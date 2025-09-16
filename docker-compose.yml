@@ -1,55 +1,55 @@
 # version: "3.0"
 services:
   # # ================ 3D Visuliser tool ================
-  # mongo:
-  #   image: mongo      #or
-  #   # image: devmanenvision/mongo:latest
-  #   container_name: abacws-chatbot-mongo
-  #   hostname: mongohost
-  #   restart: always
-  #   volumes:
-  #     - mongo-data:/data/db
-  #   networks:
-  #     - brickbot-network
-  # api:
-  #   build:
-  #     context: ./api/
-  #     dockerfile: Dockerfile
-  #   # image: devmanenvision/abacws-api:latest
-  #   hostname: apihost
-  #   container_name: abacws-api
-  #   restart: always
-  #   depends_on:
-  #     - mongo
-  #   environment:
-  #     - API_PORT=5000
-  #   ports:
-  #     - 8091:5000
-  #   volumes:
-  #     - ./api/src/api/data:/api/api/data
-  #   networks:
-  #     - brickbot-network
+  mongo:
+    image: mongo      #or
+    # image: devmanenvision/mongo:latest
+    container_name: abacws-chatbot-mongo
+    hostname: mongohost
+    restart: always
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - ontobot-network
+  api:
+    build:
+      context: ./Abacws/api/
+      dockerfile: Dockerfile
+    # image: devmanenvision/abacws-api:latest
+    hostname: apihost
+    container_name: abacws-api
+    restart: always
+    depends_on:
+      - mongo
+    environment:
+      - API_PORT=5000
+    ports:
+      - 8091:5000
+    volumes:
+      - ./Abacws/api/src/api/data:/api/api/data
+    networks:
+      - ontobot-network
 
-  # visualiser:
-  #   build:
-  #     context: ./visualiser/
-  #     dockerfile: Dockerfile
-  #   # image: devmanenvision/abacws-visualiser:latest
-  #   container_name: abacws-visualiser
-  #   hostname: visualiserhost
-  #   restart: always
-  #   depends_on:
-  #     - api
-  #   ports:
-  #     - 8090:80
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.services.abacws-visualiser.loadbalancer.server.port=80"
-  #     - "traefik.http.routers.abacws-visualiser.rule=Host(`visualiser.abacws.example.com`)"
-  #     - "traefik.http.routers.abacws-visualiser.entrypoints=https"
-  #     - "traefik.http.routers.abacws-visualiser.tls=true"
-  #   networks:
-  #     - brickbot-network
+  visualiser:
+    build:
+      context: ./Abacws/visualiser/
+      dockerfile: Dockerfile
+    # image: devmanenvision/abacws-visualiser:latest
+    container_name: abacws-visualiser
+    hostname: visualiserhost
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - 8090:80
+    # labels:
+      # - "traefik.enable=true"
+      # - "traefik.http.services.abacws-visualiser.loadbalancer.server.port=80"
+      # - "traefik.http.routers.abacws-visualiser.rule=Host(`visualiser.abacws.example.com`)"
+      # - "traefik.http.routers.abacws-visualiser.entrypoints=https"
+      # - "traefik.http.routers.abacws-visualiser.tls=true"
+    networks:
+      - ontobot-network
 
   # # # ================== thingsboard ==================
   # mytb:
@@ -72,363 +72,363 @@ services:
   #     - ~/.mytb-data:/data
   #     - ~/.mytb-logs:/var/log/thingsboards
   #   networks:
-  #     - brickbot-network
+  #     - ontobot-network
 
   # # ====================== Jena Fuseki =================
-  fuseki-db:
-    # image: busybox
-    image: devmanenvision/busybox:latest
-    container_name: jena-fuseki-db
-    volumes:
-      - jena-data:/fuseki
-    command: tail -f /dev/null # Keep the container running in the background
-    networks:
-      - brickbot-network
+#   fuseki-db:
+#     # image: busybox
+#     image: devmanenvision/busybox:latest
+#     container_name: jena-fuseki-db
+#     volumes:
+#       - jena-data:/fuseki
+#     command: tail -f /dev/null # Keep the container running in the background
+#     networks:
+#       - ontobot-network
 
-  jena-fuseki:
-    # image: stain/jena-fuseki
-    image: devmanenvision/jena-fuseki:latest
-    container_name: jena-fuseki-rdf-store
-    hostname: jenafusekihost
-    ports:
-      - "3030:3030"
-    volumes_from:
-      - fuseki-db
-    volumes:
-      - ./trial/dataset:/fuseki-data
-      # - ./config.ttl:/fuseki/config.ttl
-      # - ./postgresql-42.7.0.jar:/fuseki/WEB-INF/lib/postgresql-42.7.0.jar
-    restart: always
-    depends_on:
-      - fuseki-db
-    environment:
-      - ADMIN_PASSWORD=Admin@12345
-      # - FUSEKI_TDB_DATASET_1="tdb:location jdbc:postgresql://thingsboard:5432/thingsboard"
-    user: "root" # Specify the user as root
-    networks:
-      - brickbot-network
+#   jena-fuseki:
+#     # image: stain/jena-fuseki
+#     image: devmanenvision/jena-fuseki:latest
+#     container_name: jena-fuseki-rdf-store
+#     hostname: jenafusekihost
+#     ports:
+#       - "3030:3030"
+#     volumes_from:
+#       - fuseki-db
+#     volumes:
+#       - ./trial/dataset:/fuseki-data
+#       # - ./config.ttl:/fuseki/config.ttl
+#       # - ./postgresql-42.7.0.jar:/fuseki/WEB-INF/lib/postgresql-42.7.0.jar
+#     restart: always
+#     depends_on:
+#       - fuseki-db
+#     environment:
+#       - ADMIN_PASSWORD=Admin@12345
+#       # - FUSEKI_TDB_DATASET_1="tdb:location jdbc:postgresql://thingsboard:5432/thingsboard"
+#     user: "root" # Specify the user as root
+#     networks:
+#       - ontobot-network
 
-    # username-admin
-    # password-Suhas@551993
+#     # username-admin
+#     # password-Suhas@551993
 
-  #  ============ GraphDB =========
+#   #  ============ GraphDB =========
 
-  # graphdb:
-  #   image: ontotext/graphdb:10.4.2
-  #   # image: devmanenvision/graphdb:latest
-  #   container_name: graphdb
-  #   restart: always
-  #   ports:
-  #     - "7200:7200"
-  #   volumes:
-  #     - ./graphDB:/opt/graphdb/home/
-  #   environment:
-  #     - GRAPHDB_HOME=/opt/graphdb/home
-  #     - GDB_USER=admin
-  #     - GDB_PASSWORD=Suhas@551993 #root is default password
-  #   networks:
-  #     - brickbot-network
+#   # graphdb:
+#   #   image: ontotext/graphdb:10.4.2
+#   #   # image: devmanenvision/graphdb:latest
+#   #   container_name: graphdb
+#   #   restart: always
+#   #   ports:
+#   #     - "7200:7200"
+#   #   volumes:
+#   #     - ./graphDB:/opt/graphdb/home/
+#   #   environment:
+#   #     - GRAPHDB_HOME=/opt/graphdb/home
+#   #     - GDB_USER=admin
+#   #     - GDB_PASSWORD=Suhas@551993 #root is default password
+#   #   networks:
+#   #     - ontobot-network
 
-  # watchtower:
-  #   image: containrrr/watchtower
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   command: --run-once action_server
+#   # watchtower:
+#   #   image: containrrr/watchtower
+#   #   volumes:
+#   #     - /var/run/docker.sock:/var/run/docker.sock
+#   #   command: --run-once action_server
 
-  # web_ui:
-  #   restart: always
-  #   build:
-  #     context: ./rasa-ui/ui
-  #   # image: devmanenvision/rasa-web-ui:latest
-  #   container_name: rasa-web-ui
-  #   hostname: webuihost
-  #   ports:
-  #     - "8082:80"
-  #   depends_on:
-  #     # - action_server
-  #     - rasa
-  #   networks:
-  #     - brickbot-network
+#   # web_ui:
+#   #   restart: always
+#   #   build:
+#   #     context: ./rasa-ui/ui
+#   #   # image: devmanenvision/rasa-web-ui:latest
+#   #   container_name: rasa-web-ui
+#   #   hostname: webuihost
+#   #   ports:
+#   #     - "8082:80"
+#   #   depends_on:
+#   #     # - action_server
+#   #     - rasa
+#   #   networks:
+#   #     - ontobot-network
 
-  # # ============================ jupyter ===============
-  # jupyter:
-  #   image: 7499968836/jupyter_notebook:latest
-  #   # image: devmanenvision/jupyter_notebook:latest
-  #   # build:
-  #   #   context: ./notebooks/
-  #   container_name: jupyter_notebook
-  #   hostname: jupyter-notebook-host
-  #   restart: always
-  #   ports:
-  #     - "8888:8888"
-  #     - "8089:8089" #to see ontology
-  #   volumes:
-  #     - ./notebooks:/home/jovyan/work
-  #     - ./rasa-ui/actions:/home/jovyan/work/rasa-actions
-  #   environment:
-  #     - JUPYTER_ENABLE_LAB=yes
-  #     - JUPYTER_TOKEN=Suhas@551993
-  #   command:
-  #     - start-notebook.sh
-  #   networks:
-  #     - brickbot-network
+#   # # ============================ jupyter ===============
+#   # jupyter:
+#   #   image: 7499968836/jupyter_notebook:latest
+#   #   # image: devmanenvision/jupyter_notebook:latest
+#   #   # build:
+#   #   #   context: ./notebooks/
+#   #   container_name: jupyter_notebook
+#   #   hostname: jupyter-notebook-host
+#   #   restart: always
+#   #   ports:
+#   #     - "8888:8888"
+#   #     - "8089:8089" #to see ontology
+#   #   volumes:
+#   #     - ./notebooks:/home/jovyan/work
+#   #     - ./rasa-ui/actions:/home/jovyan/work/rasa-actions
+#   #   environment:
+#   #     - JUPYTER_ENABLE_LAB=yes
+#   #     - JUPYTER_TOKEN=Suhas@551993
+#   #   command:
+#   #     - start-notebook.sh
+#   #   networks:
+#   #     - ontobot-network
 
-  # adminer:
-  #   image: adminer
-  #   # image: devmanenvision/adminer:latest
-  #   restart: always
-  #   container_name: adminer
-  #   hostname: adminerhost
-  #   depends_on:
-  #     - mytb
-  #   ports:
-  #     - 8282:8080
-  #   networks:
-  #     - brickbot-network
+#   # adminer:
+#   #   image: adminer
+#   #   # image: devmanenvision/adminer:latest
+#   #   restart: always
+#   #   container_name: adminer
+#   #   hostname: adminerhost
+#   #   depends_on:
+#   #     - mytb
+#   #   ports:
+#   #     - 8282:8080
+#   #   networks:
+#   #     - ontobot-network
 
-  # # ===============================Trasformer model endpoint==============================
-  # t5-t5:
-  #   # build:
-  #   # context: ./Transformers
-  #   # image: "7499968836/transformer-nl2sparql-model:latest"
-  #   image: devmanenvision/t5-t5:latest
-  #   restart: always
-  #   container_name: t5-t5
-  #   hostname: t5-t5-host
-  #   volumes:
-  #     - ./Transformers/app.py:/app/app.py
-  #   ports:
-  #     - "5001:5000"
-  #   depends_on:
-  #     - jena-fuseki
-  #   networks:
-  #     - brickbot-network
-  # #=============================== ADD ONNs ===========================
-  # pgadmin:
-  #   # restart: always
-  #   # image: "dpage/pgadmin4"
-  #   image: devmanenvision/pgadmin:latest
-  #   container_name: pgadmin
-  #   hostname: pgadminhost
-  #   ports:
-  #     - "5050:80"
-  #   environment:
-  #     - PGADMIN_DEFAULT_EMAIL=pgadmin@example.com
-  #     - PGADMIN_DEFAULT_PASSWORD=admin
-  #     - PGADMIN_LISTEN_ADDRESS=0.0.0.0
-  #     - PGADMIN_SERVER_JSON_FILE=/pgadmin4/servers.json
-  #   volumes:
-  #     - ./notebooks/pgadmin/servers.json:/pgadmin4/servers.json
-  #   networks:
-  #     - brickbot-network
+#   # # ===============================Trasformer model endpoint==============================
+#   # t5-t5:
+#   #   # build:
+#   #   # context: ./Transformers
+#   #   # image: "7499968836/transformer-nl2sparql-model:latest"
+#   #   image: devmanenvision/t5-t5:latest
+#   #   restart: always
+#   #   container_name: t5-t5
+#   #   hostname: t5-t5-host
+#   #   volumes:
+#   #     - ./Transformers/app.py:/app/app.py
+#   #   ports:
+#   #     - "5001:5000"
+#   #   depends_on:
+#   #     - jena-fuseki
+#   #   networks:
+#   #     - ontobot-network
+#   # #=============================== ADD ONNs ===========================
+#   # pgadmin:
+#   #   # restart: always
+#   #   # image: "dpage/pgadmin4"
+#   #   image: devmanenvision/pgadmin:latest
+#   #   container_name: pgadmin
+#   #   hostname: pgadminhost
+#   #   ports:
+#   #     - "5050:80"
+#   #   environment:
+#   #     - PGADMIN_DEFAULT_EMAIL=pgadmin@example.com
+#   #     - PGADMIN_DEFAULT_PASSWORD=admin
+#   #     - PGADMIN_LISTEN_ADDRESS=0.0.0.0
+#   #     - PGADMIN_SERVER_JSON_FILE=/pgadmin4/servers.json
+#   #   volumes:
+#   #     - ./notebooks/pgadmin/servers.json:/pgadmin4/servers.json
+#   #   networks:
+#   #     - ontobot-network
 
-  # postgres:
-  #   image: "postgres:14"
-  #   container_name: postgres
-  #   hostname: postgreshost
-  #   environment:
-  #     - POSTGRES_PASSWORD=postgres
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_DB=thingsboard
-  #   ports:
-  #     - "5433:5432" # PostgreSQL Port (use a different host port to avoid conflicts)
-  #   volumes:
-  #     - postgres-data:/var/lib/postgresql/data
-  #   networks:
-  #     - brickbot-network
+#   # postgres:
+#   #   image: "postgres:14"
+#   #   container_name: postgres
+#   #   hostname: postgreshost
+#   #   environment:
+#   #     - POSTGRES_PASSWORD=postgres
+#   #     - POSTGRES_USER=postgres
+#   #     - POSTGRES_DB=thingsboard
+#   #   ports:
+#   #     - "5433:5432" # PostgreSQL Port (use a different host port to avoid conflicts)
+#   #   volumes:
+#   #     - postgres-data:/var/lib/postgresql/data
+#   #   networks:
+#   #     - ontobot-network
 
-  # ======================== all services in one container ========================
-  microservices:
-    build:
-      context: ./microservices # root directory containing your combined Flask app
-      dockerfile: Dockerfile
-    container_name: microservices_container
-    hostname: microserviceshost
-    restart: always
-    ports:
-      - "6000:6000"
-    networks:
-      - brickbot-network
+#   # ======================== all services in one container ========================
+#   microservices:
+#     build:
+#       context: ./microservices # root directory containing your combined Flask app
+#       dockerfile: Dockerfile
+#     container_name: microservices_container
+#     hostname: microserviceshost
+#     restart: always
+#     ports:
+#       - "6000:6000"
+#     networks:
+#       - ontobot-network
 
-  # timescaledb:
-  #   image: "timescale/timescaledb:latest-pg12"
-  #   container_name: timescaledb
-  #   hostname: timescalehost
-  #   environment:
-  #     - POSTGRES_PASSWORD=postgres
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_DB=thingsboard
-  #   ports:
-  #     - "5432:5432" # PostgreSQL Port (use a different host port to avoid conflicts)
-  #   volumes:
-  #     - timescaledb-data:/var/lib/postgresql/data
-  #   depends_on:
-  #     - thingsboard
-  #   command: ["-c", "shared_preload_libraries=timescaledb"]
-  #   networks:
-  #     - brickbot-network
+#   # timescaledb:
+#   #   image: "timescale/timescaledb:latest-pg12"
+#   #   container_name: timescaledb
+#   #   hostname: timescalehost
+#   #   environment:
+#   #     - POSTGRES_PASSWORD=postgres
+#   #     - POSTGRES_USER=postgres
+#   #     - POSTGRES_DB=thingsboard
+#   #   ports:
+#   #     - "5432:5432" # PostgreSQL Port (use a different host port to avoid conflicts)
+#   #   volumes:
+#   #     - timescaledb-data:/var/lib/postgresql/data
+#   #   depends_on:
+#   #     - thingsboard
+#   #   command: ["-c", "shared_preload_libraries=timescaledb"]
+#   #   networks:
+#   #     - ontobot-network
 
-  # # ============================ Rasa UI ==============================
+#   # # ============================ Rasa UI ==============================
 
-  rasa:
-    image: rasa/rasa:3.6.12-full
-    # image: devmanenvision/rasa:3.6.12-full
-    # build:
-    #   context: ./rasa-ui
-    #   dockerfile: Dockerfile
-    container_name: rasa
-    hostname: rasahost
-    ports:
-      - "5005:5005"
-    volumes:
-      - ./rasa-ui:/app
-      - ./rasa-ui/actions/sensor_list.txt:/app/actions/sensor_list.txt
-      - ./rasa-ui/config.yml:/app/config.yml
-      - ./rasa-ui/credentials.yml:/app/credentials.yml
-      - ./rasa-ui/endpoints.yml:/app/endpoints.yml
-      - ./rasa-ui/domain.yml:/app/domain.yml
-      - ./rasa-ui/index.html:/app/index.html
-    command:
-      # - train # uncomment for training new nlu and core model
-      # - nlu # uncomment for training new nlu model
-      - run
-      - --cors
-      - "*"
-      - --enable-api
-      # - --debug # uncomment for debugging
-    depends_on:
-      - duckling
-    networks:
-      - brickbot-network
+#   rasa:
+#     image: rasa/rasa:3.6.12-full
+#     # image: devmanenvision/rasa:3.6.12-full
+#     # build:
+#     #   context: ./rasa-ui
+#     #   dockerfile: Dockerfile
+#     container_name: rasa
+#     hostname: rasahost
+#     ports:
+#       - "5005:5005"
+#     volumes:
+#       - ./rasa-ui:/app
+#       - ./rasa-ui/actions/sensor_list.txt:/app/actions/sensor_list.txt
+#       - ./rasa-ui/config.yml:/app/config.yml
+#       - ./rasa-ui/credentials.yml:/app/credentials.yml
+#       - ./rasa-ui/endpoints.yml:/app/endpoints.yml
+#       - ./rasa-ui/domain.yml:/app/domain.yml
+#       - ./rasa-ui/index.html:/app/index.html
+#     command:
+#       # - train # uncomment for training new nlu and core model
+#       # - nlu # uncomment for training new nlu model
+#       - run
+#       - --cors
+#       - "*"
+#       - --enable-api
+#       # - --debug # uncomment for debugging
+#     depends_on:
+#       - duckling
+#     networks:
+#       - ontobot-network
 
-  action_server:
-    restart: unless-stopped
-    build:
-      context: ./rasa-ui
-      # dockerfile: Dockerfile
-    # image: devmanenvision/rasa_action_server:latest
-    container_name: rasa_action_server
-    hostname: actionserverhost
-    ports:
-      - "5055:5055"
-      - "8000:8000"
-    depends_on: 
-      - rasa
-    volumes:
-      - ./rasa-ui/actions:/app/actions
-      - ./rasa-ui/actions/actions.py:/app/actions/actions.py
-      - ./rasa-ui/static_server.py:/app/static_server.py
-      - ./rasa-ui/entrypoint.sh:/app/entrypoint.sh
-      - ./rasa-ui/data/sensors.txt:/app/data/sensors.txt
-      - ./rasa-ui/actions/sensor_list.txt:/app/actions/sensor_list.txt
-      - ./rasa-ui/actions/sensor_mappings.txt:/app/actions/sensor_mappings.txt
-    networks:
-      - brickbot-network
+#   action_server:
+#     restart: unless-stopped
+#     build:
+#       context: ./rasa-ui
+#       # dockerfile: Dockerfile
+#     # image: devmanenvision/rasa_action_server:latest
+#     container_name: rasa_action_server
+#     hostname: actionserverhost
+#     ports:
+#       - "5055:5055"
+#       - "8000:8000"
+#     depends_on: 
+#       - rasa
+#     volumes:
+#       - ./rasa-ui/actions:/app/actions
+#       - ./rasa-ui/actions/actions.py:/app/actions/actions.py
+#       - ./rasa-ui/static_server.py:/app/static_server.py
+#       - ./rasa-ui/entrypoint.sh:/app/entrypoint.sh
+#       - ./rasa-ui/data/sensors.txt:/app/data/sensors.txt
+#       - ./rasa-ui/actions/sensor_list.txt:/app/actions/sensor_list.txt
+#       - ./rasa-ui/actions/sensor_mappings.txt:/app/actions/sensor_mappings.txt
+#     networks:
+#       - ontobot-network
       
 
-  duckling:
-    image: rasa/duckling:latest
-    ports:
-      - "8080:8000"
-    restart: unless-stopped
-    networks:
-      - brickbot-network
+#   duckling:
+#     image: rasa/duckling:latest
+#     ports:
+#       - "8080:8000"
+#     restart: unless-stopped
+#     networks:
+#       - ontobot-network
 
-  # action_server_static_sharing:
-  #     build:
-  #       context: ./rasa-ui/actions/static
-  #       dockerfile: Dockerfile
-  #     container_name: flask_static_server
-  #     ports:
-  #       - "8000:8000"
-  #     volumes:
-  #       - ./rasa-ui/actions/static/logs:/app/logs
-  #       - attachments_volume:/app/attachments:ro
-  #     environment:
-  #       - PYTHONUNBUFFERED=1
-  #       - GUNICORN_CMD_ARGS=--log-level=info
-  #     restart: unless-stopped
-  #     networks:
-  #       - brickbot-network
- #  ================================Ollma ==============================
+#   # action_server_static_sharing:
+#   #     build:
+#   #       context: ./rasa-ui/actions/static
+#   #       dockerfile: Dockerfile
+#   #     container_name: flask_static_server
+#   #     ports:
+#   #       - "8000:8000"
+#   #     volumes:
+#   #       - ./rasa-ui/actions/static/logs:/app/logs
+#   #       - attachments_volume:/app/attachments:ro
+#   #     environment:
+#   #       - PYTHONUNBUFFERED=1
+#   #       - GUNICORN_CMD_ARGS=--log-level=info
+#   #     restart: unless-stopped
+#   #     networks:
+#   #       - ontobot-network
+#  #  ================================Ollma ==============================
 
 
-  # ollama:
-  #     container_name: ollama
-  #     build:
-  #       context: ./Transformers/Mistral
-  #     pull_policy: always
-  #     restart: unless-stopped
-  #     ports:
-  #       - "11434:11434"
-  #     environment:
-  #       - OLLAMA_NUM_PARALLEL=4
-  #       - OLLAMA_MAX_LOADED_MODELS=2
-  #       - OLLAMA_MODELS=/usr/share/ollama/.ollama/models
-  #     healthcheck:
-  #       test: "ollama --version && ollama ps || exit 1"
-  #       interval: 30s
-  #       timeout: 60s
-  #       retries: 3
-  #       start_period: 30s
-      # deploy:
-      #   resources:
-      #     reservations:
-            # devices:
-            #   - driver: nvidia
-            #     count: 1
-            #     capabilities: [gpu]
-      # volumes:
-        # - ./Transformers/Mistral:/usr/share/ollama/.ollama/models
-  #   networks:
-  #     - brickbot-network
+#   # ollama:
+#   #     container_name: ollama
+#   #     build:
+#   #       context: ./Transformers/Mistral
+#   #     pull_policy: always
+#   #     restart: unless-stopped
+#   #     ports:
+#   #       - "11434:11434"
+#   #     environment:
+#   #       - OLLAMA_NUM_PARALLEL=4
+#   #       - OLLAMA_MAX_LOADED_MODELS=2
+#   #       - OLLAMA_MODELS=/usr/share/ollama/.ollama/models
+#   #     healthcheck:
+#   #       test: "ollama --version && ollama ps || exit 1"
+#   #       interval: 30s
+#   #       timeout: 60s
+#   #       retries: 3
+#   #       start_period: 30s
+#       # deploy:
+#       #   resources:
+#       #     reservations:
+#             # devices:
+#             #   - driver: nvidia
+#             #     count: 1
+#             #     capabilities: [gpu]
+#       # volumes:
+#         # - ./Transformers/Mistral:/usr/share/ollama/.ollama/models
+#   #   networks:
+#   #     - ontobot-network
 
-  # nl2sparql:
-  #   build: 
-  #     context: ./Transformers
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "5000:5000"
-  #   volumes:
-  #     - ./Transformers/T5_base/trained:/app/T5_base/trained
-  #     - ./Transformers/app.py:/app/app.py
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #   container_name: nl2sparql_service
-  #   hostname: nl2sparql-host
-  #   restart: always
-  #   networks:
-  #     - brickbot-network
+#   # nl2sparql:
+#   #   build: 
+#   #     context: ./Transformers
+#   #     dockerfile: Dockerfile
+#   #   ports:
+#   #     - "5000:5000"
+#   #   volumes:
+#   #     - ./Transformers/T5_base/trained:/app/T5_base/trained
+#   #     - ./Transformers/app.py:/app/app.py
+#   #   environment:
+#   #     - PYTHONUNBUFFERED=1
+#   #   container_name: nl2sparql_service
+#   #   hostname: nl2sparql-host
+#   #   restart: always
+#   #   networks:
+#   #     - ontobot-network
 
-  rasa-frontend:
-    build:
-      context: ./rasa-frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./rasa-frontend/:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-    container_name: rasa-frontend
-    hostname: rasa-frontend-host
-    restart: unless-stopped
-    command: npm start
-    networks:
-      - brickbot-network
+#   rasa-frontend:
+#     build:
+#       context: ./rasa-frontend
+#       dockerfile: Dockerfile
+#     ports:
+#       - "3000:3000"
+#     volumes:
+#       - ./rasa-frontend/:/app
+#       - /app/node_modules
+#     environment:
+#       - NODE_ENV=development
+#     container_name: rasa-frontend
+#     hostname: rasa-frontend-host
+#     restart: unless-stopped
+#     command: npm start
+#     networks:
+#       - ontobot-network
 
 networks:
-  brickbot-network:
+  ontobot-network:
 volumes:
-  # ollama-models:
-  #   mongo-data:
-  #   api-data:
-    # mytb-data:
-    #   external: true
-    # mytb-logs:
-    #   external: true
-    jena-data:
-    fuseki:
-  # timescaledb-data:
-# postgres-data:
+#   # ollama-models:
+    mongo-data:
+    api-data:
+#     # mytb-data:
+#     #   external: true
+#     # mytb-logs:
+#     #   external: true
+#     jena-data:
+#     fuseki:
+#   # timescaledb-data:
+# # postgres-data:
