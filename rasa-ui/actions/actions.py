@@ -1332,7 +1332,7 @@ class ActionTestConnection(Action):
         domain: Dict[Text, Any],
     ) -> List[Dict[Text, Any]]:
         # Introduce the media test with a text message
-        dispatcher.utter_message(text="✅ The action server is working!")
+        dispatcher.utter_message(text="✅ The action server is running!")
         # dispatcher.utter_message(text="Testing various media types:")
 
         # # Log working directory

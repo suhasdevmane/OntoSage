@@ -2,14 +2,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';       // ← add this
 import './Home.css';
-import Apache_Jena from './imgs/Apache_Jena.png'; // Import the image at the top
-import nlinegiftoolsgif from './imgs/thingsboard.png'; // Import the image at the top
-import pg2png from './imgs/pg-2.png'; // Import the image at the top
-import jupyter3 from './imgs/jupyter-3.png'; // Import the image at the top
-import menuimage from './imgs/menu_image.png'; // Import the image at the top
-import bldgpng from './imgs/bldg.png'; // Import the image at the top
-import APIgif from './imgs/api.png'; // Import the image at the top
-import GraphDB from './imgs/GraphDB.png'; // Import the image at the top
+import Apache_Jena from './imgs/Apache_Jena.jpg'; // Import the image at the top
+import nlinegiftoolsgif from './imgs/thingsboard.jpg'; // Import the image at the top
+import pg2png from './imgs/pg-2.jpg'; // Import the image at the top
+import jupyter3 from './imgs/jupyter-3.jpg'; // Import the image at the top
+import menuimage from './imgs/menu_image.jpg'; // Import the image at the top
+import bldgpng from './imgs/bldg.jpg'; // Import the image at the top
+import APIgif from './imgs/api.jpg'; // Import the image at the top
+import GraphDB from './imgs/GraphDB.jpg'; // Import the image at the top
 
 
 

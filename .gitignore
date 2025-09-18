@@ -7,6 +7,8 @@ Transformers/T5-NL2SPARQL/
 Transformers/T5-SPARQL2QA/
 Transformers/t5_base/v2/
 notebooks/
+development/
+.development
 .rasa/
 .vscode/
 abacws_chatbot_env/
