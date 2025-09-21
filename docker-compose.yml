@@ -390,6 +390,38 @@ services:
     networks:
       - ontobot-network
 
+  rasa-editor:
+    build:
+      context: ./rasa-ui
+      dockerfile: editor.Dockerfile
+    container_name: rasa_editor
+    restart: unless-stopped
+    ports:
+      - "6080:6080"
+    environment:
+      - PORT=6080
+      - FRONTEND_ORIGIN=http://localhost:3000
+      - ALLOWED_ORIGINS=http://localhost:3000
+      - RASA_PROJECT_ROOT=/srv/rasa
+    volumes:
+      - ./rasa-ui/editor_server.py:/srv/editor_server.py
+      - ./rasa-ui/data:/srv/rasa/data
+      - ./rasa-ui/domain.yml:/srv/rasa/domain.yml
+      - ./rasa-ui/config.yml:/srv/rasa/config.yml
+      - ./rasa-ui/models:/srv/rasa/models
+      - ./rasa-ui/endpoints.yml:/srv/rasa/endpoints.yml
+      - ./rasa-ui/credentials.yml:/srv/rasa/credentials.yml
+      - ./rasa-ui/actions:/srv/rasa/actions
+    entrypoint: ["python", "-m", "uvicorn"]
+    command: ["editor_server:app", "--host", "0.0.0.0", "--port", "6080", "--app-dir", "/srv"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6080/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ontobot-network
+
   rasa-frontend:
     build:
       context: ./rasa-frontend

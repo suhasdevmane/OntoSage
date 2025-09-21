@@ -8,6 +8,7 @@ import Links from './pages/Links';
 import About from './pages/About';
 import Health from './pages/Health';
 import Settings from './pages/Settings';
+import SettingsTabs from './pages/SettingsTabs';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(() => sessionStorage.getItem('currentUser'));
@@ -29,7 +30,8 @@ function App() {
         <Route path="/links" element={<Links />} />
         <Route path="/about" element={<About />} />
   <Route path="/health" element={<Health />} />
-  <Route path="/settings" element={<Settings />} />
+  <Route path="/settings" element={<SettingsTabs />} />
+  <Route path="/settings/train" element={<Settings />} />
         <Route path="/chat" element={<Home />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
