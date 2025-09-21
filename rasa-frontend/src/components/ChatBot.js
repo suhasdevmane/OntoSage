@@ -15,12 +15,17 @@ const RASA_ENDPOINT = "http://localhost:5005/webhooks/rest/webhook";
 function ChatBot() {
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
-  const [minimized, setMinimized] = useState(false);
+  // Default to minimized; restore from sessionStorage if present
+  const [minimized, setMinimized] = useState(() => {
+    const saved = sessionStorage.getItem('chatbot_minimized');
+    return saved === null ? true : saved === 'true';
+  });
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // New loading state
   const textAreaRef = useRef(null);
   const messagesEndRef = useRef(null);
   const currentUser = sessionStorage.getItem('currentUser');
+
 
   // Load chat history from server on mount, fallback to Dexie
   useEffect(() => {
@@ -180,7 +185,11 @@ function ChatBot() {
   };
 
   const toggleMinimize = () => {
-    setMinimized(prev => !prev);
+    setMinimized(prev => {
+      const next = !prev;
+      try { sessionStorage.setItem('chatbot_minimized', String(next)); } catch {}
+      return next;
+    });
   };
 
   // Toggle full-screen mode using the Fullscreen API

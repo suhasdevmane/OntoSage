@@ -9,7 +9,10 @@ export default function TopNav() {
       await fetch('http://localhost:8080/api/logout', { method: 'POST', credentials: 'include' });
     } catch {}
     sessionStorage.removeItem('currentUser');
-    window.location.href = '/login';
+    sessionStorage.removeItem('chatbot_minimized');
+    window.dispatchEvent(new Event('auth-changed'));
+    // Slight delay to allow state to propagate
+    setTimeout(() => { window.location.href = '/login'; }, 0);
   };
 
   return (

@@ -32,7 +32,10 @@ function Login() {
           await db.users.add({ username, password });
         }
         await db.chatHistory.add({ username, messages: [] });
-        sessionStorage.setItem('currentUser', username);
+  sessionStorage.setItem('currentUser', username);
+  // Start minimized after login
+  sessionStorage.setItem('chatbot_minimized', 'true');
+  window.dispatchEvent(new Event('auth-changed'));
         navigate('/chat');
         return true;
       } catch (err) {
@@ -52,6 +55,9 @@ function Login() {
       });
       if (res.ok) {
         sessionStorage.setItem('currentUser', username);
+        // Start minimized after login
+        sessionStorage.setItem('chatbot_minimized', 'true');
+        window.dispatchEvent(new Event('auth-changed'));
         // Keep a copy locally (for offline viewing)
         const existing = await db.users.where('username').equals(username).first();
         if (!existing) {
