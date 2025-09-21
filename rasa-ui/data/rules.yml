@@ -1,5 +1,15 @@
 version: "3.1"
 rules:
+  - rule: Respond to greetings
+    steps:
+      - intent: greet
+      - action: utter_greet
+
+  - rule: Test file sharing action
+    steps:
+      - intent: test_action_server
+      - action: action_generate_and_share_data
+
   - rule: Say goodbye anytime the user says goodbye
     steps:
       - intent: goodbye

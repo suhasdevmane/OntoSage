@@ -12,4 +12,10 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_pass http://${API_HOST}/;
     }
+
+    # Simple health endpoint
+    location = /health {
+        default_type application/json;
+        return 200 '{"status":"ok"}';
+    }
 }

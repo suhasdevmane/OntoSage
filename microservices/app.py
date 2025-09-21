@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, jsonify
 from flask_cors import CORS
 
 def create_app():
@@ -69,6 +69,10 @@ def create_app():
         </html>
         """
         return render_template_string(html)
+
+    @app.route("/health")
+    def health():
+        return jsonify({"status": "ok"}), 200
 
     return app
 

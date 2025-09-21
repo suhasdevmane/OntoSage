@@ -107,6 +107,12 @@ slots:
     mappings:
       - type: custom
 
+  generated_urls:
+    type: any
+    influence_conversation: false
+    mappings:
+      - type: custom
+
 responses:
   utter_greet:
     - text: "Hey! How are you?"
@@ -174,7 +180,7 @@ responses:
 actions:
   - action_question_to_brickbot
   - action_process_timeseries
-  - action_test_connection
+  - action_generate_and_share_data
   - validate_sensor_form
   - validate_dates_form
   - action_reset_slots

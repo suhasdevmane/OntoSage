@@ -1,12 +1,12 @@
 /* Default chat container (normal mode) */
 .chat-container {
   overflow: hidden;
-  height: 620px;           /* Fixed height for normal mode */
-  max-width: 800px;
+  height: 620px; /* Responsive height for normal mode */
+  width: min(90vw, 800px);           /* Responsive width cap */
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
 
 /* Fullscreen chat container – no fixed height/width constraints */
@@ -16,6 +16,8 @@
   border: none;
   border-radius: 0;
   box-shadow: none;
+  /* width: 100vw;
+  height: 100vh; */
 }
 
 /* User messages */
@@ -60,7 +62,7 @@
 /* Chat messages area */
 .chat-messages {
   flex-grow: 1;
-  padding: 15px;
+  padding: 16px clamp(10px, 3vw, 28px);
   overflow-y: auto;
   background-color: #f5f5f5;
   width: auto;
@@ -85,7 +87,7 @@
 .chat-input {
   display: flex;
   align-items: center;
-  padding: 15px;
+  padding: 12px 16px;
   border-top: 1px solid #ddd;
   background-color: #fff;
 }
@@ -132,4 +134,34 @@
   0% { opacity: 1; }
   50% { opacity: 0.5; }
   100% { opacity: 1; }
+}
+
+/* Message bubble/card sizing - auto width up to 60% (WhatsApp-like) */
+.message-card {
+  display: inline-block;
+  width: fit-content;
+  max-width: 60%;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Alignments for bubbles within rows */
+.user-message {
+  margin-left: auto; /* push to the right when possible */
+}
+.bot-message {
+  margin-right: auto; /* keep to the left */
+}
+
+/* Ensure media elements scale nicely inside bubbles */
+.message-card img,
+.message-card video,
+.message-card audio,
+.message-card iframe {
+  max-width: 100%;
+}
+
+/* Slightly larger PDF/iframe view in fullscreen */
+.fullscreen-chat-container .message-card iframe {
+  min-height: 60vh;
 }

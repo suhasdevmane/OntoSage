@@ -1,1 +1,0 @@
-Download the trained T5 model and place the model files and all files inside the v4 folder. 

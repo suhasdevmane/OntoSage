@@ -1,15 +1,26 @@
 // src/components/Home.js
 import React from 'react';
-import { Link } from 'react-router-dom';       // ← add this
+// Removed unused Link import to satisfy ESLint
 import './Home.css';
-import Apache_Jena from './imgs/Apache_Jena.jpg'; // Import the image at the top
-import nlinegiftoolsgif from './imgs/thingsboard.jpg'; // Import the image at the top
-import pg2png from './imgs/pg-2.jpg'; // Import the image at the top
-import jupyter3 from './imgs/jupyter-3.jpg'; // Import the image at the top
-import menuimage from './imgs/menu_image.jpg'; // Import the image at the top
-import bldgpng from './imgs/bldg.jpg'; // Import the image at the top
-import APIgif from './imgs/api.jpg'; // Import the image at the top
-import GraphDB from './imgs/GraphDB.jpg'; // Import the image at the top
+import TopNav from './TopNav';
+
+
+import Apache_Jena from './imgs/Apache_Jena.jpg';
+import graphdbImg from './imgs/GraphDB.jpg';
+import thingsboardImg from './imgs/thingsboard.jpg';
+import pgImg from './imgs/pg-2.jpg';
+import adminerImg from './imgs/menu_image.jpg';
+import visualiserImg from './imgs/bldg.jpg';
+import jupyterImg from './imgs/jupyter-3.jpg';
+import apiImg from './imgs/api.jpg';
+import Microservicespng from './imgs/menu_image.png';
+import apiPng from './imgs/api.png';
+import RasaLogo from './imgs/bot-logo.png';
+import ActionLogo from './imgs/bot-logo2.png';
+import DucklingImg from './imgs/middle.png';
+import OllamaImg from './imgs/ollama.png';
+// Reuse existing API icons for services without specific logos
+
 
 
 
@@ -17,14 +28,32 @@ export default function Home() {
   const openService = url => window.open(url, '_blank');
 
  const services = [
-    { img: Apache_Jena, title: "Jena Fuseki Server", text: "Semantic Web Framework", url: "http://localhost:3030",width:  "70%", height: "150px" },
-    { img: nlinegiftoolsgif, title: "ThingsBoard Server", text: "IoT Platform", url: "http://localhost:8080",width:  "70%", height: "150px" },
-    { img: pg2png, title: "PgAdmin Server", text: "Database Management", url: "http://localhost:5050" ,width:  "70%", height: "150px"},
-    { img: jupyter3, title: "Jupyter Notebook", text: "Notebooks for data analysis", url: "http://localhost:8888",width:  "70%", height: "150px" },
-    { img: menuimage, title: "Adminer Service", text: "Database Management", url: "http://localhost:8282" ,width:  "70%", height: "150px"},
-    { img: bldgpng, title: "3D-Abacws Service", text: "3D Visualization", url: "http://localhost:8090" ,width:  "70%", height: "150px"},
-    { img: APIgif, title: "3D-API", text: "API for 3D Services", url: "http://localhost:8091" ,width:  "70%", height: "150px"},
-    { img: GraphDB, title: "GraphDB", text: "Graph DBMS for SPARQL", url: "http://localhost:7200" ,width:  "70%", height: "150px"},
+    // Data & Semantics
+    { img: Apache_Jena,    title: "Jena Fuseki Server", text: "Semantic Web Framework",            url: "http://localhost:3030",  width:  "70%", height: "150px" },
+    { img: graphdbImg,     title: "GraphDB",            text: "Graph DBMS for SPARQL",            url: "http://localhost:7200",  width:  "70%", height: "150px" },
+
+    // IoT Platform & DB Tools
+    { img: thingsboardImg, title: "ThingsBoard Server", text: "IoT Platform",                      url: "http://localhost:8082", width:  "70%", height: "150px" },
+    { img: pgImg,          title: "pgAdmin",            text: "Database Management",               url: "http://localhost:5050",  width:  "70%", height: "150px" },
+    { img: adminerImg,     title: "Adminer",            text: "Database Management",               url: "http://localhost:8282",  width:  "70%", height: "150px" },
+
+    // Frontend & Notebooks
+    { img: visualiserImg,  title: "3D-Abacws Service",  text: "3D Visualization",                  url: "http://localhost:8090",  width:  "70%", height: "150px" },
+    { img: jupyterImg,     title: "Jupyter Notebook",   text: "Notebooks for data analysis",       url: "http://localhost:8888",  width:  "70%", height: "150px" },
+
+    // APIs and Microservices
+    { img: apiImg,         title: "3D-API",             text: "API for 3D Services",               url: "http://localhost:8091",  width:  "70%", height: "150px" },
+    { img: Microservicespng,title: "Microservices",      text: "Analytics and utilities",           url: "http://localhost:6001",  width:  "70%", height: "150px" },
+    { img: apiPng,         title: "File Server",        text: "Shared artifacts server",           url: "http://localhost:8080",  width:  "70%", height: "150px" },
+
+    // Conversational stack
+    { img: RasaLogo,        title: "Rasa Server",        text: "Conversational AI",                 url: "http://localhost:5005",  width:  "70%", height: "150px" },
+    { img: ActionLogo,      title: "Action Server",      text: "Rasa custom actions",               url: "http://localhost:5055",  width:  "70%", height: "150px" },
+    { img: DucklingImg,      title: "Duckling",           text: "Entity extraction service",         url: "http://localhost:8000",  width:  "70%", height: "150px" },
+
+    // AI services
+    { img: apiPng,           title: "NL2SPARQL",          text: "Natural language → SPARQL",         url: "http://localhost:6005",  width:  "70%", height: "150px" },
+    { img: OllamaImg,           title: "Ollama (Mistral)",   text: "Local LLM service",                 url: "http://localhost:11434", width:  "70%", height: "150px" },
   ];
 
   return (
@@ -35,85 +64,7 @@ export default function Home() {
       <div className="wave"></div>
       <div className="wave"></div>
       {/* Navbar */}
-      <nav className="navbar navbar-expand-lg navbar-light bg-light">
-        <div className="container">
-          {/* Brand → goes to your home route */}
-          <Link className="navbar-brand" to="/">Abacws SmartBot</Link>
-
-          <button
-            className="navbar-toggler"
-            type="button"
-            data-toggle="collapse"
-            data-target="#navbarScroll"
-            aria-controls="navbarScroll"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
-          >
-            <span className="navbar-toggler-icon" />
-          </button>
-
-          <div className="collapse navbar-collapse" id="navbarScroll">
-            <ul className="navbar-nav mr-auto my-2 my-lg-0 navbar-nav-scroll">
-              <li className="nav-item">
-                {/* Home link */}
-                <Link className="nav-link active" to="/">Home</Link>
-              </li>
-              <li className="nav-item">
-                {/* Docs route (create a /docs page or adjust as needed) */}
-                <Link className="nav-link" to="/docs">Docs</Link>
-              </li>
-              <li className="nav-item dropdown">
-                {/* Dropdown parent – could point to a page of links */}
-                <Link
-                  className="nav-link dropdown-toggle"
-                  to="/links"
-                  role="button"
-                  data-toggle="dropdown"
-                  aria-expanded="false"
-                >
-                  Links
-                </Link>
-                <ul className="dropdown-menu">
-                  <li>
-                    <Link className="dropdown-item" to="/action/3.1">
-                      Action
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="/action/3.2">
-                      Another action
-                    </Link>
-                  </li>
-                  <li><hr className="dropdown-divider" /></li>
-                  <li>
-                    <Link className="dropdown-item" to="/action/3.3">
-                      Something else here
-                    </Link>
-                  </li>
-                </ul>
-              </li>
-              <li className="nav-item">
-                {/* If you don’t have an About page yet, either create one or hide this */}
-                <Link className="nav-link disabled" to="/" aria-disabled="true">
-                  About us
-                </Link>
-              </li>
-            </ul>
-
-            <form className="form-inline my-2 my-lg-0">
-              <input
-                className="form-control mr-sm-2"
-                type="search"
-                placeholder="Search"
-                aria-label="Search"
-              />
-              <button className="btn btn-outline-success my-2 my-sm-0" type="submit">
-                Search
-              </button>
-            </form>
-          </div>
-        </div>
-      </nav>
+      <TopNav />
 
       {/* Intro */}
       <div className="container mt-4" id="content">

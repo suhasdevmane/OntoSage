@@ -1,0 +1,37 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "docker-compose up affected services",
+			"type": "shell",
+			"command": "docker-compose up -d mytb http_server ollama nl2sparql",
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Rebuild api and visualiser for health endpoints",
+			"type": "shell",
+			"command": "docker-compose build api visualiser microservices && docker-compose up -d api visualiser microservices",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Run scripts/check-health.ps1",
+			"type": "shell",
+			"command": "pwsh -NoProfile -File scripts/check-health.ps1",
+			"isBackground": false,
+			"group": "build"
+		}
+		,
+		{
+			"label": "Run scripts/check-health.sh",
+			"type": "shell",
+			"command": "bash scripts/check-health.sh",
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}

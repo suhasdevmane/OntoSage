@@ -13,7 +13,7 @@
 action_endpoint:
   # url: "http://localhost:5055/webhook" # use the service name not the container name
   # cors: "*"
-  url: "http://actionserverhost:5055/webhook" # use the service name not the container name
+  url: "http://action_server:5055/webhook" # use the service name not the container name
   request_timeout: 60 # [optional](default: 60)"
 # Tracker store which is used to store the conversations.
 # By default the conversations are stored in memory.

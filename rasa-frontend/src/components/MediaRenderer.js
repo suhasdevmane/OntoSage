@@ -1,11 +1,49 @@
 // src/components/MediaRenderer.js
 import React from 'react';
-import { BsDownload } from 'react-icons/bs';
+import { BsDownload, BsBoxArrowUpRight } from 'react-icons/bs';
 
-// Updated downloadFile function to open the URL in a new window
-function downloadFile(url, filename = 'download') {
-  // Open the file in a new tab/window.
+// Build a URL that forces download on our file server
+function ensureDownloadUrl(url) {
+  if (!url) return url;
+  const hasQuery = url.includes('?');
+  const hasDownload = /[?&]download=1/i.test(url);
+  return hasDownload ? url : `${url}${hasQuery ? '&' : '?'}download=1`;
+}
+
+// Robust downloader: uses fetch+blob to trigger a download without navigating away
+async function downloadFile(url, filename = 'download') {
+  try {
+    const downloadUrl = ensureDownloadUrl(url);
+    const resp = await fetch(downloadUrl, { mode: 'cors' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const blob = await resp.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename || 'download';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  } catch (e) {
+    // Fallback: open in new tab
+    window.open(url, '_blank');
+  }
+}
+
+// Open file in a new tab/window without forcing download
+function openFile(url) {
+  if (!url) return;
   window.open(url, '_blank');
+}
+// Map common extensions to proper MIME types for <source type="...">
+function getMediaMime(kind, extension) {
+  const ext = (extension || '').toLowerCase();
+  const videoMap = { mp4: 'video/mp4', webm: 'video/webm', ogg: 'video/ogg' };
+  const audioMap = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg' };
+  if (kind === 'video') return videoMap[ext] || `video/${ext}`;
+  if (kind === 'audio') return audioMap[ext] || `audio/${ext}`;
+  return undefined;
 }
 
 // Helper: extract file extension from filename or URL
@@ -22,24 +60,44 @@ function MediaRenderer({ media }) {
   const filename = media.filename || (media.url ? media.url.split('/').pop() : 'download');
   const extension = getFileExtension(filename);
 
-  // Render a small download button positioned over the media element
-  const renderDownloadButton = () => (
-    <button
-      onClick={() => downloadFile(media.url, filename)}
+  // Render small Open + Download buttons positioned over the media element
+  const renderActionButtons = () => (
+    <div
       style={{
         position: 'absolute',
         top: '5px',
         right: '5px',
-        background: 'rgba(255,255,255,0.7)',
-        border: 'none',
-        cursor: 'pointer',
-        padding: '4px',
-        borderRadius: '50%'
+        display: 'flex',
+        gap: '6px'
       }}
-      title="Download"
     >
-      <BsDownload size={18} />
-    </button>
+      <button
+        onClick={() => openFile(media.url)}
+        style={{
+          background: 'rgba(255,255,255,0.85)',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '4px',
+          borderRadius: '50%'
+        }}
+        title="Open"
+      >
+        <BsBoxArrowUpRight size={16} />
+      </button>
+      <button
+        onClick={() => downloadFile(media.url, filename)}
+        style={{
+          background: 'rgba(255,255,255,0.85)',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '4px',
+          borderRadius: '50%'
+        }}
+        title="Download"
+      >
+        <BsDownload size={16} />
+      </button>
+    </div>
   );
 
   // Container style to wrap media and position download button
@@ -56,6 +114,7 @@ function MediaRenderer({ media }) {
           <pre style={{ maxWidth: '100%', overflowX: 'auto' }}>
             {media.content}
           </pre>
+          {renderActionButtons()}
         </div>
       );
 
@@ -63,23 +122,31 @@ function MediaRenderer({ media }) {
       return (
         <div style={containerStyle}>
           <img src={media.url} alt="media" style={{ maxWidth: '100%' }} />
-          {renderDownloadButton()}
+          {renderActionButtons()}
         </div>
       );
 
     case 'pdf':
       return (
         <div style={containerStyle}>
-          <iframe src={media.url} width="100%" height="10%" title="PDF Viewer" />
-          {renderDownloadButton()}
+          <iframe
+            src={media.url}
+            title="PDF Viewer"
+            style={{ width: '100%', height: 'min(60vh, 520px)', border: 'none' }}
+          />
+          {renderActionButtons()}
         </div>
       );
 
     case 'chart':
       return (
         <div style={containerStyle}>
-          <img src={media.url} alt="chart" style={{ maxWidth: '100%' }} />
-          {renderDownloadButton()}
+          <iframe
+            src={media.url}
+            title="Chart"
+            style={{ width: '100%', height: 'min(60vh, 520px)', border: 'none' }}
+          />
+          {renderActionButtons()}
         </div>
       );
 
@@ -88,10 +155,10 @@ function MediaRenderer({ media }) {
       return (
         <div style={containerStyle}>
           <video controls style={{ maxWidth: '100%' }}>
-            <source src={media.url} type={`video/${extension}`} />
+            <source src={media.url} type={getMediaMime('video', extension)} />
             Your browser does not support the video tag.
           </video>
-          {renderDownloadButton()}
+          {renderActionButtons()}
         </div>
       );
 
@@ -99,10 +166,10 @@ function MediaRenderer({ media }) {
       return (
         <div style={containerStyle}>
           <audio controls style={{ maxWidth: '100%' }}>
-            <source src={media.url} type={`audio/${extension}`} />
+            <source src={media.url} type={getMediaMime('audio', extension)} />
             Your browser does not support the audio element.
           </audio>
-          {renderDownloadButton()}
+          {renderActionButtons()}
         </div>
       );
 
@@ -143,7 +210,7 @@ function MediaRenderer({ media }) {
             <div style={{ fontSize: '10px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{filename}</div>
             <div style={{ fontSize: '10px', color: '#888' }}>Preview not available</div>
           </div>
-          {renderDownloadButton()}
+          {renderActionButtons()}
         </div>
       );
 
@@ -153,7 +220,7 @@ function MediaRenderer({ media }) {
           <a href={media.url} target="_blank" rel="noopener noreferrer">
             {media.url}
           </a>
-          {renderDownloadButton()}
+          {renderActionButtons()}
         </div>
       );
 
@@ -161,7 +228,7 @@ function MediaRenderer({ media }) {
       return (
         <div style={containerStyle}>
           <div>Unsupported media type: {media.type}</div>
-          {renderDownloadButton()}
+          {renderActionButtons()}
         </div>
       );
   }

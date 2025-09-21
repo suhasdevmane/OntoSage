@@ -1,452 +1,459 @@
 # version: "3.0"
 services:
   # # ================ 3D Visuliser tool and API ================
-  # mongo:
-  #   image: mongo      #or
-  #   # image: devmanenvision/mongo:latest
-  #   container_name: abacws-chatbot-mongo
-  #   hostname: mongohost
-  #   restart: always
-  #   volumes:
-  #     - mongo-data:/data/db
-  #   networks:
-  #     - ontobot-network
-  # api:
-  #   build:
-  #     context: ./Abacws/api/
-  #     dockerfile: Dockerfile
-  #   # image: devmanenvision/abacws-api:latest
-  #   hostname: apihost
-  #   container_name: abacws-api
-  #   restart: always
-  #   depends_on:
-  #     - mongo
-  #   environment:
-  #     - API_PORT=5000
-  #   ports:
-  #     - 8091:5000
-  #   volumes:
-  #     - ./Abacws/api/src/api/data:/api/api/data
-  #   networks:
-  #     - ontobot-network
+  mongo:
+    image: mongo      #or
+    # image: devmanenvision/mongo:latest
+    container_name: abacws-chatbot-mongo
+    hostname: mongohost
+    restart: always
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - ontobot-network
+  api:
+    build:
+      context: ./Abacws/api/
+      dockerfile: Dockerfile
+    # image: devmanenvision/abacws-api:latest
+    hostname: apihost
+    container_name: abacws-api
+    restart: always
+    depends_on:
+      - mongo
+    environment:
+      - API_PORT=5000
+    ports:
+      - 8091:5000
+    volumes:
+      - ./Abacws/api/src/api/data:/api/api/data
+    networks:
+      - ontobot-network
+    healthcheck:
+      test: ["CMD", "sh", "-lc", "wget -qO- http://localhost:5000/health | grep -q 'ok'"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
-  # visualiser:
-  #   build:
-  #     context: ./Abacws/visualiser/
-  #     dockerfile: Dockerfile
-  #   # image: devmanenvision/abacws-visualiser:latest
-  #   container_name: abacws-visualiser
-  #   hostname: visualiserhost
-  #   restart: always
-  #   depends_on:
-  #     - api
-  #   ports:
-  #     - 8090:80
-  #   # labels:
-  #     # - "traefik.enable=true"
-  #     # - "traefik.http.services.abacws-visualiser.loadbalancer.server.port=80"
-  #     # - "traefik.http.routers.abacws-visualiser.rule=Host(`visualiser.abacws.example.com`)"
-  #     # - "traefik.http.routers.abacws-visualiser.entrypoints=https"
-  #     # - "traefik.http.routers.abacws-visualiser.tls=true"
-  #   networks:
-  #     - ontobot-network
+  visualiser:
+    build:
+      context: ./Abacws/visualiser/
+      dockerfile: Dockerfile
+    # image: devmanenvision/abacws-visualiser:latest
+    container_name: abacws-visualiser
+    hostname: visualiserhost
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - 8090:80
+    # labels:
+      # - "traefik.enable=true"
+      # - "traefik.http.services.abacws-visualiser.loadbalancer.server.port=80"
+      # - "traefik.http.routers.abacws-visualiser.rule=Host(`visualiser.abacws.example.com`)"
+      # - "traefik.http.routers.abacws-visualiser.entrypoints=https"
+      # - "traefik.http.routers.abacws-visualiser.tls=true"
+    networks:
+      - ontobot-network
+    healthcheck:
+      test: ["CMD", "sh", "-lc", "wget -qO- http://localhost/health | grep -q 'ok'"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
 #   # ==================== new postgress + thingsboard + pgadmin ===================
 
-  # postgres:
-  #   # restart: always
-  #   image: postgres:15-alpine
-  #   container_name: postgres
-  #   hostname: postgres
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     POSTGRES_DB: thingsboard
-  #     POSTGRES_USER: thingsboard
-  #     POSTGRES_PASSWORD: thingsboard
-  #   volumes:
-  #     - ~/.postgres-data:/var/lib/postgresql/data
-  #   networks:
-  #     - ontobot-network
+  postgres:
+    # restart: always
+    image: postgres:15-alpine
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: thingsboard
+      POSTGRES_USER: thingsboard
+      POSTGRES_PASSWORD: thingsboard
+    volumes:
+      - ~/.postgres-data:/var/lib/postgresql/data
+    networks:
+      - ontobot-network
 
-# # This is the setup service. It will run the database migration.
-# # You should run this once and then replace it with the `mytb` service.
-#   # mytb-setup:
-#   #   user: root
-#   #   restart: "no" # This service should not restart after it's done
-#   #   image: devmanenvision/my-thingsboard:1.1
-#   #   container_name: thingsboard-setup
-#   #   depends_on:
-#   #     - postgres
-#   #   environment:
-#   #     TB_QUEUE_TYPE: in-memory
-#   #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/thingsboard
-#   #     SPRING_DATASOURCE_USERNAME: thingsboard
-#   #     SPRING_DATASOURCE_PASSWORD: thingsboard
-#   #   command: /usr/share/thingsboard/bin/install/install.sh --loadDemo --no-su
-#   #   networks:
-#   #     - ontobot-network
-
-#  # This is the main ThingsBoard service. It will run the application.
-# # Use this service after the setup is complete.
-  # mytb:
-  #   # restart: always
+# This is the setup service. It will run the database migration.
+# You should run this once and then replace it with the `mytb` service.
+  # mytb-setup:
+  #   user: root
+  #   restart: "no" # This service should not restart after it's done
   #   image: devmanenvision/my-thingsboard:1.1
-  #   container_name: thingsboard
-  #   hostname: thingsboardhost
-  #   ports:
-  #     - "8080:9090"
-  #     - "1883:1883"
-  #     - "7070:7070"
-  #     - "5683-5688:5683-5688/udp"
-  #     - "8081:8081"
+  #   container_name: thingsboard-setup
   #   depends_on:
   #     - postgres
-  #   mem_limit: 8g
-  #   mem_reservation: 4g
-  #   cpus: '4.0'
   #   environment:
   #     TB_QUEUE_TYPE: in-memory
   #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/thingsboard
   #     SPRING_DATASOURCE_USERNAME: thingsboard
   #     SPRING_DATASOURCE_PASSWORD: thingsboard
-  #   volumes:
-  #     - ~/.mytb-data:/data
-  #     - ~/.mytb-logs:/var/log/thingsboard
+  #   command: /usr/share/thingsboard/bin/install/install.sh --loadDemo --no-su
   #   networks:
   #     - ontobot-network
 
-#   pgadmin:
-#     # restart: always
-#     image: dpage/pgadmin4:snapshot
-#     container_name: pgadmin
-#     hostname: pgadminhost
-#     ports:
-#       - "5050:80"
-#     environment:
-#       PGADMIN_DEFAULT_EMAIL: pgadmin@example.com
-#       PGADMIN_DEFAULT_PASSWORD: admin
-#       PGADMIN_LISTEN_ADDRESS: 0.0.0.0
-#       PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
-#     volumes:
-#       - ./development/notebooks/pgadmin/servers.json:/pgadmin4/servers.json
-#     networks:
-#       - ontobot-network
+#  # This is the main ThingsBoard service. It will run the application.
+# # Use this service after the setup is complete.
+  mytb:
+    # restart: always
+    image: devmanenvision/my-thingsboard:1.1
+    container_name: thingsboard
+    hostname: thingsboardhost
+    ports:
+      # Web UI exposed on host 8082 to avoid conflict with http_server on 8080
+      # Access ThingsBoard at: http://localhost:8082
+      - "8082:9090"
+      - "1883:1883"
+      - "7070:7070"
+      - "5683-5688:5683-5688/udp"
+      - "8081:8081"
+    depends_on:
+      - postgres
+    mem_limit: 8g
+    mem_reservation: 4g
+    cpus: '4.0'
+    environment:
+      TB_QUEUE_TYPE: in-memory
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/thingsboard
+      SPRING_DATASOURCE_USERNAME: thingsboard
+      SPRING_DATASOURCE_PASSWORD: thingsboard
+    volumes:
+      - ~/.mytb-data:/data
+      - ~/.mytb-logs:/var/log/thingsboard
+    networks:
+      - ontobot-network
+
+  pgadmin:
+    # restart: always
+    image: dpage/pgadmin4:snapshot
+    container_name: pgadmin
+    hostname: pgadminhost
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pgadmin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_ADDRESS: 0.0.0.0
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    volumes:
+      - ./development/notebooks/pgadmin/servers.json:/pgadmin4/servers.json
+    networks:
+      - ontobot-network
 
 
 #   # # ====================== Jena Fuseki =================
-  # fuseki-db:
-  #   # image: busybox
-  #   image: devmanenvision/busybox:latest
-  #   container_name: jena-fuseki-db
-  #   volumes:
-  #     - jena-data:/fuseki
-  #   command: tail -f /dev/null # Keep the container running in the background
-  #   networks:
-  #     - ontobot-network
+  fuseki-db:
+    # image: busybox
+    image: devmanenvision/busybox:latest
+    container_name: jena-fuseki-db
+    volumes:
+      - jena-data:/fuseki
+    command: tail -f /dev/null # Keep the container running in the background
+    networks:
+      - ontobot-network
 
-  # jena-fuseki:
-  #   # image: stain/jena-fuseki
-  #   image: devmanenvision/jena-fuseki:latest
-  #   container_name: jena-fuseki-rdf-store
-  #   hostname: jenafusekihost
-  #   ports:
-  #     - "3030:3030"
-  #   volumes_from:
-  #     - fuseki-db
-  #   volumes:
-  #     - ./trial/dataset:/fuseki-data
-  #     # - ./config.ttl:/fuseki/config.ttl
-  #     # - ./postgresql-42.7.0.jar:/fuseki/WEB-INF/lib/postgresql-42.7.0.jar
-  #   restart: always
-  #   depends_on:
-  #     - fuseki-db
-  #   environment:
-  #     - ADMIN_PASSWORD=Admin@12345  # username = admin
-  #     # - FUSEKI_TDB_DATASET_1="tdb:location jdbc:postgresql://thingsboard:5432/thingsboard"
-  #   user: "root" # Specify the user as root
-  #   networks:
-  #     - ontobot-network
+  jena-fuseki:
+    # image: stain/jena-fuseki
+    image: devmanenvision/jena-fuseki:latest
+    container_name: jena-fuseki-rdf-store
+    hostname: jenafusekihost
+    ports:
+      - "3030:3030"
+    volumes_from:
+      - fuseki-db
+    volumes:
+      - ./trial/dataset:/fuseki-data
+      # - ./config.ttl:/fuseki/config.ttl
+      # - ./postgresql-42.7.0.jar:/fuseki/WEB-INF/lib/postgresql-42.7.0.jar
+    restart: always
+    depends_on:
+      - fuseki-db
+    environment:
+      - ADMIN_PASSWORD=Admin@12345  # username = admin
+      # - FUSEKI_TDB_DATASET_1="tdb:location jdbc:postgresql://thingsboard:5432/thingsboard"
+    user: "root" # Specify the user as root
+    networks:
+      - ontobot-network
 
 # #     # username-admin
 # #     # password-Suhas@551993
 
 # #   #  ============ GraphDB =========
 
-  # graphdb:
-  #   # image: ontotext/graphdb:10.4.2
-  #   image: devmanenvision/graphdb:10.4.2
-  #   container_name: graphdb
-  #   restart: always
-  #   ports:
-  #     - "7200:7200"
-  #   volumes:
-  #     - ./graphDB:/opt/graphdb/home/
-  #   environment:
-  #     - GRAPHDB_HOME=/opt/graphdb/home
-  #     - GDB_USER=admin
-  #     - GDB_PASSWORD=Suhas@551993 #root is default password
-  #   networks:
-  #     - ontobot-network
+  graphdb:
+    # image: ontotext/graphdb:10.4.2
+    image: devmanenvision/graphdb:10.4.2
+    container_name: graphdb
+    restart: always
+    ports:
+      - "7200:7200"
+    volumes:
+      - ./graphDB:/opt/graphdb/home/
+    environment:
+      - GRAPHDB_HOME=/opt/graphdb/home
+      - GDB_USER=admin
+      - GDB_PASSWORD=Suhas@551993 #root is default password
+    networks:
+      - ontobot-network
 
 
-# # =-================ Rasa UI old ==============================
-#   # watchtower:
-#   #   image: containrrr/watchtower
-#   #   volumes:
-#   #     - /var/run/docker.sock:/var/run/docker.sock
-#   #   command: --run-once action_server
-
-#   # web_ui:
-#   #   restart: always
-#   #   build:
-#   #     context: ./rasa-ui/ui
-#   #   # image: devmanenvision/rasa-web-ui:latest
-#   #   container_name: rasa-web-ui
-#   #   hostname: webuihost
-#   #   ports:
-#   #     - "8082:80"
-#   #   depends_on:
-#   #     # - action_server
-#   #     - rasa
-#   #   networks:
-#   #     - ontobot-network
 
 # #   # # ============================ jupyter ===============
-#   jupyter:
-#     # image: 7499968836/jupyter_notebook:latest
-#     image: devmanenvision/jupyter_notebook:latest
-#     # build:
-#     #   context: ./development/notebooks/
-#     container_name: jupyter_notebook
-#     hostname: jupyter-notebook-host
-#     restart: always
-#     ports:
-#       - "8888:8888"
-#       - "8089:8089" #to see ontology
-#     volumes:
-#       - ./development/notebooks:/home/jovyan/work
-#       - ./rasa-ui/actions:/home/jovyan/work/rasa-actions
-#     environment:
-#       - JUPYTER_ENABLE_LAB=yes
-#       - JUPYTER_TOKEN=Suhas@551993
-#     command:
-#       - start-notebook.sh
-#     networks:
-#       - ontobot-network
+  jupyter:
+    # image: 7499968836/jupyter_notebook:latest
+    image: devmanenvision/jupyter_notebook:latest
+    # build:
+    #   context: ./development/notebooks/
+    container_name: jupyter_notebook
+    hostname: jupyter-notebook-host
+    restart: always
+    ports:
+      - "8888:8888"
+      - "8089:8089" #to see ontology
+    volumes:
+      - ./development/notebooks:/home/jovyan/work
+      - ./rasa-ui/actions:/home/jovyan/work/rasa-actions
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=Suhas@551993
+    command:
+      - start-notebook.sh
+    networks:
+      - ontobot-network
 
 # #   # # ============================ Adminer ==============================
-  # adminer:
-  #   # image: adminer
-  #   image: devmanenvision/adminer:latest
-  #   restart: always
-  #   container_name: adminer
-  #   hostname: adminerhost
-  #   depends_on:
-  #     - mytb
-  #   ports:
-  #     - 8282:8080
-  #   networks:
-  #     - ontobot-network
+  adminer:
+    # image: adminer
+    image: devmanenvision/adminer:latest
+    restart: always
+    container_name: adminer
+    hostname: adminerhost
+    depends_on:
+      - mytb
+    ports:
+      - 8282:8080
+    networks:
+      - ontobot-network
 
 # # username - thingsboard password- postgres
 
-
-# #   # # ===============================Trasformer model endpoint==============================
-  # t5-t5:
-  #   # build:
-  #   # context: ./Transformers
-  #   # image: "7499968836/transformer-nl2sparql-model:latest"
-  #   image: devmanenvision/t5-t5:latest
-  #   restart: always
-  #   container_name: t5-t5
-  #   hostname: t5-t5-host
-  #   volumes:
-  #     - ./Transformers/app.py:/app/app.py
-  #   ports:
-  #     - "5001:5000"
-  #   depends_on:
-  #     - jena-fuseki
-  #   networks:
-  #     - ontobot-network
-
 # #   # ======================== all services in one container ========================
-  # microservices:
-  #   build:
-  #     context: ./microservices # root directory containing your combined Flask app
-  #     dockerfile: Dockerfile
-  #   container_name: microservices_container
-  #   hostname: microserviceshost
-  #   restart: always
-  #   ports:
-  #     - "6001:6000"
-  #   networks:
-  #     - ontobot-network
+  microservices:
+    build:
+      context: ./microservices # root directory containing your combined Flask app
+      dockerfile: Dockerfile
+    container_name: microservices_container
+    hostname: microserviceshost
+    restart: always
+    ports:
+      - "6001:6000"
+    networks:
+      - ontobot-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6000/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
 
-# #   # # ============================ Rasa UI ==============================
+# #   # # ============================ Rasa UI New==============================
 
   rasa:
-    # image: rasa/rasa:3.6.12-full
-    image: devmanenvision/rasa:3.6.12-full
-    # build:
-    #   context: ./rasa-ui
-    #   dockerfile: Dockerfile
-    container_name: rasa
-    hostname: rasahost
+    image: rasa/rasa:3.6.12-full
+    container_name: rasa_container
+    restart: unless-stopped
     ports:
-      - "5005:5005"
+    - "5005:5005"
     volumes:
-      - ./rasa-ui:/app
-      - ./rasa-ui/actions/sensor_list.txt:/app/actions/sensor_list.txt
-      - ./rasa-ui/config.yml:/app/config.yml
-      - ./rasa-ui/credentials.yml:/app/credentials.yml
-      - ./rasa-ui/endpoints.yml:/app/endpoints.yml
-      - ./rasa-ui/domain.yml:/app/domain.yml
-      - ./rasa-ui/index.html:/app/index.html
+    - ./rasa-ui/data:/app/data
+    - ./rasa-ui/domain.yml:/app/domain.yml
+    - ./rasa-ui/config.yml:/app/config.yml
+    - ./rasa-ui/endpoints.yml:/app/endpoints.yml
+    - ./rasa-ui/credentials.yml:/app/credentials.yml
+    - ./rasa-ui/models:/app/models
+    - ./rasa-ui/shared_data:/app/shared_data
     command:
-      - train # uncomment for training new nlu and core model
-      # - nlu # uncomment for training new nlu model
-      # - run
-      # - --cors
-      # - "*"
-      # - --enable-api
-      # - --debug # uncomment for debugging
+    # - train
+    - run
+    - --cors
+    - "*"
+    - --enable-api
+    # - --debug # uncomment for debugging
     depends_on:
-      - duckling
+    - action_server
+    - duckling_server
+    healthcheck:
+      # Use Python for portability (avoids relying on curl/wget in image)
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/version').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
     networks:
       - ontobot-network
-
-
   action_server:
+    build: ./rasa-ui/actions
+    container_name: action_server_container
     restart: unless-stopped
-    build:
-      context: ./rasa-ui
-      # dockerfile: Dockerfile
-    # image: devmanenvision/rasa_action_server:latest
-    container_name: rasa_action_server
-    hostname: actionserverhost
-    ports:
-      - "5055:5055"
-      - "8000:8000"
-    depends_on: 
-      - rasa
     volumes:
-      - ./rasa-ui/actions:/app/actions
-      - ./rasa-ui/actions/actions.py:/app/actions/actions.py
-      - ./rasa-ui/static_server.py:/app/static_server.py
-      - ./rasa-ui/entrypoint.sh:/app/entrypoint.sh
-      - ./rasa-ui/data/sensors.txt:/app/data/sensors.txt
-      - ./rasa-ui/actions/sensor_list.txt:/app/actions/sensor_list.txt
-      - ./rasa-ui/actions/sensor_mappings.txt:/app/actions/sensor_mappings.txt
-    networks:
-      - ontobot-network
-      
-
-  duckling:
-    image: rasa/duckling:latest
+    - ./rasa-ui/actions/actions.py:/app/actions.py
+    - ./rasa-ui/shared_data:/app/shared_data
+    environment:
+      # Use internal DNS name so containers talk inside the network
+      - BASE_URL=http://http_server:8080  # internal service URL; host access is http://localhost:8080
+      # Service URLs (uncomment to override defaults)
+      # - NL2SPARQL_URL=http://nl2sparql:6005/nl2sparql
+      # - SUMMARIZATION_URL=http://ollama:11434
+      - BUNDLE_MEDIA=true
+      # Optional DB config (uses sensible defaults in code if unset)
+      # - DB_HOST=host.docker.internal
+      # - DB_NAME=sensordb
+      # - DB_USER=root
+      # - DB_PASSWORD=root
+      # - DB_PORT=3306
+      # Optional: point to analytics service if available
+      # - ANALYTICS_URL=http://microservices:6000/analytics/run
     ports:
-      - "8080:8000"
+    - "5055:5055"
+    healthcheck:
+      # Python-based check for robustness
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5055/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ontobot-network
+  #   # Use the default CMD from the image (python -m rasa_sdk --actions actions)
+
+  duckling_server:
+    image: rasa/duckling:latest
+    container_name: duckling_server_container
     restart: unless-stopped
+    ports:
+    - "8000:8000"
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "curl -s http://localhost:8000 | grep -q Duckling"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
     networks:
       - ontobot-network
 
-  action_server_static_sharing:
+  http_server:
+    image: python:3.8-slim
+    container_name: http_server_container
+    restart: unless-stopped
+    ports:
+    - "8080:8080"
+    volumes:
+    - ./rasa-ui/shared_data:/data
+    - ./rasa-ui/file_server.py:/srv/file_server.py
+    environment:
+      - ROOT_DIR=/data
+      - PORT=8080
+      - FRONTEND_ORIGIN=http://localhost:3000
+      - ALLOWED_ORIGINS=http://localhost:3000
+      - JWT_SECRET=change_me_in_prod
+      - JWT_EXPIRES_DAYS=7
+      - SECURE_COOKIES=false
+    command: ["sh", "-c", "pip install --no-cache-dir flask werkzeug pyjwt && python3 /srv/file_server.py"]
+    healthcheck:
+      # Python-based check; ensure /health responds with 'ok'
+      test: ["CMD", "python", "-c", "import sys,urllib.request; sys.exit(0 if 'ok' in urllib.request.urlopen('http://localhost:8080/health').read().decode() else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ontobot-network
+
+  rasa-frontend:
+    build:
+      context: ./rasa-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./rasa-frontend/:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    container_name: rasa-frontend
+    hostname: rasa-frontend-host
+    restart: unless-stopped
+    command: npm start
+    networks:
+      - ontobot-network
+# #  #  ================================ Transformers ==============================
+  nl2sparql:
+    build:
+      context: ./Transformers/t5_base/trained
+    ports:
+      - "6005:6005"
+    volumes:
+      - ./Transformers/t5_base/trained/checkpoint-2:/app/checkpoint-2:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    container_name: nl2sparql_service
+    hostname: nl2sparql-host
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6005/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - ontobot-network
+
+  ollama:
+      container_name: ollama
       build:
-        context: ./rasa-ui/actions/static
-        dockerfile: Dockerfile
-      container_name: flask_static_server
-      ports:
-        - "8000:8000"
-      volumes:
-        - ./rasa-ui/actions/static/logs:/app/logs
-        - attachments_volume:/app/attachments:ro
-      environment:
-        - PYTHONUNBUFFERED=1
-        - GUNICORN_CMD_ARGS=--log-level=info
+        context: ./Transformers/Mistral
+      pull_policy: always
       restart: unless-stopped
+      ports:
+        - "11434:11434"
+      environment:
+        - OLLAMA_NUM_PARALLEL=4
+        - OLLAMA_MAX_LOADED_MODELS=2
+        - OLLAMA_MODELS=/usr/share/ollama/.ollama/models
+      healthcheck:
+        test: "ollama --version && ollama ps || exit 1"
+        interval: 30s
+        timeout: 60s
+        retries: 3
+        start_period: 30s
+      deploy:
+        resources:
+          reservations:
+            devices:
+              - driver: nvidia
+                count: 1
+                capabilities: [gpu]
+      volumes:
+        - ollama-models:/usr/share/ollama/.ollama/models
       networks:
         - ontobot-network
-# #  #  ================================Ollma ==============================
 
 
-# #   # ollama:
-# #   #     container_name: ollama
-# #   #     build:
-# #   #       context: ./Transformers/Mistral
-# #   #     pull_policy: always
-# #   #     restart: unless-stopped
-# #   #     ports:
-# #   #       - "11434:11434"
-# #   #     environment:
-# #   #       - OLLAMA_NUM_PARALLEL=4
-# #   #       - OLLAMA_MAX_LOADED_MODELS=2
-# #   #       - OLLAMA_MODELS=/usr/share/ollama/.ollama/models
-# #   #     healthcheck:
-# #   #       test: "ollama --version && ollama ps || exit 1"
-# #   #       interval: 30s
-# #   #       timeout: 60s
-# #   #       retries: 3
-# #   #       start_period: 30s
-# #       # deploy:
-# #       #   resources:
-# #       #     reservations:
-# #             # devices:
-# #             #   - driver: nvidia
-# #             #     count: 1
-# #             #     capabilities: [gpu]
-# #       # volumes:
-# #         # - ./Transformers/Mistral:/usr/share/ollama/.ollama/models
-# #   #   networks:
-# #   #     - ontobot-network
 
-# #   # nl2sparql:
-# #   #   build: 
-# #   #     context: ./Transformers
-# #   #     dockerfile: Dockerfile
-# #   #   ports:
-# #   #     - "5000:5000"
-# #   #   volumes:
-# #   #     - ./Transformers/T5_base/trained:/app/T5_base/trained
-# #   #     - ./Transformers/app.py:/app/app.py
-# #   #   environment:
-# #   #     - PYTHONUNBUFFERED=1
-# #   #   container_name: nl2sparql_service
-# #   #   hostname: nl2sparql-host
-# #   #   restart: always
-# #   #   networks:
-# #   #     - ontobot-network
 
-  # rasa-frontend:
-  #   build:
-  #     context: ./rasa-frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - ./rasa-frontend/:/app
-  #     - /app/node_modules
-  #   environment:
-  #     - NODE_ENV=development
-  #   container_name: rasa-frontend
-  #   hostname: rasa-frontend-host
-  #   restart: unless-stopped
-  #   command: npm start
-  #   networks:
-  #     - ontobot-network
 
 networks:
   ontobot-network:
-# volumes:
-# #   # ollama-models:
-    # mongo-data:
-    # api-data:
-    # mytb-data:
-    #   external: true
-    # mytb-logs:
-    #   external: true
-    # jena-data:
-    # fuseki:
-# #   # timescaledb-data:
-# # # postgres-data:
-    # attachments_volume:
+volumes:
+  ollama-models:
+  mongo-data:
+  api-data:
+  mytb-data:
+    external: true
+  mytb-logs:
+    external: true
+  jena-data:
+  fuseki:
+  postgres-data:
+  attachments_volume:

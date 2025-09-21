@@ -12,6 +12,12 @@ function Message({ message }) {
     if (message.image) {
       return <MediaRenderer media={{ type: 'image', url: message.image }} />;
     }
+    // If the bot sent a custom payload with a media array
+    if (message.custom && Array.isArray(message.custom.media)) {
+      return message.custom.media.map((m, idx) => (
+        <MediaRenderer key={idx} media={m} />
+      ));
+    }
     // If a single attachment exists (for example, an image, pdf, etc.)
     if (message.attachment) {
       return <MediaRenderer media={message.attachment} />;
@@ -26,9 +32,9 @@ function Message({ message }) {
   if (message.sender === 'user') {
     return (
       <Row className="my-2">
-        <Col xs={8} className="offset-4">
+        <Col xs={12}>
           <div className="d-flex justify-content-end align-items-center">
-            <Card className="p-2 bg-success text-white">
+            <Card className="p-2 bg-success text-white message-card user-message">
               <Card.Text className="mb-1">{message.text}</Card.Text>
               {renderMedia()}
               <small className="text-light">{message.timestamp}</small>
@@ -48,7 +54,7 @@ function Message({ message }) {
   } else {
     return (
       <Row className="my-2">
-        <Col xs={8}>
+        <Col xs={12}>
           <div className="d-flex align-items-center">
             <Image 
               src={botAvatar} 
@@ -58,7 +64,7 @@ function Message({ message }) {
               height={40} 
               alt="Bot Avatar" 
             />
-            <Card className="p-2">
+            <Card className="p-2 message-card bot-message">
               <Card.Text className="mb-1">{message.text}</Card.Text>
               {renderMedia()}
               <small className="text-muted">{message.timestamp}</small>

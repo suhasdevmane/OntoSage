@@ -15,6 +15,9 @@ from rasa_sdk.events import FollowupAction
 from SPARQLWrapper import SPARQLWrapper, JSON
 import mysql.connector
 import json
+import wave
+import struct
+import math
 from ollama import Client
 import dateparser
 from dateparser.search import search_dates
@@ -24,10 +27,40 @@ from calendar import monthrange
 from decimal import Decimal
 from dateutil.parser import parse
 
-# Configure logging to file
-LOG_DIR = "/app/actions/static/logs"
+logger = logging.getLogger(__name__)
+
+# -----------------------------
+# Per-user artifact helpers
+# -----------------------------
+def sanitize_username(name: str) -> str:
+    try:
+        # Keep alphanumeric, dash and underscore only; cap length
+        return "".join(c for c in (name or "") if c.isalnum() or c in ("-", "_"))[:64] or "anonymous"
+    except Exception:
+        return "anonymous"
+
+def get_user_artifacts_dir(tracker: Tracker) -> Tuple[str, str]:
+    """
+    Compute a safe username from tracker.sender_id and ensure artifacts/<username> exists.
+    Returns (user_safe, absolute_dir_path)
+    """
+    user_raw = getattr(tracker, "sender_id", None) or "anonymous"
+    user_safe = sanitize_username(user_raw)
+    user_dir = os.path.join(ARTIFACTS_DIR, user_safe)
+    os.makedirs(user_dir, exist_ok=True)
+    return user_safe, user_dir
+
+# Ensure the shared data directory exists
+SHARED_DIR = "/app/shared_data"
+os.makedirs(SHARED_DIR, exist_ok=True)
+# Single folder to keep all generated artifacts that are shared with users
+ARTIFACTS_DIR = os.path.join(SHARED_DIR, "artifacts")
+os.makedirs(ARTIFACTS_DIR, exist_ok=True)
+
+# Logs directory: prefer a dedicated logs folder under shared_data so logs are visible on host
+LOG_DIR = os.getenv("ACTION_LOG_DIR", os.path.join(SHARED_DIR, "logs"))
+os.makedirs(LOG_DIR, exist_ok=True)
 LOG_FILE = os.path.join(LOG_DIR, "action.log")
-os.makedirs(LOG_DIR, exist_ok=True)  # Create logs directory if it doesn't exist
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -39,10 +72,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Global constants
-nl2sparql_url = "https://deep-gator-cleanly.ngrok-free.app/"
-FUSEKI_URL = "http://jena-fuseki-rdf-store:3030/abacws-sensor-network/sparql"
-ATTACHMENTS_DIR = "/app/actions/static/attachments"
-SUMMARIZATION_URL = "http://dashing-sunfish-curiously.ngrok-free.app"
+# Default to internal Docker DNS names so services work inside the compose network.
+nl2sparql_url = os.getenv("NL2SPARQL_URL", "http://nl2sparql:6005/nl2sparql")
+FUSEKI_URL = os.getenv("FUSEKI_URL", "http://jena-fuseki-rdf-store:3030/abacws-sensor-network/sparql")
+# Where to write downloadable files. Use the shared volume so http_server can serve them.
+# Route everything through a single folder for easy sharing and cleanup.
+ATTACHMENTS_DIR = ARTIFACTS_DIR
+# Base URL for the simple HTTP server that exposes shared_data
+BASE_URL_DEFAULT = "http://localhost:8080"
+SUMMARIZATION_URL = os.getenv("SUMMARIZATION_URL", "http://ollama:11434")
 
 
 MyDatabase = "MySQL_DB_CONFIG"
@@ -56,7 +94,14 @@ MySQL_DB_CONFIG = {
 
 # Load VALID_SENSOR_TYPES from sensor_list.txt
 try:
-    with open("./actions/sensor_list.txt", "r") as f:
+    # In the built image, files reside under /app; with WORKDIR=/app, use relative paths.
+    # Prefer sensor_list.txt in current dir; fallback to legacy ./actions path if needed.
+    candidates = [
+        os.path.join(os.getcwd(), "sensor_list.txt"),
+        os.path.join(os.getcwd(), "actions", "sensor_list.txt"),
+    ]
+    path = next((p for p in candidates if os.path.exists(p)), None)
+    with open(path or "sensor_list.txt", "r") as f:
         VALID_SENSOR_TYPES = {line.strip() for line in f if line.strip()}
     logger.info(f"Loaded {len(VALID_SENSOR_TYPES)} sensor types from sensor_list.txt")
 except FileNotFoundError:
@@ -109,7 +154,12 @@ class ValidateSensorForm(FormValidationAction):
     def load_sensor_mappings(self) -> Dict[str, str]:
         mappings = {}
         try:
-            with open("./actions/sensor_mappings.txt", "r") as f:
+            candidates = [
+                os.path.join(os.getcwd(), "sensor_mappings.txt"),
+                os.path.join(os.getcwd(), "actions", "sensor_mappings.txt"),
+            ]
+            path = next((p for p in candidates if os.path.exists(p)), None)
+            with open(path or "sensor_mappings.txt", "r") as f:
                 for line_num, line in enumerate(f, 1):
                     try:
                         if line.strip():
@@ -710,16 +760,15 @@ class ActionQuestionToBrickbot(Action):
             dispatcher.utter_message(text=f"SPARQL query results:\n{formatted_results}")
 
             standardized_json = self.standardize_sparql_json(sparql_results, user_question, sensor_types[0] if sensor_types else "")
-            static_folder = os.getenv("STATIC_FOLDER", ATTACHMENTS_DIR)
-            base_url = os.getenv("BASE_URL", "http://localhost:8000")
-            os.makedirs(static_folder, exist_ok=True)
+            base_url = os.getenv("BASE_URL", BASE_URL_DEFAULT)
+            user_safe, user_dir = get_user_artifacts_dir(tracker)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"sparql_response_{timestamp}.json"
-            output_file = os.path.join(static_folder, filename)
+            output_file = os.path.join(user_dir, filename)
             try:
                 with open(output_file, "w") as f:
                     json.dump(standardized_json, f, indent=2)
-                json_url = f"{base_url}/{filename}"
+                json_url = f"{base_url}/artifacts/{user_safe}/{filename}"
                 dispatcher.utter_message(
                     text="SPARQL results saved as JSON:",
                     attachment={"type": "json", "url": json_url, "filename": filename}
@@ -1239,16 +1288,15 @@ class ActionProcessTimeseries(Action):
             return []
 
         dispatcher.utter_message(text="SQL query executed successfully.")
-        static_folder = os.getenv("STATIC_FOLDER", ATTACHMENTS_DIR)
-        base_url = os.getenv("BASE_URL", "http://localhost:8000")
-        os.makedirs(static_folder, exist_ok=True)
+        base_url = os.getenv("BASE_URL", BASE_URL_DEFAULT)
+        user_safe, user_dir = get_user_artifacts_dir(tracker)
         timestamp = int(time.time())
         filename = f"sql_results_{timestamp}.json"
-        file_path = os.path.join(static_folder, filename)
+        file_path = os.path.join(user_dir, filename)
         try:
             with open(file_path, "w") as f:
                 json.dump(json.loads(sql_results), f, indent=2)
-            json_url = f"{base_url}/{filename}"
+            json_url = f"{base_url}/artifacts/{user_safe}/{filename}"
             dispatcher.utter_message(
                 text="SQL query results saved as JSON:",
                 attachment={"type": "json", "url": json_url, "filename": filename}
@@ -1259,32 +1307,39 @@ class ActionProcessTimeseries(Action):
             logger.error(f"Failed to save SQL JSON: {e}")
             dispatcher.utter_message(text="Error saving SQL results. Inline results above.")
 
+        # Analytics (optional) and summarization
         analytics_type = "analyze_device_deviation"
         logger.info(f"Using analytics_type: {analytics_type} (default for testing)")
-        ANALYTICS_URL = "http://microservices:6000/analytics/run"
+        ANALYTICS_URL = os.getenv("ANALYTICS_URL", "")
+
         # Parse the SQL results from string to dictionary
         sql_results_dict = json.loads(sql_results)
         payload = {
             "analysis_type": analytics_type,
             **sql_results_dict  # Expand the dictionary directly into the payload
         }
-        try:
-            analytics_response = requests.post(ANALYTICS_URL, json=payload, timeout=30)
+        analytics_response = {"analysis_type": analytics_type, **sql_results_dict}
+        if ANALYTICS_URL:
             try:
-                analytics_response = analytics_response.json()
-                if "error" in analytics_response:
-                    logger.error(f"Analytics error: {analytics_response['error']}")
-                    dispatcher.utter_message(text=f"Analytics error: {analytics_response['error']}")
-                else:
-                    dispatcher.utter_message(text="Analytics results:")
-                    dispatcher.utter_message(text=json.dumps(analytics_response, indent=2))
-                    logger.info(f"Analytics response: {analytics_response}")
-            except ValueError as e:
-                logger.error(f"Invalid JSON response from analytics service: {e}")
-                dispatcher.utter_message(text="Error: Invalid response format from analytics service")
-        except Exception as e:
-            logger.error(f"Failed to query analytics service: {e}")
-            dispatcher.utter_message(text="Error querying analytics service.")
+                resp = requests.post(ANALYTICS_URL, json=payload, timeout=30)
+                try:
+                    analytics_response = resp.json()
+                    if "error" in analytics_response:
+                        logger.error(f"Analytics error: {analytics_response['error']}")
+                        dispatcher.utter_message(text=f"Analytics error: {analytics_response['error']}")
+                    else:
+                        dispatcher.utter_message(text="Analytics results:")
+                        dispatcher.utter_message(text=json.dumps(analytics_response, indent=2))
+                        logger.info(f"Analytics response: {analytics_response}")
+                except ValueError as e:
+                    logger.error(f"Invalid JSON response from analytics service: {e}")
+                    dispatcher.utter_message(text="Error: Invalid response format from analytics service")
+            except Exception as e:
+                logger.error(f"Failed to query analytics service: {e}")
+                dispatcher.utter_message(text="Error querying analytics service. Using SQL results for summary.")
+        else:
+            logger.info("ANALYTICS_URL not set. Skipping analytics call and summarizing SQL results directly.")
+
         # start performing pre-processing for summary
         uuid_to_sensor = self.load_sensor_mappings()
         if not uuid_to_sensor:
@@ -1292,6 +1347,7 @@ class ActionProcessTimeseries(Action):
         else:
             analytics_response = self.replace_uuids_with_sensor_types(analytics_response, uuid_to_sensor)
             logger.info(f"Modified analytics response with sensor types: {analytics_response}")
+
         # start performing summary
         summary = self.summarize_response(analytics_response)
         logger.info(f"Generated summary: {summary}")
@@ -1319,11 +1375,12 @@ class ActionResetSlots(Action):
         ]
 
 # ---------------------------
-# Action to test if the action server is working
+# Action to test if the action server is working to give all format files
 # ---------------------------
-class ActionTestConnection(Action):
+# Simple action to generate sample files in shared_data and share links
+class ActionGenerateAndShareData(Action):
     def name(self) -> Text:
-        return "action_test_connection"
+        return "action_generate_and_share_data"
 
     def run(
         self,
@@ -1331,154 +1388,212 @@ class ActionTestConnection(Action):
         tracker: Tracker,
         domain: Dict[Text, Any],
     ) -> List[Dict[Text, Any]]:
-        # Introduce the media test with a text message
-        dispatcher.utter_message(text="✅ The action server is running!")
-        # dispatcher.utter_message(text="Testing various media types:")
+        events: List[Dict[Text, Any]] = []
+        base_url = os.getenv("BASE_URL", BASE_URL_DEFAULT)
+        user_safe, user_dir = get_user_artifacts_dir(tracker)
+        bundle_media = os.getenv("BUNDLE_MEDIA", "true").lower() in ("1", "true", "yes")
+        media_items: List[Dict[str, str]] = []
 
-        # # Log working directory
-        # logger.info(f"Working directory: {os.getcwd()}")
+        # 0) Generate sample downloadable files and share links (as attachments for frontend)
+        try:
+            os.makedirs(user_dir, exist_ok=True)
+            now = datetime.now()
+            rid = now.strftime("%Y%m%d_%H%M%S")
+            json_name = f"report_{rid}.json"
+            txt_name = f"placeholder_{rid}.txt"  # using text placeholder to avoid image libs
+            json_path = os.path.join(user_dir, json_name)
+            txt_path = os.path.join(user_dir, txt_name)
 
-        # # 1. Send an image via the "image" field
-        # dispatcher.utter_message(
-        #     text="Dummy image (using image field):",
-        #     image="https://picsum.photos/200/300",
-        # )
+            payload = {
+                "report_id": rid,
+                "generated_on": now.isoformat(),
+                "user_id": tracker.sender_id,
+                "message": "Sample data report generated by action server.",
+            }
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(payload, f, indent=2)
+            with open(txt_path, "w", encoding="utf-8") as f:
+                f.write("This is a placeholder for an image file. Replace with real content.")
 
-        # # 2. Send a dummy JPG image using an attachment
-        # dispatcher.utter_message(
-        #     text="Dummy JPG image (attachment):",
-        #     attachment={
-        #         "type": "image",
-        #         "url": "https://picsum.photos/200/300",
-        #         "filename": "dummy.jpg",
-        #     },
-        # )
+            json_url = f"{base_url}/artifacts/{user_safe}/{json_name}"
+            txt_url = f"{base_url}/artifacts/{user_safe}/{txt_name}"
 
-        # # 3. Send a dummy PNG image using an attachment
-        # dispatcher.utter_message(
-        #     text="Dummy PNG image (attachment):",
-        #     attachment={
-        #         "type": "image",
-        #         "url": "https://www.sample-videos.com/img/Sample-png-image-100kb.png",
-        #         "filename": "dummy.png",
-        #     },
-        # )
+            # Queue media items for a single bundled message
+            media_items.append({"type": "json", "url": json_url, "filename": json_name})
+            media_items.append({"type": "txt", "url": txt_url, "filename": txt_name})
 
-        # # 4. Send a dummy PDF document
-        # dispatcher.utter_message(
-        #     text="Dummy PDF document:",
-        #     attachment={
-        #         "type": "pdf",
-        #         "url": "https://www.sample-videos.com/pdf/Sample-pdf-5mb.pdf",
-        #         "filename": "dummy.pdf",
-        #     },
-        # )
+            events.append(SlotSet("generated_urls", {"json": json_url, "file": txt_url}))
+        except Exception as e:
+            logger.exception("Failed to generate/share files: %s", e)
+            dispatcher.utter_message(text="Error generating sample files.")
 
-        # # 5. Send a dummy CSV file
-        # dispatcher.utter_message(
-        #     text="Dummy CSV file:",
-        #     attachment={
-        #         "type": "csv",
-        #         "url": "https://www.sample-videos.com/csv/Sample-Spreadsheet-1000-rows.csv",
-        #         "filename": "dummy.csv",
-        #     },
-        # )
+        # Log working directory
+        try:
+            logger.info(f"Working directory: {os.getcwd()}")
+        except Exception:
+            pass
 
-        # # 6. Send dummy JSON data
-        # dispatcher.utter_message(
-        #     text="Dummy JSON data:",
-        #     attachment={
-        #         "type": "json",
-        #         "content": {"key": "value", "number": 123},
-        #         "filename": "dummy.json",
-        #     },
-        # )
+        # 1) Include an example image
+        media_items.append({
+            "type": "image",
+            "url": "https://picsum.photos/800/400",
+            "filename": "sample.jpg",
+        })
 
-        # # 7. Send a dummy video
-        # dispatcher.utter_message(
-        #     text="Dummy video:",
-        #     attachment={
-        #         "type": "video",
-        #         "url": "https://www.sample-videos.com/video321/mp4/720/big_buck_bunny_720p_2mb.mp4",
-        #         "filename": "dummy_video.mp4",
-        #     },
-        # )
+        # 2) Additional remote image
+        media_items.append({
+            "type": "image",
+            "url": "https://picsum.photos/200/300",
+            "filename": "dummy.jpg",
+        })
 
-        # # 8. Send a dummy link
-        # dispatcher.utter_message(
-        #     text="Dummy link:",
-        #     attachment={
-        #         "type": "link",
-        #         "url": "https://www.wikipedia.org/",
-        #         "filename": "dummy_link.html",
-        #     },
-        # )
+        # 3) Remote PNG image
+        media_items.append({
+            "type": "image",
+            "url": "https://file-examples.com/storage/feb797b78b68ccdb5a1194c/2017/10/file_example_PNG_500kB.png",
+            "filename": "dummy.png",
+        })
 
-        # # 9. Send a dummy audio file
-        # dispatcher.utter_message(
-        #     text="Dummy audio file:",
-        #     attachment={
-        #         "type": "audio",
-        #         "url": "https://www.sample-videos.com/audio/mp3/wave.mp3",
-        #         "filename": "Your_audio.mp3",
-        #     },
-        # )
+        # 4) Remote PDF example
+        media_items.append({
+            "type": "pdf",
+            "url": "https://file-examples.com/wp-content/storage/2017/10/file-sample_150kB.pdf",
+            "filename": "dummy.pdf",
+        })
 
-        # # Generate and share chart
-        # try:
-        #     timestamps = pd.date_range(start="2025-01-01", periods=50, freq="min")
-        #     sensor_values = np.random.rand(50)
-        #     data = pd.DataFrame(
-        #         {"timestamp": timestamps, "sensor_value": sensor_values}
-        #     )
-        #     fig = px.line(
-        #         data, x="timestamp", y="sensor_value", title="Live Sensor Data"
-        #     )
+        # 5) Send a dummy CSV file (generated locally for download via local server)
+        try:
+            csv_name = f"sample_{int(time.time())}.csv"
+            csv_path = os.path.join(user_dir, csv_name)
+            with open(csv_path, "w", encoding="utf-8") as f:
+                f.write("timestamp,value\n")
+                for i in range(5):
+                    ts = (datetime.utcnow() - timedelta(minutes=5 - i)).strftime("%Y-%m-%d %H:%M:%S")
+                    f.write(f"{ts},{round(np.random.rand(), 4)}\n")
+            csv_url = f"{base_url}/artifacts/{user_safe}/{csv_name}"
+            media_items.append({"type": "csv", "url": csv_url, "filename": csv_name})
+        except Exception as e:
+            logger.error(f"Failed to generate CSV: {e}")
+            dispatcher.utter_message(text="Note: Could not generate CSV file.")
 
-        #     # Define shared attachments folder
-        #     static_folder = "/app/actions/static/attachments"
-        #     logger.info(f"Static folder path: {static_folder}")
+        # 6) Send dummy JSON data (as a downloadable local file)
+        try:
+            dummy_json_name = f"dummy_{int(time.time())}.json"
+            dummy_json_path = os.path.join(user_dir, dummy_json_name)
+            with open(dummy_json_path, "w", encoding="utf-8") as f:
+                json.dump({"key": "value", "number": 123}, f, indent=2)
+            dummy_json_url = f"{base_url}/artifacts/{user_safe}/{dummy_json_name}"
+            media_items.append({"type": "json", "url": dummy_json_url, "filename": dummy_json_name})
+        except Exception as e:
+            logger.error(f"Failed to generate dummy JSON: {e}")
+            dispatcher.utter_message(text="Note: Could not generate dummy JSON file.")
 
-        #     # Ensure folder exists
-        #     os.makedirs(static_folder, exist_ok=True)
+        # 7) Video: try downloading a small mp4 locally for playback via localhost
+        try:
+            video_name = f"sample_{int(time.time())}.mp4"
+            video_path = os.path.join(user_dir, video_name)
+            video_url_src = "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4"
+            resp = requests.get(video_url_src, stream=True, timeout=15)
+            resp.raise_for_status()
+            with open(video_path, "wb") as vf:
+                for chunk in resp.iter_content(chunk_size=8192):
+                    if chunk:
+                        vf.write(chunk)
+            media_items.append({
+                "type": "video",
+                "url": f"{base_url}/artifacts/{user_safe}/{video_name}",
+                "filename": video_name,
+            })
+        except Exception as e:
+            logger.warning(f"Failed to download sample video locally: {e}. Falling back to remote URL")
+            media_items.append({
+                "type": "video",
+                "url": "https://file-examples.com/storage/feb797b78b68ccdb5a1194c/2017/04/file_example_MP4_640_3MG.mp4",
+                "filename": "dummy_video.mp4",
+            })
 
-        #     # Save HTML chart
-        #     filename = f"chart_{int(time.time())}.html"
-        #     file_path = os.path.join(static_folder, filename)
-        #     fig.write_html(file_path)
-        #     logger.info(f"HTML chart saved at: {file_path}")
+        # 8) Dummy link
+        media_items.append({
+            "type": "link",
+            "url": "https://www.wikipedia.org/",
+            "filename": "dummy_link.html",
+        })
 
-        #     # URL for static sharing
-        #     html_url = f"http://localhost:8000/{filename}"
-        #     dispatcher.utter_message(
-        #         text="Interactive HTML chart:",
-        #         attachment={"type": "html", "url": html_url, "filename": filename},
-        #     )
+        # 9) Generate a small WAV audio locally for reliable playback
+        try:
+            wav_name = f"sample_{int(time.time())}.wav"
+            wav_path = os.path.join(user_dir, wav_name)
+            framerate = 22050
+            duration_sec = 2
+            freq = 440.0  # A4 tone
+            nframes = int(duration_sec * framerate)
+            amp = 16000
+            with wave.open(wav_path, 'w') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)  # 16-bit
+                wf.setframerate(framerate)
+                for i in range(nframes):
+                    value = int(amp * math.sin(2 * math.pi * freq * (i / framerate)))
+                    wf.writeframesraw(struct.pack('<h', value))
+            media_items.append({
+                "type": "audio",
+                "url": f"{base_url}/artifacts/{user_safe}/{wav_name}",
+                "filename": wav_name,
+            })
+        except Exception as e:
+            logger.warning(f"Failed to generate local WAV: {e}. Falling back to remote MP3")
+            media_items.append({
+                "type": "audio",
+                "url": "https://file-examples.com/storage/fe560e508068ccbf398f4e7/2017/11/file_example_WAV_1MG.wav",
+                "filename": "Your_audio.mp3",
+            })
 
-        #     # PDF file handling
-        #     pdf_filename = "dummy.pdf"
-        #     pdf_file_path = os.path.join(static_folder, pdf_filename)
-        #     if os.path.exists(pdf_file_path):
-        #         pdf_url = (
-        #             f"http://localhost:8000/{pdf_filename}"  # host.docker.internal
-        #         )
-        #         logger.info(f"PDF file served from: {pdf_url}")
-        #         dispatcher.utter_message(
-        #             text="Here is the PDF document:",
-        #             attachment={
-        #                 "type": "pdf",
-        #                 "url": pdf_url,
-        #                 "filename": pdf_filename,
-        #             },
-        #         )
-        #     else:
-        #         logger.warning(f"PDF file {pdf_file_path} not found")
-        #         dispatcher.utter_message(text="Note: Dummy PDF not available yet.")
-        # except Exception as e:
-        #     logger.error(f"Error generating chart/PDF: {str(e)}")
-        #     dispatcher.utter_message(
-        #         text="Error: Could not generate or serve chart/PDF."
-        #     )
+        # 10) Generate and share chart (HTML) and optionally serve a PDF if present
+        try:
+            timestamps = pd.date_range(start="2025-01-01", periods=50, freq="min")
+            sensor_values = np.random.rand(50)
+            data = pd.DataFrame({"timestamp": timestamps, "sensor_value": sensor_values})
+            fig = px.line(data, x="timestamp", y="sensor_value", title="Live Sensor Data")
 
-        return []
+            static_folder = user_dir
+            os.makedirs(static_folder, exist_ok=True)
+
+            chart_name = f"chart_{int(time.time())}.html"
+            chart_path = os.path.join(static_folder, chart_name)
+            fig.write_html(chart_path)
+            logger.info(f"HTML chart saved at: {chart_path}")
+
+            html_url = f"{base_url}/artifacts/{user_safe}/{chart_name}"
+            # Queue chart as html and as simple link
+            media_items.append({"type": "html", "url": html_url, "filename": chart_name})
+            media_items.append({"type": "link", "url": html_url, "filename": chart_name})
+
+            # PDF file handling (serve if a dummy file exists in shared folder)
+            pdf_filename = "dummy.pdf"
+            pdf_file_path = os.path.join(static_folder, pdf_filename)
+            if os.path.exists(pdf_file_path):
+                pdf_url = f"{base_url}/artifacts/{user_safe}/{pdf_filename}"
+                logger.info(f"PDF file served from: {pdf_url}")
+                media_items.append({"type": "pdf", "url": pdf_url, "filename": pdf_filename})
+            else:
+                logger.warning(f"PDF file {pdf_file_path} not found")
+                # Optional notice; skip adding to media_items
+        except Exception as e:
+            logger.error(f"Error generating chart/PDF: {str(e)}")
+            dispatcher.utter_message(text="Error: Could not generate or serve chart/PDF.")
+
+        # Finally, send output according to toggle
+        if media_items:
+            if bundle_media:
+                dispatcher.utter_message(
+                    text="Yes. It is working as expected. Here are your generated artifacts shows you can successfully download and see them:",
+                    json_message={"media": media_items},
+                )
+            else:
+                dispatcher.utter_message(text="Generated artifacts:")
+                for m in media_items:
+                    # Prefer attachment objects for frontend rendering
+                    dispatcher.utter_message(attachment=m)
+
+        return events
 

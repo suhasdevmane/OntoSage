@@ -4,8 +4,11 @@ import axios from 'axios';
 import Message from './Message';
 import { Container, Button, Form } from 'react-bootstrap';
 import { BsDownload, BsTrash, BsDashSquare, BsChatDotsFill, BsFullscreen, BsFullscreenExit } from 'react-icons/bs';
+import { FaBroom } from 'react-icons/fa';
 import db from '../db';
 import '../App.css'; // Ensure CSS is imported
+
+const API_BASE = 'http://localhost:8080/api';
 
 const RASA_ENDPOINT = "http://localhost:5005/webhooks/rest/webhook";
 
@@ -19,35 +22,58 @@ function ChatBot() {
   const messagesEndRef = useRef(null);
   const currentUser = sessionStorage.getItem('currentUser');
 
-  // Load chat history on mount
+  // Load chat history from server on mount, fallback to Dexie
   useEffect(() => {
-    if (currentUser) {
-      db.chatHistory.where('username').equals(currentUser).first().then(record => {
-        if (record && record.messages && record.messages.length > 0) {
-          setMessages(record.messages);
-        } else {
-          setMessages([{
-            sender: 'bot',
-            text: 'Welcome to our chat! How can I help you today?',
-            timestamp: new Date().toLocaleTimeString(),
-          }]);
+    if (!currentUser) return;
+    (async () => {
+      try {
+  const res = await fetch(`${API_BASE}/get_history`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          const msgs = Array.isArray(data.messages) ? data.messages : [];
+          if (msgs.length > 0) {
+            setMessages(msgs);
+            await db.chatHistory.where('username').equals(currentUser).modify({ messages: msgs });
+            return;
+          }
         }
-      });
-    }
+      } catch (e) {
+        console.warn('Falling back to Dexie for chat history:', e);
+      }
+      // Dexie fallback or default greeting
+      const record = await db.chatHistory.where('username').equals(currentUser).first();
+      if (record && record.messages && record.messages.length > 0) {
+        setMessages(record.messages);
+      } else {
+        const greet = [{ sender: 'bot', text: 'Welcome to our chat! How can I help you today?', timestamp: new Date().toLocaleTimeString() }];
+        setMessages(greet);
+        await db.chatHistory.add({ username: currentUser, messages: greet });
+      }
+    })();
   }, [currentUser]);
 
-  // Save chat history and auto-scroll
+  // Save chat history locally and to server; auto-scroll
   useEffect(() => {
-    if (currentUser) {
-      db.chatHistory.where('username').equals(currentUser).first().then(record => {
-        if (record) {
-          db.chatHistory.update(record.id, { messages });
-        } else {
-          db.chatHistory.add({ username: currentUser, messages });
-        }
-      });
+    if (!currentUser) return;
+    (async () => {
+      const record = await db.chatHistory.where('username').equals(currentUser).first();
+      if (record) {
+        await db.chatHistory.update(record.id, { messages });
+      } else {
+        await db.chatHistory.add({ username: currentUser, messages });
+      }
+      try {
+        await fetch(`${API_BASE}/save_history`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ messages })
+        });
+      } catch (e) {
+        console.warn('Failed to sync history to server:', e);
+      }
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
+    })();
   }, [messages, currentUser]);
 
   const addMessage = (message) => {
@@ -67,7 +93,7 @@ function ChatBot() {
     addMessage(userMessage);
     setIsLoading(true); // Set loading state to true
     try {
-      const response = await axios.post(RASA_ENDPOINT, { sender: 'user', message: userInput });
+  const response = await axios.post(RASA_ENDPOINT, { sender: currentUser || 'user', message: userInput });
       const botMessages = response.data.map(msg => ({
         sender: 'bot',
         ...msg,
@@ -114,10 +140,43 @@ function ChatBot() {
   };
 
   const clearChatHistory = () => {
-    if (currentUser) {
-      db.chatHistory.where('username').equals(currentUser).modify({ messages: [] });
+    if (!window.confirm('Clear chat history and reset assistant memory?')) return;
+    (async () => {
+      try {
+        if (currentUser) {
+          const rec = await db.chatHistory.where('username').equals(currentUser).first();
+          if (rec) await db.chatHistory.update(rec.id, { messages: [] });
+        }
+      } catch {}
+      try {
+        // Reset Rasa tracker memory for this user
+        if (currentUser) {
+          await axios.post(`http://localhost:5005/conversations/${encodeURIComponent(currentUser)}/events`, [
+            { event: 'restart' }
+          ]);
+        }
+      } catch (e) {
+        console.warn('Failed to reset Rasa conversation:', e);
+      }
+      // Finally, clear UI state (this will also sync empty messages to server via useEffect)
+      setMessages([]);
+    })();
+  };
+
+  const clearArtifacts = async () => {
+    if (!window.confirm('Delete all generated files for this user? (chat history will be kept)')) return;
+    try {
+      const res = await fetch(`${API_BASE}/clear_artifacts`, { method: 'POST', credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        addMessage({ sender: 'bot', text: `Cleared ${data.deleted || 0} artifacts.`, timestamp: new Date().toLocaleTimeString() });
+      } else {
+        const data = await res.json().catch(() => ({}));
+        addMessage({ sender: 'bot', text: `Failed to clear artifacts: ${data.error || res.status}`, timestamp: new Date().toLocaleTimeString() });
+      }
+    } catch (e) {
+      addMessage({ sender: 'bot', text: `Failed to clear artifacts: ${e}`, timestamp: new Date().toLocaleTimeString() });
     }
-    setMessages([]);
   };
 
   const toggleMinimize = () => {
@@ -153,7 +212,7 @@ function ChatBot() {
         top: 0,
         left: 0,
         width: '100vw',
-        height: '900vh',
+        height: '100vh',
         margin: 0,
         padding: 0,
         zIndex: 10000,
@@ -162,8 +221,9 @@ function ChatBot() {
         position: 'fixed',
         bottom: '20px',
         right: '20px',
-        maxWidth: '500px',
-        height: '640px',
+        width: '420px',
+        height: '620px',
+        margin: 0,
         padding: 0,
         zIndex: 9999,
       };
@@ -221,8 +281,11 @@ function ChatBot() {
             <Button variant="secondary" onClick={downloadChatHistory}>
               <BsDownload size={20} />
             </Button>
-            <Button variant="danger" onClick={clearChatHistory}>
+            <Button variant="danger" onClick={clearChatHistory} title="Clear chat and reset memory">
               <BsTrash size={20} />
+            </Button>
+            <Button variant="warning" onClick={clearArtifacts} title="Clear generated files">
+              <FaBroom size={18} />
             </Button>
           </div>
         </div>
