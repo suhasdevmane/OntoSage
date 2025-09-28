@@ -20,6 +20,12 @@ Configuration of this image is done through environment variables:
 | API_PORT    | 5000                         | The port to bind to                                                                |
 | MONGODB_URI | mongodb://mongo:27017/abacws | The MongoDB instance to use for data storage and query                             |
 
+### OntoBot integration
+
+- This API is optional in the OntoBot stack (compose has it commented by default).
+- If enabled, set `API_HOST` on the Visualiser to point to this API.
+- For other services (Rasa actions), prefer MySQL/Jena Fuseki as configured in `docker-compose.yml`.
+
 #### Custom device list
 The default devices of this application can be overridden by creating mounting a volume to the `/api/data` directory and adding your own devices.json file.\
 An example for one of these files can be seen [here](./src/api/data/devices.json).

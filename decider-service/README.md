@@ -8,6 +8,12 @@ Single endpoint that decides whether to perform analytics for a user question an
 
 When ML models are absent, the service falls back to robust rule-based logic.
 
+## Integration
+
+- Action Server calls this service before analytics to determine if and what to run.
+- If `perform_analytics` is false, the action crafts a non-analytics response.
+- If true, the action posts a standardized payload to Analytics (`/analytics/run`) with the selected `analysis_type`.
+
 ## Training
 
 1) Generate dataset from the T5 corpus:
@@ -32,3 +38,9 @@ Or use uvicorn locally:
 - DECIDER_PERFORM_VECT_PATH
 - DECIDER_LABEL_MODEL_PATH
 - DECIDER_LABEL_VECT_PATH
+
+## Customize for your building
+
+- Extend training data with building-specific intents and phrasing.
+- Define mapping from question categories to `analysis_type` aligned with your sensors and analytics.
+- Keep a rule-based fallback for robustness when models are absent.

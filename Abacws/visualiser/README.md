@@ -20,3 +20,9 @@ Configuration of the docker image is carried out using environment variables:
 |:--------:|:--------:|:-----------------------------------:|
 | WEB_PORT | 80       | The port to host the application on |
 | API_HOST | api:5000 | The API to query                    |
+
+### OntoBot integration
+
+- In the main OntoBot compose, the Visualiser/API pair is optional (commented).
+- You can enable both, then set `API_HOST` accordingly so the visualiser points to your API container.
+- For conversations and analytics, the Rasa stack and analytics service operate independently of this visualiser.
