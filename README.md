@@ -1,89 +1,97 @@
-<div align="center">
+<div align="center>
 
 # OntoBot
 
-Abacws SmartBot platform: end‑to‑end IoT analytics, knowledge‑graph querying, and a Rasa‑powered conversational interface. It orchestrates data services (MySQL, Jena Fuseki), analytics microservices, Rasa (NLU + Actions), web frontends, and helper tools via Docker Compose.
+A production‑ready, end‑to‑end platform for human–building conversation: Rasa (NLU + Actions), robust analytics microservices, SQL/SPARQL knowledge stores, and a web UI—all orchestrated with Docker Compose.
 
 </div>
 
-This project is under active development. If you need access to trained HF models or dataset versions, please get in touch.
+> Last updated: 2025‑09‑28
+
+This README consolidates the ground‑truth docs from each service into a single guide.
 
 ## Contents
 
-- Overview
-- Architecture & services
-- Quick start (Docker)
-- Analytics API (Flask microservice)
-- Rasa stack and UI
-- Data stores and semantics
-- Development workflow (optional local Python)
-- Health checks and testing
+- What is OntoBot?
+- Architecture and services
+- Install and run (Docker)
+- Configuration and environment
+- Data and payloads
+- Analytics API (microservices)
+- Rasa actions and Decider flow
+- Customization for new buildings
+- Testing and operations
 - Troubleshooting
 - License
 
 ---
 
-## Overview
+## What is OntoBot?
 
-OntoBot connects building/IoT telemetry and semantic data with a chatbot and analytics. You can:
+OntoBot connects building/IoT telemetry and semantic data to a conversational interface and analytics.
+You can:
 
-- Visualise device/room signals in a UI (frontend),
-- Query semantic stores (SPARQL on Jena Fuseki),
-- Ask questions in natural language (Rasa) with custom actions,
-- Run analytics on timeseries payloads (Flask microservice),
-- Manage data and files via a lightweight file server/editor.
+- Ask questions in natural language (Rasa) and get unit‑aware answers.
+- Run time‑series analytics via a standardized payload (Flask microservice).
+- Query semantic data (SPARQL on Jena Fuseki) and SQL telemetry.
+- Serve artifacts (plots/csv) through a file server for the frontend.
 
-All services run together via Docker for a reproducible dev setup.
+All services are containerized and wired together for repeatable local dev.
 
 ---
 
-## Architecture & services
+## Architecture and services
 
-See `docker-compose.yml` for full definitions. Active services (default) are:
+See `docker-compose.yml` for definitive configuration. Default services:
 
-- microservices (Flask analytics)
+- Analytics microservices (Flask)
   - Health: http://localhost:6001/health
-  - Analytics runner: http://localhost:6001/analytics/run
-- MySQL (sensordb)
-  - Host: localhost:3307 (maps to container 3306)
-- Jena Fuseki (RDF/SPARQL)
-  - UI/Ping: http://localhost:3030/$/ping
+  - Runner: http://localhost:6001/analytics/run
+- MySQL telemetry
+  - Host: localhost:3307 → container 3306, DB `sensordb` (root: mysql)
+- Jena Fuseki RDF/SPARQL
+  - Ping: http://localhost:3030/$/ping
 - Rasa (core server)
   - Version: http://localhost:5005/version
-- Rasa Action Server (custom actions)
+- Rasa Action Server
   - Health: http://localhost:5055/health
-- Duckling (NER for time/quantities)
+- Duckling NER
   - Root: http://localhost:8000/
-- File server (Flask) for assets and helpers
+- HTTP File server
   - Health: http://localhost:8080/health
-- Rasa editor (lightweight admin/UX tool)
+- Rasa Editor
   - UI: http://localhost:6080/
-- Rasa frontend (React dev server)
+- Rasa Frontend (React)
   - UI: http://localhost:3000/
-- Decider service (analytics routing)
+- Decider Service
   - Health: http://localhost:6009/health
 
-Optional services (commented in compose) you can enable as needed:
-
-- ThingsBoard (IoT) + pgAdmin
-- GraphDB (RDF store)
+Optional (commented) services:
+- ThingsBoard + pgAdmin
+- GraphDB
 - Jupyter Notebook
-- Visualiser + API (3D and REST)
+- Abacws API + Visualiser
 - NL2SPARQL (T5) and Ollama (Mistral)
 
 All services share the `ontobot-network` for internal DNS.
 
 ---
 
-## Quick start (Docker)
+## Install and run (Docker)
 
-Prerequisites: Docker Desktop (Windows/macOS) or Docker Engine (Linux).
+Prereqs: Docker Desktop (Windows/macOS) or Docker Engine (Linux).
 
-Start core services:
+Start everything:
 
 ```powershell
-# From the repo root
+# From repo root
 docker-compose up -d
+```
+
+Rebuild a service (example: analytics microservices):
+
+```powershell
+docker-compose up microservices --build
 ```
 
 Stop all:
@@ -92,30 +100,61 @@ Stop all:
 docker-compose down
 ```
 
-Rebuild a single service (example: microservices):
+Health URLs (open in a browser):
 
-```powershell
-docker-compose up microservices --build
-```
+- http://localhost:6001/health (analytics)
+- http://localhost:5005/version (rasa)
+- http://localhost:5055/health (actions)
+- http://localhost:8080/health (file)
+- http://localhost:3030/$/ping (fuseki)
+- http://localhost:6009/health (decider)
 
 ---
 
-## Analytics API (Flask microservice)
+## Configuration and environment
+
+Action Server environment (see `docker-compose.yml`):
+
+- BASE_URL: Public URL for the file server; default http://http_server:8080 (internal) / http://localhost:8080 (host)
+- DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT: MySQL connection (defaults set for container)
+- ANALYTICS_URL: http://microservices:6000/analytics/run (internal)
+- DECIDER_URL: http://decider-service:6009/decide (internal)
+- BUNDLE_MEDIA: Optional; bundle multiple media into one bot message (true/false)
+
+Volumes:
+- `./shared_data` is mounted to actions, file server, and editor.
+- Artifacts (plots/csv) are placed under `./shared_data/artifacts` and served via the file server.
+
+---
+
+## Data and payloads
+
+Standardized payloads are accepted by analytics:
+
+- Flat: `{ sensorName: [ { timestamp|datetime, reading_value }, ... ] }`
+- Nested: `{ groupId: { innerKey: { timeseries_data: [ { datetime, reading_value }, ... ] } } }`
+
+Notes:
+- UUID → Sensor name mapping is done in actions before analytics.
+- Timestamps are normalized server‑side; keys are matched robustly (e.g., temperature vs temp but not attempt).
+- Units and UK indoor guidelines are included in results (where applicable): °C, %RH, ppm, µg/m³, dB(A), etc.
+
+---
+
+## Analytics API (microservices)
 
 Base: http://localhost:6001
 
 Endpoints:
-
 - GET `/health` → `{ "status": "ok" }`
-- POST `/analytics/run` → runs a named analysis on provided payload
+- POST `/analytics/run`
+  - Body:
+    - `analysis_type` (string, required)
+    - Sensor data (flat or nested payload)
+    - Optional params per analysis (acceptable_range, thresholds, method, window)
+  - Returns: `{ analysis_type, timestamp, results }`
 
-Request body schema:
-
-- `analysis_type` (string, required): one of the functions listed below
-- Sensor data: either flat `{ sensorName: [ {timestamp|datetime, reading_value}, ... ] }` or nested standard payload `{ groupId: { innerKey: { timeseries_data: [...] } } }`
-- Optional params: specific to each analysis (e.g., `acceptable_range`, `thresholds`, `method`, `window`)
-
-Example:
+Example request (nested):
 
 ```json
 {
@@ -132,107 +171,70 @@ Example:
 ```
 
 Available analyses (selection):
+- Environmental: temperatures, humidity, CO2, PM, HCHO, noise, AQI metrics
+- HVAC/air: supply/return delta‑T, airflow variation, pressure trend, quality trends, HVAC anomalies
+- Generic: correlation, aggregation, trend, anomalies (zscore/iqr), potential failures, downtime forecast
+- Ops: device deviation, failure trends, recalibration frequency
 
-- Environmental: `analyze_temperatures`, `analyze_humidity`, `analyze_co2_levels`, `analyze_pm_levels`, `analyze_noise_levels`, `analyze_formaldehyde_levels`, `analyze_air_quality`, `compute_air_quality_index`
-- HVAC/air: `analyze_supply_return_temp_difference`, `analyze_air_flow_variation`, `analyze_pressure_trend`, `analyze_air_quality_trends`, `analyze_hvac_anomalies`
-- Generic analytics: `correlate_sensors`, `aggregate_sensor_data`, `analyze_sensor_trend`, `detect_anomalies`, `detect_potential_failures`, `forecast_downtimes`
-- Ops/maintenance: `analyze_device_deviation`, `analyze_failure_trends`, `analyze_recalibration_frequency`
-
-Input handling highlights:
-
-- Flat or nested payloads are accepted; timestamps normalized; key detection is robust.
-- Units and UK indoor defaults are included in results when relevant (e.g., °C, %RH, ppm, µg/m³).
-
-Smoke tests:
-
-- Run the bundled script to exercise all endpoints:
+Smoke test:
 
 ```powershell
 python microservices/test_analytics_smoke.py
 ```
 
-It prints per‑analysis status and a summary; useful for quick regressions. Ensure the microservices container is running first.
+This exercises all registered analyses using dummy data and reports a summary.
 
 ---
 
-## Rasa stack and UI
+## Rasa actions and Decider flow
 
-- Rasa core server: Docker image `rasa/rasa:3.6.12-full` listening on 5005.
-- Action server: builds from `rasa-ui/actions`; environment wired to talk to:
-  - Analytics service via `ANALYTICS_URL=http://microservices:6000/analytics/run`
-  - Decider service via `DECIDER_URL=http://decider-service:6009/decide`
-- Duckling: NER for times/durations/quantities on port 8000.
-- Rasa editor: lightweight UI (port 6080) to inspect/edit.
-- Rasa frontend: React development server (port 3000).
+- Actions query SQL/SPARQL/files and build standardized payloads.
+- UUIDs are replaced with human‑readable sensor names prior to analytics.
+- Actions optionally call the Decider service first to choose an `analysis_type` for the user question.
+- Actions post to `/analytics/run`, then format a user‑facing message including units and thresholds, and save any artifacts to `shared_data/artifacts`.
 
-Shared data and models are mounted from `rasa-ui/` into containers for live iteration.
-
----
-
-## Data stores and semantics
-
-- MySQL (`mysqlserver`)
-  - Host: `localhost:3307` (maps to container port 3306)
-  - Default root password: `mysql`
-  - Default DB: `sensordb`
-- Jena Fuseki RDF store
-  - Ping: http://localhost:3030/$/ping
-  - Data volume: `jena-data` (see compose)
-
-Optional (commented): ThingsBoard, GraphDB, Jupyter, Visualiser/API. Uncomment in `docker-compose.yml` to enable and adjust ports/credentials as needed.
+Internal endpoints (Docker network):
+- Analytics: http://microservices:6000/analytics/run
+- Decider: http://decider-service:6009/decide
+- File server: http://http_server:8080
 
 ---
 
-## Development workflow (optional local Python)
+## Customization for new buildings
 
-You normally don’t need a local env if using Docker. If you want to run utilities locally:
-
-```powershell
-python -m venv ./.abacws-venv
-./.abacws-venv/Scripts/Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-Download extra NLP models as needed, e.g.:
-
-```powershell
-python -m spacy download en_core_web_sm
-```
+- Extend Rasa intents/entities with site‑specific devices/locations.
+- Prepare and load sensor UUID→name mappings; use descriptive keys in analytics.
+- Override thresholds in analytics requests (acceptable_range/thresholds) to match building standards.
+- Connect to your MySQL/Fuseki instances via env vars and secrets.
+- Optional Visualiser/API can be enabled and pointed at your data via API_HOST.
 
 ---
 
-## Health checks and testing
+## Testing and operations
 
-Quick health probes (open in browser or curl):
+Health probes:
+- Analytics: /health; Rasa: /version; Actions: /health; File: /health; Fuseki: $/ping; Decider: /health.
 
-- Microservices: http://localhost:6001/health
-- Rasa: http://localhost:5005/version
-- Action server: http://localhost:5055/health
-- Duckling: http://localhost:8000/
-- Jena Fuseki: http://localhost:3030/$/ping
-- File server: http://localhost:8080/health
-- Decider service: http://localhost:6009/health
+Logs:
+- `docker-compose logs -f <service>`
 
-Analytics smoke test:
+Networking:
+- All services share the `ontobot-network`. Inspect with `docker network inspect ontobot-network`.
 
-```powershell
-python microservices/test_analytics_smoke.py
-```
-
-It posts a realistic sample payload to each `/analytics/run` analysis and reports success/failure.
+CI hooks (optional):
+- Run the analytics smoke test in PRs to guard regressions.
 
 ---
 
 ## Troubleshooting
 
-- Ports busy: adjust host ports in `docker-compose.yml` (e.g., MySQL maps to 3307 by default).
-- Service not healthy: check logs: `docker-compose logs -f <service>` and hit the health URL directly.
-- Network issues: all services share `ontobot-network`. Inspect with `docker network inspect ontobot-network`.
-- Analytics errors: verify your payload matches flat or nested formats; check `/analytics/run` response `results` for `{ error: ... }`.
+- Port conflicts → adjust host ports in `docker-compose.yml` (MySQL maps to 3307 by default).
+- Service unhealthy → check logs; hit health URLs directly.
+- Analytics errors → verify flat/nested payloads; inspect the `results` object for detailed errors.
+- Missing media → confirm files exist under `shared_data/artifacts` and the file server is reachable at the expected BASE_URL.
 
 ---
 
 ## License
 
-See the repository’s LICENSE file. Third‑party components retain their respective licenses.
+See LICENSE in this repository. Third‑party components retain their respective licenses.
