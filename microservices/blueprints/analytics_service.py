@@ -1,11 +1,148 @@
 # blueprints/analytics_module.py
 from flask import Blueprint, request, jsonify
+import inspect
 import pandas as pd
 import numpy as np
 import logging
 import json
+import re
+from datetime import datetime
+from typing import Optional
 
 analytics_service = Blueprint("analytics_service", __name__)
+
+# ---------------------------
+# Payload normalization helpers
+# ---------------------------
+
+def _ensure_parsed(obj):
+    """Parse JSON string to Python, otherwise return as-is."""
+    if isinstance(obj, str):
+        try:
+            return json.loads(obj)
+        except Exception as e:
+            logging.error(f"Failed to parse JSON input: {e}")
+            return obj
+    return obj
+
+def _series_items(sensor_data):
+    """Yield (logical_key, readings_list) for both flat and nested payloads.
+
+    Accepts:
+      - Flat: { name_or_uuid: [ {datetime|timestamp, reading_value}, ... ] }
+      - Nested: { group_id: { key: { timeseries_data: [...] } } }
+      - List: [ {datetime|timestamp, reading_value}, ... ]
+    """
+    sensor_data = _ensure_parsed(sensor_data)
+    if isinstance(sensor_data, dict) and sensor_data and all(isinstance(v, list) for v in sensor_data.values()):
+        for k, v in sensor_data.items():
+            yield str(k), v
+        return
+    if isinstance(sensor_data, dict):
+        for _, inner in sensor_data.items():
+            if isinstance(inner, dict):
+                for k, v in inner.items():
+                    if isinstance(v, dict):
+                        yield str(k), v.get("timeseries_data", [])
+                    elif isinstance(v, list):
+                        yield str(k), v
+            elif isinstance(inner, list):
+                yield "series", inner
+        return
+    if isinstance(sensor_data, list):
+        yield "series", sensor_data
+
+def _aggregate_flat(sensor_data):
+    """Return a dict {key: combined_readings_list} merging duplicates across groups."""
+    flat = {}
+    for key, readings in _series_items(sensor_data):
+        try:
+            flat.setdefault(key, []).extend(list(readings or []))
+        except Exception:
+            flat.setdefault(key, []).extend([])
+    return flat
+
+def _df_from_readings(readings):
+    """Convert a list of readings to a sorted DataFrame with 'timestamp' normalized."""
+    df = pd.DataFrame(list(readings or []))
+    if df.empty:
+        return df
+    if "timestamp" not in df.columns and "datetime" in df.columns:
+        df = df.rename(columns={"datetime": "timestamp"})
+    if "timestamp" not in df.columns:
+        # Create synthetic timestamps if missing
+        df["timestamp"] = pd.to_datetime(range(len(df)), unit="s", origin="unix")
+    df["timestamp"] = pd.to_datetime(df["timestamp"])  # to datetime
+    df = df.sort_values(by="timestamp")
+    return df
+
+def _key_matcher(substrs, exclude_substrs=None):
+    """Return a predicate that matches key if any substr in substrs occurs (case-insensitive),
+    excluding keys that contain any of exclude_substrs."""
+    exclude_substrs = exclude_substrs or []
+    def pred(key: str) -> bool:
+        k = (key or "").lower()
+        if any(ex in k for ex in exclude_substrs):
+            return False
+        return any(s in k for s in substrs)
+    return pred
+
+def _select_keys(flat_dict, predicate, fallback_to_all=False):
+    keys = [k for k in flat_dict.keys() if predicate(str(k))]
+    if not keys and fallback_to_all:
+        keys = list(flat_dict.keys())
+    return keys
+
+# ---------------------------
+# UK indoor environment standards and units
+# ---------------------------
+# Consolidated UK-oriented comfort/air-quality guidelines (indicative/common practice)
+# Notes:
+# - Temperature (°C): 18–24 as a general comfort band for offices, winter heating min ~18.
+# - Relative Humidity (%RH): 40–60 recommended to balance comfort and health.
+# - CO2 (ppm): 400–1000 good ventilation; >1500 often considered poor.
+# - PM2.5 (µg/m³): 35 short-term alert threshold (aligned with common indoor targets);
+# - PM10 (µg/m³): 50 short-term limit;
+# - NO2 (µg/m³): 200 short-term limit (1-hour legal limit), with 40 typical annual target;
+# - CO (ppm): 9 ppm short-term guidance;
+# - Formaldehyde (mg/m³): 0.1 mg/m³ short-term guideline;
+# - Noise (dB(A)): ~55 dB(A) comfort threshold for occupied spaces (context-dependent).
+UK_INDOOR_STANDARDS = {
+    "temperature_c": {"unit": "°C", "range": (18, 24)},
+    "humidity_rh": {"unit": "%", "range": (40, 60)},
+    "co2_ppm": {"unit": "ppm", "range": (400, 1000), "max": 1500},
+    "pm2.5_ugm3": {"unit": "µg/m³", "max": 35},
+    "pm10_ugm3": {"unit": "µg/m³", "max": 50},
+    "no2_ugm3": {"unit": "µg/m³", "max": 200, "annual_target": 40},
+    "co_ppm": {"unit": "ppm", "max": 9},
+    "hcho_mgm3": {"unit": "mg/m³", "max": 0.1},
+    "noise_db": {"unit": "dB(A)", "max": 55},
+}
+
+def _unit_for_key(key: str) -> Optional[str]:
+    """Infer human-readable unit for a sensor key name."""
+    try:
+        kl = str(key).lower()
+    except Exception:
+        return None
+    if "temperature" in kl or re.search(r"\btemp\b", kl):
+        return "°C"
+    if "humidity" in kl or kl in ("rh", "relative_humidity"):
+        return "%"
+    if "co2" in kl:
+        return "ppm"
+    if ("co" in kl and "co2" not in kl) or "carbon_monoxide" in kl:
+        return "ppm"
+    if "pm10" in kl or "pm2.5" in kl or "pm2_5" in kl or re.search(r"\bpm1(\b|[_\.])", kl):
+        return "µg/m³"
+    if "formaldehyde" in kl or "hcho" in kl:
+        return "mg/m³"
+    if "noise" in kl or "sound" in kl:
+        return "dB(A)"
+    if "pressure" in kl:
+        # Units vary by system; often Pa. Leaving generic if uncertain.
+        return "Pa"
+    return None
 
 def analyze_recalibration_frequency(sensor_data):
     """
@@ -388,215 +525,97 @@ def analyze_sensor_status(sensor_data):
 
 def analyze_air_quality_trends(sensor_data, target_sensor="Air_Quality_Sensor"):
     """
-    Analyzes air quality (or specified target sensor) trends from nested sensor data.
+    Analyze trend for air-quality-like series from standardized payload.
 
-    Expected input (as Python dict or JSON string):
-      {
-          "1": {
-              "Air_Quality_Sensor": {
-                  "timeseries_data": [
-                      {"datetime": "2025-02-10 05:31:59", "reading_value": 80},
-                      {"datetime": "2025-02-10 05:32:11", "reading_value": 78},
-                      ...
-                  ]
-              },
-              ...
-          },
-          "2": {
-              "Air_Quality_Sensor": {
-                  "timeseries_data": [
-                      {"datetime": "2025-02-10 06:00:00", "reading_value": 85},
-                      ...
-                  ]
-              },
-              ...
-          }
-      }
+    - If target_sensor is provided, first try exact or substring match; otherwise
+      auto-detect keys like 'air_quality', 'aqi', 'aq_sensor'.
+    - For each selected key: compute mean, latest reading, and classify trend as
+      rising/falling/stable relative to the mean.
 
-    For each sensor ID and the target sensor:
-      - Computes mean (norm), latest reading, and determines trend: "rising", "falling", or "stable".
-
-    Parameters:
-        sensor_data: JSON or dict
-        target_sensor: the sensor to analyze trends for (default: Air_Quality_Sensor)
-
-    Returns:
-        A nested dict mapping each sensor ID to its air quality trend analysis.
+    Returns a dict mapping key -> trend summary.
     """
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No air quality data available"}
 
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing JSON: {e}")
-            return {"error": "Invalid JSON"}
+    keys = []
+    if target_sensor:
+        # exact or substring match
+        tl = str(target_sensor).lower()
+        for k in flat.keys():
+            kl = str(k).lower()
+            if k == target_sensor or tl in kl or kl in tl:
+                keys.append(k)
+    if not keys:
+        aq_pred = _key_matcher(["air_quality", "aqi", "aq_sensor"])  # broad
+        keys = _select_keys(flat, aq_pred, fallback_to_all=(len(flat) == 1))
+    if not keys:
+        return {"error": "No air-quality-like keys found"}
 
     response = {}
-
-    for sensor_id, sensor_types in sensor_data.items():
-        if target_sensor not in sensor_types:
-            response[sensor_id] = {
-                target_sensor: {"message": f"No data found for {target_sensor}."}
-            }
-            continue
-
-        sensor_info = sensor_types.get(target_sensor, {})
-        timeseries_data = sensor_info.get("timeseries_data", [])
-
-        try:
-            df = pd.DataFrame(timeseries_data)
-            if "datetime" in df.columns:
-                df.rename(columns={"datetime": "timestamp"}, inplace=True)
-            df["timestamp"] = pd.to_datetime(df["timestamp"])
-        except Exception as e:
-            logging.error(f"Data error for sensor {sensor_id}: {e}")
-            response[sensor_id] = {target_sensor: {"error": "Data format issue."}}
-            continue
-
+    for key in keys:
+        df = _df_from_readings(flat.get(key, []))
         if df.empty:
-            response[sensor_id] = {target_sensor: {"message": "No data available."}}
+            response[str(key)] = {"message": "No data available."}
             continue
-
         norm = float(df["reading_value"].mean())
-        latest_value = float(df.sort_values(by="timestamp").iloc[-1]["reading_value"])
-
+        latest_value = float(df.iloc[-1]["reading_value"]) if not df.empty else None
+        if latest_value is None:
+            response[str(key)] = {"message": "No readings."}
+            continue
         if latest_value > norm:
             trend = "rising"
         elif latest_value < norm:
             trend = "falling"
         else:
             trend = "stable"
-
-        response[sensor_id] = {
-            target_sensor: {
-                "norm": round(norm, 2),
-                "latest_reading": round(latest_value, 2),
-                "trend": trend,
-                "message": f"{target_sensor} trend is {trend} compared to average.",
-            }
+        response[str(key)] = {
+            "norm": round(norm, 2),
+            "latest_reading": round(latest_value, 2),
+            "trend": trend,
+            "unit": _unit_for_key(key),
+            "message": f"{key} trend is {trend} compared to average.",
         }
-
-    if not response:
-        return {"message": f"No trend analysis found for {target_sensor}."}
-
     return response
 
 
 def analyze_hvac_anomalies(sensor_data):
     """
-    Analyzes HVAC sensor data to detect anomalies in the past week.
-
-    Expected input: either a Python dictionary or a JSON string in the following nested format:
-
-    {
-      "1": {
-          "HVAC_1": {
-             "timeseries_data": [
-                {"datetime": "2025-02-10 05:31:59", "reading_value": 27.99, "sensor_id": "HVAC_1"},
-                {"datetime": "2025-02-10 05:32:11", "reading_value": 27.99, "sensor_id": "HVAC_1"},
-                ...
-             ]
-          },
-          "Other_Sensor": { ... }
-      },
-      "2": {
-          "HVAC_2": {
-             "timeseries_data": [
-                {"datetime": "2025-02-10 05:35:00", "reading_value": 28.05, "sensor_id": "HVAC_2"},
-                {"datetime": "2025-02-10 05:35:12", "reading_value": 28.07, "sensor_id": "HVAC_2"},
-                ...
-             ]
-          }
-      }
-    }
-
-    For each sensor type (only those whose sensor type name contains "HVAC", case-insensitive):
-      - Converts the list of readings from "timeseries_data" into a DataFrame.
-      - Renames "datetime" to "timestamp" (if present) and converts it to datetime objects.
-      - Filters the readings to only include data from the past 7 days.
-      - Calculates the 25th percentile (Q1), 75th percentile (Q3), and IQR.
-      - Identifies outliers where reading_value is below (Q1 - 1.5*IQR) or above (Q3 + 1.5*IQR).
-
-    Returns:
-      A dictionary with each HVAC sensor's identifier (taken from the sensor type key) as a key and a summary of the anomaly analysis as its value.
-      For example:
-
-      {
-          "HVAC_1": {
-              "anomaly_count": 3,
-              "message": "Sensor HVAC_1 detected 3 anomalies in the past week."
-          },
-          "HVAC_2": {
-              "message": "No significant anomalies detected in the HVAC system."
-          }
-      }
+    Detect anomalies for HVAC-like series in the past 7 days from standardized payload.
+    Keys are selected if they contain 'hvac' (case-insensitive).
+    Returns key -> { anomaly_count, message }.
     """
-    # Parse JSON if necessary.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No HVAC data available"}
 
-    # If sensor_data is provided as a list (data for one sensor), wrap it in a dict.
-    if isinstance(sensor_data, list):
-        sensor_data = {"1": sensor_data}
+    hvac_pred = _key_matcher(["hvac"])  # broad match
+    keys = _select_keys(flat, hvac_pred, fallback_to_all=False)
+    if not keys:
+        return {"error": "No HVAC-like keys found"}
 
-    response = {}
     now = pd.Timestamp.now()
-
-    # Iterate over each outer sensor key.
-    for outer_key, sensor_types in sensor_data.items():
-        # Iterate over each sensor type within the outer key.
-        for sensor_type, sensor_info in sensor_types.items():
-            # Process only sensor types whose name contains "HVAC" (case-insensitive).
-            if "HVAC" not in sensor_type.upper():
-                continue
-
-            timeseries_data = sensor_info.get("timeseries_data", [])
-            try:
-                df = pd.DataFrame(timeseries_data)
-                if "datetime" in df.columns:
-                    df = df.rename(columns={"datetime": "timestamp"})
-                df["timestamp"] = pd.to_datetime(df["timestamp"])
-            except Exception as e:
-                logging.error(f"Data conversion error for sensor {sensor_type}: {e}")
-                response[sensor_type] = {"error": "Invalid sensor data format"}
-                continue
-
-            # Filter data for the past 7 days.
-            df = df[df["timestamp"] >= now - pd.Timedelta(days=7)]
-            if df.empty:
-                response[sensor_type] = {
-                    "message": "No HVAC data available for the past week."
-                }
-                continue
-
-            # Compute quartiles and IQR.
-            Q1 = df["reading_value"].quantile(0.25)
-            Q3 = df["reading_value"].quantile(0.75)
-            IQR = Q3 - Q1
-
-            # Identify outliers.
-            outliers = df[
-                (df["reading_value"] < Q1 - 1.5 * IQR)
-                | (df["reading_value"] > Q3 + 1.5 * IQR)
-            ]
-
-            if not outliers.empty:
-                response[sensor_type] = {
-                    "anomaly_count": int(len(outliers)),
-                    "message": f"Sensor {sensor_type} detected {len(outliers)} anomalies in the past week.",
-                }
-            else:
-                response[sensor_type] = {
-                    "message": "No significant anomalies detected in the HVAC system."
-                }
-
-    if not response:
-        return {"message": "No HVAC sensor data available."}
-
+    response = {}
+    for key in keys:
+        df = _df_from_readings(flat.get(key, []))
+        if df.empty:
+            response[str(key)] = {"message": "No HVAC data available for the past week."}
+            continue
+        df = df[df["timestamp"] >= now - pd.Timedelta(days=7)]
+        if df.empty:
+            response[str(key)] = {"message": "No HVAC data available for the past week."}
+            continue
+        Q1 = df["reading_value"].quantile(0.25)
+        Q3 = df["reading_value"].quantile(0.75)
+        IQR = Q3 - Q1
+        outliers = df[(df["reading_value"] < Q1 - 1.5 * IQR) | (df["reading_value"] > Q3 + 1.5 * IQR)]
+        if not outliers.empty:
+            response[str(key)] = {
+                "anomaly_count": int(len(outliers)),
+                "message": f"Sensor {key} detected {len(outliers)} anomalies in the past week.",
+            }
+        else:
+            response[str(key)] = {"message": "No significant anomalies detected in the HVAC system."}
     return response
 
 
@@ -651,143 +670,93 @@ def analyze_supply_return_temp_difference(sensor_data):
         - temperature_difference: Difference (supply minus return).
         - message: A descriptive message.
     """
-    # Parse sensor_data if it is a JSON string.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
+    # Accept standard payload: detect 'supply' and 'return' temperature series
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No temperature data available"}
 
-    # Initialize lists to collect readings.
-    supply_readings = []
-    return_readings = []
+    # Prefer explicit supply/return names; avoid false matches on unrelated keys
+    supply_pred = _key_matcher(["supply", "supply_air"], exclude_substrs=["return"])
+    return_pred = _key_matcher(["return", "return_air"], exclude_substrs=["supply"])
+    temp_pred = _key_matcher(["temperature", "temp"])  # generic temperature
 
-    # Iterate over each sensor ID and aggregate readings.
-    for sensor_id, sensor_types in sensor_data.items():
-        if "Supply_Air_Temperature_Sensor" in sensor_types:
-            supply_readings.extend(
-                sensor_types["Supply_Air_Temperature_Sensor"].get("timeseries_data", [])
-            )
-        if "Return_Air_Temperature_Sensor" in sensor_types:
-            return_readings.extend(
-                sensor_types["Return_Air_Temperature_Sensor"].get("timeseries_data", [])
-            )
+    supply_keys = [k for k in flat.keys() if supply_pred(str(k)) and temp_pred(str(k))]
+    return_keys = [k for k in flat.keys() if return_pred(str(k)) and temp_pred(str(k))]
 
-    if not supply_readings:
+    # Fallback: if not found, try to pick two temperature-like series
+    if not supply_keys or not return_keys:
+        temp_keys = _select_keys(flat, temp_pred, fallback_to_all=False)
+        if len(temp_keys) >= 2:
+            supply_keys = [temp_keys[0]]
+            return_keys = [temp_keys[1]]
+        else:
+            return {"error": "Could not identify supply/return temperature series"}
+
+    def avg_for(keys):
+        readings = []
+        for k in keys:
+            readings.extend(flat.get(k, []))
+        df = _df_from_readings(readings)
+        return (float(df["reading_value"].mean()) if not df.empty else None), df
+
+    avg_supply, df_supply = avg_for(supply_keys)
+    avg_return, df_return = avg_for(return_keys)
+    if avg_supply is None:
         return {"error": "No supply air temperature data found"}
-    if not return_readings:
+    if avg_return is None:
         return {"error": "No return air temperature data found"}
 
-    try:
-        # Process supply data.
-        df_supply = pd.DataFrame(supply_readings)
-        if "datetime" in df_supply.columns:
-            df_supply = df_supply.rename(columns={"datetime": "timestamp"})
-        df_supply["timestamp"] = pd.to_datetime(df_supply["timestamp"])
-        df_supply = df_supply.sort_values(by="timestamp")
-        avg_supply = df_supply["reading_value"].mean()
-
-        # Process return data.
-        df_return = pd.DataFrame(return_readings)
-        if "datetime" in df_return.columns:
-            df_return = df_return.rename(columns={"datetime": "timestamp"})
-        df_return["timestamp"] = pd.to_datetime(df_return["timestamp"])
-        df_return = df_return.sort_values(by="timestamp")
-        avg_return = df_return["reading_value"].mean()
-
-    except Exception as e:
-        logging.error(f"Error processing temperature data: {e}")
-        return {"error": "Data conversion error"}
-
     diff = avg_supply - avg_return
-    result = {
+    return {
         "average_supply_temperature": round(avg_supply, 2),
         "average_return_temperature": round(avg_return, 2),
         "temperature_difference": round(diff, 2),
         "message": (
-            f"Average supply temperature is {avg_supply:.2f}°C, "
-            f"average return temperature is {avg_return:.2f}°C, with a difference of {diff:.2f}°C."
+            f"Average supply temperature is {avg_supply:.2f}°C, average return temperature is {avg_return:.2f}°C, "
+            f"with a difference of {diff:.2f}°C."
         ),
+        "unit": "°C",
+        "supply_keys": [str(k) for k in supply_keys],
+        "return_keys": [str(k) for k in return_keys],
     }
-    return result
 
 
-def analyze_air_flow_variation(sensor_data, target_sensor="Air_Flow_Sensor"):
+def analyze_air_flow_variation(sensor_data):
     """
-    Analyzes airflow variation for the specified target sensor from a nested JSON structure.
+    Analyzes airflow variation for airflow-like sensors from the standard payload.
 
-    Parameters:
-      - sensor_data: JSON string or dict with structure:
-        {
-            "1": {
-                "Air_Flow_Sensor": {
-                    "timeseries_data": [
-                        {"datetime": "2025-02-10 05:31:59", "reading_value": 27.99},
-                        ...
-                    ]
-                }
-            },
-            "2": { ... }
-        }
+    Auto-detects keys containing 'air_flow' or 'airflow' and computes mean, std,
+    coefficient of variation (CV). Reports stability if CV < 0.1.
 
-      - target_sensor: default "Air_Flow_Sensor", can be customized if needed.
-
-    For each timeseries ID:
-      - Extracts data for target_sensor.
-      - Computes mean, std deviation, coefficient of variation.
-      - Reports stability/instability based on CV.
-
-    Returns:
-      A nested dict mapping each timeseries ID to results for the target_sensor.
+    Returns a dict mapping each detected key to its analysis summary.
     """
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid JSON input"}
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No airflow data available"}
+
+    flow_pred = _key_matcher(["air_flow", "airflow", "flow_rate"])
+    keys = _select_keys(flat, flow_pred, fallback_to_all=False)
+    if not keys:
+        return {"error": "No airflow-like keys found"}
 
     response = {}
-
-    for sensor_id, sensor_types in sensor_data.items():
-        if target_sensor not in sensor_types:
-            response[sensor_id] = {
-                target_sensor: {"message": f"No data available for {target_sensor}."}
-            }
+    for key in keys:
+        df = _df_from_readings(flat.get(key, []))
+        if df.empty:
+            response[str(key)] = {"message": "No readings available."}
             continue
-
-        timeseries_data = sensor_types[target_sensor].get("timeseries_data", [])
-        if not timeseries_data:
-            response[sensor_id] = {
-                target_sensor: {"message": f"No readings found for {target_sensor}."}
-            }
-            continue
-
-        try:
-            df = pd.DataFrame(timeseries_data)
-            if "datetime" in df.columns:
-                df.rename(columns={"datetime": "timestamp"}, inplace=True)
-            df["timestamp"] = pd.to_datetime(df["timestamp"])
-        except Exception as e:
-            logging.error(f"Data conversion error for sensor {sensor_id}: {e}")
-            response[sensor_id] = {target_sensor: {"error": "Data formatting error"}}
-            continue
-
-        mean_val = df["reading_value"].mean()
-        std_val = df["reading_value"].std() or 0.0
-        cv = std_val / mean_val if mean_val else 0
-
-        response[sensor_id] = {
-            target_sensor: {
-                "mean_airflow": round(mean_val, 2),
-                "std_dev_airflow": round(std_val, 2),
-                "coefficient_of_variation": round(cv, 2),
-                "message": (
-                    f"{target_sensor} coefficient of variation: {cv:.2f}. "
-                    + ("Stable airflow." if cv < 0.1 else "High variation detected.")
-                ),
-            }
+        mean_val = float(df["reading_value"].mean())
+        std_val = float(df["reading_value"].std() or 0.0)
+        cv = (std_val / mean_val) if mean_val else 0.0
+        response[str(key)] = {
+            "mean_airflow": round(mean_val, 2),
+            "std_dev_airflow": round(std_val, 2),
+            "coefficient_of_variation": round(cv, 2),
+            "unit": _unit_for_key(key),
+            "message": (
+                f"Coefficient of variation: {cv:.2f}. "
+                + ("Stable airflow." if cv < 0.1 else "High variation detected.")
+            ),
         }
 
     return response
@@ -829,69 +798,35 @@ def analyze_pressure_trend(sensor_data, expected_range=(0.5, 1.5)):
     Returns:
       A nested dictionary where each sensor ID maps to sensor type keys with their analysis.
     """
-    # Parse JSON string if necessary.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
+    # Accept standard payload: detect pressure-like keys
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No pressure data available"}
 
-    # If sensor_data is a list (data for one sensor), wrap it in a dictionary.
-    if isinstance(sensor_data, list):
-        sensor_data = {"1": sensor_data}
+    press_pred = _key_matcher(["pressure", "static_pressure"])  # broad match
+    keys = _select_keys(flat, press_pred, fallback_to_all=(len(flat) == 1))
+    if not keys:
+        return {"error": "No pressure-like keys found"}
 
     response = {}
-    for sensor_id, sensor_types in sensor_data.items():
-        response[sensor_id] = {}
-        for sensor_type, sensor_info in sensor_types.items():
-            # Get the readings from the "timeseries_data" key.
-            timeseries_data = sensor_info.get("timeseries_data", [])
-            try:
-                df = pd.DataFrame(timeseries_data)
-                # Rename "datetime" to "timestamp" if present.
-                if "datetime" in df.columns:
-                    df = df.rename(columns={"datetime": "timestamp"})
-                df["timestamp"] = pd.to_datetime(df["timestamp"])
-            except Exception as e:
-                logging.error(
-                    f"Data processing error for sensor {sensor_id}, type {sensor_type}: {e}"
-                )
-                response[sensor_id][sensor_type] = {
-                    "error": "Invalid sensor data format"
-                }
-                continue
-
-            if df.empty:
-                response[sensor_id][sensor_type] = {
-                    "message": "No data available for this sensor."
-                }
-                continue
-
-            avg_pressure = df["reading_value"].mean()
-
-            if expected_range[0] <= avg_pressure <= expected_range[1]:
-                message = (
-                    f"Sensor {sensor_id} ({sensor_type}) average pressure "
-                    f"{avg_pressure:.2f} is within the expected range."
-                )
-                status = "normal"
-            else:
-                message = (
-                    f"Sensor {sensor_id} ({sensor_type}) average pressure "
-                    f"{avg_pressure:.2f} is out of the expected range {expected_range}."
-                )
-                status = "abnormal"
-
-            response[sensor_id][sensor_type] = {
-                "average_pressure": round(avg_pressure, 2),
-                "status": status,
-                "message": message,
-            }
-
-    if not response:
-        return {"message": "No pressure sensor data found."}
-
+    for key in keys:
+        df = _df_from_readings(flat.get(key, []))
+        if df.empty:
+            response[str(key)] = {"message": "No data available for this sensor."}
+            continue
+        avg_pressure = float(df["reading_value"].mean())
+        if expected_range[0] <= avg_pressure <= expected_range[1]:
+            status = "normal"
+            message = f"{key} average pressure {avg_pressure:.2f} is within the expected range."
+        else:
+            status = "abnormal"
+            message = f"{key} average pressure {avg_pressure:.2f} is out of the expected range {expected_range}."
+        response[str(key)] = {
+            "average_pressure": round(avg_pressure, 2),
+            "status": status,
+            "message": message,
+            "unit": _unit_for_key(key),
+        }
     return response
 
 
@@ -925,64 +860,37 @@ def analyze_sensor_trend(sensor_data, window=3):
     Returns:
       A nested dictionary where each sensor ID maps to sensor type keys with their trend analysis details.
     """
-    # Parse JSON string if necessary.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
-
-    # If sensor_data is provided as a list, wrap it in a dict with a default key "1".
-    if isinstance(sensor_data, list):
-        sensor_data = {"1": sensor_data}
+    # Accept standard payload, compute trend per key
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No sensor data available"}
 
     response = {}
-    trend_threshold = 0.05  # threshold to decide if change is significant (adjustable)
-
-    # Process each sensor ID.
-    for sensor_id, sensor_types in sensor_data.items():
-        response[sensor_id] = {}
-        # Process each sensor type for the current sensor ID.
-        for sensor_type, sensor_info in sensor_types.items():
-            timeseries_data = sensor_info.get("timeseries_data", [])
-            try:
-                # Convert list of readings into a DataFrame.
-                df = pd.DataFrame(timeseries_data)
-                # Rename "datetime" to "timestamp" if needed.
-                if "datetime" in df.columns:
-                    df = df.rename(columns={"datetime": "timestamp"})
-                df["timestamp"] = pd.to_datetime(df["timestamp"])
-                df = df.sort_values(by="timestamp")
-                # Compute rolling average.
-                df["rolling_mean"] = (
-                    df["reading_value"].rolling(window=window, min_periods=1).mean()
-                )
-            except Exception as e:
-                logging.error(
-                    f"Data conversion error for sensor {sensor_id}, type {sensor_type}: {e}"
-                )
-                response[sensor_id][sensor_type] = {
-                    "error": "Invalid sensor data format"
-                }
+    trend_threshold = 0.05
+    for key, readings in flat.items():
+        try:
+            df = _df_from_readings(readings)
+            if df.empty:
+                response[str(key)] = {"message": "No data available."}
                 continue
-
-            # Compute trend using difference between the first and last rolling average values.
-            trend_diff = df["rolling_mean"].iloc[-1] - df["rolling_mean"].iloc[0]
+            df["rolling_mean"] = df["reading_value"].rolling(window=window, min_periods=1).mean()
+            trend_diff = float(df["rolling_mean"].iloc[-1] - df["rolling_mean"].iloc[0])
             if abs(trend_diff) < trend_threshold:
                 trend = "stable"
             elif trend_diff > 0:
                 trend = "upward"
             else:
                 trend = "downward"
-
-            response[sensor_id][sensor_type] = {
-                "initial_rolling_mean": df["rolling_mean"].iloc[0],
-                "latest_rolling_mean": df["rolling_mean"].iloc[-1],
+            response[str(key)] = {
+                "initial_rolling_mean": float(df["rolling_mean"].iloc[0]),
+                "latest_rolling_mean": float(df["rolling_mean"].iloc[-1]),
                 "trend": trend,
                 "difference": trend_diff,
+                "unit": _unit_for_key(key),
             }
-
+        except Exception as e:
+            logging.error(f"Trend analysis failed for {key}: {e}")
+            response[str(key)] = {"error": "Trend analysis failed"}
     return response
 
 
@@ -1013,52 +921,25 @@ def aggregate_sensor_data(sensor_data, freq="H"):
       Each summary (list of records) includes the mean, standard deviation, minimum, and maximum values,
       with timestamps converted to string format.
     """
-    # Parse JSON string if needed.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
+    # Accept standard payload and aggregate per key
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No sensor data available"}
 
     aggregated_results = {}
-
-    # Iterate over each sensor ID.
-    for sensor_id, sensor_types in sensor_data.items():
-        aggregated_results[sensor_id] = {}
-        # Iterate over each sensor type within this sensor ID.
-        for sensor_type, sensor_info in sensor_types.items():
-            timeseries_data = sensor_info.get("timeseries_data", [])
-            try:
-                df = pd.DataFrame(timeseries_data)
-                # Rename "datetime" column to "timestamp" if necessary.
-                if "datetime" in df.columns:
-                    df = df.rename(columns={"datetime": "timestamp"})
-                df["timestamp"] = pd.to_datetime(df["timestamp"])
-                df = df.sort_values(by="timestamp")
-                df.set_index("timestamp", inplace=True)
-                # Resample and compute summary statistics.
-                agg_df = (
-                    df["reading_value"]
-                    .resample(freq)
-                    .agg(["mean", "std", "min", "max"])
-                )
-                # Reset index and convert timestamp to string.
-                agg_df = agg_df.reset_index()
-                agg_df["timestamp"] = agg_df["timestamp"].dt.strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                )
-                aggregated_results[sensor_id][sensor_type] = agg_df.to_dict(
-                    orient="records"
-                )
-            except Exception as e:
-                logging.error(
-                    f"Aggregation error for sensor {sensor_id}, type {sensor_type}: {e}"
-                )
-                aggregated_results[sensor_id][sensor_type] = {
-                    "error": "Aggregation failed"
-                }
-
+    for key, readings in flat.items():
+        try:
+            df = _df_from_readings(readings)
+            if df.empty:
+                aggregated_results[str(key)] = []
+                continue
+            df = df.set_index("timestamp")
+            agg_df = df["reading_value"].resample(freq).agg(["mean", "std", "min", "max"]).reset_index()
+            agg_df["timestamp"] = agg_df["timestamp"].dt.strftime("%Y-%m-%d %H:%M:%S")
+            aggregated_results[str(key)] = agg_df.to_dict(orient="records")
+        except Exception as e:
+            logging.error(f"Aggregation error for {key}: {e}")
+            aggregated_results[str(key)] = {"error": "Aggregation failed"}
     return aggregated_results
 
 
@@ -1066,53 +947,22 @@ def correlate_sensors(sensor_data_dict):
     """
     Computes the correlation matrix among multiple timeseries from a JSON structure.
 
-    Expected input (as a Python dict or JSON string):
-      {
-          "249a4c9c-fe31-4649-a119-452e5e8e7dc5": [
-              {"datetime": "2025-03-15 00:02:01", "reading_value": 10},
-              {"datetime": "2025-03-15 00:03:01", "reading_value": 11},
-              ...
-          ],
-          "95ae1ca6-1806-40b9-9493-9b6be51a5e03": [
-              {"datetime": "2025-03-15 00:02:01", "reading_value": 12},
-              {"datetime": "2025-03-15 00:03:01", "reading_value": 13},
-              ...
-          ]
-      }
-
-    The function processes each timeseries ID as a unique sensor, merges data on timestamps
-    (with a tolerance of 1 minute), and computes the Pearson correlation between readings.
-
-    Returns:
-      A correlation matrix as a nested dictionary, or an error dictionary if processing fails.
+    Accepts either a flat mapping {id_or_name: [...readings...]}
+    or the nested standard payload. Merges on timestamps (1-minute tolerance)
+    and computes Pearson correlation between series.
     """
-    # Parse JSON string to dict if needed
-    if isinstance(sensor_data_dict, str):
-        try:
-            sensor_data_dict = json.loads(sensor_data_dict)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
+    flat = _aggregate_flat(sensor_data_dict)
+    if not flat:
+        return {"error": "No valid timeseries data to correlate."}
 
     dfs = []
-
-    # Process each timeseries ID
-    for timeseries_id, timeseries_data in sensor_data_dict.items():
+    for timeseries_id, readings in flat.items():
         try:
-            # Convert timeseries data to DataFrame
-            df = pd.DataFrame(timeseries_data)
-            if "datetime" not in df.columns or "reading_value" not in df.columns:
-                logging.error(f"Missing required columns in timeseries {timeseries_id}")
+            df = _df_from_readings(readings)
+            if df.empty or "reading_value" not in df.columns:
                 continue
-
-            # Rename datetime to timestamp and convert to datetime
-            df = df.rename(columns={"datetime": "timestamp"})
-            df["timestamp"] = pd.to_datetime(df["timestamp"])
-            df = df.sort_values(by="timestamp")
-
-            # Rename reading_value column to the timeseries ID
             df = df[["timestamp", "reading_value"]].rename(
-                columns={"reading_value": timeseries_id}
+                columns={"reading_value": str(timeseries_id)}
             )
             dfs.append(df)
         except Exception as e:
@@ -1122,7 +972,6 @@ def correlate_sensors(sensor_data_dict):
     if not dfs:
         return {"error": "No valid timeseries data to correlate."}
 
-    # Merge all DataFrames on the timestamp column using asof merge with a tolerance of 1 minute
     merged_df = dfs[0]
     for df in dfs[1:]:
         merged_df = pd.merge_asof(
@@ -1133,7 +982,6 @@ def correlate_sensors(sensor_data_dict):
             direction="nearest",
         )
 
-    # Drop the timestamp column and compute the correlation matrix
     corr_matrix = merged_df.drop(columns=["timestamp"]).corr(method="pearson")
     return corr_matrix.to_dict()
 
@@ -1186,64 +1034,63 @@ def compute_air_quality_index(sensor_data):
 
     Finally, it sums the weighted components to compute the composite AQI and assigns a health status.
     """
-    # Parse JSON string if needed.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No data available for AQI calculation"}
 
-    # Define arbitrary thresholds and weights.
+    # thresholds (units assumed typical):
     thresholds = {
-        "PM2.5_Level_Sensor_Standard": 35,
-        "PM10_Level_Sensor_Standard": 50,
-        "NO2_Level_Sensor": 40,
-        "CO_Level_Sensor": 9,
-        "CO2_Level_Sensor": 1000,
+        "pm2.5": 35,
+        "pm10": 50,
+        "no2": 40,
+        "co": 9,
+        "co2": 1000,
+    }
+    weights = {
+        "pm2.5": 0.3,
+        "pm10": 0.2,
+        "no2": 0.2,
+        "co": 0.15,
+        "co2": 0.15,
     }
 
-    weights = {
-        "PM2.5_Level_Sensor_Standard": 0.3,
-        "PM10_Level_Sensor_Standard": 0.2,
-        "NO2_Level_Sensor": 0.2,
-        "CO_Level_Sensor": 0.15,
-        "CO2_Level_Sensor": 0.15,
-    }
+    # map keys by pollutant
+    groups = {k: [] for k in thresholds.keys()}
+    for key in flat.keys():
+        kl = str(key).lower()
+        if "pm10" in kl:
+            groups["pm10"].append(key)
+        if "pm2.5" in kl or "pm2_5" in kl or "pm25" in kl:
+            groups["pm2.5"].append(key)
+        if "no2" in kl:
+            groups["no2"].append(key)
+        if kl == "co" or "co_sensor" in kl or ("carbon_monoxide" in kl and "co2" not in kl):
+            groups["co"].append(key)
+        if "co2" in kl:
+            groups["co2"].append(key)
 
     index_components = {}
-
-    # For each expected sensor type, gather all readings from the nested structure.
-    for sensor_type, threshold in thresholds.items():
-        aggregated_readings = []
-        # Loop over each outer key (sensor ID) in the nested structure.
-        for sensor_id, sensor_types in sensor_data.items():
-            if sensor_type in sensor_types:
-                timeseries = sensor_types[sensor_type].get("timeseries_data", [])
-                aggregated_readings.extend(timeseries)
-        if not aggregated_readings:
+    for pollutant, keys in groups.items():
+        if not keys:
             continue
-        try:
-            df = pd.DataFrame(aggregated_readings)
-            if "datetime" in df.columns:
-                df = df.rename(columns={"datetime": "timestamp"})
-            df["timestamp"] = pd.to_datetime(df["timestamp"])
-            df = df.sort_values(by="timestamp")
-            latest_value = df.iloc[-1]["reading_value"]
-            # Normalize the latest reading (simple ratio normalization).
-            normalized = latest_value / threshold
-            index_components[sensor_type] = normalized * weights[sensor_type]
-        except Exception as e:
-            logging.error(
-                f"Error computing AQI component for sensor {sensor_type}: {e}"
-            )
+        readings = []
+        for k in keys:
+            readings.extend(flat.get(k, []))
+        df = _df_from_readings(readings)
+        if df.empty:
+            continue
+        latest = float(df.iloc[-1]["reading_value"]) if not df.empty else None
+        if latest is None:
+            continue
+        thr = thresholds[pollutant]
+        w = weights[pollutant]
+        component = (latest / thr) * w
+        index_components[pollutant] = component
 
     if not index_components:
         return {"error": "Insufficient data for AQI calculation."}
 
-    aqi = sum(index_components.values())
-
-    # Define a simple category (arbitrary ranges for demonstration purposes)
+    aqi = float(sum(index_components.values()))
     if aqi < 0.5:
         status = "Good"
     elif aqi < 1:
@@ -1252,11 +1099,21 @@ def compute_air_quality_index(sensor_data):
         status = "Unhealthy for Sensitive Groups"
     else:
         status = "Unhealthy"
+    # Round for user-friendly output
+    aqi = round(aqi, 3)
+    index_components = {k: round(v, 3) for k, v in index_components.items()}
+    # Attach units metadata
+    component_units = {
+        "pm2.5": UK_INDOOR_STANDARDS["pm2.5_ugm3"]["unit"],
+        "pm10": UK_INDOOR_STANDARDS["pm10_ugm3"]["unit"],
+        "no2": UK_INDOOR_STANDARDS["no2_ugm3"]["unit"],
+        "co": UK_INDOOR_STANDARDS["co_ppm"]["unit"],
+        "co2": UK_INDOOR_STANDARDS["co2_ppm"]["unit"],
+    }
+    return {"AQI": aqi, "Status": status, "Components": index_components, "Units": component_units}
 
-    return {"AQI": aqi, "Status": status, "Components": index_components}
 
-
-def generate_health_alerts(sensor_data, thresholds):
+def generate_health_alerts(sensor_data, thresholds=None):
     """
     Generates alerts if the latest sensor readings exceed specified threshold ranges,
     accepting a nested JSON structure.
@@ -1292,55 +1149,102 @@ def generate_health_alerts(sensor_data, thresholds):
 
     Returns a dictionary with alert messages per sensor.
     """
-    # Convert sensor_data from JSON string to dict if needed.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
-
+    flat = _aggregate_flat(sensor_data)
     alerts = {}
+    if not flat:
+        return {"error": "No data available"}
 
-    # Iterate over each outer sensor ID.
-    for sensor_id, sensor_types in sensor_data.items():
-        # Iterate over each sensor type within this sensor ID.
-        for sensor_type, sensor_info in sensor_types.items():
-            # Process only if sensor_type is among those in thresholds.
-            if sensor_type not in thresholds:
+    # If thresholds not provided, derive UK defaults for keys present
+    if thresholds is None:
+        derived = {}
+        for key in flat.keys():
+            kl = str(key).lower()
+            # Temperature
+            if "temperature" in kl or re.search(r"\btemp\b", kl):
+                lo, hi = UK_INDOOR_STANDARDS["temperature_c"]["range"]
+                derived[key] = (lo, hi)
                 continue
-
-            min_val, max_val = thresholds[sensor_type]
-            readings = sensor_info.get("timeseries_data", [])
-            unique_key = f"{sensor_id}_{sensor_type}"
-
-            if not readings:
-                alerts[unique_key] = "No data available."
+            # Humidity
+            if "humidity" in kl or kl in ("rh", "relative_humidity"):
+                lo, hi = UK_INDOOR_STANDARDS["humidity_rh"]["range"]
+                derived[key] = (lo, hi)
                 continue
-
-            try:
-                df = pd.DataFrame(readings)
-                if "datetime" in df.columns:
-                    df = df.rename(columns={"datetime": "timestamp"})
-                df["timestamp"] = pd.to_datetime(df["timestamp"])
-                df = df.sort_values(by="timestamp")
-                latest_value = df.iloc[-1]["reading_value"]
-            except Exception as e:
-                logging.error(
-                    f"Error processing sensor {sensor_id} ({sensor_type}): {e}"
-                )
-                alerts[unique_key] = "Data error."
+            # CO2
+            if "co2" in kl:
+                lo, hi = UK_INDOOR_STANDARDS["co2_ppm"]["range"]
+                derived[key] = (lo, hi)
                 continue
+            # CO (not CO2)
+            if ("co" in kl and "co2" not in kl) or "carbon_monoxide" in kl:
+                hi = UK_INDOOR_STANDARDS["co_ppm"]["max"]
+                derived[key] = (0, hi)
+                continue
+            # PM2.5 / PM10
+            if "pm2.5" in kl or "pm2_5" in kl or "pm25" in kl:
+                hi = UK_INDOOR_STANDARDS["pm2.5_ugm3"]["max"]
+                derived[key] = (0, hi)
+                continue
+            if "pm10" in kl:
+                hi = UK_INDOOR_STANDARDS["pm10_ugm3"]["max"]
+                derived[key] = (0, hi)
+                continue
+            # Formaldehyde
+            if "formaldehyde" in kl or "hcho" in kl:
+                hi = UK_INDOOR_STANDARDS["hcho_mgm3"]["max"]
+                derived[key] = (0, hi)
+                continue
+            # Noise
+            if "noise" in kl or "sound" in kl:
+                hi = UK_INDOOR_STANDARDS["noise_db"]["max"]
+                derived[key] = (0, hi)
+                continue
+        thresholds = derived
 
-            if latest_value < min_val or latest_value > max_val:
-                alerts[unique_key] = (
-                    f"Alert: Latest reading {latest_value} out of range [{min_val}, {max_val}]."
-                )
-            else:
-                alerts[unique_key] = (
-                    f"OK: Latest reading {latest_value} within acceptable range."
-                )
+    # thresholds may be provided as exact or generic names; robust substring/token match
+    def find_threshold_for(key):
+        # Exact match first
+        if key in thresholds:
+            return thresholds[key]
+        kl = str(key).lower()
+        # Tokenize by common separators
+        tokens = set(filter(None, [t.strip() for t in re.split(r"[_\-\s]+|\W+", kl)]))
+        best = None
+        best_score = 0
+        for th_key, rng in thresholds.items():
+            tkl = str(th_key).lower()
+            th_tokens = set(filter(None, [t.strip() for t in re.split(r"[_\-\s]+|\W+", tkl)]))
+            # score by token overlap and substring presence
+            overlap = len(tokens & th_tokens)
+            substr = 1 if (tkl in kl or kl in tkl) else 0
+            score = overlap * 2 + substr
+            if score > best_score:
+                best = rng
+                best_score = score
+        return best
 
+    for key, readings in flat.items():
+        th = find_threshold_for(key)
+        if th is None:
+            continue
+        df = _df_from_readings(readings)
+        if df.empty:
+            alerts[str(key)] = "No data available."
+            continue
+        latest_value = float(df.iloc[-1]["reading_value"]) if not df.empty else None
+        if latest_value is None:
+            alerts[str(key)] = "No readings."
+            continue
+        min_val, max_val = th
+        unit = _unit_for_key(key)
+        unit_suffix = f" {unit}" if unit else ""
+        if latest_value < min_val or latest_value > max_val:
+            alerts[str(key)] = (
+                f"Alert: Latest reading {latest_value}{unit_suffix} out of range [{min_val}, {max_val}]."
+            )
+        else:
+            alerts[str(key)] = (
+                f"OK: Latest reading {latest_value}{unit_suffix} within acceptable range."
+            )
     return alerts
 
 
@@ -1363,7 +1267,7 @@ def detect_anomalies(sensor_data, method="zscore", threshold=3, robust=False):
                 },
                 "2": { ... }
             }
-      - method: Currently supports only "zscore" (standard or robust based on the `robust` flag).
+    - method: "zscore" (standard or robust based on the `robust` flag) or "iqr" for IQR-based outliers.
       - threshold: The z-score threshold above which a reading is flagged as an anomaly.
       - robust: If True, uses the median and median absolute deviation (MAD) for z-score calculation,
                 which is more robust to outliers.
@@ -1372,60 +1276,48 @@ def detect_anomalies(sensor_data, method="zscore", threshold=3, robust=False):
       A dictionary mapping flattened sensor names (e.g. "1_Sensor_Type_A") to a list of anomalous readings.
       Each anomalous reading includes the timestamp, reading_value, and computed zscore.
     """
-    # Convert JSON string to dict if needed.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
+    # Accept standard payload and compute anomalies per key
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No sensor data available"}
 
     anomalies = {}
-
-    # Iterate over each sensor ID in the nested structure.
-    for sensor_id, sensor_types in sensor_data.items():
-        # Iterate over each sensor type.
-        for sensor_type, sensor_info in sensor_types.items():
-            unique_key = f"{sensor_id}_{sensor_type}"
-            timeseries_data = sensor_info.get("timeseries_data", [])
-            try:
-                df = pd.DataFrame(timeseries_data)
-                if "datetime" in df.columns:
-                    df = df.rename(columns={"datetime": "timestamp"})
-                df["timestamp"] = pd.to_datetime(df["timestamp"])
-                df = df.sort_values(by="timestamp")
-
+    for key, readings in flat.items():
+        try:
+            df = _df_from_readings(readings)
+            if df.empty or "reading_value" not in df.columns:
+                anomalies[str(key)] = []
+                continue
+            if method == "iqr":
+                Q1 = df["reading_value"].quantile(0.25)
+                Q3 = df["reading_value"].quantile(0.75)
+                IQR = Q3 - Q1
+                lower = Q1 - threshold * IQR
+                upper = Q3 + threshold * IQR
+                anomaly_df = df[(df["reading_value"] < lower) | (df["reading_value"] > upper)].copy()
+                anomaly_df["timestamp"] = anomaly_df["timestamp"].dt.strftime("%Y-%m-%d %H:%M:%S")
+                anomalies[str(key)] = anomaly_df[["timestamp", "reading_value"]].to_dict(orient="records")
+            else:
                 if robust:
-                    median_val = df["reading_value"].median()
-                    mad = np.median(np.abs(df["reading_value"] - median_val))
-                    if mad == 0:
-                        mad = 1  # Avoid division by zero
+                    median_val = float(df["reading_value"].median())
+                    mad = float(np.median(np.abs(df["reading_value"] - median_val)))
+                    mad = mad if mad != 0 else 1.0
                     df["zscore"] = 0.6745 * (df["reading_value"] - median_val) / mad
                 else:
-                    mean_val = df["reading_value"].mean()
-                    std_val = df["reading_value"].std() or 1  # Avoid division by zero
+                    mean_val = float(df["reading_value"].mean())
+                    std_val = float(df["reading_value"].std() or 1.0)
                     df["zscore"] = (df["reading_value"] - mean_val) / std_val
-
-                # Flag anomalies where the absolute z-score exceeds the threshold.
                 anomaly_df = df[np.abs(df["zscore"]) > threshold].copy()
-                anomaly_df = anomaly_df.assign(
-                    timestamp=anomaly_df["timestamp"].dt.strftime("%Y-%m-%d %H:%M:%S")
-                )
-                anomalies[unique_key] = anomaly_df[
-                    ["timestamp", "reading_value", "zscore"]
-                ].to_dict(orient="records")
-            except Exception as e:
-                logging.error(f"Error detecting anomalies for sensor {unique_key}: {e}")
-                anomalies[unique_key] = {
-                    "error": "Anomaly detection failed",
-                    "details": str(e),
-                }
-
+                anomaly_df["timestamp"] = anomaly_df["timestamp"].dt.strftime("%Y-%m-%d %H:%M:%S")
+                anomalies[str(key)] = anomaly_df[["timestamp", "reading_value", "zscore"]].to_dict(orient="records")
+        except Exception as e:
+            logging.error(f"Error detecting anomalies for sensor {key}: {e}")
+            anomalies[str(key)] = {"error": "Anomaly detection failed", "details": str(e)}
     return anomalies
 
 
 def analyze_noise_levels(
-    sensor_data, sensor_key="Sound_Noise_Sensor_MEMS", threshold=90
+    sensor_data, threshold=90
 ):
     """
     Analyzes noise level data from a nested JSON structure.
@@ -1462,49 +1354,43 @@ def analyze_noise_levels(
     Returns:
       A dictionary with summary statistics and an alert message.
     """
-    # Parse sensor_data from JSON string if needed.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No noise data available"}
 
-    # Aggregate readings for the specified sensor_key across all sensor IDs.
-    aggregated_readings = []
-    for sensor_id, sensor_types in sensor_data.items():
-        if sensor_key in sensor_types:
-            readings = sensor_types[sensor_key].get("timeseries_data", [])
-            aggregated_readings.extend(readings)
+    noise_pred = _key_matcher(["noise", "sound"])
+    keys = _select_keys(flat, noise_pred, fallback_to_all=(len(flat) == 1))
+    if not keys:
+        return {"error": "No noise-like keys found"}
 
-    if not aggregated_readings:
-        return {"error": f"No data found for {sensor_key}"}
+    all_readings = []
+    for k in keys:
+        all_readings.extend(flat.get(k, []))
+    df = _df_from_readings(all_readings)
+    if df.empty:
+        return {"error": "Empty noise series"}
 
-    try:
-        df = pd.DataFrame(aggregated_readings)
-        if "datetime" in df.columns:
-            df = df.rename(columns={"datetime": "timestamp"})
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
-        df = df.sort_values(by="timestamp")
-        latest = df.iloc[-1]["reading_value"]
-        summary = {
-            "mean": float(df["reading_value"].mean()),
-            "min": float(df["reading_value"].min()),
-            "max": float(df["reading_value"].max()),
-            "std": float(df["reading_value"].std()),
-            "latest": float(latest),
-        }
+    latest = float(df.iloc[-1]["reading_value"]) if not df.empty else None
+    summary = {
+        "mean": float(df["reading_value"].mean()),
+        "min": float(df["reading_value"].min()),
+        "max": float(df["reading_value"].max()),
+        "std": float(df["reading_value"].std()),
+        "latest": latest,
+        "unit": UK_INDOOR_STANDARDS["noise_db"]["unit"],
+        "acceptable_max": threshold,
+    }
+    if latest is not None:
         summary["alert"] = (
             "High noise level" if latest > threshold else "Normal noise level"
         )
-        return summary
-    except Exception as e:
-        logging.error(f"Error analyzing noise levels: {e}")
-        return {"error": "Failed to analyze noise levels"}
+    else:
+        summary["alert"] = "No readings"
+    return summary
 
 
 def analyze_air_quality(
-    sensor_data, sensor_key="Air_Quality_Sensor", thresholds=(50, 100)
+    sensor_data, thresholds=(50, 100)
 ):
     """
     Analyzes air quality sensor data from a nested JSON structure.
@@ -1541,50 +1427,41 @@ def analyze_air_quality(
         - min: minimum reading_value.
         - max: maximum reading_value.
     """
-    # Parse sensor_data if it's a JSON string.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No air quality data available"}
 
-    # Aggregate readings for the specified sensor_key across sensor IDs.
-    aggregated_readings = []
-    for sensor_id, sensor_types in sensor_data.items():
-        if sensor_key in sensor_types:
-            readings = sensor_types[sensor_key].get("timeseries_data", [])
-            aggregated_readings.extend(readings)
+    aq_pred = _key_matcher(["air_quality", "aqi", "aq_sensor"])  # broad match
+    keys = _select_keys(flat, aq_pred, fallback_to_all=(len(flat) == 1))
+    if not keys:
+        return {"error": "No air-quality-like keys found"}
 
-    if not aggregated_readings:
-        return {"error": f"No data found for {sensor_key}"}
+    all_readings = []
+    for k in keys:
+        all_readings.extend(flat.get(k, []))
+    df = _df_from_readings(all_readings)
+    if df.empty:
+        return {"error": "Empty air quality series"}
 
-    try:
-        df = pd.DataFrame(aggregated_readings)
-        if "datetime" in df.columns:
-            df = df.rename(columns={"datetime": "timestamp"})
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
-        df = df.sort_values(by="timestamp")
-        avg_quality = float(df["reading_value"].mean())
-        if avg_quality <= thresholds[0]:
-            status = "Good"
-        elif avg_quality <= thresholds[1]:
-            status = "Moderate"
-        else:
-            status = "Poor"
-        return {
-            "average_air_quality": avg_quality,
-            "status": status,
-            "min": float(df["reading_value"].min()),
-            "max": float(df["reading_value"].max()),
-        }
-    except Exception as e:
-        logging.error(f"Error analyzing air quality: {e}")
-        return {"error": "Failed to analyze air quality"}
+    avg_quality = float(df["reading_value"].mean())
+    if avg_quality <= thresholds[0]:
+        status = "Good"
+    elif avg_quality <= thresholds[1]:
+        status = "Moderate"
+    else:
+        status = "Poor"
+    return {
+        "average_air_quality": avg_quality,
+        "status": status,
+        "min": float(df["reading_value"].min()),
+        "max": float(df["reading_value"].max()),
+        "unit": None,  # AQI is unitless if this is an arbitrary index
+        "thresholds": {"good_max": thresholds[0], "moderate_max": thresholds[1]},
+    }
 
 
 def analyze_formaldehyde_levels(
-    sensor_data, sensor_key="Formaldehyde_Level_Sensor", threshold=0.1
+    sensor_data, threshold=None
 ):
     """
     Analyzes formaldehyde sensor readings from a nested JSON structure.
@@ -1619,50 +1496,46 @@ def analyze_formaldehyde_levels(
       - mean, min, max, std, and latest reading_value.
       - an alert message if the latest reading exceeds the threshold.
     """
-    # Parse sensor_data if it is a JSON string.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No formaldehyde data available"}
 
-    # Aggregate readings for the specified sensor_key across all sensor IDs.
-    aggregated_readings = []
-    for sensor_id, sensor_types in sensor_data.items():
-        if sensor_key in sensor_types:
-            readings = sensor_types[sensor_key].get("timeseries_data", [])
-            aggregated_readings.extend(readings)
+    hcho_pred = _key_matcher(["formaldehyde", "hcho"])  # common naming
+    keys = _select_keys(flat, hcho_pred, fallback_to_all=(len(flat) == 1))
+    if not keys:
+        return {"error": "No formaldehyde-like keys found"}
 
-    if not aggregated_readings:
-        return {"error": f"No data found for {sensor_key}"}
+    all_readings = []
+    for k in keys:
+        all_readings.extend(flat.get(k, []))
+    df = _df_from_readings(all_readings)
+    if df.empty:
+        return {"error": "Empty formaldehyde series"}
 
-    try:
-        df = pd.DataFrame(aggregated_readings)
-        if "datetime" in df.columns:
-            df = df.rename(columns={"datetime": "timestamp"})
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
-        df = df.sort_values(by="timestamp")
-        latest = float(df.iloc[-1]["reading_value"])
-        summary = {
-            "mean": float(df["reading_value"].mean()),
-            "min": float(df["reading_value"].min()),
-            "max": float(df["reading_value"].max()),
-            "std": float(df["reading_value"].std()),
-            "latest": latest,
-        }
+    latest = float(df.iloc[-1]["reading_value"]) if not df.empty else None
+    if threshold is None:
+        threshold = UK_INDOOR_STANDARDS["hcho_mgm3"]["max"]
+    summary = {
+        "mean": float(df["reading_value"].mean()),
+        "min": float(df["reading_value"].min()),
+        "max": float(df["reading_value"].max()),
+        "std": float(df["reading_value"].std()),
+        "latest": latest,
+        "unit": UK_INDOOR_STANDARDS["hcho_mgm3"]["unit"],
+        "acceptable_max": threshold,
+    }
+    if latest is not None:
         summary["alert"] = (
             "High formaldehyde level"
             if latest > threshold
             else "Normal formaldehyde level"
         )
-        return summary
-    except Exception as e:
-        logging.error(f"Error analyzing formaldehyde levels: {e}")
-        return {"error": "Failed to analyze formaldehyde levels"}
+    else:
+        summary["alert"] = "No readings"
+    return summary
 
 
-def analyze_co2_levels(sensor_data, sensor_key="CO2_Level_Sensor", threshold=1000):
+def analyze_co2_levels(sensor_data, threshold=None):
     """
     Analyzes CO2 sensor readings from a nested JSON structure.
 
@@ -1696,58 +1569,51 @@ def analyze_co2_levels(sensor_data, sensor_key="CO2_Level_Sensor", threshold=100
       - mean, min, max, std, and latest reading_value.
       - an alert message if the latest reading exceeds the threshold.
     """
-    # Parse sensor_data if provided as a JSON string.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No CO2 data available"}
 
-    # Aggregate readings for the specified sensor_key across sensor IDs.
-    aggregated_readings = []
-    for sensor_id, sensor_types in sensor_data.items():
-        if sensor_key in sensor_types:
-            readings = sensor_types[sensor_key].get("timeseries_data", [])
-            aggregated_readings.extend(readings)
+    co2_pred = _key_matcher(["co2"])  # specific enough
+    keys = _select_keys(flat, co2_pred, fallback_to_all=(len(flat) == 1))
+    if not keys:
+        return {"error": "No CO2-like keys found"}
 
-    if not aggregated_readings:
-        return {"error": f"No data found for {sensor_key}"}
+    all_readings = []
+    for k in keys:
+        all_readings.extend(flat.get(k, []))
+    df = _df_from_readings(all_readings)
+    if df.empty:
+        return {"error": "Empty CO2 series"}
 
-    try:
-        df = pd.DataFrame(aggregated_readings)
-        if "datetime" in df.columns:
-            df = df.rename(columns={"datetime": "timestamp"})
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
-        df = df.sort_values(by="timestamp")
-        latest = float(df.iloc[-1]["reading_value"])
-        summary = {
-            "mean": float(df["reading_value"].mean()),
-            "min": float(df["reading_value"].min()),
-            "max": float(df["reading_value"].max()),
-            "std": float(df["reading_value"].std()),
-            "latest": latest,
-        }
+    latest = float(df.iloc[-1]["reading_value"]) if not df.empty else None
+    # Default threshold per UK guidance
+    if threshold is None:
+        threshold = UK_INDOOR_STANDARDS["co2_ppm"]["range"][1]
+    summary = {
+        "mean": float(df["reading_value"].mean()),
+        "min": float(df["reading_value"].min()),
+        "max": float(df["reading_value"].max()),
+        "std": float(df["reading_value"].std()),
+        "latest": latest,
+        "unit": UK_INDOOR_STANDARDS["co2_ppm"]["unit"],
+        "acceptable_max": threshold,
+    }
+    if latest is not None:
         summary["alert"] = (
             "High CO2 level" if latest > threshold else "Normal CO2 level"
         )
-        return summary
-    except Exception as e:
-        logging.error(f"Error analyzing CO2 levels: {e}")
-        return {"error": "Failed to analyze CO2 levels"}
+    else:
+        summary["alert"] = "No readings"
+    return summary
 
 
 def analyze_pm_levels(
     sensor_data,
-    sensor_keys=[
-        "PM1_Level_Sensor_Standard",
-        "PM2_5_Level_Sensor_Standard",
-        "PM10_Level_Sensor_Standard",
-    ],
     thresholds={
-        "PM1_Level_Sensor_Standard": 50,
-        "PM2_5_Level_Sensor_Standard": 30,
-        "PM10_Level_Sensor_Standard": 50,
+        "pm1": 50,
+        "pm2.5": 35,
+        "pm2_5": 35,
+        "pm10": 50,
     },
 ):
     """
@@ -1780,59 +1646,69 @@ def analyze_pm_levels(
 
     Returns a dictionary mapping each sensor key to its analysis summary.
     """
-    # Parse sensor_data if it's a JSON string.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor data"}
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No PM data available"}
 
-    # If sensor_data is a list (data for a single sensor), wrap it in a dict.
-    if isinstance(sensor_data, list):
-        sensor_data = {"1": sensor_data}
+    # Group keys by PM type
+    pm_groups = {
+        "pm1": [],
+        "pm2.5": [],
+        "pm10": [],
+    }
+    for k in flat.keys():
+        kl = str(k).lower()
+        if "pm10" in kl:
+            pm_groups["pm10"].append(k)
+        elif "pm2.5" in kl or "pm2_5" in kl or "pm25" in kl:
+            pm_groups["pm2.5"].append(k)
+        elif kl.startswith("pm1") or "pm1_0" in kl or "pm1.0" in kl:
+            pm_groups["pm1"].append(k)
 
     analysis = {}
-    for key in sensor_keys:
-        # Aggregate readings for this key across all sensor IDs.
-        aggregated_readings = []
-        for sensor_id, sensor_types in sensor_data.items():
-            if key in sensor_types:
-                readings = sensor_types[key].get("timeseries_data", [])
-                aggregated_readings.extend(readings)
-        if not aggregated_readings:
-            analysis[key] = {"error": "No data available"}
+    for pm_type, keys in pm_groups.items():
+        if not keys:
             continue
-        try:
-            df = pd.DataFrame(aggregated_readings)
-            if "datetime" in df.columns:
-                df = df.rename(columns={"datetime": "timestamp"})
-            df["timestamp"] = pd.to_datetime(df["timestamp"])
-            df = df.sort_values(by="timestamp")
-            latest = float(df.iloc[-1]["reading_value"])
-            summary = {
-                "mean": float(df["reading_value"].mean()),
-                "min": float(df["reading_value"].min()),
-                "max": float(df["reading_value"].max()),
-                "std": float(df["reading_value"].std()),
-                "latest": latest,
-            }
-            thres = thresholds.get(key, None)
-            if thres is not None:
-                summary["alert"] = (
-                    f"High {key} reading" if latest > thres else f"Normal {key} reading"
-                )
-            else:
-                summary["alert"] = "Threshold not defined"
-            analysis[key] = summary
-        except Exception as e:
-            logging.error(f"Error analyzing {key}: {e}")
-            analysis[key] = {"error": f"Failed to analyze {key}"}
+        all_readings = []
+        for k in keys:
+            all_readings.extend(flat.get(k, []))
+        df = _df_from_readings(all_readings)
+        if df.empty:
+            analysis[pm_type] = {"error": "No data available"}
+            continue
+        latest = float(df.iloc[-1]["reading_value"]) if not df.empty else None
+        unit = UK_INDOOR_STANDARDS["pm10_ugm3"]["unit"] if pm_type == "pm10" else UK_INDOOR_STANDARDS["pm2.5_ugm3"]["unit"] if pm_type.startswith("pm2") else UK_INDOOR_STANDARDS["pm2.5_ugm3"]["unit"]
+        summary = {
+            "mean": float(df["reading_value"].mean()),
+            "min": float(df["reading_value"].min()),
+            "max": float(df["reading_value"].max()),
+            "std": float(df["reading_value"].std()),
+            "latest": latest,
+            "unit": unit,
+        }
+        thres = None
+        # choose threshold key variant
+        for key_variant in [pm_type, pm_type.replace(".", "_"), pm_type.replace(".", "")]:
+            if key_variant in thresholds:
+                thres = thresholds[key_variant]
+                break
+        if latest is not None and thres is not None:
+            summary["alert"] = (
+                f"High {pm_type} reading" if latest > thres else f"Normal {pm_type} reading"
+            )
+            summary["threshold"] = {"value": thres, "unit": unit}
+        elif thres is None:
+            summary["alert"] = "Threshold not defined"
+        else:
+            summary["alert"] = "No readings"
+        analysis[pm_type] = summary
+    if not analysis:
+        return {"error": "No PM-like keys found"}
     return analysis
 
 
 def analyze_temperatures(
-    sensor_data, sensor_key="Air_Temperature_Sensor", acceptable_range=(18, 27)
+    sensor_data, acceptable_range=None
 ):
     """
     Analyzes temperature sensor data from a nested JSON structure.
@@ -1864,61 +1740,63 @@ def analyze_temperatures(
          }
       }
 
-    Returns:
+        Returns:
       A dictionary with the computed summary statistics and an alert message.
     """
-    # Parse sensor_data if provided as a JSON string.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {"error": "Invalid sensor_data JSON"}
+    # Accept any temperature-like series from standard payload
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No temperature data available"}
 
-    # Aggregate readings for the specified sensor_key across all sensor IDs.
-    aggregated_readings = []
-    for sensor_id, sensor_types in sensor_data.items():
-        if sensor_key in sensor_types:
-            readings = sensor_types[sensor_key].get("timeseries_data", [])
-            aggregated_readings.extend(readings)
+    # Exclude accidental matches like 'attempt' when looking for temperature series
+    temp_pred = _key_matcher(["temperature", "temp"], exclude_substrs=["attempt"])  # avoid matching 'attempt'
+    keys = _select_keys(flat, temp_pred, fallback_to_all=(len(flat) == 1))
+    if not keys:
+        return {"error": "No temperature-like keys found"}
 
-    if not aggregated_readings:
-        return {"error": f"No data found for {sensor_key}"}
+    # Combine all selected series
+    all_readings = []
+    for k in keys:
+        all_readings.extend(flat.get(k, []))
+    df = _df_from_readings(all_readings)
+    if df.empty:
+        return {"error": "Empty temperature series"}
 
-    try:
-        df = pd.DataFrame(aggregated_readings)
-        if "datetime" in df.columns:
-            df = df.rename(columns={"datetime": "timestamp"})
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
-        df = df.sort_values(by="timestamp")
-        latest = float(df.iloc[-1]["reading_value"])
-        summary = {
-            "mean": float(df["reading_value"].mean()),
-            "min": float(df["reading_value"].min()),
-            "max": float(df["reading_value"].max()),
-            "std": float(df["reading_value"].std()),
-            "latest": latest,
-        }
+    latest = float(df.iloc[-1]["reading_value"]) if not df.empty else None
+    # Default to UK comfort range if not provided
+    if acceptable_range is None:
+        acceptable_range = UK_INDOOR_STANDARDS["temperature_c"]["range"]
+    unit = "°C"
+    summary = {
+        "mean": float(df["reading_value"].mean()),
+        "min": float(df["reading_value"].min()),
+        "max": float(df["reading_value"].max()),
+        "std": float(df["reading_value"].std()),
+        "latest": latest,
+        "unit": unit,
+        "acceptable_range": {"min": acceptable_range[0], "max": acceptable_range[1], "unit": unit},
+    }
+    if latest is not None:
         summary["alert"] = (
             "Temperature out of range"
             if (latest < acceptable_range[0] or latest > acceptable_range[1])
             else "Temperature normal"
         )
-        return summary
-    except Exception as e:
-        logging.error(f"Error analyzing temperatures: {e}")
-        return {"error": "Failed to analyze temperatures"}
+    else:
+        summary["alert"] = "No readings"
+    return summary
 
 
 def analyze_humidity(
-    sensor_data, sensor_key="Zone_Air_Humidity_Sensor", acceptable_range=(30, 60)
+    sensor_data,
+    acceptable_range=None,
 ):
     """
     Analyzes humidity sensor data from a nested JSON structure.
 
-    Aggregates readings for the specified sensor_key across sensor IDs,
-    computes summary statistics (mean, min, max, std, latest reading), and
-    flags an alert if the latest reading is outside the acceptable range.
+    Automatically discovers humidity-like series across the payload (UUIDs or names),
+    aggregates readings, computes summary statistics (mean, min, max, std, latest),
+    and flags an alert if the latest reading is outside the acceptable range.
 
     Expected input (as a Python dict or JSON string):
       {
@@ -1943,7 +1821,7 @@ def analyze_humidity(
          }
       }
 
-    Returns:
+        Returns:
       A dictionary containing summary statistics and an alert message.
     """
     # Parse sensor_data if provided as a JSON string.
@@ -1954,35 +1832,111 @@ def analyze_humidity(
             logging.error(f"Error parsing sensor_data JSON: {e}")
             return {"error": "Invalid sensor_data JSON"}
 
-    # Aggregate readings for the specified sensor_key across sensor IDs.
+    # Helper to detect humidity-like keys
+    def is_humidity_key(key: str) -> bool:
+        try:
+            k = key.lower()
+        except Exception:
+            return False
+        return ("humidity" in k) or (k == "rh") or ("relative_humidity" in k)
+
     aggregated_readings = []
-    for sensor_id, sensor_types in sensor_data.items():
-        if sensor_key in sensor_types:
-            readings = sensor_types[sensor_key].get("timeseries_data", [])
-            aggregated_readings.extend(readings)
+
+    # If the payload is a flat mapping: {name_or_uuid: [ {datetime, reading_value}, ... ]}
+    if isinstance(sensor_data, dict) and sensor_data and all(
+        isinstance(v, list) for v in sensor_data.values()
+    ):
+        # Prefer humidity-like keys; else if one key, use it; else aggregate all keys
+        keys_to_use = [k for k in sensor_data.keys() if is_humidity_key(str(k))]
+        if not keys_to_use:
+            if len(sensor_data) == 1:
+                keys_to_use = list(sensor_data.keys())
+            else:
+                # Fall back to all keys if ambiguous
+                keys_to_use = list(sensor_data.keys())
+        for k in keys_to_use:
+            readings = sensor_data.get(k, [])
+            if isinstance(readings, list):
+                aggregated_readings.extend(readings)
+
+    # Else, expect nested mapping: { group_id: { inner_key: { timeseries_data: [...] } } }
+    elif isinstance(sensor_data, dict):
+        for group_id, inner in sensor_data.items():
+            if not isinstance(inner, dict):
+                # If inner is a list, treat as direct readings for this group
+                if isinstance(inner, list):
+                    aggregated_readings.extend(inner)
+                continue
+
+            # Determine which inner keys to use for this group
+            selected_keys = [k for k in inner.keys() if is_humidity_key(str(k))]
+            if not selected_keys:
+                if len(inner) == 1:
+                    selected_keys = list(inner.keys())
+                else:
+                    # Choose key(s) with max number of readings; if empty, use all
+                    lengths = []
+                    for k, v in inner.items():
+                        if isinstance(v, dict):
+                            readings = v.get("timeseries_data", [])
+                        elif isinstance(v, list):
+                            readings = v
+                        else:
+                            readings = []
+                        lengths.append((k, len(readings)))
+                    if lengths:
+                        max_len = max(l for _, l in lengths)
+                        selected_keys = [k for k, l in lengths if l == max_len]
+                    else:
+                        selected_keys = list(inner.keys())
+
+            for k in selected_keys:
+                info = inner.get(k)
+                if isinstance(info, dict):
+                    aggregated_readings.extend(info.get("timeseries_data", []))
+                elif isinstance(info, list):
+                    aggregated_readings.extend(info)
+
+    # If sensor_data is already a list of readings
+    elif isinstance(sensor_data, list):
+        aggregated_readings = sensor_data
 
     if not aggregated_readings:
-        return {"error": f"No data found for {sensor_key}"}
+        # Give a clearer error, mentioning both the requested key and fallback behavior
+        return {"error": "No humidity-like data found (searched names, UUIDs, and fallbacks)"}
 
     try:
         df = pd.DataFrame(aggregated_readings)
-        if "datetime" in df.columns:
+        # Normalize timestamp column
+        if "timestamp" not in df.columns and "datetime" in df.columns:
             df = df.rename(columns={"datetime": "timestamp"})
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        if "timestamp" not in df.columns:
+            # If still not present, create a dummy monotonic timestamp based on index
+            df["timestamp"] = pd.to_datetime(range(len(df)), unit="s", origin="unix")
+        df["timestamp"] = pd.to_datetime(df["timestamp"]) 
         df = df.sort_values(by="timestamp")
-        latest = float(df.iloc[-1]["reading_value"])
+        latest = float(df.iloc[-1]["reading_value"]) if not df.empty else None
+        # Default to UK recommended RH range if not provided
+        if acceptable_range is None:
+            acceptable_range = UK_INDOOR_STANDARDS["humidity_rh"]["range"]
+        unit = "%"
         summary = {
-            "mean": float(df["reading_value"].mean()),
-            "min": float(df["reading_value"].min()),
-            "max": float(df["reading_value"].max()),
-            "std": float(df["reading_value"].std()),
+            "mean": float(df["reading_value"].mean()) if not df.empty else None,
+            "min": float(df["reading_value"].min()) if not df.empty else None,
+            "max": float(df["reading_value"].max()) if not df.empty else None,
+            "std": float(df["reading_value"].std()) if not df.empty else None,
             "latest": latest,
+            "unit": unit,
+            "acceptable_range": {"min": acceptable_range[0], "max": acceptable_range[1], "unit": unit},
         }
-        summary["alert"] = (
-            "Humidity out of range"
-            if (latest < acceptable_range[0] or latest > acceptable_range[1])
-            else "Humidity normal"
-        )
+        if latest is not None:
+            summary["alert"] = (
+                "Humidity out of range"
+                if (latest < acceptable_range[0] or latest > acceptable_range[1])
+                else "Humidity normal"
+            )
+        else:
+            summary["alert"] = "No readings"
         return summary
     except Exception as e:
         logging.error(f"Error analyzing humidity: {e}")
@@ -2028,10 +1982,10 @@ def analyze_temperature_humidity(
 
     # Call the updated analysis functions (which expect the nested JSON structure)
     temp_summary = analyze_temperatures(
-        sensor_data, sensor_key=temp_key, acceptable_range=temp_range
+        sensor_data, acceptable_range=temp_range
     )
     humidity_summary = analyze_humidity(
-        sensor_data, sensor_key=humidity_key, acceptable_range=humidity_range
+        sensor_data, acceptable_range=humidity_range
     )
 
     # Compute midpoints for the acceptable ranges.
@@ -2100,60 +2054,31 @@ def detect_potential_failures(sensor_data, time_window_hours=24, anomaly_thresho
     Returns:
       - List of flattened sensor identifiers (e.g. "1_Sensor_Type_A") showing potential failures.
     """
-    # Parse sensor_data from JSON string if necessary.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return []
+    # Use standardized helpers to accept flat or nested payloads
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return []
 
     sensors_with_failures = []
-
-    # Iterate over each sensor ID.
-    for sensor_id, sensor_types in sensor_data.items():
-        # Iterate over each sensor type within this sensor ID.
-        for sensor_type, sensor_info in sensor_types.items():
-            data_points = sensor_info.get("timeseries_data", [])
-            # If there is no data, skip this sensor type.
-            if not data_points:
+    for key, readings in flat.items():
+        try:
+            df = _df_from_readings(readings)
+            if df.empty or "reading_value" not in df.columns:
                 continue
-            try:
-                df = pd.DataFrame(data_points)
-                if "datetime" in df.columns:
-                    df = df.rename(columns={"datetime": "timestamp"})
-                df["timestamp"] = pd.to_datetime(df["timestamp"])
-                df = df.sort_values(by="timestamp")
-
-                # Calculate rolling mean and standard deviation for anomaly detection.
-                df["rolling_mean"] = (
-                    df["reading_value"].rolling(window=5, min_periods=1).mean()
-                )
-                df["rolling_std"] = (
-                    df["reading_value"].rolling(window=5, min_periods=1).std()
-                )
-
-                # Replace zeros in rolling_std with 1 to avoid division by zero.
-                std_series = df["rolling_std"].replace(0, 1)
-                df["zscore"] = np.abs(
-                    (df["reading_value"] - df["rolling_mean"]) / std_series
-                )
-
-                # Identify potential failures where z-score exceeds the threshold.
-                potential_failures = df[df["zscore"] > anomaly_threshold]
-
-                if not potential_failures.empty:
-                    latest_timestamp = df.iloc[-1]["timestamp"]
-                    failures_in_window = potential_failures[
-                        potential_failures["timestamp"]
-                        >= (latest_timestamp - pd.Timedelta(hours=time_window_hours))
-                    ]
-                    if not failures_in_window.empty:
-                        sensors_with_failures.append(f"{sensor_id}_{sensor_type}")
-            except Exception as e:
-                logging.error(
-                    f"Error processing sensor {sensor_id} ({sensor_type}): {e}"
-                )
+            df["rolling_mean"] = df["reading_value"].rolling(window=5, min_periods=1).mean()
+            df["rolling_std"] = df["reading_value"].rolling(window=5, min_periods=1).std()
+            std_series = df["rolling_std"].replace(0, 1)
+            df["zscore"] = np.abs((df["reading_value"] - df["rolling_mean"]) / std_series)
+            potential_failures = df[df["zscore"] > anomaly_threshold]
+            if not potential_failures.empty:
+                latest_timestamp = df.iloc[-1]["timestamp"]
+                failures_in_window = potential_failures[
+                    potential_failures["timestamp"] >= (latest_timestamp - pd.Timedelta(hours=time_window_hours))
+                ]
+                if not failures_in_window.empty:
+                    sensors_with_failures.append(str(key))
+        except Exception as e:
+            logging.error(f"Error processing sensor {key}: {e}")
 
     return sensors_with_failures
 
@@ -2188,58 +2113,28 @@ def forecast_downtimes(sensor_data):
       - A dictionary mapping each flattened sensor identifier (e.g. "1_Sensor_Type_A") to a list of timestamps
         (as strings) forecasted for potential downtimes.
     """
-    # Parse sensor_data if it is a JSON string.
-    if isinstance(sensor_data, str):
-        try:
-            sensor_data = json.loads(sensor_data)
-        except Exception as e:
-            logging.error(f"Error parsing sensor_data JSON: {e}")
-            return {}
+    # Accept flat or nested payloads
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {}
 
     downtimes_forecast = {}
-
-    # Iterate over each sensor ID.
-    for sensor_id, sensor_types in sensor_data.items():
-        # Iterate over each sensor type for this sensor ID.
-        for sensor_type, sensor_info in sensor_types.items():
-            timeseries_data = sensor_info.get("timeseries_data", [])
-            unique_key = f"{sensor_id}_{sensor_type}"
-
-            if not timeseries_data:
-                downtimes_forecast[unique_key] = []
+    for key, readings in flat.items():
+        try:
+            df = _df_from_readings(readings)
+            if df.empty or "reading_value" not in df.columns:
+                downtimes_forecast[str(key)] = []
                 continue
-
-            try:
-                df = pd.DataFrame(timeseries_data)
-                # Rename "datetime" column to "timestamp" if present.
-                if "datetime" in df.columns:
-                    df = df.rename(columns={"datetime": "timestamp"})
-                df["timestamp"] = pd.to_datetime(df["timestamp"])
-                df = df.sort_values(by="timestamp")
-                df = df.set_index("timestamp")
-
-                # Calculate rolling mean and standard deviation.
-                df["rolling_mean"] = (
-                    df["reading_value"].rolling(window=5, min_periods=1).mean()
-                )
-                df["rolling_std"] = (
-                    df["reading_value"].rolling(window=5, min_periods=1).std()
-                )
-
-                # Define a threshold series: rolling_mean - 2 * rolling_std.
-                threshold_series = df["rolling_mean"] - 2 * df["rolling_std"]
-                potential_downtimes = df[df["reading_value"] < threshold_series]
-
-                # Extract timestamps of potential downtimes.
-                forecasted = potential_downtimes.index.strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                ).tolist()
-                downtimes_forecast[unique_key] = forecasted
-            except Exception as e:
-                logging.error(
-                    f"Error forecasting downtimes for sensor {unique_key}: {e}"
-                )
-                downtimes_forecast[unique_key] = []
+            df = df.set_index("timestamp")
+            df["rolling_mean"] = df["reading_value"].rolling(window=5, min_periods=1).mean()
+            df["rolling_std"] = df["reading_value"].rolling(window=5, min_periods=1).std()
+            threshold_series = df["rolling_mean"] - 2 * df["rolling_std"]
+            potential_downtimes = df[df["reading_value"] < threshold_series]
+            forecasted = potential_downtimes.index.strftime("%Y-%m-%d %H:%M:%S").tolist()
+            downtimes_forecast[str(key)] = forecasted
+        except Exception as e:
+            logging.error(f"Error forecasting downtimes for sensor {key}: {e}")
+            downtimes_forecast[str(key)] = []
 
     return downtimes_forecast
 
@@ -2295,8 +2190,31 @@ def run_analysis():
     analysis_type = data["analysis_type"]
     logging.info(f"Analysis type: {analysis_type}")
     
-    # Remove 'analysis_type' to isolate sensor data
-    sensor_data = {k: v for k, v in data.items() if k != "analysis_type"}
+    # Remove control keys to isolate sensor data, but keep optional params
+    control_keys = {"analysis_type"}
+    optional_params = {}
+    # Collect whitelisted option keys if present
+    for opt in (
+        "sensor_key",
+        "acceptable_range",
+        "thresholds",
+        "temp_key",
+        "humidity_key",
+        "temp_range",
+        "humidity_range",
+        "freq",
+        "window",
+        "expected_range",
+        "robust",
+        "method",
+        "threshold",
+        "time_window_hours",
+        "anomaly_threshold",
+    ):
+        if opt in data:
+            optional_params[opt] = data[opt]
+            control_keys.add(opt)
+    sensor_data = {k: v for k, v in data.items() if k not in control_keys}
     logging.info(f"Extracted sensor data keys: {list(sensor_data.keys())}")
 
     if not sensor_data:
@@ -2309,7 +2227,15 @@ def run_analysis():
 
     try:
         logging.info(f"Calling analysis function: {analysis_type} with data of length: {len(str(sensor_data))}")
-        result = analysis_functions[analysis_type](sensor_data)
+        func = analysis_functions[analysis_type]
+        # Filter optional params based on function signature
+        sig = None
+        try:
+            sig = inspect.signature(func)
+            valid_kwargs = {k: v for k, v in optional_params.items() if k in sig.parameters}
+        except Exception:
+            valid_kwargs = optional_params
+        result = func(sensor_data, **valid_kwargs)
         
         # Create an enhanced response that includes the analytics type
         enhanced_result = {

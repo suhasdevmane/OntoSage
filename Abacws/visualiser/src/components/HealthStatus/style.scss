@@ -1,0 +1,21 @@
+.healthstatus {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  padding: 8px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  z-index: 15;
+  .row { display: flex; align-items: center; margin-bottom: 4px; gap: 6px; }
+  .row:last-child { margin-bottom: 0; }
+  .label { opacity: 0.8; }
+  .value.ok { color: #4caf50; }
+  .value.error { color: #f44336; }
+  .value.disabled { color: #ff9800; }
+  input { background: #222; color: #fff; border: 1px solid #444; padding: 2px 4px; border-radius: 3px; }
+  button { background:#1976d2; color:#fff; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; }
+  button:disabled { opacity:0.5; cursor: default; }
+}

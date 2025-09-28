@@ -1,0 +1,361 @@
+{
+  "offset": {
+    "x": -160,
+    "y": 0,
+    "z": 120
+  },
+  "devices": [
+    {
+      "name": "node_5.01",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 211,
+        "y": 73,
+        "z": -96
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.02",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 138,
+        "y": 73,
+        "z": -108
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.03",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 165,
+        "y": 73,
+        "z": -96
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.04",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 106,
+        "y": 73,
+        "z": -108
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.05",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 100,
+        "y": 73,
+        "z": -146
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.06",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 211,
+        "y": 73,
+        "z": -139
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.07",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 218,
+        "y": 73,
+        "z": -128
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.08",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 138,
+        "y": 73,
+        "z": -128
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.09",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 50,
+        "y": 73,
+        "z": -139
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.10",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 50,
+        "y": 73,
+        "z": -96
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.11",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 259,
+        "y": 73,
+        "z": -139
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.12",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 86,
+        "y": 73,
+        "z": -96
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.13",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 106,
+        "y": 73,
+        "z": -128
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.14",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 218,
+        "y": 73,
+        "z": -108
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.15",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 190,
+        "y": 73,
+        "z": -128
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.16",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 60,
+        "y": 73,
+        "z": -118
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.17",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 1218,
+        "y": 73,
+        "z": -96
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.18",
+      "type": "Corridor",
+      "floor": 5,
+      "position": {
+        "x": 243,
+        "y": 73,
+        "z": -96
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.19",
+      "type": "private_room",
+      "floor": 5,
+      "position": {
+        "x": 176,
+        "y": 73,
+        "z": -132
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.21",
+      "type": "teaching_space",
+      "floor": 5,
+      "position": {
+        "x": 250,
+        "y": 73,
+        "z": -87
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.23",
+      "type": "teaching_space",
+      "floor": 5,
+      "position": {
+        "x": 106,
+        "y": 73,
+        "z": -153
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.24",
+      "type": "teaching_space",
+      "floor": 5,
+      "position": {
+        "x": 190,
+        "y": 73,
+        "z": -108
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.25",
+      "type": "teaching_space",
+      "floor": 5,
+      "position": {
+        "x": 272,
+        "y": 73,
+        "z": -87
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.26",
+      "type": "teaching_space",
+      "floor": 5,
+      "position": {
+        "x": 90,
+        "y": 73,
+        "z": -139
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.27",
+      "type": "teaching_space",
+      "floor": 5,
+      "position": {
+        "x": 225,
+        "y": 73,
+        "z": -146
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.28",
+      "type": "teaching_space",
+      "floor": 5,
+      "position": {
+        "x": 225,
+        "y": 73,
+        "z": -153
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.29",
+      "type": "lift_out",
+      "floor": 5,
+      "position": {
+        "x": 64,
+        "y": 73,
+        "z": -96
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.30",
+      "type": "lift_out",
+      "floor": 5,
+      "position": {
+        "x": 276,
+        "y": 73,
+        "z": -139
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.31",
+      "type": "staircase_out",
+      "floor": 5,
+      "position": {
+        "x": 274,
+        "y": 73,
+        "z": -96
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.32",
+      "type": "staircase_out",
+      "floor": 5,
+      "position": {
+        "x": 128,
+        "y": 73,
+        "z": -139
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.33",
+      "type": "shared_room",
+      "floor": 5,
+      "position": {
+        "x": 280,
+        "y": 73,
+        "z": -282
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.34",
+      "type": "shared_room",
+      "floor": 5,
+      "position": {
+        "x": 167,
+        "y": 73,
+        "z": -118
+      },
+      "pinned": true
+    }
+  ]
+}

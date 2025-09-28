@@ -24,13 +24,27 @@
 			"command": "pwsh -NoProfile -File scripts/check-health.ps1",
 			"isBackground": false,
 			"group": "build"
-		}
-		,
+		},
 		{
 			"label": "Run scripts/check-health.sh",
 			"type": "shell",
 			"command": "bash scripts/check-health.sh",
 			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Train Rasa model",
+			"type": "shell",
+			"command": "docker compose",
+			"args": [
+				"--project-directory",
+				"c:\\Users\\suhas\\Documents\\GitHub\\OntoBot",
+				"run",
+				"--rm",
+				"rasa-train"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
 			"group": "build"
 		}
 	]

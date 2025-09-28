@@ -1,5 +1,12 @@
 version: "3.1"
 rules:
+
+  - rule: Route brickbot questions to action
+    steps:
+      - intent: Questions_to_brickbot
+      - action: action_question_to_brickbot
+    wait_for_user_input: false
+
   - rule: Respond to greetings
     steps:
       - intent: greet
@@ -20,11 +27,8 @@ rules:
       - intent: bot_challenge
       - action: utter_iamabot
 
-  - rule: Activate sensor form
-    steps:
-      - intent: Questions_to_brickbot
-      - action: sensor_form
-      - active_loop: sensor_form
+  # Removed automatic activation of sensor_form on Questions_to_brickbot.
+  # Now the intent will be handled by a story that calls action_question_to_brickbot first.
 
   - rule: Submit sensor form and process SPARQL query
     condition:
@@ -33,16 +37,7 @@ rules:
       - action: sensor_form
       - active_loop: null
       - action: action_question_to_brickbot
-      - slot_was_set:
-          - sparql_error: false
-      - slot_was_set:
-          - timeseries_ids: ["dummy_id"] # Placeholder for matching - actual value doesn't matter
-      - slot_was_set:
-          - start_date: "any" # These values help distinguish between paths
-      - slot_was_set:
-          - end_date: "any"
-      - action: action_process_timeseries
-      - action: action_reset_slots
+      # Follow-up actions are handled by dedicated rules based on slots
 
   - rule: Handle SPARQL error
     condition:

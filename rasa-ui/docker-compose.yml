@@ -39,14 +39,20 @@ services:
     environment:
       - BASE_URL=http://localhost:8080
       - BUNDLE_MEDIA=true
-      # Optional DB config (uses sensible defaults in code if unset)
-      # - DB_HOST=host.docker.internal
+      # Explicit DB config for internal Docker network(option1)
+      # - DB_HOST=mysqlserver
       # - DB_NAME=sensordb
       # - DB_USER=root
-      # - DB_PASSWORD=root
+      # - DB_PASSWORD=mysql
       # - DB_PORT=3306
+      # Explicit DB config for external local network/pc(option 2)
+      - DB_HOST=host.docker.internal
+      - DB_NAME=sensordb
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_PORT=3306
       # Optional: point to analytics service if available
-      # - ANALYTICS_URL=http://microservices:6000/analytics/run
+      - ANALYTICS_URL=http://microservices:6000/analytics/run
     ports:
     - "5055:5055"
     healthcheck:

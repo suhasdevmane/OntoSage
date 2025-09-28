@@ -1,0 +1,9 @@
+.settings-panel { position: fixed; top: 80px; right: 12px; z-index: 30; font-family: sans-serif; }
+.settings-toggle { background:#222; color:#fff; border:1px solid #555; border-radius:4px; padding:4px 8px; cursor:pointer; }
+.settings-body { display:none; margin-top:6px; width:240px; background:#1b1f23; color:#eee; border:1px solid #444; border-radius:6px; padding:10px 12px; box-shadow:0 4px 16px rgba(0,0,0,0.4); font-size:12px; }
+.settings-panel.open .settings-body { display:block; }
+.settings-panel h3 { margin:0 0 8px; font-size:14px; }
+.settings-panel h4 { margin:12px 0 4px; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:#aaa; }
+.settings-panel .row { display:flex; align-items:center; gap:6px; font-size:12px; margin:4px 0; }
+.settings-panel button { font-size:12px; }
+.settings-panel .hint { margin-top:4px; font-size:11px; color:#8fd; word-break:break-word; }

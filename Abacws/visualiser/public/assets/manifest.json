@@ -1,0 +1,12 @@
+{
+  "layers": [
+    "floors.glb",
+    "exterior-walls.glb",
+    "interior-walls.glb",
+    "windows.glb",
+    "stairs.glb",
+    "decoration.glb",
+    "glass.glb",
+    "egg.glb"
+  ]
+}

@@ -42,6 +42,79 @@ TRAIN_STATUS = {
     "model": None,
 }
 
+# In-memory action server restart jobs (multiple concurrent by id)
+ACTION_JOBS = {}
+RASA_START_JOBS = {}
+TRAIN_JOBS = {}
+
+def _new_action_job():
+    jid = f"job-{int(time.time()*1000)}"
+    ACTION_JOBS[jid] = {
+        "running": True,
+        "state": "starting",  # starting | stopping | starting_container | healthy | error
+        "error": None,
+        "logs": [],
+        "created_at": time.time(),
+        "updated_at": time.time(),
+    }
+    return jid
+
+def _append_action_log(job_id: str, message: str):
+    job = ACTION_JOBS.get(job_id)
+    if not job:
+        return
+    ts = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    job["logs"].append(f"[{ts}] {message}")
+    # Limit memory
+    if len(job["logs"]) > 2000:
+        job["logs"] = job["logs"][-2000:]
+    job["updated_at"] = time.time()
+
+def _new_rasa_start_job():
+    jid = f"start-{int(time.time()*1000)}"
+    RASA_START_JOBS[jid] = {
+        "running": True,
+        "state": "starting",  # starting | healthy | error
+        "error": None,
+        "logs": [],
+        "created_at": time.time(),
+        "updated_at": time.time(),
+    }
+    return jid
+
+def _append_rasa_start_log(job_id: str, message: str):
+    job = RASA_START_JOBS.get(job_id)
+    if not job:
+        return
+    ts = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    job["logs"].append(f"[{ts}] {message}")
+    if len(job["logs"]) > 2000:
+        job["logs"] = job["logs"][-2000:]
+    job["updated_at"] = time.time()
+
+def _new_train_job():
+    jid = f"train-{int(time.time()*1000)}"
+    TRAIN_JOBS[jid] = {
+        "running": True,
+        "state": "starting",  # starting | stopping_rasa | training | training_done | starting_rasa | rasa_ready | loading_model | done | error
+        "error": None,
+        "logs": [],
+        "model": None,
+        "created_at": time.time(),
+        "updated_at": time.time(),
+    }
+    return jid
+
+def _append_train_log(job_id: str, message: str):
+    job = TRAIN_JOBS.get(job_id)
+    if not job:
+        return
+    ts = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    job["logs"].append(f"[{ts}] {message}")
+    if len(job["logs"]) > 4000:
+        job["logs"] = job["logs"][-4000:]
+    job["updated_at"] = time.time()
+
 def _set_train_status(step: str, **kwargs):
     TRAIN_STATUS.update({"step": step, **kwargs})
 
@@ -318,6 +391,18 @@ def _http_server_container(client):
             return c
     return None
 
+def _action_server_container(client):
+    for c in client.containers.list(all=True):
+        try:
+            labels = c.labels or {}
+            if labels.get('com.docker.compose.service') == 'action_server':
+                return c
+        except Exception:
+            pass
+        if c.name == 'action_server_container':
+            return c
+    return None
+
 
 def _rasa_train_template(client):
     for c in client.containers.list(all=True):
@@ -360,6 +445,106 @@ def _rasa_base_candidates(rasa_ct) -> list:
     # Always include DNS name last
     candidates.append(RASA_BASE)
     return candidates
+
+def _container_health_status(container) -> str:
+    try:
+        container.reload()
+        state = container.attrs.get('State', {})
+        health = state.get('Health', {})
+        return (health.get('Status') or state.get('Status') or '').lower()
+    except Exception:
+        return ''
+
+def _restart_action_server_job(job_id: str, timeout: int = 300):
+    try:
+        client = _docker_client()
+        ct = _action_server_container(client)
+        if not ct:
+            _append_action_log(job_id, "action_server container not found")
+            ACTION_JOBS[job_id].update({"running": False, "state": "error", "error": "container not found"})
+            return
+        ACTION_JOBS[job_id]["state"] = "stopping"
+        _append_action_log(job_id, f"Stopping container {ct.name}…")
+        try:
+            ct.reload()
+            if ct.status in ("running", "restarting"):
+                ct.stop(timeout=20)
+                _append_action_log(job_id, "Stopped.")
+        except Exception as e:
+            _append_action_log(job_id, f"Stop error (continuing): {e}")
+
+        ACTION_JOBS[job_id]["state"] = "starting_container"
+        _append_action_log(job_id, "Starting container…")
+        try:
+            ct.start()
+        except Exception as e:
+            _append_action_log(job_id, f"Start error: {e}")
+            ACTION_JOBS[job_id].update({"running": False, "state": "error", "error": str(e)})
+            return
+
+        # Wait for healthy or running
+        start_time = time.time()
+        last_health = ''
+        while time.time() - start_time < timeout:
+            hs = _container_health_status(ct)
+            if hs and hs != last_health:
+                _append_action_log(job_id, f"Health: {hs}")
+                last_health = hs
+            ct.reload()
+            if hs == 'healthy' or ct.status == 'running':
+                break
+            time.sleep(1)
+
+        hs = _container_health_status(ct)
+        if hs == 'healthy' or ct.status == 'running':
+            ACTION_JOBS[job_id].update({"running": False, "state": "healthy"})
+            _append_action_log(job_id, "Action server is up.")
+            try:
+                logs = ct.logs(tail=200).decode('utf-8', errors='ignore')
+                if logs:
+                    for line in logs.splitlines():
+                        _append_action_log(job_id, f"[container] {line}")
+            except Exception:
+                pass
+        else:
+            ACTION_JOBS[job_id].update({"running": False, "state": "error", "error": f"timed out waiting for healthy (status={ct.status}, health={hs})"})
+            _append_action_log(job_id, "Timed out waiting for healthy.")
+    except Exception as e:
+        ACTION_JOBS[job_id].update({"running": False, "state": "error", "error": str(e)})
+        _append_action_log(job_id, f"Unexpected error: {e}")
+
+
+@app.route("/api/action_server/restart", methods=["POST"])
+def api_action_server_restart():
+    username = get_user_from_request()
+    if not username:
+        return jsonify({"error": "unauthorized"}), 401
+    jid = _new_action_job()
+    _append_action_log(jid, f"User {username} requested action server restart")
+    # fire background thread
+    import threading
+    t = threading.Thread(target=_restart_action_server_job, args=(jid,), daemon=True)
+    t.start()
+    return jsonify({"ok": True, "jobId": jid}), 202
+
+
+@app.route("/api/action_server/restart/<job_id>/status", methods=["GET"])
+def api_action_server_restart_status(job_id: str):
+    username = get_user_from_request()
+    if not username:
+        return jsonify({"error": "unauthorized"}), 401
+    job = ACTION_JOBS.get(job_id)
+    if not job:
+        return jsonify({"error": "unknown jobId"}), 404
+    # Return tail of logs (join)
+    tail = "\n".join(job.get("logs", [])[-1000:])
+    return jsonify({
+        "running": job.get("running", False),
+        "state": job.get("state"),
+        "error": job.get("error"),
+        "updatedAt": int(job.get("updated_at", time.time())*1000),
+        "logs": tail,
+    }), 200
 
 
 @app.route("/api/rasa/models", methods=["GET"])
@@ -596,8 +781,12 @@ def api_rasa_train_job():
     if not username:
         return jsonify({"error": "unauthorized"}), 401
     if TRAIN_STATUS.get("running"):
-        return jsonify({"error": "training already in progress"}), 409
+        return jsonify({"error": "training already in progress", "status": TRAIN_STATUS}), 409
     _begin_train_status()
+    job_start_ts = time.time()
+    # Snapshot current latest model to verify new artifact is created by this run
+    prev_latest = _latest_model_path(RASA_MODELS_DIR)
+    prev_latest_mtime = os.path.getmtime(prev_latest) if prev_latest and os.path.exists(prev_latest) else 0
     # Use docker socket to orchestrate
     try:
         client = _docker_client()
@@ -654,7 +843,10 @@ def api_rasa_train_job():
                     environment={}
                 )
             exit_code = tmpl.wait(timeout=3600).get('StatusCode')
-            logs_tail = tmpl.logs(tail=2000).decode('utf-8', errors='ignore')
+            try:
+                logs_tail = tmpl.logs().decode('utf-8', errors='ignore')
+            except Exception:
+                logs_tail = tmpl.logs(tail=2000).decode('utf-8', errors='ignore')
             if exit_code != 0:
                 training_error = f"training job failed (template) with exit {exit_code}"
         else:
@@ -677,21 +869,35 @@ def api_rasa_train_job():
                 )
                 _set_train_status("training")
                 exit_code = job.wait(timeout=3600).get('StatusCode')
-                logs_tail = job.logs(tail=2000).decode('utf-8', errors='ignore')
+                try:
+                    logs_tail = job.logs().decode('utf-8', errors='ignore')
+                except Exception:
+                    logs_tail = job.logs(tail=2000).decode('utf-8', errors='ignore')
                 if exit_code != 0:
                     training_error = f"training job failed with exit {exit_code}"
     except Exception as e:
         training_error = f"failed to run training job: {e}"
 
-    # Find latest model
+    # Find latest model produced by this run
     model_path = _latest_model_path(RASA_MODELS_DIR)
-    if not model_path or not os.path.exists(model_path):
-        # Even if training failed, try to restart rasa below
+    model_mtime = os.path.getmtime(model_path) if model_path and os.path.exists(model_path) else 0
+    # Require a new model (newer timestamp or different filename) to consider training successful
+    produced_new_model = bool(model_path) and os.path.exists(model_path) and (
+        (model_mtime > max(prev_latest_mtime, job_start_ts - 2)) or (prev_latest and os.path.basename(model_path) != os.path.basename(prev_latest)) or (not prev_latest)
+    )
+    if not produced_new_model:
         if training_error is None:
-            training_error = "no model produced by training job"
+            training_error = "no new model produced by training job"
 
     # If auto-load is disabled, finish here after saving the model.
     if not AUTO_LOAD_AFTER_TRAIN:
+        if training_error:
+            _end_train_status(error=training_error)
+            return jsonify({"error": training_error, "logs": logs_tail[-2000:]}), 500
+        # Safety: ensure we have a valid model_path
+        if not (model_path and os.path.exists(model_path)):
+            _end_train_status(error="training finished but model missing")
+            return jsonify({"error": "training finished but model missing", "logs": logs_tail[-2000:]}), 500
         _end_train_status(model=os.path.basename(model_path))
         return jsonify({"ok": True, "strategy": "job", "model": os.path.basename(model_path), "auto_load": False})
 
@@ -752,6 +958,200 @@ def api_rasa_train_job():
         return jsonify({"error": str(e)}), 500
 
 
+def _run_training_job_with_logs(job_id: str):
+    try:
+        client = _docker_client()
+    except Exception as e:
+        TRAIN_JOBS[job_id].update({"running": False, "state": "error", "error": str(e)})
+        _append_train_log(job_id, f"docker client init failed: {e}")
+        return
+
+    # Stop rasa if running
+    try:
+        rasa_ct = _rasa_container(client)
+        TRAIN_JOBS[job_id]["state"] = "stopping_rasa"
+        if rasa_ct and rasa_ct.status == 'running':
+            rasa_ct.stop(timeout=30)
+        TRAIN_JOBS[job_id]["state"] = "training"
+    except Exception as e:
+        TRAIN_JOBS[job_id].update({"running": False, "state": "error", "error": f"failed to stop rasa: {e}"})
+        _append_train_log(job_id, f"failed to stop rasa: {e}")
+        return
+
+    # Run training (reuse template if exists else ephemeral)
+    training_error = None
+    try:
+        tmpl = _rasa_train_template(client)
+        if tmpl:
+            try:
+                if tmpl.status == 'running':
+                    tmpl.stop(timeout=10)
+            except Exception:
+                pass
+            try:
+                tmpl.start()
+            except Exception:
+                http_ct = _http_server_container(client)
+                if not http_ct:
+                    training_error = "http_server container not found for volumes_from"
+                else:
+                    try:
+                        tmpl.remove(force=True)
+                    except Exception:
+                        pass
+                    tmpl = client.containers.run(
+                        image='rasa/rasa:3.6.12-full',
+                        name='rasa_train_template',
+                        command=['train', '--config', '/srv/rasa/config.yml', '--domain', '/srv/rasa/domain.yml', '--data', '/srv/rasa/data', '--out', '/srv/rasa/models'],
+                        working_dir='/srv/rasa',
+                        detach=True,
+                        volumes_from=[http_ct.id],
+                        user='root',
+                        remove=False,
+                        environment={}
+                    )
+            # Stream logs while waiting for completion
+            try:
+                for line in tmpl.logs(stream=True, follow=True):
+                    try:
+                        txt = line.decode('utf-8', errors='ignore') if isinstance(line, (bytes, bytearray)) else str(line)
+                        if txt.strip():
+                            _append_train_log(job_id, f"[train] {txt.strip()}")
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            exit_code = tmpl.wait(timeout=3600).get('StatusCode')
+            if exit_code != 0:
+                training_error = f"training job failed (template) with exit {exit_code}"
+        else:
+            http_ct = _http_server_container(client)
+            if not http_ct:
+                training_error = "http_server container not found for volumes_from"
+            else:
+                job = client.containers.run(
+                    image='rasa/rasa:3.6.12-full',
+                    name=f"rasa_train_job_{int(time.time())}",
+                    command=['train', '--config', '/srv/rasa/config.yml', '--domain', '/srv/rasa/domain.yml', '--data', '/srv/rasa/data', '--out', '/srv/rasa/models'],
+                    working_dir='/srv/rasa',
+                    detach=True,
+                    volumes_from=[http_ct.id],
+                    user='root',
+                    remove=True,
+                    environment={}
+                )
+                # Stream logs while waiting
+                while True:
+                    try:
+                        for line in job.logs(stream=True, follow=True):
+                            try:
+                                txt = line.decode('utf-8', errors='ignore') if isinstance(line, (bytes, bytearray)) else str(line)
+                                if txt.strip():
+                                    _append_train_log(job_id, f"[train] {txt.strip()}")
+                            except Exception:
+                                pass
+                            TRAIN_JOBS[job_id]["updated_at"] = time.time()
+                    except Exception:
+                        # break when container stops
+                        break
+                    time.sleep(1)
+                exit_code = job.wait(timeout=3600).get('StatusCode')
+                if exit_code != 0:
+                    training_error = f"training job failed with exit {exit_code}"
+    except Exception as e:
+        training_error = f"failed to run training job: {e}"
+
+    # Find latest model
+    model_path = _latest_model_path(RASA_MODELS_DIR)
+    if not model_path or not os.path.exists(model_path):
+        if training_error is None:
+            training_error = "no model produced by training job"
+
+    if training_error:
+        TRAIN_JOBS[job_id].update({"running": False, "state": "error", "error": training_error})
+        _append_train_log(job_id, training_error)
+        return
+
+    # Start rasa back up and load model
+    TRAIN_JOBS[job_id]["state"] = "starting_rasa"
+    rasa_base = RASA_BASE
+    start_err = None
+    try:
+        rasa_ct = _rasa_container(client)
+        if rasa_ct:
+            rasa_ct.start()
+            TRAIN_JOBS[job_id]["state"] = "rasa_ready"
+            start_ts = time.time()
+            while time.time() - start_ts < 300:
+                try:
+                    rasa_ct.reload()
+                    ip = _container_ip_on_network(rasa_ct)
+                    rasa_base = f"http://{ip}:{RASA_HTTP_PORT}" if ip else RASA_BASE
+                    vr = requests.get(f"{rasa_base}/version", timeout=5)
+                    if vr.status_code == 200:
+                        break
+                except Exception:
+                    pass
+                time.sleep(2)
+        else:
+            start_err = "rasa container not found"
+    except Exception as e:
+        start_err = f"failed to start rasa: {e}"
+
+    # Load model into Rasa
+    if start_err:
+        TRAIN_JOBS[job_id].update({"running": False, "state": "error", "error": start_err})
+        _append_train_log(job_id, start_err)
+        return
+    try:
+        TRAIN_JOBS[job_id]["state"] = "loading_model"
+        with open(model_path, "rb") as fh:
+            files = {"model": (os.path.basename(model_path), fh, "application/gzip")}
+            lr = requests.put(f"{rasa_base}/model", files=files, timeout=300)
+            if lr.status_code in (200, 204):
+                TRAIN_JOBS[job_id].update({"running": False, "state": "done", "model": os.path.basename(model_path)})
+                _append_train_log(job_id, f"Model loaded: {os.path.basename(model_path)}")
+                return
+        TRAIN_JOBS[job_id].update({"running": False, "state": "error", "error": f"model load failed: {lr.status_code} {lr.text}"})
+        _append_train_log(job_id, f"model load failed: {lr.status_code} {lr.text}")
+    except Exception as e:
+        TRAIN_JOBS[job_id].update({"running": False, "state": "error", "error": str(e)})
+        _append_train_log(job_id, f"Unexpected error: {e}")
+
+
+@app.route("/api/rasa/train_job2", methods=["POST"])
+def api_rasa_train_job2():
+    """Like train_job, but with log streaming that the frontend can poll."""
+    username = get_user_from_request()
+    if not username:
+        return jsonify({"error": "unauthorized"}), 401
+    jid = _new_train_job()
+    _append_train_log(jid, f"User {username} requested training job")
+    import threading
+    t = threading.Thread(target=_run_training_job_with_logs, args=(jid,), daemon=True)
+    t.start()
+    return jsonify({"ok": True, "jobId": jid}), 202
+
+
+@app.route("/api/rasa/train_job2/<job_id>/status", methods=["GET"])
+def api_rasa_train_job2_status(job_id: str):
+    username = get_user_from_request()
+    if not username:
+        return jsonify({"error": "unauthorized"}), 401
+    job = TRAIN_JOBS.get(job_id)
+    if not job:
+        return jsonify({"error": "unknown jobId"}), 404
+    tail = "\n".join(job.get("logs", [])[-1200:])
+    return jsonify({
+        "running": job.get("running", False),
+        "state": job.get("state"),
+        "error": job.get("error"),
+        "model": job.get("model"),
+        "updatedAt": int(job.get("updated_at", time.time())*1000),
+        "logs": tail,
+    }), 200
+
+
 @app.route("/api/rasa/start", methods=["POST"])
 def api_rasa_start():
     username = get_user_from_request()
@@ -790,6 +1190,113 @@ def api_rasa_start():
         return jsonify({"error": "rasa not ready within timeout"}), 504
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+def _start_rasa_job(job_id: str, timeout: int = 300):
+    try:
+        client = _docker_client()
+        rasa_ct = _rasa_container(client)
+        if not rasa_ct:
+            RASA_START_JOBS[job_id].update({"running": False, "state": "error", "error": "container not found"})
+            _append_rasa_start_log(job_id, "Rasa container not found")
+            return
+        # Try starting if not running
+        try:
+            rasa_ct.reload()
+        except Exception:
+            pass
+        if rasa_ct.status != 'running':
+            _append_rasa_start_log(job_id, "Starting Rasa container…")
+            try:
+                rasa_ct.start()
+            except Exception as e:
+                RASA_START_JOBS[job_id].update({"running": False, "state": "error", "error": str(e)})
+                _append_rasa_start_log(job_id, f"Failed to start container: {e}")
+                return
+
+        # Poll readiness and stream recent logs
+        start_ts = time.time()
+        last_log_ts = 0.0
+        while time.time() - start_ts < timeout:
+            try:
+                try:
+                    rasa_ct.reload()
+                except Exception:
+                    pass
+                # check health via /version using best-guess base candidates
+                bases = _rasa_base_candidates(rasa_ct) if rasa_ct else [RASA_BASE]
+                healthy = False
+                for base in bases:
+                    try:
+                        r = requests.get(f"{base}/version", timeout=3)
+                        if r.status_code == 200:
+                            healthy = True
+                            break
+                    except Exception:
+                        continue
+
+                # append container logs tail periodically
+                try:
+                    logs = rasa_ct.logs(since=int(last_log_ts) or None, tail=50)
+                    if isinstance(logs, bytes):
+                        txt = logs.decode('utf-8', errors='ignore')
+                    else:
+                        txt = str(logs)
+                    if txt:
+                        for line in txt.splitlines():
+                            if line.strip():
+                                _append_rasa_start_log(job_id, f"[container] {line}")
+                    last_log_ts = time.time()
+                except Exception:
+                    pass
+
+                if healthy:
+                    RASA_START_JOBS[job_id].update({"running": False, "state": "healthy"})
+                    _append_rasa_start_log(job_id, "Rasa is healthy.")
+                    return
+            except Exception as e:
+                RASA_START_JOBS[job_id].update({"running": False, "state": "error", "error": str(e)})
+                _append_rasa_start_log(job_id, f"Unexpected error: {e}")
+                return
+            time.sleep(2)
+
+        # timeout
+        RASA_START_JOBS[job_id].update({"running": False, "state": "error", "error": "timed out waiting for healthy"})
+        _append_rasa_start_log(job_id, "Timed out waiting for healthy.")
+    except Exception as e:
+        RASA_START_JOBS[job_id].update({"running": False, "state": "error", "error": str(e)})
+        _append_rasa_start_log(job_id, f"Unexpected error: {e}")
+
+
+@app.route("/api/rasa/start_job", methods=["POST"])
+def api_rasa_start_job():
+    username = get_user_from_request()
+    if not username:
+        return jsonify({"error": "unauthorized"}), 401
+    jid = _new_rasa_start_job()
+    _append_rasa_start_log(jid, f"User {username} requested Rasa start")
+    import threading
+    t = threading.Thread(target=_start_rasa_job, args=(jid,), daemon=True)
+    t.start()
+    return jsonify({"ok": True, "jobId": jid}), 202
+
+
+@app.route("/api/rasa/start_job/<job_id>/status", methods=["GET"])
+def api_rasa_start_job_status(job_id: str):
+    username = get_user_from_request()
+    if not username:
+        return jsonify({"error": "unauthorized"}), 401
+    job = RASA_START_JOBS.get(job_id)
+    if not job:
+        return jsonify({"error": "unknown jobId"}), 404
+    tail = "\n".join(job.get("logs", [])[-1000:])
+    return jsonify({
+        "running": job.get("running", False),
+        "state": job.get("state"),
+        "error": job.get("error"),
+        "updatedAt": int(job.get("updated_at", time.time())*1000),
+        "logs": tail,
+    }), 200
 
 
 @app.route("/api/rasa/stop", methods=["POST"])

@@ -6,8 +6,8 @@ def create_app():
     CORS(app)
 
     # Assuming 'blueprints' directory and 'analytics_service' exist
-    # from blueprints.analytics_service import analytics_service
-    # app.register_blueprint(analytics_service, url_prefix="/analytics")
+    from blueprints.analytics_service import analytics_service
+    app.register_blueprint(analytics_service, url_prefix="/analytics")
 
     @app.route("/")
     def index():

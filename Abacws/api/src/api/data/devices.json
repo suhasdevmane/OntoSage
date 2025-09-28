@@ -10,340 +10,363 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -110.2,
-        "y": 70,
-        "z": 23.727
-      }
+        "x": 51,
+        "y": 73,
+        "z": 24
+      },
+      "pinned": true
     },
     {
       "name": "node_5.02",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -98.144,
-        "y": 70,
-        "z": 32.355
-      }
+        "x": -22,
+        "y": 73,
+        "z": 12
+      },
+      "pinned": true
     },
     {
       "name": "node_5.03",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -80.64,
-        "y": 70,
-        "z": 23.727
-      }
+        "x": 5,
+        "y": 73,
+        "z": 24
+      },
+      "pinned": true
     },
     {
       "name": "node_5.04",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -40.704,
-        "y": 70,
-        "z": 23.727
-      }
+        "x": -54,
+        "y": 73,
+        "z": 12
+      },
+      "pinned": true
     },
     {
       "name": "node_5.05",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 2.304,
-        "y": 70,
-        "z": 23.727
-      }
+        "x": -57,
+        "y": 73,
+        "z": -26
+      },
+      "pinned": true
     },
     {
       "name": "node_5.06",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 47.616,
-        "y": 70,
-        "z": 23.727
-      }
+        "x": 51,
+        "y": 73,
+        "z": -19
+      },
+      "pinned": true
     },
     {
       "name": "node_5.07",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 82.176,
-        "y": 70,
-        "z": 23.727
-      }
+        "x": 58,
+        "y": 73,
+        "z": -8
+      },
+      "pinned": true
     },
     {
       "name": "node_5.08",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 101.144,
-        "y": 70,
-        "z": 32.355
-      }
+        "x": -22,
+        "y": 73,
+        "z": -8
+      },
+      "pinned": true
     },
     {
       "name": "node_5.09",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 110.2,
-        "y": 70,
-        "z": 23.727
-      }
+        "x": -110,
+        "y": 73,
+        "z": -19
+      },
+      "pinned": true
     },
     {
       "name": "node_5.10",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 108.288,
-        "y": 70,
-        "z": 0
-      }
+        "x": -110,
+        "y": 73,
+        "z": 24
+      },
+      "pinned": true
     },
     {
       "name": "node_5.11",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 117.504,
-        "y": 70,
-        "z": -20
-      }
+        "x": 99,
+        "y": 73,
+        "z": -19
+      },
+      "pinned": true
     },
     {
       "name": "node_5.12",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 99.072,
-        "y": 70,
-        "z": -20
-      }
+        "x": -74,
+        "y": 73,
+        "z": 24
+      },
+      "pinned": true
     },
     {
       "name": "node_5.13",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 47.616,
-        "y": 70,
-        "z": -20
-      }
+        "x": -54,
+        "y": 73,
+        "z": -8
+      },
+      "pinned": true
     },
     {
       "name": "node_5.14",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 15.36,
-        "y": 70,
-        "z": -20
-      }
+        "x": 58,
+        "y": 73,
+        "z": 12
+      },
+      "pinned": true
     },
     {
       "name": "node_5.15",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -38.4,
-        "y": 70,
-        "z": -20
-      }
+        "x": 30,
+        "y": 73,
+        "z": -8
+      },
+      "pinned": true
     },
     {
       "name": "node_5.16",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -80.64,
-        "y": 70,
-        "z": -20
-      }
+        "x": -100,
+        "y": 73,
+        "z": 2
+      },
+      "pinned": true
     },
     {
       "name": "node_5.17",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -112.504,
-        "y": 70,
-        "z": -20
-      }
+        "x": -32,
+        "y": 73,
+        "z": 24
+      },
+      "pinned": true
     },
     {
       "name": "node_5.18",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -102.288,
-        "y": 70,
-        "z": 0
-      }
+        "x": 83,
+        "y": 73,
+        "z": 24
+      },
+      "pinned": true
     },
     {
       "name": "node_5.19",
       "type": "private_room",
       "floor": 5,
       "position": {
-        "x": 112.896,
-        "y": 70,
-        "z": 32.355
-      }
-    },
-    {
-      "name": "node_5.20",
-      "type": "private_room",
-      "floor": 5,
-      "position": {
-        "x": 121.344,
-        "y": 70,
-        "z": 32.355
-      }
+        "x": 16,
+        "y": 73,
+        "z": -12
+      },
+      "pinned": true
     },
     {
       "name": "node_5.21",
       "type": "teaching_space",
       "floor": 5,
       "position": {
-        "x": 30.72,
-        "y": 70,
-        "z": 8.628
-      }
-    },
-    {
-      "name": "node_5.22",
-      "type": "teaching_space",
-      "floor": 5,
-      "position": {
-        "x": 61.44,
-        "y": 70,
-        "z": 8.628
-      }
+        "x": 103,
+        "y": 73,
+        "z": 33
+      },
+      "pinned": true
     },
     {
       "name": "node_5.23",
       "type": "teaching_space",
       "floor": 5,
       "position": {
-        "x": 30.72,
-        "y": 70,
-        "z": -8.628
-      }
+        "x": -54,
+        "y": 73,
+        "z": -33
+      },
+      "pinned": true
     },
     {
       "name": "node_5.24",
       "type": "teaching_space",
       "floor": 5,
       "position": {
-        "x": 61.44,
-        "y": 70,
-        "z": -8.628
-      }
+        "x": 30,
+        "y": 73,
+        "z": 12
+      },
+      "pinned": true
     },
     {
       "name": "node_5.25",
       "type": "teaching_space",
       "floor": 5,
       "position": {
-        "x": -30.72,
-        "y": 70,
-        "z": 8.628
-      }
+        "x": 112,
+        "y": 73,
+        "z": 33
+      },
+      "pinned": true
     },
     {
       "name": "node_5.26",
       "type": "teaching_space",
       "floor": 5,
       "position": {
-        "x": -61.44,
-        "y": 70,
-        "z": 8.628
-      }
+        "x": -70,
+        "y": 73,
+        "z": -19
+      },
+      "pinned": true
     },
     {
       "name": "node_5.27",
       "type": "teaching_space",
       "floor": 5,
       "position": {
-        "x": -30.72,
-        "y": 70,
-        "z": -8.628
-      }
+        "x": 65,
+        "y": 73,
+        "z": -26
+      },
+      "pinned": true
     },
     {
       "name": "node_5.28",
       "type": "teaching_space",
       "floor": 5,
       "position": {
-        "x": -61.44,
-        "y": 70,
-        "z": -8.628
-      }
+        "x": 65,
+        "y": 73,
+        "z": -33
+      },
+      "pinned": true
     },
     {
       "name": "node_5.29",
       "type": "lift_out",
       "floor": 5,
       "position": {
-        "x": 63.744,
-        "y": 70,
-        "z": -27.446
-      }
+        "x": -96,
+        "y": 73,
+        "z": 24
+      },
+      "pinned": false
     },
     {
       "name": "node_5.30",
       "type": "lift_out",
       "floor": 5,
       "position": {
-        "x": -58.744,
-        "y": 70,
-        "z": -27.446
-      }
+        "x": 116,
+        "y": 73,
+        "z": -19
+      },
+      "pinned": true
     },
     {
       "name": "node_5.31",
       "type": "staircase_out",
       "floor": 5,
       "position": {
-        "x": 63.744,
-        "y": 70,
-        "z": -37.074
-      }
+        "x": 114,
+        "y": 73,
+        "z": 24
+      },
+      "pinned": true
     },
     {
       "name": "node_5.32",
       "type": "staircase_out",
       "floor": 5,
       "position": {
-        "x": -58.744,
-        "y": 70,
-        "z": -37.074
-      }
+        "x": -32,
+        "y": 73,
+        "z": -19
+      },
+      "pinned": true
     },
     {
       "name": "node_5.33",
       "type": "shared_room",
       "floor": 5,
       "position": {
-        "x": 85.624,
-        "y": 70,
-        "z": 10.785
-      }
+        "x": 120,
+        "y": 73,
+        "z": 33
+      },
+      "pinned": true
     },
     {
       "name": "node_5.34",
       "type": "shared_room",
       "floor": 5,
       "position": {
-        "x": -75.784,
+        "x": 107,
+        "y": 73,
+        "z": 2
+      },
+      "pinned": true
+    },
+    {
+      "name": "node_5.20",
+      "type": "demo_sensor",
+      "floor": 5,
+      "position": {
+        "x": 121.344,
         "y": 70,
-        "z": 10.785
-      }
+        "z": 32.355000000000004
+      },
+      "pinned": false
     }
   ]
 }

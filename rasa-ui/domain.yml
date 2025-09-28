@@ -49,9 +49,11 @@ slots:
     mappings:
       - type: from_entity
         entity: sensor_type
-      - type: from_intent
-        intent: provide_sensor_type
-        value: []
+  analytics_type:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
   start_date:
     type: text
     influence_conversation: true

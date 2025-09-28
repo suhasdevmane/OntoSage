@@ -17,6 +17,17 @@ export default function Settings({ embedded = false }) {
   const [rasaStatus, setRasaStatus] = useState('idle'); // 'idle' | 'starting' | 'healthy' | 'error'
   const [showRasaStatus, setShowRasaStatus] = useState(false);
   const hideTimerRef = useRef(null);
+  // Small logs panel state
+  const [rasaLogs, setRasaLogs] = useState('');
+  const logsRef = useRef(null);
+  // Start job tracking
+  const [startJobId, setStartJobId] = useState('');
+  // (state/running tracked via rasaStatus + job polling logs)
+  const [trainJobId, setTrainJobId] = useState('');
+  // Logs behavior and delta trackers
+  const [appendLogs, setAppendLogs] = useState(true);
+  const startLastCountRef = useRef(0);
+  const trainLastCountRef = useRef(0);
   
   const step1Done = progress === 'done';
   const step2Active = rasaStatus === 'starting' || rasaStarted || rasaStatus === 'healthy';
@@ -28,8 +39,11 @@ export default function Settings({ embedded = false }) {
     setModelActionMsg('');
     setIsTraining(true);
     setProgress('starting');
+    // Reset logs and note start
+    setRasaLogs('');
+    setRasaLogs((l) => l + `[${new Date().toLocaleTimeString()}] Triggering training job…\n`);
     try {
-      const res = await fetch('http://localhost:8080/api/rasa/train_job', {
+      const res = await fetch('http://localhost:8080/api/rasa/train_job2', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -37,19 +51,23 @@ export default function Settings({ embedded = false }) {
       });
       const data = await res.json();
       if (res.ok && data.ok) {
-        setModelActionMsg(`Training job complete. Model: ${data.model}`);
-        setRasaStarted(false);
-        await loadModels();
+        setTrainJobId(data.jobId);
       } else {
         const details = data.logs ? `\nLogs: ${String(data.logs).slice(-500)}` : (data.body ? `\nDetails: ${String(data.body).slice(0,500)}` : '');
         const code = data.status ? ` (status ${data.status})` : '';
         setModelActionMsg(`Training job failed${code}: ${data.error || res.statusText}${details}`);
+        // Append any logs tail to the panel
+        if (data.logs) {
+          setRasaLogs((l) => l + `\n[${new Date().toLocaleTimeString()}] Training failed. Logs tail:\n${data.logs}\n`);
+        } else if (data.error) {
+          setRasaLogs((l) => l + `\n[${new Date().toLocaleTimeString()}] Training failed: ${data.error}\n`);
+        }
       }
     } catch (e) {
       setModelActionMsg(`Training job error: ${e.message}`);
+      setRasaLogs((l) => l + `\n[${new Date().toLocaleTimeString()}] Training job error: ${e.message}\n`);
     } finally {
-      setIsTraining(false);
-      setProgress('idle');
+      // keep isTraining true until job completes via poller
     }
   };
 
@@ -106,16 +124,23 @@ export default function Settings({ embedded = false }) {
 
   const stopRasa = async () => {
     setRasaMsg('');
+    setRasaLogs((l) => l + `[${new Date().toLocaleTimeString()}] Stopping Rasa…\n`);
     try {
       const res = await fetch('http://localhost:8080/api/rasa/stop', {
         method: 'POST',
         credentials: 'include',
       });
       const data = await res.json();
-      if (res.ok && data.ok) setRasaMsg('Rasa stopped.');
-      else setRasaMsg(`Stop failed: ${data.error || res.statusText}`);
+      if (res.ok && data.ok) {
+        setRasaMsg('Rasa stopped.');
+        setRasaLogs((l) => l + `[${new Date().toLocaleTimeString()}] Rasa stopped.\n`);
+      } else {
+        setRasaMsg(`Stop failed: ${data.error || res.statusText}`);
+        setRasaLogs((l) => l + `[${new Date().toLocaleTimeString()}] Stop failed: ${data.error || res.statusText}\n`);
+      }
     } catch (e) {
       setRasaMsg(`Stop error: ${e.message}`);
+      setRasaLogs((l) => l + `[${new Date().toLocaleTimeString()}] Stop error: ${e.message}\n`);
     }
   };
 
@@ -123,49 +148,78 @@ export default function Settings({ embedded = false }) {
     setRasaMsg('');
     setRasaStatus('starting');
     setShowRasaStatus(true);
+    // Job-based start sequence handled via polling below
+    // Reset logs for a fresh start sequence (unless appending)
+    if (!appendLogs) setRasaLogs('');
+    setRasaLogs((l) => (l ? l + '\n' : '') + `--- Start Rasa @ ${new Date().toLocaleTimeString()} ---\n`);
     try {
-      const res = await fetch('http://localhost:8080/api/rasa/start', {
+      const res = await fetch('http://localhost:8080/api/rasa/start_job', {
         method: 'POST',
         credentials: 'include',
       });
       const data = await res.json();
       if (res.ok && data.ok) {
-        setRasaMsg('Rasa started.');
-        setRasaStarted(true);
-        setRasaStatus('healthy');
-        // Auto-hide the Rasa status chip after ~2 minutes once healthy
-        if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-        hideTimerRef.current = setTimeout(() => setShowRasaStatus(false), 120000);
-        await loadModels();
+        setStartJobId(data.jobId);
+        startLastCountRef.current = 0;
       } else {
         setRasaMsg(`Start failed: ${data.error || res.statusText}`);
         setRasaStatus('error');
+  // handled by status chip and logs
+        setRasaLogs((l) => l + `[${new Date().toLocaleTimeString()}] Start failed: ${data.error || res.statusText}\n`);
       }
     } catch (e) {
       setRasaMsg(`Start error: ${e.message}`);
       setRasaStatus('error');
+  // handled by status chip and logs
+      setRasaLogs((l) => l + `[${new Date().toLocaleTimeString()}] Start error: ${e.message}\n`);
     }
   };
 
   useEffect(() => {
     loadModels();
+  }, []);
+
+  // Poll training job status for logs and completion
+  useEffect(() => {
+    if (!trainJobId) return;
+    let cancelled = false;
     const id = setInterval(async () => {
       try {
-        const res = await fetch('http://localhost:8080/api/rasa/train_job/status', { credentials: 'include' });
+        const res = await fetch(`http://localhost:8080/api/rasa/train_job2/${trainJobId}/status`, { credentials: 'include' });
         const data = await res.json();
-        if (res.ok) {
-          setProgress(data.step || 'idle');
-          setLastError(data.error || '');
-          if (data.step === 'done' && data.model) {
+        if (!cancelled && res.ok) {
+          // Append only new lines based on last count
+          const all = (data.logs || '').split(/\r?\n/);
+          const prev = trainLastCountRef.current || 0;
+          if (all.length > prev) {
+            const delta = all.slice(prev).filter(Boolean).join('\n');
+            if (delta) setRasaLogs((l) => (l ? l + '\n' : '') + delta + '\n');
+            trainLastCountRef.current = all.length;
+          }
+          // Update progress chip based on state
+          const state = data.state || 'starting';
+          setProgress(state);
+          if (state === 'done' && data.model) {
+            setModelActionMsg(`Training job complete. Model: ${data.model}`);
+            setIsTraining(false);
+            setProgress('idle');
             await loadModels();
+            clearInterval(id);
+            trainLastCountRef.current = 0;
+          } else if (state === 'error') {
+            setLastError(data.error || 'unknown error');
+            setIsTraining(false);
+            setProgress('idle');
+            clearInterval(id);
+            trainLastCountRef.current = 0;
           }
         }
-      } catch {
+      } catch (_) {
         // ignore
       }
-    }, 1500);
-    return () => clearInterval(id);
-  }, []);
+    }, 1000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [trainJobId]);
   
   useEffect(() => {
     // Cleanup hide timer on unmount
@@ -181,28 +235,53 @@ export default function Settings({ embedded = false }) {
       : 'btn btn-outline-success';
   const startBtnLabel = rasaStatus === 'starting' ? 'Starting…' : 'Start Rasa';
   
-  // Optional frontend health polling of Rasa /version to update UI promptly
+  // Poll start job status and stream logs into panel
   useEffect(() => {
-    if (!showRasaStatus || rasaStatus !== 'starting') return;
+    if (!startJobId) return;
     let cancelled = false;
-    const interval = setInterval(async () => {
+    const id = setInterval(async () => {
       try {
-        const res = await fetch('http://localhost:5005/version', { method: 'GET' });
+        const res = await fetch(`http://localhost:8080/api/rasa/start_job/${startJobId}/status`, { credentials: 'include' });
+        const data = await res.json();
         if (!cancelled && res.ok) {
-          setRasaStatus('healthy');
-          if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-          hideTimerRef.current = setTimeout(() => setShowRasaStatus(false), 120000);
-          clearInterval(interval);
+          // state reflected in rasaStatus below
+          // Update status chip
+          if (data.state === 'healthy') {
+            setRasaStatus('healthy');
+            setRasaStarted(true);
+            // Auto-hide status after 2 minutes
+            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+            hideTimerRef.current = setTimeout(() => setShowRasaStatus(false), 120000);
+          } else if (data.state === 'error') {
+            setRasaStatus('error');
+          } else {
+            setRasaStatus('starting');
+          }
+          // Append only new lines from backend tail
+          const all = (data.logs || '').split(/\r?\n/);
+          const prev = startLastCountRef.current || 0;
+          if (all.length > prev) {
+            const delta = all.slice(prev).filter(Boolean).join('\n');
+            if (delta) setRasaLogs((l) => (l ? l + '\n' : '') + delta + '\n');
+            startLastCountRef.current = all.length;
+          }
+          if (!data.running && (data.state === 'healthy' || data.state === 'error')) {
+            clearInterval(id);
+            startLastCountRef.current = 0;
+          }
         }
       } catch (_) {
-        // keep waiting
+        // ignore transient errors
       }
     }, 1000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [showRasaStatus, rasaStatus]);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [startJobId]);
+  // Auto-scroll logs
+  useEffect(() => {
+    if (logsRef.current) {
+      logsRef.current.scrollTop = logsRef.current.scrollHeight;
+    }
+  }, [rasaLogs]);
   const renderCards = () => (
     <div>
       <div className="card mt-3">
@@ -274,6 +353,32 @@ export default function Settings({ embedded = false }) {
               {rasaMsg}
             </div>
           )}
+          {/* Compact logs window below the Rasa Model container */}
+          <div className="mt-3">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <div className="form-text">Logs</div>
+                <div className="mt-1 d-flex gap-2">
+                  <span className={`badge ${progress === 'done' ? 'bg-success' : progress === 'error' ? 'bg-danger' : (progress === 'idle' ? 'bg-secondary' : 'bg-warning text-dark')}`} title="Training state">
+                    Train: {progress}
+                  </span>
+                  <span className={`badge ${rasaStatus === 'healthy' ? 'bg-success' : rasaStatus === 'error' ? 'bg-danger' : (rasaStatus === 'idle' ? 'bg-secondary' : 'bg-warning text-dark')}`} title="Rasa state">
+                    Rasa: {rasaStatus}
+                  </span>
+                </div>
+              </div>
+              <div className="d-flex align-items-center gap-3">
+                <div className="form-check form-switch">
+                  <input className="form-check-input" type="checkbox" role="switch" id="appendLogsSwitch" checked={appendLogs} onChange={(e) => setAppendLogs(e.target.checked)} />
+                  <label className="form-check-label" htmlFor="appendLogsSwitch">Append across actions</label>
+                </div>
+                <button className="btn btn-sm btn-outline-secondary" onClick={() => setRasaLogs('')}>Clear</button>
+              </div>
+            </div>
+            <div ref={logsRef} className="border rounded" style={{height: 220, overflow: 'auto', background: '#0b0b0b', color: '#cfd2d6', padding: '8px'}}>
+              <pre style={{whiteSpace: 'pre-wrap', wordWrap: 'break-word', margin: 0}}>{rasaLogs || '—'}</pre>
+            </div>
+          </div>
         </div>
       </div>
       <div className="card mt-3">

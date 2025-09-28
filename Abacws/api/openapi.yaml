@@ -59,6 +59,56 @@ paths:
         "503":
           $ref: "#/components/responses/databaseFailure"
 
+    post:
+      summary: Create a new device
+      description: >
+        # Create device
+          Creates a new device with a name, floor, and world position.
+          The device name must be unique.
+      tags:
+        - Devices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/deviceCreate"
+            example:
+              name: viz_test_01
+              type: sensor
+              floor: 5
+              position:
+                x: 100
+                y: 70
+                z: -120
+      responses:
+        "201":
+          description: >
+            ##### Created
+              The device was created successfully and returned in the response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/device"
+        "400":
+          description: >
+            ##### Bad Request
+              The payload was invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "409":
+          description: >
+            ##### Conflict
+              A device with this name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "503":
+          $ref: "#/components/responses/databaseFailure"
+
   /devices/{deviceName}:
     summary: Get information about device
     parameters:
@@ -80,6 +130,57 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/device"
+
+    patch:
+      summary: Update device properties
+      description: >
+        # Update device
+          Update one or more properties of a device. Supported fields: type, floor, position, pinned.
+      tags:
+        - Devices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    type:
+                      type: string
+                    floor:
+                      type: number
+                    position:
+                      $ref: "#/components/schemas/position"
+                    pinned:
+                      type: boolean
+            example:
+              position:
+                x: 120
+                y: 70
+                z: -100
+              pinned: true
+      responses:
+        "200":
+          description: >
+            ##### OK
+              Updated device returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/device"
+        "400":
+          description: >
+            ##### Bad Request
+              Invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "404":
+          $ref: "#/components/responses/deviceNotFound"
+        "503":
+          $ref: "#/components/responses/databaseFailure"
 
   /devices/{deviceName}/data:
     summary: Data interaction endpoint
@@ -236,7 +337,7 @@ paths:
 
       responses:
         "200":
-          $ref: "#components/responses/aQueryOK"
+          $ref: "#/components/responses/aQueryOK"
         "503":
           $ref: "#/components/responses/databaseFailure"
 
@@ -261,7 +362,7 @@ paths:
 
       responses:
         "200":
-          $ref: "#components/responses/aQueryOK"
+          $ref: "#/components/responses/aQueryOK"
         "503":
           $ref: "#/components/responses/databaseFailure"
 
@@ -288,9 +389,188 @@ paths:
 
       responses:
         "200":
-          $ref: "#components/responses/aQueryOK"
+          $ref: "#/components/responses/aQueryOK"
         "503":
           $ref: "#/components/responses/databaseFailure"
+
+  # External Postgres time-series integration (experimental)
+  /datasources:
+    get:
+      summary: List data sources
+      description: List configured external Postgres data sources (currently single-cluster assumed)
+      tags: [ Time-Series (Experimental) ]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/dataSource' }
+        "501": { $ref: '#/components/responses/databaseFailure' }
+    post:
+      summary: Create data source
+      description: Create a new data source (host/port/db/user/password/schema). Password write-only.
+      security: [ { apiKeyAuth: [] } ]
+      tags: [ Time-Series (Experimental) ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/dataSourceCreate' }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/dataSource' } } } }
+        "400": { description: Bad request }
+        "501": { $ref: '#/components/responses/databaseFailure' }
+
+  /datasources/{id}:
+    patch:
+      summary: Update data source
+      security: [ { apiKeyAuth: [] } ]
+      tags: [ Time-Series (Experimental) ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/dataSourceUpdate' }
+      responses:
+        "200": { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/dataSource' } } } }
+        "404": { description: Not found }
+    delete:
+      summary: Delete data source
+      security: [ { apiKeyAuth: [] } ]
+      tags: [ Time-Series (Experimental) ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Deleted }
+        "400": { description: Has mappings / cannot delete }
+        "404": { description: Not found }
+
+  /datasources/{id}/tables:
+    get:
+      summary: List tables for data source
+      tags: [ Time-Series (Experimental) ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { type: string } } } } }
+        "404": { description: Not found }
+
+  /datasources/{id}/columns:
+    get:
+      summary: List columns for table
+      tags: [ Time-Series (Experimental) ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: table
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/tableColumn' } } } } }
+        "404": { description: Not found }
+
+  /mappings:
+    get:
+      summary: List device time-series mappings
+      tags: [ Time-Series (Experimental) ]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/deviceMapping' } } } } }
+    post:
+      summary: Create device mapping
+      security: [ { apiKeyAuth: [] } ]
+      tags: [ Time-Series (Experimental) ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/deviceMappingCreate' }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/deviceMapping' } } } }
+        "400": { description: Missing required fields }
+        "409": { description: Duplicate mapping }
+
+  /mappings/{id}:
+    patch:
+      summary: Update device mapping
+      security: [ { apiKeyAuth: [] } ]
+      tags: [ Time-Series (Experimental) ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/deviceMappingUpdate' }
+      responses:
+        "200": { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/deviceMapping' } } } }
+        "404": { description: Not found }
+    delete:
+      summary: Delete device mapping
+      security: [ { apiKeyAuth: [] } ]
+      tags: [ Time-Series (Experimental) ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Deleted }
+        "404": { description: Not found }
+
+  /mappings/device/{deviceName}/timeseries:
+    get:
+      summary: Fetch time series for device via mapping
+      tags: [ Time-Series (Experimental) ]
+      parameters:
+        - name: deviceName
+          in: path
+          required: true
+          schema: { type: string }
+        - name: from
+          in: query
+          required: false
+          schema: { type: number, description: 'Epoch ms' }
+        - name: to
+          in: query
+          required: false
+          schema: { type: number, description: 'Epoch ms' }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/deviceTimeSeriesResponse' } } } }
+
+  /latest:
+    get:
+      summary: Batch latest mapped values for all devices
+      tags: [ Time-Series (Experimental) ]
+      parameters:
+        - name: lookbackDays
+          in: query
+          required: false
+          schema: { type: integer, default: 7, maximum: 30 }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/latestBatch' } } } }
 
 
 components:
@@ -454,8 +734,15 @@ components:
           examples:
             - lecture
             - office
+        floor:
+          type: number
+          description: >
+            The floor on which the device is located.
         position:
           $ref: "#/components/schemas/position"
+        pinned:
+          type: boolean
+          description: Whether the device is pinned (locked) in the UI
         data:
           $ref: "#/components/schemas/timestampedData"
         history:
@@ -538,9 +825,127 @@ components:
             - Not Found
             - Could not read/write from database
 
+    # Payload for creating a device
+    deviceCreate:
+      type: object
+      required:
+        - name
+        - floor
+        - position
+      properties:
+        name:
+          type: string
+          description: Unique device name (must be unique)
+        type:
+          type: string
+          description: Optional device type
+        floor:
+          type: number
+          description: Floor on which the device is located
+        position:
+          $ref: "#/components/schemas/position"
+        pinned:
+          type: boolean
+          description: Optional pinned state (defaults to false)
+
+        # Experimental time-series integration schemas
+        dataSource:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+            host: { type: string }
+            port: { type: integer }
+            database: { type: string }
+            user: { type: string }
+            schema: { type: string }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+        dataSourceCreate:
+          type: object
+          required: [ host, port, database, user ]
+          properties:
+            name: { type: string }
+            host: { type: string }
+            port: { type: integer, default: 5432 }
+            database: { type: string }
+            user: { type: string }
+            password: { type: string }
+            schema: { type: string, default: public }
+        dataSourceUpdate:
+          type: object
+          properties:
+            name: { type: string }
+            password: { type: string }
+            schema: { type: string }
+        tableColumn:
+          type: object
+          properties:
+            column_name: { type: string }
+            data_type: { type: string }
+        deviceMapping:
+          type: object
+          properties:
+            id: { type: integer }
+            device_name: { type: string }
+            data_source_id: { type: integer }
+            table_name: { type: string }
+            device_id_column: { type: string }
+            device_identifier_value: { type: string }
+            timestamp_column: { type: string }
+            value_columns: { type: array, items: { type: string } }
+            primary_value_column: { type: string, nullable: true }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+        deviceMappingCreate:
+          allOf:
+            - $ref: '#/components/schemas/deviceMapping'
+          required: [ device_name, data_source_id, table_name, device_id_column, device_identifier_value, timestamp_column, value_columns ]
+        deviceMappingUpdate:
+          type: object
+          properties:
+            table_name: { type: string }
+            device_id_column: { type: string }
+            device_identifier_value: { type: string }
+            timestamp_column: { type: string }
+            value_columns: { type: array, items: { type: string } }
+            primary_value_column: { type: string }
+        deviceTimeSeriesPoint:
+          type: object
+          description: Row of time-series values; dynamic keys for value columns plus ts
+          properties:
+            ts: { type: number, description: 'Epoch ms' }
+          additionalProperties: true
+        deviceTimeSeriesResponse:
+          type: object
+          properties:
+            mapping: { $ref: '#/components/schemas/deviceMapping' }
+            series: { type: array, items: { $ref: '#/components/schemas/deviceTimeSeriesPoint' } }
+        latestBatch:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              timestamp: { type: number }
+              values: { type: object, additionalProperties: true }
+              primary: { type: number }
+              mappingId: { type: integer }
+              range_min: { type: number, nullable: true }
+              range_max: { type: number, nullable: true }
+              color_min: { type: string, nullable: true, description: 'Hex color (#rrggbb)' }
+              color_max: { type: string, nullable: true, description: 'Hex color (#rrggbb)' }
+
 
   securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
     ApiKeyAuth:
       type: apiKey
       in: header
       name: x-api-key
+
+# NOTE: Experimental external time-series endpoints (datasources, mappings, latest)
+# are implemented in the server but not fully documented inline here to avoid
+# inflating this already large spec. A follow-up refinement can merge them properly.

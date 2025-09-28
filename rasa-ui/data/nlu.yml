@@ -97,6 +97,41 @@ nlu:
 
   - intent: Questions_to_brickbot
     examples: |
+      - List all temperature sensors in building A
+      - Show me all sensors in building A
+      - Which sensors are in building A?
+      - What are the sensors in building A?
+      - List sensors for building A
+      - Show sensors at building A
+      - Trend this week
+      - Trend this week for [Air_Temperature_Sensor_5.02](sensor_type)
+      - Average this month
+      - Average this month for [CO2_Level_Sensor_5.02](sensor_type)
+      - Last week trend
+      - Last month average
+      - Yesterday's trend for [Air_Temperature_Sensor_5.01](sensor_type)
+      - Today stats for [CO2_Level_Sensor_5.01](sensor_type)
+      - YTD trend for [Air_Temperature_Sensor_5.01](sensor_type)
+      - QTD average for [CO2_Level_Sensor_5.02](sensor_type)
+      - Show last weekend for [Sound_Noise_Sensor_MEMS_5.02](sensor_type)
+      - Show last 7 days for [CO2_Level_Sensor_5.02](sensor_type)
+      - Show last 30 days
+      - last 24 hours for [Air_Temperature_Sensor_5.02](sensor_type)
+      - last 48 hours
+      - since yesterday
+      - since yesterday for [Air_Temperature_Sensor_5.02](sensor_type)
+      - since last week
+      - until today for [CO_Level_Sensor_5.02](sensor_type)
+      - from last week to today
+      - from last month to today for [Air_Quality_Sensor_5.02](sensor_type)
+      - this week
+      - this month
+      - last week
+      - last month
+      - year to date
+      - quarter to date
+      - yesterday
+      - today
       - Can you tell me any temperature deviations observed in [Air_Temperature_Sensor_5.01](sensor_type) between dates 02/02/2025 to 02/03/2025?
       - What is the recalibration frequency for [CO2_Level_Sensor_5.01](sensor_type) from 01/01/2025 to 31/01/2025?
       - Analyze failure trends for [Zone_Air_Humidity_Sensor_5.02](sensor_type) in February 2025.
@@ -318,6 +353,10 @@ nlu:
       - Sensor type is [Air_Temperature_Sensor_5.03](sensor_type)
       - The sensor is [HVAC_Sensor_1](sensor_type)
       - Use [Energy_Meter_3](sensor_type)
+      - use [Zone Air Humidity Sensor 5.01](sensor_type)
+      - it's [Air Temperature Sensor 5.02](sensor_type)
+      - [CO2 Level Sensor 5.02](sensor_type)
+      - [Air Quality Sensor 5.01](sensor_type)
 
   - intent: provide_start_date
     examples: |
@@ -1158,6 +1197,11 @@ nlu:
       - analyze_temperature_humidity
       - detect_potential_failures
       - forecast_downtimes
+
+  - regex: sensor_type
+    examples: |
+      - (?:(?:[A-Za-z]+(?:[_\s][A-Za-z0-9]+)*)[_\s]Sensor[_\s][0-9]+(?:\.[0-9]+)?)
+      - (?:(?:[A-Za-z]+(?:[_\s][A-Za-z0-9]+)*)[_\s][A-Za-z][_\s][0-9]+(?:\.[0-9]+)?)
 
   - regex: date
     examples: |

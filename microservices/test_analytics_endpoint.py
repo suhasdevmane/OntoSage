@@ -5,7 +5,7 @@ BASE_URL = "http://localhost:6000/analytics"
 
 # Example payload for the 'analyze_recalibration_frequency' analysis
 data = {
-    "analysis_type": "analyze_recalibration_frequency",
+    "analysis_type": "analyze_humidity",
     "timeseriesId_1": [
         {"datetime": "2025-02-10 05:31:59", "reading_value": 27.99},
         {"datetime": "2025-02-10 06:00:00", "reading_value": 28.10},
