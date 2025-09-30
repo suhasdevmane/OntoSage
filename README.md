@@ -30,6 +30,7 @@ This single README merges all documentation (project overview, Rasa runbook, API
 - Troubleshooting and FAQs
 - Security notes
 - Roadmap
+- References
 - License
 
 ---
@@ -262,6 +263,11 @@ Invoke-RestMethod -Method Post -Uri http://localhost:5005/webhooks/rest/webhook 
 - Access the UI at http://localhost:3030 and load your dataset
 - Actions prepend common Brick/ontology prefixes to queries automatically
 
+See also:
+- Apache Jena Fuseki docs: https://jena.apache.org/documentation/fuseki2/
+- SPARQL over HTTP (SOH): https://jena.apache.org/documentation/fuseki2/soh.html
+- Fuseki 1 (archive): https://jena.apache.org/documentation/archive/serving_data/fuseki1.html
+
 ---
 
 ## Database and performance
@@ -325,6 +331,53 @@ Invoke-RestMethod -Method Post -Uri http://localhost:5005/webhooks/rest/webhook 
 
 ---
 
+## References
+
+Official docs for platforms and services referenced by OntoBot:
+
+- Rasa (Core & Actions): https://rasa.com/docs/rasa/
+- Duckling (entity extraction): https://github.com/facebook/duckling
+- Apache Jena Fuseki: https://jena.apache.org/documentation/fuseki2/
+  - SPARQL over HTTP (SOH): https://jena.apache.org/documentation/fuseki2/soh.html
+  - Fuseki 1 (archive): https://jena.apache.org/documentation/archive/serving_data/fuseki1.html
+- SPARQL 1.1 Query Language (W3C): https://www.w3.org/TR/sparql11-query/
+- MySQL: https://dev.mysql.com/doc/
+- Docker: https://docs.docker.com/
+- Docker Compose: https://docs.docker.com/compose/
+- React: https://react.dev/
+- Brick Schema: https://brickschema.org/
+- ThingsBoard (optional): https://thingsboard.io/
+- GraphDB (optional): https://graphdb.ontotext.com/
+- Jupyter (optional): https://jupyter.org/
+- Ollama (optional): https://ollama.com/
+- Mistral model in Ollama (optional): https://ollama.com/library/mistral
+- T5 model (for NL2SPARQL variants): https://huggingface.co/docs/transformers/model_doc/t5
+
+Internal services (this repo):
+- Analytics microservices, Decider service, HTTP file server, Rasa Editor → see sections above in this README.
+
+---
+
 ## License
 
-See LICENSE in this repository. Third‑party components retain their respective licenses.
+MIT License
+
+Copyright (c) 2024 Suhas Devmane
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
