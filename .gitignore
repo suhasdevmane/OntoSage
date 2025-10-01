@@ -52,7 +52,12 @@ abacws_chatbot_env/
 ##############################
 graphDB/
 Abacws/mongo/
-development/
+
+# Keep everything under development/ local by default, except selected notebooks
+/development/**
+!/development/notebooks/
+/development/notebooks/**
+!/development/notebooks/**/*.ipynb
 .development
 
 ##############################
