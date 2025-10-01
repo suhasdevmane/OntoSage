@@ -53,6 +53,7 @@ abacws_chatbot_env/
 graphDB/
 Abacws/mongo/
 Abacws3D/mongo/
+/Abacws3D/
 
 # Keep only development/examples local; track the rest of development/
 /development/examples/
@@ -118,11 +119,15 @@ rasa-ui/models/
 # Project-specific (tune as needed)
 ##############################
 notebooks/
-# Allow tracking of notebooks under development/notebooks
+# Track ONLY selected notebooks under development/notebooks; ignore the rest
 !/development/notebooks/
 /development/notebooks/**
-!/development/notebooks/**/*.ipynb
-# If you need to version certain notebooks, remove the line above and ignore only generated artifacts.
+!/development/notebooks/00.brickall ontology creation.ipynb
+!/development/notebooks/01.brickall ontology creation-new.ipynb
+!/development/notebooks/02.brick inference and validation.ipynb
+!/development/notebooks/05.RDFworking.ipynb
+!/development/notebooks/06.brickschema.ipynb
+# Note: .ipynb_checkpoints remain ignored globally by **/.ipynb_checkpoints/
 /suhasdevmane.github.io/
 
 # Ignore large/local datasets at repo root
