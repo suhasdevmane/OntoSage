@@ -129,7 +129,7 @@ notebooks/
 !/development/notebooks/06.brickschema.ipynb
 # Note: .ipynb_checkpoints remain ignored globally by **/.ipynb_checkpoints/
 /suhasdevmane.github.io/
-
+!/development/graphDB/
 # Ignore large/local datasets at repo root
 /brick-datasets/
 /cassandradb/

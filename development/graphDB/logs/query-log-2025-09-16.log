@@ -1,0 +1,1 @@
+[INFO ] 2025-09-16 16:28:21,500 [import-task-mythingsboard-1 | c.o.t.m.MonitorRepositoryConnection] Parallel mode requested but it is disabled globally. Using serial mode instead.

@@ -1,0 +1,46 @@
+[INFO ] 2025-09-20 00:59:13,648 [main | c.o.g.Config] Using 'jar:file:/opt/graphdb/dist/lib/graphdb-application-common-10.4.2.jar!/com/ontotext/graphdb/logback.xml' as logback's configuration file
+[INFO ] 2025-09-20 00:59:13,993 [main | c.o.g.s.GraphDB] Starting GraphDB in workbench mode.
+[INFO ] 2025-09-20 00:59:21,698 [main | c.o.g.Config] GraphDB Home directory: /opt/graphdb/home
+[INFO ] 2025-09-20 00:59:21,700 [main | c.o.g.Config] GraphDB Config directory: /opt/graphdb/home/conf
+[INFO ] 2025-09-20 00:59:21,702 [main | c.o.g.Config] GraphDB Data directory: /opt/graphdb/home/data
+[INFO ] 2025-09-20 00:59:21,703 [main | c.o.g.Config] GraphDB Work directory: /opt/graphdb/home/work
+[INFO ] 2025-09-20 00:59:21,704 [main | c.o.g.Config] GraphDB Logs directory: /opt/graphdb/home/logs
+[INFO ] 2025-09-20 00:59:22,604 [main | c.o.g.r.s.SecurityUtil] Cluster gRPC server security is disabled
+[INFO ] 2025-09-20 00:59:22,873 [main | c.o.f.c.s.r.GraphDBRpcServer] Started gRPC server on port 7300 successfully
+[INFO ] 2025-09-20 00:59:24,347 [main | c.o.g.s.GraphDB] Started GraphDB in workbench mode at port 7200.
+[INFO ] 2025-09-20 01:05:32,241 [Thread-3 | c.o.g.s.GraphDB] Stopping GraphDB.
+[INFO ] 2025-09-20 01:06:33,427 [main | c.o.g.Config] Using 'jar:file:/opt/graphdb/dist/lib/graphdb-application-common-10.4.2.jar!/com/ontotext/graphdb/logback.xml' as logback's configuration file
+[INFO ] 2025-09-20 01:06:34,095 [main | c.o.g.s.GraphDB] Starting GraphDB in workbench mode.
+[INFO ] 2025-09-20 01:06:40,833 [main | c.o.g.Config] GraphDB Home directory: /opt/graphdb/home
+[INFO ] 2025-09-20 01:06:40,835 [main | c.o.g.Config] GraphDB Config directory: /opt/graphdb/home/conf
+[INFO ] 2025-09-20 01:06:40,837 [main | c.o.g.Config] GraphDB Data directory: /opt/graphdb/home/data
+[INFO ] 2025-09-20 01:06:40,838 [main | c.o.g.Config] GraphDB Work directory: /opt/graphdb/home/work
+[INFO ] 2025-09-20 01:06:40,839 [main | c.o.g.Config] GraphDB Logs directory: /opt/graphdb/home/logs
+[INFO ] 2025-09-20 01:06:41,728 [main | c.o.g.r.s.SecurityUtil] Cluster gRPC server security is disabled
+[INFO ] 2025-09-20 01:06:42,004 [main | c.o.f.c.s.r.GraphDBRpcServer] Started gRPC server on port 7300 successfully
+[INFO ] 2025-09-20 01:06:43,792 [main | c.o.g.s.GraphDB] Started GraphDB in workbench mode at port 7200.
+[INFO ] 2025-09-20 01:46:33,331 [Thread-3 | c.o.g.s.GraphDB] Stopping GraphDB.
+[INFO ] 2025-09-20 01:46:33,383 [Thread-3 | c.o.f.c.s.SemanticDataManagement] Shutting down current semantic location
+[INFO ] 2025-09-20 01:47:32,510 [main | c.o.g.Config] Using 'jar:file:/opt/graphdb/dist/lib/graphdb-application-common-10.4.2.jar!/com/ontotext/graphdb/logback.xml' as logback's configuration file
+[INFO ] 2025-09-20 01:47:32,900 [main | c.o.g.s.GraphDB] Starting GraphDB in workbench mode.
+[INFO ] 2025-09-20 01:47:40,513 [main | c.o.g.Config] GraphDB Home directory: /opt/graphdb/home
+[INFO ] 2025-09-20 01:47:40,514 [main | c.o.g.Config] GraphDB Config directory: /opt/graphdb/home/conf
+[INFO ] 2025-09-20 01:47:40,516 [main | c.o.g.Config] GraphDB Data directory: /opt/graphdb/home/data
+[INFO ] 2025-09-20 01:47:40,517 [main | c.o.g.Config] GraphDB Work directory: /opt/graphdb/home/work
+[INFO ] 2025-09-20 01:47:40,518 [main | c.o.g.Config] GraphDB Logs directory: /opt/graphdb/home/logs
+[INFO ] 2025-09-20 01:47:41,421 [main | c.o.g.r.s.SecurityUtil] Cluster gRPC server security is disabled
+[INFO ] 2025-09-20 01:47:41,717 [main | c.o.f.c.s.r.GraphDBRpcServer] Started gRPC server on port 7300 successfully
+[INFO ] 2025-09-20 01:47:43,646 [main | c.o.g.s.GraphDB] Started GraphDB in workbench mode at port 7200.
+[INFO ] 2025-09-20 01:58:47,031 [Thread-3 | c.o.g.s.GraphDB] Stopping GraphDB.
+[INFO ] 2025-09-20 01:58:47,066 [Thread-3 | c.o.f.c.s.SemanticDataManagement] Shutting down current semantic location
+[INFO ] 2025-09-20 01:59:37,032 [main | c.o.g.Config] Using 'jar:file:/opt/graphdb/dist/lib/graphdb-application-common-10.4.2.jar!/com/ontotext/graphdb/logback.xml' as logback's configuration file
+[INFO ] 2025-09-20 01:59:37,442 [main | c.o.g.s.GraphDB] Starting GraphDB in workbench mode.
+[INFO ] 2025-09-20 01:59:45,892 [main | c.o.g.Config] GraphDB Home directory: /opt/graphdb/home
+[INFO ] 2025-09-20 01:59:45,894 [main | c.o.g.Config] GraphDB Config directory: /opt/graphdb/home/conf
+[INFO ] 2025-09-20 01:59:45,895 [main | c.o.g.Config] GraphDB Data directory: /opt/graphdb/home/data
+[INFO ] 2025-09-20 01:59:45,897 [main | c.o.g.Config] GraphDB Work directory: /opt/graphdb/home/work
+[INFO ] 2025-09-20 01:59:45,898 [main | c.o.g.Config] GraphDB Logs directory: /opt/graphdb/home/logs
+[INFO ] 2025-09-20 01:59:46,828 [main | c.o.g.r.s.SecurityUtil] Cluster gRPC server security is disabled
+[INFO ] 2025-09-20 01:59:47,105 [main | c.o.f.c.s.r.GraphDBRpcServer] Started gRPC server on port 7300 successfully
+[INFO ] 2025-09-20 01:59:49,194 [main | c.o.g.s.GraphDB] Started GraphDB in workbench mode at port 7200.
+[INFO ] 2025-09-20 02:33:54,249 [Thread-3 | c.o.g.s.GraphDB] Stopping GraphDB.
