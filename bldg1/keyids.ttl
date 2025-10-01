@@ -1,0 +1,2935 @@
+@prefix ns1: <https://brickschema.org/schema/1.1/Brick#> .
+@prefix ns2: <https://example.org/ref#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.org/building#C2H5CH5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#C2H5CH5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 129 ] .
+
+<https://example.org/building#CO5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#CO5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 131 ] .
+
+<https://example.org/building#VOC5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#VOC5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 130 ] .
+
+<https://example.org/building#airq5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#airq5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 125 ] .
+
+<https://example.org/building#cotwo5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#cotwo5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 132 ] .
+
+<https://example.org/building#db1> a ns1:postgressDB ;
+    ns1:database "thingsboard" ;
+    ns1:host "localhost" ;
+    ns1:password "postgres" ;
+    ns1:port "5432" ;
+    ns1:user "thingsboard" .
+
+<https://example.org/building#dust5.01> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.02> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.03> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.04> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.05> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.06> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.07> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.08> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.09> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.10> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.11> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.12> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.13> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.14> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.15> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.16> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.17> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.18> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.19> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.20> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.21> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.22> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.23> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.24> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.25> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.26> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.27> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.28> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.29> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.30> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.31> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.32> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.33> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#dust5.34> ns1:hasUnit "µg/m³" ;
+    ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 77 ] .
+
+<https://example.org/building#hcho5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hcho5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 122 ] .
+
+<https://example.org/building#hum5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#hum5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 30 ] .
+
+<https://example.org/building#light5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#light5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 134 ] .
+
+<https://example.org/building#mqfive5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqfive5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 126 ] .
+
+<https://example.org/building#mqnine5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqnine5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 127 ] .
+
+<https://example.org/building#mqthree5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqthree5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 121 ] .
+
+<https://example.org/building#mqtwo5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#mqtwo5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 120 ] .
+
+<https://example.org/building#notwo5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#notwo5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 128 ] .
+
+<https://example.org/building#oxy5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#oxy5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 135 ] .
+
+<https://example.org/building#sound5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#sound5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 119 ] .
+
+<https://example.org/building#temp5.01> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.02> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.03> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.04> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "725a3830-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.05> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "78df12c0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.06> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8084c6a0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.07> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8c34df30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.08> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "93834b50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.09> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "997b9d50-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.10> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9f44f010-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.11> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "a6250a00-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.12> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "add0b150-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.13> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "b4f415d0-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.14> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "bad9ca30-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.15> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "c0fe3540-7db2-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.16> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "729855d0-7db6-11ee-b0f3-69bd975277c1" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.17> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "328afde0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.18> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "37c9eaf0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.19> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "3d369ec0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.20> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "4e709010-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.21> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "53491a30-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.22> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "58b83f00-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.23> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "5d800040-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.24> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "620958f0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.25> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6694ad70-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.26> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "6b6a7870-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.27> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7091e5e0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.28> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "759e7850-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.29> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7b537fc0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.30> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "7ffd58c0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.31> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "84bd51d0-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.32> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "8afd3420-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.33> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "90088e10-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+
+<https://example.org/building#temp5.34> ns1:storedAt <https://example.org/ex#db1> ;
+    ns2:hasExternalReference [ a ns2:TimeseriesReference ;
+            ns2:hasTimeseriesId "9586a700-83f5-11ee-a992-8978af4232d8" ;
+            ns2:hasTimeseriesKeyId 133 ] .
+

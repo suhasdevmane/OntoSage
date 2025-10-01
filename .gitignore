@@ -62,6 +62,12 @@ Abacws3D/mongo/
 /development/cassandradb/
 /bldg2/
 /bldg3/
+!/bldg2/
+!/bldg3/
+/bldg2/**
+/bldg3/**
+!/bldg2/README.md
+!/bldg3/README.md
 ##############################
 # Secrets & credentials
 ##############################
@@ -127,11 +133,11 @@ notebooks/
 !/development/notebooks/02.brick inference and validation.ipynb
 !/development/notebooks/05.RDFworking.ipynb
 !/development/notebooks/06.brickschema.ipynb
-!/development/notebooks/pgadmin/servers.json
+!/development/pgadmin/servers.json
 # Note: .ipynb_checkpoints remain ignored globally by **/.ipynb_checkpoints/
 /suhasdevmane.github.io/
 !/development/graphDB/
-!/development/notebooks/pgadmin/
+!/development/pgadmin/
 # Ignore large/local datasets at repo root
 /brick-datasets/
 /cassandradb/

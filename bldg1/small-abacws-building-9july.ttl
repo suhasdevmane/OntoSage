@@ -1,0 +1,966 @@
+@prefix bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rec: <https://w3id.org/rec#> .
+@prefix ref: <https://brickschema.org/schema/Brick/ref#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+bldg:Abacws a rec:Building,
+        rec:School ;
+    rec:PostalAddress "CF24 4AG" ;
+    rec:address "Senghennydd Rd, Cardiff CF24 4AG, Wales, United Kingdom, UK" ;
+    rec:architectedBy "Cardiff University" ;
+    rec:area "10,000 sq m" ;
+    rec:capacity "about 500 people" ;
+    rec:constructedBy "Unknows. NA" ;
+    rec:operatedBy "Cardiff University" ;
+    rec:ownedBy "Cardiff University" .
+
+bldg:C2H5CH5.01 brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 129 ] .
+
+bldg:C2H5CH5.02 brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 129 ] .
+
+bldg:C2H5CH5.03 brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 129 ] .
+
+bldg:CO5.01 brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 131 ] .
+
+bldg:CO5.02 brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 131 ] .
+
+bldg:CO5.03 brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 131 ] .
+
+bldg:VOC5.01 brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 130 ] .
+
+bldg:VOC5.02 brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 130 ] .
+
+bldg:VOC5.03 brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 130 ] .
+
+owl:Class rdfs:subClassOf rdfs:Class .
+
+owl:DatatypeProperty rdfs:subClassOf rdf:Property .
+
+bldg:Room0.01 a rec:Room ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.04 a rec:Room ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.05 a rec:Room ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room1.04 a rec:Room ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.06 a rec:Room ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.07 a rec:Room ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room2.01 a rec:Room ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.04 a rec:Room ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.05 a rec:Room ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room3.01 a rec:Room ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.02 a rec:Room ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.03 a rec:Room ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room4.01 a rec:Room ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.02 a rec:Room ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.06 a rec:Room ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room5.01 a brick:Room,
+        rec:Room ;
+    rdfs:label "Room5.01" ;
+    brick:isPartOf bldg:Floor5 ;
+    rec:isPartOf bldg:north-Zone,
+        bldg:north-east-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone .
+
+bldg:Room5.02 a brick:Room,
+        rec:Room ;
+    rdfs:label "Room5.02" ;
+    brick:isPartOf bldg:Floor5 ;
+    rec:isPartOf bldg:east-Zone,
+        bldg:north-Zone,
+        bldg:north-east-Zone,
+        bldg:south-Zone,
+        bldg:south-east-Zone .
+
+bldg:Room5.03 a brick:Room,
+        rec:Room ;
+    rdfs:label "Room5.03" ;
+    brick:isPartOf bldg:Floor5 ;
+    rec:isPartOf bldg:north-Zone,
+        bldg:north-west-Zone,
+        bldg:south-Zone,
+        bldg:south-east-Zone,
+        bldg:south-west-Zone .
+
+bldg:airq5.03 a brick:Air_Quality_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Air Quality Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 125 ] .
+
+bldg:c2h5ch5.03 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room c2h5ch Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone .
+
+bldg:co5.03 a brick:CO_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room CO Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone .
+
+bldg:cotwo5.03 a brick:CO2_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room CO2 Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 132 ] .
+
+bldg:dust5.03 a brick:PM2.5_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room pm 2.5 Dust Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:hasUnit "µg/m³" ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 77 ] .
+
+bldg:east-Zone a rec:Space ;
+    brick:hasPart bldg:room_list .
+
+bldg:hcho5.03 a brick:Formaldehyde_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room hcho/Formaldehyde Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 122 ] .
+
+bldg:hum5.03 a brick:Humidity_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Humidity Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 30 ] .
+
+bldg:light5.03 a brick:Illuminance_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Light Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 134 ] .
+
+bldg:mqfive5.03 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room MQ5 Gas Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 126 ] .
+
+bldg:mqnine5.03 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room MQ9 Gas Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 127 ] .
+
+bldg:mqthree5.03 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room MQ3 Gas Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 121 ] .
+
+bldg:mqtwo5.03 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room MQ2 Gas Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 120 ] .
+
+bldg:notwo5.03 a brick:NO2_Level_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room NO2 Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 128 ] .
+
+bldg:oxy5.03 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Oxygen gas Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 135 ] .
+
+bldg:pir5.03 a brick:PIR_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Occupancy Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone .
+
+bldg:sound5.03 a brick:Sensor ;
+    rdfs:label "Room Sound Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 119 ] .
+
+bldg:temp5.03 a brick:Sensor,
+        brick:Temperature_Sensor ;
+    rdfs:label "Room Temperature Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "6b52c020-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 133 ] .
+
+bldg:voc5.03 a brick:Sensor,
+        brick:TVOC_Level_Sensor ;
+    rdfs:label "Room VOC Sensor" ;
+    brick:hasLocation bldg:south-west-Zone ;
+    brick:isPointOf bldg:south-west-Zone .
+
+bldg:north-east-Zone a rec:Space ;
+    brick:hasPart bldg:room_list .
+
+bldg:south-Zone a rec:Space ;
+    brick:hasPart bldg:room_list .
+
+bldg:south-east-Zone a rec:Space ;
+    brick:hasPart bldg:room_list .
+
+bldg:Floor0 a rec:Space ;
+    brick:hasPart bldg:Room0.01,
+        bldg:Room0.04,
+        bldg:Room0.05 .
+
+bldg:Floor1 a rec:Space ;
+    brick:hasPart bldg:Room1.04,
+        bldg:Room1.06,
+        bldg:Room1.07 .
+
+bldg:Floor2 a rec:Space ;
+    brick:hasPart bldg:Room2.01,
+        bldg:Room2.04,
+        bldg:Room2.05 .
+
+bldg:Floor3 a rec:Space ;
+    brick:hasPart bldg:Room3.01,
+        bldg:Room3.02,
+        bldg:Room3.03 .
+
+bldg:Floor4 a rec:Space ;
+    brick:hasPart bldg:Room4.01,
+        bldg:Room4.02,
+        bldg:Room4.06 .
+
+bldg:Floor5 a rec:Space ;
+    brick:hasPart bldg:Room5.01,
+        bldg:Room5.02,
+        bldg:Room5.03 .
+
+bldg:airq5.01 a brick:Air_Quality_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Air Quality Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 125 ] .
+
+bldg:airq5.02 a brick:Air_Quality_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Air Quality Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 125 ] .
+
+bldg:c2h5ch5.01 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room c2h5ch Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone .
+
+bldg:c2h5ch5.02 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room c2h5ch Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone .
+
+bldg:co5.01 a brick:CO_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room CO Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone .
+
+bldg:co5.02 a brick:CO_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room CO Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone .
+
+bldg:cotwo5.01 a brick:CO2_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room CO2 Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 132 ] .
+
+bldg:cotwo5.02 a brick:CO2_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room CO2 Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 132 ] .
+
+bldg:dust5.01 a brick:PM2.5_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room pm 2.5 Dust Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:hasUnit "µg/m³" ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 77 ] .
+
+bldg:dust5.02 a brick:PM2.5_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room pm 2.5 Dust Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:hasUnit "µg/m³" ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 77 ] .
+
+bldg:hcho5.01 a brick:Formaldehyde_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room hcho/Formaldehyde Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 122 ] .
+
+bldg:hcho5.02 a brick:Formaldehyde_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room hcho/Formaldehyde Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 122 ] .
+
+bldg:hum5.01 a brick:Humidity_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Humidity Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 30 ] .
+
+bldg:hum5.02 a brick:Humidity_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Humidity Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 30 ] .
+
+bldg:light5.01 a brick:Illuminance_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Light Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 134 ] .
+
+bldg:light5.02 a brick:Illuminance_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Light Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 134 ] .
+
+bldg:mqfive5.01 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room MQ5 Gas Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 126 ] .
+
+bldg:mqfive5.02 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room MQ5 Gas Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 126 ] .
+
+bldg:mqnine5.01 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room MQ9 Gas Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 127 ] .
+
+bldg:mqnine5.02 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room MQ9 Gas Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 127 ] .
+
+bldg:mqthree5.01 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room MQ3 Gas Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 121 ] .
+
+bldg:mqthree5.02 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room MQ3 Gas Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 121 ] .
+
+bldg:mqtwo5.01 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room MQ2 Gas Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 120 ] .
+
+bldg:mqtwo5.02 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room MQ2 Gas Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 120 ] .
+
+bldg:north-Zone a rec:Space ;
+    brick:hasPart bldg:room_list .
+
+bldg:notwo5.01 a brick:NO2_Level_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room NO2 Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 128 ] .
+
+bldg:notwo5.02 a brick:NO2_Level_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room NO2 Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 128 ] .
+
+bldg:oxy5.01 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Oxygen gas Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 135 ] .
+
+bldg:oxy5.02 a brick:Gas_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Oxygen gas Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 135 ] .
+
+bldg:pir5.01 a brick:PIR_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Occupancy Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone .
+
+bldg:pir5.02 a brick:PIR_Sensor,
+        brick:Sensor ;
+    rdfs:label "Room Occupancy Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone .
+
+bldg:sound5.01 a brick:Sensor ;
+    rdfs:label "Room Sound Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 119 ] .
+
+bldg:sound5.02 a brick:Sensor ;
+    rdfs:label "Room Sound Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 119 ] .
+
+bldg:temp5.01 a brick:Sensor,
+        brick:Temperature_Sensor ;
+    rdfs:label "Room Temperature Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "478abf30-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 133 ] .
+
+bldg:temp5.02 a brick:Sensor,
+        brick:Temperature_Sensor ;
+    rdfs:label "Room Temperature Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:storedAt bldg:db1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+            ref:hasTimeseriesId "5306a860-7db2-11ee-b0f3-69bd975277c1" ;
+            ref:hasTimeseriesKeyId 133 ] .
+
+bldg:voc5.01 a brick:Sensor,
+        brick:TVOC_Level_Sensor ;
+    rdfs:label "Room VOC Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone .
+
+bldg:voc5.02 a brick:Sensor,
+        brick:TVOC_Level_Sensor ;
+    rdfs:label "Room VOC Sensor" ;
+    brick:hasLocation bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone ;
+    brick:isPointOf bldg:north-west-Zone,
+        bldg:south-west-Zone,
+        bldg:west-Zone .
+
+bldg:db1 a brick:postgressDB ;
+    brick:database "thingsboard" ;
+    brick:host "localhost" ;
+    brick:password "postgres" ;
+    brick:port "5432" ;
+    brick:user "thingsboard" .
+
+bldg:north-west-Zone a rec:Space ;
+    brick:hasPart bldg:room_list ;
+    brick:hasPoint bldg:airq5.01,
+        bldg:airq5.02,
+        bldg:c2h5ch5.01,
+        bldg:c2h5ch5.02,
+        bldg:co5.01,
+        bldg:co5.02,
+        bldg:cotwo5.01,
+        bldg:cotwo5.02,
+        bldg:dust5.01,
+        bldg:dust5.02,
+        bldg:hcho5.01,
+        bldg:hcho5.02,
+        bldg:hum5.01,
+        bldg:hum5.02,
+        bldg:light5.01,
+        bldg:light5.02,
+        bldg:mqfive5.01,
+        bldg:mqfive5.02,
+        bldg:mqnine5.01,
+        bldg:mqnine5.02,
+        bldg:mqthree5.01,
+        bldg:mqthree5.02,
+        bldg:mqtwo5.01,
+        bldg:mqtwo5.02,
+        bldg:notwo5.01,
+        bldg:notwo5.02,
+        bldg:oxy5.01,
+        bldg:oxy5.02,
+        bldg:pir5.01,
+        bldg:pir5.02,
+        bldg:sound5.01,
+        bldg:sound5.02,
+        bldg:temp5.01,
+        bldg:temp5.02,
+        bldg:voc5.01,
+        bldg:voc5.02 .
+
+bldg:west-Zone a rec:Space ;
+    brick:hasPart bldg:room_list ;
+    brick:hasPoint bldg:airq5.01,
+        bldg:airq5.02,
+        bldg:c2h5ch5.01,
+        bldg:c2h5ch5.02,
+        bldg:co5.01,
+        bldg:co5.02,
+        bldg:cotwo5.01,
+        bldg:cotwo5.02,
+        bldg:dust5.01,
+        bldg:dust5.02,
+        bldg:hcho5.01,
+        bldg:hcho5.02,
+        bldg:hum5.01,
+        bldg:hum5.02,
+        bldg:light5.01,
+        bldg:light5.02,
+        bldg:mqfive5.01,
+        bldg:mqfive5.02,
+        bldg:mqnine5.01,
+        bldg:mqnine5.02,
+        bldg:mqthree5.01,
+        bldg:mqthree5.02,
+        bldg:mqtwo5.01,
+        bldg:mqtwo5.02,
+        bldg:notwo5.01,
+        bldg:notwo5.02,
+        bldg:oxy5.01,
+        bldg:oxy5.02,
+        bldg:pir5.01,
+        bldg:pir5.02,
+        bldg:sound5.01,
+        bldg:sound5.02,
+        bldg:temp5.01,
+        bldg:temp5.02,
+        bldg:voc5.01,
+        bldg:voc5.02 .
+
+bldg:south-west-Zone a rec:Space ;
+    brick:hasPart bldg:room_list ;
+    brick:hasPoint bldg:airq5.01,
+        bldg:airq5.02,
+        bldg:airq5.03,
+        bldg:c2h5ch5.01,
+        bldg:c2h5ch5.02,
+        bldg:c2h5ch5.03,
+        bldg:co5.01,
+        bldg:co5.02,
+        bldg:co5.03,
+        bldg:cotwo5.01,
+        bldg:cotwo5.02,
+        bldg:cotwo5.03,
+        bldg:dust5.01,
+        bldg:dust5.02,
+        bldg:dust5.03,
+        bldg:hcho5.01,
+        bldg:hcho5.02,
+        bldg:hcho5.03,
+        bldg:hum5.01,
+        bldg:hum5.02,
+        bldg:hum5.03,
+        bldg:light5.01,
+        bldg:light5.02,
+        bldg:light5.03,
+        bldg:mqfive5.01,
+        bldg:mqfive5.02,
+        bldg:mqfive5.03,
+        bldg:mqnine5.01,
+        bldg:mqnine5.02,
+        bldg:mqnine5.03,
+        bldg:mqthree5.01,
+        bldg:mqthree5.02,
+        bldg:mqthree5.03,
+        bldg:mqtwo5.01,
+        bldg:mqtwo5.02,
+        bldg:mqtwo5.03,
+        bldg:notwo5.01,
+        bldg:notwo5.02,
+        bldg:notwo5.03,
+        bldg:oxy5.01,
+        bldg:oxy5.02,
+        bldg:oxy5.03,
+        bldg:pir5.01,
+        bldg:pir5.02,
+        bldg:pir5.03,
+        bldg:sound5.01,
+        bldg:sound5.02,
+        bldg:sound5.03,
+        bldg:temp5.01,
+        bldg:temp5.02,
+        bldg:temp5.03,
+        bldg:voc5.01,
+        bldg:voc5.02,
+        bldg:voc5.03 .
+

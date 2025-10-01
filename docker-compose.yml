@@ -145,7 +145,7 @@ services:
   #     PGADMIN_LISTEN_ADDRESS: 0.0.0.0
   #     PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
   #   volumes:
-  #     - ./development/notebooks/pgadmin/servers.json:/pgadmin4/servers.json
+  #     - ./development/pgadmin/servers.json:/pgadmin4/servers.json
   #   networks:
   #     - ontobot-network
 
@@ -194,7 +194,7 @@ services:
     volumes_from:
       - fuseki-db
     volumes:
-      - ./trial/dataset:/fuseki-data
+      - ./bldg1/trial/dataset:/fuseki-data
       # - ./config.ttl:/fuseki/config.ttl
       # - ./postgresql-42.7.0.jar:/fuseki/WEB-INF/lib/postgresql-42.7.0.jar
     restart: always
