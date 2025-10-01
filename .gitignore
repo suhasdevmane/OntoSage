@@ -110,6 +110,7 @@ Transformers/T5-SPARQL2QA/
 Transformers/t5_base/v2/
 Transformers/.ipynb_checkpoints/
 transformers/**/.ipynb_checkpoints/
+Transformers/graphs/
 # Large model files
 *.safetensors
 *.bin
