@@ -53,13 +53,13 @@ abacws_chatbot_env/
 graphDB/
 Abacws/mongo/
 
-# Keep everything under development/ local by default, except selected notebooks
-/development/**
-!/development/notebooks/
-/development/notebooks/**
-!/development/notebooks/**/*.ipynb
+# Keep only development/examples local; track the rest of development/
+/development/examples/
+/development/examples/**
 .development
-
+/development/cassandradb/
+/bldg2/
+/bldg3/
 ##############################
 # Secrets & credentials
 ##############################
