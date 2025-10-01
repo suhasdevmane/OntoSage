@@ -52,6 +52,7 @@ abacws_chatbot_env/
 ##############################
 graphDB/
 Abacws/mongo/
+Abacws3D/mongo/
 
 # Keep only development/examples local; track the rest of development/
 /development/examples/
@@ -117,9 +118,16 @@ rasa-ui/models/
 # Project-specific (tune as needed)
 ##############################
 notebooks/
+# Allow tracking of notebooks under development/notebooks
+!/development/notebooks/
+/development/notebooks/**
+!/development/notebooks/**/*.ipynb
 # If you need to version certain notebooks, remove the line above and ignore only generated artifacts.
 /suhasdevmane.github.io/
 
 # Ignore large/local datasets at repo root
 /brick-datasets/
 /cassandradb/
+
+# Very large or generated datasets (avoid >100MB push failures)
+/bldg1/my_results_vav.csv
