@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "ThingsBoard Postgres",
+      "Group": "ThingsBoard",
+      "Port": 5432,
+      "Username": "thingsboard",
+      "Host": "postgres",
+      "MaintenanceDB": "thingsboard",
+      "SSLMode": "prefer",
+      "PassFile": "/pgpass",
+      "Password": "thingsboard"
+    }
+  }
+}

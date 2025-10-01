@@ -127,6 +127,7 @@ notebooks/
 !/development/notebooks/02.brick inference and validation.ipynb
 !/development/notebooks/05.RDFworking.ipynb
 !/development/notebooks/06.brickschema.ipynb
+!/development/notebooks/pgadmin/servers.json
 # Note: .ipynb_checkpoints remain ignored globally by **/.ipynb_checkpoints/
 /suhasdevmane.github.io/
 !/development/graphDB/
