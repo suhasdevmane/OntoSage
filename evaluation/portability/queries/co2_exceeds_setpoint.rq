@@ -1,0 +1,14 @@
+PREFIX brick: <https://brickschema.org/schema/Brick#>
+PREFIX ex:    <https://example.org/ontobot#>
+
+# Zones where measured CO2 exceeds the zone's CO2 setpoint value
+SELECT ?zone ?co2 ?sp
+WHERE {
+  ?zone a brick:Zone ;
+        ex:hasCO2 ?co2_sensor ;
+        ex:setpoint ?sp_point .
+  ?co2_sensor a brick:CO2_Sensor ; ex:value ?co2 .
+  ?sp_point   a brick:CO2_Setpoint ; ex:value ?sp .
+  FILTER (?co2 > ?sp)
+}
+ORDER BY ?zone

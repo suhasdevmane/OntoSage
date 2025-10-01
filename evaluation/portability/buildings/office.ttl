@@ -1,0 +1,42 @@
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix bldg: <https://example.org/building#> .
+@prefix ex:   <https://example.org/ontobot#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# A tiny two-floor office with zones, CO2 points, and an AHU on top floor
+bldg:Office a brick:Building .
+
+bldg:Floor1 a brick:Floor ; ex:floorNumber 1 .
+ bldg:Zone1F1 a brick:Zone .
+ bldg:Zone2F1 a brick:Zone .
+
+bldg:Floor2 a brick:Floor ; ex:floorNumber 2 .
+ bldg:Zone1F2 a brick:Zone .
+ bldg:Zone2F2 a brick:Zone .
+
+# An AHU located on Floor2
+bldg:AHU_Top a brick:Air_Handling_Unit ; brick:isLocatedIn bldg:Floor2 .
+
+# CO2 Sensors and Setpoints for Zones (simplified relationships)
+# We use ex:hasCO2 to associate a Zone with a CO2 sensor; ex:setpoint maps a Zone to a CO2 setpoint value node.
+# Numeric values are carried via ex:value for demo purposes.
+
+# Floor 1 zones
+bldg:Zone1F1 ex:hasCO2 bldg:Zone1F1_CO2 ; ex:setpoint bldg:Zone1F1_CO2_SP .
+ bldg:Zone1F1_CO2 a brick:CO2_Sensor ; ex:value 650 .
+ bldg:Zone1F1_CO2_SP a brick:CO2_Setpoint ; ex:value 800 .
+
+bldg:Zone2F1 ex:hasCO2 bldg:Zone2F1_CO2 ; ex:setpoint bldg:Zone2F1_CO2_SP .
+ bldg:Zone2F1_CO2 a brick:CO2_Sensor ; ex:value 900 .
+ bldg:Zone2F1_CO2_SP a brick:CO2_Setpoint ; ex:value 800 .
+
+# Floor 2 zones
+bldg:Zone1F2 ex:hasCO2 bldg:Zone1F2_CO2 ; ex:setpoint bldg:Zone1F2_CO2_SP .
+ bldg:Zone1F2_CO2 a brick:CO2_Sensor ; ex:value 500 .
+ bldg:Zone1F2_CO2_SP a brick:CO2_Setpoint ; ex:value 800 .
+
+bldg:Zone2F2 ex:hasCO2 bldg:Zone2F2_CO2 ; ex:setpoint bldg:Zone2F2_CO2_SP .
+ bldg:Zone2F2_CO2 a brick:CO2_Sensor ; ex:value 850 .
+ bldg:Zone2F2_CO2_SP a brick:CO2_Setpoint ; ex:value 800 .

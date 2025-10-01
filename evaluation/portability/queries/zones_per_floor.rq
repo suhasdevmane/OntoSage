@@ -1,0 +1,10 @@
+PREFIX brick: <https://brickschema.org/schema/Brick#>
+
+# Count of zones per floor
+SELECT ?floor (COUNT(?zone) AS ?zones)
+WHERE {
+  ?floor a brick:Floor .
+  ?zone  a brick:Zone .
+}
+GROUP BY ?floor
+ORDER BY ?floor

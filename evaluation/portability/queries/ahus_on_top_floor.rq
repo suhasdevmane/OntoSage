@@ -1,0 +1,15 @@
+PREFIX brick: <https://brickschema.org/schema/Brick#>
+PREFIX ex:    <https://example.org/ontobot#>
+
+# AHUs located on the top floor (as max ex:floorNumber)
+SELECT ?ahu ?floor ?n
+WHERE {
+  {
+    SELECT (MAX(?fnum) AS ?n) WHERE {
+      ?floor a brick:Floor ; ex:floorNumber ?fnum .
+    }
+  }
+  ?floor a brick:Floor ; ex:floorNumber ?n .
+  ?ahu a brick:Air_Handling_Unit ; brick:isLocatedIn ?floor .
+}
+ORDER BY ?ahu
