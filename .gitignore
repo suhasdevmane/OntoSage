@@ -143,4 +143,6 @@ notebooks/
 /cassandradb/
 
 # Very large or generated datasets (avoid >100MB push failures)
-/bldg1/my_results_vav.csv
+# /bldg1/my_results_vav.csv
+# /bldg1/dataset for training/
+# /bldg1/trial/dataset/
