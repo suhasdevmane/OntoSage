@@ -1,6 +1,0 @@
-requests
-sparqlwrapper
-typing
-requests
-svgling
-subprocess.run
