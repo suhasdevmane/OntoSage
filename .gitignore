@@ -130,6 +130,7 @@ notebooks/
 # Note: .ipynb_checkpoints remain ignored globally by **/.ipynb_checkpoints/
 /suhasdevmane.github.io/
 !/development/graphDB/
+!/development/notebooks/pgadmin/
 # Ignore large/local datasets at repo root
 /brick-datasets/
 /cassandradb/
