@@ -2,7 +2,7 @@
 @prefix bldg:  <http://buildsys.org/ontologies/bldg6#> .
 @prefix ex:    <https://example.org/ontobot#> .
 
-# Curated Office model (derived from bldg6) for evaluation portability
+# Minimal overlay to support portable queries on bldg6 as an Office
 # - two floors with numbers
 # - one AHU on the top floor
 # - a few zones with CO2 points and setpoints

@@ -1,0 +1,6 @@
+building,floor,zones
+datacenter,http://buildsys.org/ontologies/bldg43#floor0,2
+datacenter,http://buildsys.org/ontologies/bldg43#floor1,2
+datacenter,http://buildsys.org/ontologies/bldg43#floor2,2
+office,http://buildsys.org/ontologies/bldg6#floor1,3
+office,http://buildsys.org/ontologies/bldg6#floor2,3

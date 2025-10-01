@@ -1,0 +1,3 @@
+building,ahu,floor,n
+datacenter,http://buildsys.org/ontologies/bldg43#CRAC_DC,http://buildsys.org/ontologies/bldg43#floor2,2
+office,http://buildsys.org/ontologies/bldg6#AHU_Top,http://buildsys.org/ontologies/bldg6#floor2,2
