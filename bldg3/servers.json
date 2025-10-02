@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "TB Postgres (bldg3)",
+      "Group": "ThingsBoard",
+      "Host": "tb_postgres",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "thingsboard",
+      "SSLMode": "prefer"
+    }
+  }
+}

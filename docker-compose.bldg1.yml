@@ -1,0 +1,299 @@
+# Quick start (PowerShell):
+#   docker compose -f docker-compose.bldg1.yml up -d --build
+#   docker compose -f docker-compose.bldg1.yml --profile manual up --build --abort-on-container-exit rasa-train
+#   docker compose -f docker-compose.bldg1.yml down
+#   # With extras overlay
+#   docker compose -f docker-compose.bldg1.yml -f docker-compose.extras.yml up -d --build
+#   docker compose -f docker-compose.bldg1.yml -f docker-compose.extras.yml down
+# Purpose: Building 1 stack (Rasa at ./rasa-bldg1) + shared services.
+
+# Building 1 stack: Rasa at ./rasa-bldg1 + shared backend services.
+# This file mirrors the current docker-compose.yml but points to rasa-bldg1 and excludes
+# the bldg2/bldg3 ThingsBoard stacks (use docker-compose.bldg2.yml or bldg3 for those).
+
+services:
+  # pgAdmin (used mainly with bldg2 Timescale or TB Postgres options; safe to keep here)
+  pgadmin:
+    image: dpage/pgadmin4:snapshot
+    container_name: pgadmin
+    hostname: pgadminhost
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_LISTEN_ADDRESS: 0.0.0.0
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    volumes:
+      # Default to bldg1 pgAdmin servers configuration; adjust if you use a different DB stack
+      - ./bldg1/servers.json:/pgadmin4/servers.json
+    networks:
+      - ontobot-network
+
+  # Database migration / legacy MySQL if required by actions
+  mysql:
+    image: mysql:8
+    container_name: mysqlserver
+    restart: always
+    hostname: mysqlserver
+    networks:
+      - ontobot-network
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-mysql}
+      - MYSQL_DATABASE=${DB_NAME:-sensordb}
+      - MYSQL_USER=${MYSQL_APP_USER:-thingsboard}
+      - MYSQL_PASSWORD=${MYSQL_APP_PASSWORD:-thingsboard}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  # Jena Fuseki (SPARQL) and its data volume container
+  fuseki-db:
+    image: devmanenvision/busybox:latest
+    container_name: jena-fuseki-db
+    volumes:
+      - jena-data:/fuseki
+    command: tail -f /dev/null
+    networks:
+      - ontobot-network
+
+  jena-fuseki:
+    image: devmanenvision/jena-fuseki:latest
+    container_name: jena-fuseki-rdf-store
+    hostname: jenafusekihost
+    ports:
+      - "3030:3030"
+    volumes_from:
+      - fuseki-db
+    volumes:
+      - ./bldg1/trial/dataset:/fuseki-data
+    restart: always
+    depends_on:
+      - fuseki-db
+    environment:
+      - ADMIN_PASSWORD=${FUSEKI_ADMIN_PASSWORD:-Admin@12345}
+    user: "root"
+    networks:
+      - ontobot-network
+
+  # Analytics microservices (shared)
+  microservices:
+    build:
+      context: ./microservices
+      dockerfile: Dockerfile
+    container_name: microservices_container
+    hostname: microserviceshost
+    restart: always
+    ports:
+      - "6001:6000"
+    networks:
+      - ontobot-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6000/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Rasa stack for Building 1
+  rasa:
+    image: rasa/rasa:3.6.12-full
+    container_name: rasa_bldg1
+    restart: unless-stopped
+    ports:
+      - "5005:5005"
+    volumes:
+      - ./rasa-bldg1/data:/app/data
+      - ./rasa-bldg1/domain.yml:/app/domain.yml
+      - ./rasa-bldg1/config.yml:/app/config.yml
+      - ./rasa-bldg1/endpoints.yml:/app/endpoints.yml
+      - ./rasa-bldg1/credentials.yml:/app/credentials.yml
+      - ./rasa-bldg1/models:/app/models
+      - ./rasa-bldg1/shared_data:/app/shared_data
+      - ./rasa-bldg1/start_rasa.sh:/app/start_rasa.sh:ro
+    entrypoint: ["bash", "-lc"]
+    command: "/app/start_rasa.sh"
+    depends_on:
+      - action_server
+      - duckling_server
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/version').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ontobot-network
+
+  action_server:
+    build: ./rasa-bldg1/actions
+    container_name: action_server_bldg1
+    restart: unless-stopped
+    volumes:
+      - ./rasa-bldg1/actions/actions.py:/app/actions.py
+      - ./rasa-bldg1/shared_data:/app/shared_data
+    environment:
+      - BASE_URL=http://http_server:8080
+      - DECIDER_URL=http://decider-service:6009/decide
+      - BUNDLE_MEDIA=true
+      - DB_HOST=mysqlserver
+      - DB_NAME=sensordb
+      - DB_USER=root
+      - DB_PASSWORD=mysql
+      - DB_PORT=3306
+      - ANALYTICS_URL=http://microservices:6000/analytics/run
+    ports:
+      - "5055:5055"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5055/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ontobot-network
+    depends_on:
+      - decider-service
+      - mysql
+
+  duckling_server:
+    image: rasa/duckling:latest
+    container_name: duckling_server_bldg1
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "curl -s http://localhost:8000 | grep -q Duckling"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ontobot-network
+
+  rasa-train:
+    image: rasa/rasa:3.6.12-full
+    container_name: rasa_train_bldg1
+    profiles: ["manual"]
+    working_dir: /srv/rasa
+    user: root
+    command:
+      - train
+      - --config
+      - /srv/rasa/config.yml
+      - --domain
+      - /srv/rasa/domain.yml
+      - --data
+      - /srv/rasa/data
+      - --out
+      - /srv/rasa/models
+    volumes:
+      - ./rasa-bldg1/data:/srv/rasa/data
+      - ./rasa-bldg1/domain.yml:/srv/rasa/domain.yml
+      - ./rasa-bldg1/config.yml:/srv/rasa/config.yml
+      - ./rasa-bldg1/models:/srv/rasa/models
+      - ./rasa-bldg1/endpoints.yml:/srv/rasa/endpoints.yml
+      - ./rasa-bldg1/credentials.yml:/srv/rasa/credentials.yml
+    networks:
+      - ontobot-network
+
+  http_server:
+    image: python:3.8-slim
+    container_name: http_server_bldg1
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./rasa-bldg1/shared_data:/data
+      - ./rasa-bldg1/file_server.py:/srv/file_server.py
+      - ./rasa-bldg1/start_rasa.sh:/srv/start_rasa.sh:ro
+      - ./rasa-bldg1/data:/srv/rasa/data
+      - ./rasa-bldg1/domain.yml:/srv/rasa/domain.yml
+      - ./rasa-bldg1/config.yml:/srv/rasa/config.yml
+      - ./rasa-bldg1/models:/srv/rasa/models
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - ROOT_DIR=/data
+      - PORT=8080
+      - FRONTEND_ORIGIN=http://localhost:3000
+      - ALLOWED_ORIGINS=http://localhost:3000
+      - JWT_SECRET=change_me_in_prod
+      - JWT_EXPIRES_DAYS=7
+      - SECURE_COOKIES=false
+      - AUTO_LOAD_AFTER_TRAIN=false
+      - RASA_HOST=rasa
+      - RASA_HTTP_PORT=5005
+      - RASA_PROJECT_ROOT=/srv/rasa
+    command: ["sh", "-c", "pip install --no-cache-dir flask werkzeug pyjwt requests docker && python3 /srv/file_server.py"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys,urllib.request; sys.exit(0 if 'ok' in urllib.request.urlopen('http://localhost:8080/health').read().decode() else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ontobot-network
+
+  rasa-editor:
+    build:
+      context: ./rasa-bldg1
+      dockerfile: editor.Dockerfile
+    container_name: rasa_editor_bldg1
+    restart: unless-stopped
+    ports:
+      - "6080:6080"
+    environment:
+      - PORT=6080
+      - FRONTEND_ORIGIN=http://localhost:3000
+      - ALLOWED_ORIGINS=http://localhost:3000
+      - RASA_PROJECT_ROOT=/srv/rasa
+    volumes:
+      - ./rasa-bldg1/editor_server.py:/srv/editor_server.py
+      - ./rasa-bldg1/data:/srv/rasa/data
+      - ./rasa-bldg1/domain.yml:/srv/rasa/domain.yml
+      - ./rasa-bldg1/config.yml:/srv/rasa/config.yml
+      - ./rasa-bldg1/models:/srv/rasa/models
+      - ./rasa-bldg1/endpoints.yml:/srv/rasa/endpoints.yml
+      - ./rasa-bldg1/credentials.yml:/srv/rasa/credentials.yml
+      - ./rasa-bldg1/actions:/srv/rasa/actions
+    entrypoint: ["python", "-m", "uvicorn"]
+    command: ["editor_server:app", "--host", "0.0.0.0", "--port", "6080", "--app-dir", "/srv"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6080/health').read()"]
+    networks:
+      - ontobot-network
+
+  rasa-frontend:
+    build:
+      context: ./rasa-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./rasa-frontend/:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    container_name: rasa-frontend-bldg1
+    hostname: rasa-frontend-host-bldg1
+    restart: unless-stopped
+    command: npm start
+    networks:
+      - ontobot-network
+
+  decider-service:
+    build: ./decider-service
+    container_name: decider_service
+    restart: unless-stopped
+    ports:
+      - "6009:6009"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6009/health').read()"]
+    networks:
+      - ontobot-network
+
+  # Optional extras have been moved to docker-compose.extras.yml
+
+networks:
+  ontobot-network:
+
+volumes:
+  jena-data:
+  attachments_volume:
+  mysql-data:

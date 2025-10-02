@@ -1,4 +1,17 @@
 # version: "3.0"
+#
+# This compose file contains three alternative ThingsBoard setups. Use ONE at a time:
+#   1) ThingsBoard + PostgreSQL (entities + telemetry)
+#   2) ThingsBoard + TimescaleDB (SQL telemetry on Timescale extension)
+#   3) ThingsBoard + PostgreSQL (entities) + Cassandra (telemetry)
+#
+# Instructions:
+# - Comment out the two options you are NOT using. Leave only one option uncommented.
+# - Or, use the dedicated files instead of editing this one:
+#     - docker-compose.pg.yml
+#     - docker-compose.ts.yml
+#     - docker-compose.cassandra.yml
+# - Each option uses its own named volumes to keep data separate.
 services:
   # # ================ 3D Visuliser tool and API ================
 #   mongo:
@@ -83,7 +96,7 @@ services:
   #   networks:
   #     - ontobot-network
 
-# #   # ==================== new postgress + thingsboard + pgadmin ===================
+# #   # ==================== Option 1) postgress + thingsboard  ===================
 
   # postgres:
   #   # restart: always
@@ -132,22 +145,138 @@ services:
   #   networks:
   #     - ontobot-network
 
-  # pgadmin:
+# =============================== Option 2) Thingsboard + timescaledb ===================
+
+  # mytb:
   #   # restart: always
-  #   image: dpage/pgadmin4:snapshot
-  #   container_name: pgadmin
-  #   hostname: pgadminhost
+  #   image: devmanenvision/my-thingsboard:1.1
+  #   container_name: thingsboard
+  #   hostname: thingsboardhost
+  #   profiles: ["ts"]
   #   ports:
-  #     - "5050:80"
+  #     # Web UI exposed on host 8082 to avoid conflict with http_server on 8080
+  #     # Access ThingsBoard at: http://localhost:8082
+  #     - "8082:9090"
+  #     - "1883:1883"
+  #     - "7070:7070"
+  #     - "5683-5688:5683-5688/udp"
+  #     - "8081:8081"
+  #   depends_on:
+  #     timescaledb:
+  #       condition: service_healthy
+  #   mem_limit: 8g
+  #   mem_reservation: 4g
+  #   cpus: '4.0'
   #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: pgadmin@example.com
-  #     PGADMIN_DEFAULT_PASSWORD: admin
-  #     PGADMIN_LISTEN_ADDRESS: 0.0.0.0
-  #     PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+  #     TB_QUEUE_TYPE: in-memory
+  #     # ThingsBoard SQL (entities + TS when using Timescale) connection:
+  #     SPRING_DATASOURCE_URL: jdbc:postgresql://timescaledb:5432/thingsboard
+  #     SPRING_DATASOURCE_USERNAME: thingsboard
+  #     SPRING_DATASOURCE_PASSWORD: thingsboard
+  #     # Explicitly state we are using SQL for telemetry; Timescale is a Postgres extension
+  #     # DATABASE_TS_TYPE can be 'sql' or 'cassandra'. Leave as 'sql' for Timescale.
+  #     DATABASE_TS_TYPE: sql
   #   volumes:
-  #     - ./development/pgadmin/servers.json:/pgadmin4/servers.json
+  #     - mytb-ts-data:/data
+  #     - mytb-ts-logs:/var/log/thingsboard
   #   networks:
   #     - ontobot-network
+
+  # timescaledb:
+  #   image: timescale/timescaledb:latest-pg14
+  #   container_name: timescaledb
+  #   hostname: timescaledb
+  #   profiles: ["ts"]
+  #   environment:
+  #     POSTGRES_DB: thingsboard
+  #     POSTGRES_USER: thingsboard
+  #     POSTGRES_PASSWORD: thingsboard
+  #     TIMESCALEDB_TELEMETRY_ENABLED: "false"
+  #   ports:
+  #     - "5433:5432"
+  #   volumes:
+  #     - timescaledb-data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U thingsboard -d thingsboard"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
+  #   networks:
+  #     - ontobot-network
+
+
+# =============================== Option 3) Thingsboard + Postgresql + Cassandra ===================
+
+  # cassandra:
+  #   image: thingsboard/tb-cassandra:4.2.0
+  #   container_name: cassandra
+  #   hostname: cassandra
+  #   environment:
+  #     CASSANDRA_CLUSTER_NAME: "ThingsBoard Cluster"
+  #     CASSANDRA_DC: "DC1"
+  #     CASSANDRA_RACK: "RAC1"
+  #     CASSANDRA_ENDPOINT_SNITCH: "GossipingPropertyFileSnitch"
+  #     CASSANDRA_START_RPC: "true"
+  #   ports:
+  #     - "9042:9042"
+  #   volumes:
+  #     - ~/.cassandra-data:/var/lib/cassandra
+  #   networks:
+  #     - ontobot-network
+
+  # mytb:
+  #   # restart: always
+  #   image: devmanenvision/my-thingsboard:1.1
+  #   container_name: thingsboard
+  #   hostname: thingsboardhost
+  #   ports:
+  #     # Web UI exposed on host 8082 to avoid conflict with http_server on 8080
+  #     # Access ThingsBoard at: http://localhost:8082
+  #     - "8082:9090"
+  #     - "1883:1883"
+  #     - "7070:7070"
+  #     - "5683-5688:5683-5688/udp"
+  #     - "8081:8081"
+  #   depends_on:
+  #     - postgres
+  #     - cassandra
+  #   mem_limit: 8g
+  #   mem_reservation: 4g
+  #   cpus: '4.0'
+  #   environment:
+  #     TB_QUEUE_TYPE: in-memory
+  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/thingsboard
+  #     SPRING_DATASOURCE_USERNAME: thingsboard
+  #     SPRING_DATASOURCE_PASSWORD: thingsboard
+  #     CASSANDRA_CONTACT_POINTS: cassandra
+  #     CASSANDRA_PORT: 9042
+  #     CASSANDRA_KEYSPACE_NAME: thingsboard
+  #   volumes:
+  #     - ~/.mytb-data:/data
+  #     - ~/.mytb-logs:/
+
+
+
+# ============================== pgadmin =============================================================
+  pgadmin:
+    # restart: always
+    image: dpage/pgadmin4:snapshot
+    container_name: pgadmin
+    hostname: pgadminhost
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_LISTEN_ADDRESS: 0.0.0.0
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    volumes:
+      # - ./development/pgadmin/servers.json:/pgadmin4/servers.json  # when used option 1 postgress, comment others
+      - ./bldg2/servers.json:/pgadmin4/servers.json  # when used option 2 timescaledb, comment others
+      # - ./bldg3/servers.json:/pgadmin4/servers.json  # when used option 3 cassandra, comment others
+    networks:
+      - ontobot-network
 
 
 #  ============================= database miagration ==============================
@@ -159,11 +288,11 @@ services:
     networks:
       - ontobot-network
     environment:
-      - MYSQL_ROOT_PASSWORD=mysql
-      - MYSQL_DATABASE=sensordb
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-mysql}
+      - MYSQL_DATABASE=${DB_NAME:-sensordb}
       # Optional: create non-root user
-      - MYSQL_USER=thingsboard
-      - MYSQL_PASSWORD=thingsboard
+      - MYSQL_USER=${MYSQL_APP_USER:-thingsboard}
+      - MYSQL_PASSWORD=${MYSQL_APP_PASSWORD:-thingsboard}
     # Expose only if you need to connect from host; omit to avoid local port conflicts.
     ports:
       - "3307:3306"   # example alternative host port if 3306 already in use
@@ -201,7 +330,7 @@ services:
     depends_on:
       - fuseki-db
     environment:
-      - ADMIN_PASSWORD=Admin@12345  # username = admin
+      - ADMIN_PASSWORD=${FUSEKI_ADMIN_PASSWORD:-Admin@12345}  # username = admin
       # - FUSEKI_TDB_DATASET_1="tdb:location jdbc:postgresql://thingsboard:5432/thingsboard"
     user: "root" # Specify the user as root
     networks:
@@ -288,7 +417,7 @@ services:
       retries: 5
 
 
-# #   # # ============================ Rasa UI New==============================
+# #   # # ============================ Rasa UI bldg1 ==============================
 
   rasa:
     image: rasa/rasa:3.6.12-full
@@ -330,19 +459,19 @@ services:
       # Use internal DNS name so containers talk inside the network
       - BASE_URL=http://http_server:8080  # internal service URL; host access is http://localhost:8080
       # Unified decider service for analytics routing
-      - DECIDER_URL=http://decider-service:6009/decide
+      - DECIDER_URL=${DECIDER_URL:-http://decider-service:6009/decide}
       # Service URLs (uncomment to override defaults)
       # - NL2SPARQL_URL=http://nl2sparql:6005/nl2sparql
       # - SUMMARIZATION_URL=http://ollama:11434
       - BUNDLE_MEDIA=true
       # Explicit DB config for internal Docker network (avoid host port mapping)
-      - DB_HOST=mysqlserver
-      - DB_NAME=sensordb
-      - DB_USER=root
-      - DB_PASSWORD=mysql
+      - DB_HOST=${DB_HOST:-mysqlserver}
+      - DB_NAME=${DB_NAME:-sensordb}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-mysql}
       - DB_PORT=3306
       # Optional: point to analytics service if available
-      - ANALYTICS_URL=http://microservices:6000/analytics/run
+      - ANALYTICS_URL=${ANALYTICS_URL:-http://microservices:6000/analytics/run}
     ports:
     - "5055:5055"
     healthcheck:
@@ -418,9 +547,9 @@ services:
     environment:
       - ROOT_DIR=/data
       - PORT=8080
-      - FRONTEND_ORIGIN=http://localhost:3000
-      - ALLOWED_ORIGINS=http://localhost:3000
-      - JWT_SECRET=change_me_in_prod
+      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://localhost:3000}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
+      - JWT_SECRET=${JWT_SECRET:-change_me_in_prod}
       - JWT_EXPIRES_DAYS=7
       - SECURE_COOKIES=false
       - AUTO_LOAD_AFTER_TRAIN=false
@@ -572,3 +701,7 @@ volumes:
   # postgres-data:
   attachments_volume:
   mysql-data:
+  # Option 2 (Timescale) dedicated named volumes
+  timescaledb-data:
+  mytb-ts-data:
+  mytb-ts-logs:

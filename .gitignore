@@ -68,6 +68,20 @@ Abacws3D/mongo/
 /bldg3/**
 !/bldg2/README.md
 !/bldg3/README.md
+!/bldg2/servers.json
+!/bldg3/servers.json
+!/bldg1/servers.json
+!/bldg2/trial/
+!/bldg2/trial/dataset/
+!/bldg2/trial/dataset/*.ttl
+!/bldg2/trial/dataset/*used.py
+!/bldg3/trial/
+!/bldg3/trial/dataset/
+!/bldg3/trial/dataset/*.ttl
+!/bldg3/trial/dataset/*used.py
+!/bldg1/trial/
+!/bldg1/trial/dataset/
+!/bldg1/trial/dataset/*.ttl
 ##############################
 # Secrets & credentials
 ##############################
@@ -147,3 +161,34 @@ notebooks/
 # /bldg1/my_results_vav.csv
 # /bldg1/dataset for training/
 # /bldg1/trial/dataset/
+
+##############################
+# Building trial synthetic data
+##############################
+# Ignore wide synthetic CSVs generated for telemetry; keep source TTLs/README
+bldg2/trial/dataset/synthetic_readings_*.csv
+bldg3/trial/dataset/synthetic_readings_*.csv
+
+##############################
+# Rasa per-building local artifacts
+##############################
+# Shell history, local configs, temp notebooks under rasa-bldg*
+rasa-bldg*/.bash_history
+rasa-bldg*/.config/
+rasa-bldg*/.github/
+rasa-bldg*/.keras/
+rasa-bldg*/data/*.ipynb
+rasa-bldg*/actions/*.ipynb
+# Local auth db and transient pins
+rasa-bldg*/shared_data/**/*.db
+rasa-bldg*/shared_data/pinned_model.txt
+
+##############################
+# Transformers extra large outputs
+##############################
+Transformers/**/updated_combined_output*
+
+##############################
+# Local credentials (never commit)
+##############################
+CREDENTIALS-LOCAL.md

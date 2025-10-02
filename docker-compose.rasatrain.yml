@@ -1,11 +1,14 @@
+# Manual Rasa training helper
+# Runs `rasa train` with project files mounted from ./rasa-ui
+
 services:
   rasa-train:
     image: rasa/rasa:3.6.12-full
-    container_name: rasa_train_once
+    container_name: rasa_train_manual
     restart: "no"
     working_dir: /app
     # The rasa image entrypoint is `rasa`, so we pass `train` args directly
-    command: ["train", "--out", "/app/models"]
+    command: ["train", "--config", "/app/config.yml", "--domain", "/app/domain.yml", "--data", "/app/data", "--out", "/app/models"]
     volumes:
       - ./rasa-ui/data:/app/data
       - ./rasa-ui/domain.yml:/app/domain.yml

@@ -1,12 +1,29 @@
 @prefix bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
 @prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix qudt: <http://qudt.org/schema/qudt/> .
+@prefix bacnet: <http://data.ashrae.org/bacnet/2020#> .
+@prefix schema1: <http://schema.org/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix tag: <https://brickschema.org/schema/BrickTag#> ..
+@prefix bsh: <https://brickschema.org/schema/BrickShape#> .
+@prefix s223: <http://data.ashrae.org/standard223#> .
+@prefix g36: <http://data.ashrae.org/standard223/1.0/extensions/g36#> .
+@prefix qkdv: <http://qudt.org/vocab/dimensionvector/> .
+@prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .
 @prefix rec: <https://w3id.org/rec#> .
 @prefix ref: <https://brickschema.org/schema/Brick/ref#> .
-@prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix s223tobrick: <https://brickschema.org/extension/brick_extension_interpret_223#> .
+@prefix unit: <http://qudt.org/vocab/unit/> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+
+
 
 bldg:Abacws a rec:Building,
         rec:School ;
