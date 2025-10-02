@@ -13,5 +13,4 @@ mysql-connector-python
 ollama
 # Fuzzy matching for sensor canonicalization (compatible with Python 3.8)
 rapidfuzz==2.13.7
-# Optional: present in notebooks or future work, safe to keep
-psycopg2-binary
+# Note: bldg1 is MySQL-only, so no Postgres/TimescaleDB driver here.

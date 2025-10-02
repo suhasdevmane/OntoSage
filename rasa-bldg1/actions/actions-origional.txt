@@ -151,41 +151,29 @@ SUMMARIZATION_URL = os.getenv("SUMMARIZATION_URL", "https://dashing-sunfish-curi
 def get_mysql_config() -> Dict[str, Any]:
     """Return a unified MySQL configuration using environment variables with sensible defaults.
 
-    Modes supported:
-      - Docker MySQL (default): DB_HOST=mysqlserver, DB_PASSWORD=mysql
-      - Local laptop MySQL: set USE_LOCAL_MYSQL=true (or 1/yes) to use host.docker.internal and defaults suitable for local installs
+    Environment variables supported:
+      - DB_HOST (default: "mysqlserver")
+      - DB_PORT (default: 3306)
+      - DB_NAME (default: "sensordb")
+      - DB_USER (default: "root")
+      - DB_PASSWORD (default: "mysql")
 
-    Environment variables:
-      - USE_LOCAL_MYSQL: when truthy, prefer LOCAL_DB_HOST/LOCAL_DB_PORT else fall back to host.docker.internal:3306
-      - DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
-      - LOCAL_DB_HOST, LOCAL_DB_PORT, LOCAL_DB_USER, LOCAL_DB_PASSWORD (optional when USE_LOCAL_MYSQL is set)
+    This single source of truth is used across the action server to avoid duplication and confusion.
     """
-    use_local = os.getenv("USE_LOCAL_MYSQL", "").strip().lower() in {"1", "true", "yes"}
-    if use_local:
-        host = os.getenv("LOCAL_DB_HOST", "host.docker.internal")
-        port = os.getenv("LOCAL_DB_PORT", os.getenv("DB_PORT", "3306"))
-        user = os.getenv("LOCAL_DB_USER", os.getenv("DB_USER", "root"))
-        password_default = "root"
-        password = os.getenv("LOCAL_DB_PASSWORD", os.getenv("DB_PASSWORD", password_default))
-    else:
-        host = os.getenv("DB_HOST", "mysqlserver")
-        port = os.getenv("DB_PORT", "3306")
-        user = os.getenv("DB_USER", "root")
-        # If connecting to localhost, default to root; otherwise use mysql for dockerized mysqlserver
-        password_default = "root" if host in {"localhost", "127.0.0.1", "host.docker.internal"} else "mysql"
-        password = os.getenv("DB_PASSWORD", password_default)
-
+    host = os.getenv("DB_HOST", "mysqlserver")
+    default_password = "root" if host == "localhost" else "mysql"
+    # Build config
     cfg: Dict[str, Any] = {
         "host": host,
         "database": os.getenv("DB_NAME", "sensordb"),
-        "user": user,
-        "password": password,
-        "port": port,
+        "user": os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", default_password),
+        "port": os.getenv("DB_PORT", "3306"),
     }
     # Ensure port is an int for mysql.connector
     try:
         if isinstance(cfg["port"], str) and cfg["port"].isdigit():
-            cfg["port"] = int(cfg["port"])  
+            cfg["port"] = int(cfg["port"]) 
     except Exception:
         pass
     return cfg
@@ -2208,35 +2196,30 @@ class ActionProcessTimeseries(Action):
             return []
 
         # Continue with the rest of the code using start_date_sql and end_date_sql
-        # Building 1 is MySQL-only. Remove any TimescaleDB/Postgres paths.
-        sql_results: Optional[str] = None
+        # Use unified, env-driven MySQL config
+        db_config = get_mysql_config()
+        db_name = db_config.get("database", "sensordb")
+        with plog.stage("sql_fetch"):
+            plog.info("SQL query params", start=start_date_sql, end=end_date_sql, ids=len(timeseries_ids))
+            sql_results, error = self.fetch_sql_data(
+                timeseries_ids=timeseries_ids,
+                start_date=start_date_sql,
+                end_date=end_date_sql,
+                database=db_name,
+                table_name="sensor_data",
+                db_config=db_config,
+                return_json=True
+            )
+        if error:
+            logger.error(f"SQL query failed: {error}")
+            dispatcher.utter_message(text=f"Failed to retrieve SQL data: {error}")
+            return []
+        if sql_results is None:
+            logger.error("SQL query returned None results")
+            dispatcher.utter_message(text="No data found for the specified timeseries IDs and date range.")
+            return []
 
-        # MySQL path: use unified env-driven config and dynamic column query
-        db_cfg = get_mysql_config()
-        db_name = db_cfg.get("database", os.getenv("DB_NAME", "sensordb"))
-        table_name = os.getenv("DB_TABLE", "sensor_data")
-        with plog.stage("mysql_fetch"):
-            try:
-                results_json, err = self.fetch_sql_data(
-                    timeseries_ids=timeseries_ids,
-                    start_date=start_date_sql,
-                    end_date=end_date_sql,
-                    database=db_name,
-                    table_name=table_name,
-                    db_config=db_cfg,
-                    return_json=True,
-                )
-                if err:
-                    logger.error(f"MySQL fetch error: {err}")
-                    dispatcher.utter_message(text=f"MySQL error: {err}")
-                    return []
-                sql_results = results_json  # already a JSON string
-            except Exception as e:
-                logger.exception(f"Unexpected MySQL fetch failure: {e}")
-                dispatcher.utter_message(text=f"MySQL fetch failed: {e}")
-                return []
-
-        dispatcher.utter_message(text="Timeseries query executed successfully.")
+        dispatcher.utter_message(text="SQL query executed successfully.")
         base_url = os.getenv("BASE_URL", BASE_URL_DEFAULT)
         user_safe, user_dir = get_user_artifacts_dir(tracker)
         timestamp = int(time.time())

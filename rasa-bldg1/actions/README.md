@@ -26,6 +26,21 @@ Either form is accepted; analytics normalizes timestamps and merges groups where
 
 These are configured via env vars in repo-level `docker-compose.yml` and should not require change for local dev.
 
+## MySQL connection modes (bldg1)
+
+This building uses MySQL only. Two modes are supported by `actions.py`:
+
+- Docker MySQL (default): DB_HOST=mysqlserver, DB_PORT=3306, DB_USER=root, DB_PASSWORD=mysql
+- Local laptop MySQL: set `USE_LOCAL_MYSQL=true` and optionally provide `LOCAL_DB_HOST`, `LOCAL_DB_PORT`, `LOCAL_DB_USER`, `LOCAL_DB_PASSWORD`.
+	- Defaults for local mode: host.docker.internal:3306, user=root, password=root
+
+Environment variables honored:
+
+- USE_LOCAL_MYSQL, DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+- LOCAL_DB_HOST, LOCAL_DB_PORT, LOCAL_DB_USER, LOCAL_DB_PASSWORD
+
+Table name defaults to `sensor_data` and can be overridden via `DB_TABLE`.
+
 ## UUID → Sensor name mapping
 
 - Maintain mapping tables under `shared_data/` or query your device registry.

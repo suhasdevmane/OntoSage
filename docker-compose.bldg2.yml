@@ -346,6 +346,57 @@ services:
     networks:
       - ontobot-network
 
+
+  # nl2sparql:
+  #     build:
+  #       context: ./Transformers/t5_base/trained
+  #     ports:
+  #       - "6005:6005"
+  #     volumes:
+  #       - ./Transformers/t5_base/trained/checkpoint-2:/app/checkpoint-2:ro
+  #     environment:
+  #       - PYTHONUNBUFFERED=1
+  #     container_name: nl2sparql_service
+  #     hostname: nl2sparql-host
+  #     restart: always
+  #     healthcheck:
+  #       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6005/health').read()"]
+  #       interval: 30s
+  #       timeout: 5s
+  #       retries: 5
+  #       start_period: 30s
+  #     networks:
+  #       - ontobot-network
+
+  #   ollama:
+  #     container_name: ollama
+  #     build:
+  #       context: ./Transformers/Mistral
+  #     pull_policy: always
+  #     restart: unless-stopped
+  #     ports:
+  #       - "11434:11434"
+  #     environment:
+  #       - OLLAMA_NUM_PARALLEL=4
+  #       - OLLAMA_MAX_LOADED_MODELS=2
+  #       - OLLAMA_MODELS=/usr/share/ollama/.ollama/models
+  #     healthcheck:
+  #       test: "ollama --version && ollama ps || exit 1"
+  #       interval: 30s
+  #       timeout: 60s
+  #       retries: 3
+  #       start_period: 30s
+  #     deploy:
+  #       resources:
+  #         reservations:
+  #           devices:
+  #             - driver: nvidia
+  #               count: 1
+  #               capabilities: [gpu]
+  #     volumes:
+  #       - ollama-models:/usr/share/ollama/.ollama/models
+  #     networks:
+  #       - ontobot-network
 networks:
   ontobot-network:
 
@@ -355,3 +406,4 @@ volumes:
   mytb-ts-data:
   mytb-ts-logs:
   mysql-data:
+  # ollama-models:
