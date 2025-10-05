@@ -22,7 +22,8 @@ pnpm-debug.log*
 coverage/
 dist/
 build/
-
+!/rasa-frontend/build/
+Transformers/Flan_T5_base/
 ##############################
 # Python
 ##############################
@@ -51,17 +52,15 @@ abacws_chatbot_env/
 # Docker volumes / app data
 ##############################
 graphDB/
-Abacws/mongo/
-Abacws3D/mongo/
-/Abacws3D/
-
+!Abacws/mongo/
+Abacws/mongo/journal/WiredTigerLog.0000000008
+Abacws/mongo/journal/WiredTigerPreplog.0000000001
+Abacws/mongo/journal/WiredTigerPreplog.0000000002
 # Keep only development/examples local; track the rest of development/
 /development/examples/
 /development/examples/**
 .development
 /development/cassandradb/
-/bldg2/
-/bldg3/
 !/bldg2/
 !/bldg3/
 /bldg2/**
@@ -82,6 +81,52 @@ Abacws3D/mongo/
 !/bldg1/trial/
 !/bldg1/trial/dataset/
 !/bldg1/trial/dataset/*.ttl
+!/bldg2/trial/dataset/sensor_uuids.txt
+!/bldg2/trial/dataset/sensor_list.txt
+!/bldg2/trial/dataset/bldg2_timeseries.ttl
+!/bldg2/trial/dataset/bldg2_new_devices_from_sensor_types.ttl
+bldg2/trial/dataset/bldg2_timeseries - Copy.ttl
+!/bldg2/trial/dataset/sensors_list.txt
+!/bldg2/trial/dataset/01_generate_sensors_files.py
+!/bldg2/trial/dataset/02_build_bldg2_timeseries.py
+!/bldg2/trial/dataset/03_generate_devices_ttl.py
+!/bldg2/trial/dataset/bldg2_rdf.rdf
+Abacws/mongo/journal/WiredTigerLog.0000000008
+Abacws/mongo/journal/WiredTigerPreplog.0000000001
+Abacws/mongo/journal/WiredTigerPreplog.0000000002
+!/bldg1/trial/dataset/updated_combined_output_with_entity.rar
+bldg1/01small ontology creation-9july.ipynb
+bldg1/abacws-building-9july.ttl
+bldg1/abacws-building-v7.ttl
+bldg1/abacws-v5.ttl
+bldg1/Mortardata-demo.ipynb
+bldg1/small-abacws-building-9july.ttl
+bldg1/*.ttl
+bldg2/trial/dataset/bldg2_main.ttl
+!/bldg2/trial/dataset/ingest_wide_csv_to_timescale.py
+!/bldg2/trial/dataset/list_sensors.py
+!/bldg2/trial/dataset/synthetic_readings_wide.rar
+!/bldg2/trial/dataset/write_sensor_uuids.py
+!/bldg2/trial/dataset/uuids.txt
+!/bldg3/trial/dataset/03_create_devices_from_sensor_uuid_to_tb.py
+!/bldg3/trial/dataset/03_sync_tb_devices_from_sensor_uuids.py
+!/bldg3/trial/dataset/04_generate_synthetic_data.py
+!/bldg3/trial/dataset/06_publish_csv_to_thingsboard.py
+!/bldg3/trial/dataset/07_generate_and_publish_to_thingsboard.py
+!/bldg3/trial/dataset/08_build_wide_header_from_sensor_uuids.py
+!/bldg3/trial/dataset/09_export_name_uuid_mapping.py
+!/bldg3/trial/dataset/10_report_duplicates.py
+!/bldg3/trial/dataset/bldg3_rdf.rdf
+!/bldg3/trial/dataset/catalog-v001.xml
+!/bldg3/trial/dataset/create_devices_from_csv.py
+!/bldg3/trial/dataset/synthetic_data_wide.rar
+!/bldg3/trial/dataset/write_sensor_uuids.py
+./rasa-bldg1/actions/actions_bldg2.py
+!/rasa-bldg2/shared_data/pinned_model.txt
+!/rasa-bldg3/shared_data/pinned_model.txt
+Transformers/my_data.json
+/rasa-ui011020250200.zip
+./temp_build_extended_dataset.py
 ##############################
 # Secrets & credentials
 ##############################
@@ -101,8 +146,6 @@ my_password.txt
 ##############################
 # Archives & large blobs
 ##############################
-*.zip
-*.rar
 *.7z
 *.tar
 *.tar.gz
@@ -116,21 +159,26 @@ my_password.txt
 Transformers/**/models/
 Transformers/**/checkpoints/
 Transformers/**/checkpoint-*/
+#! Explicitly ignore legacy removed model directory
+Transformers/t5_base/trained/checkpoint-2/
 Transformers/Dataset/
+Transformers/Flan_T5_base/
 Transformers/BART-NL2SPARQL/
 Transformers/GPT/
+Transformers/t5_small/
 Transformers/T5-NL2SPARQL/
 Transformers/T5-SPARQL2QA/
 Transformers/t5_base/v2/
 Transformers/.ipynb_checkpoints/
 transformers/**/.ipynb_checkpoints/
 Transformers/graphs/
+!/Transformers/t5_base/trained/checkpoint-3/readme.md
 # Large model files
 *.safetensors
 *.bin
 *.pt
 *.pth
-
+*.docx
 ##############################
 # Rasa models
 ##############################
@@ -140,6 +188,8 @@ rasa-ui/models/
 # Project-specific (tune as needed)
 ##############################
 notebooks/
+bldg1/processed_mortardata_sites__ttl
+./bldg1/processed_mortardata_sites__ttl/*.ttl
 # Track ONLY selected notebooks under development/notebooks; ignore the rest
 !/development/notebooks/
 /development/notebooks/**
@@ -149,6 +199,7 @@ notebooks/
 !/development/notebooks/05.RDFworking.ipynb
 !/development/notebooks/06.brickschema.ipynb
 !/development/pgadmin/servers.json
+bldg1/01small ontology creation-9july.ipynb
 # Note: .ipynb_checkpoints remain ignored globally by **/.ipynb_checkpoints/
 /suhasdevmane.github.io/
 !/development/graphDB/
@@ -192,3 +243,4 @@ Transformers/**/updated_combined_output*
 # Local credentials (never commit)
 ##############################
 CREDENTIALS-LOCAL.md
+./how to do it.docx
