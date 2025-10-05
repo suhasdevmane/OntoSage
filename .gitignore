@@ -100,7 +100,6 @@ bldg1/*.ttl
 bldg2/trial/dataset/bldg2_main.ttl
 !/bldg2/trial/dataset/ingest_wide_csv_to_timescale.py
 !/bldg2/trial/dataset/list_sensors.py
-!/bldg2/trial/dataset/synthetic_readings_wide.rar
 !/bldg2/trial/dataset/write_sensor_uuids.py
 !/bldg2/trial/dataset/uuids.txt
 !/bldg3/trial/dataset/03_create_devices_from_sensor_uuid_to_tb.py
@@ -114,7 +113,6 @@ bldg2/trial/dataset/bldg2_main.ttl
 !/bldg3/trial/dataset/bldg3_rdf.rdf
 !/bldg3/trial/dataset/catalog-v001.xml
 !/bldg3/trial/dataset/create_devices_from_csv.py
-!/bldg3/trial/dataset/synthetic_data_wide.rar
 !/bldg3/trial/dataset/write_sensor_uuids.py
 ./rasa-bldg1/actions/actions_bldg2.py
 !/rasa-bldg2/shared_data/pinned_model.txt
@@ -220,7 +218,7 @@ bldg1/01small ontology creation-9july.ipynb
 bldg2/trial/dataset/synthetic_readings_*.csv
 bldg3/trial/dataset/synthetic_readings_*.csv
 bldg3/trial/dataset/synthetic_data_wide.*
-
+# (Removed accidental whitelist of large .rar/.zip telemetry archives; rely on global *.rar ignore)
 ##############################
 # Rasa per-building local artifacts
 ##############################
