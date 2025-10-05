@@ -46,6 +46,26 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "Generate sensor lookup from sensor_list.txt",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"$src = 'rasa-bldg2/actions/sensor_list.txt'; $dst = 'rasa-bldg2/data/lookup/sensor_type.md'; if (Test-Path $src) { Get-Content $src | ForEach-Object { if($_ -and -not $_.StartsWith('#')) { $_.Trim() } } | Set-Content -Encoding UTF8 $dst } else { Write-Error \"Missing $src\" }"
+			]
+		},
+		{
+			"label": "Rasa validate training data",
+			"type": "shell",
+			"command": "docker compose run --rm --no-deps rasa data validate -v",
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"group": "build"
 		}
 	]
 }

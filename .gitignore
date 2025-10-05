@@ -52,10 +52,8 @@ abacws_chatbot_env/
 # Docker volumes / app data
 ##############################
 graphDB/
-!Abacws/mongo/
-Abacws/mongo/journal/WiredTigerLog.0000000008
-Abacws/mongo/journal/WiredTigerPreplog.0000000001
-Abacws/mongo/journal/WiredTigerPreplog.0000000002
+# Ignore local MongoDB data directory (runtime volume, very large, not for source control)
+Abacws/mongo/
 # Keep only development/examples local; track the rest of development/
 /development/examples/
 /development/examples/**
@@ -91,9 +89,6 @@ bldg2/trial/dataset/bldg2_timeseries - Copy.ttl
 !/bldg2/trial/dataset/02_build_bldg2_timeseries.py
 !/bldg2/trial/dataset/03_generate_devices_ttl.py
 !/bldg2/trial/dataset/bldg2_rdf.rdf
-Abacws/mongo/journal/WiredTigerLog.0000000008
-Abacws/mongo/journal/WiredTigerPreplog.0000000001
-Abacws/mongo/journal/WiredTigerPreplog.0000000002
 !/bldg1/trial/dataset/updated_combined_output_with_entity.rar
 bldg1/01small ontology creation-9july.ipynb
 bldg1/abacws-building-9july.ttl
@@ -152,6 +147,7 @@ my_password.txt
 *.tgz
 *.tar.xz
 *.gz
+*.rar
 
 ##############################
 # Transformers models & datasets
@@ -223,6 +219,7 @@ bldg1/01small ontology creation-9july.ipynb
 # Ignore wide synthetic CSVs generated for telemetry; keep source TTLs/README
 bldg2/trial/dataset/synthetic_readings_*.csv
 bldg3/trial/dataset/synthetic_readings_*.csv
+bldg3/trial/dataset/synthetic_data_wide.*
 
 ##############################
 # Rasa per-building local artifacts

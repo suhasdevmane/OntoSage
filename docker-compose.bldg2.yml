@@ -259,7 +259,7 @@ services:
     hostname: microserviceshost
     restart: always
     ports:
-      - "6001:6000"
+      - "6001:6000"  # host 6001 -> container 6000 (internal analytics API)
     networks:
       - ontobot-network
     healthcheck:
@@ -273,7 +273,7 @@ services:
     container_name: decider_service
     restart: unless-stopped
     ports:
-      - "6009:6009"
+      - "6009:6009"  # host 6009 -> container 6009 (decider API)
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6009/health').read()"]
       interval: 30s
@@ -347,56 +347,63 @@ services:
       - ontobot-network
 
 
-  # nl2sparql:
-  #     build:
-  #       context: ./Transformers/t5_base/trained
-  #     ports:
-  #       - "6005:6005"
-  #     volumes:
-  #       - ./Transformers/t5_base/trained/checkpoint-2:/app/checkpoint-2:ro
-  #     environment:
-  #       - PYTHONUNBUFFERED=1
-  #     container_name: nl2sparql_service
-  #     hostname: nl2sparql-host
-  #     restart: always
-  #     healthcheck:
-  #       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6005/health').read()"]
-  #       interval: 30s
-  #       timeout: 5s
-  #       retries: 5
-  #       start_period: 30s
-  #     networks:
-  #       - ontobot-network
+  nl2sparql:
+    build:
+      context: ./Transformers/t5_base/trained
+    ports:
+      - "6005:6005"
+    volumes:
+      # Correct checkpoint mount (was pointing to a non-existent 'checkpoint-' directory)
+      - ./Transformers/t5_base/trained/checkpoint-3:/app/checkpoint-3:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MODEL_PATH=/app/checkpoint-3
+    container_name: nl2sparql_service
+    hostname: nl2sparql-host
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6005/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - ontobot-network
 
-  #   ollama:
-  #     container_name: ollama
-  #     build:
-  #       context: ./Transformers/Mistral
-  #     pull_policy: always
-  #     restart: unless-stopped
-  #     ports:
-  #       - "11434:11434"
-  #     environment:
-  #       - OLLAMA_NUM_PARALLEL=4
-  #       - OLLAMA_MAX_LOADED_MODELS=2
-  #       - OLLAMA_MODELS=/usr/share/ollama/.ollama/models
-  #     healthcheck:
-  #       test: "ollama --version && ollama ps || exit 1"
-  #       interval: 30s
-  #       timeout: 60s
-  #       retries: 3
-  #       start_period: 30s
-  #     deploy:
-  #       resources:
-  #         reservations:
-  #           devices:
-  #             - driver: nvidia
-  #               count: 1
-  #               capabilities: [gpu]
-  #     volumes:
-  #       - ollama-models:/usr/share/ollama/.ollama/models
-  #     networks:
-  #       - ontobot-network
+  ollama:
+      container_name: ollama
+      build:
+        context: ./Transformers/Mistral
+      pull_policy: always
+      restart: unless-stopped
+      ports:
+        - "11434:11434"
+      environment:
+        - OLLAMA_NUM_PARALLEL=4
+        - OLLAMA_MAX_LOADED_MODELS=1
+        - OLLAMA_MODELS=/usr/share/ollama/.ollama/models
+        # Space or comma separated list of models to auto-pull & optionally warm up
+        - AUTO_PULL_MODELS=mistral:latest
+        # Set to 'false' to skip warmup token generation after pull
+        - WARMUP_MODELS=true
+      healthcheck:
+        test: "ollama --version && ollama ps || exit 1"
+        interval: 30s
+        timeout: 180s
+        retries: 3
+        start_period: 30s
+      # deploy:
+      #   resources:
+      #     reservations:
+            # devices:
+            #   - driver: nvidia
+            #     count: 1
+            #     capabilities: [gpu]
+      volumes:
+        - .:/usr/share/ollama/.ollama/models
+      networks:
+        - ontobot-network
+
 networks:
   ontobot-network:
 
@@ -406,4 +413,4 @@ volumes:
   mytb-ts-data:
   mytb-ts-logs:
   mysql-data:
-  # ollama-models:
+  ollama-models:

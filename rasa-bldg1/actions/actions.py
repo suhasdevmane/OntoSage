@@ -394,11 +394,11 @@ class ValidateSensorForm(FormValidationAction):
         mappings = {}
         try:
             candidates = [
-                os.path.join(os.getcwd(), "sensor_mappings.txt"),
-                os.path.join(os.getcwd(), "actions", "sensor_mappings.txt"),
+                os.path.join(os.getcwd(), "sensor_uuids.txt"),
+                os.path.join(os.getcwd(), "actions", "sensor_uuids.txt"),
             ]
             path = next((p for p in candidates if os.path.exists(p)), None)
-            with open(path or "sensor_mappings.txt", "r") as f:
+            with open(path or "sensor_uuids.txt", "r") as f:
                 for line_num, line in enumerate(f, 1):
                     try:
                         if line.strip():
@@ -414,15 +414,15 @@ class ValidateSensorForm(FormValidationAction):
                         logger.error(f"Error on line {line_num}: {e}")
             logger.info(f"Loaded {len(mappings)} sensor mappings")
         except FileNotFoundError:
-            logger.error("sensor_mappings.txt not found")
+            logger.error("sensor_uuids.txt not found")
             # Create an empty file to prevent future errors
             try:
                 os.makedirs("./actions", exist_ok=True)
-                with open("./actions/sensor_mappings.txt", "w") as f:
+                with open("./actions/sensor_uuids.txt", "w") as f:
                     f.write("# Format: sensor_name,sensor_uuid\n")
-                logger.info("Created empty sensor_mappings.txt file")
+                logger.info("Created empty sensor_uuids.txt file")
             except Exception as e:
-                logger.error(f"Failed to create empty sensor_mappings.txt: {e}")
+                logger.error(f"Failed to create empty sensor_uuids.txt: {e}")
         return mappings
 
 def extract_date_range(text: str) -> Dict[str, str]:
@@ -941,14 +941,14 @@ class ActionQuestionToBrickbot(Action):
     def load_sensor_mappings(self) -> Dict[str, str]:
         mappings = {}
         try:
-            with open("./actions/sensor_mappings.txt", "r") as f:
+            with open("./actions/sensor_uuids.txt", "r") as f:
                 for line in f:
                     if line.strip():
                         name, uuid = line.strip().split(",")
                         mappings[uuid] = name
             logger.info(f"Loaded {len(mappings)} sensor mappings")
         except FileNotFoundError:
-            logger.error("sensor_mappings.txt not found")
+            logger.error("sensor_uuids.txt not found")
         return mappings
 
     def query_service_requests(self, url: str, data: Dict) -> Dict:
@@ -1196,7 +1196,7 @@ class ActionQuestionToBrickbot(Action):
                     logger.info(f"UUID {uuid} maps to sensor name: {sensor_mappings[uuid]}")
                     # Consider replacing UUID with sensor name in the data before sending to LLM
                 else:
-                    logger.info(f"UUID {uuid} has no mapping in sensor_mappings.txt")
+                    logger.info(f"UUID {uuid} has no mapping in sensor_uuids.txt")
         
         # Log a sample of the JSON (truncated if too large)
         sample_json = json.dumps(standardized_json, indent=2)
@@ -1816,12 +1816,12 @@ class ActionProcessTimeseries(Action):
         mappings: Dict[str, str] = {}
         try:
             candidates = [
-                os.path.join(os.getcwd(), "sensor_mappings.txt"),
-                os.path.join(os.getcwd(), "actions", "sensor_mappings.txt"),
-                "./actions/sensor_mappings.txt",
+                os.path.join(os.getcwd(), "sensor_uuids.txt"),
+                os.path.join(os.getcwd(), "actions", "sensor_uuids.txt"),
+                "./actions/sensor_uuids.txt",
             ]
             path = next((p for p in candidates if os.path.exists(p)), None)
-            with open(path or "./actions/sensor_mappings.txt", "r") as f:
+            with open(path or "./actions/sensor_uuids.txt", "r") as f:
                 for line_num, line in enumerate(f, 1):
                     try:
                         if line.strip() and not line.strip().startswith("#"):
@@ -1838,14 +1838,14 @@ class ActionProcessTimeseries(Action):
                         logger.error(f"Error on line {line_num}: {e}")
             logger.info(f"Loaded {len(mappings)} sensor mappings")
         except FileNotFoundError:
-            logger.error("sensor_mappings.txt not found")
+            logger.error("sensor_uuids.txt not found")
             try:
                 os.makedirs("./actions", exist_ok=True)
-                with open("./actions/sensor_mappings.txt", "w") as f:
+                with open("./actions/sensor_uuids.txt", "w") as f:
                     f.write("# Format: sensor_name,sensor_uuid\n")
-                logger.info("Created empty sensor_mappings.txt file")
+                logger.info("Created empty sensor_uuids.txt file")
             except Exception as e:
-                logger.error(f"Failed to create empty sensor_mappings.txt: {e}")
+                logger.error(f"Failed to create empty sensor_uuids.txt: {e}")
         return mappings
 
     def replace_uuids_with_sensor_types(self, data: Any, uuid_to_sensor: Dict[Text, Text]) -> Any:
@@ -2024,7 +2024,7 @@ class ActionProcessTimeseries(Action):
                 if uuid in sensor_mappings:
                     logger.info(f"UUID {uuid} maps to sensor name: {sensor_mappings[uuid]}")
                 else:
-                    logger.info(f"UUID {uuid} has no mapping in sensor_mappings.txt")
+                    logger.info(f"UUID {uuid} has no mapping in sensor_uuids.txt")
         
         # Log a sample of the JSON (truncated if too large)
         sample_json = json.dumps(standardized_json, indent=2)

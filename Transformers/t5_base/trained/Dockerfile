@@ -18,7 +18,7 @@ RUN pip install --upgrade pip && \
 
 # Copy application files
 COPY app.py .
-COPY ./checkpoint-2 /app/checkpoint-2
+COPY ./checkpoint-3 /app/checkpoint-3
 
 # Expose port
 EXPOSE 6005

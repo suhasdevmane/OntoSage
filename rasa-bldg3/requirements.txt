@@ -21,7 +21,7 @@ ollama
 dateparser
 datetime
 rapidfuzz
-
+cassandra-driver
 # if you are using a virtual environment, you can use the following command to install the dependencies:
 # pip install -r requirements.txt
 # if you are using a conda environment, you can use the following command to install the dependencies:

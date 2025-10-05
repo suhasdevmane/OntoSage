@@ -4,7 +4,7 @@ This guide covers running OntoBot for Building 3, which uses ThingsBoard with te
 
 ## Services and ports
 
-- ThingsBoard UI: http://localhost:8083
+- ThingsBoard UI: http://localhost:8082
 - TB Postgres (host): localhost:5434 → container 5432 (metadata only)
 - Cassandra (CQL): localhost:9042
 - Rasa: http://localhost:5006/version (host 5006 → container 5005)
@@ -93,7 +93,7 @@ Send telemetry to TB (HTTP transport example):
 
 ```powershell
 # Replace <DEVICE_TOKEN>
-Invoke-WebRequest -Method Post -Uri "http://localhost:8082/api/v1/<DEVICE_TOKEN>/telemetry" -ContentType "application/json" -Body '{ "humidity": 48 }'
+Invoke-WebRequest -Method Post -Uri "http://localhost:8080/api/v1/<DEVICE_TOKEN>/telemetry" -ContentType "application/json" -Body '{ "humidity": 48 }'
 ```
 
 ## Environment (.env)

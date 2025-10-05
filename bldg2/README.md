@@ -220,6 +220,30 @@ FROM timescaledb_information.hypertables
 ORDER BY hypertable_name;
 ```
 
+### Ingest wide CSV into TimescaleDB (ts_kv)
+
+You can bulk-load the generated wide CSV (first column `datetime`, followed by UUID columns) into ThingsBoard’s SQL storage using the helper script we added.
+
+PowerShell example (from repo root):
+
+```powershell
+$env:PG_HOST = 'localhost'
+$env:PG_PORT = '5433'                  # host port mapped to timescaledb:5432
+$env:PG_DATABASE = 'thingsboard'
+$env:PG_USER = 'thingsboard'
+$env:PG_PASSWORD = 'thingsboard'
+$env:TB_DEVICE_NAME = 'TestDevice'     # or set TB_DEVICE_ID to a UUID
+
+python bldg2/trial/dataset/ingest_wide_csv_to_timescale.py `
+  bldg2/trial/dataset/synthetic_readings_wide.csv 2000
+```
+
+Notes:
+- The script creates any missing keys in `ts_kv_dictionary` and inserts rows into `ts_kv` with ON CONFLICT DO NOTHING, making it safe to re-run.
+- It expects a device to exist in ThingsBoard; set `TB_DEVICE_ID` or `TB_DEVICE_NAME` to target where telemetry lands.
+- Values are parsed into dbl_v/long_v/bool_v/str_v automatically.
+- For large files, the second argument controls the batch size (default 2000 timestamps per flush).
+
 ### Troubleshooting quick refs
 
 - Ensure you’re logged in as Tenant Admin (tenant@thingsboard.org / tenant).

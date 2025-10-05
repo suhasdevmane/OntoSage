@@ -15,3 +15,7 @@ ollama
 rapidfuzz==2.13.7
 # Optional: present in notebooks or future work, safe to keep
 psycopg2-binary
+cassandra-driver
+# rapidfuzz
+# pandas
+# plotly

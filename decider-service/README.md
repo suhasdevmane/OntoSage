@@ -2,6 +2,12 @@
 
 Single endpoint that decides whether to perform analytics for a user question and, if yes, which analytics function to apply.
 
+Multi‑building deployment notes:
+- Default host port (bldg1/2): `6009`
+- Alternate host port (bldg3 variant): `6010`
+- Internal DNS name inside Docker network: `decider-service:6009` (container port consistent)
+- See root `README.md` isolation section if you need concurrent stacks.
+
 - POST /decide
   - Request: { "question": "..." }
   - Response: { "perform_analytics": boolean, "analytics": string|null }
@@ -25,12 +31,24 @@ When ML models are absent, the service falls back to robust rule-based logic.
 
 ## Run
 
-- Build and run via Docker:
-- docker build -t decider-service .
-- docker run -p 6009:6009 decider-service
+Docker (standalone dev):
 
-Or use uvicorn locally:
-- uvicorn app.main:app --reload --port 6009
+```powershell
+docker build -t decider-service .
+docker run -p 6009:6009 decider-service
+```
+
+Concurrent building test (example alt port):
+
+```powershell
+docker run -p 6010:6009 --name decider_bldg3 decider-service
+```
+
+Local (no Docker):
+
+```powershell
+uvicorn app.main:app --reload --port 6009
+```
 
 ## Env overrides
 

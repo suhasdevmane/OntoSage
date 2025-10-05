@@ -8,17 +8,28 @@ A production‑ready, end‑to‑end platform for human–building conversation:
 
 > Last updated: 2025‑10‑01
 
-This single README merges all documentation (project overview, Rasa runbook, APIs, and operations) into one comprehensive guide.
+This single README merges all documentation (project overview, Rasa runbook, datasets & model training, APIs, and operations) into one comprehensive guide.
+
+Recent highlights (Oct 2025):
+- Multi‑building dataset generation & merge tooling (bldg1, bldg2, bldg3) with raw + deduplicated outputs and provenance.
+- Hardened T5 fine‑tuning (checkpoint‑3) powering the `nl2sparql` microservice; legacy checkpoint‑2 removed.
+- Automatic Ollama (Mistral) model auto‑pull & optional warm‑up on container start.
+- Added health endpoints to critical services (nl2sparql, analytics, decider, Rasa, file server) for compose reliability.
+- Clarified compose file separation: one active building stack at a time unless you adopt the optional isolation strategy below.
 
 ## Contents
 
 - What is OntoBot?
 - Architecture at a glance
 - Services and ports
+  - (See also: [Detailed Port Reference](PORTS.md))
+- Service matrix (summary)
 - Prerequisites
 - Quick start (Docker)
 - Configuration and environment (.env)
 - Data and payloads (contracts)
+- Dataset generation & merging (multi‑building NL→SPARQL)
+- Model training (T5 NL→SPARQL & Decider)
 - Analytics API (examples)
 - Rasa actions, forms, and Decider flow
 - Project structure and key paths
@@ -27,6 +38,7 @@ This single README merges all documentation (project overview, Rasa runbook, API
 - Database and performance
 - Artifacts and file server
 - Testing and smoke checks
+- Isolation strategy & running multiple building stacks concurrently
 - Troubleshooting and FAQs
 - Security notes
 - Roadmap
@@ -292,33 +304,36 @@ flowchart LR
 
 ## Services and ports (host)
 
-See `docker-compose.yml` for definitive configuration.
+See the compose files for definitive configuration. Common host‑level port defaults:
 
-- Analytics microservices (Flask)
-  - Health: http://localhost:6001/health
-  - Runner: http://localhost:6001/analytics/run (maps container 6000)
-- MySQL telemetry
-  - Host: localhost:3307 → container 3306, DB `sensordb` (root: mysql)
-- Jena Fuseki RDF/SPARQL
-  - Ping: http://localhost:3030/$/ping
-- Rasa (core server)
-  - Version: http://localhost:5005/version
-- Rasa Action Server
-  - Health: http://localhost:5055/health
-- Duckling NER
-  - Root: http://localhost:8000/
-- HTTP File server
-  - Health: http://localhost:8080/health
-- Rasa Editor
-  - UI: http://localhost:6080/
-- Rasa Frontend (React)
-  - UI: http://localhost:3000/
-- Decider Service
-  - Health: http://localhost:6009/health
+For a complete host ↔ container mapping (including protocol ports, optional extras, and rationale) consult [PORTS.md](PORTS.md).
 
-Optional services (commented): ThingsBoard + pgAdmin, GraphDB, Jupyter Notebook, Abacws API + Visualiser, NL2SPARQL (T5) and Ollama (Mistral).
+| Service | Purpose | Host Port (all building stacks) | Health / Key Endpoint |
+|---------|---------|-------------------------------|------------------------|
+| Rasa | Core conversational engine | 5005 | /version |
+| Rasa Action Server | Executes custom logic | 5055 | /health |
+| Duckling | Entity extraction (time, numbers) | 8000 | root HTML contains "Duckling" |
+| Rasa Frontend | Chat UI | 3000 | / (React dev server) |
+| Rasa Editor | Project file editor/API | 6080 | /health |
+| HTTP File Server | Serves artifacts & models | 8080 | /health |
+| Analytics Microservices | Time‑series & sensor analytics | 6001 (host→6000 container) | /health |
+| Decider Service | Determines analysis need & type | 6009 | /health |
+| Jena Fuseki | SPARQL triple store | 3030 | $/ping |
+| ThingsBoard UI | Device mgmt & dashboards | 8082 | / |
+| pgAdmin | Postgres/Timescale admin | 5050 (bldg1/2) or 5051 (optional bldg3) | / |
+| MySQL | Legacy telemetry / actions DB | 3307 | n/a (mysqladmin ping) |
+| TimescaleDB | Time‑series SQL (bldg2) | 5433 | pg_isready |
+| Postgres (TB metadata) | TB entities (bldg3) | 5434 | pg_isready |
+| Cassandra | TB telemetry (bldg3) | 9042 | nodetool status |
+| nl2sparql | NL→SPARQL translation (T5) | 6005 | /health |
+| Ollama (Mistral) | Local LLM runtime | 11434 | ollama ps |
 
-All services share the `ontobot-network` for internal DNS.
+Notes:
+- The table shows default ports after recent corrections (e.g., bldg3 variant offsets). If you need concurrent multi‑building runtime, see the Isolation Strategy section below.
+- `nl2sparql` now mounts `checkpoint-3` explicitly; legacy `checkpoint-2` was removed.
+- Ollama auto‑pulls models listed in `AUTO_PULL_MODELS` and optionally warms them via token generation when `WARMUP_MODELS=true`.
+
+All services share the `ontobot-network` for internal DNS resolution.
 
 ---
 
@@ -400,15 +415,15 @@ Two root-level compose files orchestrate the per-building stacks:
 
 - Building 3 (Cassandra): `docker-compose.bldg3.yml`
   - Rasa project: `./rasa-bldg3`
-  - ThingsBoard UI: http://localhost:8083
-  - Rasa: http://localhost:5006/version (host 5006 → container 5005)
-  - Actions: http://localhost:5056/health (host 5056 → container 5055)
-  - Duckling: http://localhost:8001/
-  - File server: http://localhost:8084/health (host 8084 → container 8080)
-  - Rasa Editor: http://localhost:6081/
-  - Rasa Frontend: http://localhost:3001/
+  - ThingsBoard UI: http://localhost:8082
+  - Rasa: http://localhost:5005/version
+  - Actions: http://localhost:5055/health
+  - Duckling: http://localhost:8000/
+  - File server: http://localhost:8080/health
+  - Rasa Editor: http://localhost:6080/
+  - Rasa Frontend: http://localhost:3000/
 
-Important: Run one building stack for Q&A at a time. Ports are set to avoid conflicts if you do bring both up, but models, datasets, and telemetry backends are independent.
+Important: Run one building stack for Q&A at a time. Ports are presently assigned to reduce (not eliminate) collision risk; full concurrent operation requires the isolation adjustments described later.
 
 ### Quick start: Building 2 (TimescaleDB)
 
@@ -529,7 +544,7 @@ docker compose -f docker-compose.bldg3.yml --profile manual up --build --abort-o
 5) Test Rasa
 
 ```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:5006/webhooks/rest/webhook -ContentType 'application/json' -Body (@{
+Invoke-RestMethod -Method Post -Uri http://localhost:5005/webhooks/rest/webhook -ContentType 'application/json' -Body (@{
   sender = 'tester1'
   message = 'Show humidity trends for last week in Zone B'
 } | ConvertTo-Json)

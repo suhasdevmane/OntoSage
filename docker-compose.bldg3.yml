@@ -22,7 +22,7 @@ services:
     ports:
       - "5434:5432"
     volumes:
-      - tb-pg-data:/var/lib/postgresql/data
+      - tb-cs-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U thingsboard -d thingsboard"]
       interval: 10s
@@ -50,13 +50,13 @@ services:
       test: ["CMD-SHELL", "nodetool status | grep -q 'UN' "]
       interval: 20s
       timeout: 10s
-      retries: 10
-      start_period: 60s
+      retries: 20
+      start_period: 120s
     networks:
       - ontobot-network
 
   mytb:
-    image: devmanenvision/my-thingsboard:1.1
+    image: thingsboard/tb-cassandra:3.6.0
     container_name: thingsboard
     hostname: thingsboardhost
     depends_on:
@@ -70,27 +70,36 @@ services:
       SPRING_DATASOURCE_USERNAME: ${PG_THINGSBOARD_USER:-thingsboard}
       SPRING_DATASOURCE_PASSWORD: ${PG_THINGSBOARD_PASSWORD:-thingsboard}
       DATABASE_TS_TYPE: cassandra
+      # Explicitly set Cassandra host for ThingsBoard to avoid defaulting to localhost
+      CASSANDRA_HOST: cassandra
+      # ThingsBoard 3.6 uses CASSANDRA_URL (host:port) from thingsboard.yml
+      CASSANDRA_URL: "cassandra:9042"
       CASSANDRA_CONTACT_POINTS: cassandra
       CASSANDRA_PORT: 9042
       CASSANDRA_KEYSPACE_NAME: thingsboard
+      CASSANDRA_LOCAL_DATACENTER: datacenter1
+      # Ensure username/password login is available and OAuth2 is disabled
+      SECURITY_OAUTH2_ENABLED: "false"
+      SECURITY_USER_LOGIN_ENABLED: "true"
     ports:
-      - "8083:9090"   # TB Web UI at http://localhost:8083
+      - "8082:9090"   # TB Web UI at http://localhost:8082
       - "1884:1883"
       - "7071:7070"
       - "5689-5694:5683-5688/udp"
-      - "8082:8081"
+      - "8081:8081"   # TB HTTP transport API (default)
     volumes:
       - mytb-cas-data:/data
       - mytb-cas-logs:/var/log/thingsboard
     networks:
       - ontobot-network
 
+
   rasa-frontend:
     build:
       context: ./rasa-frontend
       dockerfile: Dockerfile
     ports:
-      - "3001:3000"
+      - "3000:3000"  # Unified with bldg1/bldg2 since only one stack runs at a time
     volumes:
       - ./rasa-frontend/:/app
       - /app/node_modules
@@ -123,7 +132,7 @@ services:
       - action_server
       - duckling_server
     ports:
-      - "5006:5005"
+      - "5005:5005"  # Unified Rasa port
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/version').read()"]
       interval: 30s
@@ -150,7 +159,7 @@ services:
       - DB_PORT=3306
       - ANALYTICS_URL=http://microservices:6000/analytics/run
     ports:
-      - "5056:5055"
+      - "5055:5055"  # Unified Action Server port
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5055/health').read()"]
       interval: 30s
@@ -167,7 +176,7 @@ services:
     container_name: duckling_server_bldg3
     restart: unless-stopped
     ports:
-      - "8001:8000"
+      - "8000:8000"  # Unified Duckling port
     healthcheck:
       test: ["CMD", "bash", "-lc", "curl -s http://localhost:8000 | grep -q Duckling"]
       interval: 30s
@@ -207,7 +216,7 @@ services:
     container_name: http_server_bldg3
     restart: unless-stopped
     ports:
-      - "8084:8080"
+      - "8080:8080"  # Unified file server port
     volumes:
       - ./rasa-bldg3/shared_data:/data
       - ./rasa-bldg3/file_server.py:/srv/file_server.py
@@ -245,7 +254,7 @@ services:
     container_name: rasa_editor_bldg3
     restart: unless-stopped
     ports:
-      - "6081:6080"
+      - "6080:6080"  # Unified editor port
     environment:
       - PORT=6080
       - FRONTEND_ORIGIN=http://localhost:3001
@@ -279,7 +288,7 @@ services:
     hostname: microserviceshost
     restart: always
     ports:
-      - "6002:6000"
+      - "6001:6000"  # host 6001 -> container 6000 (internal analytics API)
     networks:
       - ontobot-network
     healthcheck:
@@ -293,7 +302,7 @@ services:
     container_name: decider_service
     restart: unless-stopped
     ports:
-      - "6010:6009"
+      - "6009:6009"  # host 6009 -> container 6009 (decider API)
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6009/health').read()"]
       interval: 30s
@@ -302,12 +311,12 @@ services:
     networks:
       - ontobot-network
 
-  # Jena Fuseki (SPARQL) for bldg3
+  # # Jena Fuseki (SPARQL) for bldg3
   fuseki-db:
     image: devmanenvision/busybox:latest
     container_name: jena-fuseki-db
     volumes:
-      - jena-data:/fuseki
+      - jena-bldg3-data:/fuseki
     command: tail -f /dev/null
     networks:
       - ontobot-network
@@ -332,99 +341,109 @@ services:
       - ontobot-network
 
   # Optional: pgAdmin to inspect Postgres metadata (TB)
-  pgadmin:
-    image: dpage/pgadmin4:snapshot
-    container_name: pgadmin
-    hostname: pgadminhost
-    ports:
-      - "5051:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@example.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-      PGADMIN_LISTEN_ADDRESS: 0.0.0.0
-      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
-    volumes:
-      - ./bldg3/servers.json:/pgadmin4/servers.json
-    networks:
-      - ontobot-network
-
-  # Legacy MySQL (if needed by actions or migration scripts)
-  mysql:
-    image: mysql:8
-    container_name: mysqlserver
-    restart: always
-    hostname: mysqlserver
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-mysql}
-      - MYSQL_DATABASE=${DB_NAME:-sensordb}
-      - MYSQL_USER=${MYSQL_APP_USER:-thingsboard}
-      - MYSQL_PASSWORD=${MYSQL_APP_PASSWORD:-thingsboard}
-    ports:
-      - "3308:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-    networks:
-      - ontobot-network
-
-  # nl2sparql:
-  #   build:
-  #     context: ./Transformers/t5_base/trained
+  # pgadmin:
+  #   image: dpage/pgadmin4:snapshot
+  #   container_name: pgadmin
+  #   hostname: pgadminhost
   #   ports:
-  #     - "6005:6005"
-  #   volumes:
-  #     - ./Transformers/t5_base/trained/checkpoint-2:/app/checkpoint-2:ro
+  #     - "5051:80"
   #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #   container_name: nl2sparql_service
-  #   hostname: nl2sparql-host
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@example.com}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+  #     PGADMIN_LISTEN_ADDRESS: 0.0.0.0
+  #     PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+  #   volumes:
+  #     - ./bldg3/servers.json:/pgadmin4/servers.json
+  #   networks:
+  #     - ontobot-network
+
+  # # Legacy MySQL (if needed by actions or migration scripts)
+  # mysql:
+  #   image: mysql:8
+  #   container_name: mysqlserver
   #   restart: always
-  #   healthcheck:
-  #     test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6005/health').read()"]
-  #     interval: 30s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 30s
+  #   hostname: mysqlserver
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-mysql}
+  #     - MYSQL_DATABASE=${DB_NAME:-sensordb}
+  #     - MYSQL_USER=${MYSQL_APP_USER:-thingsboard}
+  #     - MYSQL_PASSWORD=${MYSQL_APP_PASSWORD:-thingsboard}
+  #   ports:
+  #     - "3308:3306"
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
   #   networks:
   #     - ontobot-network
 
-  # ollama:
-  #   container_name: ollama
-  #   build:
-  #     context: ./Transformers/Mistral
-  #   pull_policy: always
-  #   restart: unless-stopped
-  #   ports:
-  #     - "11434:11434"
-  #   environment:
-  #     - OLLAMA_NUM_PARALLEL=4
-  #     - OLLAMA_MAX_LOADED_MODELS=2
-  #     - OLLAMA_MODELS=/usr/share/ollama/.ollama/models
-  #   healthcheck:
-  #     test: "ollama --version && ollama ps || exit 1"
-  #     interval: 30s
-  #     timeout: 60s
-  #     retries: 3
-  #     start_period: 30s
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             count: 1
-  #             capabilities: [gpu]
-  #   volumes:
-  #     - ollama-models:/usr/share/ollama/.ollama/models
-  #   networks:
-  #     - ontobot-network
+
+  ollama:
+      container_name: ollama
+      build:
+        context: ./Transformers/Mistral
+      pull_policy: always
+      restart: unless-stopped
+      ports:
+        - "11434:11434"
+      environment:
+        - OLLAMA_NUM_PARALLEL=4
+        - OLLAMA_MAX_LOADED_MODELS=1
+        - OLLAMA_MODELS=/usr/share/ollama/.ollama/models
+        # Space or comma separated list of models to auto-pull & optionally warm up
+        - AUTO_PULL_MODELS=mistral:latest
+        # Set to 'false' to skip warmup token generation after pull
+        - WARMUP_MODELS=true
+      healthcheck:
+        test: "ollama --version && ollama ps || exit 1"
+        interval: 30s
+        timeout: 180s
+        retries: 3
+        start_period: 30s
+      # deploy:
+      #   resources:
+      #     reservations:
+            # devices:
+            #   - driver: nvidia
+            #     count: 1
+            #     capabilities: [gpu]
+      volumes:
+        - .:/usr/share/ollama/.ollama/models
+      networks:
+        - ontobot-network
+
+  nl2sparql:
+    build:
+      context: ./Transformers/t5_base/trained
+    ports:
+      - "6005:6005"
+    volumes:
+      # Correct checkpoint mount (was pointing to a non-existent 'checkpoint-' directory)
+      - ./Transformers/t5_base/trained/checkpoint-3:/app/checkpoint-3:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MODEL_PATH=/app/checkpoint-3
+    container_name: nl2sparql_service
+    hostname: nl2sparql-host
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6005/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - ontobot-network
+
+    
 
 networks:
   ontobot-network:
+    external: true
 
 volumes:
-  jena-data:
-  tb-pg-data:
+  jena-bldg3-data:
+  tb-cs-data:
   cassandra-data:
   mytb-cas-data:
   mytb-cas-logs:
   mysql-data:
-  # ollama-models:
+  ollama-models:

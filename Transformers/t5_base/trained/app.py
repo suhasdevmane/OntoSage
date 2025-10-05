@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string
+import os
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 import torch
 from collections import deque
@@ -16,15 +17,23 @@ app = Flask(__name__)
 # Initialize query log (stores last 50 queries)
 query_log = deque(maxlen=50)
 
-# Load the T5 model and tokenizer
+# Load the T5 model and tokenizer (configurable via env MODEL_PATH, default /app/checkpoint-3)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_path = "./checkpoint-2"  # Updated for Docker path
+model_path = os.getenv("MODEL_PATH", "/app/checkpoint-3")
+
+def _load_model(path: str):
+    logger.info(f"Attempting to load model from: {path}")
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"MODEL_PATH does not exist: {path}")
+    tok = T5Tokenizer.from_pretrained(path)
+    mdl = T5ForConditionalGeneration.from_pretrained(path).to(device)
+    return tok, mdl
+
 try:
-    tokenizer = T5Tokenizer.from_pretrained(model_path)
-    model = T5ForConditionalGeneration.from_pretrained(model_path).to(device)
+    tokenizer, model = _load_model(model_path)
     logger.info("Model and tokenizer loaded successfully")
 except Exception as e:
-    logger.error(f"Failed to load model: {e}")
+    logger.error(f"Failed to load model at {model_path}: {e}")
     raise
 
 # HTML template for welcome page
@@ -227,15 +236,16 @@ def nl2sparql():
             welcome_template, sparql_query=f"Error: {str(e)}", logs=query_log
         )
 
+
 @app.route("/health", methods=["GET"])
 def health():
-    try:
-        # simple check: ensure model and tokenizer exist and return ok
-        _ = tokenizer is not None and model is not None
-        return jsonify({"status": "ok"}), 200
-    except Exception as e:
-        logger.error(f"Healthcheck failed: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+    """Lightweight health endpoint for Docker healthcheck."""
+    return jsonify({
+        "status": "ok",
+        "model_path": model_path,
+        "device": str(device),
+        "queries_cached": len(query_log)
+    })
 
 
 if __name__ == "__main__":

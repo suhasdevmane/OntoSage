@@ -14,7 +14,6 @@ from rasa_sdk.types import DomainDict
 from typing import Any, Text, Dict, List, Tuple, Union, Optional
 from rasa_sdk.events import FollowupAction
 from SPARQLWrapper import SPARQLWrapper, JSON
-import mysql.connector
 import json
 import wave
 import struct
@@ -136,7 +135,7 @@ logger = logging.getLogger(__name__)
 # Default to internal Docker DNS names so services work inside the compose network.
 # nl2sparql_url = os.getenv("NL2SPARQL_URL", "http://nl2sparql:6005/nl2sparql") # Original internal URL
 nl2sparql_url = os.getenv("NL2SPARQL_URL", "https://deep-gator-cleanly.ngrok-free.app") # Updated to external ngrok URL for testing
-FUSEKI_URL = os.getenv("FUSEKI_URL", "http://jena-fuseki-rdf-store:3030/abacws-sensor-network/sparql")
+FUSEKI_URL = os.getenv("FUSEKI_URL", "http://jena-fuseki-rdf-store:3030/bldg3/sparql")
 # Where to write downloadable files. Use the shared volume so http_server can serve them.
 # Route everything through a single folder for easy sharing and cleanup.
 ATTACHMENTS_DIR = ARTIFACTS_DIR
@@ -148,35 +147,7 @@ DECIDER_URL = os.getenv("DECIDER_URL")
 # SUMMARIZATION_URL = os.getenv("SUMMARIZATION_URL", "http://ollama:11434") # Original internal URL
 SUMMARIZATION_URL = os.getenv("SUMMARIZATION_URL", "https://dashing-sunfish-curiously.ngrok-free.app") # Updated to external ngrok URL for testing
 
-def get_mysql_config() -> Dict[str, Any]:
-    """Return a unified MySQL configuration using environment variables with sensible defaults.
-
-    Environment variables supported:
-      - DB_HOST (default: "mysqlserver")
-      - DB_PORT (default: 3306)
-      - DB_NAME (default: "sensordb")
-      - DB_USER (default: "root")
-      - DB_PASSWORD (default: "mysql")
-
-    This single source of truth is used across the action server to avoid duplication and confusion.
-    """
-    host = os.getenv("DB_HOST", "mysqlserver")
-    default_password = "root" if host == "localhost" else "mysql"
-    # Build config
-    cfg: Dict[str, Any] = {
-        "host": host,
-        "database": os.getenv("DB_NAME", "sensordb"),
-        "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", default_password),
-        "port": os.getenv("DB_PORT", "3306"),
-    }
-    # Ensure port is an int for mysql.connector
-    try:
-        if isinstance(cfg["port"], str) and cfg["port"].isdigit():
-            cfg["port"] = int(cfg["port"]) 
-    except Exception:
-        pass
-    return cfg
+### Removed legacy MySQL helper: this deployment supports ONLY ThingsBoard Postgres + Cassandra ###
 
 # Load VALID_SENSOR_TYPES from sensor_list.txt
 try:
@@ -382,11 +353,11 @@ class ValidateSensorForm(FormValidationAction):
         mappings = {}
         try:
             candidates = [
-                os.path.join(os.getcwd(), "sensor_mappings.txt"),
-                os.path.join(os.getcwd(), "actions", "sensor_mappings.txt"),
+                os.path.join(os.getcwd(), "sensor_uuids.txt"),
+                os.path.join(os.getcwd(), "actions", "sensor_uuids.txt"),
             ]
             path = next((p for p in candidates if os.path.exists(p)), None)
-            with open(path or "sensor_mappings.txt", "r") as f:
+            with open(path or "sensor_uuids.txt", "r") as f:
                 for line_num, line in enumerate(f, 1):
                     try:
                         if line.strip():
@@ -402,15 +373,15 @@ class ValidateSensorForm(FormValidationAction):
                         logger.error(f"Error on line {line_num}: {e}")
             logger.info(f"Loaded {len(mappings)} sensor mappings")
         except FileNotFoundError:
-            logger.error("sensor_mappings.txt not found")
+            logger.error("sensor_uuids.txt not found")
             # Create an empty file to prevent future errors
             try:
                 os.makedirs("./actions", exist_ok=True)
-                with open("./actions/sensor_mappings.txt", "w") as f:
+                with open("./actions/sensor_uuids.txt", "w") as f:
                     f.write("# Format: sensor_name,sensor_uuid\n")
-                logger.info("Created empty sensor_mappings.txt file")
+                logger.info("Created empty sensor_uuids.txt file")
             except Exception as e:
-                logger.error(f"Failed to create empty sensor_mappings.txt: {e}")
+                logger.error(f"Failed to create empty sensor_uuids.txt: {e}")
         return mappings
 
 def extract_date_range(text: str) -> Dict[str, str]:
@@ -929,14 +900,14 @@ class ActionQuestionToBrickbot(Action):
     def load_sensor_mappings(self) -> Dict[str, str]:
         mappings = {}
         try:
-            with open("./actions/sensor_mappings.txt", "r") as f:
+            with open("./actions/sensor_uuids.txt", "r") as f:
                 for line in f:
                     if line.strip():
                         name, uuid = line.strip().split(",")
                         mappings[uuid] = name
             logger.info(f"Loaded {len(mappings)} sensor mappings")
         except FileNotFoundError:
-            logger.error("sensor_mappings.txt not found")
+            logger.error("sensor_uuids.txt not found")
         return mappings
 
     def query_service_requests(self, url: str, data: Dict) -> Dict:
@@ -1184,7 +1155,7 @@ class ActionQuestionToBrickbot(Action):
                     logger.info(f"UUID {uuid} maps to sensor name: {sensor_mappings[uuid]}")
                     # Consider replacing UUID with sensor name in the data before sending to LLM
                 else:
-                    logger.info(f"UUID {uuid} has no mapping in sensor_mappings.txt")
+                    logger.info(f"UUID {uuid} has no mapping in sensor_uuids.txt")
         
         # Log a sample of the JSON (truncated if too large)
         sample_json = json.dumps(standardized_json, indent=2)
@@ -1654,197 +1625,45 @@ class ActionProcessTimeseries(Action):
     def name(self) -> Text:
         return "action_process_timeseries"
 
-    def fetch_sql_data(
-        self,
-        timeseries_ids: Union[str, List[str]],
-        start_date: str,
-        end_date: str,
-        database: str,
-        table_name: str,
-        db_config: Dict,
-        return_json: bool = True
-    ) -> Tuple[Union[str, Dict], Union[str, None]]:
-        """
-        Fetches sensor data for multiple timeseries IDs and dates dynamically.
-
-        Parameters:
-            timeseries_ids: Single UUID or list of UUIDs (e.g., '249a4c9c-fe31-4649-a119-452e5e8e7dc5').
-            start_date: Start timestamp as a string, e.g., '2025-02-10 00:00:00'.
-            end_date: End timestamp as a string, e.g., '2025-02-20 23:59:59'.
-            database: Name of the database (e.g., 'sensordb').
-            table_name: Name of the table (e.g., 'sensor_data').
-            db_config: Dictionary containing database connection parameters (host, user, password, etc.).
-            return_json: If True, returns results as a JSON string; otherwise, returns a Python dict.
-
-        Returns:
-            A tuple (results, error) where error is None if successful. Results are formatted as:
-            {
-                "column_1": [
-                    {"datetime": "2025-02-10 05:31:59", "reading_value": 27.99},
-                    ...
-                ],
-                "column_2": [
-                    {"datetime": "2025-02-10 06:00:00", "reading_value": 28.10},
-                    ...
-                ],
-                ...
-            }
-        """
-        
-        try:   
-            # Ensure timeseries_ids is a list
-            if isinstance(timeseries_ids, str):
-                timeseries_ids = [timeseries_ids]
-        
-            # Validate inputs
-            if not timeseries_ids or not all(isinstance(tid, str) for tid in timeseries_ids):
-                return None, "Invalid or empty timeseries_ids provided"
-            if not start_date or not end_date:
-                return None, "Start_date and end_date must be provided"
-            if not database or not table_name:
-                return None, "Database and table_name must be provided"
-
-            # Establish database connection (ensure port is an int and log config)
-            try:
-                eff_host = db_config.get("host")
-                eff_port = db_config.get("port")
-                # mysql.connector accepts int for port; env gives strings
-                if isinstance(eff_port, str) and eff_port.isdigit():
-                    db_config["port"] = int(eff_port)
-                logger.info(f"Connecting to MySQL with host={eff_host}, port={db_config.get('port')}, db={db_config.get('database')}")
-            except Exception as _e:
-                logger.warning(f"Failed to normalize DB config before connect: {_e}")
-            connection = mysql.connector.connect(**db_config)
-            if not connection.is_connected():
-                return None, "Failed to connect to the database"
-
-            cursor = connection.cursor(dictionary=True)
-            results = {}
-
-            # Construct dynamic SQL query
-            # Select `Datetime` and all timeseries IDs as columns (backtick-quoted for consistency)
-            columns = ["`Datetime`"] + [f"`{tid}`" for tid in timeseries_ids]
-            columns_str = ", ".join(columns)
-
-            # IMPORTANT: Do NOT AND all columns with IS NOT NULL for multi-UUID — that drops rows where any series is null.
-            # We only constrain the time window and later filter per-timeseries in Python.
-            # When exactly one UUID is requested, adding IS NOT NULL is safe and matches common single-series queries.
-            where_clause = "`Datetime` BETWEEN %s AND %s"
-            if len(timeseries_ids) == 1:
-                only = timeseries_ids[0]
-                where_clause += f" AND `{only}` IS NOT NULL"
-
-            # Build the full query with a stable ordering
-            query = f"""
-                SELECT {columns_str}
-                FROM `{database}`.`{table_name}`
-                WHERE {where_clause}
-            """
-
-            logger.info(f"Executing SQL query over window: {start_date} -> {end_date}; columns={len(timeseries_ids)}")
-            # Execute query with parameters
-            cursor.execute(query, (start_date, end_date))
-            # Log the final SQL statement with parameters substituted (as executed by the connector)
-            try:
-                logger.info(f"SQL executed: {cursor.statement}")
-            except Exception:
-                # Fallback: log the template and parameters separately
-                logger.info(f"SQL template: {query.strip()} | params: {(start_date, end_date)}")
-            rows = cursor.fetchall()
-
-            # Initialize results dictionary
-            for tid in timeseries_ids:
-                results[tid] = []
-
-            # Process each row
-            for row in rows:
-                dt_value = row.get("Datetime")
-                if dt_value and hasattr(dt_value, "strftime"):
-                    dt_value = dt_value.strftime("%Y-%m-%d %H:%M:%S")
-
-                # Add data for each timeseries ID
-                for tid in timeseries_ids:
-                    reading_value = row.get(tid)
-                    # Skip NULLs here; different columns may be sparsely populated per row
-                    if reading_value is None:
-                        continue
-                    # Convert to float where sensible; keep strings (e.g., enum) as-is
-                    if isinstance(reading_value, Decimal):
-                        reading_value = float(reading_value)
-                    elif isinstance(reading_value, (int, float)):
-                        reading_value = float(reading_value)
-                    else:
-                        # Try best-effort float conversion for numeric-looking strings
-                        try:
-                            reading_value = float(str(reading_value))
-                        except Exception:
-                            # leave non-numeric values (e.g., enums) as-is
-                            pass
-                    results[tid].append(
-                        {"datetime": dt_value, "reading_value": reading_value}
-                    )
-
-            # Clean up
-            cursor.close()
-            connection.close()
-
-            # Return results in the requested format
-            if return_json:
-                return json.dumps(results, indent=4), None
-            return results, None
-
-        except mysql.connector.Error as e:
-            logger.error(f"MySQL error: {e}")
-            return None, f"MySQL error: {str(e)}"
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            return None, f"Unexpected error: {str(e)}"
+    # Removed fetch_sql_data: only Postgres (ThingsBoard metadata + recent values) and Cassandra (historical ts_kv_cf) are supported.
 
     def load_sensor_mappings(self) -> Dict[str, str]:
         mappings: Dict[str, str] = {}
         try:
             candidates = [
-                os.path.join(os.getcwd(), "sensor_mappings.txt"),
-                os.path.join(os.getcwd(), "actions", "sensor_mappings.txt"),
-                "./actions/sensor_mappings.txt",
+                os.path.join(os.getcwd(), "sensor_uuids.txt"),
+                os.path.join(os.getcwd(), "actions", "sensor_uuids.txt"),
+                "./actions/sensor_uuids.txt",
             ]
             path = next((p for p in candidates if os.path.exists(p)), None)
-            with open(path or "./actions/sensor_mappings.txt", "r") as f:
+            with open(path or "./actions/sensor_uuids.txt", "r") as f:
                 for line_num, line in enumerate(f, 1):
                     try:
                         if line.strip() and not line.strip().startswith("#"):
                             parts = line.strip().split(",")
                             if len(parts) == 2:
-                                name, uuid = parts
-                                mappings[name] = uuid
-                                mappings[uuid] = name
+                                name, uuid_val = parts
+                                mappings[name] = uuid_val
+                                mappings[uuid_val] = name
                             else:
                                 logger.warning(
                                     f"Line {line_num}: Invalid format - expected 'name,uuid' but got: {line.strip()}"
                                 )
                     except Exception as e:
                         logger.error(f"Error on line {line_num}: {e}")
-            logger.info(f"Loaded {len(mappings)} sensor mappings")
+            logger.info(f"Loaded {len(mappings)} sensor mappings (ActionProcessTimeseries)")
         except FileNotFoundError:
-            logger.error("sensor_mappings.txt not found")
-            try:
-                os.makedirs("./actions", exist_ok=True)
-                with open("./actions/sensor_mappings.txt", "w") as f:
-                    f.write("# Format: sensor_name,sensor_uuid\n")
-                logger.info("Created empty sensor_mappings.txt file")
-            except Exception as e:
-                logger.error(f"Failed to create empty sensor_mappings.txt: {e}")
+            logger.error("sensor_uuids.txt not found for ActionProcessTimeseries")
         return mappings
 
     def replace_uuids_with_sensor_types(self, data: Any, uuid_to_sensor: Dict[Text, Text]) -> Any:
-            """Recursively replace UUIDs with sensor types in the data structure."""
-            if isinstance(data, dict):
-                return {k: self.replace_uuids_with_sensor_types(v, uuid_to_sensor) for k, v in data.items()}
-            elif isinstance(data, list):
-                return [self.replace_uuids_with_sensor_types(item, uuid_to_sensor) for item in data]
-            elif isinstance(data, str) and data in uuid_to_sensor:
-                return uuid_to_sensor[data]
-            return data
+        if isinstance(data, dict):
+            return {k: self.replace_uuids_with_sensor_types(v, uuid_to_sensor) for k, v in data.items()}
+        if isinstance(data, list):
+            return [self.replace_uuids_with_sensor_types(x, uuid_to_sensor) for x in data]
+        if isinstance(data, str) and data in uuid_to_sensor:
+            return uuid_to_sensor[data]
+        return data
 
     def build_nested_payload_from_sql(
         self,
@@ -1853,26 +1672,13 @@ class ActionProcessTimeseries(Action):
         collapse_to_base: bool = True,
         add_base_aggregates: bool = True,
     ) -> Dict[str, Any]:
-        """Convert flat SQL results keyed by UUID to nested payload keyed by human-readable names.
+        """Convert flat results keyed by UUID to nested payload with human-readable names.
 
-        Args:
-            sql_results_dict: Mapping of uuid -> list of {datetime, reading_value}
-            group_label: Outer group key (default "1")
-            collapse_to_base: If True, strip numeric suffix after "_Sensor" so multiple
-                instances (e.g., Zone_Air_Humidity_Sensor_5.01, _5.02) merge under the base
-                key "Zone_Air_Humidity_Sensor"; if False, keep full specific names.
-
-        Output shape:
-        {
-          "<group_label>": {
-            "Sensor_Name": { "timeseries_data": [ {datetime, reading_value}, ... ] },
-            ...
-          }
-        }
+        Output:
+        {"<group_label>": {"Sensor_Name": {"timeseries_data": [...]}}}
         """
         uuid_to_sensor = self.load_sensor_mappings()
         nested: Dict[str, Any] = {group_label: {}}
-        # Helper to strip numeric suffixes like _5 or _5.01 after the _Sensor token
         suffix_re = re.compile(r"^(.*?_Sensor)(?:_[0-9]+(?:\.[0-9]+)?)?$")
 
         def add_series(key: str, series: List[Dict[str, Any]]):
@@ -1884,9 +1690,7 @@ class ActionProcessTimeseries(Action):
 
         for uuid_key, series in sql_results_dict.items():
             sensor_name = uuid_to_sensor.get(uuid_key, uuid_key)
-
             if collapse_to_base:
-                # Original behavior: collapse to base key only
                 base_key = sensor_name
                 if isinstance(sensor_name, str):
                     m = suffix_re.match(sensor_name)
@@ -1894,17 +1698,14 @@ class ActionProcessTimeseries(Action):
                         base_key = m.group(1)
                 add_series(base_key, series)
             else:
-                # New behavior: keep full specific key and optionally also add base aggregate
                 full_key = sensor_name
                 add_series(full_key, series)
                 if add_base_aggregates and isinstance(sensor_name, str):
                     m = suffix_re.match(sensor_name)
                     if m:
                         base_key = m.group(1)
-                        # Avoid double-adding when full_key already equals base_key
                         if base_key != full_key:
                             add_series(base_key, series)
-
         return nested
 
     def build_canonical_analytics_payload(
@@ -2012,7 +1813,7 @@ class ActionProcessTimeseries(Action):
                 if uuid in sensor_mappings:
                     logger.info(f"UUID {uuid} maps to sensor name: {sensor_mappings[uuid]}")
                 else:
-                    logger.info(f"UUID {uuid} has no mapping in sensor_mappings.txt")
+                    logger.info(f"UUID {uuid} has no mapping in sensor_uuids.txt")
         
         # Log a sample of the JSON (truncated if too large)
         sample_json = json.dumps(standardized_json, indent=2)
@@ -2195,12 +1996,15 @@ class ActionProcessTimeseries(Action):
             dispatcher.utter_message(text="Invalid date format. Please provide dates in DD/MM/YYYY format.")
             return []
 
-        # Continue with the rest of the code using start_date_sql and end_date_sql
-        # TimescaleDB (PostgreSQL) fetch via ThingsBoard tables ts_kv and ts_kv_dictionary
-        # Assume timeseries_ids are sensor UUID strings used as telemetry keys.
+        # Decide backend for timeseries retrieval
+        backend = os.getenv("TB_TS_BACKEND", "postgres").lower()
+        logger.info(f"Timeseries backend selected: {backend}")
+
+        # Helper to convert SQL-formatted timestamp to epoch ms
         def _pg_cfg() -> Dict[str, Any]:
+            # Default host aligns with docker-compose service name (e.g. 'postgres' or 'tb-postgres')
             return {
-                "host": os.getenv("PG_HOST", "timescaledb"),
+                "host": os.getenv("PG_HOST", "postgres"),
                 "port": int(os.getenv("PG_PORT", "5432")),
                 "database": os.getenv("PG_DATABASE", "thingsboard"),
                 "user": os.getenv("PG_USER", "thingsboard"),
@@ -2217,103 +2021,252 @@ class ActionProcessTimeseries(Action):
             epoch = datetime(1970, 1, 1)
             return int((dt - epoch).total_seconds() * 1000)
 
-        try:
-            import psycopg2
-            import psycopg2.extras
-        except Exception as e:
-            logger.error(f"psycopg2 not available in action server image: {e}")
-            dispatcher.utter_message(text="TimescaleDB driver not available. Please ensure psycopg2-binary is installed.")
-            return []
-
         start_ms = _to_epoch_ms(start_date_sql, end_of_day_if_date=False)
         end_ms = _to_epoch_ms(end_date_sql, end_of_day_if_date=True)
 
-        cfg = _pg_cfg()
-        device_name = os.getenv("TB_DEVICE_NAME")
-        device_id = os.getenv("TB_DEVICE_ID")
+        data_by_uuid: Dict[str, List[Dict[str, Any]]] = {}
 
-        def _resolve_device(conn, name: Optional[str], did: Optional[str]) -> Optional[str]:
-            if did:
-                return did
-            if not name:
-                return None
+        if backend == "cassandra":
+            logger.info("Fetching timeseries from Cassandra backend")
+            # Cassandra specific fetch
             try:
-                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                    cur.execute("SELECT id FROM device WHERE name = %s LIMIT 1", (name,))
-                    row = cur.fetchone()
-                    return row["id"] if row else None
+                from cassandra.cluster import Cluster
+                from cassandra.auth import PlainTextAuthProvider
             except Exception as e:
-                logger.warning(f"Failed to resolve device '{name}': {e}")
-                return None
-
-        def _lookup_key_ids(conn, keys: List[str]) -> Dict[str, int]:
-            if not keys:
-                return {}
-            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute("SELECT key, key_id FROM ts_kv_dictionary WHERE key = ANY(%s)", (keys,))
-                rows = cur.fetchall() or []
-            return {r["key"]: int(r["key_id"]) for r in rows}
-
-        def _fetch(conn, keys: List[str], start_ms: int, end_ms: int, entity_id: Optional[str]) -> Dict[str, List[Dict[str, Any]]]:
-            out: Dict[str, List[Dict[str, Any]]] = {k: [] for k in keys}
-            key_map = _lookup_key_ids(conn, keys)
-            if not key_map:
-                return out
-            key_ids = list(key_map.values())
-            params: List[Any] = [key_ids, start_ms, end_ms]
-            where = ["d.key_id = ANY(%s)", "k.ts BETWEEN %s AND %s"]
-            if entity_id:
-                where.append("k.entity_id = %s")
-                params.append(entity_id)
-            sql = f"""
-                SELECT k.ts, d.key AS key, k.bool_v, k.long_v, k.dbl_v, k.str_v, k.json_v
-                FROM ts_kv k
-                JOIN ts_kv_dictionary d ON k.key = d.key_id
-                WHERE {' AND '.join(where)}
-                ORDER BY k.ts ASC
-            """
-            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute(sql, params)
-                for row in cur.fetchall() or []:
-                    k = row["key"]
-                    ts_ms = int(row["ts"]) if row["ts"] is not None else None
-                    # choose numeric first, then bool, then string/json
-                    val: Any = None
-                    if row.get("dbl_v") is not None:
-                        val = float(row["dbl_v"])
-                    elif row.get("long_v") is not None:
-                        val = float(row["long_v"])
-                    elif row.get("bool_v") is not None:
-                        val = 1.0 if row["bool_v"] else 0.0
-                    elif row.get("str_v") is not None:
-                        val = row["str_v"]
-                    elif row.get("json_v") is not None:
-                        val = row["json_v"]
-                    if ts_ms is None or val is None:
-                        continue
-                    dt_iso = datetime.utcfromtimestamp(ts_ms / 1000.0).strftime("%Y-%m-%d %H:%M:%S")
-                    out.setdefault(k, []).append({"datetime": dt_iso, "reading_value": val})
-            return out
-
-        with plog.stage("pg_fetch"):
-            try:
-                conn = psycopg2.connect(
-                    host=cfg["host"], port=cfg["port"], dbname=cfg["database"], user=cfg["user"], password=cfg["password"], sslmode=cfg.get("sslmode", "disable")
-                )
-            except Exception as e:
-                logger.error(f"Failed to connect to TimescaleDB: {e}")
-                dispatcher.utter_message(text=f"DB connection error: {e}")
+                logger.error(f"cassandra-driver not available: {e}")
+                dispatcher.utter_message(text="Cassandra driver not installed in action server")
                 return []
+
+            hosts = [h.strip() for h in os.getenv("CASSANDRA_HOSTS", os.getenv("CASS_HOSTS", "cassandra")).split(",") if h.strip()]
+            port = int(os.getenv("CASSANDRA_PORT", os.getenv("CASS_PORT", "9042")))
+            keyspace = os.getenv("CASSANDRA_KEYSPACE", os.getenv("CASS_KEYSPACE", "thingsboard"))
+            username = os.getenv("CASSANDRA_USERNAME") or os.getenv("CASS_USERNAME")
+            password = os.getenv("CASSANDRA_PASSWORD") or os.getenv("CASS_PASSWORD")
+            consistency = os.getenv("CASS_CONSISTENCY", "LOCAL_QUORUM")
+            uniform_key = os.getenv("TB_UNIFORM_KEY", "value")
+
+            # Resolve device entity_ids (UUID) from tokens via Postgres if possible
+            token_list: List[str] = list(timeseries_ids) if isinstance(timeseries_ids, list) else []
+            token_to_entity: Dict[str, str] = {}
             try:
-                entity_id = _resolve_device(conn, device_name, device_id)
-                if device_name and not entity_id:
-                    plog.warning("Device name not found; querying across all devices", device_name=device_name)
-                data_by_uuid = _fetch(conn, list(timeseries_ids or []), start_ms, end_ms, entity_id)
+                import psycopg2, psycopg2.extras  # type: ignore
+                cfg = _pg_cfg()
+                with psycopg2.connect(host=cfg["host"], port=cfg["port"], dbname=cfg["database"], user=cfg["user"], password=cfg["password"], sslmode=cfg.get("sslmode", "disable")) as _pgc:
+                    with _pgc.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                        cur.execute(
+                            """
+                            SELECT d.id, dc.credentials_id AS token
+                            FROM device d
+                            JOIN device_credentials dc ON d.id = dc.device_id
+                            WHERE dc.credentials_type='ACCESS_TOKEN' AND dc.credentials_id = ANY(%s)
+                            """,
+                            (token_list,)
+                        )
+                        for row in cur.fetchall() or []:
+                            token_to_entity[str(row["token"])] = str(row["id"])
+            except Exception as e:
+                logger.warning(f"Could not resolve tokens via Postgres (continuing): {e}")
+
+            if not token_to_entity:
+                logger.warning("No entity IDs resolved for provided tokens; results will be empty")
+
+            auth_provider = None
+            if username and password:
+                auth_provider = PlainTextAuthProvider(username=username, password=password)
+            cluster = Cluster(contact_points=hosts, port=port, auth_provider=auth_provider)
+            session = cluster.connect(keyspace)
+            try:
+                # Prepare statement (ThingsBoard schema)
+                cql = (
+                    "SELECT ts, bool_v, long_v, dbl_v, str_v, json_v FROM ts_kv_cf "
+                    "WHERE entity_type='DEVICE' AND entity_id=? AND key=? AND partition=? AND ts>=? AND ts<=? ALLOW FILTERING"
+                )
+                prepared = session.prepare(cql)
+                DAY_MS = 86400000
+                start_part = start_ms // DAY_MS
+                end_part = end_ms // DAY_MS
+                for token in token_list:
+                    series: List[Dict[str, Any]] = []
+                    ent_id = token_to_entity.get(token)
+                    if not ent_id:
+                        continue
+                    try:
+                        ent_uuid = uuid.UUID(ent_id)
+                    except Exception:
+                        logger.warning(f"Invalid entity UUID for token {token}: {ent_id}")
+                        continue
+                    for part in range(start_part, end_part + 1):
+                        try:
+                            rs = session.execute(prepared, (ent_uuid, uniform_key, part, start_ms, end_ms))
+                            for row in rs:
+                                ts_val = int(row.ts)
+                                val: Any = None
+                                if row.dbl_v is not None:
+                                    val = float(row.dbl_v)
+                                elif row.long_v is not None:
+                                    val = float(row.long_v)
+                                elif row.bool_v is not None:
+                                    val = 1.0 if row.bool_v else 0.0
+                                elif row.str_v is not None:
+                                    # attempt numeric cast else keep string
+                                    try:
+                                        val = float(row.str_v)
+                                    except Exception:
+                                        val = row.str_v
+                                elif row.json_v is not None:
+                                    val = row.json_v
+                                if val is None:
+                                    continue
+                                dt_iso = datetime.utcfromtimestamp(ts_val / 1000.0).strftime("%Y-%m-%d %H:%M:%S")
+                                # Ensure numeric rounding similar to publisher (2 decimals) if float
+                                if isinstance(val, float):
+                                    val = round(val, 2)
+                                series.append({"datetime": dt_iso, "reading_value": val})
+                        except Exception as ie:
+                            logger.warning(f"Cassandra partition fetch error token={token} part={part}: {ie}")
+                    data_by_uuid[token] = series
             finally:
                 try:
-                    conn.close()
+                    session.shutdown()
+                    cluster.shutdown()
                 except Exception:
                     pass
+
+        else:  # postgres path (ThingsBoard ts_kv / ts_kv_dictionary)
+            try:
+                import psycopg2
+                import psycopg2.extras
+            except Exception as e:
+                logger.error(f"psycopg2 not available in action server image: {e}")
+                dispatcher.utter_message(text="Postgres driver not available (psycopg2). Install psycopg2-binary.")
+                return []
+
+            cfg = _pg_cfg()
+            device_name = os.getenv("TB_DEVICE_NAME")
+            device_id = os.getenv("TB_DEVICE_ID")
+
+            def _resolve_device(conn, name: Optional[str], did: Optional[str]) -> Optional[str]:
+                if did:
+                    return did
+                if not name:
+                    return None
+                try:
+                    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                        cur.execute("SELECT id FROM device WHERE name = %s LIMIT 1", (name,))
+                        row = cur.fetchone()
+                        return row["id"] if row else None
+                except Exception as e:
+                    logger.warning(f"Failed to resolve device '{name}': {e}")
+                    return None
+
+            def _resolve_devices_by_tokens(conn, tokens: List[str]) -> List[Dict[str, str]]:
+                out: List[Dict[str, str]] = []
+                if not tokens:
+                    return out
+                try:
+                    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                        cur.execute(
+                            """
+                            SELECT d.id, d.name, dc.credentials_id AS token
+                            FROM device d
+                            JOIN device_credentials dc ON d.id = dc.device_id
+                            WHERE dc.credentials_type = 'ACCESS_TOKEN' AND dc.credentials_id = ANY(%s)
+                            """,
+                            (tokens,)
+                        )
+                        for row in cur.fetchall() or []:
+                            out.append({"id": str(row["id"]), "name": row.get("name"), "token": row.get("token")})
+                except Exception as e:
+                    logger.warning(f"Failed to resolve devices by tokens: {e}")
+                return out
+
+            def _lookup_key_ids(conn, keys: List[str]) -> Dict[str, int]:
+                if not keys:
+                    return {}
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    cur.execute("SELECT key, key_id FROM ts_kv_dictionary WHERE key = ANY(%s)", (keys,))
+                    rows = cur.fetchall() or []
+                return {r["key"]: int(r["key_id"]) for r in rows}
+
+            def _fetch(conn, keys: List[str], start_ms: int, end_ms: int, entity_ids: Optional[List[str]]) -> Dict[str, List[Dict[str, Any]]]:
+                out: Dict[str, List[Dict[str, Any]]] = {k: [] for k in keys}
+                key_map = _lookup_key_ids(conn, keys)
+                if not key_map:
+                    return out
+                key_ids = list(key_map.values())
+                params: List[Any] = [key_ids, start_ms, end_ms]
+                where = ["d.key_id = ANY(%s)", "k.ts BETWEEN %s AND %s"]
+                if entity_ids:
+                    where.append("k.entity_id = ANY(%s)")
+                    params.append(entity_ids)
+                sql = f"""
+                    SELECT k.ts, d.key AS key, k.bool_v, k.long_v, k.dbl_v, k.str_v, k.json_v
+                    FROM ts_kv k
+                    JOIN ts_kv_dictionary d ON k.key = d.key_id
+                    WHERE {' AND '.join(where)}
+                    ORDER BY k.ts ASC
+                """
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    cur.execute(sql, params)
+                    for row in cur.fetchall() or []:
+                        k = row["key"]
+                        ts_ms = int(row["ts"]) if row["ts"] is not None else None
+                        val: Any = None
+                        if row.get("dbl_v") is not None:
+                            val = float(row["dbl_v"])
+                        elif row.get("long_v") is not None:
+                            val = float(row["long_v"])
+                        elif row.get("bool_v") is not None:
+                            val = 1.0 if row["bool_v"] else 0.0
+                        elif row.get("str_v") is not None:
+                            val = row["str_v"]
+                        elif row.get("json_v") is not None:
+                            val = row["json_v"]
+                        if ts_ms is None or val is None:
+                            continue
+                        dt_iso = datetime.utcfromtimestamp(ts_ms / 1000.0).strftime("%Y-%m-%d %H:%M:%S")
+                        out.setdefault(k, []).append({"datetime": dt_iso, "reading_value": val})
+                return out
+
+            with plog.stage("pg_fetch"):
+                try:
+                    conn = psycopg2.connect(
+                        host=cfg["host"], port=cfg["port"], dbname=cfg["database"], user=cfg["user"], password=cfg["password"], sslmode=cfg.get("sslmode", "disable")
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to connect to Postgres: {e}")
+                    dispatcher.utter_message(text=f"DB connection error: {e}")
+                    return []
+                try:
+                    raw_tokens_slot = tracker.get_slot("device_tokens") or tracker.get_slot("access_tokens")
+                    tokens: List[str] = []
+                    if isinstance(raw_tokens_slot, list):
+                        tokens = [str(t).strip() for t in raw_tokens_slot if str(t).strip()]
+                    elif isinstance(raw_tokens_slot, str):
+                        tokens = [t.strip() for t in re.split(r"[,\s]+", raw_tokens_slot) if t.strip()]
+                    if not tokens:
+                        env_tokens = os.getenv("TB_DEVICE_TOKENS", "").strip()
+                        if env_tokens:
+                            tokens = [t.strip() for t in re.split(r"[,\s]+", env_tokens) if t.strip()]
+                    entity_ids: Optional[List[str]] = None
+                    if tokens:
+                        resolved = _resolve_devices_by_tokens(conn, tokens)
+                        entity_ids = [r["id"] for r in resolved]
+                        plog.info("Resolved devices by tokens", count=len(entity_ids))
+                        if not entity_ids:
+                            plog.warning("No devices found for provided tokens; falling back to TB_DEVICE_ID/NAME")
+                    if not entity_ids:
+                        single_id = _resolve_device(conn, device_name, device_id)
+                        if single_id:
+                            entity_ids = [single_id]
+                        elif device_name:
+                            plog.warning("Device name not found; querying across all devices", device_name=device_name)
+                    data_by_uuid = _fetch(conn, list(timeseries_ids or []), start_ms, end_ms, entity_ids)
+                finally:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
 
         # Normalize into the same JSON shape as MySQL path produced
         sql_results = json.dumps(data_by_uuid, indent=2)

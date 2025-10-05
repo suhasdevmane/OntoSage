@@ -4,10 +4,12 @@ Analytics endpoints for time-series sensor payloads used by the Rasa Action Serv
 
 ## Run
 
-- With Docker (recommended): service `microservices` in repo-level `docker-compose.yml`.
-  - Host: http://localhost:6001 (maps container port 6000)
+- With Docker (recommended): service `microservices` in a building compose file (e.g. `docker-compose.bldg1.yml` or `docker-compose.bldg2.yml`).
+  - Typical host: http://localhost:6001 (host → container 6000)
+  - Alternate (some bldg3 variants or isolation strategy): http://localhost:6002
   - Health: GET `/health`
   - Runner: POST `/analytics/run`
+  - See root `README.md` for port matrix and isolation guidance.
 
 ## API
 

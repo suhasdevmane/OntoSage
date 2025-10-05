@@ -382,11 +382,11 @@ class ValidateSensorForm(FormValidationAction):
         mappings = {}
         try:
             candidates = [
-                os.path.join(os.getcwd(), "sensor_mappings.txt"),
-                os.path.join(os.getcwd(), "actions", "sensor_mappings.txt"),
+                os.path.join(os.getcwd(), "sensor_uuids.txt"),
+                os.path.join(os.getcwd(), "actions", "sensor_uuids.txt"),
             ]
             path = next((p for p in candidates if os.path.exists(p)), None)
-            with open(path or "sensor_mappings.txt", "r") as f:
+            with open(path or "sensor_uuids.txt", "r") as f:
                 for line_num, line in enumerate(f, 1):
                     try:
                         if line.strip():
@@ -402,15 +402,15 @@ class ValidateSensorForm(FormValidationAction):
                         logger.error(f"Error on line {line_num}: {e}")
             logger.info(f"Loaded {len(mappings)} sensor mappings")
         except FileNotFoundError:
-            logger.error("sensor_mappings.txt not found")
+            logger.error("sensor_uuids.txt not found")
             # Create an empty file to prevent future errors
             try:
                 os.makedirs("./actions", exist_ok=True)
-                with open("./actions/sensor_mappings.txt", "w") as f:
+                with open("./actions/sensor_uuids.txt", "w") as f:
                     f.write("# Format: sensor_name,sensor_uuid\n")
-                logger.info("Created empty sensor_mappings.txt file")
+                logger.info("Created empty sensor_uuids.txt file")
             except Exception as e:
-                logger.error(f"Failed to create empty sensor_mappings.txt: {e}")
+                logger.error(f"Failed to create empty sensor_uuids.txt: {e}")
         return mappings
 
 def extract_date_range(text: str) -> Dict[str, str]:
@@ -929,14 +929,14 @@ class ActionQuestionToBrickbot(Action):
     def load_sensor_mappings(self) -> Dict[str, str]:
         mappings = {}
         try:
-            with open("./actions/sensor_mappings.txt", "r") as f:
+            with open("./actions/sensor_uuids.txt", "r") as f:
                 for line in f:
                     if line.strip():
                         name, uuid = line.strip().split(",")
                         mappings[uuid] = name
             logger.info(f"Loaded {len(mappings)} sensor mappings")
         except FileNotFoundError:
-            logger.error("sensor_mappings.txt not found")
+            logger.error("sensor_uuids.txt not found")
         return mappings
 
     def query_service_requests(self, url: str, data: Dict) -> Dict:
@@ -1184,7 +1184,7 @@ class ActionQuestionToBrickbot(Action):
                     logger.info(f"UUID {uuid} maps to sensor name: {sensor_mappings[uuid]}")
                     # Consider replacing UUID with sensor name in the data before sending to LLM
                 else:
-                    logger.info(f"UUID {uuid} has no mapping in sensor_mappings.txt")
+                    logger.info(f"UUID {uuid} has no mapping in sensor_uuids.txt")
         
         # Log a sample of the JSON (truncated if too large)
         sample_json = json.dumps(standardized_json, indent=2)
@@ -1665,6 +1665,9 @@ class ActionProcessTimeseries(Action):
         return_json: bool = True
     ) -> Tuple[Union[str, Dict], Union[str, None]]:
         """
+        NOTE: For bldg2 we use TimescaleDB (PostgreSQL/ThingsBoard tables) for timeseries.
+        This MySQL helper is retained for compatibility with other buildings and legacy flows.
+
         Fetches sensor data for multiple timeseries IDs and dates dynamically.
 
         Parameters:
@@ -1804,12 +1807,12 @@ class ActionProcessTimeseries(Action):
         mappings: Dict[str, str] = {}
         try:
             candidates = [
-                os.path.join(os.getcwd(), "sensor_mappings.txt"),
-                os.path.join(os.getcwd(), "actions", "sensor_mappings.txt"),
-                "./actions/sensor_mappings.txt",
+                os.path.join(os.getcwd(), "sensor_uuids.txt"),
+                os.path.join(os.getcwd(), "actions", "sensor_uuids.txt"),
+                "./actions/sensor_uuids.txt",
             ]
             path = next((p for p in candidates if os.path.exists(p)), None)
-            with open(path or "./actions/sensor_mappings.txt", "r") as f:
+            with open(path or "./actions/sensor_uuids.txt", "r") as f:
                 for line_num, line in enumerate(f, 1):
                     try:
                         if line.strip() and not line.strip().startswith("#"):
@@ -1826,14 +1829,14 @@ class ActionProcessTimeseries(Action):
                         logger.error(f"Error on line {line_num}: {e}")
             logger.info(f"Loaded {len(mappings)} sensor mappings")
         except FileNotFoundError:
-            logger.error("sensor_mappings.txt not found")
+            logger.error("sensor_uuids.txt not found")
             try:
                 os.makedirs("./actions", exist_ok=True)
-                with open("./actions/sensor_mappings.txt", "w") as f:
+                with open("./actions/sensor_uuids.txt", "w") as f:
                     f.write("# Format: sensor_name,sensor_uuid\n")
-                logger.info("Created empty sensor_mappings.txt file")
+                logger.info("Created empty sensor_uuids.txt file")
             except Exception as e:
-                logger.error(f"Failed to create empty sensor_mappings.txt: {e}")
+                logger.error(f"Failed to create empty sensor_uuids.txt: {e}")
         return mappings
 
     def replace_uuids_with_sensor_types(self, data: Any, uuid_to_sensor: Dict[Text, Text]) -> Any:
@@ -2012,7 +2015,7 @@ class ActionProcessTimeseries(Action):
                 if uuid in sensor_mappings:
                     logger.info(f"UUID {uuid} maps to sensor name: {sensor_mappings[uuid]}")
                 else:
-                    logger.info(f"UUID {uuid} has no mapping in sensor_mappings.txt")
+                    logger.info(f"UUID {uuid} has no mapping in sensor_uuids.txt")
         
         # Log a sample of the JSON (truncated if too large)
         sample_json = json.dumps(standardized_json, indent=2)
@@ -2246,6 +2249,32 @@ class ActionProcessTimeseries(Action):
                 logger.warning(f"Failed to resolve device '{name}': {e}")
                 return None
 
+        def _resolve_devices_by_tokens(conn, tokens: List[str]) -> List[Dict[str, str]]:
+            """Resolve a list of ThingsBoard access tokens to device UUIDs (entity_ids).
+
+            Returns a list of dicts with keys: id (UUID), name (device name), token (credentials_id).
+            """
+            out: List[Dict[str, str]] = []
+            if not tokens:
+                return out
+            try:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    # Filter only ACCESS_TOKEN credentials type to avoid other kinds
+                    cur.execute(
+                        """
+                        SELECT d.id, d.name, dc.credentials_id AS token
+                        FROM device d
+                        JOIN device_credentials dc ON d.id = dc.device_id
+                        WHERE dc.credentials_type = 'ACCESS_TOKEN' AND dc.credentials_id = ANY(%s)
+                        """,
+                        (tokens,)
+                    )
+                    for row in cur.fetchall() or []:
+                        out.append({"id": str(row["id"]), "name": row.get("name"), "token": row.get("token")})
+            except Exception as e:
+                logger.warning(f"Failed to resolve devices by tokens: {e}")
+            return out
+
         def _lookup_key_ids(conn, keys: List[str]) -> Dict[str, int]:
             if not keys:
                 return {}
@@ -2254,7 +2283,7 @@ class ActionProcessTimeseries(Action):
                 rows = cur.fetchall() or []
             return {r["key"]: int(r["key_id"]) for r in rows}
 
-        def _fetch(conn, keys: List[str], start_ms: int, end_ms: int, entity_id: Optional[str]) -> Dict[str, List[Dict[str, Any]]]:
+        def _fetch(conn, keys: List[str], start_ms: int, end_ms: int, entity_ids: Optional[List[str]]) -> Dict[str, List[Dict[str, Any]]]:
             out: Dict[str, List[Dict[str, Any]]] = {k: [] for k in keys}
             key_map = _lookup_key_ids(conn, keys)
             if not key_map:
@@ -2262,9 +2291,10 @@ class ActionProcessTimeseries(Action):
             key_ids = list(key_map.values())
             params: List[Any] = [key_ids, start_ms, end_ms]
             where = ["d.key_id = ANY(%s)", "k.ts BETWEEN %s AND %s"]
-            if entity_id:
-                where.append("k.entity_id = %s")
-                params.append(entity_id)
+            if entity_ids:
+                # Filter across one or more device entity UUIDs
+                where.append("k.entity_id = ANY(%s)")
+                params.append(entity_ids)
             sql = f"""
                 SELECT k.ts, d.key AS key, k.bool_v, k.long_v, k.dbl_v, k.str_v, k.json_v
                 FROM ts_kv k
@@ -2305,10 +2335,37 @@ class ActionProcessTimeseries(Action):
                 dispatcher.utter_message(text=f"DB connection error: {e}")
                 return []
             try:
-                entity_id = _resolve_device(conn, device_name, device_id)
-                if device_name and not entity_id:
-                    plog.warning("Device name not found; querying across all devices", device_name=device_name)
-                data_by_uuid = _fetch(conn, list(timeseries_ids or []), start_ms, end_ms, entity_id)
+                # 1) Try to read device tokens from slots or env and resolve to device IDs
+                raw_tokens_slot = tracker.get_slot("device_tokens") or tracker.get_slot("access_tokens")
+                tokens: List[str] = []
+                if isinstance(raw_tokens_slot, list):
+                    tokens = [str(t).strip() for t in raw_tokens_slot if str(t).strip()]
+                elif isinstance(raw_tokens_slot, str):
+                    tokens = [t.strip() for t in re.split(r"[,\s]+", raw_tokens_slot) if t.strip()]
+                # Fallback to env var for tokens
+                if not tokens:
+                    env_tokens = os.getenv("TB_DEVICE_TOKENS", "").strip()
+                    if env_tokens:
+                        tokens = [t.strip() for t in re.split(r"[,\s]+", env_tokens) if t.strip()]
+
+                entity_ids: Optional[List[str]] = None
+                if tokens:
+                    resolved = _resolve_devices_by_tokens(conn, tokens)
+                    entity_ids = [r["id"] for r in resolved]
+                    plog.info("Resolved devices by tokens", count=len(entity_ids))
+                    if not entity_ids:
+                        plog.warning("No devices found for provided tokens; falling back to TB_DEVICE_ID/NAME")
+
+                # 2) If no tokens resolved, fall back to a single ID (env) or name
+                if not entity_ids:
+                    single_id = _resolve_device(conn, device_name, device_id)
+                    if single_id:
+                        entity_ids = [single_id]
+                    elif device_name:
+                        plog.warning("Device name not found; querying across all devices", device_name=device_name)
+
+                # 3) Fetch data filtered by one or more device IDs if present
+                data_by_uuid = _fetch(conn, list(timeseries_ids or []), start_ms, end_ms, entity_ids)
             finally:
                 try:
                     conn.close()

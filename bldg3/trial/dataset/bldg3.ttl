@@ -11021,8 +11021,7 @@ bsh:isPartOfShape a sh:PropertyShape ;
 <n32c4720a45cf4235b3ca4ec5b38920fab1> brick:hasUnits unit:FT_2 ;
     brick:value "130149^^xsd:integer"^^xsd:string .
 
-<n32c4720a45cf4235b3ca4ec5b38920fab10> a ref:TimeseriesReference ;
-    ref:hasTimeseriesId "ce16fb1f-cff3-40c0-b8cb-ac9bd82b0e4b"^^xsd:string .
+
 
 <n32c4720a45cf4235b3ca4ec5b38920fab100> a ref:TimeseriesReference ;
     ref:hasTimeseriesId "8ebb78e1-8859-4a2c-804a-d392633bed33"^^xsd:string .
@@ -45734,7 +45733,7 @@ bldg:bldg3.CHW.Pump1_SPEED a brick:Speed_Status ;
     brick:isPointOf bldg:chiller ;
     ref:hasExternalReference "n32c4720a45cf4235b3ca4ec5b38920fab74" .
 
-bldg:bldg3.CHW.Pump1_Start/Stop a brick:Start_Stop_Command ;
+bldg:bldg3.CHW.Pump1_StartStop a brick:Start_Stop_Command ;
     rdfs:label "bldg3.CHW.Pump1_Start/Stop"^^xsd:string ;
     brick:hasTag tag:Command,
         tag:Off,
@@ -45753,7 +45752,7 @@ bldg:bldg3.CHW.Pump2_SPEED a brick:Speed_Status ;
     brick:isPointOf bldg:chiller ;
     ref:hasExternalReference "n32c4720a45cf4235b3ca4ec5b38920fab76" .
 
-bldg:bldg3.CHW.Pump2_Start/Stop a brick:Start_Stop_Command ;
+bldg:bldg3.CHW.Pump2_StartStop a brick:Start_Stop_Command ;
     rdfs:label "bldg3.CHW.Pump2_Start/Stop"^^xsd:string ;
     brick:hasTag tag:Command,
         tag:Off,
@@ -45763,6 +45762,7 @@ bldg:bldg3.CHW.Pump2_Start/Stop a brick:Start_Stop_Command ;
         tag:Stop ;
     brick:isPointOf bldg:chiller ;
     ref:hasExternalReference "n32c4720a45cf4235b3ca4ec5b38920fab77" .
+
 
 bldg:bldg3.ZONE.AH1S.RM123.Zone_Air_Temp a brick:Zone_Air_Temperature_Sensor ;
     rdfs:label "bldg3.ZONE.AH1S.RM123.Zone Air Temp"^^xsd:string ;
@@ -46221,6 +46221,9 @@ bldg:bldg3.ZONE.AHU01N.RM163F-B.Zone_Supply_Air_Temp a brick:Discharge_Air_Tempe
         tag:Temperature ;
     brick:isPointOf bldg:VAVRM163F-B ;
     ref:hasExternalReference "n32c4720a45cf4235b3ca4ec5b38920fab109" .
+
+<n32c4720a45cf4235b3ca4ec5b38920fab10> a ref:TimeseriesReference ;
+    ref:hasTimeseriesId "ce16fb1f-cff3-40c0-b8cb-ac9bd82b0e4b"^^xsd:string .
 
 bldg:bldg3.ZONE.AHU01N.RM163F.Zone_Air_Temp a brick:Zone_Air_Temperature_Sensor ;
     rdfs:label "bldg3.ZONE.AHU01N.RM163F.Zone Air Temp"^^xsd:string ;
@@ -67164,9 +67167,9 @@ bldg:chiller a brick:Chiller ;
         bldg:bldg3.CHW.OA_ENABLE,
         bldg:bldg3.CHW.Outside_Air_Temp,
         bldg:bldg3.CHW.Pump1_SPEED,
-        bldg:bldg3.CHW.Pump1_Start/Stop,
+        bldg:bldg3.CHW.Pump1_StartStop,
         bldg:bldg3.CHW.Pump2_SPEED,
-        bldg:bldg3.CHW.Pump2_Start/Stop ;
+        bldg:bldg3.CHW.Pump2_StartStop ;
     brick:hasTag tag:Chiller,
         tag:Equipment,
         tag:HVAC .

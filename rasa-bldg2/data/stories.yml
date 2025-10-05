@@ -31,7 +31,3 @@ stories:
           - timeseries_ids: null
       - action: utter_no_dates_needed
       - action: action_reset_slots
-  - story: test share artifacts action
-    steps:
-      - intent: test_action_server
-      - action: action_generate_and_share_data

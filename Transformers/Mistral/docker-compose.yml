@@ -12,6 +12,10 @@ services:
       - OLLAMA_NUM_PARALLEL=4
       - OLLAMA_MAX_LOADED_MODELS=1
       - OLLAMA_MODELS=/usr/share/ollama/.ollama/models
+      # Space or comma separated list of models to auto-pull & optionally warm up
+      - AUTO_PULL_MODELS=mistral:latest
+      # Set to 'false' to skip warmup token generation after pull
+      - WARMUP_MODELS=true
     healthcheck:
       test: "ollama --version && ollama ps || exit 1"
       interval: 30s

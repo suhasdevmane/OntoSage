@@ -1,77 +1,67 @@
 # Rasa Frontend (React)
 
-Chat UI for the OntoBot stack. Connects to the Rasa server and renders rich responses, links, and media served by the file server.
+Chat UI for the OntoBot stack. Connects to the Rasa server and renders rich responses, links, and media served by the file server. For full platform architecture, deployment instructions, analytics payload formats, and NL→SPARQL details, see the root `README.md`.
+
+All building stacks now share the SAME host ports (only one runs at a time):
+- Frontend: http://localhost:3000
+- Rasa: http://localhost:5005
+- Action Server: http://localhost:5055/health
+- Duckling: http://localhost:8000
+- File Server: http://localhost:8080/health
+- Rasa Editor: http://localhost:6080/health
+
+If you later adopt a concurrent multi‑building isolation strategy you can reintroduce port offsets (e.g. +10, +20) via compose edits.
 
 ## Available Scripts
 
-In the project directory, you can run:
-
 ### `npm start`
-
-Runs the app in development mode. Open http://localhost:3000
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Development mode; opens http://localhost:3000. Reloads on file changes and shows lint errors in console.
 
 ### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Runs the test runner in watch mode.
 
 ### `npm run build`
-
-Builds the app for production to the `build` folder.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Creates a production build in `build/` (minified, hashed filenames).
 
 ### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+One‑way extraction of all configuration (webpack, Babel, ESLint). Avoid unless deep customization is required.
 
 ## Configuration
 
-- Rasa server URL is typically `http://localhost:5005` (via docker-compose). Adjust the client config if using a different host.
-- Media links are served from the file server at `http://localhost:8080` (artifacts live under `/artifacts`).
+Injected via Docker Compose environment:
+- Rasa server URL: `http://localhost:5005`
+- File server base URL: `http://localhost:8080`
+- FRONTEND_ORIGIN / ALLOWED_ORIGINS: should match the frontend origin (`http://localhost:3000`)
+
+SPARQL/ontology and analytics calls are indirect—handled by the Action Server and NL2SPARQL service; no direct config needed here.
 
 ## Customize for your building
 
-- Modify prompts, labels, and inline help to match your site terminology.
-- Add panels for common actions (e.g., “Show latest temperature in Room 101”).
-- Keep intent names consistent with `rasa-ui` to ensure correct routing.
+- Update UI labels to reflect building‑specific sensor naming conventions.
+- Add quick‑action buttons for frequent analytics queries (temperature trends, humidity anomalies, etc.).
+- Keep intent and slot names aligned with the active Rasa project (`rasa-bldg1`, `rasa-bldg2`, or `rasa-bldg3`).
 
 ## End-to-end flow
 
-1) User sends a message. 2) Rasa interprets and triggers an action. 3) The action fetches data and calls analytics if needed. 4) The frontend renders text + media from the file server.
+1. User sends a message.
+2. Rasa interprets intent/entities.
+3. Action Server may query SPARQL (Fuseki), gather telemetry (SQL or Cassandra), call Analytics, and/or translate NL→SPARQL.
+4. Generated artifacts (plots/CSV) saved to shared volume and exposed by File Server.
+5. Frontend renders text plus rich cards & artifact links.
 
-### Code Splitting
+## Optional concurrent multi-building (future)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+If you decide to run multiple buildings simultaneously (not default):
+- Assign unique host ports (e.g. 3000/3010/3020, 8080/8090/8100, etc.).
+- Add suffixes to container names for clarity.
+- Adjust FRONTEND_ORIGIN / ALLOWED_ORIGINS per stack.
 
-### Analyzing the Bundle Size
+## CRA Reference
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-See CRA troubleshooting: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+Standard Create React App docs:
+- Code splitting: https://facebook.github.io/create-react-app/docs/code-splitting
+- Bundle analysis: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+- Progressive Web App: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+- Advanced configuration: https://facebook.github.io/create-react-app/docs/advanced-configuration
+- Deployment: https://facebook.github.io/create-react-app/docs/deployment
+- Troubleshooting: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
