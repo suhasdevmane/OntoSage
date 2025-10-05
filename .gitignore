@@ -156,16 +156,20 @@ my_password.txt
 ##############################
 # Transformers models & datasets
 ##############################
+# Explicit model directories user requested to exclude
+# (These are also covered by broader wildcard patterns below, but kept
+# for clarity and future auditing of intentional exclusions.)
+Transformers/t5_small/
+Transformers/Flan_T5_base/
+Transformers/graphs/
 Transformers/**/models/
 Transformers/**/checkpoints/
 Transformers/**/checkpoint-*/
 #! Explicitly ignore legacy removed model directory
 Transformers/t5_base/trained/checkpoint-2/
 Transformers/Dataset/
-Transformers/Flan_T5_base/
 Transformers/BART-NL2SPARQL/
 Transformers/GPT/
-Transformers/t5_small/
 Transformers/T5-NL2SPARQL/
 Transformers/T5-SPARQL2QA/
 Transformers/t5_base/v2/
