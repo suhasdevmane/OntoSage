@@ -13,7 +13,7 @@ This single README merges all documentation (project overview, Rasa runbook, dat
 Recent highlights (Oct 2025):
 - Multi‑building dataset generation & merge tooling (bldg1, bldg2, bldg3) with raw + deduplicated outputs and provenance.
 - Hardened T5 fine‑tuning (checkpoint‑3) powering the `nl2sparql` microservice; legacy checkpoint‑2 removed.
-- Automatic Ollama (Mistral) model auto‑pull & optional warm‑up on container start.
+- Automatic Ollama (Mistral) model auto‑pull & warm‑up on container start.
 - Added health endpoints to critical services (nl2sparql, analytics, decider, Rasa, file server) for compose reliability.
 - Clarified compose file separation: one active building stack at a time unless you adopt the optional isolation strategy below.
 
@@ -31,6 +31,7 @@ Recent highlights (Oct 2025):
 - Dataset generation & merging (multi‑building NL→SPARQL)
 - Model training (T5 NL→SPARQL & Decider)
 - Analytics API (examples)
+- Analytics & Decider deep dive (see [analytics.md](analytics.md))
 - Rasa actions, forms, and Decider flow
 - Project structure and key paths
 - Required files and datasets
@@ -46,9 +47,9 @@ Recent highlights (Oct 2025):
 - License
 
 ---
-## Compose stacks overview and extras (required vs optional)
+## Compose stacks overview and extras (feature selection)
 
-This repo now has dedicated compose files for three distinct smart buildings plus an overlay for extras. For an in‑depth semantic/ontological description of each building (real testbed vs synthetic office vs synthetic data centre), see [BUILDINGS.md](BUILDINGS.md).
+This repo now has dedicated compose files for three distinct smart buildings plus an overlay for additional tooling. Language translation (`nl2sparql`) and local summarization (`ollama`) are pluggable feature services that many pipelines use. For an in‑depth semantic/ontological description of each building (real testbed vs synthetic office vs synthetic data centre), see [BUILDINGS.md](BUILDINGS.md).
 
 ### Building taxonomy quick summary
 | Building | Nature | Focus | Key Strength |
@@ -72,12 +73,12 @@ The compose files below instantiate the runtime service graph for exactly one bu
   - Includes: Postgres + Cassandra + ThingsBoard, Rasa, Actions, Duckling, Editor, HTTP file server, Microservices, Decider, MySQL, Fuseki, pgAdmin (no default servers.json; you can add `bldg3/servers.json`).
 
 - Extras overlay: `docker-compose.extras.yml`
-  - Purpose: add optional exploration/ML services on top of any building stack.
+  - Purpose: add exploration/ML services on top of any building stack (translation + summarization, visualization, notebooks, alternate RDF store).
   - Services:
-    - Required for some workflows:
-      - `nl2sparql` (T5-based translator) if your pipeline requires NL → SPARQL via HTTP.
-      - `ollama` (Mistral) if you want on-box LLM summarization or generation.
-    - Useful for exploration:
+    - Feature services (enable as needed):
+      - `nl2sparql` (T5-based translator) for NL → SPARQL via HTTP.
+      - `ollama` (Mistral) for on-box summarization or generation.
+    - Visualization / exploration add-ons:
       - `graphdb` (alternate RDF store)
       - `jupyter` (notebooks; mounts `./development/notebooks` and `./rasa-bldg1/actions` by default)
       - `adminer` (DB UI; depends on MySQL)
@@ -111,9 +112,9 @@ Notes:
 - If you use `adminer` with bldg2/bldg3 and no MySQL, either add MySQL to those stacks or remove the dependency from extras.
 - The `ollama` service uses a GPU deploy block; comment it if GPU is not available.
 
-### Extras overlay (optional)
+### Extras overlay
 
-Layer optional services on top of a building stack by combining compose files (order matters; building stack first):
+Layer additional services on top of a building stack by combining compose files (order matters; building stack first):
 
 ```powershell
 # Example: building 1 + extras
@@ -127,11 +128,10 @@ You can substitute `docker-compose.bldg2.yml` or `docker-compose.bldg3.yml` for 
 
 Services provided by the extras overlay:
 - nl2sparql
-  - Natural language → SPARQL service over HTTP.
-  - When: your action flow expects an NL2SPARQL endpoint.
+  - Natural language → SPARQL translator.
   - Health: http://localhost:6005/health (internal DNS `nl2sparql:6005`).
 - ollama (Mistral)
-  - Local LLM for summarization/captioning/generation.
+  - Summarization / natural language post‑processing.
   - Health: http://localhost:11434
   - GPU deploy block included; comment if GPU isn’t available.
 - graphdb
@@ -154,7 +154,7 @@ Action Server configuration when using extras:
   - `NL2SPARQL_URL=http://nl2sparql:6005/nl2sparql`
   - `SUMMARIZATION_URL=http://ollama:11434`
   
-If these variables are absent, the Action Server paths gracefully skip the optional steps.
+If these variables are absent the Action Server skips translation and/or summarization stages and returns raw analytical metrics or structured outputs instead.
 
 
 ## Docker Compose: how to run, stop, and choose files
@@ -222,7 +222,7 @@ docker compose -f docker-compose.bldg2.yml -f docker-compose.extras.yml down
     - Down: `docker compose -f docker-compose.bldg3.yml down`
 
 - docker-compose.extras.yml (overlay)
-  - Scenario: Optional services like nl2sparql, ollama, graphdb, jupyter, adminer.
+  - Scenario: Additional services like graphdb, jupyter, adminer (core language services may also be overlaid if not embedded elsewhere).
   - Use when: You need NL→SPARQL, local LLM summarization, alternate RDF store, notebooks, or a DB UI.
   - Run with a building stack (order matters):
     - Up: `docker compose -f docker-compose.bldgX.yml -f docker-compose.extras.yml up -d --build`
@@ -340,7 +340,7 @@ For a complete host ↔ container mapping (including protocol ports, optional ex
 Notes:
 - The table shows default ports after recent corrections (e.g., bldg3 variant offsets). If you need concurrent multi‑building runtime, see the Isolation Strategy section below.
 - `nl2sparql` now mounts `checkpoint-3` explicitly; legacy `checkpoint-2` was removed.
-- Ollama auto‑pulls models listed in `AUTO_PULL_MODELS` and optionally warms them via token generation when `WARMUP_MODELS=true`.
+- Ollama auto‑pulls models listed in `AUTO_PULL_MODELS` and warms them via token generation when `WARMUP_MODELS=true`.
 
 All services share the `ontobot-network` for internal DNS resolution.
 
@@ -466,7 +466,7 @@ Invoke-RestMethod -Method Post -Uri http://localhost:5005/webhooks/rest/webhook 
 } | ConvertTo-Json)
 ```
 
-6) Optional: Send telemetry to ThingsBoard and verify in TimescaleDB
+6) (Optional) Send telemetry to ThingsBoard and verify in TimescaleDB
 
 ```powershell
 # Replace <DEVICE_TOKEN> with your TB device token
@@ -521,7 +521,7 @@ ORDER BY t.ts DESC
 LIMIT 20;
 ```
 
-Optional Timescale checks:
+Timescale checks (if using TimescaleDB stack):
 
 ```sql
 \dx;  -- should list timescaledb
@@ -559,7 +559,7 @@ Invoke-RestMethod -Method Post -Uri http://localhost:5005/webhooks/rest/webhook 
 } | ConvertTo-Json)
 ```
 
-6) Optional: Send telemetry to ThingsBoard (HTTP transport)
+6) (Optional) Send telemetry to ThingsBoard (HTTP transport)
 
 ```powershell
 Invoke-WebRequest -Method Post -Uri "http://localhost:8082/api/v1/<DEVICE_TOKEN>/telemetry" -ContentType "application/json" -Body '{ "humidity": 48 }'
@@ -649,13 +649,13 @@ Saving changes via the frontend:
 
 ```powershell
 # From repo root
-# 1) Optional: copy and adjust environment
+# 1) Copy and adjust environment
 Copy-Item .env.example .env -ErrorAction SilentlyContinue
 
-# 2) Build and start all core services
+# 2) Build and start the selected services
 docker-compose up -d --build
 
-# 3) Train the Rasa model (optional if a model exists)
+# 3) Train the Rasa model (skip only if a model already exists)
 docker-compose exec rasa rasa train
 
 # 4) Health checks (open in a browser)
@@ -692,10 +692,12 @@ Copy `.env.example` to `.env` and adjust as needed. Key variables used by the Ac
 - ANALYTICS_URL: http://microservices:6000/analytics/run (internal DNS)
 - DECIDER_URL: http://decider-service:6009/decide
 - DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
-- Optional:
   - NL2SPARQL_URL (internal translator endpoint)
   - SUMMARIZATION_URL (Ollama/OpenAI/etc.)
   - BUNDLE_MEDIA=true|false to bundle multiple media in bot messages
+
+Remote / external deployment:
+You do NOT have to run `nl2sparql` or `ollama` locally; you can point `NL2SPARQL_URL` and `SUMMARIZATION_URL` at services running on any reachable host (e.g. `http://nl2sparql.mycompany.net:6005/nl2sparql`, `https://llm.example.org/api`). As long as the Action Server can reach those HTTP endpoints and they respect the expected contract, the local compose services may be omitted.
 
 Volumes:
 - `rasa-ui/shared_data` is mounted to actions, file server, and editor.
@@ -874,9 +876,9 @@ Official docs for platforms and services referenced by OntoBot:
 - Docker Compose: https://docs.docker.com/compose/
 - React: https://react.dev/
 - Brick Schema: https://brickschema.org/
-- ThingsBoard (optional): https://thingsboard.io/
-- GraphDB (optional): https://graphdb.ontotext.com/
-- Jupyter (optional): https://jupyter.org/
+- ThingsBoard: https://thingsboard.io/ (unless you choose a non‑TB telemetry path)
+- GraphDB: https://graphdb.ontotext.com/
+- Jupyter: https://jupyter.org/
 - Ollama (optional): https://ollama.com/
 - Mistral model in Ollama (optional): https://ollama.com/library/mistral
 - T5 model (for NL2SPARQL variants): https://huggingface.co/docs/transformers/model_doc/t5
