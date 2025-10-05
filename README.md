@@ -48,7 +48,16 @@ Recent highlights (Oct 2025):
 ---
 ## Compose stacks overview and extras (required vs optional)
 
-This repo now has dedicated compose files per building and an overlay for extras:
+This repo now has dedicated compose files for three distinct smart buildings plus an overlay for extras. For an in‑depth semantic/ontological description of each building (real testbed vs synthetic office vs synthetic data centre), see [BUILDINGS.md](BUILDINGS.md).
+
+### Building taxonomy quick summary
+| Building | Nature | Focus | Key Strength |
+|----------|--------|-------|--------------|
+| Building 1 (ABACWS) | Real university testbed | Indoor Environmental Quality (IEQ) & rich per‑room sensing | Dense multi‑gas, particulate, temp, humidity, light, occupancy & noise coverage |
+| Building 2 (Synthetic Office) | Synthetic | AHU + zone thermal comfort & chilled water process variables | Structured AHU/ZONE naming for process & zone temperature queries |
+| Building 3 (Synthetic Data Centre) | Synthetic | Critical cooling, alarms, parameters, broad Brick class taxonomy | Wide equipment & alarm/parameter vocabulary for semantic generalization |
+
+The compose files below instantiate the runtime service graph for exactly one building at a time; the ontologies and sensor model differences are documented in detail in `BUILDINGS.md`.
 
 - Building 1: `docker-compose.bldg1.yml`
   - For the original/legacy building. Uses Rasa project under `./rasa-bldg1`.
