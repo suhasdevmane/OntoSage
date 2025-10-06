@@ -171,6 +171,9 @@ Transformers/.ipynb_checkpoints/
 transformers/**/.ipynb_checkpoints/
 Transformers/graphs/
 !/Transformers/t5_base/trained/checkpoint-3/readme.md
+bldg1/dataset for training explanation/
+bldg1/processed_mortardata_sites__ttl/
+
 # Large model files
 *.safetensors
 *.bin
@@ -232,7 +235,14 @@ rasa-bldg*/actions/*.ipynb
 # Local auth db and transient pins
 rasa-bldg*/shared_data/**/*.db
 rasa-bldg*/shared_data/pinned_model.txt
-
+bldg3/catalog-v001.xml
+bldg2/catalog-v001.xml
+bldg1/catalog-v001.xml
+bldg1/abacws-v5.ttl
+bldg1/abacws-building-9july.ttl
+bldg1/abacws-building-v7.ttl
+bldg1/01.brickall ontology creation-9july.ipynb
+bldg1/mortardata-demo.ipynb
 ##############################
 # Transformers extra large outputs
 ##############################

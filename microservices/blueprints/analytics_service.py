@@ -2170,6 +2170,344 @@ analysis_functions = {
     "forecast_downtimes": forecast_downtimes,
 }
 
+# ---------------------------
+# Analytics Function Registry (Decorator-based for extensibility)
+# ---------------------------
+_analytics_registry_meta = {}
+
+def analytics_function(name: Optional[str] = None, patterns: Optional[list] = None, description: Optional[str] = None):
+    """Decorator to register an analytics function with optional metadata.
+
+    Args:
+        name: Optional override for registry key (defaults to function.__name__).
+        patterns: Optional list of regex (strings) representing NL intent patterns.
+        description: Optional human readable description (defaults to docstring snippet).
+    """
+    def decorator(fn):
+        key = name or fn.__name__
+        analysis_functions[key] = fn  # plug into dispatcher
+        _analytics_registry_meta[key] = {
+            "patterns": patterns or [],
+            "description": (description or (fn.__doc__ or "")).strip(),
+        }
+        return fn
+    return decorator
+
+# ---------------------------
+# New / Extended Analytics Functions (Answering richer NL intents)
+# ---------------------------
+
+def _flatten_selected(flat, keys):
+    readings = []
+    for k in keys:
+        readings.extend(flat.get(k, []))
+    return _df_from_readings(readings)
+
+@analytics_function(patterns=[r"current (value|reading)", r"latest (temperature|humidity|co2|value)"], description="Return latest reading per detected series (or subset via key_filters)")
+def current_value(sensor_data, key_filters: Optional[list] = None):
+    """Return the latest reading for each selected series.
+
+    Parameters:
+        sensor_data: flat/nested payload
+        key_filters: optional list of substrings to restrict which keys are considered.
+    Returns: mapping key -> {latest_timestamp, latest_value, unit}
+    """
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No data"}
+    out = {}
+    for key, readings in flat.items():
+        if key_filters and not any(f.lower() in str(key).lower() for f in key_filters):
+            continue
+        df = _df_from_readings(readings)
+        if df.empty:
+            continue
+        last = df.iloc[-1]
+        out[str(key)] = {
+            "latest_timestamp": last["timestamp"].strftime("%Y-%m-%d %H:%M:%S"),
+            "latest_value": float(last.get("reading_value")),
+            "unit": _unit_for_key(key),
+        }
+    if not out:
+        return {"error": "No matching series"}
+    return out
+
+@analytics_function(patterns=[r"compare", r"difference between", r"warmer", r"cooler", r"higher"], description="Compare latest readings across two or more series and rank")
+def compare_latest_values(sensor_data, key_filters: Optional[list] = None):
+    """Compare latest values across selected sensors.
+
+    Returns: list sorted descending by latest_value with differences relative to first."""
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No data"}
+    rows = []
+    for key, readings in flat.items():
+        if key_filters and not any(f.lower() in str(key).lower() for f in key_filters):
+            continue
+        df = _df_from_readings(readings)
+        if df.empty:
+            continue
+        last = df.iloc[-1]
+        rows.append({
+            "key": str(key),
+            "latest_timestamp": last["timestamp"].strftime("%Y-%m-%d %H:%M:%S"),
+            "latest_value": float(last.get("reading_value")),
+            "unit": _unit_for_key(key),
+        })
+    if len(rows) < 2:
+        return {"error": "Need at least two series for comparison"}
+    rows.sort(key=lambda r: r["latest_value"], reverse=True)
+    base = rows[0]["latest_value"]
+    for r in rows:
+        r["diff_from_leader"] = round(r["latest_value"] - base, 3)
+    return {"comparisons": rows, "leader": rows[0]["key"]}
+
+@analytics_function(patterns=[r"setpoint", r"deviation", r"offset"], description="Compute deviation between actual readings and associated setpoint series")
+def difference_from_setpoint(sensor_data):
+    """Compute latest deviation of actual vs setpoint for temperature/hvac style series.
+
+    Heuristics:
+      - keys containing 'setpoint' treated as setpoints
+      - counterpart actual key assumed same base with 'setpoint' removed or containing 'temp'/'temperature'.
+    Returns: mapping actual_key -> {setpoint_key, latest_actual, latest_setpoint, deviation}
+    """
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No data"}
+    setpoint_keys = [k for k in flat.keys() if 'setpoint' in str(k).lower()]
+    if not setpoint_keys:
+        return {"error": "No setpoint series found"}
+    results = {}
+    for sp in setpoint_keys:
+        base = re.sub(r"setpoint", "", str(sp), flags=re.IGNORECASE)
+        # find candidate actual key
+        candidates = [k for k in flat.keys() if k != sp and base.strip('_')[:10].lower() in str(k).lower()]
+        if not candidates:
+            continue
+        df_sp = _df_from_readings(flat[sp])
+        if df_sp.empty:
+            continue
+        latest_sp = float(df_sp.iloc[-1]["reading_value"])
+        for act in candidates:
+            df_act = _df_from_readings(flat[act])
+            if df_act.empty:
+                continue
+            latest_act = float(df_act.iloc[-1]["reading_value"])
+            results[str(act)] = {
+                "setpoint_key": str(sp),
+                "latest_actual": latest_act,
+                "latest_setpoint": latest_sp,
+                "deviation": round(latest_act - latest_sp, 3),
+                "unit": _unit_for_key(act) or _unit_for_key(sp)
+            }
+    if not results:
+        return {"error": "No matching actual/setpoint pairs"}
+    return results
+
+@analytics_function(patterns=[r"time in range", r"compliance", r"within range"], description="Percentage of readings inside acceptable range for each series")
+def percentage_time_in_range(sensor_data, acceptable_range: Optional[tuple] = None):
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No data"}
+    out = {}
+    for key, readings in flat.items():
+        df = _df_from_readings(readings)
+        if df.empty:
+            continue
+        if acceptable_range is None:
+            # try infer temperature range else humidity
+            rng = None
+            kl = str(key).lower()
+            if 'temp' in kl:
+                rng = UK_INDOOR_STANDARDS['temperature_c']['range']
+            elif 'humid' in kl:
+                rng = UK_INDOOR_STANDARDS['humidity_rh']['range']
+            else:
+                rng = (df['reading_value'].quantile(0.1), df['reading_value'].quantile(0.9))
+        else:
+            rng = acceptable_range
+        inside = df[(df['reading_value'] >= rng[0]) & (df['reading_value'] <= rng[1])]
+        pct = (len(inside) / len(df)) * 100 if len(df) else 0
+        out[str(key)] = {"range": rng, "percent_in_range": round(pct, 2), "unit": _unit_for_key(key)}
+    return out or {"error": "No readings"}
+
+@analytics_function(patterns=[r"top", r"highest"], description="Top-N series by latest reading")
+def top_n_by_latest(sensor_data, n: int = 5):
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No data"}
+    scores = []
+    for key, readings in flat.items():
+        df = _df_from_readings(readings)
+        if df.empty:
+            continue
+        latest = float(df.iloc[-1]['reading_value'])
+        scores.append((key, latest, df.iloc[-1]['timestamp']))
+    scores.sort(key=lambda x: x[1], reverse=True)
+    out = [{"key": str(k), "latest_value": v, "timestamp": t.strftime('%Y-%m-%d %H:%M:%S'), "unit": _unit_for_key(k)} for k, v, t in scores[:n]]
+    return {"top": out, "n": n}
+
+@analytics_function(description="Bottom-N series by latest reading", patterns=[r"lowest", r"bottom"])
+def bottom_n_by_latest(sensor_data, n: int = 5):
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No data"}
+    scores = []
+    for key, readings in flat.items():
+        df = _df_from_readings(readings)
+        if df.empty:
+            continue
+        latest = float(df.iloc[-1]['reading_value'])
+        scores.append((key, latest, df.iloc[-1]['timestamp']))
+    scores.sort(key=lambda x: x[1])
+    out = [{"key": str(k), "latest_value": v, "timestamp": t.strftime('%Y-%m-%d %H:%M:%S'), "unit": _unit_for_key(k)} for k, v, t in scores[:n]]
+    return {"bottom": out, "n": n}
+
+@analytics_function(patterns=[r"slope", r"trend"], description="Linear regression slope over recent window (hours)")
+def rolling_trend_slope(sensor_data, window_hours: int = 6):
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No data"}
+    now = pd.Timestamp.now()
+    out = {}
+    for key, readings in flat.items():
+        df = _df_from_readings(readings)
+        if df.empty:
+            continue
+        df = df[df['timestamp'] >= now - pd.Timedelta(hours=window_hours)]
+        if len(df) < 3:
+            continue
+        # convert time to seconds offset
+        t0 = df['timestamp'].min()
+        x = (df['timestamp'] - t0).dt.total_seconds().values
+        y = df['reading_value'].values
+        try:
+            slope, intercept = np.polyfit(x, y, 1)
+            out[str(key)] = {"slope_per_sec": slope, "slope_per_hour": slope * 3600, "points": int(len(df)), "unit": _unit_for_key(key)}
+        except Exception:
+            continue
+    return out or {"error": "Insufficient data"}
+
+@analytics_function(patterns=[r"rate of change", r"how fast"], description="Average absolute rate of change between consecutive readings")
+def rate_of_change(sensor_data):
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No data"}
+    out = {}
+    for key, readings in flat.items():
+        df = _df_from_readings(readings)
+        if len(df) < 2:
+            continue
+        df['delta'] = df['reading_value'].diff().abs()
+        df['dt'] = df['timestamp'].diff().dt.total_seconds().replace(0, np.nan)
+        rate = (df['delta'] / df['dt']).dropna().mean()
+        out[str(key)] = {"avg_rate_per_sec": rate, "unit": _unit_for_key(key)}
+    return out or {"error": "No series with enough points"}
+
+@analytics_function(patterns=[r"histogram", r"distribution", r"spread"], description="Histogram bin counts for each series")
+def histogram_bins(sensor_data, bins: int = 10):
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No data"}
+    out = {}
+    for key, readings in flat.items():
+        df = _df_from_readings(readings)
+        if df.empty:
+            continue
+        counts, edges = np.histogram(df['reading_value'].values, bins=bins)
+        out[str(key)] = {"bins": edges.tolist(), "counts": counts.tolist(), "unit": _unit_for_key(key)}
+    return out or {"error": "No readings"}
+
+@analytics_function(patterns=[r"missing data", r"completeness", r"data quality"], description="Report data completeness (% timestamps missing in regular cadence)")
+def missing_data_report(sensor_data, expected_freq: str = '5min'):
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No data"}
+    out = {}
+    for key, readings in flat.items():
+        df = _df_from_readings(readings)
+        if df.empty:
+            continue
+        df = df.set_index('timestamp').sort_index()
+        full = df.resample(expected_freq).first()
+        missing = full['reading_value'].isna().sum()
+        total = len(full)
+        out[str(key)] = {"expected_points": total, "missing_points": int(missing), "percent_missing": round((missing/total)*100,2) if total else None}
+    return out or {"error": "No readings"}
+
+@analytics_function(patterns=[r"time .*threshold", r"reach .*threshold", r"when .* (exceed|reach)"], description="Estimate time to reach a threshold via linear extrapolation")
+def time_to_threshold(sensor_data, threshold: Optional[float] = None, window_points: int = 10):
+    if threshold is None:
+        return {"error": "threshold parameter required"}
+    flat = _aggregate_flat(sensor_data)
+    out = {}
+    for key, readings in flat.items():
+        df = _df_from_readings(readings)
+        if len(df) < 3:
+            continue
+        df = df.tail(window_points)
+        t0 = df['timestamp'].min()
+        x = (df['timestamp'] - t0).dt.total_seconds().values
+        y = df['reading_value'].values
+        try:
+            slope, intercept = np.polyfit(x, y, 1)
+            if slope == 0:
+                continue
+            secs = (threshold - intercept) / slope
+            if secs < x[-1]:
+                status = "already_reached"
+            elif secs < 0:
+                status = "moving_away"
+            else:
+                eta = t0 + pd.Timedelta(seconds=secs)
+                status = eta.strftime('%Y-%m-%d %H:%M:%S')
+            out[str(key)] = {"threshold": threshold, "slope_per_sec": slope, "eta": status, "unit": _unit_for_key(key)}
+        except Exception:
+            continue
+    return out or {"error": "Unable to estimate"}
+
+@analytics_function(patterns=[r"baseline"], description="Compare recent mean vs historical baseline window")
+def baseline_comparison(sensor_data, baseline_hours: int = 24, recent_hours: int = 1):
+    flat = _aggregate_flat(sensor_data)
+    now = pd.Timestamp.now()
+    out = {}
+    for key, readings in flat.items():
+        df = _df_from_readings(readings)
+        if df.empty:
+            continue
+        baseline_df = df[df['timestamp'] >= now - pd.Timedelta(hours=baseline_hours)]
+        recent_df = df[df['timestamp'] >= now - pd.Timedelta(hours=recent_hours)]
+        if len(baseline_df) < 3 or recent_df.empty:
+            continue
+        base_mean = baseline_df['reading_value'].mean()
+        recent_mean = recent_df['reading_value'].mean()
+        delta = recent_mean - base_mean
+        out[str(key)] = {"baseline_mean": round(base_mean,3), "recent_mean": round(recent_mean,3), "delta": round(delta,3), "unit": _unit_for_key(key)}
+    return out or {"error": "No sufficient data"}
+
+@analytics_function(patterns=[r"range", r"span"], description="Compute range (max-min) over window")
+def range_span(sensor_data, window_hours: int = 24):
+    flat = _aggregate_flat(sensor_data)
+    now = pd.Timestamp.now()
+    out = {}
+    for key, readings in flat.items():
+        df = _df_from_readings(readings)
+        if df.empty:
+            continue
+        df = df[df['timestamp'] >= now - pd.Timedelta(hours=window_hours)]
+        if df.empty:
+            continue
+        span = df['reading_value'].max() - df['reading_value'].min()
+        out[str(key)] = {"range_span": round(float(span),3), "max": float(df['reading_value'].max()), "min": float(df['reading_value'].min()), "unit": _unit_for_key(key)}
+    return out or {"error": "No window data"}
+
+# ---------------------------
+# Introspection endpoint to list available analytics
+# ---------------------------
+@analytics_service.route("/list", methods=["GET"])
+def list_analytics():
+    return jsonify({k: v for k, v in _analytics_registry_meta.items()})
+
 @analytics_service.route("/test", methods=["GET", "POST"])
 def test_endpoint():
     if request.method == "POST":
