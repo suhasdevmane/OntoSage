@@ -173,7 +173,7 @@ Transformers/graphs/
 !/Transformers/t5_base/trained/checkpoint-3/readme.md
 bldg1/dataset for training explanation/
 bldg1/processed_mortardata_sites__ttl/
-
+bldg1/processed_mortardata_sites__ttl
 # Large model files
 *.safetensors
 *.bin
