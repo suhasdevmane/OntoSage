@@ -6,10 +6,149 @@ import numpy as np
 import logging
 import json
 import re
+import os
+import ast
+import importlib
+import types
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Tuple
 
 analytics_service = Blueprint("analytics_service", __name__)
+
+# ---------------------------
+# Plugin system (Phase 1)
+# ---------------------------
+PLUGINS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "analytics_plugins"))
+os.makedirs(PLUGINS_DIR, exist_ok=True)
+
+# Persistent metadata (parameters schema, user-specified descriptions, etc.)
+CONFIG_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "config"))
+os.makedirs(CONFIG_DIR, exist_ok=True)
+ANALYTICS_META_FILE = os.path.join(CONFIG_DIR, "analytics_functions_meta.json")
+
+_analytics_params_meta = {}
+
+def _load_analytics_meta():
+    global _analytics_params_meta
+    if os.path.exists(ANALYTICS_META_FILE):
+        try:
+            with open(ANALYTICS_META_FILE, 'r', encoding='utf-8') as f:
+                _analytics_params_meta = json.load(f) or {}
+        except Exception as e:
+            logging.error(f"Failed to load analytics meta file: {e}")
+            _analytics_params_meta = {}
+    else:
+        _analytics_params_meta = {}
+    return _analytics_params_meta
+
+def _save_analytics_meta():
+    try:
+        tmp = ANALYTICS_META_FILE + ".tmp"
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(_analytics_params_meta, f, indent=2)
+        os.replace(tmp, ANALYTICS_META_FILE)
+    except Exception as e:
+        logging.error(f"Failed to save analytics meta file: {e}")
+
+_load_analytics_meta()
+
+FORBIDDEN_IMPORTS = {"os", "subprocess", "socket", "sys", "shutil", "pathlib", "builtins", "importlib"}
+
+def _scan_function_params(fn):
+    try:
+        sig = inspect.signature(fn)
+        params = []
+        for name, p in sig.parameters.items():
+            if name == 'sensor_data':
+                continue
+            default = None if p.default is inspect._empty else p.default
+            params.append({
+                "name": name,
+                "kind": str(p.kind).replace('Parameter.', ''),
+                "default": default,
+            })
+        return params
+    except Exception:
+        return []
+
+def _list_registry_metadata():
+    out = []
+    for name, meta in _analytics_registry_meta.items():
+        fn = analysis_functions.get(name)
+        sig_params = {p["name"]: p for p in _scan_function_params(fn)}
+        stored = _analytics_params_meta.get(name, {}).get("parameters", []) if isinstance(_analytics_params_meta.get(name), dict) else []
+        merged_params = []
+        if stored:
+            for p in stored:
+                nm = p.get("name")
+                base = sig_params.get(nm, {})
+                merged = {
+                    "name": nm,
+                    "kind": base.get("kind"),
+                    "default": base.get("default") if base.get("default") is not None else p.get("default"),
+                    "type": p.get("type"),
+                    "description": p.get("description"),
+                }
+                merged_params.append(merged)
+            # include any additional signature params not in stored schema
+            for nm, base in sig_params.items():
+                if not any(m.get("name") == nm for m in merged_params):
+                    merged_params.append(base)
+        else:
+            merged_params = list(sig_params.values())
+        out.append({
+            "name": name,
+            "description": meta.get("description"),
+            "patterns": meta.get("patterns", []),
+            "parameters": merged_params,
+        })
+    return out
+
+def _is_safe_code(source: str) -> Tuple[bool, str]:
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as e:
+        return False, f"SyntaxError: {e}"
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            names = [n.name.split('.')[0] for n in node.names]
+            for nm in names:
+                if nm in FORBIDDEN_IMPORTS:
+                    return False, f"Forbidden import: {nm}"
+        if isinstance(node, ast.Call):
+            # crude block for exec/eval/open
+            if isinstance(node.func, ast.Name) and node.func.id in {"exec", "eval", "open", "__import__"}:
+                return False, f"Forbidden call: {node.func.id}"
+    return True, "ok"
+
+def _write_plugin_file(name: str, code: str) -> str:
+    safe_name = re.sub(r"[^a-zA-Z0-9_]+", "_", name)
+    filename = f"{safe_name}.py"
+    path = os.path.join(PLUGINS_DIR, filename)
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(code)
+    return path
+
+def _load_plugins():
+    # Import all .py files in PLUGINS_DIR
+    for fname in os.listdir(PLUGINS_DIR):
+        if not fname.endswith('.py') or fname.startswith('_'):
+            continue
+        mod_name = f"micro_plugins_{fname[:-3]}"
+        full_path = os.path.join(PLUGINS_DIR, fname)
+        try:
+            spec = importlib.util.spec_from_file_location(mod_name, full_path)  # type: ignore
+            if not spec or not spec.loader:
+                logging.warning(f"Cannot load plugin spec for {fname}")
+                continue
+            module = importlib.util.module_from_spec(spec)  # type: ignore
+            spec.loader.exec_module(module)  # type: ignore
+            logging.info(f"Loaded analytics plugin: {fname}")
+        except Exception as e:
+            logging.error(f"Failed to load plugin {fname}: {e}")
+
+# Initial load
+_load_plugins()
 
 # ---------------------------
 # Payload normalization helpers
@@ -2508,6 +2647,107 @@ def range_span(sensor_data, window_hours: int = 24):
 def list_analytics():
     return jsonify({k: v for k, v in _analytics_registry_meta.items()})
 
+@analytics_service.route("/functions", methods=["GET"])
+def list_functions_detailed():
+    return jsonify({"functions": _list_registry_metadata(), "count": len(_analytics_registry_meta)})
+
+@analytics_service.route("/validate_function", methods=["POST"])
+def validate_function():
+    data = request.get_json(force=True, silent=True) or {}
+    code_body = data.get("code") or ""
+    if not code_body:
+        return jsonify({"ok": False, "error": "code field required"}), 400
+    safe, msg = _is_safe_code(code_body)
+    return jsonify({"ok": safe, "message": msg})
+
+FUNCTION_TEMPLATE = """from blueprints.analytics_service import analytics_function, _aggregate_flat, _df_from_readings, _unit_for_key\n\n@analytics_function(patterns={patterns}, description={description!r})\ndef {name}(sensor_data{param_sig}):\n    \"\"\"Auto-created analytics function. Edit logic below.\n    Parameters reflect user-provided schema.\n    \"\"\"\n    flat = _aggregate_flat(sensor_data)\n    if not flat:\n        return {{'error': 'No data'}}\n    # TODO: implement analytics logic using _df_from_readings\n    # Example: compute mean of first series\n    first_key = next(iter(flat.keys()))\n    df = _df_from_readings(flat[first_key])\n    if df.empty: return {{'error': 'Empty series'}}\n    return {{'series': first_key, 'mean': float(df['reading_value'].mean()), 'unit': _unit_for_key(first_key)}}\n"""
+
+@analytics_service.route("/add_function", methods=["POST"])
+def add_function():
+    payload = request.get_json(force=True, silent=True) or {}
+    name = payload.get("name")
+    patterns = payload.get("patterns") or []
+    description = payload.get("description") or "New analytics function"
+    params = payload.get("parameters") or []  # list of {name, default, type?, description?}
+    if not name:
+        return jsonify({"ok": False, "error": "name required"}), 400
+    if name in analysis_functions:
+        return jsonify({"ok": False, "error": "function already exists"}), 400
+    # Build param signature
+    sig_parts = []
+    for p in params:
+        pname = re.sub(r"[^a-zA-Z0-9_]+", "_", str(p.get('name') or ''))
+        if not pname or pname == 'sensor_data':
+            continue
+        default = p.get('default')
+        if default is None or default == "":
+            sig_parts.append(f", {pname}")
+        else:
+            # represent default safely
+            sig_parts.append(f", {pname}={repr(default)}")
+    param_sig = ''.join(sig_parts)
+    # Extend docstring with parameter schema lines if provided
+    if params:
+        doc_param_lines = ["Parameters:\n"]
+        for p in params:
+            pname = re.sub(r"[^a-zA-Z0-9_]+", "_", str(p.get('name') or ''))
+            if not pname or pname == 'sensor_data':
+                continue
+            ptype = p.get('type') or 'Any'
+            pdesc = p.get('description') or ''
+            doc_param_lines.append(f"    - {pname} ({ptype}): {pdesc}\n")
+        doc_extra = ''.join(doc_param_lines)
+    else:
+        doc_extra = ''
+    code = FUNCTION_TEMPLATE.format(name=name, patterns=repr(patterns), description=(description + ("\n\n" + doc_extra if doc_extra else "")), param_sig=param_sig)
+    safe, msg = _is_safe_code(code)
+    if not safe:
+        return jsonify({"ok": False, "error": msg}), 400
+    path = _write_plugin_file(name, code)
+    _load_plugins()  # reload to register
+    # Persist metadata (parameters schema)
+    _analytics_params_meta[name] = {
+        "description": description,
+        "patterns": patterns,
+        "parameters": [
+            {k: v for k, v in p.items() if k in {"name", "default", "type", "description"}}
+            for p in params
+            if p.get('name') and p.get('name') != 'sensor_data'
+        ],
+        "created_at": datetime.utcnow().isoformat() + "Z",
+    }
+    _save_analytics_meta()
+    # Try decider rules reload (optional)
+    decider_reloaded = False
+    try:
+        from .decider_service import _load_rules  # type: ignore
+        _load_rules()
+        decider_reloaded = True
+    except Exception:
+        decider_reloaded = False
+    return jsonify({"ok": True, "path": path, "registered": name in analysis_functions, "decider_reloaded": decider_reloaded})
+
+@analytics_service.route("/test_run", methods=["POST"])
+def test_run():
+    data = request.get_json(force=True, silent=True) or {}
+    fn_name = data.get("function")
+    payload = data.get("payload") or {}
+    if fn_name not in analysis_functions:
+        return jsonify({"ok": False, "error": "Unknown function"}), 400
+    fn = analysis_functions[fn_name]
+    # Filter optional parameters supplied for test
+    try:
+        sig = inspect.signature(fn)
+        kwargs = {}
+        for k, v in (data.get("params") or {}).items():
+            if k in sig.parameters:
+                kwargs[k] = v
+        result = fn(payload, **kwargs)
+        return jsonify({"ok": True, "result": result})
+    except Exception as e:
+        logging.error(f"Test run failed: {e}")
+        return jsonify({"ok": False, "error": str(e)})
+
 @analytics_service.route("/test", methods=["GET", "POST"])
 def test_endpoint():
     if request.method == "POST":
@@ -2589,3 +2829,31 @@ def run_analysis():
         import traceback
         logging.error(traceback.format_exc())
         return jsonify({"error": f"Error running analysis {analysis_type}: {str(e)}"}), 500
+
+# ---------------------------
+# Sensors list endpoint (for UI) 
+# ---------------------------
+@analytics_service.route("/sensors", methods=["GET"])
+def list_sensors():
+    """Return list of known sensor types/names by reading sensor_list.txt if present.
+
+    Response JSON shape:
+      {"sensors": ["Sensor_A", "Sensor_B", ...], "count": N}
+    Falls back to empty list if file missing; does not raise 500.
+    """
+    candidates = [
+        os.path.join(os.getcwd(), "sensor_list.txt"),
+        os.path.join(os.getcwd(), "actions", "sensor_list.txt"),
+        os.path.join(os.getcwd(), "..", "rasa-bldg1", "actions", "sensor_list.txt"),
+    ]
+    path = next((p for p in candidates if os.path.exists(p)), None)
+    sensors = []
+    if path:
+        try:
+            with open(path, "r") as f:
+                sensors = [ln.strip() for ln in f if ln.strip()]
+        except Exception as e:
+            logging.warning(f"Failed reading sensor_list.txt at {path}: {e}")
+    else:
+        logging.info("sensor_list.txt not found in known locations for /analytics/sensors endpoint")
+    return jsonify({"sensors": sensors, "count": len(sensors)})

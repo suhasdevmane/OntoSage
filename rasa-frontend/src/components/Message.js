@@ -5,10 +5,11 @@ import userAvatar from '../assets/userAvatar.png';
 import botAvatar from '../assets/botAvatar.png';
 import MediaRenderer from './MediaRenderer';
 
-function Message({ message }) {
+function Message({ message, hideAttachments }) {
   // Helper to render media if available
   const renderMedia = () => {
     // If an image URL is provided directly in the message object:
+    if (hideAttachments) return null;
     if (message.image) {
       return <MediaRenderer media={{ type: 'image', url: message.image }} />;
     }
@@ -36,7 +37,7 @@ function Message({ message }) {
           <div className="d-flex justify-content-end align-items-center">
             <Card className="p-2 bg-success text-white message-card user-message">
               <Card.Text className="mb-1">{message.text}</Card.Text>
-              {renderMedia()}
+              {!hideAttachments && renderMedia()}
               <small className="text-light">{message.timestamp}</small>
             </Card>
             <Image 
@@ -66,7 +67,7 @@ function Message({ message }) {
             />
             <Card className="p-2 message-card bot-message">
               <Card.Text className="mb-1">{message.text}</Card.Text>
-              {renderMedia()}
+              {!hideAttachments && renderMedia()}
               <small className="text-muted">{message.timestamp}</small>
             </Card>
           </div>

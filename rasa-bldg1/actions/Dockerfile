@@ -6,6 +6,8 @@ RUN pip install -r requirements.txt
 
 # Copy the actions code
 COPY . /app
+COPY sensor_uuids.txt /app/sensor_uuids.txt
+COPY sensor_list.txt /app/sensor_list.txt
 
 # Set the working directory
 WORKDIR /app

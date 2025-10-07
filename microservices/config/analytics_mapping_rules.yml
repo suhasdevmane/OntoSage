@@ -1,0 +1,48 @@
+version: 1
+
+# Explicit overrides evaluated first – regex 'if' → force analysis_type
+overrides:
+  - if: "co2.*(high|level|concentration)"  # e.g. "Is the CO2 level high?"
+    analysis_type: analyze_co2_levels
+  - if: "humidity.*(range|within|percent)"  # direct humidity range questions
+    analysis_type: analyze_humidity
+  - if: "temperature.*(difference|delta).*return"  # supply/return difference
+    analysis_type: analyze_supply_return_temp_difference
+  - if: "correlat(e|ion)"  # correlation intent
+    analysis_type: correlate_sensors
+
+# Keyword boosts per registered analytics function
+boosts:
+  analyze_temperatures:
+    keywords: [temperature, temp, hot, cold, heating, cooling]
+    weight: 1.4
+  analyze_humidity:
+    keywords: [humidity, humid, rh]
+    weight: 1.6
+  analyze_co2_levels:
+    keywords: [co2, ventilation, air, stuffy]
+    weight: 1.5
+  analyze_pm_levels:
+    keywords: [pm10, pm2, particulate, dust]
+    weight: 1.5
+  analyze_air_quality_trends:
+    keywords: [air, quality, aqi]
+    weight: 1.3
+  detect_potential_failures:
+    keywords: [failure, fault, abnormal, anomaly]
+    weight: 1.5
+  detect_anomalies:
+    keywords: [anomaly, anomalies, outlier, outliers]
+    weight: 1.3
+  correlate_sensors:
+    keywords: [correlate, correlation, relationship]
+    weight: 1.7
+  analyze_sensor_trend:
+    keywords: [trend, history, over, time, slope]
+    weight: 1.2
+  percentage_time_in_range:
+    keywords: [compliance, range, within, percent, percentage]
+    weight: 1.4
+  time_to_threshold:
+    keywords: [threshold, reach, exceed]
+    weight: 1.6

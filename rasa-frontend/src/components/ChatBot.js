@@ -15,6 +15,14 @@ const RASA_ENDPOINT = "http://localhost:5005/webhooks/rest/webhook";
 function ChatBot() {
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
+  // Toggle to show/hide intermediate attachments & verbose stages
+  // Persisted in localStorage under 'chat_show_details'. When off:
+  //  - Filters out stage/result messages (SPARQL, SQL, analytics payload/results)
+  //  - Suppresses attachments in Message component (hideAttachments prop)
+  //  - Keeps user messages, final summary, greetings, errors.
+  const [showDetails, setShowDetails] = useState(() => {
+    try { return localStorage.getItem('chat_show_details') !== 'false'; } catch { return true; }
+  });
   // Default to minimized; restore from sessionStorage if present
   const [minimized, setMinimized] = useState(() => {
     const saved = sessionStorage.getItem('chatbot_minimized');
@@ -98,7 +106,11 @@ function ChatBot() {
     addMessage(userMessage);
     setIsLoading(true); // Set loading state to true
     try {
-  const response = await axios.post(RASA_ENDPOINT, { sender: currentUser || 'user', message: userInput });
+  const response = await axios.post(RASA_ENDPOINT, {
+    sender: currentUser || 'user',
+    message: userInput,
+    metadata: { show_details: showDetails }
+  });
       const botMessages = response.data.map(msg => ({
         sender: 'bot',
         ...msg,
@@ -258,9 +270,37 @@ function ChatBot() {
         </div>
         {/* Messages */}
         <div className="chat-messages">
-          {messages.map((msg, index) => (
-            <Message key={index} message={msg} />
-          ))}
+          {messages
+            .filter(msg => {
+              if (showDetails) return true;
+              // Only keep high-level summary style messages when details hidden.
+              // Heuristics: keep final summary, plain bot greetings, user messages.
+              if (msg.sender === 'user') return true;
+              const raw = msg.text || '';
+              const t = raw.toLowerCase();
+              // If message has no text and no attachment fields, drop it to avoid blank bubble
+              if ((!raw.trim()) && !msg.attachment && !msg.attachments) return false;
+              // Hide if it's an attachment placeholder or stage output indicators
+              const hideIndicators = [
+                'sparql query results',
+                'sparql results saved',
+                'sql query results',
+                'prepared analytics payload',
+                'analytics results',
+                'analytics payload',
+                'proceeding with analytics',
+                'understanding your question',
+                'standardized json sample'
+              ];
+              if (hideIndicators.some(h => t.startsWith(h))) return false;
+              // Keep summary or errors or regular bot replies
+              if (t.startsWith('summary:')) return true;
+              if (t.startsWith('error')) return true;
+              return true; // default keep
+            })
+            .map((msg, index) => (
+              <Message key={index} message={msg} hideAttachments={!showDetails} />
+            ))}
           {isLoading && (
             <div className="processing-message text-center my-2">
               <span className="processing-text">Processing... please wait.</span>
@@ -287,6 +327,21 @@ function ChatBot() {
             </Form>
           </div>
           <div className="chat-buttons">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Form.Check
+                type="switch"
+                id="toggle-details"
+                label={showDetails ? 'Details on' : 'Details off'}
+                checked={showDetails}
+                onChange={() => {
+                  setShowDetails(prev => {
+                    const next = !prev; try { localStorage.setItem('chat_show_details', String(next)); } catch {}
+                    return next;
+                  });
+                }}
+                style={{ fontSize: '0.75rem' }}
+              />
+            </div>
             <Button variant="secondary" onClick={downloadChatHistory}>
               <BsDownload size={20} />
             </Button>
