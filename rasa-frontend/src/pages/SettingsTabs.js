@@ -3,6 +3,7 @@ import TopNav from '../components/TopNav';
 import SettingsEditor from './SettingsEditor';
 import Settings from './Settings';
 import ActionServerTab from './ActionServerTab';
+import AnalyticsManager from './AnalyticsManager';
 
 export default function SettingsTabs() {
   const [tab, setTab] = useState('edit');
@@ -21,9 +22,12 @@ export default function SettingsTabs() {
           <li className="nav-item">
             <button className={`nav-link ${tab==='action'?'active':''}`} onClick={() => setTab('action')}>Action Server</button>
           </li>
+          <li className="nav-item">
+            <button className={`nav-link ${tab==='analytics'?'active':''}`} onClick={() => setTab('analytics')}>Analytics</button>
+          </li>
         </ul>
         <div className="mt-3">
-          {tab === 'edit' ? <SettingsEditor /> : tab === 'train' ? <Settings embedded={true} /> : <ActionServerTab />}
+          {tab === 'edit' ? <SettingsEditor /> : tab === 'train' ? <Settings embedded={true} /> : tab === 'action' ? <ActionServerTab /> : <AnalyticsManager />}
         </div>
       </div>
     </div>

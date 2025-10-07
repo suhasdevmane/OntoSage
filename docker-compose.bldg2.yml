@@ -260,6 +260,10 @@ services:
     restart: always
     ports:
       - "6001:6000"  # host 6001 -> container 6000 (internal analytics API)
+    volumes:
+      - microservices-bldg2-plugins:/app/analytics_plugins
+      - microservices-bldg2-meta:/app/analytics_meta
+      - microservices-bldg2-cache:/app/.cache
     networks:
       - ontobot-network
     healthcheck:
@@ -301,7 +305,9 @@ services:
     volumes_from:
       - fuseki-db
     volumes:
-      - ./bldg2/trial/dataset:/fuseki-data
+      - jena-bldg2-config:/fuseki/config
+      - jena-bldg2-datasets:/fuseki/databases
+      - jena-bldg2-backups:/fuseki/backups
     restart: always
     depends_on:
       - fuseki-db
@@ -414,3 +420,9 @@ volumes:
   mytb-ts-logs:
   mysql-data:
   ollama-models:
+  microservices-bldg2-plugins:
+  microservices-bldg2-meta:
+  microservices-bldg2-cache:
+  jena-bldg2-config:
+  jena-bldg2-datasets:
+  jena-bldg2-backups:

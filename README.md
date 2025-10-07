@@ -746,6 +746,8 @@ python microservices/test_analytics_smoke.py
 
 ## Rasa actions, forms, and Decider flow
 
+For an in-depth description of the action server pipeline (sensor UUID mapping loader, analytics decision logic, summarization modes, verbosity gating, artifacts), see the dedicated actions README at `rasa-bldg1/actions/README.md` (building‑specific implementation details).
+
 - Forms
   - sensor_form → sensor_type supports comma‑separated inputs, fuzzy matching, canonicalization
   - dates_form → start_date, end_date accept DD/MM/YYYY, YYYY‑MM‑DD, and phrases like “last week”, “today”, “now”

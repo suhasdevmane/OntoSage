@@ -34,6 +34,88 @@ from rapidfuzz import process as rf_process, fuzz as rf_fuzz
 
 logger = logging.getLogger(__name__)
 
+# -------------------------------------------------------------
+# Unified sensor UUID mapping loader (bidirectional name<->uuid)
+# -------------------------------------------------------------
+_SENSOR_UUID_CACHE: Dict[str, str] = {}
+_SENSOR_UUID_CACHE_MTIME: Optional[float] = None
+_SENSOR_UUID_CACHE_PATH: Optional[str] = None
+_SENSOR_UUID_ENV = os.getenv("SENSOR_UUIDS_FILE")  # optional absolute/relative override
+_SENSOR_UUID_RELOAD_SEC = int(os.getenv("SENSOR_UUIDS_RELOAD_SEC", "300"))  # reload window
+
+def _load_sensor_uuid_map(force: bool = False) -> Dict[str, str]:
+    """Load and cache sensor UUID mappings.
+
+    Search order:
+      1. Env var SENSOR_UUIDS_FILE if set
+      2. ./sensor_uuids.txt (repo root / container WORKDIR)
+      3. ./actions/sensor_uuids.txt (legacy path)
+
+    File format: sensor_name,uuid (comma separated). Lines beginning with # ignored.
+    Returns a dict containing both directions name->uuid and uuid->name.
+    Does NOT create files silently. If missing returns previous cache or empty.
+    """
+    global _SENSOR_UUID_CACHE, _SENSOR_UUID_CACHE_MTIME, _SENSOR_UUID_CACHE_PATH
+    candidates: List[str] = []
+    if _SENSOR_UUID_ENV:
+        candidates.append(_SENSOR_UUID_ENV)
+    cwd = os.getcwd()
+    candidates.extend([
+        os.path.abspath(os.path.join(cwd, "sensor_uuids.txt")),
+        os.path.abspath(os.path.join(cwd, "actions", "sensor_uuids.txt")),
+    ])
+    chosen = None
+    for p in candidates:
+        if p and os.path.exists(p):
+            chosen = p
+            break
+    if not chosen:
+        if _SENSOR_UUID_CACHE:
+            logger.warning("sensor_uuids.txt not found; using cached %d mappings", len(_SENSOR_UUID_CACHE))
+            return _SENSOR_UUID_CACHE
+        logger.warning("sensor_uuids.txt not found in any candidate path: %s", candidates)
+        return {}
+    try:
+        mtime = os.path.getmtime(chosen)
+    except OSError:
+        logger.warning("Unable to stat sensor mapping file: %s", chosen)
+        return _SENSOR_UUID_CACHE if _SENSOR_UUID_CACHE else {}
+    need_reload = force or _SENSOR_UUID_CACHE_MTIME is None or _SENSOR_UUID_CACHE_PATH != chosen
+    if not need_reload:
+        age = time.time() - _SENSOR_UUID_CACHE_MTIME
+        if age > _SENSOR_UUID_RELOAD_SEC or mtime != _SENSOR_UUID_CACHE_MTIME:
+            need_reload = True
+    if not need_reload:
+        return _SENSOR_UUID_CACHE
+    new_map: Dict[str, str] = {}
+    malformed = 0
+    duplicates = 0
+    try:
+        with open(chosen, "r", encoding="utf-8") as f:
+            for line_num, raw in enumerate(f, 1):
+                line = raw.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = [p.strip() for p in line.split(",")]
+                if len(parts) != 2:
+                    malformed += 1
+                    logger.debug("Malformed sensor mapping line %d: %s", line_num, raw.rstrip())
+                    continue
+                name, uuid_val = parts
+                for a, b in ((name, uuid_val), (uuid_val, name)):
+                    if a in new_map and new_map[a] != b:
+                        duplicates += 1
+                        logger.debug("Duplicate mapping key %s at line %d (existing=%s new=%s)", a, line_num, new_map[a], b)
+                    new_map[a] = b
+    except Exception as e:
+        logger.error(f"Failed loading sensor mappings from {chosen}: {e}")
+        return _SENSOR_UUID_CACHE if _SENSOR_UUID_CACHE else {}
+    _SENSOR_UUID_CACHE = new_map
+    _SENSOR_UUID_CACHE_MTIME = mtime
+    _SENSOR_UUID_CACHE_PATH = chosen
+    logger.info("Loaded %d sensor mappings from %s (malformed=%d duplicate_conflicts=%d)", len(new_map), chosen, malformed, duplicates)
+    return new_map
+
 # -----------------------------
 # Structured pipeline logging helpers
 # -----------------------------
@@ -134,8 +216,8 @@ logger = logging.getLogger(__name__)
 
 # Global constants
 # Default to internal Docker DNS names so services work inside the compose network.
-# nl2sparql_url = os.getenv("NL2SPARQL_URL", "http://nl2sparql:6005/nl2sparql") # Original internal URL
-nl2sparql_url = os.getenv("NL2SPARQL_URL", "https://deep-gator-cleanly.ngrok-free.app") # Updated to external ngrok URL for testing
+nl2sparql_url = os.getenv("NL2SPARQL_URL", "http://nl2sparql:6005/nl2sparql") # Original internal URL
+# nl2sparql_url = os.getenv("NL2SPARQL_URL", "https://deep-gator-cleanly.ngrok-free.app") # Updated to external ngrok URL for testing
 FUSEKI_URL = os.getenv("FUSEKI_URL", "http://jena-fuseki-rdf-store:3030/abacws-sensor-network/sparql")
 # Where to write downloadable files. Use the shared volume so http_server can serve them.
 # Route everything through a single folder for easy sharing and cleanup.
@@ -215,6 +297,171 @@ try:
 except Exception as e:
     logger.error(f"Failed to initialize Ollama client: {e}")
     client = None
+
+# ------------------------------------------------------------------
+# Dynamic Analytics Registry (replaces hardcoded _supported_types())
+# ------------------------------------------------------------------
+# We keep a static fallback set so previously bundled analytics continue to work
+_STATIC_ANALYTICS_FALLBACK: set = {
+    "analyze_failure_trends",
+    "analyze_sensor_status",
+    "analyze_air_quality_trends",
+    "analyze_hvac_anomalies",
+    "analyze_supply_return_temp_difference",
+    "analyze_air_flow_variation",
+    "analyze_sensor_trend",
+    "aggregate_sensor_data",
+    "analyze_air_quality",
+    "analyze_formaldehyde_levels",
+    "analyze_co2_levels",
+    "analyze_pm_levels",
+    "analyze_temperatures",
+    "analyze_humidity",
+    "analyze_temperature_humidity",
+    "detect_potential_failures",
+    "forecast_downtimes",
+    "correlate_sensors",
+}
+
+# Cache structure for remote registry (functions list fetched from microservices)
+_ANALYTICS_CACHE: Dict[str, Any] = {
+    "fetched_at": 0.0,
+    "ttl": float(os.getenv("ANALYTICS_REGISTRY_TTL", "60")),  # seconds
+    "functions": [],  # list[str]
+}
+
+# Derive a base host for registry listing. Prefer explicit host env, else derive from ANALYTICS_URL, else default.
+_analytics_run_url = os.getenv("ANALYTICS_URL", "")  # usually .../analytics/run
+_host_candidate = os.getenv("ANALYTICS_SERVICE_HOST")
+if not _host_candidate and _analytics_run_url:
+    try:
+        # Extract scheme://host:port
+        m = re.match(r"(https?://[^/]+)", _analytics_run_url)
+        if m:
+            _host_candidate = m.group(1)
+    except Exception:
+        pass
+ANALYTICS_SERVICE_HOST = _host_candidate or "http://microservices:6000"
+ANALYTICS_REGISTRY_URL = os.getenv(
+    "ANALYTICS_REGISTRY_URL", f"{ANALYTICS_SERVICE_HOST}/analytics/list"
+)
+
+def _fetch_analytics_registry(force: bool = False) -> None:
+    """Populate _ANALYTICS_CACHE['functions'] from the analytics microservice.
+
+    Tries to GET ANALYTICS_REGISTRY_URL expecting either:
+      - list[str]
+      - list[ {"name": str, ...} ]
+    Fails silently (logs warning) and leaves cache untouched on errors.
+    """
+    now = time.time()
+    try:
+        if not force and (now - _ANALYTICS_CACHE["fetched_at"]) < _ANALYTICS_CACHE["ttl"]:
+            return
+        logger.info(
+            f"Attempting analytics registry fetch (force={force}) url={ANALYTICS_REGISTRY_URL}"
+        )
+        resp = requests.get(ANALYTICS_REGISTRY_URL, timeout=5)
+        if not resp.ok:
+            logger.warning(
+                f"Analytics registry non-200 status={resp.status_code} url={ANALYTICS_REGISTRY_URL}"
+            )
+            _ANALYTICS_CACHE["fetched_at"] = now  # Avoid hammering
+            return
+        data = resp.json()
+        names: List[str] = []
+        if isinstance(data, list):
+            for item in data:
+                if isinstance(item, str):
+                    names.append(item)
+                elif isinstance(item, dict):
+                    n = item.get("name")
+                    if isinstance(n, str):
+                        names.append(n)
+        # Deduplicate & sort for determinism
+        if names:
+            unique = sorted(set(names))
+            _ANALYTICS_CACHE["functions"] = unique
+            _ANALYTICS_CACHE["fetched_at"] = now
+            logger.info(
+                f"Fetched analytics registry: {len(unique)} functions (TTL={_ANALYTICS_CACHE['ttl']}s) -> {unique}"
+            )
+        else:
+            _ANALYTICS_CACHE["fetched_at"] = now
+            logger.warning("Analytics registry returned empty list; using fallback only")
+    except Exception as e:
+        _ANALYTICS_CACHE["fetched_at"] = now
+        logger.warning(f"Analytics registry fetch failed: {e}; using fallback set")
+
+def _supported_types() -> set:
+    """Return union of dynamic registry functions and static fallback.
+
+    We always include the static fallback so previously referenced analytics continue to work
+    even if the registry is temporarily unavailable.
+    """
+    before = set(_ANALYTICS_CACHE.get("functions") or [])
+    _fetch_analytics_registry()
+    after = set(_ANALYTICS_CACHE.get("functions") or [])
+    if after != before:
+        logger.info(
+            f"Analytics registry updated: before={sorted(before)} after={sorted(after)}"
+        )
+    union = after | _STATIC_ANALYTICS_FALLBACK
+    # Log once per call site (keep concise) – only length and hash for large sets
+    logger.debug(
+        f"Supported analytics count={len(union)} dynamic={len(after)} fallback={len(_STATIC_ANALYTICS_FALLBACK)}"
+    )
+    return union
+
+# -------------------------------------------------------
+# Detail verbosity control (frontend toggle integration)
+# -------------------------------------------------------
+def _frontend_show_details(tracker: Tracker) -> bool:
+    """Return whether we should emit verbose stage/attachment messages.
+
+    The React frontend sends metadata: { show_details: bool } with each user message.
+    Rasa REST channel preserves this under tracker.latest_message['metadata'].
+    Default True if not specified (preserve current behavior).
+    """
+    try:
+        latest = getattr(tracker, 'latest_message', None) or {}
+        meta = latest.get('metadata') or {}
+        val = meta.get('show_details')
+        if isinstance(val, str):  # accept 'false' / 'true'
+            return val.lower() not in {'0','false','no','off'}
+        if isinstance(val, bool):
+            return val
+    except Exception:
+        pass
+    return True
+
+def emit_message(dispatcher: CollectingDispatcher, tracker: Tracker, *, text: Optional[str]=None,
+                 attachment: Optional[Dict[str,Any]]=None, detail: bool=True) -> None:
+    """Wrapper around dispatcher.utter_message honoring detail flag.
+
+    detail=True => only send if _frontend_show_details(tracker) is True.
+    detail=False => always send (critical output like final summary).
+    """
+    # Auto-bypass gating if message appears critical (contains error/failure semantics)
+    auto_critical = False
+    if text:
+        lowered = text.lower()
+        # Keywords chosen to cover common failure notices; adjust as needed
+        critical_keywords = [
+            "error", "failed", "failure", "exception", "couldn't", "cannot", "invalid",
+            "unsupported", "timeout", "problem", "unable"
+        ]
+        if any(k in lowered for k in critical_keywords):
+            auto_critical = True
+    if detail and not auto_critical and not _frontend_show_details(tracker):
+        return
+    # Suppress truly empty messages (avoid blank bubbles) when there's no attachment
+    if (text is None or str(text).strip() == "") and not attachment:
+        return
+    try:
+        dispatcher.utter_message(text=text, attachment=attachment)
+    except Exception:
+        logger.exception("Failed to emit message", extra={"text": text, "detail": detail})
 
 
 # ---------------------------------
@@ -391,39 +638,7 @@ class ValidateSensorForm(FormValidationAction):
         return {"sensor_type": valid_sensors}
 
     def load_sensor_mappings(self) -> Dict[str, str]:
-        mappings = {}
-        try:
-            candidates = [
-                os.path.join(os.getcwd(), "sensor_uuids.txt"),
-                os.path.join(os.getcwd(), "actions", "sensor_uuids.txt"),
-            ]
-            path = next((p for p in candidates if os.path.exists(p)), None)
-            with open(path or "sensor_uuids.txt", "r") as f:
-                for line_num, line in enumerate(f, 1):
-                    try:
-                        if line.strip():
-                            parts = line.strip().split(",")
-                            if len(parts) == 2:
-                                name, uuid = parts
-                                # Store both directions for flexible lookup
-                                mappings[name] = uuid  # For validation of names
-                                mappings[uuid] = name  # For converting UUIDs to names
-                            else:
-                                logger.warning(f"Line {line_num}: Invalid format - expected 'name,uuid' but got: {line.strip()}")
-                    except Exception as e:
-                        logger.error(f"Error on line {line_num}: {e}")
-            logger.info(f"Loaded {len(mappings)} sensor mappings")
-        except FileNotFoundError:
-            logger.error("sensor_uuids.txt not found")
-            # Create an empty file to prevent future errors
-            try:
-                os.makedirs("./actions", exist_ok=True)
-                with open("./actions/sensor_uuids.txt", "w") as f:
-                    f.write("# Format: sensor_name,sensor_uuid\n")
-                logger.info("Created empty sensor_uuids.txt file")
-            except Exception as e:
-                logger.error(f"Failed to create empty sensor_uuids.txt: {e}")
-        return mappings
+        return _load_sensor_uuid_map()
 
 def extract_date_range(text: str) -> Dict[str, str]:
     """
@@ -639,7 +854,7 @@ class ValidateDatesForm(FormValidationAction):
                     # Store end_date for later use
                     extra_slots = {}
                     if not tracker.get_slot("end_date"):
-                        dispatcher.utter_message(text=f"I've noted the end date as {extracted_end}")
+                        emit_message(dispatcher, tracker, text=f"I've noted the end date as {extracted_end}", detail=True)
                         # Defer setting slot via returned dict instead of mutating tracker
                         extra_slots["end_date"] = extracted_end
                     # Use the extracted start date
@@ -665,7 +880,7 @@ class ValidateDatesForm(FormValidationAction):
                             ed = parse(end_iso)
                             end_str = ed.strftime("%d/%m/%Y")
                             extra_slots['end_date'] = end_str
-                            dispatcher.utter_message(text=f"I've noted the end date as {end_str}")
+                            emit_message(dispatcher, tracker, text=f"I've noted the end date as {end_str}", detail=True)
                         except Exception:
                             pass
                     if extra_slots:
@@ -699,11 +914,11 @@ class ValidateDatesForm(FormValidationAction):
                         # 'until' means user supplied only an upper bound; keep start_date as-is if already set later
                         result["end_date"] = end_dt.strftime("%d/%m/%Y")
                         if label in {"today", "last_7_days", "last_week", "last_month", "this_week", "this_month", "this_quarter", "this_year", "last_year", "last_quarter", "last_weekend", "last_24_hours", "last_48_hours", "last_30_days"} or label.startswith("last_"):
-                            dispatcher.utter_message(text=f"Using {label.replace('_',' ')} as the date range.")
+                            emit_message(dispatcher, tracker, text=f"Using {label.replace('_',' ')} as the date range.", detail=True)
                         elif label == "now":
-                            dispatcher.utter_message(text="Using now as the end time.")
+                            emit_message(dispatcher, tracker, text="Using now as the end time.", detail=True)
                         elif label in {"since", "until"}:
-                            dispatcher.utter_message(text=f"Using {label} window ending {end_dt.strftime('%d/%m/%Y') if label=='until' else 'now'}.")
+                            emit_message(dispatcher, tracker, text=f"Using {label} window ending {end_dt.strftime('%d/%m/%Y') if label=='until' else 'now'}.", detail=True)
                     if 'extra_slots' in locals():
                         result.update(extra_slots)
                     return result
@@ -788,7 +1003,7 @@ class ValidateDatesForm(FormValidationAction):
                     
                     # Store start_date for later use
                     extra_slots = {}
-                    dispatcher.utter_message(text=f"I've noted the start date as {extracted_start}")
+                    emit_message(dispatcher, tracker, text=f"I've noted the start date as {extracted_start}", detail=True)
                     # Defer slot assignment via return dict
                     extra_slots["start_date"] = extracted_start
                     # Use the extracted end date
@@ -806,7 +1021,7 @@ class ValidateDatesForm(FormValidationAction):
                             sd = parse(start_iso)
                             start_str = sd.strftime("%d/%m/%Y")
                             extra_slots['start_date'] = start_str
-                            dispatcher.utter_message(text=f"I've noted the start date as {start_str}")
+                            emit_message(dispatcher, tracker, text=f"I've noted the start date as {start_str}", detail=True)
                         except Exception:
                             pass
                     if end_iso:
@@ -850,11 +1065,11 @@ class ValidateDatesForm(FormValidationAction):
                     if not tracker.get_slot("start_date") and label != "until":
                         result["start_date"] = start_dt.strftime("%d/%m/%Y")
                     if label in {"today", "last_7_days", "last_week", "last_month", "this_week", "this_month", "this_quarter", "this_year", "last_year", "last_quarter", "last_weekend", "last_24_hours", "last_48_hours", "last_30_days"} or label.startswith("last_"):
-                        dispatcher.utter_message(text=f"Using {label.replace('_',' ')} as the date range.")
+                        emit_message(dispatcher, tracker, text=f"Using {label.replace('_',' ')} as the date range.", detail=True)
                     elif label == "now":
-                        dispatcher.utter_message(text="Using now as the end time.")
+                        emit_message(dispatcher, tracker, text="Using now as the end time.", detail=True)
                     elif label in {"since", "until"}:
-                        dispatcher.utter_message(text=f"Using {label} window {'ending ' + end_dt.strftime('%d/%m/%Y') if label=='until' else 'from ' + start_dt.strftime('%d/%m/%Y') + ' to now'}.")
+                        emit_message(dispatcher, tracker, text=f"Using {label} window {'ending ' + end_dt.strftime('%d/%m/%Y') if label=='until' else 'from ' + start_dt.strftime('%d/%m/%Y') + ' to now'}.", detail=True)
                     if 'extra_slots' in locals():
                         result.update(extra_slots)
                     return result
@@ -865,13 +1080,20 @@ class ValidateDatesForm(FormValidationAction):
                     formatted_date = f"{year}-{month}-{day}"
                     end_dt = parse(formatted_date)  # Validate
                     sql_date = formatted_date
-                    logger.info(f"Converted to SQL date format: {sql_date}")
+                    result = {"end_date": slot_value}
+                    if 'extra_slots' in locals():
+                        result.update(extra_slots)
+                    return result
                     
                 # 4.2. YYYY-MM-DD format
                 elif re.match(r"^\d{4}-\d{2}-\d{2}$", slot_value):
                     logger.info(f"end_date is already in YYYY-MM-DD format: {slot_value}")
                     end_dt = parse(slot_value)  # Validate
                     sql_date = slot_value
+                    result = {"end_date": sql_date}
+                    if 'extra_slots' in locals():
+                        result.update(extra_slots)
+                    return result
                     
                 # 4.3. Try natural language parsing for other formats
                 else:
@@ -939,17 +1161,7 @@ class ActionQuestionToBrickbot(Action):
         return "action_question_to_brickbot"
 
     def load_sensor_mappings(self) -> Dict[str, str]:
-        mappings = {}
-        try:
-            with open("./actions/sensor_uuids.txt", "r") as f:
-                for line in f:
-                    if line.strip():
-                        name, uuid = line.strip().split(",")
-                        mappings[uuid] = name
-            logger.info(f"Loaded {len(mappings)} sensor mappings")
-        except FileNotFoundError:
-            logger.error("sensor_uuids.txt not found")
-        return mappings
+        return _load_sensor_uuid_map()
 
     def query_service_requests(self, url: str, data: Dict) -> Dict:
             headers = {"Content-Type": "application/json"}
@@ -997,6 +1209,17 @@ class ActionQuestionToBrickbot(Action):
         """Map provided sensor names to canonical ones using normalization + fuzzy matching (>=90)."""
         if not sensor_types:
             return sensor_types
+        # First, normalize common Brick naming case issues (e.g., user types Air_Quality_sensor_5.04 but ontology stores Air_Quality_Sensor_5.04)
+        normalized_initial: List[str] = []
+        for s in sensor_types:
+            if isinstance(s, str) and '_sensor_' in s and '_Sensor_' not in s:
+                fixed = s.replace('_sensor_', '_Sensor_')
+                if fixed != s:
+                    logger.info(f"Normalized sensor case '{s}' -> '{fixed}' (pre-fuzzy phase)")
+                normalized_initial.append(fixed)
+            else:
+                normalized_initial.append(s)
+        sensor_types = normalized_initial
         # Build candidate list
         mappings = self.load_sensor_mappings()
         uuid_re = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
@@ -1214,25 +1437,56 @@ class ActionQuestionToBrickbot(Action):
             processed_json = self.replace_uuids_with_sensor_types(standardized_json, sensor_mappings)
             logger.info("Replaced UUIDs with sensor names in data for summary")
         
+        # Optional enrichment keys (may be absent). We purposely ignore raw SPARQL & compact list
+        # in no-timeseries mode per latest requirement to keep prompt minimal.
+        raw_sparql = standardized_json.get("_raw_sparql") if not standardized_json.get("_no_timeseries") else None
+        minimal_results_text = None  # force suppression in prompt per updated spec
         sparql_response = json.dumps(processed_json, indent=2)
         logger.debug(f"Summarization input - question: {question}")
         logger.debug(f"Summarization input - SPARQL response: {sparql_response}")
 
-        prompt = (
-            "Instructions: Read the following smart building data received over an ontology created using BrickSchema "
-            "and SQL sensor data or analytics output received and provide a short summary.\n"
-            f"Question: {question}\n"
-            f"SPARQL Response: {sparql_response}\n\n"
-            "Explanation:"
-        )
+        no_ts = standardized_json.get("_no_timeseries", False)
+        prompt_parts = [
+            "Instructions: You are an expert smart building assistant. Read the provided ontology-derived data "
+            "(BrickSchema entities) and any analytics/SQL context, then provide a concise end-user summary.",
+            f"Question: {question}",
+        ]
+        if no_ts:
+            # Minimal prompt: only question + results to reduce noise.
+            prompt_parts.append("Ontology Results (standardized JSON):\n" + sparql_response)
+            prompt_parts.append("Note: No timeseries UUIDs detected; summarize ontology-level facts only (no sensor history).")
+        else:
+            if raw_sparql:
+                prompt_parts.append("Original SPARQL Query:\n" + raw_sparql)
+            prompt_parts.append("Standardized Structured Data:\n" + sparql_response)
+        prompt_parts.append("Explanation:")
+        prompt = "\n\n".join(prompt_parts)
         logger.debug(f"Generated prompt: {prompt}")
 
         try:
+            # --- Added detailed logging of Ollama input payload ---
+            model_name = "mistral:latest"
+            generate_options = {"max_tokens": 150}
+            prompt_char_len = len(prompt)
+            # Provide a safe truncated preview at INFO level; full at DEBUG only
+            preview_limit = 1200
+            if prompt_char_len > preview_limit:
+                preview = prompt[:preview_limit] + "...<truncated>"
+            else:
+                preview = prompt
+            logger.info(
+                "Ollama summarize invocation | model=%s chars=%d no_timeseries=%s uuid_count=%d", 
+                model_name, prompt_char_len, no_ts, len(uuids_found)
+            )
+            logger.info("Ollama prompt preview (truncated=%s):\n%s", prompt_char_len > preview_limit, preview)
+            # Full prompt only at debug (already logged above but keep semantic clarity)
+            logger.debug("Ollama full prompt (model=%s options=%s):\n%s", model_name, generate_options, prompt)
+            # --- End added logging ---
             logger.debug(
                 "Sending prompt to the model 'mistral:latest' with max_tokens=150"
             )
             response = client.generate(
-                model="mistral:latest", prompt=prompt, options={"max_tokens": 150}
+                model=model_name, prompt=prompt, options=generate_options
             )
             logger.debug(f"Response received: {response}")
 
@@ -1262,7 +1516,8 @@ class ActionQuestionToBrickbot(Action):
                     raw_text = ""
                 user_question = raw_text.strip()
             if not user_question:
-                dispatcher.utter_message(text="Sorry, I couldn't understand your query. Please try again.")
+                # Informational guidance message; gate with detail toggle for consistency
+                emit_message(dispatcher, tracker, text="Sorry, I couldn't understand your query. Please try again.", detail=True)
                 return [SlotSet("sparql_error", True)]
 
             # Early exit for pure social / greeting intents to prevent unnecessary sensor requests
@@ -1321,7 +1576,8 @@ class ActionQuestionToBrickbot(Action):
                 used_fallback=(entity_value == " ")
             )
             logger.info(f"Prepared NL2SPARQL payload (pre-sensor prompt decision): {input_data}")
-            dispatcher.utter_message(text="Understanding your question...")
+            # Verbose progress message gated by details toggle
+            emit_message(dispatcher, tracker, text="Understanding your question...", detail=True)
 
             with plog.stage("nl2sparql_translate"):
                 response = self.query_service_requests(nl2sparql_url, input_data)
@@ -1357,10 +1613,50 @@ class ActionQuestionToBrickbot(Action):
                 plog.info("Decision", action="abort_no_query")
                 return [SlotSet("sparql_error", True), SlotSet("timeseries_ids", None)]
 
-            logger.info(f"Generated SPARQL query: {sparql_query}")
+            logger.info(f"Generated SPARQL query (raw, no prefixes): {sparql_query}")
             full_sparql_query = self.add_sparql_prefixes(sparql_query)
+            try:
+                # Log the fully prefixed query separately for clarity (not sent to summarizer in no-timeseries mode)
+                logger.info("Full SPARQL query (with prefixes):\n%s", full_sparql_query)
+            except Exception:
+                logger.warning("Failed to log full SPARQL query")
             with plog.stage("fuseki_query"):
                 sparql_results = self.execute_sparql_query(full_sparql_query)
+            # Fallback: if no results AND any sensor name contained a lower-case '_sensor_' originally, retry with capitalized form
+            try:
+                retry_performed = False
+                if sparql_results and isinstance(sparql_results, dict):
+                    b = (sparql_results.get('results') or {}).get('bindings') or []
+                    if not b and sensor_types:
+                        # Check if any provided sensor differs by case variant
+                        case_adjusted = []
+                        need_retry = False
+                        for s in sensor_types:
+                            if isinstance(s, str) and '_sensor_' in s:
+                                need_retry = True
+                                fixed = s.replace('_sensor_', '_Sensor_')
+                                case_adjusted.append(fixed)
+                            else:
+                                case_adjusted.append(s)
+                        if need_retry:
+                            retry_performed = True
+                            alt_entity_string = ", ".join([f"bldg:{x}" for x in case_adjusted])
+                            alt_input_data = {"question": user_question, "entity": alt_entity_string or " "}
+                            plog.info("Retrying SPARQL with case-normalized entity list", entities=alt_entity_string)
+                            # Re-run translation (so NL2SPARQL can consider explicit entity string) ONLY if original query had explicit entity references? We keep same sparql_query shape by simple replace.
+                            # Simple replace approach: substitute occurrences in raw sparql_query.
+                            adjusted_query = sparql_query
+                            for orig, fixed in zip(sensor_types, case_adjusted):
+                                if orig != fixed:
+                                    adjusted_query = adjusted_query.replace(orig, fixed)
+                            logger.info(f"Retry SPARQL query (raw) after case normalization: {adjusted_query}")
+                            adjusted_full = self.add_sparql_prefixes(adjusted_query)
+                            sparql_results = self.execute_sparql_query(adjusted_full) or sparql_results
+                            if sparql_results and (sparql_results.get('results') or {}).get('bindings'):
+                                sensor_types = case_adjusted  # adopt normalized variant
+                                logger.info("Case-normalized SPARQL retry produced results; adopting normalized sensor names")
+            except Exception as retry_e:
+                logger.warning(f"Case normalization retry failed: {retry_e}")
             if sparql_results is None:
                 if needs_sensor:
                     dispatcher.utter_message(response="utter_ask_sensor_type")
@@ -1372,7 +1668,7 @@ class ActionQuestionToBrickbot(Action):
 
             with plog.stage("format_results"):
                 formatted_results = self.format_sparql_results(sparql_results)
-            dispatcher.utter_message(text=f"SPARQL query results:\n{formatted_results}")
+            emit_message(dispatcher, tracker, text=f"SPARQL query results:\n{formatted_results}", detail=True)
 
             # Standardize results early so both listing and metric flows can reuse it
             with plog.stage("standardize"):
@@ -1396,7 +1692,8 @@ class ActionQuestionToBrickbot(Action):
                 count = len(bindings)
                 plog.info("Listing evaluation", bindings_count=count)
                 if count == 0:
-                    dispatcher.utter_message(text="I couldn't find any sensors matching your listing request.")
+                    # Listing path informational notice (not a hard error)
+                    emit_message(dispatcher, tracker, text="I couldn't find any sensors matching your listing request.", detail=True)
                     plog.info("Decision", action="answer_listing_empty")
                     # Do not return; continue to non-timeseries summarization below
                 # Build a concise list of sensor URIs or labels
@@ -1409,9 +1706,9 @@ class ActionQuestionToBrickbot(Action):
                 # Deduplicate & truncate
                 sensor_names = list(dict.fromkeys(sensor_names))
                 preview = sensor_names[:25]
-                dispatcher.utter_message(text="Sensors found (showing up to 25):\n" + "\n".join(preview))
+                emit_message(dispatcher, tracker, text="Sensors found (showing up to 25):\n" + "\n".join(preview), detail=True)
                 if len(sensor_names) > 25:
-                    dispatcher.utter_message(text=f"... and {len(sensor_names)-25} more.")
+                    emit_message(dispatcher, tracker, text=f"... and {len(sensor_names)-25} more.", detail=True)
                 plog.info("Decision", action="answer_listing", total=len(sensor_names))
                 # Do not return; continue to non-timeseries summarization below
             
@@ -1419,7 +1716,8 @@ class ActionQuestionToBrickbot(Action):
             # If results empty and we still have no sensor types in a metric-style question, now ask for them
             empty_bindings = not sparql_results.get("results", {}).get("bindings") if sparql_results else True
             if empty_bindings and needs_sensor and not sensor_types:
-                dispatcher.utter_message(text="I need to know which sensor type you're interested in (e.g., CO2_Level_Sensor_5.14).")
+                # Guidance prompt – still acceptable to gate (will be explicitly asked again via form)
+                emit_message(dispatcher, tracker, text="I need to know which sensor type you're interested in (e.g., CO2_Level_Sensor_5.14).", detail=True)
                 plog.info("Decision", action="prompt_sensor_type", reason="empty_results_metric")
                 return [{"event": "active_loop", "name": "sensor_form"}, SlotSet("sparql_error", False)]
             base_url = os.getenv("BASE_URL", BASE_URL_DEFAULT)
@@ -1431,9 +1729,12 @@ class ActionQuestionToBrickbot(Action):
                 with open(output_file, "w") as f:
                     json.dump(standardized_json, f, indent=2)
                 json_url = f"{base_url}/artifacts/{user_safe}/{filename}"
-                dispatcher.utter_message(
+                # Attachment announcement (informational)
+                emit_message(
+                    dispatcher, tracker,
                     text="SPARQL results saved as JSON:",
-                    attachment={"type": "json", "url": json_url, "filename": filename}
+                    attachment={"type": "json", "url": json_url, "filename": filename},
+                    detail=True
                 )
             except (IOError, TypeError) as e:
                 logger.error(f"Failed to save SPARQL JSON: {e}")
@@ -1491,45 +1792,25 @@ class ActionQuestionToBrickbot(Action):
                 except Exception as e:
                     plog.warning("Decider call failed", error=str(e))
 
-            def _supported_types() -> set:
-                return {
-                    "analyze_failure_trends",
-                    "analyze_sensor_status",
-                    "analyze_air_quality_trends",
-                    "analyze_hvac_anomalies",
-                    "analyze_supply_return_temp_difference",
-                    "analyze_air_flow_variation",
-                    "analyze_sensor_trend",
-                    "aggregate_sensor_data",
-                    "analyze_air_quality",
-                    "analyze_formaldehyde_levels",
-                    "analyze_co2_levels",
-                    "analyze_pm_levels",
-                    "analyze_temperatures",
-                    "analyze_humidity",
-                    "analyze_temperature_humidity",
-                    "detect_potential_failures",
-                    "forecast_downtimes",
-                    "correlate_sensors",
-                }
+            # Use global dynamic _supported_types() (defined at module level) instead of local static copy
 
             def _pick_type_from_context(q: str, sensors: List[str]) -> str:
                 ql = (q or "").lower()
                 s_join = " ".join(sensors).lower() if sensors else ""
                 if "humid" in ql or "humid" in s_join:
                     return "analyze_humidity"
-                if "temp" in ql or "temperature" in ql or "temp" in s_join or "temperature" in s_join:
+                if any(k in ql or k in s_join for k in ["temp","temperature"]):
                     return "analyze_temperatures"
                 if "co2" in ql or "co2" in s_join:
                     return "analyze_co2_levels"
                 if "pm" in ql or "particulate" in ql:
                     return "analyze_pm_levels"
-                if any(k in ql for k in ["trend", "over time", "time series", "history", "timeline"]):
-                    return "analyze_sensor_trend"
-                if any(k in ql for k in ["correlate", "correlation", "relationship"]):
+                if any(k in ql for k in ["correlate","correlation","relationship"]):
                     return "correlate_sensors"
-                if any(k in ql for k in ["anomaly", "outlier", "abnormal", "fault", "failure"]):
+                if any(k in ql for k in ["anomaly","outlier","abnormal","fault","failure"]):
                     return "detect_potential_failures"
+                if any(k in ql for k in ["trend","over time","time series","history","timeline"]):
+                    return "analyze_sensor_trend"
                 return "analyze_sensor_trend"
 
             def fallback_decide(q: str) -> Tuple[bool, str]:
@@ -1554,7 +1835,7 @@ class ActionQuestionToBrickbot(Action):
                     plog.warning("Unsupported analytics type from decider; using fallback", got=raw_choice, fallback=selected_analytics)
                 events.append(SlotSet("timeseries_ids", timeseries_ids))
                 events.append(SlotSet("analytics_type", selected_analytics))
-                dispatcher.utter_message(text=f"Proceeding with analytics: {selected_analytics} on IDs: {timeseries_ids}")
+                emit_message(dispatcher, tracker, text=f"Proceeding with analytics: {selected_analytics} on IDs: {timeseries_ids}", detail=True)
             
                 # Refresh date slots after potential override
                 start_date = tracker.get_slot("start_date")
@@ -1614,13 +1895,22 @@ class ActionQuestionToBrickbot(Action):
             else:
                 # No UUIDs present: summarize SPARQL results directly without asking for dates
                 with plog.stage("summarize_without_timeseries"):
+                    # Mark that we are in ontology-only summarization mode; keep payload minimal
+                    try:
+                        standardized_json["_no_timeseries"] = True
+                        # Ensure no legacy enrichment keys remain
+                        standardized_json.pop("_raw_sparql", None)
+                        standardized_json.pop("_minimal_results_text", None)
+                    except Exception:
+                        pass
                     summary = self.summarize_response(standardized_json)
                 if summary:
                     logger.info(f"Generated SPARQL summary (without timeseries): {summary}")
                     dispatcher.utter_message(text=f"Summary: {summary}")
                 else:
                     logger.debug("No summary generated for SPARQL results")
-                    dispatcher.utter_message(text="I found information based on your query, but couldn't generate a summary.")
+                    # Non-critical fallback summary notice
+                    emit_message(dispatcher, tracker, text="I found information based on your query, but couldn't generate a summary.", detail=True)
                 return events
             
 class ActionDebugEntities(Action):
@@ -1643,23 +1933,22 @@ class ActionDebugEntities(Action):
         entities = latest_message.get("entities", [])
         entity_text = "Extracted entities:\n" + json.dumps(entities, indent=2)
         logger.info(entity_text)
-        dispatcher.utter_message(text=entity_text)
+        emit_message(dispatcher, tracker, text=entity_text, detail=True)
         
         # Check for date entities specifically
         date_entities = [e for e in entities if e.get("entity") == "time"]
         if date_entities:
             dates_text = "Date entities found:\n" + json.dumps(date_entities, indent=2)
-            dispatcher.utter_message(text=dates_text)
+            emit_message(dispatcher, tracker, text=dates_text, detail=True)
             logger.info(dates_text)
         else:
-            dispatcher.utter_message(text="No date entities found!")
+            emit_message(dispatcher, tracker, text="No date entities found!", detail=True)
             logger.info("No date entities found!")
             
         # Show current slot values
-        dispatcher.utter_message(text=f"Current start_date: {tracker.get_slot('start_date')}")
-        dispatcher.utter_message(text=f"Current end_date: {tracker.get_slot('end_date')}")
-        dispatcher.utter_message(text=f"Current sensor_type slot: {tracker.get_slot('sensor_type')}")
-        
+        emit_message(dispatcher, tracker, text=f"Current start_date: {tracker.get_slot('start_date')}", detail=True)
+        emit_message(dispatcher, tracker, text=f"Current end_date: {tracker.get_slot('end_date')}", detail=True)
+        emit_message(dispatcher, tracker, text=f"Current sensor_type slot: {tracker.get_slot('sensor_type')}", detail=True)
         return []
 
 class ActionProcessTimeseries(Action):
@@ -1813,40 +2102,7 @@ class ActionProcessTimeseries(Action):
             return None, f"Unexpected error: {str(e)}"
 
     def load_sensor_mappings(self) -> Dict[str, str]:
-        mappings: Dict[str, str] = {}
-        try:
-            candidates = [
-                os.path.join(os.getcwd(), "sensor_uuids.txt"),
-                os.path.join(os.getcwd(), "actions", "sensor_uuids.txt"),
-                "./actions/sensor_uuids.txt",
-            ]
-            path = next((p for p in candidates if os.path.exists(p)), None)
-            with open(path or "./actions/sensor_uuids.txt", "r") as f:
-                for line_num, line in enumerate(f, 1):
-                    try:
-                        if line.strip() and not line.strip().startswith("#"):
-                            parts = line.strip().split(",")
-                            if len(parts) == 2:
-                                name, uuid = parts
-                                mappings[name] = uuid
-                                mappings[uuid] = name
-                            else:
-                                logger.warning(
-                                    f"Line {line_num}: Invalid format - expected 'name,uuid' but got: {line.strip()}"
-                                )
-                    except Exception as e:
-                        logger.error(f"Error on line {line_num}: {e}")
-            logger.info(f"Loaded {len(mappings)} sensor mappings")
-        except FileNotFoundError:
-            logger.error("sensor_uuids.txt not found")
-            try:
-                os.makedirs("./actions", exist_ok=True)
-                with open("./actions/sensor_uuids.txt", "w") as f:
-                    f.write("# Format: sensor_name,sensor_uuid\n")
-                logger.info("Created empty sensor_uuids.txt file")
-            except Exception as e:
-                logger.error(f"Failed to create empty sensor_uuids.txt: {e}")
-        return mappings
+        return _load_sensor_uuid_map()
 
     def replace_uuids_with_sensor_types(self, data: Any, uuid_to_sensor: Dict[Text, Text]) -> Any:
             """Recursively replace UUIDs with sensor types in the data structure."""
@@ -2236,7 +2492,10 @@ class ActionProcessTimeseries(Action):
                 dispatcher.utter_message(text=f"MySQL fetch failed: {e}")
                 return []
 
-        dispatcher.utter_message(text="Timeseries query executed successfully.")
+        # Timeseries fetch succeeded
+        # emit_message(dispatcher, tracker, text="Timeseries query executed successfully.", detail=True)
+
+        # Persist SQL results as artifact (gated as detail)
         base_url = os.getenv("BASE_URL", BASE_URL_DEFAULT)
         user_safe, user_dir = get_user_artifacts_dir(tracker)
         timestamp = int(time.time())
@@ -2246,11 +2505,12 @@ class ActionProcessTimeseries(Action):
             with open(file_path, "w") as f:
                 json.dump(json.loads(sql_results), f, indent=2)
             json_url = f"{base_url}/artifacts/{user_safe}/{filename}"
-            dispatcher.utter_message(
+            emit_message(
+                dispatcher, tracker,
                 text="SQL query results saved as JSON:",
-                attachment={"type": "json", "url": json_url, "filename": filename}
+                attachment={"type": "json", "url": json_url, "filename": filename},
+                detail=True
             )
-            # dispatcher.utter_message(text=f"SQL query results:\n{json.dumps(json.loads(sql_results), indent=2)}")
             logger.info(f"SQL results saved to {file_path}")
         except (IOError, TypeError) as e:
             logger.error(f"Failed to save SQL JSON: {e}")
@@ -2259,44 +2519,25 @@ class ActionProcessTimeseries(Action):
         # Analytics (optional) and summarization
         # Prefer analytics type chosen upstream in ActionQuestionToBrickbot
         analytics_type = tracker.get_slot("analytics_type")
-        def _supported_types() -> set:
-            return {
-                "analyze_failure_trends",
-                "analyze_sensor_status",
-                "analyze_air_quality_trends",
-                "analyze_hvac_anomalies",
-                "analyze_supply_return_temp_difference",
-                "analyze_air_flow_variation",
-                "analyze_sensor_trend",
-                "aggregate_sensor_data",
-                "analyze_air_quality",
-                "analyze_formaldehyde_levels",
-                "analyze_co2_levels",
-                "analyze_pm_levels",
-                "analyze_temperatures",
-                "analyze_humidity",
-                "analyze_temperature_humidity",
-                "detect_potential_failures",
-                "forecast_downtimes",
-                "correlate_sensors",
-            }
+        # Use global dynamic _supported_types() (defined at module level)
+
         def _pick_type_from_context(question: str, sensors: List[str]) -> str:
             ql = (question or "").lower()
             s_join = " ".join(sensors).lower() if sensors else ""
             if "humid" in ql or "humid" in s_join:
                 return "analyze_humidity"
-            if "temp" in ql or "temperature" in ql or "temp" in s_join or "temperature" in s_join:
+            if any(k in ql or k in s_join for k in ["temp","temperature"]):
                 return "analyze_temperatures"
             if "co2" in ql or "co2" in s_join:
                 return "analyze_co2_levels"
             if "pm" in ql or "particulate" in ql:
                 return "analyze_pm_levels"
-            if any(k in ql for k in ["trend", "over time", "time series", "history", "timeline"]):
-                return "analyze_sensor_trend"
-            if any(k in ql for k in ["correlate", "correlation", "relationship"]):
+            if any(k in ql for k in ["correlate","correlation","relationship"]):
                 return "correlate_sensors"
-            if any(k in ql for k in ["anomaly", "outlier", "abnormal", "fault", "failure"]):
+            if any(k in ql for k in ["anomaly","outlier","abnormal","fault","failure"]):
                 return "detect_potential_failures"
+            if any(k in ql for k in ["trend","over time","time series","history","timeline"]):
+                return "analyze_sensor_trend"
             return "analyze_sensor_trend"
 
         # Normalize invalid or 'none' values and select a supported default
@@ -2330,9 +2571,11 @@ class ActionProcessTimeseries(Action):
             with open(nested_path, "w") as nf:
                 json.dump(payload, nf, indent=2)
             nested_url = f"{base_url}/artifacts/{user_safe}/{nested_name}"
-            dispatcher.utter_message(
+            emit_message(
+                dispatcher, tracker,
                 text="Prepared analytics payload (nested):",
-                attachment={"type": "json", "url": nested_url, "filename": nested_name}
+                attachment={"type": "json", "url": nested_url, "filename": nested_name},
+                detail=True
             )
         except Exception as e:
             logger.warning(f"Failed to save analytics payload artifact: {e}")
@@ -2346,15 +2589,15 @@ class ActionProcessTimeseries(Action):
                             logger.error(f"Analytics error: {analytics_response['error']}")
                             dispatcher.utter_message(text=f"Analytics error: {analytics_response['error']}")
                         else:
-                            dispatcher.utter_message(text="Analytics results:")
+                            emit_message(dispatcher, tracker, text="Analytics results:", detail=True)
                             # Keep output compact; attach full JSON as artifact if needed later
                             try:
                                 preview = json.dumps(analytics_response)
                                 if len(preview) > 1200:
                                     preview = preview[:1200] + "..."
-                                dispatcher.utter_message(text=preview)
+                                # emit_message(dispatcher, tracker, text=preview, detail=True)
                             except Exception:
-                                dispatcher.utter_message(text="<unserializable analytics JSON>")
+                                emit_message(dispatcher, tracker, text="<unserializable analytics JSON>", detail=True)
                             logger.info(f"Analytics response: {analytics_response}")
                     except ValueError as e:
                         logger.error(f"Invalid JSON response from analytics service: {e}")
@@ -2624,4 +2867,3 @@ class ActionGenerateAndShareData(Action):
                     dispatcher.utter_message(attachment=m)
 
         return events
-
