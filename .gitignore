@@ -41,6 +41,7 @@ __pycache__/
 venv*/
 abacws-chatbot-venv/
 abacws_chatbot_env/
+.rasaenv/
 .rasa/
 
 ##############################
@@ -208,12 +209,12 @@ bldg1/01small ontology creation-9july.ipynb
 # Ignore large/local datasets at repo root
 /brick-datasets/
 /cassandradb/
-
+bldg1/small-abacws-building-9july.ttl
 # Very large or generated datasets (avoid >100MB push failures)
 # /bldg1/my_results_vav.csv
 # /bldg1/dataset for training/
 # /bldg1/trial/dataset/
-
+manifests/
 ##############################
 # Building trial synthetic data
 ##############################
@@ -253,3 +254,31 @@ Transformers/**/updated_combined_output*
 ##############################
 CREDENTIALS-LOCAL.md
 ./how to do it.docx
+
+##############################
+# Internal documentation & reports (do not commit)
+##############################
+*COMPLETE*.md
+*_COMPLETE.md
+*REPORT*.md
+*_REPORT.md
+*PROGRESS*.md
+*_PROGRESS.md
+*SUMMARY*.md
+*.OLD.md
+*.old.md
+*_APPLIED.md
+*CROSSREF*.md
+PRE_PUSH_INSPECTION_REPORT.md
+cleanup_before_push.ps1
+deleted_backup/
+deleted_backup_ext/
+
+##############################
+# Backup files (never commit)
+##############################
+*.bak
+*.backup
+*_backup.*
+*_old.*
+*.orig

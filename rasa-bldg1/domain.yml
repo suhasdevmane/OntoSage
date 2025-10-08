@@ -49,6 +49,13 @@ slots:
     mappings:
       - type: from_entity
         entity: sensor_type
+  date_range_mode:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_text
+        conditions:
+          - active_loop: date_range_choice_form
   analytics_type:
     type: text
     influence_conversation: true
@@ -61,9 +68,13 @@ slots:
       - type: from_entity
         entity: time
         role: start
+        conditions:
+          - active_loop: dates_form
       - type: from_entity
         entity: time
         not_intent: provide_end_date
+        conditions:
+          - active_loop: dates_form
       - type: from_intent
         intent: provide_start_date
         value: ""
@@ -74,9 +85,13 @@ slots:
       - type: from_entity
         entity: time
         role: end
+        conditions:
+          - active_loop: dates_form
       - type: from_entity
         entity: time
         not_intent: provide_start_date
+        conditions:
+          - active_loop: dates_form
       - type: from_intent
         intent: provide_end_date
         value: ""
@@ -133,6 +148,8 @@ responses:
     - text: "Please provide the start date (e.g., 01/02/2025 or 01/02/2025 00:00:00)."
   utter_ask_end_date:
     - text: "Please provide the end date (e.g., 02/02/2025 or 02/02/2025 23:59:59)."
+  utter_ask_date_range_mode:
+    - text: "For this analysis I can use the last 24 hours of data. Is that okay? Reply 'yes' (or 'last 24 hours') to proceed, or provide a start and end date (e.g., 01/02/2025 to 02/02/2025). If you prefer another range you can also say 'no' and I'll ask for specific dates."
   utter_translation_error:
     - text: "Sorry, I couldn't translate your query into a valid SPARQL query. Please try again."
   utter_iamabot:
@@ -185,6 +202,8 @@ actions:
   - action_generate_and_share_data
   - validate_sensor_form
   - validate_dates_form
+  - validate_date_range_choice_form
+  - action_route_after_date_choice
   - action_reset_slots
   - action_debug_entities
 
@@ -196,6 +215,9 @@ forms:
     required_slots:
       - start_date
       - end_date
+  date_range_choice_form:
+    required_slots:
+      - date_range_mode
 
 session_config:
   session_expiration_time: 60

@@ -57,7 +57,7 @@ rules:
       - action: utter_no_dates_needed
       - action: action_reset_slots
 
-  - rule: Activate dates form when dates are needed
+  - rule: Activate date range choice form when dates are needed
     condition:
       - slot_was_set:
           - sparql_error: false
@@ -67,9 +67,20 @@ rules:
           - start_date: null
       - slot_was_set:
           - end_date: null
+      - slot_was_set:
+          - date_range_mode: null
     steps:
-      - action: dates_form
-      - active_loop: dates_form
+      - action: date_range_choice_form
+      - active_loop: date_range_choice_form
+
+  - rule: Submit date range choice form
+    condition:
+      - active_loop: date_range_choice_form
+    steps:
+      - action: date_range_choice_form
+      - active_loop: null
+      - action: action_route_after_date_choice
+    wait_for_user_input: false
 
   - rule: Submit dates form
     condition:

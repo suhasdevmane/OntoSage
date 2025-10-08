@@ -307,7 +307,61 @@ Artifacts are strictly immutable once written (timestamped). Frontend can downlo
 Potential future optimization: add a digest cache keyed by (question, sensor_types, date_window) → reuse analytics results when identical.
 
 ---
-## 🚨 Error & Resilience Strategy
+## � Explicit Date Range Confirmation Flow (NEW – Oct 2025)
+
+Historically the pipeline sometimes produced empty SQL result sets due to an implicit or near-zero date window. The new interactive flow guarantees explicit user consent for using a default window (last 24h) and offers immediate inline range parsing.
+
+Trigger Conditions:
+- Timeseries UUIDs extracted (analytics path) AND
+- `perform_analytics` is true AND
+- Either `start_date` or `end_date` is missing AND
+- `date_range_mode` not already set.
+
+Form: `date_range_choice_form` (slot: `date_range_mode`).
+
+User Responses → Outcomes:
+| Input Example | Interpretation | Effects |
+|---------------|---------------|---------|
+| yes / last 24 hours / sure last24h | Accept default 24h window | `date_range_mode=last24h`; dates auto-filled just-in-time (never prematurely) |
+| 01/02/2025 to 02/02/2025 | Explicit full range | `date_range_mode=custom`; `start_date` & `end_date` set; skip `dates_form` |
+| no / I want custom dates | Decline default | `date_range_mode=awaiting_custom`; activate `dates_form` for start/end |
+| Single date only | Partial | `date_range_mode=partial`; prompt again for end date |
+| Unrecognized text | Re-prompt | `date_range_mode` left None; guidance message |
+
+Safeguards:
+- `ActionProcessTimeseries` auto-fills 24h range if `date_range_mode=last24h` but dates are still absent (edge story/test path).
+- ISO timestamps normalized to SQL friendly `%Y-%m-%d %H:%M:%S` before downstream use.
+
+Validator (`ValidateDateRangeChoiceForm`):
+- Pattern match "from X to Y", "DD/MM/YYYY to DD/MM/YYYY", ISO-to-ISO, or two standalone date tokens separated by whitespace/commas.
+- Normalizes and sets slots atomically; avoids half-populated windows unless explicitly partial.
+
+Added / Modified Artifacts:
+- Slots: `date_range_mode` added; reset in `ActionResetSlots`.
+- Rules: submission paths for last24h & custom direct range; awaiting_custom route to `dates_form`.
+- Stories & Tests: new stories (`timeseries last24h via choice form`, `timeseries custom range via choice form`) plus test stories appended in `tests/test_stories.yml`.
+
+Sequence (condensed):
+```
+action_question_to_brickbot
+	→ have UUIDs & need dates? & no mode → activate date_range_choice_form
+		→ yes → mode=last24h → auto-fill later → process
+		→ explicit X to Y → mode=custom + dates → process
+		→ no → mode=awaiting_custom → dates_form → collect → process
+```
+
+Benefits:
+- Prevents silent empty result sets.
+- Makes temporal scope auditable (artifact logs show chosen window).
+- Reduces friction for “quick look” queries (single affirmation). 
+
+Future Enhancements (roadmap):
+- Add relative quantifier parsing (e.g. "past 3 days") directly in the choice validator.
+- Provide confirmation echo ("Using 2025-02-01 12:00 → 2025-02-02 12:00") before analytics stage.
+- Offer quick presets (last 7 days / last month) as buttons in frontend metadata.
+
+---
+## �🚨 Error & Resilience Strategy
 
 | Failure Point | Handling | User Feedback | Escalation |
 |---------------|----------|---------------|------------|
@@ -404,6 +458,38 @@ User: “Correlate humidity and temperature for last week in Lab 5”
 - File server serves static JSON only; no execution risk (enforce correct MIME types).
 - Avoid leaking raw SPARQL in ontology-only summarization to reduce accidental prompt injection surface.
 - Mapping file path controlled via env to prevent directory traversal injection.
+
+---
+## 🧪 Rasa Training & Test Quick Reference (Added)
+
+Train (from `rasa-bldg1/` or project root adjusting paths):
+```
+rasa train
+```
+
+Run core conversation tests (including new date range scenarios):
+```
+rasa test --stories tests/test_stories.yml
+```
+
+Evaluate NLU only (confidence & confusion):
+```
+rasa test nlu
+```
+
+Smoke interactive shell (use to manually verify date choice form):
+```
+rasa shell
+```
+
+Recommended manual checks after modifying date logic:
+1. Query with metric intent but no dates → expect date_range_choice_form prompt.
+2. Reply "yes" → verify last24h auto-filled and analytics executes.
+3. Repeat, reply custom range (e.g. "01/02/2025 to 02/02/2025") → no date form, direct processing.
+4. Reply "no" → system asks for start then end; completing both triggers analytics.
+5. Provide malformed input ("thirdday") → validator re-prompts politely.
+
+If tests fail due to slot mismatch, ensure your test stories reference only slots that are actually set by rules (avoid over‑specifying). Adjust with `slot_was_set:` blocks rather than expecting implicit transitions.
 
 ---
 <!-- End of actions README -->

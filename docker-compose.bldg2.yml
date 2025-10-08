@@ -259,11 +259,15 @@ services:
     hostname: microserviceshost
     restart: always
     ports:
-      - "6001:6000"  # host 6001 -> container 6000 (internal analytics API)
+      - "6001:6000"  # host 6001 -> container 6000 (internal analytics API + T5 training API) - Using 6001 to avoid Chrome ERR_UNSAFE_PORT
     volumes:
       - microservices-bldg2-plugins:/app/analytics_plugins
       - microservices-bldg2-meta:/app/analytics_meta
       - microservices-bldg2-cache:/app/.cache
+      # Mount rasa-bldg2 actions for sensor list access
+      - ./rasa-bldg2:/app/rasa-bldg2:ro
+      # Mount Transformers directory for T5 training
+      - ./Transformers:/app/Transformers
     networks:
       - ontobot-network
     healthcheck:
