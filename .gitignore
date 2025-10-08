@@ -253,3 +253,30 @@ Transformers/**/updated_combined_output*
 ##############################
 CREDENTIALS-LOCAL.md
 ./how to do it.docx
+
+##############################
+# Internal documentation & reports (do not commit)
+##############################
+*COMPLETE*.md
+*_COMPLETE.md
+*REPORT*.md
+*_REPORT.md
+*PROGRESS*.md
+*_PROGRESS.md
+*SUMMARY*.md
+*.OLD.md
+*.old.md
+*_APPLIED.md
+*CROSSREF*.md
+PRE_PUSH_INSPECTION_REPORT.md
+cleanup_before_push.ps1
+deleted_backup/
+
+##############################
+# Backup files (never commit)
+##############################
+*.bak
+*.backup
+*_backup.*
+*_old.*
+*.orig
