@@ -55,7 +55,7 @@ OntoBot is an intelligent conversational AI platform designed for smart building
 - **Knowledge Graphs** (Brick Schema + SPARQL) - Semantic representation of building equipment and sensors
 - **Time-Series Analytics** - Statistical analysis, anomaly detection, forecasting
 - **Multi-Database Support** - MySQL, PostgreSQL/TimescaleDB, Cassandra
-- **T5 NL2SPARQL Translation** - Convert natural language to SPARQL queries
+- **T5 NL2SPARQL Translation** - Convert natural language to SPARQL queries using BrickSchema
 - **LLM Integration** (Mistral/Ollama) - Natural language response generation
 - **Web UI** (React) - User-friendly chat interface with rich visualizations
 
