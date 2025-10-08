@@ -41,6 +41,7 @@ __pycache__/
 venv*/
 abacws-chatbot-venv/
 abacws_chatbot_env/
+.rasaenv/
 .rasa/
 
 ##############################
@@ -271,6 +272,7 @@ CREDENTIALS-LOCAL.md
 PRE_PUSH_INSPECTION_REPORT.md
 cleanup_before_push.ps1
 deleted_backup/
+deleted_backup_ext/
 
 ##############################
 # Backup files (never commit)

@@ -1227,7 +1227,7 @@ def compute_air_quality_index(sensor_data):
         index_components[pollutant] = component
 
     if not index_components:
-        return {"error": "Insufficient data for AQI calculation."}
+        return {"error": "Insufficient data for AQI calculation. Please provide relevant sensor data. It requires at least one sensor of type PM10, PM2.5, NO2, CO, and CO2 to calculate AQI. Provide target sensors and I will try again."}
 
     aqi = float(sum(index_components.values()))
     if aqi < 0.5:

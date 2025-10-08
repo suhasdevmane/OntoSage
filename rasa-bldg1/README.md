@@ -1,78 +1,544 @@
-# Rasa UI Stack
+# Building 1 - ABACWS (Real University Testbed)
 
-This workspace contains a Rasa Open Source bot, a custom action server, a simple HTTP file server for artifacts, Duckling, an editor, and a React frontend. It integrates with the analytics microservice and optional decider service.
+**Rasa Conversational AI Stack for Building 1**
 
-## Services
+[![Rasa](https://img.shields.io/badge/Rasa-3.6.12-5A17EE?logo=rasa)](https://rasa.com/)
+[![Python](https://img.shields.io/badge/Python-3.10-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Docker](https://img.shields.io/badge/Docker-Required-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
-- Rasa (5005): Core NLU/Dialogue engine
-- Action Server (5055): Custom business logic; calls Analytics and Decider; generates artifacts under `shared_data/artifacts`
-- Duckling (8000): Entity extraction for dates/times and others
-- HTTP File Server (8080): Serves artifacts and supports streaming and forced downloads
-- Rasa Editor (6080): Lightweight project editor and admin
-- React Frontend (3000): Chat UI rendering media and links
+This directory contains the Rasa Open Source conversational AI stack specifically configured for **Building 1 (ABACWS)**, a real-world university testbed building at Cardiff University with comprehensive Indoor Environmental Quality (IEQ) monitoring.
 
-## Run
+## 🏢 Building Overview
 
-The stack is dockerized.
+| Property | Details |
+|----------|---------|
+| **Building Type** | Real University Testbed |
+| **Location** | Cardiff University, Wales, UK |
+| **Sensor Coverage** | 680 sensors across 34 zones (5.01–5.34) |
+| **Focus Area** | Indoor Environmental Quality (IEQ) |
+| **Database** | MySQL (port 3307) |
+| **Knowledge Graph** | Brick Schema 1.3 via Jena Fuseki (port 3030) |
+| **Compose File** | `docker-compose.bldg1.yml` (from repo root) |
 
-```pwsh
-# From repo root
-docker-compose up --build
+### Sensor Types (20 sensors per zone)
+
+**Air Quality Monitoring:**
+- CO2, TVOC, Formaldehyde
+- Particulate Matter (PM1, PM2.5, PM10)
+
+**Multi-Gas Sensors:**
+- MQ2 (Combustible Gas, Smoke)
+- MQ3 (Alcohol Vapor)
+- MQ5 (LPG, Natural Gas)
+- MQ9 (Carbon Monoxide, Coal Gas)
+- NO2, O2 Percentage
+- Ethyl Alcohol (C2H5OH)
+
+**Environmental Parameters:**
+- Air Temperature & Humidity
+- Illuminance (Light Levels)
+- Sound/Noise (MEMS sensor)
+- Air Quality Index
+
+## 🚀 Services
+
+This stack includes six integrated services:
+
+| Service | Port | Purpose | Health Endpoint |
+|---------|------|---------|-----------------|
+| **Rasa Core** | 5005 | NLU/Dialogue engine | `GET /version` |
+| **Action Server** | 5055 | Custom actions & integrations | `GET /health` |
+| **Duckling** | 8000 | Entity extraction (dates, times) | `GET /` |
+| **File Server** | 8080 | Artifact hosting (charts, CSV) | `GET /health` |
+| **Rasa Editor** | 6080 | Web-based NLU editor | `GET /health` |
+| **Frontend UI** | 3000 | React chat interface | N/A |
+
+### Service Architecture
+
+```
+User Query → Frontend (3000)
+    ↓
+Rasa Core (5005) → NLU Processing
+    ↓
+Action Server (5055)
+    ├── MySQL (3307) - Telemetry Data
+    ├── Fuseki (3030) - Knowledge Graph (SPARQL)
+    ├── Analytics (6001) - Time-series Analysis
+    ├── Decider (6009) - Analytics Selection
+    └── NL2SPARQL (6005) - Query Translation
+    ↓
+File Server (8080) ← Generated Artifacts
+    ↓
+Frontend (3000) ← Rich Response + Media
 ```
 
-- Rasa: http://localhost:5005
-- Actions health: http://localhost:5055/health (basic curl ok)
-- File server: http://localhost:8080/health (returns {"status":"ok"})
-- Editor: http://localhost:6080
-- Frontend: http://localhost:3000
+## 📦 Installation
 
-## Environment variables
+### Prerequisites
 
-Action server (see repo `docker-compose.yml`):
+- Docker Desktop 20.10+
+- Docker Compose 2.0+
+- 8GB RAM minimum (16GB recommended)
+- 20GB free disk space
 
-- BASE_URL: Public URL for file server; defaults to `http://localhost:8080`
-- BUNDLE_MEDIA: `true|false` to bundle multiple media in one bot message
-- DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT: MySQL connection (container-internal defaults set)
-- ANALYTICS_URL: Analytics endpoint; defaults `http://microservices:6000/analytics/run` in Docker network
-- DECIDER_URL: Decider endpoint; defaults `http://decider-service:6009/decide`
+### Quick Start
 
-## Data & Artifacts
+```powershell
+# From repository root
+cd c:\Users\suhas\Documents\GitHub\OntoBot
 
-- Shared volume: `./shared_data` (mounted to action server, http server, and editor)
-- Artifacts directory: `./shared_data/artifacts`
-- Media links: `${BASE_URL}/artifacts/<filename>`
+# Start Building 1 stack
+docker-compose -f docker-compose.bldg1.yml up -d --build
 
-Handy utility:
+# Wait for services to be healthy (~2-3 minutes)
+Start-Sleep -Seconds 180
 
-```pwsh
-# Move stray files in shared_data root into artifacts
-./scripts/tidy_artifacts.ps1
+# Verify services
+docker-compose -f docker-compose.bldg1.yml ps
 ```
 
-## Development
+### Access Points
 
-- Actions code: `actions/actions.py` (mounted live into container)
-- Frontend: `rasa-frontend` (Node dev server)
-- Add or adjust NLU/Rules/Stories in `data/`
+- **Frontend**: http://localhost:3000
+- **Rasa Core**: http://localhost:5005/version
+- **Action Server**: http://localhost:5055/health
+- **File Server**: http://localhost:8080/health
+- **Editor**: http://localhost:6080
+- **Duckling**: http://localhost:8000
 
-### Customize for different buildings
+## ⚙️ Configuration
 
-- Intents/entities: add building/location/device-specific vocabulary in `data/` and `domain.yml`.
-- Sensor mapping: implement UUID→sensor name mapping in actions (stored under `shared_data/`), so analytics receive human-readable keys.
-- Knowledge sources: connect to MySQL, Jena Fuseki, or others via actions; store credentials using env vars and secrets.
+### Environment Variables
 
-### End-to-end analytics flow
+Action Server configuration (set in `docker-compose.bldg1.yml`):
 
-1) User asks a question in the frontend.
-2) Rasa NLU detects intent/entities; a custom action is triggered.
-3) Action queries DB/knowledge store, maps UUIDs→names, builds a standardized flat/nested payload.
-4) Action optionally calls Decider to pick an analysis, then posts payload to Analytics.
-5) Analytics returns results with units and UK defaults; action formats a user-facing message and media.
-6) File server hosts generated artifacts; frontend renders content.
+```yaml
+environment:
+  # File Server
+  BASE_URL: http://localhost:8080
+  BUNDLE_MEDIA: "true"
+  
+  # MySQL Database
+  DB_HOST: mysqlserver
+  DB_NAME: telemetry
+  DB_USER: root
+  DB_PASSWORD: password
+  DB_PORT: 3306
+  
+  # Service Integrations
+  ANALYTICS_URL: http://microservices:6000/analytics/run
+  DECIDER_URL: http://decider-service:6009/decide
+  NL2SPARQL_URL: http://nl2sparql:6005/predict
+  FUSEKI_URL: http://fuseki:3030/abacws/query
+  
+  # Feature Flags
+  ENABLE_SUMMARIZATION: "true"
+  ENABLE_ANALYTICS: "true"
+```
 
-## Notes
+### Volumes
 
-- If MySQL isn’t available on the host, set DB_* envs accordingly or add a MySQL service to docker-compose.
-- Remove/adjust large lookup lists if training becomes slow.
-- The HTTP file server supports `?download=1` for forced downloads and Range requests for media streaming.
- - Use the Editor (6080) to quickly review and tweak NLU data during development.
+```yaml
+volumes:
+  ./rasa-bldg1:/app                    # Rasa project files
+  ./rasa-bldg1/shared_data:/app/shared_data  # Artifacts
+  ./rasa-bldg1/actions:/app/actions    # Custom actions (live reload)
+  ./rasa-bldg1/models:/app/models      # Trained models
+```
+
+## 💬 Usage
+
+### Example Queries
+
+**Temperature Queries:**
+```
+What is the temperature in zone 5.04?
+Show me temperature trends for zone 5.15
+What's the average temperature today?
+```
+
+**Air Quality Queries:**
+```
+What's the CO2 level in zone 5.01?
+Show me air quality trends for the last week
+Is the air quality good in zone 5.20?
+```
+
+**Analytics Queries:**
+```
+Detect anomalies in temperature for zone 5.04
+Compare humidity between zones 5.01 and 5.10
+Forecast CO2 levels for the next 2 hours
+```
+
+**Multi-Parameter Queries:**
+```
+Show correlation between temperature and humidity
+What's the relationship between CO2 and occupancy?
+Analyze particulate matter trends
+```
+
+### Response Format
+
+The bot returns structured responses with:
+- **Text**: Human-readable answer
+- **Data**: Numerical values with units
+- **Visualizations**: Charts (line, bar, scatter)
+- **Artifacts**: Downloadable CSV/JSON
+
+## 🔧 Development
+
+### Project Structure
+
+```
+rasa-bldg1/
+├── actions/
+│   ├── actions.py           # Custom action logic
+│   ├── sensor_list.txt      # 680 ABACWS sensor names
+│   ├── sensor_uuids.txt     # UUID mappings
+│   └── requirements.txt     # Action dependencies
+├── data/
+│   ├── nlu.yml              # NLU training examples
+│   ├── rules.yml            # Conversation rules
+│   └── stories.yml          # Dialogue stories
+├── models/                  # Trained Rasa models
+├── shared_data/
+│   └── artifacts/           # Generated charts/CSV
+├── config.yml               # Pipeline configuration
+├── domain.yml               # Intents, entities, slots
+├── endpoints.yml            # Service endpoints
+└── credentials.yml          # Channel credentials
+```
+
+### Training a New Model
+
+```powershell
+# Option 1: Using Docker Compose
+docker-compose -f docker-compose.bldg1.yml run --rm rasa_bldg1 train
+
+# Option 2: Manual container (from rasa-bldg1/)
+docker run --rm -v ${PWD}:/app rasa/rasa:3.6.12-full train
+
+# Models are saved to ./models/
+```
+
+### Testing Locally
+
+```powershell
+# Test NLU only
+docker-compose -f docker-compose.bldg1.yml run --rm rasa_bldg1 shell nlu
+
+# Interactive chat
+docker-compose -f docker-compose.bldg1.yml run --rm rasa_bldg1 shell
+
+# REST API test
+Invoke-RestMethod -Method Post -Uri http://localhost:5005/webhooks/rest/webhook `
+  -ContentType "application/json" `
+  -Body (@{sender="test"; message="What is the temperature?"} | ConvertTo-Json)
+```
+
+### Modifying Actions
+
+Actions are live-mounted, so changes take effect immediately after container restart:
+
+```powershell
+# Edit actions/actions.py
+# Then restart action server
+docker-compose -f docker-compose.bldg1.yml restart action_server_bldg1
+```
+
+## 🏗️ Building-Specific Customization
+
+### Sensor Naming Convention
+
+ABACWS sensors follow this pattern:
+```
+{Parameter}_{Zone_ID}
+```
+
+Examples:
+```
+Air_Temperature_Sensor_5.04
+CO2_Level_Sensor_5.01
+Zone_Air_Humidity_Sensor_5.15
+PM2.5_Level_Sensor_Atmospheric_5.20
+```
+
+### Zone Layout
+
+- **Zones**: 5.01 through 5.34 (34 zones total)
+- **Level**: Floor 5 of university building
+- **Sensors per Zone**: 20 sensors
+- **Total Sensors**: 680
+
+### Database Schema
+
+**MySQL Table: `sensor_data`**
+```sql
+CREATE TABLE sensor_data (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  sensor_name VARCHAR(255),
+  sensor_uuid VARCHAR(36),
+  value FLOAT,
+  unit VARCHAR(20),
+  ts TIMESTAMP,
+  INDEX idx_sensor_ts (sensor_name, ts),
+  INDEX idx_uuid_ts (sensor_uuid, ts)
+);
+```
+
+### Knowledge Graph (Brick Schema)
+
+The ABACWS Brick ontology defines:
+- 680 sensor instances
+- 34 zone instances
+- Equipment relationships
+- Measurement capabilities
+
+**Example SPARQL Query:**
+```sparql
+PREFIX brick: <https://brickschema.org/schema/Brick#>
+SELECT ?sensor ?zone WHERE {
+  ?sensor a brick:Temperature_Sensor .
+  ?sensor brick:isPartOf ?zone .
+  ?zone brick:label "Zone 5.04" .
+}
+```
+
+## 📊 Analytics Integration
+
+### Available Analytics
+
+The Action Server calls the Analytics Microservices with building-specific payloads:
+
+**Statistical Analysis:**
+- Mean, median, standard deviation
+- Min/max values
+- Percentiles and quartiles
+
+**Trend Detection:**
+- Linear regression
+- Moving averages
+- Seasonal decomposition
+
+**Anomaly Detection:**
+- Z-score method
+- IQR (Interquartile Range)
+- Isolation Forest
+
+**Forecasting:**
+- ARIMA models
+- Prophet (Facebook)
+- Exponential smoothing
+
+**Correlation:**
+- Pearson correlation
+- Spearman rank correlation
+- Cross-correlation
+
+### Payload Format
+
+```json
+{
+  "analysis_type": "analyze_temperatures",
+  "1": {
+    "Air_Temperature_Sensor_5.04": {
+      "timeseries_data": [
+        {"datetime": "2025-01-08T10:00:00Z", "reading_value": 22.5},
+        {"datetime": "2025-01-08T10:15:00Z", "reading_value": 22.7}
+      ]
+    }
+  },
+  "acceptable_range": [18, 24],
+  "unit": "°C"
+}
+```
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+**1. Services Won't Start**
+```powershell
+# Check logs
+docker-compose -f docker-compose.bldg1.yml logs rasa_bldg1
+
+# Restart services
+docker-compose -f docker-compose.bldg1.yml restart
+```
+
+**2. Action Server Can't Connect to MySQL**
+```powershell
+# Verify MySQL is running
+docker-compose -f docker-compose.bldg1.yml ps mysqlserver
+
+# Check connection from action server
+docker-compose -f docker-compose.bldg1.yml exec action_server_bldg1 ping mysqlserver
+```
+
+**3. NLU Confidence Too Low**
+```yaml
+# Adjust pipeline in config.yml
+pipeline:
+  - name: DIETClassifier
+    epochs: 200  # Increase from 100
+    constrain_similarities: true
+```
+
+**4. Slow Training**
+```yaml
+# In domain.yml, reduce lookup table sizes
+# Or use featurizers with lower dimensions
+```
+
+## 📚 Data & Artifacts
+
+### Shared Data Volume
+
+```
+shared_data/
+├── artifacts/                    # Generated files
+│   ├── temperature_chart_*.png
+│   ├── analytics_result_*.json
+│   └── sensor_data_*.csv
+├── sensor_mappings.json          # UUID to name mappings
+└── cache/                        # Temporary files
+```
+
+### Artifact Access
+
+**Via File Server:**
+```
+http://localhost:8080/artifacts/temperature_chart_20250108_143000.png
+```
+
+**Download Flag:**
+```
+http://localhost:8080/artifacts/data.csv?download=1
+```
+
+**Streaming (for large files):**
+- File server supports HTTP Range requests
+- Enables progressive loading in browser
+
+## 🔗 Integration with Other Services
+
+### Analytics Microservices (Port 6001)
+
+```python
+# From actions.py
+import requests
+
+response = requests.post(
+    "http://microservices:6000/analytics/run",
+    json={
+        "analysis_type": "analyze_temperatures",
+        "1": sensor_data
+    }
+)
+```
+
+### Decider Service (Port 6009)
+
+```python
+# Determine which analytics to run
+response = requests.post(
+    "http://decider-service:6009/decide",
+    json={"question": user_message}
+)
+
+if response.json()["perform_analytics"]:
+    analytics_type = response.json()["analytics"]
+    # Run analytics
+```
+
+### NL2SPARQL (Port 6005)
+
+```python
+# Translate natural language to SPARQL
+response = requests.post(
+    "http://nl2sparql:6005/predict",
+    json={"question": "What is the temperature in zone 5.04?"}
+)
+
+sparql_query = response.json()["sparql"]
+# Execute against Fuseki
+```
+
+## 🧪 Testing
+
+### Health Checks
+
+```powershell
+# Check all services
+curl http://localhost:5005/version        # Rasa
+curl http://localhost:5055/health         # Actions
+curl http://localhost:8080/health         # File Server
+curl http://localhost:6080/health         # Editor
+curl http://localhost:8000                # Duckling
+```
+
+### End-to-End Test
+
+```powershell
+# Send a test message
+$response = Invoke-RestMethod -Method Post `
+  -Uri http://localhost:5005/webhooks/rest/webhook `
+  -ContentType "application/json" `
+  -Body (@{
+    sender = "test_user"
+    message = "What is the temperature in zone 5.04?"
+  } | ConvertTo-Json)
+
+# Should return temperature value with unit
+Write-Output $response
+```
+
+### Smoke Test Script
+
+```powershell
+# Test all endpoints
+$tests = @(
+    @{Name="Rasa"; Url="http://localhost:5005/version"},
+    @{Name="Actions"; Url="http://localhost:5055/health"},
+    @{Name="FileServer"; Url="http://localhost:8080/health"}
+)
+
+foreach ($test in $tests) {
+    try {
+        $result = Invoke-RestMethod -Uri $test.Url -TimeoutSec 5
+        Write-Host "✓ $($test.Name) OK" -ForegroundColor Green
+    } catch {
+        Write-Host "✗ $($test.Name) FAIL" -ForegroundColor Red
+    }
+}
+```
+
+## 📖 References
+
+- **Rasa Documentation**: https://rasa.com/docs/rasa/
+- **Brick Schema**: https://brickschema.org/
+- **Apache Jena Fuseki**: https://jena.apache.org/documentation/fuseki2/
+- **SPARQL 1.1**: https://www.w3.org/TR/sparql11-query/
+- **OntoBot Main README**: [../README.md](../README.md)
+- **Multi-Building Support**: [../MULTI_BUILDING_SUPPORT.md](../MULTI_BUILDING_SUPPORT.md)
+- **Analytics API**: [../analytics.md](../analytics.md)
+
+## 🆘 Support
+
+For issues specific to Building 1 (ABACWS):
+- Check logs: `docker-compose -f docker-compose.bldg1.yml logs`
+- Review main README: [../README.md](../README.md)
+- See troubleshooting guide: [../TROUBLESHOOTING_SENSOR_DROPDOWN.md](../TROUBLESHOOTING_SENSOR_DROPDOWN.md)
+
+## 📄 License
+
+This project is part of OntoBot. See [../LICENSE](../LICENSE) for details.
+
+---
+
+**Next Steps:**
+- [Building 2 (Office)](../rasa-bldg2/README.md) - Synthetic Office Building (329 sensors)
+- [Building 3 (Data Center)](../rasa-bldg3/README.md) - Synthetic Data Center (597 sensors)
+- [Frontend Documentation](../suhasdevmane.github.io/_docs/frontend_ui.md)
+- [API Reference](../suhasdevmane.github.io/_docs/api_reference.md)

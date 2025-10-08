@@ -38,6 +38,15 @@ nlu:
       - of course
       - that sounds good
       - correct
+      - yes use last 24 hours
+      - yes last twenty four hours is fine
+      - last 24 hours is fine
+      - use the last 24 hours
+      - just use last day
+      - go with last twenty four hours
+      - sure last 24h
+      - yes past 24 hours
+      - take the last 24 hours
 
   - intent: deny
     examples: |
@@ -48,6 +57,15 @@ nlu:
       - don't like that
       - no way
       - not really
+      - no I want to give dates
+      - no I will specify dates
+      - I prefer to specify the range
+      - not last 24 hours
+      - don't use the last 24 hours
+      - I want a custom date range
+      - I'll provide dates
+      - let me give you dates
+      - no ask me for dates
 
   - intent: mood_great
     examples: |
@@ -377,6 +395,9 @@ nlu:
       - start date [02/02/2025](time:start)
       - from [01/02/2025](time:start)
       - from [01/02/2025 00:00:00](time:start)
+      - starting [01/02/2025](time:start)
+      - begin [01/02/2025](time:start)
+      - start [01/02/2025](time:start)
 
   - intent: provide_end_date
     examples: |
@@ -396,6 +417,11 @@ nlu:
       - end date [03/02/2025](time:end)
       - untill [02/02/2025](time:end)
       - to [02/02/2025 23:59:59](time:end)
+      - until [02/02/2025](time:end)
+      - ending [02/02/2025](time:end)
+      - end [02/02/2025](time:end)
+
+  # Removed separate provide_date_range_compact intent; examples merged into start/end intents for broader generalization.
 
   - synonym: Air_Temperature_Sensor_5.36
     examples: |

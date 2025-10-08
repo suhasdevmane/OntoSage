@@ -321,6 +321,8 @@ _STATIC_ANALYTICS_FALLBACK: set = {
     "detect_potential_failures",
     "forecast_downtimes",
     "correlate_sensors",
+    # Added so decider-selected 'compute_air_quality_index' is preserved even if registry fetch fails
+    "compute_air_quality_index",
 }
 
 # Cache structure for remote registry (functions list fetched from microservices)
@@ -1156,6 +1158,76 @@ class ValidateDatesForm(FormValidationAction):
             dispatcher.utter_message(text="There was a problem processing the date. Please try again with format DD/MM/YYYY.")
             return {"end_date": None}
 
+class ValidateDateRangeChoiceForm(FormValidationAction):
+    """Form validator for explicit date range confirmation.
+
+    User options we interpret:
+      - Affirm / yes / last 24 hours => set date_range_mode="last24h" (dates filled later if absent)
+      - A phrase containing an explicit range (from X to Y / DD/MM/YYYY to DD/MM/YYYY / YYYY-MM-DD to YYYY-MM-DD) => fill start_date/end_date + set mode="custom"
+      - A single date or two dates separated by space/newline/comma => attempt to parse sequentially into start/end
+      - 'no' / deny => triggers follow-up asking for start date (falls back to dates_form)
+    """
+    def name(self) -> Text:
+        return "validate_date_range_choice_form"
+
+    async def validate_date_range_mode(
+        self,
+        slot_value: Any,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> Dict[Text, Any]:
+        raw = (slot_value or "").strip().lower() if isinstance(slot_value, str) else ""
+        logger.info(f"Validating date_range_mode raw input='{raw}'")
+        if not raw:
+            dispatcher.utter_message(text="Please reply 'yes' to use last 24 hours or provide a start and end date.")
+            return {"date_range_mode": None}
+        # Quick acceptance synonyms
+        yes_tokens = {"yes","y","yeah","sure","ok","okay","last 24 hours","last24","24h","last day"}
+        if raw in yes_tokens or re.match(r"^(use )?last 24 ?hours$", raw):
+            return {"date_range_mode": "last24h"}
+        if raw in {"no","n","nope","nah"}:
+            # Ask for specific dates via existing forms
+            dispatcher.utter_message(response="utter_ask_start_date")
+            return {"date_range_mode": "awaiting_custom"}
+        # Try explicit pattern detection "from X to Y"
+        range_pat = re.search(r"from\s+(.+?)\s+to\s+(.+)$", raw)
+        if range_pat:
+            s_raw, e_raw = range_pat.group(1), range_pat.group(2)
+            sd = dateparser.parse(s_raw)
+            ed = dateparser.parse(e_raw)
+            if sd and ed:
+                return {
+                    "date_range_mode": "custom",
+                    "start_date": sd.strftime("%d/%m/%Y"),
+                    "end_date": ed.strftime("%d/%m/%Y"),
+                }
+        # Try simple "DD/MM/YYYY to DD/MM/YYYY" style without 'from'
+        pat2 = re.search(r"(\d{2}/\d{2}/\d{4})\s+to\s+(\d{2}/\d{2}/\d{4})", raw)
+        if pat2:
+            s_raw, e_raw = pat2.group(1), pat2.group(2)
+            return {"date_range_mode": "custom", "start_date": s_raw, "end_date": e_raw}
+        # Split tokens and try to parse up to two date values
+        tokens = re.split(r"[;,\s]+", raw)
+        parsed_dates: List[str] = []
+        for tok in tokens:
+            if not tok:
+                continue
+            dt = dateparser.parse(tok)
+            if dt:
+                parsed_dates.append(dt.strftime("%d/%m/%Y"))
+            if len(parsed_dates) == 2:
+                break
+        if len(parsed_dates) == 2:
+            return {"date_range_mode": "custom", "start_date": parsed_dates[0], "end_date": parsed_dates[1]}
+        if len(parsed_dates) == 1:
+            # Have start only; ask for end
+            dispatcher.utter_message(text="Please provide the end date for the range.")
+            return {"date_range_mode": "partial", "start_date": parsed_dates[0]}
+        # Fallback guidance
+        dispatcher.utter_message(text="I didn't catch that. Reply 'yes' to use last 24 hours or provide a range like 01/02/2025 to 02/02/2025.")
+        return {"date_range_mode": None}
+
 class ActionQuestionToBrickbot(Action):
     def name(self) -> Text:
         return "action_question_to_brickbot"
@@ -1758,16 +1830,24 @@ class ActionQuestionToBrickbot(Action):
             midnight_str = f"{today_str} 00:00:00"
             # Collect slot override events before 'events' is initialized
             _pre_slot_events: List[Dict[str, Any]] = []
-            # Force date override if the latest message explicitly contains a range like "from DD/MM/YYYY to DD/MM/YYYY" or "YYYY-MM-DD to YYYY-MM-DD"
+            # Force date override ONLY if the latest message EXPLICITLY contains date keywords
+            # This prevents Duckling from auto-extracting "now" from questions without explicit dates
             try:
                 latest_text = (tracker.latest_message or {}).get("text", "") or ""
-                override = extract_date_range(latest_text)
-                if override.get("start_date") and override.get("end_date"):
-                    # Keep the user's literal format; we'll normalize later in ProcessTimeseries
-                    sd_raw = override["start_date"]
-                    ed_raw = override["end_date"]
-                    _pre_slot_events.extend([SlotSet("start_date", sd_raw), SlotSet("end_date", ed_raw)])
-                    plog.info("Overrode date slots from latest message", start_date=sd_raw, end_date=ed_raw)
+                # Only extract dates if the question contains explicit date/time keywords
+                date_keywords = ["from", "to", "between", "since", "until", "during", "on", "last", "past", "previous", "yesterday", "today", "week", "month", "year", "day", "hour"]
+                has_date_context = any(keyword in latest_text.lower() for keyword in date_keywords)
+                
+                if has_date_context:
+                    override = extract_date_range(latest_text)
+                    if override.get("start_date") and override.get("end_date"):
+                        # Keep the user's literal format; we'll normalize later in ProcessTimeseries
+                        sd_raw = override["start_date"]
+                        ed_raw = override["end_date"]
+                        _pre_slot_events.extend([SlotSet("start_date", sd_raw), SlotSet("end_date", ed_raw)])
+                        plog.info("Overrode date slots from latest message", start_date=sd_raw, end_date=ed_raw)
+                else:
+                    plog.info("No explicit date keywords found in question; will ask user for date range")
             except Exception as _e:
                 plog.warning("Date override detection failed", error=str(_e))
 
@@ -1840,9 +1920,52 @@ class ActionQuestionToBrickbot(Action):
                 # Refresh date slots after potential override
                 start_date = tracker.get_slot("start_date")
                 end_date = tracker.get_slot("end_date")
+                date_range_mode = tracker.get_slot("date_range_mode")
+
+                # Check if dates are valid and recent (not just leftover from previous conversation)
+                # If dates exist but are stale or invalid, clear them
+                if start_date or end_date:
+                    try:
+                        # Validate dates are parseable
+                        if start_date:
+                            parse(start_date) if 'T' in start_date else datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
+                        if end_date:
+                            parse(end_date) if 'T' in end_date else datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+                        plog.info("Found valid existing dates in slots", start_date=start_date, end_date=end_date)
+                    except (ValueError, TypeError) as e:
+                        plog.warning("Invalid dates in slots; will clear and ask user", error=str(e))
+                        start_date = None
+                        end_date = None
+                        events.extend([SlotSet("start_date", None), SlotSet("end_date", None)])
+
+                # Explicit confirmation: if no valid dates and no prior mode chosen, start the choice form
+                if (not start_date or not end_date) and not date_range_mode:
+                    plog.info("No valid dates found; triggering date range choice form")
+                    events.append({"event": "active_loop", "name": "date_range_choice_form"})
+                    return events
+
+                # If user confirmed last24h and dates still absent, we'll auto-fill below
 
                 # Add after checking if both dates are present
-                if start_date and end_date:
+                # If user did not supply a date range, automatically default to last 24 hours to avoid zero-width window
+                auto_dates_used = False
+                if (not start_date or not end_date) and date_range_mode == "last24h":
+                    now_dt = datetime.now()
+                    start_auto = (now_dt - timedelta(hours=24)).strftime("%Y-%m-%d %H:%M:%S")
+                    end_auto = now_dt.strftime("%Y-%m-%d %H:%M:%S")
+                    events.append(SlotSet("start_date", start_auto))
+                    events.append(SlotSet("end_date", end_auto))
+                    start_date = start_auto
+                    end_date = end_auto
+                    auto_dates_used = True
+                    emit_message(dispatcher, tracker, text="No date range provided – defaulting to the last 24 hours.", detail=True)
+                elif (not start_date or not end_date) and date_range_mode and date_range_mode.startswith("await"):
+                    # User said 'no' and we are waiting for specific dates: prompt start date
+                    dispatcher.utter_message(response="utter_ask_start_date")
+                    events.append({"event": "active_loop", "name": "dates_form"})
+                    return events
+
+                if start_date and end_date:  # After potential auto-fill
                     # Initialize SQL date variables
                     start_date_sql = None
                     end_date_sql = None
@@ -1866,13 +1989,13 @@ class ActionQuestionToBrickbot(Action):
                         end_date_sql = end_date
                        
                     
-                    # Add right before the summary is generated (around line 741):
+                    # Add debug block prior to triggering timeseries processing
                     logger.info("==================== Date Debug Information ====================")
                     logger.info(f"Final tracker start_date before summarization: {tracker.get_slot('start_date')}")
                     logger.info(f"Final tracker end_date before summarization: {tracker.get_slot('end_date')}")
                     logger.info(f"Final start_date before summarization: {start_date_sql if 'start_date_sql' in locals() else tracker.get_slot('start_date')}")
                     logger.info(f"Final end_date before summarization: {end_date_sql if 'end_date_sql' in locals() else tracker.get_slot('end_date')}")
-                    logger.info(f"Auto-generated dates: {is_auto_date}")
+                    logger.info(f"Auto-generated dates: {auto_dates_used}")
                     logger.info("===============================================================")
 
                     # summary = self.summarize_response(standardized_json)
@@ -1886,11 +2009,10 @@ class ActionQuestionToBrickbot(Action):
                     plog.info("Triggering FollowupAction for timeseries processing")
                     events.append(FollowupAction("action_process_timeseries"))
                     return events
-                else:
-                    # If dates are missing, use the form to collect them
+                else:  # Should not reach here, but guard just in case
                     dispatcher.utter_message(response="utter_ask_start_date")
+                    plog.info("Unexpected missing dates after auto-fill attempt; invoking dates form")
                     events.append({"event": "active_loop", "name": "dates_form"})
-                    plog.info("Requesting dates form", reason="dates_missing_timeseries")
                     return events
             else:
                 # No UUIDs present: summarize SPARQL results directly without asking for dates
@@ -1990,6 +2112,18 @@ class ActionProcessTimeseries(Action):
                 ],
                 ...
             }
+            date_range_mode = tracker.get_slot("date_range_mode")
+
+            # Safeguard: if user selected last24h but dates are missing (e.g. story path shortcut), auto-fill.
+            if (not start_date or not end_date) and date_range_mode == "last24h":
+                now_dt = datetime.now()
+                auto_start = (now_dt - timedelta(hours=24)).strftime("%Y-%m-%d %H:%M:%S")
+                auto_end = now_dt.strftime("%Y-%m-%d %H:%M:%S")
+                events.append(SlotSet("start_date", auto_start))
+                events.append(SlotSet("end_date", auto_end))
+                start_date = auto_start
+                end_date = auto_end
+                emit_message(dispatcher, tracker, text="Defaulted to last 24 hours for analysis.", detail=True)
         """
         
         try:   
@@ -2625,6 +2759,51 @@ class ActionProcessTimeseries(Action):
 
         return []
 
+class ActionRouteAfterDateChoice(Action):
+    """
+    Intermediate routing action called after date_range_choice_form submission.
+    Routes conversation flow based on date_range_mode slot value:
+    - last24h: auto-fills dates and triggers processing
+    - awaiting_custom: activates dates_form
+    - custom: triggers processing with already-set dates
+    """
+    def name(self) -> Text:
+        return "action_route_after_date_choice"
+
+    async def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> List[Dict[Text, Any]]:
+        date_range_mode = tracker.get_slot("date_range_mode")
+        logger.info(f"Routing after date choice: mode={date_range_mode}")
+
+        if date_range_mode == "last24h":
+            # Auto-fill last 24 hours and trigger processing
+            end_dt = datetime.now()
+            start_dt = end_dt - timedelta(hours=24)
+            return [
+                SlotSet("start_date", start_dt.strftime("%Y-%m-%dT%H:%M:%S")),
+                SlotSet("end_date", end_dt.strftime("%Y-%m-%dT%H:%M:%S")),
+                FollowupAction("action_process_timeseries")
+            ]
+        elif date_range_mode == "awaiting_custom":
+            # Activate dates_form to collect custom dates
+            return [FollowupAction("dates_form")]
+        elif date_range_mode == "custom":
+            # Dates already set, proceed to processing
+            start_date = tracker.get_slot("start_date")
+            end_date = tracker.get_slot("end_date")
+            if start_date and end_date:
+                return [FollowupAction("action_process_timeseries")]
+            else:
+                dispatcher.utter_message(text="Error: Custom dates not found. Please try again.")
+                return [SlotSet("date_range_mode", None)]
+        else:
+            dispatcher.utter_message(text="Error: Unknown date range mode. Please start over.")
+            return [SlotSet("date_range_mode", None)]
+
 class ActionResetSlots(Action):
     def name(self) -> Text:
         return "action_reset_slots"
@@ -2643,6 +2822,7 @@ class ActionResetSlots(Action):
             SlotSet("timeseries_ids", None),
             SlotSet("request_dates", False),
             SlotSet("sparql_error", False),
+            SlotSet("date_range_mode", None),
         ]
 
 # ---------------------------

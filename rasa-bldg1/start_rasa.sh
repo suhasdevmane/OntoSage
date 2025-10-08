@@ -1,4 +1,4 @@
-Transformers\Mistral#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 PIN_FILE="/app/shared_data/pinned_model.txt"
 BASE_CMD=(rasa run --cors "*" --enable-api)
