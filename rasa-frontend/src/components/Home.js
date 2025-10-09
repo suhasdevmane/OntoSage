@@ -5,23 +5,21 @@ import './Home.css';
 import TopNav from './TopNav';
 
 
-import Apache_Jena from './imgs/Apache_Jena.jpg';
-import graphdbImg from './imgs/GraphDB.jpg';
-import thingsboardImg from './imgs/thingsboard.jpg';
-import pgImg from './imgs/pg-2.jpg';
-import adminerImg from './imgs/menu_image.jpg';
-import visualiserImg from './imgs/bldg.jpg';
-import jupyterImg from './imgs/jupyter-3.jpg';
-import apiImg from './imgs/api.jpg';
-import Microservicespng from './imgs/menu_image.png';
-import apiPng from './imgs/api.png';
-import RasaLogo from './imgs/bot-logo.png';
-import ActionLogo from './imgs/bot-logo2.png';
-import DucklingImg from './imgs/middle.png';
+import Apache_Jena from './imgs/Apache_Jena_1.png';
+import graphdbImg from './imgs/GraphDB-small.png';
+import thingsboardImg from './imgs/thingsboardImg.png';
+import pgImg from './imgs/pgadminvala.png';
+import adminerImg from './imgs/adminer_hosting.png';
+import visualiserImg from './imgs/bldg-removebg-preview.png';
+import jupyterImg from './imgs/jupyter-3.png';
+import apiImg from './imgs/api-removebg.png';
+import Microservicespng from './imgs/services.png';
 import OllamaImg from './imgs/ollama.png';
+import files from './imgs/folder.png';
+import servicespic from './imgs/services.png';
+import RasaLogo2 from './imgs/chatbot.png';
+import nl2sparql from './imgs/nl2sparql.png';
 // Reuse existing API icons for services without specific logos
-
-
 
 
 export default function Home() {
@@ -44,15 +42,15 @@ export default function Home() {
     // APIs and Microservices
     { img: apiImg,         title: "3D-API",             text: "API for 3D Services",               url: "http://localhost:8091",  width:  "70%", height: "150px" },
     { img: Microservicespng,title: "Microservices",      text: "Analytics and utilities",           url: "http://localhost:6001",  width:  "70%", height: "150px" },
-    { img: apiPng,         title: "File Server",        text: "Shared artifacts server",           url: "http://localhost:8080",  width:  "70%", height: "150px" },
+    { img: files,         title: "File Server",        text: "Shared artifacts server",           url: "http://localhost:8080",  width:  "70%", height: "150px" },
 
     // Conversational stack
-    { img: RasaLogo,        title: "Rasa Server",        text: "Conversational AI",                 url: "http://localhost:5005",  width:  "70%", height: "150px" },
-    { img: ActionLogo,      title: "Action Server",      text: "Rasa custom actions",               url: "http://localhost:5055",  width:  "70%", height: "150px" },
-    { img: DucklingImg,      title: "Duckling",           text: "Entity extraction service",         url: "http://localhost:8000",  width:  "70%", height: "150px" },
+    { img: RasaLogo2,        title: "Rasa Server",        text: "Conversational AI",                 url: "http://localhost:5005",  width:  "70%", height: "150px" },
+    { img: servicespic,      title: "Action Server",      text: "Rasa custom actions",               url: "http://localhost:5055",  width:  "70%", height: "150px" },
+    { img: servicespic,      title: "Duckling",           text: "Entity extraction service",         url: "http://localhost:8000",  width:  "70%", height: "150px" },
 
     // AI services
-    { img: apiPng,           title: "NL2SPARQL",          text: "Natural language → SPARQL",         url: "http://localhost:6005",  width:  "70%", height: "150px" },
+    { img: nl2sparql,           title: "NL2SPARQL",          text: "Natural language → SPARQL",         url: "http://localhost:6005",  width:  "70%", height: "150px" },
     { img: OllamaImg,           title: "Ollama (Mistral)",   text: "Local LLM service",                 url: "http://localhost:11434", width:  "70%", height: "150px" },
   ];
 

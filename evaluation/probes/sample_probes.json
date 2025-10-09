@@ -1,0 +1,51 @@
+[
+  {
+    "id": "C1_001",
+    "class": "C1",
+    "question": "What is the label of the CO2 sensor in room 5.12?",
+    "gold": {
+      "entities": ["CO2 sensor", "room 5.12"],
+      "sparql": "SELECT ?label WHERE { ?s a brick:CO2_Sensor ; brick:hasLocation ?room ; rdfs:label ?label . ?room rdfs:label 'room 5.12' . }",
+      "result_nonempty": true,
+      "si": true
+    }
+  },
+  {
+    "id": "C2_001",
+    "class": "C2",
+    "question": "Which rooms contain air quality sensors reporting above threshold?",
+    "gold": {
+      "entities": ["air quality sensor"],
+      "sparql": "SELECT ?room WHERE { ?s a brick:Air_Quality_Sensor ; brick:hasLocation ?room . }",
+      "result_nonempty": true,
+      "si": true
+    }
+  },
+  {
+    "id": "C3_001",
+    "class": "C3",
+    "question": "What was the average zone air temperature in room 5.12 last week?",
+    "gold": {
+      "entities": ["zone air temperature", "room 5.12"],
+      "sparql": "SELECT (AVG(?v) AS ?avg) WHERE { ?s a brick:Zone_Air_Temperature_Sensor ; brick:hasLocation ?room . ?room rdfs:label 'room 5.12' . }",
+      "result_nonempty": true,
+      "si": true
+    }
+  },
+  {
+    "id": "C4_001",
+    "class": "C4",
+    "question": "Detect anomalies in the supply temperature of AHU01 for room RM001A over the last 24 hours.",
+    "gold": {
+      "entities": ["supply temperature", "ahu 01", "room 1a"],
+      "sparql": "SELECT ?uuid WHERE { ?s a brick:Supply_Air_Temperature_Sensor ; ref:hasExternalReference ?uuid . }",
+      "result_nonempty": true,
+      "si": true
+    },
+    "analytics": {
+      "path": "/analyze/detect_anomalies",
+      "method": "POST",
+      "payload": {"signal": "supply_temperature", "window": "24h"}
+    }
+  }
+]

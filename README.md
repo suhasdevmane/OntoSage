@@ -70,6 +70,15 @@ OntoBot is an intelligent conversational AI platform designed for smart building
 🐳 **Docker-First**: Complete orchestration with Docker Compose  
 📚 **Comprehensive Documentation**: Professional README files and GitHub Pages
 
+### Frontend Interface
+
+The OntoBot web interface provides an intuitive chat-based interaction for querying building systems and viewing analytics results.
+
+<div align="center">
+  <img src="Home.png" alt="OntoBot Frontend Home Page" width="100%">
+  <p><em>OntoBot Frontend: Natural language chat interface with real-time sensor data visualization</em></p>
+</div>
+
 ---
 
 ## 🏢 Buildings
