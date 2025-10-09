@@ -61,7 +61,7 @@ OntoBot is an intelligent conversational AI platform designed for smart building
 
 ### Key Features
 
-🎯 **Multi-Building Support**: Three distinct buildings with 1,606 total sensors  
+🎯 **Multi-Building Support**: Three example buildings(2 synthetic) with 1,606 total sensors  
 📊 **Advanced Analytics**: 30+ analytics types including forecasting and anomaly detection  
 🔍 **Semantic Queries**: SPARQL-powered knowledge graph exploration  
 📈 **Real-Time Monitoring**: Live sensor data with visualization  
@@ -74,7 +74,7 @@ OntoBot is an intelligent conversational AI platform designed for smart building
 
 ## 🏢 Buildings
 
-OntoBot supports three distinct smart buildings with different characteristics and use cases.
+OntoBot supports three example smart buildings with different characteristics and use cases.
 
 ### Building Taxonomy
 
@@ -330,7 +330,7 @@ Comprehensive documentation is available on GitHub Pages:
 
 ## Compose Stacks Overview and Extras (Feature Selection)
 
-This repo has dedicated compose files for three distinct smart buildings plus an overlay for additional tooling. Language translation (`nl2sparql`) and local summarization (`ollama`) are pluggable feature services.
+This repo has dedicated compose files for three distinct smart buildings plus an overlay for additional tooling. Language translation (`nl2sparql`) and local summarization (`ollama`) are pluggable feature services (can be hosted separately for quick responses).
 
 ### Compose Files
 
