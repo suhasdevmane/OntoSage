@@ -935,7 +935,7 @@ class ActionQuestionToBrickbot(Action):
             "PREFIX sosa: <http://www.w3.org/ns/sosa/>",
             "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>",
             "PREFIX tag: <https://brickschema.org/schema/BrickTag#>",
-            "PREFIX bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#>",
+            "PREFIX bldg: <http://buildsys.org/ontologies/bldg3#>",
             "PREFIX bsh: <https://brickschema.org/schema/BrickShape#>",
             "PREFIX s223: <http://data.ashrae.org/standard223#>",
             "PREFIX bacnet: <http://data.ashrae.org/bacnet/2020#>",

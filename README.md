@@ -61,7 +61,7 @@ OntoBot is an intelligent conversational AI platform designed for smart building
 
 ### Key Features
 
-🎯 **Multi-Building Support**: Three distinct buildings with 1,606 total sensors  
+🎯 **Multi-Building Support**: Three example buildings(2 synthetic) with 1,606 total sensors  
 📊 **Advanced Analytics**: 30+ analytics types including forecasting and anomaly detection  
 🔍 **Semantic Queries**: SPARQL-powered knowledge graph exploration  
 📈 **Real-Time Monitoring**: Live sensor data with visualization  
@@ -70,11 +70,20 @@ OntoBot is an intelligent conversational AI platform designed for smart building
 🐳 **Docker-First**: Complete orchestration with Docker Compose  
 📚 **Comprehensive Documentation**: Professional README files and GitHub Pages
 
+### Frontend Interface
+
+The OntoBot web interface provides an intuitive chat-based interaction for querying building systems and viewing analytics results.
+
+<div align="center">
+  <img src="Home.png" alt="OntoBot Frontend Home Page" width="100%">
+  <p><em>OntoBot Frontend: Natural language chat interface with real-time sensor data visualization</em></p>
+</div>
+
 ---
 
 ## 🏢 Buildings
 
-OntoBot supports three distinct smart buildings with different characteristics and use cases.
+OntoBot supports three example smart buildings with different characteristics and use cases.
 
 ### Building Taxonomy
 
@@ -330,7 +339,7 @@ Comprehensive documentation is available on GitHub Pages:
 
 ## Compose Stacks Overview and Extras (Feature Selection)
 
-This repo has dedicated compose files for three distinct smart buildings plus an overlay for additional tooling. Language translation (`nl2sparql`) and local summarization (`ollama`) are pluggable feature services.
+This repo has dedicated compose files for three distinct smart buildings plus an overlay for additional tooling. Language translation (`nl2sparql`) and local summarization (`ollama`) are pluggable feature services (can be hosted separately for quick responses).
 
 ### Compose Files
 
