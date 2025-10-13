@@ -6364,10 +6364,7 @@
     sh:predicate brick:hasTag ;
     sh:subject sh:this .
 
-<na99033713e994d3fac6c613af3f33cc0b214> a sh:TripleRule ;
-    sh:object tag:CO2 ;
-    sh:predicate brick:hasTag ;
-    sh:subject sh:this .
+
 
 <na99033713e994d3fac6c613af3f33cc0b2140> a sh:TripleRule ;
     sh:object tag:Air ;
@@ -6419,10 +6416,7 @@
     sh:predicate brick:hasTag ;
     sh:subject sh:this .
 
-<na99033713e994d3fac6c613af3f33cc0b215> a sh:TripleRule ;
-    sh:object tag:Differential ;
-    sh:predicate brick:hasTag ;
-    sh:subject sh:this .
+
 
 <na99033713e994d3fac6c613af3f33cc0b2150> a sh:TripleRule ;
     sh:object tag:Air ;
@@ -6474,10 +6468,7 @@
     sh:predicate brick:hasTag ;
     sh:subject sh:this .
 
-<na99033713e994d3fac6c613af3f33cc0b216> a sh:TripleRule ;
-    sh:object tag:Point ;
-    sh:predicate brick:hasTag ;
-    sh:subject sh:this .
+
 
 <na99033713e994d3fac6c613af3f33cc0b2160> a sh:TripleRule ;
     sh:object tag:Air ;
@@ -6529,10 +6520,7 @@
     sh:predicate brick:hasTag ;
     sh:subject sh:this .
 
-<na99033713e994d3fac6c613af3f33cc0b217> a sh:TripleRule ;
-    sh:object tag:Sensor ;
-    sh:predicate brick:hasTag ;
-    sh:subject sh:this .
+
 
 <na99033713e994d3fac6c613af3f33cc0b2170> a sh:TripleRule ;
     sh:object tag:Air ;
@@ -6584,10 +6572,7 @@
     sh:predicate brick:hasTag ;
     sh:subject sh:this .
 
-<na99033713e994d3fac6c613af3f33cc0b218> a sh:TripleRule ;
-    sh:object tag:CO ;
-    sh:predicate brick:hasTag ;
-    sh:subject sh:this .
+
 
 <na99033713e994d3fac6c613af3f33cc0b2180> a sh:TripleRule ;
     sh:object tag:Setpoint ;
@@ -6639,10 +6624,7 @@
     sh:predicate brick:hasTag ;
     sh:subject sh:this .
 
-<na99033713e994d3fac6c613af3f33cc0b219> a sh:TripleRule ;
-    sh:object tag:Differential ;
-    sh:predicate brick:hasTag ;
-    sh:subject sh:this .
+
 
 <na99033713e994d3fac6c613af3f33cc0b2190> a sh:TripleRule ;
     sh:object tag:Point ;
@@ -6699,10 +6681,7 @@
     sh:predicate brick:hasTag ;
     sh:subject sh:this .
 
-<na99033713e994d3fac6c613af3f33cc0b220> a sh:TripleRule ;
-    sh:object tag:Point ;
-    sh:predicate brick:hasTag ;
-    sh:subject sh:this .
+
 
 <na99033713e994d3fac6c613af3f33cc0b2200> a sh:TripleRule ;
     sh:object tag:Temperature ;
@@ -6754,10 +6733,7 @@
     sh:predicate brick:hasTag ;
     sh:subject sh:this .
 
-<na99033713e994d3fac6c613af3f33cc0b221> a sh:TripleRule ;
-    sh:object tag:Sensor ;
-    sh:predicate brick:hasTag ;
-    sh:subject sh:this .
+
 
 <na99033713e994d3fac6c613af3f33cc0b2210> a sh:TripleRule ;
     sh:object tag:Outside ;
@@ -32961,6 +32937,11 @@ brick:CO2_Alarm_Sensitivity_Parameter a owl:Class,
         tag:Point,
         tag:Sensitivity .
 
+
+bldg:CO2_Differential_Sensor.01 a brick:CO2_Differential_Sensor ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ac499f0c-1854-4f9b-b34b-2030ff625908" ;
+        ref:storedAt bldg:database1 ] .
 brick:CO2_Differential_Sensor a owl:Class,
         sh:NodeShape ;
     rdfs:label "CO2 Differential Sensor"^^xsd:string ;
@@ -32976,7 +32957,27 @@ brick:CO2_Differential_Sensor a owl:Class,
         tag:Sensor ;
     brick:hasQuantity brick:Differential_CO2_Concentration ;
     brick:hasSubstance brick:Air .
+<na99033713e994d3fac6c613af3f33cc0b214> a sh:TripleRule ;
+    sh:object tag:CO2 ;
+    sh:predicate brick:hasTag ;
+    sh:subject sh:this .
+<na99033713e994d3fac6c613af3f33cc0b215> a sh:TripleRule ;
+    sh:object tag:Differential ;
+    sh:predicate brick:hasTag ;
+    sh:subject sh:this .
+<na99033713e994d3fac6c613af3f33cc0b216> a sh:TripleRule ;
+    sh:object tag:Point ;
+    sh:predicate brick:hasTag ;
+    sh:subject sh:this .
+<na99033713e994d3fac6c613af3f33cc0b217> a sh:TripleRule ;
+    sh:object tag:Sensor ;
+    sh:predicate brick:hasTag ;
+    sh:subject sh:this .
 
+bldg:CO_Differential_Sensor.01 a brick:CO_Differential_Sensor ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4da8d3c1-b35d-4d05-bef6-5799c8ddc659" ;
+        ref:storedAt bldg:database1 ] .
 brick:CO_Differential_Sensor a owl:Class,
         sh:NodeShape ;
     rdfs:label "CO Differential Sensor"^^xsd:string ;
@@ -32991,7 +32992,24 @@ brick:CO_Differential_Sensor a owl:Class,
         tag:Sensor ;
     brick:hasQuantity brick:Differential_CO_Concentration ;
     brick:hasSubstance brick:Air .
+<na99033713e994d3fac6c613af3f33cc0b218> a sh:TripleRule ;
+    sh:object tag:CO ;
+    sh:predicate brick:hasTag ;
+    sh:subject sh:this .
+<na99033713e994d3fac6c613af3f33cc0b219> a sh:TripleRule ;
+    sh:object tag:Differential ;
+    sh:predicate brick:hasTag ;
+    sh:subject sh:this .
+<na99033713e994d3fac6c613af3f33cc0b220> a sh:TripleRule ;
+    sh:object tag:Point ;
+    sh:predicate brick:hasTag ;
+    sh:subject sh:this .
+<na99033713e994d3fac6c613af3f33cc0b221> a sh:TripleRule ;
+    sh:object tag:Sensor ;
+    sh:predicate brick:hasTag ;
+    sh:subject sh:this .
 
+    
 brick:CO_Level_Sensor a owl:Class,
         sh:NodeShape ;
     rdfs:label "CO Level Sensor"^^xsd:string ;
@@ -60623,10 +60641,7 @@ bldg:Bypass_Water_Flow_Sensor.01 a brick:Bypass_Water_Flow_Sensor ;
         ref:hasTimeseriesId "09e9dba9-655b-4d36-96ee-e7ac76194e73" ;
         ref:storedAt bldg:database1 ] .
 
-bldg:CO2_Differential_Sensor.01 a brick:CO2_Differential_Sensor ;
-    ref:hasExternalReference [ a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "ac499f0c-1854-4f9b-b34b-2030ff625908" ;
-        ref:storedAt bldg:database1 ] .
+
 
 bldg:CO2_Level_Sensor.01 a brick:CO2_Level_Sensor ;
     ref:hasExternalReference [ a ref:TimeseriesReference ;
@@ -60638,10 +60653,7 @@ bldg:CO2_Sensor.01 a brick:CO2_Sensor ;
         ref:hasTimeseriesId "9bcc2a5c-cc84-4d31-ae3c-2081c1f0c985" ;
         ref:storedAt bldg:database1 ] .
 
-bldg:CO_Differential_Sensor.01 a brick:CO_Differential_Sensor ;
-    ref:hasExternalReference [ a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "4da8d3c1-b35d-4d05-bef6-5799c8ddc659" ;
-        ref:storedAt bldg:database1 ] .
+
 
 bldg:CO_Level_Sensor.01 a brick:CO_Level_Sensor ;
     ref:hasExternalReference [ a ref:TimeseriesReference ;
