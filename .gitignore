@@ -121,6 +121,7 @@ bldg2/trial/dataset/bldg2_main.ttl
 Transformers/my_data.json
 /rasa-ui011020250200.zip
 ./temp_build_extended_dataset.py
+brick assets/
 ##############################
 # Secrets & credentials
 ##############################

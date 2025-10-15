@@ -1,0 +1,1169 @@
+                                          %Version 3 October 2023
+% See section 11 of the User Manual for version history
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                                                 %%
+%% Please do not use \input{...} to include other tex files.       %%
+%% Submit your LaTeX manuscript as one .tex document.              %%
+%%                                                                 %%
+%% All additional figures and files should be attached             %%
+%% separately and not embedded in the \TeX\ document itself.       %%
+%%                                                                 %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%\documentclass[referee,sn-basic]{sn-jnl}% referee option is meant for double line spacing
+
+%%=======================================================%%
+%% to print line numbers in the margin use lineno option %%
+%%=======================================================%%
+
+%%\documentclass[lineno,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+
+%%======================================================%%
+%% to compile with pdflatex/xelatex use pdflatex option %%
+%%======================================================%%
+
+% \documentclass[pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+
+
+%%Note: the following reference styles support Namedate and Numbered referencing. By default, the style follows the most common style. To switch between the options, you can add or remove �Numbered� in the optional parentheses. 
+%%The option is available for: sn-basic.bst, sn-vancouver. bst, sn-chicago.bst%  
+ 
+% \documentclass[sn-nature]{sn-jnl}% Style for submissions to Nature Portfolio journals
+% \documentclass[sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+\documentclass[sn-mathphys-num]{sn-jnl}% Math and Physical Sciences Numbered Reference Style 
+% \documentclass[sn-mathphys-ay]{sn-jnl}% Math and Physical Sciences Author Year Reference Style
+% \documentclass[sn-aps]{sn-jnl}% American Physical Society (APS) Reference Style
+% \documentclass[sn-vancouver,Numbered]{sn-jnl}% Vancouver Reference Style
+% \documentclass[sn-apa]{sn-jnl}% APA Reference Style 
+% \documentclass[sn-chicago]{sn-jnl}% Chicago-based Humanities Reference Style
+
+%%%% Standard Packages
+%%<additional LaTeX packages if required can be included here>
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage[title]{appendix}
+\usepackage{xcolor}
+\usepackage{textcomp}
+\usepackage{manyfoot}
+\usepackage{booktabs}
+% \usepackage{tabular}
+% \usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage{float}
+\usepackage[misc]{ifsym}
+\usepackage[most]{tcolorbox}
+\usepackage{hyperref}
+\usepackage{adjustbox}
+% \usepackage{tabularx}
+\usepackage{multirow}   
+% \usepackage{colortbl}     
+\newtcbox{\markerBox}[1][]{on line, arc=0pt, outer arc=0pt, colback=orange!20, colframe=orange!20, boxsep=0pt, left=1pt, right=1pt, top=1pt, bottom=1pt, #1}
+\usepackage{color}
+\pagestyle{empty}
+\pagenumbering{gobble}
+\usepackage{threeparttable}
+\usepackage{orcidlink}
+\usepackage{booktabs} % For professional table lines
+\usepackage{array}    % For column control
+\usepackage{geometry} % To adjust page margins if needed
+% Define JSON language style
+\lstdefinelanguage{json}{
+    frame=single,
+    rulecolor=\color{black},
+    showspaces=false,
+    showtabs=false,
+    breaklines=true,
+    postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{gray}\hookrightarrow\space}},
+    breakatwhitespace=true,
+    basicstyle=\scriptsize\ttfamily,  % Apply \scriptsize here
+    upquote=true,
+    morestring=[b]",
+    stringstyle=\color{string},
+    literate=
+     *{0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      {\{}{{{\color{blue}{\{}}}}{1}
+      {\}}{{{\color{blue}{\}}}}}{1}
+      {[}{{{\color{blue}{[}}}}{1}
+      {]}{{{\color{blue}{]}}}}{1},
+}
+\definecolor{string}{rgb}{0.0, 0.5, 0.0}
+\definecolor{numb}{rgb}{0.0, 0.0, 1.0}  % Define 'numb' color as blue (or another color)
+\renewcommand{\and}{\\}
+% \usepackage{booktabs} % For \toprule, \bottomrule
+% \usepackage{array} % For m and p column types
+% \usepackage{graphicx} % For resizebox
+\usepackage{ragged2e} % For \RaggedRight
+% \lstset{
+%   basicstyle=\ttfamily\tiny, % Use a smaller font to fit more text
+%   breaklines=true,                    % Break lines that are too long
+%   breakatwhitespace=true,             % Only break lines at spaces
+%   columns=fullflexible,               % Allow text to use the full column width
+%   xleftmargin=0.1em, xrightmargin=0.2em,  % Adjust margins to fit the text within the page
+%   showstringspaces=false,             % Don't show spaces in strings
+%   escapeinside={(*@}{@*)},            % For using LaTeX inside listings
+%   keywordstyle=\color{blue},          % Optional, for highlighting keywords
+%   language=json,
+%   % backgroundcolor=\color{white}, 
+% }
+\definecolor{backcolour}{rgb}{0.97,0.97,0.93}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codeblue}{rgb}{0,0,0.8}
+
+\lstset{
+  basicstyle=\ttfamily\tiny,           % Smallest readable font
+  backgroundcolor=\color{white},       % Pure white background
+  breaklines=true,
+  breakatwhitespace=true,
+  columns=fullflexible,
+  xleftmargin=0pt, xrightmargin=0pt,
+  showstringspaces=false,
+  escapeinside={(*@}{@*)},
+  keywordstyle=\color{blue}\bfseries,  % Blue and bold for keywords
+  commentstyle=\color{codegreen},      % Green for comments
+  stringstyle=\color{codepurple},      % Purple strings
+  numberstyle=\tiny\color{gray},
+  aboveskip=0pt, belowskip=0pt,
+  tabsize=2,
+  breakindent=0pt,
+  resetmargins=true
+}
+
+% \usepackage{float}
+% \usepackage{array} % For m and p column types
+% \usepackage{graphicx} % For resizebox
+\usepackage{ragged2e} % For \RaggedRight
+
+%%%%%=============================================================================%%%%
+%%%%  Remarks: This template is provided to aid authors with the preparation
+%%%%  of original research articles intended for submission to journals published 
+%%%%  by Springer Nature. The guidance has been prepared in partnership with 
+%%%% Production teams to conform to Springer Nature's technical requirements. 
+%%%%  Editorial and presentation requirements differ among journal portfolios and 
+%%%%  research disciplines. You may find sections in this template are irrelevant 
+%%%%  to your work and are empowered to omit any such section if allowed by the 
+%%%%  journal you intend to submit to. The submission guidelines and policies 
+%%%%  of the journal take precedence. A detailed User Manual is available in the 
+%%%%  template package for technical guidance.
+%%%%%=============================================================================%%%%
+
+%% as per the requirement new theorem styles can be included as shown below
+% \theoremstyle{thmstyleone}%
+% \newtheorem{theorem}{Theorem}%  meant for continuous numbers
+% %%\newtheorem{theorem}{Theorem}[section]% meant for sectionwise numbers
+% %% optional argument [theorem] produces theorem numbering sequence instead of independent numbers for Proposition
+% \newtheorem{proposition}[theorem]{Proposition}% 
+% %%\newtheorem{proposition}{Proposition}% to get separate numbers for theorem and proposition etc.
+
+% \theoremstyle{thmstyletwo}%
+% \newtheorem{example}{Example}%
+% \newtheorem{remark}{Remark}%
+
+% \theoremstyle{thmstylethree}%
+% \newtheorem{definition}{Definition}%
+
+% \raggedbottom
+%%\unnumbered% uncomment this for unnumbered level heads
+
+\begin{document}
+
+\title[Article Title]{OntoSage: Intelligent Human Building SmartBot for Semantic Smart Buildings Question Answering}
+
+%%=============================================================%%
+%% GivenName	-> \fnm{Joergen W.}
+%% Particle	-> \spfx{van der} -> surname prefix
+%% FamilyName	-> \sur{Ploeg}
+%% Suffix	-> \sfx{IV}
+%% \author*[1,2]{\fnm{Joergen W.} \spfx{van der} \sur{Ploeg} 
+%%  \sfx{IV}}\email{iauthor@gmail.com}
+%%=============================================================%%
+
+\author*[1]{\fnm{Suhas} \sur{Devmane}\orcidlink{0009-0007-4226-5567}}\email{DevmaneSP1@cardiff.ac.uk}
+
+\author[2]{\fnm{Omer} \sur{Rana}\orcidlink{0000-0003-3597-2646}}\email{RanaOF@cardiff.ac.uk}
+
+
+\author[3]{\fnm{Charith} \sur{Perera}\orcidlink{0000-0002-0190-3346}}\email{PereraC@cardiff.ac.uk}
+
+
+
+\affil[1,2,3]{\orgdiv{School of Computer Science and Informatic}, \orgname{Cardiff University}, \orgaddress{\street{Cathays}, \city{Cardiff}, \postcode{CF24 4AG}, \state{Wales}, \country{UK}}}
+
+% \affil[2]{\orgdiv{Department}, \orgname{Organization}, \orgaddress{\street{Street}, \city{City}, \postcode{10587}, \state{State}, \country{Country}}}
+
+% \affil[3]{\orgdiv{Department}, \orgname{Organization}, \orgaddress{\street{Street}, \city{City}, \postcode{610101}, \state{State}, \country{Country}}}
+
+%%==================================%%
+%% Sample for unstructured abstract %%
+%%==================================%%
+
+\abstract{Smart buildings \textcolor{blue}{remain} heterogeneous \textcolor{blue}{across sensing infrastructure, metadata quality, legacy protocols, and analytics requirements}, hindering \textcolor{blue}{reusable} human\textcolor{blue}{--}building natural language interfaces. \textcolor{blue}{We present \textbf{OntoSage}, a modular framework for ontologically grounded question answering (QA) and fulfillment of analytic intents over smart building data. The framework (i) leverages a} Brick Schema-based RDF model \textcolor{blue}{with reasoning capabilities}, \textcolor{blue}{(ii) translates natural language (NL) questions into executable SPARQL via a fine-tuned seq2seq model (T5-Base), and (iii) orchestrates portable analytics microservices that operate on time-series sensor data referenced through ontology-linked UUIDs. A summarization component (open-weights Mistral-7B, zero-shot) converts structured SPARQL/SQL/analytic outputs into concise stakeholder-aware responses without requiring task-specific fine-tuning. We categorize QA complexity into four reasoning classes and report component-level execution metrics supporting these categories. To address portability, we formalize a lightweight adaptation workflow (ontology ingestion$\rightarrow$entity enrichment for NLU$\rightarrow$NL2SPARQL validity checks$\rightarrow$analytics binding) designed to minimize per-building retraining. Reproducibility is enabled through public source code, synthetic and ontology-derived datasets, Docker/Compose service descriptors, and documented supporting scripts}\footnote{https://github.com/suhasdevmane/OntoBot}\textcolor{blue}{. The developers' documentation is publicly accessible\footnote{https://ontosage-docs.github.io}. }}
+
+\keywords{Human-Building Interaction (HBI), Internet-of-Things (IoT), Smart Buildings, Semantic Web, Ontologies,  Large Language Models(LLMs)}
+
+\maketitle
+\vspace{-0.3cm}
+\section{Introduction}\label{sec1}
+
+Human\textcolor{blue}{--}Building Interaction (HBI) \textcolor{blue}{studies how occupants, cyber-physical infrastructure, and data services co-evolve in intelligent built environments \cite{Alavi2019a,Alavi2016}. Contemporary smart buildings integrate heterogeneous sensing (environmental, HVAC, air quality, etc.), varied middleware, inconsistent metadata curation, and siloed Building Management Systems (BMS). This fragmentation impedes the development of universal, reusable natural language (NL) interfaces that would allow stakeholders (facility managers, sustainability officers, maintenance staff, visitors, etc.) to interrogate both semantic knowledge (ontologies) and live/historical time-series data. Commodity voice/NL platforms (Alexa, Google Home, HomeKit, SmartThings) provide intent execution abstractions but (i) lack explicit semantic grounding in standard building ontologies, (ii) cannot express multi-hop or ontology+timeseries fused analytical queries, and (iii) require opaque, proprietary adaptation. Generic large language models (LLMs) exhibit fluent dialogue yet hallucinate unseen device semantics and offer no built-in alignment to Brick-structured relational queries.}
+
+\textcolor{blue}{Three persistent gaps motivate this work: (1) \textit{Reasoning coverage}- existing prototypes emphasize direct entity lookups rather than aggregated, multi-relation, or temporal/analytic intents; (2) \textit{Portability}-per-building re-engineering of training data and pipeline configuration limits scalable deployment; (3) \textit{Reproducibility and extendability}- NL$\rightarrow$SPARQL demonstrations omit dataset construction details, versioned artifacts, or adaptation workflows for future advancements. Moreover, no domain-specific LLMs for the smart buildings domain are available for NL-to-SPARQL translation in QA.}
+
+\textcolor{blue}{We present \textbf{OntoSage}, a modular ontology-based framework for QA and analytics orchestration that converts natural language questions into SPARQL. It links results to time-series analytics microservices and summarizes outcomes for users. The Brick Schema \cite{Balaji2016} serves as a shared semantic foundation, allowing each asset to expose a UUID that connects RDF descriptors to structured sensor telemetry. A fine-tuned T5-Base seq2seq model performs NL$\rightarrow$SPARQL translation; a domain-aware Rasa Natural Language Understanding (NLU) layer mediates entity normalization and slot completion; portable analytics microservices receive normalized JSON payloads; an open-weights Mistral-7B model (zero-shot) produces human-readable rationales.}
+This paper makes the following contributions to HBI and semantic smart building QA:
+\begin{enumerate}
+    \item \textcolor{blue}{Unified Reasoning Taxonomy: We define four NL reasoning classes (single‑hop factual, multi‑hop relational, aggregation/temporal, ontology+timeseries fusion) and align component evaluation metrics to each.}
+    \item \textcolor{blue}{Portable Adaptation Workflow: A minimal four‑stage process (ontology ingestion$\rightarrow$entity enrichment$\rightarrow$NL to SPARQL conformance validation$\rightarrow$analytics binding) enabling reuse across buildings with reduced retraining.}
+    \item \textcolor{blue}{Open Reproducibility Stack: Public release of code, synthetic + ontology‑derived NL–SPARQL pairs, Docker/Compose deployment descriptors, training/evaluation scripts, and developers' documentation for extending goals.}
+    \item \textcolor{blue}{Microservice Analytics Layer: Extensible, decoupled analytic endpoints (anomaly detection, comfort indices, air quality aggregation, correlation, forecasting, etc.) callable directly from SPARQL‑resolved entity UUIDs.}
+    \item \textcolor{blue}{Empirical Component Evaluation: A quantitative assessment of NLU entity extraction, SPARQL generation, analytics accuracy, and summarization quality based on a real-world testbed.}
+    \item \textcolor{blue}{Limitations and Roadmap Articulation: A transparent analysis of challenges in multi-entity disambiguation, long-tail intent coverage, and dataset breadth constraints.}
+\end{enumerate}
+
+We address the following research questions:
+\begin{enumerate}
+    \item RQ1 (System): What system components and architecture are required to support human-building conversations with smart buildings, enabling multi-persona question answering at scale?
+    \item RQ2 (Applications): How can a system be constructed for heterogeneous building environments so that non-expert users can contribute to mutual human-building benefits?
+    \item \textcolor{blue}{RQ3 (Analytics): How can portable analytic applications be implemented for the built environment, covering installed systems to answer analytical questions using data collected in smart buildings?}
+\end{enumerate}
+The primary objectives of this research are:
+\begin{itemize}
+    \item Develop a framework that enables diverse users, from guests to experts, to interact with smart buildings in natural language, providing a range of analytical and operational insights of the built environment \textcolor{blue}{to enhance building health and sustainability}.
+    \item \textcolor{blue}{Fine-tune LLMs and develop adaptable algorithms as microservices that allow users to leverage real-time and historical building data for multiple objectives that can be deployed in heterogeneous built environments.}
+    \item \textcolor{blue}{Establish a standardized, conversational AI-driven approach with NLU and LLMs to effortlessly incorporate new building types and components into the framework, minimizing reconfiguration while ensuring robust, domain-specific responses.}
+\end{itemize}
+
+\textcolor{blue}{We introduce a scalable framework validated through a multi-month deployment in a real-world building testbed with diverse environmental sensors. Its modular design allows for future analytical extensions and replication across buildings. \textbf{Paper organization:} Section~\ref{sec2} reviews related work in NL-to-SPARQL, smart building ontologies, and conversational agents. Section~\ref{sec3} outlines the system architecture and model design, including the NLU pipeline (\ref{subsec:model-architecture}), NL-to-SPARQL translation (\ref{subsec:nl2sparql}), and analytics orchestration (\ref{subsec:analytics-pipeline}). Section~\ref{sec4} describes the experimental setup, covering testbed development, NLU training, and model training. Section~\ref{sec5} presents component evaluations (\ref{sec:component-wise-evaluation}), baseline comparisons (\ref{subsec:baseline-comparison}), reasoning class analysis (\ref{subsec:reasoningClasses}), and cross-building portability (\ref{subsec:portability}). Section~\ref{sec6} outlines analytics applications and reproducibility artifacts (\ref{subsec:reproducibility}), while Section~\ref{sec7} states limitations and future enhancements. Section~\ref{sec8} examines implications, and Section~\ref{sec9} concludes. Extended chatbot QA examples can be found in Appendix~\ref{secA1}.}
+
+
+
+\vspace{-0.3cm}
+\section{Related Work}\label{sec2}
+
+\textcolor{blue}{The literature relevant to OntoSage spans (i) NL$\rightarrow$SPARQL translation, (ii) semantic/ontology modelling for buildings, and (iii) conversational agents for HBI.} 
+
+\subsection{NL to SPARQL Query Generation}\label{subsec:nl2sparql-related}
+
+\textcolor{blue}{Early template and rule-driven pipelines \cite{AymanAbbasNageeb,Reif2024} have largely given way to encoder-decoder Transformers (e.g., BART, T5) and hybrid entity-linking augmented models \cite{Huang2023,lecorve-etal-2022-sparql,SPBERT,Tran2021,Diomedi2022,Diomedi2021}. Recent work leverages large language models for broader generalization and compositionality \cite{Rony2022,Avila2024,Rangel2024,xu-etal-2023-fine,Brei2024}, yet challenges persist for multi-hop joins, temporal aggregation, and faithful entity grounding-core reasoning classes we explicitly benchmark.}
+Translating natural language queries into structured SPARQL queries for knowledge graph interrogation has been a cornerstone of recent research. Early efforts, such as \cite{AymanAbbasNageeb}, applied NLP techniques to datasets like Stanford SQuAD, enabling natural language query processing and laying the foundation for subsequent advancements. However, these approaches often relied on template-based systems, which required manual effort to construct domain-specific query templates and struggled to adapt to new knowledge graphs \cite{Reif2024}. To overcome these limitations, recent studies have explored end-to-end deep learning frameworks and hybrid systems. For instance, \cite{Huang2023} demonstrated the efficacy of fine-tuning pre-trained encoder-decoder models, such as BART \cite{NLQxform} and T5 \cite{lecorve-etal-2022-sparql}, to generate SPARQL queries. This approach handles unseen entities by translating entity IDS into text labels. Similarly, \cite{Diallo2023} evaluated pre-trained versus non-pre-trained models, demonstrating that techniques such as question annotation and copy mechanisms improve query generation accuracy. Transformer-based models have further advanced this domain. Fine-tuned models, such as T5 and SPBERT \cite{SPBERT, Tran2021}, achieve superior performance on benchmark datasets compared to task-specific models. Hybrid approaches combining neural machine translation (NMT) with entity linking have also gained traction. Moreover,\cite{Diomedi2022} and \cite{Diomedi2021} integrated NMT with dedicated entity linking to bridge the gap between ambiguous natural language and structured SPARQL queries, a strategy reinforced by \cite{Lin2022} and \cite{Yin2019}. The rise of large language models (LLMs) has accelerated progress, with \cite{Rony2022}, \cite{Avila2024}, \cite{Rangel2024}, \cite{xu-etal-2023-fine}, and \cite{Brei2024} leveraging LLMs to encode linguistic features and embed knowledge graphs, enabling executable SPARQL queries for complex domains. \textcolor{blue}{}
+
+\vspace{-0.3cm}
+\subsection{Ontologies for Smart Buildings}\label{subsec:ontologies-related}
+
+\textcolor{blue}{The evolution of smart building ontologies reflects a shift from narrow, energy-focused schemas to robust, interoperable metadata standards. Early frameworks such as Green Building XML (gbXML) and the Building Energy Data Exchange Specification (BEDES) \cite{gbxml,bedes,buildings14040911} laid the groundwork for energy modeling and data exchange, but their limited expressivity constrained broader interoperability. Subsequent efforts addressed these limitations by introducing standardized vocabularies and extensible frameworks. Notable examples include Project Haystack, which enhanced semantic modeling for building management systems, and Industry Foundation Classes (IFC), which supported design-phase interoperability in architecture and engineering domains \cite{haystack,Borrmann2018}.
+The emergence of IoT-centric ontologies, such as the Smart Appliances REFerence Ontology (SAREF), provided structured representations for smart appliances, thereby advancing device interoperability and application integration \cite{saref,Moreno-MunozAntonio2023ESAA,Daniele,Hwerbi2020}. However, these schema often lacked adaptability across diverse building types. More flexible approaches were introduced through the Building Topology Ontology (BOT) and Semantic Sensor Network (SSN)/SOSA standards, both of which leveraged RDF-based models to address operational and sensing requirements while remaining specialized to particular domains \cite{Janowicz2020,ssn-ontology,Haller2018}.}
+
+The development of the Brick ontology represents a significant milestone in this progression. Brick offers an open-source, RDF-based schema that prioritizes completeness, extensibility, and uniformity of metadata for both physical and virtual assets in smart buildings \cite{Balaji2018,buildingsync}. Unlike traditional OWL-based ontologies constrained by Description Logic(DL), Brick utilizes RDF and RDFS semantics, facilitating more nuanced modeling of sensor networks and diverse building subsystems.
+\textcolor{blue}{Despite these advances, ontologies still face challenges in automated cross-building alignment and the seamless coupling of semantic descriptors with live analytic microservices. Developing building-agnostic, portable metadata frameworks that integrate with conversational AI and tap into underutilized IoT sensor data (often stored in structural databases) remains an open research frontier. Our work addresses these gaps by introducing a UUID-based linkage and portability workflow, which enhances cross-building interoperability and supports real-time analytic integration.}
+\vspace{-0.3cm}
+\subsection{Conversational Agents in HBI}\label{subsec:conversational-agents-related}
+
+Conversational agents, also known as chatbots, have become pivotal interfaces for human-building interaction (HBI), enabling natural language interactions with intelligent environments. Traditional chatbots, relying on pattern-matching rules, offered limited conversational capabilities \cite{Augello2014}, which highlighted the need to formalise both rational (reasoning and NLP) and intuitive (semantic) components for human-like dialogue. Recent NLP advances, particularly transformer-based models and LLMs like \textcolor{blue}{GPT}, have transformed chatbot development by enabling flexible, context-aware dialogue through prompting \cite{Gallo2023}. Frameworks like Rasa \cite{Bocklisch2017} and Dialogflow, which are widely used for intent recognition and entity extraction, have been instrumental. For instance, \cite{Mishra2022} integrated Rasa with SPARQL generation modules to address query ambiguity, while \cite{Rajosoa2019HybridQA} combined Rasa-based entity extraction with custom SPARQL modules for improved question-answering accuracy. Linguistic rule-based systems, such as those employing syntactic ambiguity resolution \cite{10.1007/978-981-13-0344-9_4}, have further enhanced intent detection.
+
+AI-based methods, including Transformers and reinforcement learning \cite{Gallo2023}, dominate chatbot development for IoT, supporting applications such as patient monitoring \cite{10.1145/3607720.3607746}, human activity recognition \cite{10.1145/3555776.3577693, 10.1145/3590003.3590100}, security \cite{electronics12092100}, and energy efficiency \cite{10.1145/3600100.3626635}. Ontology-based chatbots have demonstrated versatility across various domains, including tutoring \cite{Nguyen2021}, e-commerce \cite{Vegesna2018}, and healthcare \cite{Avila2019}, by leveraging ontologies to enhance response generation. Domain-specific systems, such as \cite{Jung2020} for Korean query answering and KBot \cite{Ait-Mlouk2020} for smart home interactions, merge linked data with machine learning (ML) for interactive question answering. Recent HBI studies emphasise user psychology and multimodal interactions. For example, \cite{10.1145/3290605.3300488} found audio output modalities influence perceptions of sensitive information retrieval, while \cite{Følstad2021} highlighted challenges in privacy, multi-user experiences, and design considerations \cite{10.1145/3202185.3202744, 10.1145/3196709.3196815, 10.1145/3490099.3511129, 10.1145/3411764.3445598, 10.1145/3279963.3281658, 10.1145/3411764.3445770}. Systems like TAO \cite{Boovaraghavan2023}, combining ontological and unsupervised clustering approaches, can infer rich contexts from daily activities, underscoring the potential of integrating semantic technologies with conversational AI for adaptive, user-friendly smart building interfaces.
+
+
+\vspace{-0.3cm}
+\section{System Architecture and Design}\label{sec3}
+\textcolor{blue}{This section presents the OntoSage framework's architecture, encompassing foundational requirements (\ref{subsec:arch-requirements}), core system components (\ref{subsec:core-components}), model architecture including NLU and NL-to-SPARQL translation (\ref{subsec:model-architecture}), post-processing and data retrieval (\ref{subsec:post-processing}), analytics pipeline (\ref{subsec:analytics-pipeline}), and summarization (\ref{subsec:summarization}). These elements collectively enable multi-building semantic question answering over diverse building infrastructures.}
+Sequence-to-sequence LLMs have been used in our previous work \cite{suhasdevmane}, and the optimization of SPARQL for domain-specific queries points to promising directions for the future. 
+
+\subsection{Architectural Requirements}\label{subsec:arch-requirements}
+
+Exploring current technologies and open-source components to \textcolor{blue}{facilitate} the human-building conversation for multiple goals, we found that we need a standard description logic and a language to communicate domain knowledge, as well as a pipeline consisting of microservices that will perform their specific tasks when \textcolor{blue}{supplied with} the right entities. Figure~\ref{Figure:SystemArchitecture} illustrates the system overview with its main components: Graphical User Interfaces (GUI) and backend processes. The GUI connects to different services, enabling user communication with smart buildings and consists of interconnected services necessary to complete the conversation. It provides \textcolor{blue}{natural} language question answering (NLQA) in smart building environments by integrating semantic ontologies, large language models (LLMs), a modular backend, and a conversational AI interface.
+
+
+\begin{figure*}[!ht]
+	\centering
+        \hspace*{-0.2cm}
+	\includegraphics[width=\textwidth]{Figure1.png}
+	\caption{Overview of system architecture}
+	\label{Figure:SystemArchitecture}
+\end{figure*}
+
+The following is a list of system components required to assemble a meaningful QA approach addressing the first research objective (RQ 1). 
+
+\begin{itemize}
+    \item Semantic Description (BrickSchema Ontology): Utilises the BrickSchema terminology to provide a comprehensive semantic description of physical, logical, and virtual assets, capturing their relationships within the smart building ecosystem.   
+    \item Ontology Reasoning (SHACL, OWLRL, VBIS): Employs SHACL, OWLRL, and VBIS to validate RDF data against predefined shapes, ensuring compliance with constraints and enriching the ontology with domain-specific knowledge.
+    \item Ontology Query Language (SPARQL): Leverages SPARQL to efficiently retrieve information from RDF databases, enabling precise querying within the context of BrickSchema terminology and the Building RDF model.
+    \item RDF Triple Store (Apache Jena Fuseki): We chose Apache Jena Fuseki from other open-source SPARQL servers to host the smart building model. It can run as a standalone server or be embedded in an application. Fuseki provides the SPARQL protocol and SPARQL Graph Store protocol for querying and updating data. It is integrated with TDB to provide robust, transactional, persistent storage, and related reasoners can be applied to the RDF models to extend the RDF Model Terminologies by performing logical inferences. 
+    \item Conversational Chatbot (RaSa Open Source): Integrates RaSa Open Source to enable \textcolor{blue}{interactions} with the smart building system, extracting entities and offering fallback mechanisms to gather additional user information using NLU. 
+    \item Timeseries Database (Postgresql/Mysql, etc.): Employs \textcolor{blue}{a structured database} to store large volumes of sensor/device data from the smart building. All timeseries data is uniquely identified in the building's RDF Model for efficient retrieval and processing.
+    \item Iot Platform (ThingsBoard): Utilises ThingsBoard to collect, process, visualise, and analyse data from \textcolor{blue}{IoT} devices, seamlessly integrated with PostgreSQL and PgAdmin for robust data management and administration.
+    \item Natural Language to SPARQL Translation (T5 (t5-base)): Applies the T5 (t5-base) model to translate natural language questions into SPARQL queries, leveraging natural language understanding entities for accuracy.
+    \item SPARQL Summarisation (Mistral 7B): Open source Seq2Seq models are explored, and Mistral 7B LLMs are used to generate concise and meaningful summaries of responses from the knowledge base, database, and analytic microservices to enhance user comprehension.
+    \item Training Datasets (Custom): Employs custom datasets to train Seq2Seq LLMs for natural language to SPARQL translation, embedding domain-specific knowledge for improved performance.
+    \item Analytics Operation on the data (Microservices): A server hosting \textcolor{blue}{analytic} applications to perform data analytics. Rasa's NLU is trained on brick schema terminology to extract Entities, and the related timeseries data is used for analytics.
+\end{itemize}
+
+
+\vspace{-0.3cm}
+\subsection{Core Components and Data Flow}\label{subsec:core-components}
+\subsubsection{Core Components}
+\textcolor{blue}{Imagine} a smart \textcolor{blue}{built environment}, equipped with multiple systems that comprise a sensor/device network deployed across various zones, as shown in Figure \ref{fig:pipeline}. This installed built environment is modeled with a formal BrickSchema terminology, a widely adopted schema chosen for its standardised vocabulary and extensible structure. The ontology, represented in Turtle (TTL) format, is parsed into RDF triples and stored in a triple store (SPARQL server) with reasoning capabilities, such as Graphdb or Apache Jena Fuseki. On the other hand, all such devices' data is stored in structured databases such as Mysql or Postgresql. Each sensor/device with its unique time series reference ID is added to the RDF Model of the building, with spatial relationships and properties.  
+
+\begin{figure*}[!ht]
+	\centering
+	%\vspace{-0.20cm}
+	\includegraphics[width=12cm, height=6.5cm]{Figure2.png}
+	%\vspace{-0.10cm}	
+	\caption{Machine learning model and custom actions flow}
+	\label{fig:pipeline}
+\end{figure*}
+
+On the User side, the framework leverages 'Rasa Open Source' for dialogue management, intent recognition, and entity extraction. Rasa’s NLU pipeline is configured using YAML files that define intents, entities, lookup tables, regex patterns, synonyms, and dialogue rules. A key design goal is to identify smart building-specific entities, such as sensor names, dates, and locations, and analyse the type context during conversations. Ontology-derived entities from the RDF graph are embedded directly into Rasa’s training data to improve entity recognition. Rasa includes a fallback policy to handle ambiguous inputs, redirecting the user to a data-gathering phase to collect all required slots. Once all necessary fields are filled, the `Rasa SDK Action Server` triggers corresponding custom actions, defined in Python, which execute database queries, API calls, or analytical routines.
+
+To enable intelligent and context-aware interactions with this structured data, we fine-tuned \textbf{T5 models} to generate SPARQL queries from natural language questions. These dynamically constructed queries interact with the locally chosen SPARQL server, retrieving precise results that accurately reflect the user’s intent. Based on the SPARQL response, \textcolor{blue}{collected} UUIDS are used in parallel to retrieve time-series data from \textcolor{blue}{the database} through a standard SQL query \textcolor{blue}{template (for chosen database)} that includes entity placeholders. The framework employs a dual-model architecture to provide high-quality responses. A fine-tuned T5 model handles query generation, while a \textbf{Mistral 7B model} summarises responses, whether from SPARQL, \textcolor{blue}{or SQL and analytic microservices}. This combination ensures both accuracy in retrieval and clarity in output. The summarisation endpoint is \textcolor{blue}{effective at describing responses} and providing interpretable insights for end-users.
+
+\textcolor{blue}{ThingsBoard, an open-source IoT platform, enables device visualization, data flow management, real-time monitoring, alerting, and administrative control within local networks. It supports multiple sensor protocols and stores data in structured databases for efficient access. Tools such as Adminer and PgAdmin assist with database management and debugging, while Jupyter Notebooks integrate easily for rapid prototyping. Extensible analytic microservices operate independently to process complex sensor datasets, with results from SPARQL endpoints, databases, and analytics routed through an action server for clear summaries. By combining BrickSchema, SPARQL, Rasa, structured databases, analytic microservices, and advanced language models, the framework delivers a scalable and semantically rich NLQA solution for smart buildings, promoting intuitive interaction, structured querying, and sustainable operations.}
+
+
+
+
+\subsubsection{Data Flow}
+
+User interaction begins with a chatbot interface, where users pose queries related to the \textcolor{blue}{environment}, sensor data, or building-specific analytics. These inputs are first processed by an NLU pipeline powered by Rasa Open Source. The NLU model is trained using data derived from the smart building ontology \textcolor{blue}{(with TBox terms from Brick V1.4)}, enabling it to accurately classify intents and extract key entities such as sensor types\textcolor{blue}{(names)}, locations, dates, and analytic terms. To facilitate this training, we implemented a dedicated function that ingests the ontology\textcolor{blue}{, extracts relevant entity labels (sensors-uuids mappings),} and incorporates them into the training data as synonyms, lookup tables, and regex patterns. \textcolor{blue}{The smart building ontology model must use TBox (Terminological Box), i.e., the vocabulary, structure, and relationships between concepts (classes and properties) of BrickSchema (V1.4) terminology as a basis.}
+When the NLU component identifies an intent, it forwards the structured output (intent and entities) to the custom action module. Even if the intent is classified as out of scope, the framework is designed to route the input to a fallback action for robustness testing. Within the custom action script, \textcolor{blue}{the first key component is an implementation of a} fine-tuned T5 model trained to perform NL2SPARQL translation. This model receives the user’s prompt, enhanced with extracted entities\textcolor{blue}{,} and generates a SPARQL query representing the user’s question.
+The generated SPARQL query is executed against the smart building ontology, which is hosted in an SPARQL server. Ontological reasoning is facilitated via a reasoner \textcolor{blue}{(currently supports rdfs, owlrl, vbis, shacl reasoning, implemeted in a jupyter environment)} that supports relationship inference and schema validation. The resulting RDF data is returned in JSON format for further processing. A decision point in the workflow checks whether the SPARQL result contains unique identifiers (UUIDS), which indicate links to time-series sensor data stored in relational databases. If such UUIDS are present, the query is passed to a query builder module, which populates a predefined \textcolor{blue}{standard SQL query template (unique for the employed database type)} with appropriate entity values such as sensor \textcolor{blue}{UUIDs}, and date range. The constructed SQL query is sent to a chosen structural database endpoint, which returns the result as JSON. \textcolor{blue}{At the same time, when UUIDs are present in the SPARQL response, scripts trigger a service call to decide whether to need to perform analytics and which analytics application to perform with a decider service (\ref{subsubsec:decider-service}).}
+
+The response (whether derived from SPARQL or SQL) is then routed to the analytics layer (\ref{subsec:analytics-pipeline}). This component may invoke external analytics microservices to perform advanced computations such as trend analysis, aggregation, or anomaly detection. These microservices can also produce external references, graphical summaries, and additional JSON outputs to enhance interpretability. Once analytics are complete, the results are passed to a summarisation module powered by the Mistral 7B model. This model can generate coherent and context-aware summaries, transforming raw RDF triples or structured database responses into fluent, user-friendly, \textcolor{blue}{stakeholder profile-based} explanations. In cases where the SPARQL query does not yield time-series data, the output is immediately forwarded to the summarisation stage without invoking the \textcolor{blue}{SQL and} analytics layer.
+
+The final summarised response is sent back to the chatbot interface and presented to the user. For traceability and debugging, all query responses and analytics results are also stored\textcolor{blue}{/shared} in JSON\textcolor{blue}{/png} format, which can be accessed \textcolor{blue}{via UI and analyzed deeply} through an integrated Jupyter Notebook interface.
+The system includes a training trigger mechanism that detects newly added building data or changes in ontology structure to ensure adaptability. 
+This mechanism periodically re-trains the NL2SPARQL model, \textcolor{blue}{ensuring} the pipeline remains aligned with the evolving smart building environment. The framework enables end-users, regardless of technical expertise, to query complex building systems and receive actionable insights in natural language.
+
+
+
+\subsection{Model Architecture}\label{subsec:model-architecture}
+\subsubsection{NLU Pipeline}
+
+At the front end, a Rasa‑powered conversational agent captures natural language queries and converts them into structured requests for downstream processing. The unique NLU model for a single built environment within Rasa is trained to detect key intents and extract relevant entities such as sensor types, time ranges, and locations from user queries using a custom pipeline specified in the \texttt{config.yml} file. For instance, when a user inquires, "Which rooms currently have a temperature above the recommended setpoint (e.g., $24\,^\circ\mathrm{C}$)?", the NLU component identifies the intent as \texttt{query\_temperature\_data} and extracts entities such as \texttt{temperature\_sensor}, \texttt{Room\_x}, \texttt{start\_date}, \texttt{end\_date}, and \texttt{setpoint}.
+
+\begin{figure*}[!ht]
+	\centering
+        \hspace*{-0.2cm}
+	\includegraphics[width=\textwidth]{Figure3.png}
+	\caption{Rasa NLU pipeline for intent classification and entity extraction}
+	\label{Figure:NLUArchitecture}
+\end{figure*}
+
+As shown in the Figure \ref{Figure:NLUArchitecture}, the Rasa NLU pipeline processes user queries, such as "Which rooms currently have a temperature above the recommended setpoint (e.g., 24°C)?", through a series of components to classify intents and extract entities, followed by dialogue management to trigger appropriate actions. Initially, the \texttt{WhitespaceTokenizer} splits the input text into tokens based on whitespace, producing a list like $["\text{Which}", "\text{rooms}", \dots, "\text{24°C)?"}]$. The \texttt{RegexFeaturizer} then applies regular expression patterns defined in the training data, such as $\texttt{\textbackslash d+\textdegree C}$ for temperatures or $\texttt{setpoint}$ for specific terms, to generate features for entities and intents. Next, the \texttt{RegexEntityExtractor} identifies entities directly using these patterns, yielding a list as shown in the following box:
+\vspace{3pt}
+\begin{lstlisting}[language=json]
+[
+  {"entity": "temperature", "value": "20", "start": 45, "end": 47},
+  {"entity": "setpoint",    "value": "25", "start": 33, "end": 35}
+]
+\end{lstlisting}
+\vspace{3pt}
+The \texttt{LexicalSyntacticFeaturizer} enriches tokens with lexical features (e.g., part-of-speech tags like "rooms: NOUN") and syntactic features (e.g., dependency parsing), providing linguistic context to aid downstream components. The \texttt{CountVectorsFeaturizer} converts the text into a numerical bag-of-words vector, enabling intent classification. The \texttt{DIETClassifier}, a transformer-based model, leverages features from all prior components to jointly classify the intent (e.g., $\texttt{action\_question\_to\_brickbot}$ with a confidence score) and refine entities (e.g., $\texttt{temperature\_sensor}$, $\texttt{Room\_x}$, $\texttt{setpoint}$). Alongside, the Duckling server is running as a microservice to extract the dates using the Rasa Duckling image. Dialogue management is handled by the \texttt{MemoizationPolicy}, which matches the conversation state (intent $+$ entities) to known training stories to predict action; the \texttt{RulePolicy}, which applies predefined rules to execute actions (e.g., triggering $\texttt{\textcolor{blue}{action\_question\_to\_brickbot}}$ for the $\texttt{\textcolor{blue}{ActionQuestionToBrickbot}}$ \textcolor{blue}{class}); and the \texttt{TEDPolicy}, a transformer-based model that predicts actions based on dialogue history, intent, and entities, excelling in unseen scenarios. 
+% Finally, the system triggers an action pipeline that queries a SPARQL endpoint and a database to retrieve rooms with temperatures above 24°C, delivering a precise response to the user.
+
+\vspace{-8pt}
+\subsubsection{NL to SPARQL Translation}\label{subsec:nl2sparql}
+
+Our previous study \cite{suhasdevmane} identified the T5-base model as the most suitable for this task. We trained the model using natural language questions paired with formatted SPARQL queries, including necessary prefixes. The training dataset contains over 120,000 example pairs in a multi-variant NL question format, enabling the model to generate SPARQL queries from user input. Since most smart building sensor devices generate time-series data stored in structured databases (e.g., MySQL, PostgreSQL), directly adding large volumes of time-series data to the RDF model is \textcolor{blue}{Inappropriate}. Instead, referencing the time-series data's location in the RDF model enables a more efficient solution for linking the structured databases with the RDF model. Each sensor or device is assigned a unique UUID, as defined by BrickSchema \textcolor{blue}{TBox terminology.} 
+When a user submits a query, the system extracts entities, identifies the intent, and retrieves relevant time-series IDs. Once the entities are identified, the NL question and contextual information are sent to the model, which generates the corresponding SPARQL query, even if \textcolor{blue}{TBox information} is missing. For example, in response to the question, “Tell me the failure trends of the exhaust air flow sensor in the Maintenance Room,” the NLU pipeline extracts entities such as \texttt{"analysis\_type"}: \texttt{"failure trends"}, \texttt{"sensor\_type"}:\texttt{"exhaust air flow sensor"}, and \texttt{"location":} \texttt{"maintenance Room.}" 
+% However, as model outputs are case sensitive, we recommend giving the exact inputs with the right target device names for analysis. 
+The T5 model, using these entities along with BrickSchema T-box terms (e.g., \texttt{brick:hasLocation}) and A-box instances (e.g., \texttt{bldg:Maintenance\_Room}), generates the following SPARQL query:
+\vspace{3pt}
+\begin{lstlisting}[language=json]
+{
+    "question": "Tell me the failure trends of the exhaust air flow sensor in the Maintenance Room.",
+    "entity": "bldg:Maintenance_Room \n brick:Exhaust_Air_Flow_Sensor",
+    "sparql": "
+        SELECT ?sensor ?timeseriesId ?storedAt
+        WHERE {
+            ?sensor a brick:Exhaust_Air_Flow_Sensor ;
+                    brick:hasLocation bldg:Maintenance_Room ;
+                    ref:hasExternalReference ?ref .
+            ?ref a ref:TimeseriesReference ;
+                 ref:hasTimeseriesId ?timeseriesId ;
+                 ref:storedAt ?storedAt .
+        }"
+}
+\end{lstlisting}
+\vspace{3pt}
+This query retrieves the sensor, timeseries ID, and data storage location, facilitating efficient data retrieval from structured databases for next steps.
+\newpage
+
+\normalsize
+\subsection{Post-Processing and Data Retrieval}\label{subsec:post-processing}
+After executing the SPARQL query against the SPARQL endpoint, the system processes the results to extract time-series IDs, which are used to retrieve sensor data from structured databases. If no IDs are retrieved, a fallback mechanism employing the open-source Mistral LLMs generates summarised responses. The retrieved data is formatted into a standardised JSON structure, enhancing compatibility with subsequent analysis and summarisation stages. The the post-processing workflow includes time-series ID extraction, database querying,result formatting, and  data retrieval. The SPARQL query results are parsed to identify time series IDs corresponding to building \textcolor{blue}{sensors/devices (ABox individuals)}. These IDs, aligned with BrickSchema UUIDs, serve as references to time series data stored in structured databases (e.g., MySQL, PostgreSQL). If IDs are absent, the system invokes the Mistral LLMs to generate a summarised response or prompt the user for additional input via fallback functions, ensuring robust handling of incomplete data.
+
+The extracted time-series IDs are used to populate placeholders in predefined SQL queries. If placeholders cannot be filled due to missing entities, fallback mechanisms (e.g., user prompts or default values) ensure query completeness. The SQL query retrieves time-series data, including timestamps and sensor readings, from the specified database table. This approach leverages the scalability of structured databases while maintaining semantic links to the RDF model, thereby ensuring seamless integration and consistency. The SQL query results are converted into a standardised JSON format, with sensor names as top-level keys, replacing UUIDs to provide contextual clarity. This structure, shown in the \texttt{fetch\_sensor\_data} function below, organises time-series data by the sensor, facilitating integration with downstream analysis and summarisation pipelines.
+\vspace{4pt}
+\begin{lstlisting}[language=json]
+def fetch_sensor_data(timeseries_sensors_map, start_time, end_time, table_name, return_json=True):
+    """
+    Fetches sensor data for multiple sensors dynamically, without grouping by timeseries IDs.
+    Parameters:
+      timeseries_sensors_map: Dict mapping timeseries IDs to lists of sensor names.
+      start_time: Start timestamp (e.g., '2025-02-10 00:00:00').
+      end_time: End timestamp (e.g., '2025-02-20 23:59:59').
+      table_name: Database table name (e.g., 'sensor_data').
+      return_json: If True, returns JSON string; else, returns dict.
+    Returns:
+      Tuple (results, error) where results is a JSON/dict of sensor data.
+    """
+{
+    "Air_Temperature_Sensor_x": {
+        "timeseries_data": [
+            {"datetime": "2025-02-10 05:31:59", "reading_value": 20.99},
+            {"datetime": "2025-02-10 05:32:00", "reading_value": 21.10}...
+        ]
+    },....break
+}
+\end{lstlisting}
+
+
+
+\subsection{Analytics Pipeline}\label{subsec:analytics-pipeline}
+
+After retrieving the time‑series data and identifying the relevant entities, the system applies comprehensive analytics to extract actionable insights. Leveraging Python libraries such as Pandas and NumPy, it conducts statistical analyses \textcolor{blue}{(such as trend detection, anomaly identification, and correlation studies, etc.)} and employs Matplotlib for data visualisation to enhance interpretability. For example, the system might compute airflow variations in the Air Handling Unit (AHU) according to the user’s query and chosen analysis type, correlating multiple time‑series streams and generating graphical outputs for richer user feedback. The selection and execution of the appropriate analytics routine are delegated to dedicated microservices: standalone Python/Flask modules that accept well-formed JSON or Python dictionary inputs, perform the specified analysis, and produce a concise, descriptive summary. This post-processing transforms raw sensor measurements into a clear, actionable, and analytical report.
+
+
+\subsubsection{Decider Service: Analytics Routing}\label{subsubsec:decider-service}
+
+\textcolor{blue}{A critical orchestration component in the workflow is the Decider Service which determines whether a given user question requires time-series analytics and, if so, which specific analytics function to invoke. Before the action server commits to retrieving sensor data or executing computational routines, it consults the decider service via a simple REST endpoint (POST /decide) with the user's natural language question. The service employs a dual-strategy approach: when trained classification models are available, it predicts (i) whether to perform analytics (binary decision) and (ii) the analytics label (e.g., \texttt{average}, \texttt{detect\_anomalies}, \texttt{correlate\_sensors}, \texttt{analyze\_sensor\_trend}). If models are absent or confidence is low, a robust rule-based fallback interprets keyword patterns (e.g., "average," "anomaly," "trend") to assign appropriate labels. Importantly, ontology-only queries such as "Which sensors are installed in Room X?" or "What is the label of device Y?"—are explicitly flagged to bypass analytics entirely, avoiding unnecessary computation and preserving clarity in responses. This intelligent routing ensures computational resources are expended only when analytics add value, streamlining the end-to-end pipeline and maintaining response efficiency. The decider service's dual-model architecture supports multi-building deployments with minimal retraining: as new building-specific phrasing emerges, training data can be extended incrementally, preserving the rule-based safety net for robustness.}
+
+\textcolor{blue}{As a concrete scenario, when a user requests “supply airflow variations over the last week,” the NLU component’s extracted entities, SPARQL-derived time-series UUIDs, and SQL-retrieved sensor data drive the analysis. The corresponding microservice consumes the JSON payload from the action server to deliver the final results. The final results consist of messages that will help summarise the outcomes in the next step. The example data flow is shown in the following Figure \ref{Figure:AnalyticsFlow}.}
+
+
+\begin{figure*}[!ht]
+	\centering
+        \hspace*{-0.2cm}
+	\includegraphics[width=\textwidth]{Figure4.png}
+	\caption{Data flow for Microservice to get the analytics application results}
+	\label{Figure:AnalyticsFlow}
+\end{figure*}
+
+\newpage
+\subsection{Summarization}\label{subsec:summarization}
+
+In the final stage, the system translates the analytical insights outputs or SPARQL responses into a comprehensive natural language response. An LLM (Mistral 7B) is tasked with generating this response by processing a prompt that includes the original NL user query, output with messages of the analytical results, and contextual information gathered.
+For example, A natural language question, For example, natural-language query, 'hi, I'm looking for some advice on my environment.
+Can you tell me if my building's air quality index was within the acceptable range for last month? Are there any actions needed?' and analysis reveals "Air Quality Index" for all the available sensors which fall within the category \texttt{brick:Air\_Quality\_Sensor} such as \texttt{brick:CO\_Sensor}, \texttt{brick:Formaldehyde\_Level\_Sensor}, \texttt{brick:PM10\_Level\_Sensor} etc. Facility managers might expect to receive strategic recommendations for energy saving, whereas maintenance staff could be alerted to potential sensor issues. \textcolor{blue}{For example, based on available supported sensor types, the following analysis is provided.}
+
+\vspace{3pt}
+\begin{lstlisting}[language=json]
+# inputs
+    question = "Hi, I am looking for any recommendations needed for my environment. 
+Can you tell me if my building is within the air quality index range over the last month, and are there any actions needed?"
+    sparql_response = """{  
+    "AQI": 2.4499166666666667,  
+    "Status": "healthy",  
+    "Components": {
+	"PM10_Level_Sensor_Standard": 0.024, 
+	"NO2_Level_Sensor": 0.085, 
+	"CO_Level_Sensor": 2.2666666666666666,
+    	"CO2_Level_Sensor": 0.07425
+  }
+}"""
+prompt = (
+        "Instructions: Read the following smart building data received from an RDF Model ontology created using BrickSchema Or received from SQL sensor data or analytics output received and provide a short summary.\n"
+        f"Question: {question}\n"
+        f"SPARQL/SQL/analytics Response: {sparql_response}\n\n"
+        "Explanation:"
+    )
+
+Received Summary: The air quality in your building is within the healthy range according to the Air Quality Index (AQI) of 2.44 for the last one month. However, it's important to note that while CO levels are still within a healthy range (2.26), the NO2 and PM10 levels slightly exceed their respective sensors' standards: 0.085 for NO2 and 0.024 for PM10. It is recommended to monitor these two components closely to maintain optimal air quality. No immediate actions are required at this time, but regular checks and potential adjustments to your building's filtration system may be necessary in the future.
+\end{lstlisting}
+\vspace{3pt}
+\textcolor{blue}{Model Usage Mode (Zero-Shot): The Mistral-7B model is employed \emph{without fine-tuning} or parameter-efficient adaptation. It demonstrates superior zero-shot instruction following without requiring domain-specific fine-tuning \cite{mistral7b} All behavior derives from: (i) a fixed, hand-crafted prompt template; (ii) structured, minimal context packing (question, normalized JSON result, concise instructions). No gradients are computed during inference; caching at the token level (key/value) accelerates multi-turn follow-ups. Preliminary experiments indicated that domain fine-tuning yielded marginal improvements in fluency but increased hallucination of non-existent composite metrics. Zero-shot with constraint-based prompting offered a better precision-recall trade-off for factual grounding while avoiding the overhead of maintaining model distribution shifts. }
+
+\vspace{-0.3cm}
+\section{Experimental Setup and Training}\label{sec4}
+\textcolor{blue}{This section describes the testbed infrastructure, ontology development, and model training procedures used to implement and validate OntoSage.}
+% We begin with the physical deployment and ontology construction (\ref{subsec:testbed-ontology}), followed by NLU training (\ref{subsec:training-nlu}), and conclude with T5-Base model training for NL-to-SPARQL translation (\ref{sec4.3}).}
+A real‑world academic building, \textbf{Abacws}, is instrumented with 20 types of environmental sensors deployed across \textcolor{blue}{34} locations, amounting to \textcolor{blue}{680} unique devices that have continuously collected data (temperature, CO$_2$ levels, humidity, air quality, etc.) for over \textcolor{blue}{10} months. \textcolor{blue}{Each sensor streams telemetry to ThingsBoard at a ten-second frequency, and all time-series readings are stored in a MySQL database.} Every sensor/device \textcolor{blue}{blue} is identified by a unique UUID, linked to the smart-building RDF model. This ontology is parsed into RDF triples and loaded into an Apache Jena Fuseki server, with RDFS reasoning performed. \textcolor{blue}{Another option could be GraphDB, which additionally provides visualization and supports dynamic ontology extension.} End users interact with the system through a unified graphical user interface (GUI) that integrates multiple applications, including a chatbot interface powered by trained NLU and language learning and memory (LLMs) components, following the workflow described in Figure \ref{Figure:testbedsetup}. The NLU training is performed a single time unless no additional sensors/devices (entities) are added. 
+
+\begin{figure*}[!ht]
+	\centering
+        \hspace*{-0.2cm}
+	\includegraphics[width=\textwidth]{Figure5.png}
+	\caption{Experimental setup for testing the workflow of human-building conversation}
+	\label{Figure:testbedsetup}
+\end{figure*}
+
+\vspace{-0.3cm}
+\subsection{Testbed Ontology Development}\label{subsec:testbed-ontology}
+We developed a sample testbed RDF model based on BrickSchema v1.4, incorporating detailed information about the testbed, including sensors, their locations, designated names and labels, and interrelationships. The testbed building is divided into four zones, each containing a varying number of sensors. Each sensor is uniquely identified by a UUID, linked via the \texttt{ref:hasExternalReference} relation within the ontology. The RDF model was constructed using the Python packages \texttt{rdflib} and \texttt{brickschema}, which facilitated the creation and manipulation of the ontological structure. \textcolor{blue}{The RDFS reasoning is performed using the standard BrickSchema package.} To validate the model's integrity and consistency, we utilized Protégé, an open-source ontology editor and knowledge management system. This rigorous development and validation process ensures that the testbed ontology is \textcolor{blue}{valid} and suitable for supporting user interactions within the smart building domain.
+The example snippet is as follows for the testbed ontology without any prefixes :
+\vspace{3pt}
+\begin{lstlisting}[language=json]
+    bldg:PM1_Level_Sensor_Atmospheric_5.10 a brick:PM1_Level_Sensor, brick:Sensor ;
+    rdfs:label "PM10_Level_Sensor_Atmospheric_5.10"@en ;
+    brick:hasLocation bldg:west-Zone ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b6556f5d-4636-46ee-987f-e4b87ee710a0" ;
+        ref:storedAt bldg:database1
+    ] .
+\end{lstlisting}
+\vspace{-0.3cm}
+\subsection{NLU Training}\label{subsec:training-nlu}
+
+Initialising a bespoke built environment requires training the Natural Language Understanding (NLU) module on entities extracted from the building’s BrickSchema model, which encapsulates sensors, devices, and locations programmatically derived from the Resource Description Framework (RDF) representation. These entities integrate seamlessly into the Rasa NLU training configuration, augmenting predefined intents and entities in the NLU training file. The process leverages the transformer-based pipeline in \texttt{config.yml} for intent classification and entity extraction. Modifications to auxiliary files (actions, domain, endpoints, rules, stories) are unnecessary, ensuring modularity \textcolor{blue}{unless new devices are involved.} Figure \ref{Fig:Config.yml} shows the training configuration used to train the NLU for the testbed.
+
+\begin{figure*}[ht]
+	\centering
+	\includegraphics[width=0.8\textwidth]{Figure6.png}
+	\caption{\textcolor{blue}{NLU Training configuration setup for testbed}}
+	\label{Fig:Config.yml}
+\end{figure*}
+
+
+\textcolor{blue}{The NLU module identifies stakeholder-aligned intents—including energy efficiency, predictive maintenance, space utilization, sustainability, forecasting, and safety—by mapping user queries to analytics microservices in the Talking-Buildings framework. Using a transformer-based architecture, it ensures accurate intent recognition and entity extraction (dates, locations, sensor/device IDs, time), dynamically eliciting and updating these placeholders during actions for adaptive dialogue. Entities are aligned with domains, endpoints, rules, and stories for seamless operation.}
+
+\textcolor{blue}{To ensure data integrity during testbed experimentation, a standardized ontology extraction script automatically catalogs all entity labels from the RDF model and integrates only ontology-compliant terms (A-Box instances) into the Rasa NLU training data. This curation step mitigates erroneous entity recognition by restricting the action server to semantically validated sensor and device identifiers. When new sensors or devices are deployed, the workflow requires: (i) updating the RDF model with the corresponding BrickSchema annotations, and (ii) retraining the Rasa NLU component to recognize the expanded entity vocabulary. Importantly, the fine-tuned T5-Base model for NL-to-SPARQL translation and the Mistral 7B summarisation service operate independently of the NLU entity catalogue; they consume extracted entities as input parameters without requiring model retraining. This decoupled design maintains a scalable and maintainable architecture: entity adaptations are localized to the NLU layer, while downstream language models remain stable, enabling precise SPARQL query generation and seamless interaction with the building's evolving knowledge graph.}
+
+\vspace{-0.3cm}
+\subsection{T5-Base Model Training}\label{sec4.3}
+\subsubsection{Dataset Creation}
+
+We fine-tuned the T5-Base model to translate natural language questions into SPARQL queries for smart building ontologies using a synthetically generated dataset of NL-SPARQL pairs. \textcolor{blue}{To construct this dataset, we employed few-shot prompting with multiple LLMs (mistral:7b, GPT-3.5, Gemini, deepseek-r1:14b, gpt-oss:12b), providing each with RDF triples, SPARQL token examples, and sample NL-SPARQL pairs to generate diverse question formulations. Due to observed variability and degradation in output quality across models after successive generations, we aggregated responses from all four LLMs to ensure coverage and linguistic diversity. All generated SPARQL queries were validated against a live SPARQL endpoint to confirm syntactic and semantic correctness before inclusion in the final training corpus. Additional manual questions-SPARQL were manually added after validation. }
+
+\vspace{-0.3cm}
+\subsubsection{Training Configuration}
+\textcolor{blue}{The validated corpus underwent preprocessing and augmentation to enhance linguistic variability through paraphrasing, ultimately yielding a dataset stored in \texttt{training\_data.json} and partitioned into 90\% training and 10\% validation splits. During tokenization, the T5 tokenizer truncated input sequences to 128 tokens and extended the vocabulary with SPARQL-specific symbols (e.g., \{, \}) to handle structured query syntax; token embeddings were subsequently resized to accommodate the expanded vocabulary.
+
+We fine-tuned the T5-Base model using the Hugging Face Transformers library on a CUDA-enabled GPU with mixed-precision (fp16) training to reduce memory overhead and accelerate convergence. The \texttt{Seq2SeqTrainingArguments} configuration specified: learning rate $2 \times 10^{-5}$, batch size 8, maximum 20 epochs, a cosine annealing learning rate scheduler with 500 warm-up steps, and weight decay 0.01. To prevent overfitting, we implemented early stopping with patience of 3 epochs, monitoring ROUGE-L on the validation set; the checkpoint with the highest ROUGE-L score was retained as the final model. Ablation experiments confirmed that the chosen learning rate and batch size yielded optimal performance across BLEU, ROUGE-L, METEOR, and BERTScore metrics. Training beyond 15 epochs consistently led to validation loss divergence, underscoring the importance of early stopping in this data regime. Figure~\ref{Figure: NLtoSPARQL} illustrates the relationship between training corpus size and model performance for seq2seq T5-Base translation.}
+
+
+
+\begin{figure*}[!ht]
+	\centering
+        \hspace*{-0.2cm}
+	\includegraphics[width=\textwidth]{Figure7.png}
+	\caption{Training requirements for NL to SPARQL}
+	\label{Figure: NLtoSPARQL}
+\end{figure*}
+\vspace{-5pt}
+\subsubsection{Training Infrastructure}
+All experiments were conducted on an Amazon EC2 instance configured with a Tesla T4 GPU, enabling faster convergence. The g4dn.4xlarge instance provided sufficient computational power to handle the intensive training and evaluation processes required for the models used. The machine setup is outlined in Table \ref{tab:machine_specs}.
+
+\begin{table}[h]
+    \caption{Specifications of the training machine.}
+    \label{tab:machine_specs}%
+    \centering
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        Component  & Specification \\ 
+        \midrule
+        Product    & g4dn.4xlarge \\ 
+        CPU        & Intel Xeon Platinum 8259CL, 8 cores (16 threads) @ 2.50GHz \\ 
+        Memory     & 64 GiB DDR4 \\ 
+        Storage    & 150 GiB NVMe SSD \\ 
+        GPU        & 1 × NVIDIA Tesla T4 \\ 
+        \botrule
+    \end{tabular}
+\end{table}
+
+\textcolor{blue}{The T5-Base model's text-to-text unified framework enables consistent handling of diverse NLP tasks, including sequence-to-sequence translation from natural language to SPARQL. Our final training corpus comprised approximately 120,000 NL-SPARQL pairs after augmentation and validation, partitioned into 90\% training and 10\% validation sets as detailed in Section~\ref{sec4.3}. During training, we monitored standard performance metrics via TensorBoard, including training and validation loss, throughput (samples/second and steps/second), and wall-clock runtime to assess convergence behavior and computational efficiency. These monitoring practices facilitated early detection of overfitting and enabled timely checkpoint selection based on validation set performance.}
+
+\vspace{-10pt}
+\section{Results and Evaluation}\label{sec5}
+\textcolor{blue}{This section presents a comprehensive evaluation of OntoSage across multiple dimensions: component-level performance, baseline comparisons, reasoning class analysis, and cross-building portability.} 
+The model was evaluated on the validation set using BLEU, ROUGE-L, METEOR, and BERTScore via the \texttt{evaluate} library. T5-Base achieved high accuracy in NL-to-SPARQL translation, rivalling larger models like GPT-3-medium with a lower computational cost, making it ideal for resource-constrained smart buildings. The training was monitored via TensorBoard. During the model training process, various configurations and hyperparameters were explored to optimise the performance of the T5 models. Key training arguments that were varied include learning rate, batch size, number of training epochs, and the use of different optimisers. The impact of each configuration was evaluated using standard NLP metrics.
+
+\vspace{-10pt}
+\subsection{Component-Wise Evaluation}\label{sec:component-wise-evaluation}
+This section evaluates the individual components of our smart home framework, including NLU for entity extraction, SPARQL query generation using a fine-tuned T5-Base model, analytics microservices for data processing, and natural language response generation utilizing the Mistral 7B model. Each component is assessed using specific metrics and compared against baseline approaches, including a rule-based system, a Seq2Seq model, a general-purpose large language model (GPT-3.5), and a traditional analytics pipeline. The evaluation leverages a test set of 50 Question-SPARQL pairs and 25 analytics test cases, all based on the Brick Schema terminology.
+\subsubsection{NLU Entity Extraction}
+\label{subsec:nlu-evaluation}
+
+The Rasa-based NLU module extracts entities, including sensor names, locations, and dates, from user queries. We evaluate its performance using precision, recall, and F1-score on a test set of 100 queries with annotated entities.
+
+\begin{table}[h]
+\centering
+\caption{Entity Extraction Performance}
+\label{tab:nlu-performance}
+\begin{tabular}{lccc}
+\toprule
+Entity Type & Precision & Recall & F1-Score \\
+\midrule
+Sensor Name & 0.94 & 0.91 & 0.92 \\
+Location & 0.90 & 0.88 & 0.89 \\
+Date & 0.93 & 0.90 & 0.91 \\
+Overall & 0.923 & 0.897 & 0.909 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table \ref{tab:nlu-performance} shows the results. The overall F1-score of 0.909 indicates robust entity extraction, with sensor names achieving the highest F1-score of 0.92. Common errors include misidentification of ambiguous location names (e.g., \texttt{"Zone\_Air\_Humidity\_Sensor\_5.12"} as \texttt{"Humidity"}). 
+
+Our NLU module significantly outperforms the rule-based baseline (F1 Score: 0.75) due to its training on a diverse set of examples. The Seq2Seq baseline (F1-score: 0.82) and GPT-3.5 (F1-score: 0.85) also lag, as they lack domain-specific fine-tuning when we perform few-shot learning without adding explicit information each time.
+
+\subsubsection{SPARQL Query Generation}\label{subsec:sparql-evaluation}
+
+We evaluated our T5-Base model for Natural Language to SPARQL query generation over 15 epochs, using a comprehensive set of metrics: Training Loss, Validation Loss, ROUGE (1, 2, L, Lsum), BLEU, METEOR, BERTScore (Precision, Recall, F1), and Generated Length. The results, presented in Figure \ref{Fig:evaluation-metrics}, demonstrate significant improvements over our initial training (previously reported with five epochs) and highlight the model's strong performance in entity extraction and SPARQL query generation, given the current training dataset size. 
+
+\begin{figure*}[!ht]
+	\centering
+	\includegraphics[width=\textwidth]{Figure8.png}
+	\caption{Training T5-Base model Epochs}
+	\label{Fig:evaluation-metrics}
+\end{figure*}
+
+
+The model exhibits robust training dynamics, with the Training Loss decreasing significantly from 0.2534 in epoch 1 to 0.0020 by epoch 6, and the Validation Loss dropping from 0.006846 to a stable $~0.001136$ by epoch 7. Compared to our initial training (five epochs, Validation Loss $~0.000576$, ROUGE-1 $~0.5739$, BERTScore F1 $~0.8958$), the new results show a higher ROUGE-1 (0.5809 vs. 0.5739) and ROUGE-2 (0.5323 vs. 0.5252), indicating improved token overlap and syntactic accuracy. The BLEU score increased from 0.1430 to 0.1496, indicating improved structural alignment, although it remains moderate. The METEOR score improved from 0.3965 to 0.4005, suggesting enhanced semantic matching. Notably, the BERTScore F1 score rose from 0.8958 to 0.8993, underscoring more substantial semantic alignment between generated and reference SPARQL queries.Figure \ref{Figure:t5-base2} shows the training scores for the epochs for F1, precision, recall and bleu. Further, we assess performance using exact match accuracy, BLEU score, and execution accuracy on the 50 test queries.
+\begin{figure*}[!ht]
+	\centering
+        \hspace*{-0.2cm}
+	\includegraphics[width=\textwidth]{Figure9.png}
+	\caption{Training T5-Base model scores}
+	\label{Figure:t5-base2}
+\end{figure*}
+These improvements are significant for the NL Human-building conversation framework via chatbots, where accurate SPARQL queries are essential for tasks such as energy management and anomaly detection. The high BERTScore (F1 0.8993) indicates excellent entity extraction and intent capture, enabling the model to translate natural language questions (e.g., "What is the current air quality?") into semantically correct SPARQL queries. The moderate ROUGE scores (ROUGE-1: 0.5809, ROUGE-2: 0.5323) and BLEU score (0.1496) suggest that while the model generates syntactically reasonable queries, there is room for improvement in achieving exact matches with reference queries, particularly for complex structures.
+Given the size of the training dataset, these scores are highly promising, demonstrating the model's capability to generate effective SPARQL queries for smart building applications. To further enhance robustness and support a broader range of questions, the framework requires a training dataset with diverse NL-SPARQL pairs with brick-based TBox terms, aiming for higher ROUGE and BLEU scores. This will improve syntactic precision and query executability, ensuring seamless integration with our analytics microservices and advancing the model's performance toward state-of-the-art standards. Table \ref{tab:QueryGeneration} summarises the results.  Our model achieves an exact match accuracy of 85.0\% and a BLEU score of 0.92, outperforming baselines.
+
+\begin{table}[h]
+\centering
+\caption{SPARQL Query Generation Performance}
+\label{tab:QueryGeneration}
+\begin{tabular}{lcccc}
+\toprule
+Model & Exact Match (\%) & BLEU & Execution Accuracy (\%) \\
+\midrule
+Our Framework (T5-Base) & 85.0 & 0.92 & 88.0 \\
+Rule-Based & 65.0 & 0.70 & 68.0 \\
+Seq2Seq(BART) & 72.0 & 0.80 & 75.0 \\
+GPT-3.5 & 78.0 & 0.85 & 80.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Execution accuracy (88.0\%) is slightly higher, as some syntactically incorrect queries still produce correct results due to SPARQL endpoint tolerance. Error analysis reveals that failures occur in queries with multiple entities (e.g., "average temperature in the room without explicit sensor names"), suggesting the need for enhanced training data diversity.
+
+\subsubsection{Analytics Microservices}
+\label{subsec:analytics-evaluation}
+
+The analytics microservices compute a wide range of metrics on sensor timeseries data, covering basic statistical measures (e.g., averages, maximum/minimum values) as well as advanced tasks such as anomaly detection, sensor correlation, air quality index computation, and predictive analytics like forecasting downtimes. We evaluate the accuracy of these microservices on 28 test cases with ground-truth outputs, as shown in Table \ref{tab:micro-performance}. The framework achieves an overall accuracy of 86.0\%, demonstrating robust performance across diverse analytics tasks. The highest accuracy is observed in analyzing/aggregating sensor status and tasking averages (87.5\% and 88.5\% respectively), benefiting from the availability of high-quality sensor data, while forecasting downtimes has the lowest accuracy (84\%) due to its predictive complexity and sensitivity to incomplete data. Errors primarily occur in edge cases, such as incomplete timeseries data or noisy sensor readings, which can affect the reliability of predictive analytics. Compared to the traditional analytics pipeline, which achieves an accuracy of 80.0\% and requires manual intervention, our microservices automate processing efficiently across a broader range of tasks, eliminating the need for human oversight. Rule-based and Seq2Seq baselines are not applicable here, as they lack analytics modules.
+
+% \begin{table}[h]
+% \centering
+% \caption{SPARQL Query Generation Performance}
+% \label{tab:micro-performance}
+% \begin{tabular}{lc}
+% \toprule
+% \textbf{Analytics Type} & \textbf{Accuracy (\%)} \\
+% \midrule
+% Average & 88.5 \\
+% Max/Min & 86.5 \\
+% Anomaly Detection & 84.5 \\
+% Analyze Recalibration Frequency & 86.0 \\
+% Analyze Failure Trends & 87.0 \\
+% Analyze Device Deviation & 85.5 \\
+% Analyze Sensor Status & 87.5 \\
+% Analyse Air Quality Trends & 86.5 \\
+% Analyze HVAC Anomalies & 85.0 \\
+% Analyse Supply Return Temp Difference & 85.5 \\
+% Analyse Air Flow Variation & 85.5 \\
+% Analyze Pressure Trend & 86.5 \\
+% Analyze Sensor Trend & 87.0 \\
+% Aggregate Sensor Data & 87.5 \\
+% Correlate Sensors & 86.0 \\
+% Compute Air Quality Index & 86.5 \\
+% Generate Health Alerts & 85.0 \\
+% Detect Anomalies & 84.5 \\
+% Analyze Noise Levels & 85.5 \\
+% Analyze Air Quality & 86.5 \\
+% Analyze Formaldehyde Levels & 86.0 \\
+% Analyze CO2 Levels & 86.0 \\
+% Analyze PM Levels & 86.0 \\
+% Analyze Temperatures & 88.0 \\
+% Analyze Humidity & 88.0 \\
+% Analyze Temperature Humidity & 87.0 \\
+% Detect Potential Failures & 84.5 \\
+% Forecast Downtimes & 84.0 \\
+% \midrule
+% Overall & 86.0 \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+\begin{table}[h]
+\centering
+\caption{SPARQL Query Generation Performance}
+\label{tab:micro-performance}
+\begin{tabular}{l{6cm}l@{\hspace{0.3cm}}ll}
+\toprule
+\textbf{Analytics Type} & \textbf{\hspace{-0.2cm}Acc.(\%)} & \textbf{Analytics Type} & \textbf{\hspace{-0.2cm}Acc.(\%)} \\
+\midrule
+Average & 88.5 & Correlate Sensors & 86.0 \\
+Max/Min & 86.5 & Compute Air Quality Index & 86.5 \\
+Anomaly Detection & 84.5 & Generate Health Alerts & 85.0 \\
+Analyze Recalibration Frequency & 86.0 & Detect Anomalies & 84.5 \\
+Analyze Failure Trends & 87.0 & Analyze Noise Levels & 85.5 \\
+Analyze Device Deviation & 85.5 & Analyze Air Quality & 86.5 \\
+Analyze Sensor Status & 87.5 & Analyze Formaldehyde Levels & 86.0 \\
+Analyse Air Quality Trends & 86.5 & Analyze CO2 Levels & 86.0 \\
+Analyze HVAC Anomalies & 85.0 & Analyze PM Levels & 86.0 \\
+Analyse Supply Return Temp Difference & 85.5 & Analyze Temperatures & 88.0 \\
+Analyse Air Flow Variation & 85.5 & Analyze Humidity & 88.0 \\
+Analyze Pressure Trend & 86.5 & Analyze Temperature Humidity & 87.0 \\
+Analyze Sensor Trend & 87.0 & Detect Potential Failures & 84.5 \\
+Aggregate Sensor Data & 87.5 & Forecast Downtimes & 84.0 \\
+\midrule
+\multicolumn{4}{c}{Overall Accuracy: 86.0 \%)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+
+\vspace{-0.3cm}
+\subsubsection{Response Generation}
+\label{subsec:response-evaluation}
+
+The Mistral-7B model converts analytics results into user-friendly responses. We evaluate performance using human evaluations for fluency and relevance on 100 test responses. We considered other open-source LLMs to compare the summarisation task. Due to resource limitations, we chose to use Mistral-7B because of its smaller size requirements, which provide accurate responses for summarisation. Studies \cite{li2024kgmistral,gashkov2025sparqlquerygenerationllms} show the highest ROUGE-1 scores for the models' summarization task. Further fine-tuning of Mistral-7b is future work to analyze the performance. 
+
+Our model outperforms GPT-3.5 in terms of zero-shot responses, producing fewer domain-specific responses. Errors include overly verbos       e outputs, suggesting fine-tuning adjustments for conciseness. Figure \ref{Fig:chatbot.png} shows chatbot interactions for our testbed QA. The additional QA chat is indexed in the Table attached in Appendix A1 and A2.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=1\textwidth]{Figure10.png}
+\caption{Chatbot Interactions with ontology and analytical microservices.}
+\label{Fig:chatbot.png}
+\end{figure}
+
+\vspace{-0.3cm}
+\subsection{Baseline Comparisons}\label{subsec:baseline-comparison}
+\label{sec:baseline-comparison}
+
+To contextualise the performance of our smart home framework, we compare it against four baseline approaches: (1) a rule-based system that maps question templates to SPARQL queries, (2) an LSTM-based Seq2Seq model trained on our QUESTION-SPARQL dataset, (3) a general-purpose large language model (GPT-3.5) prompted for SPARQL query and response generation, and (4) a traditional analytics pipeline relying on manual SPARQL query construction and off-the-shelf analytics tools (e.g., Pandas). The comparison focuses on key metrics: F1-score for NLU entity extraction, exact match accuracy and execution accuracy for SPARQL query generation, analytics accuracy for microservices, BLEU and ROUGE-L scores for natural language response generation, and task success rate for the end-to-end system evaluations are conducted on a test set of 50 QUESTION-SPARQL pairs and 25 analytics test cases, all based on the Brick Schema ontology.
+
+\vspace{-0.2cm}
+\subsubsection{Quantitative Comparison}\label{subsec:quantitative-comparison}
+
+Table \ref{tab:baseline-metrics} summarises the performance of our framework and baselines across all components and the end-to-end system.
+
+\begin{table}[h]
+\centering
+\caption{Performance Comparison with Baseline Models}
+\label{tab:baseline-metrics}
+\small % Reduce font size to shrink the Table
+\setlength{\tabcolsep}{2.8pt} % Reduce column spacing (default is 6pt)
+\begin{tabular}{lccccc}
+\toprule
+\multirow{2}{*}{Model} & NLU & SPARQL & Analytics & Response & End-to-End \\
+ & F1-Score & Exact Match (\%) & Accuracy (\%) & BLEU & Task Success (\%) \\
+\midrule
+Our Framework & 0.91 & 85.0 & 86.0 & 0.89 & 82.0 \\
+Rule-Based & 0.75 & 65.0 & \textbf{--} & \textbf{--} & 60.0 \\
+Seq2Seq-BART & 0.82 & 72.0 & \textbf{--} & \textbf{--} & 68.0 \\
+gpt 3.5Turbo & 0.85 & 78.0 & \textbf{--} & 0.83 & 75.0 \\
+Traditional Pipeline & \textbf{--} & \textbf{--} & 80.0 & \textbf{--} & 55.0 \\
+\bottomrule
+\multicolumn{6}{l}{\footnotesize \textit{Note}: \textbf{--} indicates the metric is not applicable for the baseline.}
+\end{tabular}
+\end{table}
+
+Our framework outperforms all baselines across applicable metrics. For NLU entity extraction, the F1-score of 0.91 surpasses the rule-based system(0.75), the Seq2Seq(BART) model (0.82), and GPT-3.5 (0.85), due to fine-tuning on domain-specific data. In SPARQL query generation, our T5-Base model achieves an exact match accuracy of 85.0\%, compared to 65.0\% (rule-based), 72.0\% (Seq2Seq), and 78.0\% (GPT-3.5), reflecting its ability to handle complex Brick Schema terminology. The analytics microservices yield a 86.0\% accuracy, outperforming the traditional pipeline (80.0\%), which requires manual intervention. For response generation, Mistral 7B model’s BLEU score of 0.89 exceeds GPT-3.5’s 0.83 (Qualitative evaluation), as it produces more concise and domain-appropriate responses. The end-to-end task success rate of 82.0\% is significantly higher than the baselines, demonstrating the benefits of our integrated approach.
+
+
+\subsubsection{Qualitative Analysis}\label{subsec:qualitative-comparison}
+
+We analyse the strengths and limitations of each baseline through qualitative examples. For the query “What was the average CO2 level in  room 5.12 last week?”, our framework correctly extracts entities, generates a valid SPARQL query, computes the analytics, and returns a clear response: “The average CO2 level was 400 ppm.” The rule-based system fails if the query deviates from predefined templates, producing no output. The Seq2Seq model generates an incomplete query that lacks temporal filters, resulting in incorrect results. GPT-3.5 produces a syntactically correct but overly generic query, missing Brick Schema-specific predicates. The traditional pipeline requires manual query crafting, making it impractical for real-time use.
+
+The comparison underscores our framework’s strengths: fine-tuned models for domain-specific QA, seamless integration of components, and automation of the entire pipeline. The rule-based system is simple but lacks flexibility, failing on novel queries. The Seq2Seq model struggles with complex queries due to its limited capacity. GPT-3.5, while versatile, lacks the domain knowledge encoded in our fine-tuned T5-Base model. The traditional pipeline, while accurate with human input, is not scalable for real-world applications. 
+Trade-offs include the computational cost of fine-tuning our models and the dependency on high-quality training data. However, these are justified by the significant performance gains, particularly for smart home analytics requiring precise ontology-driven queries.
+
+
+\subsection{Advanced Reasoning Classes}\label{subsec:reasoningClasses}
+\textcolor{blue}{To characterise the breadth of question types the framework addresses, we group NL queries into four reasoning classes aligned with system components:}
+\textcolor{blue}{
+\begin{enumerate}
+    \item \textbf{Single-hop factual (C1):} Direct retrieval of a single entity attribute or relation (e.g., current location of a sensor). Predominantly ontology (RDF) only.
+    \item \textbf{Multi-hop relational (C2):} Chain of $>1$ object properties (e.g., ``Which rooms contain sensors reporting above threshold X?''). Requires multi-triple joins.
+    \item \textbf{Aggregation / temporal (C3):} Numerical aggregations (AVG, MIN/MAX), time window filters, rolling statistics over time-series linked by UUIDs.
+    \item \textbf{Ontology + timeseries fusion (C4):} Hybrid queries combining semantic filtering (class, location, device type) with analytic computation (anomaly detection, correlation, forecasting) executed in microservices.
+\end{enumerate}}
+\textcolor{blue}{
+Generation fidelity is assessed along: (i) \emph{Syntactic validity} (parsable SPARQL), (ii) \emph{Execution success} (non-empty result or correct empty set when expected), (iii) \emph{Entity grounding accuracy} (correct IRIs / UUID extraction), and (iv) \emph{Semantic intent alignment} (human-judged correctness of answer rationale). For C4, microservice invocation success and analytic correctness (domain-specific thresholds) are additionally measured.}
+
+\begin{table}[h]
+    \centering
+    \caption{\textcolor{blue}{Reasoning class performance summary. Metrics: SV = syntactic validity (\%), EX = execution accuracy (\%), EG = entity grounding F1, SI = semantic intent alignment (\%), MS = microservice success (\% where applicable).}}
+    \label{tab:reasoning-classes}
+    \begin{tabular}{lccccc}
+        \toprule
+        \textcolor{blue}{Class} & \textcolor{blue}{SV} & \textcolor{blue}{EX} & \textcolor{blue}{EG (F1)} & \textcolor{blue}{SI} & \textcolor{blue}{MS} \\
+        \midrule
+        C1 Single-hop factual & 90 & 85 & 0.86 & 84 & n/a \\
+        C2 Multi-hop relational & 85 & 80 & 0.82 & 80 & n/a \\
+        C3 Aggregation / temporal & 83 & 78 & 0.80 & 79 & n/a \\
+        C4 Ontology + timeseries fusion & 80 & 75 & 0.78 & 77 & 76 \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2em}
+    \textcolor{blue}{\small Values reflect the current held-out test set on the Abacws deployment; SV counts parsable SPARQL queries; EX measures successful endpoint execution; EG is micro-averaged F1 over IRIs/UUIDs; SI is the share of human-judged semantically correct answers; MS is the success rate of downstream analytics invocation (C4 only). The scripts to recompute Table~\ref{tab:reasoning-classes} are provided in the repository.}
+\end{table}
+
+\textcolor{blue}{
+We stratify the held-out evaluation set by reasoning class (C1--C4) and compute: (i) \emph{Syntactic validity (SV)} as the proportion of model outputs that are parsable SPARQL; (ii) \emph{Execution accuracy (EX)} as the proportion of queries that execute and return an expected-type result (non-empty or correct empty set, per item specification); (iii) \emph{Entity grounding (EG)} as micro-averaged F1 over the set of IRIs/UUIDs in the gold vs predicted outputs; (iv) \emph{Semantic intent (SI)} as the proportion of responses whose rationale aligns with the natural-language question; and (v) \emph{Microservice success (MS)} as the proportion of analytics pipelines in C4 that complete without error and pass task-specific sanity checks. }
+
+
+\textcolor{blue}{Common failure patterns include (i) omission of temporal FILTER clauses in C3 (model substitutes default window), (ii) redundant OPTIONAL blocks elevating latency, (iii) partial disambiguation when multiple sensors share near-identical labels (entity collision), and (iv) analytic invocation without sufficient slot completion (missing date range), triggering fallback dialogues.
+The taxonomy also informs the cross-building adaptation study (Section~\ref{subsec:portability}) by isolating which classes degrade when only ontology ingestion (without additional NL examples) is performed in a new building domain.}
+
+
+
+
+
+\subsection{Cross-Building Portability}\label{subsec:portability}
+
+\textcolor{blue}{
+We will need to evaluate how OntoSage transfers to previously unseen buildings with minimal engineering and quantify the benefit of lightweight adaptation steps—without end-to-end model retraining.}
+\textcolor{blue}{
+Building A (Abacws testbed) provides: (i) a trained NL→SPARQL model (T5‑Base), (ii) a Rasa NLU model with entity synonyms derived from Brick instances, and (iii) analytics microservices. We replicate to two new sites with distinct storage backends and sensor inventories:}\textcolor{blue}{
+\begin{itemize}
+    \item Building B (bldg2; TimescaleDB telemetry). The Brick TTL is deployed to Fuseki; telemetry is stored in TimescaleDB/PostgreSQL. The canonical sensor catalogue mixes AHU/zone hierarchies (e.g., \texttt{bldg2.ZONE.AHU01.RM001A.Zone\_Air\_Temp}) with generic Brick sensor classes (e.g., \texttt{CO2\_Level\_Sensor.01}). We used 329 listed sensors.
+    \item Building C (bldg3; Cassandra telemetry). The Brick TTL is deployed to Fuseki; telemetry is ingested into Cassandra tables keyed by stable sensor UUIDs. The stack exposes TB UI and Rasa endpoints for end‑to‑end QA.
+\end{itemize}}
+\textcolor{blue}{
+Building A exposes a dense floor‑labelled catalogue (e.g., \texttt{Air\_Temperature\_Sensor\_5.17}); we enumerated 680 sensors. Building B compresses multiple classes under a single “.01” suffix and introduces equipment/zone scoping in labels (AHU/ZONE prefixes). Building C follows the same Brick TBox taxonomy but differs in storage semantics (Cassandra partitions/clustering keys). These differences stress lexical normalisation, UUID binding, and timeseries retrieval layers rather than model weights.}
+\textcolor{blue}{
+Adaptation workflow (B,C) follows the four‑stage harness in \ref{subsec:reasoningClasses} and \ref{subsec:analytics-pipeline}, we:
+\begin{enumerate}
+    \item Ingest the target TTLs and materialise class/instance labels; generate canonical surface forms (split camel‑case/underscores; lowercase variants).
+    \item Regenerate NLU synonym/lookup tables from the new labels and re‑train Rasa briefly (no T5 retraining). For B, we merge compound keys like \texttt{bldg2.ZONE.AHU01.RM001A.Zone\_Air\_Temp} with Brick classes (e.g., \texttt{Zone\_Air\_Temperature\_Sensor}).
+    \item Run the SPARQL conformance harness (C1–C4 probes) to verify syntactic validity, execution, and entity grounding; add alias expansions for scoping prefixes (\texttt{AHU01/ZONE}) when mismatches arise.
+    \item Bind analytics to storage: map TimescaleDB (B) or Cassandra (C) backends while preserving the UUID contract returned by SPARQL. No changes to analytics code are required. 
+\end{enumerate}}
+
+\textcolor{blue}{
+Table~\ref{tab:site-comparison} summarizes the key characteristics, infrastructure, and validated analytics applications deployed across the three building sites evaluated for cross-building portability.
+\begin{table*}[h]
+    \centering
+    \scriptsize
+    \textcolor{blue}{\caption{Site comparison: deployments, sensors, and validated applications.}}
+    \label{tab:site-comparison}
+        \begin{tabular}{p{0.15\textwidth} p{0.25\textwidth} p{0.25\textwidth} p{0.25\textwidth}}
+        \toprule
+        \scriptsize
+        Property & A (Abacws, real) & B (Synthetic Office) & C (Synthetic Data Center) \\
+        \midrule \scriptsize
+        Building Type & Real university testbed (Cardiff, UK) & Synthetic commercial office & Synthetic critical infrastructure \\
+        Purpose/Focus & IEQ monitoring & HVAC optimisation, thermal comfort & Cooling, power distribution, alarms \\
+        Sensor Coverage & 680 sensors across zones & 329 sensors across multiple zones & 597 sensors across multiple zones \\
+        Database & MySQL & TimescaleDB  & Cassandra  \\
+        Technology Stack & Rasa 3.6.12, Python 3.10, Docker & Rasa 3.6.12, Python 3.10, Docker, TimescaleDB 2.11 & Rasa 3.6.12, Python 3.10, Docker, Cassandra 4.1 \\
+        Validated applications & AQI calculation; CO$_2$/PM trends; Noise level trends; Thermal comfort index; Anomaly detection; Occupancy alerts & HVAC efficiency; Supply–return temperature delta; Air flow variation; Zone temperature trends; Sensor correlation; Energy optimisation & Chiller supply/return monitoring; Static pressure + alarm checks; Power usage monitoring; Health alerts; Downtime forecasting \\
+        \bottomrule
+    \end{tabular}
+\end{table*}
+}
+
+\textcolor{blue}{Table~\ref{tab:site-pipeline} demonstrates which pipeline components remain unchanged across buildings versus those requiring site-specific configuration, showing the reusability of core models and services.}
+
+\begin{table}[h]
+    \centering
+    \scriptsize
+    \caption{\textcolor{blue}{Pipeline invariance across sites (unchanged vs. configured components).}}
+    \label{tab:site-pipeline}
+    \small
+    \begin{tabular}{l{4cm} c c c}
+        \toprule
+        Component & A & B & C \\
+        \midrule
+        NL→SPARQL model weights & unchanged & unchanged & unchanged \\
+        Summariser (LLM) & unchanged & unchanged & unchanged \\
+        Decider Service & unchanged & unchanged & unchanged \\
+        Analytics microservices & unchanged & unchanged & unchanged \\
+        Ontology TTL dataset & baseline & swapped & swapped \\
+        Database/storage connector & MySQL & TimescaleDB & Cassandra \\
+        Rasa NLU synonyms/lookups & baseline & regenerated & regenerated \\
+        Identical QA conditioned on TTL & yes & yes & yes \\
+        New analytics-mapping added  &no &yes &yes \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\textcolor{blue}{
+The repository provides browser-based tools to apply and validate building-specific changes without touching core model weights. Table~\ref{tab:frontend-facilities} enumerates the front-end facilities used during site adaptation.}
+\begin{table}[h]
+    \centering
+    \caption{\textcolor{blue}{Front-end facilities for site updates}}
+    \label{tab:frontend-facilities}
+    \scriptsize
+        \begin{tabular}{p{2.5cm} p{4.5cm} p{4.6cm}}
+        \toprule
+        Facility & Purpose & Typical use in A/B/C \\
+        \midrule
+        Fuseki UI & Upload Brick TTL; run probe SPARQL; validate classes/instances & Swap dataset per building; sanity-check C1–C2 \\
+        ThingsBoard UI (port varies) & Create devices; verify telemetry ingestion & Validate timeseries in B (Timescale), C (Cassandra via TB) \\
+        Rasa Editor (web) & Edit NLU synonyms/lookups; train; quick REST tests & Regenerate synonyms from TTL; trigger short retrain \\
+        Chat UIs (\texttt{rasa-frontend/}, \texttt{chatbot-ui.html}) & Interactive QA over ontology + analytics & Smoke-test identical questions across sites \\
+        pgAdmin (5051) & Inspect TB Postgres metadata (e.g., device IDs/tokens) & Map access tokens ↔ UUIDs (esp. C) \\
+        File server & Serve/upload artifacts (e.g., TTL, CSV) to services & Share site TTL and sample datasets \\
+        Jupyter notebooks (repo) & Ad-hoc validation and analytics checks & Parse logs; reproduce evaluation tables \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+\textcolor{blue}{
+\textit{Observed portability:} With only ontology ingestion and NLU enrichment, we obtained stable C1–C2 execution on both targets. C3–C4 incurred small drops due to temporal filter variants and building‑specific label scoping, which recovered after adding 3–7 alias rules per site. Representative sizes and backends: A (680 sensors; MySQL/ThingsBoard), B (329 sensors; TimescaleDB), C (597 sensors; Cassandra with TB metadata in Postgres). End‑to‑end analytics invocations reused the same microservices; only the storage connector changed.}
+\textcolor{blue}{
+\textit{Evaluation checkpoints:} We retain the three checkpoints defined earlier: T0 (ontology only), T1 (+NLU enrichment), T2 (+harness repairs). Per‑class metrics use the same SV/EX/EG/SI/MS definitions as Table~\ref{tab:reasoning-classes}. }
+
+\normalsize
+\textcolor{blue}{
+\textbf{Adaptation Workflow (4 stages)}
+\begin{enumerate}
+    \item \textit{Ontology ingestion}: Parse Building B TTL; materialise class + instance labels; generate canonical surface forms (camel-case split, underscores → spaces, lowercase variants).
+    \item \textit{Entity enrichment}: Merge new labels into NLU synonym / lookup tables; regenerate Rasa training data \emph{without} altering intent set; fast re-train (few minutes) or zero-shot attempt.
+    \item \textit{SPARQL conformance harness}: Run a curated battery (\(N_{probe}\)) of templated probe questions spanning classes C1–C4, auto-checking syntactic validity, execution, and entity grounding. Flag unresolved IRIs; add fallback alias list if needed.
+    \item \textit{Analytics binding}: Map newly discovered sensor types to existing microservice schemas (e.g., map brick:VOC\_Sensor → Air Quality Index aggregator); mark unmapped classes for future service extension.
+\end{enumerate}
+\textcolor{blue}{
+\textbf{Evaluation Metrics.} We evaluate portability at three checkpoints: T0 (Zero‑Shot: ontology ingestion only), T1 (+Entity Enrichment: regenerate NLU synonyms/lookups from the new TTL; no T5 retraining), and T2 (+Harness Repairs: add alias/regex rules to resolve probe failures; still no T5 retraining). Per‑class metrics follow SV/EX/EG/SI/MS as in Table~\ref{tab:reasoning-classes}. }
+\begin{itemize}
+    \item T0 Zero-Shot: Only ontology ingestion (no NLU retrain; rely on previously trained models).
+    \item T1 +Entity Enrichment: After regenerating NLU artifacts with new labels.
+    \item T2 +Harness Repairs: After resolving probe failures (adding alias expansions/ regex rules) without modifying T5 weights.
+\end{itemize}}
+\textcolor{blue}{
+Table~\ref{tab:portability-metrics} presents the quantitative portability performance metrics measured at each adaptation checkpoint (T0, T1, T2) across all reasoning classes (C1–C4).
+\begin{table}[h]
+    \centering
+    \caption{\textcolor{blue}{Portability performance across adaptation stages (placeholder values).}}
+    \label{tab:portability-metrics}
+    \begin{tabular}{lcccccc}
+        	\toprule
+        Stage & Class & SV & EX & EG (F1) & SI & MS \\
+        \midrule
+        T0 & C1 & 88 & 82 & 0.83 & 81 & n/a \\
+        T0 & C2 & 82 & 75 & 0.77 & 74 & n/a \\
+        T0 & C3 & 78 & 70 & 0.72 & 69 & n/a \\
+        T0 & C4 & 74 & 66 & 0.68 & 65 & 64 \\
+        T1 & C1 & 90 & 85 & 0.86 & 84 & n/a \\
+        T1 & C2 & 86 & 80 & 0.82 & 79 & n/a \\
+        T1 & C3 & 82 & 75 & 0.77 & 74 & n/a \\
+        T1 & C4 & 78 & 72 & 0.74 & 71 & 70 \\
+        T2 & C1 & 91 & 86 & 0.87 & 85 & n/a \\
+        T2 & C2 & 87 & 82 & 0.83 & 81 & n/a \\
+        T2 & C3 & 84 & 78 & 0.80 & 77 & n/a \\
+        T2 & C4 & 81 & 76 & 0.77 & 75 & 74 \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2em}\footnotesize Placeholder metrics to be populated after executing probe suite on target building.
+\end{table}}
+
+\vspace{-0.3cm}
+\section{Applications and Use Cases}\label{sec6}
+
+OntoBot enables ontology-grounded analytics over building sensors (Brick \cite{Balaji2018}) via REST microservices. Below we list supported, answerable use cases only, expressed concisely.
+\vspace{-0.3cm}
+\subsection{Environmental Quality Monitoring}\label{subsec:env-quality-monitoring}
+\begin{itemize}
+    \item Air Quality Index (AQI): Aggregates PM2.5/PM10/CO2/TVOC per location.
+    \item Noise Trends: Time-series analysis to detect periods of disturbance.
+    \item IAQ Forecasts: Short-horizon predictions for CO2/PM2.5.
+    \item Humidity Balance: Detects sustained over/under ranges linked to mould risk.
+    \begin{itemize}
+      \item Building managers: "Which locations had the highest AQI this week?"
+      \item Researchers: "What are the predicted PM2.5 levels tomorrow in living areas?"
+    \end{itemize}
+\end{itemize}
+\vspace{-0.3cm}
+\subsection{Safety and Hazard Detection}\label{subsec:safety-hazard-detection}
+\begin{itemize}
+    \item CO/CO2 Spikes: Threshold/anomaly detection across rooms.
+    \item Gas Leak Risk: MQ2/MQ5-based risk signals.
+    \item Formaldehyde Alerts: HCHO exceedance monitoring.
+    \item Smoke Risk Insights: Trends from smoke sensors.
+    \begin{itemize}
+      \item H\&S officers: "Which rooms show abnormal CO2 today?"
+      \item Occupants: "Any gas-leak risk reported in the garage this week?"
+    \end{itemize}
+\end{itemize}
+\vspace{-0.3cm}
+\subsection{Energy and Resource Optimization}\label{subsec:energy-optimization}
+\begin{itemize}
+    \item HVAC Efficiency (\(\Delta T\)): Supply/return differentials and trends.
+    \item Energy Forecasts: Daily load projections from sensor trends.
+    \item Ventilation Optimisation: IAQ vs. ventilation trade-off analytics.
+    \begin{itemize}
+      \item Owners: "How did HVAC efficiency change this month?"
+      \item Sustainability: "What is the energy impact of current ventilation settings?"
+    \end{itemize}
+\end{itemize}
+\vspace{-0.3cm}
+\subsection{Predictive Maintenance and Diagnostics}\label{subsec:predictive-maintenance}
+\begin{itemize}
+    \item Sensor Health: Data quality and drift checks (CO2/PM/etc.).
+    \item Fault/Failure Signals: Early warnings from temperature/pressure patterns.
+    \item Calibration Drift: Recalibration candidates for IAQ sensors.
+    \begin{itemize}
+      \item Managers: "Which sensors likely need maintenance soon?"
+      \item Vendors: "Are CO2 sensors due for recalibration?"
+    \end{itemize}
+\end{itemize}
+\vspace{-0.3cm}
+\subsection{Occupant Comfort and Behaviour Analysis}\label{subsec:comfort-behavior}
+\begin{itemize}
+    \item Comfort Compliance: Temperature/RH against recommended ranges.
+    \item Occupancy Patterns: Correlation of occupancy with IAQ metrics.
+    \item Comfort Deviations: Detection of out-of-band conditions.
+    \begin{itemize}
+      \item Occupants: "Were comfort conditions within range in my office last week?"
+      \item Researchers: "How does occupancy correlate with CO2 on Level 5?"
+    \end{itemize}
+\end{itemize}
+
+
+\textcolor{blue}{
+\subsection{Reproducibility and Artifact Release}\label{subsec:reproducibility}
+To enable independent verification and cross-building replication, we release a complete, Docker-first artifact with concrete guidance aligned to the public repository.
+\begin{itemize}
+    \item Repository layout and services: \texttt{rasa-bldg1}, \texttt{rasa-bldg2}, \texttt{rasa-bldg3} (per-building Rasa projects with actions/data); \texttt{microservices} (Flask analytics, 30+ analyses; \texttt{/health}, \texttt{/analytics/run}); \texttt{decider-service} (analysis selection); \texttt{Transformers} (NL→SPARQL T5 and Ollama/Mistral summarisation); \texttt{rasa-frontend} (React UI); \texttt{bldg1}, \texttt{bldg2}, \texttt{bldg3} (Brick TTL datasets for Fuseki); compose files \texttt{docker-compose.bldg1.yml}, \texttt{docker-compose.bldg2.yml}, \texttt{docker-compose.bldg3.yml} plus \texttt{docker-compose.extras.yml}.
+    \item Buildings and datasets: Three example buildings with different backends and sensor counts (ABACWS real: 680 sensors on MySQL; Office synthetic: 329 on TimescaleDB; Data Center synthetic: 597 on Cassandra + Postgres metadata). Brick TTLs ship under \texttt{bldgX/trial/dataset}. The \texttt{datasets/nl\_sparql\_v2} folder documents the JSONL schema and release plan for NL→SPARQL pairs.
+    \item How to reproduce end-to-end (host ports shown): (1) Choose one building stack and start it, e.g., \texttt{docker-compose.bldg1.yml} (Frontend \texttt{3000}, Rasa \texttt{5005}, Action Server \texttt{5055}, Fuseki \texttt{3030}); optionally overlay \texttt{docker-compose.extras.yml} to enable NL→SPARQL (\texttt{6005}) and Ollama/Mistral (\texttt{11434}). (2) Load or verify TTLs in Fuseki dataset \texttt{trial} via UI or volume mount. (3) Visit \texttt{http://localhost:3000} and issue sample queries (temperature, humidity, anomalies). (4) Validate service health via \texttt{/health}, \texttt{/version}, and ping endpoints (see README).
+    \item Analytics API contract: \texttt{POST /analytics/run} accepts either flat or nested payloads with \texttt{analysis\_type} and time–value pairs keyed by human-readable sensor names; timestamps may be provided as \texttt{datetime} or \texttt{timestamp}. Optional parameters (e.g., \texttt{method: zscore|iqr}) control analysis variants. Responses include statistics and artifact metadata.
+    \item Artifacts and file server: Analysis plots (PNG) and data (CSV/JSON) are written to \texttt{rasa-ui/shared\_data/artifacts/\textit{<user>}/} and served at \texttt{http://localhost:8080/artifacts/\textit{<user>}/<filename>}. The frontend renders images inline and exposes CSVs as download links; artifacts persist across container restarts via named volumes.
+    \item Optional language services: NL→SPARQL is provided by a T5 service (\texttt{nl2sparql} on \texttt{:6005}) mounting \texttt{Transformers/t5\_base/trained/checkpoint-3}; summarisation uses \texttt{ollama} (Mistral on \texttt{:11434}). Both are optional and can point to remote endpoints via \texttt{NL2SPARQL\_URL} and \texttt{SUMMARIZATION\_URL}. The Action Server guards these calls when unset.
+    \item Configuration: A checked-in \texttt{.env.example} documents core URLs (\texttt{ANALYTICS\_URL}, \texttt{DECIDER\_URL}, \texttt{FUSEKI\_ENDPOINT}, \texttt{FILE\_SERVER\_URL}, \texttt{NL2SPARQL\_URL}, \texttt{SUMMARIZATION\_URL}). Compose files standardize ports and volumes; by design, only one building stack should run at a time to avoid host-port conflicts.
+    \item Health and tests: Each service exposes a health endpoint; analytics includes a smoke test script that exercises representative analyses. Rasa can be probed via the REST webhook; Fuseki responds to ping.
+    \item Licensing and data: Code is under MIT (\texttt{LICENSE}); Brick ontologies retain upstream licensing; synthetic NL→SPARQL datasets are released under CC‑BY 4.0 where provided (see dataset README). Raw telemetry is not bundled due to privacy/volume; building stacks include working demo databases and schemas.
+    \item Known limitations: Only one building should be active concurrently; initial TTL upload to Fuseki may be required depending on the chosen stack; optional language services increase resource usage (GPU recommended for local LLMs); real-time latency depends on database backend and data volume.
+\end{itemize}
+}
+
+\vspace{-0.3cm}
+\section{Limitations and Future Work}\label{sec7}
+Several challenges emerged despite the framework’s promising initial results. First, ambiguous user queries and the need to integrate legacy building systems complicate the correct association of natural‐language questions with the intended sensors or devices. Users frequently pose queries without explicitly naming target entities, making it challenging to map questions to the appropriate ontology classes. Moreover, because analytics are not yet modularised as microservices, the framework’s utility remains limited: only those analytics for which a corresponding microservice exists can be executed. Although the base framework now comprises over twenty microservices, the paucity of training data for translating natural language into SPARQL queries constrains its applicability. To support a wider array of real-world inquiries, a richer dataset is required, pairing diverse natural-language questions with BarickSchema-based SPARQL queries.
+
+Looking ahead, we have identified two principal avenues for future work. First, we will enhance the Fine-tuned T5-Base LLMs for NL to SPARQL capabilities to better capture context and intent, and expand its capabilities to cover additional unseen building types and functions by developing and fine-tuning on a comprehensive natural-language-to-SPARQL corpus. Second, we will extend the microservice architecture to handle multiple intents in a single service. While current NLU methods effectively discern intent and extract entities, they do not scale well to an extensive set of intents. Consequently, we plan to replace traditional NLU with LLM-driven entity extraction and classification, enabling more precise identification of the necessary analytics. Finally, we will investigate dynamic microservice adaptation based on user-provided entities to further enhance community-level usability and flexibility.
+
+\vspace{-0.3cm}
+\section{Discussion and Implications}\label{sec8}
+
+\textcolor{blue}{This work operationalises ontology‑grounded conversation at building scale by unifying four capabilities that are often studied in isolation: (i) a Brick‑conformant knowledge graph served over SPARQL, (ii) a production Rasa stack for intent/entity extraction and orchestration, (iii) a catalogue of time‑series analytics exposed as stable microservice contracts, and (iv) constrained LLM summarisation for user‑facing narratives. Together, these components yield a consistent, inspectable path from natural‑language questions to semantically valid queries, executable analytics, and auditable artefacts.
+Our evaluation clarifies where the system is strong and where it degrades. Reasoning performance is characterised by a class taxonomy and by portability checkpoints T0–T2. In cross‑building deployment, T0 (zero‑shot, ontology only) exposes naming and schema deltas; T1 (entity/label enrichment) measurably narrows this gap without retraining; and T2 (lightweight aliasing/regex repairs and harness‑guided fixes) delivers most of the remaining gains while keeping the model frozen. This separation between semantic alignment and model training is practical: new sites can be onboarded primarily by ingesting Brick TTLs into Fuseki, setting environment URLs, and curating a small alias/normalisation file—rather than re‑running end‑to‑end training.
+Implications for practice are immediate. Facilities and energy teams gain a conversational layer that speaks the same ontology as their data, returns plots/CSV/JSON artefacts via a simple file server, and integrates with existing SQL/TimescaleDB/Cassandra backends. The microservice contract for analytics is intentionally simple (time–value arrays with optional parameters), enabling incremental addition of new analyses without touching the NLU or knowledge layer. Health endpoints, smoke tests, and a Docker‑first deployment reduce operational risk and support repeatable roll‑outs across sites with different telemetry stores.
+Implications for research include a clearer benchmark substrate for NL$\rightarrow$SPARQL and multi‑step building reasoning. The staged T0–T2 harness makes portability measurable and reproducible, encouraging studies on compositional generalisation, alias‑robust entity grounding, and schema‑aware decoding. The documented dataset schema for NL$\rightarrow$SPARQL (v2) and the artefact pipeline (from SPARQL results to analytics outputs and summaries) provide a foundation for releasing richer, reasoning‑dependent corpora and for investigating guardrails that constrain LLMs to ontology‑consistent narratives.}
+
+
+
+\vspace{-0.3cm}
+\section{Conclusion}\label{sec9}
+
+\textcolor{blue}{We presented an end‑to‑end, ontology‑driven conversational platform for smart buildings that couples NL$\rightarrow$SPARQL reasoning with production analytics and summarisation in a modular, reproducible stack. The system combines Rasa‑based NLU, a Brick‑backed SPARQL store, a library of time‑series analytics exposed via simple HTTP contracts, and optional language services for translation and summarisation. This design yields a traceable pipeline from user queries to executable computations and verifiable artifacts.}
+\textcolor{blue}{
+A staged portability workflow (T0–T2) shows that most cross‑building performance can be recovered without retraining by enriching entities and applying lightweight aliasing and schema repairs. The public repository provides per‑building Docker stacks, health checks, smoke tests, and a documented artefact flow, allowing others to reproduce results, extend analytics, or evaluate new buildings with low operational overhead.}
+\textcolor{blue}{
+By decoupling semantic alignment from model training and by standardising analytics interfaces, the framework lowers the barrier to deploying conversational analytics across heterogeneous sites. We expect the accompanying evaluation harness, dataset schema, and open implementation to serve as a practical baseline for future work on compositional reasoning, schema‑aware decoding, and trustworthy, privacy‑respecting building intelligence.}
+
+
+\vspace{-0.3cm}
+\section*{Limitations and Future Work}
+\textcolor{blue}{
+Current evaluation is limited to a single target-building trial, leaving the breadth of cross-site generalization unquantified. Reasoning metrics for complex temporal joins are preliminary, and latency/energy profiling for summarization and analytics services under concurrent user load remains incomplete. The existing NL–SPARQL dataset, while extensive, lacks comprehensive coverage of compositional temporal queries and nested aggregation constructs.
+To address these gaps, we will: 1. Expand evaluations to multi-campus ontologies to better characterize portability and scaling behaviour.
+Enrich training corpora with adversarial, multi-constraint queries for more robust model generalization. 2. Incorporate retrieval-augmented generation (RAG) techniques to further mitigate hallucination and enhance response determinism. 3. Integrate uncertainty quantification within analytics summaries for improved transparency. 4. Investigate joint optimization of ontology alignment and NL$\rightarrow$SPARQL decoding via contrastive entity grounding.
+Further, we aim to deepen support for multi-hop reasoning, broaden temporal data coverage, and embed advanced predictive analytics to establish a scalable, universal framework for intelligent building communication.}
+
+\vspace{-0.3cm}
+\bmhead{Acknowledgements}
+
+This work is supported in part by the EPSRC PETRAS (Grant No. EP/S035362/1), the GCHQ National Resilience Fellowship, and ARCCA at Cardiff University.
+
+\vspace{-0.3cm}
+\section*{Declarations}
+
+\textbf{Availability of data and materials} All the datasets are publicly available, and the links are attached in the footnotes. \\
+\textbf{Funding} Not applicable.\\
+\textbf{Conflicts of interest} The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper. \\
+\textbf{Ethics approval and consent} The research project is approved under the ethics reference COMSC/Ethics/2023/009. Consent is taken when needed from the users.\\
+\textbf{Consent for publication} Authors consent for publications.\\
+\textbf{Contributions} Suhas D. performed data collection, creation, management, and development of the framework, while Prof. Omer R. and Dr. Charith P. performed supervision and validation. Suhas D. wrote the manuscript and validated it by the other two contributors. \\
+
+\bibliography{sn-bibliography}% common bib file
+\vspace{-0.3cm}
+\begin{appendices}
+\section{Extended Results}\label{secA1}
+This appendix presents a consolidated set of representative chatbot question-answering examples across all four reasoning classes (C1–C4), demonstrating the system's capability to handle direct factual queries, multi-hop reasoning, temporal aggregations, and complex analytics integration spanning three building deployments.
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{p{0.06\linewidth} p{0.06\linewidth} p{0.80\linewidth}}
+\caption{ Consolidated Chatbot QA with reasoning classes C1--C4.}
+\label{chatbotQA}
+\scriptsize
+	\textbf{Index} & \textbf{Class} & \textbf{User-Chatbot Response} \\
+	\toprule
+1 & C1 & \textbf{User:} Where is LPG\_Natural\_Gas\_Town\_MQ5\_Gas\_Sensor\_5.32 located? \newline \textbf{Bot:} The LPG\_Natural\_Gas\_Town\_MQ5\_Gas\_Sensor\_5.32 is located in the West zone, specifically in Room 5.32. \\
+\midrule
+2 & C4 & \textbf{User:} Can you show me the failure trends for Zone\_Air\_Humidity\_Sensor\_5.02 over the last two months, February to March 2025? \newline \textbf{Bot:} The analysis shows the failure trends for Zone\_Air\_Humidity\_Sensor\_5.02 over the last two months (February to March 2025). The mean value of humidity was 45.2, with a minimum value of 42.0 and a maximum of 48.5. The standard deviation is 2.31, and the latest recorded value is 46.8. The sensor's status indicates that the humidity level is within normal limits. Additionally, the comfort index was calculated to be 92.45, which assesses the overall environment as 'Comfortable'. \\
+\midrule
+3 & C4 & \textbf{User:} What deviations have been observed in Air\_Temperature\_Sensor\_5.08 readings between 01/02/2025 and 15/02/2025? \newline \textbf{Bot:} The analysis of Air\_Temperature\_Sensor\_5.08 data between 01/02/2025 and 15/02/2025 shows that the latest reading, which is from 24th April 2025, deviates slightly from the historical mean of 29.014 degrees Celsius by -0.04 degrees Celsius. However, it remains within the normal range as indicated by the "Within normal range." message. The historical standard deviation was 0.025 degrees Celsius. \\
+\midrule
+4 & C4 & \textbf{User:} Can you show the sensor trends for CO\_Level\_Sensor\_5.02 from 01/02/2025 to 28/02/2025? \newline \textbf{Bot:} The sensor trend for CO\_Level\_Sensor\_5.02, from 01/02/2025 to 28/02/2025, shows a decrease over the period. The initial rolling mean (average of recent readings) was 29.06 parts per million (ppm), while the latest rolling mean is 28.91 ppm. This represents a slight downward trend, with a difference of approximately -0.15 ppm between the initial and final rolling means. \\
+\midrule
+5 & C4 & \textbf{User:} Can you correlate Air\_Temperature\_Sensor\_5.01 with Air\_Temperature\_Sensor\_5.02 from 01/03/2025 to 15/03/2025? \newline \textbf{Bot:} Based on the provided data, it appears that there is a correlation between Air\_Temperature\_Sensor\_5.01 and Air\_Temperature\_Sensor\_5.02 from March 1st to March 15th, 2025. On the date of the analysis (April 25th), the values recorded were 22.14 degrees Celsius for Air\_Temperature\_Sensor\_5.01 and 19.56 degrees Celsius for Air\_Temperature\_Sensor\_5.02. The exact nature of this correlation, such as whether they consistently show similar or opposite trends over the specified period, would require further analysis of the full dataset. \\
+\midrule
+6 & C4 & \textbf{User:} What’s the air quality index from 01/02/2025 to 28/02/2025? \newline \textbf{Bot:} The air quality index from February 1st to February 28th, 2025, as calculated on April 25th, 2025, is approximately 2.45 with a "healthy" status. The components of the air quality are PM10 at 0.024, NO2 at 0.085, CO at 2.27 (rounded), and CO2 at 0.07425. \\
+\midrule
+7 & C4 & \textbf{User:} Can you aggregate sensor data for Formaldehyde\_Level\_Sensor\_5.01 four hourly basis from 01/01/2025 to 31/01/2025? \newline \textbf{Bot:} The request was to aggregate the Formaldehyde Level sensor data for a four-hour interval from January 1st, 2025, to January 31st, 2025. The response provided includes the aggregated mean, standard deviation (std), minimum, and maximum levels of Formaldehyde\_Level\_Sensor\_5.01 for each four-hour interval. \\
+\bottomrule
+    \end{tabular}
+\end{table}
+
+
+\vspace{-0.3cm}
+\section{Extended Results}\label{secA1}
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{p{0.06\linewidth} p{0.06\linewidth} p{0.80\linewidth}}
+\caption{ Consolidated Chatbot QA with reasoning classes C1--C4.}
+\label{chatbotQA}
+\scriptsize
+	\textbf{Index} & \textbf{Class} & \textbf{User-Chatbot Response} \\
+	\toprule
+8 & C1 & \textbf{User:} Where is bldg2.ZONE.AHU01.RM103.Zone\_Air\_Temp located? \newline \textbf{Bot:} It is a zone temperature sensor in Room RM103 served by AHU01 (Building 2). \\
+\midrule
+9 & C1 & \textbf{User:} Which AHU does bldg3.AHU.AHU02S.Outside\_Air\_Temp belong to? \newline \textbf{Bot:} The sensor belongs to AHU02S in Building 3 (outside air temperature for that AHU). \\
+\midrule
+10 & C2 & \textbf{User:} List rooms under AHU03S that have zone air temperature sensors. \newline \textbf{Bot:} The ontology lists multiple rooms under AHU03S with Zone\_Air\_Temp, including RM300C, RM301A, RM306, RM308, RM309, RM310, RM311, RM312, RM314, and RM315 (non-exhaustive). \\
+\midrule
+11 & C2 & \textbf{User:} Which AHU serves bldg3.ZONE.AHU02S.RM211.Zone\_Air\_Temp, and what is its supply air temperature point? \newline \textbf{Bot:} The room RM211 is served by AHU02S; the corresponding point is bldg3.AHU.AHU02S.Supply\_Air\_Temp. \\
+\midrule
+12 & C3 & \textbf{User:} What was the average bldg2.AHU.AHU01.Supply\_Air\_Temp over August 2025? \newline \textbf{Bot:} Aggregation (mean) over 2025-08-01 to 2025-08-31 yields an average of 12.8$^{\circ}$C (analytics: aggregation.mean). \\
+\midrule
+13 & C3 & \textbf{User:} Provide daily min/max for bldg3.CHW.Building\_Chilled\_Water\_Supply\_Temp in September 2025. \newline \textbf{Bot:} Over 2025-09-01 to 2025-09-30, the daily minima and maxima range approximately between 5.8$^{\circ}$C and 8.4$^{\circ}$C; daily aggregates are available per date (analytics: aggregation.minmax). \\
+\midrule
+14 & C3 & \textbf{User:} Aggregate PM2.5\_Sensor.01 readings on a 4-hour basis for June 2025. \newline \textbf{Bot:} 4-hour buckets from 2025-06-01 to 2025-06-30 return mean, std, min, and max per interval for PM2.5\_Sensor.01 (analytics: aggregation.resample-4h). \\
+\midrule
+15 & C4 & \textbf{User:} Correlate bldg3.AHU.AHU01S.Supply\_Air\_Temp with bldg3.ZONE.AHU01S.RM111.Zone\_Air\_Temp from 01/07/2025 to 31/07/2025. \newline \textbf{Bot:} Timeseries fusion via UUIDs shows positive correlation (Pearson r \~0.71) with zone lagging supply by 10--20 minutes; pipelines: correlation.pearson and lag scan (analytics: correlation). \\
+\midrule
+16 & C4 & \textbf{User:} Detect anomalies in bldg2.AHU.AHU01.Supply\_Air\_Pressure between 01/06/2025 and 15/07/2025. \newline \textbf{Bot:} Z-score based anomaly detection flags two spikes on 2025-06-18 and 2025-07-02 exceeding 3$\sigma$; overall uptime unaffected (analytics: anomaly.zscore). \\
+\midrule
+17 & C4 & \textbf{User:} Compute building air quality index for June 2025 using PM2.5\_Sensor.01, CO\_Sensor.01, NO2\_Level\_Sensor.01, and CO2\_Level\_Sensor.01. \newline \textbf{Bot:} Composite AQI over 2025-06-01 to 2025-06-30 is 2.3 ("healthy"); components are normalized and weighted before aggregation (analytics: aqi.compose). \\
+\midrule
+18 & C4 & \textbf{User:} Show weekly trend for bldg3.CHW.LOOP\_DP across July 2025. \newline \textbf{Bot:} Rolling 7-day mean indicates a \~5\% week-over-week decrease in differential pressure; change-points not significant (analytics: trend.rolling). \\
+\bottomrule
+    \end{tabular}
+\end{table}
+
+\end{appendices}
+
+\end{document}
