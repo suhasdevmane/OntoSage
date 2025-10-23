@@ -1,0 +1,141 @@
+# HVAC Analytics Functions (scaffold)
+# Style: follows analyze_formaldehyde_levels signature and behavior
+# Input: nested or flat JSON-like payloads; combines readings across keys; outputs stats + alerts.
+
+
+def analyze_tvoc_levels(sensor_data, threshold=None):
+    """
+    Analyzes TVOC sensor readings from a nested JSON structure.
+
+    Aggregates readings for TVOC-like keys across groups, computes summary stats,
+    and flags if the latest reading exceeds the threshold.
+
+    Expected input (as a Python dict or JSON string):
+      {
+         "1": {
+             "TVOC_Level_Sensor1": {
+                 "timeseries_data": [
+                     {"datetime": "2025-02-10 05:31:59", "reading_value": 180.0},
+                     {"datetime": "2025-02-10 05:32:11", "reading_value": 220.5}
+                 ]
+             }
+         },
+         "2": {
+             "TVOC_Level_Sensor2": {
+                 "timeseries_data": [
+                     {"datetime": "2025-02-10 05:35:00", "reading_value": 310.2},
+                     {"datetime": "2025-02-10 05:35:12", "reading_value": 295.4}
+                 ]
+             }
+         }
+      }
+
+    Returns a dictionary containing:
+      - mean, min, max, std, and latest reading_value.
+      - an alert message if the latest reading exceeds the threshold.
+    """
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No TVOC data available"}
+
+    tvoc_pred = _key_matcher(["tvoc", "voc"])  # common naming
+    keys = _select_keys(flat, tvoc_pred, fallback_to_all=(len(flat) == 1))
+    if not keys:
+        return {"error": "No TVOC-like keys found"}
+
+    all_readings = []
+    for k in keys:
+        all_readings.extend(flat.get(k, []))
+    df = _df_from_readings(all_readings)
+    if df.empty:
+        return {"error": "Empty TVOC series"}
+
+    latest = float(df.iloc[-1]["reading_value"]) if not df.empty else None
+    # TVOC indoor guidance varies; default to 500 µg/m³ as a conservative short-term threshold
+    if threshold is None:
+        threshold = 500.0
+    summary = {
+        "mean": float(df["reading_value"].mean()),
+        "min": float(df["reading_value"].min()),
+        "max": float(df["reading_value"].max()),
+        "std": float(df["reading_value"].std()),
+        "latest": latest,
+        "unit": "µg/m³",
+        "acceptable_max": float(threshold),
+    }
+    if latest is not None:
+        summary["alert"] = (
+            "High TVOC level" if latest > float(threshold) else "Normal TVOC level"
+        )
+    else:
+        summary["alert"] = "No readings"
+    return summary
+
+
+def analyze_ammonia_levels(sensor_data, threshold=None):
+    """
+    Analyzes Ammonia (NH3) sensor readings from a nested JSON structure.
+
+    Aggregates readings for ammonia-like keys across groups, computes summary stats,
+    and flags if the latest reading exceeds the threshold.
+
+    Expected input (as a Python dict or JSON string):
+      {
+         "1": {
+             "Ammonia_Level_Sensor1": {
+                 "timeseries_data": [
+                     {"datetime": "2025-02-10 05:31:59", "reading_value": 12.5},
+                     {"datetime": "2025-02-10 05:32:11", "reading_value": 13.2}
+                 ]
+             }
+         },
+         "2": {
+             "Ammonia_Level_Sensor2": {
+                 "timeseries_data": [
+                     {"datetime": "2025-02-10 05:35:00", "reading_value": 18.0},
+                     {"datetime": "2025-02-10 05:35:12", "reading_value": 19.1}
+                 ]
+             }
+         }
+      }
+
+    Returns a dictionary containing:
+      - mean, min, max, std, and latest reading_value.
+      - an alert message if the latest reading exceeds the threshold.
+    """
+    flat = _aggregate_flat(sensor_data)
+    if not flat:
+        return {"error": "No ammonia data available"}
+
+    nh3_pred = _key_matcher(["ammonia", "nh3"])  # common naming
+    keys = _select_keys(flat, nh3_pred, fallback_to_all=(len(flat) == 1))
+    if not keys:
+        return {"error": "No ammonia-like keys found"}
+
+    all_readings = []
+    for k in keys:
+        all_readings.extend(flat.get(k, []))
+    df = _df_from_readings(all_readings)
+    if df.empty:
+        return {"error": "Empty ammonia series"}
+
+    latest = float(df.iloc[-1]["reading_value"]) if not df.empty else None
+    # Default threshold: 25 ppm (illustrative short-term limit; adjust per local standards)
+    if threshold is None:
+        threshold = 25.0
+    summary = {
+        "mean": float(df["reading_value"].mean()),
+        "min": float(df["reading_value"].min()),
+        "max": float(df["reading_value"].max()),
+        "std": float(df["reading_value"].std()),
+        "latest": latest,
+        "unit": "ppm",
+        "acceptable_max": float(threshold),
+    }
+    if latest is not None:
+        summary["alert"] = (
+            "High ammonia level" if latest > float(threshold) else "Normal ammonia level"
+        )
+    else:
+        summary["alert"] = "No readings"
+    return summary
