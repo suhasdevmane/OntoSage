@@ -25,7 +25,7 @@ B. Environmental & IAQ
 15) Outdoor vs Indoor IAQ Contrast — Ventilation opportunity | Outside_Air_CO2_Sensor, Return_Air_CO2_Sensor | differential trend, economizer feasibility flag
 
 C. Thermal & Comfort
-16) Zone Temperature Summary — Stats per zone | Zone_Air_Temperature or Zone_Air_Temperatureerature_Sensor | avg/min/max, time-in-comfort-band
+16) Zone Temperature Summary — Stats per zone | Zone_Air_Temperature or Zone_Air_Temperature_Sensor | avg/min/max, time-in-comfort-band
 17) Comfort Index (Simple) — Proxy comfort score | Zone_Air_Temperature + Relative_Humidity_Sensor | comfort score (0–100), within/near/out of range
 18) PMV/PPD Approximation — Thermal comfort estimate | Zone_Air_Temperature, Relative_Humidity_Sensor, Air_Flow_Sensor (air speed proxy) | PMV/PPD estimates with assumptions
 19) Temperature Setpoint Tracking — Tracking actual vs setpoint | Supply_Air_Temperature + (if available) relevant setpoint signals | follow error stats, overshoot/undershoot time
@@ -44,12 +44,12 @@ D. Air-Side HVAC (AHU/RTU)
 30) Return/Mixed/Outdoor Consistency — Plausibility trio | Return_Air_Temperature, Mixed_Air_Temperature, Outside_Air_Temperature | logical ordering violations, sensor swap suspicion
 
 E. Water-Side (Chilled/Hot/Condenser)
-31) Chilled Water ΔT — Supply vs Return | Chilled_Water_Supply_Temperature, Chilled_Water_Return_Temperatureerature_Sensor | ΔT timeseries, low-ΔT penalty
+31) Chilled Water ΔT — Supply vs Return | Chilled_Water_Supply_Temperature, Chilled_Water_Return_Temperature_Sensor | ΔT timeseries, low-ΔT penalty
 32) Chilled Water Flow Health — Adequacy | Chilled_Water_Flow_Sensor or Supply/Return flow sensors | min/avg/max flow, NPSH warnings (heuristic)
 33) Differential Pressure (CW/HW) — Pumping sufficiency | Chilled_Water_Differential_Pressure_Sensor / Hot_Water_Differential_Pressure_Sensor | DP trend, setpoint tracking
 34) Coil Valve Diagnostics — Performance via temps/flow | Supply/Return Water Temps + Valve_Position_Sensor | leakage/stuck inference, hysteresis
 35) Heat Exchanger Effectiveness — HX performance | Heat_Exchanger_*_Temperature_Sensor | effectiveness KPI, fouling suspicion
-36) Condenser Loop Health — CW temperature/flow | Condenser_Water_Temperatureerature_Sensor, Condenser_Water_Flow_Sensor | approach temperature, capacity constraints
+36) Condenser Loop Health — CW temperature/flow | Condenser_Water_Temperature_Sensor, Condenser_Water_Flow_Sensor | approach temperature, capacity constraints
 
 F. Energy & Efficiency KPIs
 37) Electric Power Summary — Demand/energy | Electric_Power_Sensor or Active_Power_Sensor; Electric_Energy_Sensor | peak demand, kWh by period, load factor
@@ -97,6 +97,23 @@ L. Derived/Composite Diagnostics
 67) Economizer Fault Rules — FDD | Mixed vs calc mixed temp, damper pos | rules pass/fail, fault code
 68) Low ΔT Syndrome — Chilled water loop | CHW ΔT + coil valve pos | low-ΔT duration, probable causes
 69) Simultaneous Heating/Cooling — Waste check | Supply/Return temps in HW & CHW loops | overlap windows, energy waste index
+
+M. Advanced & Predictive Analytics
+70) Benchmarking Dashboard — Cross-site/zone KPI comparison | KPIs (EUI, COP, PLR, comfort, IAQ) + site/zone metadata | percentiles, league tables, sparklines
+71) Control Loop Auto-Tuning Aid — Suggest PID tuning ranges | Process variable (e.g., SAT or Static_Pressure), Setpoint, Actuator_Position | suggested Kp/Ki/Kd ranges, stability margin, what-if response
+72) Residual-Based Coil FDD — Model vs observed residuals | Coil in/out temperatures, Water_Flow_Sensor, Valve_Position_Sensor, Outside_Air_Temperature | residual stats, fault codes (fouling, valve leakage), confidence
+73) Occupancy Inference (CO2-based) — Estimate occupancy | Zone_CO2_Level_Sensor, zone volume metadata, Outside_Air_Flow (if available) | estimated occupancy timeseries, uncertainty band
+74) Per-Person Ventilation Rate — Compliance to standards | Supply_Air_Flow_Sensor + occupancy (inferred or counted) | L/s per person over time, compliance flags
+75) Baseline Energy Regression (M&V) — Weather/usage baseline | Electric_Energy_Sensor + Outside_Air_Temperature + occupancy/schedule | baseline model (R², CV(RMSE), NMBE), savings vs baseline
+76) Load/Zone Clustering — Segment behaviors for ops | Electric_Power_Sensor and/or Zone_Air_Temperature series | clusters, centroids, segment labels
+77) Predictive Maintenance – Fans/Pumps — Early warnings | Motor_Current_Sensor, runtime, DP/flow; (optional) Vibration_Sensor | health score, remaining useful life (RUL), alerts
+78) Predictive Maintenance – Chillers/AHUs — Early warnings | Electric_Power_Sensor, CHW ΔT & Flow, Supply_Air_Temperature tracking | health score, RUL, degradation trend
+79) DR Event Impact Analysis — Shed and rebound effect | Electric_Power_Sensor + comfort metrics | shed kW, rebound quantification, comfort deviation
+80) Digital Twin Scenario Simulation — What-if planning | System models + setpoint scenarios | predicted energy/comfort outcomes, recommended scenario
+81) MPC Readiness/Shadow Mode — Compare MPC vs baseline | Same signals as control loop analytics | projected energy savings, comfort guarantees, constraint violations
+82) Fault Signature Library Matching — Map anomalies to known faults | Multi-sensor patterns (temp/flow/pressure/power) | fault label with confidence, supporting evidence
+83) SAT Residual Analysis — Expected vs actual SAT | Outside_Air_Temperature, Mixed_Air_Temperature, Valve/Damper_Position, Supply_Air_Temperature | residual time series, control bias flag
+84) Weather-Normalized Benchmarking — Climate-independent comparison | KPIs + weather normalization (HDD/CDD) | normalized rankings, deltas to peers
 
 Notes
 - Where specific *_Setpoint sensors are missing, compliance analyses operate against configured targets (provided via config/API), or are skipped.
