@@ -5,12 +5,10 @@
 Thumbs.db
 *.swp
 .idea/
-
 # VS Code: ignore everything by default, allow select files
 .vscode/*
 !.vscode/tasks.json
 !.vscode/extensions.json
-
 ##############################
 # Node / JS
 ##############################
@@ -43,12 +41,10 @@ abacws-chatbot-venv/
 abacws_chatbot_env/
 .rasaenv/
 .rasa/
-
 ##############################
 # Jupyter
 ##############################
 **/.ipynb_checkpoints/
-
 ##############################
 # Docker volumes / app data
 ##############################
@@ -137,7 +133,6 @@ my_password.txt
 **/id_ed25519
 **/id_ed25519.pub
 **/known_hosts
-
 ##############################
 # Archives & large blobs
 ##############################
@@ -148,7 +143,6 @@ my_password.txt
 *.tar.xz
 *.gz
 *.rar
-
 ##############################
 # Transformers models & datasets
 ##############################
@@ -186,7 +180,6 @@ bldg1/processed_mortardata_sites__ttl
 # Rasa models
 ##############################
 rasa-ui/models/
-
 ##############################
 # Project-specific (tune as needed)
 ##############################
@@ -249,13 +242,11 @@ bldg1/mortardata-demo.ipynb
 # Transformers extra large outputs
 ##############################
 Transformers/**/updated_combined_output*
-
 ##############################
 # Local credentials (never commit)
 ##############################
 CREDENTIALS-LOCAL.md
 ./how to do it.docx
-
 ##############################
 # Internal documentation & reports (do not commit)
 ##############################
@@ -274,7 +265,6 @@ PRE_PUSH_INSPECTION_REPORT.md
 cleanup_before_push.ps1
 deleted_backup/
 deleted_backup_ext/
-
 ##############################
 # Backup files (never commit)
 ##############################
