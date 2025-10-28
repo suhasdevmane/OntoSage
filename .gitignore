@@ -172,6 +172,7 @@ Transformers/graphs/
 bldg1/dataset for training explanation/
 bldg1/processed_mortardata_sites__ttl/
 bldg1/processed_mortardata_sites__ttl
+working-demos/
 # Large model files
 *.safetensors
 *.bin
