@@ -31,7 +31,6 @@ services:
   #     - ontobot-network
   mongo:
     image: mongo      #or
-    # image: devmanenvision/mongo:latest
     container_name: abacws-chatbot-mongo
     hostname: mongohost
     restart: always
@@ -72,7 +71,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./api/src/api/data:/api/src/api/data
+      - ./Abacws/api/src/api/data:/api/src/api/data
     healthcheck:
       test: ["CMD", "sh", "-lc", "wget -qO- http://localhost:5000/health | grep -q 'ok'"]
       interval: 30s
