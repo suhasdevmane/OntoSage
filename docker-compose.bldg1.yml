@@ -52,18 +52,18 @@ services:
       - DB_ENGINE=postgres
       # - DB_ENGINE=mysql
       # - DB_ENGINE=disabled
-      - PGHOST=postgres
-      - PGPORT=5432
-      - PGUSER=postgres
-      - PGPASSWORD=postgres
-      - PGDATABASE=abacws
+      - PGHOST=${API_PGHOST:-postgres}
+      - PGPORT=${API_PGPORT:-5432}
+      - PGUSER=${API_PGUSER:-postgres}
+      - PGPASSWORD=${API_PGPASSWORD:-postgres}
+      - PGDATABASE=${API_PGDATABASE:-abacws}
       # MySQL connection (used when DB_ENGINE=mysql)
-      - MYSQL_HOST=mysql
-      - MYSQL_PORT=3306
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=mysql
-      - MYSQL_DATABASE=abacws
-      - API_KEY=V3rySecur3Pas3word
+      - MYSQL_HOST=${API_MYSQL_HOST:-mysql}
+      - MYSQL_PORT=${API_MYSQL_PORT:-3306}
+      - MYSQL_USER=${API_MYSQL_USER:-root}
+      - MYSQL_PASSWORD=${API_MYSQL_PASSWORD:-mysql}
+      - MYSQL_DATABASE=${API_MYSQL_DATABASE:-abacws}
+      - API_KEY=${API_KEY:-change_me}
     restart: always
     depends_on:
       - mongo
@@ -272,8 +272,8 @@ services:
       - BUNDLE_MEDIA=true
       - DB_HOST=mysqlserver
       - DB_NAME=sensordb
-      - DB_USER=root
-      - DB_PASSWORD=mysql
+      - DB_USER=${ACTION_DB_USER:-root}
+      - DB_PASSWORD=${ACTION_DB_PASSWORD:-mysql}
       - DB_PORT=3306
       - ANALYTICS_URL=http://microservices:6000/analytics/run
     ports:
@@ -349,7 +349,7 @@ services:
       - PORT=8080
       - FRONTEND_ORIGIN=http://localhost:3000
       - ALLOWED_ORIGINS=http://localhost:3000
-      - JWT_SECRET=change_me_in_prod
+      - JWT_SECRET=${JWT_SECRET:-change_me_in_prod}
       - JWT_EXPIRES_DAYS=7
       - SECURE_COOKIES=false
       - AUTO_LOAD_AFTER_TRAIN=false
