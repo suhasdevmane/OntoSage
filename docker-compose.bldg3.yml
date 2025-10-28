@@ -169,7 +169,7 @@ services:
       - ontobot-network
     depends_on:
       - decider-service
-      - mysql
+      # MySQL service is not defined in this stack; remove dependency to avoid invalid compose project
 
   duckling_server:
     image: rasa/duckling:latest

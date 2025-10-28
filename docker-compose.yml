@@ -98,21 +98,21 @@ services:
 
 # #   # ==================== Option 1) postgress + thingsboard  ===================
 
-  # postgres:
-  #   # restart: always
-  #   image: postgres:15-alpine
-  #   container_name: postgres
-  #   hostname: postgres
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     POSTGRES_DB: thingsboard
-  #     POSTGRES_USER: thingsboard
-  #     POSTGRES_PASSWORD: thingsboard
-  #   volumes:
-  #     - ~/.postgres-data:/var/lib/postgresql/data
-  #   networks:
-  #     - ontobot-network
+  postgres:
+    # restart: always
+    image: postgres:15-alpine
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: thingsboard
+      POSTGRES_USER: thingsboard
+      POSTGRES_PASSWORD: thingsboard
+    volumes:
+      - ~/.postgres-data:/var/lib/postgresql/data
+    networks:
+      - ontobot-network
 
 #  # This is the main ThingsBoard service. It will run the application.
 # # Use this service after the setup is complete.

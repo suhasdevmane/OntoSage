@@ -112,32 +112,32 @@ services:
       - ontobot-network
 
   postgres:
-      image: postgres:15-alpine
-      container_name: postgres
-      hostname: postgres
-      environment:
-        POSTGRES_DB: ${PG_THINGSBOARD_DB:-thingsboard}
-        POSTGRES_USER: ${PG_THINGSBOARD_USER:-thingsboard}
-        POSTGRES_PASSWORD: ${PG_THINGSBOARD_PASSWORD:-thingsboard}
-      ports:
-        - "5432:5432"
-      volumes:
-        - postgres-data:/var/lib/postgresql/data
-      networks:
-        - ontobot-network
+    image: postgres:15-alpine
+    container_name: postgres
+    hostname: postgres
+    environment:
+      - POSTGRES_DB=${PG_THINGSBOARD_DB}
+      - POSTGRES_USER=${PG_THINGSBOARD_USER}
+      - POSTGRES_PASSWORD=${PG_THINGSBOARD_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - ontobot-network
 
   mytb:
     image: devmanenvision/my-thingsboard:1.1
     container_name: thingsboard
     hostname: thingsboardhost
     depends_on:
-     - postgres
+      - postgres
     environment:
-      TB_QUEUE_TYPE: in-memory
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${PG_THINGSBOARD_DB:-thingsboard}
-      SPRING_DATASOURCE_USERNAME: ${PG_THINGSBOARD_USER:-thingsboard}
-      SPRING_DATASOURCE_PASSWORD: ${PG_THINGSBOARD_PASSWORD:-thingsboard}
-      DATABASE_TS_TYPE: sql
+      - TB_QUEUE_TYPE=in-memory
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${PG_THINGSBOARD_DB}
+      - SPRING_DATASOURCE_USERNAME=${PG_THINGSBOARD_USER}
+      - SPRING_DATASOURCE_PASSWORD=${PG_THINGSBOARD_PASSWORD}
+      - DATABASE_TS_TYPE=sql
     ports:
       - "8082:9090"   # TB Web UI at http://localhost:8082
       - "1883:1883"
@@ -159,8 +159,8 @@ services:
     networks:
       - ontobot-network
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-mysql}
-      - MYSQL_DATABASE=${DB_NAME:-sensordb}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${MYSQL_APP_USER:-thingsboard}
       - MYSQL_PASSWORD=${MYSQL_APP_PASSWORD:-thingsboard}
     ports:
