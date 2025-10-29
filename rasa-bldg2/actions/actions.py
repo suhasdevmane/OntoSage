@@ -136,7 +136,7 @@ logger = logging.getLogger(__name__)
 # Default to internal Docker DNS names so services work inside the compose network.
 # nl2sparql_url = os.getenv("NL2SPARQL_URL", "http://nl2sparql:6005/nl2sparql") # Original internal URL
 nl2sparql_url = os.getenv("NL2SPARQL_URL", "https://deep-gator-cleanly.ngrok-free.app") # Updated to external ngrok URL for testing
-FUSEKI_URL = os.getenv("FUSEKI_URL", "http://jena-fuseki-rdf-store:3030/abacws-sensor-network/sparql")
+FUSEKI_URL = os.getenv("FUSEKI_URL", "http://jena-fuseki-rdf-store:3030/bldg2/sparql")
 # Where to write downloadable files. Use the shared volume so http_server can serve them.
 # Route everything through a single folder for easy sharing and cleanup.
 ATTACHMENTS_DIR = ARTIFACTS_DIR
@@ -964,7 +964,7 @@ class ActionQuestionToBrickbot(Action):
             "PREFIX sosa: <http://www.w3.org/ns/sosa/>",
             "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>",
             "PREFIX tag: <https://brickschema.org/schema/BrickTag#>",
-            "PREFIX bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#>",
+            "PREFIX bldg: <http://buildsys.org/ontologies/bldg2#>",
             "PREFIX bsh: <https://brickschema.org/schema/BrickShape#>",
             "PREFIX s223: <http://data.ashrae.org/standard223#>",
             "PREFIX bacnet: <http://data.ashrae.org/bacnet/2020#>",

@@ -276,3 +276,7 @@ deleted_backup_ext/
 *_backup.*
 *_old.*
 *.orig
+
+
+sn-article.tex
+article/

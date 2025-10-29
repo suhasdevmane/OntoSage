@@ -500,7 +500,7 @@ volumes:
   mongo-data:
   attachments_volume:
   mysql-data:
-  ollama-models:
+  # ollama-models:
   mytb-data:
   mytb-logs:
   microservices-bldg1-plugins:

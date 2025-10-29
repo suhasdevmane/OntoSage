@@ -227,8 +227,8 @@ BASE_URL_DEFAULT = "http://localhost:8080"
 # Optional unified decider microservice
 DECIDER_URL = os.getenv("DECIDER_URL")
 # Summarization/Ollama base URL
-# SUMMARIZATION_URL = os.getenv("SUMMARIZATION_URL", "http://ollama:11434") # Original internal URL
-SUMMARIZATION_URL = os.getenv("SUMMARIZATION_URL", "https://dashing-sunfish-curiously.ngrok-free.app") # Updated to external ngrok URL for testing
+SUMMARIZATION_URL = os.getenv("SUMMARIZATION_URL", "http://ollama:11434") # Original internal URL
+# SUMMARIZATION_URL = os.getenv("SUMMARIZATION_URL", "https://dashing-sunfish-curiously.ngrok-free.app") # Updated to external ngrok URL for testing
 
 def get_mysql_config() -> Dict[str, Any]:
     """Return a unified MySQL configuration using environment variables with sensible defaults.
