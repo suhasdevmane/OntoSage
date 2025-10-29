@@ -179,6 +179,8 @@ working-demos/
 *.pt
 *.pth
 *.docx
+.blobs/
+blobs/
 ##############################
 # Rasa models
 ##############################
