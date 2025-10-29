@@ -39,6 +39,7 @@ services:
     networks:
       - ontobot-network
   api:
+    # image: devmanenvision/abacws-api:bldg1-2025-10-29  # Option: pull prebuilt image from Docker Hub (comment out build: below)
     build:
       context: ./Abacws/api
       dockerfile: Dockerfile
@@ -81,6 +82,7 @@ services:
       - ontobot-network
 
   visualiser:
+    # image: devmanenvision/abacws-visualiser:bldg1-2025-10-29  # Option: pull prebuilt image from Docker Hub (comment out build: below)
     build:
       context: ./Abacws/visualiser/
       dockerfile: Dockerfile
@@ -201,6 +203,7 @@ services:
 
   # Analytics microservices (shared)
   microservices:
+    # image: devmanenvision/microservices:bldg1-2025-10-29  # Option: pull prebuilt image from Docker Hub (comment out build: below)
     build:
       context: ./microservices
       dockerfile: Dockerfile
@@ -257,6 +260,7 @@ services:
       - ontobot-network
 
   action_server:
+    # image: devmanenvision/rasa_action_server:bldg1-2025-10-29  # Option: pull prebuilt image from Docker Hub (comment out build: below)
     build: ./rasa-bldg1/actions
     container_name: action_server_bldg1
     restart: unless-stopped
@@ -365,6 +369,7 @@ services:
       - ontobot-network
 
   rasa-editor:
+    # image: devmanenvision/rasa-editor:bldg1-2025-10-29  # Option: pull prebuilt image from Docker Hub (comment out build: below)
     build:
       context: ./rasa-bldg1
       dockerfile: editor.Dockerfile
@@ -394,6 +399,7 @@ services:
       - ontobot-network
 
   rasa-frontend:
+    # image: devmanenvision/rasa-web-ui:bldg1-2025-10-29  # Option: pull prebuilt image from Docker Hub (comment out build: below)
     build:
       context: ./rasa-frontend
       dockerfile: Dockerfile
@@ -414,6 +420,7 @@ services:
       - ontobot-network
 
   decider-service:
+    # image: devmanenvision/decider-service:bldg1-2025-10-29  # Option: pull prebuilt image from Docker Hub (comment out build: below)
     build: ./decider-service
     container_name: decider_service
     restart: unless-stopped
@@ -425,6 +432,7 @@ services:
       - ontobot-network
 
   nl2sparql:
+    # image: devmanenvision/nl2sparql:bldg1-2025-10-29  # Option: pull prebuilt image from Docker Hub (comment out build: below)
     build:
       context: ./Transformers/t5_base/trained
     ports:
@@ -449,6 +457,7 @@ services:
 
   ollama:
       container_name: ollama
+      # image: devmanenvision/ollama-mistral:bldg1-2025-10-29  # Option: pull prebuilt image from Docker Hub (comment out build: below)
       build:
         context: ./Transformers/Mistral
       pull_policy: always
