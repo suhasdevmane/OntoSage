@@ -41,6 +41,8 @@ abacws-chatbot-venv/
 abacws_chatbot_env/
 .rasaenv/
 .rasa/
+todos/
+papers/
 ##############################
 # Jupyter
 ##############################

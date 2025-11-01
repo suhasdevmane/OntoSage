@@ -37,8 +37,9 @@ export default function Home() {
   { img: apiImg,         title: "3D-API",             text: "API for 3D Services",               url: "http://localhost:8091",  width:  "70%", height: "150px" },
 
   // AI services
-  { img: sparqlimg,      title: "NL2SPARQL",          text: "Natural language → SPARQL",         url: "http://localhost:6005",  width:  "70%", height: "150px" },
-  { img: OllamaImg,      title: "Ollama (Mistral)",   text: "Local LLM service",                 url: "http://localhost:11434", width:  "70%", height: "150px" },
+  { img: sparqlimg,      title: "NL2SPARQL",          text: "Natural language → SPARQL",         url: "http://localhost:6005",  width:  "60%", height: "150px" },
+  { img: apiImg,         title: "Decider Service",    text: "ML Analytics Decision Engine",      url: "http://localhost:6009",  width:  "60%", height: "150px" },
+  { img: OllamaImg,      title: "Ollama (Mistral)",   text: "Local LLM service",                 url: "http://localhost:11434", width:  "60%", height: "150px" },
   ];
 
   return (

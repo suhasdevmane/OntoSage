@@ -10,9 +10,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 52,
+        "x": 211,
         "y": 73,
-        "z": 24
+        "z": -96
       },
       "pinned": true
     },
@@ -32,9 +32,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 5,
+        "x": 165,
         "y": 73,
-        "z": 24
+        "z": -96
       },
       "pinned": true
     },
@@ -43,9 +43,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -54,
+        "x": 106,
         "y": 73,
-        "z": 12
+        "z": -108
       },
       "pinned": true
     },
@@ -54,9 +54,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -60,
+        "x": 100,
         "y": 73,
-        "z": -26
+        "z": -146
       },
       "pinned": true
     },
@@ -65,9 +65,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 51,
+        "x": 211,
         "y": 73,
-        "z": -19
+        "z": -139
       },
       "pinned": true
     },
@@ -76,9 +76,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 58,
+        "x": 218,
         "y": 73,
-        "z": -8
+        "z": -128
       },
       "pinned": true
     },
@@ -87,9 +87,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -22,
+        "x": 138,
         "y": 73,
-        "z": -8
+        "z": -128
       },
       "pinned": true
     },
@@ -98,9 +98,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -110,
+        "x": 50,
         "y": 73,
-        "z": -19
+        "z": -139
       },
       "pinned": true
     },
@@ -109,9 +109,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -110,
+        "x": 50,
         "y": 73,
-        "z": 24
+        "z": -96
       },
       "pinned": true
     },
@@ -120,9 +120,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 99,
+        "x": 250,
         "y": 73,
-        "z": -19
+        "z": -139
       },
       "pinned": true
     },
@@ -131,20 +131,20 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -74,
+        "x": 86,
         "y": 73,
-        "z": 24
+        "z": -96
       },
-      "pinned": true
+      "pinned": false
     },
     {
       "name": "node_5.13",
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -54,
+        "x": 106,
         "y": 73,
-        "z": -8
+        "z": -128
       },
       "pinned": true
     },
@@ -153,9 +153,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 58,
+        "x": 218,
         "y": 73,
-        "z": 12
+        "z": -108
       },
       "pinned": true
     },
@@ -164,9 +164,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 30,
+        "x": 190,
         "y": 73,
-        "z": -8
+        "z": -128
       },
       "pinned": true
     },
@@ -175,9 +175,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": -100,
+        "x": 50,
         "y": 73,
-        "z": 2
+        "z": -96
       },
       "pinned": true
     },
@@ -197,9 +197,9 @@
       "type": "Corridor",
       "floor": 5,
       "position": {
-        "x": 83,
+        "x": 243,
         "y": 73,
-        "z": 24
+        "z": -96
       },
       "pinned": true
     },
@@ -230,7 +230,7 @@
       "type": "teaching_space",
       "floor": 5,
       "position": {
-        "x": 250,
+        "x": 262,
         "y": 73,
         "z": -87
       },
@@ -241,7 +241,7 @@
       "type": "teaching_space",
       "floor": 5,
       "position": {
-        "x": 106,
+        "x": 104,
         "y": 73,
         "z": -153
       },
@@ -362,9 +362,9 @@
       "type": "shared_room",
       "floor": 5,
       "position": {
-        "x": 108,
+        "x": 267,
         "y": 73,
-        "z": 2
+        "z": -118
       },
       "pinned": true
     }
