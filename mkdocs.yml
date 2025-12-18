@@ -68,6 +68,7 @@ extra_javascript:
 
 nav:
   - Overview: index.md
+  - Project Structure: PROJECT_STRUCTURE.md
   - Architecture: ARCHITECTURE.md
   - Workflow Deep Dive: WORKFLOW.md
   - Services: SERVICES.md
