@@ -47,7 +47,7 @@ def load_sensor_map(filepath='sensor_uuids.json'):
         print(f"[py-dummy] Warning: Could not load sensor map from {filepath}: {e}")
 
 def load_schema_map(filepath='postgresql columns.csv'):
-    global SCHEMA_MAP
+    # global SCHEMA_MAP  # Not needed for in-place modification
     try:
         import csv
         script_dir = os.path.dirname(os.path.abspath(__file__))
