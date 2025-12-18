@@ -1,0 +1,32 @@
+# Core dependencies
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+
+# LangGraph and LangChain
+langgraph==0.2.55
+langchain==0.3.13
+langchain-ollama>=0.2.0
+langchain-community==0.3.13
+langchain-openai==0.2.14
+
+# Redis
+redis==5.2.0
+
+# HTTP client
+httpx==0.28.1
+
+# Database
+aiomysql==0.2.0
+pymysql==1.1.1
+cryptography>=41.0.0  # Required for MySQL sha256_password auth
+asyncpg==0.29.0
+sqlalchemy==2.0.25
+
+# Logging
+python-json-logger==3.2.1
+
+# WebSocket support
+websockets==14.1

@@ -1,0 +1,799 @@
+# OntoSage 2.0: Agentic AI Docker Compose Configuration
+# Optimized for DeepSeek-R1:32b with NVIDIA GPU support
+# Local volumes + External MySQL volume
+# Usage: docker-compose -f docker-compose.agentic.yml up -d
+
+networks:
+  ontobot-agentic:
+    driver: bridge
+  ontobot-network:
+    external: true  # Connect to existing MySQL network with sensor data
+
+volumes:
+  # External volume - reuse existing MySQL data with sensor UUIDs
+  mysql-data:
+    external: true
+    name: ontobot_mysql-data
+
+services:
+  # ====================== Local LLM (Ollama) with GPU ======================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-deepseek-r1
+    ports:
+      - "11435:11434"  # Host port changed to avoid conflict
+    volumes:
+      - ./volumes/ollama:/root/.ollama  # Local persistent storage
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_NUM_GPU=1
+      - OLLAMA_GPU_LAYERS=-1  # Use all GPU layers for maximum performance
+      - OLLAMA_KEEP_ALIVE=24h  # Keep model in VRAM for 24 hours
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_NUM_CTX=4096
+    networks:
+      - ontobot-agentic
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s  # Longer for model loading
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    profiles:
+      - local
+      - "" # Empty profile = always start (default behavior when no profile specified)
+
+  # ====================== Ollama Health Sidecar ======================
+  ollama-health:
+    build:
+      context: ./ollama-health
+      dockerfile: Dockerfile
+    container_name: ollama-health
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_BASE_URL=http://ollama-deepseek-r1:11434
+      - OLLAMA_MODEL=deepseek-r1:32b
+    ports:
+      - "8005:8005"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - ontobot-agentic
+    restart: unless-stopped
+    profiles:
+      - local
+      - ""
+
+  # ====================== Open WebUI ======================
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "3001:8080"
+    volumes:
+      - ./volumes/open-webui:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://ollama-deepseek-r1:11434
+      - OPENAI_API_BASE_URL=http://ontosage-orchestrator:8000/v1
+      - OPENAI_API_KEY=sk-ontobot-pipeline
+      # Use PostgreSQL for chat history (consolidated with OntoSage)
+      # - DATABASE_URL=postgresql://ontobot:ontobot_secret@postgres-user-data:5432/openwebui
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - ontobot-agentic
+    restart: unless-stopped
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  # ====================== Orchestrator ======================
+  orchestrator:
+    build:
+      context: .
+      dockerfile: orchestrator/Dockerfile
+    container_name: ontosage-orchestrator
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./orchestrator:/app/orchestrator  # Mount source code for hot-reloading
+      - ./shared:/app/shared  # Mount shared module for hot-reloading
+      - ./data/bldg1:/app/data/bldg1:ro  # Mount sensor UUID data for SQL agent
+      - ./outputs:/app/outputs  # Mount shared outputs (data, plots, query results)
+      - ./orchestrator/agents/.env:/app/agents/.env:ro  # Mount OpenAI credentials
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RAG_SERVICE_HOST=rag-service
+      - RAG_SERVICE_PORT=8001
+      - CODE_EXECUTOR_HOST=code-executor
+      - CODE_EXECUTOR_PORT=8002
+      - WHISPER_STT_HOST=whisper-stt
+      - WHISPER_STT_PORT=8003
+      # GraphDB Configuration (replaces Fuseki)
+      - GRAPHDB_HOST=graphdb
+      - GRAPHDB_PORT=7200
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      # Ollama LLM Configuration (use deepseek-r1:32b with GPU)
+      - OLLAMA_BASE_URL=http://ollama-deepseek-r1:11434
+      - OLLAMA_MODEL=deepseek-r1:32b
+      # MODEL_PROVIDER is read from .env file (local/cloud/openai)
+      - MODEL_PROVIDER=${MODEL_PROVIDER:-local}
+      - OLLAMA_CLOUD_API_KEY=${OLLAMA_CLOUD_API_KEY}
+      - OLLAMA_CLOUD_BASE_URL=${OLLAMA_CLOUD_BASE_URL:-https://api.ollama.ai/v1}
+      - OLLAMA_CLOUD_MODEL=${OLLAMA_CLOUD_MODEL:-gpt-oss:120b-cloud}
+      - LLM_TEMPERATURE=0.2
+      # GPU optimization for faster inference
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_NUM_CTX=4096
+      - OLLAMA_KEEP_ALIVE=24h  # Keep model loaded in GPU
+      - OLLAMA_GPU_LAYERS=-1
+      # NEW: Semantic Ontology Query Configuration
+      - USE_SEMANTIC_ONTOLOGY=true
+      - ONTOLOGY_QUERY_MODE=semantic
+    depends_on:
+      redis:
+        condition: service_healthy
+      graphdb-rag-service:
+        condition: service_started  # Relax to started (healthcheck can be flaky during init)
+      code-executor:
+        condition: service_healthy
+      graphdb:
+        condition: service_started  # Relax to started (initial dataset load takes time)
+      mysql:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    networks:
+      - ontobot-agentic
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ====================== Vector Database (Required for graphdbRAG service) ======================
+  # NOTE: Uncomment this service if using GraphDB RAG approach (rag-service)
+  # Comment it out if using only Microsoft GraphRAG (graphrag-service)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-vector-db
+    ports:
+      - "6333:6333"  # HTTP API
+      - "6334:6334"  # gRPC
+    volumes:
+      - ./volumes/qdrant:/qdrant/storage  # Local persistent storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__LOG_LEVEL=INFO
+    networks:
+      - ontobot-agentic
+    healthcheck:
+      # Use simple health endpoint instead of collections (more reliable)
+      test: ["CMD", "curl", "-fsS", "http://localhost:6333/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ====================== Memory Store ======================
+  redis:
+    image: redis:7-alpine
+    container_name: redis-memory-store
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./volumes/redis:/data  # Local persistent storage
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    networks:
+      - ontobot-agentic
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # ====================== RAG Service (GraphDB + Qdrant + Similarity Indexing) ======================
+  # Architecture: GraphDB for structured queries + Qdrant for vector embeddings + Similarity indexing
+  # Port: 8001
+  # Use this for: Traditional RAG with ontology reasoning + vector similarity search
+  graphdb-rag-service:
+    build:
+      context: .
+      dockerfile: rag-service/graphdbRAG/Dockerfile
+    container_name: rag-service-graphdb
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      # GraphDB configuration
+      - GRAPHDB_REPOSITORY=bldg
+      - GRAPHDB_SIMILARITY_INDEX=bldg_index
+    volumes:
+      - ./data/bldg1:/staging:ro  # Mount ontology files for reference
+    depends_on:
+      graphdb:
+        condition: service_started  # Wait for GraphDB to be ready
+      # qdrant:
+      #   condition: service_healthy
+    networks:
+      ontobot-agentic:
+        aliases:
+          - rag-service  # Network alias for backward compatibility
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s  # Give RAG service time to initialize
+    restart: unless-stopped
+
+  # ====================== RAG Service - Alternative: Microsoft GraphRAG (Entity-Relationship-Community) ======================
+  # Architecture: Entity extraction + Relationship mapping + Community detection from text
+  # Port: 8004
+  # Use this for: Unstructured text processing with automatic knowledge graph generation
+  # NOTE: Uncomment this service and comment out the above rag-service to use GraphRAG instead
+  # graphrag-service:
+  #   build:
+  #     context: .
+  #     dockerfile: rag-service/GraphRAG/Dockerfile
+  #   container_name: graphrag-service
+  #   ports:
+  #     - "8004:8004"
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - OPENAI_API_KEY=${OPENAI_API_KEY}
+  #     - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4-turbo-preview}
+  #     - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+  #     - GRAPHRAG_SERVICE_PORT=8004
+  #     - GRAPHRAG_INPUT_DIR=/app/graphrag-service/inputs
+  #     - GRAPHRAG_OUTPUT_DIR=/app/graphrag-service/outputs
+  #     - GRAPHRAG_CACHE_DIR=/app/graphrag-service/cache
+  #     - LOG_LEVEL=${LOG_LEVEL:-INFO}
+  #   volumes:
+  #     - ./rag-service/GraphRAG/inputs:/app/graphrag-service/inputs
+  #     - ./rag-service/GraphRAG/outputs:/app/graphrag-service/outputs
+  #     - ./rag-service/GraphRAG/cache:/app/graphrag-service/cache
+  #     - ./rag-service/GraphRAG/config:/app/graphrag-service/config:ro
+  #   networks:
+  #     - ontobot-agentic
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 60s
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - redis
+
+  # ====================== Code Executor Service ======================
+  code-executor:
+    build:
+      context: .
+      dockerfile: code-executor/Dockerfile
+    container_name: code-executor
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env
+    volumes:
+      - ./outputs:/app/outputs  # Mount shared outputs
+    mem_limit: 1g
+    cpus: 1.0
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ontobot-agentic
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====================== Whisper STT ======================
+  whisper-stt:
+    image: lscr.io/linuxserver/faster-whisper:latest
+    container_name: whisper-stt-service
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - WHISPER_MODEL=tiny-int8   # quantized model for low latency
+      - WHISPER_BEAM=1            # beam size (increase for accuracy)
+      - WHISPER_LANG=en           # default language
+      # - LOCAL_ONLY=1            # uncomment to disable remote fallback if image adds one
+    volumes:
+      - ./volumes/whisper:/config
+    ports:
+      - "8003:10300"             # map internal API port 10300 to expected 8003
+    networks:
+      - ontobot-agentic
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10300/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    # Optional GPU acceleration (uncomment if container supports CUDA & host has nvidia runtime)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # ====================== Knowledge Graph (DEPRECATED - Replaced by GraphDB) ======================
+  # fuseki:
+  #   image: stain/jena-fuseki:latest
+  #   container_name: jena-fuseki
+  #   ports:
+  #     - "3030:3030"
+  #   volumes:
+  #     - ./volumes/fuseki:/fuseki  # Local persistent storage
+  #     - ./data/bldg1:/staging:ro  # Read-only mount for TTL files (9184 triples)
+  #   environment:
+  #     - ADMIN_PASSWORD=${FUSEKI_ADMIN_PASSWORD:-Admin@12345}
+  #     - JVM_ARGS=-Xmx8g  # 8GB for large ontology
+  #     - TDB=2  # Use TDB2 for better performance
+  #   networks:
+  #     - ontobot-agentic
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:3030/$/ping"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 60s
+  #   restart: unless-stopped
+
+  # ====================== GraphDB (Replaces Fuseki + Qdrant) ======================
+  graphdb:
+    image: ontotext/graphdb:10.7.4
+    container_name: graphdb
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7200:7200"
+      - "127.0.0.1:7300:7300"  # gRPC port
+    volumes:
+      - ./volumes/graphdb:/opt/graphdb/home
+      - ./data/bldg1/trial/dataset:/opt/graphdb/import:ro
+    environment:
+      - GDB_HEAP_SIZE=4g
+      - GDB_MIN_MEM=2g
+      - GDB_MAX_MEM=8g
+      - GDB_JAVA_OPTS=-Xmx8g -Xms2g -XX:MaxDirectMemorySize=2g
+    networks:
+      - ontobot-agentic
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7200/rest/repositories"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # ====================== MySQL Database (External Volume) ======================
+  mysql:
+    image: mysql:8
+    container_name: mysql-bldg1
+    ports:
+      - "3307:3306"  # Match your existing port mapping
+    volumes:
+      - mysql-data:/var/lib/mysql  # Reuse external volume with existing sensor data
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-mysql}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-sensordb}
+      - MYSQL_USER=${MYSQL_USER:-thingsboard}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-thingsboard}
+    networks:
+      - ontobot-agentic
+      - ontobot-network  # Connect to existing network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ====================== User Data & History (PostgreSQL) ======================
+  postgres-user-data:
+    image: postgres:15-alpine
+    container_name: postgres-user-data
+    hostname: postgres-user-data
+    ports:
+      - "5433:5432"  # 5433 on host to avoid conflict with ThingsBoard
+    volumes:
+      - ./volumes/postgres-user-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_USER_DB:-ontobot}
+      - POSTGRES_USER=${POSTGRES_USER_USER:-ontobot}
+      - POSTGRES_PASSWORD=${POSTGRES_USER_PASSWORD:-ontobot_secret}
+    networks:
+      - ontobot-agentic
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ontobot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ====================== PostgreSQL Database (ThingsBoard) ======================
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: postgres-thingsboard
+  #   hostname: postgres
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - ./volumes/postgres:/var/lib/postgresql/data  # Local persistent storage
+  #   environment:
+  #     - POSTGRES_DB=${POSTGRES_DB:-thingsboard}
+  #     - POSTGRES_USER=${POSTGRES_USER:-thingsboard}
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-thingsboard}
+  #   networks:
+  #     - ontobot-agentic
+  #     - ontobot-network  # Connect to existing network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U thingsboard"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 30s
+  #   restart: unless-stopped
+
+  # ====================== pgAdmin (Database Management UI) ======================
+  pgadmin:
+    image: dpage/pgadmin4:snapshot
+    container_name: pgadmin
+    hostname: pgadminhost
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL:-pgadmin@example.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD:-admin}
+      - PGADMIN_LISTEN_ADDRESS=0.0.0.0
+      - PGADMIN_SERVER_JSON_FILE=/pgadmin4/servers.json
+    volumes:
+      # Default to bldg1 pgAdmin servers configuration; adjust if you use a different DB stack
+      - ./bldg1/servers.json:/pgadmin4/servers.json:ro
+      - ./bldg1/.pgpass:/pgpass:ro
+      - ./volumes/pgadmin:/var/lib/pgadmin  # Persist pgAdmin settings
+    # depends_on:
+    #   - postgres
+    networks:
+      - ontobot-agentic
+      - ontobot-network  # Connect to existing network
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep -v grep | grep gunicorn || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # ====================== Chat History ======================
+  mongo:
+    image: mongo:7
+    container_name: mongo-chat-history
+    hostname: mongohost
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./volumes/mongo:/data/db  # Local persistent storage
+    environment:
+      - MONGO_INITDB_DATABASE=chatbot
+    networks:
+      - ontobot-agentic
+      - ontobot-network  # Connect to existing network for cross-stack access
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====================== Abacws API (Building Management Backend) ======================
+  api:
+    build:
+      context: ./Abacws/api
+      dockerfile: Dockerfile
+    container_name: abacws-api
+    hostname: apihost
+    ports:
+      - "5000:5000"
+    environment:
+      - API_PORT=5000
+      # Database engine: mysql (for sensor time-series), postgres (for ThingsBoard), mongo (for metadata)
+      - DB_ENGINE=${API_DB_ENGINE:-mysql}
+      
+      # PostgreSQL connection (ThingsBoard device registry & telemetry)
+      # Use host.docker.internal to connect to Postgres running on host or exposed port
+      - PGHOST=${API_PGHOST:-host.docker.internal}
+      - PGPORT=${API_PGPORT:-5432}
+      - PGUSER=${API_PGUSER:-thingsboard}
+      - PGPASSWORD=${API_PGPASSWORD:-thingsboard}
+      - PGDATABASE=${API_PGDATABASE:-thingsboard}
+      
+      # MySQL connection (Sensor time-series data - PRIMARY DATABASE)
+      # Container: mysql-bldg1, Database: sensordb, Table: sensor_data (576K+ records)
+      - MYSQL_HOST=${API_MYSQL_HOST:-mysql-bldg1}
+      - MYSQL_PORT=${API_MYSQL_PORT:-3306}  # Internal port (external: 3307)
+      - MYSQL_USER=${API_MYSQL_USER:-root}
+      - MYSQL_PASSWORD=${API_MYSQL_PASSWORD:-mysql}
+      - MYSQL_DATABASE=${API_MYSQL_DATABASE:-sensordb}
+      
+      # API Security
+      - API_KEY=${API_KEY:-change_me}
+      
+      # Enable dual database mode (MySQL + PostgreSQL)
+      - ENABLE_POSTGRES=${API_ENABLE_POSTGRES:-true}
+      - ENABLE_MYSQL=${API_ENABLE_MYSQL:-true}
+    volumes:
+      - ./Abacws/api/src/api/data:/api/src/api/data
+    depends_on:
+      mongo:
+        condition: service_healthy
+      # postgres:
+      #   condition: service_healthy
+      mysql:
+        condition: service_healthy
+    networks:
+      - ontobot-agentic
+      - ontobot-network
+    healthcheck:
+      test: ["CMD", "sh", "-lc", "wget -qO- http://localhost:5000/health | grep -q 'ok'"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ====================== Abacws Visualiser (3D Building Visualization) ======================
+  visualiser:
+    build:
+      context: ./Abacws/visualiser/
+      dockerfile: Dockerfile
+    container_name: abacws-visualiser
+    hostname: visualiserhost
+    ports:
+      - "8090:80"
+    environment:
+      - WEB_PORT=80
+      # Point to the API container in the same network
+      - API_HOST=${VISUALISER_API_HOST:-abacws-api:5000}
+      # Enable debug mode for verbose logging
+      - ABACWS_DEBUG=${ABACWS_DEBUG:-0}
+      # Database connection info (passed to frontend for direct queries if needed)
+      - MYSQL_HOST=${VISUALISER_MYSQL_HOST:-mysql-bldg1}
+      - MYSQL_DATABASE=${VISUALISER_MYSQL_DATABASE:-sensordb}
+      - ENABLE_HISTORICAL_DATA=${VISUALISER_ENABLE_HISTORICAL:-true}
+    depends_on:
+      api:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    networks:
+      - ontobot-agentic
+      - ontobot-network
+    healthcheck:
+      test: ["CMD", "sh", "-lc", "wget -qO- http://localhost/health | grep -q 'ok'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ====================== ThingsBoard (IoT Platform for Sensor Management) ======================
+  # thingsboard:
+  #   image: devmanenvision/my-thingsboard:1.1
+  #   container_name: thingsboard
+  #   hostname: thingsboardhost
+  #   ports:
+  #     - "8082:9090"   # TB Web UI at http://localhost:8082
+  #     - "1883:1883"   # MQTT
+  #     - "7070:7070"   # Edge RPC
+  #     - "5683-5688:5683-5688/udp"  # CoAP and LwM2M
+  #     - "8081:8081"   # HTTP transport
+  #   environment:
+  #     - TB_QUEUE_TYPE=in-memory
+  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-thingsboard}
+  #     - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-thingsboard}
+  #     - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-thingsboard}
+  #     - DATABASE_TS_TYPE=sql
+  #   volumes:
+  #     - ./volumes/thingsboard-data:/data
+  #     - ./volumes/thingsboard-logs:/var/log/thingsboard
+  #   # depends_on:
+  #   #   postgres:
+  #   #     condition: service_healthy
+  #   networks:
+  #     - ontobot-agentic
+  #     - ontobot-network
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9090/login"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 120s  # ThingsBoard takes longer to start
+  #   restart: unless-stopped
+
+  # ====================== File Server (Artifacts) ======================
+  file-server:
+    image: nginx:alpine
+    container_name: file-server-artifacts
+    ports:
+      - "8080:80"
+    volumes:
+      - ./volumes/artifacts:/usr/share/nginx/html  # Local persistent storage
+    networks:
+      - ontobot-agentic
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====================== Frontend ======================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ontosage-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - orchestrator
+    networks:
+      - ontobot-agentic
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====================== Monitoring (Optional) ======================
+  
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus-metrics
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - ontobot-agentic
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-dashboards
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - ontobot-agentic
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+# ====================== Usage Instructions ======================
+#
+# Hardware: 64GB RAM + NVIDIA RTX 4090 16GB GPU
+# Model: DeepSeek-R1:32b (~20GB)
+# Ontology: bldg1_protege.ttl (9,184 triples)
+# MySQL: External volume with sensor UUID data
+#
+# 1. Create volume directories:
+#    mkdir volumes\ollama volumes\qdrant volumes\redis volumes\fuseki volumes\mongo volumes\artifacts
+#
+# 2. Start infrastructure (MySQL, Redis, Qdrant, Fuseki, Ollama):
+#    docker-compose -f docker-compose.agentic.yml up -d mysql redis qdrant fuseki ollama mongo file-server
+#
+# 3. Pull DeepSeek-R1:32b model (~20GB, requires GPU):
+#    docker exec ollama-deepseek-r1 ollama pull deepseek-r1:32b
+#    # This will take 10-15 minutes depending on network
+#
+# 4. Load ontology to Fuseki (9,184 triples):
+#    pwsh scripts/load-fuseki.ps1
+#    # Or manually: curl -X POST http://localhost:3030/$/datasets -d "dbName=abacws&dbType=tdb2"
+#    #              curl -X POST -H "Content-Type:text/turtle" --data-binary @data\bldg1\trial\dataset\bldg1_protege.ttl http://localhost:3030/abacws/data
+#
+# 5. Initialize Qdrant collections:
+#    docker-compose -f docker-compose.agentic.yml run --rm rag-service python -m scripts.init_qdrant
+#    # (init_qdrant.py now present under rag-service/scripts)
+#
+# 6. Embed ontology to Qdrant:
+#    docker-compose -f docker-compose.agentic.yml run --rm rag-service python -m scripts.ingest_ontology
+#    # (ingest_ontology.py now present; uses /staging mount and settings paths)
+#
+# 7. Build and start OntoSage 2.0 services:
+#    docker-compose -f docker-compose.agentic.yml up -d --build orchestrator rag-service code-executor whisper-stt frontend
+#
+# 8. Verify GPU acceleration (check for "NVIDIA GPU detected"):
+#    docker exec ollama-deepseek-r1 nvidia-smi
+#    docker logs ollama-deepseek-r1
+#
+# 9. Check all services health:
+#    docker-compose -f docker-compose.agentic.yml ps
+#    curl http://localhost:8000/health  # Orchestrator
+#    curl http://localhost:8001/health  # RAG Service
+#    curl http://localhost:8002/health  # Code Executor
+#    curl http://localhost:8003/health  # Whisper STT (linuxserver faster-whisper)
+#    curl http://localhost:3030/$/ping  # Fuseki
+#    curl http://localhost:6333/health  # Qdrant
+#
+# 10. Access the UI:
+#     http://localhost:3000
+#
+# 11. Test SPARQL query (count sensors):
+#     curl -X POST http://localhost:3030/abacws/sparql --data-urlencode "query=SELECT (COUNT(?sensor) AS ?count) WHERE { ?sensor a brick:Sensor }"
+#
+# 12. Test SQL query (count sensor readings):
+#     docker exec mysql-bldg1 mysql -uroot -pmysql -e "SELECT COUNT(*) FROM sensordb.ts_kv;"
+#
+# 13. Test DeepSeek chat:
+#     curl -X POST http://localhost:8000/chat -H "Content-Type: application/json" -d '{"message":"What sensors are in building 1?","conversation_id":"test"}'
+#
+# 14. Monitor logs:
+#     docker-compose -f docker-compose.agentic.yml logs -f orchestrator
+#     docker-compose -f docker-compose.agentic.yml logs -f ollama
+#
+# 15. Stop all services:
+#     docker-compose -f docker-compose.agentic.yml down
+#
+# 16. Backup volumes (data persists in .\volumes\):
+#     Compress-Archive -Path .\volumes -DestinationPath .\backups\ontosage-$(Get-Date -Format 'yyyyMMdd-HHmmss').zip
+#
+# Troubleshooting:
+# - GPU not detected: Install nvidia-docker2, restart Docker daemon
+# - Model download slow: Use ollama pull with --insecure flag if behind proxy
+# - Whisper accuracy low: Increase WHISPER_MODEL (e.g., base, small-int8, medium) & WHISPER_BEAM>1
+# - Whisper latency high: Use smaller quantized model (tiny-int8) and keep beam=1
+# - Whisper language auto-detect issues: Set WHISPER_LANG explicitly (e.g., en, fr)
+# - Persistent cache cleared: Remove ./volumes/whisper to force re-download of model
+# - Fuseki dataset not created: Use scripts/load-fuseki.ps1 or create manually via UI
+# - MySQL connection refused: Check if mysqlserver container exists: docker ps -a
+# - Out of memory: DeepSeek-R1:32b needs 20GB VRAM + 16GB RAM, reduce GPU layers if needed
+#

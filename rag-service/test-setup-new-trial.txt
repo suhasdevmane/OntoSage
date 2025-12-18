@@ -1,0 +1,142 @@
+A Triple Store RAG Retriever
+How we used Ontotext GraphDB’s vector capabilities to build a simple RAG retriever over a Knowledge Graph, using open, offline LLM models
+
+Motivations and Setup
+In the last year or so the Knowledge Graphs community has seen a rise of enthusiasm over ways to make Large Language Models (LLMs) and Knowledge Graphs (KGs) collaborate. Among these ways, using Knowledge Graphs to implement the RAG (Retrieval Augmented Generation) pattern sounded natural to many of us. Knowledge Graphs provide low-noise, high-quality facts (triples) that are simple for LLMs to exploit.
+This other Ontotext article gives an introduction over RAG, but in a few words, we can recall that RAG is an architectural pattern for LLM applications whereby, before answering, the application retrieves relevant knowledge from a Knowledge Base (in our case, a Knowledge Graph) and adds it to the LLM’s input. This enables features such as “talk to your graph” (such as GraphDB’s implementation). And more in general, in the context of an LLM application, where different building blocks are orchestrated, RAG over a graph can give the LLM curated knowledge over a particular domain, to better ground its answers.
+While Ontotext and other product companies are adding LLM integrations to their products, the tech community at large (consultancy companies like Semantic Partners, professionals, students, enthusiasts) are exploring ways to integrate LLM patterns like RAG in more general AI flows. Hundreds of articles, tutorials, videos and marketing posts are being dropped on platforms like Medium and LinkedIn, showcasing ways to build LLM flows. The positive outcome of all this is that more and more people, instead of blindly using pre-packaged solutions, are teaching themselves the principles behind LLM applications.
+At Semantic Partners, we decided to do a similar learning exercise, focusing on the type of Knowledge Graph that is our passion and specialty: RDF graphs. Graphs are perfect for RAG, because they are very easy to query and navigate, even when facts are linked together by complex patterns. And RDF graphs give the additional benefit of reasoning, ensuring that all implicit links between nodes are surfaced. This is, in our opinion, what makes RDF graphs perfect partners for the RAG pattern.
+We chose to implement a simple, demonstrative KG RAG solution – to be seen as a building block of a larger LLM application. In doing that, we imposed ourselves some requirements:
+We wanted to use one of the most used LLM orchestrator libraries (we chose LangChain);
+We wanted to use small, offline, open, and free LLM models: this study should be simple enough to be understood and run on a laptop, without paying for every call to the LLM model, nor send private data to external parties. We chose Ollama as LLM server – it is very easy to install and use;
+We wanted the chosen graph database to be an RDF triple store, with OWL reasoning capabilities. And because RAG needs vector indexing, better if the triple store has built-in vector indexing and search. We chose Ontotext GraphDB with its Similarity plugin.
+A technique that is sometimes used is to construct a Knowledge Graph from text (in substitution of RAG over text), but we were more interested in RAG over existing Knowledge Graphs, which tends to be our natural setting with our clients. We hand-crafted a small graph, so that we can easily evaluate what we do.
+In its basic form, RAG is composed of a system prompt (the general instruction for the LLM), a user query, and a retriever able to find relevant content to add to the prompt. The retriever will have to find content starting from the user prompt, and the way to make that possible is to embed the textual descriptions of our graph entities (nodes and properties).
+
+The Knowledge Graph
+We start by crafting a small ontology representing a Knowledge Graph of simple topics. We make sure to add labels and descriptions, optionally also add ontology axioms (such as disjointness, transitivity, property chains, etc). In our case, we used a dataset of products and vendors that we use internally at Semantic Partners, modified manually using Protégé. You can build your favourite toy ontology from scratch in a few minutes, or adopt one of choice.
+Equivalent class definitions can be useful: for example, if we define a SemanticProduct class as being any Product with a semantic feature, and we apply reasoning in GraphDB, we will have all the relevant instances classified under that class. This will help the retrieval phase.
+Once we have our ontology file, we can import it into a GraphDB repository, enabling it with one of the OWL reasoning profiles.
+GraphDB and Its Vector Index
+Vector indexes use the so-called embeddings, a mathematical representation where each “word” (or token) becomes a vector in a multi-dimensional space, representing statistical co-occurrence between tokens. Why do we need vector embedding? Because we will query this index using the user’s question as a query, and so a vanilla lexical search would simply be too rigid, and fail most of the time. By vectorising our graph and the query, the search amounts to finding similar (close) vectors. 
+GraphDB provides a feature to index any literal in your graph through the similarity plugin, which comes already enabled with any GraphDB instance. Given a repository (where RDF graphs are stored), we can define a vector index with the click of a button. By default, GraphDB indexes all literals, but it is possible to customise the SPARQL query used by the plugin and choose to index a more granular set of nodes or literals.
+
+GraphDB provides an endpoint to query the vector index. This is simply the usual SPARQL query endpoint, with the SELECT query below. Given a piece of text, it retrieves the most similar entities (nodes or properties). Our retriever will use this query.
+PREFIX :<https://www.ontotext.com/graphdb/similarity/>
+PREFIX similarity:<https://www.ontotext.com/graphdb/similarity/instance/>
+
+SELECT ?iri ?score
+WHERE {
+?search a similarity:products_index;
+       	:searchTerm "{userQuery}";
+       	:documentResult ?result .
+?result :value ?iri;
+:score ?score.
+}
+ORDER BY desc(?score)
+LIMIT 10
+The LLM Flow
+With our ontology loaded in GraphDB, and the index created, we can now query it. Let us first see the LLM flow in LangChain, and then we will present the idea for the implementation of our GraphDB retriever. To avoid drowning the reader in unnecessary details, I will present the logic of the flow in pseudo-code (although very close to the real implementation).
+As for the LLM, we use one of the models served by Ollama: we found both mistral and solar (7B and 10B parameters respectively) to perform decently on this use case.
+prompt = ChatPromptTemplate.from_template(
+"""
+Using only the given Context below, made of RDF-like triples, use it to answer the Question. Answer briefly.
+
+*** Context ***
+{triples}
+
+*** Question ***
+{question}
+
+""")
+
+llm = ChatOllama(model="solar", temperature=0)
+
+graph_retriever = GraphDBRetriever(repo="products", index="products_index")
+
+rag_chain = (
+        {
+"question": get("user_question")   
+"triples": graph_retriever(input)
+        }
+        | prompt
+        | llm
+)
+
+answer = rag_chain.invoke(
+{"user_question": "Give me a list of semantic products"}
+)
+The user will ask a question. The chain will fill the prompt template with:
+the user question
+RDF triples (retrieved by the graph retriever) that are relevant to the question
+Notice that LangChain represents prompts as templates to be filled. The application flow is represented by a so-called chain, where the pipe symbol (|) represents sequential execution. This chain fills the prompt and then passes it to the LLM to generate the answer.
+The Retriever
+To implement our GraphDBRetriever in LangChain, we simply extend a ​​BaseRetriever class and implement a _get_relevant_documents method, that given a user question will return a list of relevant LangChain Documents (in our case, triples). We do the retrieval in two steps. Let us suppose that the user asks: “What database products are linked to RDF?”.
+1- Get the most relevant entities.
+We submit the user’s question to the GraphDB similarity endpoint (the SELECT query shown previously), and the endpoint will return a list of nodes or properties in the graph (IRIs) that are relevant to the question (due to their labels, definitions, or any other literal property). We like to call these candidate entities. The retriever will find a list of IRIs, ordered by similarity score – for our question, it may return:
+[
+:Product, :linked_to, :graphDB, :virtuoso, :rdfox, :neo4j, :chroma, :postgres
+]
+These are: the Product class, the property linked_to, and then different kinds of database products, some of them being, in fact, triple stores.
+Notice that this result set is what a pure vector search would yield on our dataset, ignoring its graph nature. This is a lightweight option to implement entity linking – the task of mapping an entity reference in text to the correct identifier in a database or a graph. In graphs with big mass of named entities more comprehensive AI models are needed to deal with ambiguity. 
+2 – Get the context
+For each of the retrieved entities we will get a “bounded context”, that is: a set of triples describing that entity. With a SPARQL query, we get triples coming in or going out of our entity. We can do one or more hops in the graph. The idea is to “fish” for potentially useful information next to the relevant nodes. Not too much info (because these triples will be appended to the prompt, and we don’t want the prompt to exceed the LLM context capability) but not too little either. To this end, we can limit the triples retrieved, or use a re-ranker on them.
+Then, we format the triples in an LLM-friendly way (we noticed that rendering nodes with their main labels, instead of their IRIs, makes the LLM behave better).
+The bounded context
+Intuitively, the bounded context of an entity is the portion of the graph around the entity (up to a certain depth). This is why OWL reasoning can help yield a richer context.
+To get the context we decided to use a union of SELECT queries, to have more control over the set of triples returned.
+
+So, an example of bounded context, resulting from the contexts of the first candidate entities, would be something like:
+(graphDB, is a, SemanticProduct)
+(virtuoso, is a, SemanticProduct)
+
+(ontotext, develops, graphDB)
+(openlink, develops, virtuoso)
+
+(has feature, subPropertyOf, linked to)
+(Product, disjoint with, Vendor)
+
+(graphDB, has description, “A triple-store platform, built on rdf4j. Links diverse data, indexes it for semantic search and enriches it via text analysis to build big knowledge graphs.”)
+(graphDB, has feature, vector indexing)
+(graphDB, has feature, RDF storage)
+(graphDB, has feature, SPARQL querying)
+
+(virtuoso, has description, "Scalable Multi-Model RDBMS, Data Integration Middleware, Linked Data Deployment, and HTTP Application Server Platform")
+(virtuoso, has feature, vector index)
+(virtuoso, has feature, RDF storage)
+(virtuoso, has feature, SPARQL querying)
+The LLM will be free to exploit these facts and connections to inform its answer. The chain will then fill these triples into the prompt template, yielding:
+Using only the given Context made of RDF-like triples, use it to answer the Question. Answer briefly.
+
+**** Context ****:
+(graphDB, is a, SemanticProduct)
+(virtuoso, is a, SemanticProduct)
+(ontotext, develops, graphDB)
+(openlink, develops, virtuoso)
+(has feature, subPropertyOf, linked to)
+(Product, disjoint with, Vendor)
+(graphDB, has description, “A triple-store platform, built on rdf4j. Links diverse data, indexes it for semantic search and enriches it via text analysis to build big knowledge graphs.”)
+(graphDB, has feature, vector indexing)
+(graphDB, has feature, RDF storage)
+(graphDB, has feature, SPARQL querying)
+(virtuoso, has description, "Scalable Multi-Model RDBMS, Data Integration Middleware, Linked Data Deployment, and HTTP Application Server Platform")
+(virtuoso, has feature, vector index)
+(virtuoso, has feature, RDF storage)
+(virtuoso, has feature, SPARQL querying)
+
+**** Question ****:
+'What database products are linked to RDF?'
+
+"""
+The LLM will then respond something like:
+“In the given context, ontotext graphDB and openlink virtuoso are both triple stores (and semantic products) related to RDF. They are both capable of indexing, storing RDF and querying with SPARQL.”
+By exploiting the graph we make sure to retrieve what the user is asking, and let the LLM describe the findings.
+Notice that a specific implementation would require optimising some technicalities, like devising the best prompt for the use case, adjusting retrieval metrics, keeping the LLM “creativity” low, and choosing the right amount of triples to consider.
+Conclusions
+We presented the approach to building a RAG retriever for an RDF triple store, in the context of Question-Answering over a Knowledge Graph.
+Here the graph retriever is used to let the user explore the graph, but more realistically it will constitute a building block of a larger LLM application.
+In fact, there is another use case where triple-store RAG becomes interesting: in the context of a more complex LLM chain, we can couple a Graph retriever with a documents’ retriever, and perform RAG over documents (say, PDFs) but backed with background knowledge (or facts) coming from a Knowledge Graph. This is one of the ideas we will present in further articles.
+
+
+
+This is what i wanted to implement for my use case, for my ontology. I want you to create a more descriptive markdown file using this data. Add all information to this document and steps to follow in detail, so that i can follow steps and make this work for my personal project. also, tell me if i need a seperate vector database with this technique? 

@@ -1,0 +1,81 @@
+site_name: OntoSage 2.0
+site_description: Agentic AI for Intelligent Buildings
+site_url: https://suhasdevmane.github.io/OntoBot
+repo_url: https://github.com/suhasdevmane/OntoBot
+repo_name: suhasdevmane/OntoBot
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/favicon.svg
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.instant
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - content.action.edit
+    - header.autohide
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: blue
+    - scheme: slate
+      primary: indigo
+      accent: blue
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.details
+  - pymdownx.tabbed
+  - pymdownx.tasklist
+  - pymdownx.snippets
+  - pymdownx.emoji
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_css:
+  - https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css
+  - assets/overrides.css
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js
+  - https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js
+  - assets/katex-init.js
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
+  - assets/init-mermaid.js
+
+nav:
+  - Overview: index.md
+  - Architecture: ARCHITECTURE.md
+  - Workflow Deep Dive: WORKFLOW.md
+  - Services: SERVICES.md
+  - Configuration: CONFIGURATION.md
+  - GraphDB Setup: GRAPHDB_SETUP.md
+  - Building Onboarding: BUILDING_ONBOARDING.md
+  - Deployment: DEPLOYMENT.md
+  - Runbook: RUNBOOK.md
+  - Developer Guide: DEVELOPER_GUIDE.md
+  - User Guide: USER_GUIDE.md
+  - Security: SECURITY.md

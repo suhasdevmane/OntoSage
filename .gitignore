@@ -284,3 +284,9 @@ deleted_backup_ext/
 
 sn-article.tex
 article/
+
+volumes/
+outputs/
+
+*.zip
+blobs/

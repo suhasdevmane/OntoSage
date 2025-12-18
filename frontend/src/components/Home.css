@@ -1,0 +1,175 @@
+/* .home-body {
+    font-family: "Arial", sans-serif;
+    background: url(./imgs/white-bg.jpg) #f8f9fa; /* Fallback color if image is missing */
+    /* background-size: cover;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }  */ 
+  
+/* 1️⃣ Gradient background on the home container */
+.home-body {
+  margin: auto;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: auto;
+  background: linear-gradient(
+    315deg,
+    hwb(192 94% 2%)   3%,
+    rgb(209, 212, 200) 38%,
+    rgb(200, 250, 212) 68%,
+    hwb(224 66% 6%)   98%
+  );
+  animation: gradient 15s ease infinite;
+  background-size: 400% 400%;
+  background-attachment: fixed;
+  position: relative; /* so we can stack content above waves */
+}
+
+/* 2️⃣ Gradient animation */
+@keyframes gradient {
+  0%   { background-position: 0%   0%;   }
+  50%  { background-position: 100% 100%; }
+  100% { background-position: 0%   0%;   }
+}
+
+/* 3️⃣ Waves: fixed, full-width, infinite animation */
+.wave {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 1000% 1000% 0 0;
+  position: fixed;
+  width: 200%;
+  height: 10em;
+  animation: wave 10s -3s linear infinite;
+  transform: translate3d(0, 0, 0);
+  opacity: 0.8;
+  bottom: 0;
+  left: 0;
+  z-index: -1; /* → behind your nav/content but above the gradient */
+}
+
+.wave:nth-of-type(2) {
+  bottom: -1.25em;
+  animation: wave 18s linear reverse infinite;
+  opacity: 0.8;
+}
+
+.wave:nth-of-type(3) {
+  bottom: -2.5em;
+  animation: wave 20s -1s reverse infinite;
+  opacity: 0.9;
+}
+
+/* 4️⃣ Wave keyframes */
+@keyframes wave {
+  2%   { transform: translateX(1);     }
+  25%  { transform: translateX(-25%);  }
+  50%  { transform: translateX(-50%);  }
+  75%  { transform: translateX(-25%);  }
+  100% { transform: translateX(1);     }
+}
+
+
+
+
+  .home-body{
+    margin: 0px;
+    height: 100vh;
+  }
+  
+  .background-container{
+    position: relative;
+  }
+  
+  .background-1{
+    position: absolute;
+    opacity: 0.5;
+    z-index: 1;
+  }
+  
+  .background-2{
+    position: absolute;
+    opacity: 1;
+    z-index: 0;
+  }
+
+
+
+
+
+  .home-body .navbar {
+    background-color: #bee3ff;
+  }
+  
+  .home-body .navbar-brand {
+    font-weight: bold;
+    color: #343a40 !important;
+  }
+  
+  .home-body .nav-link {
+    color: #343a40 !important;
+  }
+  
+  .home-body .navbar-toggler-icon {
+    background-color: #343a40;
+  }
+  
+  .home-body #chat-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+  
+  .home-body .service-container {
+    margin-top: 30px;
+  }
+  
+  .home-body .card-transparent {
+    background: transparent;
+    border: none;
+  }
+  
+  .home-body .service-card {
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .home-body .service-card:hover {
+    transform: scale(1.5);
+  }
+  
+  .home-body .card-img-top {
+    max-height: 150px;
+    width: 100%;
+    object-fit: cover;
+    margin-bottom: 10px;
+  }
+  
+  .home-body .card-title {
+    font-weight: bold;
+  }
+  
+  .home-body .card-text {
+    color: #6c757d;
+  }
+  
+  .home-body .card-footer {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+  
+  .home-body .btn-primary {
+    background-color: #7952b3;
+    border-color: #7952b3;
+  }
+  
+  .home-body .btn-primary:hover {
+    background-color: #6c42a3;
+    border-color: #6c42a3;
+  }
+  
+  /* Utility to ensure content is visible under the chat widget */
+  .home-body #content {
+    position: relative;
+    z-index: 2;
+  }

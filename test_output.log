@@ -1,0 +1,16 @@
+
+[1m[95m
+================================================================================
+  OntoSage 2.0 - Full System Integration Test
+Traceback (most recent call last):
+  File "C:\Users\suhas\Documents\GitHub\OntoBot\test_full_integration.py", line 400, in <module>
+    asyncio.run(test_full_workflow())
+  File "C:\Users\suhas\AppData\Local\Programs\Python\Python310\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\suhas\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "C:\Users\suhas\Documents\GitHub\OntoBot\test_full_integration.py", line 339, in test_full_workflow
+    print("  Workflow: User Input \u2192 RAG \u2192 LLM \u2192 SPARQL \u2192 GraphDB \u2192 Redis")
+  File "C:\Users\suhas\AppData\Local\Programs\Python\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 23: character maps to <undefined>

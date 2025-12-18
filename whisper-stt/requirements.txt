@@ -1,0 +1,13 @@
+# OntoSage 2.0 - Whisper STT Requirements
+
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+python-multipart==0.0.6
+
+# OpenAI (for cloud transcription)
+openai==1.6.1
+
+# Local Whisper removed (PyAV build failures with FFmpeg). Use OpenAI provider only for now.
