@@ -1,8 +1,8 @@
 site_name: OntoSage 2.0
 site_description: Agentic AI for Intelligent Buildings
-site_url: https://suhasdevmane.github.io/OntoBot
-repo_url: https://github.com/suhasdevmane/OntoBot
-repo_name: suhasdevmane/OntoBot
+site_url: https://suhasdevmane.github.io/OntoSage/
+repo_url: https://github.com/suhasdevmane/OntoSage
+repo_name: suhasdevmane/OntoSage
 edit_uri: edit/main/docs/
 
 theme:
