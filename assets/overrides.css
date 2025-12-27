@@ -1,0 +1,12 @@
+/* Basic brand overrides for Material */
+.md-header {
+  backdrop-filter: saturate(120%) blur(6px);
+}
+.md-typeset h1, .md-typeset h2, .md-typeset h3 {
+  letter-spacing: 0.2px;
+}
+/* Wide tables */
+.md-typeset table:not([class]) {
+  display: block;
+  overflow-x: auto;
+}

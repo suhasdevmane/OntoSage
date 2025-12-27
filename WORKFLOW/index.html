@@ -1,0 +1,1575 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/WORKFLOW/">
+      
+      
+        <link rel="prev" href="../ARCHITECTURE/">
+      
+      
+        <link rel="next" href="../SERVICES/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Workflow Deep Dive - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../assets/overrides.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#system-workflow-deep-dive" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Workflow Deep Dive
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-hidden="true"  type="radio" name="__palette" id="__palette_1">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-request-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Request Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-langgraph-orchestration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. LangGraph Orchestration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. LangGraph Orchestration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-graph-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Graph Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conversation-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversation State
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-agent-internals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Agent Internals
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Agent Internals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-dialogue-agent-orchestratoragentsdialogue_agentpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. Dialogue Agent (orchestrator/agents/dialogue_agent.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-sparql-agent-orchestratoragentssparql_agentpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. SPARQL Agent (orchestrator/agents/sparql_agent.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-sql-agent-orchestratoragentssql_agentpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. SQL Agent (orchestrator/agents/sql_agent.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d-analytics-agent-orchestratoragentsanalytics_agentpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D. Analytics Agent (orchestrator/agents/analytics_agent.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-rag-service-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. RAG Service Workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-data-state-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Data &amp; State Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Data &amp; State Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#redis-caching-orchestratorredis_managerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redis Caching (orchestrator/redis_manager.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#postgres-persistence-orchestratorpostgres_managerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postgres Persistence (orchestrator/postgres_manager.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-api-standardization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. API Standardization
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-request-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Request Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-langgraph-orchestration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. LangGraph Orchestration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. LangGraph Orchestration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-graph-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Graph Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conversation-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversation State
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-agent-internals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Agent Internals
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Agent Internals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-dialogue-agent-orchestratoragentsdialogue_agentpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. Dialogue Agent (orchestrator/agents/dialogue_agent.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-sparql-agent-orchestratoragentssparql_agentpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. SPARQL Agent (orchestrator/agents/sparql_agent.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-sql-agent-orchestratoragentssql_agentpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. SQL Agent (orchestrator/agents/sql_agent.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d-analytics-agent-orchestratoragentsanalytics_agentpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D. Analytics Agent (orchestrator/agents/analytics_agent.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-rag-service-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. RAG Service Workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-data-state-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Data &amp; State Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Data &amp; State Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#redis-caching-orchestratorredis_managerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redis Caching (orchestrator/redis_manager.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#postgres-persistence-orchestratorpostgres_managerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postgres Persistence (orchestrator/postgres_manager.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-api-standardization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. API Standardization
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/WORKFLOW.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="system-workflow-deep-dive">System Workflow Deep Dive<a class="headerlink" href="#system-workflow-deep-dive" title="Permanent link">&para;</a></h1>
+<p>This document provides a comprehensive, "under-the-hood" explanation of the OntoSage 2.0 workflow. It details how requests are processed, how agents interact, and the specific code paths involved in generating answers.</p>
+<h2 id="1-request-lifecycle">1. Request Lifecycle<a class="headerlink" href="#1-request-lifecycle" title="Permanent link">&para;</a></h2>
+<p>The journey of a user request follows this path:</p>
+<ol>
+<li><strong>Frontend</strong>: User sends a message via the React UI (<code>/chat</code> endpoint).</li>
+<li><strong>Orchestrator (FastAPI)</strong>:<ul>
+<li>Receives the request in <code>orchestrator/main.py</code>.</li>
+<li>Validates authentication (<code>auth_manager.py</code>).</li>
+<li>Loads/Creates <code>ConversationState</code> from Redis.</li>
+<li>Passes the state to <code>WorkflowOrchestrator</code>.</li>
+</ul>
+</li>
+<li><strong>LangGraph Execution</strong>:<ul>
+<li>The <code>WorkflowOrchestrator</code> (<code>orchestrator/workflow.py</code>) initializes the state graph.</li>
+<li>Execution starts at the <strong>Dialogue Node</strong>.</li>
+</ul>
+</li>
+<li><strong>Agent Routing</strong>:<ul>
+<li><strong>Dialogue Agent</strong> analyzes the intent (e.g., <code>sparql</code>, <code>sql</code>, <code>analytics</code>, <code>general</code>).</li>
+<li>The graph routes the state to the appropriate specialized agent.</li>
+</ul>
+</li>
+<li><strong>Task Execution</strong>:<ul>
+<li>The specialized agent performs its task (querying DB, running code, etc.).</li>
+<li>Results are stored in <code>state.intermediate_results</code>.</li>
+</ul>
+</li>
+<li><strong>Response Generation</strong>:<ul>
+<li>The flow returns to the <strong>Response Node</strong> (often back to Dialogue Agent or a dedicated response generator).</li>
+<li>The LLM synthesizes a final natural language answer using the intermediate results.</li>
+</ul>
+</li>
+<li><strong>Delivery</strong>:<ul>
+<li>The final response is saved to Redis/Postgres.</li>
+<li>The Orchestrator returns a standardized <code>APIResponse</code> JSON to the frontend.</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="2-langgraph-orchestration">2. LangGraph Orchestration<a class="headerlink" href="#2-langgraph-orchestration" title="Permanent link">&para;</a></h2>
+<p>The core logic is defined in <code>orchestrator/workflow.py</code>. We use <strong>LangGraph</strong> to define a state machine where nodes are agents and edges are routing logic.</p>
+<h3 id="the-graph-structure">The Graph Structure<a class="headerlink" href="#the-graph-structure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># orchestrator/workflow.py</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StateGraph</span><span class="p">:</span>
+    <span class="n">workflow</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">ConversationState</span><span class="p">)</span>
+
+    <span class="c1"># Nodes</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">&quot;dialogue&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dialogue_node</span><span class="p">)</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">&quot;sparql&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sparql_node</span><span class="p">)</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">&quot;sql&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_node</span><span class="p">)</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">&quot;analytics&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analytics_node</span><span class="p">)</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">&quot;visualization&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_visualization_node</span><span class="p">)</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">&quot;response&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_response_node</span><span class="p">)</span>
+
+    <span class="c1"># Entry Point</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">set_entry_point</span><span class="p">(</span><span class="s2">&quot;dialogue&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Conditional Edges (Routing)</span>
+    <span class="n">workflow</span><span class="o">.</span><span class="n">add_conditional_edges</span><span class="p">(</span>
+        <span class="s2">&quot;dialogue&quot;</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_route_from_dialogue</span><span class="p">,</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;sparql&quot;</span><span class="p">:</span> <span class="s2">&quot;sparql&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sql&quot;</span><span class="p">:</span> <span class="s2">&quot;sql&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;analytics&quot;</span><span class="p">:</span> <span class="s2">&quot;analytics&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;visualization&quot;</span><span class="p">:</span> <span class="s2">&quot;visualization&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;response&quot;</span><span class="p">:</span> <span class="s2">&quot;response&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">END</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="c1"># ... (other edges)</span>
+</code></pre></div>
+<h3 id="conversation-state">Conversation State<a class="headerlink" href="#conversation-state" title="Permanent link">&para;</a></h3>
+<p>The state passed between agents is defined in <code>shared/models.py</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ConversationState</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">conversation_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">user_message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">messages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Message</span><span class="p">]</span>
+    <span class="n">current_intent</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">intermediate_results</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>  <span class="c1"># Stores output from SPARQL/SQL agents</span>
+    <span class="n">analytics_required</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="c1"># ...</span>
+</code></pre></div>
+<hr />
+<h2 id="3-agent-internals">3. Agent Internals<a class="headerlink" href="#3-agent-internals" title="Permanent link">&para;</a></h2>
+<h3 id="a-dialogue-agent-orchestratoragentsdialogue_agentpy">A. Dialogue Agent (<code>orchestrator/agents/dialogue_agent.py</code>)<a class="headerlink" href="#a-dialogue-agent-orchestratoragentsdialogue_agentpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Role</strong>: The "Front Desk". It classifies intent and handles general chit-chat.</li>
+<li><strong>Mechanism</strong>:<ol>
+<li>Retrieves context from RAG Service (<code>_retrieve_ontology_context</code>).</li>
+<li>Constructs a prompt with conversation history and retrieved context.</li>
+<li>Asks the LLM to classify the intent into: <code>sparql</code>, <code>sql</code>, <code>analytics</code>, <code>visualization</code>, or <code>general</code>.</li>
+</ol>
+</li>
+<li><strong>Code Highlight</strong>:
+    <div class="highlight"><pre><span></span><code><span class="c1"># Intent Classification Prompt</span>
+<span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">Analyze the user&#39;s request: &quot;</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">user_message</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="s2">Determine the best tool to use:</span>
+<span class="s2">- SPARQL: For questions about building structure, sensors, rooms, or metadata.</span>
+<span class="s2">- SQL: For questions about historical sensor data, temperature readings, energy usage.</span>
+<span class="s2">- ANALYTICS: For statistical analysis, correlations, or complex data processing.</span>
+<span class="s2">- GENERAL: For greetings, clarifications, or general knowledge.</span>
+<span class="s2">&quot;&quot;&quot;</span>
+</code></pre></div></li>
+</ul>
+<h3 id="b-sparql-agent-orchestratoragentssparql_agentpy">B. SPARQL Agent (<code>orchestrator/agents/sparql_agent.py</code>)<a class="headerlink" href="#b-sparql-agent-orchestratoragentssparql_agentpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Role</strong>: Queries the Ontology (GraphDB).</li>
+<li><strong>Workflow</strong>:<ol>
+<li><strong>Schema Retrieval</strong>: Fetches relevant schema parts (classes, properties) from RAG.</li>
+<li><strong>Query Generation</strong>: Uses LLM to generate a SPARQL query based on the user question and schema.</li>
+<li><strong>Execution</strong>: Sends the query to GraphDB via HTTP.</li>
+<li><strong>Caching</strong>: Checks Redis for cached results of identical semantic queries.</li>
+</ol>
+</li>
+<li><strong>Key File</strong>: <code>orchestrator/agents/sparql_agent.py</code></li>
+</ul>
+<h3 id="c-sql-agent-orchestratoragentssql_agentpy">C. SQL Agent (<code>orchestrator/agents/sql_agent.py</code>)<a class="headerlink" href="#c-sql-agent-orchestratoragentssql_agentpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Role</strong>: Queries Time-Series Data (MySQL).</li>
+<li><strong>Security</strong>: Implements <strong>Strict SQL Validation</strong> to prevent injection.
+    <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="c1"># Only allow SELECT</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*SELECT&quot;</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="c1"># Block DML/DDL</span>
+    <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\b(INSERT|UPDATE|DELETE|DROP|ALTER)\b&quot;</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+</code></pre></div></li>
+<li><strong>Workflow</strong>: Similar to SPARQL Agent but targets MySQL tables (<code>sensor_data</code>, <code>devices</code>).</li>
+</ul>
+<h3 id="d-analytics-agent-orchestratoragentsanalytics_agentpy">D. Analytics Agent (<code>orchestrator/agents/analytics_agent.py</code>)<a class="headerlink" href="#d-analytics-agent-orchestratoragentsanalytics_agentpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Role</strong>: Performs data analysis.</li>
+<li><strong>Mechanism</strong>:<ol>
+<li><strong>Template Matching</strong>: Checks if the request matches a pre-defined template (e.g., "correlation between X and Y").</li>
+<li><strong>Code Generation</strong>: If matched, uses a deterministic Python template. If not, uses LLM to generate Python code.</li>
+<li><strong>Execution</strong>: Sends the code to the <strong>Code Executor</strong> service (Docker sandbox).</li>
+<li><strong>Result</strong>: Returns text output or a path to a generated plot image.</li>
+</ol>
+</li>
+</ul>
+<hr />
+<h2 id="4-rag-service-workflow">4. RAG Service Workflow<a class="headerlink" href="#4-rag-service-workflow" title="Permanent link">&para;</a></h2>
+<p>The <strong>RAG Service</strong> (<code>rag-service/</code>) bridges the gap between unstructured text and structured knowledge.</p>
+<ol>
+<li><strong>Ingestion</strong>:<ul>
+<li>Ontology files (<code>.ttl</code>) and documents (<code>.md</code>, <code>.pdf</code>) are chunked.</li>
+<li>Embeddings are generated using <code>sentence-transformers/all-MiniLM-L6-v2</code>.</li>
+<li>Vectors are stored in <strong>Qdrant</strong>.</li>
+</ul>
+</li>
+<li><strong>Retrieval</strong>:<ul>
+<li>User query is embedded.</li>
+<li>Qdrant performs a vector similarity search.</li>
+<li>Top-k results (text chunks + entity URIs) are returned to the Orchestrator.</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="5-data-state-management">5. Data &amp; State Management<a class="headerlink" href="#5-data-state-management" title="Permanent link">&para;</a></h2>
+<h3 id="redis-caching-orchestratorredis_managerpy">Redis Caching (<code>orchestrator/redis_manager.py</code>)<a class="headerlink" href="#redis-caching-orchestratorredis_managerpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Conversation State</strong>: Persisted after every turn.</li>
+<li><strong>Semantic Caching</strong>:<ul>
+<li>Key: <code>hash(intent + canonical_query)</code></li>
+<li>Value: JSON result from DB.</li>
+<li>TTL: 1 hour.</li>
+<li>Benefit: drastically reduces latency for repeated questions like "What is the temperature?".</li>
+</ul>
+</li>
+</ul>
+<h3 id="postgres-persistence-orchestratorpostgres_managerpy">Postgres Persistence (<code>orchestrator/postgres_manager.py</code>)<a class="headerlink" href="#postgres-persistence-orchestratorpostgres_managerpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Used for long-term storage of user accounts, conversation history, and audit logs.</li>
+<li>Acts as the "Source of Truth" if Redis is flushed.</li>
+</ul>
+<hr />
+<h2 id="6-api-standardization">6. API Standardization<a class="headerlink" href="#6-api-standardization" title="Permanent link">&para;</a></h2>
+<p>All endpoints in <code>orchestrator/main.py</code> follow this response format:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">  </span><span class="c1">// or false</span>
+<span class="w">  </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">         </span><span class="c1">// The actual payload</span>
+<span class="w">    </span><span class="nt">&quot;conversation_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;response&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;intent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sql&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">    </span><span class="c1">// Error message if success is false</span>
+<span class="w">  </span><span class="nt">&quot;meta&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">         </span><span class="c1">// Debug info, timing, etc.</span>
+<span class="w">    </span><span class="nt">&quot;cached&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>This ensures the frontend can consistently handle success and error states.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.instant", "navigation.top", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link", "content.action.edit", "header.autohide"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../assets/katex-init.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../assets/init-mermaid.js"></script>
+      
+    
+  </body>
+</html>
