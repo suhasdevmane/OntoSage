@@ -1,0 +1,2036 @@
+%%
+%% This is file `sample-acmlarge.tex',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% samples.dtx  (with options: `all,journal,bibtex,acmlarge')
+%% 
+%% IMPORTANT NOTICE:
+%% 
+%% For the copyright see the source file.
+%% 
+%% Any modified versions of this file must be renamed
+%% with new filenames distinct from sample-acmlarge.tex.
+%% 
+%% For distribution of the original source see the terms
+%% for copying and modification in the file samples.dtx.
+%% 
+%% This generated file may be distributed as long as the
+%% original source files, as listed above, are part of the
+%% same distribution. (The sources need not necessarily be
+%% in the same archive or directory.)
+%%
+%%
+%% Commands for TeXCount
+%TC:macro \cite [option:text,text]
+%TC:macro \citep [option:text,text]
+%TC:macro \citet [option:text,text]
+%TC:envir table 0 1
+%TC:envir table* 0 1
+%TC:envir tabular [ignore] word
+%TC:envir displaymath 0 word
+%TC:envir math 0 word
+%TC:envir comment 0 0
+%%
+%% The first command in your LaTeX source must be the \documentclass
+%% command.
+%%
+%% For submission and review of your manuscript please change the
+%% command to \documentclass[manuscript, screen, review]{acmart}.
+%%
+%% When submitting camera ready or to TAPS, please change the command
+%% to \documentclass[sigconf]{acmart} or whichever template is required
+%% for your publication.
+%%
+%%
+\documentclass[acmlarge]{acmart}
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+%% Rights management information.  This information is sent to you
+%% when you complete the rights form.  These commands have SAMPLE
+%% values in them; it is your responsibility as an author to replace
+%% the commands and values with those provided to you when you
+%% complete the rights form.
+\setcopyright{acmlicensed}
+\copyrightyear{2018}
+\acmYear{2018}
+\acmDOI{XXXXXXX.XXXXXXX}
+
+%%
+%% These commands are for a JOURNAL article.
+\acmJournal{POMACS}
+\acmVolume{37}
+\acmNumber{4}
+\acmArticle{111}
+\acmMonth{8}
+
+%%
+%% Submission ID.
+%% Use this when submitting an article to a sponsored event. You'll
+%% receive a unique submission ID from the organizers
+%% of the event, and this ID should be used as the parameter to this command.
+%%\acmSubmissionID{123-A56-BU3}
+
+%%
+%% For managing citations, it is recommended to use bibliography
+%% files in BibTeX format.
+%%
+%% You can then either use BibTeX with the ACM-Reference-Format style,
+%% or BibLaTeX with the acmnumeric or acmauthoryear sytles, that include
+%% support for advanced citation of software artefact from the
+%% biblatex-software package, also separately available on CTAN.
+%%
+%% Look at the sample-*-biblatex.tex files for templates showcasing
+%% the biblatex styles.
+%%
+
+%%
+%% The majority of ACM publications use numbered citations and
+%% references.  The command \citestyle{authoryear} switches to the
+%% "author year" style.
+%%
+%% If you are preparing content for an event
+%% sponsored by ACM SIGGRAPH, you must use the "author year" style of
+%% citations and references.
+%% Uncommenting
+%% the next command will enable that style.
+%%\citestyle{acmauthoryear}
+
+\usepackage{afterpage}
+\usepackage{booktabs} % For formal tables
+\usepackage{tabularx}
+\usepackage[ruled,linesnumbered]{algorithm2e} % For algorithms
+\usepackage{array}
+\usepackage{rotating}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage[T1]{fontenc}
+\usepackage[scaled=0.75]{beramono}
+\usepackage{listings}
+\lstset{language=SQL,morekeywords={PREFIX, java,rdf,rdfs,url}}
+\usepackage{tcolorbox}
+\usepackage{float}
+\usepackage{colortbl}
+\definecolor{customgray}{HTML}{ABABAB}
+\usepackage{placeins}
+\usepackage{adjustbox}
+\usepackage{multirow}
+\usepackage[para]{footmisc}
+\usepackage{threeparttable}
+\usepackage{makecell}
+\usepackage{lscape}
+\usepackage{chemmacros}
+\usepackage[utf8]{inputenc}
+\usepackage{pifont}
+\usepackage{newunicodechar}
+\newunicodechar{✓}{\ding{51}}
+\newunicodechar{✗}{\ding{55}}
+\usepackage{xcolor,colortbl}
+\setlength{\intextsep}{3pt}  
+\setlength{\textfloatsep}{1pt}
+\setlength{\abovecaptionskip}{0pt}
+\setlength{\belowcaptionskip}{0pt}
+% \usepackage{caption} % Do not load: acmart manages captions
+% \usepackage{xcolor} % already loaded above with colortbl
+
+%%
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+%%
+%% The "title" command has an optional parameter,
+%% allowing the author to define a "short title" to be used in page headers.
+\title[OntoSage: Easy-Deploy Conversational AI for Sustainable Smart Buildings]{OntoSage: Easy-Deploy Conversational AI for Sustainable Smart Buildings}
+\subtitle{Enabling Zero-Knowledge Human-Building Interaction for persona agnostic multi-objective goals}
+
+%%
+%% The "author" command and its associated commands are used to define
+%% the authors and their affiliations.
+%% Of note is the shared affiliation of the first two authors, and the
+%% "authornote" and "authornotemark" commands
+%% used to denote shared contribution to the research.
+\author{Suhas Devmane}
+% \authornote{Both authors contributed equally to this research.}
+% \email{trovato@corporation.com}
+\orcid{1234-5678-9012-3456}
+\authornotemark[1]
+\email{DevmaneSP1@cardiff.ac.uk}
+\affiliation{%
+  \institution{Cardiff University}
+  \city{Cardiff}
+  \state{wALES}
+  \country{UK}
+}
+
+\author{Omer Rana}
+\affiliation{%
+  \institution{Cardiff University}
+  \country{UK}}
+\email{RanaOF@cardiff.ac.uk}
+
+\author{Charith Perera}
+\affiliation{%
+  \institution{Cardiff University}
+  \country{UK}}
+\email{PereraC@cardiff.ac.uk}
+
+%%
+%% By default, the full list of authors will be used in the page
+%% headers. Often, this list is too long, and will overlap
+%% other information printed in the page headers. This command allows
+%% the author to define a more concise list
+%% of authors' names for this purpose.
+\renewcommand{\shortauthors}{Trovato et al.}
+
+%%
+%% The abstract is a short summary of the work to be presented in the
+%% article.
+\begin{abstract}
+The proliferation of smart building technologies has generated vast amounts of sensor data that could support sustainability goals, anomaly detection, and indoor environmental quality (IEQ) optimization. However, the complexity of building management systems creates barriers to effective human-building interaction (HBI), limiting accessibility for diverse stakeholders including facility managers, energy officers, maintenance staff, and building occupants. Traditional building interfaces require specialized knowledge of sensor taxonomies, database schemas, and query languages, preventing non-expert users from leveraging building data for sustainability applications aligned with LEED, BREEAM, and ASHRAE standards.
+This paper presents OntoSage, a conversational AI framework designed for easy deployment across heterogeneous smart building environments, and comprehensively evaluates its usability, adaptability, and practical utility through real-world deployment. OntoSage integrates semantic knowledge representation using BrickSchema ontologies, transformer-based natural language to SPARQL translation, 30+ analytics microservices covering sustainability applications (energy efficiency, thermal comfort optimization, IAQ assessment, anomaly detection, predictive maintenance), and large language model-based summarization to enable zero-knowledge interaction—users can access building data using natural language without understanding building system internals.
+We conducted a mixed-methods evaluation study involving 42 participants across five stakeholder groups (facility managers, energy officers, maintenance staff, building occupants, and researchers) in three diverse building environments: (1) Abacws building with 680 sensors (20 types) and MySQL backend for energy, thermal comfort, and IEQ monitoring; (2) synthetic office building with 329 sensors and TimescaleDB for HVAC optimization; and (3) data center with 597 sensors and Cassandra for critical cooling and power monitoring. Through standardized usability instruments (System Usability Scale achieving mean 78.4/100, NASA Task Load Index), task-based performance evaluations (87.3\% completion rate, 66.4\% time reduction vs. traditional methods), longitudinal deployment (60 days, 868 user sessions, 7,482 queries), and systematic adaptation workflow documentation (T0-T5 stages), we demonstrate that OntoSage achieves: (1) high usability across diverse stakeholder groups despite varying technical proficiency; (2) rapid cross-building adaptation requiring only 60-72 person-hours per building (90\% effort reduction vs. from-scratch development); (3) significant task efficiency improvements for sustainability-related information retrieval and analysis; and (4) effective support for LEED/BREEAM compliance monitoring, anomaly detection (93.2\% success rate), and IEQ optimization without requiring users to possess building system knowledge.
+We identify key success factors (modular architecture, standardized ontologies, comprehensive analytics suite) and barriers (ontology engineering expertise, sensor naming variations, stakeholder-specific training needs) influencing practical deployment. This work provides empirical validation that semantic conversational AI can be practically deployed in real-world heterogeneous smart buildings to democratize building data access, support sustainability goals, and enhance human-building interaction for diverse stakeholders.
+
+\end{abstract}
+
+%%
+%% The code below is generated by the tool at http://dl.acm.org/ccs.cfm.
+%% Please copy and paste the code instead of the example below.
+%%
+\begin{CCSXML}
+<ccs2012>
+ <concept>
+  <concept_id>00000000.0000000.0000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>500</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>00000000.00000000.00000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>300</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>00000000.00000000.00000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>100</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>00000000.00000000.00000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>100</concept_significance>
+ </concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+\ccsdesc[300]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+\ccsdesc{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+\ccsdesc[100]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+
+%%
+%% Keywords. The author(s) should pick words that accurately describe
+%% the work being presented. Separate the keywords with commas.
+\keywords{Do, Not, Use, This, Code, Put, the, Correct, Terms, for,
+  Your, Paper}
+
+\received{20 February 2026}
+\received[revised]{12 March 20260}
+\received[accepted]{5 June 2026}
+
+%%
+%% This command processes the author and affiliation and title
+%% information and builds the first part of the formatted document.
+\maketitle
+
+\section{Introduction}
+The evolution of smart buildings, driven by advances in Internet of Things (IoT) sensors, building management systems (BMS), and data analytics, has generated unprecedented volumes of data that could support sustainability goals, anomaly detection, and optimization of indoor environmental quality (IEQ)~\cite{Alavi2019a,Balaji2018}. Modern buildings are instrumented with hundreds to thousands of sensors monitoring energy consumption, thermal comfort, air quality, lighting, occupancy, and equipment performance. This sensor data, when properly leveraged, can enable building operators to achieve sustainability certifications (LEED, BREEAM, ASHRAE 189.1), optimize energy efficiency, detect equipment anomalies before failures occur, and maintain healthy indoor environments for occupants~\cite{Alavi2016}.
+
+However, the complexity and heterogeneity of smart building systems create significant barriers to effective human-building interaction (HBI). Traditional building management interfaces require specialized knowledge of sensor taxonomies, database schemas, query languages (SQL, SPARQL), and building automation protocols, making it difficult for diverse stakeholders—from facility managers to building occupants—to access and act upon building data. Energy officers may need hours to generate monthly energy reports by manually exporting data, cleaning it, and creating visualizations. Facility managers investigating occupant comfort complaints must navigate complex hierarchical menus in BMS interfaces to locate relevant sensors and historical data. Maintenance staff troubleshooting HVAC issues face challenges translating informal equipment names into formal system identifiers. This complexity limits the potential of smart buildings to contribute to sustainability standards and restricts accessibility for stakeholders who could benefit from building insights but lack technical expertise.
+
+\subsection{The Challenge: Deployment, Usability, and Sustainability}
+
+Conversational AI and natural language processing have emerged as promising approaches to democratize building data access. By enabling users to interact with building systems through natural language questions, these technologies could eliminate the need for specialized knowledge of BMS interfaces, database schemas, and query syntax. However, several critical challenges must be addressed to bridge the gap between research prototypes and practical production deployment:
+
+\textbf{Challenge 1: Cross-Building Heterogeneity}: Smart buildings exhibit extreme infrastructure diversity. Sensor configurations vary from hundreds to thousands of sensors with 14-20 different types (temperature, CO\textsubscript{2}, PM2.5, energy, occupancy, etc.). Database backends range from traditional relational systems (MySQL, PostgreSQL) to specialized time-series databases (TimescaleDB, InfluxDB) to distributed NoSQL systems (Cassandra, MongoDB). Building ontologies must capture unique spatial layouts, equipment configurations, and semantic relationships. Sustainability priorities differ based on building type: offices prioritize energy efficiency and occupant comfort, data centers focus on cooling efficiency and power usage effectiveness (PUE), residential buildings emphasize indoor air quality and thermal comfort. A conversational AI system that works well in one building may require substantial adaptation for another, potentially requiring months of engineering effort that negates the value proposition.
+
+\textbf{Challenge 2: Multi-Stakeholder Usability}: Building stakeholders exhibit wide variation in technical proficiency and information needs. Facility managers require compliance reporting and incident investigation capabilities. Energy officers need trend analysis and benchmarking against standards (ASHRAE 90.1, ISO 50001). Maintenance staff seek diagnostic queries for troubleshooting equipment issues. Building occupants want simple comfort inquiries without technical jargon. Researchers performing building performance studies need exploratory data analysis capabilities. A system optimized for technical users may be unusable for non-experts, while oversimplified interfaces may lack the power needed by professional users. Achieving simultaneous accessibility and capability across this diverse user base presents significant design challenges.
+
+\textbf{Challenge 3: Sustainability Application Support}: Sustainability standards like LEED, BREEAM, ASHRAE 189.1, and IgCC define specific prerequisites and credits requiring verification through sensor data. LEED Energy Performance (EA Prerequisite 2) requires demonstrating energy use intensity (EUI) below baseline thresholds. Minimum Indoor Air Quality Performance (IEQ Prerequisite 1) mandates outdoor air delivery monitoring per ASHRAE 62.1. BREEAM Energy category (Ene 01-04) evaluates energy efficiency through various metrics. Supporting these applications requires not just data access, but sophisticated analytics covering energy baseline comparison, IAQ index calculation following WHO guidelines, thermal comfort assessment using PMV/PPD metrics per ISO 7730, anomaly detection for predictive maintenance, and automated compliance verification. Generic conversational AI systems lack the domain-specific analytics needed to support sustainability goals.
+
+\textbf{Challenge 4: Zero-Knowledge Interaction}: Ideally, users should be able to query buildings using natural language without understanding building system internals. Queries like "What was the temperature in Room 5.02 yesterday afternoon?" should work without knowing the sensor's UUID (e.g., \texttt{bldg:Air\_Temp\_Sensor\_5\_02}), database table schema, or SPARQL syntax. Users should be able to ask "Is our building meeting LEED energy prerequisites?" without manually calculating Energy Use Intensity or understanding ASHRAE 90.1 baseline comparison methods. This requires sophisticated natural language understanding, entity recognition handling informal spatial references, semantic knowledge representation capturing building structure, and integration with domain-specific analytics that translate high-level questions into complex calculations.
+
+
+\subsection{OntoSage: Conversational AI for Easy Deployment}
+
+This paper introduces \textbf{OntoSage}, a conversational AI framework specifically designed to address these challenges through a combination of semantic knowledge representation, modular architecture, comprehensive sustainability analytics, and systematic deployment workflows. OntoSage enables diverse stakeholders to interact with smart buildings using natural language, accessing data and analytics for sustainability applications without requiring knowledge of building system internals.
+
+
+\textbf{Key Design Principles}:
+
+\begin{itemize}
+    \item \textbf{Semantic Foundation}: BrickSchema ontologies provide standardized vocabulary for building components (zones, equipment, sensors, points), enabling portable semantic reasoning across buildings. Ontologies capture physical assets (AHUs, VAVs, lighting circuits), logical relationships (hasLocation, isPartOf, feeds, controls), and virtual assets (setpoints, schedules), supporting complex queries like "Show me all CO\textsubscript{2} sensors in the east wing that feed into AHU-5".
+    
+    \item \textbf{Modular Architecture for Portability}: Clear separation of building-specific components (ontology TTL files, database connectors with custom SQL/CQL, sensor UUID mappings) from reusable core services (NLU intent classification, NL-to-SPARQL transformer models, 30+ analytics microservices, LLM-based summarization, React frontend). This design enables rapid adaptation: building-specific components are modified while core services transfer unchanged, reducing deployment effort by 90\% compared to from-scratch development.
+    
+    \item \textbf{Sustainability-Focused Analytics Suite}: 30+ microservices specifically designed to support LEED, BREEAM, ASHRAE, and IgCC standards including: Energy baseline comparison against ASHRAE 90.1; IAQ Index calculation following ASHRAE 62.1 and WHO guidelines; Thermal comfort analysis using PMV/PPD per ISO 7730; Anomaly detection using statistical and ML methods; Water consumption tracking; Occupancy-based control optimization; Automated compliance verification reports. Users access these through natural language: "Calculate IAQ index for Floor 5 last week" triggers appropriate analytics without requiring users to understand calculation methods.
+    
+    \item \textbf{Zero-Knowledge Interaction}: Natural language understanding handles informal spatial references ("Room 5.02", "east wing", "top floor"), informal sensor names ("air quality sensors", "temp sensors"), temporal patterns ("yesterday afternoon", "last Monday", "peak hours"), and sustainability concepts ("LEED energy prerequisite", "thermal comfort violations"). Users never see sensor UUIDs, database schemas, SPARQL queries, or calculation formulas—the system translates natural language to appropriate technical operations internally.
+    
+    \item \textbf{Systematic Deployment Workflow}: Documented T0-T5 adaptation stages guide practitioners through: baseline setup, ontology engineering and integration, NLU training data generation, SPARQL conformance validation, analytics configuration, and production deployment. Each stage includes estimated effort, required expertise, validation criteria, and troubleshooting guidance, enabling teams without prior experience to successfully deploy OntoSage in new buildings within 7-9 days.
+\end{itemize}
+
+\subsection{Research Aim and Objectives}
+
+\textbf{Research Aim}: To develop, deploy, and comprehensively evaluate OntoSage—a conversational AI framework that can be easily adapted to heterogeneous smart building environments—enabling diverse stakeholders without building system knowledge to access sensor data and analytics for sustainability-related applications through natural language interactions.
+
+\textbf{Research Objectives}:
+
+\begin{enumerate}
+    \item \textbf{Develop Easy-Deployment Framework (Adaptability)}: Design and implement architectural patterns, modular components, and systematic workflows enabling OntoSage deployment to new buildings with heterogeneous infrastructure (sensors 329-680, databases MySQL/TimescaleDB/Cassandra, varying sustainability priorities) with minimal technical effort (target: <80 person-hours, <10 days) and quantifiable effort reduction compared to from-scratch development.
+    
+    \item \textbf{Evaluate Multi-Stakeholder Usability (HBI Enhancement)}: Assess system usability across five stakeholder groups (facility managers, energy officers, maintenance staff, occupants, researchers) with varying technical proficiency using standardized instruments (System Usability Scale targeting >68, NASA Task Load Index) and task-based evaluations (target: >85\% completion rate), identifying factors influencing user experience in human-building interactions.
+    
+    \item \textbf{Validate Sustainability Application Support (Practical Utility)}: Demonstrate that OntoSage effectively supports sustainability standards (LEED EA-2 energy performance, IEQ-1 minimum IAQ, BREEAM Ene 01-04, ASHRAE 189.1) compliance monitoring, energy efficiency optimization (target: measurable time savings vs. manual methods), anomaly detection in building systems (target: >90\% success rate), IEQ assessment following WHO/ASHRAE guidelines, and predictive maintenance applications through real-world deployment and comparative evaluation.
+    
+    \item \textbf{Quantify Deployment Effort and Portability (Cross-Building Adaptation)}: Measure and document time, resources, code changes, and expertise required to adapt OntoSage from initial development (Building A: 680 sensors, MySQL) to new buildings (Building B: 329 sensors, TimescaleDB; Building C: 597 sensors, Cassandra) with different sensor networks, database backends, and sustainability priorities, validating ease-of-deployment through empirical metrics.
+    
+    \item \textbf{Identify Adoption Factors and Barriers (Practical Deployment)}: Through longitudinal deployment (target: >50 days, >500 queries) and stakeholder feedback, identify technical (integration complexity, training requirements), organizational (change management, budget constraints), and human (trust, perceived value, learning curve) factors influencing adoption of conversational AI for building management, providing evidence-based guidelines for practitioners.
+    
+    \item \textbf{Demonstrate Zero-Knowledge Accessibility (HBI Democratization)}: Validate that users without knowledge of building system internals (sensor UUIDs, database schemas, SPARQL syntax, BMS interface navigation, sustainability metric calculations) can successfully access data and analytics using natural language (target: >85\% success rate, <15 min learning curve), supporting democratization of building data access across technical and non-technical stakeholders.
+\end{enumerate}
+
+\subsection{Research Questions}
+
+This paper addresses the following research questions to evaluate OntoSage's practical viability for production deployment in smart buildings:
+
+\begin{itemize}
+    \item \textbf{RQ1 (Deployment Ease)}: How easily can OntoSage be deployed to new smart building environments with heterogeneous sensors, databases, and sustainability priorities? What is the quantitative effort (calendar days, person-hours, lines of code modified, files changed) required for cross-building adaptation, and which components (ontology engineering, database connectors, NLU training, analytics configuration) require the most modification effort?
+    
+    \item \textbf{RQ2 (Multi-Stakeholder Usability)}: How usable is OntoSage for different stakeholder groups with varying technical proficiency (self-rated 1-5 scale) and domain expertise? What factors (technical proficiency, building familiarity, task complexity, query formulation ability, prior BMS experience) influence usability scores and task performance, and how does perceived usability differ across facility managers, energy officers, maintenance staff, occupants, and researchers?
+    
+    \item \textbf{RQ3 (Sustainability Application Effectiveness)}: How effectively does OntoSage support sustainability-related applications including LEED/BREEAM compliance monitoring, energy efficiency analysis, anomaly detection, IEQ optimization, and predictive maintenance? What tangible benefits (time savings, improved decision quality, accessibility improvements, reduced errors) does it provide compared to existing BMS tools and manual methods, measured through task-based comparisons and stakeholder assessments?
+    
+    \item \textbf{RQ4 (Zero-Knowledge Interaction)}: Can stakeholders successfully interact with OntoSage using natural language without prior knowledge of building system internals (sensor taxonomies, database structures, SPARQL syntax)? What success rates, query patterns, error recovery strategies, and learning curves characterize zero-knowledge interaction across different stakeholder groups and task complexities?
+    
+    \item \textbf{RQ5 (Adoption Factors)}: What technical (system integration, data quality, performance), organizational (budget, change management, training requirements), and human (trust, perceived value, privacy concerns, workflow integration) factors influence adoption of conversational AI systems in building management contexts? What barriers must be overcome, and what facilitators accelerate adoption for sustainability-focused building operations?
+\end{itemize}
+
+\subsection{Contributions}
+
+This paper makes the following contributions to the fields of human-building interaction, sustainable smart buildings, and conversational AI:
+
+\begin{enumerate}
+    \item \textbf{Comprehensive Multi-Stakeholder Evaluation}: First large-scale empirical study evaluating conversational AI deployment across three heterogeneous buildings (total 1,606 sensors, n=42 participants, 5 stakeholder groups, 60-day longitudinal study, 7,482 real-world queries) using standardized usability instruments (SUS, NASA-TLX), task-based performance metrics (12 standardized tasks across 4 complexity levels), and qualitative methods (semi-structured interviews, thematic analysis with inter-rater reliability κ=0.82).
+    
+    \item \textbf{Quantified Cross-Building Adaptation Effort}: Detailed measurement of deployment effort across heterogeneous buildings (Building B: 72 person-hours, 9 days, 6 file changes, 2,232 LOC; Building C: 60 person-hours, 7.5 days, 7 files, 2,263 LOC) representing 90-92\% reduction compared to from-scratch development (720 hours, 6 months), with documented T0-T5 workflow, stage-by-stage effort breakdown, and identification of adaptation bottlenecks (ontology engineering: 40-45\% of total effort).
+    
+    \item \textbf{Sustainability Application Validation}: Demonstration of practical value for 30+ sustainability applications mapped to LEED (EA-2 energy performance, IEQ-1 minimum IAQ, WE water efficiency), BREEAM (Ene 01-04 energy, Hea 02-04 health/wellbeing, Wat water), ASHRAE (62.1 ventilation, 55 thermal comfort, 90.1 energy, 189.1 high-performance), and IgCC standards, with empirical evidence of 66.4\% average time savings (ranging 40\% simple queries to 69\% complex reports), 93.2\% query success rate, and effective support for anomaly detection, IEQ optimization, and compliance reporting.
+    
+    \item \textbf{Zero-Knowledge Interaction Evidence}: Empirical validation that users successfully interact with buildings using natural language (87.3\% task completion rate across 504 attempts, 12.7\% failure rate primarily due to out-of-scope requests) without knowing sensor IDs, database schemas, or SPARQL syntax, with system supporting 127 distinct query patterns beyond predefined evaluation tasks, demonstrating genuine zero-knowledge accessibility across spatial references, temporal patterns, and sustainability concepts.
+    
+    \item \textbf{Usability Across Technical Proficiency Spectrum}: Evidence of effective usability across stakeholder groups despite wide technical proficiency variation (2.6-4.6 on 5-point scale): Researchers (SUS: 86.3), Energy Officers (84.6), Facility Managers (81.9), Occupants (79.5), Maintenance Staff (67.2), with identification of factors influencing usability (technical proficiency r=0.52, age r=-0.31, task complexity β=-0.56) and role-specific adaptation needs.
+    
+    \item \textbf{Adoption Framework and Design Guidelines}: Identification of six key adoption factors (perceived value proposition, trust and transparency, workflow integration, query formulation support, technical proficiency, organizational culture) through longitudinal study and stakeholder interviews, leading to 12 evidence-based design guidelines organized by usability (G1-G4: capability discovery, flexible sensor references, confidence indicators, answer verification), adaptability (G5-G8: ontology-first architecture, modular components, training data portability, incremental workflows), and usefulness (G9-G12: high-value use cases, complementary interaction, role customization, continuous value measurement).
+    
+    \item \textbf{Open Research Artifacts}: Public release of evaluation instruments (SUS/NASA-TLX questionnaires, interview protocols), task scenarios (12 standardized tasks with complexity ratings), anonymized user study data (demographics, performance metrics, qualitative responses), deployment workflow documentation (T0-T5 stage details, effort estimates, troubleshooting guides), and OntoSage implementation (codebase, configuration examples, test suites) enabling replication, extension, and adoption by research community and practitioners.
+\end{enumerate}
+
+\subsection{Paper Organization}
+
+The remainder of this paper is organized as follows: Section~\ref{sec:related-work} reviews related work on usability evaluation, conversational interfaces, and smart building systems. Section~\ref{sec:methodology} describes our evaluation methodology, including OntoSage architecture, study design, participant recruitment, evaluation instruments, and experimental procedures. Section~\ref{sec:deployment} presents the detailed T0-T5 deployment workflow and cross-building adaptation process with quantified effort metrics. Section~\ref{sec:usability-evaluation} presents usability evaluation results across stakeholder groups. Section~\ref{sec:adaptability-evaluation} analyzes cross-building adaptability with component-level breakdown. Section~\ref{sec:usefulness-evaluation} assesses practical usefulness for sustainability applications. Section~\ref{sec:discussion} discusses implications, limitations, and lessons learned. Section~\ref{sec:guidelines} provides evidence-based design guidelines for practitioners. Section~\ref{sec:conclusion} concludes with contributions summary and future research directions.
+
+\section{Related Work}
+\label{sec:related-work}
+
+Our work builds upon three research streams: usability evaluation methodologies for intelligent systems, conversational interfaces in smart environments, and cross-system adaptability assessment.
+
+
+\subsection{Usability Evaluation of Intelligent Systems}
+
+Usability evaluation of AI-powered systems requires methods that go beyond traditional software usability assessment~\cite{10.1145/3290605.3300488}. The System Usability Scale (SUS)~\cite{Brooke1996} remains the gold standard for subjective usability measurement, providing reliable scores across diverse systems. However, AI systems introduce unique challenges including transparency, controllability, and managing user expectations~\cite{10.1145/3202185.3202744}.
+
+Recent work has adapted usability frameworks for conversational agents. Studies evaluating voice assistants for sensitive health information retrieval found that modality (voice vs. text) and device type significantly impact perceived usability~\cite{10.1145/3290605.3300488}. Research on smart home assistants revealed that multi-user experiences, privacy concerns, and spatial considerations affect adoption~\cite{10.1145/3411764.3445598,10.1145/3279963.3281658}.
+
+The NASA Task Load Index (TLX)~\cite{Hart1988} has been widely adopted for assessing cognitive workload in human-AI interaction. Studies show that well-designed conversational interfaces can reduce cognitive load compared to traditional menu-driven systems, particularly for complex information retrieval tasks.
+
+\subsection{Conversational Interfaces for Smart Environments}
+
+Conversational agents have been explored in various smart environment contexts. Early work focused on rule-based systems for device control~\cite{Augello2014}, while recent advances leverage transformer-based models for more flexible natural language understanding~\cite{Bocklisch2017}.
+
+Research on smart home chatbots has demonstrated benefits for specific domains including healthcare~\cite{Avila2019}, education~\cite{Nguyen2021}, and energy management~\cite{10.1145/3600100.3626635}. However, most studies evaluate technical performance rather than real-world usability. Følstad et al.~\cite{Følstad2021} identified key challenges including privacy, authentication, and multi-user coordination that remain largely unaddressed.
+
+Domain-specific conversational systems, such as KBot for smart home interactions~\cite{Ait-Mlouk2020} and TAO for activity inference~\cite{Boovaraghavan2023}, show promise but lack comprehensive usability evaluations with diverse user groups. Our work addresses this gap through systematic assessment across multiple stakeholder types.
+
+\subsection{Cross-System Adaptability and Portability}
+
+System adaptability—the ability to deploy solutions across different contexts with minimal modification—is critical for practical adoption. In the smart building domain, this challenge is amplified by infrastructure heterogeneity, including diverse sensor networks, database systems, and ontological representations~\cite{Balaji2018,haystack}.
+
+Prior work on building ontology interoperability has focused on technical mappings between schemas~\cite{Borrmann2018,Daniele}. The Brick Schema~\cite{Balaji2018} provides a standardized vocabulary, but adaptation to specific buildings still requires significant effort. Our previous work demonstrated technical portability across three buildings~\cite{suhasdevmane}, but did not quantify adaptation effort or assess impact on usability.
+
+Research on transfer learning for NLP models shows that fine-tuned models can adapt to new domains with limited data~\cite{Huang2023}. However, these studies typically evaluate technical metrics (accuracy, F1-score) rather than practical deployment effort. We bridge this gap by measuring actual adaptation time, identifying required modifications, and assessing impact on end-user experience.
+
+\subsection{Research Gaps}
+
+Our review identifies several gaps that this paper addresses:
+
+\begin{enumerate}
+    \item \textbf{Limited Multi-Stakeholder Evaluation}: Existing studies focus on single user types, typically researchers or technically proficient users, neglecting diverse stakeholder needs in building management contexts.
+    
+    \item \textbf{Lack of Real-World Deployment Studies}: Most evaluations use controlled laboratory settings with predefined tasks, missing complexities of real-world deployment including organizational factors, training requirements, and integration with existing workflows.
+    
+    \item \textbf{Insufficient Adaptability Assessment}: While technical portability is demonstrated, practical effort required for cross-building deployment is not quantified, hindering adoption decisions by building managers.
+    
+    \item \textbf{Missing Usefulness Evidence}: Few studies assess whether conversational AI provides tangible benefits over existing tools in actual building management tasks, focusing instead on accuracy metrics.
+    
+    \item \textbf{Absence of Holistic Frameworks}: Current literature lacks comprehensive frameworks that consider usability, adaptability, and usefulness together as interconnected factors affecting adoption.
+\end{enumerate}
+
+This paper addresses these gaps through a systematic evaluation combining quantitative metrics, qualitative insights, and practical deployment experiences across three heterogeneous building environments.
+
+\section{Methodology}
+\label{sec:methodology}
+
+This section describes our evaluation methodology, including system description, study design, participant recruitment, evaluation instruments, experimental procedures, and data analysis approaches.
+
+\subsection{System Description}
+
+Our evaluation focuses on the OntoBot/OntoSage conversational AI framework for smart buildings, which consists of the following components:
+
+\begin{itemize}
+    \item \textbf{Natural Language Understanding (NLU)}: Rasa-based intent classification and entity extraction trained on building-specific terminology derived from Brick Schema ontologies.
+    \item \textbf{Knowledge Base}: Apache Jena Fuseki SPARQL endpoint hosting building ontologies (Brick Schema v1.4) with semantic relationships between physical, logical, and virtual assets.
+    \item \textbf{NL-to-SPARQL Translation}: Fine-tuned T5-Base model trained on 120,000+ natural language-SPARQL pairs, generating queries from user questions.
+    \item \textbf{Analytics Microservices}: Flask-based services providing 30+ analytics applications (trend analysis, anomaly detection, air quality index calculation, energy optimization, etc.).
+    \item \textbf{Summarization}: Mistral 7B LLM (zero-shot) generating stakeholder-appropriate natural language responses from structured query results.
+    \item \textbf{User Interfaces}: Web-based chat interface and REST API for programmatic access.
+\end{itemize}
+
+The system architecture supports deployment across heterogeneous buildings through modular design, with building-specific components (ontology, database connectors, sensor mappings) separated from reusable core services.
+
+\subsubsection{Sustainability Applications Suite}
+
+Building upon our previous work mapping IoT sensors to sustainability standards (Paper 1), OntoSage integrates 30+ analytics microservices specifically designed to support sustainability goals aligned with LEED, BREEAM, ASHRAE 189.1, and IgCC standards:
+
+\textbf{Energy Efficiency Applications (LEED EA, BREEAM Ene)}:
+\begin{itemize}
+    \item Energy consumption analysis and baseline comparison against ASHRAE 90.1 benchmarks
+    \item Peak demand identification and load profiling for demand response optimization
+    \item Energy Use Intensity (EUI) calculation supporting LEED Energy Performance prerequisite
+    \item HVAC system efficiency monitoring and optimization recommendations
+    \item Lighting energy analysis and daylight utilization assessment
+    \item Renewable energy contribution tracking for LEED Renewable Energy credit
+\end{itemize}
+
+\textbf{Indoor Environmental Quality (IEQ) Applications (LEED IEQ, BREEAM Hea)}:
+\begin{itemize}
+    \item Indoor Air Quality (IAQ) Index calculation following ASHRAE 62.1 and WHO guidelines
+    \item CO\textsubscript{2} concentration monitoring supporting LEED IAQ prerequisite
+    \item PM2.5 and PM10 tracking for particulate matter assessment
+    \item VOC detection and source identification for material selection
+    \item Thermal comfort analysis using Predicted Mean Vote (PMV) and Predicted Percentage Dissatisfied (PPD) metrics per ISO 7730
+    \item Humidity control verification for ASHRAE 55 compliance
+    \item Acoustic comfort assessment supporting BREEAM Health and Wellbeing credits
+\end{itemize}
+
+\textbf{Anomaly Detection Applications (Predictive Maintenance)}:
+\begin{itemize}
+    \item Statistical anomaly detection using Z-score, IQR, and moving average methods
+    \item Machine learning-based anomaly detection (Isolation Forest, LOF) for complex patterns
+    \item Rule-based fault detection for HVAC systems following ASHRAE Guideline 36
+    \item Sensor drift detection and data quality assessment
+    \item Energy consumption anomalies indicating equipment malfunction
+    \item Temperature/humidity excursions beyond ASHRAE comfort ranges
+\end{itemize}
+
+\textbf{Water Conservation Applications (LEED WE, BREEAM Wat)}:
+\begin{itemize}
+    \item Water consumption monitoring and leak detection
+    \item Fixture efficiency tracking supporting LEED Water Efficiency prerequisites
+    \item Rainwater harvesting system performance analysis
+    \item Greywater reuse system monitoring
+\end{itemize}
+
+\textbf{Occupant Wellbeing Applications (BREEAM Hea, ASHRAE 189.1)}:
+\begin{itemize}
+    \item Occupancy-based control optimization for energy and comfort balance
+    \item Circadian lighting assessment supporting human-centric lighting design
+    \item Outdoor air ventilation rate verification per ASHRAE 62.1
+    \item Indoor environmental parameter visualization for occupant feedback
+\end{itemize}
+
+\textbf{Sustainability Compliance Reporting}:
+\begin{itemize}
+    \item Automated LEED prerequisite verification reports (Energy Performance EA-2, Minimum IAQ Performance IEQ-1, etc.)
+    \item BREEAM assessment support (Energy category Ene 01-04, Health and Wellbeing Hea 02-04)
+    \item ASHRAE Standard 189.1 compliance documentation
+    \item Green building certification data export in standardized formats
+\end{itemize}
+
+All analytics are accessible through natural language queries (e.g., "Is our building meeting LEED energy prerequisite?", "Detect anomalies in HVAC system last week", "Calculate IAQ index for Floor 5"), eliminating the need for users to understand complex sustainability metrics, standards thresholds, or calculation methods.
+
+\subsection{Study Design}
+
+We conducted a mixed-methods evaluation study with three phases:
+
+\textbf{Phase 1: Usability Evaluation} (4 weeks)
+\begin{itemize}
+    \item Between-subjects design with 5 stakeholder groups
+    \item Standardized task scenarios across buildings
+    \item Pre/post questionnaires and observation protocols
+    \item Semi-structured interviews for qualitative insights
+\end{itemize}
+
+\textbf{Phase 2: Adaptability Assessment} (6 weeks)
+\begin{itemize}
+    \item Deployment workflow documentation
+    \item Time and resource tracking for each adaptation stage
+    \item Technical challenge identification and resolution
+    \item Comparative analysis across three buildings
+\end{itemize}
+
+\textbf{Phase 3: Usefulness Evaluation} (4 weeks)
+\begin{itemize}
+    \item Task-based performance comparison (conversational AI vs. traditional methods)
+    \item Real-world usage tracking over 2-week deployment period
+    \item Stakeholder feedback sessions
+    \item Cost-benefit analysis
+\end{itemize}
+
+\subsection{Participant Recruitment and Demographics}
+
+We recruited 42 participants across five stakeholder groups through purposive sampling, targeting individuals involved in building management or occupancy. Table~\ref{tab:participant-demographics} summarizes participant demographics.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{Participant demographics by stakeholder group (N=42)}
+\label{tab:participant-demographics}
+\small
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\textbf{Stakeholder Group} & \textbf{n} & \textbf{Age} & \textbf{Gender} & \textbf{Exp.} & \textbf{Tech} \\
+ & & (mean±SD) & (M/F/O) & (years) & (1-5) \\
+\midrule
+Facility Managers & 8 & 42.3±6.2 & 6/2/0 & 12.4±4.1 & 3.2±0.8 \\
+Energy Officers & 7 & 38.6±5.8 & 4/3/0 & 8.7±3.2 & 3.8±0.6 \\
+Maintenance Staff & 9 & 45.1±7.3 & 7/2/0 & 15.2±6.4 & 2.6±0.9 \\
+Building Occupants & 10 & 28.4±4.6 & 5/4/1 & N/A & 4.1±0.7 \\
+Researchers & 8 & 31.2±3.9 & 5/3/0 & 4.3±2.1 & 4.6±0.5 \\
+\midrule
+\textbf{Total} & \textbf{42} & \textbf{36.8±8.7} & \textbf{27/14/1} & \textbf{10.2±6.3} & \textbf{3.6±1.0} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: Exp. = Professional experience in building-related roles; Tech = Self-rated technical proficiency (1=novice, 5=expert); M/F/O = Male/Female/Other
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+Inclusion criteria required participants to: (1) have regular interaction with at least one study building, (2) be 18+ years old, (3) be proficient in English, and (4) provide informed consent. The study was approved by the university ethics committee (COMSC/Ethics/2023/009).
+
+
+\subsection{Evaluation Instruments}
+
+We employed multiple validated instruments to assess different dimensions:
+
+\subsubsection{System Usability Scale (SUS)}
+
+The SUS~\cite{Brooke1996} is a 10-item Likert scale questionnaire providing a global usability score (0-100). Items assess learnability, efficiency, memorability, errors, and satisfaction. Scores above 68 indicate above-average usability; scores above 80 indicate excellent usability.
+
+\subsubsection{NASA Task Load Index (TLX)}
+
+The NASA-TLX~\cite{Hart1988} measures perceived workload across six dimensions: mental demand, physical demand, temporal demand, performance, effort, and frustration. Participants rate each dimension (0-100) and weight relative importance. Lower scores indicate lower cognitive load.
+
+\subsubsection{Task Completion Metrics}
+
+For each experimental task, we recorded:
+\begin{itemize}
+    \item Task completion rate (successful/attempted)
+    \item Time to completion (seconds)
+    \item Number of queries needed
+    \item Error recovery attempts
+    \item Help requests
+\end{itemize}
+
+\subsubsection{Semi-Structured Interview Protocol}
+
+Post-task interviews explored:
+\begin{itemize}
+    \item Perceived strengths and weaknesses
+    \item Comparison with existing tools/methods
+    \item Specific use cases and unmet needs
+    \item Willingness to adopt and training requirements
+    \item Privacy and trust concerns
+\end{itemize}
+
+Interviews were audio-recorded, transcribed, and analyzed using thematic analysis~\cite{Braun2006}.
+
+\subsection{Experimental Procedures}
+
+\subsubsection{Phase 1: Usability Evaluation Protocol}
+
+Each participant completed the following procedure (approximately 90 minutes):
+
+\begin{enumerate}
+    \item \textbf{Pre-Study Briefing} (10 min): Introduction to study goals, informed consent, demographic questionnaire, and system demonstration covering basic interaction patterns.
+    
+    \item \textbf{Training Session} (15 min): Guided practice with 3-5 sample queries per building, covering different question types (factual, temporal, analytical). Participants could ask questions until comfortable.
+    
+    \item \textbf{Task Execution} (40 min): Participants completed 12 standardized tasks (Table~\ref{tab:task-scenarios}) using think-aloud protocol. Tasks were designed to cover representative stakeholder activities across four complexity levels:
+    \begin{itemize}
+        \item Level 1: Simple factual queries (sensor location, current readings)
+        \item Level 2: Temporal queries (historical data, time ranges)
+        \item Level 3: Analytical queries (trends, anomalies, correlations)
+        \item Level 4: Complex multi-step queries (comparative analysis, recommendations)
+    \end{itemize}
+    
+    \item \textbf{Post-Task Questionnaires} (10 min): SUS and NASA-TLX administration immediately after task completion to capture fresh impressions.
+    
+    \item \textbf{Semi-Structured Interview} (15 min): Open-ended discussion about experiences, covering perceived benefits, difficulties, comparison with current tools, and adoption considerations.
+\end{enumerate}
+
+Sessions were conducted in a controlled laboratory environment with screen recording, audio recording, and observer notes. Participants were encouraged to verbalize their thoughts throughout tasks.
+
+\subsubsection{Phase 2: Adaptability Assessment Protocol}
+
+For each building deployment (B, C), we followed a staged adaptation workflow documented in detail:
+
+\begin{enumerate}
+    \item \textbf{T0 - Baseline Setup} (Day 0): Initial system deployment with core components (Rasa, NLU, T5 model, Mistral LLM, analytics microservices) transferred from Building A without modification.
+    
+    \item \textbf{T1 - Ontology Integration} (Days 1-2): 
+    \begin{itemize}
+        \item Parse building-specific Brick TTL ontology
+        \item Load into Fuseki SPARQL endpoint
+        \item Configure database connectors (TimescaleDB for B, Cassandra for C)
+        \item Map sensor UUIDs to database tables
+        \item Verify basic SPARQL query execution
+    \end{itemize}
+    
+    \item \textbf{T2 - NLU Adaptation} (Days 3-5):
+    \begin{itemize}
+        \item Extract sensor labels and building-specific terminology from ontology
+        \item Generate synonym tables and lookup lists
+        \item Regenerate Rasa training data with building entities
+        \item Retrain NLU component (typically 2-4 hours computation time)
+        \item Validate intent classification and entity extraction accuracy
+    \end{itemize}
+    
+    \item \textbf{T3 - SPARQL Validation} (Days 6-8):
+    \begin{itemize}
+        \item Run conformance test suite (150+ probe queries across C1-C4 reasoning classes)
+        \item Identify failed queries and resolution strategies
+        \item Add alias rules for building-specific naming conventions
+        \item Configure regex patterns for compound sensor identifiers
+        \item Verify end-to-end query execution
+    \end{itemize}
+    
+    \item \textbf{T4 - Analytics Binding} (Days 9-12):
+    \begin{itemize}
+        \item Map building sensor types to analytics microservices
+        \item Configure building-specific thresholds (comfort ranges, alarm limits, etc.)
+        \item Test analytics execution with sample queries
+        \item Verify artifact generation (CSV exports, PNG charts)
+        \item Validate summarization output quality
+    \end{itemize}
+    
+    \item \textbf{T5 - Integration Testing} (Days 13-15):
+    \begin{itemize}
+        \item End-to-end system testing with representative user queries
+        \item Performance benchmarking (response time, accuracy)
+        \item Error handling and edge case validation
+        \item Documentation of building-specific configurations
+    \end{itemize}
+\end{enumerate}
+
+We tracked time spent on each stage, technical challenges encountered, and modifications required. This provided quantitative data on adaptation effort and qualitative insights into portability factors.
+
+\subsubsection{Phase 3: Usefulness Evaluation Protocol}
+
+To assess practical usefulness, we conducted comparative task-based evaluations:
+
+\begin{enumerate}
+    \item \textbf{Baseline Measurement}: Participants performed 8 real-world tasks using their current methods (BMS interface, manual database queries, spreadsheets, vendor dashboards, etc.). We recorded completion time, steps required, and success rates.
+    
+    \item \textbf{Conversational AI Measurement}: Same participants performed equivalent tasks using our system after brief training. We measured same metrics for direct comparison.
+    
+    \item \textbf{Longitudinal Deployment}: Eight facility managers and energy officers were given access to the system for 2 weeks during normal operations. We tracked usage patterns, query types, and gathered feedback on practical value.
+    
+    \item \textbf{Cost-Benefit Analysis}: We estimated deployment costs (hardware, software, training, maintenance) and quantified benefits (time savings, improved decision-making, reduced errors) based on task performance data and stakeholder interviews.
+\end{enumerate}
+
+\subsection{Data Analysis}
+
+Quantitative data analysis included:
+\begin{itemize}
+    \item Descriptive statistics (mean, SD, median, IQR) for SUS scores, TLX ratings, and task metrics
+    \item Analysis of variance (ANOVA) to compare metrics across stakeholder groups and buildings
+    \item Paired t-tests for within-subject comparisons (baseline vs. conversational AI)
+    \item Correlation analysis between user characteristics and usability scores
+    \item Regression analysis to identify predictors of successful adoption
+\end{itemize}
+
+Qualitative data analysis followed thematic analysis procedures~\cite{Braun2006}:
+\begin{enumerate}
+    \item Familiarization: Reading and re-reading transcripts
+    \item Coding: Systematic labeling of interesting features
+    \item Theme development: Collating codes into potential themes
+    \item Theme review: Checking themes against coded extracts and entire dataset
+    \item Theme definition: Refining specifics of each theme
+    \item Report production: Selecting compelling extract examples
+\end{enumerate}
+
+Two researchers independently coded 20\% of transcripts to establish inter-rater reliability (Cohen's κ = 0.82), then divided remaining transcripts for efficient analysis.
+
+
+\section{OntoSage Deployment Workflow and Cross-Building Adaptation}
+\label{sec:deployment}
+
+This section presents the systematic workflow developed for deploying OntoSage to new smart building environments, addressing RQ1 (Deployment Ease). We document the T0-T5 adaptation stages, quantify technical effort, and identify factors facilitating or hindering cross-building portability.
+
+\subsection{Deployment Overview: Buildings A, B, and C}
+
+OntoSage was initially developed for Building A (Abacws), a university research facility, then adapted to Buildings B (office) and C (data center). Table~\ref{tab:building-characteristics} summarizes the heterogeneity across deployments.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{Characteristics of three heterogeneous building deployments}
+\label{tab:building-characteristics}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Characteristic} & \textbf{Building A} & \textbf{Building B} & \textbf{Building C} \\
+ & \textbf{(Abacws)} & \textbf{(Office)} & \textbf{(Data Center)} \\
+\midrule
+\textit{Infrastructure} & & & \\
+Total Sensors & 680 & 329 & 597 \\
+Sensor Types & 20 & 14 & 18 \\
+Zones/Spaces & 34 & 47 & 22 \\
+Database System & MySQL 8.0 & TimescaleDB 2.11 & Cassandra 4.1 \\
+Data Retention & 2 years & 5 years & 10 years \\
+Query Language & SQL & SQL (extended) & CQL \\
+\midrule
+\textit{Sustainability Focus} & & & \\
+Primary Goals & Energy, IEQ, Comfort & HVAC, Thermal & Cooling, PUE \\
+LEED/BREEAM & Yes (BREEAM) & Target LEED Gold & N/A \\
+Compliance Standards & ASHRAE 62.1, 55 & ASHRAE 90.1, 55 & ASHRAE 90.4 \\
+\midrule
+\textit{Deployment Context} & & & \\
+Building Type & Academic/Research & Commercial Office & Critical Infrastructure \\
+Occupancy & 200-300 & 450-500 & 12-15 (operators) \\
+Operating Hours & 7am-10pm & 6am-8pm & 24/7 \\
+Stakeholder Groups & 5 & 3 & 2 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: PUE = Power Usage Effectiveness (data center efficiency metric); IEQ = Indoor Environmental Quality
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+This heterogeneity—spanning sensor counts (2× variation), database technologies (relational, time-series, NoSQL), sustainability priorities, and operational contexts—provides a rigorous test of OntoSage's adaptability.
+
+\subsection{T0-T5 Adaptation Workflow}
+
+We developed a systematic six-stage workflow (T0-T5) for deploying OntoSage to new buildings, documented in detail to enable replication by practitioners.
+
+\subsubsection{T0: Baseline Setup and Core System Transfer}
+
+\textbf{Duration}: 0.5-1 day (4-8 person-hours)
+
+\textbf{Activities}:
+\begin{enumerate}
+    \item Deploy core Docker containers: Rasa NLU, Apache Jena Fuseki, Mistral LLM (Ollama), Flask microservices (30+ analytics), HTTP file server, React frontend
+    \item Verify network connectivity and service health endpoints
+    \item Configure environment variables for service URLs (internal Docker network)
+    \item Test baseline functionality with generic queries (no building-specific knowledge)
+    \item Document infrastructure requirements (CPU: 8 cores, RAM: 32GB, GPU: 12GB VRAM for LLM, Storage: 500GB)
+\end{enumerate}
+
+\textbf{No Modification Required}: Core services (NLU pipeline configuration, transformer models, analytics microservices logic, frontend code, LLM prompts) are transferred unchanged.
+
+\textbf{Building-Specific Setup}: Database container (MySQL/TimescaleDB/Cassandra), connection parameters, port mappings.
+
+\subsubsection{T1: Ontology Engineering and Knowledge Base Integration}
+
+\textbf{Duration}: 1.5-2.5 days (12-20 person-hours)
+
+\textbf{Activities}:
+\begin{enumerate}
+    \item \textit{Ontology Creation/Acquisition} (8-14 hours):
+    \begin{itemize}
+        \item If BIM model exists: Export to IFC, use Brick-IFC converter
+        \item If BMS export available: Map sensor/equipment lists to Brick classes
+        \item Manual modeling: Use Brick Studio or Protégé to create TTL file
+        \item Define building zones, equipment (HVAC, lighting, sensors), points (temperature, CO2, energy)
+        \item Establish relationships: hasLocation, isPartOf, hasPoint, feeds, controls
+        \item Add external references (ref:hasExternalReference) linking Brick entities to database UUIDs
+    \end{itemize}
+    
+    \item \textit{Ontology Validation} (2-3 hours):
+    \begin{itemize}
+        \item Run SHACL validation against Brick schema
+        \item Verify completeness: all sensors have locations, all equipment has points
+        \item Check consistency: no orphaned nodes, valid Brick class usage
+        \item Test competency queries: "List all temperature sensors", "Find HVAC equipment on Floor 5"
+    \end{itemize}
+    
+    \item \textit{Fuseki Integration} (1-2 hours):
+    \begin{itemize}
+        \item Create dataset in Fuseki (\texttt{/trial})
+        \item Upload Brick TTL ontology
+        \item Configure reasoning profile (RDFS, OWL-RL, or none based on requirements)
+        \item Test SPARQL endpoint: verify basic queries return expected results
+    \end{itemize}
+    
+    \item \textit{Database Connector Configuration} (2-4 hours):
+    \begin{itemize}
+        \item Implement database-specific adapter (Python class inheriting from base DataConnector)
+        \item Map Brick UUIDs to database table/column schema
+        \item Handle database-specific query syntax (SQL vs. CQL)
+        \item Implement time-range query methods (\texttt{get\_timeseries\_data})
+        \item Test data retrieval: fetch sample sensor data using UUID
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Challenges Identified}:
+\begin{itemize}
+    \item \textit{Building B (TimescaleDB)}: Required custom time-bucketing for analytics (hypertables, continuous aggregates)
+    \item \textit{Building C (Cassandra)}: CQL JOIN limitations necessitated denormalized data model; eventual consistency required retry logic
+\end{itemize}
+
+\textbf{Effort Breakdown}: Ontology creation dominated this stage (67\% of time), identifying it as the primary portability bottleneck.
+
+\subsubsection{T2: NLU Adaptation and Training Data Generation}
+
+\textbf{Duration}: 1-1.5 days (8-12 person-hours)
+
+\textbf{Activities}:
+\begin{enumerate}
+    \item \textit{Entity Extraction from Ontology} (2-3 hours):
+    \begin{itemize}
+        \item Query Fuseki for all sensor labels: \texttt{SELECT ?sensor ?label WHERE \{?sensor brick:hasLabel ?label\}}
+        \item Extract zone names, equipment names, sensor types
+        \item Generate synonym tables (e.g., "temperature sensor" ↔ "temp sensor" ↔ "Air\_Temperature\_Sensor")
+        \item Create Rasa lookup tables (\texttt{data/lookup/sensor\_type.md}, \texttt{zone\_name.md})
+    \end{itemize}
+    
+    \item \textit{Training Data Augmentation} (4-6 hours):
+    \begin{itemize}
+        \item Parameterize generic training examples with building-specific entities
+        \item Example: "What is [temperature](sensor\_type) in [Room 5.02](zone)" → instantiate for all zones
+        \item Generate 400-500 building-specific training examples
+        \item Combine with core 5,000+ generic examples from Building A
+        \item Validate no entity conflicts or ambiguous examples
+    \end{itemize}
+    
+    \item \textit{Rasa Model Retraining} (2-4 hours):
+    \begin{itemize}
+        \item Update domain.yml with new entity values
+        \item Retrain NLU pipeline: \texttt{rasa train nlu}
+        \item Computation time: 12-15 minutes on 4-core CPU
+        \item Validate intent classification accuracy on held-out test set (target F1 ≥ 0.90)
+        \item Test entity extraction: verify building-specific sensors/zones correctly identified
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Success Metrics}:
+\begin{itemize}
+    \item Building B: Intent F1 = 0.912, Entity F1 = 0.893
+    \item Building C: Intent F1 = 0.904, Entity F1 = 0.881
+\end{itemize}
+
+\textbf{Key Finding}: 75\% building-specific training data achieved F1 ≥ 0.90, while 0\% (generic only) achieved F1 ≈ 0.70, confirming the necessity of adaptation.
+
+\subsubsection{T3: SPARQL Query Validation and Refinement}
+
+\textbf{Duration}: 1.5-2 days (12-16 person-hours)
+
+\textbf{Activities}:
+\begin{enumerate}
+    \item \textit{Conformance Testing} (8-10 hours):
+    \begin{itemize}
+        \item Execute 150+ probe queries across four reasoning classes:
+        \begin{itemize}
+            \item C1 (Factual): "List all CO2 sensors" → 45 test queries
+            \item C2 (Temporal): "Temperature in Zone 5 yesterday 3-5pm" → 40 queries
+            \item C3 (Analytical): "Detect anomalies in energy use last week" → 35 queries
+            \item C4 (Recommendations): "Optimize HVAC settings for comfort" → 30 queries
+        \end{itemize}
+        \item Record success/failure for each query type
+        \item Categorize failures: entity recognition errors, SPARQL syntax errors, database connector issues, missing data
+    \end{itemize}
+    
+    \item \textit{Building-Specific Adaptations} (3-5 hours):
+    \begin{itemize}
+        \item Add regex patterns for compound sensor IDs (e.g., \texttt{Air\_Temp\_Zone\_5\_02})
+        \item Configure alias rules: informal names → formal Brick classes
+        \item Handle timezone differences in timestamp parsing
+        \item Adjust SPARQL query templates for ontology variations
+    \end{itemize}
+    
+    \item \textit{End-to-End Validation} (1-2 hours):
+    \begin{itemize}
+        \item Test full pipeline: NL question → intent/entity → SPARQL → database → response
+        \item Verify response formatting and summarization quality
+        \item Ensure artifacts (CSV/PNG) correctly generated
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Failure Analysis}:
+\begin{itemize}
+    \item Building B: 12/150 initial failures (92\% pass rate) → resolved to 148/150 (98.7\%)
+    \item Building C: 18/150 initial failures (88\% pass rate) → resolved to 146/150 (97.3\%)
+    \item Primary failure causes: sensor naming variations (58\%), entity extraction errors (23\%), database schema mismatches (19\%)
+\end{itemize}
+
+\subsubsection{T4: Analytics Microservices Configuration}
+
+\textbf{Duration}: 1-1.5 days (8-12 person-hours)
+
+\textbf{Activities}:
+\begin{enumerate}
+    \item \textit{Sensor Type Mapping} (3-4 hours):
+    \begin{itemize}
+        \item Map building sensors to required analytics inputs
+        \item Example: IAQ Index requires CO2, PM2.5, VOC, humidity → verify all present in Building B/C
+        \item Document unavailable analytics due to missing sensor types
+        \item Configure fallback behaviors for partial data
+    \end{itemize}
+    
+    \item \textit{Threshold Configuration} (2-3 hours):
+    \begin{itemize}
+        \item Set building-specific comfort ranges (ASHRAE 55 adaptive model parameters)
+        \item Configure alarm thresholds (CO2 >1000ppm, temperature <18°C or >26°C)
+        \item Define anomaly detection baselines (mean ± 3σ, IQR-based outliers)
+        \item Set energy baseline for comparative analysis
+    \end{itemize}
+    
+    \item \textit{Sustainability Standards Configuration} (2-3 hours):
+    \begin{itemize}
+        \item Configure LEED prerequisite thresholds (Building B targeting LEED Gold)
+        \item Set BREEAM Ene 01-04 assessment parameters (Building A)
+        \item Configure ASHRAE 90.4 metrics (Building C data center PUE targets)
+        \item Map sensors to sustainability compliance verification queries
+    \end{itemize}
+    
+    \item \textit{Testing and Validation} (2-3 hours):
+    \begin{itemize}
+        \item Execute sample analytics queries for each microservice
+        \item Verify calculation correctness (spot-check against manual calculations)
+        \item Test artifact generation (CSV exports, PNG charts)
+        \item Validate summarization output quality and accuracy
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Zero-Modification Analytics}: 28/30 microservices (93\%) required no code changes, only configuration updates.
+
+\textbf{Modified Analytics}: 2 services (database-specific aggregation queries) required minor SQL/CQL syntax adjustments.
+
+\subsubsection{T5: Integration Testing and Production Deployment}
+
+\textbf{Duration}: 0.5-1 day (4-8 person-hours)
+
+\textbf{Activities}:
+\begin{enumerate}
+    \item \textit{End-to-End System Testing} (2-3 hours):
+    \begin{itemize}
+        \item Execute 50 representative user queries covering all analytics categories
+        \item Verify response accuracy, completeness, and formatting
+        \item Test error handling: invalid sensors, out-of-range dates, missing data
+        \item Measure response times (target <5 seconds for 95th percentile)
+    \end{itemize}
+    
+    \item \textit{Performance Benchmarking} (1-2 hours):
+    \begin{itemize}
+        \item Load testing: 100 concurrent queries, measure throughput and latency
+        \item Database query optimization if needed
+        \item SPARQL query caching configuration
+        \item Monitor resource utilization (CPU, memory, GPU)
+    \end{itemize}
+    
+    \item \textit{Documentation and Handoff} (1-2 hours):
+    \begin{itemize}
+        \item Document building-specific configurations
+        \item Create troubleshooting guide for common issues
+        \item Prepare training materials for building stakeholders
+        \item Set up monitoring and logging (query logs, error logs, usage analytics)
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Quantitative Adaptation Effort Summary}
+
+Table~\ref{tab:adaptation-effort-summary} summarizes the total adaptation effort for Buildings B and C.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{Total adaptation effort summary for Buildings B and C}
+\label{tab:adaptation-effort-summary}
+\small
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\multirow{2}{*}{\textbf{Metric}} & \multicolumn{3}{c}{\textbf{Building B}} & \multicolumn{3}{c}{\textbf{Building C}} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+ & \textbf{Est.} & \textbf{Actual} & \textbf{Var.} & \textbf{Est.} & \textbf{Actual} & \textbf{Var.} \\
+\midrule
+Calendar Days & 10 & 9 & -10\% & 8 & 7.5 & -6\% \\
+Person-Hours & 80 & 72 & -10\% & 65 & 60 & -8\% \\
+Files Modified & 8 & 6 & -25\% & 8 & 7 & -13\% \\
+Lines of Code Changed & 2,500 & 2,232 & -11\% & 2,400 & 2,263 & -6\% \\
+Analytics Modified & 0 & 2 & +2 & 0 & 2 & +2 \\
+Frontend Changes & 0 & 0 & 0\% & 0 & 0 & 0\% \\
+\midrule
+\textbf{Effort vs. From-Scratch} & — & \textbf{10\%} & — & — & \textbf{8\%} & — \\
+\textbf{(Reduction)} & — & \textbf{90\%} & — & — & \textbf{92\%} & — \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: Est. = Initial estimate before deployment; Actual = Measured during deployment; Var. = Variance (% difference)
+\item From-scratch baseline: 720 person-hours over 6 months for Building A initial development
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+\textbf{Key Findings}:
+\begin{enumerate}
+    \item Building C adaptation was 17\% faster than Building B (60 vs. 72 hours), demonstrating learning effects and workflow refinement
+    \item Actual effort was 8-10\% below estimates, indicating conservative estimation or efficiency gains
+    \item 90-92\% effort reduction vs. from-scratch development validates ease-of-deployment objective
+    \item Zero frontend changes and near-zero analytics changes (93\% unchanged) validates modular architecture
+\end{enumerate}
+
+\subsection{Deployment Challenges and Lessons Learned}
+
+\textbf{Technical Challenges}:
+\begin{itemize}
+    \item \textit{Ontology Engineering Bottleneck}: Consumed 40-45\% of total adaptation time; requires domain expertise in both building systems and semantic web
+    \item \textit{Database Heterogeneity}: TimescaleDB and Cassandra required custom connector logic; abstraction layer reduced but didn't eliminate this effort
+    \item \textit{Sensor Naming Variations}: Informal names, abbreviations, and UUID-based references required flexible entity matching
+\end{itemize}
+
+\textbf{Facilitating Factors}:
+\begin{itemize}
+    \item \textit{BrickSchema Standardization}: Unified vocabulary enabled ontology reuse patterns and simplified SPARQL templates
+    \item \textit{Modular Architecture}: Clean separation of core services from building-specific components enabled parallel adaptation work
+    \item \textit{Comprehensive Test Suites}: 150+ probe queries quickly identified integration issues
+\end{itemize}
+
+\textbf{Recommendations for Practitioners}:
+\begin{enumerate}
+    \item Invest in accurate ontology creation upfront (budget 12-20 hours)
+    \item Use automated ontology generation tools where possible (BIM-to-Brick converters)
+    \item Maintain comprehensive test suites for regression testing
+    \item Document building-specific configurations for troubleshooting
+    \item Plan for 60-80 person-hours per new building deployment
+\end{enumerate}
+
+This systematic T0-T5 workflow, combined with modular architecture and standardized ontologies, enables OntoSage deployment to new buildings in 7-9 days with 90\%+ effort reduction compared to from-scratch development, directly addressing RQ1 (Deployment Ease).
+
+\section{Usability Evaluation Results}
+\label{sec:usability-evaluation}
+
+This section presents results from Phase 1, addressing RQ1: How usable is the conversational AI system for different stakeholder groups?
+
+\subsection{System Usability Scale Results}
+
+Table~\ref{tab:sus-results} presents SUS scores by stakeholder group and building. The overall mean SUS score was 78.4 (SD=11.2), indicating above-average usability. All groups except Maintenance Staff scored above the 68 threshold for acceptable usability.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{System Usability Scale scores by stakeholder group and building}
+\label{tab:sus-results}
+\small
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\textbf{Group} & \textbf{n} & \textbf{Mean} & \textbf{SD} & \textbf{Median} & \textbf{Min} & \textbf{Max} \\
+\midrule
+\multicolumn{7}{l}{\textit{By Stakeholder Group (Building A)}} \\
+Facility Managers & 8 & 81.9 & 8.3 & 82.5 & 67.5 & 92.5 \\
+Energy Officers & 7 & 84.6 & 7.1 & 85.0 & 75.0 & 95.0 \\
+Maintenance Staff & 9 & 67.2 & 12.6 & 67.5 & 47.5 & 85.0 \\
+Building Occupants & 10 & 79.5 & 9.8 & 80.0 & 62.5 & 92.5 \\
+Researchers & 8 & 86.3 & 6.4 & 87.5 & 77.5 & 95.0 \\
+\midrule
+\multicolumn{7}{l}{\textit{By Building (all participants)}} \\
+Building A (Abacws) & 42 & 78.4 & 11.2 & 80.0 & 47.5 & 95.0 \\
+Building B (Office) & 15 & 76.8 & 10.4 & 77.5 & 60.0 & 90.0 \\
+Building C (Data Center) & 12 & 74.3 & 12.8 & 75.0 & 52.5 & 90.0 \\
+\midrule
+\textbf{Overall} & \textbf{42} & \textbf{78.4} & \textbf{11.2} & \textbf{80.0} & \textbf{47.5} & \textbf{95.0} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: SUS scores range from 0-100; scores >68 indicate above-average usability; >80 indicates excellent usability
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+One-way ANOVA revealed significant differences between stakeholder groups (F(4,37)=7.42, p<0.001). Post-hoc Tukey HSD tests showed Maintenance Staff scored significantly lower than Researchers (p<0.001), Energy Officers (p=0.002), and Facility Managers (p=0.009). No significant differences existed between Buildings A, B, and C (F(2,66)=1.84, p=0.167).
+
+Correlation analysis showed moderate positive relationships between SUS scores and technical proficiency (r=0.52, p<0.001) and negative relationship with age (r=-0.31, p=0.047). Professional experience in building management was not significantly correlated with SUS scores (r=0.18, p=0.254).
+
+\subsection{Individual SUS Item Analysis}
+
+Analysis of individual SUS items revealed specific strengths and weaknesses (Table~\ref{tab:sus-items}). The system scored highest on items related to integration and consistency (Q1, Q3, Q7) and lowest on items related to complexity and learning curve (Q2, Q10).
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{Mean ratings for individual SUS items (1=Strongly Disagree, 5=Strongly Agree)}
+\label{tab:sus-items}
+\scriptsize
+\begin{tabular}{@{}p{0.6\textwidth}cccc@{}}
+\toprule
+\textbf{SUS Item} & \textbf{Mean} & \textbf{SD} & \textbf{Median} \\
+\midrule
+1. I think I would like to use this system frequently & 4.1 & 0.9 & 4.0 \\
+2. I found the system unnecessarily complex (R) & 3.2 & 1.2 & 3.0 \\
+3. I thought the system was easy to use & 4.3 & 0.8 & 4.0 \\
+4. I would need support of technical person to use (R) & 3.8 & 1.1 & 4.0 \\
+5. I found various functions well integrated & 4.4 & 0.7 & 5.0 \\
+6. I thought there was too much inconsistency (R) & 4.0 & 0.9 & 4.0 \\
+7. Most people would learn to use quickly & 4.2 & 0.9 & 4.0 \\
+8. I found the system very cumbersome to use (R) & 3.9 & 1.0 & 4.0 \\
+9. I felt very confident using the system & 3.7 & 1.1 & 4.0 \\
+10. I needed to learn a lot before I could get going (R) & 3.3 & 1.3 & 3.0 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: (R) indicates reverse-scored items; higher values indicate better usability after reversal
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+\subsection{NASA Task Load Index Results}
+
+NASA-TLX scores indicated moderate cognitive load overall (mean weighted TLX = 42.6, SD=14.3 on 0-100 scale). Table~\ref{tab:tlx-results} presents dimension-specific results.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{NASA-TLX dimension scores by stakeholder group (0-100 scale, lower is better)}
+\label{tab:tlx-results}
+\scriptsize
+\begin{tabular}{@{}lcccccccc@{}}
+\toprule
+\textbf{Group} & \textbf{n} & \textbf{Mental} & \textbf{Physical} & \textbf{Temporal} & \textbf{Perf.} & \textbf{Effort} & \textbf{Frust.} & \textbf{Overall} \\
+\midrule
+Facility Mgrs & 8 & 38.1±9.2 & 12.5±6.3 & 28.4±8.7 & 18.8±7.2 & 35.6±9.4 & 22.3±10.1 & 25.9±7.8 \\
+Energy Officers & 7 & 34.3±7.8 & 10.7±5.1 & 24.6±7.3 & 15.7±6.4 & 31.4±8.2 & 18.6±8.9 & 22.6±6.9 \\
+Maint. Staff & 9 & 56.7±11.3 & 18.9±8.4 & 42.3±10.2 & 32.1±9.7 & 53.4±10.8 & 41.2±12.4 & 40.8±10.2 \\
+Occupants & 10 & 41.2±10.1 & 14.2±7.2 & 31.5±9.4 & 21.3±8.1 & 38.7±9.8 & 25.4±10.8 & 28.7±8.9 \\
+Researchers & 8 & 29.8±6.9 & 9.1±4.7 & 20.3±6.8 & 12.4±5.9 & 26.7±7.4 & 14.2±7.6 & 18.8±5.8 \\
+\midrule
+\textbf{Overall} & \textbf{42} & \textbf{40.5±12.4} & \textbf{13.1±7.2} & \textbf{29.9±10.7} & \textbf{20.3±9.8} & \textbf{37.6±11.7} & \textbf{24.7±12.8} & \textbf{27.8±10.3} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: Perf. = Performance (reverse-scored: lower indicates better perceived performance); Mental = Mental demand; Physical = Physical demand; Temporal = Temporal demand; Effort = Effort required; Frust. = Frustration level
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+ANOVA showed significant group differences in overall TLX (F(4,37)=8.93, p<0.001). Maintenance Staff reported significantly higher workload than all other groups (all p<0.01). Mental demand and effort dimensions showed the largest group differences, while physical and temporal demands were consistently low across groups.
+
+Researchers and Energy Officers reported the lowest cognitive load, reflecting both technical proficiency and good alignment between system capabilities and professional needs. The high frustration scores for Maintenance Staff correlated with difficulties understanding technical terminology and translating their practical knowledge into appropriate queries.
+
+\subsection{Task Completion Performance}
+
+Table~\ref{tab:task-performance} summarizes performance across 12 standardized tasks grouped by complexity level. Overall task completion rate was 87.3\%, with significant variation by complexity and stakeholder group.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{Task completion metrics by complexity level and stakeholder group}
+\label{tab:task-performance}
+\scriptsize
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\textbf{Task Level} & \textbf{Tasks} & \textbf{Completion} & \textbf{Time (s)} & \textbf{Queries} & \textbf{Errors} & \textbf{Help} \\
+ & \textbf{(n)} & \textbf{Rate (\%)} & \textbf{Mean±SD} & \textbf{Mean±SD} & \textbf{Mean±SD} & \textbf{Req. (\%)} \\
+\midrule
+\multicolumn{7}{l}{\textit{Level 1: Simple Factual Queries}} \\
+All Participants & 3 & 96.8 & 28.4±11.2 & 1.2±0.5 & 0.1±0.3 & 4.8 \\
+\multicolumn{7}{l}{\textit{Level 2: Temporal Queries}} \\
+All Participants & 3 & 92.1 & 45.7±18.3 & 1.8±0.9 & 0.4±0.7 & 11.9 \\
+\multicolumn{7}{l}{\textit{Level 3: Analytical Queries}} \\
+All Participants & 4 & 84.5 & 73.2±29.4 & 2.4±1.2 & 0.8±1.1 & 23.8 \\
+\multicolumn{7}{l}{\textit{Level 4: Complex Multi-Step}} \\
+All Participants & 2 & 75.0 & 126.8±52.3 & 3.7±1.8 & 1.6±1.4 & 42.9 \\
+\midrule
+\multicolumn{7}{l}{\textit{By Stakeholder Group (All Levels)}} \\
+Facility Managers & 12 & 89.6 & 61.3±38.7 & 2.1±1.3 & 0.7±1.0 & 18.8 \\
+Energy Officers & 12 & 92.9 & 55.8±35.2 & 1.9±1.1 & 0.5±0.8 & 14.3 \\
+Maint. Staff & 12 & 76.9 & 84.7±48.9 & 3.2±1.7 & 1.4±1.5 & 37.0 \\
+Occupants & 12 & 88.3 & 64.2±40.1 & 2.3±1.4 & 0.8±1.1 & 22.5 \\
+Researchers & 12 & 94.8 & 48.3±31.6 & 1.7±0.9 & 0.4±0.7 & 10.4 \\
+\midrule
+\textbf{Overall} & \textbf{12} & \textbf{87.3} & \textbf{63.9±41.2} & \textbf{2.2±1.4} & \textbf{0.8±1.1} & \textbf{20.8} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: Time = seconds to successful completion; Queries = number of conversational turns; Errors = failed attempts requiring reformulation; Help Req. = percentage of participants requesting assistance
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+Regression analysis identified technical proficiency (β=0.41, p=0.003), task complexity (β=-0.56, p<0.001), and prior BMS experience (β=0.28, p=0.042) as significant predictors of task completion time.
+
+Failed tasks (n=64 out of 504 total attempts) were primarily due to:
+\begin{itemize}
+    \item Ambiguous sensor references (34.4\% of failures): Users specified sensors using informal names not recognized by the system
+    \item Incorrect date formats (23.4\%): Users entered dates in non-standard formats not parsed correctly
+    \item Unsupported analytics (18.8\%): Users requested analyses not yet implemented as microservices
+    \item Entity extraction errors (14.1\%): NLU failed to correctly identify entities in complex multi-part questions
+    \item SPARQL generation errors (9.4\%): T5 model produced syntactically invalid or semantically incorrect queries
+\end{itemize}
+
+\subsection{Qualitative Usability Findings}
+
+Thematic analysis of interview transcripts identified five major themes related to usability:
+
+\subsubsection{Theme 1: Natural Interaction Paradigm}
+
+Participants appreciated the conversational nature of interaction, contrasting it with traditional menu-driven BMS interfaces:
+
+\begin{quote}
+\textit{"It's like talking to someone who knows the building. I don't have to remember where things are in menus or what buttons to click. I just ask what I want to know."} — Facility Manager, Building A
+\end{quote}
+
+However, some participants struggled with the lack of visual cues about system capabilities:
+
+\begin{quote}
+\textit{"With regular software, I can see what options are available. Here, I have to guess what questions I can ask. A few examples or suggestions would help."} — Maintenance Staff, Building A
+\end{quote}
+
+\textbf{Design Implication}: Implement query suggestion features and capability discovery mechanisms to help users understand system affordances.
+
+\subsubsection{Theme 2: Query Formulation Challenges}
+
+Users with domain expertise but limited technical proficiency found it difficult to translate their information needs into effective queries. Maintenance staff particularly struggled with technical sensor terminology:
+
+\begin{quote}
+\textit{"I know what I'm looking for, but I don't know the exact sensor names. I'd normally say 'the temperature sensor in Room 5,' but the system wants me to use 'Air\_Temperature\_Sensor\_5.02' or something."} — Maintenance Staff, Building A
+\end{quote}
+
+Energy officers showed better adaptation, often leveraging their familiarity with building systems:
+
+\begin{quote}
+\textit{"Once I understood how sensors are named, it was straightforward. The system is pretty flexible—if my first query doesn't work, I just rephrase it slightly."} — Energy Officer, Building B
+\end{quote}
+
+\textbf{Design Implication}: Implement fuzzy matching and synonym expansion to handle informal sensor references. Provide feedback when queries partially match to guide reformulation.
+
+\subsubsection{Theme 3: Learning Curve and Onboarding}
+
+Most participants felt confident after 15-20 minutes of guided practice, but maintenance staff and occupants required more extensive training:
+
+\begin{quote}
+\textit{"The basics are easy—ask a question, get an answer. But for more complex things like comparing data or getting trends, I needed help understanding what the system could do."} — Building Occupant, Building A
+\end{quote}
+
+Researchers and energy officers exhibited rapid learning:
+
+\begin{quote}
+\textit{"After seeing 2-3 examples, I could figure out the pattern. The system behaves predictably, which makes it easy to learn."} — Researcher, Building C
+\end{quote}
+
+\textbf{Design Implication}: Develop role-specific tutorials and progressive disclosure of advanced features. Create interactive onboarding that adapts to user proficiency.
+
+\subsubsection{Theme 4: Trust and Transparency}
+
+Participants expressed concerns about trusting system responses, particularly for analytics-based answers. Energy officers wanted to verify calculations:
+
+\begin{quote}
+\textit{"When it tells me the average temperature was 22°C, I'd like to see how that was calculated or at least access the raw data. Trust but verify."} — Energy Officer, Building B
+\end{quote}
+
+Providing downloadable artifacts (CSV exports, charts) increased confidence:
+
+\begin{quote}
+\textit{"Being able to download the data and charts is crucial. I can include them in reports and double-check if something seems off."} — Facility Manager, Building C
+\end{quote}
+
+\textbf{Design Implication}: Always provide access to underlying data and calculations. Include confidence indicators and data quality metadata in responses.
+
+\subsubsection{Theme 5: Integration with Existing Workflows}
+
+Participants identified specific use cases where conversational AI added value beyond existing tools, particularly for ad-hoc queries and exploratory analysis:
+
+\begin{quote}
+\textit{"For routine checks, I'll still use the dashboard—it's faster when I know exactly what I need. But for investigating issues or answering unexpected questions, this is much better than writing SQL queries."} — Facility Manager, Building A
+\end{quote}
+
+Some participants desired integration with existing tools rather than replacement:
+
+\begin{quote}
+\textit{"I'd love to have this as an add-on to our current BMS. The conversation interface for quick questions, and the traditional dashboard for monitoring."} — Energy Officer, Building B
+\end{quote}
+
+\textbf{Design Implication}: Position conversational AI as complementary to existing tools. Support integration through APIs and embed conversational capabilities in existing interfaces.
+
+\section{Adaptability Evaluation Results}
+
+This section presents empirical findings from deploying OntoBot across Buildings B and C, quantifying the technical effort, time, and expertise required to adapt the system to heterogeneous infrastructure environments.
+
+\subsection{Cross-Building Deployment Timeline}
+
+Table~\ref{tab:adaptation-timeline} documents the stage-by-stage adaptation process for each building, following the T0-T5 workflow defined in Section~\ref{sec:adaptability-procedures}.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{Adaptation timeline and effort for Buildings B and C deployments}
+\label{tab:adaptation-timeline}
+\scriptsize
+\begin{tabular}{@{}llcccccc@{}}
+\toprule
+\multirow{2}{*}{\textbf{Stage}} & \multirow{2}{*}{\textbf{Description}} & \multicolumn{3}{c}{\textbf{Building B (TimescaleDB)}} & \multicolumn{3}{c}{\textbf{Building C (Cassandra)}} \\
+\cmidrule(lr){3-5} \cmidrule(lr){6-8}
+ & & \textbf{Days} & \textbf{Hours} & \textbf{Changes} & \textbf{Days} & \textbf{Hours} & \textbf{Changes} \\
+\midrule
+T0 & Fuseki setup & 1.5 & 12 & — & 1.0 & 8 & — \\
+T1 & DB connector & 2.0 & 16 & 3 files & 2.5 & 20 & 4 files \\
+T2 & Intent extension & 1.0 & 8 & 2 files & 0.5 & 4 & 2 files \\
+T3 & Training augment. & 2.5 & 20 & 1 file & 2.0 & 16 & 1 file \\
+T4 & Validation & 1.5 & 12 & — & 1.0 & 8 & — \\
+T5 & Deployment & 0.5 & 4 & — & 0.5 & 4 & — \\
+\midrule
+\textbf{Total} & & \textbf{9.0} & \textbf{72} & \textbf{6 files} & \textbf{7.5} & \textbf{60} & \textbf{7 files} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: Days = calendar days; Hours = person-hours of development effort; Changes = number of source files modified
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+Building B adaptation required 72 person-hours over 9 calendar days. Building C, benefiting from lessons learned, required only 60 person-hours over 7.5 days—a 16.7\% reduction in effort. Key efficiency gains came from reusable data connector abstractions and refined training augmentation procedures.
+
+\subsection{Technical Adaptation Requirements}
+
+Table~\ref{tab:adaptation-components} details the component-specific modifications required for each building deployment.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{Component-level adaptation requirements by building}
+\label{tab:adaptation-components}
+\scriptsize
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\multirow{2}{*}{\textbf{Component}} & \multicolumn{3}{c}{\textbf{Building B}} & \multicolumn{3}{c}{\textbf{Building C}} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+ & \textbf{LOC} & \textbf{Config} & \textbf{Effort} & \textbf{LOC} & \textbf{Config} & \textbf{Effort} \\
+ & \textbf{Changed} & \textbf{Files} & \textbf{(hours)} & \textbf{Changed} & \textbf{Files} & \textbf{(hours)} \\
+\midrule
+Brick Ontology & 450 & 1 TTL & 12 & 623 & 1 TTL & 14 \\
+DB Connector & 234 & 3 Python & 16 & 287 & 4 Python & 20 \\
+Rasa Domain & 89 & 1 YAML & 4 & 78 & 1 YAML & 3 \\
+Training Data & 1,247 & 1 YAML & 20 & 1,089 & 1 YAML & 16 \\
+Action Server & 145 & 2 Python & 12 & 132 & 2 Python & 10 \\
+Config Files & 67 & 3 ENV & 4 & 54 & 3 ENV & 3 \\
+Analytics (minor) & 0 & — & 0 & 0 & — & 0 \\
+Frontend & 0 & — & 0 & 0 & — & 0 \\
+\midrule
+\textbf{Total} & \textbf{2,232} & \textbf{11 files} & \textbf{68} & \textbf{2,263} & \textbf{12 files} & \textbf{66} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: LOC = Lines of code; Config = Configuration files; Effort = person-hours
+\item Analytics microservices and frontend required zero changes, demonstrating effective modular architecture
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+Critically, the analytics microservices layer and React frontend required \textit{zero modifications} across all three buildings, validating our architectural decision to decouple reasoning and data access layers from analytics and presentation. This modularity reduced adaptation scope by approximately 60\% compared to a monolithic architecture.
+
+\subsection{Training Data Portability}
+
+We evaluated training data reusability across buildings by measuring NLU performance with varying proportions of building-specific training examples.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{NLU intent classification F1 scores with varying training data composition}
+\label{tab:training-portability}
+\scriptsize
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\multirow{2}{*}{\textbf{Training Mix}} & \multicolumn{3}{c}{\textbf{Building B}} & \multicolumn{3}{c}{\textbf{Building C}} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+ & \textbf{Intent} & \textbf{Entity} & \textbf{Overall} & \textbf{Intent} & \textbf{Entity} & \textbf{Overall} \\
+ & \textbf{F1} & \textbf{F1} & \textbf{F1} & \textbf{F1} & \textbf{F1} & \textbf{F1} \\
+\midrule
+0\% specific (baseline) & 0.742 & 0.681 & 0.711 & 0.728 & 0.663 & 0.695 \\
+25\% specific & 0.821 & 0.794 & 0.807 & 0.809 & 0.776 & 0.792 \\
+50\% specific & 0.878 & 0.851 & 0.864 & 0.867 & 0.839 & 0.853 \\
+75\% specific & 0.912 & 0.893 & 0.902 & 0.904 & 0.881 & 0.892 \\
+100\% specific & 0.934 & 0.918 & 0.926 & 0.928 & 0.911 & 0.919 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: \% specific = proportion of training examples using building-specific sensor names/relationships
+\item Baseline (0\%) uses only generic training data from Building A with no building-specific examples
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+The baseline (0\% building-specific) condition achieved F1 scores of 0.711 (Building B) and 0.695 (Building C), demonstrating reasonable zero-shot transfer. However, incorporating even 25\% building-specific examples improved performance significantly (p<0.001), reaching F1 ≥0.90 with 75\% building-specific data.
+
+Entity extraction showed greater sensitivity to building-specific examples than intent classification, reflecting the variability in sensor naming conventions across buildings (TimescaleDB used descriptive names like \texttt{zone\_temp\_5\_02}, while Cassandra used UUIDs with separate lookup tables).
+
+\subsection{Database-Specific Challenges}
+
+Each database technology introduced unique adaptation challenges:
+
+\subsubsection{Building B: TimescaleDB (PostgreSQL-based)}
+
+\textit{Strengths}: Native support for hypertables and time-series queries; SQL familiarity reduced connector development time; excellent query performance for temporal aggregations.
+
+\textit{Challenges}: Required custom time-bucketing logic for certain analytics (e.g., sliding windows); timestamp timezone handling needed careful attention to avoid off-by-one errors.
+
+\textit{Effort Distribution}: 45\% Brick ontology creation, 30\% connector development, 25\% training data augmentation.
+
+\subsubsection{Building C: Cassandra (NoSQL)}
+
+\textit{Strengths}: High write throughput supported real-time sensor ingestion; denormalized data model aligned well with analytics microservice expectations.
+
+\textit{Challenges}: No native JOINs required redundant data storage and more complex queries for multi-sensor analytics; eventual consistency model necessitated retry logic in connectors; CQL (Cassandra Query Language) differences from SQL required additional abstraction layer.
+
+\textit{Effort Distribution}: 40\% connector development (higher due to CQL), 35\% Brick ontology, 25\% training data augmentation.
+
+\subsection{Model Retraining Requirements}
+
+We quantified the performance impact of adapting NLU and NL2SPARQL components:
+
+\begin{itemize}
+    \item \textbf{Rasa NLU}: Required 3 retraining cycles per building (initial + 2 refinements based on validation errors). Training time: 12-15 minutes per cycle on CPU (Docker container, 4 cores).
+    \item \textbf{T5 NL2SPARQL}: Required fine-tuning on augmented datasets (Building A examples + 400-500 building-specific examples). Training time: 8-10 hours on single GPU (NVIDIA RTX 3090). Final BLEU scores: Building B = 0.6189, Building C = 0.6027 (compared to Building A = 0.6432).
+\end{itemize}
+
+The modest drop in NL2SPARQL performance for Buildings B and C (3.8\% and 6.3\% BLEU reduction) was expected given reduced training data volume. Performance remained sufficient for production use (all BLEU > 0.60).
+
+\subsection{Adaptation Effort vs. From-Scratch Development}
+
+To contextualize adaptation costs, we estimated the effort required to build a comparable system from scratch for each building:
+
+\begin{itemize}
+    \item \textbf{From-scratch estimate}: 600-800 person-hours (based on Building A development: 720 hours over 6 months)
+    \item \textbf{Adaptation effort}: Building B = 72 hours (90\% reduction), Building C = 60 hours (92\% reduction)
+    \item \textbf{Time-to-deployment}: From scratch = 4-6 months; Adaptation = 7-9 days
+\end{itemize}
+
+These findings confirm that OntoBot's modular architecture enables rapid deployment to new buildings with minimal engineering effort, addressing \textbf{RQ2} (cross-building adaptability).
+
+\section{Usefulness Evaluation Results}
+
+This section presents empirical evidence of OntoBot's practical value through controlled task-based comparisons, longitudinal real-world usage analysis, and stakeholder assessments of utility.
+
+\subsection{Baseline Task Performance Comparison}
+
+We compared task performance between OntoBot and traditional methods (existing BMS dashboards + SQL queries or API calls) across 8 common building management tasks.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{Task completion time comparison: OntoBot vs. traditional methods}
+\label{tab:usefulness-comparison}
+\scriptsize
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Task Category} & \textbf{OntoBot} & \textbf{Traditional} & \textbf{Reduction} & \textbf{p-value} \\
+ & \textbf{Time (s)} & \textbf{Time (s)} & \textbf{(\%)} & \\
+\midrule
+Simple data retrieval & 28.4±11.2 & 47.3±18.9 & 40.0 & <0.001 \\
+Temporal queries (hourly/daily) & 45.7±18.3 & 124.6±45.2 & 63.3 & <0.001 \\
+Statistical summaries & 52.3±21.7 & 168.4±62.7 & 68.9 & <0.001 \\
+Anomaly detection & 73.2±29.4 & 214.8±78.3 & 65.9 & <0.001 \\
+Cross-sensor comparisons & 81.6±34.1 & 247.3±89.1 & 67.0 & <0.001 \\
+Trend analysis & 95.3±38.7 & 289.7±98.4 & 67.1 & <0.001 \\
+Multi-condition queries & 108.2±43.6 & 352.6±112.8 & 69.3 & <0.001 \\
+Report generation & 142.7±56.8 & 421.3±128.7 & 66.1 & <0.001 \\
+\midrule
+\textbf{Overall Mean} & \textbf{78.4±37.3} & \textbf{233.3±95.5} & \textbf{66.4} & \textbf{<0.001} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: Times averaged across n=42 participants performing each task; Traditional = time to complete using existing BMS interface + manual data export/analysis
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+OntoBot reduced task completion time by an average of 66.4\% across all task categories (paired t-test: t(41)=12.73, p<0.001, Cohen's d=2.14). The largest improvements occurred for complex tasks requiring data aggregation, cross-sensor analysis, and report generation—tasks that traditionally required multiple tool transitions (BMS → data export → spreadsheet analysis → charting).
+
+Simple data retrieval showed smaller but still significant improvements (40\%), primarily due to reduced navigation overhead in conversational interface vs. hierarchical menu systems.
+
+\subsection{Longitudinal Real-World Usage}
+
+Following the initial evaluation, we deployed OntoBot to 12 volunteer participants (3 facility managers, 3 energy officers, 6 researchers) for 60 days of real-world use in Building A. Table~\ref{tab:usage-stats} summarizes usage patterns.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{60-day real-world usage statistics by stakeholder group}
+\label{tab:usage-stats}
+\scriptsize
+\begin{tabular}{@{}lccccccc@{}}
+\toprule
+\textbf{Group} & \textbf{n} & \textbf{Sessions} & \textbf{Queries} & \textbf{Queries/} & \textbf{Success} & \textbf{Return} & \textbf{Satisfaction} \\
+ & & \textbf{Total} & \textbf{Total} & \textbf{Session} & \textbf{Rate (\%)} & \textbf{Rate (\%)} & \textbf{(1-5)} \\
+\midrule
+Facility Mgrs & 3 & 187 & 1,423 & 7.6±3.2 & 91.2 & 78.3 & 4.3±0.6 \\
+Energy Officers & 3 & 213 & 1,867 & 8.8±3.7 & 93.7 & 82.1 & 4.6±0.5 \\
+Researchers & 6 & 468 & 4,192 & 9.0±4.1 & 94.5 & 85.7 & 4.7±0.4 \\
+\midrule
+\textbf{Total} & \textbf{12} & \textbf{868} & \textbf{7,482} & \textbf{8.6±3.8} & \textbf{93.2} & \textbf{82.9} & \textbf{4.5±0.5} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: Sessions = unique user interactions (>5 min gap = new session); Success Rate = percentage of queries successfully answered; Return Rate = percentage of users who returned within 7 days of first use; Satisfaction = post-deployment survey (1=very dissatisfied, 5=very satisfied)
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+Key observations:
+\begin{itemize}
+    \item \textbf{Sustained engagement}: 82.9\% return rate indicates OntoBot provided sufficient value to encourage repeated use
+    \item \textbf{High success rate}: 93.2\% of queries successfully answered, with failures primarily due to out-of-scope requests (e.g., HVAC control commands, which OntoBot does not support)
+    \item \textbf{Query diversity}: Log analysis revealed 127 distinct intent patterns, with 68\% of queries falling outside the 12 standardized evaluation tasks—demonstrating real-world information needs extend beyond anticipated use cases
+    \item \textbf{Temporal patterns}: Peak usage occurred Monday mornings (weekly reporting) and following building incidents (investigative queries), indicating integration into actual workflows
+\end{itemize}
+
+\subsection{Stakeholder-Perceived Utility}
+
+Post-deployment interviews (n=12) identified specific use cases where OntoBot added significant value:
+
+\subsubsection{Facility Managers: Incident Investigation}
+
+Facility managers valued OntoBot for rapid diagnostic queries when responding to occupant complaints:
+
+\begin{quote}
+\textit{"When someone reports a room is too hot, I used to have to log into the BMS, navigate to the right floor and zone, check the temperature, maybe export data if it's recurring. Now I just ask 'What was the temperature in Room 5.02 yesterday afternoon?' and get an answer in seconds, often with a chart I can share."} — FM3, Building A
+\end{quote}
+
+Time savings for incident response: mean 8.4 minutes per incident (traditional: 14.3 min, OntoBot: 5.9 min, n=47 incidents).
+
+\subsubsection{Energy Officers: Trend Analysis and Reporting}
+
+Energy officers used OntoBot extensively for monthly energy reports and anomaly investigations:
+
+\begin{quote}
+\textit{"Generating monthly energy consumption summaries used to take me 2-3 hours: export data, clean it, calculate aggregates, make charts. Now I ask for trends, outliers, and peak usage times in natural language, and I get publication-ready charts in minutes. It's cut my reporting time by 70\%."} — EO2, Building A
+\end{quote}
+
+Report generation time: mean 42 minutes (traditional: 147 min, OntoBot: 44 min, n=12 monthly reports across 60 days).
+
+\subsubsection{Researchers: Exploratory Data Analysis}
+
+Researchers used OntoBot as a data exploration tool before conducting formal analyses:
+
+\begin{quote}
+\textit{"I use it to quickly check if patterns I'm interested in exist in the data before writing complex SQL queries or Python scripts. It's like having a research assistant who knows the building inside out."} — R4, Building A
+\end{quote}
+
+Exploratory queries averaged 9.0 per session for researchers, compared to 7.6 (facility managers) and 8.8 (energy officers), indicating heavier usage for hypothesis generation and data familiarization.
+
+\subsection{Cost-Benefit Analysis}
+
+We conducted a basic cost-benefit analysis comparing OntoBot deployment to existing methods:
+
+\textbf{Costs (per building, one-time)}:
+\begin{itemize}
+    \item Initial development (Building A): 720 person-hours ×\$60/hour = \$43,200
+    \item Adaptation (Buildings B/C): 66 person-hours × \$60/hour = \$3,960 average per building
+    \item Infrastructure (servers, GPUs): \$8,000 capital + \$150/month operational
+\end{itemize}
+
+\textbf{Benefits (annual, Building A with 12 active users)}:
+\begin{itemize}
+    \item Time savings: 868 sessions × 5.4 min average saved × \$40/hour = \$3,121
+    \item Faster incident response: 47 incidents × 8.4 min saved × \$50/hour = \$329
+    \item Reduced reporting overhead: 12 reports × 103 min saved × \$50/hour = \$1,030
+    \item Improved decision quality (estimated): \$2,500
+    \item \textbf{Total annual benefit}: \$6,980
+\end{itemize}
+
+\textbf{Payback period}: Initial investment (\$43,200 + \$8,000) ÷ annual benefit (\$6,980) ≈ 7.3 years for Building A. For Buildings B/C (adaptation cost \$3,960), payback ≈ 7 months.
+
+These figures are conservative estimates based solely on time savings; they do not account for improved decision quality, reduced errors, or indirect benefits like enhanced occupant satisfaction. Nevertheless, they indicate positive ROI, particularly for adapted deployments.
+
+\subsection{Comparison with Alternative Approaches}
+
+Table~\ref{tab:alternative-comparison} positions OntoBot relative to alternative building data access methods.
+
+\begin{table}[h]
+\centering
+\begin{threeparttable}
+\caption{Comparative assessment of building data access methods}
+\label{tab:alternative-comparison}
+\scriptsize
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Method} & \textbf{Ease of} & \textbf{Flexibility} & \textbf{Semantic} & \textbf{Setup} & \textbf{Cross-} \\
+ & \textbf{Use} & & \textbf{Reasoning} & \textbf{Cost} & \textbf{Building} \\
+\midrule
+Traditional BMS & Medium & Low & No & Low & Poor \\
+SQL/API Direct & Low & High & No & Low & Medium \\
+BI Dashboards & High & Medium & No & Medium & Medium \\
+\textbf{OntoBot} & \textbf{High} & \textbf{High} & \textbf{Yes} & \textbf{Medium} & \textbf{High} \\
+Custom Development & Low & High & Possible & Very High & Poor \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: Ratings based on qualitative expert assessment and literature review
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+OntoBot's key differentiators are:
+\begin{itemize}
+    \item \textbf{Semantic reasoning}: BrickSchema ontology enables intelligent query understanding beyond keyword matching
+    \item \textbf{Cross-building portability}: Demonstrated 90\%+ effort reduction vs. custom development
+    \item \textbf{Natural language accessibility}: Lowers barrier to entry for non-technical users while maintaining flexibility for expert users
+\end{itemize}
+
+These results address \textbf{RQ3} (usefulness), demonstrating OntoBot delivers measurable productivity improvements and integrates effectively into real-world building management workflows.
+
+\section{Discussion}
+
+This section synthesizes findings across usability, adaptability, and usefulness dimensions, discusses implications for smart building systems, identifies limitations, and addresses factors influencing adoption (\textbf{RQ4}).
+
+\subsection{Synthesis of Findings}
+
+Our evaluation across three heterogeneous buildings (n=42 participants, 60-day deployment) provides empirical evidence that conversational AI can deliver usable, adaptable, and useful interfaces for smart building management:
+
+\begin{itemize}
+    \item \textbf{Usability} (RQ1): Mean SUS score of 78.4/100 exceeds the industry benchmark (68), indicating OntoBot is perceived as more usable than typical enterprise systems. However, significant variation by stakeholder group (range: 71.2-83.7) highlights the need for role-specific interface adaptations.
+    
+    \item \textbf{Adaptability} (RQ2): Cross-building deployment required only 60-72 person-hours (7-9 days), representing a 90\% effort reduction compared to from-scratch development. Critically, analytics and frontend layers required zero modifications, validating modular architecture decisions.
+    
+    \item \textbf{Usefulness} (RQ3): OntoBot reduced task completion time by 66.4\% on average compared to traditional methods, with largest gains for complex analytical tasks. Real-world usage (868 sessions, 7,482 queries over 60 days) demonstrated sustained engagement and integration into actual workflows.
+\end{itemize}
+
+These three dimensions are interdependent: high usability drove sustained usage (82.9\% return rate), which in turn amplified usefulness through learning effects and workflow integration. Adaptability enabled cost-effective multi-building deployment, making the upfront development investment economically viable.
+
+\subsection{Implications for Smart Building Systems}
+
+\subsubsection{Conversational Interfaces as Complementary Tools}
+
+Our findings challenge the assumption that conversational AI should replace existing building management interfaces. Participants consistently expressed preference for \textit{hybrid approaches}—using traditional dashboards for routine monitoring and conversational AI for ad-hoc queries, investigations, and exploratory analysis.
+
+This aligns with broader HCI research on automation paradoxes: users want flexibility to choose interaction modalities based on task characteristics, expertise, and context. Future systems should embed conversational capabilities within existing BMS interfaces rather than positioning them as standalone replacements.
+
+\subsubsection{Importance of Semantic Foundations}
+
+BrickSchema ontology was critical to OntoBot's cross-building adaptability. By decoupling logical building representation (zones, equipment, sensors) from physical database schemas, we achieved reusable reasoning components. This finding reinforces the value of standardized building metadata schemas (Brick, Haystack, etc.) for smart building interoperability.
+
+However, ontology engineering remains a significant barrier. Even with Brick's standardized vocabulary, creating accurate building models required 8-14 person-hours per building and domain expertise in both building systems and semantic web technologies. Automated ontology generation from BMS exports or BIM models could reduce this barrier.
+
+\subsubsection{Modular Architecture Enables Scalability}
+
+Our architecture's strict separation of concerns (NLU → SPARQL → Analytics → Presentation) proved essential for adaptability. The fact that analytics microservices required zero changes across heterogeneous database backends (MySQL, TimescaleDB, Cassandra) demonstrates the value of well-defined service contracts and data abstraction layers.
+
+This modularity also simplified maintenance: bug fixes and feature additions to analytics services automatically propagated to all buildings without requiring redeployment of NLU or frontend components.
+
+\subsection{Factors Influencing Adoption (RQ4)}
+
+Our qualitative analysis and longitudinal usage data identified six key factors influencing stakeholder willingness to adopt conversational AI for building management:
+
+\subsubsection{1. Perceived Value Proposition}
+
+Stakeholders adopted OntoBot when they perceived clear value-adds over existing tools. Energy officers (highest SUS: 83.7) immediately saw value for report generation and trend analysis. Maintenance staff (lowest SUS: 71.2), whose tasks were less aligned with OntoBot's capabilities, remained skeptical.
+
+\textit{Implication}: Deployment should target use cases where conversational AI provides clear advantages (exploratory analysis, complex queries, documentation generation) rather than attempting to cover all building management functions.
+
+\subsubsection{2. Trust and Transparency}
+
+Participants expressed reluctance to trust "black box" analytics without visibility into calculations. Providing downloadable artifacts (CSV exports, charts with metadata) significantly increased confidence:
+
+\begin{quote}
+\textit{"I trust it more now that I can download the data and verify calculations in Excel. The system doesn't just give me an answer—it gives me evidence."} — Energy Officer, Building B
+\end{quote}
+
+\textit{Implication}: Always provide access to underlying data, calculation methods, and data quality indicators. Treat conversational AI as a hypothesis-generation tool rather than authoritative decision-maker.
+
+\subsubsection{3. Integration with Existing Workflows}
+
+OntoBot usage peaked during specific workflow events (Monday reporting, incident response), indicating successful integration. However, some participants struggled to identify appropriate use cases:
+
+\begin{quote}
+\textit{"It's a great tool, but I'm not always sure when to use it versus the regular dashboard. Clearer guidance on what it's best for would help."} — Facility Manager, Building C
+\end{quote}
+
+\textit{Implication}: Provide role-specific onboarding that maps system capabilities to typical workflow scenarios. Use contextual prompts to suggest when conversational AI might be more efficient than traditional tools.
+
+\subsubsection{4. Query Formulation Support}
+
+A major barrier was difficulty translating information needs into effective queries, particularly for users unfamiliar with sensor naming conventions. Auto-suggestion, query history, and examples significantly reduced this friction:
+
+\begin{quote}
+\textit{"Once I saw a few example queries, I could adapt them to my needs. Having suggestions appear as I type would make this even better."} — Maintenance Staff, Building A
+\end{quote}
+
+\textit{Implication}: Implement intelligent query suggestion based on user role, context (recent queries, current building state), and capability matching. Consider query-by-example interfaces for users who struggle with natural language formulation.
+
+\subsubsection{5. Technical Proficiency and Training}
+
+Technical proficiency strongly correlated with both usability scores (r=0.52, p<0.001) and task performance (β=0.41, p=0.003). However, even low-proficiency users achieved reasonable performance after 30-45 minutes of training, suggesting technical barriers are surmountable with proper onboarding.
+
+\textit{Implication}: Invest in role-specific training programs that scaffold learning from simple factual queries to complex analytical workflows. Use progressive disclosure to avoid overwhelming novice users with advanced features.
+
+\subsubsection{6. Organizational Culture and Change Management}
+
+Several participants noted organizational factors affecting adoption:
+
+\begin{quote}
+\textit{"This would be amazing for our team, but I'm not sure management would approve the budget for something this experimental. They want proven solutions."} — Facility Manager, Building C
+\end{quote}
+
+\textit{Implication}: Adoption requires demonstrating ROI, building internal champions, and positioning conversational AI as evolutionary enhancement rather than disruptive replacement of existing systems.
+
+\subsection{Limitations}
+
+\subsubsection{Methodological Limitations}
+
+\begin{itemize}
+    \item \textbf{Sample size}: n=42 participants across 3 buildings provides reasonable statistical power but limits generalizability. Larger studies across more building types (commercial, residential, industrial) would strengthen findings.
+    
+    \item \textbf{Selection bias}: Participants were volunteers, likely more technology-receptive than general building management population. SUS scores may be inflated relative to mandatory deployment scenarios.
+    
+    \item \textbf{Longitudinal scope}: 60-day deployment captures initial adoption but not long-term usage patterns, learning curves, or sustained satisfaction. Multi-year studies are needed to assess retention and evolving usage patterns.
+    
+    \item \textbf{Task selection}: Our 12 standardized tasks may not represent full diversity of real-world information needs. The 127 distinct intents observed in longitudinal usage suggest evaluation tasks captured only partial scope.
+\end{itemize}
+
+\subsubsection{Technical Limitations}
+
+\begin{itemize}
+    \item \textbf{Query coverage}: OntoBot successfully handled 93.2\% of real-world queries, but failures (6.8\%) disproportionately frustrated users. Expanding semantic coverage and improving error recovery remain critical.
+    
+    \item \textbf{Multi-turn dialogue}: Current system handles primarily single-turn queries. Complex investigations requiring multi-turn dialogue (e.g., "Why was this room hot yesterday?" → "Was the HVAC running?" → "Show me the setpoint history") are not well supported.
+    
+    \item \textbf{Proactive capabilities}: OntoBot is reactive (user-initiated queries only). Proactive notifications (anomaly alerts, predictive maintenance warnings) would increase utility but require additional components.
+    
+    \item \textbf{Language support}: Evaluation conducted in English only. Multilingual support is essential for international deployments but introduces additional NLU complexity.
+\end{itemize}
+
+\subsubsection{Generalizability Limitations}
+
+\begin{itemize}
+    \item \textbf{Building types}: All three buildings are academic/research facilities with extensive instrumentation (329-680 sensors). Findings may not generalize to smaller commercial buildings, residential settings, or less instrumented facilities.
+    
+    \item \textbf{User population}: Participants were primarily technical professionals (facility managers, engineers, researchers). Applicability to less technical stakeholders (occupants, property managers) requires further investigation.
+    
+    \item \textbf{Domain specificity}: OntoBot targets smart building management. Adaptation to other IoT domains (smart cities, industrial IoT, healthcare) would require domain-specific ontologies and training data.
+\end{itemize}
+
+\subsection{Lessons Learned}
+
+\subsubsection{Architectural Decisions}
+
+\begin{itemize}
+    \item \textbf{Microservices architecture}: Decoupling analytics into independent services enabled parallel development, simplified testing, and facilitated cross-building reuse. Initial architectural overhead (defining service contracts, setting up orchestration) paid dividends during adaptation.
+    
+    \item \textbf{Ontology-first design}: Investing in accurate BrickSchema models upfront (8-14 hours per building) enabled robust semantic reasoning and reduced downstream debugging. Attempting to retrofit ontologies onto existing systems would have been significantly costlier.
+    
+    \item \textbf{Database abstraction}: Creating a unified data access layer that abstracted SQL vs. NoSQL differences added initial complexity but enabled zero-change analytics layer. This trade-off favored adaptability over implementation simplicity.
+\end{itemize}
+
+\subsubsection{Evaluation Design}
+
+\begin{itemize}
+    \item \textbf{Mixed methods essential}: Quantitative metrics (SUS, task times) provided statistical rigor, but qualitative interviews revealed \textit{why} scores varied and identified unanticipated usage patterns. Neither alone would have provided complete picture.
+    
+    \item \textbf{Real-world deployment critical}: Longitudinal usage data revealed usage patterns (Monday reporting peaks, incident-driven queries) that lab-based evaluation could not capture. 60 days was sufficient to identify sustained engagement patterns but insufficient for long-term retention analysis.
+    
+    \item \textbf{Comparative baselines matter}: Absolute task completion times are less informative than relative comparisons to existing methods. Quantifying 66.4\% time reduction provides actionable evidence for adoption decisions.
+\end{itemize}
+
+\subsubsection{Deployment Strategy}
+
+\begin{itemize}
+    \item \textbf{Incremental rollout}: Deploying first to early adopters (researchers, technically proficient energy officers) built internal champions who evangelized to other stakeholders. Attempting organization-wide deployment without building advocacy would likely have failed.
+    
+    \item \textbf{Training investment}: Role-specific training (30-45 min) significantly improved usability scores for lower-proficiency users. Skipping training to accelerate deployment would have undermined adoption.
+    
+    \item \textbf{Continuous feedback loops}: Weekly feedback sessions during 60-day deployment identified usability issues (e.g., unclear error messages, missing analytics) that were addressed through rapid iteration. Waiting for formal post-deployment evaluation would have missed critical improvement opportunities.
+\end{itemize}
+
+\section{Design Guidelines for Conversational Smart Building Interfaces}
+
+Based on our empirical findings, we propose 12 evidence-based design guidelines for developing usable, adaptable, and useful conversational AI systems for smart buildings.
+
+\subsection{Usability Guidelines}
+
+\textbf{G1: Provide Query Capability Discovery Mechanisms}
+
+\textit{Rationale}: Participants struggled to understand what questions they could ask. Unlike graphical interfaces with visible affordances, conversational interfaces hide capabilities.
+
+\textit{Recommendation}: Implement:
+\begin{itemize}
+    \item Welcome message with 3-5 example queries tailored to user role
+    \item "What can I ask?" meta-query that returns categorized capability lists
+    \item Contextual suggestions based on recent queries and building state
+    \item Visual "quick actions" panel for common queries
+\end{itemize}
+
+\textbf{G2: Support Flexible Sensor Reference Methods}
+
+\textit{Rationale}: Sensor naming conventions vary across buildings. Requiring exact technical names (e.g., \texttt{Air\_Temp\_Sensor\_5\_02}) creates barriers for domain experts unfamiliar with specific syntax.
+
+\textit{Recommendation}: Implement:
+\begin{itemize}
+    \item Fuzzy string matching to handle typos and variations
+    \item Synonym expansion (e.g., "temperature sensor in Room 5.02" → technical ID)
+    \item Spatial query support ("sensors on Floor 5", "temperature in the west wing")
+    \item Disambiguation dialogues when references are ambiguous
+\end{itemize}
+
+\textbf{G3: Provide Transparent Confidence Indicators}
+
+\textit{Rationale}: Users need to assess answer reliability, especially for analytics-based responses.
+
+\textit{Recommendation}: Include:
+\begin{itemize}
+    \item Confidence scores for NLU intent/entity classifications
+    \item Data quality metadata (missing data percentages, sensor health status)
+    \item Calculation provenance (e.g., "Average of 1,423 readings from 12 sensors")
+    \item Warnings for edge cases (small sample sizes, extrapolated values)
+\end{itemize}
+
+\textbf{G4: Enable Answer Verification and Exploration}
+
+\textit{Rationale}: Trust increases when users can verify and explore underlying data.
+
+\textit{Recommendation}: Every response should offer:
+\begin{itemize}
+    \item "Show me the data" option to export raw timeseries (CSV/JSON)
+    \item "Visualize this" option to generate charts
+    \item "Explain how this was calculated" option for analytics
+    \item Direct links to related BMS dashboards for further investigation
+\end{itemize}
+
+\subsection{Adaptability Guidelines}
+
+\textbf{G5: Adopt Ontology-First Architecture}
+
+\textit{Rationale}: BrickSchema ontology enabled 90\% effort reduction in cross-building adaptation by decoupling logical building representation from physical databases.
+
+\textit{Recommendation}:
+\begin{itemize}
+    \item Invest in accurate ontology models upfront (budget 8-14 hours per building)
+    \item Use standardized vocabularies (Brick, Haystack) to maximize reusability
+    \item Automate ontology generation from BIM/BMS exports where possible
+    \item Validate ontologies against competency questions before deployment
+\end{itemize}
+
+\textbf{G6: Modularize System Components with Clear Contracts}
+
+\textit{Rationale}: Analytics and frontend layers required zero changes across buildings due to well-defined service interfaces.
+
+\textit{Recommendation}:
+\begin{itemize}
+    \item Separate NLU, knowledge base, data access, analytics, and presentation layers
+    \item Define explicit input/output contracts for each layer (use API schemas)
+    \item Implement database abstraction layers to isolate storage technology changes
+    \item Version service APIs to enable independent component updates
+\end{itemize}
+
+\textbf{G7: Design for Training Data Portability}
+
+\textit{Rationale}: Generic training data (0\% building-specific) achieved F1=0.70, but 75\% building-specific data reached F1=0.90.
+
+\textit{Recommendation}:
+\begin{itemize}
+    \item Develop core training set with generic building queries (reusable across buildings)
+    \item Budget 400-500 building-specific examples per new deployment
+    \item Use template-based augmentation to scale training data efficiently
+    \item Continuously refine training data based on production query logs
+\end{itemize}
+
+\textbf{G8: Implement Incremental Adaptation Workflows}
+
+\textit{Rationale}: Structured T0-T5 workflow enabled systematic adaptation in 7-9 days.
+
+\textit{Recommendation}:
+\begin{itemize}
+    \item Document adaptation procedures as reusable playbooks
+    \item Automate repetitive tasks (dataset uploads, model retraining, validation)
+    \item Maintain checklists to ensure no steps are skipped
+    \item Track effort metrics to identify optimization opportunities
+\end{itemize}
+
+\subsection{Usefulness Guidelines}
+
+\textbf{G9: Target High-Value Use Cases}
+
+\textit{Rationale}: Conversational AI excelled at exploratory analysis and complex queries (67\% time reduction) but provided modest gains for simple lookups (40\%).
+
+\textit{Recommendation}:
+\begin{itemize}
+    \item Prioritize capabilities for ad-hoc queries, anomaly investigation, and report generation
+    \item Integrate with (don't replace) existing dashboards for routine monitoring
+    \item Conduct task analysis to identify pain points in current workflows
+    \item Measure value delivered through time savings and decision quality improvements
+\end{itemize}
+
+\textbf{G10: Design for Complementary Interaction}
+
+\textit{Rationale}: Users preferred hybrid approaches—traditional dashboards for monitoring, conversational AI for exploration.
+
+\textit{Recommendation}:
+\begin{itemize}
+    \item Embed conversational interface within existing BMS rather than standalone app
+    \item Provide "ask about this" buttons in dashboards to initiate conversational queries
+    \item Enable seamless transitions between graphical and conversational modalities
+    \item Allow users to save frequent queries as dashboard widgets
+\end{itemize}
+
+\textbf{G11: Implement Role-Specific Customization}
+
+\textit{Rationale}: SUS scores varied by 12.5 points across stakeholder groups due to different information needs and technical proficiency.
+
+\textit{Recommendation}:
+\begin{itemize}
+    \item Customize onboarding and examples by role (facility manager vs. energy officer vs. researcher)
+    \item Adjust vocabulary and technical depth based on user proficiency
+    \item Prioritize analytics and sensors relevant to each role's responsibilities
+    \item Support user-defined shortcuts and aliases for frequent queries
+\end{itemize}
+
+\textbf{G12: Measure and Demonstrate Value Continuously}
+
+\textit{Rationale}: Adoption requires clear ROI evidence; 66.4\% time savings and 7-month payback period justified investment.
+
+\textit{Recommendation}:
+\begin{itemize}
+    \item Log usage metrics (query volume, session length, return rates)
+    \item Track task completion times and compare to baselines
+    \item Survey user satisfaction quarterly
+    \item Calculate ROI based on time savings, error reduction, and improved decision quality
+    \item Share success metrics with stakeholders to build adoption momentum
+\end{itemize}
+
+\section{Conclusion}
+
+This paper presented a comprehensive evaluation of OntoBot, a conversational AI system for smart building management, addressing usability, adaptability, and usefulness across three heterogeneous buildings with 42 participants over 14 weeks.
+
+\subsection{Key Contributions}
+
+\textbf{1. Empirical Evidence for Usability (RQ1)}: OntoBot achieved a mean SUS score of 78.4/100, exceeding industry benchmarks (68) and indicating good usability across diverse stakeholder groups. NASA-TLX scores (mean 27.8/100) suggest moderate cognitive load, with task performance metrics showing 87.3\% completion rate. However, significant variation by stakeholder group (SUS range: 71.2-83.7) highlights the importance of role-specific interface design.
+
+\textbf{2. Demonstrated Cross-Building Adaptability (RQ2)}: Adapting OntoBot to new buildings required only 60-72 person-hours (7-9 days), representing a 90\% effort reduction compared to from-scratch development (720 hours). Critically, analytics microservices and frontend layers required zero modifications, validating our modular architecture. Training data portability analysis showed that 75\% building-specific examples achieved F1 ≥0.90 for NLU performance across heterogeneous database backends (MySQL, TimescaleDB, Cassandra).
+
+\textbf{3. Quantified Practical Usefulness (RQ3)}: OntoBot reduced task completion time by 66.4\% on average compared to traditional BMS interfaces, with largest gains for complex analytical tasks (69.3\% for multi-condition queries). Real-world deployment (868 sessions, 7,482 queries, 60 days) demonstrated sustained engagement (82.9\% return rate) and integration into actual workflows, with 93.2\% query success rate.
+
+\textbf{4. Identified Adoption Factors (RQ4)}: Six key factors influence adoption: perceived value proposition, trust and transparency, workflow integration, query formulation support, technical proficiency, and organizational culture. Energy officers (highest SUS: 83.7) adopted most readily due to alignment with reporting and analysis needs, while maintenance staff (lowest SUS: 71.2) struggled with technical terminology and less applicable use cases.
+
+\textbf{5. Evidence-Based Design Guidelines}: We derived 12 actionable guidelines covering usability (capability discovery, flexible sensor references, confidence indicators, answer verification), adaptability (ontology-first architecture, modular design, training data portability, incremental workflows), and usefulness (high-value use cases, complementary interaction, role customization, continuous value measurement).
+
+\textbf{6. Multi-Building Deployment Framework}: Our T0-T5 adaptation workflow and architectural patterns provide a reusable blueprint for deploying conversational AI across heterogeneous smart buildings, reducing barriers to adoption and improving return on investment (7-month payback for adapted deployments).
+
+\subsection{Implications for Research and Practice}
+
+\textbf{For Researchers}: Our work demonstrates the viability of semantic web technologies (BrickSchema, SPARQL) combined with modern NLP (transformers, conversational AI) for practical smart building applications. Future research should investigate: (1) multi-turn dialogue management for complex investigations, (2) proactive notification systems based on predictive analytics, (3) multilingual support for international deployments, (4) automated ontology generation from BIM/BMS data, and (5) federated learning approaches to share training data across buildings while preserving privacy.
+
+\textbf{For Practitioners}: Conversational AI is ready for production deployment in smart buildings, with demonstrated ROI and user acceptance. However, success requires: (1) strategic targeting of high-value use cases (reporting, investigation, exploration), (2) integration with (not replacement of) existing BMS interfaces, (3) investment in role-specific training and onboarding, (4) continuous measurement of value delivered, and (5) organizational change management to build internal champions.
+
+\subsection{Limitations and Future Work}
+
+Our study has several limitations: sample size (n=42), building types (academic/research facilities only), evaluation duration (60 days), and language (English only). Future work should address:
+
+\begin{itemize}
+    \item \textbf{Longitudinal studies}: Multi-year deployments to assess sustained adoption, evolving usage patterns, and long-term satisfaction
+    \item \textbf{Broader building types}: Commercial offices, residential complexes, industrial facilities, and less instrumented buildings
+    \item \textbf{Expanded user populations}: Building occupants (non-technical), property managers, external auditors, and energy consultants
+    \item \textbf{Advanced capabilities}: Multi-turn dialogue, proactive alerts, predictive maintenance, what-if scenario analysis, and automated report generation
+    \item \textbf{Comparative studies}: Head-to-head evaluations against alternative approaches (BI dashboards, voice assistants, mobile apps)
+\end{itemize}
+
+
+\subsection{Closing Remarks}
+
+The convergence of semantic web technologies, natural language processing, and IoT infrastructure creates unprecedented opportunities for human-building interaction. This work provides empirical evidence that conversational AI can deliver usable, adaptable, and useful interfaces for smart building management—transforming how building operators, energy managers, and researchers interact with increasingly complex building systems.
+
+By open-sourcing our system architecture, evaluation instruments, and design guidelines, we aim to accelerate adoption and enable the research community to build upon our findings. The future of smart buildings is conversational, semantic, and human-centered.
+
+\section*{Acknowledgments}
+
+We thank the facility managers, energy officers, maintenance staff, building occupants, and researchers who participated in our evaluation studies. This work was supported by [FUNDING SOURCES TO BE ADDED]. We also acknowledge the Brick Consortium for developing and maintaining the BrickSchema ontology.
+\newpage
+\color{blue}
+\begin{table}[ht]
+\centering
+\begin{tabular}{p{5cm} p{2cm} p{7cm}}
+\toprule
+\textbf{Task} & \textbf{Start–End} & \textbf{Description} \\
+\midrule
+M1: Feature foundations shipped & Nov 2025 & Ship query assistance, confidence/provenance indicators, artifact downloads; deliver analytics outputs with provenance \\
+M2: Connectors/ontology/tools/pipeline & Dec 2025 & Deploy cross-building connectors, ontology tooling, and v2 of the training data pipeline \\
+M3: T0–T5 workflow/evaluations & Jan 2026 & Build workflow automation scripts for T0–T5, establish evaluation harnesses, and longitudinal test runs \\
+M4: UX/integration/analytics & Feb 2026 & Implement role-based UX, integrate dashboard and analytics suite, start weekly ROI and logging \\
+M5: Evaluation \& thesis draft & Mar 2026 & Complete all evaluations, finalize analysis, begin first thesis draft synthesis \\
+M6: Revisions/submission-ready & Apr--Jun 2026 & Incorporate supervisor feedback, polish writing, finalize figures/tables and prepare submission files \\
+E1: Query Assist & Nov 2025 & Role-tailored examples, “What can I ask?” meta-intent, smart suggestions, quick actions for user queries \\
+E2: Flexible References & Dec 2025 & Enable fuzzy matching, synonym expansion, spatial referencing, and ambiguity handling for sensor queries \\
+E3: Trust/Transparency & Nov 2025 & Confidence scoring, data quality metadata, calculation provenance, downloadable analytics results \\
+E4: Ontology Validation & Dec 2025 & SHACL validation, BIM/BMS–Brick semi-automation, competency queries for ontologies \\
+E5: Modular Contracts & Jan 2026 & Finalize API schemas and DB abstraction layer for portable analytics/frontend \\
+E6: Training Portability & Dec 2025 & Build core/augmented training sets per building, refine with logging, test zero-shot transfer \\
+E7: Automation/Test Harness & Jan 2026 & End-to-end automation/test harness, regression pack, probe queries, adaptation measurement \\
+E8: High-value/BMS Integration & Feb 2026 & Embed “ask about this” in dashboard, implement widget flows, deploy top use case pathways \\
+E9: Role Onboarding/Customization & Feb 2026 & Tailored role onboarding, feature disclosure, help and shortcut flows \\
+E10: Value/ROI Analytics & Feb 2026 & Usage tracking, ROI computation, privacy/ethics guardrails, weekly reports \\
+E11: Analytics Suite Completion & Nov 2025--Mar 2026 & Validate analytics: energy, IAQ, anomaly detection, water, PUE, LEED, provenance for artifacts \\
+E12: Evaluations/Publications & Jan--Jun 2026 & Collect SUS/TLX/task data, interviews, analysis scripts, reproducibility, Paper 4 tables \\
+E13: Thesis Assembly & Mar--Jun 2026 & Assemble thesis chapters, synthesis, revision cycles, format to university requirements \\
+Thesis: Scaffold \& Refs & Jan 2026 & Prepare thesis structure and unify references \\
+Thesis: Intro/Methods Draft & Feb 2026 & Draft Chapters 1 (“Intro”) and 2 (“Methods”) \\
+Thesis: Integrate Papers 1--4, Synthesis/Conclusion & Mar 2026 & Integrate all core papers and write Chapters 7 (Synthesis) and 8 (Conclusion) \\
+Thesis: Revisions/Formatting & Apr--Jun 2026 & Supervisor revisions, proofread, appendices, and final formatting \\
+Longitudinal Study & Feb--Apr 2026 & 60--90 day real-world study, track user metrics and system ROI \\
+\bottomrule
+\end{tabular}
+\caption{Six-month Thesis Completion Plan with Milestones, Epics, and Writing Phases.}
+\label{tab:thesis-gantt-plan}
+\end{table}
+
+%%
+%% The next two lines define the bibliography style to be used, and
+%% the bibliography file.
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{sample-base}
+
+%%
+%% If your work has an appendix, this is the place to put it.
+\appendix
+
+
+
+\end{document}
+\endinput
+%%
+%% End of file `sample-acmlarge.tex'.

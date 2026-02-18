@@ -1,0 +1,261 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{24}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{} and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showURL}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showURL #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[ash({[n.\,d.]})]%
+        {ashrae223}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{ASHRAE Standard 223P: Semantic Interoperability for
+  Building Systems}.
+\newblock \bibinfo{howpublished}{\url{http://data.ashrae.org/standard223/}}.
+\newblock
+\newblock
+\shownote{Accessed 2026-01-05}.
+
+
+\bibitem[bri({[n.\,d.]})]%
+        {brick}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Brick Schema}.
+\newblock \bibinfo{howpublished}{\url{https://brickschema.org/}}.
+\newblock
+\newblock
+\shownote{Accessed 2026-01-05}.
+
+
+\bibitem[lan({[n.\,d.]})]%
+        {langgraph}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{LangGraph}.
+\newblock
+  \bibinfo{howpublished}{\url{https://github.com/langchain-ai/langgraph}}.
+\newblock
+\newblock
+\shownote{Accessed 2026-01-05}.
+
+
+\bibitem[rec({[n.\,d.]})]%
+        {rec}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{RealEstateCore (REC)}.
+\newblock \bibinfo{howpublished}{\url{https://w3id.org/rec/}}.
+\newblock
+\newblock
+\shownote{Accessed 2026-01-05}.
+
+
+\bibitem[10.({[n.\,d.]}a)]%
+        {10.1145/3290605.3300488}
+ \bibinfo{year}{[n.\,d.]}\natexlab{a}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Bro({[n.\,d.]})]%
+        {Brooke1996}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[10.({[n.\,d.]}b)]%
+        {10.1145/3202185.3202744}
+ \bibinfo{year}{[n.\,d.]}\natexlab{b}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[10.({[n.\,d.]}c)]%
+        {10.1145/3411764.3445598}
+ \bibinfo{year}{[n.\,d.]}\natexlab{c}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[10.({[n.\,d.]}d)]%
+        {10.1145/3279963.3281658}
+ \bibinfo{year}{[n.\,d.]}\natexlab{d}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Har({[n.\,d.]})]%
+        {Hart1988}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Aug({[n.\,d.]})]%
+        {Augello2014}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Boc({[n.\,d.]})]%
+        {Bocklisch2017}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Avi({[n.\,d.]})]%
+        {Avila2019}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Ngu({[n.\,d.]})]%
+        {Nguyen2021}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[10.({[n.\,d.]}e)]%
+        {10.1145/3600100.3626635}
+ \bibinfo{year}{[n.\,d.]}\natexlab{e}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Fø({[n.\,d.]})]%
+        {Følstad2021}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Ait({[n.\,d.]})]%
+        {Ait-Mlouk2020}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Boo({[n.\,d.]})]%
+        {Boovaraghavan2023}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Bal({[n.\,d.]})]%
+        {Balaji2018}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[hay({[n.\,d.]})]%
+        {haystack}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Bor({[n.\,d.]})]%
+        {Borrmann2018}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Dan({[n.\,d.]})]%
+        {Daniele}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[suh({[n.\,d.]})]%
+        {suhasdevmane}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\bibitem[Hua({[n.\,d.]})]%
+        {Huang2023}
+ \bibinfo{year}{[n.\,d.]}\natexlab{}.
+\newblock \bibinfo{title}{Reference placeholder}.
+\newblock
+\newblock
+\shownote{Details to be completed}.
+
+
+\end{thebibliography}

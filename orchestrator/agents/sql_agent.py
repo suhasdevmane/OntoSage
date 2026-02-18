@@ -99,6 +99,29 @@ class SQLAgent:
                 storage = storage_map.get(uuid, 'N/A') if storage_map else 'N/A'
                 logger.info(f"   {i}. {uuid} (Storage: {storage})")
             
+            # VALIDATION: Validate UUIDs against DB columns to prevent "Unknown column" errors
+            existing_columns = await self._get_all_db_columns()
+            valid_uuids = [u for u in uuids if u in existing_columns]
+            missing_uuids = set(uuids) - set(valid_uuids)
+            
+            if missing_uuids:
+                logger.warning(f"⚠️  {len(missing_uuids)} UUIDs found in Ontology are MISSING in SQL Database.")
+                # logger.debug(f"Missing: {missing_uuids}")
+
+            if not valid_uuids:
+                msg = f"Found {len(uuids)} sensors in metadata, but none exist in the time-series database."
+                logger.warning(f"❌ {msg}")
+                return {
+                    "success": True, 
+                    "query": "Metadata Check (No Columns)",
+                    "results": {"data": []},
+                    "formatted_response": msg,
+                    "analytics_required": False
+                }
+            
+            # Continue with valid UUIDs only
+            uuids = valid_uuids
+
             # Group UUIDs by storage location
             # Default to 'default' if no map provided or storage not found
             grouped_uuids = {"default": []}
@@ -172,9 +195,9 @@ CRITICAL REQUIREMENTS:
 1. The schema shows UUIDs as COLUMN NAMES (wide format). You MUST unpivot them using UNION ALL.
 2. The timestamp column is called 'Datetime' (capital D), NOT 'timestamp'.
 3. For each UUID, generate a SELECT statement and combine with UNION ALL.
-4. ALWAYS use 'Datetime' as the column name in ALL clauses (SELECT, WHERE, ORDER BY).
+4. ALWAYS use 'Datetime' as the column name in SELECT and WHERE clauses, but use alias 'timestamp' in global ORDER BY.
 5. DO NOT add LIMIT clauses within individual UNION queries - apply global ORDER BY and LIMIT at the end.
-6. For multiple UUIDs, wrap in parentheses and add final ORDER BY Datetime DESC LIMIT 1000.
+6. For multiple UUIDs, wrap in parentheses and add final ORDER BY timestamp DESC LIMIT 1000.
 
 Single UUID Template:
 SELECT 
@@ -184,7 +207,7 @@ SELECT
 FROM sensor_data
 WHERE `uuid_value` IS NOT NULL
   AND [TIME_FILTER_USING_Datetime]
-ORDER BY Datetime DESC
+ORDER BY timestamp DESC
 LIMIT 1000;
 
 Multiple UUIDs Template:
@@ -199,7 +222,7 @@ UNION ALL
   FROM sensor_data
   WHERE `uuid2` IS NOT NULL AND Datetime >= [TIME_FILTER]
 )
-ORDER BY Datetime DESC
+ORDER BY timestamp DESC
 LIMIT 1000;
 
 Time Filter Rules:
@@ -244,6 +267,25 @@ Return ONLY the SQL query, no markdown, no explanations.
         except Exception as e:
             logger.error(f"Fetch data for UUIDs failed: {e}")
             return {"success": False, "error": str(e)}
+
+    async def _get_all_db_columns(self) -> set:
+        """Get set of all column names across all tables to validate UUIDs"""
+        try:
+            columns = set()
+            conn = await aiomysql.connect(**self.db_config)
+            async with conn.cursor() as cursor:
+                await cursor.execute("SHOW TABLES")
+                tables = await cursor.fetchall()
+                for (table_name,) in tables:
+                    await cursor.execute(f"DESCRIBE {table_name}")
+                    cols = await cursor.fetchall()
+                    for col in cols:
+                        columns.add(col[0]) # Column name is first element
+            conn.close()
+            return columns
+        except Exception as e:
+            logger.error(f"Failed to get DB columns: {e}")
+            return set()
 
     async def _get_schema(self) -> str:
         """Get database schema information with intelligent column detection"""
@@ -310,12 +352,12 @@ Time Context:
 User Query: {user_query}
 
 CRITICAL RULES:
-1. The timestamp column is 'Datetime' (capital D) - use it in ALL clauses (SELECT, WHERE, ORDER BY).
+1. The timestamp column is 'Datetime' (capital D) - use it in SELECT and WHERE clauses. Use alias 'timestamp' in ORDER BY.
 2. Select 'Datetime AS timestamp', the UUID column as 'value', and the UUID as string literal for 'uuid'.
 3. Filter by time using 'Datetime' column (NOT 'timestamp').
 4. NO AGGREGATION (no AVG, SUM, etc.) - fetch raw rows only.
 5. Limit to 1000 rows max.
-6. Order by 'Datetime DESC'.
+6. Order by 'timestamp DESC'.
 
 Time Filter Examples:
 - Today: WHERE Datetime >= CURDATE() AND Datetime < CURDATE() + INTERVAL 1 DAY
@@ -331,7 +373,7 @@ SELECT
 FROM sensor_data 
 WHERE Datetime >= [TIME_CONDITION]
   AND `uuid_column` IS NOT NULL
-ORDER BY Datetime DESC 
+ORDER BY timestamp DESC 
 LIMIT 1000;
 
 Respond with ONLY the SQL query, no markdown, no explanations."""

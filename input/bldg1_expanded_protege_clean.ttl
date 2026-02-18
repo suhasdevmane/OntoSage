@@ -33953,10 +33953,10 @@ bldg:east-Zone rdf:type owl:NamedIndividual ,
                               bldg:Zone_Air_Humidity_Sensor_5.05 ,
                               bldg:Zone_Air_Humidity_Sensor_5.25 ,
                               bldg:Zone_Air_Humidity_Sensor_5.28 ,
-                              bldg:oxygen_level_gas_sensor_5.04 ,
-                              bldg:oxygen_level_gas_sensor_5.05 ,
-                              bldg:oxygen_level_gas_sensor_5.25 ,
-                              bldg:oxygen_level_gas_sensor_5.28 ,
+                              bldg:Oxygen_O2_Percentage_Gas_Sensor_5.04 ,
+                              bldg:Oxygen_O2_Percentage_Gas_Sensor_5.05 ,
+                              bldg:Oxygen_O2_Percentage_Gas_Sensor_5.25 ,
+                              bldg:Oxygen_O2_Percentage_Gas_Sensor_5.28 ,
                               bldg:pir_sensor_5.04 ,
                               bldg:pir_sensor_5.05 ,
                               bldg:pir_sensor_5.25 ,
@@ -34064,11 +34064,11 @@ bldg:north-east-Zone rdf:type owl:NamedIndividual ,
                                     bldg:Zone_Air_Humidity_Sensor_5.21 ,
                                     bldg:Zone_Air_Humidity_Sensor_5.23 ,
                                     bldg:Zone_Air_Humidity_Sensor_5.30 ,
-                                    bldg:oxygen_level_gas_sensor_5.18 ,
-                                    bldg:oxygen_level_gas_sensor_5.20 ,
-                                    bldg:oxygen_level_gas_sensor_5.21 ,
-                                    bldg:oxygen_level_gas_sensor_5.23 ,
-                                    bldg:oxygen_level_gas_sensor_5.30 ,
+                                    bldg:Oxygen_O2_Percentage_Gas_Sensor_5.18 ,
+                                    bldg:Oxygen_O2_Percentage_Gas_Sensor_5.20 ,
+                                    bldg:Oxygen_O2_Percentage_Gas_Sensor_5.21 ,
+                                    bldg:Oxygen_O2_Percentage_Gas_Sensor_5.23 ,
+                                    bldg:Oxygen_O2_Percentage_Gas_Sensor_5.30 ,
                                     bldg:pir_sensor_5.18 ,
                                     bldg:pir_sensor_5.20 ,
                                     bldg:pir_sensor_5.21 ,
@@ -34117,85 +34117,85 @@ bldg:north-west-Zone rdf:type owl:NamedIndividual ,
                                     bldg:TVOC_Level_Sensor_5.22 ,
                                     bldg:Zone_Air_Humidity_Sensor_5.17 ,
                                     bldg:Zone_Air_Humidity_Sensor_5.22 ,
-                                    bldg:oxygen_level_gas_sensor_5.17 ,
-                                    bldg:oxygen_level_gas_sensor_5.22 ,
+                                    bldg:Oxygen_O2_Percentage_Gas_Sensor_5.17 ,
+                                    bldg:Oxygen_O2_Percentage_Gas_Sensor_5.22 ,
                                     bldg:pir_sensor_5.17 ,
                                     bldg:pir_sensor_5.22 .
 
 
-bldg:oxygen_level_gas_sensor_5.01 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.01 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.02 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.02 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.04 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.04 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.05 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.05 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.08 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.08 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.09 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.09 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.10 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.10 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.11 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.11 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.13 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.13 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.14 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.14 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.15 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.15 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.16 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.16 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.17 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.17 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.18 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.18 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.19 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.19 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.20 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.20 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.21 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.21 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.22 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.22 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.23 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.23 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.24 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.24 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.25 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.25 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.28 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.28 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.29 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.29 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.30 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.30 rdf:type owl:NamedIndividual .
 
 
-bldg:oxygen_level_gas_sensor_5.34 rdf:type owl:NamedIndividual .
+bldg:Oxygen_O2_Percentage_Gas_Sensor_5.34 rdf:type owl:NamedIndividual .
 
 
 bldg:pir_sensor_5.01 rdf:type owl:NamedIndividual .
@@ -34374,11 +34374,11 @@ bldg:south-Zone rdf:type owl:NamedIndividual ,
                                bldg:Zone_Air_Humidity_Sensor_5.13 ,
                                bldg:Zone_Air_Humidity_Sensor_5.14 ,
                                bldg:Zone_Air_Humidity_Sensor_5.29 ,
-                               bldg:oxygen_level_gas_sensor_5.08 ,
-                               bldg:oxygen_level_gas_sensor_5.09 ,
-                               bldg:oxygen_level_gas_sensor_5.13 ,
-                               bldg:oxygen_level_gas_sensor_5.14 ,
-                               bldg:oxygen_level_gas_sensor_5.29 ,
+                               bldg:Oxygen_O2_Percentage_Gas_Sensor_5.08 ,
+                               bldg:Oxygen_O2_Percentage_Gas_Sensor_5.09 ,
+                               bldg:Oxygen_O2_Percentage_Gas_Sensor_5.13 ,
+                               bldg:Oxygen_O2_Percentage_Gas_Sensor_5.14 ,
+                               bldg:Oxygen_O2_Percentage_Gas_Sensor_5.29 ,
                                bldg:pir_sensor_5.08 ,
                                bldg:pir_sensor_5.09 ,
                                bldg:pir_sensor_5.13 ,
@@ -34465,10 +34465,10 @@ bldg:south-east-Zone rdf:type owl:NamedIndividual ,
                                     bldg:Zone_Air_Humidity_Sensor_5.19 ,
                                     bldg:Zone_Air_Humidity_Sensor_5.24 ,
                                     bldg:Zone_Air_Humidity_Sensor_5.34 ,
-                                    bldg:oxygen_level_gas_sensor_5.11 ,
-                                    bldg:oxygen_level_gas_sensor_5.19 ,
-                                    bldg:oxygen_level_gas_sensor_5.24 ,
-                                    bldg:oxygen_level_gas_sensor_5.34 ,
+                                    bldg:Oxygen_O2_Percentage_Gas_Sensor_5.11 ,
+                                    bldg:Oxygen_O2_Percentage_Gas_Sensor_5.19 ,
+                                    bldg:Oxygen_O2_Percentage_Gas_Sensor_5.24 ,
+                                    bldg:Oxygen_O2_Percentage_Gas_Sensor_5.34 ,
                                     bldg:pir_sensor_5.11 ,
                                     bldg:pir_sensor_5.19 ,
                                     bldg:pir_sensor_5.24 ,
@@ -34576,11 +34576,11 @@ bldg:west-Zone rdf:type owl:NamedIndividual ,
                               bldg:Zone_Air_Humidity_Sensor_5.10 ,
                               bldg:Zone_Air_Humidity_Sensor_5.15 ,
                               bldg:Zone_Air_Humidity_Sensor_5.16 ,
-                              bldg:oxygen_level_gas_sensor_5.01 ,
-                              bldg:oxygen_level_gas_sensor_5.02 ,
-                              bldg:oxygen_level_gas_sensor_5.10 ,
-                              bldg:oxygen_level_gas_sensor_5.15 ,
-                              bldg:oxygen_level_gas_sensor_5.16 ,
+                              bldg:Oxygen_O2_Percentage_Gas_Sensor_5.01 ,
+                              bldg:Oxygen_O2_Percentage_Gas_Sensor_5.02 ,
+                              bldg:Oxygen_O2_Percentage_Gas_Sensor_5.10 ,
+                              bldg:Oxygen_O2_Percentage_Gas_Sensor_5.15 ,
+                              bldg:Oxygen_O2_Percentage_Gas_Sensor_5.16 ,
                               bldg:pir_sensor_5.01 ,
                               bldg:pir_sensor_5.02 ,
                               bldg:pir_sensor_5.10 ,

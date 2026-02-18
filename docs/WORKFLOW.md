@@ -1,32 +1,28 @@
-# System Workflow Deep Dive
+# Workflow Deep Dive: From Intent to Action
 
-This document provides a comprehensive, "under-the-hood" explanation of the OntoSage 2.0 workflow. It details how requests are processed, how agents interact, and the specific code paths involved in generating answers.
+This document details the "under-the-hood" mechanics of **OntoSage**, explaining how it achieves **Zero-Knowledge Interaction** and **Persona-Agnostic Adaptation**.
 
-## 1. Request Lifecycle
+## 1. The Cognitive Lifecycle
 
-The journey of a user request follows this path:
+The journey of a user request follows a sophisticated path designed to abstract complexity:
 
-1.  **Frontend**: User sends a message via the React UI (`/chat` endpoint).
+1.  **Input**: User speaks or types a query into **Open WebUI** (e.g., "It's too hot in the conference room").
 2.  **Orchestrator (FastAPI)**:
-    *   Receives the request in `orchestrator/main.py`.
-    *   Validates authentication (`auth_manager.py`).
-    *   Loads/Creates `ConversationState` from Redis.
-    *   Passes the state to `WorkflowOrchestrator`.
+    *   Receives the request and loads the `ConversationState` from Redis.
+    *   **Memory Retrieval**: Queries **Qdrant** to fetch relevant past conversation history (e.g., user previously mentioned "Building 1").
+    *   **Persona Inference**: Based on the user's history and query complexity, the system infers a persona (e.g., "Occupant" vs. "Facility Manager").
 3.  **LangGraph Execution**:
-    *   The `WorkflowOrchestrator` (`orchestrator/workflow.py`) initializes the state graph.
-    *   Execution starts at the **Dialogue Node**.
-4.  **Agent Routing**:
-    *   **Dialogue Agent** analyzes the intent (e.g., `sparql`, `sql`, `analytics`, `general`).
-    *   The graph routes the state to the appropriate specialized agent.
-5.  **Task Execution**:
-    *   The specialized agent performs its task (querying DB, running code, etc.).
-    *   Results are stored in `state.intermediate_results`.
+    *   The `WorkflowOrchestrator` initializes the state graph.
+    *   **Intent Classification**: The **Dialogue Agent** determines the goal.
+        *   *Example*: "It's too hot" -> `Intent: Comfort_Complaint` -> `Action: Check_Temperature_Sensor`.
+4.  **Zero-Knowledge Translation**:
+    *   **SPARQL Agent**: Maps "Conference Room" to `bldg:Room-101` using **GraphDB Similarity Indexing**. It does not use external vector stores for this mapping.
+    *   **SQL Agent**: Maps "Temperature" to the specific sensor UUID `sensor_123` and generates a SQL query.
+5.  **Multi-Objective Reasoning**:
+    *   If the user asks "Optimize energy for this room," the **Analytics Agent** balances conflicting goals (Comfort vs. Energy) using a Python-based optimization script.
 6.  **Response Generation**:
-    *   The flow returns to the **Response Node** (often back to Dialogue Agent or a dedicated response generator).
-    *   The LLM synthesizes a final natural language answer using the intermediate results.
-7.  **Delivery**:
-    *   The final response is saved to Redis/Postgres.
-    *   The Orchestrator returns a standardized `APIResponse` JSON to the frontend.
+    *   The LLM synthesizes the technical data (24.5°C) into a natural response ("The temperature is 24.5°C, which is 2 degrees above the setpoint.").
+    *   **Visualization Agent**: Generates a Plotly chart if a trend was detected.
 
 ---
 
@@ -91,9 +87,10 @@ class ConversationState(BaseModel):
 ### A. Dialogue Agent (`orchestrator/agents/dialogue_agent.py`)
 *   **Role**: The "Front Desk". It classifies intent and handles general chit-chat.
 *   **Mechanism**:
-    1.  Retrieves context from RAG Service (`_retrieve_ontology_context`).
-    2.  Constructs a prompt with conversation history and retrieved context.
-    3.  Asks the LLM to classify the intent into: `sparql`, `sql`, `analytics`, `visualization`, or `general`.
+    1.  **Memory Lookup**: Queries Qdrant for similar past user queries.
+    2.  **Context Retrieval**: Calls RAG Service (`_retrieve_ontology_context`) which uses **GraphDB Similarity** to find relevant ontology concepts.
+    3.  **Prompt Construction**: Constructs a prompt with conversation history, memory context, and retrieved ontology context.
+    4.  **Classification**: Asks the LLM to classify the intent into: `sparql`, `sql`, `analytics`, `visualization`, or `general`.
 *   **Code Highlight**:
     ```python
     # Intent Classification Prompt

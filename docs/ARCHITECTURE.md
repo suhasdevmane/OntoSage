@@ -1,14 +1,14 @@
 # System Architecture
 
-**OntoSage 2.0** employs a modular, microservices-based architecture designed for scalability, flexibility, and robust agentic behavior. The system is orchestrated using **LangGraph** to manage state and interactions between specialized AI agents.
+**OntoSage** employs a modular, microservices-based architecture designed for **Easy-Deploy** scalability and **Zero-Knowledge** interaction. The system is orchestrated using **LangGraph** to manage state and interactions between specialized AI agents, enabling it to adapt to **persona-agnostic multi-objective goals**.
 
 ## High-Level Overview
 
-The system follows a hub-and-spoke model where the **Orchestrator** serves as the central hub, coordinating requests from the **Frontend** and delegating tasks to specialized services and agents.
+The system follows a hub-and-spoke model where the **Orchestrator** serves as the central cognitive hub, coordinating requests from the **Open WebUI** and delegating tasks to specialized services and agents.
 
 ```mermaid
 graph TD
-    User[User] -->|HTTP/WS| Frontend["Frontend (React)"]
+    User[User] -->|HTTP/WS| Frontend["Open WebUI"]
     Frontend -->|REST API| Orchestrator["Orchestrator (FastAPI/LangGraph)"]
     
     subgraph "Agentic Core"
@@ -19,16 +19,17 @@ graph TD
         Orchestrator -->|Delegates| VisAgent["Visualization Agent"]
     end
     
+    subgraph "Memory System"
+        DialogueAgent -->|Retrieve History| Qdrant["Qdrant (User Memory)"]
+    end
+
     subgraph "Support Services"
         SPARQLAgent -->|Query| RAGService["RAG Service"]
-        RAGService -->|Vector Search| Qdrant["Qdrant Vector DB"]
-        RAGService -->|Semantic Query| Fuseki["Fuseki Knowledge Graph"]
+        RAGService -->|Semantic Search| GraphDB["GraphDB (Similarity Index)"]
         
         SQLAgent -->|Query| SQLDB[("MySQL/PostgreSQL")]
         
         AnalyticsAgent -->|Execute| CodeExecutor["Code Executor (Sandbox)"]
-        
-        Orchestrator -->|Audio| WhisperSTT["Whisper STT"]
         
         Orchestrator -->|State| Redis["Redis Cache"]
     end
@@ -41,46 +42,49 @@ graph TD
 
 ## Core Components
 
-### 1. Orchestrator (The Brain)
+### 1. Orchestrator (The Cognitive Brain)
 - **Technology**: Python, FastAPI, LangGraph.
-- **Role**: Manages the conversation flow, maintains context, and routes user intents to the appropriate agent.
+- **Role**: Manages the conversation flow, maintains context, and routes user intents to the appropriate agent. It implements the **Zero-Knowledge** logic by translating vague user requests into specific technical actions.
 - **Key Features**:
-  - **Redis Caching**: Implements semantic caching for SPARQL and SQL queries (1-hour TTL) and persists conversation state.
+  - **Memory Management**: Queries **Qdrant** to retrieve relevant past conversation history, ensuring continuity across sessions.
+  - **Redis Caching**: Implements semantic caching for SPARQL and SQL queries (1-hour TTL) and persists active conversation state.
   - **API Standardization**: All endpoints return a uniform JSON structure (`{ success, data, error }`).
 - **Agents**:
-  - **Dialogue Agent**: Handles general conversation and intent classification.
+  - **Dialogue Agent**: Handles general conversation, intent classification, and memory retrieval.
   - **SPARQL Agent**: Translates natural language to SPARQL queries for ontology interaction.
   - **SQL Agent**: Generates SQL queries for time-series data retrieval. **Hardened** to allow only `SELECT` statements and prevent injection.
   - **Analytics Agent**: Generates Python code to analyze data. Uses **Deterministic Templates** for common tasks to ensure reliability.
   - **Visualization Agent**: Creates Plotly charts for data visualization.
 
-### 2. RAG Service (Knowledge Retrieval)
-- **Technology**: Python, Qdrant, Sentence Transformers.
-- **Role**: Provides semantic search capabilities over the building ontology and documentation. It retrieves relevant context to augment LLM responses.
+### 2. RAG Service (GraphDB Native)
+- **Technology**: Python, GraphDB Similarity Index.
+- **Role**: Provides semantic search capabilities over the building ontology.
+- **Mechanism**: Instead of using an external vector DB for documents, it leverages **GraphDB's internal Similarity Indexing**. This allows it to find ontology entities (e.g., `brick:Temperature_Sensor`) that are semantically similar to user terms (e.g., "heat detector") directly within the Knowledge Graph.
 
-### 3. Code Executor (Safe Execution)
+### 3. Qdrant (Long-Term Memory)
+- **Technology**: Qdrant Vector Database.
+- **Role**: Stores vector embeddings of **User Conversation History**.
+- **Usage**: When a user sends a new request, the system searches Qdrant for similar past interactions to provide context-aware responses (e.g., remembering that the user previously asked about "Room 101").
+
+### 4. Code Executor (Safe Execution)
 - **Technology**: Python, Docker/Sandbox.
 - **Role**: Executes Python code generated by the Analytics Agent in an isolated environment to prevent security risks. It returns the output (text or image) to the Orchestrator.
 
-### 4. Whisper STT (Voice Interface)
-- **Technology**: OpenAI Whisper (Local or Cloud).
-- **Role**: Transcribes voice input from the frontend into text for the Orchestrator to process.
-
-### 5. Frontend (User Interface)
-- **Technology**: React 19, TypeScript, Tailwind CSS.
-- **Role**: Provides a chat interface, 3D building visualization, and interactive charts. It communicates with the backend via REST APIs and WebSockets.
+### 5. Open WebUI (Multimodal Interface)
+- **Technology**: Svelte, Python.
+- **Role**: Provides a rich chat interface with integrated voice support (STT/TTS), markdown rendering, and interactive chart display. It communicates with the backend via REST APIs.
 
 ## Data Layer
 
-- **Redis**: Stores conversation history and agent state for low-latency access.
-- **Qdrant**: Vector database for storing embeddings of the ontology and documents.
-- **Apache Jena Fuseki**: Stores the RDF Knowledge Graph (Ontology).
+- **Redis**: Stores active conversation state and agent scratchpads.
+- **Qdrant**: Stores long-term user conversation history.
+- **GraphDB**: Stores the RDF Knowledge Graph (Ontology) and handles Semantic Similarity Search.
 - **MySQL / PostgreSQL**: Stores structured building data (sensors, time-series telemetry).
 
 ## Deployment & Infrastructure
 
-- **Docker Compose**: Orchestrates the containerized services.
+- **Docker Compose**: Orchestrates the containerized services for an **Easy-Deploy** experience.
 - **Monitoring**: Prometheus collects metrics, and Grafana provides dashboards for system health and performance.
 - **Model Serving**: 
-  - **Local**: Ollama serves open-source models (e.g., Llama 3, Mistral) locally.
+  - **Local**: Ollama serves open-source models (e.g., DeepSeek-R1, Llama 3) locally for privacy.
   - **Cloud**: Direct integration with OpenAI API for GPT-4 models.

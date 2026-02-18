@@ -81,7 +81,7 @@ services:
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
     ports:
-      - "3001:8080"
+      - "3000:8080"
     volumes:
       - ./volumes/open-webui:/app/backend/data
     environment:
@@ -117,7 +117,7 @@ services:
     volumes:
       - ./orchestrator:/app/orchestrator  # Mount source code for hot-reloading
       - ./shared:/app/shared  # Mount shared module for hot-reloading
-      - ./data/bldg1:/app/data/bldg1:ro  # Mount sensor UUID data for SQL agent
+      - ./input:/app/input:ro             # Mount input folder for raw ontology files
       - ./outputs:/app/outputs  # Mount shared outputs (data, plots, query results)
       - ./orchestrator/agents/.env:/app/agents/.env:ro  # Mount OpenAI credentials
     environment:
@@ -237,6 +237,7 @@ services:
       - GRAPHDB_SIMILARITY_INDEX=bldg_index
     volumes:
       - ./data/bldg1:/staging:ro  # Mount ontology files for reference
+      - ./input:/app/input:ro     # Mount input folder for auto-import
     depends_on:
       graphdb:
         condition: service_started  # Wait for GraphDB to be ready
@@ -385,7 +386,7 @@ services:
       - "127.0.0.1:7300:7300"  # gRPC port
     volumes:
       - ./volumes/graphdb:/opt/graphdb/home
-      - ./data/bldg1/trial/dataset:/opt/graphdb/import:ro
+      - ./input:/opt/graphdb/import:ro
     environment:
       - GDB_HEAP_SIZE=4g
       - GDB_MIN_MEM=2g
