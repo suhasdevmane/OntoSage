@@ -156,9 +156,11 @@ class WorkflowOrchestrator:
         intent = intent_result.get("intent", "general")
         entities = intent_result.get("entities", [])
         required_analytics = intent_result.get("required_analytics", [])
-        time_range = intent_result.get("time_range", {})
+        time_range = intent_result.get("time_range") or {}
         direct_response = intent_result.get("response", "")
         explanation = intent_result.get("explanation", "")
+        clarification_question = intent_result.get("clarification_question", "")
+        discovery_filter = intent_result.get("discovery_filter")
         
         # Backward compatibility mapping
         is_general = (intent == "general")
@@ -183,7 +185,25 @@ class WorkflowOrchestrator:
         state.intermediate_results["end_date"] = end_date
         state.intermediate_results["explanation"] = explanation
         
-        if is_general:
+        if intent == "clarification":
+            # Need more information from user before proceeding
+            logger.info("🔄 Clarification needed - asking user for more details")
+            state.current_intent = "clarification"
+            state.intent = "clarification"
+            state.needs_clarification = True
+            state.clarification_question = clarification_question
+            state.intermediate_results["dialogue_response"] = clarification_question or \
+                "Could you please provide more details about your question?"
+
+        elif intent == "discovery":
+            # User wants to explore available sensors / capabilities
+            logger.info("🔍 Discovery intent detected - listing available sensors")
+            state.current_intent = "discovery"
+            state.intent = "discovery"
+            discovery_response = self._handle_sensor_discovery(discovery_filter, entities)
+            state.intermediate_results["dialogue_response"] = discovery_response
+
+        elif is_general:
             # General knowledge question - use direct LLM response
             logger.info("✅ General knowledge question detected - returning direct answer")
             state.current_intent = "general_knowledge"
@@ -475,12 +495,102 @@ class WorkflowOrchestrator:
         
         return state
 
+    def _handle_sensor_discovery(self, discovery_filter: str = None, entities: list = None) -> str:
+        """
+        Build a sensor discovery response from the cached sensor_map.
+        
+        Args:
+            discovery_filter: Optional keyword to filter sensors (e.g. "temperature", "zone 5")
+            entities: Optional entity list from intent detection
+            
+        Returns:
+            Formatted string listing available sensors
+        """
+        if not self.sensor_map:
+            return ("I don't have a cached sensor catalogue right now. "
+                    "You can ask me about specific sensor types like temperature, "
+                    "humidity, or air quality sensors.")
+        
+        # Deduplicate: sensor_map has multiple key formats (name, label, URI) pointing
+        # to the same sensor. Collect unique sensors by their URI.
+        unique_sensors = {}
+        for key, info in self.sensor_map.items():
+            uri = info.get("uri", key)
+            if uri not in unique_sensors:
+                unique_sensors[uri] = {
+                    "label": info.get("label", key),
+                    "uuid": info.get("uuid", ""),
+                    "storage": info.get("storage", ""),
+                }
+        
+        # Apply filter
+        filter_text = discovery_filter or ""
+        if entities and not filter_text:
+            filter_text = " ".join(entities)
+        filter_lower = filter_text.lower().strip()
+        
+        if filter_lower:
+            filtered = {
+                uri: s for uri, s in unique_sensors.items()
+                if filter_lower in s["label"].lower() or filter_lower in uri.lower()
+            }
+        else:
+            filtered = unique_sensors
+        
+        total = len(unique_sensors)
+        matched = len(filtered)
+        
+        if matched == 0:
+            # No match — show summary of available types
+            type_counts = self._count_sensor_types(unique_sensors)
+            type_summary = ", ".join(f"**{t}** ({c})" for t, c in sorted(type_counts.items(), key=lambda x:-x[1])[:10])
+            return (f"I couldn't find sensors matching **\"{filter_text}\"**.\n\n"
+                    f"I have **{total}** sensors total. Available types: {type_summary}.\n\n"
+                    f"Try asking about a specific type (e.g., *\"list all temperature sensors\"*).")
+        
+        # If too many results, show a grouped summary
+        if matched > 20:
+            type_counts = self._count_sensor_types(filtered)
+            type_summary = "\n".join(f"- **{t}**: {c} sensors" for t, c in sorted(type_counts.items(), key=lambda x:-x[1]))
+            filter_note = f" matching **\"{filter_text}\"**" if filter_lower else ""
+            return (f"Found **{matched}** sensors{filter_note} (out of {total} total):\n\n"
+                    f"{type_summary}\n\n"
+                    f"To see specific sensors, ask something like *\"list all Air Temperature sensors\"* "
+                    f"or *\"what sensors are in zone 5?\"*.")
+        
+        # Show individual sensors
+        lines = []
+        for uri, s in sorted(filtered.items(), key=lambda x: x[1]["label"]):
+            lines.append(f"- **{s['label']}** (storage: {s['storage'] or 'N/A'})")
+        
+        sensor_list = "\n".join(lines)
+        filter_note = f" matching **\"{filter_text}\"**" if filter_lower else ""
+        return (f"Found **{matched}** sensors{filter_note}:\n\n{sensor_list}\n\n"
+                f"You can ask about any of these sensors, for example: "
+                f"*\"What is the current reading of {list(filtered.values())[0]['label']}?\"*")
+    
+    @staticmethod
+    def _count_sensor_types(sensors: dict) -> dict:
+        """Group sensors by type (e.g. Air_Temperature, Humidity, CO2)"""
+        type_counts = {}
+        for uri, info in sensors.items():
+            label = info.get("label", "")
+            # Extract type: everything before the last underscore + number pattern
+            # e.g. "Air Temperature Sensor 5.04" -> "Air Temperature Sensor"
+            parts = label.rsplit(" ", 1)
+            if len(parts) == 2 and any(c.isdigit() for c in parts[1]):
+                sensor_type = parts[0]
+            else:
+                sensor_type = label
+            type_counts[sensor_type] = type_counts.get(sensor_type, 0) + 1
+        return type_counts
+
     def _route_from_dialogue(self, state: ConversationState) -> str:
         """Route from dialogue node based on intent"""
         intent = state.current_intent
         
-        if intent in ["greeting", "clarification", "unknown", "general_knowledge"]:
-            return "response"  # Skip to response
+        if intent in ["greeting", "clarification", "discovery", "unknown", "general_knowledge"]:
+            return "response"  # Skip to response (clarification & discovery responses already set)
         elif intent == "sparql":
             return "sparql"
         elif intent == "sql":

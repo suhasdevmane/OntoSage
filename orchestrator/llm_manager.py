@@ -6,6 +6,7 @@ import sys
 sys.path.append('/app')
 
 import asyncio
+import os
 import time
 from typing import List, Dict, Any, Optional
 from shared.config import settings, get_llm_config
@@ -13,8 +14,10 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
-# Rate limiting for OpenAI (3 RPM = 1 request every 20s)
-OPENAI_RATE_LIMIT_DELAY = 21.0
+# Rate limiting for OpenAI
+# gpt-4o-mini Tier-1: 500 RPM, Tier-2+: 5000 RPM
+# Set conservatively at 1s; increase only if you hit 429 errors
+OPENAI_RATE_LIMIT_DELAY = float(os.environ.get('OPENAI_RATE_LIMIT_DELAY', '1.0'))
 
 class LLMManager:
     """Manages LLM interactions with multiple providers"""
@@ -124,19 +127,18 @@ class LLMManager:
                     messages.append(SystemMessage(content=system_message))
                 messages.append(HumanMessage(content=prompt))
                 
+                # Use per-request kwargs to avoid mutating shared client state
+                invoke_kwargs = {}
                 if temperature is not None:
-                    self.client.temperature = temperature
+                    invoke_kwargs["temperature"] = temperature
                 
-                response = await self.client.ainvoke(messages)
+                response = await self.client.ainvoke(messages, **invoke_kwargs)
                 return response.content
                 
             else:  # ollama (local)
                 full_prompt = prompt
                 if system_message:
                     full_prompt = f"System: {system_message}\n\nUser: {prompt}"
-                
-                if temperature is not None:
-                    self.client.temperature = temperature
                 
                 response = await self.client.ainvoke(full_prompt)
                 return response

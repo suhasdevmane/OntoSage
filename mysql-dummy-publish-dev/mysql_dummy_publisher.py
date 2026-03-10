@@ -125,20 +125,22 @@ def get_realistic_value(sensor_name, uuid, enum_opts=None):
     return None
 
 # ============================ SETTINGS (edit me) ============================
+# All connection settings can be overridden by environment variables,
+# making this script work both locally and inside Docker containers.
 SETTINGS = {
-    # Connection
-    'HOST': 'localhost',
-    'PORT': 3307,
-    'USER': 'thingsboard',
-    'PASSWORD': 'thingsboard',
-    'DB': 'sensordb',
-    'TABLE': 'sensor_data',
+    # Connection (env vars: MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB, MYSQL_TABLE)
+    'HOST': os.environ.get('MYSQL_HOST', 'localhost'),
+    'PORT': int(os.environ.get('MYSQL_PORT', '3307')),
+    'USER': os.environ.get('MYSQL_USER', 'thingsboard'),
+    'PASSWORD': os.environ.get('MYSQL_PASSWORD', 'thingsboard'),
+    'DB': os.environ.get('MYSQL_DB', 'sensordb'),
+    'TABLE': os.environ.get('MYSQL_TABLE', 'sensor_data'),
 
     # Timestamp column: leave empty to auto-detect first TIMESTAMP/DATETIME
     'TIMESTAMP_COLUMN': 'Datetime',
 
-    # Loop cadence
-    'INTERVAL_SECONDS': 30,     # delay between insert ticks
+    # Loop cadence (env var: PUBLISH_INTERVAL)
+    'INTERVAL_SECONDS': int(os.environ.get('PUBLISH_INTERVAL', '30')),
 
     # Batching: when >1 uses executemany per tick
     'BATCH_SIZE': 1,            # set to e.g. 50 for batch mode

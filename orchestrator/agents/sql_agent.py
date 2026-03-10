@@ -243,6 +243,39 @@ Return ONLY the SQL query, no markdown, no explanations.
                 logger.info(f"\n⚙️  Executing SQL query...")
                 results = await self._execute_query(sql_query)
                 
+                # AUTO-EXPAND: If 0 rows and user didn't specify an explicit time range,
+                # fall back to fetching the most recent available data regardless of date.
+                # Treat relative defaults like 'now-1d' as non-explicit
+                _is_default_range = (
+                    not start_date or 
+                    str(start_date).strip().lower() in ('none', 'null', '', 'now-1d', 'now-24h')
+                )
+                if not results and _is_default_range:
+                    has_explicit_time = any(kw in user_query.lower() for kw in [
+                        "today", "yesterday", "last week", "last month",
+                        "hour", "day", "week", "month", "year",
+                        "since", "before", "after", "between", "from", "until"
+                    ])
+                    if not has_explicit_time:
+                        logger.warning("⚠️  0 rows with default time window. Retrying with latest available data...")
+                        # Build a simple fallback query that fetches the most recent rows
+                        fallback_parts = []
+                        for uuid in group_uuids:
+                            fallback_parts.append(
+                                f"SELECT Datetime AS timestamp, '{uuid}' AS uuid, "
+                                f"`{uuid}` AS value FROM sensor_data "
+                                f"WHERE `{uuid}` IS NOT NULL "
+                                f"ORDER BY Datetime DESC LIMIT 200"
+                            )
+                        if len(fallback_parts) == 1:
+                            fallback_sql = fallback_parts[0] + ";"
+                        else:
+                            fallback_sql = "(" + ") UNION ALL (".join(fallback_parts) + ") ORDER BY timestamp DESC LIMIT 1000;"
+                        logger.info(f"📝 Fallback SQL: {fallback_sql[:200]}...")
+                        results = await self._execute_query(fallback_sql)
+                        if results:
+                            logger.info(f"✅ Fallback query returned {len(results)} rows (latest available data)")
+                
                 if results:
                     logger.info(f"✅ Query returned {len(results)} rows")
                     if results:

@@ -78,16 +78,19 @@ services:
 
   # ====================== Open WebUI ======================
   open-webui:
-    image: ghcr.io/open-webui/open-webui:main
+    image: ghcr.io/open-webui/open-webui:0.8.3
     container_name: open-webui
     ports:
-      - "3000:8080"
+      - "3001:8080"
     volumes:
       - ./volumes/open-webui:/app/backend/data
     environment:
       - OLLAMA_BASE_URL=http://ollama-deepseek-r1:11434
       - OPENAI_API_BASE_URL=http://ontosage-orchestrator:8000/v1
       - OPENAI_API_KEY=sk-ontobot-pipeline
+      # External access via Cloudflare Tunnel → talk2futurebuildings.systems
+      - WEBUI_URL=https://talk2futurebuildings.systems
+      - ENABLE_WEBSOCKET_SUPPORT=true
       # Use PostgreSQL for chat history (consolidated with OntoSage)
       # - DATABASE_URL=postgresql://ontobot:ontobot_secret@postgres-user-data:5432/openwebui
     deploy:
@@ -103,6 +106,9 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
+    profiles:
+      - local
+      - ""
 
   # ====================== Orchestrator ======================
   orchestrator:
@@ -120,6 +126,7 @@ services:
       - ./input:/app/input:ro             # Mount input folder for raw ontology files
       - ./outputs:/app/outputs  # Mount shared outputs (data, plots, query results)
       - ./orchestrator/agents/.env:/app/agents/.env:ro  # Mount OpenAI credentials
+      - ./data:/app/data:ro  # Mount sensor map and other data files
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -321,29 +328,29 @@ services:
     restart: unless-stopped
 
   # ====================== Whisper STT ======================
-  whisper-stt:
-    image: lscr.io/linuxserver/faster-whisper:latest
-    container_name: whisper-stt-service
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=UTC
-      - WHISPER_MODEL=tiny-int8   # quantized model for low latency
-      - WHISPER_BEAM=1            # beam size (increase for accuracy)
-      - WHISPER_LANG=en           # default language
-      # - LOCAL_ONLY=1            # uncomment to disable remote fallback if image adds one
-    volumes:
-      - ./volumes/whisper:/config
-    ports:
-      - "8003:10300"             # map internal API port 10300 to expected 8003
-    networks:
-      - ontobot-agentic
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:10300/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    restart: unless-stopped
+  # whisper-stt:
+  #   image: lscr.io/linuxserver/faster-whisper:latest
+  #   container_name: whisper-stt-service
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=UTC
+  #     - WHISPER_MODEL=tiny-int8   # quantized model for low latency
+  #     - WHISPER_BEAM=1            # beam size (increase for accuracy)
+  #     - WHISPER_LANG=en           # default language
+  #     # - LOCAL_ONLY=1            # uncomment to disable remote fallback if image adds one
+  #   volumes:
+  #     - ./volumes/whisper:/config
+  #   ports:
+  #     - "8003:10300"             # map internal API port 10300 to expected 8003
+  #   networks:
+  #     - ontobot-agentic
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:10300/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   restart: unless-stopped
     # Optional GPU acceleration (uncomment if container supports CUDA & host has nvidia runtime)
     # deploy:
     #   resources:
@@ -423,6 +430,27 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    restart: unless-stopped
+
+  # ====================== Dummy Data Publisher ======================
+  data-publisher:
+    build:
+      context: ./mysql-dummy-publish-dev
+      dockerfile: Dockerfile
+    container_name: data-publisher
+    environment:
+      - MYSQL_HOST=mysql-bldg1
+      - MYSQL_PORT=3306
+      - MYSQL_USER=${MYSQL_USER:-thingsboard}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-thingsboard}
+      - MYSQL_DB=${MYSQL_DATABASE:-sensordb}
+      - MYSQL_TABLE=sensor_data
+      - PUBLISH_INTERVAL=30
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - ontobot-agentic
     restart: unless-stopped
 
   # ====================== User Data & History (PostgreSQL) ======================

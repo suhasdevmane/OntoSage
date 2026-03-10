@@ -270,9 +270,16 @@ Current Date and Time: {current_time_str}
 Your task is to analyze the user's question and return a JSON response with the following fields:
 
 1. "intent" (string): One of:
-   - "general": General knowledge questions (e.g., "what is 2+2?", "hello").
+   - "general": General knowledge questions (e.g., "what is 2+2?", "hello", greetings).
    - "metadata": Questions about static properties (e.g., "list sensors", "where is X?", "what type is Y?").
    - "analytics": Questions about dynamic data/values (e.g., "current reading", "average temp", "history").
+   - "clarification": The user's question is too vague or ambiguous to route correctly. You need more information before proceeding.
+     Use this when:
+       • The user mentions a sensor type but not which specific sensor (e.g., "show me the temperature" — which temperature sensor?).
+       • The query could be metadata OR analytics and you cannot tell which.
+       • Critical details are missing (e.g., "compare sensors" — which sensors? what metric?).
+     Do NOT use clarification for simple/general questions or when the answer can reasonably be inferred from context.
+   - "discovery": The user wants to explore what sensors, data, or capabilities are available (e.g., "what sensors do you have?", "what data can I query?", "what types of sensors are in zone 5?", "list all temperature sensors").
 
 2. "entities" (list of strings): Extract all specific building entities mentioned (e.g., "Air_Temperature_Sensor_5.04", "Zone 5.12").
    - Normalize names if possible (e.g., "Sensor 5.04" -> "Air_Temperature_Sensor_5.04" if clear from context).
@@ -282,18 +289,27 @@ Your task is to analyze the user's question and return a JSON response with the 
    - "min", "max", "avg", "count", "sum", "trend", "latest".
 
 4. "time_range" (object):
-   - "start": ISO date string or relative (e.g., "now-1d", "2023-01-01"). Default "now-1d" if not specified but analytics needed.
-   - "end": ISO date string or relative (e.g., "now").
+   - "start": ISO date string or relative (e.g., "now-1d", "2023-01-01"). Return null if user does NOT specify a time range.
+   - "end": ISO date string or relative (e.g., "now"). Return null if user does NOT specify a time range.
+   - IMPORTANT: Only set start/end when the user explicitly mentions a time period (e.g., "today", "last week", "yesterday", "since January"). If the user just asks for "current" or "latest" values, return null for both.
 
 5. "response" (string): Direct answer if intent="general". Otherwise null.
 
-6. "explanation" (string): Brief reasoning for your classification.
+6. "clarification_question" (string): If intent="clarification", provide a helpful question to ask the user.
+   The question should:
+   - Acknowledge what the user asked
+   - Explain what additional information is needed
+   - Suggest 2-3 specific options when possible (e.g., "Did you mean Air_Temperature_Sensor_5.04 or Air_Temperature_Sensor_5.12?")
 
-=== RELEVANT CONTEXT ===
-{context_str}
+7. "discovery_filter" (string or null): If intent="discovery", an optional filter keyword (e.g., "temperature", "zone 5", "humidity"). null if no filter.
+
+8. "explanation" (string): Brief reasoning for your classification.
 
 === CONVERSATION HISTORY ===
 {conversation_history}
+
+=== RELEVANT CONTEXT ===
+{context_str}
 
 === USER QUERY ===
 {user_query}
@@ -330,6 +346,8 @@ Return ONLY the JSON object.
                     "required_analytics": result.get("required_analytics", []),
                     "time_range": result.get("time_range", {"start": None, "end": None}),
                     "response": result.get("response", ""),
+                    "clarification_question": result.get("clarification_question", ""),
+                    "discovery_filter": result.get("discovery_filter"),
                     "explanation": result.get("explanation", "")
                 }
                 
