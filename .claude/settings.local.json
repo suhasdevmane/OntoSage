@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find c:UserssuhasDocumentsGitHubOntoSage -maxdepth 2 -type f \\\\\\(-name docker-compose* -o -name requirements.txt -o -name setup.py \\\\\\))",
+      "Bash(ls -la /c/Users/suhas/Documents/GitHub/OntoSage/orchestrator/agents/*.py)",
+      "Bash(grep -n \"hardcoded\\\\|TODO\\\\|FIXME\\\\|BUG\\\\|XXX\" /c/Users/suhas/Documents/GitHub/OntoSage/orchestrator/agents/*.py)",
+      "Bash(find orchestrator/services -name \"*.py\" -exec grep -l \"def\\\\|class\" {})",
+      "Bash(grep -rn \"from orchestrator.services\\\\|import.*service\" orchestrator/agents/*.py)",
+      "Bash(grep -n \"getattr\\\\|hasattr\\\\|AttributeError\" /c/Users/suhas/Documents/GitHub/OntoSage/orchestrator/services/*.py)",
+      "Read",
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Bash(*)",
+      "Grep",
+      "Glob",
+      "LS",
+      "WebFetch",
+      "WebSearch",
+      "NotebookRead",
+      "NotebookEdit",
+      "TodoRead",
+      "TodoWrite"
+    ]
+  }
+}

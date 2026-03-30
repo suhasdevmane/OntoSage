@@ -164,23 +164,27 @@ class ConversationState(BaseModel):
     title: Optional[str] = Field(default="New Conversation", description="Conversation title")
     summary: Optional[str] = Field(default=None, description="Conversation summary")
     building_id: str = Field(default="bldg1", description="Building context")
-    persona: Literal["stakeholder", "guest", "officer", "facility_manager"] = Field(
-        default="guest",
+    persona: Literal[
+        "student", "researcher", "facility_manager", "occupant",
+        "energy_manager", "safety_officer", "it_admin", "executive",
+        "sustainability_officer", "general",
+        # Legacy aliases kept for backward compatibility
+        "stakeholder", "guest", "officer"
+    ] = Field(
+        default="general",
         description="User persona for response customization"
     )
-    
+
     # Current interaction
     user_message: str = Field(..., description="Current user input")
     messages: List[Message] = Field(default_factory=list, description="Conversation history")
-    # Legacy / workflow compatibility fields
-    current_intent: Optional[str] = Field(default=None, description="Detected intent (legacy name)")
-    intent: Optional[str] = Field(default=None, description="Detected user intent (preferred field)")
+    # current_intent is the authoritative routing field; intent is a read alias
+    current_intent: Optional[str] = Field(default=None, description="Detected intent (used for routing)")
     intermediate_results: Dict[str, Any] = Field(default_factory=dict, description="Temporary results between agents")
     query_results: Any = Field(default_factory=dict, description="Last query results (SPARQL/SQL)")
     user_preferences: Dict[str, Any] = Field(default_factory=dict, description="User preferences/persona/language")
-    
+
     # Intent understanding
-    intent: Optional[str] = Field(default=None, description="Detected user intent")
     needs_clarification: bool = Field(default=False, description="Whether to ask for clarification")
     clarification_question: Optional[str] = Field(default=None, description="Question to ask user")
     
@@ -241,8 +245,13 @@ class ChatRequest(BaseModel):
     message: str = Field(..., description="User message")
     conversation_id: Optional[str] = Field(default=None, description="Conversation ID (optional)")
     user_id: str = Field(default="anonymous", description="User ID")
-    persona: Literal["stakeholder", "guest", "officer", "facility_manager"] = Field(
-        default="guest",
+    persona: Literal[
+        "student", "researcher", "facility_manager", "occupant",
+        "energy_manager", "safety_officer", "it_admin", "executive",
+        "sustainability_officer", "general",
+        "stakeholder", "guest", "officer"
+    ] = Field(
+        default="general",
         description="User persona"
     )
     audio_data: Optional[str] = Field(default=None, description="Base64 encoded audio (optional)")
@@ -271,4 +280,49 @@ class APIResponse(BaseModel):
     data: Optional[Any] = Field(default=None, description="Response payload")
     error: Optional[str] = Field(default=None, description="Error message if failed")
     meta: Optional[Dict[str, Any]] = Field(default=None, description="Metadata (pagination, timing, etc)")
+
+
+# ==================== Request Validation Models ====================
+
+# Maximum allowed message length (chars). Prevents abuse and LLM token overflow.
+CHAT_MAX_MESSAGE_LENGTH = 10_000
+
+import re
+_CONTROL_CHARS_RE = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]')
+
+
+def sanitize_user_input(text: str) -> str:
+    """Strip null bytes and control characters from user-provided text."""
+    return _CONTROL_CHARS_RE.sub('', text).strip()
+
+
+class ChatRequest(BaseModel):
+    """Validated chat request body — replaces raw Dict[str, Any] on chat endpoints."""
+    message: str = Field(..., min_length=1, max_length=CHAT_MAX_MESSAGE_LENGTH,
+                         description="User message (1-10 000 chars)")
+    conversation_id: Optional[str] = Field(default=None, max_length=200,
+                                           description="Existing conversation ID")
+    session_id: Optional[str] = Field(default=None, max_length=200,
+                                      description="Session ID for conversation continuity")
+    persona: Optional[str] = Field(default="general", description="Persona for response style")
+    language: Optional[str] = Field(default="en", max_length=10, description="Response language")
+    building: Optional[str] = Field(default="building1", max_length=100,
+                                    description="Target building ID")
+
+    @classmethod
+    def _sanitize(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        return sanitize_user_input(v)
+
+    def sanitized(self) -> "ChatRequest":
+        """Return a copy with all string fields sanitized."""
+        return self.model_copy(update={
+            "message": sanitize_user_input(self.message),
+            "conversation_id": self._sanitize(self.conversation_id),
+            "session_id": self._sanitize(self.session_id),
+            "persona": self._sanitize(self.persona),
+            "language": self._sanitize(self.language),
+            "building": self._sanitize(self.building),
+        })
 

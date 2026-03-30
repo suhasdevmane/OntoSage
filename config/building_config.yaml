@@ -1,0 +1,69 @@
+# ============================================================
+# OntoSage Building Configuration
+# ============================================================
+# Copy this file and fill in values for each new building.
+# Set BUILDING_CONFIG_FILE env var to the path of this file.
+# All settings here can be overridden by environment variables.
+# ============================================================
+
+building:
+  # Unique identifier for this building (used in logs, caching, DB names)
+  id: "bldg1"
+
+  # Human-readable name shown in responses
+  name: "Abacws Building"
+
+  # Full base URI of this building's ontology instances (ABox namespace)
+  # Must end with '#'
+  namespace: "http://abacwsbuilding.cardiff.ac.uk/abacws#"
+
+  # The short prefix used in SPARQL queries for this namespace
+  # e.g. "bldg" → PREFIX bldg: <namespace>
+  prefix: "bldg"
+
+  # IANA timezone name for this building's location
+  # See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  timezone: "Europe/London"
+
+  # Path to the building's ontology ABox (TTL file)
+  # Relative to the project root or absolute
+  abox_file: "trial/dataset/bldg1_protege.ttl"
+
+  # Path to the TBox (vocabulary / schema) file
+  tbox_file: "trial/dataset/Brick.ttl"
+
+# ============================================================
+# Ontology Schema Configuration
+# ============================================================
+ontology:
+  # Primary ontology schema used: "brick", "rec", "s223", "custom"
+  schema: "brick"
+
+  # Base URI of the schema (used for class resolution)
+  schema_uri: "https://brickschema.org/schema/Brick#"
+
+  # Additional ontology prefixes to register (besides standard ones)
+  # These are added to SPARQL queries automatically
+  extra_prefixes: []
+  #   - prefix: "custom"
+  #     uri: "http://example.com/custom#"
+
+# ============================================================
+# Sensor / Data Storage Configuration
+# ============================================================
+storage:
+  # Primary time-series data backend: "mysql", "postgresql", "influxdb", "timescaledb"
+  backend: "mysql"
+
+  # Database name containing sensor readings
+  database: "abacws"
+
+  # Table name (for SQL backends)
+  table: "sensor_data"
+
+  # Column names mapping (customize if schema differs)
+  columns:
+    uuid: "uuid"
+    value: "value"
+    timestamp: "time"
+    sensor_name: "sensor_name"

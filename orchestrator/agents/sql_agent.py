@@ -4,7 +4,6 @@ SQL Agent - Time-series data queries for Building 1
 import sys
 sys.path.append('/app')
 
-import aiomysql
 import json
 from pathlib import Path
 from typing import Dict, Any, Optional, List
@@ -14,6 +13,8 @@ from shared.models import ConversationState
 from shared.utils import get_logger
 from shared.config import settings
 from orchestrator.llm_manager import llm_manager
+from orchestrator.services.adapters.registry import adapter_registry
+from orchestrator.services.prompt_builder import get_prompt_builder
 
 logger = get_logger(__name__)
 
@@ -28,6 +29,8 @@ class SQLAgent:
             'password': settings.MYSQL_PASSWORD,
             'db': settings.MYSQL_DATABASE
         }
+        # C.2: Dynamic prompt builder for dialect-aware SQL generation
+        self._prompt_builder = get_prompt_builder()
     
     async def generate_and_execute(
         self,
@@ -41,15 +44,26 @@ class SQLAgent:
             Dict with 'query', 'results', 'formatted_response'
         """
         try:
+            # Graceful degradation: check adapter availability
+            if not adapter_registry.is_available:
+                logger.warning("SQL Agent: No database adapters available")
+                return {
+                    "success": False,
+                    "error": "database_unavailable",
+                    "query": None,
+                    "results": None,
+                    "formatted_response": "The time-series database is currently unavailable.",
+                }
+
             # Step 1: Get database schema
             schema = await self._get_schema()
-            
+
             # Step 2: Generate SQL query
             sql_query = await self._generate_sql(user_query, schema)
-            
+
             # Step 3: Execute query
             results = await self._execute_query(sql_query)
-            
+
             # Step 4: Format results
             formatted = await self._format_results(results, user_query, sql_query)
             
@@ -90,18 +104,35 @@ class SQLAgent:
             end_date: End date/time string (ISO or relative)
         """
         try:
+            # Graceful degradation: check adapter availability before doing work
+            if not adapter_registry.is_available:
+                logger.warning("SQL Agent: No database adapters available — database is unreachable")
+                return {
+                    "success": False,
+                    "error": "database_unavailable",
+                    "query": None,
+                    "results": {"data": []},
+                    "formatted_response": "The time-series database is currently unavailable. I can still answer questions about the building ontology and metadata.",
+                    "analytics_required": False,
+                }
+
             logger.info("="*80)
-            logger.info("💾 SQL AGENT: Fetching Data for UUIDs")
+            logger.info("SQL AGENT: Fetching Data for UUIDs")
             logger.info("="*80)
-            logger.info(f"📥 User Query: {user_query}")
-            logger.info(f"🔑 UUIDs to fetch: {len(uuids)}")
+            logger.info(f"User Query: {user_query}")
+            logger.info(f"UUIDs to fetch: {len(uuids)}")
             for i, uuid in enumerate(uuids, 1):
                 storage = storage_map.get(uuid, 'N/A') if storage_map else 'N/A'
                 logger.info(f"   {i}. {uuid} (Storage: {storage})")
             
-            # VALIDATION: Validate UUIDs against DB columns to prevent "Unknown column" errors
-            existing_columns = await self._get_all_db_columns()
-            valid_uuids = [u for u in uuids if u in existing_columns]
+            # VALIDATION: Validate UUIDs against DB columns (via adapter registry)
+            # Use the first non-null storage URI from the storage_map to route to correct DB
+            primary_storage_uri = None
+            if storage_map:
+                primary_storage_uri = next(
+                    (v for v in storage_map.values() if v), None
+                )
+            valid_uuids = await adapter_registry.get_valid_uuids(uuids, primary_storage_uri)
             missing_uuids = set(uuids) - set(valid_uuids)
             
             if missing_uuids:
@@ -161,11 +192,12 @@ class SQLAgent:
                     continue
                     
                 logger.info(f"Fetching data for {len(group_uuids)} UUIDs from storage: {storage_key}")
-                
-                # In a fully heterogeneous system, we would switch connection configs here
-                # For now, we assume all data is in the configured MySQL DB
-                
-                schema = await self._get_schema()
+
+                # Phase 2.5: Pick the right adapter for this storage location
+                adapter = adapter_registry.get(storage_key)
+                schema_text = adapter_registry.get_schema_text(storage_key)
+                ts_col = adapter_registry.get_timestamp_column(storage_key)
+                dialect_hints = adapter.get_dialect_hints() if adapter else ""
                 
                 # Format UUIDs for SQL IN clause
                 uuid_list_str = ", ".join([f"'{u}'" for u in group_uuids])
@@ -179,10 +211,9 @@ class SQLAgent:
                 if not time_context:
                     time_context = self._parse_time_references(user_query)
 
-                prompt = f"""You are a SQL expert. Generate a MySQL query to fetch time-series data for specific sensors.
+                prompt = f"""You are a SQL expert. Generate a SQL query to fetch time-series data for specific sensors.
 
-Database Schema:
-{schema}
+{schema_text}
 
 Target Sensor UUIDs ({len(group_uuids)} total): {uuid_list_str}
 
@@ -191,46 +222,15 @@ Time Context:
 
 User Request Context: "{user_query}"
 
+{dialect_hints}
+
 CRITICAL REQUIREMENTS:
 1. The schema shows UUIDs as COLUMN NAMES (wide format). You MUST unpivot them using UNION ALL.
-2. The timestamp column is called 'Datetime' (capital D), NOT 'timestamp'.
+2. The timestamp column is called '{ts_col}' (use this exact name in SELECT and WHERE clauses). Alias it as 'timestamp' in final ORDER BY.
 3. For each UUID, generate a SELECT statement and combine with UNION ALL.
-4. ALWAYS use 'Datetime' as the column name in SELECT and WHERE clauses, but use alias 'timestamp' in global ORDER BY.
+4. ALWAYS use '{ts_col}' in SELECT/WHERE, alias 'timestamp' in ORDER BY.
 5. DO NOT add LIMIT clauses within individual UNION queries - apply global ORDER BY and LIMIT at the end.
 6. For multiple UUIDs, wrap in parentheses and add final ORDER BY timestamp DESC LIMIT 1000.
-
-Single UUID Template:
-SELECT 
-  Datetime AS timestamp, 
-  'uuid_value' AS uuid, 
-  `uuid_value` AS value
-FROM sensor_data
-WHERE `uuid_value` IS NOT NULL
-  AND [TIME_FILTER_USING_Datetime]
-ORDER BY timestamp DESC
-LIMIT 1000;
-
-Multiple UUIDs Template:
-(
-  SELECT Datetime AS timestamp, 'uuid1' AS uuid, `uuid1` AS value
-  FROM sensor_data
-  WHERE `uuid1` IS NOT NULL AND Datetime >= [TIME_FILTER]
-)
-UNION ALL
-(
-  SELECT Datetime AS timestamp, 'uuid2' AS uuid, `uuid2` AS value
-  FROM sensor_data
-  WHERE `uuid2` IS NOT NULL AND Datetime >= [TIME_FILTER]
-)
-ORDER BY timestamp DESC
-LIMIT 1000;
-
-Time Filter Rules:
-- If "today" in query: Datetime >= CURDATE() AND Datetime < CURDATE() + INTERVAL 1 DAY
-- If "yesterday" in query: Datetime >= CURDATE() - INTERVAL 1 DAY AND Datetime < CURDATE()
-- If "last N hours" in query: Datetime >= NOW() - INTERVAL N HOUR
-- If "last N days" in query: Datetime >= NOW() - INTERVAL N DAY
-- Otherwise (default): Datetime >= NOW() - INTERVAL 1 DAY
 
 Return ONLY the SQL query, no markdown, no explanations.
 """
@@ -239,9 +239,16 @@ Return ONLY the SQL query, no markdown, no explanations.
                 
                 logger.info(f"\n📝 Generated SQL for UUIDs ({storage_key}):")
                 logger.info(f"   {sql_query}")
-                
-                logger.info(f"\n⚙️  Executing SQL query...")
-                results = await self._execute_query(sql_query)
+
+                logger.info(f"\n⚙️  Executing SQL query via adapter ({adapter.adapter_type.value if adapter else 'unknown'})...")
+                if adapter:
+                    query_result = await adapter.execute_query(sql_query)
+                    results = query_result.data if query_result.success else []
+                    if not query_result.success:
+                        logger.warning(f"Adapter query failed: {query_result.error}")
+                else:
+                    logger.error("No adapter available for storage: " + storage_key)
+                    results = []
                 
                 # AUTO-EXPAND: If 0 rows and user didn't specify an explicit time range,
                 # fall back to fetching the most recent available data regardless of date.
@@ -302,79 +309,41 @@ Return ONLY the SQL query, no markdown, no explanations.
             return {"success": False, "error": str(e)}
 
     async def _get_all_db_columns(self) -> set:
-        """Get set of all column names across all tables to validate UUIDs"""
+        """Get all column names from the default adapter (for UUID validation)."""
         try:
-            columns = set()
-            conn = await aiomysql.connect(**self.db_config)
-            async with conn.cursor() as cursor:
-                await cursor.execute("SHOW TABLES")
-                tables = await cursor.fetchall()
-                for (table_name,) in tables:
-                    await cursor.execute(f"DESCRIBE {table_name}")
-                    cols = await cursor.fetchall()
-                    for col in cols:
-                        columns.add(col[0]) # Column name is first element
-            conn.close()
-            return columns
+            adapter = adapter_registry.get()
+            if adapter:
+                return await adapter.get_columns()
+            return set()
         except Exception as e:
-            logger.error(f"Failed to get DB columns: {e}")
+            logger.error(f"Failed to get DB columns via adapter: {e}")
             return set()
 
     async def _get_schema(self) -> str:
-        """Get database schema information with intelligent column detection"""
-        try:
-            conn = await aiomysql.connect(**self.db_config)
-            async with conn.cursor() as cursor:
-                # Get table names
-                await cursor.execute("SHOW TABLES")
-                tables = await cursor.fetchall()
-                
-                schema_info = "Database Schema:\n\n"
-                timestamp_col_detected = None
-                
-                for (table_name,) in tables:
-                    schema_info += f"Table: {table_name}\n"
-                    
-                    # Get column info
-                    await cursor.execute(f"DESCRIBE {table_name}")
-                    columns = await cursor.fetchall()
-                    
-                    for col in columns:
-                        col_name = col[0]
-                        col_type = col[1]
-                        schema_info += f"  - {col_name} ({col_type})\n"
-                        
-                        # Detect timestamp/datetime column
-                        if not timestamp_col_detected:
-                            col_lower = col_name.lower()
-                            type_lower = col_type.decode('utf-8').lower() if isinstance(col_type, bytes) else str(col_type).lower()
-                            if 'datetime' in col_lower or 'timestamp' in col_lower or 'date' in type_lower or 'time' in type_lower:
-                                timestamp_col_detected = col_name
-                    
-                    schema_info += "\n"
-                
-                # Add critical note about timestamp column
-                if timestamp_col_detected:
-                    schema_info += f"\n⚠️  CRITICAL: The timestamp column is named '{timestamp_col_detected}' (case-sensitive).\n"
-                    schema_info += f"    Always use '{timestamp_col_detected}' in SELECT, WHERE, and ORDER BY clauses.\n"
-                    schema_info += f"    You can alias it as 'timestamp' in SELECT (e.g., '{timestamp_col_detected} AS timestamp').\n"
-                
-                conn.close()
-                return schema_info
-                
-        except Exception as e:
-            logger.error(f"Schema retrieval error: {e}")
-            return "Schema unavailable"
-    
+        """Get schema text from the default adapter."""
+        return adapter_registry.get_schema_text()
+
     async def _generate_sql(self, user_query: str, schema: str) -> str:
-        """Generate SQL query using LLM"""
-        
+        """Generate SQL query using LLM with dialect-aware prompts (C.2)."""
+
         # Parse time references
         time_context = self._parse_time_references(user_query)
-        
+
+        # C.2: Get dialect hints from the active adapter; fall back to MySQL
+        try:
+            adapter = adapter_registry.get()
+            dialect_hints = self._prompt_builder.sql_dialect_hints(adapter)
+        except Exception:
+            dialect_hints = self._prompt_builder.sql_dialect_hints()
+
+        schema_with_tz = self._prompt_builder.sql_schema_hints(schema)
+
         sql_prompt = f"""You are a SQL expert for building time-series data.
 
-{schema}
+{schema_with_tz}
+
+=== DIALECT & SYNTAX RULES ===
+{dialect_hints}
 
 IMPORTANT: The 'sensor_data' table uses a WIDE format where each sensor UUID is a COLUMN name.
 The table has a 'Datetime' column (capital D) and many columns named after sensor UUIDs (e.g., '5dd84aa6...').
@@ -392,23 +361,6 @@ CRITICAL RULES:
 5. Limit to 1000 rows max.
 6. Order by 'timestamp DESC'.
 
-Time Filter Examples:
-- Today: WHERE Datetime >= CURDATE() AND Datetime < CURDATE() + INTERVAL 1 DAY
-- Yesterday: WHERE Datetime >= CURDATE() - INTERVAL 1 DAY AND Datetime < CURDATE()
-- Last N hours: WHERE Datetime >= NOW() - INTERVAL N HOUR
-- Default (24h): WHERE Datetime >= NOW() - INTERVAL 1 DAY
-
-Template:
-SELECT 
-  Datetime AS timestamp,
-  `uuid_column` AS value,
-  'uuid_value' AS uuid
-FROM sensor_data 
-WHERE Datetime >= [TIME_CONDITION]
-  AND `uuid_column` IS NOT NULL
-ORDER BY timestamp DESC 
-LIMIT 1000;
-
 Respond with ONLY the SQL query, no markdown, no explanations."""
 
         response = await llm_manager.generate(sql_prompt)
@@ -424,7 +376,7 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
         """Parse time references from natural language"""
         query_lower = query.lower()
         try:
-            now = datetime.now(ZoneInfo("Europe/London"))
+            now = datetime.now(ZoneInfo(settings.BUILDING_TIMEZONE))
         except Exception:
             now = datetime.now()
         
@@ -500,31 +452,23 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
                  
         return True
 
+    _SQL_SAFETY_LIMIT = 10000
+
     async def _execute_query(self, sql: str) -> List[Dict[str, Any]]:
-        """Execute SQL query and return results"""
+        """Execute SQL query via the adapter registry (delegates to the default/MySQL adapter)."""
         try:
-            # Validate SQL before execution
-            self.validate_sql(sql)
-            
-            conn = await aiomysql.connect(**self.db_config)
-            async with conn.cursor(aiomysql.DictCursor) as cursor:
-                await cursor.execute(sql)
-                results = await cursor.fetchall()
-                
-                conn.close()
-                
-                # Convert Decimal to float and datetime to string for JSON serialization
-                from decimal import Decimal
-                for row in results:
-                    for key, value in row.items():
-                        if isinstance(value, Decimal):
-                            row[key] = float(value)
-                        elif isinstance(value, datetime):
-                            row[key] = value.isoformat()
-                
-                logger.info(f"SQL query returned {len(results)} rows")
-                return results
-                
+            # Phase 5.2: Enforce LIMIT safety cap if query doesn't already have one
+            if "LIMIT" not in sql.upper():
+                sql = sql.rstrip().rstrip(";") + f" LIMIT {self._SQL_SAFETY_LIMIT};"
+
+            adapter = adapter_registry.get()
+            if not adapter:
+                raise RuntimeError("No database adapter available")
+            result = await adapter.execute_query(sql)
+            if not result.success:
+                raise Exception(f"Adapter query failed: {result.error}")
+            logger.info(f"SQL query returned {result.row_count} rows")
+            return result.data
         except Exception as e:
             logger.error(f"SQL execution error: {e}")
             raise Exception(f"Failed to execute SQL query: {str(e)}")

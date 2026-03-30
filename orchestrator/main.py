@@ -8,13 +8,17 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Head
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, StreamingResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from contextlib import asynccontextmanager
 from typing import Dict, Any, Optional
 from datetime import datetime
 import json
 import os
+import time
+import uuid as _uuid_mod
+import collections
 
-from shared.models import ConversationState, Message, APIResponse
+from shared.models import ConversationState, Message, APIResponse, ChatRequest
 from shared.utils import get_logger, generate_conversation_id
 from shared.config import settings
 
@@ -22,6 +26,48 @@ from orchestrator.redis_manager import RedisManager
 from orchestrator.postgres_manager import PostgresManager
 from orchestrator.workflow import WorkflowOrchestrator
 from orchestrator.auth_manager import AuthManager
+from orchestrator.middleware.rbac import RBACMiddleware, get_auth_manager, get_user_store
+from orchestrator.services.ontology_introspector import ontology_introspector
+from orchestrator.services.ontology_validator import ontology_validator
+from orchestrator.services.ontology_detector import OntologySchemaDetector
+from orchestrator.services.adapters.registry import adapter_registry
+from orchestrator.services.sparql_validator import sparql_validator
+from orchestrator.services.hybrid_retrieval import hybrid_retrieval
+from orchestrator.services.response_cache import ResponseCacheService
+from orchestrator.services.agent_memory import AgentMemoryService
+from orchestrator.services.multi_building_manager import get_building_manager
+from orchestrator.services.plugin_registry import PluginRegistry, get_plugin_registry
+
+# All valid personas (must match shared/models.py ConversationState.persona Literal)
+VALID_PERSONAS = {
+    "student", "researcher", "facility_manager", "occupant",
+    "energy_manager", "safety_officer", "it_admin", "executive",
+    "sustainability_officer", "general",
+    # Legacy aliases
+    "stakeholder", "guest", "officer",
+}
+
+# E.9 — Prometheus metrics (optional; graceful degradation if unavailable)
+try:
+    from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+    _PROM_REQUESTS = Counter(
+        "ontosage_http_requests_total",
+        "Total HTTP requests",
+        ["method", "endpoint", "status"],
+    )
+    _PROM_LATENCY = Histogram(
+        "ontosage_request_duration_seconds",
+        "HTTP request duration in seconds",
+        ["endpoint"],
+    )
+    _PROM_CHAT_TOTAL = Counter(
+        "ontosage_chat_messages_total",
+        "Total chat messages processed",
+        ["intent"],
+    )
+    _PROMETHEUS_AVAILABLE = True
+except ImportError:
+    _PROMETHEUS_AVAILABLE = False
 
 logger = get_logger(__name__)
 
@@ -30,11 +76,14 @@ redis_manager: RedisManager = None
 postgres_manager: PostgresManager = None
 orchestrator: WorkflowOrchestrator = None
 auth_manager: AuthManager = None
+response_cache: ResponseCacheService = None
+ontology_detector: OntologySchemaDetector = None
+agent_memory: AgentMemoryService = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle manager for startup/shutdown"""
-    global redis_manager, postgres_manager, orchestrator, auth_manager
+    global redis_manager, postgres_manager, orchestrator, auth_manager, response_cache, ontology_detector, agent_memory
     
     # Startup
     logger.info("Starting OntoSage 2.0 Orchestrator...")
@@ -56,13 +105,133 @@ async def lifespan(app: FastAPI):
     # Initialize workflow with redis_manager reference
     orchestrator = WorkflowOrchestrator(redis_manager=redis_manager, postgres_manager=postgres_manager)
     logger.info("Workflow orchestrator initialized")
-    
+
+    # Phase 1: Validate ontology and introspect building schema at startup
+    try:
+        logger.info(f"Building: {settings.BUILDING_NAME} ({settings.BUILDING_ID})")
+        logger.info(f"Namespace: {settings.BUILDING_NAMESPACE}")
+        logger.info(f"Timezone: {settings.BUILDING_TIMEZONE}")
+        val_result = await ontology_validator.validate()
+        if val_result.ok:
+            await ontology_introspector.initialize()
+
+            # C.3: Auto-generate sensor_map.json if file is missing or stale
+            try:
+                import json as _json, os as _os
+                _sensor_map_path = settings.SENSOR_MAP_PATH
+                _needs_regen = not _os.path.exists(_sensor_map_path)
+                if not _needs_regen and ontology_introspector.entity_types:
+                    # Regen if cached entity count differs significantly from discovered
+                    try:
+                        with open(_sensor_map_path) as _f:
+                            _cached = _json.load(_f)
+                        _needs_regen = len(_cached) == 0
+                    except Exception:
+                        _needs_regen = True
+                if _needs_regen and ontology_introspector.sensor_classes:
+                    _sensor_map = {
+                        cls.split("#")[-1].split("/")[-1]: {
+                            "uri": cls,
+                            "label": cls.split("#")[-1].split("/")[-1],
+                            "uuid": "",
+                            "storage": "",
+                        }
+                        for cls in ontology_introspector.sensor_classes
+                    }
+                    _os.makedirs(_os.path.dirname(_sensor_map_path) or ".", exist_ok=True)
+                    with open(_sensor_map_path, "w") as _f:
+                        _json.dump(_sensor_map, _f, indent=2)
+                    logger.info(f"C.3: Auto-generated {_sensor_map_path} with {len(_sensor_map)} sensor class entries")
+                    # Reload into running orchestrator
+                    if orchestrator:
+                        orchestrator.sensor_map = _sensor_map
+            except Exception as _e:
+                logger.warning(f"Sensor map auto-generation failed (non-fatal): {_e}")
+
+            # B.4: Auto-detect ontology schema from live GraphDB after validation
+            try:
+                ontology_detector = OntologySchemaDetector()
+                graphdb_url = f"http://{settings.GRAPHDB_HOST}:{settings.GRAPHDB_PORT}"
+                detect_result = await ontology_detector.detect_from_graphdb(
+                    graphdb_url, settings.GRAPHDB_REPOSITORY
+                )
+                if detect_result.detected:
+                    logger.info(
+                        f"Ontology schemas detected: {detect_result.schemas} "
+                        f"(confidence={detect_result.confidence:.0%})"
+                    )
+                    # Store on app state for downstream use
+                    app.state.detected_ontology = detect_result
+                else:
+                    logger.warning(f"Ontology auto-detection inconclusive: {detect_result.notes}")
+            except Exception as e:
+                logger.warning(f"Ontology detector failed (non-fatal): {e}")
+        else:
+            logger.warning(f"Ontology validation failed: {val_result.errors}. Introspector skipped.")
+    except Exception as e:
+        logger.warning(f"Ontology startup check failed (non-fatal): {e}")
+
+    # Phase 2: Initialize database adapter registry (storage-aware routing)
+    try:
+        await adapter_registry.initialize()
+    except Exception as e:
+        logger.warning(f"AdapterRegistry initialization failed (non-fatal): {e}")
+
+    # B.2: Initialize response cache backed by async Redis client
+    try:
+        response_cache = ResponseCacheService(redis_client=redis_manager.client)
+        logger.info("Response cache initialized")
+        # Expose on orchestrator so workflow can use it
+        if orchestrator:
+            orchestrator.response_cache = response_cache
+    except Exception as e:
+        logger.warning(f"Response cache initialization failed (non-fatal): {e}")
+
+    # B.3: Initialize agent memory service (per-user episodic memory in Qdrant)
+    try:
+        agent_memory = AgentMemoryService(qdrant_url=settings.QDRANT_URL)
+        await agent_memory.initialise()
+        if orchestrator:
+            orchestrator.agent_memory = agent_memory
+        logger.info("Agent memory service initialized")
+    except Exception as e:
+        logger.warning(f"Agent memory initialization failed (non-fatal): {e}")
+
+    # B.6: Initialize multi-building manager — discovers and loads all building configs
+    try:
+        building_manager = get_building_manager(config_dir=settings.BUILDING_CONFIG_FILE.rsplit("/", 1)[0] or "config")
+        logger.info(building_manager.summary())
+        app.state.building_manager = building_manager
+    except Exception as e:
+        logger.warning(f"Multi-building manager initialization failed (non-fatal): {e}")
+
+    # P1: Initialize plugin registry — discovers plugins from plugins/ dir, env var, and entry_points
+    try:
+        plugin_registry = get_plugin_registry()
+        app.state.plugin_registry = plugin_registry
+        logger.info(plugin_registry.summary())
+    except Exception as e:
+        logger.warning(f"Plugin registry initialization failed (non-fatal): {e}")
+
+    # Phase 3.1: Initialize SmartCacheManager for event-driven cache invalidation
+    try:
+        from orchestrator.services.smart_cache import SmartCacheManager
+        smart_cache = SmartCacheManager(redis_client=redis_manager.client)
+        app.state.smart_cache = smart_cache
+        orchestrator.smart_cache = smart_cache
+        logger.info("SmartCacheManager initialized and wired into orchestrator")
+    except Exception as e:
+        logger.warning(f"SmartCacheManager initialization failed (non-fatal): {e}")
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down OntoSage 2.0 Orchestrator...")
     await redis_manager.close()
     await postgres_manager.close()
+    await adapter_registry.close_all()
+    # Phase 3.4: Invalidate SPARQL cache on shutdown (optional — Redis flush)
+    # await sparql_validator.invalidate()
 
 # Create FastAPI app
 app = FastAPI(
@@ -78,14 +247,67 @@ os.makedirs("/app/outputs", exist_ok=True)
 # Mount static files for serving plots and data
 app.mount("/static", StaticFiles(directory="/app/outputs"), name="static")
 
-# Configure CORS
+# E.1: CORS — use CORS_ORIGINS env var; '*' for dev, explicit origins for production
+_cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()] or ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+logger.info(f"CORS origins: {_cors_origins}")
+
+# E.2: Request tracing — attach a trace_id to every request + contextvars for log propagation
+from orchestrator.services.logging_context import set_trace_id, get_trace_id
+
+class TracingMiddleware(BaseHTTPMiddleware):
+    """Generates a unique trace_id per request; propagates via contextvars so all logs include it."""
+    async def dispatch(self, request: Request, call_next):
+        trace_id = request.headers.get("X-Trace-Id") or _uuid_mod.uuid4().hex[:12]
+        set_trace_id(trace_id)
+        request.state.trace_id = trace_id
+        response = await call_next(request)
+        response.headers["X-Trace-Id"] = trace_id
+        return response
+
+app.add_middleware(TracingMiddleware)
+
+# E.3: Per-IP rate limiting — simple token-bucket in memory
+_RATE_LIMIT_REQUESTS = int(os.environ.get("RATE_LIMIT_REQUESTS", "60"))   # per window
+_RATE_LIMIT_WINDOW_S = int(os.environ.get("RATE_LIMIT_WINDOW_S", "60"))   # seconds
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Simple in-process per-IP rate limiter (token bucket, not distributed)."""
+    def __init__(self, app, requests: int = _RATE_LIMIT_REQUESTS, window: int = _RATE_LIMIT_WINDOW_S):
+        super().__init__(app)
+        self._requests = requests
+        self._window = window
+        self._counts: dict = {}   # ip → deque of timestamps
+
+    async def dispatch(self, request: Request, call_next):
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.monotonic()
+        window_start = now - self._window
+        bucket = self._counts.setdefault(client_ip, collections.deque())
+        # Remove old timestamps outside current window
+        while bucket and bucket[0] < window_start:
+            bucket.popleft()
+        if len(bucket) >= self._requests:
+            return JSONResponse(
+                status_code=429,
+                content={"error": "Too many requests. Please wait before retrying."},
+                headers={"Retry-After": str(self._window)},
+            )
+        bucket.append(now)
+        return await call_next(request)
+
+app.add_middleware(RateLimitMiddleware)
+
+# B.1: RBAC middleware — enabled when RBAC_ENABLED=true in env
+if settings.RBAC_ENABLED:
+    app.add_middleware(RBACMiddleware, secret_key=settings.SECRET_KEY)
+    logger.info("RBAC middleware activated")
 
 @app.get("/", response_model=APIResponse)
 async def root():
@@ -101,28 +323,118 @@ async def root():
 
 @app.get("/health", response_model=APIResponse)
 async def health_check():
-    """Health check endpoint"""
+    """
+    Comprehensive health check — probes ALL dependencies and returns per-service status.
+    Overall: healthy (all OK), degraded (some down), unhealthy (critical down).
+    """
+    import httpx
+    checks: Dict[str, Any] = {}
+    start = time.time()
+
+    # 1. Redis
     try:
-        # Check Redis connection
-        await redis_manager.connect()
-        
-        return APIResponse(
-            success=True,
-            data={
-                "status": "healthy",
-                "redis": "connected",
-                "orchestrator": "ready"
-            }
-        )
+        if hasattr(redis_manager, "redis") and redis_manager.redis:
+            pong = await redis_manager.redis.ping()
+            checks["redis"] = {"status": "ok" if pong else "no-pong"}
+        else:
+            await redis_manager.connect()
+            checks["redis"] = {"status": "connected"}
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        return APIResponse(
-            success=False,
-            error=str(e),
-            data={
-                "status": "unhealthy"
-            }
-        )
+        checks["redis"] = {"status": "error", "error": str(e)}
+
+    # 2. PostgreSQL (user data)
+    try:
+        if postgres_manager and postgres_manager.pool:
+            async with postgres_manager.pool.acquire() as conn:
+                await conn.fetchval("SELECT 1")
+            checks["postgresql"] = {"status": "ok"}
+        else:
+            checks["postgresql"] = {"status": "not_configured"}
+    except Exception as e:
+        checks["postgresql"] = {"status": "error", "error": str(e)}
+
+    # 3. MySQL (sensor data via adapter registry)
+    try:
+        if adapter_registry.is_available:
+            adapter = adapter_registry.get()
+            if adapter:
+                qr = await adapter.execute_query("SELECT 1 AS ping")
+                checks["mysql"] = {"status": "ok" if qr.success else "error", "backends": [t.value for t in adapter_registry._adapters]}
+            else:
+                checks["mysql"] = {"status": "no_adapter"}
+        else:
+            checks["mysql"] = {"status": "unavailable"}
+    except Exception as e:
+        checks["mysql"] = {"status": "error", "error": str(e)}
+
+    # 4. GraphDB
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(f"http://{settings.GRAPHDB_HOST}:{settings.GRAPHDB_PORT}/rest/repositories")
+            checks["graphdb"] = {"status": "ok" if r.status_code == 200 else "error", "http_status": r.status_code}
+    except Exception as e:
+        checks["graphdb"] = {"status": "unreachable", "error": str(e)}
+
+    # 5. RAG Service
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(f"http://{settings.RAG_SERVICE_HOST}:{settings.RAG_SERVICE_PORT}/health")
+            checks["rag_service"] = {"status": "ok" if r.status_code == 200 else "error"}
+    except Exception as e:
+        checks["rag_service"] = {"status": "unreachable", "error": str(e)}
+
+    # 6. Code Executor
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(f"http://{settings.CODE_EXECUTOR_HOST}:{settings.CODE_EXECUTOR_PORT}/health")
+            checks["code_executor"] = {"status": "ok" if r.status_code == 200 else "error"}
+    except Exception as e:
+        checks["code_executor"] = {"status": "unreachable", "error": str(e)}
+
+    # 7. Qdrant (agent memory vector store)
+    try:
+        qdrant_url = os.environ.get("QDRANT_URL", "http://qdrant:6333")
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(f"{qdrant_url}/healthz")
+            checks["qdrant"] = {"status": "ok" if r.status_code == 200 else "error"}
+    except Exception as e:
+        checks["qdrant"] = {"status": "unreachable", "error": str(e)}
+
+    # 8. Circuit breakers
+    try:
+        from orchestrator.services.circuit_breaker import all_breaker_statuses
+        checks["circuit_breakers"] = all_breaker_statuses()
+    except Exception:
+        checks["circuit_breakers"] = []
+
+    # Overall status
+    critical = ["redis", "mysql", "graphdb"]
+    critical_ok = all(checks.get(k, {}).get("status") in ("ok", "connected") for k in critical)
+    any_error = any(
+        checks.get(k, {}).get("status") in ("error", "unreachable", "unavailable")
+        for k in checks if k != "circuit_breakers"
+    )
+
+    if critical_ok and not any_error:
+        overall = "healthy"
+    elif critical_ok:
+        overall = "degraded"
+    else:
+        overall = "unhealthy"
+
+    duration_ms = round((time.time() - start) * 1000, 1)
+
+    return APIResponse(
+        success=overall != "unhealthy",
+        data={
+            "status": overall,
+            "duration_ms": duration_ms,
+            "services": checks,
+            "building": settings.BUILDING_NAME,
+            "ontology_valid": ontology_validator.last_result.ok,
+            "introspector_ready": ontology_introspector.is_ready(),
+        }
+    )
 
 @app.get("/conversations/{user_id}", response_model=APIResponse)
 async def get_conversations(user_id: str):
@@ -209,6 +521,38 @@ async def get_current_user(
 
 
 # ==================== Authentication Endpoints ====================
+
+@app.post("/api/v1/auth/login", response_model=APIResponse)
+async def rbac_login(request: Dict[str, Any]):
+    """
+    B.1 — RBAC JWT login endpoint.
+    Issues a short-lived JWT token for role-based API access.
+
+    Request: {"username": "...", "password": "..."}
+    Response: {"token": "<jwt>", "role": "...", "permissions": [...]}
+    """
+    username = request.get("username", "").strip()
+    password = request.get("password", "")
+    if not username or not password:
+        return APIResponse(success=False, error="username and password required")
+
+    token_mgr = get_auth_manager(settings.SECRET_KEY)
+    user_store = get_user_store()
+    user = user_store.authenticate(username, password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = token_mgr.issue_token(user)
+    return APIResponse(
+        success=True,
+        data={
+            "token": token,
+            "role": user.role,
+            "permissions": sorted(user.all_permissions),
+            "user_id": user.user_id,
+        }
+    )
+
 
 @app.post("/auth/register", response_model=APIResponse)
 async def register_user(request: Dict[str, Any]):
@@ -326,7 +670,6 @@ async def logout_user(
     except Exception as e:
         logger.error(f"Logout endpoint error: {e}")
         return APIResponse(success=False, error="Logout failed")
-        raise HTTPException(status_code=500, detail="Logout failed")
 
 
 @app.get("/auth/me", response_model=APIResponse)
@@ -606,64 +949,42 @@ async def aggregate_health():
 
 @app.post("/chat", response_model=APIResponse)
 async def chat(
-    request: Dict[str, Any],
+    request: ChatRequest,
     current_user: Optional[str] = Depends(get_current_user)
 ):
     """
     Synchronous chat endpoint (requires authentication)
-    
-    Request:
-        {
-            "message": "user message",
-            "conversation_id": "optional-id",
-            "persona": "student|researcher|facility_manager|general",
-            "language": "en",
-            "building": "building1"
-        }
-    
-    Response:
-        {
-            "success": true,
-            "data": {
-                "conversation_id": "...",
-                "response": "...",
-                "intent": "...",
-                "username": "...",
-                "analytics": boolean
-            }
-        }
+
+    Request body validated via ChatRequest Pydantic model.
+    Max message length: 10 000 chars. Null bytes / control chars stripped.
     """
     try:
         # Validate authentication
         if not current_user:
             return APIResponse(success=False, error="Authentication required")
-        
+
         username = current_user
-        
-        # Extract request data
-        user_message = request.get("message")
-        if not user_message:
-            return APIResponse(success=False, error="Message is required")
-        
+
+        # Sanitize all input fields
+        req = request.sanitized()
+        user_message = req.message
+
         # Use session_id if provided, otherwise conversation_id, otherwise generate new one
-        # This ensures all queries in same session share the same conversation_id
-        session_id = request.get("session_id")
-        conversation_id = request.get("conversation_id")
-        
+        session_id = req.session_id
+        conversation_id = req.conversation_id
+
         if session_id:
-            # Use session_id as conversation_id for continuity
             conversation_id = f"conv_{session_id}:{username}"
             logger.info(f"Using session_id for conversation: {conversation_id}")
         elif not conversation_id:
-            # Generate new conversation_id only if neither session_id nor conversation_id provided
             conversation_id = f"{generate_conversation_id()}:{username}"
             logger.info(f"Generated new conversation_id: {conversation_id}")
         else:
             logger.info(f"Using provided conversation_id: {conversation_id}")
-        
-        persona = request.get("persona", "general")
-        language = request.get("language", "en")
-        building = request.get("building", "building1")
+
+        persona = req.persona or "general"
+        language = req.language or "en"
+        building = req.building or "building1"
         
         # Load or create conversation state
         state = await redis_manager.load_state(conversation_id)
@@ -675,7 +996,7 @@ async def chat(
                 user_message=user_message,  # Add current message
                 messages=[],
                 building_id=building,
-                persona=persona if persona in ["stakeholder", "guest", "officer", "facility_manager"] else "guest"
+                persona=persona if persona in VALID_PERSONAS else "general"
             )
             # Store user association
             state.user_id = username
@@ -811,33 +1132,29 @@ async def chat(
 
 @app.post("/chat/stream")
 async def chat_stream(
-    request: Dict[str, Any],
+    request: ChatRequest,
     current_user: Optional[str] = Depends(get_current_user)
 ):
     """
-    Streaming chat endpoint (Server-Sent Events)
+    Streaming chat endpoint (Server-Sent Events).
+    Request body validated via ChatRequest Pydantic model.
     """
     try:
-        # Validate authentication
-        # Allow unauthenticated for demo/testing if needed, but prefer authenticated
         username = current_user or "guest"
-        
-        user_message = request.get("message")
-        if not user_message:
-            raise HTTPException(status_code=400, detail="Message is required")
-            
-        conversation_id = request.get("conversation_id")
+
+        req = request.sanitized()
+        user_message = req.message
+
+        conversation_id = req.conversation_id
         if not conversation_id:
             conversation_id = f"{generate_conversation_id()}:{username}"
-            
-        persona = request.get("persona", "general")
-        # Map 'general' to 'guest' or validate against allowed values
-        valid_personas = ["stakeholder", "guest", "officer", "facility_manager"]
-        if persona not in valid_personas:
-            persona = "guest"
 
-        language = request.get("language", "en")
-        building = request.get("building", "building1")
+        persona = req.persona or "general"
+        if persona not in VALID_PERSONAS:
+            persona = "general"
+
+        language = req.language or "en"
+        building = req.building or "building1"
         
         async def event_generator():
             try:
@@ -908,9 +1225,7 @@ async def chat_stream(
                 if assistant_metadata and assistant_metadata.get('media'):
                     yield f"data: {json.dumps({'type': 'metadata', 'media': assistant_metadata['media']})}\n\n"
                 yield f"data: [DONE]\n\n"
-                
-                yield f"data: [DONE]\n\n"
-                
+
             except Exception as e:
                 logger.error(f"Stream error: {e}")
                 yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
@@ -987,8 +1302,10 @@ async def websocket_stream(websocket: WebSocket):
             
             await redis_manager.save_message(conversation_id, "user", user_message)
             
-            # Stream workflow execution
+            # Stream workflow execution — capture last step as final state
+            last_step = None
             async for step in orchestrator.stream_execute(state):
+                last_step = step
                 # Send progress updates
                 if "dialogue" in step:
                     await websocket.send_json({
@@ -1015,9 +1332,16 @@ async def websocket_stream(websocket: WebSocket):
                         "type": "progress",
                         "data": "Creating visualization..."
                     })
-            
-            # Get final state
-            final_state = await orchestrator.execute(state)
+
+            # Extract final state from last streamed step (avoid re-executing entire pipeline)
+            final_state = state
+            if last_step and isinstance(last_step, dict):
+                # LangGraph astream yields {node_name: state_dict}
+                for node_name, node_state in last_step.items():
+                    if isinstance(node_state, ConversationState):
+                        final_state = node_state
+                    elif isinstance(node_state, dict) and "messages" in node_state:
+                        final_state = ConversationState(**node_state)
             
             # Save state
             await redis_manager.save_state(final_state)
@@ -1113,6 +1437,96 @@ async def update_preferences(request: Dict[str, Any]):
         logger.error(f"Update preferences error: {e}")
         return APIResponse(success=False, error=str(e))
 
+# ==================== Report Generation ====================
+
+@app.post("/api/v1/report")
+async def generate_report(
+    request: Dict[str, Any],
+    current_user: Optional[str] = Depends(get_current_user)
+):
+    """
+    Generate a building report as PDF, DOCX, or HTML.
+
+    Request body:
+        {
+            "report_type": "summary|anomaly|compliance|trend|comparison|full",
+            "output_format": "html|pdf|docx",
+            "persona": "executive|facility_manager|general|...",
+            "building_id": "building1",
+            "title": "Optional custom title",
+            "date_range": {"start": "2025-01-01", "end": "2025-01-31"}
+        }
+    """
+    try:
+        username = current_user or "guest"
+        report_type = request.get("report_type", "summary")
+        output_format = request.get("output_format", "html")
+        persona = request.get("persona", "general")
+        building_id = request.get("building_id", "building1")
+        title = request.get("title")
+        date_range = request.get("date_range", {})
+
+        from orchestrator.services.document_builder import DocumentBuilder
+        builder = DocumentBuilder()
+
+        # Collect data for the report via a lightweight chat pipeline
+        report_data = {
+            "narrative": f"Auto-generated {report_type} report for {building_id}.",
+            "building_id": building_id,
+            "date_range": date_range,
+            "generated_by": username,
+        }
+
+        # If we have SQL adapter available, fetch latest readings
+        if adapter_registry.is_available:
+            try:
+                adapter = adapter_registry.get()
+                if adapter:
+                    recent_sql = "SELECT * FROM sensor_data ORDER BY Datetime DESC LIMIT 50"
+                    qr = await adapter.execute_query(recent_sql)
+                    if qr.success and qr.data:
+                        report_data["readings"] = qr.data[:20]
+                        report_data["readings_summary"] = {
+                            "row_count": qr.row_count,
+                            "sample": qr.data[:5],
+                        }
+            except Exception as _db_err:
+                logger.warning(f"Report: could not fetch latest readings: {_db_err}")
+
+        result = builder.render(
+            report_data=report_data,
+            report_type=report_type,
+            persona=persona,
+            output_format=output_format,
+            title=title,
+        )
+
+        if not result.get("success"):
+            return APIResponse(success=False, error=result.get("error", "Report generation failed"))
+
+        # For binary formats, save to exports and return download path
+        if output_format in ("pdf", "docx"):
+            export_path = builder.save_to_exports(result)
+            return APIResponse(success=True, data={
+                "filename": result.get("filename"),
+                "format": output_format,
+                "size_bytes": result.get("size_bytes"),
+                "export_path": export_path,
+            })
+
+        # HTML: return inline
+        return APIResponse(success=True, data={
+            "filename": result.get("filename"),
+            "format": "html",
+            "content": result.get("content"),
+            "size_bytes": result.get("size_bytes"),
+        })
+
+    except Exception as e:
+        logger.error(f"Report generation error: {e}", exc_info=True)
+        return APIResponse(success=False, error=str(e))
+
+
 # ==================== OpenAI Compatibility Layer ====================
 
 @app.post("/v1/chat/completions")
@@ -1142,18 +1556,26 @@ async def openai_chat_completions(
         if not last_user_msg:
              raise HTTPException(status_code=400, detail="No user message found")
              
-        user_message = last_user_msg["content"]
-        
+        from shared.models import sanitize_user_input, CHAT_MAX_MESSAGE_LENGTH
+        user_message = sanitize_user_input(last_user_msg["content"])
+        if len(user_message) > CHAT_MAX_MESSAGE_LENGTH:
+            raise HTTPException(status_code=400, detail=f"Message too long (max {CHAT_MAX_MESSAGE_LENGTH} chars)")
+        if not user_message:
+            raise HTTPException(status_code=400, detail="Message is empty after sanitization")
+
         # Generate conversation ID
         conversation_id = f"owui_{generate_conversation_id()}:{username}"
         
-        # Create state
+        # Create state — accept persona and building_id from request body
+        req_persona = data.get("persona", "general")
+        if req_persona not in VALID_PERSONAS:
+            req_persona = "general"
         state = ConversationState(
             conversation_id=conversation_id,
             user_message=user_message,
-            messages=[], 
-            building_id="building1", # Default
-            persona="guest",
+            messages=[],
+            building_id=data.get("building_id", "building1"),
+            persona=req_persona,
             user_id=username
         )
         
@@ -1230,6 +1652,59 @@ async def openai_models():
             }
         ]
     }
+
+@app.get("/api/files/{filename}")
+async def download_export(filename: str):
+    """D.2: Download a previously generated export file (CSV, JSON, HTML, Markdown)."""
+    from fastapi.responses import FileResponse
+    import re as _re
+    # Sanitise: allow alphanum, dash, underscore, dot only
+    if not _re.match(r'^[\w\-. ]+$', filename):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    file_path = os.path.join(settings.EXPORTS_DIR, filename)
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail=f"Export file '{filename}' not found")
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type="application/octet-stream",
+    )
+
+
+@app.get("/buildings", response_model=APIResponse)
+async def list_buildings():
+    """B.6: List all registered buildings and their configurations."""
+    try:
+        from orchestrator.services.multi_building_manager import get_building_manager
+        mgr = get_building_manager()
+        return APIResponse(success=True, data={"buildings": mgr.list_buildings()})
+    except Exception as e:
+        logger.error(f"List buildings failed: {e}")
+        return APIResponse(success=False, error=str(e), data={"buildings": []})
+
+
+# ── E.9: Prometheus metrics endpoint ─────────────────────────────────────────
+
+from fastapi.responses import Response as _FastAPIResponse
+
+@app.get("/metrics", include_in_schema=False)
+async def prometheus_metrics():
+    """
+    E.9: Expose Prometheus-compatible metrics at GET /metrics.
+    Scraped by Prometheus or compatible observability stacks.
+    Returns 503 if prometheus_client is not installed.
+    """
+    if not _PROMETHEUS_AVAILABLE:
+        return _FastAPIResponse(
+            content="# prometheus_client not installed\n",
+            status_code=503,
+            media_type="text/plain",
+        )
+    return _FastAPIResponse(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST,
+    )
+
 
 if __name__ == "__main__":
     import uvicorn

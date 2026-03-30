@@ -1,0 +1,73 @@
+{
+  "_doc": "Few-shot examples for intent detection. Key format: 'persona|intent'. Each value is an array of {q, a} examples. At prompt time, 1-2 matching examples are injected before the user query.",
+
+  "general|metadata": [
+    {"q": "How many sensors are in zone 5.01?", "a": "{\"intent\":\"metadata\",\"entities\":[\"Zone_5.01\"],\"required_analytics\":[\"count\"]}"},
+    {"q": "What type of sensor is Air_Temperature_Sensor_5.04?", "a": "{\"intent\":\"metadata\",\"entities\":[\"Air_Temperature_Sensor_5.04\"],\"required_analytics\":[]}"}
+  ],
+  "general|analytics": [
+    {"q": "What is the current CO2 level in zone 5.06?", "a": "{\"intent\":\"analytics\",\"entities\":[\"Zone_5.06\"],\"required_analytics\":[\"latest\"]}"},
+    {"q": "What was the average temperature last week?", "a": "{\"intent\":\"analytics\",\"entities\":[],\"required_analytics\":[\"avg\"],\"time_range\":{\"start\":\"now-7d\",\"end\":\"now\"}}"}
+  ],
+  "general|discovery": [
+    {"q": "What zones are in the building?", "a": "{\"intent\":\"discovery\",\"entities\":[],\"discovery_filter\":\"zones\"}"},
+    {"q": "What types of sensors do we have?", "a": "{\"intent\":\"discovery\",\"entities\":[],\"discovery_filter\":\"sensor types\"}"}
+  ],
+  "general|report": [
+    {"q": "Generate a weekly summary report", "a": "{\"intent\":\"report\",\"entities\":[],\"report_type\":\"summary\"}"},
+    {"q": "Show me an anomaly report for air quality", "a": "{\"intent\":\"report\",\"entities\":[],\"report_type\":\"anomaly\"}"}
+  ],
+  "general|export": [
+    {"q": "Export CO2 data for zone 5.01 as CSV", "a": "{\"intent\":\"export\",\"entities\":[\"Zone_5.01\"],\"export_format\":\"csv\"}"}
+  ],
+  "general|compliance": [
+    {"q": "Check ASHRAE 55 compliance for the building", "a": "{\"intent\":\"compliance\",\"entities\":[],\"required_analytics\":[]}"},
+    {"q": "Are we meeting WELL standard for air quality?", "a": "{\"intent\":\"compliance\",\"entities\":[],\"required_analytics\":[]}"}
+  ],
+  "general|planner": [
+    {"q": "Generate a CO2 report and export as PDF", "a": "{\"intent\":\"planner\",\"entities\":[],\"report_type\":\"summary\",\"export_format\":\"pdf\"}"}
+  ],
+
+  "facility_manager|analytics": [
+    {"q": "Which zones have the highest energy consumption this month?", "a": "{\"intent\":\"analytics\",\"entities\":[],\"required_analytics\":[\"max\",\"sum\"],\"time_range\":{\"start\":\"now-30d\",\"end\":\"now\"}}"},
+    {"q": "Are there any HVAC issues in the east wing?", "a": "{\"intent\":\"anomaly\",\"entities\":[],\"required_analytics\":[\"anomaly\"]}"}
+  ],
+  "facility_manager|report": [
+    {"q": "Give me this week's maintenance summary", "a": "{\"intent\":\"report\",\"entities\":[],\"report_type\":\"summary\",\"time_range\":{\"start\":\"now-7d\",\"end\":\"now\"}}"}
+  ],
+
+  "executive|analytics": [
+    {"q": "What are the building KPIs for this quarter?", "a": "{\"intent\":\"report\",\"entities\":[],\"report_type\":\"summary\"}"},
+    {"q": "How is our energy efficiency trending?", "a": "{\"intent\":\"trend\",\"entities\":[],\"required_analytics\":[\"trend\"]}"}
+  ],
+
+  "researcher|analytics": [
+    {"q": "Show me PM2.5 distribution across all zones with statistical summary", "a": "{\"intent\":\"analytics\",\"entities\":[],\"required_analytics\":[\"avg\",\"min\",\"max\"]}"},
+    {"q": "Export all temperature readings with timestamps and metadata", "a": "{\"intent\":\"export\",\"entities\":[],\"export_format\":\"csv\"}"}
+  ],
+
+  "sustainability_officer|compliance": [
+    {"q": "Generate BREEAM evidence pack for IAQ", "a": "{\"intent\":\"planner\",\"entities\":[],\"report_type\":\"compliance\",\"export_format\":\"pdf\"}"},
+    {"q": "Are we meeting ISO 50001 energy targets?", "a": "{\"intent\":\"compliance\",\"entities\":[],\"required_analytics\":[]}"}
+  ],
+
+  "safety_officer|anomaly": [
+    {"q": "Are there any air quality alerts right now?", "a": "{\"intent\":\"anomaly\",\"entities\":[],\"required_analytics\":[\"anomaly\",\"latest\"]}"},
+    {"q": "Show me CO2 threshold violations in the last 48 hours", "a": "{\"intent\":\"anomaly\",\"entities\":[],\"required_analytics\":[\"anomaly\"],\"time_range\":{\"start\":\"now-2d\",\"end\":\"now\"}}"}
+  ],
+
+  "student|metadata": [
+    {"q": "What is a Brick ontology sensor?", "a": "{\"intent\":\"general\",\"entities\":[],\"response\":\"A Brick sensor is a standardized representation of a physical sensing device in a building...\"}"},
+    {"q": "How does the building measure air quality?", "a": "{\"intent\":\"discovery\",\"entities\":[],\"discovery_filter\":\"air quality sensors\"}"}
+  ],
+
+  "energy_manager|analytics": [
+    {"q": "Compare energy usage weekday vs weekend", "a": "{\"intent\":\"compare\",\"entities\":[],\"required_analytics\":[\"avg\",\"sum\"]}"},
+    {"q": "What's our peak demand period?", "a": "{\"intent\":\"analytics\",\"entities\":[],\"required_analytics\":[\"max\"]}"}
+  ],
+
+  "it_admin|discovery": [
+    {"q": "Which sensors are offline or not reporting data?", "a": "{\"intent\":\"anomaly\",\"entities\":[],\"required_analytics\":[\"latest\"]}"},
+    {"q": "Show me the sensor data pipeline health", "a": "{\"intent\":\"discovery\",\"entities\":[],\"discovery_filter\":\"system status\"}"}
+  ]
+}

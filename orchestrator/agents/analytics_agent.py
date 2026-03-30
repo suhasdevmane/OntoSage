@@ -281,15 +281,15 @@ for uuid, count in results.items():
         # but we describe the structure.
         data_preview = str(data)[:500] + "..." if data else "No data provided"
         
-        # Get current time in UK timezone
+        # Get current time in building's local timezone
         try:
-            uk_time = datetime.now(ZoneInfo("Europe/London"))
-            current_time_str = uk_time.strftime("%A, %B %d, %Y, %H:%M %Z")
-            timestamp_str = uk_time.strftime("%Y%m%d_%H%M%S")
+            local_time = datetime.now(ZoneInfo(settings.BUILDING_TIMEZONE))
+            current_time_str = local_time.strftime("%A, %B %d, %Y, %H:%M %Z")
+            timestamp_str = local_time.strftime("%Y%m%d_%H%M%S")
         except Exception:
-            uk_time = datetime.now()
-            current_time_str = uk_time.strftime("%A, %B %d, %Y, %H:%M (UTC)")
-            timestamp_str = uk_time.strftime("%Y%m%d_%H%M%S")
+            local_time = datetime.now()
+            current_time_str = local_time.strftime("%A, %B %d, %Y, %H:%M (UTC)")
+            timestamp_str = local_time.strftime("%Y%m%d_%H%M%S")
         
         # Build sensor metadata context
         metadata_context = ""
@@ -449,16 +449,17 @@ Respond with ONLY the Python code, wrapped in ```python blocks."""
     async def _execute_code(self, code: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Execute code via code executor service"""
         
-        # Prepend data if available
+        # Prepend data if available — use json.loads() to prevent triple-quote injection
         if data:
             import json
-            data_json = json.dumps(data)
-            # Use triple quotes to avoid escaping issues, but be careful with triple quotes inside data
-            # A safer way is to use repr() or base64 encoding if data is complex, 
-            # but for now simple string injection should work for standard JSON.
-            data_assignment = f'raw_data_json = \'\'\'{data_json}\'\'\'\n'
+            import base64
+            data_b64 = base64.b64encode(json.dumps(data, default=str).encode()).decode()
+            data_assignment = (
+                f"import base64 as _b64, json as _json\n"
+                f"raw_data_json = _json.loads(_b64.b64decode({data_b64!r}).decode())\n"
+            )
             code = data_assignment + code
-            logger.info(f"✅ Prepended data to code ({len(data_json)} chars of JSON)")
+            logger.info(f"✅ Prepended data to code via base64 ({len(data_b64)} chars encoded)")
         else:
             logger.warning("⚠️  No data provided to _execute_code - raw_data_json will not be defined!")
 

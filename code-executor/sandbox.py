@@ -102,6 +102,9 @@ class CodeSandbox:
         'statistics',
         'collections',
         'itertools',
+        'base64',  # needed for chart image encoding
+        'io',
+        'BytesIO',
     }
     
     # Forbidden imports - blacklist (extra safety)

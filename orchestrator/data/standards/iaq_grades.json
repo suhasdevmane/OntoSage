@@ -1,0 +1,7 @@
+[
+  {"grade": "A", "co2_max": 800,  "pm25_max": 10,  "label": "Excellent"},
+  {"grade": "B", "co2_max": 1000, "pm25_max": 15,  "label": "Good"},
+  {"grade": "C", "co2_max": 1200, "pm25_max": 25,  "label": "Fair"},
+  {"grade": "D", "co2_max": 1500, "pm25_max": 35,  "label": "Poor"},
+  {"grade": "F", "co2_max": 9999, "pm25_max": 9999, "label": "Very Poor"}
+]
