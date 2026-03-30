@@ -183,7 +183,8 @@ working-demos/
 *.docx
 .blobs/
 blobs/
-##############################
+
+############################
 # Rasa models
 ##############################
 rasa-ui/models/
@@ -191,6 +192,7 @@ rasa-ui/models/
 # Project-specific (tune as needed)
 ##############################
 notebooks/
+paper/
 bldg1/processed_mortardata_sites__ttl
 ./bldg1/processed_mortardata_sites__ttl/*.ttl
 # Track ONLY selected notebooks under development/notebooks; ignore the rest

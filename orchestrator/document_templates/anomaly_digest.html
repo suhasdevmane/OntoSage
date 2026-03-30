@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="section">
+  <h2>Anomaly Summary</h2>
+  <div class="narrative">{{ narrative }}</div>
+</div>
+
+{% if kpis %}
+<div class="section">
+  <div class="kpi-grid">
+    {% for kpi in kpis %}
+    <div class="kpi-card">
+      <div class="label">{{ kpi.label }}</div>
+      <div class="value">{{ kpi.value }}<span class="unit"> {{ kpi.unit }}</span></div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if anomalies %}
+<div class="section">
+  <h2>Anomaly Details ({{ anomalies | length }} events)</h2>
+  <table>
+    <thead><tr><th>Sensor</th><th>Value</th><th>Expected Range</th><th>Severity</th><th>Timestamp</th></tr></thead>
+    <tbody>
+      {% for a in anomalies %}
+      <tr>
+        <td>{{ a.column }}</td>
+        <td><strong>{{ a.value }}</strong> {{ a.unit }}</td>
+        <td>{{ a.threshold.min }} – {{ a.threshold.max }}</td>
+        <td><span class="badge badge-{{ a.severity }}">{{ a.severity | upper }}</span></td>
+        <td>{{ a.timestamp }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if highlights %}
+<div class="section">
+  <h2>Action Items</h2>
+  <ul>
+    {% for h in highlights %}
+    <li>{{ h }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

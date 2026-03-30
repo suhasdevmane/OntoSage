@@ -13,6 +13,9 @@ import uvicorn
 from shared.config import settings, validate_config
 from shared.utils import get_logger
 from graphdb_retriever import GraphDBRetriever
+import asyncio
+# Import the auto-loader
+from import_ontology import import_ontology
 
 # Initialize logger
 logger = get_logger(__name__)
@@ -48,6 +51,10 @@ async def startup_event():
     """Initialize services on startup"""
     logger.info("🚀 Starting RAG Service (GraphDB Mode)")
     logger.info(f"GraphDB URL: {settings.GRAPHDB_URL}")
+    
+    # Trigger auto-import of input ontology files in background
+    # We use a task so it doesn't block startup
+    asyncio.create_task(import_ontology())
     logger.info(f"Repository: {settings.GRAPHDB_REPOSITORY}")
     
     # Check GraphDB connection

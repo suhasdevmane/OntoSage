@@ -3,10 +3,15 @@ Shared configuration for OntoSage 2.0
 Supports both local (Ollama) and cloud (OpenAI) model providers
 """
 import os
-from typing import Literal
+from typing import Literal, Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings
 from pathlib import Path
+try:
+    import yaml
+    _YAML_AVAILABLE = True
+except ImportError:
+    _YAML_AVAILABLE = False
 
 class Settings(BaseSettings):
     """
@@ -111,7 +116,7 @@ class Settings(BaseSettings):
     MYSQL_PORT: int = Field(default=3306, description="MySQL port")
     MYSQL_USER: str = Field(default="root", description="MySQL username")
     MYSQL_PASSWORD: str = Field(default="mysql", description="MySQL password")
-    MYSQL_DATABASE: str = Field(default="abacws", description="MySQL database name")
+    MYSQL_DATABASE: str = Field(default="sensordb", description="MySQL database name")
     
     RAG_SERVICE_URL: str = Field(default="http://rag-service:8001", description="RAG service URL")
     CODE_EXECUTOR_URL: str = Field(default="http://code-executor:8002", description="Code executor URL")
@@ -130,8 +135,24 @@ class Settings(BaseSettings):
     )
     
     # ==================== Building Configuration ====================
+    BUILDING_CONFIG_FILE: str = Field(
+        default="config/building_config.yaml",
+        description="Path to building-specific YAML config (relative to /app or absolute)"
+    )
     BUILDING_ID: str = Field(default="bldg1", description="Building identifier (bldg1, bldg2, bldg3)")
     BUILDING_NAME: str = Field(default="Abacws Building", description="Human-readable building name")
+    BUILDING_NAMESPACE: str = Field(
+        default="http://abacwsbuilding.cardiff.ac.uk/abacws#",
+        description="Base URI for building ontology instances (ABox namespace). Must end with '#'."
+    )
+    BUILDING_PREFIX: str = Field(
+        default="bldg",
+        description="Short SPARQL prefix for BUILDING_NAMESPACE (e.g. 'bldg')"
+    )
+    BUILDING_TIMEZONE: str = Field(
+        default="Europe/London",
+        description="IANA timezone for the building (e.g. 'Europe/London', 'America/New_York')"
+    )
     
     # Ontology Files
     BRICK_TBOX_FILE: str = Field(
@@ -149,11 +170,33 @@ class Settings(BaseSettings):
     ONTOLOGY_COLLECTION: str = Field(default="ontology", description="Legacy collection name")
     
     # ==================== Security & Limits ====================
+    SECRET_KEY: str = Field(
+        default="change-me-in-production-use-32-random-bytes",
+        description="JWT signing secret for RBAC tokens. Override via SECRET_KEY env var."
+    )
+    RBAC_ENABLED: bool = Field(
+        default=True,
+        description="Enable RBAC middleware. Enabled by default for production safety. Set False only for local dev."
+    )
+    RESPONSE_CACHE_ENABLED: bool = Field(
+        default=True,
+        description="Enable Redis-backed response cache for identical/similar queries."
+    )
+    WORKFLOW_TIMEOUT_S: int = Field(default=120, description="Max seconds for entire workflow execution")
     CODE_EXECUTOR_TIMEOUT: int = Field(default=30, description="Code execution timeout in seconds")
     CODE_EXECUTOR_MEMORY_LIMIT: str = Field(default="1g", description="Memory limit for code execution")
     CODE_EXECUTOR_CPU_LIMIT: float = Field(default=1.0, description="CPU limit for code execution")
     
     MAX_RETRY_ATTEMPTS: int = Field(default=3, description="Max retry attempts for error recovery")
+    PLANNER_MAX_STEPS: int = Field(default=6, description="Maximum steps for multi-step planner agent")
+    SENSOR_MAP_PATH: str = Field(default="data/sensor_map.json", description="Path to sensor map cache JSON file")
+    OUTPUT_DATA_DIR: str = Field(default="outputs/data", description="Directory for analytics data output files")
+    QUERY_RESULTS_DIR: str = Field(default="/app/outputs/query_results", description="Directory for SPARQL query result files")
+    EXPORTS_DIR: str = Field(default="/app/outputs/exports", description="Directory where DataExportAgent saves downloadable files")
+    CORS_ORIGINS: str = Field(
+        default="*",
+        description="Comma-separated allowed CORS origins. Use '*' for development, explicit URLs for production."
+    )
     
     # ==================== Conversation Settings ====================
     CONVERSATION_TTL: int = Field(default=3600, description="Conversation state TTL in Redis (seconds)")
@@ -198,6 +241,53 @@ class Settings(BaseSettings):
 
 # Global settings instance
 settings = Settings()
+
+def _load_building_yaml(s: 'Settings') -> None:
+    """
+    Load building-specific values from YAML config file.
+    Values from the YAML file are applied ONLY if the corresponding env var
+    has not been explicitly set (i.e., still has its default value).
+    """
+    if not _YAML_AVAILABLE:
+        return
+    # Resolve config file path
+    config_path = Path(s.BUILDING_CONFIG_FILE)
+    if not config_path.is_absolute():
+        # Try relative to /app (Docker) first, then cwd
+        app_path = Path("/app") / config_path
+        cwd_path = Path.cwd() / config_path
+        if app_path.exists():
+            config_path = app_path
+        elif cwd_path.exists():
+            config_path = cwd_path
+        else:
+            return  # No YAML file found, use defaults/env vars
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+        building = data.get('building', {})
+        # Only apply YAML value if env var not explicitly set
+        env = os.environ
+        if 'BUILDING_ID' not in env and building.get('id'):
+            s.BUILDING_ID = building['id']
+        if 'BUILDING_NAME' not in env and building.get('name'):
+            s.BUILDING_NAME = building['name']
+        if 'BUILDING_NAMESPACE' not in env and building.get('namespace'):
+            s.BUILDING_NAMESPACE = building['namespace']
+        if 'BUILDING_PREFIX' not in env and building.get('prefix'):
+            s.BUILDING_PREFIX = building['prefix']
+        if 'BUILDING_TIMEZONE' not in env and building.get('timezone'):
+            s.BUILDING_TIMEZONE = building['timezone']
+        # Ontology files
+        if 'BRICK_TBOX_FILE' not in env and data.get('building', {}).get('tbox_file'):
+            s.BRICK_TBOX_FILE = data['building']['tbox_file']
+        if 'BLDG1_ABOX_FILE' not in env and data.get('building', {}).get('abox_file'):
+            s.BLDG1_ABOX_FILE = data['building']['abox_file']
+    except Exception:
+        pass  # YAML errors are non-fatal — defaults/env vars remain
+
+# Apply YAML overrides after env-based init
+_load_building_yaml(settings)
 
 def get_llm_config() -> dict:
     """
@@ -247,19 +337,87 @@ def get_embedding_config() -> dict:
 
 def validate_config():
     """
-    Validate configuration based on chosen providers
-    Raises ValueError if required settings are missing
+    Validate configuration based on chosen providers.
+    Raises ValueError if required settings are missing or semantically invalid.
+    Returns True on success.
     """
+    # ── API key checks ────────────────────────────────────────────────────────
     if settings.MODEL_PROVIDER == "openai" and not settings.OPENAI_API_KEY:
         raise ValueError("OPENAI_API_KEY is required when MODEL_PROVIDER=openai")
-    
+
     if settings.MODEL_PROVIDER == "cloud" and not settings.OLLAMA_CLOUD_API_KEY:
         raise ValueError("OLLAMA_CLOUD_API_KEY is required when MODEL_PROVIDER=cloud")
-    
+
     if settings.EMBEDDING_PROVIDER == "openai" and not settings.OPENAI_API_KEY:
         raise ValueError("OPENAI_API_KEY is required when EMBEDDING_PROVIDER=openai")
-    
+
     if settings.STT_PROVIDER == "openai" and not settings.OPENAI_API_KEY:
         raise ValueError("OPENAI_API_KEY is required when STT_PROVIDER=openai")
-    
+
+    # ── C.4: Semantic correctness checks ─────────────────────────────────────
+
+    # BUILDING_NAMESPACE must end with '#' or '/'
+    ns = settings.BUILDING_NAMESPACE
+    if ns and not (ns.endswith("#") or ns.endswith("/")):
+        raise ValueError(
+            f"BUILDING_NAMESPACE must end with '#' or '/' (got: {ns!r}). "
+            "Example: 'http://example.com/building#'"
+        )
+
+    # SECRET_KEY must not be the default placeholder in production-like envs
+    _is_default_key = settings.SECRET_KEY == "change-me-in-production-use-32-random-bytes"
+    if settings.RBAC_ENABLED and _is_default_key:
+        raise ValueError(
+            "SECRET_KEY must be changed from the default value when RBAC_ENABLED=true. "
+            "Generate a strong random key (e.g. `openssl rand -hex 32`)."
+        )
+    elif _is_default_key:
+        import logging as _logging
+        _logging.getLogger("shared.config").warning(
+            "SECRET_KEY is still the default placeholder. "
+            "Set a strong random key before deploying to production."
+        )
+
     return True
+
+
+async def validate_config_async():
+    """
+    Async version — performs lightweight connectivity probes in addition to
+    the synchronous checks.  Non-fatal: logs warnings rather than raising for
+    network checks so that offline/CI environments still start up.
+
+    Returns a dict {"ok": bool, "errors": [...], "warnings": [...]}.
+    """
+    errors: list = []
+    warnings: list = []
+
+    # Run synchronous checks first
+    try:
+        validate_config()
+    except ValueError as e:
+        errors.append(str(e))
+
+    # ── GraphDB reachability ──────────────────────────────────────────────────
+    try:
+        import httpx
+        url = f"http://{settings.GRAPHDB_HOST}:{settings.GRAPHDB_PORT}/rest/info"
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(url)
+            if resp.status_code >= 500:
+                warnings.append(f"GraphDB returned {resp.status_code} at {url}")
+    except Exception as e:
+        warnings.append(f"GraphDB unreachable at {settings.GRAPHDB_HOST}:{settings.GRAPHDB_PORT} — {e}")
+
+    # ── Code executor health ──────────────────────────────────────────────────
+    try:
+        import httpx
+        url = f"http://{settings.CODE_EXECUTOR_HOST}:{settings.CODE_EXECUTOR_PORT}/health"
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(url)
+            if not resp.is_success:
+                warnings.append(f"Code executor unhealthy: {resp.status_code}")
+    except Exception as e:
+        warnings.append(f"Code executor unreachable at {settings.CODE_EXECUTOR_HOST}:{settings.CODE_EXECUTOR_PORT} — {e}")
+
+    return {"ok": len(errors) == 0, "errors": errors, "warnings": warnings}

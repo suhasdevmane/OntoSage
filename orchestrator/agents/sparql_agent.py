@@ -16,6 +16,11 @@ from shared.config import settings
 from orchestrator.llm_manager import llm_manager
 from orchestrator.agents.dialogue_agent import format_conversation_history
 from orchestrator.redis_manager import redis_manager
+from orchestrator.services.ontology_introspector import ontology_introspector
+from orchestrator.services.sparql_validator import sparql_validator
+from orchestrator.services.hybrid_retrieval import hybrid_retrieval, QueryType, classify_query_type
+from orchestrator.services.self_correction_engine import SelfCorrectionEngine
+from orchestrator.services.prompt_builder import get_prompt_builder
 
 logger = get_logger(__name__)
 
@@ -36,7 +41,7 @@ if not settings.GRAPHDB_REPOSITORY:
 
 GRAPHDB_QUERY_ENDPOINT = f"http://{settings.GRAPHDB_HOST}:{settings.GRAPHDB_PORT}/repositories/{settings.GRAPHDB_REPOSITORY}"
 
-EXTENDED_PREFIXES = [
+_STANDARD_PREFIXES = [
     'PREFIX br: <http://vocab.deri.ie/br#>',
     'PREFIX bl: <https://w3id.org/biolink/vocab/>',
     'PREFIX bld: <http://biglinkeddata.com/>',
@@ -64,8 +69,14 @@ EXTENDED_PREFIXES = [
     'PREFIX schema1: <http://schema.org/>',
     'PREFIX unit: <http://qudt.org/vocab/unit/>',
     'PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>',
-    'PREFIX bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#>'
 ]
+
+def _build_extended_prefixes() -> list:
+    """Build EXTENDED_PREFIXES dynamically, appending the building-specific prefix from settings."""
+    building_prefix_line = f'PREFIX {settings.BUILDING_PREFIX}: <{settings.BUILDING_NAMESPACE}>'
+    return _STANDARD_PREFIXES + [building_prefix_line]
+
+EXTENDED_PREFIXES = _build_extended_prefixes()
 
 class SPARQLAgent:
     """Generates and executes SPARQL queries with RAG support"""
@@ -73,6 +84,10 @@ class SPARQLAgent:
     def __init__(self):
         self.max_retries = 3
         self._instance_cache: Dict[str, List[str]] = {}
+        # B.5: Self-correction engine wraps SPARQL execution with 4-strategy repair loop
+        self._correction_engine = SelfCorrectionEngine()
+        # C.2: Dynamic prompt builder (injects live building metadata into prompts)
+        self._prompt_builder = get_prompt_builder()
     
     async def _reason_over_ontology(
         self,
@@ -170,12 +185,15 @@ Your Answer:"""
                 return await self.answer_semantically(state, user_query, context)
 
             # Extract explicit entity references first
-            # NEW: Use entities from DialogueAgent if available
-            entities = state.intermediate_results.get("entities", [])
+            # NEW: Use entities from DialogueAgent if available, but only valid SPARQL URI forms
+            # (DialogueAgent may return plain text like "air quality sensors" which breaks templates)
+            _valid_ent_re = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*:[A-Za-z0-9_\.]+$')
+            raw_entities = state.intermediate_results.get("entities", [])
+            entities = [e for e in raw_entities if _valid_ent_re.match(str(e))]
+            if entities:
+                logger.info(f"Using entities extracted by DialogueAgent (filtered): {entities}")
             if not entities:
                 entities = self._extract_entities(user_query)
-            else:
-                logger.info(f"Using entities extracted by DialogueAgent: {entities}")
             # Derive class target (reuse mapping logic)
             class_target = self._infer_class(user_query.lower())
             instance_candidates = []
@@ -192,9 +210,9 @@ Your Answer:"""
                 except Exception as e:
                     logger.warning(f"Instance candidate discovery failed: {e}")
             
-            # Disable template SPARQL per user requirement
-            # sparql_query = self._template_sparql(user_query, entities)
-            sparql_query = None
+            # Phase 3.1: Template-first routing (zero LLM for common patterns)
+            # Expanded dynamically using OntologyIntrospector discovered classes
+            sparql_query = self._template_sparql(user_query, entities)
             
             used_template = sparql_query is not None
             # Default analytics decision for template queries
@@ -230,15 +248,33 @@ Your Answer:"""
             sparql_query = self._postprocess_query(sparql_query)
             # Ensure required prefixes present (legacy add_sparql_prefixes behavior)
             sparql_query = self._ensure_prefixes(sparql_query)
-            # Step 4: Validate syntax
-            if not validate_sparql_syntax(sparql_query):
-                logger.warning("Generated SPARQL has syntax errors, attempting repair")
-                sparql_query = await self._repair_query(sparql_query, user_query, context)
+            # Step 4+5: Phase 3.4 — Validate + B.5 self-correction + cache-aware execute
+            async def _wrapped_execute(query: str) -> Dict[str, Any]:
+                try:
+                    res, _from_cache = await sparql_validator.validate_and_execute(
+                        query, executor=self._execute_query, use_cache=True
+                    )
+                    if _from_cache:
+                        logger.info("📦 SPARQL result served from cache")
+                    bindings = res.get("results", {}).get("bindings", [])
+                    return {"success": True, "results": res,
+                            "error": None if bindings else "Empty results"}
+                except ValueError as _ve:
+                    return {"success": False, "results": {}, "error": str(_ve)}
+                except Exception as _ex:
+                    return {"success": False, "results": {}, "error": str(_ex)}
 
-            logger.info("Final SPARQL to execute:\n" + sparql_query)
-            
-            # Step 5: Execute query
-            results = await self._execute_query(sparql_query)
+            _ctx = {
+                "building_namespace": settings.BUILDING_NAMESPACE,
+                "building_prefix":    settings.BUILDING_PREFIX,
+                "user_query":         user_query,
+                "llm_call":           None,
+            }
+            correction_result = await self._correction_engine.execute_with_correction(
+                sparql_query, _wrapped_execute, _ctx
+            )
+            results = correction_result.get("results", {})
+            from_cache = False  # correction engine doesn't surface this flag directly
             
             # NEW: Fallback if no results
             has_results = False
@@ -366,10 +402,10 @@ TRIPLES (Graph Structure):
                 - 'reasoning': str - LLM's reasoning about whether exact answer exists in context
         """
         
-        # Get current time in UK timezone
+        # Get current time in building's local timezone
         try:
-            uk_time = datetime.now(ZoneInfo("Europe/London"))
-            current_time_str = uk_time.strftime("%A, %B %d, %Y, %H:%M %Z")
+            local_time = datetime.now(ZoneInfo(settings.BUILDING_TIMEZONE))
+            current_time_str = local_time.strftime("%A, %B %d, %Y, %H:%M %Z")
         except Exception:
             current_time_str = datetime.now().strftime("%A, %B %d, %Y, %H:%M (UTC)")
         
@@ -379,11 +415,22 @@ TRIPLES (Graph Structure):
         # Add conversation history section if available
         history_section = f"\n\n=== CONVERSATION HISTORY ===\n{conversation_history}\n" if conversation_history and conversation_history != "(No previous conversation)" else ""
         
+        # C.2: Build dynamic building profile from live introspector data (if available)
+        try:
+            from orchestrator.services.ontology_introspector import ontology_introspector
+            _sensor_classes = ontology_introspector.sensor_classes if ontology_introspector.is_ready() else []
+            _ns_map = ontology_introspector.namespace_map if ontology_introspector.is_ready() else {}
+        except Exception:
+            _sensor_classes, _ns_map = [], {}
+        _building_profile = self._prompt_builder.sparql_system_hints(_sensor_classes, _ns_map)
+
         if is_smart_context:
             # Use the pre-built unified context directly
             full_context = "\n\n".join(context)
             sparql_prompt = f"""Given a natural language query about a building and context from GraphRAG knowledge graph, generate an accurate SPARQL query using correct RDF prefixes.
 Current Date and Time: {current_time_str}
+
+{_building_profile}
 
 === GRAPHRAG CONTEXT ===
 {full_context}{history_section}
@@ -451,35 +498,8 @@ Respond with JSON containing exactly TWO keys:
    
    DO NOT use 'bldg:connstring' unless it explicitly appears in the context triples.
 
-5. use only following prefixes if needed.
-    'PREFIX br: <http://vocab.deri.ie/br#>',
-    'PREFIX bl: <https://w3id.org/biolink/vocab/>',
-    'PREFIX bld: <http://biglinkeddata.com/>',
-    'PREFIX brick: <https://brickschema.org/schema/Brick#>',
-    'PREFIX dcterms: <http://purl.org/dc/terms/>',
-    'PREFIX owl: <http://www.w3.org/2002/07/owl#>',
-    'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>',
-    'PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>',
-    'PREFIX sh: <http://www.w3.org/ns/shacl#>',
-    'PREFIX skos: <http://www.w3.org/2004/02/skos/core#>',
-    'PREFIX sosa: <http://www.w3.org/ns/sosa/>',
-    'PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>',
-    'PREFIX tag: <https://brickschema.org/schema/BrickTag#>',
-    'PREFIX bsh: <https://brickschema.org/schema/BrickShape#>',
-    'PREFIX s223: <http://data.ashrae.org/standard223#>',
-    'PREFIX bacnet: <http://data.ashrae.org/bacnet/2020#>',
-    'PREFIX g36: <http://data.ashrae.org/standard223/1.0/extensions/g36#>',
-    'PREFIX qkdv: <http://qudt.org/vocab/dimensionvector/>',
-    'PREFIX quantitykind: <http://qudt.org/vocab/quantitykind/>',
-    'PREFIX qudt: <http://qudt.org/schema/qudt/>',
-    'PREFIX rec: <https://w3id.org/rec#>',
-    'PREFIX ref: <https://brickschema.org/schema/Brick/ref#>',
-    'PREFIX s223tobrick: <https://brickschema.org/extension/brick_extension_interpret_223#>',
-    'PREFIX schema1: <http://schema.org/>',
-    'PREFIX unit: <http://qudt.org/vocab/unit/>',
-    'PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>',
-    'PREFIX bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#>'
-]
+5. Use ONLY the following prefixes (if needed):
+{self._prefix_block()}
 
 6. Use exact URIs from context. Prefer OPTIONAL for optional properties.
 
@@ -503,7 +523,7 @@ Respond with JSON containing exactly TWO keys:
 === MANDATORY SPARQL PATTERN FOR SENSORS ===
 If the query involves a specific sensor or device, you MUST generate a query matching this EXACT pattern:
 
-PREFIX bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#>
+PREFIX {settings.BUILDING_PREFIX}: <{settings.BUILDING_NAMESPACE}>
 PREFIX ref: <https://brickschema.org/schema/Brick/ref#>
 PREFIX ashrae: <http://data.ashrae.org/standard223#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -516,12 +536,12 @@ WHERE {{
             ref:storedAt ?database .
             
     # Filter for the specific entity found in context/query
-    FILTER(?sensor = bldg:ENTITY_NAME)
+    FILTER(?sensor = {settings.BUILDING_PREFIX}:ENTITY_NAME)
 }}
 
-Replace bldg:ENTITY_NAME with the actual URI found in the context (e.g. bldg:CO2_Level_Sensor_5.08).
+Replace {settings.BUILDING_PREFIX}:ENTITY_NAME with the actual URI found in the context (e.g. {settings.BUILDING_PREFIX}:CO2_Level_Sensor_5.08).
 Do NOT add other OPTIONAL blocks or properties.
-Do NOT use 'bldg:connstring'.
+Do NOT use '{settings.BUILDING_PREFIX}:connstring'.
 Do NOT use 'ref:hasExternalReference' directly on the sensor (use ashrae:hasExternalReference).
 """
         else:
@@ -529,8 +549,10 @@ Do NOT use 'ref:hasExternalReference' directly on the sensor (use ashrae:hasExte
             context_preview = "\n".join(context[:10]) if context else "No context available"
             candidate_preview = "\n".join(candidates[:30]) if candidates else "None"
             class_hint = class_target or "Unknown"
-            
-            sparql_prompt = f"""Given a natural language query about a building, generate SPARQL using Brick Schema.
+
+            sparql_prompt = f"""Given a natural language query about a building, generate SPARQL using the building's ontology schema.
+
+{_building_profile}
 
 === AVAILABLE CONTEXT ===
 {context_preview}
@@ -683,6 +705,26 @@ SELECT ?building ?label ?comment WHERE {
         
         # Entity-focused specialized queries
         if entities:
+            # Detect if any entity is a Zone/Room/Space (location) vs a sensor
+            zone_entities = [e for e in entities if re.search(r'bldg:Zone_\d|bldg:Room_|bldg:Space_|bldg:Floor_', e)]
+            sensor_entities = [e for e in entities if e not in zone_entities]
+
+            # If we have zone entities → find sensors in those zones with their timeseries UUIDs
+            if zone_entities and not features['wants_definition'] and not features['wants_equipment']:
+                patterns = []
+                for zone in zone_entities:
+                    patterns.append(f"""{{
+  ?sensor brick:hasLocation {zone} .
+  ?sensor rdf:type ?type .
+  ?sensor rdfs:label ?label .
+  ?ref ref:hasTimeseriesId ?uuid .
+  ?ref ref:storedAt ?storage .
+  ?sensor ref:hasExternalReference ?ref .
+  FILTER(CONTAINS(STR(?type), 'Sensor'))
+}}""")
+                union_block = " UNION ".join(patterns)
+                return self._prefix_block() + f"\nSELECT ?sensor ?label ?type ?uuid ?storage WHERE {{\n{union_block}\n}} LIMIT 50"
+
             # Order of checks matters: prioritize equipment and definition before uuid-only
             if features['wants_equipment']:
                 patterns = []
@@ -727,15 +769,95 @@ SELECT ?building ?label ?comment WHERE {
                     patterns.append(f"{{ {ent} rdfs:label ?label . OPTIONAL {{ {ent} bldg:connstring ?uuid . }} }}")
                 union_block = " \n UNION \n ".join(patterns)
                 return self._prefix_block() + f"\nSELECT ?label ?uuid WHERE {{ {union_block} }}"
-        # Map keywords to Brick classes for class-level queries
-        class_map = {
-            'air temperature': 'brick:Air_Temperature_Sensor',
-            'temperature': 'brick:Air_Temperature_Sensor',
-            'humidity': 'brick:Humidity_Sensor',
-            'co2': 'brick:CO2_Sensor',
-            'occupancy': 'brick:Occupancy_Sensor',
-            'pressure': 'brick:Pressure_Sensor'
+
+        # ── E.5: 5 additional template patterns ─────────────────────────────
+        # T1: List all floors / storeys
+        floor_words = ['floor', 'floors', 'storey', 'storeys', 'level', 'levels']
+        zone_words = ['zone', 'zones', 'room', 'rooms', 'space', 'spaces']
+        if any(w in uq for w in floor_words) and features['wants_count']:
+            return self._prefix_block() + """
+SELECT (COUNT(DISTINCT ?floor) AS ?count) WHERE {
+  { ?floor a brick:Floor . } UNION { ?floor a brick:Level . }
+}"""
+        if any(w in uq for w in floor_words) and not entities:
+            return self._prefix_block() + """
+SELECT ?floor ?label WHERE {
+  { ?floor a brick:Floor . } UNION { ?floor a brick:Level . }
+  OPTIONAL { ?floor rdfs:label ?label . }
+} ORDER BY ?label LIMIT 50"""
+
+        # T2: List all zones / rooms / spaces
+        # Zones in this ontology have no rdf:type — discoverable only via brick:hasLocation
+        if any(w in uq for w in zone_words) and features['wants_count'] and not entities:
+            return self._prefix_block() + """
+SELECT (COUNT(DISTINCT ?space) AS ?count) WHERE {
+  { ?space a brick:Zone . } UNION { ?space a brick:Room . } UNION { ?space a brick:Space . }
+  UNION { ?sensor brick:hasLocation ?space . FILTER(CONTAINS(STR(?space), "Zone")) }
+}"""
+        if any(w in uq for w in zone_words) and not entities:
+            return self._prefix_block() + f"""
+SELECT DISTINCT ?space (COUNT(?sensor) AS ?sensor_count) WHERE {{
+  ?sensor brick:hasLocation ?space .
+  FILTER(CONTAINS(STR(?space), "Zone") || CONTAINS(STR(?space), "Room") || CONTAINS(STR(?space), "Floor"))
+}} GROUP BY ?space ORDER BY ?space LIMIT 100"""
+
+        # T3: Sensors located in a specific zone/floor/room (entity = location)
+        # Only trigger for bldg: instance entities (not class references like brick:Sensor)
+        location_entities = [e for e in entities if e.startswith(f'{settings.BUILDING_PREFIX}:')]
+        if location_entities and any(w in uq for w in ['in', 'on', 'at', 'within']):
+            patterns = []
+            for ent in location_entities:
+                patterns.append(
+                    f"{{ ?sensor brick:hasLocation {ent} . OPTIONAL {{ ?sensor rdfs:label ?label . }} "
+                    f"OPTIONAL {{ ?sensor rdf:type ?type . }} OPTIONAL {{ ?sensor bldg:connstring ?uuid . }} }}"
+                )
+                patterns.append(
+                    f"{{ ?sensor brick:isLocatedIn {ent} . OPTIONAL {{ ?sensor rdfs:label ?label . }} "
+                    f"OPTIONAL {{ ?sensor rdf:type ?type . }} OPTIONAL {{ ?sensor bldg:connstring ?uuid . }} }}"
+                )
+            union_block = " UNION ".join(patterns)
+            return self._prefix_block() + f"\nSELECT DISTINCT ?sensor ?label ?type ?uuid WHERE {{ {union_block} }} LIMIT 100"
+
+        # T4: Equipment / HVAC / AHU / VAV listing
+        equipment_keywords = {
+            'hvac': 'brick:HVAC',
+            'air handler': 'brick:Air_Handler_Unit',
+            'air handling': 'brick:Air_Handler_Unit',
+            'ahu': 'brick:Air_Handler_Unit',
+            'vav': 'brick:VAV',
+            'variable air volume': 'brick:VAV',
+            'boiler': 'brick:Boiler',
+            'chiller': 'brick:Chiller',
+            'fan': 'brick:Fan',
+            'pump': 'brick:Pump',
+            'damper': 'brick:Damper',
+            'actuator': 'brick:Actuator',
         }
+        for kw, equip_class in equipment_keywords.items():
+            if kw in uq:
+                if features['wants_count']:
+                    return self._prefix_block() + f"\nSELECT (COUNT(?equip) AS ?count) WHERE {{ ?equip a {equip_class} . }}"
+                return self._prefix_block() + f"""
+SELECT ?equip ?label ?location WHERE {{
+  ?equip a {equip_class} .
+  OPTIONAL {{ ?equip rdfs:label ?label . }}
+  OPTIONAL {{ ?equip brick:hasLocation ?location . }}
+}} LIMIT 50"""
+
+        # T5: Building hierarchy / location tree
+        hierarchy_words = ['hierarchy', 'structure', 'layout', 'topology', 'contains', 'hasPart']
+        if any(w in uq for w in hierarchy_words) or ('building' in uq and any(w in uq for w in ['structure', 'layout', 'contains'])):
+            return self._prefix_block() + """
+SELECT ?parent ?parentLabel ?child ?childLabel WHERE {
+  { ?parent brick:hasPart ?child . }
+  UNION { ?parent brick:hasLocation ?child . FILTER(?parent != ?child) }
+  OPTIONAL { ?parent rdfs:label ?parentLabel . }
+  OPTIONAL { ?child rdfs:label ?childLabel . }
+} LIMIT 100"""
+
+        # Phase 3.1: Use expanded class map (static + OntologyIntrospector discovered)
+        class_map = self._get_extended_class_map()
+        uq = user_query.lower()
         target_class = None
         for k, v in class_map.items():
             if k in uq:
@@ -746,39 +868,65 @@ SELECT ?building ?label ?comment WHERE {
         if features['wants_definition'] and target_class:
             return self._prefix_block() + f"\nSELECT ?def WHERE {{ {target_class} (rdfs:comment|skos:definition) ?def . }} LIMIT 5"
         if features['wants_equipment'] and target_class:
-            # Include UNION for inverse relation
             return self._prefix_block() + f"\nSELECT ?sensor ?equipment ?equipLabel WHERE {{ {{ ?sensor rdf:type {target_class} . ?sensor brick:isPointOf ?equipment . OPTIONAL {{ ?equipment rdfs:label ?equipLabel . }} }} UNION {{ ?sensor rdf:type {target_class} . ?equipment brick:hasPoint ?sensor . OPTIONAL {{ ?equipment rdfs:label ?equipLabel . }} }} }} LIMIT 50"
         if target_class:
-            # Provide dual strategy: attempt direct class typing then fallback pattern search if zero results.
-            # The fallback will be triggered in postprocess stage if needed (handled by execution wrapper).
             return self._prefix_block() + f"\nSELECT ?sensor ?location ?uuid WHERE {{\n  ?sensor rdf:type {target_class} .\n  OPTIONAL {{ ?sensor brick:hasLocation ?location . }}\n  OPTIONAL {{ ?sensor bldg:connstring ?uuid . }}\n}} LIMIT 50"
         # Generic sensor listing fallback
         sensor_words = ['sensor', 'sensors', 'point', 'points']
         if any(w in uq for w in sensor_words):
+            # "what types" / "list types" → DISTINCT type + count
+            type_words = ['types', 'type of', 'kinds', 'categories', 'what type', 'which type']
+            if any(w in uq for w in type_words):
+                return self._prefix_block() + """
+SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
+  ?sensor rdf:type ?type .
+  FILTER(CONTAINS(STR(?type), 'Sensor') || CONTAINS(STR(?type), 'Point'))
+} GROUP BY ?type ORDER BY DESC(?count)"""
             return self._prefix_block() + "\nSELECT ?sensor ?type ?location ?uuid WHERE {\n  ?sensor rdf:type ?type .\n  FILTER(CONTAINS(STR(?type), 'Sensor') || CONTAINS(STR(?type), 'Point'))\n  OPTIONAL { ?sensor brick:hasLocation ?location . }\n  OPTIONAL { ?sensor bldg:connstring ?uuid . }\n} LIMIT 50"
         return None
 
-    def _infer_class(self, uq: str) -> Optional[str]:
-        mapping = {
+    def _get_extended_class_map(self) -> dict:
+        """
+        Phase 3.1: Static class map merged with OntologyIntrospector-discovered sensor classes.
+        Supports any building's sensor taxonomy without code changes.
+        """
+        static_map = {
             'air temperature': 'brick:Air_Temperature_Sensor',
             'temperature': 'brick:Air_Temperature_Sensor',
             'humidity': 'brick:Humidity_Sensor',
-            'air humidity': 'brick:Humidity_Sensor',
             'co2': 'brick:CO2_Sensor',
+            'occupancy': 'brick:Occupancy_Sensor',
             'pressure': 'brick:Pressure_Sensor',
-            'occupancy': 'brick:Occupancy_Sensor'
+            'air quality': 'brick:Air_Quality_Sensor',
+            'motion': 'brick:Occupancy_Sensor',
+            'light': 'brick:Luminance_Sensor',
+            'sound': 'brick:Sound_Pressure_Level_Sensor',
+            'voc': 'brick:TVOC_Sensor',
         }
-        for k, v in mapping.items():
+        if ontology_introspector.is_ready():
+            for local_name in ontology_introspector.sensor_classes:
+                keyword = local_name.replace('_Sensor', '').replace('_', ' ').lower()
+                ns = settings.BUILDING_PREFIX if local_name.startswith(settings.BUILDING_PREFIX) else 'brick'
+                if keyword not in static_map:
+                    static_map[keyword] = f'{ns}:{local_name}'
+        return static_map
+
+    def _infer_class(self, uq: str) -> Optional[str]:
+        """Phase 3.1: Uses _get_extended_class_map for class inference."""
+        class_map = self._get_extended_class_map()
+        for k, v in class_map.items():
             if k in uq:
                 return v
         return None
 
     async def _get_instances_for_class(self, brick_class: str, limit: int = 40) -> List[str]:
-        """Query GraphDB for instances of a Brick class. Returns bldg: URIs only."""
+        """Query GraphDB for instances of a Brick class. Returns <prefix>: URIs only."""
         if brick_class in self._instance_cache:
             return self._instance_cache[brick_class]
+        bldg_ns = settings.BUILDING_NAMESPACE
+        bldg_pfx = settings.BUILDING_PREFIX
         q = f"""{self._prefix_block()}
-SELECT ?s WHERE {{ ?s rdf:type {brick_class} . FILTER(STRSTARTS(STR(?s), 'http://abacwsbuilding.cardiff.ac.uk/abacws#')) }} LIMIT {limit}"""
+SELECT ?s WHERE {{ ?s rdf:type {brick_class} . FILTER(STRSTARTS(STR(?s), '{bldg_ns}')) }} LIMIT {limit}"""
         try:
             async with httpx.AsyncClient(timeout=25.0) as client:
                 auth = (settings.GRAPHDB_USER, settings.GRAPHDB_PASSWORD) if settings.GRAPHDB_USER else None
@@ -788,8 +936,8 @@ SELECT ?s WHERE {{ ?s rdf:type {brick_class} . FILTER(STRSTARTS(STR(?s), 'http:/
                 out = []
                 for b in data.get('results', {}).get('bindings', []):
                     uri = b.get('s', {}).get('value')
-                    if uri and uri.startswith('http://abacwsbuilding.cardiff.ac.uk/abacws#'):
-                        out.append('bldg:' + uri.split('#', 1)[1])
+                    if uri and uri.startswith(bldg_ns):
+                        out.append(f'{bldg_pfx}:' + uri.split('#', 1)[1])
                 self._instance_cache[brick_class] = out
                 return out
         except Exception as e:
@@ -804,9 +952,11 @@ SELECT ?s WHERE {{ ?s rdf:type {brick_class} . FILTER(STRSTARTS(STR(?s), 'http:/
             token = m.group(1).replace('Air_Temperature', 'Air_Temperature').replace('Humidity', 'Humidity').replace('CO2', 'CO2').replace('Pressure', 'Pressure').replace('Occupancy', 'Occupancy')
         if not token:
             return []
+        bldg_ns = settings.BUILDING_NAMESPACE
+        bldg_pfx = settings.BUILDING_PREFIX
         # Use regex on URI string via FILTER(CONTAINS())
         q = f"""{self._prefix_block()}
-SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'http://abacwsbuilding.cardiff.ac.uk/abacws#') && CONTAINS(STR(?s), '{token}_Sensor')) }} LIMIT {limit}"""
+SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(STR(?s), '{token}_Sensor')) }} LIMIT {limit}"""
         try:
             async with httpx.AsyncClient(timeout=25.0) as client:
                 auth = (settings.GRAPHDB_USER, settings.GRAPHDB_PASSWORD) if settings.GRAPHDB_USER else None
@@ -816,8 +966,8 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'http://abacwsbuilding.ca
                 out = []
                 for b in data.get('results', {}).get('bindings', []):
                     uri = b.get('s', {}).get('value')
-                    if uri and uri.startswith('http://abacwsbuilding.cardiff.ac.uk/abacws#'):
-                        out.append('bldg:' + uri.split('#', 1)[1])
+                    if uri and uri.startswith(bldg_ns):
+                        out.append(f'{bldg_pfx}:' + uri.split('#', 1)[1])
                 return out
         except Exception as e:
             logger.warning(f"Pattern instance search failed for token {token}: {e}")
@@ -849,31 +999,57 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'http://abacwsbuilding.ca
         return "\n".join(EXTENDED_PREFIXES)
 
     def _extract_entities(self, user_query: str) -> List[str]:
-        """Extract explicit bldg: entities or construct them from patterns like 'Air Humidity Sensor 5.01'."""
+        """Extract explicit bldg: entities or construct them from natural language patterns."""
         entities = []
         # Direct bldg: references
         for token in re.findall(r"bldg:[A-Za-z0-9_\.]+", user_query):
             entities.append(token)
-        # Unified sensor pattern extraction
-        sensor_pattern = re.findall(r"(Zone|Room|Space|Air)?\s*(Air Temperature|Temperature|Air Humidity|Humidity|CO2|Pressure|Occupancy) Sensor\s*(\d+\.\d+|\d+)", user_query, re.IGNORECASE)
+
+        # Zone/Room/Space number pattern: "zone 5.01", "zone 5", "room 5.03"
+        zone_pattern = re.findall(r"\b(?:zone|room|space)\s+(\d+(?:\.\d+)?)\b", user_query, re.IGNORECASE)
+        for num in zone_pattern:
+            entities.append(f"bldg:Zone_{num}")
+
+        # Sensor type + node number patterns: "Air Quality Level Sensor 5.01", "Air Temperature Sensor 5.01"
+        sensor_type_map = [
+            (r"air quality level sensor[s]?\s+(\d+\.\d+|\d+)", "Air_Quality_Level_Sensor"),
+            (r"air quality sensor[s]?\s+(\d+\.\d+|\d+)", "Air_Quality_Level_Sensor"),
+            (r"air temperature sensor[s]?\s+(\d+\.\d+|\d+)", "Air_Temperature_Sensor"),
+            (r"temperature sensor[s]?\s+(\d+\.\d+|\d+)", "Air_Temperature_Sensor"),
+            (r"humidity sensor[s]?\s+(\d+\.\d+|\d+)", "Zone_Air_Humidity_Sensor"),
+            (r"zone air humidity sensor[s]?\s+(\d+\.\d+|\d+)", "Zone_Air_Humidity_Sensor"),
+            (r"co2 sensor[s]?\s+(\d+\.\d+|\d+)", "CO2_Level_Sensor"),
+            (r"co2 level sensor[s]?\s+(\d+\.\d+|\d+)", "CO2_Level_Sensor"),
+            (r"co\s+level sensor[s]?\s+(\d+\.\d+|\d+)", "CO_Level_Sensor"),
+            (r"tvoc sensor[s]?\s+(\d+\.\d+|\d+)", "TVOC_Level_Sensor"),
+            (r"formaldehyde sensor[s]?\s+(\d+\.\d+|\d+)", "Formaldehyde_Level_Sensor"),
+            (r"illuminance sensor[s]?\s+(\d+\.\d+|\d+)", "Illuminance_Sensor"),
+            (r"sound sensor[s]?\s+(\d+\.\d+|\d+)", "Sound_Noise_Sensor_MEMS"),
+            (r"noise sensor[s]?\s+(\d+\.\d+|\d+)", "Sound_Noise_Sensor_MEMS"),
+        ]
+        for pattern, sensor_type in sensor_type_map:
+            for num in re.findall(pattern, user_query, re.IGNORECASE):
+                entities.append(f"bldg:{sensor_type}_{num}")
+
+        # Legacy: (Zone|Room|Space|Air)? (Air Temperature|Humidity|CO2|etc) Sensor NUM
+        sensor_pattern = re.findall(
+            r"(Zone|Room|Space|Air)?\s*(Air Temperature|Temperature|Air Humidity|Humidity|CO2|Pressure|Occupancy) Sensor\s*(\d+\.\d+|\d+)",
+            user_query, re.IGNORECASE
+        )
         for prefix, stype, num in sensor_pattern:
             stype_norm = stype.lower().strip()
             mapping = {
-                'air temperature': 'Air_Temperature',
-                'temperature': 'Air_Temperature',
-                'air humidity': 'Air_Humidity',
-                'humidity': 'Air_Humidity',
-                'co2': 'CO2',
-                'pressure': 'Pressure',
-                'occupancy': 'Occupancy'
+                'air temperature': 'Air_Temperature_Sensor',
+                'temperature': 'Air_Temperature_Sensor',
+                'air humidity': 'Zone_Air_Humidity_Sensor',
+                'humidity': 'Zone_Air_Humidity_Sensor',
+                'co2': 'CO2_Level_Sensor',
+                'pressure': 'Pressure_Sensor',
+                'occupancy': 'Occupancy_Sensor',
             }
-            base_type = mapping.get(stype_norm, stype_norm.title().replace(' ', '_'))
-            base = f"{base_type}_Sensor_{num}"
-            zone_base = "Zone_" + base
-            chosen = zone_base if prefix and prefix.lower() == 'zone' else base
-            entities.append("bldg:" + chosen)
-            if chosen != zone_base:
-                entities.append("bldg:" + zone_base)
+            base_type = mapping.get(stype_norm, stype_norm.title().replace(' ', '_') + '_Sensor')
+            entities.append(f"bldg:{base_type}_{num}")
+
         return list(dict.fromkeys(entities))  # dedupe preserving order
 
     def _infer_class_from_entity(self, entity: str) -> Optional[str]:
@@ -927,7 +1103,7 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'http://abacwsbuilding.ca
                         # Compact known namespaces
                         for ns, pref in (
                             ('https://brickschema.org/schema/Brick#', 'brick:'),
-                            ('http://abacwsbuilding.cardiff.ac.uk/abacws#', 'bldg:'),
+                            (settings.BUILDING_NAMESPACE, f'{settings.BUILDING_PREFIX}:'),
                             ('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf:'),
                             ('http://www.w3.org/2000/01/rdf-schema#', 'rdfs:'),
                             ('http://www.w3.org/2002/07/owl#', 'owl:'),
@@ -944,6 +1120,10 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'http://abacwsbuilding.ca
             standardized['error'] = f'standardization_failed: {e}'
     async def _execute_query(self, sparql: str) -> Dict[str, Any]:
         """Execute SPARQL query against GraphDB (with Fuseki fallback)"""
+        # Phase 4.2: Enforce LIMIT safety cap on SELECT queries
+        from orchestrator.services.sparql_validator import sparql_validator
+        sparql = sparql_validator.enforce_limit(sparql)
+
         # Check cache
         query_hash = generate_hash(sparql)
         cache_key = f"cache:sparql_exec:{query_hash}"
@@ -1224,13 +1404,14 @@ Generate your response now:"""
         # **PRIORITY 1: Metadata-only patterns** (check FIRST!)
         # These are static ontology properties - NEVER require analytics
         metadata_patterns = [
-            "what is the label", "what is the uuid", "what is the id", 
+            "what is the label", "what is the uuid", "what is the id",
             "what is the type", "what is the location", "where is",
             "what is the definition", "what is the description",
-            "list all", "show all", "how many", "count",
+            "list all", "show all", "how many", "count of sensors",
             "which equipment", "what type", "explain", "describe",
             "in ontology", "in the ontology", "from ontology",
-            "hasLocation", "isPointOf", "feeds", "hasPart"
+            "hasLocation", "isPointOf", "feeds", "hasPart",
+            "what sensors", "which sensors", "list sensors",
         ]
         
         for pattern in metadata_patterns:
@@ -1243,10 +1424,25 @@ Generate your response now:"""
             "current temperature", "current reading", "current value",
             "average temperature", "min temperature", "max temperature",
             "temperature reading", "co2 reading", "humidity reading",
+            "air quality reading", "humidity reading", "sound reading",
             "above", "below", "higher than", "lower than",
-            "trend", "history", "yesterday", "last week", "last hour",
+            "trend", "history", "yesterday", "last week", "last hour", "last month",
             "graph", "chart", "plot", "visualize", "visualise",
-            "show me the data", "get readings", "fetch values"
+            "show me the data", "get readings", "fetch values",
+            # Time-relative queries
+            "last reading", "latest reading", "last value", "latest value",
+            "recent reading", "recent data", "last data", "latest data",
+            "last measurement", "most recent",
+            # Generic "reading" / "value" when asking for data
+            "give me reading", "get reading", "show reading",
+            "sensor data", "sensor value", "sensor reading",
+            "data for zone", "data for room", "data from zone",
+            "readings for zone", "readings from zone", "values for zone",
+            "readings in zone", "average in zone", "average for zone",
+            "max in zone", "min in zone", "temperature in zone",
+            # Aggregation patterns
+            "average", "minimum", "maximum", "distribution", "compare",
+            "highest", "lowest", "peak", "anomaly", "anomalies",
         ]
         
         for pattern in analytics_patterns:

@@ -1,121 +1,115 @@
-# OntoSage 2.0: Agentic AI for Intelligent Buildings
+# OntoSage: Easy-Deploy Conversational AI for Sustainable Smart Buildings
+## Enabling Zero-Knowledge Human-Building Interaction for Persona-Agnostic Multi-Objective Goals
 
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green.svg)](https://fastapi.tiangolo.com/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-0.2-purple.svg)](https://langchain-ai.github.io/langgraph/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**OntoSage 2.0** is a state-of-the-art **Agentic AI System** designed for the management, analysis, and interaction with Intelligent Buildings. Unlike traditional chatbots, OntoSage employs a **Multi-Agent Architecture** orchestrated by **LangGraph**, allowing it to reason, plan, and execute complex tasks across heterogeneous data sources (SQL Time-Series, RDF Knowledge Graphs, Vector Stores).
+**OntoSage** is a research-grade **Agentic AI Framework** designed to democratize access to smart building data. It enables **Zero-Knowledge Human-Building Interaction (HBI)**, allowing users with no technical expertise (occupants, facility managers, researchers) to interact with complex building systems using natural language.
 
-Whether you are a Facility Manager needing real-time sensor data, a Researcher querying complex ontologies, or a Student exploring building systems, OntoSage adapts its persona and tools to serve you.
+Designed for **Sustainable Smart Buildings**, OntoSage facilitates **persona-agnostic multi-objective goals**—from optimizing energy consumption to ensuring occupant comfort—without requiring users to understand the underlying database schemas, ontologies, or sensor protocols.
+
+The framework is built on a **"Easy-Deploy"** philosophy, ensuring it can be deployed in any smart building environment with **minimal changes** to existing databases and ontologies.
 
 ---
 
-## 🌟 Key Features
+## 🌟 Key Research Contributions & Features
 
-*   **🧠 Multi-Agent Orchestration**: A team of specialized agents (Dialogue, SPARQL, SQL, Analytics, Visualization) working together to solve complex user queries.
-*   **🔍 Hybrid RAG System**: Combines **Vector Search** (Qdrant) for unstructured data with **Semantic Queries** (SPARQL) for structured knowledge graphs.
-*   **📊 Advanced Analytics**: Generates and executes Python code in a secure sandbox to perform statistical analysis and data processing on the fly.
-*   **📈 Dynamic Visualization**: Automatically generates interactive Plotly charts to visualize sensor trends and analysis results.
-*   **🗣️ Voice Interface**: Integrated **Whisper STT** for seamless voice-to-text interaction.
-*   **🏢 3D Building Digital Twin**: Interactive 3D visualization of building assets and sensor locations.
-*   **🔓 Flexible Model Support**: Run completely offline with **Ollama (DeepSeek/Llama)** or connect to **OpenAI (GPT-4)** for cloud-based power.
-*   **⚡ High Performance**: Redis-based caching for conversation state and semantic queries (SPARQL/SQL).
-*   **🛡️ Secure & Reliable**: Hardened SQL execution, deterministic analytics templates, and standardized API responses.
+*   **🤖 Zero-Knowledge Interaction**: Abstracts the complexity of SPARQL, SQL, and IoT protocols. Users simply ask questions like "Why is it so hot in here?" or "Analyze energy trends for last month," and the system handles the technical translation.
+*   **🏢 Persona-Agnostic Adaptability**: Automatically detects and adapts to the user's role (e.g., providing simplified comfort controls for occupants vs. detailed diagnostic data for facility managers).
+*   **⚡ Easy-Deploy Architecture**: Containerized microservices architecture (Docker) that requires minimal configuration. It adapts to *your* building's existing ontology (Brick, RealEstateCore, etc.) and database structure rather than forcing a migration.
+*   **🧠 Multi-Agent Orchestration**: A sophisticated **LangGraph**-based brain that coordinates specialized agents:
+    *   **Dialogue Agent**: Context-aware communication.
+    *   **SPARQL Agent**: Semantic reasoning over building topology.
+    *   **SQL Agent**: High-performance time-series retrieval.
+    *   **Analytics Agent**: On-the-fly Python code generation for statistical analysis.
+    *   **Visualization Agent**: Dynamic generation of Plotly charts.
+*   **🔍 GraphDB-Native RAG**: Utilizes **GraphDB Similarity Indexing** for semantic search directly within the Knowledge Graph, eliminating the need for external vector databases for ontology mapping.
+*   **🧠 Long-Term Memory**: Uses **Qdrant** to store and retrieve **User Conversation History**, enabling the system to recall past context and preferences across sessions.
+*   **🔓 Open & Private**: Fully supports local deployment with **Ollama (DeepSeek/Llama)** for data privacy, or cloud integration with OpenAI.
+*   **🗣️ Multimodal Interface**: Integrated with **Open WebUI** for a seamless chat experience, including voice interaction capabilities.
 
 ---
 
 ## 🏗️ System Architecture
 
-OntoSage 2.0 follows a **Hub-and-Spoke** architecture where the **Orchestrator** acts as the central brain, coordinating communication between the Frontend and specialized microservices.
+OntoSage employs a **Hub-and-Spoke** agentic architecture. The **Orchestrator** serves as the central cognitive unit, decomposing complex user queries into sub-tasks delegated to specialized agents.
 
 ```mermaid
 graph TD
-    User((User)) -->|Chat/Voice| Frontend[Frontend UI]
-    Frontend -->|REST/WS| Orchestrator[Orchestrator Service]
+    User((User)) -->|Natural Language| OpenWebUI[Open WebUI]
+    OpenWebUI -->|REST API| Orchestrator[Orchestrator Service]
     
-    subgraph "Agentic Core (LangGraph)"
-        Orchestrator -->|Routes| Dialogue[Dialogue Agent]
-        Orchestrator -->|Routes| SPARQL[SPARQL Agent]
-        Orchestrator -->|Routes| SQL[SQL Agent]
-        Orchestrator -->|Routes| Analytics[Analytics Agent]
-        Orchestrator -->|Routes| Vis[Visualization Agent]
+    subgraph "Cognitive Core (LangGraph)"
+        Orchestrator -->|Delegates| Dialogue[Dialogue Agent]
+        Orchestrator -->|Delegates| SPARQL[SPARQL Agent]
+        Orchestrator -->|Delegates| SQL[SQL Agent]
+        Orchestrator -->|Delegates| Analytics[Analytics Agent]
+        Orchestrator -->|Delegates| Vis[Visualization Agent]
     end
     
-    subgraph "Knowledge & Data"
-        SPARQL -->|Query| GraphDB[(GraphDB Ontology)]
-        SQL -->|Query| MySQL[(Sensor Data)]
-        Dialogue -->|Retrieve| RAG[RAG Service]
-        RAG -->|Search| Qdrant[(Vector DB)]
+    subgraph "Memory & Context"
+        Dialogue -->|Retrieve History| Qdrant[(Qdrant Memory)]
+    end
+
+    subgraph "Knowledge Layer"
+        SPARQL -->|Semantic Query| GraphDB[(GraphDB Ontology)]
+        SQL -->|Time-Series Query| MySQL[(Sensor Data)]
+        Dialogue -->|Context Retrieval| RAG[RAG Service]
+        RAG -->|Similarity Search| GraphDB
     end
     
-    subgraph "Execution & Processing"
-        Analytics -->|Execute| Sandbox[Code Executor]
-        Orchestrator -->|Transcribe| Whisper[Whisper STT]
+    subgraph "Execution Layer"
+        Analytics -->|Secure Execution| Sandbox[Code Executor]
     end
 ```
 
-### Agent Decision Flow
+### Zero-Knowledge Query Resolution Flow
 
-How the system decides which agent to use:
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant O as Orchestrator
-    participant D as Dialogue Agent
-    participant S as SPARQL Agent
-    participant Q as SQL Agent
-    participant A as Analytics Agent
-
-    U->>O: "What is the average temp in Room 101?"
-    O->>O: Classify Intent
-    alt Intent = Structural/Metadata
-        O->>S: Generate SPARQL
-        S->>O: Return Entities (Sensor IDs)
-    else Intent = Time-Series Data
-        O->>Q: Generate SQL
-        Q->>O: Return Data Points
-    else Intent = Analysis
-        O->>A: Generate Python Code
-        A->>O: Return Analysis Result
-    else Intent = General/Chit-Chat
-        O->>D: RAG Search + LLM
-        D->>O: Return Answer
-    end
-    O->>U: Final Response
-```
+1.  **Context Retrieval**: The system fetches relevant past interactions from **Qdrant** to understand the user's ongoing context.
+2.  **Intent Recognition**: The system identifies if the user wants to *know* (metadata), *see* (time-series), or *analyze* (computation).
+3.  **Schema Mapping**: It uses **GraphDB Similarity Indexing** to map natural language terms (e.g., "Conference Room") to specific ontology entities (e.g., `bldg:Room-101`).
+4.  **Data Retrieval**: It autonomously constructs valid SPARQL or SQL queries based on the connected building's schema.
+5.  **Synthesis**: Results are synthesized into a natural language response, often accompanied by dynamic visualizations.
 
 ---
 
-## 🧩 Detailed Service Guide
+## 🧩 Service Components
 
 ### 1. Orchestrator Service (`/orchestrator`)
-**The Brain.** Built with **FastAPI** and **LangGraph**.
-*   **Role**: Manages the conversation state, history, and agent routing. It receives the user's query and decides *which* agent is best suited to handle it.
-*   **Agents**:
-    *   **Dialogue Agent**: Handles chit-chat, intent classification, and general Q&A using RAG.
-    *   **SPARQL Agent**: Translates natural language into SPARQL queries to fetch structural data from the Ontology (e.g., "What sensors are in Room 101?").
-    *   **SQL Agent**: Translates natural language into SQL queries to fetch historical time-series data (e.g., "Show me the temperature of Sensor X last week").
-    *   **Analytics Agent**: Writes Python code to analyze data (e.g., "Calculate the average energy consumption").
-    *   **Visualization Agent**: Generates configuration for Plotly charts.
-*   **State Management**: Uses **Redis** to persist conversation history and agent scratchpads, allowing for multi-turn reasoning.
+The cognitive brain built with **FastAPI** and **LangGraph**. It maintains conversation state and manages the "Persona Agnostic" logic, adjusting responses based on the inferred user intent.
 
-### 2. RAG Service (`/rag-service`)
-**The Librarian.** Built with **GraphDB** and **Qdrant**.
-*   **Role**: Handles semantic search. It indexes building documentation, ontology descriptions, and metadata.
-*   **Working**: When a user asks a vague question, the RAG service retrieves relevant context chunks to help the LLM understand the domain-specific terminology before generating a response.
+### 2. Agentic Microservices
+*   **SPARQL Agent**: Interfaces with RDF stores (GraphDB) to understand building topology.
+*   **SQL Agent**: Interfaces with SQL databases (PostgreSQL/MySQL) for historical sensor data.
+*   **Analytics Agent**: A secure sandbox for executing generated Python code to perform complex calculations (e.g., "Calculate the correlation between occupancy and temperature").
+*   **Visualization Agent**: Generates configuration for Plotly charts.
+*   **State Management**: Uses **Redis** for short-term state and **Qdrant** for long-term semantic memory.
 
-### 3. Code Executor Service (`/code-executor`)
+### 3. RAG Service (`/rag-service`)
+**The Librarian.** Built with **GraphDB Similarity Indexing**.
+*   **Role**: Handles semantic search directly within the Knowledge Graph.
+*   **Working**: Uses GraphDB's internal vector index to find relevant ontology entities based on user queries, then retrieves their "bounded context" (neighboring triples) to ground the LLM.
+
+### 4. Code Executor Service (`/code-executor`)
 **The Sandbox.** Built with **Docker** and **Python**.
 *   **Role**: A secure, isolated environment for running code generated by the Analytics Agent.
 *   **Security**: Prevents the AI from accessing the host system, network, or sensitive files. It only has access to the specific data provided for the analysis task.
 *   **Output**: Returns the standard output (text) and any generated artifacts (images/plots) back to the Orchestrator.
 
-### 4. Whisper STT Service (`/whisper-stt`)
-**The Ears.** Built with **OpenAI Whisper**.
-*   **Role**: Converts voice recordings from the frontend into text.
-*   **Working**: Supports multiple languages and is optimized for technical terminology. Can run locally (using CPU/GPU) or proxy to OpenAI's API.
+### 5. Frontend Application (`/frontend`)
+**The Face.** Built with **Open WebUI**.
+*   **Features**:
+    *   **Chat Interface**: Streaming responses, markdown support, code highlighting.
+    *   **Voice Input**: One-click recording and sending.
+    *   **Visualization**: Renders interactive plots generated by the backend.
+
+### 6. Data Layer
+*   **MySQL**: Stores high-frequency sensor telemetry data.
+*   **GraphDB**: Stores the RDF Knowledge Graph (Ontology) and handles Vector Similarity Search.
+*   **Qdrant**: Stores vector embeddings of **User Conversation History** for long-term memory.
+*   **Redis**: High-speed cache for active conversation state.
 
 ### 5. Frontend Application (`/frontend`)
 **The Face.** Built with **React 19**, **TypeScript**, and **Tailwind CSS**.

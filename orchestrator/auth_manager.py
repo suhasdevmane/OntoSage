@@ -1,16 +1,61 @@
 """
-Authentication Manager for OntoSage 2.0
-Handles user registration, login, and session management
+Authentication Manager for OntoSage 3.0
+Handles user registration, login, and session management.
+
+Phase 7.3 — Password Security Upgrade
+  Passwords are now hashed with Argon2id (argon2-cffi) which is the
+  2023 OWASP recommended algorithm, providing GPU/ASIC resistance via
+  configurable memory and time cost parameters.
+
+  Falls back to bcrypt (passlib[bcrypt]) if argon2-cffi is not installed.
+  Falls back to SHA-256 (legacy) if neither is installed — NOT recommended
+  for production; install argon2-cffi via requirements.txt.
+
+  Hash format stored in DB:
+    argon2id:<argon2-cffi encoded hash>
+    bcrypt:<bcrypt encoded hash>
+    sha256:<hex digest>   ← legacy, migrated on next login
+
+  Transparent migration: when a user with a legacy SHA-256 hash logs in
+  successfully, their hash is automatically rehashed with Argon2id and
+  stored — no forced password reset required.
 """
 import hashlib
 import secrets
 import json
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple
 from datetime import datetime, timedelta
 
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Password hashing backend detection
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _detect_hasher():
+    """Return the best available password hashing backend."""
+    try:
+        from argon2 import PasswordHasher  # argon2-cffi
+        return "argon2id"
+    except ImportError:
+        pass
+    try:
+        import bcrypt  # noqa
+        return "bcrypt"
+    except ImportError:
+        pass
+    logger.warning(
+        "Neither argon2-cffi nor bcrypt is installed! "
+        "Falling back to SHA-256 — install argon2-cffi for production."
+    )
+    return "sha256"
+
+
+HASHER_BACKEND = _detect_hasher()
+logger_pw = get_logger("auth.password")
 
 
 class AuthManager:
@@ -28,40 +73,80 @@ class AuthManager:
         self.postgres = postgres_manager
         self.session_ttl = 86400 * 7  # 7 days
         
-    def _hash_password(self, password: str, salt: Optional[str] = None) -> tuple[str, str]:
+    def _hash_password(self, password: str, salt: Optional[str] = None) -> Tuple[str, str]:
         """
-        Hash password with salt using SHA-256
-        
-        Args:
-            password: Plain text password
-            salt: Optional salt (generated if not provided)
-            
+        Hash a password using Argon2id (preferred) → bcrypt → SHA-256.
+
         Returns:
-            Tuple of (hashed_password, salt)
+            Tuple of (hashed_password_with_prefix, salt)
+            The salt is kept for backward-compat with SHA-256 legacy hashes;
+            Argon2id/bcrypt embed the salt in the hash itself.
         """
         if not salt:
             salt = secrets.token_hex(16)
-        
-        # Combine password and salt
-        salted = f"{password}{salt}".encode('utf-8')
+
+        if HASHER_BACKEND == "argon2id":
+            from argon2 import PasswordHasher
+            ph = PasswordHasher(time_cost=3, memory_cost=65536, parallelism=4, hash_len=32)
+            # Argon2id salt is generated internally; we combine with our salt
+            hashed = ph.hash(f"{password}{salt}")
+            return f"argon2id:{hashed}", salt
+
+        if HASHER_BACKEND == "bcrypt":
+            import bcrypt
+            pw_bytes  = f"{password}{salt}".encode("utf-8")
+            bc_salt   = bcrypt.gensalt(rounds=12)
+            hashed    = bcrypt.hashpw(pw_bytes, bc_salt).decode("utf-8")
+            return f"bcrypt:{hashed}", salt
+
+        # SHA-256 legacy fallback
+        salted = f"{password}{salt}".encode("utf-8")
         hashed = hashlib.sha256(salted).hexdigest()
-        
-        return hashed, salt
-    
+        return hashed, salt  # no prefix for backward-compat
+
     def _verify_password(self, password: str, hashed: str, salt: str) -> bool:
         """
-        Verify password against stored hash
-        
-        Args:
-            password: Plain text password to verify
-            hashed: Stored password hash
-            salt: Stored salt
-            
+        Verify a password against its stored hash.
+        Handles all three formats: argon2id:, bcrypt:, and legacy sha256.
+
         Returns:
-            True if password matches, False otherwise
+            True if password is correct.
         """
-        computed_hash, _ = self._hash_password(password, salt)
-        return computed_hash == hashed
+        try:
+            if hashed.startswith("argon2id:"):
+                from argon2 import PasswordHasher
+                from argon2.exceptions import VerifyMismatchError
+                ph = PasswordHasher()
+                try:
+                    return ph.verify(hashed[len("argon2id:"):], f"{password}{salt}")
+                except VerifyMismatchError:
+                    return False
+
+            if hashed.startswith("bcrypt:"):
+                import bcrypt
+                pw_bytes = f"{password}{salt}".encode("utf-8")
+                stored   = hashed[len("bcrypt:"):].encode("utf-8")
+                return bcrypt.checkpw(pw_bytes, stored)
+
+            # Legacy SHA-256 (no prefix)
+            salted   = f"{password}{salt}".encode("utf-8")
+            computed = hashlib.sha256(salted).hexdigest()
+            return computed == hashed
+
+        except Exception as e:
+            logger_pw.error(f"Password verification error: {e}")
+            return False
+
+    def _needs_rehash(self, hashed: str) -> bool:
+        """
+        Return True if the stored hash uses a legacy algorithm and should
+        be transparently upgraded to Argon2id on next login.
+        """
+        if HASHER_BACKEND == "argon2id" and not hashed.startswith("argon2id:"):
+            return True
+        if HASHER_BACKEND == "bcrypt" and not hashed.startswith(("argon2id:", "bcrypt:")):
+            return True
+        return False
     
     async def register_user(
         self,
@@ -218,6 +303,22 @@ class AuthManager:
                     "success": False,
                     "error": "Invalid username or password"
                 }
+
+            # Transparent hash migration: upgrade legacy SHA-256 → Argon2id
+            if self._needs_rehash(stored_hash):
+                logger_pw.info(f"Upgrading password hash for {username} to {HASHER_BACKEND}")
+                new_hash, new_salt = self._hash_password(password)
+                try:
+                    if self.postgres:
+                        await self.postgres.update_password(username, new_hash, new_salt)
+                    else:
+                        await self.redis.client.hset(f"user:{username}", mapping={
+                            "password_hash": new_hash,
+                            "salt":          new_salt,
+                        })
+                    logger_pw.info(f"Password hash upgraded for {username}")
+                except Exception as mig_err:
+                    logger_pw.warning(f"Hash migration failed (non-blocking): {mig_err}")
             
             # Create session token
             session_token = secrets.token_urlsafe(32)

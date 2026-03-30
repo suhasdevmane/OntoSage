@@ -4,15 +4,31 @@ Shared utility functions for OntoSage 2.0
 import hashlib
 import json
 import logging
+import os
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 import uuid
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+class _TraceIdFilter(logging.Filter):
+    """Inject trace_id into every log record from contextvars (if available)."""
+    def filter(self, record):
+        try:
+            from orchestrator.services.logging_context import get_trace_id
+            record.trace_id = get_trace_id()
+        except Exception:
+            record.trace_id = "-"
+        return True
+
+
+# Setup logging — include trace_id for structured tracing
+_LOG_FORMAT = os.environ.get(
+    "LOG_FORMAT",
+    "%(asctime)s [%(trace_id)s] %(name)s %(levelname)s %(message)s",
 )
+logging.basicConfig(level=logging.INFO, format=_LOG_FORMAT)
+logging.getLogger().addFilter(_TraceIdFilter())
+
 
 def get_logger(name: str) -> logging.Logger:
     """Get a logger instance"""

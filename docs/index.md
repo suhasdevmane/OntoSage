@@ -33,8 +33,8 @@ OntoSage 2.0 is designed to bridge the gap between complex building data (Ontolo
 
 ```mermaid
 graph TD
-  User((User)) -->|Chat/Voice| FE[Frontend UI]
-  FE -->|REST/WS| ORCH[Orchestrator]
+  User((User)) -->|Chat/Voice| FE[Open WebUI]
+  FE -->|REST API| ORCH[Orchestrator]
   
   subgraph "Agentic Core"
     ORCH -->|Routes| Dialogue[Dialogue Agent]
@@ -44,17 +44,17 @@ graph TD
     ORCH -->|Routes| Vis[Visualization Agent]
   end
   
-  subgraph "Data & Knowledge"
-    SPARQL -->|Query| GDB[(GraphDB)]
-    SQL -->|Query| MYSQL[(MySQL)]
-    Dialogue -->|Retrieve| RAG[RAG Service]
-    RAG -->|Search| QDR[(Qdrant)]
+  subgraph "Memory & Data"
+    Dialogue -->|Retrieve History| Qdrant[(Qdrant Memory)]
+    SPARQL -->|Semantic Query| GDB[(GraphDB)]
+    SQL -->|Time-Series Query| MYSQL[(MySQL)]
+    Dialogue -->|Context| RAG[RAG Service]
+    RAG -->|Similarity Search| GDB
     ORCH -->|Cache| REDIS[(Redis)]
   end
   
   subgraph "Execution"
     Analytics -->|Run Code| EXEC[Code Executor]
-    ORCH -->|Transcribe| WHIS[Whisper STT]
   end
 ```
 

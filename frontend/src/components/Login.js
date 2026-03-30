@@ -77,6 +77,11 @@ function Login() {
         throw new Error(data.detail || data.message || 'Login failed');
       }
 
+      // Check for API-level error (even with 200 OK)
+      if (data.success === false) {
+        throw new Error(data.error || data.message || 'Login failed');
+      }
+
       // Check if we got a session token
       // API returns { success: true, data: { session_token: "..." } }
       const sessionToken = data.data?.session_token || data.session_token;
@@ -90,7 +95,7 @@ function Login() {
       sessionStorage.setItem('session_token', sessionToken);
       sessionStorage.setItem('chatbot_minimized', 'false'); // Show chat by default
       
-      console.log('Session token stored:', data.session_token.substring(0, 10) + '...');
+      console.log('Session token stored:', sessionToken.substring(0, 10) + '...');
 
       // Cache user in local DB (don't store password)
       try {
