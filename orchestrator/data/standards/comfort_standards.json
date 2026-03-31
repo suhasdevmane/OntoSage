@@ -1,0 +1,40 @@
+{
+  "ashrae55": {
+    "name": "ASHRAE Standard 55",
+    "description": "Thermal Environmental Conditions for Human Occupancy",
+    "temperature": [20.0, 26.0],
+    "humidity": [30.0, 60.0],
+    "co2": [0, 1000]
+  },
+  "well": {
+    "name": "WELL Building Standard v2",
+    "description": "Air quality and thermal comfort for occupant health",
+    "temperature": [20.0, 25.5],
+    "humidity": [30.0, 60.0],
+    "co2": [0, 900],
+    "pm25": [0, 15]
+  },
+  "en15251": {
+    "name": "EN 15251 / EN 16798-1",
+    "description": "Indoor environmental input parameters for design and assessment",
+    "temperature": [20.0, 26.0],
+    "humidity": [25.0, 65.0],
+    "co2": [0, 1200]
+  },
+  "breeam": {
+    "name": "BREEAM Hea 01",
+    "description": "Visual comfort and indoor air quality for BREEAM certification",
+    "temperature": [21.0, 25.0],
+    "humidity": [40.0, 60.0],
+    "co2": [0, 900],
+    "pm25": [0, 10],
+    "voc": [0, 300]
+  },
+  "iso50001": {
+    "name": "ISO 50001:2018",
+    "description": "Energy management systems — comfort within energy efficiency targets",
+    "temperature": [19.0, 26.0],
+    "humidity": [30.0, 65.0],
+    "co2": [0, 1000]
+  }
+}

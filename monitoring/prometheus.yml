@@ -1,0 +1,64 @@
+# Prometheus configuration for OntoSage 2.0
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'ontosage-2.0'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Scrape configurations
+scrape_configs:
+  # Orchestrator metrics
+  - job_name: 'orchestrator'
+    static_configs:
+      - targets: ['orchestrator:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # RAG Service metrics
+  - job_name: 'rag-service'
+    static_configs:
+      - targets: ['rag-service:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Code Executor metrics
+  - job_name: 'code-executor'
+    static_configs:
+      - targets: ['code-executor:8002']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Whisper STT metrics
+  - job_name: 'whisper-stt'
+    static_configs:
+      - targets: ['whisper-stt:8003']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  # Qdrant metrics
+  - job_name: 'qdrant'
+    static_configs:
+      - targets: ['qdrant:6333']
+    metrics_path: '/metrics'
+
+  # MySQL metrics
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysql:3306']
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

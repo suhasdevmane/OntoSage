@@ -1,0 +1,27 @@
+apiVersion: v2
+name: ontosage
+description: OntoSage — Intelligent Multi-Agent Smart Building RAG System
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - smart-building
+  - rag
+  - ontology
+  - iot
+  - ai
+home: https://github.com/suhasdevmane/OntoSage
+sources:
+  - https://github.com/suhasdevmane/OntoSage
+maintainers:
+  - name: Suhas Devmane
+    email: suhas@example.com
+dependencies:
+  - name: redis
+    version: "17.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: mysql
+    version: "9.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: mysql.enabled

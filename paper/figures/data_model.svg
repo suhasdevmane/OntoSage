@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <style>
+    .box { fill:#fafafa; stroke:#34495e; stroke-width:2; }
+    .title { font-family: Arial, sans-serif; font-size: 22px; font-weight: bold; fill:#2c3e50; }
+    .label { font-family: Arial, sans-serif; font-size: 16px; fill:#2c3e50; }
+    .arrow { stroke:#34495e; stroke-width:2; marker-end:url(#arrowhead); }
+    .mono { font-family: Courier New, monospace; font-size: 15px; fill:#2c3e50; }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#34495e" />
+    </marker>
+  </defs>
+  <text x="30" y="40" class="title">Data Model: GraphDB Triples and MySQL Time-series</text>
+
+  <!-- GraphDB side -->
+  <rect x="40" y="80" width="480" height="460" class="box"/>
+  <text x="60" y="110" class="label">GraphDB (Brick/REC/ASHRAE 223)</text>
+  <text x="60" y="150" class="mono">@prefix brick: &lt;https://brickschema.org/schema/Brick#&gt;</text>
+  <text x="60" y="175" class="mono">@prefix rec: &lt;https://w3id.org/rec#&gt;</text>
+  <text x="60" y="200" class="mono">@prefix ashrae: &lt;https://data.ashrae.org/standard223#&gt;</text>
+  <text x="60" y="235" class="mono">brick:CO2_Sensor_5_01 rdf:type brick:CO2_Sensor .</text>
+  <text x="60" y="260" class="mono">brick:CO2_Sensor_5_01 rec:isLocatedIn brick:Zone_5_01 .</text>
+  <text x="60" y="285" class="mono">brick:CO2_Sensor_5_01 ashrae:hasExternalReference _:ref1 .</text>
+  <text x="60" y="310" class="mono">_:ref1 ref:hasTimeseriesId "uuid-1234" ; ref:storedAt "mysql" .</text>
+
+  <!-- MySQL side -->
+  <rect x="680" y="80" width="480" height="460" class="box"/>
+  <text x="700" y="110" class="label">MySQL (wide table)</text>
+  <text x="700" y="150" class="mono">CREATE TABLE readings (</text>
+  <text x="700" y="175" class="mono">  ts DATETIME NOT NULL,</text>
+  <text x="700" y="200" class="mono">  uuid_1234 DOUBLE, -- CO2_Sensor_5_01</text>
+  <text x="700" y="225" class="mono">  uuid_5678 DOUBLE, -- CO2_Sensor_5_02</text>
+  <text x="700" y="250" class="mono">  ...</text>
+  <text x="700" y="275" class="mono">);</text>
+
+  <!-- Mapping Arrow -->
+  <line x1="520" y1="300" x2="680" y2="300" class="arrow"/>
+  <text x="550" y="290" class="label">UUID Mapping</text>
+
+  <!-- Unpivot note -->
+  <text x="700" y="330" class="label">Unpivot Strategy (UNION ALL)</text>
+  <text x="700" y="360" class="mono">SELECT ts, 'uuid_1234' AS uuid, uuid_1234 AS val FROM readings UNION ALL ...</text>
+</svg>

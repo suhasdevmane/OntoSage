@@ -1,913 +1,296 @@
-<div align="center">
+# OntoSage: Easy-Deploy Conversational AI for Sustainable Smart Buildings
+## Enabling Zero-Knowledge Human-Building Interaction for Persona-Agnostic Multi-Objective Goals
 
-# OntoBot
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green.svg)](https://fastapi.tiangolo.com/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-0.2-purple.svg)](https://langchain-ai.github.io/langgraph/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A production‑ready, end‑to‑end platform for human–building conversation: Rasa (NLU + Actions), robust analytics microservices, SQL/SPARQL knowledge stores, and a web UI—all orchestrated with Docker Compose.
+**OntoSage** is a research-grade **Agentic AI Framework** designed to democratize access to smart building data. It enables **Zero-Knowledge Human-Building Interaction (HBI)**, allowing users with no technical expertise (occupants, facility managers, researchers) to interact with complex building systems using natural language.
 
-</div>
+Designed for **Sustainable Smart Buildings**, OntoSage facilitates **persona-agnostic multi-objective goals**—from optimizing energy consumption to ensuring occupant comfort—without requiring users to understand the underlying database schemas, ontologies, or sensor protocols.
 
-> Last updated: 2025‑10‑01
-
-This single README merges all documentation (project overview, Rasa runbook, datasets & model training, APIs, and operations) into one comprehensive guide.
-
-Recent highlights (Oct 2025):
-- Multi‑building dataset generation & merge tooling (bldg1, bldg2, bldg3) with raw + deduplicated outputs and provenance.
-- Hardened T5 fine‑tuning (checkpoint‑3) powering the `nl2sparql` microservice; legacy checkpoint‑2 removed.
-- Automatic Ollama (Mistral) model auto‑pull & warm‑up on container start.
-- Added health endpoints to critical services (nl2sparql, analytics, decider, Rasa, file server) for compose reliability.
-- Clarified compose file separation: one active building stack at a time unless you adopt the optional isolation strategy below.
-
-## Contents
-
-- What is OntoBot?
-- Architecture at a glance
-- Services and ports
-  - (See also: [Detailed Port Reference](PORTS.md))
-- Service matrix (summary)
-- Prerequisites
-- Quick start (Docker)
-- Configuration and environment (.env)
-- Data and payloads (contracts)
-- Dataset generation & merging (multi‑building NL→SPARQL)
-- Model training (T5 NL→SPARQL & Decider)
-- Analytics API (examples)
-- Analytics & Decider deep dive (see [analytics.md](analytics.md))
-- Rasa actions, forms, and Decider flow
-- Project structure and key paths
-- Required files and datasets
-- SPARQL (Fuseki) setup
-- Database and performance
-- Artifacts and file server
-- Testing and smoke checks
-- Isolation strategy & running multiple building stacks concurrently
-- Troubleshooting and FAQs
-- Security notes
-- Roadmap
-- References
-- License
-
----
-## Compose stacks overview and extras (feature selection)
-
-This repo now has dedicated compose files for three distinct smart buildings plus an overlay for additional tooling. Language translation (`nl2sparql`) and local summarization (`ollama`) are pluggable feature services that many pipelines use. For an in‑depth semantic/ontological description of each building (real testbed vs synthetic office vs synthetic data centre), see [BUILDINGS.md](BUILDINGS.md).
-
-### Building taxonomy quick summary
-| Building | Nature | Focus | Key Strength |
-|----------|--------|-------|--------------|
-| Building 1 (ABACWS) | Real university testbed | Indoor Environmental Quality (IEQ) & rich per‑room sensing | Dense multi‑gas, particulate, temp, humidity, light, occupancy & noise coverage |
-| Building 2 (Synthetic Office) | Synthetic | AHU + zone thermal comfort & chilled water process variables | Structured AHU/ZONE naming for process & zone temperature queries |
-| Building 3 (Synthetic Data Centre) | Synthetic | Critical cooling, alarms, parameters, broad Brick class taxonomy | Wide equipment & alarm/parameter vocabulary for semantic generalization |
-
-The compose files below instantiate the runtime service graph for exactly one building at a time; the ontologies and sensor model differences are documented in detail in `BUILDINGS.md`.
-
-- Building 1: `docker-compose.bldg1.yml`
-  - For the original/legacy building. Uses Rasa project under `./rasa-bldg1`.
-  - Includes: Rasa, Actions, Duckling, Editor, HTTP file server, Microservices, Decider, MySQL, Fuseki, pgAdmin.
-
-- Building 2 (Timescale): `docker-compose.bldg2.yml`
-  - For bldg2 with SQL telemetry (TimescaleDB). Uses `./rasa-bldg2`.
-  - Includes: TimescaleDB + ThingsBoard, Rasa, Actions, Duckling, Editor, HTTP file server, Microservices, Decider, MySQL, Fuseki, pgAdmin (pre-configured via `bldg2/servers.json`).
-
-- Building 3 (Cassandra): `docker-compose.bldg3.yml`
-  - For bldg3 with telemetry in Cassandra and TB entities in Postgres. Uses `./rasa-bldg3`.
-  - Includes: Postgres + Cassandra + ThingsBoard, Rasa, Actions, Duckling, Editor, HTTP file server, Microservices, Decider, MySQL, Fuseki, pgAdmin (no default servers.json; you can add `bldg3/servers.json`).
-
-- Extras overlay: `docker-compose.extras.yml`
-  - Purpose: add exploration/ML services on top of any building stack (translation + summarization, visualization, notebooks, alternate RDF store).
-  - Services:
-    - Feature services (enable as needed):
-      - `nl2sparql` (T5-based translator) for NL → SPARQL via HTTP.
-      - `ollama` (Mistral) for on-box summarization or generation.
-    - Visualization / exploration add-ons:
-      - `graphdb` (alternate RDF store)
-      - `jupyter` (notebooks; mounts `./development/notebooks` and `./rasa-bldg1/actions` by default)
-      - `adminer` (DB UI; depends on MySQL)
-
-Run patterns (PowerShell):
-
-```powershell
-# bldg1 only
-docker compose -f docker-compose.bldg1.yml up -d --build
-
-# bldg1 + extras
-docker compose -f docker-compose.bldg1.yml -f docker-compose.extras.yml up -d --build
-
-# bldg2 only (Timescale)
-docker compose -f docker-compose.bldg2.yml up -d --build
-
-# bldg2 + extras
-docker compose -f docker-compose.bldg2.yml -f docker-compose.extras.yml up -d --build
-
-# bldg3 only (Cassandra)
-docker compose -f docker-compose.bldg3.yml up -d --build
-
-# bldg3 + extras
-docker compose -f docker-compose.bldg3.yml -f docker-compose.extras.yml up -d --build
-```
-
-Notes:
-- One stack at a time: run only bldg1 OR bldg2 OR bldg3 to avoid port conflicts and data confusion.
-- Fuseki is included in all building compose files on http://localhost:3030; load the appropriate `bldgX/trial/dataset` into Fuseki UI.
-- pgAdmin is included in all three; bldg1 mounts `bldg1/servers.json`, bldg2 mounts `bldg2/servers.json` (pre-configured for Timescale), and bldg3 includes a template at `bldg3/servers.json` and is mounted by default.
-- If you use `adminer` with bldg2/bldg3 and no MySQL, either add MySQL to those stacks or remove the dependency from extras.
-- The `ollama` service uses a GPU deploy block; comment it if GPU is not available.
-
-### Extras overlay
-
-Layer additional services on top of a building stack by combining compose files (order matters; building stack first):
-
-```powershell
-# Example: building 1 + extras
-docker compose -f docker-compose.bldg1.yml -f docker-compose.extras.yml up -d --build
-
-# Stop the combined stack
-docker compose -f docker-compose.bldg1.yml -f docker-compose.extras.yml down
-```
-
-You can substitute `docker-compose.bldg2.yml` or `docker-compose.bldg3.yml` for bldg1.
-
-Services provided by the extras overlay:
-- nl2sparql
-  - Natural language → SPARQL translator.
-  - Health: http://localhost:6005/health (internal DNS `nl2sparql:6005`).
-- ollama (Mistral)
-  - Summarization / natural language post‑processing.
-  - Health: http://localhost:11434
-  - GPU deploy block included; comment if GPU isn’t available.
-- graphdb
-  - Alternate RDF triple store for experimentation.
-  - UI: http://localhost:7200
-- jupyter
-  - Notebooks for EDA/experiments; mounts `./development/notebooks` and `./rasa-bldg1/actions` by default.
-  - UIs: http://localhost:8888 (Lab), http://localhost:8089 (Ontology view)
-  - Adjust mounts per building as needed.
-- adminer
-  - Lightweight DB UI; useful for MySQL exploration.
-  - UI: http://localhost:8282 (requires MySQL running in your chosen stack)
-
-Safe combinations and notes:
-- Run one building stack at a time (bldg1 OR bldg2 OR bldg3); extras are port-stable and can be overlaid.
-- Typical full workflow: bldg2 + nl2sparql + ollama for NL → SPARQL → Analysis → Summary.
-
-Action Server configuration when using extras:
-- Set internal DNS URLs in the Action Server environment (already on the Docker network):
-  - `NL2SPARQL_URL=http://nl2sparql:6005/nl2sparql`
-  - `SUMMARIZATION_URL=http://ollama:11434`
-  
-If these variables are absent the Action Server skips translation and/or summarization stages and returns raw analytical metrics or structured outputs instead.
-
-
-## Docker Compose: how to run, stop, and choose files
-
-Use these patterns from the repo root. All commands are PowerShell-friendly on Windows.
-
-### Common commands
-
-```powershell
-# Start services (build if needed) in detached mode
-docker compose -f <compose-file>.yml up -d --build
-
-# Show running services from that file
-docker compose -f <compose-file>.yml ps
-
-# Tail logs for a specific service
-docker compose -f <compose-file>.yml logs -f --tail 200 <service-name>
-
-# Restart a service (e.g., after config changes)
-docker compose -f <compose-file>.yml restart <service-name>
-
-# Stop (keeps containers)
-docker compose -f <compose-file>.yml stop
-
-# Down (removes containers but keeps named volumes)
-docker compose -f <compose-file>.yml down
-
-# Danger: down and remove volumes too (wipes data in named volumes)
-docker compose -f <compose-file>.yml down -v
-```
-
-Multiple files (overlays):
-
-```powershell
-# Building stack + extras overlay
-docker compose -f docker-compose.bldg2.yml -f docker-compose.extras.yml up -d --build
-
-# Bring down the combined stack
-docker compose -f docker-compose.bldg2.yml -f docker-compose.extras.yml down
-```
-
-### Compose files and scenarios
-
-- docker-compose.bldg1.yml
-  - Scenario: Building 1 full stack with Rasa at `./rasa-bldg1` and shared services (no ThingsBoard path by default).
-  - Use when: You want to run Q&A for bldg1 with Fuseki, MySQL, Editor, Frontend, Analytics.
-  - Run:
-    - Up: `docker compose -f docker-compose.bldg1.yml up -d --build`
-    - Down: `docker compose -f docker-compose.bldg1.yml down`
-
-- docker-compose.bldg2.yml
-  - Scenario: Building 2 full stack with ThingsBoard + TimescaleDB and Rasa at `./rasa-bldg2`.
-  - Use when: You want Q&A for bldg2 and to validate telemetry in Timescale.
-  - Run:
-    - Up: `docker compose -f docker-compose.bldg2.yml up -d --build`
-    - Train (one-off): `docker compose -f docker-compose.bldg2.yml --profile manual up --build --abort-on-container-exit rasa-train`
-    - Down: `docker compose -f docker-compose.bldg2.yml down`
-
-- docker-compose.bldg3.yml
-  - Scenario: Building 3 full stack with ThingsBoard (entities in Postgres) + Cassandra for telemetry and Rasa at `./rasa-bldg3`.
-  - Use when: You want Q&A for bldg3 and to validate telemetry in Cassandra.
-  - Run:
-    - Up: `docker compose -f docker-compose.bldg3.yml up -d --build`
-    - Train (one-off): `docker compose -f docker-compose.bldg3.yml --profile manual up --build --abort-on-container-exit rasa-train`
-    - Down: `docker compose -f docker-compose.bldg3.yml down`
-
-- docker-compose.extras.yml (overlay)
-  - Scenario: Additional services like graphdb, jupyter, adminer (core language services may also be overlaid if not embedded elsewhere).
-  - Use when: You need NL→SPARQL, local LLM summarization, alternate RDF store, notebooks, or a DB UI.
-  - Run with a building stack (order matters):
-    - Up: `docker compose -f docker-compose.bldgX.yml -f docker-compose.extras.yml up -d --build`
-    - Down: `docker compose -f docker-compose.bldgX.yml -f docker-compose.extras.yml down`
-
-- docker-compose.pg.yml (ThingsBoard + PostgreSQL)
-  - Scenario: ThingsBoard with plain Postgres for telemetry (no Timescale or Cassandra).
-  - Use when: You want to experiment with TB on Postgres only.
-  - Run:
-    - Up: `docker compose -f docker-compose.pg.yml up -d --build`
-    - Down: `docker compose -f docker-compose.pg.yml down`
-
-- docker-compose.ts.yml (ThingsBoard + TimescaleDB)
-  - Scenario: ThingsBoard backed by Timescale (Postgres + Timescale extension) for telemetry.
-  - Use when: You want a minimal TB + Timescale setup (independent of bldg2 stack).
-  - Run:
-    - Up: `docker compose -f docker-compose.ts.yml up -d --build`
-    - Down: `docker compose -f docker-compose.ts.yml down`
-
-- docker-compose.cassandra.yml (ThingsBoard + Postgres + Cassandra)
-  - Scenario: ThingsBoard with Cassandra for telemetry and Postgres for entities.
-  - Use when: You want a minimal TB + Cassandra setup (independent of bldg3 stack).
-  - Run:
-    - Up: `docker compose -f docker-compose.cassandra.yml up -d --build`
-    - Down: `docker compose -f docker-compose.cassandra.yml down`
-
-- docker-compose.rasatrain.yml
-  - Scenario: One-off job to train a Rasa project (legacy/default project under `rasa-ui`).
-  - Use when: You want to train outside the per-building stacks.
-  - Run:
-    - Train: `docker compose -f docker-compose.rasatrain.yml up --build --abort-on-container-exit`
-
-- docker-compose.yml (main)
-  - Scenario: Legacy/dev monolithic compose with toggles for different TB options.
-  - Use when: You prefer a single file and manually comment/uncomment TB variants (not recommended—prefer per-building files).
-  - Run:
-    - Up: `docker compose up -d --build`
-    - Down: `docker compose down`
-
-Best practices:
-- Run one building stack at a time for Q&A to avoid port/data conflicts.
-- Named volumes persist data across `up`/`down`; use `down -v` only when you intentionally want to reset state.
-- For overlays, always list the building compose first, then `docker-compose.extras.yml`.
-- Healthchecks are defined for most services—if a service is unhealthy, review logs with `logs -f` and check its health endpoint in the README.
-
-## What is OntoBot?
-
-OntoBot connects building/IoT telemetry and semantic data to a conversational interface and analytics.
-You can:
-
-- Ask questions in natural language and get unit‑aware answers.
-- Run time‑series analytics via a standardized payload.
-- Query semantic data (SPARQL on Jena Fuseki) and SQL telemetry.
-- Serve artifacts (plots/csv) through a simple file server and view them in the frontend.
-
-All services are containerized and connected on a shared Docker network.
+The framework is built on a **"Easy-Deploy"** philosophy, ensuring it can be deployed in any smart building environment with **minimal changes** to existing databases and ontologies.
 
 ---
 
-## Architecture at a glance
+## 🌟 Key Research Contributions & Features
+
+*   **🤖 Zero-Knowledge Interaction**: Abstracts the complexity of SPARQL, SQL, and IoT protocols. Users simply ask questions like "Why is it so hot in here?" or "Analyze energy trends for last month," and the system handles the technical translation.
+*   **🏢 Persona-Agnostic Adaptability**: Automatically detects and adapts to the user's role (e.g., providing simplified comfort controls for occupants vs. detailed diagnostic data for facility managers).
+*   **⚡ Easy-Deploy Architecture**: Containerized microservices architecture (Docker) that requires minimal configuration. It adapts to *your* building's existing ontology (Brick, RealEstateCore, etc.) and database structure rather than forcing a migration.
+*   **🧠 Multi-Agent Orchestration**: A sophisticated **LangGraph**-based brain that coordinates specialized agents:
+    *   **Dialogue Agent**: Context-aware communication.
+    *   **SPARQL Agent**: Semantic reasoning over building topology.
+    *   **SQL Agent**: High-performance time-series retrieval.
+    *   **Analytics Agent**: On-the-fly Python code generation for statistical analysis.
+    *   **Visualization Agent**: Dynamic generation of Plotly charts.
+*   **🔍 GraphDB-Native RAG**: Utilizes **GraphDB Similarity Indexing** for semantic search directly within the Knowledge Graph, eliminating the need for external vector databases for ontology mapping.
+*   **🧠 Long-Term Memory**: Uses **Qdrant** to store and retrieve **User Conversation History**, enabling the system to recall past context and preferences across sessions.
+*   **🔓 Open & Private**: Fully supports local deployment with **Ollama (DeepSeek/Llama)** for data privacy, or cloud integration with OpenAI.
+*   **🗣️ Multimodal Interface**: Integrated with **Open WebUI** for a seamless chat experience, including voice interaction capabilities.
+
+---
+
+## 🏗️ System Architecture
+
+OntoSage employs a **Hub-and-Spoke** agentic architecture. The **Orchestrator** serves as the central cognitive unit, decomposing complex user queries into sub-tasks delegated to specialized agents.
 
 ```mermaid
-flowchart LR
-    U(User) --> FE[React Frontend]
-    FE -->|/webhook| Rasa[Rasa Server]
-    Rasa --> Actions[Action Server]
-    Actions -->|NL2SPARQL_URL| NL2S[NL2SPARQL]
-    Actions -->|SPARQL| Fuseki[Jena Fuseki]
-    Actions -->|Decide| Decider[Decider Service]
-    Actions -->|SQL| MySQL[(MySQL)]
-    Actions -->|/analytics/run| Analytics[Analytics Microservices]
-    Actions -->|Artifacts| FS[(shared_data/artifacts)]
-    FS --> FileSrv[HTTP File Server]
-    FileSrv --> FE
-    Analytics --> FileSrv
-    subgraph Docker Network
-    Rasa
-    Actions
-    Analytics
-    Decider
-    Fuseki
-    MySQL
-    FileSrv
+graph TD
+    User((User)) -->|Natural Language| OpenWebUI[Open WebUI]
+    OpenWebUI -->|REST API| Orchestrator[Orchestrator Service]
+    
+    subgraph "Cognitive Core (LangGraph)"
+        Orchestrator -->|Delegates| Dialogue[Dialogue Agent]
+        Orchestrator -->|Delegates| SPARQL[SPARQL Agent]
+        Orchestrator -->|Delegates| SQL[SQL Agent]
+        Orchestrator -->|Delegates| Analytics[Analytics Agent]
+        Orchestrator -->|Delegates| Vis[Visualization Agent]
+    end
+    
+    subgraph "Memory & Context"
+        Dialogue -->|Retrieve History| Qdrant[(Qdrant Memory)]
+    end
+
+    subgraph "Knowledge Layer"
+        SPARQL -->|Semantic Query| GraphDB[(GraphDB Ontology)]
+        SQL -->|Time-Series Query| MySQL[(Sensor Data)]
+        Dialogue -->|Context Retrieval| RAG[RAG Service]
+        RAG -->|Similarity Search| GraphDB
+    end
+    
+    subgraph "Execution Layer"
+        Analytics -->|Secure Execution| Sandbox[Code Executor]
     end
 ```
 
----
+### Zero-Knowledge Query Resolution Flow
 
-## Services and ports (host)
-
-See the compose files for definitive configuration. Common host‑level port defaults:
-
-For a complete host ↔ container mapping (including protocol ports, optional extras, and rationale) consult [PORTS.md](PORTS.md).
-
-| Service | Purpose | Host Port (all building stacks) | Health / Key Endpoint |
-|---------|---------|-------------------------------|------------------------|
-| Rasa | Core conversational engine | 5005 | /version |
-| Rasa Action Server | Executes custom logic | 5055 | /health |
-| Duckling | Entity extraction (time, numbers) | 8000 | root HTML contains "Duckling" |
-| Rasa Frontend | Chat UI | 3000 | / (React dev server) |
-| Rasa Editor | Project file editor/API | 6080 | /health |
-| HTTP File Server | Serves artifacts & models | 8080 | /health |
-| Analytics Microservices | Time‑series & sensor analytics | 6001 (host→6000 container) | /health |
-| Decider Service | Determines analysis need & type | 6009 | /health |
-| Jena Fuseki | SPARQL triple store | 3030 | $/ping |
-| ThingsBoard UI | Device mgmt & dashboards | 8082 | / |
-| pgAdmin | Postgres/Timescale admin | 5050 (bldg1/2) or 5051 (optional bldg3) | / |
-| MySQL | Legacy telemetry / actions DB | 3307 | n/a (mysqladmin ping) |
-| TimescaleDB | Time‑series SQL (bldg2) | 5433 | pg_isready |
-| Postgres (TB metadata) | TB entities (bldg3) | 5434 | pg_isready |
-| Cassandra | TB telemetry (bldg3) | 9042 | nodetool status |
-| nl2sparql | NL→SPARQL translation (T5) | 6005 | /health |
-| Ollama (Mistral) | Local LLM runtime | 11434 | ollama ps |
-
-Notes:
-- The table shows default ports after recent corrections (e.g., bldg3 variant offsets). If you need concurrent multi‑building runtime, see the Isolation Strategy section below.
-- `nl2sparql` now mounts `checkpoint-3` explicitly; legacy `checkpoint-2` was removed.
-- Ollama auto‑pulls models listed in `AUTO_PULL_MODELS` and warms them via token generation when `WARMUP_MODELS=true`.
-
-All services share the `ontobot-network` for internal DNS resolution.
+1.  **Context Retrieval**: The system fetches relevant past interactions from **Qdrant** to understand the user's ongoing context.
+2.  **Intent Recognition**: The system identifies if the user wants to *know* (metadata), *see* (time-series), or *analyze* (computation).
+3.  **Schema Mapping**: It uses **GraphDB Similarity Indexing** to map natural language terms (e.g., "Conference Room") to specific ontology entities (e.g., `bldg:Room-101`).
+4.  **Data Retrieval**: It autonomously constructs valid SPARQL or SQL queries based on the connected building's schema.
+5.  **Synthesis**: Results are synthesized into a natural language response, often accompanied by dynamic visualizations.
 
 ---
 
-## Running ThingsBoard stacks (choose one)
+## 🧩 Service Components
 
-You can run ThingsBoard with different backends using separate compose files, or by editing the main `docker-compose.yml`:
+### 1. Orchestrator Service (`/orchestrator`)
+The cognitive brain built with **FastAPI** and **LangGraph**. It maintains conversation state and manages the "Persona Agnostic" logic, adjusting responses based on the inferred user intent.
 
-- Option 1: PostgreSQL only → `docker-compose.pg.yml`
-- Option 2: TimescaleDB (Postgres + Timescale extension) → `docker-compose.ts.yml`
-- Option 3: PostgreSQL (entities) + Cassandra (telemetry) → `docker-compose.cassandra.yml`
+### 2. Agentic Microservices
+*   **SPARQL Agent**: Interfaces with RDF stores (GraphDB) to understand building topology.
+*   **SQL Agent**: Interfaces with SQL databases (PostgreSQL/MySQL) for historical sensor data.
+*   **Analytics Agent**: A secure sandbox for executing generated Python code to perform complex calculations (e.g., "Calculate the correlation between occupancy and temperature").
+*   **Visualization Agent**: Generates configuration for Plotly charts.
+*   **State Management**: Uses **Redis** for short-term state and **Qdrant** for long-term semantic memory.
 
-Recommended: use the dedicated compose file for the option you want.
+### 3. RAG Service (`/rag-service`)
+**The Librarian.** Built with **GraphDB Similarity Indexing**.
+*   **Role**: Handles semantic search directly within the Knowledge Graph.
+*   **Working**: Uses GraphDB's internal vector index to find relevant ontology entities based on user queries, then retrieves their "bounded context" (neighboring triples) to ground the LLM.
 
-Examples (PowerShell):
+### 4. Code Executor Service (`/code-executor`)
+**The Sandbox.** Built with **Docker** and **Python**.
+*   **Role**: A secure, isolated environment for running code generated by the Analytics Agent.
+*   **Security**: Prevents the AI from accessing the host system, network, or sensitive files. It only has access to the specific data provided for the analysis task.
+*   **Output**: Returns the standard output (text) and any generated artifacts (images/plots) back to the Orchestrator.
 
+### 5. Frontend Application (`/frontend`)
+**The Face.** Built with **Open WebUI**.
+*   **Features**:
+    *   **Chat Interface**: Streaming responses, markdown support, code highlighting.
+    *   **Voice Input**: One-click recording and sending.
+    *   **Visualization**: Renders interactive plots generated by the backend.
+
+### 6. Data Layer
+*   **MySQL**: Stores high-frequency sensor telemetry data.
+*   **GraphDB**: Stores the RDF Knowledge Graph (Ontology) and handles Vector Similarity Search.
+*   **Qdrant**: Stores vector embeddings of **User Conversation History** for long-term memory.
+*   **Redis**: High-speed cache for active conversation state.
+
+### 5. Frontend Application (`/frontend`)
+**The Face.** Built with **React 19**, **TypeScript**, and **Tailwind CSS**.
+*   **Features**:
+    *   **Chat Interface**: Streaming responses, markdown support, code highlighting.
+    *   **3D Viewer**: Interactive model of the building, highlighting rooms and sensors based on the conversation.
+    *   **Dashboard**: Real-time charts and analytics views.
+    *   **Voice Input**: One-click recording and sending.
+
+### 6. Data Layer
+*   **MySQL**: Stores high-frequency sensor telemetry data.
+*   **GraphDB**: Stores the RDF Knowledge Graph (Ontology) representing the building's physical structure and relationships.
+*   **Qdrant**: Vector database for semantic similarity search.
+*   **Redis**: High-speed cache for conversation state and pub/sub messaging.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+*   **Docker Desktop** (Windows/Mac) or **Docker Engine** (Linux).
+*   **Git** to clone the repository.
+*   *(Optional)* **NVIDIA GPU** for faster local inference.
+
+### Step 1: Configuration
+OntoSage supports two modes: **Local** (Privacy-focused, Free) and **Cloud** (High Performance, Paid).
+
+1.  **Clone the repo**:
+    ```bash
+    git clone https://github.com/suhasdevmane/OntoBot.git
+    cd OntoBot
+    ```
+
+2.  **Choose your provider**:
+    *   **For Local (Ollama)**:
+        ```bash
+        cp .env.local .env
+        ```
+    *   **For Cloud (OpenAI)**:
+        ```bash
+        cp .env.cloud .env
+        ```
+        *Edit `.env` and add your `OPENAI_API_KEY`.*
+
+### Step 2: Deployment
+We provide automated scripts to handle the complex Docker Compose setup.
+
+**Windows (PowerShell):**
 ```powershell
-# Option 1 – TB + PostgreSQL
-docker compose -f docker-compose.pg.yml up -d
-
-# Option 2 – TB + TimescaleDB
-docker compose -f docker-compose.ts.yml up -d
-
-# Option 3 – TB + PostgreSQL + Cassandra
-docker compose -f docker-compose.cassandra.yml up -d
+./startup.ps1 -Provider local
+# OR
+./startup.ps1 -Provider cloud
 ```
 
-ThingsBoard UI is at http://localhost:8082 in all options.
-
-Using the main docker-compose.yml directly:
-
-1) Open `docker-compose.yml` and comment out the two options you are not using.
-2) Leave only one ThingsBoard option (and its DB services) uncommented.
-3) Start with:
-
-```powershell
-docker compose up -d
+**Linux / Mac (Bash):**
+```bash
+chmod +x scripts/check-health.sh
+./scripts/check-health.sh
+docker-compose up -d
 ```
 
-Notes:
-- Each option has isolated named volumes to keep data separate.
-- Timescale adds a DB healthcheck and TB waits for it.
-- Cassandra can require more memory and longer first start.
+*Note: The first startup may take 10-15 minutes to download necessary Docker images and LLM models (approx. 10GB).*
+
+### Step 3: Access the System
+Once the startup script completes and health checks pass:
+
+*   **Frontend UI**: [http://localhost:3000](http://localhost:3000)
+*   **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
+*   **RAG Service**: [http://localhost:8001/docs](http://localhost:8001/docs)
+*   **Grafana Monitoring**: [http://localhost:3001](http://localhost:3001) (Default login: admin/admin)
 
 ---
 
-## Choose your building: bldg2 or bldg3 (compose files)
+## 📚 Full Documentation
 
-OntoBot supports per-building deployments with separate Rasa projects and ontology TTLs. Choose exactly one building at a time for question answering.
+For deeper details and operations, see the docs set:
 
-- What changes between buildings
-  - Ontology/dataset (TTL files):
-    - bldg2 TTLs live under `bldg2/`
-    - bldg3 TTLs live under `bldg3/`
-  - Rasa project and model:
-    - bldg2 uses `./rasa-bldg2` (its own training data and models)
-    - bldg3 uses `./rasa-bldg3` (its own training data and models)
-  - ThingsBoard telemetry backend:
-    - bldg2 uses TimescaleDB (SQL on Postgres)
-    - bldg3 uses Cassandra
-
-- What stays the same
-  - All other backend services and contracts are identical across buildings:
-    - Analytics microservices, Decider service, Duckling, HTTP file server, Rasa Editor, Rasa Frontend
-    - SPARQL store (Jena Fuseki) and the way Actions query it
-    - Artifact paths and payload formats
-
-Two root-level compose files orchestrate the per-building stacks:
-
-- Building 2 (TimescaleDB): `docker-compose.bldg2.yml`
-  - Rasa project: `./rasa-bldg2`
-  - ThingsBoard UI: http://localhost:8082
-  - Rasa: http://localhost:5005/version
-  - Actions: http://localhost:5055/health
-  - Duckling: http://localhost:8000/
-  - File server: http://localhost:8080/health
-  - Rasa Editor: http://localhost:6080/
-  - Rasa Frontend: http://localhost:3000/
-  - pgAdmin (Timescale): http://localhost:5050/
-
-- Building 3 (Cassandra): `docker-compose.bldg3.yml`
-  - Rasa project: `./rasa-bldg3`
-  - ThingsBoard UI: http://localhost:8082
-  - Rasa: http://localhost:5005/version
-  - Actions: http://localhost:5055/health
-  - Duckling: http://localhost:8000/
-  - File server: http://localhost:8080/health
-  - Rasa Editor: http://localhost:6080/
-  - Rasa Frontend: http://localhost:3000/
-
-Important: Run one building stack for Q&A at a time. Ports are presently assigned to reduce (not eliminate) collision risk; full concurrent operation requires the isolation adjustments described later.
-
-### Quick start: Building 2 (TimescaleDB)
-
-1) Bring up the bldg2 stack
-
-```powershell
-docker compose -f docker-compose.bldg2.yml up -d --build
-```
-
-2) Start SPARQL store (Fuseki) if you haven’t already (defined in main docker-compose.yml)
-
-```powershell
-docker compose up -d fuseki-db jena-fuseki
-```
-
-3) Load/refresh your bldg2 TTL dataset in Fuseki UI (http://localhost:3030)
-
-4) Train the bldg2 Rasa model (if needed)
-
-```powershell
-# Use the manual profile training job defined in docker-compose.bldg2.yml
-docker compose -f docker-compose.bldg2.yml --profile manual up --build --abort-on-container-exit rasa-train
-```
-
-5) Test Rasa
-
-```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:5005/webhooks/rest/webhook -ContentType 'application/json' -Body (@{
-  sender = 'tester1'
-  message = 'What is the average temperature last week in Zone A?'
-} | ConvertTo-Json)
-```
-
-6) (Optional) Send telemetry to ThingsBoard and verify in TimescaleDB
-
-```powershell
-# Replace <DEVICE_TOKEN> with your TB device token
-Invoke-WebRequest -Method Post -Uri "http://localhost:8081/api/v1/<DEVICE_TOKEN>/telemetry" -ContentType "application/json" -Body '{ "temperature": 23.7 }'
-
-# Inspect in pgAdmin (http://localhost:5050). The connection is pre-configured via bldg2/servers.json.
-# You can also run SQL against timescaledb (inside a psql session) to see ts_kv rows.
-```
-
-#### pgAdmin connections (bldg2)
-
-Open pgAdmin at http://localhost:5050. Two servers are pre-registered via `bldg2/servers.json`:
-
-- TimescaleDB (container, bldg2) → Host: `timescaledb`, Port: `5432`
-  - Best for use from the pgAdmin container (internal Docker network name)
-- TimescaleDB (host 5433, bldg2) → Host: `localhost`, Port: `5433`
-  - Useful for host tools like psql/clients; also works from pgAdmin
-
-Credentials (prompted by pgAdmin):
-- Username: `thingsboard`
-- Password: `thingsboard`
-- Database: `thingsboard`
-
-Verify mappings and telemetry:
-
-1) Map device token to device UUID
-
-```sql
-SELECT d.id, d.name
-FROM device d
-JOIN device_credentials dc ON dc.device_id = d.id
-WHERE dc.credentials_id = 'YOUR_DEVICE_ACCESS_TOKEN';
-```
-
-2) Recent telemetry for that device UUID
-
-```sql
-SELECT
-  to_timestamp(t.ts/1000.0) AS ts,
-  dkey.key,
-  COALESCE(
-    t.dbl_v::text,
-    t.long_v::text,
-    t.str_v,
-    (t.bool_v::text),
-    (t.json_v::text)
-  ) AS value
-FROM ts_kv t
-JOIN ts_kv_dictionary dkey ON t.key = dkey.key_id
-WHERE t.entity_id = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-ORDER BY t.ts DESC
-LIMIT 20;
-```
-
-Timescale checks (if using TimescaleDB stack):
-
-```sql
-\dx;  -- should list timescaledb
-SELECT hypertable_name FROM timescaledb_information.hypertables ORDER BY hypertable_name;
-```
-
-### Quick start: Building 3 (Cassandra)
-
-1) Bring up the bldg3 stack
-
-```powershell
-docker compose -f docker-compose.bldg3.yml up -d --build
-```
-
-2) Start SPARQL store (Fuseki) if you haven’t already (defined in main docker-compose.yml)
-
-```powershell
-docker compose up -d fuseki-db jena-fuseki
-```
-
-3) Load/refresh your bldg3 TTL dataset in Fuseki UI (http://localhost:3030)
-
-4) Train the bldg3 Rasa model (if needed)
-
-```powershell
-docker compose -f docker-compose.bldg3.yml --profile manual up --build --abort-on-container-exit rasa-train
-```
-
-5) Test Rasa
-
-```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:5005/webhooks/rest/webhook -ContentType 'application/json' -Body (@{
-  sender = 'tester1'
-  message = 'Show humidity trends for last week in Zone B'
-} | ConvertTo-Json)
-```
-
-6) (Optional) Send telemetry to ThingsBoard (HTTP transport)
-
-```powershell
-Invoke-WebRequest -Method Post -Uri "http://localhost:8082/api/v1/<DEVICE_TOKEN>/telemetry" -ContentType "application/json" -Body '{ "humidity": 48 }'
-# Note: Telemetry is stored in Cassandra. Validate via TB dashboards or cqlsh in the cassandra container.
-```
-
-#### pgAdmin connections (bldg3)
-
-Open pgAdmin at http://localhost:5051. One server is pre-registered via `bldg3/servers.json`:
-
-- TB Postgres (bldg3) → Host: `tb_postgres`, Port: `5432`
-  - Username: `thingsboard`
-  - Password: `thingsboard`
-  - Database: `thingsboard` (select after connecting; maintenance DB defaults to `postgres`)
-
-Verify device token → device UUID in Postgres (TB metadata):
-
-```sql
-SELECT d.id, d.name
-FROM device d
-JOIN device_credentials dc ON dc.device_id = d.id
-WHERE dc.credentials_id = 'YOUR_DEVICE_ACCESS_TOKEN';
-```
-
-Note: Postgres in bldg3 holds ThingsBoard entities/metadata only. Telemetry resides in Cassandra—use TB dashboards/APIs or cqlsh for time-series data.
-
-More details: see bldg3/README.md → pgAdmin connections
-[`bldg3/README.md#pgadmin-connections-tb-postgres-metadata`](bldg3/README.md#pgadmin-connections-tb-postgres-metadata)
-
-### How components connect (per-building)
-
-- Rasa (per building) → Action Server (per building): each building has its own training data, model, and `actions.py` under `./rasa-bldg2` or `./rasa-bldg3`.
-- Action Server → SPARQL (Fuseki): queries the dataset you loaded from the building’s TTL files under `bldg2/` or `bldg3/`.
-- Action Server → Decider → Analytics: decides the analysis and calls the shared analytics API with a standardized payload; results and plots are saved under the shared artifacts folder and served by the HTTP file server.
-- Telemetry persistence (ThingsBoard):
-  - bldg2 uses TimescaleDB. TB connects to Timescale; pgAdmin is provided to inspect it. Actions can read SQL time-series if enabled in your `actions.py`.
-  - bldg3 uses Cassandra. TB writes telemetry to Cassandra; TB UI dashboards and APIs can be used to view telemetry. Action paths remain the same unless you customize them for Cassandra.
-
-In both cases, all non‑telemetry OntoBot components remain identical.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [docs/SERVICES.md](docs/SERVICES.md)
+- [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
+- [docs/BUILDING_ONBOARDING.md](docs/BUILDING_ONBOARDING.md)
+- [docs/RUNBOOK.md](docs/RUNBOOK.md)
+- [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)
+- [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+- [docs/SECURITY.md](docs/SECURITY.md)
 
 ---
 
-## Rasa: editing, training, and saving changes
+## 🏢 Onboarding Your Own Building
 
-There are two ways to manage Rasa training in this repo:
+OntoSage is designed to be ontology-agnostic. You can load your own building's data (in RDF/TTL format) to start chatting with it.
 
-1) Through the frontend/editor and backend services
-  - The Rasa project lives under `rasa-ui/` (data, domain.yml, config.yml, endpoints.yml, credentials.yml, models/)
-  - The editor server (`rasa-editor`) and HTTP file server expose settings to edit files, trigger training, and save artifacts.
-  - The `rasa` container serves the bot and can load new models from the shared volume (`rasa-ui/models`).
-  - Shared folders mounted across services:
-    - `rasa-ui/data`, `rasa-ui/domain.yml`, `rasa-ui/config.yml`, `rasa-ui/models` (for models), etc.
+### 1. Prepare Your Data
+Ensure you have your building ontology in `.ttl` (Turtle) format. This file should define:
+*   **Physical Structure**: Sites, Buildings, Floors, Rooms.
+*   **Assets**: HVAC equipment, Lighting, Sensors.
+*   **Relationships**: `hasPoint`, `feeds`, `isLocationOf`.
 
-2) Manual training with a one-off compose job
-  - Use the provided `docker-compose.rasatrain.yml` to run `rasa train` against the mounted project files.
-
-Example (PowerShell):
-
-```powershell
-# Train a new model and output to ./rasa-ui/models
-docker compose -f docker-compose.rasatrain.yml up --build --abort-on-container-exit
-
-# After training, restart the running Rasa service to pick up the new model if needed
-docker compose restart rasa
+### 2. Place Data in Volume
+Copy your `.ttl` files to the data directory:
+```bash
+# Example: Create a folder for your building
+mkdir -p data/my_building/dataset
+cp /path/to/your/building.ttl data/my_building/dataset/
 ```
 
-Where to edit files:
-- Intents/stories/rules and NLU data: `rasa-ui/data`
-- Domain: `rasa-ui/domain.yml`
-- Config: `rasa-ui/config.yml`
-- Endpoints/credentials: `rasa-ui/endpoints.yml`, `rasa-ui/credentials.yml`
+### 3. Update Configuration
+Edit `docker-compose.agentic.yml` to point the **GraphDB** service to your new data folder.
 
-Saving changes via the frontend:
-- The editor and file server mount the same project paths; updates you make are persisted to the host files under `rasa-ui/`.
-- When you trigger training from the UI (or run the manual training job), the resulting model is written to `rasa-ui/models/` and can be loaded by the live Rasa server.
+Find the `graphdb` service definition:
+```yaml
+  graphdb:
+    # ...
+    volumes:
+      - ./volumes/graphdb:/opt/graphdb/home
+      # CHANGE THIS LINE to point to your folder:
+      - ./data/my_building/dataset:/opt/graphdb/import:ro
+```
+
+### 4. Restart Services
+Restart the GraphDB service to load the new ontology:
+```bash
+docker-compose -f docker-compose.agentic.yml restart graphdb
+```
+*Note: GraphDB will automatically import files found in the `/opt/graphdb/import` directory on startup if the repository is empty.*
 
 ---
 
-## Prerequisites
+## 📖 Usage Guide
 
-- Windows with Docker Desktop (WSL2 enabled) or macOS/Linux with Docker Engine
-- Git and a terminal (PowerShell on Windows)
+### 1. Asking Questions
+You can ask questions in natural language. The system will automatically route your request.
+*   **General**: "How does the HVAC system work?" (Uses RAG + Dialogue Agent)
+*   **Structural**: "List all temperature sensors in Building 1." (Uses SPARQL Agent)
+*   **Data**: "What was the average temperature in Room 202 yesterday?" (Uses SQL Agent)
+*   **Analysis**: "Plot the correlation between humidity and temperature for the last month." (Uses Analytics + Visualization Agents)
+
+### 2. Using Voice Mode
+Click the microphone icon in the chat bar. Speak your query clearly. The system will transcribe it and process it just like a text message.
+
+### 3. 3D Visualization
+When you ask about specific rooms or equipment, the 3D viewer on the right panel will automatically fly to and highlight the relevant assets.
 
 ---
 
-## Quick start (Docker)
+## 👨‍💻 Developer Guide
 
-```powershell
-# From repo root
-# 1) Copy and adjust environment
-Copy-Item .env.example .env -ErrorAction SilentlyContinue
+### Project Structure
+*   `orchestrator/`: Main backend logic (FastAPI + LangGraph).
+*   `frontend/`: React UI code.
+*   `rag-service/`: Vector search logic.
+*   `code-executor/`: Sandbox environment.
+*   `docker-compose.yml`: Core service definitions.
 
-# 2) Build and start the selected services
-docker-compose up -d --build
+See **[docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)** for a full file tree.
 
-# 3) Train the Rasa model (skip only if a model already exists)
-docker-compose exec rasa rasa train
+### Adding a New Agent
+1.  Create a new agent class in `orchestrator/app/agents/`.
+2.  Define its state and tools.
+3.  Register it in the `orchestrator/app/workflow.py` graph.
+4.  Add a routing condition in the `supervisor` node.
 
-# 4) Health checks (open in a browser)
-# Analytics: http://localhost:6001/health
-# Rasa:     http://localhost:5005/version
-# Actions:  http://localhost:5055/health
-# Fuseki:   http://localhost:3030/ $/ping
-# File:     http://localhost:8080/health
-# Decider:  http://localhost:6009/health
+### Running Tests
+```bash
+# Run all tests
+pytest tests/
 
-# 5) Try the bot in a shell
-docker-compose exec rasa rasa shell
-```
-
-Stop everything:
-
-```powershell
-docker-compose down
-```
-
-Rebuild a specific service (example: analytics):
-
-```powershell
-docker-compose up microservices --build
+# Run specific test
+pytest tests/test_llm_intent_detection.py
 ```
 
 ---
 
-## Configuration and environment (.env)
+## 🔧 Troubleshooting
 
-Copy `.env.example` to `.env` and adjust as needed. Key variables used by the Action Server and other services:
-
-- BASE_URL: http://http_server:8080 (internal) / http://localhost:8080 (host)
-- ANALYTICS_URL: http://microservices:6000/analytics/run (internal DNS)
-- DECIDER_URL: http://decider-service:6009/decide
-- DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
-  - NL2SPARQL_URL (internal translator endpoint)
-  - SUMMARIZATION_URL (Ollama/OpenAI/etc.)
-  - BUNDLE_MEDIA=true|false to bundle multiple media in bot messages
-
-Remote / external deployment:
-You do NOT have to run `nl2sparql` or `ollama` locally; you can point `NL2SPARQL_URL` and `SUMMARIZATION_URL` at services running on any reachable host (e.g. `http://nl2sparql.mycompany.net:6005/nl2sparql`, `https://llm.example.org/api`). As long as the Action Server can reach those HTTP endpoints and they respect the expected contract, the local compose services may be omitted.
-
-Volumes:
-- `rasa-ui/shared_data` is mounted to actions, file server, and editor.
-- Artifacts (plots/csv) are placed under `shared_data/artifacts` and served via the file server.
+*   **"Ollama connection failed"**: Ensure the `ollama` container is running and healthy. If you don't have a GPU, local inference might be slow or time out.
+*   **"Database connection error"**: Check if the `mysql` and `graphdb` containers are up. The startup script waits for them, but manual restarts might be needed if they crash.
+*   **"OpenAI API Error"**: Verify your API key in the `.env` file and ensure you have credits.
 
 ---
 
-## Data and payloads (contracts)
+## 📜 License
 
-Analytics accepts flat or nested payloads. Keys should be human‑readable; UUIDs are replaced in actions.
-
-- Flat: `{ "Readable_Sensor": [ { "datetime"|"timestamp", "reading_value" }, ... ] }`
-- Nested: `{ "1": { "Readable_Sensor": { "timeseries_data": [ { "datetime", "reading_value" }, ... ] } } }`
-
-Notes:
-- Timestamps are normalized server‑side; temperature vs temp matching is robust.
-- Units and UK indoor guidelines are included (°C, %RH, ppm, µg/m³, dB(A), …).
-- Anomaly detection supports `method` like `zscore` or `iqr`.
-
----
-
-## Analytics API (examples)
-
-Base: http://localhost:6001
-
-```powershell
-# Run an analysis (nested payload)
-Invoke-RestMethod -Method Post -Uri http://localhost:6001/analytics/run -ContentType 'application/json' -Body (@{
-  analysis_type = 'analyze_temperatures'
-  '1' = @{ Air_Temperature_Sensor = @{ timeseries_data = @(
-    @{ datetime = '2025-02-10 05:31:59'; reading_value = 22.5 },
-    @{ datetime = '2025-02-10 05:33:00'; reading_value = 23.0 }
-  )}}
-} | ConvertTo-Json -Depth 6)
-```
-
-Available analyses (selection): temperatures, humidity, CO2, PM, HCHO, noise, AQI; delta‑T, airflow, pressure trend, HVAC anomalies; correlation, aggregation, trend, anomalies (zscore/iqr), potential failures, downtime forecast; device deviation, failure trends, recalibration frequency.
-
-Smoke test:
-
-```powershell
-python microservices/test_analytics_smoke.py
-```
-
----
-
-## Rasa actions, forms, and Decider flow
-
-- Forms
-  - sensor_form → sensor_type supports comma‑separated inputs, fuzzy matching, canonicalization
-  - dates_form → start_date, end_date accept DD/MM/YYYY, YYYY‑MM‑DD, and phrases like “last week”, “today”, “now”
-- Common slots: sensor_type (List[str]), start_date, end_date, timeseries_ids (UUIDs from SPARQL), analytics_type (from Decider/heuristics)
-- Key actions
-  - action_question_to_brickbot: NL2SPARQL → Fuseki → standardized JSON → save artifact → decide analytics → set slots and FollowupAction
-  - action_process_timeseries: SQL fetch → build payload (flat/nested) → call Analytics → format outputs + artifacts
-- Internal network endpoints: Analytics http://microservices:6000/analytics/run, Decider http://decider-service:6009/decide, File http://http_server:8080
-
-Rasa REST example:
-
-```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:5005/webhooks/rest/webhook -ContentType 'application/json' -Body (@{
-  sender = 'tester1'
-  message = 'Give me humidity trends for Zone_Air_Humidity_Sensor_5.01 last week'
-} | ConvertTo-Json)
-```
-
----
-
-## Project structure and key paths
-
-- Rasa project: `rasa-ui/` (data, domain.yml, config.yml, endpoints.yml, credentials.yml)
-- Actions code: `rasa-ui/actions/actions.py`
-- Analytics service: `microservices/`
-- Frontend: `rasa-frontend/`
-- Editor and file server scripts: under `rasa-ui/`
-- Shared data and artifacts: `rasa-ui/shared_data/artifacts/<user>`
-- Helper script: `scripts/tidy_artifacts.ps1`
-
----
-
-## Required files and datasets
-
-- Sensor mappings: `rasa-ui/actions/sensor_mappings.txt` with lines `name,uuid`
-- Optional curated names: `rasa-ui/actions/sensor_list.txt` (one per line) to improve fuzzy matching
-- Fuseki dataset: load your RDF/TTL into the Fuseki container (see next section)
-
----
-
-## SPARQL (Fuseki) setup
-
-- Container: `jena-fuseki-rdf-store` (host port 3030)
-- Typical mounted path: `./trial/dataset:/fuseki-data`
-- Access the UI at http://localhost:3030 and load your dataset
-- Actions prepend common Brick/ontology prefixes to queries automatically
-
-See also:
-- Apache Jena Fuseki docs: https://jena.apache.org/documentation/fuseki2/
-- SPARQL over HTTP (SOH): https://jena.apache.org/documentation/fuseki2/soh.html
-- Fuseki 1 (archive): https://jena.apache.org/documentation/archive/serving_data/fuseki1.html
-
----
-
-## Database and performance
-
-- MySQL columns are UUIDs; queries select `Datetime` plus requested UUID columns
-- Multi‑UUID: SQL does not `AND` column `IS NOT NULL` (prevents data loss); NULLs are filtered per‑column in Python
-- Indexes:
-  - Primary/clustered index on `Datetime`
-  - Consider per‑UUID indexes for heavy use, or migrate to a time‑series store for scale
-
----
-
-## Artifacts and file server
-
-- Artifacts saved under `rasa-ui/shared_data/artifacts/<safe_user>` (derived from `sender_id`)
-- File server exposes them at http://localhost:8080; add `?download=1` to force download
-- Utility:
-
-```powershell
-# Move stray files in shared_data root into artifacts
-./scripts/tidy_artifacts.ps1
-```
-
----
-
-## Testing and smoke checks
-
-- Health endpoints: Analytics (/health), Rasa (/version), Actions (/health), File (/health), Fuseki ($/ping), Decider (/health)
-- Logs: `docker-compose logs -f <service>`
-- Network: `docker network inspect ontobot-network`
-- Analytics smoke test: `python microservices/test_analytics_smoke.py`
-
----
-
-## Troubleshooting and FAQs
-
-- Port conflicts → adjust host ports in `docker-compose.yml` (MySQL maps to 3307 by default)
-- Service unhealthy → check logs; hit health URLs directly
-- Analytics errors → verify flat/nested payloads; inspect the `results` object for detailed errors
-- Artifacts missing → confirm files under `shared_data/artifacts` and file server health; ensure BASE_URL correct for actions
-- Action server can’t reach MySQL → use host `mysqlserver` and port `3306` inside Docker; confirm credentials
-- Plugging in NL2SPARQL or LLM → set `NL2SPARQL_URL` / `SUMMARIZATION_URL` in environment; code fails gracefully if unavailable
-- Run without frontend → use REST webhook or `rasa shell`
-
----
-
-## Security notes
-
-- Replace default DB credentials with least‑privilege accounts; avoid exposing 3306 directly
-- Avoid writing secrets to `shared_data`; it’s served over HTTP
-- Prefer internal services over external testing URLs for NL2SPARQL/LLM in production
-
----
-
-## Roadmap
-
-- Default to internal NL2SPARQL/Summarization services once available
-- Add e2e tests that exercise Decider → Analytics → artifact creation
-- Provide a dataset‑load script for Fuseki
-- Consider a time‑series database for large telemetry workloads
-
----
-
-## References
-
-Official docs for platforms and services referenced by OntoBot:
-
-- Rasa (Core & Actions): https://rasa.com/docs/rasa/
-- Duckling (entity extraction): https://github.com/facebook/duckling
-- Apache Jena Fuseki: https://jena.apache.org/documentation/fuseki2/
-  - SPARQL over HTTP (SOH): https://jena.apache.org/documentation/fuseki2/soh.html
-  - Fuseki 1 (archive): https://jena.apache.org/documentation/archive/serving_data/fuseki1.html
-- SPARQL 1.1 Query Language (W3C): https://www.w3.org/TR/sparql11-query/
-- MySQL: https://dev.mysql.com/doc/
-- Docker: https://docs.docker.com/
-- Docker Compose: https://docs.docker.com/compose/
-- React: https://react.dev/
-- Brick Schema: https://brickschema.org/
-- ThingsBoard: https://thingsboard.io/ (unless you choose a non‑TB telemetry path)
-- GraphDB: https://graphdb.ontotext.com/
-- Jupyter: https://jupyter.org/
-- Ollama (optional): https://ollama.com/
-- Mistral model in Ollama (optional): https://ollama.com/library/mistral
-- T5 model (for NL2SPARQL variants): https://huggingface.co/docs/transformers/model_doc/t5
-
-Internal services (this repo):
-- Analytics microservices, Decider service, HTTP file server, Rasa Editor → see sections above in this README.
-
----
-
-## License
-
-MIT License
-
-Copyright (c) 2024 Suhas Devmane
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -1,0 +1,148 @@
+global:
+  # Override values for all subcharts
+  storageClass: ""
+
+# ─── Image settings ────────────────────────────────────────────────────────
+orchestrator:
+  image:
+    repository: ontosage/orchestrator
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
+  env:
+    ONTOSAGE_LOG_LEVEL: "INFO"
+    BUILDING_CONFIG_FILE: "/config/building_config.yaml"
+    ONTOSAGE_SECRET_KEY: "change-me-in-production"
+  service:
+    type: ClusterIP
+    port: 8000
+  ingress:
+    enabled: true
+    className: nginx
+    host: ontosage.local
+    tls: false
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+frontend:
+  image:
+    repository: ontosage/frontend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 80
+
+graphdb:
+  image:
+    repository: ontotext/graphdb
+    tag: "10.7.0"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "500m"
+    limits:
+      memory: "4Gi"
+      cpu: "2000m"
+  storage:
+    enabled: true
+    size: "10Gi"
+  service:
+    port: 7200
+  repositoryName: "ontosage"
+  javaOpts: "-Xms1g -Xmx3g"
+
+# ─── Redis (cache) ──────────────────────────────────────────────────────────
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 2Gi
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+# ─── MySQL (time-series) ────────────────────────────────────────────────────
+mysql:
+  enabled: true
+  auth:
+    database: ontosage
+    username: ontosage
+    password: ontosage-password
+    rootPassword: root-password
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "1000m"
+
+# ─── MQTT broker (optional streaming) ───────────────────────────────────────
+mqtt:
+  enabled: false
+  image:
+    repository: eclipse-mosquitto
+    tag: "2.0"
+  service:
+    port: 1883
+    wsPort: 9001
+
+# ─── Monitoring ─────────────────────────────────────────────────────────────
+monitoring:
+  enabled: true
+  prometheus:
+    scrapeInterval: "30s"
+  grafana:
+    enabled: false
+
+# ─── Building config ────────────────────────────────────────────────────────
+buildingConfig:
+  # Inline building_config.yaml content (override for your deployment)
+  enabled: true
+  content: |
+    building:
+      id: default_building
+      name: Default Building
+      namespace: "http://example.com/building#"
+      prefix: bldg
+      timezone: UTC
+      abox_file: /data/ontology/abox.ttl
+      tbox_file: /data/ontology/Brick.ttl
+    ontology:
+      schema: brick
+      schema_uri: "https://brickschema.org/schema/Brick#"
+    storage:
+      backend: mysql
+      database: ontosage
+      table: sensor_data
+
+# ─── Secrets ────────────────────────────────────────────────────────────────
+secrets:
+  # Set via --set or external secret manager (do NOT commit real values)
+  openaiApiKey: ""
+  jwtSecretKey: "change-me-in-production"
