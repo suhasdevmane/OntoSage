@@ -177,3 +177,83 @@ RBAC middleware (`orchestrator/middleware/rbac.py`) enforces 6 roles (admin, fac
 - Point at logs, errors, failing tests - then resolve them
 - Zero context switching required from the user
 - Go fix failing CI tests without being told how
+
+## Quick Navigation Index
+
+Jump directly to the right code area without scanning entire files. Use these line references as the first `Read` call for any task.
+
+| Task | File | Lines | Notes |
+|------|------|-------|-------|
+| Intent routing debug | `orchestrator/workflow.py` | 1079–1130 | `_route_from_dialogue` — all 14 intent branches |
+| Add new graph node | `orchestrator/workflow.py` | 120–135 | `add_node()` calls; then add edge at 137–190 |
+| SPARQL generation failure | `orchestrator/agents/sparql_agent.py` | 165–260 | `generate_query()` — LLM call + execution |
+| SPARQL context / retrieval | `orchestrator/agents/sparql_agent.py` | 313–390 | `_retrieve_context()` + `_generate_sparql()` |
+| Ontology / TTL parsing | `orchestrator/services/ontology_detector.py` | 154–250 | `OntologySchemaDetector` + `_analyse_graph()` |
+| Live GraphDB introspection | `orchestrator/services/ontology_introspector.py` | 1–80 | `OntologyIntrospector.is_ready()` |
+| SQL / time-series failure | `orchestrator/agents/sql_agent.py` | 1–50 | entry point; then `services/adapters/registry.py` |
+| Storage adapter routing | `orchestrator/services/adapters/registry.py` | 1–60 | maps building_id → MySQL or PostgreSQL |
+| Analytics code execution | `orchestrator/agents/analytics_agent.py` | 1–80 | calls `code-executor` service port 8002 |
+| Analytics deterministic | `orchestrator/services/analytics_engine.py` | 1–60 | `AnalyticsEngine.run()` |
+| Response formatting | `orchestrator/workflow.py` | 843–1079 | `_response_node()` — full markdown assembly |
+| Auth / session issues | `orchestrator/auth_manager.py` | 61–160 | `AuthManager.__init__` + `_hash_password` |
+| RBAC / permissions | `orchestrator/middleware/rbac.py` | 51–115 | `ALL_PERMISSIONS` + `ROLE_PERMISSIONS` dict |
+| Config / env vars | `shared/config.py` | 1–100 | all `MODEL_PROVIDER` / service URLs |
+| State model fields | `shared/models.py` | 1–80 | `ConversationState` + `intermediate_results` |
+| RAG semantic fallback | `orchestrator/services/hybrid_retrieval.py` | 1–60 | `hybrid_retrieval()` entry point |
+| Docker / service start | `docker-compose.yml` | 1–80 | all service definitions |
+| FastAPI startup | `orchestrator/main.py` | 1–100 | lifespan, app init, adapter registry |
+| FastAPI endpoints | `orchestrator/main.py` | 100–400 | all route registrations |
+| Circuit breaker | `orchestrator/services/circuit_breaker.py` | 1–60 | `CircuitBreaker` class |
+
+## 14 Intent Types
+
+The dialogue agent classifies every query into one of:
+
+| Intent | Route | Description |
+|--------|-------|-------------|
+| `sensor_data` | sparql → sql → response | Current or historical sensor readings |
+| `analytics` | sparql → sql → analytics → response | Statistical analysis, trends, averages |
+| `discovery` | sparql → response | Explore available sensors/zones/devices |
+| `report` | sparql → sql → report → response | Structured building report |
+| `anomaly` | sparql → sql → anomaly → response | Out-of-range / spike detection |
+| `comparison` | sparql → sql → analytics → response | Compare zones/devices/time periods |
+| `export` | sparql → sql → export → response | Download data as CSV/JSON/HTML |
+| `recommend` | sparql → sql → response | HVAC/energy/comfort recommendations |
+| `planner` | planner → response | Multi-step orchestrated tasks |
+| `forecast` | sparql → sql → analytics → response | Future predictions |
+| `control` | response | Not yet supported — informs user |
+| `general` | response | Greetings / non-building questions |
+| `clarification` | response | Query too vague — asks follow-up |
+| `alert` | sparql → sql → anomaly → response | Threshold-based alerting |
+
+## Installed Skills Guide
+
+1,380 skills are installed at `~/.claude/skills/`. Use the Skill tool to invoke them.
+
+| Task | Skill to invoke |
+|------|----------------|
+| Debug pipeline failure | `systematic-debugging` or `phase-gated-debugging` |
+| Work on LangGraph workflow | `langgraph` |
+| Work on RAG / rag-service | `rag-engineer` |
+| FastAPI endpoint work | `fastapi-pro` |
+| Ollama / local model tuning | `local-llm-expert` |
+| LLM prompt / output tuning | `llm-app-patterns` |
+| Docker / container issues | `docker-expert` |
+| Qdrant vector index | `vector-database-engineer` |
+| Security review | `security-auditor` |
+| Writing/fixing tests | `systematic-debugging` then `testing-patterns` |
+| Agent orchestration design | `agent-orchestration-improve-agent` |
+
+**Usage:** `/skill langgraph`, `/skill rag-engineer`, `/skill systematic-debugging`
+
+## Sub-Agents
+
+Five scoped sub-agents are available in `.claude/agents/`. Each reads only its domain files.
+
+| Agent | Invoke When |
+|-------|------------|
+| `ontology-agent` | SPARQL failures, TTL parsing, GraphDB issues, new building |
+| `pipeline-agent` | Routing bugs, adding intents/nodes, state not propagating |
+| `infra-agent` | Docker failures, port conflicts, env vars, MODEL_PROVIDER switch |
+| `test-agent` | Writing or fixing tests, coverage gaps |
+| `deploy-agent` | Pre-deployment review, auth hardening, production checklist |
