@@ -1,4 +1,8 @@
 ##############################
+# Git worktrees (isolated workspaces)
+##############################
+.worktrees/
+##############################
 # OS & editor noise
 ##############################
 .DS_Store
@@ -292,3 +296,5 @@ outputs/
 
 *.zip
 blobs/
+paper/
+.paper/
