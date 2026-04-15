@@ -47,6 +47,101 @@ VALID_PERSONAS = {
     "stakeholder", "guest", "officer",
 }
 
+# ---------------------------------------------------------------------------
+# Persona auto-detection for OpenWebUI and other generic OpenAI clients
+# ---------------------------------------------------------------------------
+import re as _re
+
+# Ordered list of (keywords, canonical_persona).  More specific first.
+_PERSONA_KEYWORD_MAP = [
+    (["facility_manager", "facility manager", "building manager", "building operator", "building technician"], "facility_manager"),
+    (["sustainability_officer", "sustainability officer", "sustainability manager", "esg manager", "esg officer"], "sustainability_officer"),
+    (["safety_officer", "safety officer", "hse officer", "health and safety", "h&s officer"], "safety_officer"),
+    (["energy_manager", "energy manager", "energy analyst", "energy engineer"], "energy_manager"),
+    (["it_admin", "it admin", "sysadmin", "system administrator", "it administrator", "it manager"], "it_admin"),
+    (["researcher", "analyst", "data scientist", "ontologist", "data analyst"], "researcher"),
+    (["executive", "c-level", "cfo", "ceo", "coo", "vp ", "vice president", "director", "board member"], "executive"),
+    (["occupant", "tenant", "office worker", "building occupant", "end user"], "occupant"),
+    (["student", "learner", "intern", "trainee"], "student"),
+]
+
+# Regex that matches an "As <role>:" prefix the user types in the chat box
+_AS_ROLE_RE = _re.compile(
+    r'^[Aa]s\s+(?:an?\s+)?'
+    r'(facility[_ ]manager|sustainability[_ ]officer|safety[_ ]officer|'
+    r'energy[_ ]manager|it[_ ]admin|researcher|analyst|executive|'
+    r'occupant|student|facility\s+manager|sustainability\s+officer|'
+    r'safety\s+officer|energy\s+manager|it\s+admin|guest|general)'
+    r'\s*[:;,\-]\s*',
+    _re.IGNORECASE,
+)
+
+_ROLE_NORMALIZE = {
+    "facility_manager": "facility_manager",
+    "facility manager": "facility_manager",
+    "sustainability_officer": "sustainability_officer",
+    "sustainability officer": "sustainability_officer",
+    "safety_officer": "safety_officer",
+    "safety officer": "safety_officer",
+    "energy_manager": "energy_manager",
+    "energy manager": "energy_manager",
+    "it_admin": "it_admin",
+    "it admin": "it_admin",
+    "researcher": "researcher",
+    "analyst": "researcher",
+    "executive": "executive",
+    "occupant": "occupant",
+    "student": "student",
+    "guest": "occupant",
+    "general": "general",
+}
+
+
+def _detect_persona(messages: list, explicit_persona: str) -> tuple:
+    """
+    Auto-detect the user persona when not explicitly set in the request body.
+
+    Priority order:
+      1. Explicit persona already set (non-general) — trust it, return as-is.
+      2. OpenWebUI system prompt — scan for role/occupation keywords.
+      3. Last user message prefix "As facility_manager: ..." — extract and strip.
+      4. Fall back to "general".
+
+    Returns:
+        (persona: str, stripped_message: str | None)
+        stripped_message is non-None only when a "As role:" prefix was removed
+        from the user message, so the caller can replace user_message with it.
+    """
+    # 1. Explicit non-general persona — pass straight through
+    if explicit_persona and explicit_persona != "general" and explicit_persona in VALID_PERSONAS:
+        return explicit_persona, None
+
+    # 2. System prompt scan (OpenWebUI system prompt is a {"role":"system"} message)
+    system_content = next(
+        (m.get("content", "") for m in messages if m.get("role") == "system"),
+        ""
+    )
+    if system_content:
+        sys_lower = system_content.lower()
+        for keywords, persona in _PERSONA_KEYWORD_MAP:
+            if any(kw in sys_lower for kw in keywords):
+                return persona, None
+
+    # 3. "As <role>:" prefix in the last user message
+    raw_user = next(
+        (m.get("content", "") for m in reversed(messages) if m.get("role") == "user"),
+        ""
+    )
+    if raw_user:
+        m = _AS_ROLE_RE.match(raw_user.strip())
+        if m:
+            raw_role = m.group(1).lower().strip()
+            persona = _ROLE_NORMALIZE.get(raw_role, "general")
+            stripped = raw_user[m.end():].strip()
+            return persona, stripped if stripped else None
+
+    return "general", None
+
 # E.9 — Prometheus metrics (optional; graceful degradation if unavailable)
 try:
     from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
@@ -984,7 +1079,7 @@ async def chat(
 
         persona = req.persona or "general"
         language = req.language or "en"
-        building = req.building or "building1"
+        building = req.building or settings.BUILDING_ID
         
         # Load or create conversation state
         state = await redis_manager.load_state(conversation_id)
@@ -1154,7 +1249,7 @@ async def chat_stream(
             persona = "general"
 
         language = req.language or "en"
-        building = req.building or "building1"
+        building = req.building or settings.BUILDING_ID
         
         async def event_generator():
             try:
@@ -1274,7 +1369,7 @@ async def websocket_stream(websocket: WebSocket):
             conversation_id = request.get("conversation_id") or generate_conversation_id()
             persona = request.get("persona", "general")
             language = request.get("language", "en")
-            building = request.get("building", "building1")
+            building = request.get("building", settings.BUILDING_ID)
             
             # Load or create state
             state = await redis_manager.load_state(conversation_id)
@@ -1452,7 +1547,7 @@ async def generate_report(
             "report_type": "summary|anomaly|compliance|trend|comparison|full",
             "output_format": "html|pdf|docx",
             "persona": "executive|facility_manager|general|...",
-            "building_id": "building1",
+            "building_id": settings.BUILDING_ID,
             "title": "Optional custom title",
             "date_range": {"start": "2025-01-01", "end": "2025-01-31"}
         }
@@ -1462,7 +1557,7 @@ async def generate_report(
         report_type = request.get("report_type", "summary")
         output_format = request.get("output_format", "html")
         persona = request.get("persona", "general")
-        building_id = request.get("building_id", "building1")
+        building_id = request.get("building_id", settings.BUILDING_ID)
         title = request.get("title")
         date_range = request.get("date_range", {})
 
@@ -1565,20 +1660,33 @@ async def openai_chat_completions(
 
         # Generate conversation ID
         conversation_id = f"owui_{generate_conversation_id()}:{username}"
-        
-        # Create state — accept persona and building_id from request body
-        req_persona = data.get("persona", "general")
-        if req_persona not in VALID_PERSONAS:
-            req_persona = "general"
+
+        # Auto-detect persona from system prompt or "As <role>:" prefix when
+        # the client (e.g. OpenWebUI) does not send an explicit persona field.
+        explicit_persona = data.get("persona", "general")
+        if explicit_persona not in VALID_PERSONAS:
+            explicit_persona = "general"
+        req_persona, stripped_message = _detect_persona(messages, explicit_persona)
+
+        # If an "As <role>:" prefix was stripped, use the cleaned message
+        if stripped_message:
+            from shared.models import sanitize_user_input as _san
+            user_message = _san(stripped_message)
+            if not user_message:
+                raise HTTPException(status_code=400, detail="Message is empty after stripping persona prefix")
+
         state = ConversationState(
             conversation_id=conversation_id,
             user_message=user_message,
             messages=[],
-            building_id=data.get("building_id", "building1"),
+            building_id=data.get("building_id", settings.BUILDING_ID),
             persona=req_persona,
             user_id=username
         )
-        
+
+        logger.info(f"[persona-detect] explicit={explicit_persona!r} → resolved={req_persona!r}"
+                    + (" (prefix stripped)" if stripped_message else ""))
+
         # Add the current message to the history so the agent can see it
         state.messages.append(Message(
             role="user",
@@ -1586,34 +1694,96 @@ async def openai_chat_completions(
             timestamp=datetime.now()
         ))
         
-        # Execute workflow
-        updated_state = await orchestrator.execute(state)
-        
-        # Get response
-        assistant_message = updated_state.messages[-1].content if updated_state.messages else "No response generated"
-        
-        # Save to Postgres if available
-        if postgres_manager and postgres_manager.pool:
-            # Ensure user exists (idempotent)
-            await postgres_manager.create_user(username, "placeholder_hash", "placeholder_salt", metadata={"source": "open_webui"})
-            
-            # Save user message
-            await postgres_manager.save_message(
-                conversation_id,
-                "user",
-                user_message,
-                username
-            )
-            
-            # Save assistant message
-            await postgres_manager.save_message(
-                conversation_id,
-                "assistant",
-                assistant_message,
-                username
-            )
+        stream = bool(data.get("stream"))
+        show_status = bool(data.get("show_status", True))
 
-        # Format response as OpenAI ChatCompletion
+        if stream:
+            async def event_generator():
+                created_ts = int(datetime.now().timestamp())
+                chunk_id = f"chatcmpl-{conversation_id}"
+
+                def sse_chunk(content=None, role=None, finish_reason=None):
+                    payload = {
+                        "id": chunk_id,
+                        "object": "chat.completion.chunk",
+                        "created": created_ts,
+                        "model": data.get("model", "ontobot-pipeline"),
+                        "choices": [{
+                            "index": 0,
+                            "delta": {},
+                            "finish_reason": finish_reason
+                        }]
+                    }
+                    if role:
+                        payload["choices"][0]["delta"]["role"] = role
+                    if content is not None:
+                        payload["choices"][0]["delta"]["content"] = content
+                    return f"data: {json.dumps(payload)}\n\n"
+
+                # Initial role chunk
+                yield sse_chunk(role="assistant")
+
+                last_step = None
+                async for step in orchestrator.stream_execute(state):
+                    last_step = step
+                    if not show_status:
+                        continue
+                    status = None
+                    if "dialogue" in step:
+                        status = "Status: analyzing intent..."
+                    elif "sparql" in step:
+                        status = "Status: querying building ontology..."
+                    elif "sql" in step:
+                        status = "Status: fetching sensor data..."
+                    elif "analytics" in step:
+                        status = "Status: performing analysis..."
+                    elif "visualization" in step:
+                        status = "Status: creating visualization..."
+                    elif "report" in step:
+                        status = "Status: assembling report..."
+                    elif "document" in step:
+                        status = "Status: generating document output..."
+                    if status:
+                        yield sse_chunk(content=f"{status}\n")
+
+                # Extract final state from last streamed step (avoid re-executing)
+                final_state = state
+                if last_step and isinstance(last_step, dict):
+                    for node_name, node_state in last_step.items():
+                        if isinstance(node_state, ConversationState):
+                            final_state = node_state
+                        elif isinstance(node_state, dict) and "messages" in node_state:
+                            final_state = ConversationState(**node_state)
+
+                assistant_message = final_state.messages[-1].content if final_state.messages else "No response generated"
+
+                # Save to Postgres if available
+                if postgres_manager and postgres_manager.pool:
+                    await postgres_manager.create_user(username, "placeholder_hash", "placeholder_salt", metadata={"source": "open_webui"})
+                    await postgres_manager.save_message(conversation_id, "user", user_message, username)
+                    await postgres_manager.save_message(conversation_id, "assistant", assistant_message, username)
+
+                # Stream final response in chunks (helps UI show gradual output)
+                chunk_size = 200
+                for i in range(0, len(assistant_message), chunk_size):
+                    yield sse_chunk(content=assistant_message[i:i + chunk_size])
+
+                # Finalize stream
+                yield sse_chunk(finish_reason="stop")
+                yield "data: [DONE]\n\n"
+
+            return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+        # Non-streaming: Execute workflow
+        updated_state = await orchestrator.execute(state)
+
+        assistant_message = updated_state.messages[-1].content if updated_state.messages else "No response generated"
+
+        if postgres_manager and postgres_manager.pool:
+            await postgres_manager.create_user(username, "placeholder_hash", "placeholder_salt", metadata={"source": "open_webui"})
+            await postgres_manager.save_message(conversation_id, "user", user_message, username)
+            await postgres_manager.save_message(conversation_id, "assistant", assistant_message, username)
+
         return {
             "id": f"chatcmpl-{conversation_id}",
             "object": "chat.completion",
