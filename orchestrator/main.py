@@ -13,7 +13,7 @@ import time
 import uuid as _uuid_mod
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import (
     Cookie,
@@ -1746,10 +1746,28 @@ async def openai_chat_completions(
                     status_code=400, detail="Message is empty after stripping persona prefix"
                 )
 
+        # Reconstruct prior conversation history from the OpenAI-format
+        # messages array so the dialogue agent can resolve co-references
+        # ("the same sensor", "that zone", "yesterday") and follow-up
+        # questions without asking for clarification.
+        # We take all turns EXCEPT the last (current) user message, cap at
+        # MAX_CONVERSATION_HISTORY to avoid context overflow, and skip
+        # system/tool messages that are not meaningful for entity resolution.
+        max_history = int(getattr(settings, "MAX_CONVERSATION_HISTORY", 10))
+        prior_messages: List[Message] = []
+        for m in messages[:-1]:  # exclude the current (last) user turn
+            role = m.get("role", "user")
+            content = m.get("content") or ""
+            if role in ("user", "assistant") and content.strip():
+                prior_messages.append(
+                    Message(role=role, content=content, timestamp=datetime.now())
+                )
+        prior_messages = prior_messages[-max_history:]
+
         state = ConversationState(
             conversation_id=conversation_id,
             user_message=user_message,
-            messages=[],
+            messages=prior_messages,
             building_id=data.get("building_id", settings.BUILDING_ID),
             persona=req_persona,
             user_id=username,
@@ -1758,6 +1776,9 @@ async def openai_chat_completions(
         logger.info(
             f"[persona-detect] explicit={explicit_persona!r} → resolved={req_persona!r}"
             + (" (prefix stripped)" if stripped_message else "")
+        )
+        logger.info(
+            f"[/v1/chat/completions] loaded {len(prior_messages)} prior turns into state"
         )
 
         # Add the current message to the history so the agent can see it
