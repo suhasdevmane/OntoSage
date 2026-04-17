@@ -1,296 +1,358 @@
-# OntoSage: Easy-Deploy Conversational AI for Sustainable Smart Buildings
-## Enabling Zero-Knowledge Human-Building Interaction for Persona-Agnostic Multi-Objective Goals
+# OntoSage — Agentic AI for Intelligent Buildings
 
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green.svg)](https://fastapi.tiangolo.com/)
-[![LangGraph](https://img.shields.io/badge/LangGraph-0.2-purple.svg)](https://langchain-ai.github.io/langgraph/)
+**Natural language interaction with smart building systems — no technical knowledge required.**
+
+[![Python](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-0.2-7C3AED.svg)](https://langchain-ai.github.io/langgraph/)
+[![Brick Schema](https://img.shields.io/badge/Brick_Schema-1.3-orange.svg)](https://brickschema.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-**OntoSage** is a research-grade **Agentic AI Framework** designed to democratize access to smart building data. It enables **Zero-Knowledge Human-Building Interaction (HBI)**, allowing users with no technical expertise (occupants, facility managers, researchers) to interact with complex building systems using natural language.
-
-Designed for **Sustainable Smart Buildings**, OntoSage facilitates **persona-agnostic multi-objective goals**—from optimizing energy consumption to ensuring occupant comfort—without requiring users to understand the underlying database schemas, ontologies, or sensor protocols.
-
-The framework is built on a **"Easy-Deploy"** philosophy, ensuring it can be deployed in any smart building environment with **minimal changes** to existing databases and ontologies.
+[![CI](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml/badge.svg)](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-GitHub_Pages-blue)](https://suhasdevmane.github.io/OntoSage/)
 
 ---
 
-## 🌟 Key Research Contributions & Features
+**OntoSage** is an open-source agentic AI platform that translates plain English questions into real-time answers sourced from building ontologies (knowledge graphs) and sensor time-series databases.
 
-*   **🤖 Zero-Knowledge Interaction**: Abstracts the complexity of SPARQL, SQL, and IoT protocols. Users simply ask questions like "Why is it so hot in here?" or "Analyze energy trends for last month," and the system handles the technical translation.
-*   **🏢 Persona-Agnostic Adaptability**: Automatically detects and adapts to the user's role (e.g., providing simplified comfort controls for occupants vs. detailed diagnostic data for facility managers).
-*   **⚡ Easy-Deploy Architecture**: Containerized microservices architecture (Docker) that requires minimal configuration. It adapts to *your* building's existing ontology (Brick, RealEstateCore, etc.) and database structure rather than forcing a migration.
-*   **🧠 Multi-Agent Orchestration**: A sophisticated **LangGraph**-based brain that coordinates specialized agents:
-    *   **Dialogue Agent**: Context-aware communication.
-    *   **SPARQL Agent**: Semantic reasoning over building topology.
-    *   **SQL Agent**: High-performance time-series retrieval.
-    *   **Analytics Agent**: On-the-fly Python code generation for statistical analysis.
-    *   **Visualization Agent**: Dynamic generation of Plotly charts.
-*   **🔍 GraphDB-Native RAG**: Utilizes **GraphDB Similarity Indexing** for semantic search directly within the Knowledge Graph, eliminating the need for external vector databases for ontology mapping.
-*   **🧠 Long-Term Memory**: Uses **Qdrant** to store and retrieve **User Conversation History**, enabling the system to recall past context and preferences across sessions.
-*   **🔓 Open & Private**: Fully supports local deployment with **Ollama (DeepSeek/Llama)** for data privacy, or cloud integration with OpenAI.
-*   **🗣️ Multimodal Interface**: Integrated with **Open WebUI** for a seamless chat experience, including voice interaction capabilities.
+A facility manager types: *"Which zones on Floor 3 exceeded 1000 ppm CO₂ for more than 15 minutes this week?"*
+
+OntoSage:
+1. Classifies the query as an **analytics** intent
+2. Searches the semantic knowledge graph (GraphDB) for CO₂ sensor URIs in Floor 3 zones
+3. Generates and executes a SPARQL query to find sensor UUIDs
+4. Fetches last-7-day readings from the MySQL sensor database
+5. Runs Python analytics code in a sandboxed container to compute threshold breaches
+6. Returns a formatted table with zone names, peak values, durations, and timestamps
+
+No SQL, no SPARQL, no schema knowledge required from the user.
 
 ---
 
-## 🏗️ System Architecture
+## What Makes OntoSage Different
 
-OntoSage employs a **Hub-and-Spoke** agentic architecture. The **Orchestrator** serves as the central cognitive unit, decomposing complex user queries into sub-tasks delegated to specialized agents.
+| Capability | Description |
+|---|---|
+| **14 Intent Types** | sensor readings, analytics, anomaly detection, reports, exports, recommendations, forecasts, discovery, comparison, and more |
+| **Zero-Knowledge Interaction** | Users need no knowledge of sensor IDs, SPARQL, SQL, or ontology classes |
+| **Multi-Building Support** | 8 database backends: MySQL, PostgreSQL, TimescaleDB, InfluxDB, MongoDB, SQLite, Cassandra, Redis TimeSeries |
+| **Semantic Grounding** | GraphDB similarity indexing maps natural language to RDF entities — no external vector database needed |
+| **Safe Analytics Sandbox** | Python code generation executed in a resource-limited Docker sandbox with no filesystem or network access |
+| **Role-Based Access Control** | 6 roles, 20 permissions enforced at every API endpoint |
+| **LLM Flexibility** | Switch between local Ollama models and OpenAI with a single environment variable |
+| **Conversation Memory** | Redis-backed conversation state with 1-hour TTL; full history in MongoDB |
+
+---
+
+## Architecture
 
 ```mermaid
 graph TD
-    User((User)) -->|Natural Language| OpenWebUI[Open WebUI]
-    OpenWebUI -->|REST API| Orchestrator[Orchestrator Service]
-    
-    subgraph "Cognitive Core (LangGraph)"
-        Orchestrator -->|Delegates| Dialogue[Dialogue Agent]
-        Orchestrator -->|Delegates| SPARQL[SPARQL Agent]
-        Orchestrator -->|Delegates| SQL[SQL Agent]
-        Orchestrator -->|Delegates| Analytics[Analytics Agent]
-        Orchestrator -->|Delegates| Vis[Visualization Agent]
-    end
-    
-    subgraph "Memory & Context"
-        Dialogue -->|Retrieve History| Qdrant[(Qdrant Memory)]
+    User["User (Browser / Voice)"] -->|HTTPS| WebUI["Open WebUI :3000"]
+    WebUI -->|REST + WebSocket| Orch["OntoSage Orchestrator :8000\n(FastAPI + LangGraph)"]
+
+    subgraph "Agent Pipeline"
+        Orch --> DA["Dialogue Agent\nIntent · Entities · Time range"]
+        DA -->|routes| SA["SPARQL Agent\nOntology queries"]
+        DA -->|routes| RA["Report Agent"]
+        DA -->|routes| AA["Anomaly Agent"]
+        SA --> SQ["SQL Agent\nTime-series fetch"]
+        SQ --> AnA["Analytics Agent\nPython sandbox"]
+        AnA --> VA["Visualization Agent\nCharts"]
     end
 
     subgraph "Knowledge Layer"
-        SPARQL -->|Semantic Query| GraphDB[(GraphDB Ontology)]
-        SQL -->|Time-Series Query| MySQL[(Sensor Data)]
-        Dialogue -->|Context Retrieval| RAG[RAG Service]
-        RAG -->|Similarity Search| GraphDB
+        SA -->|SPARQL| GDB[("GraphDB :7200\nBrick / REC Ontology")]
+        SA -->|Semantic RAG| RAGS["RAG Service :8001"]
+        RAGS --> GDB
     end
-    
-    subgraph "Execution Layer"
-        Analytics -->|Secure Execution| Sandbox[Code Executor]
+
+    subgraph "Data Layer"
+        SQ -->|per-building adapter| MySQL[("MySQL :3306\nSensor time-series")]
+        SQ -->|per-building adapter| PG[("PostgreSQL :5433\nUser accounts · RBAC")]
+        Orch -->|state cache| Redis[("Redis :6379")]
+        Orch -->|chat history| Mongo[("MongoDB :27017")]
+        AnA -->|execute code| CE["Code Executor :8002\n(Docker sandbox)"]
+    end
+
+    subgraph "LLM Layer"
+        Orch -. "MODEL_PROVIDER=openai" .-> OpenAI["OpenAI API"]
+        Orch -. "MODEL_PROVIDER=local" .-> Ollama["Ollama :11434\ndeepseek-r1:32b"]
     end
 ```
 
-### Zero-Knowledge Query Resolution Flow
-
-1.  **Context Retrieval**: The system fetches relevant past interactions from **Qdrant** to understand the user's ongoing context.
-2.  **Intent Recognition**: The system identifies if the user wants to *know* (metadata), *see* (time-series), or *analyze* (computation).
-3.  **Schema Mapping**: It uses **GraphDB Similarity Indexing** to map natural language terms (e.g., "Conference Room") to specific ontology entities (e.g., `bldg:Room-101`).
-4.  **Data Retrieval**: It autonomously constructs valid SPARQL or SQL queries based on the connected building's schema.
-5.  **Synthesis**: Results are synthesized into a natural language response, often accompanied by dynamic visualizations.
-
 ---
 
-## 🧩 Service Components
-
-### 1. Orchestrator Service (`/orchestrator`)
-The cognitive brain built with **FastAPI** and **LangGraph**. It maintains conversation state and manages the "Persona Agnostic" logic, adjusting responses based on the inferred user intent.
-
-### 2. Agentic Microservices
-*   **SPARQL Agent**: Interfaces with RDF stores (GraphDB) to understand building topology.
-*   **SQL Agent**: Interfaces with SQL databases (PostgreSQL/MySQL) for historical sensor data.
-*   **Analytics Agent**: A secure sandbox for executing generated Python code to perform complex calculations (e.g., "Calculate the correlation between occupancy and temperature").
-*   **Visualization Agent**: Generates configuration for Plotly charts.
-*   **State Management**: Uses **Redis** for short-term state and **Qdrant** for long-term semantic memory.
-
-### 3. RAG Service (`/rag-service`)
-**The Librarian.** Built with **GraphDB Similarity Indexing**.
-*   **Role**: Handles semantic search directly within the Knowledge Graph.
-*   **Working**: Uses GraphDB's internal vector index to find relevant ontology entities based on user queries, then retrieves their "bounded context" (neighboring triples) to ground the LLM.
-
-### 4. Code Executor Service (`/code-executor`)
-**The Sandbox.** Built with **Docker** and **Python**.
-*   **Role**: A secure, isolated environment for running code generated by the Analytics Agent.
-*   **Security**: Prevents the AI from accessing the host system, network, or sensitive files. It only has access to the specific data provided for the analysis task.
-*   **Output**: Returns the standard output (text) and any generated artifacts (images/plots) back to the Orchestrator.
-
-### 5. Frontend Application (`/frontend`)
-**The Face.** Built with **Open WebUI**.
-*   **Features**:
-    *   **Chat Interface**: Streaming responses, markdown support, code highlighting.
-    *   **Voice Input**: One-click recording and sending.
-    *   **Visualization**: Renders interactive plots generated by the backend.
-
-### 6. Data Layer
-*   **MySQL**: Stores high-frequency sensor telemetry data.
-*   **GraphDB**: Stores the RDF Knowledge Graph (Ontology) and handles Vector Similarity Search.
-*   **Qdrant**: Stores vector embeddings of **User Conversation History** for long-term memory.
-*   **Redis**: High-speed cache for active conversation state.
-
-### 5. Frontend Application (`/frontend`)
-**The Face.** Built with **React 19**, **TypeScript**, and **Tailwind CSS**.
-*   **Features**:
-    *   **Chat Interface**: Streaming responses, markdown support, code highlighting.
-    *   **3D Viewer**: Interactive model of the building, highlighting rooms and sensors based on the conversation.
-    *   **Dashboard**: Real-time charts and analytics views.
-    *   **Voice Input**: One-click recording and sending.
-
-### 6. Data Layer
-*   **MySQL**: Stores high-frequency sensor telemetry data.
-*   **GraphDB**: Stores the RDF Knowledge Graph (Ontology) representing the building's physical structure and relationships.
-*   **Qdrant**: Vector database for semantic similarity search.
-*   **Redis**: High-speed cache for conversation state and pub/sub messaging.
-
----
-
-## 🚀 Getting Started
+## Quick Start (5 Minutes)
 
 ### Prerequisites
-*   **Docker Desktop** (Windows/Mac) or **Docker Engine** (Linux).
-*   **Git** to clone the repository.
-*   *(Optional)* **NVIDIA GPU** for faster local inference.
 
-### Step 1: Configuration
-OntoSage supports two modes: **Local** (Privacy-focused, Free) and **Cloud** (High Performance, Paid).
+- Docker Desktop (Windows / macOS) or Docker Engine (Linux)
+- 8 GB RAM minimum (16 GB recommended)
+- OpenAI API key **or** NVIDIA GPU for local inference
 
-1.  **Clone the repo**:
-    ```bash
-    git clone https://github.com/suhasdevmane/OntoBot.git
-    cd OntoBot
-    ```
+### 1. Clone
 
-2.  **Choose your provider**:
-    *   **For Local (Ollama)**:
-        ```bash
-        cp .env.local .env
-        ```
-    *   **For Cloud (OpenAI)**:
-        ```bash
-        cp .env.cloud .env
-        ```
-        *Edit `.env` and add your `OPENAI_API_KEY`.*
-
-### Step 2: Deployment
-We provide automated scripts to handle the complex Docker Compose setup.
-
-**Windows (PowerShell):**
-```powershell
-./startup.ps1 -Provider local
-# OR
-./startup.ps1 -Provider cloud
-```
-
-**Linux / Mac (Bash):**
 ```bash
-chmod +x scripts/check-health.sh
-./scripts/check-health.sh
-docker-compose up -d
+git clone https://github.com/suhasdevmane/OntoSage.git
+cd OntoSage
 ```
 
-*Note: The first startup may take 10-15 minutes to download necessary Docker images and LLM models (approx. 10GB).*
+### 2. Configure
 
-### Step 3: Access the System
-Once the startup script completes and health checks pass:
-
-*   **Frontend UI**: [http://localhost:3000](http://localhost:3000)
-*   **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
-*   **RAG Service**: [http://localhost:8001/docs](http://localhost:8001/docs)
-*   **Grafana Monitoring**: [http://localhost:3001](http://localhost:3001) (Default login: admin/admin)
-
----
-
-## 📚 Full Documentation
-
-For deeper details and operations, see the docs set:
-
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- [docs/SERVICES.md](docs/SERVICES.md)
-- [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
-- [docs/BUILDING_ONBOARDING.md](docs/BUILDING_ONBOARDING.md)
-- [docs/RUNBOOK.md](docs/RUNBOOK.md)
-- [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)
-- [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
-- [docs/SECURITY.md](docs/SECURITY.md)
-
----
-
-## 🏢 Onboarding Your Own Building
-
-OntoSage is designed to be ontology-agnostic. You can load your own building's data (in RDF/TTL format) to start chatting with it.
-
-### 1. Prepare Your Data
-Ensure you have your building ontology in `.ttl` (Turtle) format. This file should define:
-*   **Physical Structure**: Sites, Buildings, Floors, Rooms.
-*   **Assets**: HVAC equipment, Lighting, Sensors.
-*   **Relationships**: `hasPoint`, `feeds`, `isLocationOf`.
-
-### 2. Place Data in Volume
-Copy your `.ttl` files to the data directory:
 ```bash
-# Example: Create a folder for your building
-mkdir -p data/my_building/dataset
-cp /path/to/your/building.ttl data/my_building/dataset/
+cp .env.example .env
 ```
 
-### 3. Update Configuration
-Edit `docker-compose.agentic.yml` to point the **GraphDB** service to your new data folder.
+Open `.env` and set at minimum:
 
-Find the `graphdb` service definition:
-```yaml
-  graphdb:
-    # ...
-    volumes:
-      - ./volumes/graphdb:/opt/graphdb/home
-      # CHANGE THIS LINE to point to your folder:
-      - ./data/my_building/dataset:/opt/graphdb/import:ro
-```
-
-### 4. Restart Services
-Restart the GraphDB service to load the new ontology:
 ```bash
-docker-compose -f docker-compose.agentic.yml restart graphdb
+# For OpenAI (no GPU required — recommended for getting started)
+MODEL_PROVIDER=openai
+OPENAI_API_KEY=sk-your-key-here
+OPENAI_MODEL=gpt-4o-mini
+
+# Database passwords (change from defaults)
+MYSQL_ROOT_PASSWORD=yourpassword
+MYSQL_PASSWORD=yourpassword
+POSTGRES_USER_PASSWORD=yourpassword
 ```
-*Note: GraphDB will automatically import files found in the `/opt/graphdb/import` directory on startup if the repository is empty.*
+
+### 3. Start
+
+```bash
+docker compose up -d
+```
+
+First run pulls images (~2–5 minutes). Subsequent starts take under 30 seconds.
+
+### 4. Verify
+
+```bash
+curl http://localhost:8000/health
+```
+
+### 5. Open the Chat Interface
+
+```
+http://localhost:3000
+```
+
+Create an account (first user becomes admin), then start asking questions.
 
 ---
 
-## 📖 Usage Guide
+## Local GPU Mode (Ollama)
 
-### 1. Asking Questions
-You can ask questions in natural language. The system will automatically route your request.
-*   **General**: "How does the HVAC system work?" (Uses RAG + Dialogue Agent)
-*   **Structural**: "List all temperature sensors in Building 1." (Uses SPARQL Agent)
-*   **Data**: "What was the average temperature in Room 202 yesterday?" (Uses SQL Agent)
-*   **Analysis**: "Plot the correlation between humidity and temperature for the last month." (Uses Analytics + Visualization Agents)
+For a fully private, offline deployment:
 
-### 2. Using Voice Mode
-Click the microphone icon in the chat bar. Speak your query clearly. The system will transcribe it and process it just like a text message.
+```bash
+# Install NVIDIA Container Toolkit (Ubuntu)
+sudo apt-get install nvidia-container-toolkit
+sudo systemctl restart docker
 
-### 3. 3D Visualization
-When you ask about specific rooms or equipment, the 3D viewer on the right panel will automatically fly to and highlight the relevant assets.
+# Start with GPU profile
+docker compose --profile local-gpu up -d
+
+# Pull the model (first run only — ~20 GB download)
+docker exec ollama ollama pull deepseek-r1:32b
+```
+
+Then set in `.env`:
+
+```bash
+MODEL_PROVIDER=local
+OLLAMA_MODEL=deepseek-r1:32b
+```
+
+See the [Deployment Guide](https://suhasdevmane.github.io/OntoSage/DEPLOYMENT/) for options including `llama3.2:7b` (8 GB VRAM) and `deepseek-r1:14b` (16 GB VRAM).
 
 ---
 
-## 👨‍💻 Developer Guide
+## Example Queries
 
-### Project Structure
-*   `orchestrator/`: Main backend logic (FastAPI + LangGraph).
-*   `frontend/`: React UI code.
-*   `rag-service/`: Vector search logic.
-*   `code-executor/`: Sandbox environment.
-*   `docker-compose.yml`: Core service definitions.
+| Query | Intent type | What happens |
+|---|---|---|
+| "What sensors are on Floor 3?" | `discovery` | SPARQL query → ontology graph |
+| "CO₂ level in Zone 5 right now" | `sensor_data` | SPARQL → UUID → SQL → latest value |
+| "Temperature trend this week" | `analytics` | SPARQL → SQL → Python analytics → chart |
+| "Which zones exceeded 1000 ppm CO₂?" | `anomaly` | SPARQL → SQL → threshold detection |
+| "Compare energy use Floor 2 vs Floor 3" | `comparison` | SPARQL → SQL → analytics → bar chart |
+| "Generate a weekly building report" | `report` | Multi-section formatted report |
+| "Export yesterday's sensor data as CSV" | `export` | SPARQL → SQL → CSV download |
+| "Forecast temperature for tomorrow" | `forecast` | SPARQL → SQL → trend projection |
 
-See **[docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)** for a full file tree.
+---
 
-### Adding a New Agent
-1.  Create a new agent class in `orchestrator/app/agents/`.
-2.  Define its state and tools.
-3.  Register it in the `orchestrator/app/workflow.py` graph.
-4.  Add a routing condition in the `supervisor` node.
+## Connecting Your Building
+
+OntoSage adapts to your building — you don't rewrite your data to fit OntoSage.
+
+### Step 1: Prepare your ontology
+
+Your building's Turtle (`.ttl`) file needs:
+- Sensor declarations with RDF types (`brick:Temperature_Sensor`, etc.)
+- Time-series linkage connecting sensors to database UUIDs:
+
+```turtle
+bldg:sensor_001 brick:hasExternalReference _:ref .
+_:ref ref:hasTimeseriesId "a8df8757-009a-4c3b-b1f2-ec59f8ce3e21" ;
+      ref:storedAt bldg:database1 .
+```
+
+### Step 2: Run the onboarding CLI
+
+```bash
+python scripts/onboard_building.py
+```
+
+This interactive wizard validates your TTL, generates a `building_config.yaml`, and tests database connectivity.
+
+### Step 3: Load into GraphDB and create the similarity index
+
+```bash
+# Load ontology
+curl -X POST http://localhost:7200/repositories/ontosage/statements \
+  -H "Content-Type: text/turtle" --data-binary @mybuilding.ttl
+```
+
+Then follow the [Building Onboarding Guide](https://suhasdevmane.github.io/OntoSage/BUILDING_ONBOARDING/) to create the semantic search index.
+
+---
+
+## Supported Database Backends
+
+The `config/database_registry.yaml` file maps TTL `ref:storedAt` identifiers to database connections. OntoSage supports:
+
+| Backend | Technology | Use case |
+|---|---|---|
+| `mysql` | MySQL, MariaDB, TiDB | Standard IoT sensor stores |
+| `postgresql` | PostgreSQL, Aurora, Neon | Enterprise deployments |
+| `timescaledb` | TimescaleDB hypertables | High-frequency time-series |
+| `mongodb` | MongoDB, Atlas, DocumentDB | Document-model sensor data |
+| `influxdb` | InfluxDB 2.x | Native time-series platforms |
+| `sqlite` | SQLite, DuckDB | Local / embedded deployments |
+| `cassandra` | Cassandra, ScyllaDB | High-write IoT at scale |
+| `redis_timeseries` | Redis + RedisTimeSeries | Real-time edge data |
+
+Multiple buildings can use different backends simultaneously. Each sensor in the ontology declares its own `ref:storedAt` adapter key — routing is fully automatic.
+
+---
+
+## Switching LLM Providers
+
+Switch at any time without rebuilding:
+
+```bash
+# Switch to OpenAI
+MODEL_PROVIDER=openai docker compose restart orchestrator
+
+# Switch to local Ollama
+MODEL_PROVIDER=local docker compose --profile local-gpu restart orchestrator
+
+# Windows PowerShell
+.\switch-provider.ps1 openai
+.\switch-provider.ps1 local
+```
+
+---
+
+## Service Ports
+
+| Port | Service | Purpose |
+|---|---|---|
+| **3000** | Open WebUI | Chat interface |
+| **8000** | Orchestrator API | REST + WebSocket + `/v1/chat/completions` |
+| **8001** | RAG Service | Semantic entity retrieval |
+| **8002** | Code Executor | Analytics sandbox |
+| **7200** | GraphDB | Ontology store + Workbench UI |
+| **6379** | Redis | Conversation state cache |
+| **3307** | MySQL | Sensor time-series data |
+| **5433** | PostgreSQL | User accounts + RBAC |
+| **27017** | MongoDB | Chat history |
+| **6333** | Qdrant | Agent memory (vector search) |
+
+---
+
+## Documentation
+
+Full documentation at **[suhasdevmane.github.io/OntoSage](https://suhasdevmane.github.io/OntoSage/)**
+
+| Guide | Description |
+|---|---|
+| [Deployment](https://suhasdevmane.github.io/OntoSage/DEPLOYMENT/) | Deploy from scratch — OpenAI or local GPU |
+| [Building Onboarding](https://suhasdevmane.github.io/OntoSage/BUILDING_ONBOARDING/) | Connect your building's ontology and sensor database |
+| [Configuration](https://suhasdevmane.github.io/OntoSage/CONFIGURATION/) | All environment variables and settings |
+| [GraphDB Setup](https://suhasdevmane.github.io/OntoSage/GRAPHDB_SETUP/) | Create the semantic similarity index |
+| [Architecture](https://suhasdevmane.github.io/OntoSage/ARCHITECTURE/) | Component design and data flow |
+| [User Guide](https://suhasdevmane.github.io/OntoSage/USER_GUIDE/) | How to query the system with examples |
+| [Developer Guide](https://suhasdevmane.github.io/OntoSage/DEVELOPER_GUIDE/) | Local dev setup, adding agents, CI |
+| [Security](https://suhasdevmane.github.io/OntoSage/SECURITY/) | Auth, RBAC, sandbox isolation |
+| [Runbook](https://suhasdevmane.github.io/OntoSage/RUNBOOK/) | Operations: health checks, backups, troubleshooting |
+
+---
+
+## Development
+
+```bash
+# Set up virtual environment
+python -m venv .venv && source .venv/bin/activate  # Linux/macOS
+python -m venv .venv && .venv\Scripts\activate     # Windows
+
+# Install dependencies
+pip install -r orchestrator/requirements.txt
+pip install pytest pytest-asyncio black isort flake8
+
+# Start infrastructure services only (GraphDB, Redis, MySQL, etc.)
+docker compose up -d graphdb redis mysql postgres-user-data code-executor rag-service
+
+# Run orchestrator locally with hot reload
+PYTHONPATH=. uvicorn orchestrator.main:app --reload --port 8000
+```
 
 ### Running Tests
-```bash
-# Run all tests
-pytest tests/
 
-# Run specific test
-pytest tests/test_llm_intent_detection.py
+```bash
+pytest tests/ -v                      # all tests
+pytest -m unit                        # fast unit tests only
+pytest -m integration                 # requires Docker services
+pytest tests/ --cov=orchestrator      # with coverage report
+```
+
+### Code Style
+
+```bash
+black --line-length 100 orchestrator/ shared/ scripts/ tests/
+isort --profile black orchestrator/ tests/
+flake8 orchestrator/ shared/ --max-line-length 110
 ```
 
 ---
 
-## 🔧 Troubleshooting
+## Research Background
 
-*   **"Ollama connection failed"**: Ensure the `ollama` container is running and healthy. If you don't have a GPU, local inference might be slow or time out.
-*   **"Database connection error"**: Check if the `mysql` and `graphdb` containers are up. The startup script waits for them, but manual restarts might be needed if they crash.
-*   **"OpenAI API Error"**: Verify your API key in the `.env` file and ensure you have credits.
+OntoSage was developed as part of research at **Cardiff University** (Devmane, Rana, Perera) into zero-knowledge interaction with built environments. The system was evaluated across three real buildings with 81 participants and 5,916 pre-development survey questions analysing how different building stakeholders — from facility managers to occupants — ask questions about their buildings.
+
+A paper describing the methodology, corpus analysis, and evaluation results is in preparation for **ACM IMWUT (Proceedings of the ACM on Interactive, Mobile, Wearable and Ubiquitous Technologies)**.
 
 ---
 
-## 📜 License
+## Contributing
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Contributions are welcome. Please:
+
+1. Fork the repository and create a feature branch
+2. Run the test suite and linters before submitting
+3. Follow the conventions in the [Developer Guide](https://suhasdevmane.github.io/OntoSage/DEVELOPER_GUIDE/)
+4. Open a pull request against `main`
+
+For bug reports and feature requests, open a [GitHub Issue](https://github.com/suhasdevmane/OntoSage/issues).
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.
+
+---
+
+*OntoSage is open source. Built with [LangGraph](https://github.com/langchain-ai/langgraph), [FastAPI](https://fastapi.tiangolo.com/), [GraphDB](https://graphdb.ontotext.com/), and [Brick Schema](https://brickschema.org/).*
