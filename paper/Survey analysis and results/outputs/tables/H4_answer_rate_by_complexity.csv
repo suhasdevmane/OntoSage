@@ -1,0 +1,4 @@
+Complexity,Label,N,GROUNDED_n,INFORMATIONAL_n,DISAMBIGUATION_n,BOUNDARY_n,FAILED_n,Answer_rate_pct,AR_CI_lo,AR_CI_hi,Grounded_rate_pct,Latency_mean_s,Latency_median_s,Latency_sd_s,Latency_p90_s
+LOOKUP,Lookup (L1),5227,1019,2344,1395,421,48,64.34,63.03,65.63,19.49,7.94,5.28,7.24,14.92
+AGGREGATION,Aggregation (L2),510,96,188,150,64,12,55.69,51.35,59.94,18.82,8.85,5.49,9.28,14.88
+MULTI_STEP,Multi-step (L3),179,68,66,33,7,5,74.86,68.03,80.65,37.99,10.35,6.91,10.14,17.87

@@ -1,0 +1,81 @@
+TopicID,TopicLabel,Level,n_users,rank1_count,rank2_count,rank3_count,rank4_count,mean_rank
+1,Indoor Temperature Control,1,53,29,9,8,7,1.868
+1,Indoor Temperature Control,2,53,10,16,9,18,2.66
+1,Indoor Temperature Control,3,53,6,23,14,10,2.528
+1,Indoor Temperature Control,4,53,8,5,22,18,2.943
+2,Air Quality & Ventilation,1,51,23,11,9,8,2.039
+2,Air Quality & Ventilation,2,51,10,15,10,16,2.627
+2,Air Quality & Ventilation,3,51,9,15,16,11,2.569
+2,Air Quality & Ventilation,4,51,9,10,16,16,2.765
+3,Lighting & Daylight,1,43,19,6,7,11,2.233
+3,Lighting & Daylight,2,43,11,12,13,7,2.372
+3,Lighting & Daylight,3,43,8,11,12,12,2.651
+3,Lighting & Daylight,4,43,5,14,11,13,2.744
+4,Noise & Acoustics,1,30,14,5,4,7,2.133
+4,Noise & Acoustics,2,30,8,9,6,7,2.4
+4,Noise & Acoustics,3,30,4,8,13,5,2.633
+4,Noise & Acoustics,4,30,4,8,7,11,2.833
+5,Energy Consumption,1,42,21,6,7,8,2.048
+5,Energy Consumption,2,42,9,15,11,7,2.381
+5,Energy Consumption,3,42,7,12,11,12,2.667
+5,Energy Consumption,4,42,5,9,13,15,2.905
+6,Security & Access Control,1,47,21,10,5,11,2.128
+6,Security & Access Control,2,47,16,12,8,11,2.298
+6,Security & Access Control,3,47,5,16,17,9,2.638
+6,Security & Access Control,4,47,5,9,17,16,2.936
+7,Occupancy & Space Utilisation,1,35,15,4,8,8,2.257
+7,Occupancy & Space Utilisation,2,35,7,12,11,5,2.4
+7,Occupancy & Space Utilisation,3,35,7,9,10,9,2.6
+7,Occupancy & Space Utilisation,4,35,6,10,6,13,2.743
+8,Fire Safety & Emergency,1,50,25,8,11,6,1.96
+8,Fire Safety & Emergency,2,50,11,20,12,7,2.3
+8,Fire Safety & Emergency,3,50,7,11,16,16,2.82
+8,Fire Safety & Emergency,4,50,7,11,11,21,2.92
+9,Water Management,1,32,13,9,4,6,2.094
+9,Water Management,2,32,9,10,7,6,2.312
+9,Water Management,3,32,6,8,9,9,2.656
+9,Water Management,4,32,4,5,12,11,2.938
+10,Waste & Recycling,1,25,5,9,5,6,2.48
+10,Waste & Recycling,2,25,8,8,4,5,2.24
+10,Waste & Recycling,3,25,7,6,7,5,2.4
+10,Waste & Recycling,4,25,5,2,9,9,2.88
+11,Renewable Energy & Solar,1,22,9,5,4,4,2.136
+11,Renewable Energy & Solar,2,22,6,5,3,8,2.591
+11,Renewable Energy & Solar,3,22,1,6,10,5,2.864
+11,Renewable Energy & Solar,4,22,6,6,5,5,2.409
+12,Green Spaces & Biodiversity,1,28,4,6,8,10,2.857
+12,Green Spaces & Biodiversity,2,28,12,7,7,2,1.964
+12,Green Spaces & Biodiversity,3,28,5,9,7,7,2.571
+12,Green Spaces & Biodiversity,4,28,7,6,6,9,2.607
+13,Health & Well-being,1,37,14,12,3,8,2.135
+13,Health & Well-being,2,37,11,10,11,5,2.27
+13,Health & Well-being,3,37,4,8,15,10,2.838
+13,Health & Well-being,4,37,8,7,8,14,2.757
+14,IoT Sensors & Data Analytics,1,18,4,7,5,2,2.278
+14,IoT Sensors & Data Analytics,2,18,5,2,3,8,2.778
+14,IoT Sensors & Data Analytics,3,18,4,5,6,3,2.444
+14,IoT Sensors & Data Analytics,4,18,5,4,4,5,2.5
+15,"Lifts, Stairs & Internal Transport",1,18,9,1,5,3,2.111
+15,"Lifts, Stairs & Internal Transport",2,18,4,3,3,8,2.833
+15,"Lifts, Stairs & Internal Transport",3,18,2,7,6,3,2.556
+15,"Lifts, Stairs & Internal Transport",4,18,3,7,4,4,2.5
+16,Parking & EV Charging,1,14,6,2,3,3,2.214
+16,Parking & EV Charging,2,14,5,3,3,3,2.286
+16,Parking & EV Charging,3,14,1,4,5,4,2.857
+16,Parking & EV Charging,4,14,2,5,3,4,2.643
+17,Building Automation & AI,1,11,4,2,0,5,2.545
+17,Building Automation & AI,2,11,2,3,5,1,2.455
+17,Building Automation & AI,3,11,2,3,4,2,2.545
+17,Building Automation & AI,4,11,3,3,2,3,2.455
+18,User Apps & Digital Interaction,1,13,0,2,4,7,3.385
+18,User Apps & Digital Interaction,2,13,5,1,5,2,2.308
+18,User Apps & Digital Interaction,3,13,1,9,0,3,2.385
+18,User Apps & Digital Interaction,4,13,7,1,4,1,1.923
+19,Building Maintenance & Faults,1,18,13,3,2,0,1.389
+19,Building Maintenance & Faults,2,18,2,8,4,4,2.556
+19,Building Maintenance & Faults,3,18,2,3,6,7,3.0
+19,Building Maintenance & Faults,4,18,1,4,6,7,3.056
+20,Carbon Footprint & Net Zero,1,13,3,3,2,5,2.692
+20,Carbon Footprint & Net Zero,2,13,2,2,4,5,2.923
+20,Carbon Footprint & Net Zero,3,13,5,5,3,0,1.846
+20,Carbon Footprint & Net Zero,4,13,3,3,4,3,2.538

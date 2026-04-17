@@ -1,0 +1,73 @@
+# Phase C2 — Top TF-IDF terms per stage
+
+## Stage 1
+
+- smart systems (0.240)
+- safety issues (0.190)
+- nearest (0.165)
+- functions (0.165)
+- build (0.165)
+- guide (0.143)
+- inside building (0.143)
+- old (0.139)
+- smart features (0.133)
+- internet (0.114)
+- wifi (0.113)
+- green (0.102)
+- people inside (0.092)
+- temperature building (0.089)
+- security cameras (0.089)
+
+## Stage 2
+
+- sensor (0.480)
+- meter (0.252)
+- voc (0.204)
+- door (0.188)
+- pm2 (0.183)
+- gas (0.161)
+- no2 (0.148)
+- count (0.135)
+- voltage (0.125)
+- relative humidity (0.125)
+- index (0.115)
+- light level (0.110)
+- people count (0.103)
+- thermostat (0.103)
+- standby (0.099)
+
+## Stage 3
+
+- ev (0.291)
+- charging (0.211)
+- stairwells (0.185)
+- car (0.168)
+- food (0.152)
+- plan (0.146)
+- vending (0.135)
+- sensor (0.126)
+- ev charging (0.125)
+- prevent (0.118)
+- corridor (0.114)
+- stairwell (0.114)
+- park (0.110)
+- door (0.110)
+- backup (0.110)
+
+## Stage 4
+
+- green (0.250)
+- sustainability (0.188)
+- pollutants (0.143)
+- standby (0.134)
+- eco (0.116)
+- goals (0.110)
+- daylight (0.110)
+- sources (0.107)
+- wait (0.107)
+- identify (0.107)
+- adapt (0.099)
+- indoor pollution (0.099)
+- loads (0.099)
+- resource (0.099)
+- green roof (0.099)

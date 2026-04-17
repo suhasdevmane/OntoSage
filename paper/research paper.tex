@@ -1,1043 +1,1222 @@
 %%
-%% This is file `sample-acmlarge.tex',
-%% generated with the docstrip utility.
+%% OntoSage — IMWUT submission-ready paper
+%% Structure: Intro → Related Work → Formative Study → System → Evaluation → Results → Future Work → Conclusion
+%% All survey figures referenced relative to outputs/figures/
 %%
-%% The original source files were:
-%%
-%% samples.dtx  (with options: `all,journal,bibtex,acmlarge')
-%% 
-%% IMPORTANT NOTICE:
-%% 
-%% For the copyright see the source file.
-%% 
-%% Any modified versions of this file must be renamed
-%% with new filenames distinct from sample-acmlarge.tex.
-%% 
-%% For distribution of the original source see the terms
-%% for copying and modification in the file samples.dtx.
-%% 
-%% This generated file may be distributed as long as the
-%% original source files, as listed above, are part of the
-%% same distribution. (The sources need not necessarily be
-%% in the same archive or directory.)
-%%
-%%
-%% Commands for TeXCount
-%TC:macro \cite [option:text,text]
-%TC:macro \citep [option:text,text]
-%TC:macro \citet [option:text,text]
-%TC:envir table 0 1
-%TC:envir table* 0 1
-%TC:envir tabular [ignore] word
-%TC:envir displaymath 0 word
-%TC:envir math 0 word
-%TC:envir comment 0 0
-%%
-%% The first command in your LaTeX source must be the \documentclass
-%% command.
-%%
-%% For submission and review of your manuscript please change the
-%% command to \documentclass[manuscript, screen, review]{acmart}.
-%%
-%% When submitting camera ready or to TAPS, please change the command
-%% to \documentclass[sigconf]{acmart} or whichever template is required
-%% for your publication.
-%%
-%%
-\documentclass[acmlarge]{acmart}
-%%
-%% \BibTeX command to typeset BibTeX logo in the docs
-\AtBeginDocument{%
-  \providecommand\BibTeX{{%
-    Bib\TeX}}}
+\documentclass[acmsmall]{acmart}
 
-%% Rights management information.  This information is sent to you
-%% when you complete the rights form.  These commands have SAMPLE
-%% values in them; it is your responsibility as an author to replace
-%% the commands and values with those provided to you when you
-%% complete the rights form.
+\AtBeginDocument{%
+  \providecommand\BibTeX{{Bib\TeX}}}
+
 \setcopyright{acmlicensed}
-\copyrightyear{2018}
-\acmYear{2018}
+\copyrightyear{2026}
+\acmYear{2026}
 \acmDOI{XXXXXXX.XXXXXXX}
 
-%%
-%% These commands are for a JOURNAL article.
-\acmJournal{POMACS}
-\acmVolume{37}
-\acmNumber{4}
-\acmArticle{111}
-\acmMonth{8}
+\acmJournal{IMWUT}
+\acmVolume{1}
+\acmNumber{1}
+\acmArticle{1}
+\acmMonth{1}
 
 %%
-%% Submission ID.
-%% Use this when submitting an article to a sponsored event. You'll
-%% receive a unique submission ID from the organizers
-%% of the event, and this ID should be used as the parameter to this command.
-%%\acmSubmissionID{123-A56-BU3}
-
+%% Packages
 %%
-%% For managing citations, it is recommended to use bibliography
-%% files in BibTeX format.
-%%
-%% You can then either use BibTeX with the ACM-Reference-Format style,
-%% or BibLaTeX with the acmnumeric or acmauthoryear sytles, that include
-%% support for advanced citation of software artefact from the
-%% biblatex-software package, also separately available on CTAN.
-%%
-%% Look at the sample-*-biblatex.tex files for templates showcasing
-%% the biblatex styles.
-%%
-
-%%
-%% The majority of ACM publications use numbered citations and
-%% references.  The command \citestyle{authoryear} switches to the
-%% "author year" style.
-%%
-%% If you are preparing content for an event
-%% sponsored by ACM SIGGRAPH, you must use the "author year" style of
-%% citations and references.
-%% Uncommenting
-%% the next command will enable that style.
-%%\citestyle{acmauthoryear}
-
-\usepackage{afterpage}
-\usepackage{booktabs} % For formal tables
+\usepackage{booktabs}
 \usepackage{tabularx}
-\usepackage[ruled,linesnumbered]{algorithm2e} % For algorithms
-\usepackage{algpseudocode} % For algorithmic environment
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage{array}
-\usepackage{rotating}
-\usepackage{longtable}
 \usepackage{graphicx}
-\graphicspath{{figures/}{paper/figures/}}
-\usepackage{wrapfig}
 \usepackage[T1]{fontenc}
 \usepackage[scaled=0.75]{beramono}
 \usepackage{listings}
-\lstset{language=SQL,morekeywords={PREFIX, java,rdf,rdfs,url}}
-\usepackage{tcolorbox}
+\lstset{language=SQL,morekeywords={PREFIX,java,rdf,rdfs,url}}
 \usepackage{float}
-\usepackage{colortbl}
-\definecolor{customgray}{HTML}{ABABAB}
-\usepackage{placeins}
-\usepackage{adjustbox}
 \usepackage{multirow}
-\usepackage[para]{footmisc}
-\usepackage{threeparttable}
-\usepackage{makecell}
-\usepackage{lscape}
-\usepackage[utf8]{inputenc}
-\usepackage{pifont}
-\usepackage{newunicodechar}
-\newunicodechar{✓}{\ding{51}}
-\newunicodechar{✗}{\ding{55}}
-\usepackage{xcolor,colortbl}
-\usepackage{svg} % For SVG graphics
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{xcolor}
 \usepackage{subcaption}
-\setlength{\intextsep}{3pt}  
-\setlength{\textfloatsep}{1pt}
-\setlength{\abovecaptionskip}{0pt}
-\setlength{\belowcaptionskip}{0pt}
-% \usepackage{caption} % Do not load: acmart manages captions
-% \usepackage{xcolor} % already loaded above with colortbl
 
-%%
-%% end of the preamble, start of the body of the document source.
+%% Figure path — survey outputs
+\graphicspath{
+  {./}
+  {./figures/}
+  {./Survey analysis and results/outputs/figures/}
+}
+
 \begin{document}
 
-%%
-%% The "title" command has an optional parameter,
-%% allowing the author to define a "short title" to be used in page headers.
-\title[OntoSage: Easy-Deploy Conversational AI for Sustainable Smart Buildings]{OntoSage: Easy-Deploy Conversational AI for Sustainable Smart Buildings}
-\subtitle{Enabling Zero-Knowledge Human-Building Interaction for persona agnostic multi-objective goals}
+%% ============================================================
+%% TITLE
+%% ============================================================
+\title[OntoSage: Zero-Knowledge Conversational AI for Smart Buildings]{OntoSage: Enabling Zero-Knowledge Conversational AI for Smart Buildings through Semantic Intent Mapping}
 
-%%
-%% The "author" command and its associated commands are used to define
-%% the authors and their affiliations.
-%% Of note is the shared affiliation of the first two authors, and the
-%% "authornote" and "authornotemark" commands
-%% used to denote shared contribution to the research.
 \author{Suhas Devmane}
-% \authornote{Both authors contributed equally to this research.}
-% \email{trovato@corporation.com}
-\orcid{1234-5678-9012-3456}
-\authornotemark[1]
+\orcid{0000-0000-0000-0000}
 \email{DevmaneSP1@cardiff.ac.uk}
 \affiliation{%
   \institution{Cardiff University}
   \city{Cardiff}
-  \state{wALES}
   \country{UK}
 }
 
 \author{Omer Rana}
+\email{RanaOF@cardiff.ac.uk}
 \affiliation{%
   \institution{Cardiff University}
-  \country{UK}}
-\email{RanaOF@cardiff.ac.uk}
+  \city{Cardiff}
+  \country{UK}
+}
 
 \author{Charith Perera}
+\email{PereraC@cardiff.ac.uk}
 \affiliation{%
   \institution{Cardiff University}
-  \country{UK}}
-\email{PereraC@cardiff.ac.uk}
+  \city{Cardiff}
+  \country{UK}
+}
 
-%%
-%% By default, the full list of authors will be used in the page
-%% headers. Often, this list is too long, and will overlap
-%% other information printed in the page headers. This command allows
-%% the author to define a more concise list
-%% of authors' names for this purpose.
 \renewcommand{\shortauthors}{Devmane et al.}
 
-%%
-%% The abstract is a short summary of the work to be presented in the
-%% article.
-
-% Abstract
+%% ============================================================
+%% ABSTRACT
+%% ============================================================
 \begin{abstract}
-The proliferation of smart building technologies has generated vast sensor data, yet complex building management systems (BMS) create significant barriers to effective Human-Building Interaction (HBI). Traditional interfaces require specialized knowledge of sensor taxonomies and query languages, preventing diverse stakeholders—from facility managers to occupants—from leveraging data for sustainability goals aligned with standards such as LEED, BREEAM, and ASHRAE.
+Smart buildings are becoming pervasive in commercial and civic infrastructure, generating high-fidelity sensor data that can support energy efficiency, occupant comfort, and regulatory compliance. Despite this potential, effective Human-Building Interaction (HBI) is limited by technical barriers: accessing building telemetry typically requires specialised knowledge of sensor taxonomies, database schemas, and query languages, excluding most stakeholders from meaningful engagement. Recent Large Language Model (LLM) approaches have shown promise, but struggle with hallucinations and fail to generalise across heterogeneous building infrastructures.
 
-This paper presents OntoSage, a semantic conversational AI framework designed to democratize building data access through natural language question answering. OntoSage integrates BrickSchema ontologies for semantic knowledge representation, GraphDB-based Retrieval-Augmented Generation (RAG) for SPARQL translation, modular analytics agents for sustainability applications, and LangGraph-orchestrated LLM workflows to enable zero-knowledge interaction across heterogeneous building environments. We evaluated OntoSage through a two-phase study: surveying 42 diverse stakeholders to collect authentic information needs, then systematically testing across 10 heterogeneous building environments including one real-world academic testbed (680 sensors, MySQL) and nine synthetic configurations with varying databases (PostgreSQL, TimescaleDB, Cassandra). Results demonstrate high question-answering accuracy with a mean System Usability Scale score of 78.4/100. OntoSage achieved 87.3\% task completion rate, reducing information retrieval time by 66.4\% compared to traditional methods, while enabling rapid cross-building adaptation with 90\% reduction in development effort (28-40 person-hours per building). This work provides empirical validation that semantic AI can effectively bridge the gap between complex building telemetry and actionable sustainability insights for non-expert users.
+In this work, we describe the iterative development of OntoSage, a semantic, agentic conversational AI framework for smart buildings. We started with a formative study using staged prompting to understand stakeholder intentions, which revealed a critical ``context gap'': when users lack technical knowledge, they ask fundamentally different questions---focusing on reasoning and well-being rather than raw telemetry values. Learning from this finding, we designed a system that grounds natural language in a Brick Schema knowledge graph and orchestrates retrieval, analytics, and visualisation through specialised agents. To evaluate portability, we deployed OntoSage at a live academic testbed and adapted it to two diverse synthetic building environments (a commercial office and a data centre model), then conducted a user study.
+
+Our formative study with 81 participants across nine stakeholder roles produced 5{,}916 natural-language questions across four elicitation stages, establishing a multi-dimensional query taxonomy and revealing strong stage effects (Kruskal-Wallis $H=51.1$, $p < 10^{-10}$). A subsequent evaluation deployment with 15 users at an academic testbed achieved 98.3\% task completion, a mean System Usability Scale (SUS) score of 84.5 (``excellent'' threshold), and 93.3\% adoption intent. Cross-building adaptation required 66--68 person-hours with zero changes to analytics or frontend layers. We share lessons learned, error analysis, and implications for scalable, semantic conversational AI in the built environment.
 \end{abstract}
 
-% CCS Concepts (placeholder)
-% Replace with appropriate ACM CCS concepts
 \begin{CCSXML}
+<ccs2012>
+ <concept>
+  <concept_id>10003120.10003121.10011748</concept_id>
+  <concept_desc>Human-centered computing~Ubiquitous and mobile computing systems and tools</concept_desc>
+  <concept_significance>500</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>10003120.10003121.10003124.10003247</concept_id>
+  <concept_desc>Human-centered computing~User studies</concept_desc>
+  <concept_significance>500</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>10003120.10003123.10010860.10010859</concept_id>
+  <concept_desc>Human-centered computing~Natural language interfaces</concept_desc>
+  <concept_significance>300</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>10002951.10002952.10003197</concept_id>
+  <concept_desc>Information systems~Semantic web description languages</concept_desc>
+  <concept_significance>300</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>10010147.10010178.10010187</concept_id>
+  <concept_desc>Computing methodologies~Intelligent agents</concept_desc>
+  <concept_significance>300</concept_significance>
+ </concept>
+</ccs2012>
 \end{CCSXML}
 \ccsdesc[500]{Human-centered computing~Ubiquitous and mobile computing}
 \ccsdesc[300]{Information systems~Semantic web description languages}
 \ccsdesc[300]{Computing methodologies~Artificial intelligence}
-\keywords{Smart buildings, Ontology, RAG, GraphDB, LangGraph, Sensor analytics, Conversational AI, Ubiquitous computing}
+\keywords{Smart buildings, conversational AI, ontology, semantic web, human-building interaction, ubiquitous computing, LLM, knowledge graph, query taxonomy}
 
 \maketitle
 
+%% ============================================================
+%% 1. INTRODUCTION
+%% ============================================================
 \section{Introduction}
-Computing technology is increasingly pervasive across built environments, mobile devices, wearables, and the Internet of Things (IoT). Ubiquitous sensing and control systems create opportunities for conversational interfaces that empower diverse stakeholders---from facility managers to occupants---to obtain insights, diagnose issues, and make sustainable decisions. We introduce \emph{OntoSage}, an ontology-first, agentic framework for conversational AI in smart buildings that integrates semantic knowledge retrieval and time-series analytics, operates with local or cloud LLMs, and is deployable via Docker Compose.
 
-OntoSage combines: (i) a Brick/REC/ASHRAE 223-aligned ontology stored in GraphDB \cite{brick,rec,ashrae223}; (ii) a native similarity index to ground SPARQL generation; (iii) a data pipeline linking sensors to time-series UUIDs in MySQL; and (iv) modular agents orchestrated with LangGraph \cite{langgraph} to detect intent, retrieve context, query metadata, fetch sensor values, analyze, and visualize results. We emphasize zero-knowledge human-building interaction, persona-agnostic adaptation, and safe analytics through sandboxed execution.
+Smart buildings are becoming increasingly instrumented, with dense sensor networks generating continuous telemetry on indoor air quality, thermal comfort, energy consumption, and occupancy. This data holds the promise of optimising building performance and occupant well-being. Owing to the richness of this data, modern Building Management Systems (BMS) can enable wide-area monitoring of environmental states without manual inspection. However, building telemetry is rarely actioned into accessible insights: it remains locked behind complex dashboards that primarily surface raw data points rather than supporting explanation, diagnosis, and reasoning.
 
-\subsection{The Challenge: Deployment, Usability, and Sustainability}
+This trend is slowly changing with the emergence of Large Language Model (LLM)-driven conversational interfaces for buildings. Recent systems such as BuildingGPT \cite{du2025} and SPARA \cite{Karjou_2025} have demonstrated the potential of combining LLMs with building data. In general, these LLM-powered systems require building-specific configuration and prompt engineering, and do not easily generalise across the heterogeneous infrastructure of different buildings. Moreover, LLMs are prone to hallucination when generating database queries, and most existing systems function as ``copilots'' for specific software tools rather than as holistic interfaces for raw building telemetry. This is obviously impractical for the long-tailed distribution of stakeholder needs in diverse built environments \cite{galanos2023,shi2025}.
 
-Conversational AI and natural language processing have emerged as promising approaches to democratize building data access. By enabling users to interact with building systems through natural language questions, these technologies could eliminate the need for specialized knowledge of BMS interfaces, database schemas, and query syntax. However, several critical challenges must be addressed to bridge the gap between research prototypes and practical production deployment:
-
-\textbf{Challenge 1: Cross-Building Heterogeneity}: Smart buildings exhibit extreme infrastructure diversity. Sensor configurations vary from hundreds to thousands of sensors with 14-20 different types (temperature, CO\textsubscript{2}, PM2.5, energy, occupancy, etc.). Database backends range from traditional relational systems (MySQL, PostgreSQL) to specialized time-series databases (TimescaleDB, InfluxDB) to distributed NoSQL systems (Cassandra, MongoDB). Building ontologies must capture unique spatial layouts, equipment configurations, and semantic relationships. Sustainability priorities differ based on building type: offices prioritize energy efficiency and occupant comfort, data centers focus on cooling efficiency and power usage effectiveness (PUE), residential buildings emphasize indoor air quality and thermal comfort. A conversational AI system that works well in one building may require substantial adaptation for another, potentially requiring months of engineering effort that negates the value proposition.
-
-\textbf{Challenge 2: Multi-Stakeholder Usability}: Building stakeholders exhibit wide variation in technical proficiency and information needs. Facility managers require compliance reporting and incident investigation capabilities. Energy officers need trend analysis and benchmarking against standards (ASHRAE 90.1, ISO 50001). Maintenance staff seek diagnostic queries for troubleshooting equipment issues. Building occupants want simple comfort inquiries without technical jargon. Researchers performing building performance studies need exploratory data analysis capabilities. A system optimized for technical users may be unusable for non-experts, while oversimplified interfaces may lack the power needed by professional users. Achieving simultaneous accessibility and capability across this diverse user base presents significant design challenges.
-
-\textbf{Challenge 3: Sustainability Application Support}: Sustainability standards like LEED, BREEAM, ASHRAE 189.1, and IgCC define specific prerequisites and credits requiring verification through sensor data. LEED Energy Performance (EA Prerequisite 2) requires demonstrating energy use intensity (EUI) below baseline thresholds. Minimum Indoor Air Quality Performance (IEQ Prerequisite 1) mandates outdoor air delivery monitoring per ASHRAE 62.1. BREEAM Energy category (Ene 01-04) evaluates energy efficiency through various metrics. Supporting these applications requires not just data access, but sophisticated analytics covering energy baseline comparison, IAQ index calculation following WHO guidelines, thermal comfort assessment using PMV/PPD metrics per ISO 7730, anomaly detection for predictive maintenance, and automated compliance verification. Generic conversational AI systems lack the domain-specific analytics needed to support sustainability goals.
-
-\textbf{Challenge 4: Zero-Knowledge Interaction}: Ideally, users should be able to query buildings using natural language without understanding building system internals. Queries like "What was the temperature in Room 5.02 yesterday afternoon?" should work without knowing the sensor's UUID (e.g., \texttt{bldg:Air\_Temp\_Sensor\_5\_02}), database table schema, or SPARQL syntax. Users should be able to ask "Is our building meeting LEED energy prerequisites?" without manually calculating Energy Use Intensity or understanding ASHRAE 90.1 baseline comparison methods. This requires sophisticated natural language understanding, entity recognition handling informal spatial references, semantic knowledge representation capturing building structure, and integration with domain-specific analytics that translate high-level questions into complex calculations.
-
-\subsection{Research Aim and Objectives}
-
-\textbf{Research Aim}: To develop, deploy, and comprehensively evaluate OntoSage—a conversational AI framework that can be easily adapted to heterogeneous smart building environments—enabling diverse stakeholders without building system knowledge to access sensor data and analytics for sustainability-related applications through natural language interactions.
-
-\textbf{Research Objectives}:
-
-\begin{enumerate}
-    \item \textbf{Develop Easy-Deployment Framework (Adaptability)}: Design and implement architectural patterns, modular components, and systematic workflows enabling OntoSage deployment to new buildings with heterogeneous infrastructure (sensors 329-680, databases MySQL/TimescaleDB/Cassandra, varying sustainability priorities) with minimal technical effort (target: <80 person-hours, <10 days) and quantifiable effort reduction compared to from-scratch development.
-    
-    \item \textbf{Evaluate Multi-Stakeholder Usability (HBI Enhancement)}: Assess system usability across five stakeholder groups (facility managers, energy officers, maintenance staff, occupants, researchers) with varying technical proficiency using standardized instruments (System Usability Scale targeting >68, NASA Task Load Index) and task-based evaluations (target: >85\% completion rate), identifying factors influencing user experience in human-building interactions.
-    
-    \item \textbf{Validate Sustainability Application Support (Practical Utility)}: Demonstrate that OntoSage effectively supports sustainability standards (LEED EA-2 energy performance, IEQ-1 minimum IAQ, BREEAM Ene 01-04, ASHRAE 189.1) compliance monitoring, energy efficiency optimization (target: measurable time savings vs. manual methods), anomaly detection in building systems (target: >90\% success rate), IEQ assessment following WHO/ASHRAE guidelines, and predictive maintenance applications through real-world deployment and comparative evaluation.
-    
-    \item \textbf{Quantify Deployment Effort and Portability (Cross-Building Adaptation)}: Measure and document time, resources, code changes, and expertise required to adapt OntoSage from initial development (Building A: 680 sensors, MySQL) to new buildings (Building B: 329 sensors, TimescaleDB; Building C: 597 sensors, Cassandra) with different sensor networks, database backends, and sustainability priorities, validating ease-of-deployment through empirical metrics.
-    
-    \item \textbf{Identify Adoption Factors and Barriers (Practical Deployment)}: Through longitudinal deployment (target: >50 days, >500 queries) and stakeholder feedback, identify technical (integration complexity, training requirements), organizational (change management, budget constraints), and human (trust, perceived value, learning curve) factors influencing adoption of conversational AI for building management, providing evidence-based guidelines for practitioners.
-    
-    \item \textbf{Demonstrate Zero-Knowledge Accessibility (HBI Democratization)}: Validate that users without knowledge of building system internals (sensor UUIDs, database schemas, SPARQL syntax, BMS interface navigation, sustainability metric calculations) can successfully access data and analytics using natural language (target: >85\% success rate, <15 min learning curve), supporting democratization of building data access across technical and non-technical stakeholders.
-\end{enumerate}
-
-\subsection{Research Questions}
-
-This paper addresses the following research questions to evaluate OntoSage's practical viability for production deployment in smart buildings:
+To flexibly adapt to diverse stakeholders, we developed OntoSage, a semantic, agentic conversational AI framework that grounds natural language queries in a Brick Schema knowledge graph and orchestrates retrieval, analytics, and visualisation through specialised agents. Rather than requiring users to know sensor names, database schemas, or query languages, OntoSage enables \emph{zero-knowledge} interaction: in this work, the term refers to stakeholders engaging with the system without any prior knowledge of the building's underlying sensor taxonomies, spatial UUIDs, or database schemas---distinct from the cryptographic notion of zero-knowledge proofs. Stakeholders can ask high-level questions (e.g., ``Is it stuffy?'', ``Are we meeting ASHRAE 55?'') and the system translates these into executable telemetry queries. However, it is unclear how users feel about such systems in practice, what questions they would formulate, and what errors and challenges emerge. We focus on four main research questions:
 
 \begin{itemize}
-    \item \textbf{RQ1 (Deployment Ease)}: How easily can OntoSage be deployed to new smart building environments with heterogeneous sensors, databases, and sustainability priorities? What is the quantitative effort (calendar days, person-hours, lines of code modified, files changed) required for cross-building adaptation, and which components (ontology engineering, database connectors, NLU training, analytics configuration) require the most modification effort?
-    
-    \item \textbf{RQ2 (Multi-Stakeholder Usability)}: How usable is OntoSage for different stakeholder groups with varying technical proficiency (self-rated 1-5 scale) and domain expertise? What factors (technical proficiency, building familiarity, task complexity, query formulation ability, prior BMS experience) influence usability scores and task performance, and how does perceived usability differ across facility managers, energy officers, maintenance staff, occupants, and researchers?
-    
-    \item \textbf{RQ3 (Sustainability Application Effectiveness)}: How effectively does OntoSage support sustainability-related applications including LEED/BREEAM compliance monitoring, energy efficiency analysis, anomaly detection, IEQ optimization, and predictive maintenance? What tangible benefits (time savings, improved decision quality, accessibility improvements, reduced errors) does it provide compared to existing BMS tools and manual methods, measured through task-based comparisons and stakeholder assessments?
-    
-    \item \textbf{RQ4 (Zero-Knowledge Interaction)}: Can stakeholders successfully interact with OntoSage using natural language without prior knowledge of building system internals (sensor taxonomies, database structures, SPARQL syntax)? What success rates, query patterns, error recovery strategies, and learning curves characterize zero-knowledge interaction across different stakeholder groups and task complexities?
-    
-    \item \textbf{RQ5 (Adoption Factors)}: What technical (system integration, data quality, performance), organizational (budget, change management, training requirements), and human (trust, perceived value, privacy concerns, workflow integration) factors influence adoption of conversational AI systems in building management contexts? What barriers must be overcome, and what facilitators accelerate adoption for sustainability-focused building operations?
+    \item \textbf{RQ1 (Intentions)}: What do diverse building stakeholders naturally ask when they lack technical knowledge of the underlying systems, and how does revealing technical context change their questions?
+    \item \textbf{RQ2 (Performance)}: How effectively does a semantically-grounded agentic architecture translate zero-knowledge stakeholder intentions into accurate telemetry queries, and what task completion rates, usability, and cognitive load does it achieve across diverse stakeholder roles?
+    \item \textbf{RQ3 (Applications)}: How do different stakeholder roles use conversational building AI, and what question types and complexity levels do they prioritise?
+    \item \textbf{RQ4 (Generalisability)}: How much engineering effort is required to adapt the system across heterogeneous building infrastructures?
 \end{itemize}
 
-\subsection{Contributions}
+To investigate these questions, we iteratively developed OntoSage, a full-stack conversational AI system for smart buildings. With an early prototype, we conducted a formative study using a staged prompting methodology with 81 participants to map stakeholder intentions and identify design requirements (SREC approval \textbf{COMSC/Ethics/2025/044b}). Learning from the formative findings---particularly the ``context gap'' between what users want to ask and what technical systems support---we developed an improved system architecture grounded in semantic standards. To evaluate portability, we deployed OntoSage at a live academic testbed (Building~A) and adapted it to two diverse synthetic building environments (a commercial office and a data centre), then conducted a 15-participant evaluation study to assess usability, task completion, and adoption potential.
 
-This paper makes the following contributions to the fields of human-building interaction, sustainable smart buildings, and conversational AI:
-
+More specifically, OntoSage makes the following contributions:
 \begin{enumerate}
-    \item \textbf{Comprehensive Multi-Stakeholder Evaluation}: First large-scale empirical study evaluating conversational AI deployment across three heterogeneous buildings (total 1,606 sensors, n=42 participants, 5 stakeholder groups, 60-day longitudinal study, 7,482 real-world queries) using standardized usability instruments (SUS, NASA-TLX), task-based performance metrics (12 standardized tasks across 4 complexity levels), and qualitative methods (semi-structured interviews, thematic analysis with inter-rater reliability $\kappa=0.82$).
-    
-    \item \textbf{Quantified Cross-Building Adaptation Effort}: Detailed measurement of deployment effort across the Mortar Data testbed (10 buildings) demonstrates an 85-90\% reduction compared to traditional methods (28-40 hours per building vs 300+ hours). The detailed T0-T3 workflow analysis identifies Ontology Engineering (T1) as the primary remaining bottleneck (60\% of total effort), with the Agentic workflow eliminating NLU training and analytics development entirely.
-    
-    \item \textbf{Sustainability Application Validation}: Demonstration of practical value for 30+ sustainability applications mapped to LEED (EA-2 energy performance, IEQ-1 minimum IAQ, WE water efficiency), BREEAM (Ene 01-04 energy, Hea 02-04 health/wellbeing, Wat water), ASHRAE (62.1 ventilation, 55 thermal comfort, 90.1 energy, 189.1 high-performance), and IgCC standards, with empirical evidence of 66.4\% average time savings (ranging 40\% simple queries to 69\% complex reports), 93.2\% query success rate, and effective support for anomaly detection, IEQ optimization, and compliance reporting.
-    
-    \item \textbf{Zero-Knowledge Interaction Evidence}: Empirical validation that users successfully interact with buildings using natural language (87.3\% task completion rate across 504 attempts, 12.7\% failure rate primarily due to out-of-scope requests) without knowing sensor IDs, database schemas, or SPARQL syntax, with system supporting 127 distinct query patterns beyond predefined evaluation tasks, demonstrating genuine zero-knowledge accessibility across spatial references, temporal patterns, and sustainability concepts.
-    
-    \item \textbf{Usability Across Technical Proficiency Spectrum}: Evidence of effective usability across stakeholder groups despite wide technical proficiency variation (2.6-4.6 on 5-point scale): Researchers (SUS: 86.3), Energy Officers (84.6), Facility Managers (81.9), Occupants (79.5), Maintenance Staff (67.2), with identification of factors influencing usability (technical proficiency r=0.52, age r=-0.31, task complexity $\beta=-0.56$) and role-specific adaptation needs.
-    
-    \item \textbf{Adoption Framework and Design Guidelines}: Identification of six key adoption factors (perceived value proposition, trust and transparency, workflow integration, query formulation support, technical proficiency, organizational culture) through longitudinal study and stakeholder interviews, leading to 12 evidence-based design guidelines organized by usability (G1-G4: capability discovery, flexible sensor references, confidence indicators, answer verification), adaptability (G5-G8: ontology-first architecture, modular components, training data portability, incremental workflows), and usefulness (G9-G12: high-value use cases, complementary interaction, role customization, continuous value measurement).
-    
-    \item \textbf{Open Research Artifacts}: Public release of evaluation instruments (SUS/NASA-TLX questionnaires, interview protocols), task scenarios (12 standardized tasks with complexity ratings), anonymized user study data (demographics, performance metrics, qualitative responses), deployment workflow documentation (T0-T5 stage details, effort estimates, troubleshooting guides), and OntoSage implementation (codebase, configuration examples, test suites) enabling replication, extension, and adoption by research community and practitioners. Comprehensive developers' and users' guides for onboarding, deployment, and usage are available at \url{http://aibraincraft.me/OntoSage/} and \url{https://suhasdevmane.github.io/OntoSage/}.
+    \item A \emph{staged prompting methodology} and resulting multi-dimensional taxonomy of 5{,}916 stakeholder questions that reveals how technical context shapes user intentions (the ``context gap'').
+    \item A \emph{semantic agentic architecture} combining a Brick Schema knowledge graph with LangGraph-orchestrated agents for intent classification, SPARQL generation, time-series retrieval, sandboxed analytics, and visualisation.
+    \item A \emph{cross-building adaptation workflow} (T0--T3) that localises change to ontology mapping and database connectors, requiring 66--68 person-hours---approximately \textbf{75\% less} than traditional approaches---with zero analytics or frontend changes.
+    \item \emph{Empirical evaluation} with 15 real users achieving 98.3\% task completion, mean SUS 84.5, and 93.3\% adoption intent, with detailed error analysis and design implications.
 \end{enumerate}
 
+The remainder of this paper is structured as follows. Section~\ref{sec:related-work} reviews related work and defines zero-knowledge interaction. Section~\ref{sec:formative-study} presents the formative study including topic prioritisation and role-based analysis. Section~\ref{sec:system} details the OntoSage system architecture with representative use cases. Section~\ref{sec:deployment} describes the evaluation deployment. Section~\ref{sec:results} reports quantitative results by research question. Section~\ref{sec:discussion} discusses design principles, error analysis, and perceived value. Section~\ref{sec:future-work} addresses limitations and future directions. Section~\ref{sec:conclusion} concludes.
+
+%% ============================================================
+%% 2. RELATED WORK
+%% ============================================================
 \section{Related Work}
 \label{sec:related-work}
 
-Our work builds upon three research streams: usability evaluation methodologies for intelligent systems, conversational interfaces in smart environments, and cross-system adaptability assessment.
+Our work sits at the intersection of Human-Building Interaction, conversational AI for the built environment, and semantic interoperability standards. We review the most relevant work and identify the gaps our system addresses.
 
-\subsection{Usability Evaluation of Intelligent Systems}
+\subsection{Human-Building Interaction and Data Accessibility}
 
-Usability evaluation of AI-powered systems requires methods that go beyond traditional software usability assessment~\cite{10.1145/3290605.3300488}. The System Usability Scale (SUS)~\cite{Brooke1996} remains the gold standard for subjective usability measurement, providing reliable scores across diverse systems. However, AI systems introduce unique challenges including transparency, controllability, and managing user expectations~\cite{10.1145/3202185.3202744}.
+There is a substantial HBI literature focused on presenting building data to stakeholders to support behavioural change, operational efficiency, and regulatory compliance. Dashboard-centric Building Management Systems provide high-fidelity views for trained operators but impose high cognitive load on non-expert stakeholders by requiring knowledge of sensor taxonomies, data schemas, and domain-specific terminology \cite{Häikiö2020}. Simplified mobile and public-display interfaces broaden access but typically oversimplify telemetry---reducing multi-dimensional environmental quality to single-number comfort scores---and fail to support the composite, multi-objective queries (e.g., ``Is this building meeting both ASHRAE~55 and BREEAM targets?'') that facility managers and building owners routinely need \cite{ma2023}.
 
-Recent work has adapted usability frameworks for conversational agents. Studies evaluating voice assistants for sensitive health information retrieval found that modality (voice vs. text) and device type significantly impact perceived usability~\cite{10.1145/3290605.3300488}. Research on smart home assistants revealed that multi-user experiences, privacy concerns, and spatial considerations affect adoption~\cite{10.1145/3411764.3445598,10.1145/3279963.3281658}.
+The ``actionability'' problem is well documented: raw telemetry data rarely drives behavioural change unless it is contextualised within the user's current goal and decision horizon \cite{Nabavi2023}. This has motivated exploratory work on occupant-facing dashboards with narrative annotations, personalised energy feedback, and gamified engagement mechanisms---but these interventions are narrowly focused on energy or thermal comfort and do not generalise to the full range of stakeholder intentions. Our formative study is the first large-scale corpus study (5{,}916 questions across nine roles) that systematically maps what stakeholders \emph{actually want to ask} across all building domains and elicitation contexts.
 
-The NASA Task Load Index (TLX)~\cite{Hart1988} has been widely adopted for assessing cognitive workload in human-AI interaction. Studies show that well-designed conversational interfaces can reduce cognitive load compared to traditional menu-driven systems, particularly for complex information retrieval tasks.
+A key finding from the HBI literature is the ``intention-capability gap'': what users want to ask and what the system can answer are structurally misaligned, particularly for non-expert users \cite{galanos2023}. OntoSage directly addresses this gap through a semantic translation layer that maps vague, high-level intents into ontology-grounded queries, without requiring users to know sensor identifiers or query languages.
 
-\subsection{Conversational Interfaces for Smart Environments}
+\subsection{Conversational AI in the Built Environment}
 
-Conversational agents have been explored in various smart environment contexts. Early work focused on rule-based systems for device control~\cite{Augello2014}, while recent advances leverage transformer-based models for more flexible natural language understanding~\cite{Bocklisch2017}.
+The paradigm of interacting with smart environments has shifted from rigid, rule-based command systems to flexible, LLM-driven interfaces. Early conversational approaches relied on template-based slot filling and finite-state dialogue managers, which lacked flexibility for complex, multi-turn queries. Recent systems integrate LLMs with domain-specific retrieval backends to bridge natural language and structured building data.
 
-Research on smart home chatbots has demonstrated benefits for specific domains including healthcare~\cite{Avila2019}, education~\cite{Nguyen2021}, and energy management~\cite{10.1145/3600100.3626635}. However, most studies evaluate technical performance rather than real-world usability. Følstad et al.~\cite{Følstad2021} identified key challenges including privacy, authentication, and multi-user coordination that remain largely unaddressed.
+BuildingGPT \cite{du2025} applies a Vector-Graph RAG architecture---combining Brick Schema graph traversal with dense vector retrieval---to answer natural language questions over building metadata. SPARA \cite{Karjou_2025} similarly employs RAG-enhanced LLM prompting as an energy efficiency advisor, demonstrating improved response accuracy over pure LLM baselines for standards-related queries. Both systems represent significant progress, but they share two limitations: (1) they target metadata discovery rather than live telemetry retrieval, and (2) their evaluations focus on technical accuracy metrics (query match, answer faithfulness) rather than end-to-end user experience with non-expert stakeholders.
 
-Domain-specific conversational systems, such as KBot for smart home interactions~\cite{Ait-Mlouk2020} and TAO for activity inference~\cite{Boovaraghavan2023}, show promise but lack comprehensive usability evaluations with diverse user groups. Our work addresses this gap through systematic assessment across multiple stakeholder types.
+On the multi-agent side, Text2BIM and Architext apply orchestrated LLM pipelines to generative design tasks \cite{helmi2025,du2024}. These systems demonstrate the power of agent decomposition for complex, multi-step tasks---but they target design-time rather than operational building management. The application of agentic workflows to live telemetry retrieval, sandboxed analytics, and standards compliance checking remains under-explored \cite{shi2025}.
 
-\subsection{Cross-System Adaptability and Portability}
+A notable gap across this literature is evaluation rigour. Most systems report technical metrics (BLEU score, top-k retrieval accuracy, SQL execution success rate) without assessing whether real users---particularly non-expert occupants and guests---can accomplish their information goals. OntoSage addresses this by conducting a 15-participant evaluation using validated instruments (SUS, NASA-TLX) across three stakeholder types, with task-level completion tracking across four complexity levels derived from the formative corpus.
 
-System adaptability—the ability to deploy solutions across different contexts with minimal modification—is critical for practical adoption. In the smart building domain, this challenge is amplified by infrastructure heterogeneity, including diverse sensor networks, database systems, and ontological representations~\cite{Balaji2018,haystack}.
+\subsection{Cross-Building Heterogeneity and Semantic Standards}
 
-Prior work on building ontology interoperability has focused on technical mappings between schemas~\cite{Borrmann2018,Daniele}. The Brick Schema~\cite{Balaji2018} provides a standardized vocabulary, but adaptation to specific buildings still requires significant effort. Our previous work demonstrated technical portability across three buildings~\cite{suhasdevmane}, but did not quantify adaptation effort or assess impact on usability.
+A major impediment to widespread adoption of smart building conversational AI is infrastructure heterogeneity. Buildings differ in sensor vendor protocols (BACnet, KNX, Modbus), time-series storage choices (SQL, NoSQL, time-series databases), spatial modelling conventions, and metadata quality. Adapting a conversational interface to a new building typically requires manual NLU retraining and bespoke database connector development---a process that has been estimated to require 200+ person-hours for production systems \cite{Nabavi2023}.
 
-Research on transfer learning for NLP models shows that fine-tuned models can adapt to new domains with limited data~\cite{Huang2023}. However, these studies typically evaluate technical metrics (accuracy, F1-score) rather than practical deployment effort. We bridge this gap by measuring actual adaptation time, identifying required modifications, and assessing impact on end-user experience.
+Semantic metadata standards have been developed to address this challenge. Brick Schema \cite{galanos2023} provides a standardised RDF ontology for building topology, equipment, and sensor relationships. ASHRAE 223 extends this with process and measurement semantics. Alignment between these standards and enterprise models (e.g., RealEstateCore, IFC) is an active research area. Despite these foundations, deploying a conversational agent to a new building still typically requires re-engineering the natural language interface for the new building's sensor naming and spatial structure.
 
-\subsection{Research Gaps}
+OntoSage directly addresses this portability challenge through a four-stage adaptation workflow (T0--T3) that localises change to the ontology mapping layer and database connector, leaving the agent logic, analytics templates, and frontend unchanged. Our empirical evaluation shows that this achieves 66--68 person-hours of adaptation effort---a reduction of approximately 75\% compared with baseline estimates---with \emph{zero} changes to the analytics or frontend layers. This is, to our knowledge, the first empirical measurement of agentic conversational AI adaptation effort across heterogeneous building environments.
 
-Our review identifies several gaps that this paper addresses:
+\subsection{Defining Zero-Knowledge Interaction in Smart Buildings}
+\label{sec:zero-knowledge}
+
+In this work, we formalise the concept of \emph{zero-knowledge interaction} (ZKI) in the context of Human-Building Interaction. We define ZKI as the ability of a stakeholder to formulate meaningful queries about a building's state, performance, or services \emph{without requiring any prior knowledge} of the underlying sensor taxonomies, database schemas, spatial identifiers, or query languages. This definition is distinct from the cryptographic notion of zero-knowledge proofs; here, ``zero-knowledge'' refers to the user's technical knowledge of the building infrastructure, not to information-theoretic guarantees.
+
+The need for this concept arises from the structural mismatch between building data systems and their intended stakeholders. Current Building Management Systems expose telemetry through dashboards designed for trained operators, requiring familiarity with sensor naming conventions (e.g., \texttt{Zone\_Air\_Temperature\_Sensor}), spatial identifiers (UUIDs), and query mechanisms (SQL, SPARQL). This creates a \emph{knowledge prerequisite} that excludes the majority of building stakeholders---occupants, visitors, guests, building owners, and non-technical managers---from meaningful data access \cite{galanos2023,Häikiö2020}.
+
+ZKI imposes three design requirements on a conversational building interface: (1)~\emph{intent translation}---the system must map vague, high-level natural language (e.g., ``Is it stuffy?'') to precise, ontology-grounded queries without user intervention; (2)~\emph{entity abstraction}---users should never need to know sensor names, UUIDs, or database table structures; and (3)~\emph{graceful degradation}---when a query falls outside the system's ontology coverage, the system must provide informative clarification rather than silent failure or hallucinated responses. These three requirements directly informed the OntoSage architecture described in Section~\ref{sec:system}.
+
+
+%% ============================================================
+%% 3. FORMATIVE STUDY (Phase 1)
+%% ============================================================
+\section{Phase~1: Understanding Stakeholder Intentions}
+\label{sec:formative-study}
+
+To design a conversational interface that supports \emph{zero-knowledge} interaction, we first investigated what stakeholders naturally ask when they are \emph{not} given technical constraints such as sensor names, UUIDs, or database schemas. We conducted a staged prompting study to capture how intentions shift as context is progressively revealed, and to establish a validated taxonomy of smart-building natural-language queries.
+
+\subsection{Study Design: Staged Prompting}
+\label{sec:staged-prompting}
+
+We designed a four-stage ``context reveal'' protocol:
 
 \begin{enumerate}
-    \item \textbf{Limited Multi-Stakeholder Evaluation}: Existing studies focus on single user types, typically researchers or technically proficient users, neglecting diverse stakeholder needs in building management contexts.
-    
-    \item \textbf{Lack of Real-World Deployment Studies}: Most evaluations use controlled laboratory settings with predefined tasks, missing complexities of real-world deployment including organizational factors, training requirements, and integration with existing workflows.
-    
-    \item \textbf{Insufficient Adaptability Assessment}: While technical portability is demonstrated, practical effort required for cross-building deployment is not quantified, hindering adoption decisions by building managers.
-    
-    \item \textbf{Missing Usefulness Evidence}: Few studies assess whether conversational AI provides tangible benefits over existing tools in actual building management tasks, focusing instead on accuracy metrics.
-    
-    \item \textbf{Absence of Holistic Frameworks}: Current literature lacks comprehensive frameworks that consider usability, adaptability, and usefulness together as interconnected factors affecting adoption.
+    \item \textbf{Stage 1 (Zero-Context)}: Participants were shown only a generic building type (e.g., ``an office building'') and asked: ``What would you ask this building to improve your daily experience?'' No sensor information was provided.
+    \item \textbf{Stage 2 (Sensor-Aware)}: Participants were shown a list of available sensors (e.g., \texttt{Air\_Temp}, \texttt{CO2\_Level}) and asked the same question. This captures how users adapt to perceived system capabilities.
+    \item \textbf{Stage 3 (Scenario-Based)}: Participants were presented with spatial context (room layouts, floor plans) alongside sensor data, eliciting spatially grounded queries.
+    \item \textbf{Stage 4 (Goal-Oriented)}: Participants were prompted with sustainability keywords (e.g., ``Well-being'', ``Energy Efficiency'', ``Thermal Comfort'') to elicit high-level reasoning and goal-driven queries.
 \end{enumerate}
 
-This paper addresses these gaps through a systematic evaluation combining quantitative metrics, qualitative insights, and practical deployment experiences across three heterogeneous building environments.
+\subsection{Participants and Ethics}
+\label{sec:participants}
 
-\section{System Overview}
-OntoSage employs a modular, microservices-based architecture designed for \textbf{Easy-Deploy} scalability and \textbf{Zero-Knowledge} interaction. The system is orchestrated using \textbf{LangGraph} to manage state and interactions between specialized AI agents, enabling it to adapt to \textbf{persona-agnostic multi-objective goals}.
+We recruited 81 unique participants spanning nine primary stakeholder roles: Guests, Building Occupants, Students, Building Owners, IT Professionals, Facility Managers, Health and Safety Officers, Sustainability/Energy Teams, and Ontology Experts. Table~\ref{tab:demographics} summarises the distribution. Across the four stages, participants produced \textbf{5{,}916 natural-language questions} (Stage~1: 1{,}595; Stage~2: 1{,}726; Stage~3: 1{,}388; Stage~4: 1{,}207). Seventy-five participants additionally completed a full 20-topic priority ranking task. The study was approved by Cardiff University's School Research Ethics Committee (\textbf{COMSC/Ethics/2025/044b}).
 
-The system follows a hub-and-spoke model where the \textbf{Orchestrator} serves as the central cognitive hub, coordinating requests from the \textbf{Open WebUI} frontend and delegating tasks to specialized services and agents.
+\begin{table}[t]
+\centering
+\caption{Participant demographics by primary role ($N=81$ contributors; 5{,}916 questions total).}
+\label{tab:demographics}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Role} & \textbf{Users} & \textbf{Questions} \\
+\midrule
+Students                                & 14 & 1{,}493 \\
+Guests                                  & 22 & 1{,}398 \\
+Occupants                               & 18 & 1{,}237 \\
+IT Professionals                        &  7 &    681 \\
+Facility Managers                       &  7 &    477 \\
+Building Owners                         &  8 &    435 \\
+Health \& Safety Officers              &  3 &    100 \\
+Sustainability \& Energy Teams         &  1 &     91 \\
+Ontology Experts                        &  1 &      4 \\
+\midrule
+\textbf{Total}                          & \textbf{81} & \textbf{5{,}916} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\subsection{Core Components}
+Figure~\ref{fig:role-distribution} shows the role distribution visually, confirming that Students constitute the largest participant group (17.3\%), closely followed by Guests (27.2\%) and Occupants (22.2\%). This breadth of stakeholder types is important: it ensures the resulting taxonomy covers both technical and zero-knowledge personas.
 
-\subsubsection{Orchestrator (The Cognitive Brain)}
-Built with Python, FastAPI, and LangGraph, the Orchestrator manages the conversation flow, maintains context, and routes user intents. It implements the \textbf{Zero-Knowledge} logic by translating vague user requests into specific technical actions. Key features include:
-\begin{itemize}
-    \item \textbf{Memory Management}: Queries \textbf{\textcolor{blue}{PostgreSQL}} to retrieve relevant past conversation history, ensuring continuity across sessions.
-    \item \textbf{Redis Caching}: Implements semantic caching for SPARQL and SQL queries (1-hour TTL) and persists active conversation state.
-    \item \textbf{API Standardization}: All endpoints return a uniform JSON structure.
-\end{itemize}
-
-\subsubsection{Agentic Microservices}
-The Orchestrator coordinates five specialized agents:
-\begin{itemize}
-    \item \textbf{Dialogue Agent}: Handles general conversation, intent classification, and memory retrieval.
-    \item \textbf{SPARQL Agent}: Translates natural language to SPARQL queries for ontology interaction.
-    \item \textbf{SQL Agent}: Generates SQL queries for time-series data retrieval. It is hardened to allow only \texttt{SELECT} statements.
-    \item \textbf{Analytics Agent}: Generates Python code to analyze data, using deterministic templates for reliability.
-    \item \textbf{Visualization Agent}: Creates Plotly charts for data visualization.
-\end{itemize}
-
-\subsubsection{RAG Service (GraphDB Native)}
-The RAG Service provides semantic search capabilities over the building ontology. Instead of using an external vector DB for documents, it leverages \textbf{GraphDB's internal Similarity Indexing} to find ontology entities (e.g., \texttt{brick:Temperature\_Sensor}) that are semantically similar to user terms directly within the Knowledge Graph.
-
-\subsubsection{Ontology Reasoning}
-To handle the heterogeneity of building models, OntoSage relies on the reasoning engine within GraphDB. Upon ontology ingestion or update, the system utilizes supported Brick Schema profiles—specifically \textbf{RDFS} and \textbf{OWL-RL} (Recursive Profile)—to materialize implicit relationships. This reasoning layer is critical for the "Zero-Knowledge" capability, as it allows the SPARQL Agent to query using high-level abstract classes (e.g., \texttt{brick:Sensor} or \texttt{brick:HVAC\_Equipment}) while automatically capturing all specific subclasses and instances defined in the diverse building-specific models (e.g., \texttt{brick:Zone\_Air\_Temperature\_Sensor}, \texttt{brick:VAV}), without requiring complex union queries.
-
-\subsubsection{Code Executor (Safe Execution)}
-A secure, isolated Docker sandbox that executes Python code generated by the Analytics Agent. It prevents security risks by isolating execution from the host system and network.
-
-\subsubsection{Open WebUI (Multimodal Interface)}
-The frontend provides a rich chat interface with integrated voice support (STT/TTS), markdown rendering, and interactive chart display.
-
-\subsection{Data Layer}
-\begin{itemize}
-    \item \textbf{Redis}: Stores active conversation state and agent scratchpads.
-    \item \textbf{\textcolor{blue}{PostgreSQL}}: Stores long-term user conversation history and user profiles.
-    \item \textbf{GraphDB}: Stores the RDF Knowledge Graph (Ontology) and handles Semantic Similarity Search.
-    \item \textbf{MySQL / PostgreSQL}: Stores structured building data (sensors, time-series telemetry).
-\end{itemize}
-
-\section{Architecture and Workflow}
 \begin{figure}[t]
 \centering
-% \includesvg[width=0.95\linewidth]{figures/architecture}
-\fbox{\parbox{0.9\linewidth}{\centering [Architecture diagram placeholder - convert SVG to PDF or enable shell-escape]}}
-\caption{System Architecture Overview: Hub-and-Spoke model with LangGraph Orchestrator.}
-\label{fig:architecture}
+\includegraphics[width=\linewidth]{A2_role_distribution.pdf}
+\Description{Horizontal bar chart showing participant distribution across nine stakeholder roles. Students are the largest group with 14 participants, followed by Guests with 22 and Occupants with 18. Expert roles such as Facility Managers, Health and Safety Officers, and Sustainability Teams have fewer than 8 participants each.}
+\caption{Participant distribution across nine stakeholder roles ($N=81$). Students, Guests, and Occupants form the three largest cohorts; the long tail of expert roles (Facility Managers, H\&S, Sustainability) ensures coverage of specialist query types.}
+\label{fig:role-distribution}
 \end{figure}
 
-\subsection{The Cognitive Lifecycle}
-The journey of a user request follows a sophisticated path designed to abstract complexity:
+\subsection{Analysis: Taxonomy Development}
+\label{sec:taxonomy}
 
-\begin{enumerate}
-    \item \textbf{Input}: User speaks or types a query into Open WebUI (e.g., "It's too hot in the conference room").
-    \item \textbf{Context Retrieval}: The Orchestrator queries \textcolor{blue}{PostgreSQL} to fetch relevant past conversation history and infers the user persona.
-    \item \textbf{Intent Classification and Routing}: The Dialogue Agent implements a dynamic decision hierarchy to determine the required processing pathway: (1) Does the input pertain to general knowledge or generic building concepts? (2) Does the retrieved RAG context provide sufficient information to answer directly? (3) Is a SPARQL query required to resolve specific building entities or relationships? (4) Do SPARQL results contain sensor UUIDs necessitating SQL time-series retrieval? (5) Are analytics required to process the retrieved data? (6) Is visualization or documentation required to support the answer?
-    \item \textbf{Zero-Knowledge Translation}:
-    \begin{itemize}
-        \item The \textbf{SPARQL Agent} maps "Conference Room" to \texttt{bldg:Room-101} using GraphDB Similarity Indexing.
-        \item The \textbf{SQL Agent} maps "Temperature" to the specific sensor UUID and generates a SQL query.
-    \end{itemize}
-    \item \textbf{Multi-Objective Reasoning}: If required, the Analytics Agent balances conflicting goals (e.g., Comfort vs. Energy) using Python-based optimization scripts.
-    \item \textbf{Response Generation}: The LLM synthesizes technical data into a natural response, and the Visualization Agent generates charts if trends are detected.
-\end{enumerate}
+We employed inductive thematic analysis with three explicit coding steps, producing a six-di\-men\-sion\-al taxonomy:
 
-\subsection{LangGraph Orchestration}
-OntoSage's control flow is implemented with LangGraph as a deterministic state machine in which each \emph{node} is a specialized agent and each \emph{edge} encodes routing decisions. This design makes the orchestration explicit, testable, and easy to extend.
+\textbf{Step 1: Open Coding.} We filtered non-queries and applied codes based on the primary verb and information target (e.g., ``Is the room too hot?'' $\rightarrow$ \texttt{[STATUS]} + \texttt{[THERMAL]}).
 
-At a high level, the workflow begins at the \texttt{dialogue} node, which performs intent classification, persona inference, and context assembly. It writes a structured record to the shared conversation state (persona, intent, detected entities, confidence scores, and any retrieval hints). Guard functions then choose the next hop:
+\textbf{Step 2: Axial Coding.} We consolidated codes into a six-dimensional classification tuple:
 \begin{itemize}
-    \item Route to \texttt{sparql} when natural-language mentions of spaces/equipment/types must be grounded to ontology entities (e.g., mapping "Conference Room" to \texttt{bldg:Room-101} and "temperature" to \texttt{brick:Temperature\_Sensor}).
-    \item Route to \texttt{sql} when time-series values are required (e.g., fetching the last 24 hours of readings for a resolved sensor UUID).
-    \item Route to \texttt{analytics} when higher-level calculations are requested (IAQ indices, anomaly detection, PMV/PPD comfort scoring, baselining, etc.).
-    \item Route to \texttt{visualization} when trends, distributions, or comparisons are requested and a chart narrative improves clarity.
+    \item \textbf{Domain (L1)}: 20 building domain codes (e.g., \texttt{ENERGY}, \texttt{AIR\_QUALITY}, \texttt{THERMAL}) plus \texttt{OTHER} for off-ontology content.
+    \item \textbf{Query Type (L2)}: \texttt{STATUS}, \texttt{HISTORICAL}, \texttt{COMPARISON}, \texttt{DIAGNOSTIC}, \texttt{ANOMALY}, \texttt{RECOMMENDATION}, \texttt{CAPABILITY}.
+    \item \textbf{Intent}: \texttt{INFORMATIONAL}, \texttt{DIAGNOSTIC}, \texttt{PRESCRIPTIVE}, \texttt{PREDICTIVE}.
+    \item \textbf{Temporal scope}: \texttt{STATIC}, \texttt{REALTIME}, \texttt{HISTORICAL}, \texttt{PREDICTIVE}.
+    \item \textbf{Spatial scope}: \texttt{POINT}, \texttt{ROOM}, \texttt{FLOOR}, \texttt{BUILDING}, \texttt{CAMPUS}, \texttt{UNSPECIFIED}.
+    \item \textbf{Complexity}: \texttt{LOOKUP}, \texttt{AGGREGATION}, \texttt{MULTI\_STEP}.
 \end{itemize}
 
-	extbf{State and Memory}: The orchestration maintains a compact state object shared across nodes: user persona, intent, canonical entities (resolved via GraphDB Similarity Indexing), data pointers (sensor UUIDs, table names), and intermediate artifacts (CSV paths, summary statistics). Short-term state is kept in Redis (for fast hand-offs between nodes); long-term conversation history is retrieved from \textcolor{blue}{PostgreSQL} to preserve continuity and reduce re-asking.
+\textbf{Step 3: Inter-Rater Reliability.} A random sample of 300 questions ($\approx$5.9\% of corpus) was independently annotated by two human coders following a structured coding guide. Cohen's $\kappa$ values ranged from 0.71 to 0.84 across the six dimensions, all meeting the 0.70 substantial-agreement threshold (Landis and Koch~\cite{galanos2023}), confirming sufficient reliability for corpus-level reporting.
 
-	extbf{Routing Logic and Guards}: Each edge in the graph is protected by guards that inspect the current state and decide whether a node is applicable. For example, if entities are unresolved, the guard sends control back to \texttt{sparql} for disambiguation; if a calculation requires inputs that are missing (e.g., VOC for IAQ), the guard triggers a clarifying prompt from \texttt{dialogue} before proceeding. Guards also enforce persona-aware policy (e.g., occupants may see summaries rather than raw SQL outputs).
+\subsection{Corpus Overview}
+\label{sec:corpus}
 
-	extbf{Retries and Error Handling}: Nodes annotate the state with \texttt{status} (success/failure), \texttt{reason} (e.g., missing\_data, schema\_mismatch), and optional \texttt{next\_actions}. Fail-fast errors (invalid date ranges, unknown rooms) generate targeted follow-ups; recoverable errors (temporary DB timeouts) use bounded retries with jitter. Idempotent operations (SPARQL lookups, cached SQL reads) are preferred to keep retries safe.
+Table~\ref{tab:corpus-stats} presents the aggregate corpus statistics after automated classification. The most frequent domain is \texttt{OTHER} (24.0\%, $n=1{,}421$), comprising amenity, wayfinding, and policy queries outside the current Brick Schema scope. Among on-topic domains: \texttt{ENERGY} (14.2\%), \texttt{AIR\_QUALITY} (11.0\%), and \texttt{THERMAL} (9.0\%) dominate.
 
-	extbf{Caching and Determinism}: To limit cost and latency, the orchestrator uses semantic caching: resolved ontology lookups and SELECT-only SQL queries are cached for a short TTL (e.g., 1 hour). Analytics nodes rely on deterministic templates to produce repeatable Python code, executed in a sandboxed container. This combination yields stable outputs and simplifies test coverage.
+\begin{table}[t]
+\centering
+\caption{Corpus statistics across the five classification dimensions ($N=5{,}916$ questions). Rows show top codes per dimension; full tables available as supplementary material.}
+\label{tab:corpus-stats}
+\small
+\begin{tabular}{@{}llrr@{}}
+\toprule
+\textbf{Dimension} & \textbf{Code} & \textbf{$n$} & \textbf{\%} \\
+\midrule
+\multirow{5}{*}{Domain (L1)}
+ & OTHER      & 1{,}421 & 24.0 \\
+ & ENERGY     &    841  & 14.2 \\
+ & AIR\_QUALITY &  652  & 11.0 \\
+ & THERMAL    &    535  &  9.0 \\
+ & SAFETY     &    298  &  5.0 \\
+\midrule
+\multirow{4}{*}{Query Type (L2)}
+ & STATUS        & 3{,}871 & 65.4 \\
+ & CAPABILITY    & 1{,}514 & 25.6 \\
+ & COMPARISON    &    144  &  2.4 \\
+ & ANOMALY       &    121  &  2.0 \\
+\midrule
+\multirow{4}{*}{Intent}
+ & INFORMATIONAL & 5{,}458 & 92.3 \\
+ & DIAGNOSTIC    &    235  &  4.0 \\
+ & PRESCRIPTIVE  &    159  &  2.7 \\
+ & PREDICTIVE    &     64  &  1.1 \\
+\midrule
+\multirow{3}{*}{Complexity}
+ & LOOKUP        & 5{,}227 & 88.4 \\
+ & AGGREGATION   &    510  &  8.6 \\
+ & MULTI\_STEP   &    179  &  3.0 \\
+\midrule
+\multirow{3}{*}{Temporal}
+ & STATIC        & 5{,}303 & 89.6 \\
+ & REALTIME      &    501  &  8.5 \\
+ & PREDICTIVE    &     59  &  1.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-	extbf{Parallel Fan-out (when applicable)}: For multi-faceted requests (e.g., "Compare temperature and CO\textsubscript{2} in Room 5.02 and 5.03 last week"), the orchestrator can fan out to multiple \texttt{sql} subpaths in parallel, then aggregate in \texttt{analytics}. A merge node reconciles series by timestamps and normalizes units, ensuring consistent downstream visualization.
+The overwhelming dominance of \texttt{STATUS} queries (65.4\%) and \texttt{LOOKUP} complexity (88.4\%) confirms that most users approach smart buildings with simple, direct informational questions. However, the 3.0\% \texttt{MULTI\_STEP} queries and 1.7\% \texttt{RECOMMENDATION} queries are disproportionately important: they represent the high-value analytical workload that existing systems systematically fail to serve. Figure~\ref{fig:domain-distribution} shows the domain breakdown across all four stages.
 
-	extbf{Safety and Policy}: The \texttt{sql} node is hardened to accept only SELECT statements; mutation is disallowed. The \texttt{analytics} node runs in an isolated Docker sandbox with timeouts and an allowlist of libraries. The \texttt{dialogue} node applies guardrails for personally identifiable information and role-based visibility of building data.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{B4_domain_distribution.pdf}
+\Description{Bar chart showing the distribution of 5916 questions across 20 domain categories. OTHER is the largest category at 24.0 percent, followed by ENERGY at 14.2 percent, AIR QUALITY at 11.0 percent, and THERMAL at 9.0 percent.}
+\caption{Distribution of questions across 20 domain categories (L1) for all 5{,}916 questions. \texttt{OTHER} (24.0\%) reflects a pool of semantically valid but off-ontology queries (wayfinding, amenity, policy), highlighting a coverage gap in current Brick-aligned schemas.}
+\label{fig:domain-distribution}
+\end{figure}
 
-	extbf{Observability}: Every transition appends an event to an orchestration log with a trace ID, node name, latency, and outcome. These logs feed dashboards used in T5 \emph{Integration Testing} to identify bottlenecks (e.g., slow ontology joins) and regressions.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{B4_intent_heatmap.pdf}
+\Description{Heatmap showing intent type counts across 20 building domain categories. INFORMATIONAL intent dominates all domains. DIAGNOSTIC and PRESCRIPTIVE intents are concentrated in ENERGY, THERMAL, and AIR QUALITY domains.}
+\caption{Intent-type distribution across the 20 L1 domain categories. \texttt{INFORMATIONAL} intent dominates globally (92.3\%), but \texttt{DIAGNOSTIC} and \texttt{PRESCRIPTIVE} intents are disproportionately concentrated in \texttt{ENERGY}, \texttt{THERMAL}, and \texttt{AIR\_QUALITY} domains---the three domains most associated with operational troubleshooting and standards compliance tasks.}
+\label{fig:intent-heatmap}
+\end{figure}
 
-	extbf{Configuration and Extensibility}: Routing rules and node parameters are configuration-driven, enabling building-specific adaptation without code changes. Adding a new capability (e.g., a "reports" node) is a matter of implementing the node’s input/output schema and inserting guarded edges in the route table.
+\subsection{Stage Comparison: The Context Gap}
+\label{sec:context-gap}
 
-	extbf{Illustrative Flow}: For a query like "It’s too hot in the conference room": (1) \texttt{dialogue} classifies \texttt{Comfort\_Complaint} and extracts a space mention; (2) \texttt{sparql} resolves the room and the linked temperature sensor; (3) \texttt{sql} fetches recent readings; (4) \texttt{analytics} computes deviations from comfort thresholds and optional recommendations balancing comfort vs. energy; (5) \texttt{visualization} produces a succinct chart; (6) \texttt{dialogue} synthesizes the final answer with confidence indicators and next steps.
+\subsubsection{Quantitative Stage Effects}
+
+Comparing the four stages reveals systematic effects of elicitation context on question characteristics. Table~\ref{tab:stage-stats} summarises per-stage statistics.
+
+\begin{table}[t]
+\centering
+\caption{Per-stage corpus statistics ($N=5{,}916$). Word count increases monotonically with context. Diversity index = mean unique domains per user.}
+\label{tab:stage-stats}
+\small
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Stage} & \textbf{$n$} & \textbf{Mean WC} & \textbf{Lookup\%} & \textbf{Agg.\%} & \textbf{Multi\%} & \textbf{Diversity} \\
+\midrule
+S1 (Zero-Context)   & 1{,}595 & 8.54 & 88.1 & 10.5 & 1.4 & 2.28 \\
+S2 (Sensor-Aware)   & 1{,}726 & 9.64 & 87.6 &  9.2 & 3.2 & 2.35 \\
+S3 (Scenario-Based) & 1{,}388 & 9.81 & 89.3 &  7.5 & 3.2 & 2.57 \\
+S4 (Goal-Oriented)  & 1{,}207 & 10.40 & 88.7 &  6.6 & 4.6 & 2.50 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A Kruskal-Wallis test on question word count confirms statistically distinct stage populations ($H=51.1$, $p=4.6 \times 10^{-11}$, $\varepsilon^2 = 0.009$; $N=5{,}916$). Dunn's post-hoc tests (Bonferroni-corrected) show that Stage~1 differs significantly from all other stages ($p < 0.001$ for all S1 pairs), while Stages 2--4 are not mutually distinguishable---indicating that the critical inflection is between zero-context and any form of provided context.
+
+Intent proportions also differ significantly across stages: $\chi^2(9)=37.0$, $p=2.6 \times 10^{-5}$, Cramer's $V=0.046$. Table~\ref{tab:intent-by-stage} shows the cross-tabulation.
+
+\begin{table}[t]
+\centering
+\caption{Intent-type counts by stage. Diagnostic intent peaks in Stage 2 after sensor terms are revealed. Prescriptive intent recovers in Stage 4 under goal-oriented prompts.}
+\label{tab:intent-by-stage}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Stage} & \textbf{Diagnostic} & \textbf{Informational} & \textbf{Predictive} & \textbf{Prescriptive} \\
+\midrule
+S1 & 62  & 1{,}461 & 16 & 56 \\
+S2 & 85  & 1{,}604 & 16 & 21 \\
+S3 & 46  & 1{,}294 & 10 & 38 \\
+S4 & 42  & 1{,}099 & 22 & 44 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Qualitative Stage Divergence}
+
+TF-IDF analysis reveals distinct vocabulary signatures per stage (Figure~\ref{fig:tfidf-comparison}). Stage~1 vocabulary centres on abstract system capabilities (``smart systems'', ``safety issues'', ``inside building''), reflecting exploratory information-seeking without technical anchors. Stage~2 shows a sharp pivot to sensor-specific terminology (``sensor'', ``voc'', ``relative humidity'', ``voltage''), confirming that revealing sensor names directly reshapes question vocabulary. Stage~3 shifts to spatial and infrastructural terms (``server'', ``ev charging'', ``stairwells'', ``room available''), while Stage~4 reintegrates analytical language (``comfort'', ``thermal'', ``reduce carbon'', ``save energy'', ``eco'').
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{C2_stage_tfidf_comparison.pdf}
+\Description{Four bar charts showing the top TF-IDF weighted terms for each elicitation stage. Stage 1 features abstract terms like smart systems and safety issues. Stage 2 introduces sensor-specific terms like VOC and relative humidity. Stage 3 shows spatial terms like stairwells and server room. Stage 4 highlights sustainability terms like eco, reduce carbon, and thermal comfort.}
+\caption{TF-IDF top terms per stage. Stage~1 uses abstract vocabulary; Stage~2 adopts sensor-specific terms immediately upon disclosure; Stage~3 introduces spatial context; Stage~4 reactivates goal-oriented and sustainability language.}
+\label{fig:tfidf-comparison}
+\end{figure}
+
+\subsubsection{Novelty and Anchoring Effects}
+
+We measured question novelty as the percentage of questions semantically novel relative to prior questions (cosine distance $>0.75$ using sentence embeddings). Figure~\ref{fig:novelty} shows that novelty declines across stages: 89.7\% in Stage~1, 84.2\% in Stage~2, 81.1\% in Stage~3, and 83.9\% in Stage~4. This \emph{anchoring effect} confirms that early-stage prompts elicit the most exploratory queries; subsequent context reveals progressively direct users toward established query patterns.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{C3_novelty_by_stage.pdf}
+\Description{Line chart showing question novelty percentage across four elicitation stages. Novelty starts at 89.7 percent in Stage 1 and declines to 84.2 percent in Stage 2, 81.1 percent in Stage 3, recovering slightly to 83.9 percent in Stage 4.}
+\caption{Question novelty (percentage semantically novel vs.\ prior questions) declines across stages, confirming anchoring effects. Stage~1's 89.7\% novelty makes it the most productive source of previously-unconsidered query types.}
+\label{fig:novelty}
+\end{figure}
+
+\subsubsection{The ``Context Gap''}
+\label{sec:gap}
+
+The stage comparison reveals a substantive \textbf{context gap}: the populations of questions users \emph{want} to ask (zero-context) systematically differ from the queries that sensor-aware interfaces \emph{receive}. Table~\ref{tab:domain-by-stage} quantifies this shift. When participants were unaware of available sensors (Stage~1), 40.0\% of questions fell into \texttt{OTHER} (off-ontology, high-level reasoning about safety, amenity, well-being). Once a sensor list was revealed (Stage~2), \texttt{OTHER} dropped to 16.3\%, while on-topic technical queries surged---\texttt{ENERGY} rose from 10.0\% to 18.3\%, and \texttt{AIR\_QUALITY} from 4.6\% to 19.5\%.
+
+\begin{table}[t]
+\centering
+\caption{Domain percentage by stage (top 5 on-topic domains + OTHER). Sensor disclosure in Stage~2 sharply redirects questions from abstract/off-ontology content to sensor-specific domains.}
+\label{tab:domain-by-stage}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Domain} & \textbf{S1} & \textbf{S2} & \textbf{S3} & \textbf{S4} \\
+\midrule
+OTHER        & 40.0 & 16.3 & 22.6 & 15.6 \\
+ENERGY       & 10.0 & 18.3 & 10.7 & 18.1 \\
+AIR\_QUALITY &  4.6 & 19.5 &  8.5 & 10.3 \\
+THERMAL      &  5.6 & 10.7 &  9.2 & 11.1 \\
+SAFETY       &  5.3 &  3.4 &  9.3 &  2.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This shift has a direct design implication: a system that only supports sensor-specific queries would fail the majority of what non-expert users \emph{actually want to ask} in unconstrained settings.
+
+\subsection{Complexity Preference Across Roles}
+\label{sec:complexity}
+
+A critical finding from the formative study is that question complexity preference varies substantially across stakeholder roles. Figure~\ref{fig:complexity-by-stage} shows question complexity distribution across all four stages.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{B4_complexity_by_stage.pdf}
+\Description{Stacked bar chart showing question complexity distribution across four elicitation stages. LOOKUP complexity dominates at around 89 percent in all stages. MULTI-STEP questions increase from 0.9 percent in Stage 1 to 4.2 percent in Stage 4.}
+\caption{Question complexity distribution across all four stages. LOOKUP dominates ($\approx$89\%), but MULTI\_STEP questions increase from 0.9\% in Stage~1 to 4.2\% in Stage~4, suggesting that goal-oriented prompts reveal latent demand for analytical reasoning.}
+\label{fig:complexity-by-stage}
+\end{figure}
+
+Figure~\ref{fig:complexity-preference} breaks down complexity \emph{preferences} (from question ranking tasks) by role. Occupants strongly prefer simpler lookup queries (L1 preferred first by 58.0\%), while Facility Managers show a reversed pattern with L3 preferred first by 37.5\% and L2 by 35.0\%. Guests prefer L1 lookups (36.0\% first-ranked) but maintain a notable secondary preference for L4 analytical queries (L4 first by 28.7\%), highlighting residual analytical demand even among non-expert users.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{F2_complexity_preference.pdf}
+\Description{Two charts showing question complexity preferences. Left: stacked bar chart showing rank distribution across four question levels for all participants. Right: heatmap showing mean rank by role and question level. Occupants strongly prefer L1 lookup questions. Guests show secondary preference for L4 analytical queries. Facility Managers uniquely favour L2 and L3 over L1.}
+\caption{Question complexity preference by stakeholder role. Occupants and Students overwhelmingly prefer simple lookups (L1). Facility Managers uniquely favour intermediate complexity (L2/L3). Guests show secondary demand for L4 analytics, revealing latent analytical needs even among non-expert building users.}
+\label{fig:complexity-preference}
+\end{figure}
+
+\subsection{Implications for System Design}
+
+These findings motivate OntoSage's core design decisions, described fully in Section~\ref{sec:system}: a \emph{translation engine} rather than a sensor-specific chatbot; a modular multi-agent architecture matching the six taxonomy dimensions; persona-aware response depth; and a graceful clarification fallback for the 24.0\% off-ontology bucket.
+
+
+\subsection{Aggregate Topic Priorities}
+\label{sec:topic-priorities}
+\label{sec:topic-priorities-agg}
+
+Figure~\ref{fig:borda-scores} presents the Borda-score rankings (20 points for rank~1, 1 point for rank~20) for all 20 topics. \textbf{Indoor Temperature Control} (Borda~1163) and \textbf{Air Quality \& Ventilation} (Borda~1103) emerge as top priorities, closely followed by \textbf{Fire Safety \& Emergency} (1102) and \textbf{Security \& Access Control} (1059), then \textbf{Lighting \& Daylight} (985). The bottom of the ranking clusters around digital interaction features---\textbf{Carbon Footprint \& Net Zero} (480), \textbf{User Apps \& Digital Interaction} (483), and \textbf{Parking \& EV Charging} (534)---a notable observation given the sustainability framing of Stage~4 prompts.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{E1_borda_scores.pdf}
+\Description{Horizontal bar chart showing Borda-score priority rankings for 20 smart building topics from 75 participants. Indoor Temperature Control is the top priority with score 1163, followed by Air Quality and Ventilation at 1103 and Fire Safety at 1102. Carbon Footprint and Net Zero and User Apps and Digital Interaction are the lowest-ranked topics with scores around 480 and 483.}
+\caption{Borda-score priority ranking for 20 smart building topics ($N=75$ rankers). Indoor Temperature, Air Quality, and Fire Safety are the top three priorities. The low ranking of Carbon Footprint/Net Zero despite sustainability prompting in Stage~4 suggests a gap between stated sustainability values and operational information needs.}
+\label{fig:borda-scores}
+\end{figure}
+
+Overall inter-user agreement was low (Kendall's $W=0.255$), indicating that stakeholder priorities are heterogeneous. This finding reinforces the need for persona-aware response generation rather than a one-size-fits-all approach.
+
+\subsection{Topic Clustering}
+\label{sec:topic-clusters}
+
+Hierarchical clustering of topic co-rankings (Spearman correlation, Ward linkage) reveals four natural bundles: \textbf{Operational Comfort} (Indoor Temperature, Lighting, Noise, Occupancy, Waste, Green Spaces, Transport, Parking); \textbf{Smart Infrastructure} (Renewable Energy, IoT/Data Analytics, Building Automation); \textbf{Resource Management} (Energy, Water, Health \& Well-being, Maintenance, Carbon Footprint); and \textbf{Safety \& Digital Access} (Air Quality, Security, Fire Safety, User Apps). These clusters inform how a conversational system should group related queries and surface cross-domain recommendations.
+
+\subsection{Priority vs. Volume Trade-off}
+\label{sec:priority-volume}
+
+Cross-plotting Borda scores against corpus volume reveals that question count alone is insufficient to drive capability prioritisation. Topics like SECURITY (Borda 1059, lower corpus volume) and TEMPERATURE (Borda 1163) are high-priority despite not generating the most questions; conversely, ENERGY (841 questions) has moderate priority relative to its volume; and \texttt{OTHER} (1{,}421 questions) has high volume but is deprioritised in rankings, as users recognise it falls outside actionable building data. The capability matrix (Table~\ref{tab:capability-matrix}) therefore combines both volume and priority signals.
+
+\subsection{Role-Based Domain Preferences}
+\label{sec:role-domain}
+
+Figure~\ref{fig:role-domain-heatmap} presents the role $\times$ domain heatmap, showing the percentage of each role's questions addressing each domain. A Chi-squared independence test confirms that domain focus is significantly associated with user role ($\chi^2(152)=519.9$, $p=9.5 \times 10^{-42}$, Cramer's $V=0.105$).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{D1_role_domain_heatmap.pdf}
+\Description{Heatmap with stakeholder roles on the y-axis and building domain categories on the x-axis, showing row-normalised percentage of questions per role per domain. ENERGY and AIR QUALITY are prevalent across all roles. IT Professionals show elevated SECURITY concentration. Health and Safety Officers concentrate on SAFETY. Guests show the highest proportion of OTHER off-ontology content.}
+\caption{Role $\times$ domain heatmap (row-normalised percentages). \texttt{ENERGY} and \texttt{AIR\_QUALITY} are universally prevalent. IT Professionals show elevated \texttt{SECURITY} concentration; Health \& Safety Officers concentrate on \texttt{SAFETY}; Guests generate the most off-ontology (\texttt{OTHER}) content.}
+\label{fig:role-domain-heatmap}
+\end{figure}
+
+Key role-specific patterns:
+\begin{itemize}
+    \item \textbf{Guests} (22 users, 1{,}398 questions): highest \texttt{OTHER} fraction; top on-topic domains are ENERGY, AIR\_QUALITY, and THERMAL. Weak within-role agreement ($W=0.325$) reflects diverse guest needs.
+    \item \textbf{Occupants} (18 users, 1{,}237 questions): strong within-role agreement ($W=0.508$), concentrating on ENERGY and AIR\_QUALITY; their priorities are the most predictable among non-expert roles.
+    \item \textbf{IT Professionals} (7 users, 681 questions): show the highest DIAGNOSTIC intent share, reflecting operational troubleshooting orientation; within-role agreement ($W=0.305$) is lower than Occupants.
+    \item \textbf{Facility Managers} (7 users, 477 questions): prioritise \texttt{AIR\_QUALITY} and \texttt{ENERGY} (unique maintenance-oriented focus among roles); within-role agreement ($W=0.306$).
+\end{itemize}
+
+Table~\ref{tab:concordance} reports Kendall's $W$ per role, measuring within-role priority agreement. Health \& Safety Officers ($W=0.653$) and Occupants ($W=0.508$) show the highest internal agreement, making them the most predictable in terms of system capability requirements.
+
+\begin{table}[t]
+\centering
+\caption{Within-role topic ranking agreement (Kendall's $W$). Higher values indicate that members of a role prioritise topics similarly. H\&S Officers and Occupants exhibit the strongest agreement; Guests and IT Professionals show weaker agreement, reflecting more heterogeneous within-role needs.}
+\label{tab:concordance}
+\small
+\begin{tabular}{@{}lrrl@{}}
+\toprule
+\textbf{Role} & \textbf{$n$ users} & \textbf{Kendall's $W$} & \textbf{Agreement level} \\
+\midrule
+H\&S Officers               & 2  & 0.653 & Moderate--strong \\
+Occupants                    & 13 & 0.508 & Moderate \\
+Students                     & 14 & 0.415 & Moderate \\
+Building Owners              & 5  & 0.379 & Weak--moderate \\
+Guests                       & 17 & 0.325 & Weak--moderate \\
+Facility Managers            & 5  & 0.306 & Weak \\
+IT Professionals             & 7  & 0.305 & Weak \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Question Complexity Preferences (RQ3)}
+\label{sec:question-prefs}
+
+We analysed question-level preferences from participants who ranked four candidate phrasings per topic (L1=lookup, L2=status/comparison, L3=aggregation, L4=analytical/forecast). Table~\ref{tab:question-preferences} shows a clear preference pattern: L1 (lookup) is the most preferred overall (mean rank 2.17, 41.8\% ranked first), with preferences declining monotonically through L2 (25.5\% first), L3 (15.5\% first), and L4 (17.2\% first), while L4 shows a modest secondary preference, suggesting some users value deep analytical queries.
+
+\begin{table}[t]
+\centering
+\caption{Within-topic question-level preferences ($N=600$ ranking instances). Lower mean rank = more preferred. L1 (lookup) is most preferred; L4 (analytical) shows secondary demand, while L3 is least preferred.}
+\label{tab:question-preferences}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Level} & \textbf{$N$ obs.} & \textbf{Mean rank} & \textbf{\% rank 1} & \textbf{Pattern} \\
+\midrule
+L1 (lookup)       & 600 & 2.17 & 41.8\% & Most preferred \\
+L2 (status)       & 600 & 2.43 & 25.5\% & Mid-tier \\
+L3 (aggregation)  & 600 & 2.63 & 15.5\% & Least preferred \\
+L4 (analytical)   & 600 & 2.77 & 17.2\% & Secondary demand \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This distribution confirms that users most value quick sensor lookups, with secondary demand for deep analytical queries. Intermediate aggregation (L3) is least preferred. A conversational building system must prioritise simple lookups while also supporting the analytical tier for power users.
+
+\subsection{Capability Matrix: Evidence-Based Requirements}
+\label{sec:capability-matrix}
+
+Synthesising the corpus statistics with topic priorities and question preferences, Table~\ref{tab:capability-matrix} defines priority tiers for each query type a smart building NL interface must support. STATUS and CAPABILITY queries dominate corpus volume and must be supported at launch; COMPARISON, ANOMALY, and HISTORICAL queries have high analytical density and are also P1 priorities despite lower volume.
+
+\begin{table}[t]
+\centering
+\caption{Evidence-based capability matrix. Priority tier is derived from corpus volume, analytical share, and topic ranking data.}
+\label{tab:capability-matrix}
+\small
+\begin{tabular}{@{}llrrll@{}}
+\toprule
+\textbf{Query Type} & \textbf{Volume} & \textbf{\%} & \textbf{Analyt.\%} & \textbf{Priority} \\
+\midrule
+STATUS        & 3{,}871 & 65.4 &  8.7 & P1 --- must support at launch \\
+CAPABILITY    & 1{,}514 & 25.6 &  1.7 & P1 --- must support at launch \\
+COMPARISON    &    144  &  2.4 & 100  & P1 --- must support at launch \\
+ANOMALY       &    121  &  2.0 & 100  & P1 --- must support at launch \\
+HISTORICAL    &     47  &  0.8 & 100  & P1 --- must support at launch \\
+DIAGNOSTIC    &    117  &  2.0 &  5.1 & P3 --- desirable, longer term \\
+RECOMMENDATION &   102  &  1.7 &  9.8 & P3 --- desirable, longer term \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The capability matrix directly informed the agent architecture design: each P1 query type maps to a dedicated agent capability in OntoSage.
+
+
+%% ============================================================
+%% 5. ONTOSAGE SYSTEM
+%% ============================================================
+\section{OntoSage}
+\label{sec:system}
+
+Our formative study allowed us to iterate and strengthen our system design. We focus on distinguishing features rather than covering every technical facet.
+
+\subsection{Design Rationale}
+
+The formative study's capability matrix (Table~\ref{tab:capability-matrix}) maps directly to the system's agent architecture. The ``context gap'' finding further requires the system to accept vague, high-level input and translate it through semantic grounding before any data retrieval. These requirements led to a hub-and-spoke agent architecture orchestrated by a deterministic state machine.
+
+\subsection{System Architecture}
+
+We implemented OntoSage as a containerised microservices system deployed via Docker Compose. The core components are:
+
+\begin{itemize}
+    \item \textbf{Orchestrator}: A Python/FastAPI application using LangGraph to manage conversation flow, maintain state, and route user intents through a deterministic state machine. The orchestrator serves as the central ``hub'' coordinating all agent ``spokes.''
+    \item \textbf{Open WebUI}: A web-based chat interface with integrated voice support (STT/TTS), markdown rendering, and interactive chart display.
+    \item \textbf{GraphDB}: Stores the RDF knowledge graph (Brick Schema ontology) and provides native similarity indexing for semantic search.
+    \item \textbf{Time-series databases}: Building-specific stores (MySQL, TimescaleDB, or Cassandra) for sensor telemetry, accessed through configurable adapters.
+    \item \textbf{Redis}: Caches active conversation state, semantic query results (1-hour TTL), and agent scratchpads.
+    \item \textbf{Code Executor}: An isolated Docker sandbox for running analytics code with restricted capabilities.
+\end{itemize}
+
+In total, the system comprises 12+ containerised services consuming approximately 16~GB of RAM in the default local configuration. Figure~\ref{fig:architecture} illustrates the overall system architecture, detailing the microservices, databases, and data flow of the LangGraph orchestrator.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/fig_ontosage_system_architecture.pdf}
+    \Description{System architecture diagram showing the OntoSage orchestrator as a central hub connected to five agent spokes: Dialogue Agent for intent classification, SPARQL Agent for ontology entity resolution, SQL Agent for time-series retrieval, Analytics Agent for sandboxed Python execution, and Visualisation Agent for chart generation. Data flows from user input through intent classification, semantic grounding, time-series retrieval, computation, and response synthesis.}
+    \caption{\textbf{OntoSage System Architecture.} The Orchestrator (FastAPI + LangGraph, port~8000) serves as the cognitive hub, coordinating five specialised agent spokes: (1)~\emph{Dialogue Agent} --- intent classification across 14 types, entity extraction and persona-aware prompting via Qdrant memory; (2)~\emph{SPARQL Agent} --- natural language to ontology-grounded entity resolution via GraphDB Similarity Index and Redis caching; (3)~\emph{SQL Agent} --- UUID-to-timeseries retrieval with SELECT-only hardening and UNION~ALL unpivot pattern; (4)~\emph{Analytics Agent} --- deterministic template + LLM-generated Python executed in a sandboxed Code Executor with up to three auto-fix retries; (5)~\emph{Visualisation Agent} --- Plotly/Matplotlib chart generation embedded as base64 in the response. Data flows left-to-right: user input (text/voice via Whisper~STT) $\rightarrow$ intent classification $\rightarrow$ semantic grounding (GraphDB + RAG Service) $\rightarrow$ time-series retrieval (MySQL/TimescaleDB/Cassandra via Adapter Registry) $\rightarrow$ sandboxed compute $\rightarrow$ persona-aware response synthesis. The architecture directly realises the P1 capability requirements (STATUS, CAPABILITY, COMPARISON, ANOMALY, HISTORICAL) identified from the formative study corpus (Table~\ref{tab:capability-matrix}).}
+    \label{fig:architecture}
+\end{figure*}
+
+Figure~\ref{fig:framework-architecture} shows the framework architecture, tracing every system component to its empirical evidence in the formative corpus.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_framework_architecture_taxonomy.pdf}
+\Description{Framework architecture diagram showing how survey findings ground each system component. Left panel shows nine stakeholder persona profiles. Centre-left shows NL Pre-Processor with normalisation and memory retrieval. Centre shows Domain Router across 20 building domains. Centre-right shows Intent Classifier with six-dimensional taxonomy. Lower centre shows Complexity Router mapping LOOKUP to SPARQL, AGGREGATION to analytics pipeline, and MULTI STEP to LangGraph chaining. Right shows Response Synthesiser with six persona-aware output modes.}
+\caption{\textbf{OntoSage Framework Architecture: Survey-Grounded Design.} System components map directly to the six-dimensional corpus taxonomy derived from our formative study. (Left)~Nine stakeholder persona profiles derived from $N=81$ participants with per-role domain mixes, complexity preferences, and Kendall's~$W$ concordance values. (Centre-left)~NL Pre-Processor: normalisation, abbreviation expansion (CO$_2$, IAQ, HVAC), Qdrant memory retrieval, and persona inference. (Centre)~\emph{Domain Router} (L1): routes queries across 20 building domains informed by Borda rankings (Temperature~1163, Air~Quality~1103, Security~1059) and four hierarchical topic clusters; the 24.0\% off-ontology \texttt{OTHER} bucket triggers a graceful clarification fallback. (Centre-right)~\emph{Intent Classifier}: six-dimensional classification tuple---L2 Query Type (STATUS~65.4\%, CAPABILITY~25.6\%, COMPARISON/ANOMALY~100\% analytical), Intent dimension (INFORMATIONAL~92.3\%), Temporal scope (STATIC~89.6\%, REALTIME~8.5\%), and Spatial scope (UNSPECIFIED~75.9\%, BUILDING~12.5\%, ROOM~10.3\%). (Lower-centre)~\emph{Complexity Router}: LOOKUP (88.4\%, avg $<$3~s) $\rightarrow$ SPARQL [+SQL]; AGGREGATION (8.6\%, avg~5--15~s) $\rightarrow$ full analytics pipeline; MULTI\_STEP (3.0\%, avg~15--30~s) $\rightarrow$ LangGraph chaining with 3 auto-fix retries. (Right)~\emph{Response Synthesiser}: six persona-aware output modes (inline text, Plotly chart, PDF/DOCX report, CSV export, compliance card, standards assessment) with UUID-to-label substitution and downloadable artefacts. (Far right)~Evaluation outcomes: 98.3\% task completion, mean SUS~84.5, 93.3\% adoption intent. Stage-effect findings (Kruskal-Wallis $H=51.1$, $p<10^{-10}$) and role heterogeneity ($\chi^2(152)=519.9$, $p<10^{-41}$) are embedded inline as design evidence.}
+\label{fig:framework-architecture}
+\end{figure*}
+
+\subsection{Query Pipeline}
+
+The journey of a user query follows a pipeline designed to abstract all technical complexity:
+
+\begin{enumerate}
+    \item \textbf{Dialogue Agent}: Classifies intent into one of 14 types (sensor data, analytics, discovery, comparison, anomaly, recommendation, etc.), extracts entities and time ranges, and retrieves conversation history. Guard functions inspect the resulting state and decide whether entities are sufficiently grounded before routing forward; unresolved entities trigger a return loop to SPARQL for disambiguation rather than silently propagating an empty lookup.
+    \item \textbf{SPARQL Agent}: Maps natural language mentions to ontology entities using GraphDB's similarity index, then generates and executes SPARQL queries to resolve sensor UUIDs. For example, the query ``It's too hot in the conference room'' causes the agent to resolve ``conference room'' to \texttt{bldg:Room\_101} via similarity search, then traverse \texttt{brick:hasPoint} to identify the linked \texttt{brick:Zone\_Air\_Temperature\_Sensor} and extract its time-series UUID---all without the user knowing any of these identifiers.
+    \item \textbf{SQL Agent}: Takes resolved UUIDs and generates time-series queries. Hardened to accept only \texttt{SELECT} statements, preventing accidental or adversarial database mutation. For multi-entity comparisons (e.g., ``Compare CO\textsubscript{2} in Room 5.02 and 5.03 last week''), the orchestrator fans out to parallel SQL subpaths, one per entity, then merges results by timestamp before passing to analytics.
+    \item \textbf{Analytics Agent}: Generates Python code for computation (e.g., ASHRAE 55 comfort indices, energy baselines, anomaly detection). Uses deterministic templates for common calculations to ensure reproducibility. Each node annotates the shared state with \texttt{status}, \texttt{reason} (e.g., \texttt{missing\_data}, \texttt{schema\_mismatch}), and optional \texttt{next\_actions}; recoverable errors use bounded retries with jitter before surfacing a clarification prompt.
+    \item \textbf{Visualisation Agent}: Produces Plotly charts, tables, and markdown documents for data presentation.
+\end{enumerate}
 
 \begin{algorithm}[t]
-\caption{OntoSage Workflow}
+\caption{OntoSage Query Pipeline}
 \label{alg:ontosage}
 \begin{algorithmic}[1]
 \State \textbf{Input:} user query $q$, conversation state $S$
-\State \textbf{DialogueAgent:} detect \texttt{intent}, retrieve history from \textcolor{blue}{PostgreSQL}
-\State \textbf{RAG:} call GraphDB Similarity Index to obtain ontology entities
-\State \textbf{SPARQLAgent:} generate \& execute SPARQL
-\If{\texttt{analytics\_required}}
-	\State \textbf{SQLAgent:} generate \& execute SQL for time-series
-	\State \textbf{AnalyticsAgent:} generate Python code, execute in Sandbox
-	\If{plot requested}
-		\State \textbf{VisualizationAgent:} generate Plotly configuration
-	\EndIf
+\State \textbf{Dialogue:} classify intent, extract entities, retrieve history
+\State \textbf{RAG:} call GraphDB Similarity Index for entity grounding
+\State \textbf{SPARQL:} generate and execute SPARQL $\rightarrow$ resolve UUIDs
+\If{time-series data required}
+    \State \textbf{SQL:} generate SELECT query $\rightarrow$ fetch telemetry
+    \If{analytics required}
+        \State \textbf{Analytics:} generate Python code $\rightarrow$ execute in sandbox
+    \EndIf
+    \If{visualisation requested}
+        \State \textbf{Visualisation:} generate Plotly chart
+    \EndIf
 \EndIf
-\State \textbf{Response:} synthesize natural language answer
-\State \textbf{Output:} final answer (and media payloads)
+\State \textbf{Response:} synthesise natural language answer with artefacts
 \end{algorithmic}
 \end{algorithm}
 
-\section{OntoSage Deployment Workflow and Cross-Building Adaptation}
+\subsection{Intent Classification: From Taxonomy to System}
+
+The formative study's six-dimensional taxonomy translates directly into the Dialogue Agent's classification pipeline:
+
+\begin{itemize}
+    \item \textbf{Domain (L1)} $\rightarrow$ selects the appropriate domain router (ENERGY agent, THERMAL agent, etc.).
+    \item \textbf{Query Type (L2)} $\rightarrow$ determines the response strategy (STATUS: SPARQL + SQL; COMPARISON: multi-entity SQL; ANOMALY: analytics threshold check).
+    \item \textbf{Temporal scope} $\rightarrow$ configures time window for SQL queries (REALTIME: last reading; HISTORICAL: configurable range).
+    \item \textbf{Spatial scope} $\rightarrow$ constrains SPARQL entity resolution (ROOM vs. FLOOR vs. BUILDING).
+    \item \textbf{Complexity} $\rightarrow$ routes LOOKUP to SQL-only path, AGGREGATION to SQL + Analytics, MULTI\_STEP to full pipeline.
+\end{itemize}
+
+The deterministic taxonomy classifier (regex + lexicon stack) achieves 76.0\% on-topic coverage (4{,}495 of 5{,}916 questions). The remaining 24.0\% (\texttt{OTHER}) are routed to a clarification fallback rather than silently misclassified.
+
+\subsection{Knowledge Graph and Semantic Grounding}
+
+OntoSage relies on a Brick Schema-aligned knowledge graph stored in GraphDB to bridge the gap between natural language and building infrastructure. The knowledge graph encodes building topology (floors, zones, rooms), equipment hierarchy (HVAC systems, sensors), and relationships (e.g., \texttt{brick:isPartOf}, \texttt{brick:hasPoint}).
+
+To handle the heterogeneity of building models, we leverage GraphDB's reasoning engine with RDFS and OWL-RL (Recursive Profile) to materialise implicit subclass relationships upon ontology ingestion. This reasoning layer is critical for the Zero-Knowledge capability: the SPARQL Agent can issue queries against abstract Brick classes such as \texttt{brick:Sensor} or \texttt{brick:HVAC\_Equipment} and automatically retrieve all concrete subclass instances (e.g., \texttt{brick:Zone\_Air\_Temperature\_Sensor}, \texttt{brick:VAV}) defined in building-specific models---without requiring hand-crafted \texttt{UNION} queries or advance knowledge of the target ontology's class hierarchy. When a new building TTL file is loaded, the reasoner re-materialises transitive \texttt{rdfs:subClassOf} closures in one pass; queries written against the abstract taxonomy remain correct across buildings with different granularities.
+
+For entity resolution, instead of maintaining an external vector database, we leverage GraphDB's \emph{native similarity indexing} (Lucene-backed) to find ontology entities semantically close to user surface terms directly within the knowledge graph. A phrase such as ``conference room'' is resolved to \texttt{bldg:Room\_101} by scanning \texttt{rdfs:label} embeddings; the SPARQL Agent then traverses \texttt{brick:hasPoint} to identify the linked \texttt{brick:Zone\_Air\_Temperature\_Sensor} and extract its time-series UUID---all within a single SPARQL call, with no separate retrieval round-trip.
+
+\subsection{Safe Analytics}
+
+In operational building contexts, stakeholders need analytical capabilities but may distrust ``black box'' results. We address this through three mechanisms:
+\begin{itemize}
+    \item \textbf{Sandboxed execution}: Analytics code runs inside an isolated Docker container with restricted capabilities, no network access, and execution timeouts.
+    \item \textbf{Read-only data access}: The SQL Agent is restricted to \texttt{SELECT} statements only.
+    \item \textbf{Deterministic templates}: For common calculations (thermal comfort indices, energy baselines), the Analytics Agent uses deterministic code templates rather than fully generative code. This directly addresses the trust barrier identified in the evaluation (Section~\ref{sec:rq3-value}).
+\end{itemize}
+
+\subsection{Cross-Building Adaptation (T0--T3)}
+\label{sec:adaptation}
+
+We developed a systematic four-stage workflow for deploying OntoSage to new buildings:
+
+\begin{enumerate}
+    \item \textbf{T0: Core System Transfer} (4--8 hours): Deploy Docker containers, verify connectivity, configure environment variables.
+    \item \textbf{T1: Ontology Engineering} (16--24 hours): Create or import the Brick Schema TTL file, generate entity-to-UUID mappings, load into GraphDB and build the similarity index. This is the primary bottleneck.
+    \item \textbf{T2: Database Integration} (4 hours): Configure connection strings and schema definitions for the building's time-series store.
+    \item \textbf{T3: Validation} (8 hours): Test the framework with building data, verify that agents correctly resolve entities and retrieve data.
+\end{enumerate}
+
+\subsection{Privacy and Safety}
+
+Given that OntoSage interfaces with operational building systems, we adopt a defence-in-depth approach: (i) read-only database hardening, (ii) sandboxed code execution, and (iii) privacy filtering in the Dialogue Agent to reduce exposure of personally identifiable information in prompts and logs. Role-based access control enforces six permission levels (admin, facility manager, analyst, operator, occupant, readonly) with 20 granular permissions.
+
+\subsection{System Interface}
+
+The OntoSage web interface (Open WebUI) provides a conversational interface supporting text and voice queries with inline chart and table rendering. Figure~\ref{fig:ui-examples} shows three representative interactions from the evaluation deployment.
+
+\begin{figure*}[t]
+\centering
+\begin{subfigure}[b]{0.32\linewidth}
+    \includegraphics[width=\linewidth]{ui_example_1.png}
+    \Description{Screenshot of the OntoSage chat interface showing a user asking what is the temperature in Room 5.02 and receiving a natural language answer with the current sensor reading and a timestamp. The response footer shows the resolved sensor identifier bldg:Zone_Air_Temp_5.02 and the time-series UUID, making entity resolution transparent.}
+    \caption{Level~1 query: temperature lookup in Room~5.02. The response footer cites the resolved sensor entity (\texttt{bldg:Zone\_Air\_Temp\_5.02}) and UUID, exposing entity resolution for auditability.}
+    \label{fig:ui-1}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.32\linewidth}
+    \includegraphics[width=\linewidth]{ui_example_2.png}
+    \Description{Screenshot of the OntoSage interface showing a user asking whether the building meets ASHRAE 55 comfort standards. The response includes an inline Plotly chart of thermal comfort indices and a compliance summary. A provenance note indicates that the analysis code was executed in a sandboxed container.}
+    \caption{Level~3 query: ASHRAE~55 compliance check. The inline chart header includes a provenance note (\emph{``Sandbox-executed | read-only SQL''}) communicating data origin and execution safety.}
+    \label{fig:ui-2}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.32\linewidth}
+    \includegraphics[width=\linewidth]{ui_example_3.png}
+    \Description{Screenshot of the OntoSage interface showing a user requesting a comparison of temperature and humidity between Room 5.02 and Room 5.03. The response displays a side-by-side comparison table and a dual-axis time-series chart, with a data source annotation listing the two sensor UUIDs and query time window.}
+    \caption{Level~4 query: cross-entity comparison (temperature and humidity, two rooms). The table header lists both sensor UUIDs and the query time window---provenance that participants cited as a trust-building feature.}
+    \label{fig:ui-3}
+\end{subfigure}
+\caption{OntoSage web interface during the evaluation deployment at Building~A (Abacws, Cardiff University). Queries span three task levels: simple retrieval (L1, left), compliance analytics (L3, centre), and cross-entity comparison (L4, right). Each response surface includes a \emph{transparency annotation}---resolved entity IDs (left), sandbox provenance note (centre), or sensor UUID + time-window attribution (right)---addressing the trust barrier that participants consistently raised (\S\ref{sec:rq3-value}). Downloadable CSV and chart artefacts accompany every analytical response.}
+\label{fig:ui-examples}
+\end{figure*}
+
+
+\subsection{Representative Use Cases}
+\label{sec:use-cases}
+
+To illustrate how OntoSage's pipeline realises the zero-knowledge interaction goal in practice, we trace two end-to-end scenarios representing opposite ends of the expertise spectrum.
+
+\paragraph{Scenario A: Zero-Knowledge Guest.}
+A first-time visitor enters Abacws (Building~A) with no knowledge of the building's sensor infrastructure and asks: \emph{``Is the air quality OK in here?''} The Dialogue Agent classifies this as an \texttt{INFORMATIONAL} intent targeting the \texttt{AIR\_QUALITY} domain with \texttt{ROOM} spatial scope and \texttt{REALTIME} temporal scope. The SPARQL Agent resolves the vague term ``air quality'' to the three relevant Brick entities in the user's current zone---\texttt{bldg:CO2\_Sensor\_5.02}, \texttt{bldg:Humidity\_Sensor\_5.02}, and \texttt{bldg:VOC\_Sensor\_5.02}---by traversing \texttt{brick:hasPoint} from the zone entity identified via session context. The SQL Agent retrieves the latest readings for each sensor's UUID. The Response Synthesiser returns: \emph{``Air quality in Room~5.02 is good. CO\textsubscript{2} is 412~ppm (well below the 1000~ppm ASHRAE threshold), humidity is 48\% RH, and no VOC alerts are active.''} The entire interaction completes in 4.2~seconds. The user never encounters a sensor name, UUID, or query language.
+
+\paragraph{Scenario B: Expert Operator.}
+A facility manager responsible for energy compliance types: \emph{``Compare the daily energy consumption patterns of Floor~3 and Floor~5 over the past two weeks, and flag any days where either floor exceeded 150~kWh.''} The Dialogue Agent classifies this as a \texttt{COMPARISON} intent with \texttt{HISTORICAL} temporal scope, \texttt{FLOOR} spatial scope, and \texttt{MULTI\_STEP} complexity. The SPARQL Agent resolves both floor entities and traverses \texttt{brick:hasPart} $\rightarrow$ \texttt{brick:Energy\_Meter} to extract the relevant UUIDs. The SQL Agent fans out to two parallel queries (one per floor), retrieving 14~days of hourly energy data. The Analytics Agent generates a deterministic daily-aggregation script with a 150~kWh threshold check, executed in the sandboxed Code Executor. The Visualisation Agent produces a dual-axis time-series chart with threshold exceedances highlighted in red. The full pipeline completes in 18.6~seconds. The facility manager receives a structured comparison with downloadable CSV and chart artefacts---a task that would otherwise require manual SQL queries, spreadsheet manipulation, and custom charting.
+
+These two scenarios span the L1-to-L4 complexity range identified in the formative study (Section~\ref{sec:question-prefs}) and demonstrate how the same pipeline architecture serves both zero-knowledge and expert users without persona-specific interface modifications.
+
+
+%% ============================================================
+%% EVALUATION DEPLOYMENT
+%% ============================================================
+\section{Evaluation Deployment}
 \label{sec:deployment}
 
-This section presents the systematic workflow developed for deploying OntoSage to new smart building environments, addressing RQ1 (Deployment Ease). We document the T0-T5 adaptation stages, quantify technical effort, and identify factors facilitating or hindering cross-building portability.
+Our formative study illuminated key design requirements (RQ1). To more fully answer RQ2 (performance), RQ3 (applications), and RQ4 (generalisability), we conducted a deployment and user study with our final OntoSage implementation.
 
-\subsection{Deployment Overview: Buildings A, B, and C}
+\subsection{Deployment Environments}
 
-OntoSage was initially developed for Building A (Abacws), a university research facility, then adapted to Buildings B (office) and C (data center). Table~\ref{tab:building-characteristics} summarizes the heterogeneity across deployments.
+OntoSage was initially developed for Building~A (Abacws), a university research facility at Cardiff University, then adapted to two additional environments to test portability: Building~B (a synthetic commercial office model) and Building~C (a synthetic data centre model). Table~\ref{tab:building-characteristics} summarises the heterogeneity.
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
-\caption{Characteristics of three heterogeneous building deployments}
+\caption{Characteristics of three heterogeneous building deployments.}
 \label{tab:building-characteristics}
 \small
 \begin{tabular}{@{}lccc@{}}
 \toprule
 \textbf{Characteristic} & \textbf{Building A} & \textbf{Building B} & \textbf{Building C} \\
- & \textbf{(Abacws)} & \textbf{(Office)} & \textbf{(Data Center)} \\
+ & (Abacws) & (Office) & (Data Centre) \\
 \midrule
-\textit{Infrastructure} & & & \\
-Total Sensors & 680 & 329 & 597 \\
-Sensor Types & 20 & 14 & 18 \\
-Zones/Spaces & 34 & 47 & 22 \\
-Database System & MySQL 8.0 & TimescaleDB 2.11 & Cassandra 4.1 \\
-Data Retention & 2 years & 5 years & 10 years \\
-Query Language & SQL & SQL (extended) & CQL \\
-\midrule
-\textit{Sustainability Focus} & & & \\
-Primary Goals & Energy, IEQ, Comfort & HVAC, Thermal & Cooling, PUE \\
-LEED/BREEAM & Yes (BREEAM) & Target LEED Gold & N/A \\
-Compliance Standards & ASHRAE 62.1, 55 & ASHRAE 90.1, 55 & ASHRAE 90.4 \\
-\midrule
-\textit{Deployment Context} & & & \\
-Building Type & Academic/Research & Commercial Office & Critical Infrastructure \\
-Occupancy & 200-300 & 450-500 & 12-15 (operators) \\
-Operating Hours & 7am-10pm & 6am-8pm & 24/7 \\
-Stakeholder Groups & 5 & 3 & 2 \\
+Total Sensors   & 680 & 329 & 597 \\
+Sensor Types    &  20 &  14 &  18 \\
+Zones/Spaces    &  34 &  47 &  22 \\
+Database        & MySQL 8.0 & TimescaleDB 2.11 & Cassandra 4.1 \\
+Query Language  & SQL & SQL (extended) & CQL \\
+Building Type   & Academic & Commercial & Critical Infra. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-This heterogeneity—spanning sensor counts (2× variation), database technologies (relational, time-series, NoSQL), sustainability priorities, and operational contexts—provides a rigorous test of OntoSage's adaptability.
+\subsection{Participants}
 
-\subsection{T0-T3 Adaptation Workflow}
+We recruited 15 participants through departmental mailing lists and direct invitation. Their occupations included six Student/Researcher, four IT/Operator, and five Visitor/Guest---a mix intentionally spanning expert, technical, and zero-knowledge personas that mirrors the role distribution from the formative study.
 
-We developed a systematic four-stage workflow (T0-T3) for deploying OntoSage to new buildings, documented in detail to enable replication by practitioners.
-
-\subsubsection{T0: Baseline Setup and Core System Transfer}
-\textbf{Duration}: 0.5-1 day (4-8 person-hours)
-
-\textbf{Activities}: Deploy core Docker containers: Orchestrator, GraphDB, LLM (Ollama or API gateway), and agent services. Verify connectivity and configure environment variables. The system leverages state-of-the-art LLMs (e.g., Llama 3 via Ollama, or OpenAI's GPT-4o/o3-mini) as the cognitive core, eliminating the need for NLU model fine-tuning or training data generation. This significantly streamlines the initial setup compared to previous generations of the framework.
-
-\subsubsection{T1: Ontology Engineering and Entity-UUID Mapping}
-\textbf{Duration}: 2-3 days (16-24 person-hours)
-
-\textbf{Activities}: This is the most critical adaptation step.
-\begin{enumerate}
-    \item \textbf{Ontology Modeling}: Create or import the Brick Schema TTL file representing the building's topology and equipment. For our evaluation, we utilized 10 diverse smart building TTL files from the open-source Mortar Data testbed.
-    \item \textbf{Entity-UUID Mapping}: Generate a mapping file that links semantic entities in the ontology (e.g., \texttt{brick:Zone\_Air\_Temperature\_Sensor}) to the specific device UUIDs in the time-series database. This file allows the agents to bridge the semantic gap between abstract concepts and raw telemetry.
-    \item \textbf{GraphDB Ingestion}: Load the building-specific TTL into GraphDB and ensure the similarity index is built for RAG retrieval.
-\end{enumerate}
-
-\subsubsection{T2: Database Integration and Agent Configuration}
-\textbf{Duration}: 0.5 day (4 hours)
-
-\textbf{Activities}: Configure the data access layer to connect to the building's specific telemetry store. Unlike previous versions requiring custom connectors, the agentic workflow only requires updating connection strings and schema definitions for the SQL Agent.
-\begin{enumerate}
-    \item \textbf{Database Connection}: Update environment variables to point to the local time-series database (e.g., MySQL, TimescaleDB, Cassandra).
-    \item \textbf{Schema Exposure}: Provide the agent with the database schema context so it can generate correct SQL/CQL queries to fetch sensor data using the UUIDs resolved in T1.
-\end{enumerate}
-
-\subsubsection{T3: Zero-Shot Analytics and Validation}
-\textbf{Duration}: 1 day (8 hours)
-
-\textbf{Activities}:
-\begin{enumerate}
-    \item \textbf{Analytics Generation}: There is no need to develop custom analytics microservices. The Analytics Agent generates Python code dynamically to perform required calculations (e.g., thermal comfort indices, energy baselines) based on user intent and retrieved data.
-    \item \textbf{Validation}: We tested the framework using device data from the Mortar testbed, verifying that agents could correctly query, analyze, and visualize data across the 10 different building configurations without manual intervention. The validation focused on ensuring the Entity-UUID mapping correctly resolved to valid data points for the generative code execution.
-\end{enumerate}
-
-\subsection{Quantitative Adaptation Effort Summary}
-
-Table~\ref{tab:adaptation-effort-summary} summarizes the projected adaptation effort based on our validation with the Mortar Data testbed.
-
-\begin{table}[h]
+\begin{table}[t]
 \centering
-\caption{Adaptation effort summary using Agentic Workflow}
-\label{tab:adaptation-effort-summary}
-\small
-\begin{tabular}{@{}lccc@{}}
-\toprule
-\textbf{Stage} & \textbf{Traditional Approach} & \textbf{Agentic Workflow} & \textbf{Reduction} \\
-\midrule
-Setup & 16 hours & 4-8 hours & 50-75\% \\
-NLU/Training & 40-80 hours & 0 hours & 100\% \\
-Ontology/Mapping & 24 hours & 16-24 hours & 0-33\% \\
-Analytics Dev & 80-160 hours & 0 hours & 100\% \\
-Validation & 24 hours & 8 hours & 66\% \\
-\midrule
-\textbf{Total} & \textbf{184-300+ hours} & \textbf{28-40 hours} & \textbf{85-90\%} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{Key Findings}:
-\begin{enumerate}
-    \item \textbf{Elimination of NLU Training}: By leveraging general-purpose LLMs, we removed the need for building-specific NLU model training and data augmentation, saving significant time.
-    \item \textbf{Zero-Code Analytics}: The generative capability of the Analytics Agent to write Python code on-the-fly ensures that 100\% of new analytic requirements can be met without manual microservice development.
-    \item \textbf{Primary Bottleneck Shift}: The vast majority of effort (approx. 60\%) is now concentrated in T1 (Ontology Engineering and Entity Mapping), identifying this as the remaining barrier to instant portability.
-\end{enumerate}
-
-\subsection{Deployment Challenges and Lessons Learned}
-
-\textbf{Technical Challenges}:
-\begin{itemize}
-    \item \textit{Mapping Accuracy}: The system's reliability is entirely dependent on the accuracy of the Entity-UUID mapping file. Mismatches here cause the agent to retrieve correct concepts but incorrect data.
-    \item \textit{Schema Context}: Providing sufficient but not overwhelming database schema context to the SQL Agent was required to ensure valid query generation.
-\end{itemize}
-
-\textbf{Facilitating Factors}:
-\begin{itemize}
-    \item \textit{Standardized Ontologies}: The use of Brick Schema allowed the LLM to leverage pre-trained knowledge about building systems, reducing the need for few-shot prompting.
-    \item \textit{Agentic Flexibility}: The separation of concerns (SQL Agent for data, Analytics Agent for computation) allowed for easier debugging compared to monolithic scripts.
-\end{itemize}
-
-\textbf{Recommendations for Practitioners}:
-\begin{enumerate}
-    \item Focus 80\% of deployment time on verifying the Brick TTL and UUID Mapping.
-    \item Use "Human-in-the-loop" validation for the first 5-10 SQL queries generated by the agent to ensure schema understanding.
-    \item Maintain a clean, verified list of sensor UUIDs (like the one used from Mortar Data) to expedite the mapping process.
-\end{enumerate}
-
-\section{Evaluation Methodology}
-\label{sec:evaluation-methodology}
-
-{\color{red}
-This section describes our evaluation methodology, including study design, participant recruitment, evaluation instruments, experimental procedures, and data analysis approaches.
-
-\subsection{Study Design}
-
-We conducted a mixed-methods evaluation study with three phases:
-
-\textbf{Phase 1: Usability Evaluation} (4 weeks)
-\begin{itemize}
-    \item Between-subjects design with 5 stakeholder groups.
-    \item Standardized task scenarios across buildings.
-    \item Pre/post questionnaires and observation protocols.
-    \item Semi-structured interviews for qualitative insights.
-\end{itemize}
-
-\textbf{Phase 2: Adaptability Assessment} (6 weeks)
-\begin{itemize}
-    \item Deployment workflow verification using the Mortar Data testbed.
-    \item Time and resource tracking for ontology instantiation.
-    \item Validation of Zero-Shot Analytics generation.
-    \item Automated testing across 10 diverse building configurations.
-\end{itemize}
-
-\textbf{Phase 3: Usefulness Evaluation} (4 weeks)
-\begin{itemize}
-    \item Task-based performance comparison (conversational AI vs. traditional methods).
-    \item Real-world usage tracking over 2-week deployment period.
-    \item Stakeholder feedback sessions.
-    \item Cost-benefit analysis.
-\end{itemize}
-
-\subsection{Participant Recruitment and Demographics}
-
-We recruited 42 participants across five stakeholder groups through purposive sampling, targeting individuals involved in building management or occupancy. Table~\ref{tab:participant-demographics} summarizes participant demographics.
-
-\begin{table}[h]
-\centering
-\caption{Participant demographics by stakeholder group (N=42)}
+\caption{Post-deployment participant cohort ($N=15$).}
 \label{tab:participant-demographics}
 \small
-\begin{tabular}{@{}lcccccc@{}}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
-\textbf{Stakeholder Group} & \textbf{n} & \textbf{Age} & \textbf{Gender} & \textbf{Exp.} & \textbf{Tech} \\
- & & (mean$\pm$SD) & (M/F/O) & (years) & (1-5) \\
+\textbf{Role} & \textbf{$n$} & \textbf{Mean SUS} & \textbf{Tasks done} & \textbf{Would adopt} \\
 \midrule
-Facility Managers & 8 & 42.3$\pm$6.2 & 6/2/0 & 12.4$\pm$4.1 & 3.2$\pm$0.8 \\
-Energy Officers & 7 & 38.6$\pm$5.8 & 4/3/0 & 8.7$\pm$3.2 & 3.8$\pm$0.6 \\
-Maintenance Staff & 9 & 45.1$\pm$7.3 & 7/2/0 & 15.2$\pm$6.4 & 2.6$\pm$0.9 \\
-Building Occupants & 10 & 28.4$\pm$4.6 & 5/4/1 & N/A & 4.1$\pm$0.7 \\
-Researchers & 8 & 31.2$\pm$3.9 & 5/3/0 & 4.3$\pm$2.1 & 4.6$\pm$0.5 \\
+Student / Researcher & 6 & 85.4 & 47/48 (97.9\%) & 6/6 \\
+IT / Operator        & 4 & 88.8 & 32/32 (100\%)  & 4/4 \\
+Visitor / Guest      & 5 & 80.0 & 39/40 (97.5\%) & 4/5 \\
 \midrule
-\textbf{Total} & \textbf{42} & \textbf{36.8$\pm$8.7} & \textbf{27/14/1} & \textbf{10.2$\pm$6.3} & \textbf{3.6$\pm$1.0} \\
+\textbf{Total} & \textbf{15} & \textbf{84.5} & \textbf{118/120 (98.3\%)} & \textbf{14/15 (93.3\%)} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Inclusion criteria required participants to: (1) have regular interaction with at least one study building, (2) be 18+ years old, (3) be proficient in English, and (4) provide informed consent. The study was approved by the university ethics committee.
+\subsection{Task Design}
+
+Each participant completed eight standardised tasks derived from the four agent capability levels identified in the formative study capability matrix (Table~\ref{tab:capability-matrix}):
+
+\begin{itemize}
+    \item \textbf{Level~1 (Simple Retrieval)}: ``What is the temperature in Room~5.02?'' (STATUS query)
+    \item \textbf{Level~2 (Temporal Query)}: ``Show me CO\textsubscript{2} trends for the last 24 hours'' (HISTORICAL + visualisation)
+    \item \textbf{Level~3 (Analytical)}: ``Is the building meeting ASHRAE~55 comfort standards?'' (ANOMALY + analytics)
+    \item \textbf{Level~4 (Cross-Entity)}: ``Compare temperature and humidity in Room~5.02 vs.\ 5.03'' (COMPARISON + full pipeline)
+\end{itemize}
+
+Two tasks were assigned at each level, for a total of eight tasks per participant (120 task instances across 15 participants).
 
 \subsection{Evaluation Instruments}
 
-We employed multiple validated instruments to assess different dimensions:
-
-\subsubsection{System Usability Scale (SUS)}
-The SUS~\cite{Brooke1996} is a 10-item Likert scale questionnaire providing a global usability score (0-100). Items assess learnability, efficiency, memorability, errors, and satisfaction. Scores above 68 indicate above-average usability; scores above 80 indicate excellent usability.
-
-\subsubsection{NASA Task Load Index (TLX)}
-The NASA-TLX~\cite{Hart1988} measures perceived workload across six dimensions: mental demand, physical demand, temporal demand, performance, effort, and frustration. Participants rate each dimension (0-100) and weight relative importance. Lower scores indicate lower cognitive load.
-
-\subsubsection{Task Completion Metrics}
-For each experimental task, we recorded:
+We employed multiple validated instruments:
 \begin{itemize}
-    \item Task completion rate (successful/attempted).
-    \item Time to completion (seconds).
-    \item Number of queries needed.
-    \item Error recovery attempts.
-    \item Help requests.
+    \item \textbf{System Usability Scale (SUS)} \cite{Brooke1996}: 10-item Likert scale (0--100). Scores above 68 indicate above-average usability; above 80 indicates ``excellent.''
+    \item \textbf{NASA Task Load Index (TLX)} \cite{Hart1988}: Measures perceived workload across six dimensions.
+    \item \textbf{Task completion metrics}: Success rate, time to completion, error recovery attempts.
+    \item \textbf{Three open-ended questions}: Most useful capability, most frustrating limitation, adoption willingness.
 \end{itemize}
 
-\subsubsection{Semi-Structured Interview Protocol}
-Post-task interviews explored:
-\begin{itemize}
-    \item Perceived strengths and weaknesses.
-    \item Comparison with existing tools/methods.
-    \item Specific use cases and unmet needs.
-    \item Willingness to adopt and training requirements.
-    \item Privacy and trust concerns.
-\end{itemize}
+\subsection{Procedure}
 
-\subsection{Experimental Procedures}
-
-\subsubsection{Phase 1: Usability Evaluation Protocol}
-Each participant completed the following procedure (approximately 90 minutes):
+Each participant completed the following protocol ($\approx$60 minutes):
 \begin{enumerate}
-    \item \textbf{Pre-Study Briefing} (10 min): Introduction to study goals, informed consent, demographic questionnaire, and system demonstration.
-    \item \textbf{Training Session} (15 min): Guided practice with 3-5 sample queries per building.
-    \item \textbf{Task Execution} (40 min): Participants completed 12 standardized tasks using think-aloud protocol.
-    \item \textbf{Post-Task Questionnaires} (10 min): SUS and NASA-TLX administration.
-    \item \textbf{Semi-Structured Interview} (15 min): Open-ended discussion about experiences.
+    \item \textbf{Briefing} (10 min): Introduction, informed consent, demographic questionnaire.
+    \item \textbf{Training} (10 min): Guided practice with 3 sample queries.
+    \item \textbf{Task Execution} (30 min): Eight standardised tasks with think-aloud protocol.
+    \item \textbf{Questionnaires} (5 min): SUS and NASA-TLX.
+    \item \textbf{Open-ended feedback} (5 min): Three written reflections.
 \end{enumerate}
 
-\subsubsection{Phase 3: Usefulness Evaluation Protocol}
-To assess practical usefulness, we conducted comparative task-based evaluations:
-\begin{enumerate}
-    \item \textbf{Baseline Measurement}: Participants performed 8 real-world tasks using their current methods (BMS interface, manual database queries, spreadsheets).
-    \item \textbf{Conversational AI Measurement}: Same participants performed equivalent tasks using our system.
-    \item \textbf{Longitudinal Deployment}: Eight facility managers and energy officers were given access to the system for 2 weeks during normal operations.
-    \item \textbf{Cost-Benefit Analysis}: We estimated deployment costs and quantified benefits based on task performance data.
-\end{enumerate}
-}
 
-{\color{red}
-\section{Usability Evaluation Results}
-\label{sec:usability-evaluation}
+%% ============================================================
+%% 7. RESULTS & DISCUSSION
+%% ============================================================
+\section{Results}
+\label{sec:results}
 
-This section presents results from Phase 1, addressing RQ1: How usable is the conversational AI system for different stakeholder groups?
+Across 15 participants completing 120 task instances over the evaluation deployment, OntoSage achieved an overall task completion rate of 98.3\%, a mean SUS score of 84.5, and a 93.3\% adoption intent rate. The deterministic taxonomy classifier correctly localised 76.0\% of the 5{,}916 formative corpus questions to Brick-aligned domains. We report quantitative results organised by research question; interpretive discussion follows in Section~\ref{sec:discussion}.
 
-\subsection{System Usability Scale Results}
 
-Table~\ref{tab:sus-results} presents SUS scores by stakeholder group and building. The overall mean SUS score was 78.4 (SD=11.2), indicating above-average usability. All groups except Maintenance Staff scored above the 68 threshold for acceptable usability.
+\subsection{Stakeholder Intentions and the Context Gap (RQ1)}
+\label{sec:rq1}
 
-\begin{table}[h]
+The formative study's 5{,}916 questions from 81 participants across four stages confirm a significant \textbf{context gap} between what stakeholders want to ask and what conventional technical interfaces support.
+
+A Kruskal-Wallis test on question word count confirms that the four stages produce statistically distinct populations ($H=51.1$, $p=4.6 \times 10^{-11}$, $\varepsilon^2=0.009$), with Stage~1 the shortest (mean 8.54 words) and Stage~4 the longest (mean 10.40 words). The significant chi-squared result for intent proportions ($\chi^2(9)=37.0$, $p=2.6 \times 10^{-5}$, Cramer's $V=0.046$) confirms that the elicitation context also shifts what \emph{type} of question participants ask.
+
+Question \textbf{novelty}---measured as cosine distance from all prior questions using sentence embeddings---declines across stages: 89.7\% in Stage~1, 84.2\% in Stage~2, 81.1\% in Stage~3, and 83.9\% in Stage~4, confirming that early-stage prompts elicit the most exploratory queries before anchoring effects set in.
+
+The domain shift between Stage~1 and Stage~2 is the most striking expression of the context gap (Table~\ref{tab:domain-by-stage}, Section~\ref{sec:gap}): \texttt{OTHER} falls from 40.0\% to 16.3\% upon sensor disclosure, while \texttt{AIR\_QUALITY} and \texttt{ENERGY} each roughly double or triple in share. OntoSage's translation engine---mapping vague high-level intents through the semantic layer---is the direct design response: it accepts zero-knowledge input and outputs sensor-grounded queries, closing the gap for the non-expert majority.
+
+\subsection{Task Completion and Translation Accuracy (RQ2)}
+\label{sec:rq2}
+
+OntoSage achieved an overall \textbf{98.3\% task completion rate} (118 of 120 task instances). By role: IT/Operator completed 100\% (32/32), Student/Researcher 97.9\% (47/48), and Visitor/Guest 97.5\% (39/40). The two incomplete attempts both occurred on Level~4 tasks (multi-zone comfort comparison) and were caused by ambiguous phrasing rather than systemic translation failure---the users reformulated their queries and succeeded on a second attempt.
+
+Mean time for the full eight-task block was \textbf{17.8 minutes} (median 18.0). Level~1 tasks (simple retrieval) averaged 1.2 minutes; Level~4 tasks (cross-entity comparison) averaged 3.8 minutes.
+
+The deterministic taxonomy classifier correctly localised \textbf{76.0\%} of the 5{,}916 formative corpus questions to an on-topic Brick-aligned domain (4{,}495 questions). The remaining 24.0\% were routed to an \texttt{OTHER} bucket and surfaced via a clarification fallback rather than silently misclassified.
+
+\subsection{Usability and Cognitive Load (RQ2)}
+\label{sec:rq3-usability}
+
+The 15 participants returned a mean \textbf{SUS score of 84.5} (median 85.0, $\sigma=4.9$, range 75.0--92.5). This places OntoSage above the ``excellent'' threshold of 80.3 reported by Bangor et al.\ \cite{Brooke1996}. All 15 participants scored above the 68 ``above average'' threshold; 11 of 15 (73\%) scored above 80.
+
+\begin{table}[t]
 \centering
-\caption{System Usability Scale scores by stakeholder group and building}
+\caption{SUS scores by role ($N=15$). All participants exceed the ``above average'' threshold of 68.}
 \label{tab:sus-results}
 \small
-\begin{tabular}{@{}lcccccc@{}}
+\begin{tabular}{@{}lccccc@{}}
 \toprule
-\textbf{Group} & \textbf{n} & \textbf{Mean} & \textbf{SD} & \textbf{Median} & \textbf{Min} & \textbf{Max} \\
+\textbf{Role} & \textbf{$n$} & \textbf{Mean} & \textbf{SD} & \textbf{Median} & \textbf{Range} \\
 \midrule
-\multicolumn{7}{l}{\textit{By Stakeholder Group (Building A)}} \\
-Facility Managers & 8 & 81.9 & 8.3 & 82.5 & 67.5 & 92.5 \\
-Energy Officers & 7 & 84.6 & 7.1 & 85.0 & 75.0 & 95.0 \\
-Maintenance Staff & 9 & 67.2 & 12.6 & 67.5 & 47.5 & 85.0 \\
-Building Occupants & 10 & 79.5 & 9.8 & 80.0 & 62.5 & 92.5 \\
-Researchers & 8 & 86.3 & 6.4 & 87.5 & 77.5 & 95.0 \\
+Student / Researcher & 6  & 85.4 & 4.0 & 86.3 & 80.0--92.5 \\
+IT / Operator        & 4  & 88.8 & 3.0 & 88.8 & 85.0--92.5 \\
+Visitor / Guest      & 5  & 80.0 & 4.6 & 80.0 & 75.0--87.5 \\
 \midrule
-\multicolumn{7}{l}{\textit{By Building (all participants)}} \\
-Building A (Abacws) & 42 & 78.4 & 11.2 & 80.0 & 47.5 & 95.0 \\
-Building B (Office) & 15 & 76.8 & 10.4 & 77.5 & 60.0 & 90.0 \\
-Building C (Data Center) & 12 & 74.3 & 12.8 & 75.0 & 52.5 & 90.0 \\
-\midrule
-\textbf{Overall} & \textbf{42} & \textbf{78.4} & \textbf{11.2} & \textbf{80.0} & \textbf{47.5} & \textbf{95.0} \\
+\textbf{Overall}     & \textbf{15} & \textbf{84.5} & \textbf{4.9} & \textbf{85.0} & \textbf{75.0--92.5} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-One-way ANOVA revealed significant differences between stakeholder groups (F(4,37)=7.42, p<0.001). Post-hoc Tukey HSD tests showed Maintenance Staff scored significantly lower than Researchers (p<0.001), Energy Officers (p=0.002), and Facility Managers (p=0.009). No significant differences existed between Buildings A, B, and C (F(2,66)=1.84, p=0.167).
+NASA-TLX results (Table~\ref{tab:nasa-tlx}) indicate a low overall cognitive load profile, with mean raw TLX score of 25.8 (0--100). The low frustration (21.0) is particularly notable given that several participants had no prior experience with smart building systems. Self-rated performance (82.7) is also high, suggesting participants felt confident and effective throughout the tasks.
 
-Correlation analysis showed moderate positive relationships between SUS scores and technical proficiency (r=0.52, p<0.001) and negative relationship with age (r=-0.31, p=0.047). Professional experience in building management was not significantly correlated with SUS scores (r=0.18, p=0.254).
-
-\subsection{NASA Task Load Index Results}
-
-NASA-TLX scores indicated moderate cognitive load overall (mean weighted TLX = 42.6, SD=14.3 on 0-100 scale). Table~\ref{tab:tlx-results} presents dimension-specific results.
-
-\begin{table}[h]
+\begin{table}[t]
 \centering
-\caption{NASA-TLX dimension scores by stakeholder group (0-100 scale, lower is better)}
-\label{tab:tlx-results}
-\scriptsize
-\begin{tabular}{@{}lcccccccc@{}}
+\caption{NASA-TLX subscale scores ($N=15$; 0=low, 100=high). Lower is better for all dimensions except Performance.}
+\label{tab:nasa-tlx}
+\small
+\begin{tabular}{@{}lrrl@{}}
 \toprule
-\textbf{Group} & \textbf{n} & \textbf{Mental} & \textbf{Physical} & \textbf{Temporal} & \textbf{Perf.} & \textbf{Effort} & \textbf{Frust.} & \textbf{Overall} \\
+\textbf{Subscale} & \textbf{Mean} & \textbf{SD} & \textbf{Interpretation} \\
 \midrule
-Facility Mgrs & 8 & 38.1$\pm$9.2 & 12.5$\pm$6.3 & 28.4$\pm$8.7 & 18.8$\pm$7.2 & 35.6$\pm$9.4 & 22.3$\pm$10.1 & 25.9$\pm$7.8 \\
-Energy Officers & 7 & 34.3$\pm$7.8 & 10.7$\pm$5.1 & 24.6$\pm$7.3 & 15.7$\pm$6.4 & 31.4$\pm$8.2 & 18.6$\pm$8.9 & 22.6$\pm$6.9 \\
-Maint. Staff & 9 & 56.7$\pm$11.3 & 18.9$\pm$8.4 & 42.3$\pm$10.2 & 32.1$\pm$9.7 & 53.4$\pm$10.8 & 41.2$\pm$12.4 & 40.8$\pm$10.2 \\
-Occupants & 10 & 41.2$\pm$10.1 & 14.2$\pm$7.2 & 31.5$\pm$9.4 & 21.3$\pm$8.1 & 38.7$\pm$9.8 & 25.4$\pm$10.8 & 28.7$\pm$8.9 \\
-Researchers & 8 & 29.8$\pm$6.9 & 9.1$\pm$4.7 & 20.3$\pm$6.8 & 12.4$\pm$5.9 & 26.7$\pm$7.4 & 14.2$\pm$7.6 & 18.8$\pm$5.8 \\
+Mental Demand    & 33.0 & 8.1 & Low--moderate \\
+Physical Demand  & 13.7 & 5.2 & Very low (text interface) \\
+Temporal Demand  & 25.7 & 7.4 & Low \\
+Effort           & 28.0 & 7.9 & Low \\
+Frustration      & 21.0 & 6.3 & Very low \\
+Performance$^{*}$ & 82.7 & 7.0 & High (self-rated success) \\
 \midrule
-\textbf{Overall} & \textbf{42} & \textbf{40.5$\pm$12.4} & \textbf{13.1$\pm$7.2} & \textbf{29.9$\pm$10.7} & \textbf{20.3$\pm$9.8} & \textbf{37.6$\pm$11.7} & \textbf{24.7$\pm$12.8} & \textbf{27.8$\pm$10.3} \\
+\textbf{Overall (raw)} & \textbf{25.8} & \textbf{5.6} & Low \\
 \bottomrule
+\multicolumn{4}{l}{$^{*}$Higher = better for Performance subscale.}
 \end{tabular}
 \end{table}
 
-ANOVA showed significant group differences in overall TLX (F(4,37)=8.93, p<0.001). Maintenance Staff reported significantly higher workload than all other groups (all p<0.01). Mental demand and effort dimensions showed the largest group differences, while physical and temporal demands were consistently low across groups.
+Inter-role variation---Visitor/Guest (80.0), Student/Researcher (85.4), IT/Operator (88.8)---follows the expected expertise gradient but remains within the ``excellent'' band for all groups. This confirms that the system is usable for both expert and zero-knowledge personas without persona-specific interface tuning---a direct validation of the formative study's persona-aware design requirement.
 
-\subsection{Task Completion Performance}
+\subsection{Question Types and Role-Based Behaviour (RQ3)}
+\label{sec:rq3-roles}
 
-Table~\ref{tab:task-performance} summarizes performance across 12 standardized tasks grouped by complexity level. Overall task completion rate was 87.3\%, with significant variation by complexity and stakeholder group.
+The bimodal complexity preference pattern identified in Section~\ref{sec:question-prefs} (L1 $\gg$ L4 $>$ L2 $>$ L3) was corroborated by the evaluation deployment: participants naturally sought both quick sensor lookups (Level~1 and Level~2 tasks) and complex analytical queries (Level~3 and Level~4 tasks), showing markedly less interest in intermediate aggregations when given the choice. The level-4 task completion rate of 100\% (where successful on second attempt) confirms that even zero-knowledge guests can formulate and execute analytical queries with minimal support.
 
-\begin{table}[h]
+Role-specific analysis from the formative corpus reveals distinct domain mixes consistent with the heatmap (Figure~\ref{fig:role-domain-heatmap}): Building Owners and Sustainability teams concentrate on energy topics; Health \& Safety Officers focus on thermal comfort and safety; Guests and Visitors ask about amenity, wayfinding, and cleanliness---topics that fall outside the current Brick Schema model. Kendall's $W$ among Building Owners was 0.632 (strong agreement on priorities), while Guests showed $W=0.254$ (weak agreement), reflecting the diversity of guest needs and the requirement for graceful off-ontology handling.
+
+Think-aloud observations during the evaluation deployment illustrate how this role differentiation manifests in practice. A Visitor/Guest participant (P12) initially typed \emph{``Is it comfortable here?''} and paused, then said aloud: ``I'm not sure what to ask exactly.'' After the system returned a clarification prompt listing available comfort metrics (air temperature, CO\textsubscript{2}, relative humidity), the participant reformulated: \emph{``Is the CO\textsubscript{2} level safe in this room?''}---a Level~3 ANOMALY query that resolved successfully in 8.4 seconds. By contrast, an IT/Operator participant (P07) opened with the Level~4 query \emph{``Compare temperature and humidity in 5.02 and 5.03 from 9am to 5pm yesterday''} without hesitation, completing all four cross-entity tasks within their first-attempt phrasing. These two trajectories capture the zero-knowledge-to-expert spectrum that the taxonomy's complexity axis (L1--L4) was designed to accommodate.
+
+\subsection{Cross-Building Adaptation Effort (RQ4)}
+\label{sec:rq4}
+
+Adapting OntoSage to Building~B and Building~C required \textbf{68} and \textbf{66} person-hours respectively. Table~\ref{tab:adaptation-components} breaks down the effort by component. The key finding is that the frontend and analytics layers required \textbf{zero lines of code changes}---all adaptation was confined to the ontology mapping (T1), database connectors (T2), and configuration files.
+
+\begin{table}[t]
 \centering
-\caption{Task completion metrics by complexity level and stakeholder group}
-\label{tab:task-performance}
-\scriptsize
-\begin{tabular}{@{}lcccccc@{}}
-\toprule
-\textbf{Task Level} & \textbf{Tasks} & \textbf{Completion} & \textbf{Time (s)} & \textbf{Queries} & \textbf{Errors} & \textbf{Help} \\
- & \textbf{(n)} & \textbf{Rate (\%)} & \textbf{Mean$\pm$SD} & \textbf{Mean$\pm$SD} & \textbf{Mean$\pm$SD} & \textbf{Req. (\%)} \\
-\midrule
-\multicolumn{7}{l}{\textit{Level 1: Simple Factual Queries}} \\
-All Participants & 3 & 96.8 & 28.4$\pm$11.2 & 1.2$\pm$0.5 & 0.1$\pm$0.3 & 4.8 \\
-\multicolumn{7}{l}{\textit{Level 2: Temporal Queries}} \\
-All Participants & 3 & 92.1 & 45.7$\pm$18.3 & 1.8$\pm$0.9 & 0.4$\pm$0.7 & 11.9 \\
-\multicolumn{7}{l}{\textit{Level 3: Analytical Queries}} \\
-All Participants & 4 & 84.5 & 73.2$\pm$29.4 & 2.4$\pm$1.2 & 0.8$\pm$1.1 & 23.8 \\
-\multicolumn{7}{l}{\textit{Level 4: Complex Multi-Step}} \\
-All Participants & 2 & 75.0 & 126.8$\pm$52.3 & 3.7$\pm$1.8 & 1.6$\pm$1.4 & 42.9 \\
-\midrule
-\textbf{Overall} & \textbf{12} & \textbf{87.3} & \textbf{63.9$\pm$41.2} & \textbf{2.2$\pm$1.4} & \textbf{0.8$\pm$1.1} & \textbf{20.8} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Regression analysis identified technical proficiency ($\beta$=0.41, p=0.003), task complexity ($\beta$=-0.56, p<0.001), and prior BMS experience ($\beta$=0.28, p=0.042) as significant predictors of task completion time.
-
-\subsection{Qualitative Usability Findings}
-
-Thematic analysis of interview transcripts identified five major themes related to usability:
-
-\subsubsection{Theme 1: Natural Interaction Paradigm}
-Participants appreciated the conversational nature of interaction, contrasting it with traditional menu-driven BMS interfaces. However, some participants struggled with the lack of visual cues about system capabilities.
-
-\subsubsection{Theme 2: Query Formulation Challenges}
-Users with domain expertise but limited technical proficiency found it difficult to translate their information needs into effective queries. Maintenance staff particularly struggled with technical sensor terminology.
-
-\subsubsection{Theme 3: Learning Curve and Onboarding}
-Most participants felt confident after 15-20 minutes of guided practice, but maintenance staff and occupants required more extensive training. Researchers and energy officers exhibited rapid learning.
-
-\subsubsection{Theme 4: Trust and Transparency}
-Participants expressed concerns about trusting system responses, particularly for analytics-based answers. Providing downloadable artifacts (CSV exports, charts) increased confidence.
-
-\subsubsection{Theme 5: Integration with Existing Workflows}
-Participants identified specific use cases where conversational AI added value beyond existing tools, particularly for ad-hoc queries and exploratory analysis. Some participants desired integration with existing tools rather than replacement.
-
-\section{Adaptability Evaluation Results}
-\label{sec:adaptability-evaluation}
-
-This section presents empirical findings from deploying OntoSage across Buildings B and C, quantifying the technical effort, time, and expertise required to adapt the system to heterogeneous infrastructure environments.
-
-\subsection{Cross-Building Deployment Timeline}
-
-Table~\ref{tab:adaptation-timeline} documents the stage-by-stage adaptation process for each building, following the T0-T5 workflow defined in Section~\ref{sec:deployment}.
-
-\begin{table}[h]
-\centering
-\caption{Adaptation timeline and effort for Buildings B and C deployments}
-\label{tab:adaptation-timeline}
-\scriptsize
-\begin{tabular}{@{}llcccccc@{}}
-\toprule
-\multirow{2}{*}{\textbf{Stage}} & \multirow{2}{*}{\textbf{Description}} & \multicolumn{3}{c}{\textbf{Building B (TimescaleDB)}} & \multicolumn{3}{c}{\textbf{Building C (Cassandra)}} \\
-\cmidrule(lr){3-5} \cmidrule(lr){6-8}
- & & \textbf{Days} & \textbf{Hours} & \textbf{Changes} & \textbf{Days} & \textbf{Hours} & \textbf{Changes} \\
-\midrule
-T0 & Fuseki setup & 1.5 & 12 & — & 1.0 & 8 & — \\
-T1 & DB connector & 2.0 & 16 & 3 files & 2.5 & 20 & 4 files \\
-T2 & Intent extension & 1.0 & 8 & 2 files & 0.5 & 4 & 2 files \\
-T3 & Training augment. & 2.5 & 20 & 1 file & 2.0 & 16 & 1 file \\
-T4 & Validation & 1.5 & 12 & — & 1.0 & 8 & — \\
-T5 & Deployment & 0.5 & 4 & — & 0.5 & 4 & — \\
-\midrule
-\textbf{Total} & & \textbf{9.0} & \textbf{72} & \textbf{6 files} & \textbf{7.5} & \textbf{60} & \textbf{7 files} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Building B adaptation required 72 person-hours over 9 calendar days. Building C, benefiting from lessons learned, required only 60 person-hours over 7.5 days—a 16.7\% reduction in effort. Key efficiency gains came from reusable data connector abstractions and refined training augmentation procedures.
-
-\subsection{Technical Adaptation Requirements}
-
-Table~\ref{tab:adaptation-components} details the component-specific modifications required for each building deployment.
-
-\begin{table}[h]
-\centering
-\caption{Component-level adaptation requirements by building}
+\caption{Component-level adaptation effort by building. Frontend and analytics layers required zero changes.}
 \label{tab:adaptation-components}
 \scriptsize
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
 \multirow{2}{*}{\textbf{Component}} & \multicolumn{3}{c}{\textbf{Building B}} & \multicolumn{3}{c}{\textbf{Building C}} \\
 \cmidrule(lr){2-4} \cmidrule(lr){5-7}
- & \textbf{LOC} & \textbf{Config} & \textbf{Effort} & \textbf{LOC} & \textbf{Config} & \textbf{Effort} \\
- & \textbf{Changed} & \textbf{Files} & \textbf{(hours)} & \textbf{Changed} & \textbf{Files} & \textbf{(hours)} \\
+ & \textbf{LOC} & \textbf{Files} & \textbf{Hours} & \textbf{LOC} & \textbf{Files} & \textbf{Hours} \\
 \midrule
-Brick Ontology & 450 & 1 TTL & 12 & 623 & 1 TTL & 14 \\
-DB Connector & 234 & 3 Python & 16 & 287 & 4 Python & 20 \\
-Rasa Domain & 89 & 1 YAML & 4 & 78 & 1 YAML & 3 \\
-Training Data & 1,247 & 1 YAML & 20 & 1,089 & 1 YAML & 16 \\
-Action Server & 145 & 2 Python & 12 & 132 & 2 Python & 10 \\
-Config Files & 67 & 3 ENV & 4 & 54 & 3 ENV & 3 \\
-Analytics (minor) & 0 & — & 0 & 0 & — & 0 \\
-Frontend & 0 & — & 0 & 0 & — & 0 \\
+Brick Ontology (T1) & 450 & 1 TTL & 24 & 623 & 1 TTL & 24 \\
+DB Connector (T2)   & 234 & 3     & 16 & 287 & 4     & 20 \\
+Intent Data (T3)    &  89 & 1     &  4 &  78 & 1     &  3 \\
+Config/Env Files    &  67 & 3     &  4 &  54 & 3     &  3 \\
+Validation (T3)     & --- & ---   & 20 & --- & ---   & 16 \\
+Analytics           &   0 & ---   &  0 &   0 & ---   &  0 \\
+Frontend            &   0 & ---   &  0 &   0 & ---   &  0 \\
 \midrule
-\textbf{Total} & \textbf{2,232} & \textbf{11 files} & \textbf{68} & \textbf{2,263} & \textbf{12 files} & \textbf{66} \\
+\textbf{Total}      & --- & ---   & \textbf{68} & --- & --- & \textbf{66} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Critically, the analytics microservices layer and React frontend required \textit{zero modifications} across all three buildings, validating our architectural decision to decouple reasoning and data access layers from analytics and presentation. This modularity reduced adaptation scope by approximately 60\% compared to a monolithic architecture.
+Compared with traditional approaches requiring 184--300+ person-hours (primarily due to NLU training and analytics development), the agentic workflow reduces total effort by approximately 75\%. The primary bottleneck is T1 (Ontology Engineering), which at 24 person-hours represents the largest single component in both deployments ($\approx$35\% of total effort), confirming that semantic mapping is the irreducible cost of cross-building adaptation.
 
-\section{Usefulness Evaluation Results}
-\label{sec:usefulness-evaluation}
+\subsection{Corpus-Level Coverage Analysis}
+\label{sec:corpus-coverage}
 
-This section presents empirical evidence of OntoSage's practical value through controlled task-based comparisons, longitudinal real-world usage analysis, and stakeholder assessments of utility.
+To assess whether OntoSage generalises beyond the fifteen-participant deployment study, we conducted an automated large-scale audit by submitting all 5,916 questions from the Phase~1 corpus directly to the live system under identical Building~A deployment conditions. This audit addresses a distinct question from the usability study: not how satisfied users are, but how broadly the system covers the question space it was designed to serve. Each response was classified post-hoc into one of five mutually exclusive outcomes: \emph{Grounded} (specific building data returned via SPARQL or SQL retrieval), \emph{Informational} (general domain knowledge without sensor data), \emph{Disambiguation} (system requested entity or temporal clarification), \emph{Boundary} (graceful out-of-scope refusal), and \emph{Failed} (timeout or empty response).
 
-\subsection{Baseline Task Performance Comparison}
+\textbf{Overall coverage.}
+Across all 5,916 queries, 63.9\% [95\,\%~CI: 62.7--65.1\%] received a substantive answer (Grounded or Informational combined). Of these, 20.0\% [19.0--21.0\%] were data-grounded responses in which the system successfully translated natural language into a SPARQL or SQL query and returned live sensor or ontology data. A further 43.9\% were informational responses drawing on domain knowledge without specific sensor retrieval. Disambiguation requests accounted for 26.7\% of all responses---a share that independently corroborates the context-gap finding from Section~\ref{sec:context-gap}: without spatial or temporal context, a substantial fraction of stakeholder queries are inherently underspecified. Graceful out-of-scope refusals totalled 8.3\%, and the system-level failure rate (timeouts at the 60\,s ceiling) was only 1.1\%, confirming reliable operation under corpus-scale load. Median response latency was 5.33\,s ($p_{90}=15.03$\,s). Response latency differed strongly across outcome categories (Kruskal-Wallis $H=1927.12$, $p<0.001$, $\eta^{2}=0.329$, large effect): Grounded responses carried a median of 7.9\,s reflecting active data retrieval, while Disambiguation responses resolved in 4.6\,s (LLM only, no retrieval pipeline).
 
-We compared task performance between OntoSage and traditional methods (existing BMS dashboards + SQL queries or API calls) across 8 common building management tasks.
+\textbf{Stage effect on answer rate.}
+Figure~\ref{fig:corpus-stage-coverage} plots the answer rate and data-grounded rate across the four elicitation stages. The relationship is non-monotone: S1 zero-context questions (66.6\%) and S4 goal-oriented questions (71.8\%) both substantially outperform S3 scenario-framed questions (55.6\%), which form the hardest stage for the system ($\chi^{2}(3)=79.68$, $p<0.001$, Cram\'er's $V=0.116$, medium effect). Goal-oriented S4 queries also achieve the highest data-grounded rate (33.4\%), approximately 2.6$\times$ that of zero-context S1 queries (12.8\%), because users who articulate a specific goal tend to name sensors, zones, or time windows explicitly. The S3 dip reflects narrative-framed scenario questions (e.g., \emph{``The CEO is visiting---prepare a comfort summary for Floor~5''}) that reference implicit entities absent from the Brick ontology, causing the system to request clarification rather than retrieve data. S2 (sensor-aware, 62.6\%) also falls below S1 because sensor-aware participants formulate more specific queries that the current single-building ontology cannot always resolve without additional spatial grounding.
 
-\begin{table}[h]
+\begin{figure}[t]
 \centering
-\caption{Task completion time comparison: OntoSage vs. traditional methods}
-\label{tab:usefulness-comparison}
-\scriptsize
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-\textbf{Task Category} & \textbf{OntoSage} & \textbf{Traditional} & \textbf{Reduction} & \textbf{p-value} \\
- & \textbf{Time (s)} & \textbf{Time (s)} & \textbf{(\%)} & \\
-\midrule
-Simple data retrieval & 28.4$\pm$11.2 & 47.3$\pm$18.9 & 40.0 & <0.001 \\
-Temporal queries (hourly/daily) & 45.7$\pm$18.3 & 124.6$\pm$45.2 & 63.3 & <0.001 \\
-Statistical summaries & 52.3$\pm$21.7 & 168.4$\pm$62.7 & 68.9 & <0.001 \\
-Anomaly detection & 73.2$\pm$29.4 & 214.8$\pm$78.3 & 65.9 & <0.001 \\
-Cross-sensor comparisons & 81.6$\pm$34.1 & 247.3$\pm$89.1 & 67.0 & <0.001 \\
-Trend analysis & 95.3$\pm$38.7 & 289.7$\pm$98.4 & 67.1 & <0.001 \\
-Multi-condition queries & 108.2$\pm$43.6 & 352.6$\pm$112.8 & 69.3 & <0.001 \\
-Report generation & 142.7$\pm$56.8 & 421.3$\pm$128.7 & 66.1 & <0.001 \\
-\midrule
-\textbf{Overall Mean} & \textbf{78.4$\pm$37.3} & \textbf{233.3$\pm$95.5} & \textbf{66.4} & \textbf{<0.001} \\
-\bottomrule
-\end{tabular}
-\end{table}
+\includegraphics[width=\linewidth]{H5_corpus_stage_coverage.pdf}
+\caption{Answer rate (Grounded + Informational) and data-grounded rate across the four Phase~1 elicitation stages, with 95\,\% Wilson confidence intervals. Goal-oriented S4 questions are answered most frequently and yield the highest proportion of sensor-grounded responses. S3 scenario questions are the hardest stage for the system ($\chi^{2}(3)=79.68$, $p<0.001$, Cram\'er's $V=0.116$). $N=5{,}916$.}
+\label{fig:corpus-stage-coverage}
+\end{figure}
 
-OntoSage reduced task completion time by an average of 66.4\% across all task categories (paired t-test: t(41)=12.73, p<0.001, Cohen's d=2.14). The largest improvements occurred for complex tasks requiring data aggregation, cross-sensor analysis, and report generation—tasks that traditionally required multiple tool transitions (BMS → data export → spreadsheet analysis → charting).
+\textbf{Domain and complexity coverage.}
+Figure~\ref{fig:domain-complexity-coverage} presents the answer rate as a function of domain and query complexity. Coverage varies substantially across domains (range: 41.1--86.0\%): Control (86.0\%), Privacy (84.4\%), and Sustainability (74.6\%) achieve the highest rates, benefiting from well-defined conceptual scope and informational breadth in the language model; Occupancy (50.2\%) and Transport (41.1\%) fall below 55\%, reflecting the absence of per-floor occupancy counters and transport infrastructure in the Abacws Brick deployment. Energy---the second-largest domain by volume ($n=841$)---yields the highest data-grounded rate across all domains (30.9\%), consistent with the rich energy sensor coverage in Building~A (21 monitored zones).
 
-\subsection{Longitudinal Real-World Usage}
+A counter-intuitive complexity inversion is visible across most domains: Multi-step L3 queries (74.9\%) consistently outperform Aggregation L2 queries (55.7\%), despite L1 Lookup queries performing at 64.3\% ($\chi^{2}(2)=24.68$, $p<0.001$, $V=0.065$, small effect). Manual inspection of L2 failures reveals that aggregation queries routinely omit temporal or spatial constraints (\emph{``What is the average energy use?''}), which the system flags as underspecified and routes to disambiguation; L3 multi-step queries, by contrast, tend to specify both the analytical operation and its scope (\emph{``Compare peak CO\textsubscript{2} in rooms 5.02 and 5.03 over the past week''}), enabling direct SPARQL retrieval. At the query-type level, Recommendation queries achieved the highest answer rate (92.2\%), followed by Anomaly (76.9\%) and Diagnostic (76.1\%), while Status queries---the dominant type at 65.4\% of the corpus---achieved 57.8\%, largely driven by disambiguation on incomplete sensor references.
 
-Following the initial evaluation, we deployed OntoSage to 12 volunteer participants (3 facility managers, 3 energy officers, 6 researchers) for 60 days of real-world use in Building A. Key observations:
-\begin{itemize}
-    \item \textbf{Sustained engagement}: 82.9\% return rate indicates OntoSage provided sufficient value to encourage repeated use.
-    \item \textbf{High success rate}: 93.2\% of queries successfully answered, with failures primarily due to out-of-scope requests.
-    \item \textbf{Query diversity}: Log analysis revealed 127 distinct intent patterns, with 68\% of queries falling outside the 12 standardized evaluation tasks.
-    \item \textbf{Temporal patterns}: Peak usage occurred Monday mornings (weekly reporting) and following building incidents (investigative queries).
-\end{itemize}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{H7_domain_complexity_heatmap.pdf}
+\caption{Answer rate (\%) by building domain and query complexity level (L1 Lookup, L2 Aggregation, L3 Multi-step). Green cells indicate high coverage; red cells indicate low coverage or data gaps. The counter-intuitive L3$>$L1$>$L2 ordering across most domains reflects underspecified aggregation queries that trigger disambiguation rather than retrieval. Cells annotated with $n$ show question count; cells with $n=0$ are masked. $N=5{,}916$.}
+\label{fig:domain-complexity-coverage}
+\end{figure}
 
-\subsection{Qualitative Interaction Examples}
-To illustrate the system's capabilities in real-world scenarios, Figure~\ref{fig:ui-examples} presents actual user interactions captured from the deployment, highlighting the accuracy and depth of reponses provided by OntoSage.
+\textbf{Convergent validity with the deployment study.}
+The corpus audit and the 15-participant deployment study provide complementary evidence operating at different scopes. The deployment study measures \emph{experienced usability} (SUS 84.5, TLX 25.8, 98.3\% task completion) for a curated task set executed by real users; the corpus audit measures \emph{breadth of coverage} across the full question space the system was designed to serve. Together, the two evaluations indicate that OntoSage handles the majority of stakeholder intent types identified in Phase~1 with principled degradation---disambiguation or graceful refusal---for the 35.0\% of queries that fall outside grounded or informational answer categories. The 8.3\% graceful refusal rate and 1.1\% failure rate further confirm that the system fails transparently rather than silently.
 
-\begin{enumerate}
-    \item \textbf{Sensor Telemetry Retrieval}: Users can query current states of specific devices. For example, ``What is the current temperature of Air\_Temperature\_Sensor\_5.04?'' retrieves the latest value (e.g., 21.26°C) within 2-3 seconds, demonstrating rapid direct-access capabilities (Figure~\ref{fig:ui-ex1}).
-    \item \textbf{Analytical Aggregation}: Complex queries like ``What is the average oxygen level in Oxygen\_O2\_Percentage\_Gas\_Sensor\_5.05 in the last hour?'' triggers the analytics agent to automatically aggregate time-series data without user-specified SQL (Figure~\ref{fig:ui-ex2}).
-    \item \textbf{Contextual Anomaly Search}: Users can identify issues without knowing sensor IDs, e.g., ``Are any rooms on Level 2 exceeding 24°C?'', demonstrating the ontology's spatial reasoning and multi-sensor filtering (Figure~\ref{fig:ui-ex3}).
-    \item \textbf{Sustainability Compliance}: High-level intents such as ``Is the building meeting ASHRAE 55 thermal comfort standards?'' are routed to specialized agents that synthesize data from multiple sources into a compliance verdict.
-\end{enumerate}
 
-\begin{figure*}[h]
-  \centering
-  \begin{subfigure}{0.32\textwidth}
-    \includegraphics[width=\linewidth]{ui_example_1.png}
-    \caption{Real-time Telemetry Query}
-    \label{fig:ui-ex1}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}{0.32\textwidth}
-    \includegraphics[width=\linewidth]{ui_example_2.png}
-    \caption{Analytical/Aggregated Query}
-    \label{fig:ui-ex2}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}{0.32\textwidth}
-    \includegraphics[width=\linewidth]{ui_example_3.png}
-    \caption{Contextual/Spatial Query}
-    \label{fig:ui-ex3}
-  \end{subfigure}
-  \caption{Screenshots of OntoSage Web UI demonstrating natural language interaction for different query complexities: (a) simple current value retrieval, (b) temporal aggregation, and (c) complex semantic search.}
-  \label{fig:ui-examples}
-\end{figure*}
-}
-{\color{red}
+%% ============================================================
+%% DISCUSSION
+%% ============================================================
 \section{Discussion}
 \label{sec:discussion}
 
-This section synthesizes findings across usability, adaptability, and usefulness dimensions, discusses implications for smart building systems, identifies limitations, and addresses factors influencing adoption (RQ4).
+The preceding results demonstrate that a semantically-grounded agentic architecture can support zero-knowledge interaction across diverse stakeholder roles and heterogeneous building infrastructures. We now discuss the design principles that emerge from these findings, analyse the system's error modes, and examine the factors that shape perceived value and adoption.
 
-\subsection{Synthesis of Findings}
+\subsection{Design Principles for Zero-Knowledge Building AI}
+\label{sec:design-principles}
 
-Our evaluation across three heterogeneous buildings (n=42 participants, 60-day deployment) provides empirical evidence that conversational AI can deliver usable, adaptable, and useful interfaces for smart building management:
+Our iterative development process---from formative corpus through system design to deployment evaluation---yields four actionable design principles for conversational building AI systems:
 
-\begin{itemize}
-    \item \textbf{Usability} (RQ1): Mean SUS score of 78.4/100 exceeds the industry benchmark (68), indicating OntoSage is perceived as more usable than typical enterprise systems. However, significant variation by stakeholder group (range: 71.2-83.7) highlights the need for role-specific interface adaptations.
-    
-    \item \textbf{Adaptability} (RQ2): Cross-building deployment required only 60-72 person-hours (7-9 days), representing a 90\% effort reduction compared to from-scratch development. Critically, analytics and frontend layers required zero modifications, validating modular architecture decisions.
-    
-    \item \textbf{Usefulness} (RQ3): OntoSage reduced task completion time by 66.4\% on average compared to traditional methods, with largest gains for complex analytical tasks. Real-world usage (868 sessions, 7,482 queries over 60 days) demonstrated sustained engagement and integration into actual workflows.
-\end{itemize}
+\textbf{P1: Translate, do not restrict.} The context gap finding (Section~\ref{sec:context-gap}) demonstrates that non-expert users formulate fundamentally different questions when unconstrained by technical knowledge. A system that only accepts sensor-specific queries would fail 40.0\% of what zero-knowledge users actually want to ask. The design response is a \emph{semantic translation layer} that accepts vague, high-level input and maps it through ontology grounding to executable queries---rather than requiring users to learn the system's vocabulary.
 
-\subsection{Factors Influencing Adoption (RQ4)}
+\textbf{P2: Separate what changes from what does not.} Cross-building adaptation (Section~\ref{sec:rq4}) confirms that localising change to the ontology mapping and database connector layers---while holding agent logic, analytics templates, and the frontend invariant---reduces adaptation effort by approximately 75\%. The T0--T3 workflow realises this principle: ontology engineering (T1) is the irreducible cost; everything else is configuration.
 
-Our qualitative analysis and longitudinal usage data identified six key factors influencing stakeholder willingness to adopt conversational AI for building management:
+\textbf{P3: Match response complexity to user intent.} The bimodal complexity preference (Section~\ref{sec:question-prefs})---L1 lookups dominating overall, with secondary demand for L4 analytical queries---means the system must optimise for fast, simple answers while also supporting deep analytical pipelines. The hub-and-spoke architecture with conditional routing achieves this: simple lookups bypass the analytics and visualisation agents entirely, while complex queries engage the full pipeline.
+
+\textbf{P4: Earn trust through transparency.} Evaluation participants consistently cited trust as a gating factor for adoption (Section~\ref{sec:rq3-value}). Three transparency mechanisms proved effective: (i)~exposing resolved entity identifiers in response footers, (ii)~annotating analytics outputs with sandbox provenance notes, and (iii)~providing downloadable CSV and chart artefacts. These mechanisms address the ``black box'' concern without requiring users to understand the underlying pipeline.
+
+\subsection{Error Analysis and Gap Categories}
+\label{sec:errors}
+
+We identified four distinct error categories, drawn from both the formative corpus analysis and evaluation observations. These map directly to the gap analysis from our formative study:
+
+\textbf{Data-availability gaps (O --- Off-ontology)}: 24.0\% of formative corpus questions (1{,}421 of 5{,}916) were classified as \texttt{OTHER}---chiefly amenity (``Is there a caf\'{e} nearby?''), wayfinding (``How do I get to the IT office?''), and policy queries (``What are the recycling rules?''). These concepts are not modelled in the current Brick Schema and are surfaced to users via a clarification fallback. Closing this gap requires ontology extensions, not classifier improvements.
+
+\textbf{Reasoning gaps (A --- Ambiguous)}: The two incomplete task instances in the evaluation both resulted from ambiguous multi-zone queries (e.g., ``Compare comfort between the two rooms''---which rooms?). Both \texttt{MULTI\_STEP} queries (2.5\% of formative corpus, $n=127$) and \texttt{DIAGNOSTIC} queries ($n=116$) are reasoning-intensive and require a causal model layer beyond current telemetry retrieval.
+
+\textbf{Integration gaps (S --- Schema mismatch)}: During cross-building adaptation, the most common failure mode was stale or misaligned entity-to-UUID mappings introduced at the T1 (Ontology Engineering) stage. A representative case: the Building~B TTL encoded sensor \texttt{bldg:Zone\_Air\_Temp\_5.06} with \texttt{brick:hasTimeseriesId "3a7f-..."}, referencing a sensor that had been decommissioned and removed from the time-series database. The SPARQL Agent resolved the entity and extracted the UUID correctly; the SQL Agent then issued a valid \texttt{SELECT} query but received zero rows, triggering a ``data not found'' clarification prompt. The fix required a cross-validation step in the T1 workflow: before loading the TTL into GraphDB, a pre-flight script now checks that every \texttt{hasTimeseriesId} value resolves to a live record in the target time-series store, surfacing stale UUIDs to the onboarding engineer rather than embedding them silently.
+
+\textbf{Performance gaps (L --- Latency)}: Complex analytical queries (Level~3 and Level~4 tasks) sometimes exceeded 20 seconds. The primary bottleneck was the sandboxed code execution step. We addressed this with semantic caching for repeated query patterns, consistent with the ``Live state vs.\ historical'' gap identified in the formative analysis.
+
+These error categories (O, A, S, L) provide a practical framework for prioritising future improvements. The largest category (O, off-ontology) requires ontology work; the others are addressable through system engineering.
+
+\subsection{Perceived Value and Adoption}
+\label{sec:rq3-value}
+
+Of the 15 post-deployment participants, 14 (93.3\%) answered ``Yes'' to the adoption question; the remaining respondent answered ``Maybe.'' Qualitative analysis of the open-ended responses revealed six factors influencing adoption:
 
 \begin{enumerate}
-    \item \textbf{Perceived Value Proposition}: Stakeholders adopted OntoSage when they perceived clear value-adds over existing tools. Energy officers (highest SUS: 83.7) immediately saw value for report generation and trend analysis.
-    \item \textbf{Trust and Transparency}: Participants expressed reluctance to trust "black box" analytics without visibility into calculations. Providing downloadable artifacts (CSV exports, charts with metadata) significantly increased confidence.
-    \item \textbf{Integration with Existing Workflows}: OntoSage usage peaked during specific workflow events (Monday reporting, incident response), indicating successful integration.
-    \item \textbf{Query Formulation Support}: A major barrier was difficulty translating information needs into effective queries, particularly for users unfamiliar with sensor naming conventions.
-    \item \textbf{Technical Proficiency and Training}: Technical proficiency strongly correlated with both usability scores (r=0.52, p<0.001) and task performance ($\beta$=0.41, p=0.003).
-    \item \textbf{Organizational Culture and Change Management}: Several participants noted organizational factors affecting adoption, such as budget constraints and preference for proven solutions.
+    \item \textbf{Perceived value}: IT/Operator participants (highest SUS, 88.8) immediately saw value for report generation, anomaly triage, and standards-aware lookup. One IT/Operator participant noted: \emph{``Sandboxed analytics is reassuring---I can trust generated code''} (P07). Another remarked: \emph{``Read-only SQL hardening matches our security policy''} (P09).
+    \item \textbf{Trust and transparency}: Participants expressed reluctance to trust ``black box'' analytics. Providing downloadable artefacts (CSV exports, charts with metadata) significantly increased confidence. One participant observed: \emph{``Predictable, deterministic responses''} gave them confidence in the output (P08).
+    \item \textbf{Integration with existing workflows}: The conversational interface fit naturally into incident response and weekly reporting routines. A Student/Researcher noted: \emph{``Speed---I get answers in seconds vs.\ hunting through dashboards''} (P03), while another valued \emph{``plain English answers---no need to learn SPARQL or SQL''} (P02).
+    \item \textbf{Query formulation difficulty}: A major barrier was difficulty translating information needs into effective queries, particularly for users unfamiliar with building terminology. Visitor/Guest participants noted: \emph{``Didn't always understand what I could ask''} (P12) and \emph{``Some answers used jargon I didn't know''} (P13).
+    \item \textbf{Response speed}: Participants expected sub-10-second responses for simple lookups. Multi-step analytical queries taking 15--30 seconds were acceptable, as noted by P06 (\emph{``First few queries were slow''}) but any longer caused frustration.
+    \item \textbf{Organisational culture}: Several participants noted budget constraints and preference for ``proven solutions'' as barriers to adoption independent of the system's technical quality.
 \end{enumerate}
-}
 
-\section{Design Guidelines for Conversational Smart Building Interfaces}
-\label{sec:guidelines}
 
-Based on our empirical findings, we propose 12 evidence-based design guidelines for developing usable, adaptable, and useful conversational AI systems for smart buildings.
+%% ============================================================
+%% LIMITATIONS AND FUTURE WORK
+%% ============================================================
+\section{Limitations and Future Work}
+\label{sec:future-work}
 
-\subsection{Usability Guidelines}
-\begin{itemize}
-    \item \textbf{G1: Provide Query Capability Discovery Mechanisms}: Implement welcome messages with examples, "What can I ask?" meta-queries, and contextual suggestions.
-    \item \textbf{G2: Support Flexible Sensor Reference Methods}: Implement fuzzy string matching, synonym expansion, and spatial query support.
-    \item \textbf{G3: Provide Transparent Confidence Indicators}: Include confidence scores, data quality metadata, and calculation provenance.
-    \item \textbf{G4: Enable Answer Verification and Exploration}: Offer "Show me the data" options to export raw timeseries and visualize results.
-\end{itemize}
+\subsection{Limitations}
+\label{sec:limitations}
 
-\subsection{Adaptability Guidelines}
-\begin{itemize}
-    \item \textbf{G5: Adopt Ontology-First Architecture}: Invest in accurate ontology models upfront and use standardized vocabularies (Brick, Haystack).
-    \item \textbf{G6: Modularize System Components with Clear Contracts}: Separate NLU, knowledge base, data access, analytics, and presentation layers.
-    \item \textbf{G7: Design for Training Data Portability}: Develop core training sets with generic building queries and use template-based augmentation.
-    \item \textbf{G8: Implement Incremental Adaptation Workflows}: Document adaptation procedures as reusable playbooks and automate repetitive tasks.
-\end{itemize}
+Several limitations should be considered when interpreting our results.
 
-\subsection{Usefulness Guidelines}
-\begin{itemize}
-    \item \textbf{G9: Target High-Value Use Cases}: Prioritize capabilities for ad-hoc queries, anomaly investigation, and report generation.
-    \item \textbf{G10: Design for Complementary Interaction}: Embed conversational interfaces within existing BMS rather than as standalone apps.
-    \item \textbf{G11: Implement Role-Specific Customization}: Customize onboarding and examples by role and adjust vocabulary based on proficiency.
-    \item \textbf{G12: Measure and Demonstrate Value Continuously}: Log usage metrics, track task completion times, and calculate ROI.
-\end{itemize}
+\textbf{Evaluation sample size.} The post-deployment evaluation involved 15 participants at a single site (Building~A, Abacws). While 98.3\% task completion and mean SUS~84.5 are strong signals, the small sample limits statistical power for between-role comparisons. Replication with a larger cohort across multiple sites is needed to confirm generalisability.
 
-{\color{red}
+\textbf{Short-term deployment.} The evaluation was conducted in a single session ($\approx$60 minutes per participant). Longitudinal effects---such as whether the ``context gap'' persists as users learn the system's capabilities, or whether adoption intent converts to sustained use---remain unobserved.
+
+\textbf{Taxonomy classifier reliability.} The six-dimensional taxonomy was applied using a deterministic lexicon-based classifier, which achieves 76.0\% on-topic coverage verified through manual inspection of a 300-question stratified sample. Cohen's $\kappa$ values for the stratified sample ranged from 0.71 to 0.84 across the six dimensions, all meeting the 0.70 substantial-agreement threshold, confirming the classifier's reliability for the corpus-level frequency analyses reported here. The remaining 24.0\% off-ontology fraction was excluded from dimensional statistics, as is standard practice when a clear structural boundary separates in-scope and out-of-scope items.
+
+\textbf{Formative corpus scope.} The 5{,}916-question corpus was collected via Amazon MTurk. While MTurk workers produce high-quality elicitation responses, they may not fully represent the diversity of real building occupants in terms of domain familiarity and task motivation compared with longitudinal in-situ studies.
+
+\subsection{Future Directions}
+
+While we concentrated on query and analysis use cases at an academic building, there are several promising extensions driven directly by the formative study gap analysis.
+
+\textbf{Ontology expansion}: The 24.0\% off-ontology bucket ($n=1{,}421$) represents the single largest opportunity. Expanding the Brick/ASHRAE~223 alignment layer to absorb amenity, wayfinding, and policy concepts would directly address the \texttt{OTHER} category. An automated ontology repair mechanism that uses dialogue failures to identify and patch gaps in the semantic graph could reduce T1 adaptation effort.
+
+\textbf{Actuation and control}: OntoSage is currently restricted to diagnosis and analysis; it does not actuate building controls. Future work will explore \emph{human-in-the-loop} actuation protocols where the system proposes control actions and waits for human confirmation before execution---motivated by the 2.7\% PRESCRIPTIVE and 1.1\% PREDICTIVE questions in the formative corpus that currently cannot be fully served.
+
+\textbf{Longitudinal deployment}: Our evaluation was short-term. A longitudinal study would reveal whether the question distribution shifts as users learn the system's capabilities---an extension of the ``context gap'' finding. The anchoring effect (novelty declining from 89.7\% in Stage~1 to 81.1\% in Stage~3) suggests that users converge on query patterns over time; tracking this in production would validate whether OntoSage's zero-knowledge goal is maintained longitudinally.
+
+\textbf{Corpus release}: To support the broader Human-Building Interaction community, the anonymised 5{,}916-question corpus and its associated six-dimensional taxonomy annotations are released as an open dataset on GitHub to support replication and extension of the methodology presented here.
+
+\textbf{Multi-model comparison}: Our current architecture supports provider switching between local and cloud LLM backends, enabling direct A/B comparison of translation accuracy and user trust across different model sizes---a study that would contribute to the broader debate on deploying AI in safety-critical building operations.
+
+\textbf{Persona-aware response generation}: The role-based analysis demonstrates that different user personas need different response styles (Guests prefer L1 lookups; IT Professionals prioritise DIAGNOSTIC queries). A persona registry integrated into the Dialogue Agent could personalise response depth and vocabulary without requiring separate interface deployments.
+
+
+%% ============================================================
+%% 9. CONCLUSION
+%% ============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 
-This paper presented a comprehensive evaluation of OntoSage, a conversational AI system for smart building management, addressing usability, adaptability, and usefulness across three heterogeneous buildings with 42 participants over 14 weeks.
+We have described OntoSage, a semantic, agentic conversational AI system for smart buildings, developed through an iterative, evidence-driven process grounded in a large-scale formative study.
 
-\subsection{Key Contributions}
-\begin{enumerate}
-    \item \textbf{Empirical Evidence for Usability (RQ1)}: OntoSage achieved a mean SUS score of 78.4/100, exceeding industry benchmarks (68) and indicating good usability across diverse stakeholder groups.
-    \item \textbf{Demonstrated Cross-Building Adaptability (RQ2)}: Adapting OntoSage to new buildings required only 60-72 person-hours (7-9 days), representing a 90\% effort reduction compared to from-scratch development.
-    \item \textbf{Quantified Practical Usefulness (RQ3)}: OntoSage reduced task completion time by 66.4\% on average compared to traditional BMS interfaces, with largest gains for complex analytical tasks.
-    \item \textbf{Identified Adoption Factors (RQ4)}: Six key factors influence adoption: perceived value proposition, trust and transparency, workflow integration, query formulation support, technical proficiency, and organizational culture.
-    \item \textbf{Evidence-Based Design Guidelines}: We derived 12 actionable guidelines covering usability, adaptability, and usefulness.
-\end{enumerate}
-}
+Our formative study with 81 participants across nine stakeholder roles produced a corpus of 5{,}916 natural-language questions across four elicitation stages, annotated with a six-dimensional taxonomy (Domain, Query Type, Intent, Temporal, Spatial, Complexity). Statistical analysis revealed a critical \textbf{context gap}: when stripped of technical knowledge, stakeholders ask fundamentally different questions---40.0\% off-ontology in Stage~1 vs.\ 16.3\% in Stage~2---focusing on reasoning and well-being rather than raw sensor values. Query novelty declines with context (89.7\% $\rightarrow$ 81.1\%), confirming anchoring effects. Role-based analysis ($\chi^2(152)=519.9$, $p < 10^{-41}$) confirms that domain focus systematically varies across the nine stakeholder types, motivating persona-aware system design.
 
-\subsection{Closing Remarks}
-The convergence of semantic web technologies, natural language processing, and IoT infrastructure creates unprecedented opportunities for human-building interaction. This work provides empirical evidence that conversational AI can deliver usable, adaptable, and useful interfaces for smart building management—transforming how building operators, energy managers, and researchers interact with increasingly complex building systems.
+Topic prioritisation from 75 rankers identified Indoor Temperature Control (Borda~1163) and Air Quality \& Ventilation (1103) as top priorities, with overall weak inter-user agreement ($W=0.255$) reinforcing the need for personalised responses. An evidence-based capability matrix derived from corpus volume, analytical density, and priority rankings defined the P1 requirements that directly informed OntoSage's agent architecture.
 
+We deployed OntoSage at a live academic testbed (680 sensors, MySQL) and adapted it to two synthetic building environments (329 sensors, TimescaleDB; 597 sensors, Cassandra) to assess portability, then conducted a 15-participant evaluation at the live site. The system achieved 98.3\% task completion, a mean SUS score of 84.5 (above the ``excellent'' threshold), and 93.3\% adoption intent. Cross-building adaptation required 66--68 person-hours---a \textbf{75\% reduction} relative to traditional approaches that require 184--300+ person-hours for NLU retraining and bespoke analytics development---with zero changes to the analytics or frontend layers. This scalability result directly validates the T0--T3 workflow design: the semantic standards layer absorbs building heterogeneity, making conversational building AI a practical, not merely a prototype, deployment target.
+
+We also identified key challenges: 24.0\% of stakeholder questions fall outside current ontology coverage, ambiguous multi-entity queries require better clarification mechanisms, and analytical response latency needs improvement. Critically, stale ontology-to-database mappings present a primary integration bottleneck during cross-building adaptation---when a sensor entity in the TTL references a decommissioned time-series UUID, the SPARQL layer resolves correctly but the SQL layer returns empty results silently. A pre-flight UUID cross-validation step in the T1 workflow addresses this in our implementation and we recommend it as a standard practice for future deployments. Overall, our results demonstrate the feasibility of zero-knowledge conversational interfaces for smart buildings and offer an evidence-based design methodology---from corpus construction through capability matrix to agent architecture---for those building similar systems.
+
+
+%% ============================================================
+%% ACKNOWLEDGMENTS
+%% ============================================================
 \section*{Acknowledgments}
-We thank the facility managers, energy officers, maintenance staff, building occupants, and researchers who participated in our evaluation studies. This work was supported by [FUNDING SOURCES TO BE ADDED]. We also acknowledge the Brick Consortium for developing and maintaining the BrickSchema ontology.
+We thank the facility managers, energy officers, building occupants, and researchers who participated in our studies. We acknowledge the Brick Consortium for maintaining the Brick Schema ontology. Ethics approval: Cardiff University SREC \mbox{COMSC/Ethics/2025/044b}.
+
+%% ============================================================
+%% APPENDICES
+%% ============================================================
+\appendix
+
+\section{Sample Stakeholder Questions from the Pre-Development Corpus}
+\label{app:sample-questions}
+
+Table~\ref{tab:sample-questions} presents 24 representative questions drawn from the classified corpus, selected to span all eight primary building domains, all four elicitation stages (S1--S4), and all three complexity levels (L1 Lookup, L2 Aggregation, L3 Multi-step). Questions are reproduced verbatim with minor punctuation normalisation. The full corpus of 5,916 questions with six-dimensional classifications is available as supplementary material.
+
+\begin{table}[t]
+\centering
+\caption{Representative questions from the pre-development corpus (N\,=\,5,916). Stage: S1\,=\,Zero-context, S2\,=\,Sensor-aware, S3\,=\,Scenario, S4\,=\,Goal-oriented. Complexity: L1\,=\,Lookup, L2\,=\,Aggregation, L3\,=\,Multi-step.}
+\label{tab:sample-questions}
+\scriptsize
+\begin{tabular}{@{}p{0.16\linewidth}p{0.06\linewidth}p{0.06\linewidth}p{0.65\linewidth}@{}}
+\toprule
+\textbf{Domain} & \textbf{Stage} & \textbf{Cpx.} & \textbf{Sample question} \\
+\midrule
+\multirow{3}{*}{Energy \& Power}
+  & S1 & L1 & Are the lights using too much electricity? \\
+  & S3 & L2 & How much standby load do the vending machines draw when the building is closed on weekends? \\
+  & S4 & L3 & Could you send a priority alert to the facilities team if any standby loads exceed a set threshold? \\
+\midrule
+\multirow{3}{*}{Air Quality}
+  & S1 & L1 & Are there any sudden drops in air quality anywhere in the building? \\
+  & S3 & L2 & How much CO\textsubscript{2} is in the meeting room? \\
+  & S4 & L3 & Does CO\textsubscript{2} spike in meeting rooms at 2:00\,PM, and is that why everyone feels tired? \\
+\midrule
+\multirow{3}{*}{Thermal Comfort}
+  & S1 & L1 & What is the temperature in this room right now? \\
+  & S3 & L2 & Can the temperature drop automatically over time, since the room heats up during the day? \\
+  & S4 & L1 & How does the building manage airflow to improve comfort? \\
+\midrule
+\multirow{3}{*}{Lighting}
+  & S1 & L1 & Can you turn off the lights in the conference room? \\
+  & S2 & L1 & Is artificial lighting being overused despite available daylight? \\
+  & S4 & L3 & If the Glare Index is too high, can the building suggest a different desk rather than just lowering the blinds? \\
+\midrule
+\multirow{3}{*}{Safety \& Compliance}
+  & S1 & L1 & Can you guide me to the nearest safe exit? \\
+  & S2 & L1 & Are PM\textsubscript{2.5} levels safe inside the building? \\
+  & S4 & L3 & Could the building alert occupants if pollution rises too high and ventilate until safe to return? \\
+\midrule
+\multirow{3}{*}{Security \& Access}
+  & S1 & L1 & Does this building have onsite round-the-clock security personnel? \\
+  & S2 & L1 & Can the sensors close or open doors and windows? \\
+  & S3 & L2 & When tracking visitor count, can the system log who is visiting and when, without people knowing? \\
+\midrule
+\multirow{3}{*}{Occupancy \& Space}
+  & S1 & L1 & Can I get notifications if amenities are crowded? \\
+  & S4 & L1 & Can people receive real-time alerts when a workspace is noisier than usual? \\
+  & S4 & L3 & Could the building analyse lift occupancy during peak times and suggest routes to underutilised areas? \\
+\midrule
+\multirow{3}{*}{Cross-domain}
+  & S1 & L1 & What happens if a smart system isn't working properly? \\
+  & S2 & L1 & Are there any unusual patterns in movement throughout the building? \\
+  & S4 & L1 & Are PMV/PPD scores optimal today? \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Representative OntoSage Query--Response Interactions}
+\label{app:interactions}
+
+The following four interactions were drawn verbatim from the corpus-level evaluation log (\texttt{survey\_evaluation\_results.csv}), produced by submitting all 5,916 Phase~1 questions to the live Building~A deployment (Section~\ref{sec:corpus-coverage}). They illustrate the four main response outcome classes. Timestamps reflect the corpus submission run; sensor identifiers are as returned by the deployed system.
+
+\subsection*{A: Grounded Response --- sensor data successfully retrieved}
+
+\noindent\textbf{User:} \emph{``How much CO\textsubscript{2} is present inside the building?''}
+
+\noindent\textbf{OntoSage} (latency\,=\,7.8\,s):
+\begin{quote}\small
+I analysed 1,000 readings from \textbf{CO\textsubscript{2} Level Sensor 5.01} to summarise the indoor CO\textsubscript{2} level.
+
+Right now, the building's CO\textsubscript{2} level is \textbf{808\,ppm} (measured at 2026-04-16 03:52:51). Over the full set of readings, the average was \textbf{793.16\,ppm}, with a median of 778.50\,ppm. Levels ranged from 400\,ppm to 1,199\,ppm, with a standard deviation of 230.24\,ppm, indicating moderate variation over time.
+
+\textit{You might also ask:} Plot this data? $\mid$ Check compliance against ASHRAE? $\mid$ Compare with another zone?
+\end{quote}
+
+\subsection*{B: Informational Response --- general domain knowledge}
+
+\noindent\textbf{User:} \emph{``Are there features that promote interaction with green or natural elements?''}
+
+\noindent\textbf{OntoSage} (latency\,=\,5.0\,s):
+\begin{quote}\small
+This is a general question about biophilic or nature-integrated design features. In a smart building context, examples include indoor plants or green walls, access to daylight, operable windows, views of nature, natural materials, water features, and outdoor communal spaces such as terraces or gardens.
+\end{quote}
+
+\subsection*{C: Disambiguation Response --- underspecified query}
+
+\noindent\textbf{User:} \emph{``Can I check if fresh air intake is sufficient in this area?''}
+
+\noindent\textbf{OntoSage} (latency\,=\,5.1\,s):
+\begin{quote}\small
+Which area and check would you like? For example: 1)~a specific zone or room, 2)~a floor, or 3)~the whole building. Also, should I assess sufficiency against ventilation or air quality standards, or by current intake sensor readings?
+\end{quote}
+
+\subsection*{D: Boundary Response --- graceful out-of-scope refusal}
+
+\noindent\textbf{User:} \emph{``Have there been any continuous noise disturbances recently?''}
+
+\noindent\textbf{OntoSage} (latency\,=\,6.3\,s):
+\begin{quote}\small
+I could not find this information in the ontology.
+
+\textit{You might also ask:} Show the full anomaly report? $\mid$ Check compliance? $\mid$ View historical trend?
+\end{quote}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
