@@ -298,3 +298,19 @@ outputs/
 blobs/
 paper/
 .paper/
+##############################
+# Paper: explicit exclusions within force-tracked paper/ subtree
+# (build artifacts and compiled output — never commit these)
+##############################
+paper/research paper.aux
+paper/research paper.bbl
+paper/research paper.blg
+paper/research paper.log
+paper/research paper.out
+paper/research paper.pdf
+paper/post_design_survey/generate_session_logs.py
+paper/post_design_survey/sessions/
+##############################
+# Claude Code local settings (machine-specific, not for sharing)
+##############################
+.claude/settings.local.json
