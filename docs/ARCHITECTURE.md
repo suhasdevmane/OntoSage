@@ -1,90 +1,624 @@
 # System Architecture
 
-**OntoSage** employs a modular, microservices-based architecture designed for **Easy-Deploy** scalability and **Zero-Knowledge** interaction. The system is orchestrated using **LangGraph** to manage state and interactions between specialized AI agents, enabling it to adapt to **persona-agnostic multi-objective goals**.
+OntoSage is built around three core ideas: **ontology-first knowledge representation**, **agentic pipeline execution**, and **zero-knowledge interaction**. This document describes every component, how they connect, and the key design decisions behind the architecture.
 
-## High-Level Overview
+---
 
-The system follows a hub-and-spoke model where the **Orchestrator** serves as the central cognitive hub, coordinating requests from the **Open WebUI** and delegating tasks to specialized services and agents.
+## High-Level Design
 
-```mermaid
-graph TD
-    User[User] -->|HTTP/WS| Frontend["Open WebUI"]
-    Frontend -->|REST API| Orchestrator["Orchestrator (FastAPI/LangGraph)"]
-    
-    subgraph "Agentic Core"
-        Orchestrator -->|Delegates| DialogueAgent["Dialogue Agent"]
-        Orchestrator -->|Delegates| SPARQLAgent["SPARQL Agent"]
-        Orchestrator -->|Delegates| SQLAgent["SQL Agent"]
-        Orchestrator -->|Delegates| AnalyticsAgent["Analytics Agent"]
-        Orchestrator -->|Delegates| VisAgent["Visualization Agent"]
-    end
-    
-    subgraph "Memory System"
-        DialogueAgent -->|Retrieve History| Qdrant["Qdrant (User Memory)"]
-    end
+OntoSage follows a **hub-and-spoke** orchestration model. Every user request enters a single FastAPI application (the Orchestrator), which runs a **LangGraph state machine** that routes the request through a chain of specialised agents. No agent communicates directly with another; all coordination happens through shared state.
 
-    subgraph "Support Services"
-        SPARQLAgent -->|Query| RAGService["RAG Service"]
-        RAGService -->|Semantic Search| GraphDB["GraphDB (Similarity Index)"]
-        
-        SQLAgent -->|Query| SQLDB[("MySQL/PostgreSQL")]
-        
-        AnalyticsAgent -->|Execute| CodeExecutor["Code Executor (Sandbox)"]
-        
-        Orchestrator -->|State| Redis["Redis Cache"]
-    end
-    
-    subgraph "Model Providers"
-        Orchestrator -.->|Inference| Ollama["Ollama (Local LLM)"]
-        Orchestrator -.->|Inference| OpenAI["OpenAI (Cloud LLM)"]
-    end
+```
+User → Open WebUI → Orchestrator (LangGraph) → [Agent Chain] → Response
+                            ↕                         ↕
+                          Redis                  GraphDB / MySQL / PostgreSQL
 ```
 
-## Core Components
+The design separates **knowledge** (what sensors exist, where they are, what relationships they have) from **data** (what values those sensors have recorded). Knowledge lives in GraphDB as an RDF ontology. Data lives in relational stores. The pipeline bridges them automatically.
 
-### 1. Orchestrator (The Cognitive Brain)
-- **Technology**: Python, FastAPI, LangGraph.
-- **Role**: Manages the conversation flow, maintains context, and routes user intents to the appropriate agent. It implements the **Zero-Knowledge** logic by translating vague user requests into specific technical actions.
-- **Key Features**:
-  - **Memory Management**: Queries **Qdrant** to retrieve relevant past conversation history, ensuring continuity across sessions.
-  - **Redis Caching**: Implements semantic caching for SPARQL and SQL queries (1-hour TTL) and persists active conversation state.
-  - **API Standardization**: All endpoints return a uniform JSON structure (`{ success, data, error }`).
-- **Agents**:
-  - **Dialogue Agent**: Handles general conversation, intent classification, and memory retrieval.
-  - **SPARQL Agent**: Translates natural language to SPARQL queries for ontology interaction.
-  - **SQL Agent**: Generates SQL queries for time-series data retrieval. **Hardened** to allow only `SELECT` statements and prevent injection.
-  - **Analytics Agent**: Generates Python code to analyze data. Uses **Deterministic Templates** for common tasks to ensure reliability.
-  - **Visualization Agent**: Creates Plotly charts for data visualization.
+---
 
-### 2. RAG Service (GraphDB Native)
-- **Technology**: Python, GraphDB Similarity Index.
-- **Role**: Provides semantic search capabilities over the building ontology.
-- **Mechanism**: Instead of using an external vector DB for documents, it leverages **GraphDB's internal Similarity Indexing**. This allows it to find ontology entities (e.g., `brick:Temperature_Sensor`) that are semantically similar to user terms (e.g., "heat detector") directly within the Knowledge Graph.
+## Component Map
 
-### 3. Qdrant (Long-Term Memory)
-- **Technology**: Qdrant Vector Database.
-- **Role**: Stores vector embeddings of **User Conversation History**.
-- **Usage**: When a user sends a new request, the system searches Qdrant for similar past interactions to provide context-aware responses (e.g., remembering that the user previously asked about "Room 101").
+```mermaid
+graph LR
+    subgraph "Frontend"
+        OW["Open WebUI<br/>:3000"]
+    end
 
-### 4. Code Executor (Safe Execution)
-- **Technology**: Python, Docker/Sandbox.
-- **Role**: Executes Python code generated by the Analytics Agent in an isolated environment to prevent security risks. It returns the output (text or image) to the Orchestrator.
+    subgraph "Orchestrator — :8000"
+        FW["FastAPI + Auth"]
+        LG["LangGraph State Machine"]
+        DA["Dialogue Agent"]
+        SPA["SPARQL Agent"]
+        SQLA["SQL Agent"]
+        ANA["Analytics Agent"]
+        VISA["Visualization Agent"]
+        REP["Report Agent"]
+        ANO["Anomaly Agent"]
+        PLA["Planner Agent"]
+        EXP["Export Agent"]
+    end
 
-### 5. Open WebUI (Multimodal Interface)
-- **Technology**: Svelte, Python.
-- **Role**: Provides a rich chat interface with integrated voice support (STT/TTS), markdown rendering, and interactive chart display. It communicates with the backend via REST APIs.
+    subgraph "Knowledge"
+        RAGS["RAG Service :8001"]
+        GDB["GraphDB :7200"]
+    end
 
-## Data Layer
+    subgraph "Storage"
+        MySQL["MySQL :3306"]
+        PG["PostgreSQL :5433"]
+        Redis["Redis :6379"]
+        Mongo["MongoDB :27017"]
+    end
 
-- **Redis**: Stores active conversation state and agent scratchpads.
-- **Qdrant**: Stores long-term user conversation history.
-- **GraphDB**: Stores the RDF Knowledge Graph (Ontology) and handles Semantic Similarity Search.
-- **MySQL / PostgreSQL**: Stores structured building data (sensors, time-series telemetry).
+    subgraph "Compute"
+        CE["Code Executor :8002"]
+    end
 
-## Deployment & Infrastructure
+    subgraph "LLM"
+        OAI["OpenAI API"]
+        OLL["Ollama :11434"]
+    end
 
-- **Docker Compose**: Orchestrates the containerized services for an **Easy-Deploy** experience.
-- **Monitoring**: Prometheus collects metrics, and Grafana provides dashboards for system health and performance.
-- **Model Serving**: 
-  - **Local**: Ollama serves open-source models (e.g., DeepSeek-R1, Llama 3) locally for privacy.
-  - **Cloud**: Direct integration with OpenAI API for GPT-4 models.
+    OW --> FW
+    FW --> LG
+    LG --> DA
+    DA --> SPA
+    DA --> REP
+    DA --> ANO
+    DA --> PLA
+    SPA --> SQLA
+    SQLA --> ANA
+    ANA --> VISA
+    SPA --> RAGS
+    RAGS --> GDB
+    SPA --> GDB
+    SQLA --> MySQL
+    SQLA --> PG
+    ANA --> CE
+    VISA --> CE
+    LG --> Redis
+    FW --> PG
+    FW --> Mongo
+    LG --> OAI
+    LG --> OLL
+```
+
+---
+
+## The Orchestrator
+
+**File:** `orchestrator/main.py`, `orchestrator/workflow.py`
+
+The Orchestrator is the only service that users and the frontend interact with directly. It is responsible for:
+
+- Accepting and validating all incoming requests (REST, WebSocket)
+- Managing authentication and RBAC enforcement
+- Maintaining conversation state in Redis
+- Running the LangGraph agent pipeline
+- Routing to the correct LLM provider
+
+### FastAPI Application
+
+The application is built with FastAPI and runs on port 8000. Key endpoint groups:
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/health` | GET | Service health — returns status of all dependencies |
+| `/chat` | POST | Single-turn chat request |
+| `/ws/{session_id}` | WebSocket | Streaming multi-turn conversation |
+| `/v1/chat/completions` | POST | OpenAI-compatible endpoint for Open WebUI |
+| `/api/v1/buildings` | GET | List registered buildings |
+| `/api/v1/sensors` | GET | Sensor discovery |
+| `/docs` | GET | Interactive Swagger API documentation |
+
+All data endpoints require authentication and enforce RBAC. The health endpoint is public and is used by Docker health checks and monitoring tools.
+
+### Response Envelope
+
+Every API response follows a consistent envelope:
+
+```json
+{
+  "status": "success",
+  "data": { ... },
+  "trace_id": "4a7f2b1c-..."
+}
+```
+
+On error:
+
+```json
+{
+  "status": "error",
+  "message": "Human-readable description of what went wrong",
+  "trace_id": "4a7f2b1c-..."
+}
+```
+
+Every request is assigned a `trace_id` at the middleware layer. This ID appears in all log lines for that request, enabling end-to-end distributed tracing.
+
+---
+
+## The LangGraph State Machine
+
+**File:** `orchestrator/workflow.py`
+
+The heart of OntoSage is a directed state graph built with LangGraph. Every node is a wrapped agent function. Every edge is a conditional routing decision.
+
+### Graph Structure
+
+```
+START → dialogue → [conditional routing] → sparql / sql / analytics /
+                                            report / anomaly / planner /
+                                            export / visualization
+                                          → response → END
+```
+
+The entry node is always `dialogue`. After intent classification, `_route_from_dialogue()` selects the next node. Most complex paths are chains: SPARQL → SQL → Analytics → Visualization → Response.
+
+### Conversation State
+
+All agents share a single `ConversationState` object (defined in `shared/models.py`). This is the only communication channel between nodes.
+
+```python
+class ConversationState(BaseModel):
+    conversation_id: str
+    user_id: str
+    building_id: Optional[str]
+    messages: List[Message]
+    intent: Optional[str]
+    intermediate_results: Dict[str, Any]  # 16-field shared scratchpad
+    # ... additional fields
+```
+
+The `intermediate_results` dict passes structured data between nodes. Reserved keys:
+
+| Key | Set by | Read by |
+|---|---|---|
+| `intent` | Dialogue | Router, all agents |
+| `entities` | Dialogue | SPARQL, SQL |
+| `time_range` | Dialogue | SQL |
+| `sparql_results` | SPARQL | SQL, Response |
+| `uuids` | SPARQL | SQL |
+| `sql_data` | SQL | Analytics |
+| `analytics_output` | Analytics | Visualization, Response |
+| `visualization_path` | Visualization | Response |
+| `error` | `_safe_node` | Response |
+
+### Safe Node Wrapper
+
+Every node is wrapped with `_safe_node()`, which catches all exceptions, logs them with context (intent, conversation ID, node name), sets the `error` key in state, and returns state so the pipeline continues to the response node rather than crashing.
+
+```python
+workflow.add_node("sparql", self._safe_node(self._sparql_node, "sparql"))
+```
+
+---
+
+## The 14 Intent Types
+
+The Dialogue Agent classifies every query into one of 14 intent types. The routing decision is determined entirely by the classified intent.
+
+| Intent | Route | Description |
+|---|---|---|
+| `sensor_data` | sparql → sql → response | Current or recent sensor readings |
+| `analytics` | sparql → sql → analytics → response | Statistical analysis, averages, trends |
+| `discovery` | sparql → response | Explore available sensors, zones, devices |
+| `report` | sparql → sql → report → response | Structured building report |
+| `anomaly` | sparql → sql → anomaly → response | Out-of-range / spike detection |
+| `comparison` | sparql → sql → analytics → response | Compare zones, devices, or time periods |
+| `export` | sparql → sql → export → response | Download data as CSV / JSON / HTML |
+| `recommend` | sparql → sql → response | HVAC, energy, and comfort recommendations |
+| `planner` | planner → response | Multi-step orchestrated tasks |
+| `forecast` | sparql → sql → analytics → response | Predictions and forward projections |
+| `control` | response | Not yet supported — informs the user |
+| `general` | response | Greetings, general knowledge questions |
+| `clarification` | response | Query too vague — asks follow-up question |
+| `alert` | sparql → sql → anomaly → response | Threshold-based alerting |
+
+---
+
+## Agent Details
+
+### Dialogue Agent
+
+**File:** `orchestrator/agents/dialogue_agent.py`
+
+The first node in every pipeline execution. Its responsibilities:
+
+1. **Context retrieval** — Calls the RAG Service to fetch relevant ontology context (entity labels, types, triples) for the user's query
+2. **Intent classification** — Sends the query + context to the LLM, receives a structured JSON response containing `intent`, `entities`, `time_range`, and other metadata
+3. **Redis caching** — Caches intent classification results by query hash (1-hour TTL) to avoid redundant LLM calls
+4. **Response formatting** — For `general` and `clarification` intents, composes and returns the final response directly
+
+The intent classification prompt includes persona-aware system messages that adapt the response style based on the inferred user role.
+
+### SPARQL Agent
+
+**File:** `orchestrator/agents/sparql_agent.py`
+
+Responsible for translating classified intents into SPARQL queries against the GraphDB ontology.
+
+Pipeline:
+
+1. Calls RAG Service (`/graphdb/retrieve`) with the user's entities to get ontology context: prefixes, entity IRIs, nearby triples, labels
+2. Constructs a SPARQL generation prompt with the retrieved context
+3. Sends to LLM → receives a SPARQL query string
+4. Validates SPARQL syntax; repairs common issues (missing prefixes, bad brackets)
+5. Executes against GraphDB via HTTP POST
+6. On empty results: triggers semantic fallback — reasons over retrieved triples directly
+7. For analytics queries: extracts `uuid` values via `ashrae:hasExternalReference → ref:hasTimeseriesId` pattern
+
+Required SPARQL prefixes are always included:
+
+```sparql
+PREFIX rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX brick:  <https://brickschema.org/schema/Brick#>
+PREFIX bacnet: <http://data.ashrae.org/bacnet/#>
+PREFIX s223:   <http://data.ashrae.org/standard223#>
+```
+
+### SQL Agent
+
+**File:** `orchestrator/agents/sql_agent.py`
+
+Fetches time-series sensor readings from the appropriate database backend.
+
+- Reads `uuids` from `intermediate_results` (set by SPARQL Agent)
+- Routes to the correct storage adapter based on building ID and `config/database_registry.yaml`
+- Generates SQL queries that unpivot wide-format sensor tables (UUID columns, `Datetime` row index)
+- Enforces SELECT-only validation — blocks `INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `CREATE`
+- Applies time range filters from `intermediate_results["time_range"]`
+- Returns up to 1,000 rows in standardised format: `[{timestamp, uuid, value}]`
+
+### Analytics Agent
+
+**File:** `orchestrator/agents/analytics_agent.py`
+
+Generates Python analytics code and executes it in the Code Executor sandbox.
+
+- Receives standardised sensor data from the SQL Agent
+- Checks deterministic templates for common operations (min/max/avg/trend/latest/count)
+- For complex queries: sends data shape + question to LLM, receives Python code
+- Submits code to Code Executor via `POST /execute`
+- Retries up to 3 times on error, passing the error back to the LLM for auto-correction
+- Returns `formatted_response` (text summary) and optional plot file path
+- Replaces UUID identifiers in output with human-readable sensor labels
+
+### Visualization Agent
+
+**File:** `orchestrator/agents/visualization_agent.py`
+
+Generates and renders charts when explicitly requested or when analytics didn't produce a plot.
+
+- Supports: line, bar, scatter, histogram, heatmap, pie, box charts
+- Sends chart specification to LLM, receives matplotlib/plotly code
+- Executes via Code Executor
+- Returns base64-encoded image embedded in the response, plus a plain-text description
+
+### Report Agent
+
+**File:** `orchestrator/agents/report_agent.py`
+
+Generates structured narrative reports combining metadata, sensor readings, and statistical summaries.
+
+- Detects report type from query (summary, energy, comfort, maintenance, weekly)
+- Fetches sensor data and computes descriptive statistics
+- Calls LLM to produce prose narrative with section headings
+- Returns a formatted markdown document
+
+### Anomaly Agent
+
+**File:** `orchestrator/agents/anomaly_agent.py`
+
+Detects out-of-range readings using three complementary methods:
+
+1. **Threshold detection** — Compares values against comfort range (temperature: 18–26°C, CO₂: 400–1000 ppm, etc.)
+2. **Z-score detection** — Flags readings more than N standard deviations from the mean
+3. **Spike detection** — Identifies rapid consecutive changes (configurable derivative threshold)
+
+Anomalies from all three methods are merged and deduplicated. A narrative summary is generated by the LLM.
+
+### Planner Agent
+
+**File:** `orchestrator/agents/planner_agent.py`
+
+Handles complex multi-step queries by decomposing them into an ordered execution plan.
+
+- Sends the user query to the LLM with a list of available agents
+- Receives a structured `ExecutionPlan` (list of `PlanStep` objects, each specifying an agent and parameters)
+- Executes steps sequentially, passing results forward
+- Falls back to a minimal default plan if LLM planning fails
+
+### Export Agent
+
+Routes to the `export` node when intent is `export`. Generates structured outputs in the user's requested format (CSV, JSON, HTML, Markdown) from the SQL data.
+
+---
+
+## RAG Service
+
+**File:** `rag-service/graphdbRAG/`  
+**Port:** 8001
+
+The RAG (Retrieval Augmented Generation) Service is a standalone FastAPI application that bridges the SPARQL Agent with the GraphDB knowledge graph.
+
+### How It Works
+
+When a user asks about "temperature in Zone 5", the system needs to know what the correct RDF entity URI is for "Zone 5" and which sensor types measure temperature. The RAG Service answers this:
+
+1. **Query cleaning** — Normalises the user's natural language query
+2. **Vector similarity search** — Uses GraphDB's built-in Similarity Plugin to find ontology entities whose textual representation (label + type name + entity name) matches the query
+3. **Graph traversal** — Follows RDF edges up to N hops from each matched entity, collecting nearby triples
+4. **Context assembly** — Returns `prefixes`, `entities`, `triples`, `labels`, `summary`, and metadata counts
+
+The SPARQL Agent uses this context to write accurate, schema-aware SPARQL queries without needing to know the ontology structure in advance.
+
+### API
+
+```
+POST /graphdb/retrieve
+{
+  "query": "temperature sensors in zone 5",
+  "top_k": 10,
+  "hops": 2,
+  "min_score": 0.5
+}
+```
+
+Response:
+```json
+{
+  "prefixes": "PREFIX brick: <...>",
+  "entities": ["http://building.org/Zone_5_01", ...],
+  "triples": ["<Zone_5_01> a brick:HVAC_Zone .", ...],
+  "labels": {"Zone_5_01": "Zone 5.01"},
+  "summary": "Found 3 entities related to temperature in Zone 5...",
+  "metadata": {"entity_count": 3, "triple_count": 47}
+}
+```
+
+---
+
+## Multi-Building Storage Adapters
+
+**File:** `orchestrator/services/adapters/`  
+**Config:** `config/database_registry.yaml`
+
+OntoSage supports multiple buildings, each with its own database backend. The `AdapterRegistry` maps `building_id` to the correct storage adapter at startup.
+
+### Supported Backends
+
+| Adapter | Technology | Use Case |
+|---|---|---|
+| `MySQLAdapter` | MySQL / MariaDB | Traditional BMS sensor databases |
+| `PostgreSQLAdapter` | PostgreSQL | Modern building data platforms |
+| `TimescaleDBAdapter` | TimescaleDB | High-frequency sensor data (extends PostgreSQL) |
+| `InfluxDBAdapter` | InfluxDB | IoT platforms, energy meters |
+| `MongoDBAdapter` | MongoDB | Flexible schema sensor stores |
+| `SQLiteAdapter` | SQLite | Development, single-building prototypes |
+| `CassandraAdapter` | Apache Cassandra | Large-scale distributed sensor networks |
+| `RedisTimeSeriesAdapter` | Redis TimeSeries | Real-time streaming data |
+
+All adapters implement the same async interface:
+
+```python
+async def fetch(self, uuids: List[str], start: datetime, end: datetime) -> Dict
+async def health_check(self) -> bool
+```
+
+This means the SQL Agent never needs to know which backend it is querying.
+
+### Registry Configuration
+
+`config/database_registry.yaml`:
+```yaml
+buildings:
+  bldg1:
+    adapter: mysql
+    host: mysql-bldg1
+    port: 3306
+    database: sensor_data
+    table: sensor_readings
+  bldg2:
+    adapter: timescaledb
+    host: timescale-bldg2
+    port: 5432
+    database: telemetry
+    table: measurements
+```
+
+---
+
+## Authentication and RBAC
+
+**File:** `orchestrator/auth_manager.py`, `orchestrator/middleware/rbac.py`
+
+### Authentication
+
+Passwords are hashed with **Argon2id** (winner of the Password Hashing Competition). Legacy SHA-256 hashes are transparently migrated to Argon2id on first successful login.
+
+Sessions are 32-byte cryptographically random tokens stored in Redis with a **7-day TTL**. Every API request must present this token in the `Authorization: Bearer <token>` header.
+
+### Role-Based Access Control
+
+Six roles are defined, each with a specific permission set:
+
+| Role | Typical User | Key Permissions |
+|---|---|---|
+| `admin` | System administrator | All 20 permissions |
+| `facility_manager` | Facilities team | sensor:read, analytics:read, report:read, config:read, building:read |
+| `analyst` | Data scientist | sensor:read, analytics:read, export:read, trend:read |
+| `operator` | BMS operator | sensor:read, anomaly:read, alert:read, config:read |
+| `occupant` | Building user | sensor:read (limited), metadata:read |
+| `readonly` | Guest / unauthenticated | metadata:read, system:health only |
+
+The `require_permission()` FastAPI dependency enforces permissions at the endpoint level. Attempting to access a resource without the required permission returns HTTP 403.
+
+---
+
+## GraphDB Knowledge Graph
+
+GraphDB is the semantic backbone of OntoSage. It stores the building ontology as RDF triples and provides:
+
+- **SPARQL endpoint** at `http://localhost:7200/repositories/{repo}`
+- **Similarity Plugin** for vector-based entity search over ontology text
+- **REST API** for repository management
+
+### Supported Ontology Schemas
+
+| Schema | Namespace | Use |
+|---|---|---|
+| Brick Schema | `https://brickschema.org/schema/Brick#` | Primary — sensors, equipment, locations |
+| ASHRAE 223 | `http://data.ashrae.org/standard223#` | External references, time-series links |
+| BACnet | `http://data.ashrae.org/bacnet/#` | Device identifiers |
+| RealEstateCore | `https://w3id.org/rec/` | Real estate-focused building models |
+
+### Linking Ontology to Time-Series
+
+The critical pattern that enables sensor data retrieval:
+
+```turtle
+:Air_Temperature_Sensor_5_01
+    a brick:Air_Temperature_Sensor ;
+    rdfs:label "Air Temperature Sensor 5.01" ;
+    brick:isPartOf :Zone_5_01 ;
+    ashrae:hasExternalReference [
+        ref:hasTimeseriesId "uuid-abc-123-def" ;
+        ref:storedAt "mysql"
+    ] .
+```
+
+The SPARQL Agent always queries for `ref:hasTimeseriesId` values when analytics are needed. This UUID is the column name in the MySQL sensor table.
+
+---
+
+## Data Flow Summary
+
+```
+User query
+    │
+    ▼
+Dialogue Agent
+    ├─ Retrieve RAG context from GraphDB similarity index
+    ├─ Classify intent (1 of 14 types)
+    ├─ Extract entities and time range
+    └─ Route to appropriate agent chain
+         │
+         ▼
+SPARQL Agent (if metadata/analytics intent)
+    ├─ Build SPARQL using RAG context
+    ├─ Execute against GraphDB
+    ├─ Extract sensor UUIDs and storage backend
+    └─ Pass to SQL Agent
+         │
+         ▼
+SQL Agent (if analytics needed)
+    ├─ Route to correct storage adapter
+    ├─ Query time-series data by UUID
+    ├─ Validate and sanitise SQL
+    └─ Return standardised [{timestamp, uuid, value}]
+         │
+         ▼
+Analytics / Report / Anomaly Agent
+    ├─ Generate Python code or apply template
+    ├─ Execute in Code Executor sandbox
+    ├─ Retry on error (up to 3 times)
+    └─ Produce text summary + optional plot
+         │
+         ▼
+Visualization Agent (if plot requested)
+    ├─ Generate chart code
+    ├─ Execute in sandbox
+    └─ Return base64 image
+         │
+         ▼
+Response Node
+    ├─ Merge results from all agents
+    ├─ Replace UUIDs with human-readable labels
+    ├─ Format persona-aware markdown response
+    └─ Attach media (charts, exports)
+         │
+         ▼
+User receives answer
+```
+
+---
+
+## LLM Provider Abstraction
+
+**File:** `orchestrator/llm_manager.py`
+
+The `LLMManager` class abstracts all LLM calls. The active provider is selected by the `MODEL_PROVIDER` environment variable:
+
+| Value | Provider | Default Model | Notes |
+|---|---|---|---|
+| `openai` | OpenAI API | `gpt-4o-mini` | Requires `OPENAI_API_KEY` |
+| `local` | Ollama | `deepseek-r1:32b` | Requires GPU; runs entirely offline |
+| `cloud` | Ollama Cloud | configurable | Managed Ollama hosting |
+
+All agents call `llm_manager.generate(prompt)` — they are completely unaware of which provider is active. Switching providers requires only changing the `MODEL_PROVIDER` environment variable and restarting the orchestrator.
+
+---
+
+## Caching Strategy
+
+**File:** `orchestrator/services/` (Redis integration throughout)
+
+Redis is used for three distinct caching layers:
+
+| Layer | Key | TTL | Benefit |
+|---|---|---|---|
+| **Conversation state** | `conv:{conversation_id}` | 1 hour | Avoids re-loading state on every turn |
+| **Intent classification** | `intent:{hash(query)}` | 1 hour | Skips LLM call for repeated queries |
+| **SPARQL results** | `sparql:{hash(query+entities)}` | 1 hour | Skips GraphDB query for identical requests |
+| **Session tokens** | `session:{token}` | 7 days | Authentication state |
+
+Cache hits are logged with `[cache_hit]` markers, visible in the orchestrator logs.
+
+---
+
+## Code Executor Sandbox
+
+**File:** `code-executor/sandbox.py`  
+**Port:** 8002
+
+The Analytics and Visualization agents generate Python code dynamically. This code is executed in an isolated container environment with:
+
+- **No network access** — Cannot make outbound HTTP calls
+- **Read-only filesystem** — Except for the `/outputs` volume
+- **CPU and memory limits** — Enforced by Docker resource constraints
+- **Allowed libraries only** — pandas, numpy, matplotlib, seaborn, plotly, scipy
+- **Execution timeout** — Configurable, default 30 seconds
+
+The API is simple:
+
+```
+POST /execute
+{ "code": "import pandas as pd\nprint(pd.Series([1,2,3]).mean())" }
+```
+
+Response:
+```json
+{
+  "stdout": "2.0\n",
+  "stderr": "",
+  "success": true,
+  "plots": []
+}
+```
+
+---
+
+## Monitoring and Observability
+
+Every component exposes structured logging with:
+- Trace IDs on every request
+- Node entry/exit logging with intent and conversation context
+- Cache hit/miss markers
+- Timing information for LLM calls and database queries
+
+For production deployments, Prometheus metrics and Grafana dashboards are available via the `--profile monitoring` Docker Compose profile. See the [Runbook](RUNBOOK.md) for configuration details.
