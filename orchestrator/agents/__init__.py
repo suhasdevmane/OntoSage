@@ -1,10 +1,10 @@
 """Agents package for OntoSage 2.0 Orchestrator"""
 
-from .dialogue_agent import DialogueAgent
-from .sparql_agent import SPARQLAgent
-from .semantic_ontology_agent import SemanticOntologyAgent
-from .sql_agent import SQLAgent
 from .analytics_agent import AnalyticsAgent
+from .dialogue_agent import DialogueAgent
+from .semantic_ontology_agent import SemanticOntologyAgent
+from .sparql_agent import SPARQLAgent
+from .sql_agent import SQLAgent
 from .visualization_agent import VisualizationAgent
 
 __all__ = [
@@ -13,5 +13,5 @@ __all__ = [
     "SemanticOntologyAgent",
     "SQLAgent",
     "AnalyticsAgent",
-    "VisualizationAgent"
+    "VisualizationAgent",
 ]

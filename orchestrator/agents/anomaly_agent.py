@@ -13,19 +13,25 @@ Usage:
     agent = AnomalyDetectionAgent()
     result = await agent.detect(state, user_query, sensor_data=sql_result)
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 import math
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
+from orchestrator.llm_manager import llm_manager
 from shared.config import settings
-from shared.constants import COMFORT_RANGES as DEFAULT_COMFORT_RANGES, Z_SCORE_THRESHOLD, SPIKE_PCT_THRESHOLD
+from shared.constants import COMFORT_RANGES as DEFAULT_COMFORT_RANGES
+from shared.constants import (
+    SPIKE_PCT_THRESHOLD,
+    Z_SCORE_THRESHOLD,
+)
 from shared.models import ConversationState
 from shared.utils import get_logger
-from orchestrator.llm_manager import llm_manager
 
 logger = get_logger(__name__)
 
@@ -35,7 +41,9 @@ class AnomalyDetectionAgent:
     Phase 4.7: Multi-strategy anomaly detection on sensor time-series data.
     """
 
-    def __init__(self, comfort_ranges: Optional[Dict] = None, z_threshold: float = Z_SCORE_THRESHOLD):
+    def __init__(
+        self, comfort_ranges: Optional[Dict] = None, z_threshold: float = Z_SCORE_THRESHOLD
+    ):
         self.comfort_ranges = comfort_ranges or DEFAULT_COMFORT_RANGES
         self.z_threshold = z_threshold
 
@@ -74,13 +82,17 @@ class AnomalyDetectionAgent:
         spike_anomalies = self._spike_detection(records)
 
         # Merge and deduplicate
-        all_anomalies = self._merge_anomalies(threshold_anomalies, zscore_anomalies, spike_anomalies)
+        all_anomalies = self._merge_anomalies(
+            threshold_anomalies, zscore_anomalies, spike_anomalies
+        )
 
         # Severity summary
         high = [a for a in all_anomalies if a["severity"] == "high"]
         medium = [a for a in all_anomalies if a["severity"] == "medium"]
 
-        logger.info(f"Detected {len(all_anomalies)} anomalies ({len(high)} high, {len(medium)} medium)")
+        logger.info(
+            f"Detected {len(all_anomalies)} anomalies ({len(high)} high, {len(medium)} medium)"
+        )
 
         # LLM summary
         formatted = await self._generate_summary(user_query, all_anomalies, len(records))
@@ -92,7 +104,7 @@ class AnomalyDetectionAgent:
             "medium_severity": len(medium),
             "anomalies": all_anomalies[:100],  # cap for response size
             "formatted_response": formatted,
-            "data": all_anomalies[:100],       # for DataExportAgent compatibility
+            "data": all_anomalies[:100],  # for DataExportAgent compatibility
         }
 
     # ------------------------------------------------------------------
@@ -112,15 +124,17 @@ class AnomalyDetectionAgent:
                         if val < lo or val > hi:
                             deviation = max(abs(val - lo) / (hi - lo), abs(val - hi) / (hi - lo))
                             severity = "high" if deviation > 0.5 else "medium"
-                            anomalies.append({
-                                "column": col,
-                                "value": round(val, 3),
-                                "unit": bounds["unit"],
-                                "timestamp": str(ts),
-                                "type": "threshold",
-                                "severity": severity,
-                                "message": f"{col}={val}{bounds['unit']} is outside safe range [{lo}, {hi}]",
-                            })
+                            anomalies.append(
+                                {
+                                    "column": col,
+                                    "value": round(val, 3),
+                                    "unit": bounds["unit"],
+                                    "timestamp": str(ts),
+                                    "type": "threshold",
+                                    "severity": severity,
+                                    "message": f"{col}={val}{bounds['unit']} is outside safe range [{lo}, {hi}]",
+                                }
+                            )
         return anomalies
 
     # ------------------------------------------------------------------
@@ -148,16 +162,18 @@ class AnomalyDetectionAgent:
             for val, ts in pts:
                 z = abs(val - mean) / std
                 if z > self.z_threshold:
-                    anomalies.append({
-                        "column": col,
-                        "value": round(val, 3),
-                        "unit": "",
-                        "timestamp": str(ts),
-                        "type": "z-score",
-                        "z_score": round(z, 2),
-                        "severity": "high" if z > self.z_threshold * 1.5 else "medium",
-                        "message": f"{col}={val} is {z:.1f}σ from mean ({mean:.2f})",
-                    })
+                    anomalies.append(
+                        {
+                            "column": col,
+                            "value": round(val, 3),
+                            "unit": "",
+                            "timestamp": str(ts),
+                            "type": "z-score",
+                            "z_score": round(z, 2),
+                            "severity": "high" if z > self.z_threshold * 1.5 else "medium",
+                            "message": f"{col}={val} is {z:.1f}σ from mean ({mean:.2f})",
+                        }
+                    )
         return anomalies
 
     # ------------------------------------------------------------------
@@ -175,17 +191,19 @@ class AnomalyDetectionAgent:
                 if col in prev and prev[col] != 0:
                     pct_change = abs((val - prev[col]) / prev[col])
                     if pct_change > SPIKE_PCT_THRESHOLD:
-                        anomalies.append({
-                            "column": col,
-                            "value": round(val, 3),
-                            "prev_value": round(prev[col], 3),
-                            "unit": "",
-                            "timestamp": str(ts),
-                            "type": "spike",
-                            "pct_change": round(pct_change * 100, 1),
-                            "severity": "high" if pct_change > 0.75 else "medium",
-                            "message": f"{col} spiked {pct_change*100:.0f}% ({prev[col]} → {val})",
-                        })
+                        anomalies.append(
+                            {
+                                "column": col,
+                                "value": round(val, 3),
+                                "prev_value": round(prev[col], 3),
+                                "unit": "",
+                                "timestamp": str(ts),
+                                "type": "spike",
+                                "pct_change": round(pct_change * 100, 1),
+                                "severity": "high" if pct_change > 0.75 else "medium",
+                                "message": f"{col} spiked {pct_change*100:.0f}% ({prev[col]} → {val})",
+                            }
+                        )
                 prev[col] = val
         return anomalies
 

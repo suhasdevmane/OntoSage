@@ -9,12 +9,16 @@ Usage:
     result = await ontology_validator.validate()
     print(result.ok, result.details)
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
+
+from dataclasses import dataclass, field
+from typing import Any, Dict
 
 import httpx
-from dataclasses import dataclass, field
-from typing import Dict, Any
+
 from shared.config import settings
 from shared.utils import get_logger
 

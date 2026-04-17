@@ -22,19 +22,20 @@ Usage:
         raise
 """
 
-import time
 import threading
+import time
 from enum import Enum
 from typing import Dict
+
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
 
 class CircuitState(Enum):
-    CLOSED = "closed"          # Normal operation — requests pass through
-    OPEN = "open"              # Breaker tripped — fast-fail all requests
-    HALF_OPEN = "half_open"    # Recovery probe — one request allowed
+    CLOSED = "closed"  # Normal operation — requests pass through
+    OPEN = "open"  # Breaker tripped — fast-fail all requests
+    HALF_OPEN = "half_open"  # Recovery probe — one request allowed
 
 
 class CircuitBreaker:

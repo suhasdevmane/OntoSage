@@ -23,17 +23,22 @@ Query format accepted by execute_query():
 Install: pip install redis[hiredis]
          (Redis Stack with RedisTimeSeries module must be running)
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from shared.utils import get_logger
 from orchestrator.services.database_adapter import (
-    DatabaseAdapter, AdapterType, QueryResult, SchemaInfo
+    AdapterType,
+    DatabaseAdapter,
+    QueryResult,
+    SchemaInfo,
 )
+from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -58,10 +63,10 @@ class RedisTimeSeriesAdapter(DatabaseAdapter):
         password: Optional[str] = None,
         key_prefix: str = "sensor",
     ) -> None:
-        self._url        = url
-        self._password   = password
+        self._url = url
+        self._password = password
         self._key_prefix = key_prefix
-        self._redis      = None
+        self._redis = None
         self._schema_cache: Optional[SchemaInfo] = None
         self._columns_cache: Optional[Set[str]] = None
 
@@ -82,9 +87,7 @@ class RedisTimeSeriesAdapter(DatabaseAdapter):
             await self._redis.ping()
             logger.info(f"RedisTimeSeriesAdapter: connected to {self._url}")
         except ImportError:
-            raise RuntimeError(
-                "redis[hiredis] is not installed. Run: pip install redis[hiredis]"
-            )
+            raise RuntimeError("redis[hiredis] is not installed. Run: pip install redis[hiredis]")
         except Exception as e:
             logger.error(f"RedisTimeSeriesAdapter: connect failed: {e}")
             raise
@@ -99,9 +102,9 @@ class RedisTimeSeriesAdapter(DatabaseAdapter):
         if self._schema_cache:
             return self._schema_cache
 
-        tables:        List[str]              = [self._key_prefix]
-        columns:       Dict[str, List[tuple]] = {}
-        timestamp_col: Optional[str]          = "timestamp"
+        tables: List[str] = [self._key_prefix]
+        columns: Dict[str, List[tuple]] = {}
+        timestamp_col: Optional[str] = "timestamp"
 
         try:
             # Scan for keys matching the prefix
@@ -153,9 +156,7 @@ class RedisTimeSeriesAdapter(DatabaseAdapter):
 
             allowed = {"TS.RANGE", "TS.MRANGE", "TS.GET", "TS.MGET"}
             if cmd not in allowed:
-                raise ValueError(
-                    f"Command {cmd!r} not allowed. Use one of: {allowed}"
-                )
+                raise ValueError(f"Command {cmd!r} not allowed. Use one of: {allowed}")
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON query: {e}")
         return True
@@ -178,13 +179,11 @@ class RedisTimeSeriesAdapter(DatabaseAdapter):
             return QueryResult.failure(str(e), query=query)
 
         try:
-            params: Dict[str, Any] = (
-                json.loads(query) if query.strip().startswith("{") else {}
-            )
-            command  = params.get("command", "TS.RANGE").upper()
-            from_ts  = str(params.get("from_ts", "-"))
-            to_ts    = str(params.get("to_ts",   "+"))
-            count    = int(params.get("count", 1000))
+            params: Dict[str, Any] = json.loads(query) if query.strip().startswith("{") else {}
+            command = params.get("command", "TS.RANGE").upper()
+            from_ts = str(params.get("from_ts", "-"))
+            to_ts = str(params.get("to_ts", "+"))
+            count = int(params.get("count", 1000))
 
             rows: List[Dict[str, Any]] = []
 
@@ -195,31 +194,38 @@ class RedisTimeSeriesAdapter(DatabaseAdapter):
                 )
                 uuid = key.split(":", 1)[-1]
                 for ts_ms, value in raw:
-                    rows.append({
-                        "uuid":      uuid,
-                        "timestamp": datetime.fromtimestamp(int(ts_ms) / 1000).isoformat(),
-                        "value":     float(value),
-                    })
+                    rows.append(
+                        {
+                            "uuid": uuid,
+                            "timestamp": datetime.fromtimestamp(int(ts_ms) / 1000).isoformat(),
+                            "value": float(value),
+                        }
+                    )
 
             elif command == "TS.MRANGE":
                 filters = params.get("filters", [])
                 filter_args = ["FILTER"] + filters if filters else []
                 raw = await self._redis.execute_command(
-                    "TS.MRANGE", from_ts, to_ts,
-                    "COUNT", count,
+                    "TS.MRANGE",
+                    from_ts,
+                    to_ts,
+                    "COUNT",
+                    count,
                     *filter_args,
                 )
                 # TS.MRANGE returns [[key, labels, [[ts, val], ...]], ...]
                 for entry in raw:
-                    key    = entry[0] if isinstance(entry[0], str) else entry[0].decode()
-                    uuid   = key.split(":", 1)[-1]
+                    key = entry[0] if isinstance(entry[0], str) else entry[0].decode()
+                    uuid = key.split(":", 1)[-1]
                     points = entry[2]
                     for ts_ms, value in points:
-                        rows.append({
-                            "uuid":      uuid,
-                            "timestamp": datetime.fromtimestamp(int(ts_ms) / 1000).isoformat(),
-                            "value":     float(value),
-                        })
+                        rows.append(
+                            {
+                                "uuid": uuid,
+                                "timestamp": datetime.fromtimestamp(int(ts_ms) / 1000).isoformat(),
+                                "value": float(value),
+                            }
+                        )
 
             logger.info(f"RedisTimeSeriesAdapter: returned {len(rows)} samples")
             return QueryResult(success=True, data=rows, row_count=len(rows), query=query)
@@ -238,7 +244,7 @@ class RedisTimeSeriesAdapter(DatabaseAdapter):
     ) -> Optional[str]:
         """Build a TS.MRANGE JSON query for the given UUID list."""
         from_ts = "-"
-        to_ts   = "+"
+        to_ts = "+"
         if start_date and start_date not in ("-", "none", "null", ""):
             from_ts = start_date
         if end_date and end_date not in ("+", "none", "null", ""):
@@ -250,10 +256,10 @@ class RedisTimeSeriesAdapter(DatabaseAdapter):
             command = "TS.RANGE"
             query_doc = {
                 "command": command,
-                "key":     f"{self._key_prefix}:{uuids[0]}",
+                "key": f"{self._key_prefix}:{uuids[0]}",
                 "from_ts": from_ts,
-                "to_ts":   to_ts,
-                "count":   limit,
+                "to_ts": to_ts,
+                "count": limit,
             }
         else:
             # TS.MRANGE with a filter that matches all requested UUIDs
@@ -263,8 +269,8 @@ class RedisTimeSeriesAdapter(DatabaseAdapter):
                 "command": "TS.MRANGE",
                 "filters": filters,
                 "from_ts": from_ts,
-                "to_ts":   to_ts,
-                "count":   limit,
+                "to_ts": to_ts,
+                "count": limit,
             }
         return json.dumps(query_doc)
 

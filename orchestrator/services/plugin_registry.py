@@ -35,16 +35,17 @@ Usage:
     # In agents that accept plugins (e.g. AnalyticsEngine):
     engine.register_analyser("weather_correlation", WeatherCorrelationAnalyser)
 """
+
 from __future__ import annotations
 
-import os
-import sys
 import importlib
 import importlib.util
 import inspect
 import logging
+import os
+import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Callable
+from typing import Any, Callable, Dict, List, Optional, Type
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +53,10 @@ logger = logging.getLogger(__name__)
 # Plugin base classes (optional — plugins don't have to subclass these)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class AgentPlugin:
     """Base class for agent plugins."""
+
     name: str = "unnamed_agent"
     description: str = ""
 
@@ -63,6 +66,7 @@ class AgentPlugin:
 
 class AnalyserPlugin:
     """Base class for analytics plugins."""
+
     name: str = "unnamed_analyser"
     supported_types: List[str] = []
 
@@ -72,6 +76,7 @@ class AnalyserPlugin:
 
 class ExporterPlugin:
     """Base class for export format plugins."""
+
     name: str = "unnamed_exporter"
     format_id: str = "custom"
 
@@ -81,6 +86,7 @@ class ExporterPlugin:
 
 class AdapterPlugin:
     """Base class for storage adapter plugins."""
+
     name: str = "unnamed_adapter"
     backend_id: str = "custom"
 
@@ -92,14 +98,14 @@ class AdapterPlugin:
 # Plugin metadata
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class PluginInfo:
-    def __init__(self, plugin_type: str, plugin_id: str, cls: Type,
-                 source: str = "programmatic"):
-        self.plugin_type = plugin_type   # "agent", "analyser", "exporter", "adapter"
-        self.plugin_id   = plugin_id
-        self.cls         = cls
-        self.source      = source
-        self.metadata    = getattr(cls, "_plugin_metadata", {})
+    def __init__(self, plugin_type: str, plugin_id: str, cls: Type, source: str = "programmatic"):
+        self.plugin_type = plugin_type  # "agent", "analyser", "exporter", "adapter"
+        self.plugin_id = plugin_id
+        self.cls = cls
+        self.source = source
+        self.metadata = getattr(cls, "_plugin_metadata", {})
 
     def instantiate(self, **kwargs) -> Any:
         return self.cls(**kwargs)
@@ -111,6 +117,7 @@ class PluginInfo:
 # ─────────────────────────────────────────────────────────────────────────────
 # Registry
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class PluginRegistry:
     """
@@ -129,8 +136,9 @@ class PluginRegistry:
     # Registration
     # ─────────────────────────────────────────────────────────────────────────
 
-    def register(self, plugin_type: str, plugin_id: str, cls: Type,
-                 source: str = "programmatic") -> PluginInfo:
+    def register(
+        self, plugin_type: str, plugin_id: str, cls: Type, source: str = "programmatic"
+    ) -> PluginInfo:
         """Register a plugin class."""
         if plugin_type not in self.VALID_TYPES:
             raise ValueError(f"Unknown plugin type: {plugin_type!r}. Valid: {self.VALID_TYPES}")
@@ -143,34 +151,42 @@ class PluginRegistry:
 
     def agent(self, plugin_id: str, **meta):
         """Decorator: @registry.agent('my_agent')"""
+
         def decorator(cls):
             cls._plugin_metadata = meta
             self.register("agent", plugin_id, cls)
             return cls
+
         return decorator
 
     def analyser(self, plugin_id: str, **meta):
         """Decorator: @registry.analyser('my_analyser')"""
+
         def decorator(cls):
             cls._plugin_metadata = meta
             self.register("analyser", plugin_id, cls)
             return cls
+
         return decorator
 
     def exporter(self, plugin_id: str, **meta):
         """Decorator: @registry.exporter('my_format')"""
+
         def decorator(cls):
             cls._plugin_metadata = meta
             self.register("exporter", plugin_id, cls)
             return cls
+
         return decorator
 
     def adapter(self, plugin_id: str, **meta):
         """Decorator: @registry.adapter('my_backend')"""
+
         def decorator(cls):
             cls._plugin_metadata = meta
             self.register("adapter", plugin_id, cls)
             return cls
+
         return decorator
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -237,8 +253,7 @@ class PluginRegistry:
                 # Find classes with _plugin_metadata attribute
                 for name, obj in inspect.getmembers(mod, inspect.isclass):
                     if hasattr(obj, "_plugin_metadata") and hasattr(obj, "_plugin_type"):
-                        self.register(obj._plugin_type, obj._plugin_id, obj,
-                                      source=str(py_file))
+                        self.register(obj._plugin_type, obj._plugin_id, obj, source=str(py_file))
                         count += 1
                 logger.debug(f"Scanned plugin file: {py_file}")
             except Exception as e:
@@ -270,12 +285,13 @@ class PluginRegistry:
         count = 0
         try:
             from importlib.metadata import entry_points
+
             eps = entry_points(group="ontosage.plugins")
             for ep in eps:
                 try:
                     cls = ep.load()
                     plugin_type = getattr(cls, "_plugin_type", None)
-                    plugin_id   = getattr(cls, "_plugin_id",   ep.name)
+                    plugin_id = getattr(cls, "_plugin_id", ep.name)
                     if plugin_type in self.VALID_TYPES:
                         self.register(plugin_type, plugin_id, cls, source=f"entry_point:{ep.name}")
                         count += 1
@@ -308,6 +324,7 @@ class PluginRegistry:
 # ─────────────────────────────────────────────────────────────────────────────
 
 _global_registry: Optional[PluginRegistry] = None
+
 
 def get_plugin_registry() -> PluginRegistry:
     global _global_registry

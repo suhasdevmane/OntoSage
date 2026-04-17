@@ -33,11 +33,12 @@ Supported language codes (ISO 639-1):
   en fr de es it pt nl sv da no fi pl cs sk ro bg hr sl lv lt et
   zh ja ko ar hi ru uk tr
 """
+
 from __future__ import annotations
 
+import logging
 import os
 import re
-import logging
 from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -46,37 +47,56 @@ logger = logging.getLogger(__name__)
 # Configuration
 # ─────────────────────────────────────────────────────────────────────────────
 
-I18N_ENABLED          = os.environ.get("I18N_ENABLED", "true").lower() == "true"
-DETECT_CONFIDENCE     = float(os.environ.get("I18N_DETECT_CONFIDENCE", "0.85"))
-GOOGLE_API_KEY        = os.environ.get("GOOGLE_TRANSLATE_KEY", "")
-DEEPL_API_KEY         = os.environ.get("DEEPL_API_KEY", "")
-SKIP_SHORT_QUERIES    = int(os.environ.get("I18N_SKIP_SHORT", "10"))  # chars
+I18N_ENABLED = os.environ.get("I18N_ENABLED", "true").lower() == "true"
+DETECT_CONFIDENCE = float(os.environ.get("I18N_DETECT_CONFIDENCE", "0.85"))
+GOOGLE_API_KEY = os.environ.get("GOOGLE_TRANSLATE_KEY", "")
+DEEPL_API_KEY = os.environ.get("DEEPL_API_KEY", "")
+SKIP_SHORT_QUERIES = int(os.environ.get("I18N_SKIP_SHORT", "10"))  # chars
 
 # Language names for LLM prompt
 LANGUAGE_NAMES = {
-    "en": "English",   "fr": "French",     "de": "German",
-    "es": "Spanish",   "it": "Italian",    "pt": "Portuguese",
-    "nl": "Dutch",     "sv": "Swedish",    "da": "Danish",
-    "no": "Norwegian", "fi": "Finnish",    "pl": "Polish",
-    "cs": "Czech",     "sk": "Slovak",     "ro": "Romanian",
-    "bg": "Bulgarian", "hr": "Croatian",   "sl": "Slovenian",
-    "lv": "Latvian",   "lt": "Lithuanian", "et": "Estonian",
-    "zh": "Chinese",   "ja": "Japanese",   "ko": "Korean",
-    "ar": "Arabic",    "hi": "Hindi",      "ru": "Russian",
-    "uk": "Ukrainian", "tr": "Turkish",
+    "en": "English",
+    "fr": "French",
+    "de": "German",
+    "es": "Spanish",
+    "it": "Italian",
+    "pt": "Portuguese",
+    "nl": "Dutch",
+    "sv": "Swedish",
+    "da": "Danish",
+    "no": "Norwegian",
+    "fi": "Finnish",
+    "pl": "Polish",
+    "cs": "Czech",
+    "sk": "Slovak",
+    "ro": "Romanian",
+    "bg": "Bulgarian",
+    "hr": "Croatian",
+    "sl": "Slovenian",
+    "lv": "Latvian",
+    "lt": "Lithuanian",
+    "et": "Estonian",
+    "zh": "Chinese",
+    "ja": "Japanese",
+    "ko": "Korean",
+    "ar": "Arabic",
+    "hi": "Hindi",
+    "ru": "Russian",
+    "uk": "Ukrainian",
+    "tr": "Turkish",
 }
 
 
 class I18nService:
     """
     Multi-language support for the OntoSage pipeline.
-    
+
     The service is stateless — every call is independent.
     Thread-safe with standard asyncio concurrency.
     """
 
     def __init__(self, llm_manager=None, enabled: bool = I18N_ENABLED):
-        self._llm     = llm_manager
+        self._llm = llm_manager
         self._enabled = enabled
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -86,7 +106,7 @@ class I18nService:
     def detect_language(self, text: str) -> Tuple[str, float]:
         """
         Detect the language of text.
-        
+
         Returns:
             (lang_code, confidence)  e.g. ("fr", 0.98)
             Returns ("en", 1.0) if detection fails or text is too short.
@@ -97,6 +117,7 @@ class I18nService:
         # Try langdetect
         try:
             from langdetect import detect_langs
+
             results = detect_langs(text)
             if results:
                 top = results[0]
@@ -110,7 +131,7 @@ class I18nService:
         ascii_ratio = sum(c.isascii() for c in text) / max(len(text), 1)
         if ascii_ratio > 0.90:
             return "en", 0.75  # Probably English
-        return "en", 0.50      # Unknown, assume English
+        return "en", 0.50  # Unknown, assume English
 
     # ─────────────────────────────────────────────────────────────────────────
     # Translation
@@ -119,7 +140,7 @@ class I18nService:
     async def to_english(self, text: str) -> Tuple[str, str]:
         """
         Detect language and translate text to English.
-        
+
         Returns:
             (english_text, lang_code)
             If already English or detection confidence < threshold, returns original.
@@ -132,7 +153,9 @@ class I18nService:
         if lang_code == "en" or confidence < DETECT_CONFIDENCE:
             return text, "en"
 
-        logger.info(f"Detected language: {lang_code} (conf={confidence:.2f}) — translating to English")
+        logger.info(
+            f"Detected language: {lang_code} (conf={confidence:.2f}) — translating to English"
+        )
 
         translated = await self._translate(text, source=lang_code, target="en")
         return translated, lang_code
@@ -140,7 +163,7 @@ class I18nService:
     async def from_english(self, text: str, target_lang: str) -> str:
         """
         Translate an English response back to the user's language.
-        
+
         Returns original text if target_lang == 'en' or translation fails.
         """
         if not self._enabled or target_lang == "en":
@@ -181,6 +204,7 @@ class I18nService:
     async def _google_translate(self, text: str, source: str, target: str) -> Optional[str]:
         try:
             import httpx
+
             url = "https://translation.googleapis.com/language/translate/v2"
             params = {"q": text, "source": source, "target": target, "key": GOOGLE_API_KEY}
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -195,10 +219,11 @@ class I18nService:
     async def _deepl_translate(self, text: str, source: str, target: str) -> Optional[str]:
         try:
             import httpx
+
             url = "https://api-free.deepl.com/v2/translate"
             data = {
-                "auth_key":    DEEPL_API_KEY,
-                "text":        text,
+                "auth_key": DEEPL_API_KEY,
+                "text": text,
                 "source_lang": source.upper(),
                 "target_lang": target.upper(),
             }

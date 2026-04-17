@@ -18,22 +18,25 @@ Usage:
         query_string, executor_fn
     )
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 import hashlib
 import json
 import re
 from typing import Any, Callable, Coroutine, Dict, Optional, Tuple
 
-from shared.utils import get_logger
 from shared.config import settings
+from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
 # rdflib sparqlalgebra parse (available without network)
 try:
     from rdflib.plugins.sparql import prepareQuery
+
     RDFLIB_AVAILABLE = True
 except ImportError:
     RDFLIB_AVAILABLE = False
@@ -41,8 +44,15 @@ except ImportError:
 
 # Patterns that are always invalid in SPARQL (quick pre-check)
 _SYNTAX_BLACKLIST = [
-    r'\bDROP\b', r'\bINSERT\b', r'\bDELETE\b', r'\bCREATE\b',
-    r'\bLOAD\b', r'\bCLEAR\b', r'\bADD\b', r'\bCOPY\b', r'\bMOVE\b',
+    r"\bDROP\b",
+    r"\bINSERT\b",
+    r"\bDELETE\b",
+    r"\bCREATE\b",
+    r"\bLOAD\b",
+    r"\bCLEAR\b",
+    r"\bADD\b",
+    r"\bCOPY\b",
+    r"\bMOVE\b",
 ]
 
 # Cache TTL in seconds (default 5 minutes)
@@ -100,16 +110,23 @@ class SPARQLValidator:
         # Must be a SELECT, ASK, DESCRIBE, or CONSTRUCT query
         first_kw = q_upper.lstrip().split()[0] if q_upper.strip() else ""
         # Skip PREFIX/BASE preamble
-        non_prefix = re.sub(r'(PREFIX|BASE)\s+\S+\s+<[^>]+>', '', q_upper).strip()
+        non_prefix = re.sub(r"(PREFIX|BASE)\s+\S+\s+<[^>]+>", "", q_upper).strip()
         first_meaningful = non_prefix.split()[0] if non_prefix.split() else ""
         if first_meaningful not in ("SELECT", "ASK", "DESCRIBE", "CONSTRUCT", "WITH"):
-            return False, f"Query must start with SELECT/ASK/DESCRIBE/CONSTRUCT, got: '{first_meaningful}'"
+            return (
+                False,
+                f"Query must start with SELECT/ASK/DESCRIBE/CONSTRUCT, got: '{first_meaningful}'",
+            )
 
         if not RDFLIB_AVAILABLE:
             return True, None  # Can't do deeper check without rdflib
 
         # Inject common prefixes so rdflib can parse without unknown prefix errors
-        augmented = self._PREFIX_INJECT + f"PREFIX {settings.BUILDING_PREFIX}: <{settings.BUILDING_NAMESPACE}>\n" + query
+        augmented = (
+            self._PREFIX_INJECT
+            + f"PREFIX {settings.BUILDING_PREFIX}: <{settings.BUILDING_NAMESPACE}>\n"
+            + query
+        )
         try:
             prepareQuery(augmented)
             return True, None
@@ -131,14 +148,14 @@ class SPARQLValidator:
         fixed = query
 
         # Fix: missing closing brace
-        open_braces = query.count('{')
-        close_braces = query.count('}')
+        open_braces = query.count("{")
+        close_braces = query.count("}")
         if open_braces > close_braces:
-            fixed += ' }' * (open_braces - close_braces)
+            fixed += " }" * (open_braces - close_braces)
             logger.debug(f"Auto-fix: added {open_braces - close_braces} closing braces")
 
         # Fix: double WHERE WHERE
-        fixed = re.sub(r'\bWHERE\s+WHERE\b', 'WHERE', fixed, flags=re.IGNORECASE)
+        fixed = re.sub(r"\bWHERE\s+WHERE\b", "WHERE", fixed, flags=re.IGNORECASE)
 
         # Fix: SELECT * (sometimes not allowed without explicit variables)
         # Leave as-is — GraphDB generally supports SELECT *
@@ -151,7 +168,7 @@ class SPARQLValidator:
 
     def _make_cache_key(self, query: str) -> str:
         """Generate a deterministic cache key from a normalized SPARQL string."""
-        normalized = re.sub(r'\s+', ' ', query.strip().lower())
+        normalized = re.sub(r"\s+", " ", query.strip().lower())
         h = hashlib.sha256(normalized.encode()).hexdigest()[:16]
         return f"sparql_cache:{h}"
 
@@ -159,6 +176,7 @@ class SPARQLValidator:
         """Return cached result if available, else None."""
         try:
             from orchestrator.redis_manager import redis_manager
+
             if not redis_manager or not redis_manager.redis:
                 return None
             key = self._make_cache_key(query)
@@ -174,6 +192,7 @@ class SPARQLValidator:
         """Store query result in Redis cache with TTL."""
         try:
             from orchestrator.redis_manager import redis_manager
+
             if not redis_manager or not redis_manager.redis:
                 return
             # Don't cache large result sets
@@ -191,6 +210,7 @@ class SPARQLValidator:
         """Invalidate cached queries matching a pattern."""
         try:
             from orchestrator.redis_manager import redis_manager
+
             if not redis_manager or not redis_manager.redis:
                 return 0
             keys = await redis_manager.redis.keys(pattern)
@@ -226,7 +246,7 @@ class SPARQLValidator:
         # Handle auto-fix
         actual_query = query
         if error and error.startswith("AUTO_FIXED:"):
-            actual_query = error[len("AUTO_FIXED:"):]
+            actual_query = error[len("AUTO_FIXED:") :]
             logger.info("SPARQLValidator: using auto-fixed query")
 
         # Layer 2: cache check

@@ -23,12 +23,12 @@ Usage:
     from orchestrator.services.response_cache import ResponseCacheService
 
     cache = ResponseCacheService(redis_client)
-    
+
     # Check cache before running pipeline
     cached = await cache.get("What is the temperature in room 5.04?")
     if cached:
         return cached["response"]
-    
+
     # After pipeline completes, store the result
     await cache.put(
         question="What is the temperature in room 5.04?",
@@ -37,14 +37,15 @@ Usage:
         media=[]
     )
 """
+
 from __future__ import annotations
 
+import hashlib
+import json
+import logging
 import os
 import re
-import json
 import time
-import hashlib
-import logging
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -53,10 +54,10 @@ logger = logging.getLogger(__name__)
 # Configuration
 # ─────────────────────────────────────────────────────────────────────────────
 
-CACHE_ENABLED       = os.environ.get("RESPONSE_CACHE_ENABLED", "true").lower() == "true"
-CACHE_TTL           = int(os.environ.get("RESPONSE_CACHE_TTL", "3600"))
-FUZZY_ENABLED       = os.environ.get("RESPONSE_CACHE_FUZZY", "false").lower() == "true"
-MIN_SIMILARITY      = float(os.environ.get("RESPONSE_CACHE_MIN_SIMILARITY", "0.85"))
+CACHE_ENABLED = os.environ.get("RESPONSE_CACHE_ENABLED", "true").lower() == "true"
+CACHE_TTL = int(os.environ.get("RESPONSE_CACHE_TTL", "3600"))
+FUZZY_ENABLED = os.environ.get("RESPONSE_CACHE_FUZZY", "false").lower() == "true"
+MIN_SIMILARITY = float(os.environ.get("RESPONSE_CACHE_MIN_SIMILARITY", "0.85"))
 
 # Intents that are NOT safe to cache (dynamic per-request)
 NON_CACHEABLE_INTENTS = {"clarification", "discovery", "control"}
@@ -65,16 +66,85 @@ NON_CACHEABLE_INTENTS = {"clarification", "discovery", "control"}
 # Query normalisation
 # ─────────────────────────────────────────────────────────────────────────────
 
-_STOP_WORDS = {"a", "an", "the", "is", "are", "was", "were", "be", "been",
-               "being", "have", "has", "had", "do", "does", "did", "will",
-               "would", "could", "should", "may", "might", "shall", "can",
-               "to", "of", "in", "for", "on", "with", "at", "by", "from",
-               "as", "into", "through", "during", "before", "after", "and",
-               "but", "or", "not", "no", "so", "if", "then", "than", "too",
-               "very", "just", "about", "it", "its", "this", "that", "these",
-               "those", "my", "your", "our", "their", "me", "you", "us",
-               "them", "what", "which", "who", "whom", "whose", "where",
-               "when", "how", "please", "thanks", "thank"}
+_STOP_WORDS = {
+    "a",
+    "an",
+    "the",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "could",
+    "should",
+    "may",
+    "might",
+    "shall",
+    "can",
+    "to",
+    "of",
+    "in",
+    "for",
+    "on",
+    "with",
+    "at",
+    "by",
+    "from",
+    "as",
+    "into",
+    "through",
+    "during",
+    "before",
+    "after",
+    "and",
+    "but",
+    "or",
+    "not",
+    "no",
+    "so",
+    "if",
+    "then",
+    "than",
+    "too",
+    "very",
+    "just",
+    "about",
+    "it",
+    "its",
+    "this",
+    "that",
+    "these",
+    "those",
+    "my",
+    "your",
+    "our",
+    "their",
+    "me",
+    "you",
+    "us",
+    "them",
+    "what",
+    "which",
+    "who",
+    "whom",
+    "whose",
+    "where",
+    "when",
+    "how",
+    "please",
+    "thanks",
+    "thank",
+}
 
 
 def normalise_query(query: str) -> str:
@@ -83,7 +153,7 @@ def normalise_query(query: str) -> str:
     Strips punctuation, lowercases, removes stop words, sorts remaining tokens.
     """
     text = query.lower().strip()
-    text = re.sub(r"[^\w\s.]", "", text)          # keep dots for sensor IDs
+    text = re.sub(r"[^\w\s.]", "", text)  # keep dots for sensor IDs
     text = re.sub(r"\s+", " ", text).strip()
     tokens = [t for t in text.split() if t not in _STOP_WORDS and len(t) > 1]
     return " ".join(sorted(tokens))
@@ -99,10 +169,11 @@ def query_hash(query: str) -> str:
 # Trigram similarity (for fuzzy matching)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _trigrams(text: str) -> set:
     """Generate character trigrams from text."""
     text = f"  {text} "
-    return {text[i:i+3] for i in range(len(text) - 2)}
+    return {text[i : i + 3] for i in range(len(text) - 2)}
 
 
 def trigram_similarity(a: str, b: str) -> float:
@@ -119,6 +190,7 @@ def trigram_similarity(a: str, b: str) -> float:
 # Response Cache Service
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class ResponseCacheService:
     """
     Redis-backed response cache for the OntoSage pipeline.
@@ -131,12 +203,16 @@ class ResponseCacheService:
     PREFIX_FUZZY = "resp_cache:fuzzy:"
     PREFIX_STATS = "resp_cache:stats"
 
-    def __init__(self, redis_client, ttl: int = CACHE_TTL,
-                 fuzzy: bool = FUZZY_ENABLED,
-                 min_similarity: float = MIN_SIMILARITY):
-        self._redis  = redis_client          # must be redis.asyncio.Redis
-        self._ttl    = ttl
-        self._fuzzy  = fuzzy
+    def __init__(
+        self,
+        redis_client,
+        ttl: int = CACHE_TTL,
+        fuzzy: bool = FUZZY_ENABLED,
+        min_similarity: float = MIN_SIMILARITY,
+    ):
+        self._redis = redis_client  # must be redis.asyncio.Redis
+        self._ttl = ttl
+        self._fuzzy = fuzzy
         self._min_similarity = min_similarity
         self._enabled = CACHE_ENABLED
 
@@ -144,11 +220,12 @@ class ResponseCacheService:
     # Cache lookup
     # ─────────────────────────────────────────────────────────────────────────
 
-    async def get(self, question: str, building_id: str = "default",
-                  user_id: str = "") -> Optional[Dict]:
+    async def get(
+        self, question: str, building_id: str = "default", user_id: str = ""
+    ) -> Optional[Dict]:
         """
         Look up a cached response for the given question.
-        
+
         Returns:
             Dict with keys: response, intent, media, cached_at, hit_count
             or None if no cache hit.
@@ -180,7 +257,9 @@ class ResponseCacheService:
             if fuzzy_result:
                 fuzzy_result["cache_type"] = "fuzzy"
                 await self._increment_stats("fuzzy_hits")
-                logger.info(f"Response cache HIT (fuzzy): similarity={fuzzy_result.get('similarity', 0):.2f}")
+                logger.info(
+                    f"Response cache HIT (fuzzy): similarity={fuzzy_result.get('similarity', 0):.2f}"
+                )
                 return fuzzy_result
 
         await self._increment_stats("misses")
@@ -190,12 +269,18 @@ class ResponseCacheService:
     # Cache storage
     # ─────────────────────────────────────────────────────────────────────────
 
-    async def put(self, question: str, response: str, intent: str,
-                  media: Optional[List] = None, building_id: str = "default",
-                  metadata: Optional[Dict] = None):
+    async def put(
+        self,
+        question: str,
+        response: str,
+        intent: str,
+        media: Optional[List] = None,
+        building_id: str = "default",
+        metadata: Optional[Dict] = None,
+    ):
         """
         Store a response in the cache.
-        
+
         Non-cacheable intents (clarification, discovery, control) are skipped.
         """
         if not self._enabled:
@@ -209,15 +294,15 @@ class ResponseCacheService:
         cache_key = f"{self.PREFIX_EXACT}{building_id}:{qhash}"
 
         entry = {
-            "question":    question,
-            "normalised":  normalise_query(question),
-            "response":    response,
-            "intent":      intent,
-            "media":       media or [],
+            "question": question,
+            "normalised": normalise_query(question),
+            "response": response,
+            "intent": intent,
+            "media": media or [],
             "building_id": building_id,
-            "cached_at":   time.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "hit_count":   0,
-            "metadata":    metadata or {},
+            "cached_at": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "hit_count": 0,
+            "metadata": metadata or {},
         }
 
         await self._redis_set(cache_key, json.dumps(entry, ensure_ascii=False), self._ttl)
@@ -227,15 +312,16 @@ class ResponseCacheService:
         # Store fuzzy index entry
         if self._fuzzy:
             normalised = normalise_query(question)
-            fuzzy_key  = f"{self.PREFIX_FUZZY}{building_id}"
+            fuzzy_key = f"{self.PREFIX_FUZZY}{building_id}"
             await self._redis_hset(fuzzy_key, qhash, normalised)
 
     # ─────────────────────────────────────────────────────────────────────────
     # Cache invalidation
     # ─────────────────────────────────────────────────────────────────────────
 
-    async def invalidate(self, question: str = None, building_id: str = "default",
-                         flush_all: bool = False):
+    async def invalidate(
+        self, question: str = None, building_id: str = "default", flush_all: bool = False
+    ):
         """Invalidate cached responses."""
         if flush_all:
             pattern = f"{self.PREFIX_EXACT}{building_id}:*"
@@ -272,20 +358,20 @@ class ResponseCacheService:
         """Get cache hit/miss statistics."""
         raw = await self._redis_hgetall(self.PREFIX_STATS)
         return {
-            "enabled":     self._enabled,
+            "enabled": self._enabled,
             "ttl_seconds": self._ttl,
-            "fuzzy":       self._fuzzy,
-            "hits":        int(raw.get("hits", 0)),
-            "fuzzy_hits":  int(raw.get("fuzzy_hits", 0)),
-            "misses":      int(raw.get("misses", 0)),
-            "stores":      int(raw.get("stores", 0)),
-            "hit_rate":    self._compute_hit_rate(raw),
+            "fuzzy": self._fuzzy,
+            "hits": int(raw.get("hits", 0)),
+            "fuzzy_hits": int(raw.get("fuzzy_hits", 0)),
+            "misses": int(raw.get("misses", 0)),
+            "stores": int(raw.get("stores", 0)),
+            "hit_rate": self._compute_hit_rate(raw),
         }
 
     def _compute_hit_rate(self, raw: Dict) -> float:
-        hits   = int(raw.get("hits", 0)) + int(raw.get("fuzzy_hits", 0))
+        hits = int(raw.get("hits", 0)) + int(raw.get("fuzzy_hits", 0))
         misses = int(raw.get("misses", 0))
-        total  = hits + misses
+        total = hits + misses
         return round(hits / total * 100, 1) if total > 0 else 0.0
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -295,20 +381,20 @@ class ResponseCacheService:
     async def _fuzzy_lookup(self, question: str, building_id: str) -> Optional[Dict]:
         """Find the best fuzzy match for a question."""
         normalised = normalise_query(question)
-        fuzzy_key  = f"{self.PREFIX_FUZZY}{building_id}"
+        fuzzy_key = f"{self.PREFIX_FUZZY}{building_id}"
         all_entries = await self._redis_hgetall(fuzzy_key)
 
-        best_sim  = 0.0
+        best_sim = 0.0
         best_hash = None
 
         for qhash, stored_norm in all_entries.items():
             sim = trigram_similarity(normalised, stored_norm)
             if sim > best_sim:
-                best_sim  = sim
+                best_sim = sim
                 best_hash = qhash
 
         if best_sim >= self._min_similarity and best_hash:
-            cache_key  = f"{self.PREFIX_EXACT}{building_id}:{best_hash}"
+            cache_key = f"{self.PREFIX_EXACT}{building_id}:{best_hash}"
             cached_raw = await self._redis_get(cache_key)
             if cached_raw:
                 try:
@@ -368,8 +454,9 @@ class ResponseCacheService:
         try:
             result = await self._redis.hgetall(key)
             return {
-                (k.decode("utf-8") if isinstance(k, bytes) else k):
-                (v.decode("utf-8") if isinstance(v, bytes) else v)
+                (k.decode("utf-8") if isinstance(k, bytes) else k): (
+                    v.decode("utf-8") if isinstance(v, bytes) else v
+                )
                 for k, v in result.items()
             }
         except Exception:

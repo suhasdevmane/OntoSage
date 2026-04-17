@@ -11,24 +11,37 @@ Useful for:
 
 Install: pip install aiosqlite
 """
-import sys
-sys.path.append('/app')
 
-import aiosqlite
-from datetime import datetime, date
+import sys
+
+sys.path.append("/app")
+
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set
 
-from shared.utils import get_logger
+import aiosqlite
+
 from orchestrator.services.database_adapter import (
-    DatabaseAdapter, AdapterType, QueryResult, SchemaInfo
+    AdapterType,
+    DatabaseAdapter,
+    QueryResult,
+    SchemaInfo,
 )
+from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
 _FORBIDDEN_KEYWORDS = [
-    "DROP ", "DELETE ", "INSERT ", "UPDATE ", "ALTER ",
-    "TRUNCATE ", "ATTACH ", "DETACH ", "PRAGMA ",
+    "DROP ",
+    "DELETE ",
+    "INSERT ",
+    "UPDATE ",
+    "ALTER ",
+    "TRUNCATE ",
+    "ATTACH ",
+    "DETACH ",
+    "PRAGMA ",
 ]
 
 
@@ -71,9 +84,9 @@ class SQLiteAdapter(DatabaseAdapter):
         if self._schema_cache:
             return self._schema_cache
 
-        tables:       List[str]              = []
-        columns:      Dict[str, List[tuple]] = {}
-        timestamp_col: Optional[str]         = None
+        tables: List[str] = []
+        columns: Dict[str, List[tuple]] = {}
+        timestamp_col: Optional[str] = None
 
         try:
             async with aiosqlite.connect(self._path) as db:
@@ -117,9 +130,7 @@ class SQLiteAdapter(DatabaseAdapter):
         cols: Set[str] = set()
         try:
             async with aiosqlite.connect(self._path) as db:
-                async with db.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table'"
-                ) as cur:
+                async with db.execute("SELECT name FROM sqlite_master WHERE type='table'") as cur:
                     tables = [row[0] for row in await cur.fetchall()]
                 for table in tables:
                     async with db.execute(f"PRAGMA table_info({table})") as cur:
@@ -143,9 +154,7 @@ class SQLiteAdapter(DatabaseAdapter):
         for kw in _FORBIDDEN_KEYWORDS:
             if kw in sql_upper:
                 raise ValueError(f"Forbidden keyword: {kw.strip()}")
-        if sql.count(";") > 1 or (
-            sql.count(";") == 1 and not sql.strip().endswith(";")
-        ):
+        if sql.count(";") > 1 or (sql.count(";") == 1 and not sql.strip().endswith(";")):
             raise ValueError("Multiple SQL statements are not allowed.")
         return True
 
@@ -176,8 +185,7 @@ class SQLiteAdapter(DatabaseAdapter):
                 clean_rows.append(clean)
 
             logger.info(f"SQLiteAdapter: query returned {len(clean_rows)} rows")
-            return QueryResult(success=True, data=clean_rows,
-                               row_count=len(clean_rows), query=sql)
+            return QueryResult(success=True, data=clean_rows, row_count=len(clean_rows), query=sql)
 
         except Exception as e:
             logger.error(f"SQLiteAdapter.execute_query error: {e}")
@@ -189,7 +197,7 @@ class SQLiteAdapter(DatabaseAdapter):
             "- Timestamp column: usually 'timestamp' or 'datetime' (TEXT or REAL).\n"
             "- Time functions: datetime('now'), datetime('now', '-1 day'),\n"
             "  strftime('%Y-%m-%dT%H:%M:%S', timestamp).\n"
-            "- No backticks — use double-quotes for column names: \"timestamp\".\n"
+            '- No backticks — use double-quotes for column names: "timestamp".\n'
             "- UNION ALL supported for unpivoting wide-format tables.\n"
             "- Default time window: timestamp >= datetime('now', '-1 day')\n"
             "- Return ONLY the SQL query, no markdown."

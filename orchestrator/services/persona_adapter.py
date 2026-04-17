@@ -22,6 +22,7 @@ Usage:
     adapter = PersonaAdapter()
     enhanced = await adapter.enhance(response, persona="executive", intent="analytics")
 """
+
 from __future__ import annotations
 
 import logging
@@ -128,8 +129,14 @@ PERSONA_ENHANCEMENTS: Dict[str, Dict[str, str]] = {
 
 # Intents that benefit most from persona enhancement (skip for trivial general queries)
 _ENHANCE_INTENTS = {
-    "analytics", "compliance", "report", "anomaly", "trend",
-    "compare", "export", "planner",
+    "analytics",
+    "compliance",
+    "report",
+    "anomaly",
+    "trend",
+    "compare",
+    "export",
+    "planner",
 }
 
 
@@ -154,14 +161,18 @@ class PersonaAdapter:
             response:    The raw response from the OntoSage pipeline.
             persona:     Target persona (must be in PERSONA_ENHANCEMENTS or 'general').
             intent:      Current intent (enhancement only applied for data intents).
-            llm_manager: Optional LLM manager for deeper reframing. If None, applies 
+            llm_manager: Optional LLM manager for deeper reframing. If None, applies
                          simple prefix-only enhancement.
 
         Returns:
             Enhanced response string (factually identical but differently framed).
         """
         # Normalise aliases
-        _alias = {"stakeholder": "facility_manager", "guest": "occupant", "officer": "safety_officer"}
+        _alias = {
+            "stakeholder": "facility_manager",
+            "guest": "occupant",
+            "officer": "safety_officer",
+        }
         persona = _alias.get(persona, persona)
 
         config = PERSONA_ENHANCEMENTS.get(persona)
@@ -173,7 +184,9 @@ class PersonaAdapter:
             return response
 
         if not llm_manager:
-            logger.debug(f"PersonaAdapter: no llm_manager — returning raw response for persona={persona}")
+            logger.debug(
+                f"PersonaAdapter: no llm_manager — returning raw response for persona={persona}"
+            )
             return response
 
         prompt = f"""{config['style'].capitalize()} persona response rewriter.

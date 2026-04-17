@@ -14,12 +14,15 @@ Usage:
     from orchestrator.services.hybrid_retrieval import hybrid_retrieval
     context = await hybrid_retrieval.retrieve(query, query_type="entity_lookup")
 """
-import sys
-sys.path.append('/app')
 
-import httpx
+import sys
+
+sys.path.append("/app")
+
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+import httpx
 
 from shared.config import settings
 from shared.utils import get_logger
@@ -30,9 +33,9 @@ RAG_SERVICE_URL = f"http://{settings.RAG_SERVICE_HOST}:{settings.RAG_SERVICE_POR
 
 
 class QueryType(str, Enum):
-    ENTITY_LOOKUP = "entity_lookup"        # "Where is sensor X?" → GraphDB RAG
+    ENTITY_LOOKUP = "entity_lookup"  # "Where is sensor X?" → GraphDB RAG
     SPATIAL_REASONING = "spatial_reasoning"  # "What rooms share a floor?" → Community RAG
-    SENSOR_DATA = "sensor_data"             # "What is current CO2?" → GraphDB RAG for UUID
+    SENSOR_DATA = "sensor_data"  # "What is current CO2?" → GraphDB RAG for UUID
     COMPLEX_MULTI_HOP = "complex_multi_hop"  # "Which floor has highest CO2?" → Hybrid
     GENERAL_KNOWLEDGE = "general_knowledge"  # "What is brick schema?" → GraphDB RAG
     UNKNOWN = "unknown"
@@ -41,13 +44,17 @@ class QueryType(str, Enum):
 def classify_query_type(user_query: str) -> QueryType:
     """Simple keyword-based query type classifier."""
     q = user_query.lower()
-    if any(w in q for w in ["which floor", "which room", "across all", "compare", "highest", "lowest"]):
+    if any(
+        w in q for w in ["which floor", "which room", "across all", "compare", "highest", "lowest"]
+    ):
         return QueryType.COMPLEX_MULTI_HOP
     if any(w in q for w in ["adjacent", "next to", "near", "spatial", "proximity"]):
         return QueryType.SPATIAL_REASONING
     if any(w in q for w in ["current", "reading", "level", "value", "now", "today", "yesterday"]):
         return QueryType.SENSOR_DATA
-    if any(w in q for w in ["where is", "location", "type of", "what is", "define", "uuid", "list all"]):
+    if any(
+        w in q for w in ["where is", "location", "type of", "what is", "define", "uuid", "list all"]
+    ):
         return QueryType.ENTITY_LOOKUP
     return QueryType.UNKNOWN
 
@@ -88,9 +95,7 @@ class HybridRetrievalOrchestrator:
     # Tier 2: GraphDB Similarity RAG
     # ------------------------------------------------------------------
 
-    async def _graphdb_retrieve(
-        self, query: str, top_k: int = 10, hops: int = 2
-    ) -> List[str]:
+    async def _graphdb_retrieve(self, query: str, top_k: int = 10, hops: int = 2) -> List[str]:
         """GraphDB 2-step retrieval: vector similarity → bounded graph context."""
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -105,8 +110,7 @@ class HybridRetrievalOrchestrator:
                     summary = data.get("summary", "")
                     triples = data.get("triples", [])
                     triple_text = "\n".join(
-                        f"  {t['subject']} {t['predicate']} {t['object']} ."
-                        for t in triples[:50]
+                        f"  {t['subject']} {t['predicate']} {t['object']} ." for t in triples[:50]
                     )
                     context = (
                         f"=== GRAPHDB KNOWLEDGE BASE ===\n\nPREFIXES:\n{prefix_decl}\n\n"
@@ -125,9 +129,7 @@ class HybridRetrievalOrchestrator:
     # Tier 3: Community-Based LanceDB RAG
     # ------------------------------------------------------------------
 
-    async def _community_retrieve(
-        self, query: str, top_k: int = 10
-    ) -> List[str]:
+    async def _community_retrieve(self, query: str, top_k: int = 10) -> List[str]:
         """Community cluster retrieval via LanceDB (advanced RAG service)."""
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -150,11 +152,10 @@ class HybridRetrievalOrchestrator:
     # Tier 4: Hybrid (Tier 2 + Tier 3)
     # ------------------------------------------------------------------
 
-    async def _hybrid_retrieve(
-        self, query: str, top_k: int = 10, hops: int = 2
-    ) -> List[str]:
+    async def _hybrid_retrieve(self, query: str, top_k: int = 10, hops: int = 2) -> List[str]:
         """Combine GraphDB and Community RAG for maximum context richness."""
         import asyncio
+
         graphdb_ctx, community_ctx = await asyncio.gather(
             self._graphdb_retrieve(query, top_k, hops),
             self._community_retrieve(query, top_k),

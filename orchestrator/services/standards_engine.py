@@ -10,6 +10,7 @@ Usage:
     engine = StandardsEngine()
     result = engine.check("breeam", {"co2_ppm": 850, "temp_c": 22.5})
 """
+
 from __future__ import annotations
 
 import json
@@ -24,21 +25,29 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────────────────────────
 
 _BUILT_IN_STANDARDS: Dict[str, Any] = {
-
     "ashrae55": {
         "name": "ASHRAE 55 — Thermal Environmental Conditions for Human Occupancy",
         "version": "2023",
         "parameters": {
             "temp_c": {
-                "summer": {"min": 23.0, "max": 26.0, "unit": "°C", "label": "Operative Temperature (summer)"},
-                "winter": {"min": 20.0, "max": 23.5, "unit": "°C", "label": "Operative Temperature (winter)"},
+                "summer": {
+                    "min": 23.0,
+                    "max": 26.0,
+                    "unit": "°C",
+                    "label": "Operative Temperature (summer)",
+                },
+                "winter": {
+                    "min": 20.0,
+                    "max": 23.5,
+                    "unit": "°C",
+                    "label": "Operative Temperature (winter)",
+                },
             },
             "humidity_rh": {"min": 20.0, "max": 60.0, "unit": "%RH", "label": "Relative Humidity"},
         },
         "credits": None,
         "references": ["ASHRAE 55-2023 §5.3"],
     },
-
     "ashrae621": {
         "name": "ASHRAE 62.1 — Ventilation and Indoor Air Quality",
         "version": "2022",
@@ -52,7 +61,6 @@ _BUILT_IN_STANDARDS: Dict[str, Any] = {
         "credits": None,
         "references": ["ASHRAE 62.1-2022 Table 6-1"],
     },
-
     "well_v2": {
         "name": "WELL Building Standard v2 — Air Quality",
         "version": "2",
@@ -63,17 +71,30 @@ _BUILT_IN_STANDARDS: Dict[str, Any] = {
                 "pm25_ugm3": {"max": 15.0, "unit": "µg/m³", "label": "PM2.5 annual avg (A03)"},
                 "pm10_ugm3": {"max": 50.0, "unit": "µg/m³", "label": "PM10 24h avg (A03)"},
                 "tvoc_ppb": {"max": 500, "unit": "ppb", "label": "Total VOC (A04)"},
-                "humidity_rh": {"min": 30.0, "max": 60.0, "unit": "%RH", "label": "Relative Humidity (A07)"},
-                "temp_c": {"min": 19.0, "max": 26.0, "unit": "°C", "label": "Thermal Comfort (T01)"},
+                "humidity_rh": {
+                    "min": 30.0,
+                    "max": 60.0,
+                    "unit": "%RH",
+                    "label": "Relative Humidity (A07)",
+                },
+                "temp_c": {
+                    "min": 19.0,
+                    "max": 26.0,
+                    "unit": "°C",
+                    "label": "Thermal Comfort (T01)",
+                },
             },
             "light": {
-                "illuminance_lux": {"min": 300, "unit": "lux", "label": "Illuminance task area (L01)"},
+                "illuminance_lux": {
+                    "min": 300,
+                    "unit": "lux",
+                    "label": "Illuminance task area (L01)",
+                },
             },
         },
         "credits": "WELL Certification",
         "references": ["WELL v2 Feature A01, A03, A04, A07, T01, L01"],
     },
-
     "breeam": {
         "name": "BREEAM UK New Construction / In-Use",
         "version": "2018",
@@ -91,14 +112,23 @@ _BUILT_IN_STANDARDS: Dict[str, Any] = {
             "Hea 04": {
                 "description": "Thermal comfort",
                 "thresholds": {
-                    "temp_c": {"min": 19.0, "max": 25.0, "unit": "°C", "label": "Operative Temperature"},
-                    "humidity_rh": {"min": 40.0, "max": 70.0, "unit": "%RH", "label": "Relative Humidity"},
+                    "temp_c": {
+                        "min": 19.0,
+                        "max": 25.0,
+                        "unit": "°C",
+                        "label": "Operative Temperature",
+                    },
+                    "humidity_rh": {
+                        "min": 40.0,
+                        "max": 70.0,
+                        "unit": "%RH",
+                        "label": "Relative Humidity",
+                    },
                 },
             },
         },
         "references": ["BREEAM UK New Construction 2018 SD5076 §Hea 02, Hea 04"],
     },
-
     "iso50001": {
         "name": "ISO 50001:2018 — Energy Management Systems",
         "version": "2018",
@@ -128,7 +158,6 @@ _BUILT_IN_STANDARDS: Dict[str, Any] = {
         },
         "references": ["ISO 50001:2018", "CIBSE TM54", "ESOS Phase 3"],
     },
-
     "en15251": {
         "name": "EN 15251 / EN 16798-1 — Indoor Environmental Quality Criteria",
         "version": "EN 16798-1:2019",
@@ -149,24 +178,43 @@ _BUILT_IN_STANDARDS: Dict[str, Any] = {
                 "description": "Moderate (existing buildings)",
                 "temp_heating_c": {"min": 19.0, "max": 25.0, "unit": "°C"},
                 "temp_cooling_c": {"min": 22.0, "max": 27.0, "unit": "°C"},
-                "co2_above_outdoor_ppm": {"max": 1350, "unit": "ppm above outdoor (~1560 absolute)"},
+                "co2_above_outdoor_ppm": {
+                    "max": 1350,
+                    "unit": "ppm above outdoor (~1560 absolute)",
+                },
             },
         },
         "references": ["EN 16798-1:2019", "BS EN 15251:2007 (superseded)"],
     },
-
     "cibse_kg2": {
         "name": "CIBSE Guide A / TM52 / TM59 — Thermal Comfort & Overheating (UK)",
         "version": "2015/2017",
         "categories": {
-            "temp_c": {"min": 21.0, "max": 25.0, "unit": "°C", "label": "Operative temperature (average office)"},
+            "temp_c": {
+                "min": 21.0,
+                "max": 25.0,
+                "unit": "°C",
+                "label": "Operative temperature (average office)",
+            },
             "co2_ppm": {"max": 1000, "unit": "ppm", "label": "CO2 guidance limit"},
-            "humidity_rh": {"min": 40.0, "max": 70.0, "unit": "%RH", "label": "Relative humidity guidance"},
-            "temp_c_tm52_extreme": {"max": 28.0, "unit": "°C", "label": "TM52 Overheating threshold (absolute)"},
+            "humidity_rh": {
+                "min": 40.0,
+                "max": 70.0,
+                "unit": "%RH",
+                "label": "Relative humidity guidance",
+            },
+            "temp_c_tm52_extreme": {
+                "max": 28.0,
+                "unit": "°C",
+                "label": "TM52 Overheating threshold (absolute)",
+            },
         },
-        "references": ["CIBSE Guide A 2015 §1.3", "CIBSE TM52 Overheating criteria", "CIBSE TM59 Design methodology"],
+        "references": [
+            "CIBSE Guide A 2015 §1.3",
+            "CIBSE TM52 Overheating criteria",
+            "CIBSE TM59 Design methodology",
+        ],
     },
-
     "leed_v41": {
         "name": "LEED v4.1 O+M — Indoor Environmental Quality",
         "version": "v4.1",
@@ -182,22 +230,30 @@ _BUILT_IN_STANDARDS: Dict[str, Any] = {
         "credits": "EQ Credit: Indoor Environmental Quality Performance",
         "references": ["LEED v4.1 Operations and Maintenance"],
     },
-
     "nabers_ieq": {
         "name": "NABERS Indoor Environment (Australia)",
         "version": "v1.2",
         "url": "https://www.nabers.gov.au",
         "parameters": {
-            "temp_c": {"min": 20.0, "max": 26.0, "unit": "°C", "label": "Temperature Range (Core Target)"},
+            "temp_c": {
+                "min": 20.0,
+                "max": 26.0,
+                "unit": "°C",
+                "label": "Temperature Range (Core Target)",
+            },
             "humidity_rh": {"min": 30.0, "max": 60.0, "unit": "%RH", "label": "Humidity Range"},
             "co2_ppm": {"max": 800, "unit": "ppm", "label": "CO2 Base Target (<800 ppm)"},
             "pm10_ugm3": {"max": 50.0, "unit": "µg/m³", "label": "PM10 Limit"},
             "tvoc_ppb": {"max": 500, "unit": "µg/m³", "label": "TVOC Maximum"},
-            "illuminance_lux": {"min": 320, "max": 400, "unit": "lux", "label": "Task Lighting Target"},
+            "illuminance_lux": {
+                "min": 320,
+                "max": 400,
+                "unit": "lux",
+                "label": "Task Lighting Target",
+            },
         },
         "references": ["NABERS Rules for Indoor Environment for Offices"],
     },
-
     "green_star": {
         "name": "Green Star Buildings (Australia / GBCA)",
         "version": "v1",
@@ -211,25 +267,48 @@ _BUILT_IN_STANDARDS: Dict[str, Any] = {
         },
         "references": ["Green Star Buildings v1 (Good Practice Credit)"],
     },
-
     "ashrae_90_1": {
         "name": "ASHRAE 90.1 — Energy Standard for Buildings",
         "version": "2022",
         "parameters": {
-            "eui_kwh_m2_year": {"max": 120.0, "unit": "kWh/m²/yr", "label": "Baseline Target EUI (Office)"},
-            "lighting_power_density_wm2": {"max": 9.6, "unit": "W/m²", "label": "LPD (Office Areas)"},
+            "eui_kwh_m2_year": {
+                "max": 120.0,
+                "unit": "kWh/m²/yr",
+                "label": "Baseline Target EUI (Office)",
+            },
+            "lighting_power_density_wm2": {
+                "max": 9.6,
+                "unit": "W/m²",
+                "label": "LPD (Office Areas)",
+            },
         },
         "references": ["ASHRAE 90.1-2022 Appendix G"],
     },
-
     "osha_safety": {
         "name": "OSHA / Safe Work / HSE (Industrial Safety & Health Hazards)",
         "version": "Current",
         "parameters": {
-            "co2_ppm": {"max": 5000, "unit": "ppm", "label": "CO2 (8-hour Workplace Exposure Limit)"},
-            "co_ppm": {"max": 50.0, "unit": "ppm", "label": "Carbon Monoxide (Time-Weighted Average)"},
-            "pm25_ugm3": {"max": 5000.0, "unit": "µg/m³", "label": "Respirable Dust/PM2.5 Absolute Max"},
-            "temp_c": {"min": 16.0, "max": 38.0, "unit": "°C", "label": "Extreme Safety Bounds (Non-Office)"},
+            "co2_ppm": {
+                "max": 5000,
+                "unit": "ppm",
+                "label": "CO2 (8-hour Workplace Exposure Limit)",
+            },
+            "co_ppm": {
+                "max": 50.0,
+                "unit": "ppm",
+                "label": "Carbon Monoxide (Time-Weighted Average)",
+            },
+            "pm25_ugm3": {
+                "max": 5000.0,
+                "unit": "µg/m³",
+                "label": "Respirable Dust/PM2.5 Absolute Max",
+            },
+            "temp_c": {
+                "min": 16.0,
+                "max": 38.0,
+                "unit": "°C",
+                "label": "Extreme Safety Bounds (Non-Office)",
+            },
         },
         "references": ["OSHA PEL", "HSE EH40 (UK)", "Safe Work Australia WES"],
     },
@@ -239,6 +318,7 @@ _BUILT_IN_STANDARDS: Dict[str, Any] = {
 # ─────────────────────────────────────────────────────────────────────────────
 # Result dataclass-style dict builder
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _make_check(
     parameter: str,
@@ -267,6 +347,7 @@ def _make_check(
 # ─────────────────────────────────────────────────────────────────────────────
 # Main engine
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class StandardsEngine:
     """
@@ -395,9 +476,11 @@ class StandardsEngine:
         for credit_id, credit in std.get("credits", {}).items():
             for param, threshold in credit.get("thresholds", {}).items():
                 if param in readings:
-                    checks.append(self._eval_threshold(
-                        param, readings[param], threshold, std["name"], credit_id
-                    ))
+                    checks.append(
+                        self._eval_threshold(
+                            param, readings[param], threshold, std["name"], credit_id
+                        )
+                    )
         return checks
 
     def _check_well_v2(self, readings, std) -> List[Dict]:
@@ -405,9 +488,9 @@ class StandardsEngine:
         for _feature, params in std.get("features", {}).items():
             for param, threshold in params.items():
                 if param in readings:
-                    checks.append(self._eval_threshold(
-                        param, readings[param], threshold, std["name"]
-                    ))
+                    checks.append(
+                        self._eval_threshold(param, readings[param], threshold, std["name"])
+                    )
         return checks
 
     def _check_ashrae55(self, readings, std, season) -> List[Dict]:
@@ -451,7 +534,11 @@ class StandardsEngine:
                     status = "borderline"
                 else:
                     status = "non_compliant"
-                checks.append(_make_check(param, value, {"target": target}, status, margin, unit, label, std["name"]))
+                checks.append(
+                    _make_check(
+                        param, value, {"target": target}, status, margin, unit, label, std["name"]
+                    )
+                )
         return checks
 
     def _check_en15251(self, readings, std, category, season) -> List[Dict]:
@@ -463,9 +550,14 @@ class StandardsEngine:
             t = cat["co2_above_outdoor_ppm"]
             # Approximate absolute limit = outdoor CO2 (~420 ppm) + allowed delta
             absolute_max = 420 + t["max"]
-            check_t = {"max": absolute_max, "unit": "ppm",
-                        "label": f"CO2 absolute max (EN16798 Cat {category})"}
-            checks.append(self._eval_threshold("co2_ppm", readings["co2_ppm"], check_t, std["name"]))
+            check_t = {
+                "max": absolute_max,
+                "unit": "ppm",
+                "label": f"CO2 absolute max (EN16798 Cat {category})",
+            }
+            checks.append(
+                self._eval_threshold("co2_ppm", readings["co2_ppm"], check_t, std["name"])
+            )
         key = "temp_cooling_c" if season == "summer" else "temp_heating_c"
         if key in cat and "temp_c" in readings:
             t = cat[key].copy()
@@ -486,7 +578,11 @@ class StandardsEngine:
             if isinstance(section, dict):
                 for param, threshold in section.items():
                     if param in readings and isinstance(threshold, dict):
-                        checks.append(self._eval_threshold(param, readings[param], threshold, std.get("name", "")))
+                        checks.append(
+                            self._eval_threshold(
+                                param, readings[param], threshold, std.get("name", "")
+                            )
+                        )
         return checks
 
     def _eval_threshold(

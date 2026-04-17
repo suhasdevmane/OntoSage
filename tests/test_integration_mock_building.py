@@ -11,18 +11,22 @@ Run from project root:
 Requires:
     pip install pytest pytest-asyncio httpx
 """
-import sys
-import os
-import pytest
+
 import json
+import os
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+import pytest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from tests.fixtures.ontology_fixtures import (
-    mock_sql_result,
-    mock_sparql_result,
     mock_anomalous_readings,
+    mock_sparql_result,
+    mock_sql_result,
 )
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # State factory
@@ -50,14 +54,14 @@ class TestDialogueIntentDetection:
     """Integration tests for DialogueAgent intent detection with mock LLM."""
 
     INTENT_SCENARIOS = [
-        ("what is the current temperature in zone 1?",  "analytics"),
-        ("list all CO2 sensors on floor 2",             "metadata"),
-        ("hello, how are you?",                         "general"),
-        ("generate a weekly report",                    "report"),
-        ("export the sensor data as CSV",               "export"),
-        ("check for any anomaly in humidity sensors",   "anomaly"),
-        ("compare zones 1 and 2 temperatures",          "compare"),
-        ("what sensors do you have?",                   "discovery"),
+        ("what is the current temperature in zone 1?", "analytics"),
+        ("list all CO2 sensors on floor 2", "metadata"),
+        ("hello, how are you?", "general"),
+        ("generate a weekly report", "report"),
+        ("export the sensor data as CSV", "export"),
+        ("check for any anomaly in humidity sensors", "anomaly"),
+        ("compare zones 1 and 2 temperatures", "compare"),
+        ("what sensors do you have?", "discovery"),
     ]
 
     @pytest.mark.asyncio
@@ -70,37 +74,47 @@ class TestDialogueIntentDetection:
             pytest.skip("DialogueAgent not importable")
 
         agent = DialogueAgent()
-        llm_response = json.dumps({
-            "intent": expected_intent,
-            "entities": [],
-            "required_analytics": [],
-            "time_range": {"start": None, "end": None},
-            "response": "Hello!" if expected_intent == "general" else None,
-            "clarification_question": None,
-            "discovery_filter": None,
-            "export_format": "csv" if expected_intent == "export" else None,
-            "report_type": "summary" if expected_intent == "report" else None,
-            "recommendation_domain": None,
-            "explanation": "Test mock"
-        })
+        llm_response = json.dumps(
+            {
+                "intent": expected_intent,
+                "entities": [],
+                "required_analytics": [],
+                "time_range": {"start": None, "end": None},
+                "response": "Hello!" if expected_intent == "general" else None,
+                "clarification_question": None,
+                "discovery_filter": None,
+                "export_format": "csv" if expected_intent == "export" else None,
+                "report_type": "summary" if expected_intent == "report" else None,
+                "recommendation_domain": None,
+                "explanation": "Test mock",
+            }
+        )
 
-        with patch('orchestrator.agents.dialogue_agent.llm_manager.generate',
-                   new_callable=AsyncMock, return_value=llm_response), \
-             patch('orchestrator.agents.dialogue_agent.redis_manager.get_cache',
-                   new_callable=AsyncMock, return_value=None), \
-             patch('orchestrator.agents.dialogue_agent.redis_manager.set_cache',
-                   new_callable=AsyncMock, return_value=None):
+        with patch(
+            "orchestrator.agents.dialogue_agent.llm_manager.generate",
+            new_callable=AsyncMock,
+            return_value=llm_response,
+        ), patch(
+            "orchestrator.agents.dialogue_agent.redis_manager.get_cache",
+            new_callable=AsyncMock,
+            return_value=None,
+        ), patch(
+            "orchestrator.agents.dialogue_agent.redis_manager.set_cache",
+            new_callable=AsyncMock,
+            return_value=None,
+        ):
             state = make_state(query)
             result = await agent.detect_intent(state)
 
-        assert result.get("intent") == expected_intent, (
-            f"Query '{query}' should route to '{expected_intent}', got '{result.get('intent')}'"
-        )
+        assert (
+            result.get("intent") == expected_intent
+        ), f"Query '{query}' should route to '{expected_intent}', got '{result.get('intent')}'"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Integration: Analytics pipeline (SPARQL → SQL → Analytics → Response)
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestAnalyticsPipeline:
     """Integration test for the core SPARQL→SQL→Analytics pipeline."""
@@ -121,7 +135,9 @@ class TestAnalyticsPipeline:
             "media": None,
         }
 
-        with patch("orchestrator.workflow.WorkflowOrchestrator._build_graph", return_value=MagicMock()):
+        with patch(
+            "orchestrator.workflow.WorkflowOrchestrator._build_graph", return_value=MagicMock()
+        ):
             orch = WorkflowOrchestrator()
             orch.sparql_agent = MagicMock()
             orch.sparql_agent.generate_query = AsyncMock(return_value=sparql_mock)
@@ -148,6 +164,7 @@ class TestAnalyticsPipeline:
 # Integration: Anomaly detection pipeline
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestAnomalyPipeline:
     """Integration test for the SPARQL→SQL→Anomaly pipeline."""
 
@@ -166,8 +183,12 @@ class TestAnomalyPipeline:
         }
         state = make_state("are there any anomalies in temperature?", "anomaly")
 
-        with patch.object(agent, '_generate_summary', new_callable=AsyncMock,
-                          return_value="2 anomalies detected: spike at 35 degrees and cold at 8 degrees."):
+        with patch.object(
+            agent,
+            "_generate_summary",
+            new_callable=AsyncMock,
+            return_value="2 anomalies detected: spike at 35 degrees and cold at 8 degrees.",
+        ):
             result = await agent.detect(state, "anomalies?", sensor_data=sql)
 
         assert isinstance(result, dict)
@@ -179,6 +200,7 @@ class TestAnomalyPipeline:
 # ─────────────────────────────────────────────────────────────────────────────
 # Integration: Report generation
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestReportPipeline:
     """Integration test for report generation with mock data."""
@@ -195,8 +217,12 @@ class TestReportPipeline:
         sparql = mock_sparql_result()
         state = make_state("generate a building report", "report")
 
-        with patch.object(agent, '_narrate', new_callable=AsyncMock,
-                          return_value="Summary: Avg temperature 22.1 degrees C. All metrics within range."):
+        with patch.object(
+            agent,
+            "_narrate",
+            new_callable=AsyncMock,
+            return_value="Summary: Avg temperature 22.1 degrees C. All metrics within range.",
+        ):
             result = await agent.generate(state, "weekly report", sensor_data=sql, metadata=sparql)
 
         assert isinstance(result, dict)
@@ -207,6 +233,7 @@ class TestReportPipeline:
 # ─────────────────────────────────────────────────────────────────────────────
 # Integration: Planner decomposition
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestPlannerPipeline:
     """Integration test for PlannerAgent multi-step decomposition."""
@@ -219,31 +246,37 @@ class TestPlannerPipeline:
             pytest.skip("PlannerAgent not importable")
 
         agent = PlannerAgent()
-        plan_json = json.dumps({
-            "steps": [
-                {"id": "step_1", "agent": "sparql", "task": "Get CO2 sensor UUIDs"},
-                {"id": "step_2", "agent": "sql", "task": "Fetch CO2 readings"},
-                {"id": "step_3", "agent": "anomaly", "task": "Detect anomalies"},
-                {"id": "step_4", "agent": "export", "task": "Export to CSV"},
-            ],
-            "goal": "Check CO2 levels and export anomaly report"
-        })
+        plan_json = json.dumps(
+            {
+                "steps": [
+                    {"id": "step_1", "agent": "sparql", "task": "Get CO2 sensor UUIDs"},
+                    {"id": "step_2", "agent": "sql", "task": "Fetch CO2 readings"},
+                    {"id": "step_3", "agent": "anomaly", "task": "Detect anomalies"},
+                    {"id": "step_4", "agent": "export", "task": "Export to CSV"},
+                ],
+                "goal": "Check CO2 levels and export anomaly report",
+            }
+        )
         state = make_state("check CO2 levels and export as CSV", "planner")
 
         from orchestrator.agents.planner_agent import ExecutionPlan, PlanStep
+
         mock_plan = ExecutionPlan(
             user_query="check CO2 and export CSV",
             rationale="Fetch CO2 sensor data then export",
             steps=[
                 PlanStep(index=1, agent="sparql", description="Get CO2 sensor UUIDs"),
-                PlanStep(index=2, agent="sql",    description="Fetch CO2 readings"),
+                PlanStep(index=2, agent="sql", description="Fetch CO2 readings"),
                 PlanStep(index=3, agent="export", description="Export to CSV"),
-            ]
+            ],
         )
-        with patch.object(agent, '_build_plan', new_callable=AsyncMock,
-                          return_value=mock_plan):
-            with patch.object(agent, '_execute_plan', new_callable=AsyncMock,
-                              return_value={"success": True, "formatted_response": "Done."}):
+        with patch.object(agent, "_build_plan", new_callable=AsyncMock, return_value=mock_plan):
+            with patch.object(
+                agent,
+                "_execute_plan",
+                new_callable=AsyncMock,
+                return_value={"success": True, "formatted_response": "Done."},
+            ):
                 result = await agent.plan_and_execute(state, "check CO2 and export CSV")
 
         assert isinstance(result, dict)
@@ -254,6 +287,7 @@ class TestPlannerPipeline:
 # Integration: Export pipeline
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestExportPipeline:
     """Integration test for DataExportAgent with real format generation."""
 
@@ -261,15 +295,18 @@ class TestExportPipeline:
     async def test_csv_export_round_trip(self):
         """CSV export → parse back → verify row count."""
         try:
+            import csv
+            import io
+
             from orchestrator.agents.data_export_agent import DataExportAgent
-            import csv, io
         except ImportError:
             pytest.skip("DataExportAgent or csv not available")
 
         agent = DataExportAgent()
         sql = mock_sql_result(n=10)
-        result = await agent.export(data=sql, label="integration_test",
-                                    fmt="csv", title="Integration CSV Test")
+        result = await agent.export(
+            data=sql, label="integration_test", fmt="csv", title="Integration CSV Test"
+        )
 
         if not result.get("success"):
             pytest.skip(f"Export returned: {result}")

@@ -14,30 +14,32 @@ Usage:
     agent = ReportAgent()
     result = await agent.generate(state, user_query, sensor_data)
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 import json
 from datetime import datetime
-from zoneinfo import ZoneInfo
-from typing import Any, Dict, List, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
+from zoneinfo import ZoneInfo
 
+from orchestrator.llm_manager import llm_manager
 from shared.config import settings
 from shared.constants import COMFORT_RANGES as _SHARED_COMFORT_RANGES
 from shared.models import ConversationState
 from shared.utils import get_logger
-from orchestrator.llm_manager import llm_manager
 
 logger = get_logger(__name__)
 
 
 class ReportType(str, Enum):
-    SUMMARY    = "summary"     # General overview
-    ANOMALY    = "anomaly"     # Out-of-range highlights
+    SUMMARY = "summary"  # General overview
+    ANOMALY = "anomaly"  # Out-of-range highlights
     COMPARISON = "comparison"  # Cross-zone or cross-period
-    TREND      = "trend"       # Time-series evolution
-    FULL       = "full"        # Complete building report
+    TREND = "trend"  # Time-series evolution
+    FULL = "full"  # Complete building report
 
 
 def _detect_report_type(query: str) -> ReportType:
@@ -111,6 +113,7 @@ class ReportAgent:
                 fmt_lower = (export_format or "").lower().strip()
                 if fmt_lower in ("pdf", "docx", "html"):
                     from orchestrator.services.document_builder import DocumentBuilder
+
                     builder = DocumentBuilder()
                     persona = getattr(state, "persona", "general") or "general"
                     doc_data = {
@@ -132,6 +135,7 @@ class ReportAgent:
                     export_result = doc_result
                 else:
                     from orchestrator.agents.data_export_agent import DataExportAgent
+
                     export_agent = DataExportAgent()
                     export_result = await export_agent.export(
                         data=report["sections_data"],
@@ -164,7 +168,9 @@ class ReportAgent:
 
         # Section 1: Overview
         overview = {
-            "building": settings.BUILDING_NAME if hasattr(settings, "BUILDING_NAME") else "Smart Building",
+            "building": (
+                settings.BUILDING_NAME if hasattr(settings, "BUILDING_NAME") else "Smart Building"
+            ),
             "report_type": rtype.value,
             "generated_at": datetime.now(ZoneInfo(settings.BUILDING_TIMEZONE)).isoformat(),
             "sensor_count": len(sensors),
@@ -220,19 +226,25 @@ class ReportAgent:
                 for sensor_type, bounds in self.COMFORT_RANGES.items():
                     if sensor_type in col_lower:
                         if val < bounds["min"] or val > bounds["max"]:
-                            anomalies.append({
-                                "column": col,
-                                "value": val,
-                                "unit": bounds["unit"],
-                                "threshold": bounds,
-                                "timestamp": row.get("Datetime") or row.get("timestamp") or "unknown",
-                                "severity": "high" if (val < bounds["min"] * 0.8 or val > bounds["max"] * 1.2) else "medium",
-                            })
+                            anomalies.append(
+                                {
+                                    "column": col,
+                                    "value": val,
+                                    "unit": bounds["unit"],
+                                    "threshold": bounds,
+                                    "timestamp": row.get("Datetime")
+                                    or row.get("timestamp")
+                                    or "unknown",
+                                    "severity": (
+                                        "high"
+                                        if (val < bounds["min"] * 0.8 or val > bounds["max"] * 1.2)
+                                        else "medium"
+                                    ),
+                                }
+                            )
         return anomalies[:50]  # cap
 
-    def _extract_highlights(
-        self, readings: Dict, anomalies: List, rtype: ReportType
-    ) -> List[str]:
+    def _extract_highlights(self, readings: Dict, anomalies: List, rtype: ReportType) -> List[str]:
         """Bullet-point key findings."""
         highlights = []
         for field, stats in readings.items():
@@ -244,9 +256,7 @@ class ReportAgent:
             highlights.append(f"• ⚠️ {len(anomalies)} anomalies detected ({high} high-severity)")
         return highlights[:15]
 
-    async def _narrate(
-        self, query: str, rtype: ReportType, sections: Dict
-    ) -> str:
+    async def _narrate(self, query: str, rtype: ReportType, sections: Dict) -> str:
         """LLM narration of the report findings."""
         prompt = f"""Generate a concise building management {rtype.value} report based on the following data.
 
@@ -268,9 +278,7 @@ Use factual language. Be concise and specific."""
             logger.warning(f"Report narration LLM failed: {e}")
             return "\n".join(sections.get("highlights", []))
 
-    def _assemble_report(
-        self, rtype: ReportType, sections: Dict, narrative: str
-    ) -> Dict[str, Any]:
+    def _assemble_report(self, rtype: ReportType, sections: Dict, narrative: str) -> Dict[str, Any]:
         """Package final report."""
         return {
             "success": True,

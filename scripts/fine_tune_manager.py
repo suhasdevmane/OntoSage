@@ -21,6 +21,7 @@ Usage:
     python scripts/fine_tune_manager.py --format openai --input data/finetune/raw.jsonl
     python scripts/fine_tune_manager.py --upload --model gpt-4o-mini
 """
+
 from __future__ import annotations
 
 import os
@@ -45,23 +46,29 @@ Always be precise, use sensor names (not raw UUIDs), and provide actionable insi
 
 
 class QAExample:
-    def __init__(self, user_query: str, ideal_response: str,
-                 intent: str = "analytics", source: str = "log",
-                 correction: bool = False, score: float = 1.0):
-        self.user_query      = user_query
-        self.ideal_response  = ideal_response
-        self.intent          = intent
-        self.source          = source
-        self.correction      = correction  # from self-correction log
-        self.score           = score       # quality 0.0-1.0
-        self.timestamp       = datetime.datetime.utcnow().isoformat()
+    def __init__(
+        self,
+        user_query: str,
+        ideal_response: str,
+        intent: str = "analytics",
+        source: str = "log",
+        correction: bool = False,
+        score: float = 1.0,
+    ):
+        self.user_query = user_query
+        self.ideal_response = ideal_response
+        self.intent = intent
+        self.source = source
+        self.correction = correction  # from self-correction log
+        self.score = score  # quality 0.0-1.0
+        self.timestamp = datetime.datetime.utcnow().isoformat()
 
     def to_openai_format(self) -> Dict:
         """OpenAI fine-tune JSONL format (chat)."""
         return {
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user",   "content": self.user_query},
+                {"role": "user", "content": self.user_query},
                 {"role": "assistant", "content": self.ideal_response},
             ]
         }
@@ -86,11 +93,12 @@ class QAExample:
 # Example Collector
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class ExampleCollector:
     """Mines OntoSage conversation logs and correction logs for training examples."""
 
-    MIN_QUALITY_SCORE = 0.7   # minimum score to include an example
-    MAX_EXAMPLES      = 5000  # cap to avoid huge datasets
+    MIN_QUALITY_SCORE = 0.7  # minimum score to include an example
+    MAX_EXAMPLES = 5000  # cap to avoid huge datasets
 
     def collect_from_logs(self, log_dir: Path) -> List[QAExample]:
         """Scan JSONL debug logs for high-quality QA pairs."""
@@ -101,7 +109,7 @@ class ExampleCollector:
             except Exception as e:
                 logger.warning(f"Log parse error ({log_file}): {e}")
         logger.info(f"Collected {len(examples)} potential examples from {log_dir}")
-        return examples[:self.MAX_EXAMPLES]
+        return examples[: self.MAX_EXAMPLES]
 
     def _parse_log(self, log_file: Path) -> List[QAExample]:
         examples = []
@@ -145,29 +153,39 @@ class ExampleCollector:
     def collect_seed_examples(self) -> List[QAExample]:
         """Return handcrafted seed examples for bootstrap fine-tuning."""
         seeds = [
-            ("What is the current temperature in zone 1?",
-             "The current temperature in Zone 1.01 is **22.3°C**, measured by Air Temperature Sensor 1.01 at 14:35 UTC. This is within the ASHRAE 55 comfort range (20–26°C). ✅",
-             "analytics"),
-            ("List all CO2 sensors on floor 2.",
-             "Floor 2 has **2 CO2 sensors**: CO2 Sensor 2.01 (Zone 2.01, UUID: uuid-co2-201) and CO2 Sensor 2.02 (Zone 2.02, UUID: uuid-co2-202). Both are connected to the MySQL sensor_data database.",
-             "metadata"),
-            ("Are there any anomalies in the humidity sensors this week?",
-             "⚠️ **1 anomaly detected** in Zone 1.02:\n- Relative Humidity Sensor 1.02: **78% RH** on 2024-03-04 at 09:15 (threshold: 60%). This may indicate a leakage or HVAC malfunction. Recommend inspection.",
-             "anomaly"),
-            ("Generate a weekly building summary report.",
-             "# Weekly Building Report (2024-03-01 to 2024-03-07)\n\n**Temperature**: Avg 22.1°C (Grade A — 97% within range)\n**Humidity**: Avg 48% RH (Grade A — 99% within range)\n**CO2**: Avg 680 ppm (Grade B — 94% below 1000 ppm)\n**Anomalies**: 2 events (1 humidity spike, 1 temperature dip)\n\n_All metrics within ASHRAE 55 comfort standards._",
-             "report"),
-            ("Compare temperatures between zone 1 and zone 2.",
-             "**Zone 1** (Floor 1): Avg **22.3°C**, Min 20.8°C, Max 24.1°C\n**Zone 2** (Floor 2): Avg **21.7°C**, Min 19.9°C, Max 23.5°C\n\nZone 1 is on average 0.6°C warmer. Both zones are within comfort range. No adjustments required.",
-             "compare"),
+            (
+                "What is the current temperature in zone 1?",
+                "The current temperature in Zone 1.01 is **22.3°C**, measured by Air Temperature Sensor 1.01 at 14:35 UTC. This is within the ASHRAE 55 comfort range (20–26°C). ✅",
+                "analytics",
+            ),
+            (
+                "List all CO2 sensors on floor 2.",
+                "Floor 2 has **2 CO2 sensors**: CO2 Sensor 2.01 (Zone 2.01, UUID: uuid-co2-201) and CO2 Sensor 2.02 (Zone 2.02, UUID: uuid-co2-202). Both are connected to the MySQL sensor_data database.",
+                "metadata",
+            ),
+            (
+                "Are there any anomalies in the humidity sensors this week?",
+                "⚠️ **1 anomaly detected** in Zone 1.02:\n- Relative Humidity Sensor 1.02: **78% RH** on 2024-03-04 at 09:15 (threshold: 60%). This may indicate a leakage or HVAC malfunction. Recommend inspection.",
+                "anomaly",
+            ),
+            (
+                "Generate a weekly building summary report.",
+                "# Weekly Building Report (2024-03-01 to 2024-03-07)\n\n**Temperature**: Avg 22.1°C (Grade A — 97% within range)\n**Humidity**: Avg 48% RH (Grade A — 99% within range)\n**CO2**: Avg 680 ppm (Grade B — 94% below 1000 ppm)\n**Anomalies**: 2 events (1 humidity spike, 1 temperature dip)\n\n_All metrics within ASHRAE 55 comfort standards._",
+                "report",
+            ),
+            (
+                "Compare temperatures between zone 1 and zone 2.",
+                "**Zone 1** (Floor 1): Avg **22.3°C**, Min 20.8°C, Max 24.1°C\n**Zone 2** (Floor 2): Avg **21.7°C**, Min 19.9°C, Max 23.5°C\n\nZone 1 is on average 0.6°C warmer. Both zones are within comfort range. No adjustments required.",
+                "compare",
+            ),
         ]
-        return [QAExample(q, a, intent=intent, source="seed", score=1.0)
-                for q, a, intent in seeds]
+        return [QAExample(q, a, intent=intent, source="seed", score=1.0) for q, a, intent in seeds]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dataset Formatter
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class DatasetFormatter:
     """Formats QA examples into various fine-tuning dataset formats."""
@@ -191,8 +209,9 @@ class DatasetFormatter:
                 f.write(json.dumps(ex, ensure_ascii=False) + "\n")
         logger.info(f"Wrote {len(examples)} examples to {output_path}")
 
-    def split_train_val(self, examples: List[QAExample],
-                        val_ratio: float = 0.1) -> Tuple[List, List]:
+    def split_train_val(
+        self, examples: List[QAExample], val_ratio: float = 0.1
+    ) -> Tuple[List, List]:
         """Split into train/validation sets (stratified by intent)."""
         # Group by intent
         by_intent: Dict[str, List] = {}
@@ -211,18 +230,20 @@ class DatasetFormatter:
 # Fine-Tune Manager
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class FineTuneManager:
     """Orchestrates the fine-tuning pipeline end-to-end."""
 
     def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o-mini"):
         self._api_key = api_key or os.environ.get("OPENAI_API_KEY")
-        self._model   = model
+        self._model = model
         self._job_ids: List[str] = []
 
     def upload_and_train(self, dataset_path: Path) -> Optional[str]:
         """Upload JSONL file and start a fine-tune job (OpenAI)."""
         try:
             import openai
+
             client = openai.OpenAI(api_key=self._api_key)
 
             # Upload file
@@ -251,21 +272,25 @@ class FineTuneManager:
         """Check status of a fine-tune job."""
         try:
             import openai
+
             client = openai.OpenAI(api_key=self._api_key)
             job = client.fine_tuning.jobs.retrieve(job_id)
             return {
-                "job_id":     job_id,
-                "status":     job.status,
-                "model":      job.fine_tuned_model,
+                "job_id": job_id,
+                "status": job.status,
+                "model": job.fine_tuned_model,
                 "created_at": job.created_at,
             }
         except Exception as e:
             return {"job_id": job_id, "error": str(e)}
 
-    def run_pipeline(self, log_dir: Path = Path("logs/"),
-                     output_dir: Path = Path("data/finetune/"),
-                     fmt: str = "openai",
-                     upload: bool = False) -> Dict:
+    def run_pipeline(
+        self,
+        log_dir: Path = Path("logs/"),
+        output_dir: Path = Path("data/finetune/"),
+        fmt: str = "openai",
+        upload: bool = False,
+    ) -> Dict:
         """Run the complete pipeline: collect → format → split → optionally upload."""
         collector = ExampleCollector()
         formatter = DatasetFormatter()
@@ -274,8 +299,9 @@ class FineTuneManager:
         examples = collector.collect_from_logs(log_dir)
         seed = collector.collect_seed_examples()
         all_examples = seed + examples
-        logger.info(f"Total examples: {len(all_examples)} "
-                    f"(seed={len(seed)}, log={len(examples)})")
+        logger.info(
+            f"Total examples: {len(all_examples)} " f"(seed={len(seed)}, log={len(examples)})"
+        )
 
         # Step 2: Split
         train, val = formatter.split_train_val(all_examples)
@@ -283,7 +309,7 @@ class FineTuneManager:
         # Step 3: Format and write
         for split, split_examples in [("train", train), ("val", val)]:
             formatted = formatter.format(split_examples, fmt)
-            out_path  = output_dir / f"{fmt}_{split}.jsonl"
+            out_path = output_dir / f"{fmt}_{split}.jsonl"
             formatter.write_jsonl(formatted, out_path)
 
         # Step 4: Upload (optional)
@@ -295,10 +321,10 @@ class FineTuneManager:
         return {
             "total_examples": len(all_examples),
             "train_examples": len(train),
-            "val_examples":   len(val),
-            "format":         fmt,
-            "output_dir":     str(output_dir),
-            "job_id":         job_id,
+            "val_examples": len(val),
+            "format": fmt,
+            "output_dir": str(output_dir),
+            "job_id": job_id,
         }
 
 
@@ -308,13 +334,16 @@ class FineTuneManager:
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="OntoSage Fine-Tune Manager")
-    parser.add_argument("--collect", action="store_true", help="Collect training examples from logs")
+    parser.add_argument(
+        "--collect", action="store_true", help="Collect training examples from logs"
+    )
     parser.add_argument("--format", choices=DatasetFormatter.FORMATS, default="openai")
-    parser.add_argument("--input",  default="logs/",            help="Log directory")
-    parser.add_argument("--output", default="data/finetune/",   help="Output directory")
-    parser.add_argument("--upload", action="store_true",        help="Upload to OpenAI")
-    parser.add_argument("--model",  default="gpt-4o-mini",      help="Base model for fine-tuning")
+    parser.add_argument("--input", default="logs/", help="Log directory")
+    parser.add_argument("--output", default="data/finetune/", help="Output directory")
+    parser.add_argument("--upload", action="store_true", help="Upload to OpenAI")
+    parser.add_argument("--model", default="gpt-4o-mini", help="Base model for fine-tuning")
     args = parser.parse_args()
 
     mgr = FineTuneManager(model=args.model)

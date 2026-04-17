@@ -23,6 +23,7 @@ Usage:
     engine = ReasoningEngine()
     result = await engine.reason(state, user_query)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -39,13 +40,14 @@ logger = get_logger(__name__)
 # Query plan data structures
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class QueryStep:
     """A single step in a multi-hop query plan."""
 
     def __init__(
         self,
         step_id: str,
-        step_type: str,   # "sparql", "sql", "analytics", "synthesise"
+        step_type: str,  # "sparql", "sql", "analytics", "synthesise"
         query: str,
         depends_on: List[str] = None,
         description: str = "",
@@ -75,6 +77,7 @@ class QueryPlan:
 # ─────────────────────────────────────────────────────────────────────────────
 # Reasoning Engine
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class ReasoningEngine:
     """
@@ -143,7 +146,9 @@ class ReasoningEngine:
                 step.result = result
                 step.success = result.get("success", False)
                 context[step.step_id] = result
-                logger.info(f"ReasoningEngine: step {step.step_id} ({step.step_type}) success={step.success}")
+                logger.info(
+                    f"ReasoningEngine: step {step.step_id} ({step.step_type}) success={step.success}"
+                )
 
             # Step 3: Synthesise
             synthesis = await self._synthesise(plan, context, user_query, llm_manager)
@@ -208,21 +213,24 @@ Return ONLY the JSON array."""
 
         try:
             import json
+
             response = await llm_manager.generate(plan_prompt)
-            json_match = re.search(r'\[[\s\S]*\]', response)
+            json_match = re.search(r"\[[\s\S]*\]", response)
             if not json_match:
                 return self._fallback_plan(user_query)
 
             raw_steps = json.loads(json_match.group(0))
             steps = []
-            for s in raw_steps[:self.max_hop_steps + 1]:
-                steps.append(QueryStep(
-                    step_id=s.get("step_id", f"step{len(steps)+1}"),
-                    step_type=s.get("type", "sparql"),
-                    query=s.get("query_intent", ""),
-                    depends_on=s.get("depends_on", []),
-                    description=s.get("description", ""),
-                ))
+            for s in raw_steps[: self.max_hop_steps + 1]:
+                steps.append(
+                    QueryStep(
+                        step_id=s.get("step_id", f"step{len(steps)+1}"),
+                        step_type=s.get("type", "sparql"),
+                        query=s.get("query_intent", ""),
+                        depends_on=s.get("depends_on", []),
+                        description=s.get("description", ""),
+                    )
+                )
             return QueryPlan(user_query, steps)
 
         except Exception as e:
@@ -232,13 +240,19 @@ Return ONLY the JSON array."""
     def _fallback_plan(self, user_query: str) -> QueryPlan:
         """Minimal 2-step fallback: SPARQL discovery + LLM synthesis."""
         steps = [
-            QueryStep("step1", "discover_sparql",
-                      "List sensors with their zones and UUIDs",
-                      description="Discover available sensor entities"),
-            QueryStep("step2", "synthesise",
-                      user_query,
-                      depends_on=["step1"],
-                      description="Synthesise available data into answer"),
+            QueryStep(
+                "step1",
+                "discover_sparql",
+                "List sensors with their zones and UUIDs",
+                description="Discover available sensor entities",
+            ),
+            QueryStep(
+                "step2",
+                "synthesise",
+                user_query,
+                depends_on=["step1"],
+                description="Synthesise available data into answer",
+            ),
         ]
         return QueryPlan(user_query, steps)
 
@@ -273,6 +287,7 @@ Return ONLY the JSON array."""
         """Run a SPARQL discovery step using the SPARQL agent."""
         try:
             from orchestrator.agents.sparql_agent import SPARQLAgent
+
             agent = SPARQLAgent()
             result = await agent.generate_query(state, step.query or step.description)
             return {"success": result.get("success", False), "type": "sparql", "data": result}
@@ -283,10 +298,13 @@ Return ONLY the JSON array."""
         """Run a SQL data fetch step."""
         try:
             # Get UUIDs from prior SPARQL step if available
-            prior = next((v for v in context.values() if v.get("type") == "sparql" and v.get("success")), {})
+            prior = next(
+                (v for v in context.values() if v.get("type") == "sparql" and v.get("success")), {}
+            )
             sparql_data = prior.get("data", {})
 
             from orchestrator.agents.sql_agent import SQLAgent
+
             agent = SQLAgent()
             result = await agent.generate_and_execute(
                 state,
@@ -311,6 +329,7 @@ Return ONLY the JSON array."""
 
             # Simple aggregation: group by entity, compute mean value
             from collections import defaultdict
+
             groups: Dict[str, List[float]] = defaultdict(list)
             for row in all_rows:
                 uuid = str(row.get("uuid", row.get("entity", "unknown")))
@@ -320,6 +339,7 @@ Return ONLY the JSON array."""
                     pass
 
             import statistics
+
             aggregated = [
                 {
                     "entity": k,
@@ -365,11 +385,15 @@ Return ONLY the JSON array."""
                 r = step.result
                 if r.get("type") == "sparql":
                     sparql_data = r.get("data", {})
-                    parts.append(f"Step '{step.step_id}' (SPARQL discovery): {sparql_data.get('formatted_response', '')[:300]}")
+                    parts.append(
+                        f"Step '{step.step_id}' (SPARQL discovery): {sparql_data.get('formatted_response', '')[:300]}"
+                    )
                 elif r.get("type") == "sql":
                     sql_data = r.get("data", {})
                     row_count = len(sql_data.get("data", []))
-                    parts.append(f"Step '{step.step_id}' (SQL fetch): Retrieved {row_count} data rows")
+                    parts.append(
+                        f"Step '{step.step_id}' (SQL fetch): Retrieved {row_count} data rows"
+                    )
                 elif r.get("type") == "aggregate":
                     agg_data = r.get("data", [])[:5]
                     ranked = "; ".join(f"{x['entity']}: {x['mean']}" for x in agg_data)

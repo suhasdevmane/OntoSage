@@ -16,6 +16,7 @@ Usage as middleware:
 
 import contextvars
 import uuid
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
@@ -41,6 +42,7 @@ class TraceIdMiddleware(BaseHTTPMiddleware):
     Reads X-Trace-Id from incoming request headers (or generates one),
     stores it in contextvars, and returns it in the response header.
     """
+
     async def dispatch(self, request: Request, call_next):
         trace_id = request.headers.get("x-trace-id") or uuid.uuid4().hex[:12]
         set_trace_id(trace_id)

@@ -2,33 +2,39 @@
 Context Manager Service
 Handles conversation summarization, pruning, and title generation.
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 from typing import List, Optional
+
+from orchestrator.llm_manager import LLMManager
 from shared.models import Message
 from shared.utils import get_logger
-from orchestrator.llm_manager import LLMManager
 
 logger = get_logger(__name__)
+
 
 class ContextManager:
     def __init__(self, llm_manager: LLMManager):
         self.llm = llm_manager
-        
-    async def summarize_history(self, messages: List[Message], existing_summary: Optional[str] = None) -> str:
+
+    async def summarize_history(
+        self, messages: List[Message], existing_summary: Optional[str] = None
+    ) -> str:
         """
         Summarize conversation history into a concise paragraph.
         """
         if not messages:
             return existing_summary or ""
-            
+
         # Convert messages to text format
         conversation_text = ""
         for msg in messages:
             role = "User" if msg.role == "user" else "Assistant"
             conversation_text += f"{role}: {msg.content}\n"
-            
+
         prompt = f"""
         Summarize the following conversation into a concise paragraph that captures the key context, user intent, and important details.
         If an existing summary is provided, update it with the new information.
@@ -40,7 +46,7 @@ class ContextManager:
         
         Updated Summary:
         """
-        
+
         try:
             summary = await self.llm.generate(prompt, temperature=0.3)
             return summary.strip()
@@ -58,7 +64,7 @@ class ContextManager:
         
         Do not use quotes. Just the title.
         """
-        
+
         try:
             title = await self.llm.generate(prompt, temperature=0.7)
             return title.strip().strip('"')

@@ -1,48 +1,53 @@
 """
 Visualization Agent - Chart generation and PDF reporting
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
+
+import json
+import uuid
+from typing import Any, Dict, List, Optional
 
 import httpx
-import uuid
-import json
-from typing import Dict, Any, Optional, List
-from shared.models import ConversationState
-from shared.utils import get_logger, extract_code_from_llm_response
-from shared.config import settings
+
 from orchestrator.llm_manager import llm_manager
+from shared.config import settings
+from shared.models import ConversationState
+from shared.utils import extract_code_from_llm_response, get_logger
 
 logger = get_logger(__name__)
 
 CODE_EXECUTOR_URL = f"http://{settings.CODE_EXECUTOR_HOST}:{settings.CODE_EXECUTOR_PORT}"
 
+
 class VisualizationAgent:
     """Generates visualizations and reports"""
-    
+
     async def create_visualization(
         self,
         state: ConversationState,
         user_query: str,
         data: Optional[Dict[str, Any]] = None,
-        analysis_output: Optional[str] = None
+        analysis_output: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Create visualization from data
-        
+
         Args:
             state: Conversation state
             user_query: User's visualization request
             data: Optional data to visualize
             analysis_output: Optional analysis results
-            
+
         Returns:
             Dict with 'code', 'chart_type', 'image_path', 'description'
         """
         try:
             # Step 1: Determine chart type
             chart_type = await self._determine_chart_type(user_query, data)
-            
+
             # filename arg kept for prompt compat but plot is returned as base64 in stdout
             filename = f"viz_{uuid.uuid4().hex[:8]}.png"
 
@@ -59,8 +64,11 @@ class VisualizationAgent:
             description = await self._generate_description(user_query, chart_type, data)
 
             # Extract base64 from stdout, save to /app/outputs/, return HTTP URL
-            import re as _re, base64 as _b64, os as _os
+            import base64 as _b64
+            import os as _os
+            import re as _re
             from datetime import datetime as _dt
+
             image_url = None
             output_text = result.get("stdout") or result.get("output") or ""
             b64_match = _re.search(r"PLOT_BASE64: ([A-Za-z0-9+/=]+)", output_text)
@@ -72,16 +80,21 @@ class VisualizationAgent:
                     with open(plot_path, "wb") as _f:
                         _f.write(_b64.b64decode(b64_match.group(1)))
                     from shared.config import settings as _s
+
                     image_url = f"{_s.STATIC_BASE_URL.rstrip('/')}/static/{plot_filename}"
                     logger.info(f"Saved viz plot to {plot_path}, serving at {image_url}")
                 except Exception as _e:
                     logger.warning(f"Could not save viz plot: {_e}")
                     image_url = f"data:image/png;base64,{b64_match.group(1)}"
             else:
-                logger.warning("No PLOT_BASE64 in code-executor output — visualization may not render")
+                logger.warning(
+                    "No PLOT_BASE64 in code-executor output — visualization may not render"
+                )
                 image_url = ""
 
-            formatted_response = f"{description}\n\n![Visualization]({image_url})" if image_url else description
+            formatted_response = (
+                f"{description}\n\n![Visualization]({image_url})" if image_url else description
+            )
 
             return {
                 "success": True,
@@ -90,27 +103,20 @@ class VisualizationAgent:
                 "output": output_text,
                 "description": description,
                 "formatted_response": formatted_response,
-                "media": [{"type": "image", "url": image_url}] if image_url else []
+                "media": [{"type": "image", "url": image_url}] if image_url else [],
             }
-            
+
         except Exception as e:
             logger.error(f"Visualization error: {e}", exc_info=True)
-            return {
-                "success": False,
-                "error": str(e),
-                "code": None,
-                "chart_type": None
-            }
-    
+            return {"success": False, "error": str(e), "code": None, "chart_type": None}
+
     async def _determine_chart_type(
-        self,
-        user_query: str,
-        data: Optional[Dict[str, Any]] = None
+        self, user_query: str, data: Optional[Dict[str, Any]] = None
     ) -> str:
         """Determine appropriate chart type"""
-        
+
         query_lower = user_query.lower()
-        
+
         # Pattern matching for chart types
         if any(word in query_lower for word in ["line", "trend", "over time", "time series"]):
             return "line_chart"
@@ -138,21 +144,24 @@ Respond with ONLY the chart type name."""
             try:
                 response = await llm_manager.generate(chart_prompt)
                 chart_type = response.strip().lower()
-                
-                valid_types = ["line_chart", "bar_chart", "scatter_plot", "histogram", "heatmap", "pie_chart"]
+
+                valid_types = [
+                    "line_chart",
+                    "bar_chart",
+                    "scatter_plot",
+                    "histogram",
+                    "heatmap",
+                    "pie_chart",
+                ]
                 return chart_type if chart_type in valid_types else "bar_chart"
             except:
                 return "bar_chart"  # Default fallback
-    
+
     async def _generate_viz_code(
-        self,
-        user_query: str,
-        data: Optional[Dict[str, Any]],
-        chart_type: str,
-        filename: str
+        self, user_query: str, data: Optional[Dict[str, Any]], chart_type: str, filename: str
     ) -> str:
         """Generate Matplotlib/Seaborn visualization code"""
-        
+
         data_context = ""
         if data:
             # Limit data context size to avoid token limits
@@ -160,7 +169,7 @@ Respond with ONLY the chart type name."""
             if len(data_str) > 2000:
                 data_str = data_str[:2000] + "... (truncated)"
             data_context = f"\nData to visualize:\n{data_str}\n"
-        
+
         viz_prompt = f"""Generate Python code to create a {chart_type} using matplotlib/seaborn.
 
 {data_context}
@@ -220,38 +229,33 @@ Respond with ONLY the Python code, wrapped in ```python blocks."""
 
         response = await llm_manager.generate(viz_prompt)
         code = extract_code_from_llm_response(response)
-        
+
         logger.info(f"Generated visualization code for {chart_type}")
         return code
-    
+
     async def _execute_viz_code(self, code: str) -> Dict[str, Any]:
         """Execute visualization code"""
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(
-                    f"{CODE_EXECUTOR_URL}/execute",
-                    json={"code": code}
-                )
+                response = await client.post(f"{CODE_EXECUTOR_URL}/execute", json={"code": code})
                 response.raise_for_status()
                 return response.json()
-                
+
         except httpx.HTTPError as e:
             logger.error(f"Visualization execution error: {e}")
             raise Exception(f"Failed to create visualization: {str(e)}")
-    
+
     def _patch_plot_to_base64(self, code: str, filename: str) -> str:
         """Delegate to module-level patch function (shared with analytics_agent)."""
         from orchestrator.agents.analytics_agent import _patch_plot_to_base64
+
         return _patch_plot_to_base64(code)
 
     async def _generate_description(
-        self,
-        user_query: str,
-        chart_type: str,
-        data: Optional[Dict[str, Any]]
+        self, user_query: str, chart_type: str, data: Optional[Dict[str, Any]]
     ) -> str:
         """Generate natural language description of visualization"""
-        
+
         desc_prompt = f"""Generate a brief description of a visualization.
 
 User Query: {user_query}
@@ -269,53 +273,42 @@ Description:"""
             return description.strip()
         except:
             return f"Created a {chart_type.replace('_', ' ')} visualization."
-    
+
     async def create_report(
-        self,
-        state: ConversationState,
-        title: str,
-        sections: List[Dict[str, str]]
+        self, state: ConversationState, title: str, sections: List[Dict[str, str]]
     ) -> Dict[str, Any]:
         """
         Generate PDF report
-        
+
         Args:
             state: Conversation state
             title: Report title
             sections: List of {"heading": ..., "content": ...}
-            
+
         Returns:
             Dict with 'pdf_path', 'success'
         """
         # Generate report code
         report_code = self._generate_report_code(title, sections)
-        
+
         try:
             # Execute report generation
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(
-                    f"{CODE_EXECUTOR_URL}/execute",
-                    json={"code": report_code}
+                    f"{CODE_EXECUTOR_URL}/execute", json={"code": report_code}
                 )
                 response.raise_for_status()
                 result = response.json()
-                
-                return {
-                    "success": True,
-                    "pdf_path": "report.pdf",
-                    "output": result.get("output")
-                }
-                
+
+                return {"success": True, "pdf_path": "report.pdf", "output": result.get("output")}
+
         except Exception as e:
             logger.error(f"Report generation error: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-    
+            return {"success": False, "error": str(e)}
+
     def _generate_report_code(self, title: str, sections: List[Dict[str, str]]) -> str:
         """Generate Python code for PDF report"""
-        
+
         code = f"""
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
@@ -332,11 +325,11 @@ story.append(title)
 story.append(Spacer(1, 12))
 
 """
-        
+
         for section in sections:
             heading = section.get("heading", "Section")
             content = section.get("content", "").replace('"', '\\"')
-            
+
             code += f"""
 # Section: {heading}
 story.append(Paragraph("{heading}", styles['Heading1']))
@@ -345,11 +338,11 @@ story.append(Paragraph("{content}", styles['BodyText']))
 story.append(Spacer(1, 12))
 
 """
-        
+
         code += """
 # Build PDF
 pdf.build(story)
 print("Report generated: report.pdf")
 """
-        
+
         return code

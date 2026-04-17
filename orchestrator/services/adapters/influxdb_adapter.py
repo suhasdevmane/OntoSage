@@ -17,16 +17,21 @@ The get_dialect_hints() method tells the LLM to generate Flux, not SQL.
 
 Install: pip install influxdb-client
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set
 
-from shared.utils import get_logger
 from orchestrator.services.database_adapter import (
-    DatabaseAdapter, AdapterType, QueryResult, SchemaInfo
+    AdapterType,
+    DatabaseAdapter,
+    QueryResult,
+    SchemaInfo,
 )
+from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -52,9 +57,9 @@ class InfluxDBAdapter(DatabaseAdapter):
         org: str = "ontosage",
         bucket: str = "sensors",
     ) -> None:
-        self._url    = url
-        self._token  = token
-        self._org    = org
+        self._url = url
+        self._token = token
+        self._org = org
         self._bucket = bucket
         self._client = None
         self._query_api = None
@@ -70,13 +75,16 @@ class InfluxDBAdapter(DatabaseAdapter):
         try:
             from influxdb_client import InfluxDBClient
             from influxdb_client.client.exceptions import InfluxDBError
-            self._client    = InfluxDBClient(url=self._url, token=self._token, org=self._org)
+
+            self._client = InfluxDBClient(url=self._url, token=self._token, org=self._org)
             self._query_api = self._client.query_api()
             # Ping to verify
             ping = self._client.ping()
             if not ping:
                 raise ConnectionError("InfluxDB ping returned False")
-            logger.info(f"InfluxDBAdapter: connected to {self._url} org={self._org} bucket={self._bucket}")
+            logger.info(
+                f"InfluxDBAdapter: connected to {self._url} org={self._org} bucket={self._bucket}"
+            )
         except ImportError:
             raise RuntimeError("influxdb-client is not installed. Run: pip install influxdb-client")
         except Exception as e:
@@ -94,9 +102,9 @@ class InfluxDBAdapter(DatabaseAdapter):
         if self._schema_cache:
             return self._schema_cache
 
-        tables:    List[str]                  = []
-        columns:   Dict[str, List[tuple]]     = {}
-        timestamp_col: Optional[str]          = "_time"
+        tables: List[str] = []
+        columns: Dict[str, List[tuple]] = {}
+        timestamp_col: Optional[str] = "_time"
 
         try:
             # List measurements
@@ -118,7 +126,11 @@ class InfluxDBAdapter(DatabaseAdapter):
                     f'predicate: (r) => r._measurement == "{measurement}")'
                 )
                 field_result = self._query_api.query(flux_fields, org=self._org)
-                field_list: List[tuple] = [("_time", "timestamp"), ("_value", "float"), ("uuid", "string")]
+                field_list: List[tuple] = [
+                    ("_time", "timestamp"),
+                    ("_value", "float"),
+                    ("uuid", "string"),
+                ]
                 for t in field_result:
                     for rec in t.records:
                         field_name = str(rec.get_value())
@@ -129,7 +141,9 @@ class InfluxDBAdapter(DatabaseAdapter):
             logger.error(f"InfluxDBAdapter.get_schema failed: {e}")
             # Minimal fallback schema
             tables = ["sensor_data"]
-            columns = {"sensor_data": [("_time", "timestamp"), ("_value", "float"), ("uuid", "string")]}
+            columns = {
+                "sensor_data": [("_time", "timestamp"), ("_value", "float"), ("uuid", "string")]
+            }
 
         self._schema_cache = SchemaInfo(
             tables=tables,
@@ -151,10 +165,10 @@ class InfluxDBAdapter(DatabaseAdapter):
         try:
             flux = (
                 f'from(bucket: "{self._bucket}")\n'
-                f'  |> range(start: -90d)\n'
+                f"  |> range(start: -90d)\n"
                 f'  |> keep(columns: ["uuid"])\n'
                 f'  |> distinct(column: "uuid")\n'
-                f'  |> limit(n: 2000)'
+                f"  |> limit(n: 2000)"
             )
             result = self._query_api.query(flux, org=self._org)
             for table in result:
@@ -185,6 +199,7 @@ class InfluxDBAdapter(DatabaseAdapter):
 
         try:
             import asyncio
+
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(
                 None, lambda: self._query_api.query(flux, org=self._org)
@@ -217,21 +232,19 @@ class InfluxDBAdapter(DatabaseAdapter):
         """Build a Flux query for the given UUIDs and time range."""
         start = start_date or "-1d"
         # Flux range needs RFC3339 or duration string
-        range_clause = f'range(start: {start}'
+        range_clause = f"range(start: {start}"
         if end_date:
-            range_clause += f', stop: {end_date}'
+            range_clause += f", stop: {end_date}"
         range_clause += ")"
 
-        uuid_filter = " or ".join(
-            f'r["uuid"] == "{u}"' for u in uuids
-        )
+        uuid_filter = " or ".join(f'r["uuid"] == "{u}"' for u in uuids)
 
         flux = (
             f'from(bucket: "{self._bucket}")\n'
-            f'  |> {range_clause}\n'
-            f'  |> filter(fn: (r) => {uuid_filter})\n'
+            f"  |> {range_clause}\n"
+            f"  |> filter(fn: (r) => {uuid_filter})\n"
             f'  |> sort(columns: ["_time"], desc: true)\n'
-            f'  |> limit(n: {limit})'
+            f"  |> limit(n: {limit})"
         )
         return flux
 
@@ -241,10 +254,10 @@ class InfluxDBAdapter(DatabaseAdapter):
             f"Bucket: {self._bucket!r}   Org: {self._org!r}\n"
             "Flux template:\n"
             f'  from(bucket: "{self._bucket}")\n'
-            '    |> range(start: -1d)          // or: start: 2024-01-01T00:00:00Z\n'
+            "    |> range(start: -1d)          // or: start: 2024-01-01T00:00:00Z\n"
             '    |> filter(fn: (r) => r["uuid"] == "<sensor_uuid>")\n'
             '    |> sort(columns: ["_time"], desc: true)\n'
-            '    |> limit(n: 1000)\n'
+            "    |> limit(n: 1000)\n"
             "Time column: _time  Value column: _value  Tag: uuid\n"
             "Return ONLY the Flux query, no markdown."
         )

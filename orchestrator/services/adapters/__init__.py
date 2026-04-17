@@ -3,8 +3,8 @@
 # Each adapter has optional third-party dependencies; imports are guarded so
 # that a missing package disables only that adapter, not the whole package.
 
-from orchestrator.services.adapters.mysql_adapter       import MySQLAdapter
-from orchestrator.services.adapters.postgresql_adapter  import PostgreSQLAdapter
+from orchestrator.services.adapters.mysql_adapter import MySQLAdapter
+from orchestrator.services.adapters.postgresql_adapter import PostgreSQLAdapter
 
 try:
     from orchestrator.services.adapters.timescaledb_adapter import TimescaleDBAdapter
@@ -32,7 +32,9 @@ except ImportError:
     CassandraAdapter = None  # requires cassandra-driver
 
 try:
-    from orchestrator.services.adapters.redis_timeseries_adapter import RedisTimeSeriesAdapter
+    from orchestrator.services.adapters.redis_timeseries_adapter import (
+        RedisTimeSeriesAdapter,
+    )
 except ImportError:
     RedisTimeSeriesAdapter = None  # requires redis with timeseries support
 

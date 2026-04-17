@@ -11,12 +11,15 @@ Usage:
     schema_text = discovery.schema_prompt_text   # ready for LLM prompts
     valid_uuids = await discovery.get_valid_uuids(candidate_list)
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 from typing import List, Optional, Set
-from shared.utils import get_logger
+
 from orchestrator.services.database_adapter import DatabaseAdapter, SchemaInfo
+from shared.utils import get_logger
 
 logger = get_logger(__name__)
 

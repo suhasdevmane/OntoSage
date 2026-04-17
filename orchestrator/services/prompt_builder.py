@@ -18,6 +18,7 @@ Usage:
     sql_hints    = builder.sql_dialect_hints()      # inject into SQL prompt
     intent_hints = builder.intent_context_hints(sensor_types, building_id)
 """
+
 from __future__ import annotations
 
 import logging
@@ -70,11 +71,15 @@ class PromptBuilder:
 
         if sensor_classes:
             compact = self._compact_iris(sensor_classes, namespace_map or {})
-            lines.append(f"Known sensor/point classes ({len(compact)}): "
-                         + ", ".join(compact[:15])
-                         + (" …" if len(compact) > 15 else ""))
+            lines.append(
+                f"Known sensor/point classes ({len(compact)}): "
+                + ", ".join(compact[:15])
+                + (" …" if len(compact) > 15 else "")
+            )
         else:
-            lines.append("Known sensor/point classes: (discovery pending — use generic Brick/REC patterns)")
+            lines.append(
+                "Known sensor/point classes: (discovery pending — use generic Brick/REC patterns)"
+            )
 
         if namespace_map:
             ns_lines = [f"  PREFIX {p}: <{u}>" for p, u in list(namespace_map.items())[:10]]
@@ -86,9 +91,7 @@ class PromptBuilder:
         )
         return "\n".join(lines)
 
-    def sparql_prefix_block(
-        self, namespace_map: Optional[Dict[str, str]] = None
-    ) -> str:
+    def sparql_prefix_block(self, namespace_map: Optional[Dict[str, str]] = None) -> str:
         """
         Return a SPARQL PREFIX block covering the building namespace plus
         any additional namespaces discovered by OntologyIntrospector.

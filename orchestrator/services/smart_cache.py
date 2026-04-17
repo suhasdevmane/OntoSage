@@ -23,42 +23,44 @@ Usage:
     await cache.invalidate_on_data_change(sensor_uuid="uuid-temp-101")
     await cache.invalidate_on_ontology_change()
 """
+
 from __future__ import annotations
 
+import asyncio
+import hashlib
+import logging
 import os
 import time
-import hashlib
-import asyncio
-import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Callable, Any
+from typing import Any, Callable, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Constants
 # ─────────────────────────────────────────────────────────────────────────────
-DEFAULT_TTL          = 300   # seconds (default cache lifetime)
-SENSOR_CACHE_TTL     = 60    # sensor result caches (more volatile)
-METADATA_CACHE_TTL   = 3600  # ontology/metadata caches (very stable)
-STALENESS_THRESHOLD  = 100   # new readings before sensor cache invalidated
+DEFAULT_TTL = 300  # seconds (default cache lifetime)
+SENSOR_CACHE_TTL = 60  # sensor result caches (more volatile)
+METADATA_CACHE_TTL = 3600  # ontology/metadata caches (very stable)
+STALENESS_THRESHOLD = 100  # new readings before sensor cache invalidated
 
 # Redis key namespaces
-NS_SPARQL    = "sparql_cache:"
-NS_SQL       = "sql_cache:"
-NS_SENSOR    = "sensor_map:"
+NS_SPARQL = "sparql_cache:"
+NS_SQL = "sql_cache:"
+NS_SENSOR = "sensor_map:"
 NS_COMMUNITY = "community_rag:"
-NS_ALL       = [NS_SPARQL, NS_SQL, NS_SENSOR, NS_COMMUNITY]
+NS_ALL = [NS_SPARQL, NS_SQL, NS_SENSOR, NS_COMMUNITY]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dependency graph (which keys depend on which facts)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class CacheKeyRegistry:
     """Tracks active cache keys and their dependency relationships."""
 
     def __init__(self):
-        self._key_deps: Dict[str, Set[str]] = {}   # cache_key → set of fact_keys
+        self._key_deps: Dict[str, Set[str]] = {}  # cache_key → set of fact_keys
         self._fact_keys: Dict[str, Set[str]] = {}  # fact_key  → set of cache_keys
 
     def register(self, cache_key: str, depends_on: List[str]):
@@ -85,16 +87,17 @@ class CacheKeyRegistry:
 # Ontology change watcher
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class OntologyChangeWatcher:
     """Poll TTL files for changes and fire callbacks on modification."""
 
     def __init__(self, watch_paths: List[str], poll_interval_s: float = 30.0):
-        self._paths      = [Path(p) for p in watch_paths if os.path.exists(p)]
-        self._poll_s     = poll_interval_s
-        self._mtimes: Dict[str, float]  = {}
-        self._hashes: Dict[str, str]    = {}
+        self._paths = [Path(p) for p in watch_paths if os.path.exists(p)]
+        self._poll_s = poll_interval_s
+        self._mtimes: Dict[str, float] = {}
+        self._hashes: Dict[str, str] = {}
         self._callbacks: List[Callable[[str], Any]] = []
-        self._running    = False
+        self._running = False
 
     def on_change(self, callback: Callable[[str], Any]):
         """Register a callback invoked with the changed file path."""
@@ -145,6 +148,7 @@ class OntologyChangeWatcher:
 # ─────────────────────────────────────────────────────────────────────────────
 # Smart Cache Manager
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class SmartCacheManager:
     """
@@ -272,8 +276,9 @@ class SmartCacheManager:
         If cumulative new rows exceed STALENESS_THRESHOLD, the sensor's
         SQL cache is considered stale and is invalidated.
         """
-        self._staleness_counters[sensor_uuid] = \
+        self._staleness_counters[sensor_uuid] = (
             self._staleness_counters.get(sensor_uuid, 0) + n_new_rows
+        )
 
         if self._staleness_counters[sensor_uuid] >= STALENESS_THRESHOLD:
             logger.info(f"Staleness threshold reached for {sensor_uuid} — invalidating")
@@ -302,8 +307,9 @@ class SmartCacheManager:
     # Cache set/get helpers (with auto-registration)
     # ─────────────────────────────────────────────────────────────────────────
 
-    async def set(self, key: str, value: str, ttl: int = DEFAULT_TTL,
-                  depends_on: Optional[List[str]] = None):
+    async def set(
+        self, key: str, value: str, ttl: int = DEFAULT_TTL, depends_on: Optional[List[str]] = None
+    ):
         """Set a value in Redis with smart TTL and optional dependency registration."""
         if self._redis:
             try:

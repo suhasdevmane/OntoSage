@@ -11,29 +11,32 @@ Usage:
     columns = await adapter.get_columns()
     results = await adapter.execute_query(sql)
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 from abc import ABC, abstractmethod
-from enum import Enum
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 
 class AdapterType(str, Enum):
     MYSQL = "mysql"
     POSTGRESQL = "postgresql"
-    TIMESCALEDB = "timescaledb"     # PostgreSQL + hypertable extension
+    TIMESCALEDB = "timescaledb"  # PostgreSQL + hypertable extension
     MONGODB = "mongodb"
-    INFLUXDB = "influxdb"           # InfluxDB 2.x (Flux queries)
+    INFLUXDB = "influxdb"  # InfluxDB 2.x (Flux queries)
     SQLITE = "sqlite"
-    CASSANDRA = "cassandra"         # Apache Cassandra (CQL)
+    CASSANDRA = "cassandra"  # Apache Cassandra (CQL)
     REDIS_TIMESERIES = "redis_timeseries"  # Redis with RedisTimeSeries module
 
 
 @dataclass
 class QueryResult:
     """Standardized result container for any database query."""
+
     success: bool
     data: List[Dict[str, Any]] = field(default_factory=list)
     row_count: int = 0
@@ -49,6 +52,7 @@ class QueryResult:
 @dataclass
 class SchemaInfo:
     """Database schema metadata."""
+
     tables: List[str] = field(default_factory=list)
     # table_name → list of (column_name, column_type)
     columns: Dict[str, List[tuple]] = field(default_factory=dict)

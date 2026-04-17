@@ -16,7 +16,8 @@ mock building graph with 10 sensors across 3 zones on 2 floors.
 """
 
 from __future__ import annotations
-from typing import List, Dict
+
+from typing import Dict, List
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Raw TTL fixtures (schema-minimal)
@@ -181,10 +182,12 @@ bldg:S223HumSensor a s223:HumiditySensor ;
 # Fixture factories
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def brick_fixture():
     """Return a parsed rdflib Graph with mock Brick v1.3 building."""
     try:
         from rdflib import Graph
+
         g = Graph()
         g.parse(data=MOCK_BRICK_TTL, format="turtle")
         return g
@@ -196,6 +199,7 @@ def rec_fixture():
     """Return a parsed rdflib Graph with mock REC 3.3 building."""
     try:
         from rdflib import Graph
+
         g = Graph()
         g.parse(data=MOCK_REC_TTL, format="turtle")
         return g
@@ -207,6 +211,7 @@ def s223_fixture():
     """Return a parsed rdflib Graph with mock ASHRAE 223P system."""
     try:
         from rdflib import Graph
+
         g = Graph()
         g.parse(data=MOCK_S223_TTL, format="turtle")
         return g
@@ -223,43 +228,50 @@ def mock_building_graph():
 # Mock sensor data (time-series rows)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def mock_sensor_readings(uuid: str = "uuid-temp-101", n: int = 50) -> List[Dict]:
     """Generate synthetic sensor readings for testing."""
-    import math
     import datetime
+    import math
+
     base = datetime.datetime(2024, 3, 1, 8, 0, 0)
     rows = []
     for i in range(n):
         ts = base + datetime.timedelta(minutes=i * 10)
         # Sine wave + noise
         val = 21.0 + 3.0 * math.sin(i * 0.3) + (hash(f"{uuid}{i}") % 100) / 500.0
-        rows.append({
-            "Datetime": ts.isoformat(),
-            "uuid": uuid,
-            "value": round(val, 2),
-        })
+        rows.append(
+            {
+                "Datetime": ts.isoformat(),
+                "uuid": uuid,
+                "value": round(val, 2),
+            }
+        )
     return rows
 
 
 def mock_anomalous_readings(n: int = 20) -> List[Dict]:
     """Generate readings with intentional anomalies for anomaly agent testing."""
     import datetime
+
     base = datetime.datetime(2024, 3, 1, 8, 0, 0)
     rows = []
     for i in range(n):
         ts = base + datetime.timedelta(minutes=i * 10)
         # Inject anomaly at index 5 (spike) and 10 (out-of-range)
         if i == 5:
-            val = 35.0   # spike — very high temp
+            val = 35.0  # spike — very high temp
         elif i == 10:
-            val = 8.0    # out-of-range — very cold
+            val = 8.0  # out-of-range — very cold
         else:
             val = 22.0 + (i % 3) * 0.5
-        rows.append({
-            "Datetime": ts.isoformat(),
-            "uuid": "uuid-temp-101",
-            "temperature": val,
-        })
+        rows.append(
+            {
+                "Datetime": ts.isoformat(),
+                "uuid": "uuid-temp-101",
+                "temperature": val,
+            }
+        )
     return rows
 
 

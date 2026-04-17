@@ -29,15 +29,16 @@ Usage:
     async def export_data(user=Depends(require_permission("export:read"))):
         ...
 """
+
 from __future__ import annotations
 
-import os
-import time
-import logging
+import base64
 import hashlib
 import hmac
 import json
-import base64
+import logging
+import os
+import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Set
 
@@ -50,52 +51,78 @@ logger = logging.getLogger(__name__)
 # Format: "resource:action"
 ALL_PERMISSIONS = {
     # Data read
-    "sensor:read",         "analytics:read",    "metadata:read",
-    "report:read",         "export:read",       "anomaly:read",
-    "trend:read",          "compliance:read",   "comparison:read",
-
+    "sensor:read",
+    "analytics:read",
+    "metadata:read",
+    "report:read",
+    "export:read",
+    "anomaly:read",
+    "trend:read",
+    "compliance:read",
+    "comparison:read",
     # Data write / config
-    "config:read",         "config:write",
-    "user:read",           "user:write",        "user:delete",
-    "building:read",       "building:write",    "building:delete",
-
+    "config:read",
+    "config:write",
+    "user:read",
+    "user:write",
+    "user:delete",
+    "building:read",
+    "building:write",
+    "building:delete",
     # System
-    "system:admin",        "system:health",
+    "system:admin",
+    "system:health",
 }
 
 # Role → granted permissions
 ROLE_PERMISSIONS: Dict[str, Set[str]] = {
     "admin": ALL_PERMISSIONS,
-
     "facility_manager": {
-        "sensor:read", "analytics:read", "metadata:read",
-        "report:read", "export:read", "anomaly:read",
-        "trend:read", "compliance:read", "comparison:read",
-        "config:read", "config:write",
-        "building:read", "building:write",
+        "sensor:read",
+        "analytics:read",
+        "metadata:read",
+        "report:read",
+        "export:read",
+        "anomaly:read",
+        "trend:read",
+        "compliance:read",
+        "comparison:read",
+        "config:read",
+        "config:write",
+        "building:read",
+        "building:write",
         "system:health",
     },
-
     "analyst": {
-        "sensor:read", "analytics:read", "metadata:read",
-        "report:read", "export:read", "anomaly:read",
-        "trend:read", "compliance:read", "comparison:read",
-        "building:read", "system:health",
-    },
-
-    "operator": {
-        "sensor:read", "analytics:read", "metadata:read",
-        "anomaly:read", "trend:read",
-        "building:read", "system:health",
-    },
-
-    "occupant": {
-        "sensor:read", "metadata:read",
+        "sensor:read",
+        "analytics:read",
+        "metadata:read",
+        "report:read",
+        "export:read",
+        "anomaly:read",
+        "trend:read",
+        "compliance:read",
+        "comparison:read",
+        "building:read",
         "system:health",
     },
-
+    "operator": {
+        "sensor:read",
+        "analytics:read",
+        "metadata:read",
+        "anomaly:read",
+        "trend:read",
+        "building:read",
+        "system:health",
+    },
+    "occupant": {
+        "sensor:read",
+        "metadata:read",
+        "system:health",
+    },
     "readonly": {
-        "metadata:read", "system:health",
+        "metadata:read",
+        "system:health",
     },
 }
 
@@ -104,13 +131,14 @@ ROLE_PERMISSIONS: Dict[str, Set[str]] = {
 # Data classes
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class UserContext:
     user_id: str
     username: str
     role: str
-    tenant_id: str                      # building_id / organisation
-    allowed_buildings: List[str]        # empty = all buildings
+    tenant_id: str  # building_id / organisation
+    allowed_buildings: List[str]  # empty = all buildings
     permissions: Set[str] = field(default_factory=set)
     custom_permissions: Set[str] = field(default_factory=set)
     token_expiry: float = 0.0
@@ -144,6 +172,7 @@ class UserContext:
 # Minimal JWT implementation (no external dep required)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class SimpleJWT:
     """Minimal HS256 JWT encode/decode without PyJWT dependency."""
 
@@ -160,8 +189,8 @@ class SimpleJWT:
     def encode(cls, payload: Dict, secret: str, expires_in: int = 3600) -> str:
         header = cls._b64url_encode(json.dumps({"alg": "HS256", "typ": "JWT"}).encode())
         payload = {**payload, "iat": int(time.time()), "exp": int(time.time()) + expires_in}
-        body   = cls._b64url_encode(json.dumps(payload).encode())
-        sig    = hmac.new(secret.encode(), f"{header}.{body}".encode(), hashlib.sha256).digest()
+        body = cls._b64url_encode(json.dumps(payload).encode())
+        sig = hmac.new(secret.encode(), f"{header}.{body}".encode(), hashlib.sha256).digest()
         return f"{header}.{body}.{cls._b64url_encode(sig)}"
 
     @classmethod
@@ -186,26 +215,26 @@ class SimpleJWT:
 # Token manager
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TokenManager:
     """Issues and validates OntoSage access tokens."""
 
-    def __init__(self, secret_key: Optional[str] = None,
-                 token_ttl: int = 3600):
-        self._secret = secret_key or os.environ.get("ONTOSAGE_SECRET_KEY", "change-me-in-production")
-        self._ttl    = token_ttl
+    def __init__(self, secret_key: Optional[str] = None, token_ttl: int = 3600):
+        self._secret = secret_key or os.environ.get(
+            "ONTOSAGE_SECRET_KEY", "change-me-in-production"
+        )
+        self._ttl = token_ttl
         self._revoked: Set[str] = set()  # revoked token IDs
 
     def issue_token(self, user: UserContext) -> str:
         payload = {
-            "sub":               user.user_id,
-            "username":          user.username,
-            "role":              user.role,
-            "tenant_id":         user.tenant_id,
+            "sub": user.user_id,
+            "username": user.username,
+            "role": user.role,
+            "tenant_id": user.tenant_id,
             "allowed_buildings": user.allowed_buildings,
             "custom_permissions": list(user.custom_permissions),
-            "jti":               hashlib.sha256(
-                f"{user.user_id}{time.time()}".encode()
-            ).hexdigest()[:16],
+            "jti": hashlib.sha256(f"{user.user_id}{time.time()}".encode()).hexdigest()[:16],
         }
         return SimpleJWT.encode(payload, self._secret, self._ttl)
 
@@ -243,6 +272,7 @@ class TokenManager:
 # In-memory user store (replace with DB-backed in production)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class UserStore:
     """Simple in-memory user registry for development/testing."""
 
@@ -258,9 +288,15 @@ class UserStore:
             allowed_buildings=[],
         )
 
-    def add_user(self, user_id: str, username: str, password: str,
-                 role: str = "readonly", tenant_id: str = "default",
-                 allowed_buildings: Optional[List[str]] = None):
+    def add_user(
+        self,
+        user_id: str,
+        username: str,
+        password: str,
+        role: str = "readonly",
+        tenant_id: str = "default",
+        allowed_buildings: Optional[List[str]] = None,
+    ):
         pw_hash = hashlib.sha256(password.encode()).hexdigest()
         self._users[username] = {
             "user_id": user_id,
@@ -289,15 +325,13 @@ class UserStore:
         )
 
     def list_users(self) -> List[Dict]:
-        return [
-            {k: v for k, v in u.items() if k != "password_hash"}
-            for u in self._users.values()
-        ]
+        return [{k: v for k, v in u.items() if k != "password_hash"} for u in self._users.values()]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # FastAPI integration helpers (importable without FastAPI installed)
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def create_rbac_dependency(token_manager: TokenManager, required_permission: str):
     """
@@ -310,6 +344,7 @@ def create_rbac_dependency(token_manager: TokenManager, required_permission: str
         async def export(user=Depends(require_export)):
             ...
     """
+
     async def _dependency(authorization: str = ""):
         if not authorization.startswith("Bearer "):
             raise Exception("Missing or invalid Authorization header")
@@ -321,6 +356,7 @@ def create_rbac_dependency(token_manager: TokenManager, required_permission: str
                 f"(your role '{user.role}' grants: {sorted(user.permissions)})"
             )
         return user
+
     return _dependency
 
 
@@ -331,13 +367,20 @@ class RBACMiddleware:
     Non-JWT paths (/health, /metrics, /docs) are whitelisted.
     """
 
-    WHITELIST = {"/health", "/metrics", "/docs", "/openapi.json", "/redoc",
-                 "/api/v1/auth/login", "/api/v1/auth/refresh"}
+    WHITELIST = {
+        "/health",
+        "/metrics",
+        "/docs",
+        "/openapi.json",
+        "/redoc",
+        "/api/v1/auth/login",
+        "/api/v1/auth/refresh",
+    }
 
     def __init__(self, app, secret_key: Optional[str] = None):
-        self._app          = app
-        self._token_mgr    = TokenManager(secret_key)
-        self._user_store   = UserStore()
+        self._app = app
+        self._token_mgr = TokenManager(secret_key)
+        self._user_store = UserStore()
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
