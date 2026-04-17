@@ -8,7 +8,7 @@ import re
 import asyncio
 sys.path.append('/app')
 
-from typing import Dict, Any, Literal
+from typing import Dict, Any, Literal, Optional
 from uuid import uuid4
 from langgraph.graph import StateGraph, END
 from shared.models import ConversationState, Message
@@ -42,6 +42,8 @@ try:
     _I18N_AVAILABLE = True
 except ImportError:
     _I18N_AVAILABLE = False
+
+from orchestrator.services.disambiguation_service import get_disambiguation_service
 
 logger = get_logger(__name__)
 
@@ -126,6 +128,7 @@ class WorkflowOrchestrator:
         workflow.add_node("report", self._safe_node(self._report_node, "report"))
         workflow.add_node("anomaly", self._safe_node(self._anomaly_node, "anomaly"))
         workflow.add_node("export", self._safe_node(self._export_node, "export"))
+        workflow.add_node("document", self._safe_node(self._document_node, "document"))
         
         # Entry
         workflow.set_entry_point("dialogue")
@@ -148,11 +151,11 @@ class WorkflowOrchestrator:
             }
         )
         
-        # SPARQL → SQL / response
+        # SPARQL → SQL / analytics / response
         workflow.add_conditional_edges(
             "sparql",
             self._route_from_data_node,
-            {"visualization": "visualization", "response": "response", "sql": "sql"}
+            {"visualization": "visualization", "response": "response", "sql": "sql", "analytics": "analytics"}
         )
         
         # SQL → Analytics / response
@@ -170,12 +173,17 @@ class WorkflowOrchestrator:
             {"visualization": "visualization", "response": "response"}
         )
         
-        # Phase 4 nodes all lead to response
+        # Phase 4 nodes all lead to response (report may optionally create a document)
         workflow.add_edge("planner", "response")
-        workflow.add_edge("report", "response")
+        workflow.add_conditional_edges(
+            "report",
+            self._route_from_report,
+            {"document": "document", "response": "response"}
+        )
         workflow.add_edge("anomaly", "response")
         workflow.add_edge("export", "response")
         workflow.add_edge("visualization", "response")
+        workflow.add_edge("document", "response")
         workflow.add_edge("response", END)
         
         return workflow.compile()
@@ -271,10 +279,54 @@ class WorkflowOrchestrator:
         explanation = intent_result.get("explanation", "")
         clarification_question = intent_result.get("clarification_question", "")
         discovery_filter = intent_result.get("discovery_filter")
-        
+
+        # ── Follow-up context resolution ──────────────────────────────────────
+        # Standard/regulation names (ASHRAE, WELL, BREEAM, …) are not building
+        # entities.  For contextual follow-ups the LLM often returns only the
+        # standard name with no zone/sensor.  Detect that case and (a) reuse
+        # the existing query_results from the prior turn and (b) inherit the
+        # real building entities so downstream nodes stay coherent.
+        _STANDARD_NAMES = {
+            "ashrae", "well", "breeam", "leed", "en15251", "en 15251",
+            "iso", "iea", "smacna", "nfpa", "cibse", "iesve", "ies ve",
+            "ashrae 55", "ashrae 62", "ashrae 90", "ashrae standard",
+        }
+        _CONTEXTUAL_INTENTS = {"compliance", "compare", "trend", "recommend"}
+
+        if intent in _CONTEXTUAL_INTENTS:
+            building_entities = [
+                e for e in entities
+                if not any(s in e.lower() for s in _STANDARD_NAMES)
+            ]
+
+            if not building_entities:
+                # No real building entities — inherit from prior turn
+                prior_entities = state.intermediate_results.get("entities") or []
+                if prior_entities:
+                    entities = list(prior_entities)
+                    logger.info(
+                        f"[context] Follow-up '{intent}' — inherited {len(entities)} "
+                        f"entities from prior turn: {entities}"
+                    )
+
+                # If the prior turn already fetched sensor data, skip SPARQL+SQL
+                _prior_data = state.query_results
+                _has_prior_data = bool(
+                    isinstance(_prior_data, dict) and _prior_data.get("data")
+                )
+                if _has_prior_data:
+                    state.intermediate_results["use_existing_query_results"] = True
+                    logger.info(
+                        f"[context] Reusing existing query_results "
+                        f"({len(_prior_data['data'])} rows) for '{intent}' follow-up"
+                    )
+
         # Backward compatibility mapping
         is_general = (intent == "general")
         analytics_required = (intent == "analytics") or (len(required_analytics) > 0)
+        # Contextual follow-up intents always need the full SPARQL→SQL→Analytics pipeline
+        if intent in _CONTEXTUAL_INTENTS:
+            analytics_required = True
         sparql_query = "" # No longer generated by DialogueAgent
         
         start_date = time_range.get("start")
@@ -299,6 +351,24 @@ class WorkflowOrchestrator:
         state.intermediate_results["report_type"] = intent_result.get("report_type")
         state.intermediate_results["recommendation_domain"] = intent_result.get("recommendation_domain")
         
+        # ── Data-driven disambiguation ────────────────────────────────────
+        # Check BEFORE routing: if the user mentioned "sensor 5.XX" without a
+        # type keyword, generate a data-driven "Did you mean…?" response.
+        _user_query_raw = state.messages[-1].content if state.messages else ""
+        try:
+            _disambig_svc = get_disambiguation_service()
+            _clarify_msg = await _disambig_svc.check_and_clarify(_user_query_raw)
+            if _clarify_msg:
+                logger.info("[disambiguation] Ambiguous sensor ref — returning clarification")
+                state.current_intent = "clarification"
+                state.needs_clarification = True
+                state.intermediate_results["dialogue_response"] = _clarify_msg
+                state.intermediate_results["intent"] = "clarification"
+                return state
+        except Exception as _da_err:
+            logger.debug(f"Disambiguation check skipped: {_da_err}")
+        # ─────────────────────────────────────────────────────────────────
+
         if intent == "clarification":
             state.current_intent = "clarification"
             state.needs_clarification = True
@@ -386,18 +456,84 @@ class WorkflowOrchestrator:
         # UNIFIED AGENT APPROACH:
         # Use SPARQLAgent for everything (it now handles semantic fallback internally)
         logger.info("Using Unified Ontology Agent (SPARQL + Semantic Fallback)")
+
+        # Preserve any sensor data from the prior SQL turn before SPARQL overwrites query_results
+        _prior_qr = state.query_results
+        if isinstance(_prior_qr, dict) and _prior_qr.get("data"):
+            state.intermediate_results["_saved_query_results"] = _prior_qr
+
         result = await self.sparql_agent.generate_query(state, latest_message)
-        
+
         state.intermediate_results["sparql_result"] = result
         state.query_results = result.get("results", {})
         
-        # Set analytics_required: SPARQL agent can elevate to True, but
-        # if dialogue node already set it True (intent==analytics), keep True.
+        # Set analytics_required:
+        # - SPARQL's explicit False overrides dialogue True when SPARQL has a valid formatted_response
+        #   (e.g. zone counts, sensor listings, floor hierarchy — no time-series data needed)
+        # - SPARQL True always elevates to True (it knows it needs UUIDs)
         sparql_analytics = result.get("analytics_required", False)
         dialogue_analytics = state.intermediate_results.get("analytics_required", False)
-        state.analytics_required = sparql_analytics or dialogue_analytics
+        sparql_has_answer = result.get("success") and bool(result.get("formatted_response"))
+        # Check if any sensor UUIDs were returned — if yes, SQL is needed for time-series data
+        # answer_semantically() returns results as a list; guard against AttributeError.
+        _raw_results = result.get("results", {})
+        _bindings = (
+            _raw_results.get("results", {}).get("bindings", [])
+            if isinstance(_raw_results, dict)
+            else []
+        )
+        _UUID_RE = re.compile(r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$', re.IGNORECASE)
+        _sparql_has_uuids = any(
+            _UUID_RE.match(str(b.get(v, {}).get("value", "")))
+            for b in _bindings for v in b
+            if "uuid" in v.lower() or "id" in v.lower()
+        )
+        # ── Compliance/follow-up: recover if SPARQL found ontology vocab but no sensor UUIDs ──
+        _original_intent = state.intermediate_results.get("intent", "")
+        _contextual_intents = {"compliance", "compare", "trend", "recommend"}
+        if _original_intent in _contextual_intents and not _sparql_has_uuids:
+            # SPARQL returned ontology vocabulary or empty results — no sensor data.
+            # Check if the previous SQL turn left sensor readings in state.query_results.
+            _saved_qr = state.intermediate_results.get("_saved_query_results")
+            _prior_rows = (
+                _saved_qr.get("data") if isinstance(_saved_qr, dict) else None
+            )
+            if _prior_rows:
+                # Restore prior data and route to analytics
+                state.query_results = _saved_qr
+                state.intermediate_results["use_existing_query_results"] = True
+                state.analytics_required = True
+                logger.info(
+                    f"[compliance] SPARQL returned no sensor UUIDs — "
+                    f"restoring {len(_prior_rows)} prior rows for compliance analytics"
+                )
+            else:
+                # No prior data — give the user a targeted clarification instead of
+                # surfacing 554 raw ontology triples.
+                state.intermediate_results["sparql_result"] = {
+                    "success": True,
+                    "analytics_required": False,
+                    "formatted_response": (
+                        "**Compliance Check — Zone or Sensor Required**\n\n"
+                        "To assess ASHRAE / WELL / BREEAM compliance I need live sensor readings "
+                        "from a specific zone or sensor.  Please try one of:\n\n"
+                        "- *'Is the temperature in Zone 5.28 within ASHRAE 55 comfort limits?'*\n"
+                        "- *'Check ASHRAE 62.1 compliance for Zone 5.28'*\n"
+                        "- *'What is the temperature across all zones?'* (then click **Check compliance against ASHRAE?**)"
+                    ),
+                }
+                state.analytics_required = False
+                logger.info("[compliance] No sensor UUIDs and no prior data — returning clarification")
+        elif not sparql_analytics and sparql_has_answer and not _sparql_has_uuids:
+            # SPARQL resolved the query with no sensor UUIDs (e.g. zone counts, floor listing,
+            # hierarchy) — skip SQL entirely
+            state.analytics_required = False
+            logger.info("✅ SPARQL resolved query fully (no UUIDs) — overriding dialogue analytics_required=True")
+        else:
+            state.analytics_required = sparql_analytics or dialogue_analytics
         logger.info(f"✅ Ontology Agent determined: analytics_required={state.analytics_required} "
-                    f"(sparql={sparql_analytics}, dialogue={dialogue_analytics})")
+                    f"(sparql={sparql_analytics}, dialogue={dialogue_analytics}, "
+                    f"sparql_has_answer={sparql_has_answer}, sparql_has_uuids={_sparql_has_uuids})")
         if result.get("llm_reasoning"):
             logger.info(f"💭 LLM reasoning: {result.get('llm_reasoning')}")
         
@@ -435,6 +571,7 @@ class WorkflowOrchestrator:
             try:
                 # Handle standard SPARQL JSON results
                 bindings = sparql_result.get("results", {}).get("results", {}).get("bindings", [])
+                sensor_metadata = self._build_sensor_metadata_from_bindings(bindings)
                 for binding in bindings:
                     current_uuid = None
                     current_storage = None
@@ -460,6 +597,19 @@ class WorkflowOrchestrator:
                             storage_map[current_uuid] = current_storage
                 
                 uuids = list(set(uuids))
+
+                # Disambiguate by sensor type if the user asked for a specific kind (e.g., temperature)
+                preferred_kind = self._infer_query_kind(latest_message)
+                if preferred_kind and sensor_metadata:
+                    filtered = {u: m for u, m in sensor_metadata.items() if m.get("kind") == preferred_kind}
+                    if filtered:
+                        uuids = [u for u in uuids if u in filtered]
+                        storage_map = {u: s for u, s in storage_map.items() if u in uuids}
+                        state.intermediate_results["sensor_metadata"] = filtered
+                    else:
+                        state.intermediate_results["sensor_metadata"] = sensor_metadata
+                elif sensor_metadata:
+                    state.intermediate_results["sensor_metadata"] = sensor_metadata
             except Exception as e:
                 logger.warning(f"Failed to extract UUIDs from SPARQL result: {e}")
 
@@ -474,6 +624,21 @@ class WorkflowOrchestrator:
             start_date = state.intermediate_results.get("start_date")
             end_date = state.intermediate_results.get("end_date")
             result = await self.sql_agent.fetch_data_for_uuids(uuids, latest_message, storage_map, start_date, end_date)
+        elif sparql_result.get("method") == "semantic_rag" or (
+            sparql_result.get("success") and not sparql_result.get("analytics_required", True)
+            and sparql_result.get("formatted_response")
+        ):
+            # SPARQL fell back to semantic RAG (no sensor UUIDs for this query type).
+            # Skip text-to-SQL — the semantic answer already covers what's available.
+            logger.info("No UUIDs and SPARQL used semantic RAG — skipping text-to-SQL, using semantic answer")
+            result = {
+                "success": True,
+                "query": "SEMANTIC_RAG_NO_UUIDS",
+                "results": {"data": []},
+                "formatted_response": sparql_result.get("formatted_response", ""),
+                "analytics_required": False,
+            }
+            state.analytics_required = False
         else:
             # Fallback to standard SQL generation (text-to-SQL)
             logger.info("No UUIDs found or not analytics flow, using standard Text-to-SQL")
@@ -499,11 +664,16 @@ class WorkflowOrchestrator:
             logger.error(f"SQL failed: {result.get('error', 'Unknown error')}")
         
         # Only mark analytics_required for intents that actually need data processing
+        # Don't override False set by the semantic-RAG shortcut above.
         _analytics_intents = {"analytics", "compare", "trend", "recommend", "compliance", "anomaly"}
-        if state.current_intent in _analytics_intents:
-            state.analytics_required = True
+        if state.current_intent in _analytics_intents and state.analytics_required:
+            # analytics_required already True (or set by UUID path) — keep it
             logger.info(f"✅ Intent '{state.current_intent}' requires analytics: analytics_required=True")
+        elif state.current_intent in _analytics_intents and not state.analytics_required:
+            # Semantic-RAG shortcut already set analytics_required=False — respect it
+            logger.info(f"ℹ️  Intent '{state.current_intent}' — analytics skipped (semantic RAG answered)")
         else:
+            state.analytics_required = False
             logger.info(f"ℹ️  Intent '{state.current_intent}' does not require analytics post-SQL")
         
         return state
@@ -518,37 +688,13 @@ class WorkflowOrchestrator:
         data = state.query_results
         
         # Extract sensor metadata (UUID to human-readable label mapping) from SPARQL results
-        sensor_metadata = {}
-        sparql_result = state.intermediate_results.get("sparql_result", {})
-        if sparql_result.get("success"):
-            bindings = sparql_result.get("results", {}).get("results", {}).get("bindings", [])
-            for binding in bindings:
-                uuid_val = None
-                label_val = None
-                sensor_val = None
-                
-                for var in binding:
-                    # Look for UUID/ID/timeseries variables
-                    if "uuid" in var.lower() or "id" in var.lower() or "timeseries" in var.lower():
-                        uuid_val = binding[var]["value"]
-                    elif "label" in var.lower():
-                        label_val = binding[var]["value"]
-                    elif "sensor" in var.lower():
-                        sensor_val = binding[var]["value"]
-                
-                if uuid_val:
-                    # Extract human-readable name from sensor URI if label is missing
-                    if not label_val and sensor_val:
-                        # Extract the last part after # or /
-                        sensor_name = sensor_val.split('#')[-1] if '#' in sensor_val else sensor_val.split('/')[-1]
-                        # Replace underscores with spaces for readability
-                        label_val = sensor_name.replace('_', ' ')
-                    
-                    sensor_metadata[uuid_val] = {
-                        "label": label_val or "Unknown Sensor",
-                        "sensor_uri": sensor_val or "Unknown",
-                        "uuid": uuid_val  # Store UUID for reference
-                    }
+        sensor_metadata = state.intermediate_results.get("sensor_metadata")
+        if not sensor_metadata:
+            sensor_metadata = {}
+            sparql_result = state.intermediate_results.get("sparql_result", {})
+            if sparql_result.get("success"):
+                bindings = sparql_result.get("results", {}).get("results", {}).get("bindings", [])
+                sensor_metadata = self._build_sensor_metadata_from_bindings(bindings)
         
         logger.info(f"📋 Extracted sensor metadata for {len(sensor_metadata)} sensors")
         for uuid, meta in sensor_metadata.items():
@@ -729,13 +875,15 @@ class WorkflowOrchestrator:
         sql_result = state.intermediate_results.get("sql_result", {})
         analytics_result = state.intermediate_results.get("analytics_result", {})
         viz_result = state.intermediate_results.get("viz_result", {})
+        document_result = state.intermediate_results.get("document_result", {})
         dialogue_response = state.intermediate_results.get("dialogue_response")
         
         # Build response - Prioritize most downstream result
         media_payload = None
         if dialogue_response:
             final_response = dialogue_response
-        elif viz_result.get("formatted_response"):
+        elif viz_result.get("formatted_response") and viz_result.get("media"):
+            # Only use viz_result if it actually produced an image (has media payload)
             final_response = viz_result["formatted_response"]
             media_payload = viz_result.get("media")
         # Phase 4 results (highest priority after viz)
@@ -743,6 +891,13 @@ class WorkflowOrchestrator:
              state.intermediate_results.get("planner_result", {}).get("formatted_text"):
             pr = state.intermediate_results["planner_result"]
             final_response = pr.get("formatted_response") or pr.get("formatted_text")
+        elif document_result.get("success"):
+            filename = document_result.get("filename", "document")
+            download_url = document_result.get("download_url")
+            if download_url:
+                final_response = f"Document ready — **{filename}**\n\nDownload: {download_url}"
+            else:
+                final_response = f"Document generated — **{filename}**"
         elif state.intermediate_results.get("report_result", {}).get("formatted_text"):
             final_response = state.intermediate_results["report_result"]["formatted_text"]
         elif state.intermediate_results.get("anomaly_result", {}).get("formatted_response"):
@@ -968,7 +1123,7 @@ class WorkflowOrchestrator:
         elif intent == "planner":
             return "planner"
         elif intent == "report":
-            return "planner"  # report routes through planner for SPARQL+SQL+report
+            return "sparql"  # report routes through SPARQL -> SQL -> report
         elif intent == "anomaly":
             return "sparql"  # need UUIDs first, then SQL, then anomaly in _route_from_sql
         elif intent == "export":
@@ -979,6 +1134,10 @@ class WorkflowOrchestrator:
         elif intent == "sql":
             return "sql"
         elif intent in ["analytics", "compare", "trend", "recommend", "compliance"]:
+            # Short-circuit: skip SPARQL+SQL when prior data already covers the query
+            if state.intermediate_results.get("use_existing_query_results"):
+                logger.info("[route] Compliance/follow-up with existing data — routing directly to analytics")
+                return "analytics"
             return "sparql"  # SPARQL → SQL → Analytics
         elif intent == "visualization":
             # BUG-C FIX: visualization needs data first → route through SPARQL → SQL → viz
@@ -987,42 +1146,217 @@ class WorkflowOrchestrator:
         else:
             return "response"
     
+    # ── Negation-aware visualization intent detection ─────────────────────────
+    #
+    # _VIZ_KEYWORDS  — any word/phrase that signals "I want a visual output"
+    # _VIZ_NEGATIONS — any word/phrase that cancels a visualization request
+    #
+    # Rules:
+    #   1. If ANY negation phrase appears → False (no chart), full stop.
+    #   2. If ANY positive keyword appears (and no negation) → True.
+    #   3. Otherwise → False.
+
+    _VIZ_KEYWORDS = frozenset([
+        # --- direct chart/plot/graph requests ---
+        "plot", "plots", "plotted", "plotting",
+        "chart", "charts", "charted", "charting",
+        "graph", "graphs", "graphed", "graphing",
+        "diagram", "diagrams",
+        "figure", "figures",
+        "visualize", "visualise", "visualization", "visualisation",
+        "visualizing", "visualising",
+        "draw", "drawing", "render", "rendered",
+        "display", "displays",
+
+        # --- specific chart types ---
+        "line chart", "line graph", "line plot",
+        "bar chart", "bar graph", "bar plot", "histogram",
+        "scatter plot", "scatter chart", "scatter graph",
+        "pie chart", "pie graph",
+        "area chart", "area graph",
+        "heatmap", "heat map",
+        "box plot", "boxplot", "violin plot",
+        "time series", "time-series chart", "time series chart",
+        "sparkline", "candlestick",
+        "waterfall chart", "gantt chart",
+        "bubble chart", "bubble plot",
+        "radar chart", "spider chart",
+        "map", "geo map", "choropleth",
+        "dashboard", "panel",
+
+        # --- "show me" intent with visual objects ---
+        "show graph", "show chart", "show plot", "show figure",
+        "show me the graph", "show me the chart", "show me the plot",
+        "show me a graph", "show me a chart", "show me a plot",
+        "show trend", "show the trend", "show trends",
+        "show pattern", "show patterns",
+        "show distribution", "show correlation",
+        "show comparison", "show over time",
+        "show visually", "show graphically",
+        "show me visually", "show me graphically",
+        "see the graph", "see the chart", "see the plot",
+        "view the graph", "view the chart",
+
+        # --- "create / generate / make / produce" intent ---
+        "create chart", "create graph", "create plot", "create visualization",
+        "generate chart", "generate graph", "generate plot", "generate visualization",
+        "generate a chart", "generate a graph", "generate a plot",
+        "make chart", "make graph", "make plot", "make a chart",
+        "make me a chart", "make me a graph", "make me a plot",
+        "produce chart", "produce graph", "produce visualization",
+        "build chart", "build graph",
+        "draw chart", "draw graph", "draw a chart",
+
+        # --- image / picture requests ---
+        "image", "picture", "visual", "visuals", "illustration",
+        "screenshot", "snapshot", "thumbnail",
+
+        # --- trend / pattern requests implying visual output ---
+        "trend chart", "trend graph", "trend line", "trendline",
+        "show the trend line", "show trendline",
+        "plot the trend", "graph the trend", "chart the trend",
+
+        # --- explicit output format ---
+        "png", "svg", "jpeg", "pdf chart", "pdf graph",
+        "export chart", "export graph", "export plot",
+        "save chart", "save graph", "save plot",
+        "embed chart", "embed graph",
+
+        # --- implicit visual intent phrases ---
+        "graphically", "visually", "in a chart", "in a graph",
+        "as a chart", "as a graph", "as a plot", "as a figure",
+        "into a chart", "into a graph",
+        "overlay", "annotate on chart",
+        "compare visually", "plot comparison",
+    ])
+
+    _VIZ_NEGATIONS = (
+        # --- direct negations ---
+        "do not", "don't", "dont", "no need", "not needed",
+        "don't need", "do not need", "i don't want", "i do not want",
+        "no, don't", "please don't", "please do not",
+
+        # --- "no <viz-word>" patterns ---
+        "no chart", "no charts", "no graph", "no graphs",
+        "no plot", "no plots", "no figure", "no figures",
+        "no image", "no images", "no picture", "no pictures",
+        "no visual", "no visuals", "no visualization", "no visualisation",
+        "no diagram", "no diagrams", "no display",
+
+        # --- "without <viz-word>" patterns ---
+        "without chart", "without charts", "without graph", "without graphs",
+        "without plot", "without plots", "without image", "without images",
+        "without visual", "without visualization", "without visualisation",
+        "without diagram", "without figure",
+
+        # --- "skip/omit/exclude/hide/remove <viz-word>" ---
+        "skip chart", "skip graph", "skip plot", "skip visual",
+        "skip the chart", "skip the graph", "skip the plot",
+        "omit chart", "omit graph", "omit plot", "omit visual",
+        "omit the chart", "omit the graph", "omit the plot",
+        "exclude chart", "exclude graph", "exclude plot",
+        "hide chart", "hide graph", "hide plot",
+        "remove chart", "remove graph", "remove plot",
+        "suppress chart", "suppress graph", "suppress plot",
+        "avoid chart", "avoid graph", "avoid plot",
+
+        # --- "not a/the <viz-word>" ---
+        "not a chart", "not a graph", "not a plot", "not a figure",
+        "not the chart", "not the graph", "not the plot",
+
+        # --- "text-only / numbers-only / stats-only" ---
+        "just text", "text only", "text-only",
+        "numbers only", "numbers-only", "just numbers",
+        "stats only", "stats-only", "just stats",
+        "data only", "data-only", "just data",
+        "raw data only", "raw numbers only",
+        "words only", "in words",
+        "no visuals", "purely text", "plain text",
+        "just the numbers", "just statistics", "just the stats",
+
+        # --- "don't show" patterns ---
+        "don't show a chart", "do not show a chart",
+        "don't show a graph", "do not show a graph",
+        "don't show a plot", "do not show a plot",
+        "don't show the chart", "do not show the chart",
+        "don't display", "do not display",
+
+        # --- informal negations ---
+        "no viz", "no charts please", "no graphs please",
+        "no plots please", "charts not needed", "graph not needed",
+        "plot not needed", "chart not required", "graph not required",
+        "chart not necessary", "visualization not needed",
+        "i don't need a chart", "i don't need a graph",
+        "i do not need a chart", "i do not need a graph",
+        "no need for a chart", "no need for a graph",
+        "no need for a plot", "no need for visualization",
+    )
+
+    @classmethod
+    def _user_wants_visualization(cls, message: str) -> bool:
+        """
+        Return True only when the user explicitly asks for a chart/plot/graph
+        AND has NOT negated that request in the same message.
+
+        Decision logic (in order):
+          1. Scan for any negation phrase → return False immediately.
+          2. Scan for any positive keyword  → return True.
+          3. Default                        → False (no implicit chart).
+
+        Examples
+        --------
+          "show me a chart"                    → True
+          "do not give me a chart"             → False
+          "compute avg, no chart"              → False
+          "plot the trend"                     → True
+          "show the trend"                     → True   (trend + show)
+          "show me the numbers"                → False  (no viz keyword)
+          "generate a line graph"              → True
+          "just give me the stats, skip graph" → False
+          "visualize zone temperatures"        → True
+          "as a bar chart please"              → True
+          "numbers only, no viz"               → False
+          "i don't need a chart here"          → False
+        """
+        msg = message.lower()
+        for neg in cls._VIZ_NEGATIONS:
+            if neg in msg:
+                return False
+        return any(kw in msg for kw in cls._VIZ_KEYWORDS)
+
     def _route_from_data_node(self, state: ConversationState) -> str:
         """Route from SPARQL based on whether analytics/visualization is needed"""
+        # Short-circuit: compliance/follow-up recovered prior sensor data → go direct to analytics
+        if state.intermediate_results.get("use_existing_query_results") and state.analytics_required:
+            logger.info("[route] SPARQL→Analytics (prior data recovered for compliance)")
+            return "analytics"
+
         # Check if analytics is required (and we are coming from SPARQL)
         # Allow routing to SQL if intent is 'sparql' OR 'analytics'
         if state.analytics_required and (state.current_intent == "sparql" or state.current_intent == "analytics"):
              logger.info("Routing SPARQL -> SQL for data fetching (analytics=True)")
              return "sql"
 
-        latest_message = state.messages[-1].content.lower() if state.messages else ""
-        
-        # Check if user wants visualization
-        viz_keywords = ["plot", "chart", "graph", "visualize", "show", "display"]
-        if any(keyword in latest_message for keyword in viz_keywords):
+        latest_message = state.messages[-1].content if state.messages else ""
+        if self._user_wants_visualization(latest_message):
             return "visualization"
-        
+
         return "response"
 
     def _route_from_analytics_node(self, state: ConversationState) -> str:
         """Route from Analytics based on whether visualization is needed"""
-        # Check if analytics already generated a plot
+        # If analytics already embedded a plot in its output, skip the separate viz node
         analytics_result = state.intermediate_results.get("analytics_result", {})
-        output = analytics_result.get("output", "")
-        if "PLOT_GENERATED" in str(output):
-            logger.info("Analytics agent already generated a plot. Skipping separate visualization step.")
+        if analytics_result.get("media"):
+            logger.info("[route] Analytics already produced a plot — skipping visualization node")
             return "response"
 
-        # Analytics is done, check for visualization or finish
-        latest_message = state.messages[-1].content.lower() if state.messages else ""
-        
-        # Check if user wants visualization
-        viz_keywords = ["plot", "chart", "graph", "visualize", "show", "display"]
-        if any(keyword in latest_message for keyword in viz_keywords):
+        latest_message = state.messages[-1].content if state.messages else ""
+        if self._user_wants_visualization(latest_message):
             return "visualization"
-        
+
         return "response"
-    
+
     def _route_from_sql(self, state: ConversationState) -> str:
         """Route from SQL node — extended for Phase 4 anomaly/report intents."""
         intent = state.current_intent
@@ -1036,14 +1370,27 @@ class WorkflowOrchestrator:
         if state.analytics_required:
             return "analytics"
 
-        latest_message = state.messages[-1].content.lower() if state.messages else ""
-        viz_keywords = ["plot", "chart", "graph", "visualize", "show", "display"]
-        if any(keyword in latest_message for keyword in viz_keywords):
+        latest_message = state.messages[-1].content if state.messages else ""
+        if self._user_wants_visualization(latest_message):
             return "visualization"
         analytics_keywords = ["analyze", "analysis", "pattern", "correlation", "statistics"]
-        if any(keyword in latest_message for keyword in analytics_keywords):
+        if any(keyword in latest_message.lower() for keyword in analytics_keywords):
             return "analytics"
         return "response"
+
+    def _route_from_report(self, state: ConversationState) -> str:
+        """Route from report node to optional document generation."""
+        return "document" if self._wants_document(state) else "response"
+
+    @staticmethod
+    def _wants_document(state: ConversationState) -> bool:
+        """Detect if the user requested a formal document (PDF/DOCX/HTML)."""
+        fmt = (state.intermediate_results.get("export_format") or "").lower().strip()
+        if fmt in ("pdf", "docx", "html"):
+            return True
+        msg = (state.messages[-1].content if state.messages else "").lower()
+        keywords = ["pdf", "docx", "word document", "download report", "report file", "formal report", "document"]
+        return any(k in msg for k in keywords)
 
     # ------------------------------------------------------------------
     # Phase 4 Node Implementations
@@ -1113,6 +1460,134 @@ class WorkflowOrchestrator:
             title=latest_message[:80]
         )
         state.intermediate_results["export_result"] = result
+        return state
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # Helper functions for sensor disambiguation and units
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def _infer_query_kind(self, text: str) -> Optional[str]:
+        if not text:
+            return None
+        t = text.lower()
+        if "temperature" in t or "temp" in t:
+            return "temperature"
+        if "humidity" in t:
+            return "humidity"
+        if "co2" in t or "carbon dioxide" in t:
+            return "co2"
+        if "air quality" in t or "iaq" in t:
+            return "air_quality"
+        if "occupancy" in t or "occupant" in t:
+            return "occupancy"
+        if "energy" in t or "electric" in t or "power" in t or "kwh" in t or "kw" in t:
+            return "energy"
+        if "pressure" in t:
+            return "pressure"
+        if "flow" in t:
+            return "flow"
+        return None
+
+    def _infer_sensor_kind(self, label: Optional[str], sensor_uri: Optional[str]) -> Optional[str]:
+        text = f"{label or ''} {sensor_uri or ''}".lower()
+        if "temperature" in text or "temp" in text:
+            return "temperature"
+        if "humidity" in text:
+            return "humidity"
+        if "co2" in text or "carbon dioxide" in text:
+            return "co2"
+        if "air quality" in text or "iaq" in text:
+            return "air_quality"
+        if "occupancy" in text or "occupant" in text:
+            return "occupancy"
+        if "energy" in text or "electric" in text or "power" in text or "kwh" in text or "kw" in text:
+            return "energy"
+        if "pressure" in text:
+            return "pressure"
+        if "flow" in text:
+            return "flow"
+        return None
+
+    def _unit_for_kind(self, kind: Optional[str]) -> str:
+        if kind == "temperature":
+            return "°C"
+        if kind == "humidity":
+            return "%"
+        if kind == "co2":
+            return "ppm"
+        if kind == "air_quality":
+            return "level"
+        if kind == "occupancy":
+            return "count"
+        if kind == "energy":
+            return "kWh"
+        if kind == "pressure":
+            return "Pa"
+        if kind == "flow":
+            return "m³/s"
+        return ""
+
+    def _build_sensor_metadata_from_bindings(self, bindings: list) -> Dict[str, Dict[str, str]]:
+        sensor_metadata: Dict[str, Dict[str, str]] = {}
+        for binding in bindings:
+            uuid_val = None
+            label_val = None
+            sensor_val = None
+            unit_val = None
+
+            for var in binding:
+                if "uuid" in var.lower() or "id" in var.lower() or "timeseries" in var.lower():
+                    uuid_val = binding[var]["value"]
+                elif "label" in var.lower():
+                    label_val = binding[var]["value"]
+                elif "sensor" in var.lower():
+                    sensor_val = binding[var]["value"]
+                elif "unit" in var.lower():
+                    unit_val = binding[var]["value"]
+
+            if uuid_val:
+                if not label_val and sensor_val:
+                    sensor_name = sensor_val.split('#')[-1] if '#' in sensor_val else sensor_val.split('/')[-1]
+                    label_val = sensor_name.replace('_', ' ')
+
+                kind = self._infer_sensor_kind(label_val, sensor_val)
+                unit = unit_val or self._unit_for_kind(kind)
+                sensor_metadata[uuid_val] = {
+                    "label": label_val or "Unknown Sensor",
+                    "sensor_uri": sensor_val or "Unknown",
+                    "uuid": uuid_val,
+                    "kind": kind or "",
+                    "unit": unit or ""
+                }
+
+        return sensor_metadata
+
+    async def _document_node(self, state: ConversationState) -> ConversationState:
+        """CAP-01 — Generate a formal document from current pipeline outputs."""
+        logger.info("Executing Document Node")
+
+        report_type = (state.intermediate_results.get("report_type") or "summary").lower()
+        doc_type_map = {
+            "summary": "summary",
+            "anomaly": "anomaly_digest",
+            "comparison": "comparison",
+            "trend": "trend",
+            "full": "full",
+        }
+        document_type = state.intermediate_results.get("document_type") or doc_type_map.get(report_type, "summary")
+        if state.current_intent == "compliance":
+            document_type = "compliance_report"
+
+        fmt = (state.intermediate_results.get("export_format") or "pdf").lower().strip()
+        if fmt not in ("pdf", "docx", "html"):
+            fmt = "pdf"
+
+        result = await self.document_agent.generate(
+            state,
+            document_type=document_type,
+            output_format=fmt,
+        )
+        state.intermediate_results["document_result"] = result
         return state
 
     async def execute(self, state: ConversationState) -> ConversationState:

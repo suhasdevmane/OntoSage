@@ -12,7 +12,7 @@ load_dotenv()
 
 # Configuration
 SCRIPT_DIR = Path(__file__).parent.absolute()
-OPENAI_MODEL = "gpt-4o-mini"  # Using GPT-4o-mini model
+OPENAI_MODEL = "gpt-5.4"  # Using GPT-4o-mini model
 GRAPHDB_URL = "http://localhost:7200"
 GRAPHDB_REPOSITORY = "bldg"
 SIMILARITY_INDEX = "bldg_index"
@@ -459,5 +459,7 @@ if __name__ == "__main__":
     # Change TRUNCATE_LOGS at top of file to switch between verbose/minimal modes
     # Or pass truncate parameter: asyncio.run(run_debug_test(test_query, truncate=True))
     asyncio.run(run_debug_test(test_query))
+
+
 
 

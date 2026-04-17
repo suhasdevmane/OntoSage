@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 # Set working directory
 WORKDIR /app
@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     curl \
+    wkhtmltopdf \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy shared module first

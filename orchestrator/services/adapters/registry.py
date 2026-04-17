@@ -1,22 +1,32 @@
 """
-AdapterRegistry — Phase 2.5
-============================
-Singleton registry that maps storage location URIs (ref:storedAt values)
-to concrete DatabaseAdapter instances.  Allows sql_agent.py to route
-queries to the correct backend without any hardcoded connection strings.
+AdapterRegistry — config-driven multi-database routing
+=======================================================
+Singleton registry that maps storage location URIs (ref:storedAt values from
+TTL files) to concrete DatabaseAdapter instances.
+
+Configuration is driven by  config/database_registry.yaml  which maps
+TTL identifiers such as "database1" to real adapter configs.
 
 Usage:
     from orchestrator.services.adapters.registry import adapter_registry
     await adapter_registry.initialize()
-    adapter = adapter_registry.get(storage_uri)          # defaults to mysql
-    result  = await adapter.execute_query(sql)
-    schema  = adapter_registry.get_schema_text(storage_uri)
+
+    # Route a query using the storedAt URI from the SPARQL result
+    adapter = adapter_registry.get("bldg:database1")     # → MySQLAdapter
+    adapter = adapter_registry.get("bldg:database4")     # → MongoDBAdapter
+    adapter = adapter_registry.get("http://...#database5")  # → InfluxDBAdapter
+
+    result  = await adapter.execute_query(query)
+    schema  = adapter_registry.get_schema_text("bldg:database1")
 """
 import sys
+import os
+import re
 sys.path.append('/app')
 
-from typing import Dict, Optional
-from shared.config import settings
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 from shared.utils import get_logger
 from orchestrator.services.database_adapter import (
     AdapterType, DatabaseAdapter, get_adapter_from_storage_uri
@@ -27,68 +37,298 @@ from orchestrator.services.database_schema_discovery import DatabaseSchemaDiscov
 
 logger = get_logger(__name__)
 
+# Paths where database_registry.yaml can live (Docker vs local dev)
+_REGISTRY_SEARCH_PATHS = [
+    Path("/app/config/database_registry.yaml"),
+    Path("config/database_registry.yaml"),
+]
+
+
+# ---------------------------------------------------------------------------
+# Environment-variable substitution for YAML values
+# ---------------------------------------------------------------------------
+
+_ENV_PATTERN = re.compile(r"\$\{([^}:]+?)(?::-([^}]*))?\}")
+
+
+def _expand_env(value: Any) -> Any:
+    """
+    Resolve  ${VAR_NAME}  and  ${VAR_NAME:-default}  in string values.
+    Non-string values are returned unchanged.
+    """
+    if not isinstance(value, str):
+        return value
+    def _replace(m: re.Match) -> str:
+        var_name = m.group(1)
+        default  = m.group(2) if m.group(2) is not None else ""
+        return os.environ.get(var_name, default)
+    return _ENV_PATTERN.sub(_replace, value)
+
+
+def _expand_dict(d: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively expand env-var references in all string values of a dict."""
+    return {k: _expand_env(v) for k, v in d.items()}
+
+
+# ---------------------------------------------------------------------------
+# Registry
+# ---------------------------------------------------------------------------
 
 class AdapterRegistry:
     """
-    Maintains a pool of DatabaseAdapter instances keyed by AdapterType.
-    Provides get() to route a ref:storedAt URI to the right adapter.
+    Maintains a pool of DatabaseAdapter instances keyed by the TTL
+    storedAt identifier (e.g. "database1", "database4").
+
+    Initialization order:
+      1. Load config/database_registry.yaml (if present).
+      2. For each database entry, create and connect the appropriate adapter.
+      3. Fall back to legacy hardcoded MySQL (and optional PostgreSQL) if the
+         YAML file is missing, so existing deployments keep working.
     """
 
     def __init__(self) -> None:
-        self._adapters: Dict[AdapterType, DatabaseAdapter] = {}
-        self._discoveries: Dict[AdapterType, DatabaseSchemaDiscovery] = {}
+        # key → adapter instance  (e.g. "database1" → MySQLAdapter)
+        self._adapters: Dict[str, DatabaseAdapter] = {}
+        # key → schema-discovery helper
+        self._discoveries: Dict[str, DatabaseSchemaDiscovery] = {}
         self._initialized = False
 
+    # ------------------------------------------------------------------
+    # Storage-key resolution
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _resolve_storage_key(storage_uri: str) -> str:
+        """
+        Extract the meaningful identifier from a storedAt value.
+
+        Examples
+        --------
+        "bldg:database1"                          → "database1"
+        "http://example.org/bldg#database1"       → "database1"
+        "http://example.org/bldg/database1"       → "database1"
+        "database1"                               → "database1"
+        ""  / None                                → "default"
+        """
+        if not storage_uri:
+            return "default"
+        s = storage_uri.strip()
+        # Prefixed form: bldg:database1  →  take after ":"
+        if ":" in s and not s.startswith("http"):
+            return s.split(":", 1)[-1]
+        # Full URI: take fragment after "#", or last path segment
+        if "#" in s:
+            return s.split("#")[-1]
+        if "/" in s:
+            return s.rstrip("/").split("/")[-1]
+        return s
+
+    # ------------------------------------------------------------------
+    # Initialisation
+    # ------------------------------------------------------------------
+
     async def initialize(self) -> None:
-        """Build adapter pool and run schema discovery for each backend."""
+        """
+        Build the adapter pool.  Safe to call multiple times (idempotent).
+        """
         if self._initialized:
             return
 
-        # Always create MySQL adapter (it is the default backend)
+        yaml_config = self._load_yaml_config()
+        if yaml_config:
+            await self._initialize_from_yaml(yaml_config)
+        else:
+            logger.warning(
+                "AdapterRegistry: database_registry.yaml not found — "
+                "falling back to legacy MySQL/PostgreSQL initialization."
+            )
+            await self._initialize_legacy()
+
+        self._initialized = True
+        if self._adapters:
+            logger.info(
+                f"AdapterRegistry: ready — backends: "
+                f"{list(self._adapters.keys())}"
+            )
+        else:
+            logger.warning("AdapterRegistry: no database adapters available.")
+
+    # ------------------------------------------------------------------
+    # YAML-driven initialization
+    # ------------------------------------------------------------------
+
+    def _load_yaml_config(self) -> Optional[Dict[str, Any]]:
+        """Try each search path in order and return the parsed YAML, or None."""
+        try:
+            import yaml
+        except ImportError:
+            logger.warning("AdapterRegistry: PyYAML not installed — cannot load YAML config.")
+            return None
+
+        for path in _REGISTRY_SEARCH_PATHS:
+            if path.exists():
+                try:
+                    with open(path, "r", encoding="utf-8") as fh:
+                        data = yaml.safe_load(fh)
+                    logger.info(f"AdapterRegistry: loaded config from {path}")
+                    return data
+                except Exception as e:
+                    logger.error(f"AdapterRegistry: failed to parse {path}: {e}")
+        return None
+
+    async def _initialize_from_yaml(self, config: Dict[str, Any]) -> None:
+        """Create and connect one adapter per entry in the databases section."""
+        databases: Dict[str, Any] = config.get("databases", {})
+        if not databases:
+            logger.warning("AdapterRegistry: YAML config has no 'databases' section.")
+            return
+
+        for db_key, raw_cfg in databases.items():
+            cfg = _expand_dict(raw_cfg)
+            db_type = cfg.get("type", "mysql").lower()
+            try:
+                adapter = self._build_adapter(db_type, cfg)
+                await adapter.connect()
+                discovery = DatabaseSchemaDiscovery(adapter)
+                await discovery.run()
+                self._adapters[db_key]    = adapter
+                self._discoveries[db_key] = discovery
+                logger.info(
+                    f"AdapterRegistry: [{db_key}] {db_type} adapter ready"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"AdapterRegistry: [{db_key}] {db_type} init failed — {e}"
+                )
+
+    def _build_adapter(self, db_type: str, cfg: Dict[str, Any]) -> DatabaseAdapter:
+        """Instantiate the correct DatabaseAdapter subclass for db_type."""
+        if db_type == "mysql":
+            from orchestrator.services.adapters.mysql_adapter import MySQLAdapter
+            return MySQLAdapter(
+                host=cfg.get("host") or None,
+                port=int(cfg.get("port", 3306)) or None,
+                user=cfg.get("user") or None,
+                password=cfg.get("password") or None,
+                database=cfg.get("database") or None,
+            )
+
+        if db_type == "postgresql":
+            from orchestrator.services.adapters.postgresql_adapter import PostgreSQLAdapter
+            return PostgreSQLAdapter(
+                host=cfg.get("host") or None,
+                port=int(cfg.get("port", 5432)) or None,
+                user=cfg.get("user") or None,
+                password=cfg.get("password") or None,
+                database=cfg.get("database") or None,
+            )
+
+        if db_type == "timescaledb":
+            from orchestrator.services.adapters.timescaledb_adapter import TimescaleDBAdapter
+            return TimescaleDBAdapter(
+                host=cfg.get("host") or None,
+                port=int(cfg.get("port", 5432)) or None,
+                user=cfg.get("user") or None,
+                password=cfg.get("password") or None,
+                database=cfg.get("database") or None,
+            )
+
+        if db_type == "mongodb":
+            from orchestrator.services.adapters.mongodb_adapter import MongoDBAdapter
+            return MongoDBAdapter(
+                host=cfg.get("host") or "mongodb",
+                port=int(cfg.get("port", 27017)),
+                user=cfg.get("user") or None,
+                password=cfg.get("password") or None,
+                database=cfg.get("database") or "bldg",
+                collection=cfg.get("collection") or "sensor_data",
+            )
+
+        if db_type == "influxdb":
+            from orchestrator.services.adapters.influxdb_adapter import InfluxDBAdapter
+            return InfluxDBAdapter(
+                url=cfg.get("url") or "http://influxdb:8086",
+                token=cfg.get("token") or "",
+                org=cfg.get("org") or "ontosage",
+                bucket=cfg.get("bucket") or "sensors",
+            )
+
+        if db_type == "sqlite":
+            from orchestrator.services.adapters.sqlite_adapter import SQLiteAdapter
+            return SQLiteAdapter(path=cfg.get("path") or "/app/data/ontosage.db")
+
+        if db_type == "cassandra":
+            from orchestrator.services.adapters.cassandra_adapter import CassandraAdapter
+            return CassandraAdapter(
+                host=cfg.get("host") or "cassandra",
+                port=int(cfg.get("port", 9042)),
+                keyspace=cfg.get("keyspace") or "bldg",
+                user=cfg.get("user") or None,
+                password=cfg.get("password") or None,
+                table=cfg.get("table") or "sensor_data",
+            )
+
+        if db_type == "redis_timeseries":
+            from orchestrator.services.adapters.redis_timeseries_adapter import RedisTimeSeriesAdapter
+            return RedisTimeSeriesAdapter(
+                url=cfg.get("url") or "redis://redis:6379/1",
+                password=cfg.get("password") or None,
+                key_prefix=cfg.get("key_prefix") or "sensor",
+            )
+
+        raise ValueError(f"Unknown adapter type: {db_type!r}")
+
+    # ------------------------------------------------------------------
+    # Legacy fallback (no YAML)
+    # ------------------------------------------------------------------
+
+    async def _initialize_legacy(self) -> None:
+        """Mirror the original registry behaviour when no YAML config exists."""
+        from shared.config import settings
+
         try:
             mysql = MySQLAdapter()
             await mysql.connect()
-            self._adapters[AdapterType.MYSQL] = mysql
             disc_mysql = DatabaseSchemaDiscovery(mysql)
             await disc_mysql.run()
-            self._discoveries[AdapterType.MYSQL] = disc_mysql
-            logger.info("AdapterRegistry: MySQLAdapter ready")
+            self._adapters["database1"] = mysql
+            self._adapters["default"]   = mysql   # backwards-compat alias
+            self._discoveries["database1"] = disc_mysql
+            self._discoveries["default"]   = disc_mysql
+            logger.info("AdapterRegistry(legacy): MySQLAdapter ready as 'database1'/'default'")
         except Exception as e:
-            logger.warning(f"AdapterRegistry: MySQLAdapter initialization failed: {e}")
+            logger.warning(f"AdapterRegistry(legacy): MySQLAdapter failed — {e}")
 
-        # Create PostgreSQL adapter only if PG_HOST is configured
         pg_host = getattr(settings, "PG_HOST", None)
         if pg_host and pg_host not in ("", "localhost", "postgres"):
             try:
                 pg = PostgreSQLAdapter()
                 await pg.connect()
-                self._adapters[AdapterType.POSTGRESQL] = pg
                 disc_pg = DatabaseSchemaDiscovery(pg)
                 await disc_pg.run()
-                self._discoveries[AdapterType.POSTGRESQL] = disc_pg
-                logger.info("AdapterRegistry: PostgreSQLAdapter ready")
+                self._adapters["database2"] = pg
+                self._discoveries["database2"] = disc_pg
+                logger.info("AdapterRegistry(legacy): PostgreSQLAdapter ready as 'database2'")
             except Exception as e:
-                logger.warning(f"AdapterRegistry: PostgreSQLAdapter initialization failed: {e}")
+                logger.warning(f"AdapterRegistry(legacy): PostgreSQLAdapter failed — {e}")
 
-        self._initialized = True
-        logger.info(
-            f"AdapterRegistry: initialized with backends: "
-            f"{[t.value for t in self._adapters]}"
-        )
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
 
     def get(self, storage_uri: Optional[str] = None) -> Optional[DatabaseAdapter]:
         """
-        Return the best-matching adapter for a storage URI.
-        Falls back to MySQL if no specific match is found.
-        Returns None only when no adapters at all are available.
+        Resolve a storedAt URI to the best-matching adapter.
+
+        1. Extract the key fragment from the URI (e.g. "database4").
+        2. Look it up in the adapter pool.
+        3. If not found, fall back to "default" → then any available adapter.
         """
-        adapter_type = get_adapter_from_storage_uri(storage_uri or "")
-        adapter = self._adapters.get(adapter_type)
+        key = self._resolve_storage_key(storage_uri or "")
+        adapter = self._adapters.get(key)
         if adapter is None:
-            # Graceful fallback to any available adapter
-            adapter = self._adapters.get(AdapterType.MYSQL)
+            adapter = self._adapters.get("default")
         if adapter is None and self._adapters:
-            # Last resort: return any available adapter
             adapter = next(iter(self._adapters.values()))
         return adapter
 
@@ -99,31 +339,51 @@ class AdapterRegistry:
 
     def get_schema_text(self, storage_uri: Optional[str] = None) -> str:
         """Return schema prompt text for the adapter matched to storage_uri."""
-        adapter_type = get_adapter_from_storage_uri(storage_uri or "")
-        disc = self._discoveries.get(adapter_type) or self._discoveries.get(AdapterType.MYSQL)
+        key = self._resolve_storage_key(storage_uri or "")
+        disc = (
+            self._discoveries.get(key)
+            or self._discoveries.get("default")
+            or (next(iter(self._discoveries.values())) if self._discoveries else None)
+        )
         return disc.schema_prompt_text if disc else "Schema unavailable"
 
     def get_timestamp_column(self, storage_uri: Optional[str] = None) -> str:
         """Return the auto-detected timestamp column for the matched adapter."""
-        adapter_type = get_adapter_from_storage_uri(storage_uri or "")
-        disc = self._discoveries.get(adapter_type) or self._discoveries.get(AdapterType.MYSQL)
+        key = self._resolve_storage_key(storage_uri or "")
+        disc = (
+            self._discoveries.get(key)
+            or self._discoveries.get("default")
+            or (next(iter(self._discoveries.values())) if self._discoveries else None)
+        )
         return (disc.timestamp_column if disc else None) or "Datetime"
 
-    async def get_valid_uuids(self, candidates, storage_uri: Optional[str] = None):
-        """Validate UUIDs against the matched adapter's columns."""
-        adapter_type = get_adapter_from_storage_uri(storage_uri or "")
-        disc = self._discoveries.get(adapter_type) or self._discoveries.get(AdapterType.MYSQL)
+    async def get_valid_uuids(
+        self, candidates: list, storage_uri: Optional[str] = None
+    ) -> list:
+        """Validate UUIDs against the matched adapter's column/field list."""
+        key = self._resolve_storage_key(storage_uri or "")
+        disc = (
+            self._discoveries.get(key)
+            or self._discoveries.get("default")
+            or (next(iter(self._discoveries.values())) if self._discoveries else None)
+        )
         if disc:
             return await disc.get_valid_uuids(candidates)
         return candidates  # pass-through if discovery unavailable
 
     async def close_all(self) -> None:
+        """Gracefully close all adapter connections."""
+        seen = set()
         for adapter in self._adapters.values():
+            adapter_id = id(adapter)
+            if adapter_id in seen:
+                continue
+            seen.add(adapter_id)
             try:
                 await adapter.close()
             except Exception:
                 pass
 
 
-# Module-level singleton
+# Module-level singleton — import this everywhere
 adapter_registry = AdapterRegistry()

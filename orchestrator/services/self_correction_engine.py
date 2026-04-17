@@ -361,6 +361,14 @@ class SelfCorrectionEngine:
                 logger.warning("❌ All self-correction strategies exhausted")
                 break
 
+            # Fast-path: "Empty result set" is a data-absence, not a query bug.
+            # Syntax/prefix fixes and LLM regeneration won't help when the sensor
+            # type simply doesn't exist in the ontology.  Stop here so the caller
+            # can fall through to semantic RAG quickly.
+            if error == "Empty result set":
+                logger.info("⚡ Empty result set — skipping further corrections, falling back to semantic RAG")
+                break
+
             # ── Apply next correction strategy ─────────────────────────────
             strategy = self._strategies[attempt_num - 1]
             logger.info(f"🔄 Self-correction attempt {attempt_num + 1}: "

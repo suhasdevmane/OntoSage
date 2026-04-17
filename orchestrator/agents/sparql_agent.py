@@ -709,31 +709,74 @@ SELECT ?building ?label ?comment WHERE {
             zone_entities = [e for e in entities if re.search(r'bldg:Zone_\d|bldg:Room_|bldg:Space_|bldg:Floor_', e)]
             sensor_entities = [e for e in entities if e not in zone_entities]
 
-            # If we have zone entities → find sensors in those zones with their timeseries UUIDs
-            if zone_entities and not features['wants_definition'] and not features['wants_equipment']:
+            # Room/floor lookup for a zone: "what room is zone 5.14 in?"
+            _room_words = ['room', 'which room', 'which floor', 'what floor', 'which level']
+            if zone_entities and any(w in uq for w in _room_words):
                 patterns = []
                 for zone in zone_entities:
-                    patterns.append(f"""{{
+                    # Zone is part of a Room (brick:isPartOf)
+                    patterns.append(
+                        f"{{ {zone} brick:isPartOf ?parent . "
+                        f"OPTIONAL {{ ?parent rdfs:label ?label . }} "
+                        f"FILTER(CONTAINS(STR(?parent), 'Room') || CONTAINS(STR(?parent), 'Floor')) }}"
+                    )
+                union_block = " UNION ".join(patterns)
+                return self._prefix_block() + f"\nSELECT DISTINCT ?parent ?label WHERE {{ {union_block} }} ORDER BY ?parent"
+
+            # Adjacency query: "what zones are adjacent/nearby to zone 5.28?"
+            _adj_words = ['adjacent', 'nearby', 'next to', 'neighboring', 'neighbour', 'neighbours']
+            if zone_entities and any(w in uq for w in _adj_words):
+                patterns = []
+                for zone in zone_entities:
+                    patterns.append(f"{{ {zone} brick:isAdjacentTo ?adjacent . OPTIONAL {{ ?adjacent rdfs:label ?label . }} }}")
+                union_block = " UNION ".join(patterns)
+                return self._prefix_block() + f"\nSELECT DISTINCT ?adjacent ?label WHERE {{ {union_block} }} ORDER BY ?adjacent"
+
+            # If we have zone entities → find sensors in those zones with their timeseries UUIDs
+            if zone_entities and not features['wants_definition'] and not features['wants_equipment']:
+                # Infer specific sensor class from query (e.g. temperature → brick:Air_Temperature_Sensor)
+                # so we don't return a wrong sensor type that happens to be alphabetically first
+                inferred_class = self._infer_class(uq)
+                if inferred_class:
+                    type_lines = f"  ?sensor rdf:type {inferred_class} .\n  BIND({inferred_class} AS ?type)"
+                    # For specific type + zone: require UUID (we need it for SQL data fetching)
+                    uuid_lines = "  ?ref ref:hasTimeseriesId ?uuid .\n  ?ref ref:storedAt ?storage .\n  ?sensor ref:hasExternalReference ?ref ."
+                    patterns = []
+                    for zone in zone_entities:
+                        patterns.append(f"""{{\n  ?sensor brick:hasLocation {zone} .\n{type_lines}\n  ?sensor rdfs:label ?label .\n{uuid_lines}\n}}""")
+                    union_block = " UNION ".join(patterns)
+                    return self._prefix_block() + f"\nSELECT ?sensor ?label ?type ?uuid ?storage WHERE {{\n{union_block}\n}} LIMIT 50"
+                else:
+                    # Generic sensor listing (no type filter): use DISTINCT and OPTIONAL uuid
+                    # to avoid LIMIT explosion from sensors with many external refs
+                    patterns = []
+                    for zone in zone_entities:
+                        patterns.append(f"""{{
   ?sensor brick:hasLocation {zone} .
   ?sensor rdf:type ?type .
+  FILTER(CONTAINS(STR(?type), 'Sensor') && !CONTAINS(STR(?type), '#Sensor') && STRSTARTS(STR(?type), 'https://brickschema'))
   ?sensor rdfs:label ?label .
-  ?ref ref:hasTimeseriesId ?uuid .
-  ?ref ref:storedAt ?storage .
-  ?sensor ref:hasExternalReference ?ref .
-  FILTER(CONTAINS(STR(?type), 'Sensor'))
+  OPTIONAL {{
+    ?sensor ref:hasExternalReference ?ref .
+    ?ref ref:hasTimeseriesId ?uuid .
+    ?ref ref:storedAt ?storage .
+  }}
 }}""")
-                union_block = " UNION ".join(patterns)
-                return self._prefix_block() + f"\nSELECT ?sensor ?label ?type ?uuid ?storage WHERE {{\n{union_block}\n}} LIMIT 50"
+                    union_block = " UNION ".join(patterns)
+                    return self._prefix_block() + f"\nSELECT DISTINCT ?sensor ?label ?type ?uuid ?storage WHERE {{\n{union_block}\n}} ORDER BY ?sensor LIMIT 50"
 
             # Order of checks matters: prioritize equipment and definition before uuid-only
             if features['wants_equipment']:
                 patterns = []
                 for ent in entities:
-                    # Support both directions: sensor brick:isPointOf equipment OR equipment brick:hasPoint sensor
+                    # sensor → equipment: brick:isPointOf / brick:hasPoint
                     patterns.append(f"{{ {ent} brick:isPointOf ?equipment . OPTIONAL {{ ?equipment rdfs:label ?equipLabel . }} OPTIONAL {{ {ent} rdfs:label ?label . }} }}")
                     patterns.append(f"{{ ?equipment brick:hasPoint {ent} . OPTIONAL {{ ?equipment rdfs:label ?equipLabel . }} OPTIONAL {{ {ent} rdfs:label ?label . }} }}")
+                    # zone/location → equipment: feeds / isFedBy
+                    patterns.append(f"{{ ?equipment brick:feeds {ent} . OPTIONAL {{ ?equipment rdfs:label ?equipLabel . }} OPTIONAL {{ {ent} rdfs:label ?label . }} }}")
+                    patterns.append(f"{{ {ent} brick:isFedBy ?equipment . OPTIONAL {{ ?equipment rdfs:label ?equipLabel . }} OPTIONAL {{ {ent} rdfs:label ?label . }} }}")
                 union_block = " \n UNION \n ".join(patterns)
-                return self._prefix_block() + f"\nSELECT ?label ?equipment ?equipLabel WHERE {{ {union_block} }}"
+                return self._prefix_block() + f"\nSELECT DISTINCT ?label ?equipment ?equipLabel WHERE {{ {union_block} }}"
             
             # Enhanced definition query - get label AND definition for specific entity
             if features['wants_definition'] or 'label' in uq or 'definition' in uq:
@@ -770,16 +813,50 @@ SELECT ?building ?label ?comment WHERE {
                 union_block = " \n UNION \n ".join(patterns)
                 return self._prefix_block() + f"\nSELECT ?label ?uuid WHERE {{ {union_block} }}"
 
-        # ── E.5: 5 additional template patterns ─────────────────────────────
-        # T1: List all floors / storeys
-        floor_words = ['floor', 'floors', 'storey', 'storeys', 'level', 'levels']
+        # ── T0: All-zones sensor-type query (e.g. "temperature across all zones") ──
+        # Must run BEFORE T1/T2 so it captures sensor UUIDs, not just zone names
         zone_words = ['zone', 'zones', 'room', 'rooms', 'space', 'spaces']
-        if any(w in uq for w in floor_words) and features['wants_count']:
+        all_zones_words = ['all zones', 'all rooms', 'all spaces', 'every zone', 'across zones',
+                           'across all', 'building-wide', 'building wide', 'each zone', 'each room']
+        inferred_class_t0 = self._infer_class(uq)
+        if inferred_class_t0 and (
+            any(aw in uq for aw in all_zones_words)
+            or ('all' in uq and any(w in uq for w in zone_words))
+        ) and not entities:
+            return self._prefix_block() + f"""
+SELECT ?sensor ?label ?type ?uuid ?storage WHERE {{
+  ?sensor rdf:type {inferred_class_t0} .
+  BIND({inferred_class_t0} AS ?type)
+  ?sensor rdfs:label ?label .
+  ?ref ref:hasTimeseriesId ?uuid .
+  ?ref ref:storedAt ?storage .
+  ?sensor ref:hasExternalReference ?ref .
+}} LIMIT 200"""
+
+        # ── E.5: 5 additional template patterns ─────────────────────────────
+        # T0.6: Zones (or sensors) on a specific floor ("what zones are on floor 5?")
+        floor_words = ['floor', 'floors', 'storey', 'storeys', 'level', 'levels']
+        _floor_num_m = re.search(r'\bfloor\s*(\d+)\b', uq)
+        if _floor_num_m and any(w in uq for w in zone_words):
+            floor_entity = f"bldg:Floor{_floor_num_m.group(1)}"
+            return self._prefix_block() + f"""
+SELECT DISTINCT ?zone ?label WHERE {{
+  {floor_entity} brick:hasPart ?zone .
+  {{ ?zone a brick:HVAC_Zone . }} UNION {{ ?zone a brick:Zone . }}
+  OPTIONAL {{ ?zone rdfs:label ?label . }}
+}} ORDER BY ?zone"""
+
+        # T1: List all floors / storeys — only when not asking about zones or equipment on a floor
+        _equip_words_t1 = ['ahu', 'vav', 'hvac', 'air handler', 'equipment', 'fan', 'pump',
+                            'meter', 'boiler', 'chiller', 'sensor', 'serve', 'serves', 'feed']
+        _no_equip = not any(w in uq for w in _equip_words_t1)
+        _no_zones = not any(w in uq for w in zone_words)
+        if any(w in uq for w in floor_words) and features['wants_count'] and _no_zones and _no_equip:
             return self._prefix_block() + """
 SELECT (COUNT(DISTINCT ?floor) AS ?count) WHERE {
   { ?floor a brick:Floor . } UNION { ?floor a brick:Level . }
 }"""
-        if any(w in uq for w in floor_words) and not entities:
+        if any(w in uq for w in floor_words) and not entities and _no_zones and _no_equip:
             return self._prefix_block() + """
 SELECT ?floor ?label WHERE {
   { ?floor a brick:Floor . } UNION { ?floor a brick:Level . }
@@ -801,26 +878,46 @@ SELECT DISTINCT ?space (COUNT(?sensor) AS ?sensor_count) WHERE {{
   FILTER(CONTAINS(STR(?space), "Zone") || CONTAINS(STR(?space), "Room") || CONTAINS(STR(?space), "Floor"))
 }} GROUP BY ?space ORDER BY ?space LIMIT 100"""
 
-        # T3: Sensors located in a specific zone/floor/room (entity = location)
+        # T3a: Direct sensor/entity lookup (entity itself is a sensor/point)
+        sensor_entities = [e for e in entities if re.search(r'(Sensor|Point)', e)]
+        if sensor_entities:
+            patterns = []
+            for ent in sensor_entities:
+                patterns.append(
+                    f"{{ BIND({ent} AS ?sensor) "
+                    f"OPTIONAL {{ ?sensor rdfs:label ?label . }} "
+                    f"OPTIONAL {{ ?sensor rdf:type ?type . }} "
+                    f"OPTIONAL {{ ?sensor brick:hasUnit ?unit . }} "
+                    f"OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }} "
+                    f"OPTIONAL {{ ?sensor bldg:connstring ?uuid . }} }}"
+                )
+            union_block = " UNION ".join(patterns)
+            return self._prefix_block() + f"\nSELECT DISTINCT ?sensor ?label ?type ?uuid ?storage ?unit WHERE {{ {union_block} }} LIMIT 100"
+
+        # T3b: Sensors located in a specific zone/floor/room (entity = location)
         # Only trigger for bldg: instance entities (not class references like brick:Sensor)
         location_entities = [e for e in entities if e.startswith(f'{settings.BUILDING_PREFIX}:')]
-        if location_entities and any(w in uq for w in ['in', 'on', 'at', 'within']):
+        if location_entities and re.search(r'\\b(in|on|at|within)\\b', uq):
             patterns = []
             for ent in location_entities:
                 patterns.append(
                     f"{{ ?sensor brick:hasLocation {ent} . OPTIONAL {{ ?sensor rdfs:label ?label . }} "
-                    f"OPTIONAL {{ ?sensor rdf:type ?type . }} OPTIONAL {{ ?sensor bldg:connstring ?uuid . }} }}"
+                    f"OPTIONAL {{ ?sensor rdf:type ?type . }} OPTIONAL {{ ?sensor brick:hasUnit ?unit . }} "
+                    f"OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }} "
+                    f"OPTIONAL {{ ?sensor bldg:connstring ?uuid . }} }}"
                 )
                 patterns.append(
                     f"{{ ?sensor brick:isLocatedIn {ent} . OPTIONAL {{ ?sensor rdfs:label ?label . }} "
-                    f"OPTIONAL {{ ?sensor rdf:type ?type . }} OPTIONAL {{ ?sensor bldg:connstring ?uuid . }} }}"
+                    f"OPTIONAL {{ ?sensor rdf:type ?type . }} OPTIONAL {{ ?sensor brick:hasUnit ?unit . }} "
+                    f"OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }} "
+                    f"OPTIONAL {{ ?sensor bldg:connstring ?uuid . }} }}"
                 )
             union_block = " UNION ".join(patterns)
-            return self._prefix_block() + f"\nSELECT DISTINCT ?sensor ?label ?type ?uuid WHERE {{ {union_block} }} LIMIT 100"
+            return self._prefix_block() + f"\nSELECT DISTINCT ?sensor ?label ?type ?uuid ?storage ?unit WHERE {{ {union_block} }} LIMIT 100"
 
         # T4: Equipment / HVAC / AHU / VAV listing
         equipment_keywords = {
-            'hvac': 'brick:HVAC',
+            'hvac': 'brick:HVAC_System',
             'air handler': 'brick:Air_Handler_Unit',
             'air handling': 'brick:Air_Handler_Unit',
             'ahu': 'brick:Air_Handler_Unit',
@@ -837,6 +934,18 @@ SELECT DISTINCT ?space (COUNT(?sensor) AS ?sensor_count) WHERE {{
             if kw in uq:
                 if features['wants_count']:
                     return self._prefix_block() + f"\nSELECT (COUNT(?equip) AS ?count) WHERE {{ ?equip a {equip_class} . }}"
+                # For generic 'hvac' keyword, query all HVAC-related types (AHU, VAV, etc.)
+                if kw == 'hvac':
+                    return self._prefix_block() + """
+SELECT ?equip ?label ?type WHERE {
+  { ?equip a brick:Air_Handler_Unit . BIND("Air Handler Unit" AS ?type) }
+  UNION { ?equip a brick:VAV . BIND("VAV" AS ?type) }
+  UNION { ?equip a brick:Boiler . BIND("Boiler" AS ?type) }
+  UNION { ?equip a brick:Chiller . BIND("Chiller" AS ?type) }
+  UNION { ?equip a brick:Fan . BIND("Fan" AS ?type) }
+  UNION { ?equip a brick:Pump . BIND("Pump" AS ?type) }
+  OPTIONAL { ?equip rdfs:label ?label . }
+} ORDER BY ?type ?equip LIMIT 100"""
                 return self._prefix_block() + f"""
 SELECT ?equip ?label ?location WHERE {{
   ?equip a {equip_class} .
@@ -870,7 +979,7 @@ SELECT ?parent ?parentLabel ?child ?childLabel WHERE {
         if features['wants_equipment'] and target_class:
             return self._prefix_block() + f"\nSELECT ?sensor ?equipment ?equipLabel WHERE {{ {{ ?sensor rdf:type {target_class} . ?sensor brick:isPointOf ?equipment . OPTIONAL {{ ?equipment rdfs:label ?equipLabel . }} }} UNION {{ ?sensor rdf:type {target_class} . ?equipment brick:hasPoint ?sensor . OPTIONAL {{ ?equipment rdfs:label ?equipLabel . }} }} }} LIMIT 50"
         if target_class:
-            return self._prefix_block() + f"\nSELECT ?sensor ?location ?uuid WHERE {{\n  ?sensor rdf:type {target_class} .\n  OPTIONAL {{ ?sensor brick:hasLocation ?location . }}\n  OPTIONAL {{ ?sensor bldg:connstring ?uuid . }}\n}} LIMIT 50"
+            return self._prefix_block() + f"\nSELECT ?sensor ?location ?uuid ?storage ?unit WHERE {{\n  ?sensor rdf:type {target_class} .\n  OPTIONAL {{ ?sensor brick:hasLocation ?location . }}\n  OPTIONAL {{ ?sensor brick:hasUnit ?unit . }}\n  OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }}\n  OPTIONAL {{ ?sensor bldg:connstring ?uuid . }}\n}} LIMIT 50"
         # Generic sensor listing fallback
         sensor_words = ['sensor', 'sensors', 'point', 'points']
         if any(w in uq for w in sensor_words):
@@ -882,7 +991,7 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
   ?sensor rdf:type ?type .
   FILTER(CONTAINS(STR(?type), 'Sensor') || CONTAINS(STR(?type), 'Point'))
 } GROUP BY ?type ORDER BY DESC(?count)"""
-            return self._prefix_block() + "\nSELECT ?sensor ?type ?location ?uuid WHERE {\n  ?sensor rdf:type ?type .\n  FILTER(CONTAINS(STR(?type), 'Sensor') || CONTAINS(STR(?type), 'Point'))\n  OPTIONAL { ?sensor brick:hasLocation ?location . }\n  OPTIONAL { ?sensor bldg:connstring ?uuid . }\n} LIMIT 50"
+            return self._prefix_block() + "\nSELECT ?sensor ?type ?location ?uuid ?storage ?unit WHERE {\n  ?sensor rdf:type ?type .\n  FILTER(CONTAINS(STR(?type), 'Sensor') || CONTAINS(STR(?type), 'Point'))\n  OPTIONAL { ?sensor brick:hasLocation ?location . }\n  OPTIONAL { ?sensor brick:hasUnit ?unit . }\n  OPTIONAL { ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }\n  OPTIONAL { ?sensor bldg:connstring ?uuid . }\n} LIMIT 50"
         return None
 
     def _get_extended_class_map(self) -> dict:
@@ -893,15 +1002,32 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
         static_map = {
             'air temperature': 'brick:Air_Temperature_Sensor',
             'temperature': 'brick:Air_Temperature_Sensor',
+            # Thermal-comfort synonyms → temperature sensor
+            'too warm': 'brick:Air_Temperature_Sensor',
+            'too hot': 'brick:Air_Temperature_Sensor',
+            'too cold': 'brick:Air_Temperature_Sensor',
+            'overheating': 'brick:Air_Temperature_Sensor',
+            'overheat': 'brick:Air_Temperature_Sensor',
+            'freezing': 'brick:Air_Temperature_Sensor',
+            'warm': 'brick:Air_Temperature_Sensor',
+            'hot': 'brick:Air_Temperature_Sensor',
+            'cold': 'brick:Air_Temperature_Sensor',
+            'thermal': 'brick:Air_Temperature_Sensor',
             'humidity': 'brick:Humidity_Sensor',
             'co2': 'brick:CO2_Sensor',
+            # Air quality synonyms
+            'stuffy': 'brick:CO2_Level_Sensor',
+            'stale air': 'brick:CO2_Level_Sensor',
             'occupancy': 'brick:Occupancy_Sensor',
             'pressure': 'brick:Pressure_Sensor',
             'air quality': 'brick:Air_Quality_Sensor',
             'motion': 'brick:Occupancy_Sensor',
             'light': 'brick:Luminance_Sensor',
+            'illuminance': 'brick:Illuminance_Sensor',
             'sound': 'brick:Sound_Pressure_Level_Sensor',
+            'noise': 'brick:Sound_Pressure_Level_Sensor',
             'voc': 'brick:TVOC_Sensor',
+            'tvoc': 'brick:TVOC_Sensor',
         }
         if ontology_introspector.is_ready():
             for local_name in ontology_introspector.sensor_classes:
@@ -979,7 +1105,10 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
             'wants_uuid': any(w in uq for w in ['uuid', 'id', 'identifier']),
             'wants_location': any(w in uq for w in ['location', 'located']) or 'where is' in uq or 'where are' in uq,
             'wants_count': any(w in uq for w in ['how many', 'count', 'number of']),
-            'wants_equipment': 'equipment' in uq or 'device' in uq,
+            'wants_equipment': any(w in uq for w in [
+                'equipment', 'device', 'vav', 'ahu', 'hvac', 'air handler', 'air handling',
+                'fan coil', 'pump', 'boiler', 'chiller', 'meter', 'damper', 'actuator',
+            ]),
             'wants_definition': any(w in uq for w in ['definition', 'describe', 'meaning'])
         }
 
@@ -1049,6 +1178,16 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
             }
             base_type = mapping.get(stype_norm, stype_norm.title().replace(' ', '_') + '_Sensor')
             entities.append(f"bldg:{base_type}_{num}")
+
+        # Underscore-format sensor names: Air_Temperature_Sensor_5.28, CO2_Level_Sensor_5.08, etc.
+        # These appear when users copy-paste sensor IDs from the UI without spaces
+        underscore_sensor_pat = re.compile(
+            r'\b([A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*_Sensor_\d+(?:\.\d+)?)\b'
+        )
+        for match in underscore_sensor_pat.finditer(user_query):
+            cand = f"bldg:{match.group(1)}"
+            if cand not in entities:
+                entities.append(cand)
 
         return list(dict.fromkeys(entities))  # dedupe preserving order
 

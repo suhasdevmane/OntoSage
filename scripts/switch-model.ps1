@@ -3,24 +3,81 @@
     Switches the OpenAI model in the .env file and other configuration files.
 
 .DESCRIPTION
-    This script updates the OPENAI_MODEL variable in the .env file and other service configuration files to the specified model.
-    It supports common models like o3-mini, gpt-4o, gpt-4o-mini, etc.
+    Updates the OPENAI_MODEL variable in the .env file and related service configs,
+    then restarts the orchestrator for a quick switch.
 
 .PARAMETER Model
-    The name of the model to switch to. Defaults to 'o3-mini'.
+    The exact OpenAI model id to switch to (e.g., gpt-5.4-long-context).
+
+.PARAMETER Pick
+    Picks a model by index from the preferred list (use -List to see).
+
+.PARAMETER List
+    Prints the preferred model list in order and exits.
+
+.PARAMETER NoRestart
+    Skip docker restart (only update config files).
 
 .EXAMPLE
-    .\scripts\switch-model.ps1 -Model "gpt-4o"
-    Switches to GPT-4o.
+    .\scripts\switch-model.ps1 -List
+    Shows the preferred model list.
 
 .EXAMPLE
-    .\scripts\switch-model.ps1
-    Switches to o3-mini (default).
+    .\scripts\switch-model.ps1 -Pick 1
+    Switches to the top recommended model.
+
+.EXAMPLE
+    .\scripts\switch-model.ps1 -Model "gpt-4.1-mini-long-context"
+    Switches to GPT-4.1 mini long-context.
 #>
 
 param (
-    [string]$Model = "o3-mini"
+    [string]$Model,
+    [int]$Pick = 0,
+    [switch]$List,
+    [switch]$NoRestart
 )
+
+$PreferredModels = @(
+    "gpt-5.4-long-context",
+    "gpt-5-mini-2025-08-07",
+    "o4-mini-2025-04-16",
+    "o3-mini-2025-01-31",
+    "gpt-4.1-mini-long-context",
+    "gpt-4.1-nano-long-context",
+    "gpt-5.1-codex-mini",
+    "chatgpt-o-mini-latest",
+    "o4-mini-2025-04-16-shared",
+    "o3-mini-2025-01-31-shared"
+)
+
+if ($List) {
+    Write-Host "Preferred OpenAI models (highest to lowest for general quality):" -ForegroundColor Cyan
+    for ($i = 0; $i -lt $PreferredModels.Count; $i++) {
+        $idx = $i + 1
+        Write-Host ("  {0}. {1}" -f $idx, $PreferredModels[$i])
+    }
+    Write-Host ""
+    Write-Host "Usage examples:" -ForegroundColor Cyan
+    Write-Host "  .\scripts\switch-model.ps1 -Pick 1"
+    Write-Host "  .\scripts\switch-model.ps1 -Model gpt-4.1-mini-long-context"
+    return
+}
+
+if (-not $Model -and $Pick -gt 0) {
+    if ($Pick -le $PreferredModels.Count) {
+        $Model = $PreferredModels[$Pick - 1]
+    } else {
+        Write-Error "Pick index out of range. Use -List to see valid indexes."
+        exit 1
+    }
+}
+
+if (-not $Model) {
+    Write-Host "No model specified." -ForegroundColor Yellow
+    Write-Host "Run: .\\scripts\\switch-model.ps1 -List" -ForegroundColor Yellow
+    exit 1
+}
 
 # List of files to update
 $FilesToUpdate = @(
@@ -94,12 +151,15 @@ foreach ($File in $PythonFiles) {
     }
 }
 
-Write-Host "♻️  Applying changes to containers..."
-docker-compose -f docker-compose.agentic.yml up -d orchestrator graphdb-rag-service
-Write-Host "🎉 Done! The system is now using $Model."
+if (-not $NoRestart) {
+    Write-Host "♻️  Applying changes to containers..."
+    docker compose up -d orchestrator graphdb-rag-service
+    Write-Host "🎉 Done! The system is now using $Model."
+} else {
+    Write-Host "✅ Config updated. Restart skipped (NoRestart)." -ForegroundColor Yellow
+}
 
 
-# .\scripts\switch-model.ps1 -Model "o3-mini"
-# .\scripts\switch-model.ps1 -Model "gpt-4o"
-# .\scripts\switch-model.ps1 -Model "gpt-4o-mini"
-# .\scripts\switch-model.ps1 -Model "gpt-4.1-mini"
+# .\scripts\switch-model.ps1 -List
+# .\scripts\switch-model.ps1 -Pick 1
+# .\scripts\switch-model.ps1 -Model "gpt-5.4"

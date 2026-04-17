@@ -195,3 +195,9 @@ Write-Host @"
    .\switch-provider.ps1 <local|cloud|openai>
 
 "@ -ForegroundColor Green
+
+
+# how to use this script
+# .\scripts\switch-model.ps1 -List
+# .\scripts\switch-model.ps1 -Pick 1
+# .\switch-provider.ps1 -Model gpt-4.1-mini-long-context

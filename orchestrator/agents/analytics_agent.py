@@ -17,6 +17,51 @@ logger = get_logger(__name__)
 
 CODE_EXECUTOR_URL = f"http://{settings.CODE_EXECUTOR_HOST}:{settings.CODE_EXECUTOR_PORT}"
 
+
+def _patch_plot_to_base64(code: str) -> str:
+    """
+    Patch LLM-generated code to output plots as base64 via stdout.
+
+    Key problem solved: LLM often generates:
+        plt.savefig('file.png')   # removed below
+        plt.close()               # was NOT removed → figure closed before base64 capture
+    Then the appended base64 block saved a blank/closed figure → blank white image.
+
+    Fix: remove plt.close() / plt.show() so the figure stays open until the appended
+    base64 block captures and closes it.
+    """
+    import re
+    if "PLOT_BASE64" in code:
+        return code  # Already uses base64 approach — includes its own plt.close()
+
+    if "plt" not in code:
+        return code  # No matplotlib usage
+
+    # Remove file-based savefig calls (string literals and common variable names)
+    code = re.sub(r"plt\.savefig\(['\"][^'\"]*['\"][^)]*\)\s*\n?", "", code)  # string arg
+    code = re.sub(r"plt\.savefig\(filename[^)]*\)\s*\n?", "", code)
+    code = re.sub(r"plt\.savefig\(output_path[^)]*\)\s*\n?", "", code)
+    code = re.sub(r"plt\.savefig\(filepath[^)]*\)\s*\n?", "", code)
+    code = re.sub(r"plt\.savefig\(path[^)]*\)\s*\n?", "", code)
+    code = re.sub(r'print\s*\(\s*["\']PLOT_GENERATED:.*?\)\s*\n?', "", code)
+
+    # Remove plt.close() and plt.show() — they close/discard the figure before the
+    # base64 capture block below.  plt.close() will be called inside that block.
+    code = re.sub(r"plt\.close\([^)]*\)\s*\n?", "", code)
+    code = re.sub(r"plt\.show\([^)]*\)\s*\n?", "", code)
+
+    # Append base64 output block (includes plt.close() at the right moment)
+    code = code.rstrip() + (
+        "\nimport base64 as _b64, io as _bio\n"
+        "_buf = _bio.BytesIO()\n"
+        "plt.savefig(_buf, format='png', bbox_inches='tight', dpi=100)\n"
+        "plt.close()\n"
+        "_buf.seek(0)\n"
+        "print('PLOT_BASE64: ' + _b64.b64encode(_buf.read()).decode('utf-8'))\n"
+    )
+    return code
+
+
 class AnalyticsAgent:
     """Generates and executes analytical Python code"""
     
@@ -142,10 +187,13 @@ class AnalyticsAgent:
         
         # Build sensor map for the code
         sensor_map_str = "{}"
+        sensor_unit_map_str = "{}"
         if sensor_metadata:
             # Create a simple dict string: {'uuid': 'label', ...}
             simple_map = {k: v.get('label', k) for k, v in sensor_metadata.items()}
             sensor_map_str = json.dumps(simple_map)
+            simple_units = {k: v.get('unit', '') for k, v in sensor_metadata.items()}
+            sensor_unit_map_str = json.dumps(simple_units)
 
         # Common setup code for all templates
         try:
@@ -155,9 +203,13 @@ import json
 
 # Sensor Metadata
 sensor_map = {sensor_map_str}
+sensor_unit_map = {sensor_unit_map_str}
 
 def get_label(uuid):
     return sensor_map.get(uuid, uuid)
+
+def get_unit(uuid):
+    return sensor_unit_map.get(uuid, "")
 
 # Initialize empty DataFrame
 df = pd.DataFrame(columns=['uuid', 'value', 'timestamp'])
@@ -174,11 +226,14 @@ try:
             df = temp_df
 
     if not df.empty:
+        # Normalize column names — SQL agent sometimes returns 'sensor_uuid' instead of 'uuid'
+        if 'sensor_uuid' in df.columns and 'uuid' not in df.columns:
+            df = df.rename(columns={{'sensor_uuid': 'uuid'}})
         # Data preparation
         df['value'] = pd.to_numeric(df['value'], errors='coerce')
         df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
         df = df.dropna(subset=['value', 'timestamp'])
-        
+
 except Exception as e:
     print(f"Error processing data: {{e}}")
 
@@ -191,7 +246,27 @@ if df.empty:
             logger.error(f"Error constructing setup_code: {e}")
             return None
 
-        # Template 1: Average/Mean
+        # Template 1: Latest + Average (combined)
+        if any(w in query_lower for w in ['average', 'mean', 'avg']) and any(w in query_lower for w in ['current', 'latest', 'now', 'recent']):
+            return setup_code + """
+# Calculate Average and Latest
+avg_results = df.groupby('uuid')['value'].mean()
+latest_indices = df.groupby('uuid')['timestamp'].idxmax()
+latest_df = df.loc[latest_indices].set_index('uuid')
+
+print("Latest and Average Values:")
+for uuid, avg_val in avg_results.items():
+    unit = get_unit(uuid)
+    unit_str = f" {unit}" if unit else ""
+    if uuid in latest_df.index:
+        latest_row = latest_df.loc[uuid]
+        print(f"Sensor: {get_label(uuid)}")
+        print(f"Latest: {latest_row['value']:.2f}{unit_str} at {latest_row['timestamp']}")
+        print(f"Average: {avg_val:.2f}{unit_str}")
+        print("-" * 20)
+"""
+
+        # Template 2: Average/Mean
         if any(w in query_lower for w in ['average', 'mean', 'avg']):
             return setup_code + """
 # Calculate Average
@@ -199,12 +274,14 @@ results = df.groupby('uuid')['value'].mean()
 
 print("Average Values:")
 for uuid, val in results.items():
+    unit = get_unit(uuid)
+    unit_str = f" {unit}" if unit else ""
     print(f"Sensor: {get_label(uuid)}")
-    print(f"Average: {val:.2f}")
+    print(f"Average: {val:.2f}{unit_str}")
     print("-" * 20)
 """
 
-        # Template 2: Maximum/Peak
+        # Template 3: Maximum/Peak
         if any(w in query_lower for w in ['maximum', 'max', 'peak', 'highest']):
             return setup_code + """
 # Calculate Maximum
@@ -212,12 +289,14 @@ results = df.groupby('uuid')['value'].max()
 
 print("Maximum Values:")
 for uuid, val in results.items():
+    unit = get_unit(uuid)
+    unit_str = f" {unit}" if unit else ""
     print(f"Sensor: {get_label(uuid)}")
-    print(f"Max: {val:.2f}")
+    print(f"Max: {val:.2f}{unit_str}")
     print("-" * 20)
 """
 
-        # Template 3: Minimum/Lowest
+        # Template 4: Minimum/Lowest
         if any(w in query_lower for w in ['minimum', 'min', 'lowest']):
             return setup_code + """
 # Calculate Minimum
@@ -225,12 +304,14 @@ results = df.groupby('uuid')['value'].min()
 
 print("Minimum Values:")
 for uuid, val in results.items():
+    unit = get_unit(uuid)
+    unit_str = f" {unit}" if unit else ""
     print(f"Sensor: {get_label(uuid)}")
-    print(f"Min: {val:.2f}")
+    print(f"Min: {val:.2f}{unit_str}")
     print("-" * 20)
 """
 
-        # Template 4: Latest/Current
+        # Template 5: Latest/Current
         if any(w in query_lower for w in ['current', 'latest', 'now', 'recent']):
             return setup_code + """
 # Get Latest Values
@@ -240,13 +321,15 @@ latest_df = df.loc[latest_indices]
 print("Latest Readings:")
 for _, row in latest_df.iterrows():
     uuid = row['uuid']
+    unit = get_unit(uuid)
+    unit_str = f" {unit}" if unit else ""
     print(f"Sensor: {get_label(uuid)}")
-    print(f"Value: {row['value']:.2f}")
+    print(f"Value: {row['value']:.2f}{unit_str}")
     print(f"Time: {row['timestamp']}")
     print("-" * 20)
 """
 
-        # Template 5: Count
+        # Template 6: Count
         if any(w in query_lower for w in ['count', 'how many readings', 'number of readings']):
             return setup_code + """
 # Count Readings
@@ -259,7 +342,105 @@ for uuid, count in results.items():
     print("-" * 20)
 """
 
-        return None
+        # Template 7a/7b: negation-aware chart detection
+        # Reuse the same comprehensive vocabulary as WorkflowOrchestrator._user_wants_visualization
+        try:
+            from orchestrator.workflow import WorkflowOrchestrator as _WO
+            _wants_viz = _WO._user_wants_visualization(user_query)
+        except Exception:
+            # Fallback inline check if import unavailable
+            _viz_pos = frozenset([
+                "plot", "chart", "graph", "visualize", "visualise",
+                "show trend", "show graph", "show chart", "show plot",
+                "line chart", "bar chart", "time series", "histogram",
+                "scatter plot", "heatmap", "generate chart", "draw chart",
+            ])
+            _viz_neg = (
+                "do not", "don't", "dont", "no chart", "no graph", "no plot",
+                "no visual", "without chart", "without graph", "without plot",
+                "skip chart", "skip graph", "just text", "text only",
+                "numbers only", "stats only", "data only", "no viz",
+            )
+            _wants_viz = (
+                any(w in query_lower for w in _viz_pos)
+                and not any(n in query_lower for n in _viz_neg)
+            )
+
+        if _wants_viz:
+            return setup_code + """
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import base64, io as _bio
+
+if df.empty:
+    print("No sensor data found.")
+else:
+    latest_idx = df.groupby('uuid')['timestamp'].idxmax()
+    latest_df  = df.loc[latest_idx]
+    print(f"Sensor readings ({len(df)} data points):")
+    for _, row in latest_df.iterrows():
+        u = row['uuid']
+        unit = get_unit(u); unit_str = f" {unit}" if unit else ""
+        s = df[df['uuid'] == u]['value']
+        print(f"Sensor : {get_label(u)}")
+        print(f"Latest : {row['value']:.2f}{unit_str}  at  {row['timestamp']}")
+        print(f"Mean   : {s.mean():.2f}{unit_str}  |  Median: {s.median():.2f}{unit_str}")
+        print(f"Min    : {s.min():.2f}{unit_str}  |  Max   : {s.max():.2f}{unit_str}")
+        print("-" * 40)
+
+    try:
+        plt.style.use('seaborn-v0_8-darkgrid')
+    except Exception:
+        pass
+    fig, ax = plt.subplots(figsize=(12, 5))
+    uuids  = df['uuid'].unique()
+    colors = plt.cm.tab10.colors
+    for i, u in enumerate(uuids[:8]):
+        sub = df[df['uuid'] == u].sort_values('timestamp')
+        if sub.empty:
+            continue
+        lbl  = get_label(u)
+        unit = get_unit(u); unit_str = f" ({unit})" if unit else ""
+        ax.plot(sub['timestamp'], sub['value'],
+                label=f"{lbl}{unit_str}", color=colors[i % len(colors)],
+                linewidth=1.5, alpha=0.85)
+    ax.set_title("Sensor Readings Over Time", fontsize=14, fontweight='bold', pad=12)
+    ax.set_xlabel("Timestamp", fontsize=11)
+    unit_label = get_unit(list(uuids)[0]) if len(uuids) > 0 else ""
+    ax.set_ylabel(f"Value ({unit_label})" if unit_label else "Value", fontsize=11)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
+    fig.autofmt_xdate(rotation=30)
+    if len(uuids) > 1:
+        ax.legend(loc='upper left', fontsize=9)
+    plt.tight_layout()
+    _buf = _bio.BytesIO()
+    plt.savefig(_buf, format='png', bbox_inches='tight', dpi=120)
+    plt.close(fig)
+    _buf.seek(0)
+    print("PLOT_BASE64: " + base64.b64encode(_buf.read()).decode('utf-8'))
+"""
+
+        # Template 7b: Stats-only fallback (no chart) — default for all other queries
+        return setup_code + """
+if df.empty:
+    print("No sensor data found.")
+else:
+    latest_idx = df.groupby('uuid')['timestamp'].idxmax()
+    latest_df  = df.loc[latest_idx]
+    print(f"Sensor readings ({len(df)} data points):")
+    for _, row in latest_df.iterrows():
+        u = row['uuid']
+        unit = get_unit(u); unit_str = f" {unit}" if unit else ""
+        s = df[df['uuid'] == u]['value']
+        print(f"Sensor : {get_label(u)}")
+        print(f"Latest : {row['value']:.2f}{unit_str}  at  {row['timestamp']}")
+        print(f"Mean   : {s.mean():.2f}{unit_str}  |  Median: {s.median():.2f}{unit_str}")
+        print(f"Min    : {s.min():.2f}{unit_str}  |  Max   : {s.max():.2f}{unit_str}")
+        print(f"Std Dev: {s.std():.2f}{unit_str}")
+        print("-" * 40)
+"""
 
     async def _generate_code(
         self,
@@ -309,6 +490,7 @@ User Request: {user_query}
 DATA CONTEXT:
 - The data is saved locally in a standard JSON format at: `/app/outputs/data/{data_filename}`
 - Structure: {{"data": [{{"timestamp": "...", "uuid": "...", "value": ...}}, ...], "metadata": {{...}}}}
+- NOTE: The UUID column may be named 'uuid' OR 'sensor_uuid' — after reading, rename it: if 'sensor_uuid' in df.columns: df = df.rename(columns={{'sensor_uuid': 'uuid'}})
 - You MUST read the data from this file using pandas.
 {metadata_context}
 
@@ -336,10 +518,16 @@ If the user asks for a graph, chart, or plot:
 1. Use matplotlib or seaborn to create the plot.
 2. Use a professional style (e.g., `plt.style.use('seaborn-v0_8')` or similar).
 3. Add proper titles, labels, and legends.
-4. Save the plot to: `/app/outputs/{plot_filename}`
-   - Ensure the directory exists (though /app/outputs should exist).
-   - `plt.savefig('/app/outputs/{plot_filename}')`
-5. Print exactly: `PLOT_GENERATED: {plot_filename}` to standard output.
+4. Encode the plot as base64 and print it — do NOT use plt.savefig() to a file:
+   ```python
+   import base64, io as _io
+   _buf = _io.BytesIO()
+   plt.savefig(_buf, format='png', bbox_inches='tight', dpi=100)
+   plt.close()
+   _buf.seek(0)
+   print("PLOT_BASE64: " + base64.b64encode(_buf.read()).decode('utf-8'))
+   ```
+5. Do NOT use plt.savefig('/app/outputs/...') or any file path — only use the base64 method above.
 
 Available libraries: pandas, numpy, matplotlib, seaborn, plotly, datetime, json, math, statistics, time
 
@@ -375,17 +563,24 @@ else:
     plt.figure(figsize=(10, 6))
     sns.lineplot(data=filtered_df, x='timestamp', y='value')
     plt.title('Temperature over Time')
-    plt.savefig('/app/outputs/{plot_filename}')
-    print("PLOT_GENERATED: {plot_filename}")
+    import base64, io as _io
+    _buf = _io.BytesIO()
+    plt.savefig(_buf, format='png', bbox_inches='tight', dpi=100)
+    plt.close()
+    _buf.seek(0)
+    print("PLOT_BASE64: " + base64.b64encode(_buf.read()).decode('utf-8'))
 ```
 
 Respond with ONLY the Python code, wrapped in ```python blocks."""
 
         response = await llm_manager.generate(code_prompt)
-        
+
         # Extract code from response
         code = extract_code_from_llm_response(response)
-        
+
+        # Patch any LLM-generated code that still uses the old file-save pattern
+        code = _patch_plot_to_base64(code)
+
         logger.info(f"Generated analytics code:\n{code}")
         return code
     
@@ -508,10 +703,12 @@ Data File: /app/outputs/data/{data_filename}
 {metadata_context}
 
 IMPORTANT CONTEXT:
-- A variable named 'raw_data_json' containing JSON string data will be automatically provided before your code runs.
+- A variable named 'raw_data_json' (a Python dict, already parsed — NOT a JSON string) will be automatically provided before your code runs.
 - Structure: {{"data": [{{"timestamp": "...", "uuid": "...", "value": ...}}, ...]}}
+- Access records directly: raw_data_json["data"] gives a list of dicts.
+- Do NOT call json.loads() or bytes() on raw_data_json — it is already a parsed Python dict.
 - Do NOT define or mock 'raw_data_json' yourself - it is already provided.
-- If you see NameError for 'raw_data_json', the issue is elsewhere, not missing definition.
+- If you see NameError for 'raw_data_json', the issue is elsewhere, not a missing definition.
 
 Fix the code to resolve the error. Common issues:
 - Import errors: Check if library is imported
@@ -543,55 +740,58 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
         
         output = result.get("output", "")
         
-        # Check for plot generation
+        # Check for plot generation (base64 inline or legacy file-based)
         import re
-        plot_match = re.search(r"PLOT_GENERATED: ([\w\.-]+)", output)
         plot_markdown = ""
         media = []
-        if plot_match:
-            filename = plot_match.group(1)
-            
-            # Try to embed image as base64 to avoid localhost/network issues
-            try:
-                import base64
-                import os
-                
-                # Check multiple possible paths
-                possible_paths = [
-                    f"/app/outputs/{filename}",  # Docker
-                    f"outputs/{filename}",       # Local relative
-                    os.path.join(os.getcwd(), "outputs", filename) # Local absolute
-                ]
-                
-                file_path = None
-                for path in possible_paths:
-                    if os.path.exists(path):
-                        file_path = path
-                        break
-                
-                if file_path:
-                    with open(file_path, "rb") as img_file:
-                        b64_data = base64.b64encode(img_file.read()).decode('utf-8')
-                        image_url = f"data:image/png;base64,{b64_data}"
-                        logger.info(f"Embedded image {filename} as base64 from {file_path}")
-                else:
-                    # Fallback to URL if file not found
-                    logger.warning(f"Image file not found in {possible_paths}, falling back to URL")
-                    static_base = settings.STATIC_BASE_URL.rstrip('/')
-                    image_url = f"{static_base}/static/{filename}"
-            except Exception as e:
-                logger.error(f"Error embedding image: {e}")
-                static_base = settings.STATIC_BASE_URL.rstrip('/')
-                image_url = f"{static_base}/static/{filename}"
+        image_url = None
 
+        # PLOT_BASE64 — image data encoded directly in stdout by code-executor
+        b64_match = re.search(r"PLOT_BASE64: ([A-Za-z0-9+/=]+)", output)
+        if b64_match:
+            import base64, os
+            b64_data = b64_match.group(1)
+
+            # Guard: blank/empty figures produce a very small base64 string (< 6 KB decoded).
+            # A real plot is typically 30-300 KB.  Skip tiny/blank images.
+            _decoded_bytes = base64.b64decode(b64_data)
+            if len(_decoded_bytes) < 6000:
+                logger.warning(
+                    f"Discarding likely-blank plot ({len(_decoded_bytes)} bytes < 6 KB threshold)"
+                )
+                output = output.replace(b64_match.group(0), "")
+            else:
+                # Save PNG to /app/outputs/ so it's served via the orchestrator's /static/ mount
+                plot_filename = f"plot_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.png"
+                plot_path = f"/app/outputs/{plot_filename}"
+                try:
+                    os.makedirs("/app/outputs", exist_ok=True)
+                    with open(plot_path, "wb") as f:
+                        f.write(_decoded_bytes)
+                    static_base = settings.STATIC_BASE_URL.rstrip('/')
+                    image_url = f"{static_base}/static/{plot_filename}"
+                    logger.info(f"Saved plot to {plot_path}, serving at {image_url}")
+                except Exception as e:
+                    logger.warning(f"Could not save plot file: {e} — falling back to data URI")
+                    image_url = f"data:image/png;base64,{b64_data}"
+                output = output.replace(b64_match.group(0), "")
+
+        # Legacy fallback: PLOT_GENERATED with filename
+        elif re.search(r"PLOT_GENERATED: ([\w\.-]+)", output):
+            plot_match = re.search(r"PLOT_GENERATED: ([\w\.-]+)", output)
+            filename = plot_match.group(1)
+            static_base = settings.STATIC_BASE_URL.rstrip('/')
+            image_url = f"{static_base}/static/{filename}"
+            output = output.replace(plot_match.group(0), "")
+
+        if image_url:
             plot_markdown = f"\n\n![Analysis Plot]({image_url})"
             
             # Remove the marker from output to clean it up for LLM
-            output = output.replace(plot_match.group(0), "")
+        if image_url:
             media.append({
                 "type": "image",
                 "url": image_url,
-                "filename": filename
             })
         
         # Build sensor context for natural language generation
@@ -599,10 +799,19 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
         if sensor_metadata:
             sensor_context = "\n\nSensor Information:\n"
             for uuid, meta in sensor_metadata.items():
-                sensor_context += f"  - UUID {uuid} is '{meta['label']}'\n"
-            sensor_context += "\nIMPORTANT: Use the human-readable sensor names (labels) in your response, NOT UUIDs.\n"
+                unit = meta.get("unit", "")
+                kind = meta.get("kind", "")
+                unit_note = f" (unit: {unit})" if unit else ""
+                kind_note = f" [{kind}]" if kind else ""
+                sensor_context += f"  - UUID {uuid} is '{meta['label']}'{kind_note}{unit_note}\n"
+            sensor_context += "\nIMPORTANT: Use the human-readable sensor names (labels) in your response, NOT UUIDs. Include units when available.\n"
         
         # Generate natural language summary
+        viz_note = (
+            "A time-series chart has been generated and will be shown below the text."
+            if image_url else
+            "No chart was generated for this query."
+        )
         summary_prompt = f"""Convert this Python analysis output into a natural language response.
 
 User Query: {user_query}
@@ -610,13 +819,15 @@ User Query: {user_query}
 Analysis Output:
 {output}
 {sensor_context}
+Visualization status: {viz_note}
 
 Generate a concise, natural response that:
 1. Explains what analysis was performed
-2. Highlights key findings and numbers
+2. Highlights key findings and numbers (latest reading, mean, min, max, std dev if present)
 3. Uses clear, non-technical language
 4. Uses human-readable sensor names (from Sensor Information above), NOT UUIDs
-5. Mentions any visualizations created
+5. Includes units for any numeric values when provided
+6. If a chart was generated, mention it briefly — do NOT say "no visualizations"
 
 Response:"""
 

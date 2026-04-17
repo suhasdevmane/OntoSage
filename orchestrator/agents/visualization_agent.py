@@ -43,68 +43,54 @@ class VisualizationAgent:
             # Step 1: Determine chart type
             chart_type = await self._determine_chart_type(user_query, data)
             
-            # Generate unique filename
+            # filename arg kept for prompt compat but plot is returned as base64 in stdout
             filename = f"viz_{uuid.uuid4().hex[:8]}.png"
-            
+
             # Step 2: Generate visualization code
             code = await self._generate_viz_code(user_query, data, chart_type, filename)
-            
+
+            # Patch any LLM-generated code that still uses the old file-save pattern
+            code = self._patch_plot_to_base64(code, filename)
+
             # Step 3: Execute visualization code
             result = await self._execute_viz_code(code)
-            
+
             # Step 4: Generate description
             description = await self._generate_description(user_query, chart_type, data)
-            
-            # Try to embed image as base64 to avoid localhost/network issues
-            try:
-                import base64
-                import os
-                
-                # Check multiple possible paths
-                possible_paths = [
-                    f"/app/outputs/{filename}",  # Docker
-                    f"outputs/{filename}",       # Local relative
-                    os.path.join(os.getcwd(), "outputs", filename) # Local absolute
-                ]
-                
-                file_path = None
-                for path in possible_paths:
-                    if os.path.exists(path):
-                        file_path = path
-                        break
-                
-                if file_path:
-                    with open(file_path, "rb") as img_file:
-                        b64_data = base64.b64encode(img_file.read()).decode('utf-8')
-                        image_url = f"data:image/png;base64,{b64_data}"
-                        logger.info(f"Embedded image {filename} as base64 from {file_path}")
-                else:
-                    # Fallback to URL if file not found
-                    logger.warning(f"Image file not found in {possible_paths}, falling back to URL")
-                    static_base = settings.STATIC_BASE_URL.rstrip('/')
-                    image_url = f"{static_base}/static/{filename}"
-            except Exception as e:
-                logger.error(f"Error embedding image: {e}")
-                static_base = settings.STATIC_BASE_URL.rstrip('/')
-                image_url = f"{static_base}/static/{filename}"
 
-            # Construct response with image link
-            formatted_response = f"{description}\n\n![Visualization]({image_url})"
-            
+            # Extract base64 from stdout, save to /app/outputs/, return HTTP URL
+            import re as _re, base64 as _b64, os as _os
+            from datetime import datetime as _dt
+            image_url = None
+            output_text = result.get("stdout") or result.get("output") or ""
+            b64_match = _re.search(r"PLOT_BASE64: ([A-Za-z0-9+/=]+)", output_text)
+            if b64_match:
+                plot_filename = f"viz_{_dt.now().strftime('%Y%m%d_%H%M%S_%f')}.png"
+                plot_path = f"/app/outputs/{plot_filename}"
+                try:
+                    _os.makedirs("/app/outputs", exist_ok=True)
+                    with open(plot_path, "wb") as _f:
+                        _f.write(_b64.b64decode(b64_match.group(1)))
+                    from shared.config import settings as _s
+                    image_url = f"{_s.STATIC_BASE_URL.rstrip('/')}/static/{plot_filename}"
+                    logger.info(f"Saved viz plot to {plot_path}, serving at {image_url}")
+                except Exception as _e:
+                    logger.warning(f"Could not save viz plot: {_e}")
+                    image_url = f"data:image/png;base64,{b64_match.group(1)}"
+            else:
+                logger.warning("No PLOT_BASE64 in code-executor output — visualization may not render")
+                image_url = ""
+
+            formatted_response = f"{description}\n\n![Visualization]({image_url})" if image_url else description
+
             return {
                 "success": True,
                 "code": code,
                 "chart_type": chart_type,
-                "output": result.get("output"),
+                "output": output_text,
                 "description": description,
                 "formatted_response": formatted_response,
-                "media": [
-                    {
-                        "type": "image",
-                        "url": image_url,
-                        "filename": filename
-                    }
-                ]
+                "media": [{"type": "image", "url": image_url}] if image_url else []
             }
             
         except Exception as e:
@@ -187,8 +173,15 @@ Generate code that:
 2. Prepares the data (convert from dict/json to DataFrame)
 3. Creates a {chart_type} using seaborn or matplotlib
 4. Includes proper labels, title, and styling
-5. Saves the plot to '/app/outputs/{filename}'
-6. Prints confirmation message "PLOT_GENERATED: {filename}"
+5. Encodes the plot as base64 and prints it to stdout — do NOT use plt.savefig() to a file path:
+   ```python
+   import base64, io as _io
+   _buf = _io.BytesIO()
+   plt.savefig(_buf, format='png', bbox_inches='tight', dpi=100)
+   plt.close()
+   _buf.seek(0)
+   print("PLOT_BASE64: " + base64.b64encode(_buf.read()).decode('utf-8'))
+   ```
 
 Example structure:
 ```python
@@ -196,6 +189,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import json
+import base64, io as _io
 
 # Prepare data
 raw_data = {json.dumps(data) if data else "{}"}
@@ -214,9 +208,12 @@ sns.lineplot(data=df, x='timestamp', y='value') # Example
 plt.title("Chart Title")
 plt.tight_layout()
 
-# Save
-plt.savefig('/app/outputs/{filename}')
-print("PLOT_GENERATED: {filename}")
+# Output as base64 (not file)
+_buf = _io.BytesIO()
+plt.savefig(_buf, format='png', bbox_inches='tight', dpi=100)
+plt.close()
+_buf.seek(0)
+print("PLOT_BASE64: " + base64.b64encode(_buf.read()).decode('utf-8'))
 ```
 
 Respond with ONLY the Python code, wrapped in ```python blocks."""
@@ -242,6 +239,11 @@ Respond with ONLY the Python code, wrapped in ```python blocks."""
             logger.error(f"Visualization execution error: {e}")
             raise Exception(f"Failed to create visualization: {str(e)}")
     
+    def _patch_plot_to_base64(self, code: str, filename: str) -> str:
+        """Delegate to module-level patch function (shared with analytics_agent)."""
+        from orchestrator.agents.analytics_agent import _patch_plot_to_base64
+        return _patch_plot_to_base64(code)
+
     async def _generate_description(
         self,
         user_query: str,

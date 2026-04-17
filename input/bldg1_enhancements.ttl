@@ -1,0 +1,660 @@
+@prefix rec: <https://w3id.org/rec#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix ref: <https://brickschema.org/schema/Brick/ref#> .
+@prefix ashrae: <http://data.ashrae.org/standard223#> .
+@base <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+# ============================================================
+# Abacws Building Ontology - Enhancements
+# Adds: zone types, building hierarchy, room-zone mapping,
+#        equipment instances, zone adjacency
+# ============================================================
+
+
+# ============================================================
+# TODO 1 + TODO 2: brick:Building type for Abacws
+#                  rdf:type brick:HVAC_Zone for all Zone_5.XX
+# ============================================================
+
+bldg:Abacws a brick:Building ;
+    rdfs:label "Abacws Building"@en ;
+    rdfs:comment "Abacws Building, Cardiff University - School of Computer Science and Informatics" .
+
+bldg:Zone_5.01 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.01"@en .
+
+bldg:Zone_5.02 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.02"@en .
+
+bldg:Zone_5.03 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.03"@en .
+
+bldg:Zone_5.04 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.04"@en .
+
+bldg:Zone_5.05 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.05"@en .
+
+bldg:Zone_5.06 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.06"@en .
+
+bldg:Zone_5.07 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.07"@en .
+
+bldg:Zone_5.08 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.08"@en .
+
+bldg:Zone_5.09 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.09"@en .
+
+bldg:Zone_5.10 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.10"@en .
+
+bldg:Zone_5.11 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.11"@en .
+
+bldg:Zone_5.12 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.12"@en .
+
+bldg:Zone_5.13 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.13"@en .
+
+bldg:Zone_5.14 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.14"@en .
+
+bldg:Zone_5.15 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.15"@en .
+
+bldg:Zone_5.16 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.16"@en .
+
+bldg:Zone_5.17 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.17"@en .
+
+bldg:Zone_5.18 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.18"@en .
+
+bldg:Zone_5.19 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.19"@en .
+
+bldg:Zone_5.20 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.20"@en .
+
+bldg:Zone_5.21 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.21"@en .
+
+bldg:Zone_5.22 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.22"@en .
+
+bldg:Zone_5.23 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.23"@en .
+
+bldg:Zone_5.24 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.24"@en .
+
+bldg:Zone_5.25 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.25"@en .
+
+bldg:Zone_5.26 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.26"@en .
+
+bldg:Zone_5.27 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.27"@en .
+
+bldg:Zone_5.28 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.28"@en .
+
+bldg:Zone_5.29 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.29"@en .
+
+bldg:Zone_5.30 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.30"@en .
+
+bldg:Zone_5.31 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.31"@en .
+
+bldg:Zone_5.32 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.32"@en .
+
+bldg:Zone_5.33 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.33"@en .
+
+bldg:Zone_5.34 a owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "Sensor Node Zone 5.34"@en .
+
+
+# ============================================================
+# TODO 3: Building → Floor → Zone hierarchy
+# ============================================================
+
+# --- Building type already set above ---
+# Add floors as parts of the building
+bldg:Abacws brick:hasPart bldg:Floor0 ,
+                           bldg:Floor1 ,
+                           bldg:Floor2 ,
+                           bldg:Floor3 ,
+                           bldg:Floor4 ,
+                           bldg:Floor5 .
+
+# --- Floor types and isPartOf ---
+bldg:Floor0 a brick:Floor ;
+    rdfs:label "Floor 0 (Ground Floor)"@en ;
+    brick:isPartOf bldg:Abacws .
+
+bldg:Floor1 a brick:Floor ;
+    rdfs:label "Floor 1"@en ;
+    brick:isPartOf bldg:Abacws .
+
+bldg:Floor2 a brick:Floor ;
+    rdfs:label "Floor 2"@en ;
+    brick:isPartOf bldg:Abacws .
+
+bldg:Floor3 a brick:Floor ;
+    rdfs:label "Floor 3"@en ;
+    brick:isPartOf bldg:Abacws .
+
+bldg:Floor4 a brick:Floor ;
+    rdfs:label "Floor 4"@en ;
+    brick:isPartOf bldg:Abacws .
+
+bldg:Floor5 a brick:Floor ;
+    rdfs:label "Floor 5 (Top Floor)"@en ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart bldg:Zone_5.01 ,
+                  bldg:Zone_5.02 ,
+                  bldg:Zone_5.03 ,
+                  bldg:Zone_5.04 ,
+                  bldg:Zone_5.05 ,
+                  bldg:Zone_5.06 ,
+                  bldg:Zone_5.07 ,
+                  bldg:Zone_5.08 ,
+                  bldg:Zone_5.09 ,
+                  bldg:Zone_5.10 ,
+                  bldg:Zone_5.11 ,
+                  bldg:Zone_5.12 ,
+                  bldg:Zone_5.13 ,
+                  bldg:Zone_5.14 ,
+                  bldg:Zone_5.15 ,
+                  bldg:Zone_5.16 ,
+                  bldg:Zone_5.17 ,
+                  bldg:Zone_5.18 ,
+                  bldg:Zone_5.19 ,
+                  bldg:Zone_5.20 ,
+                  bldg:Zone_5.21 ,
+                  bldg:Zone_5.22 ,
+                  bldg:Zone_5.23 ,
+                  bldg:Zone_5.24 ,
+                  bldg:Zone_5.25 ,
+                  bldg:Zone_5.26 ,
+                  bldg:Zone_5.27 ,
+                  bldg:Zone_5.28 ,
+                  bldg:Zone_5.29 ,
+                  bldg:Zone_5.30 ,
+                  bldg:Zone_5.31 ,
+                  bldg:Zone_5.32 ,
+                  bldg:Zone_5.33 ,
+                  bldg:Zone_5.34 .
+
+# Zones are parts of Floor5
+bldg:Zone_5.01 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.02 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.03 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.04 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.05 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.06 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.07 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.08 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.09 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.10 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.11 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.12 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.13 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.14 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.15 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.16 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.17 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.18 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.19 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.20 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.21 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.22 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.23 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.24 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.25 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.26 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.27 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.28 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.29 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.30 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.31 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.32 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.33 brick:isPartOf bldg:Floor5 .
+bldg:Zone_5.34 brick:isPartOf bldg:Floor5 .
+
+# Directional zones are also parts of Floor5
+bldg:east-Zone a brick:HVAC_Zone ;
+    rdfs:label "East Wing Zone (Floor 5)"@en ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:north-east-Zone a brick:HVAC_Zone ;
+    rdfs:label "North-East Wing Zone (Floor 5)"@en ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:north-west-Zone a brick:HVAC_Zone ;
+    rdfs:label "North-West Wing Zone (Floor 5)"@en ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:south-Zone a brick:HVAC_Zone ;
+    rdfs:label "South Wing Zone (Floor 5)"@en ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:south-east-Zone a brick:HVAC_Zone ;
+    rdfs:label "South-East Wing Zone (Floor 5)"@en ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:west-Zone a brick:HVAC_Zone ;
+    rdfs:label "West Wing Zone (Floor 5)"@en ;
+    brick:isPartOf bldg:Floor5 .
+
+
+# ============================================================
+# TODO 4: Room-to-Zone mapping
+# Zones where zone number matches a Room on Floor 5
+# ============================================================
+
+# Zones with matching rooms (Room5.XX exists in Floor5 brick:hasPart list)
+bldg:Zone_5.01 brick:isPartOf bldg:Room5.01 .
+bldg:Room5.01 brick:hasPart bldg:Zone_5.01 .
+
+bldg:Zone_5.02 brick:isPartOf bldg:Room5.02 .
+bldg:Room5.02 brick:hasPart bldg:Zone_5.02 .
+
+bldg:Zone_5.03 brick:isPartOf bldg:Room5.03 .
+bldg:Room5.03 brick:hasPart bldg:Zone_5.03 .
+
+bldg:Zone_5.04 brick:isPartOf bldg:Room5.04 .
+bldg:Room5.04 brick:hasPart bldg:Zone_5.04 .
+
+bldg:Zone_5.05 brick:isPartOf bldg:Room5.05 .
+bldg:Room5.05 brick:hasPart bldg:Zone_5.05 .
+
+bldg:Zone_5.06 brick:isPartOf bldg:Room5.06 .
+bldg:Room5.06 brick:hasPart bldg:Zone_5.06 .
+
+bldg:Zone_5.07 brick:isPartOf bldg:Room5.07 .
+bldg:Room5.07 brick:hasPart bldg:Zone_5.07 .
+
+bldg:Zone_5.08 brick:isPartOf bldg:Room5.08 .
+bldg:Room5.08 brick:hasPart bldg:Zone_5.08 .
+
+bldg:Zone_5.09 brick:isPartOf bldg:Room5.09 .
+bldg:Room5.09 brick:hasPart bldg:Zone_5.09 .
+
+bldg:Zone_5.10 brick:isPartOf bldg:Room5.10 .
+bldg:Room5.10 brick:hasPart bldg:Zone_5.10 .
+
+bldg:Zone_5.11 brick:isPartOf bldg:Room5.11 .
+bldg:Room5.11 brick:hasPart bldg:Zone_5.11 .
+
+bldg:Zone_5.12 brick:isPartOf bldg:Room5.12 .
+bldg:Room5.12 brick:hasPart bldg:Zone_5.12 .
+
+bldg:Zone_5.13 brick:isPartOf bldg:Room5.13 .
+bldg:Room5.13 brick:hasPart bldg:Zone_5.13 .
+
+bldg:Zone_5.14 brick:isPartOf bldg:Room5.14 .
+bldg:Room5.14 brick:hasPart bldg:Zone_5.14 .
+
+bldg:Zone_5.15 brick:isPartOf bldg:Room5.15 .
+bldg:Room5.15 brick:hasPart bldg:Zone_5.15 .
+
+bldg:Zone_5.16 brick:isPartOf bldg:Room5.16 .
+bldg:Room5.16 brick:hasPart bldg:Zone_5.16 .
+
+bldg:Zone_5.17 brick:isPartOf bldg:Room5.17 .
+bldg:Room5.17 brick:hasPart bldg:Zone_5.17 .
+
+bldg:Zone_5.18 brick:isPartOf bldg:Room5.18 .
+bldg:Room5.18 brick:hasPart bldg:Zone_5.18 .
+
+# Zone 5.19 — no Room5.19 on Floor5; zone is in Floor5 directly
+# (already covered by Floor5 brick:hasPart above)
+
+bldg:Zone_5.20 brick:isPartOf bldg:Room5.20 .
+bldg:Room5.20 brick:hasPart bldg:Zone_5.20 .
+
+bldg:Zone_5.21 brick:isPartOf bldg:Room5.21 .
+bldg:Room5.21 brick:hasPart bldg:Zone_5.21 .
+
+bldg:Zone_5.22 brick:isPartOf bldg:Room5.22 .
+bldg:Room5.22 brick:hasPart bldg:Zone_5.22 .
+
+bldg:Zone_5.23 brick:isPartOf bldg:Room5.23 .
+bldg:Room5.23 brick:hasPart bldg:Zone_5.23 .
+
+# Zone 5.24, 5.25 — no matching rooms; directly on Floor5
+
+bldg:Zone_5.26 brick:isPartOf bldg:Room5.26 .
+bldg:Room5.26 brick:hasPart bldg:Zone_5.26 .
+
+# Zones 5.27–5.33 — no matching rooms; directly on Floor5
+
+bldg:Zone_5.34 brick:isPartOf bldg:Room5.34 .
+bldg:Room5.34 brick:hasPart bldg:Zone_5.34 .
+
+
+# ============================================================
+# TODO 5: Equipment instances
+# Air Handling Units per floor + VAV boxes + meters
+# ============================================================
+
+# --- Building-level electricity meter ---
+bldg:Electric_Meter_Abacws a owl:NamedIndividual ,
+        brick:Building_Electrical_Meter ;
+    rdfs:label "Abacws Building Electricity Meter"@en ;
+    brick:isPointOf bldg:Abacws ;
+    brick:hasLocation bldg:Abacws .
+
+# --- Floor-level electricity sub-meters ---
+bldg:Electric_Meter_Floor0 a owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Floor 0 Electricity Sub-Meter"@en ;
+    brick:isPointOf bldg:Floor0 ;
+    brick:hasLocation bldg:Floor0 .
+
+bldg:Electric_Meter_Floor1 a owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Floor 1 Electricity Sub-Meter"@en ;
+    brick:isPointOf bldg:Floor1 ;
+    brick:hasLocation bldg:Floor1 .
+
+bldg:Electric_Meter_Floor2 a owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Floor 2 Electricity Sub-Meter"@en ;
+    brick:isPointOf bldg:Floor2 ;
+    brick:hasLocation bldg:Floor2 .
+
+bldg:Electric_Meter_Floor3 a owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Floor 3 Electricity Sub-Meter"@en ;
+    brick:isPointOf bldg:Floor3 ;
+    brick:hasLocation bldg:Floor3 .
+
+bldg:Electric_Meter_Floor4 a owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Floor 4 Electricity Sub-Meter"@en ;
+    brick:isPointOf bldg:Floor4 ;
+    brick:hasLocation bldg:Floor4 .
+
+bldg:Electric_Meter_Floor5 a owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Floor 5 Electricity Sub-Meter"@en ;
+    brick:isPointOf bldg:Floor5 ;
+    brick:hasLocation bldg:Floor5 .
+
+# --- Air Handling Units (one per floor) ---
+bldg:AHU_Floor0 a owl:NamedIndividual , brick:Air_Handler_Unit ;
+    rdfs:label "Air Handling Unit Floor 0"@en ;
+    brick:hasLocation bldg:Floor0 ;
+    brick:feeds bldg:Floor0 .
+
+bldg:AHU_Floor1 a owl:NamedIndividual , brick:Air_Handler_Unit ;
+    rdfs:label "Air Handling Unit Floor 1"@en ;
+    brick:hasLocation bldg:Floor1 ;
+    brick:feeds bldg:Floor1 .
+
+bldg:AHU_Floor2 a owl:NamedIndividual , brick:Air_Handler_Unit ;
+    rdfs:label "Air Handling Unit Floor 2"@en ;
+    brick:hasLocation bldg:Floor2 ;
+    brick:feeds bldg:Floor2 .
+
+bldg:AHU_Floor3 a owl:NamedIndividual , brick:Air_Handler_Unit ;
+    rdfs:label "Air Handling Unit Floor 3"@en ;
+    brick:hasLocation bldg:Floor3 ;
+    brick:feeds bldg:Floor3 .
+
+bldg:AHU_Floor4 a owl:NamedIndividual , brick:Air_Handler_Unit ;
+    rdfs:label "Air Handling Unit Floor 4"@en ;
+    brick:hasLocation bldg:Floor4 ;
+    brick:feeds bldg:Floor4 .
+
+bldg:AHU_Floor5 a owl:NamedIndividual , brick:Air_Handler_Unit ;
+    rdfs:label "Air Handling Unit Floor 5"@en ;
+    brick:hasLocation bldg:Floor5 ;
+    brick:feeds bldg:VAV_Floor5_East ,
+                bldg:VAV_Floor5_NorthEast ,
+                bldg:VAV_Floor5_NorthWest ,
+                bldg:VAV_Floor5_South ,
+                bldg:VAV_Floor5_SouthEast ,
+                bldg:VAV_Floor5_West .
+
+# --- VAV boxes per directional zone on Floor 5 ---
+# East wing: zones 5.04, 5.05, 5.25, 5.28
+bldg:VAV_Floor5_East a owl:NamedIndividual , brick:VAV ;
+    rdfs:label "VAV Box Floor 5 East Wing"@en ;
+    brick:hasLocation bldg:east-Zone ;
+    brick:isFedBy bldg:AHU_Floor5 ;
+    brick:feeds bldg:Zone_5.04 ,
+                bldg:Zone_5.05 ,
+                bldg:Zone_5.25 ,
+                bldg:Zone_5.28 .
+
+bldg:Air_Temperature_Sensor_5.04 brick:isPointOf bldg:VAV_Floor5_East .
+bldg:Air_Temperature_Sensor_5.05 brick:isPointOf bldg:VAV_Floor5_East .
+bldg:Air_Temperature_Sensor_5.25 brick:isPointOf bldg:VAV_Floor5_East .
+bldg:Air_Temperature_Sensor_5.28 brick:isPointOf bldg:VAV_Floor5_East .
+
+# North-East wing: zones 5.18, 5.20, 5.21, 5.23, 5.30
+bldg:VAV_Floor5_NorthEast a owl:NamedIndividual , brick:VAV ;
+    rdfs:label "VAV Box Floor 5 North-East Wing"@en ;
+    brick:hasLocation bldg:north-east-Zone ;
+    brick:isFedBy bldg:AHU_Floor5 ;
+    brick:feeds bldg:Zone_5.18 ,
+                bldg:Zone_5.20 ,
+                bldg:Zone_5.21 ,
+                bldg:Zone_5.23 ,
+                bldg:Zone_5.30 .
+
+bldg:Air_Temperature_Sensor_5.18 brick:isPointOf bldg:VAV_Floor5_NorthEast .
+bldg:Air_Temperature_Sensor_5.20 brick:isPointOf bldg:VAV_Floor5_NorthEast .
+bldg:Air_Temperature_Sensor_5.21 brick:isPointOf bldg:VAV_Floor5_NorthEast .
+bldg:Air_Temperature_Sensor_5.23 brick:isPointOf bldg:VAV_Floor5_NorthEast .
+bldg:Air_Temperature_Sensor_5.30 brick:isPointOf bldg:VAV_Floor5_NorthEast .
+
+# North-West wing: zones 5.17, 5.22
+bldg:VAV_Floor5_NorthWest a owl:NamedIndividual , brick:VAV ;
+    rdfs:label "VAV Box Floor 5 North-West Wing"@en ;
+    brick:hasLocation bldg:north-west-Zone ;
+    brick:isFedBy bldg:AHU_Floor5 ;
+    brick:feeds bldg:Zone_5.17 ,
+                bldg:Zone_5.22 .
+
+bldg:Air_Temperature_Sensor_5.17 brick:isPointOf bldg:VAV_Floor5_NorthWest .
+bldg:Air_Temperature_Sensor_5.22 brick:isPointOf bldg:VAV_Floor5_NorthWest .
+
+# South wing: zones 5.08, 5.09, 5.13, 5.14, 5.29
+bldg:VAV_Floor5_South a owl:NamedIndividual , brick:VAV ;
+    rdfs:label "VAV Box Floor 5 South Wing"@en ;
+    brick:hasLocation bldg:south-Zone ;
+    brick:isFedBy bldg:AHU_Floor5 ;
+    brick:feeds bldg:Zone_5.08 ,
+                bldg:Zone_5.09 ,
+                bldg:Zone_5.13 ,
+                bldg:Zone_5.14 ,
+                bldg:Zone_5.29 .
+
+bldg:Air_Temperature_Sensor_5.08 brick:isPointOf bldg:VAV_Floor5_South .
+bldg:Air_Temperature_Sensor_5.09 brick:isPointOf bldg:VAV_Floor5_South .
+bldg:Air_Temperature_Sensor_5.13 brick:isPointOf bldg:VAV_Floor5_South .
+bldg:Air_Temperature_Sensor_5.14 brick:isPointOf bldg:VAV_Floor5_South .
+bldg:Air_Temperature_Sensor_5.29 brick:isPointOf bldg:VAV_Floor5_South .
+
+# South-East wing: zones 5.11, 5.19, 5.24, 5.34
+bldg:VAV_Floor5_SouthEast a owl:NamedIndividual , brick:VAV ;
+    rdfs:label "VAV Box Floor 5 South-East Wing"@en ;
+    brick:hasLocation bldg:south-east-Zone ;
+    brick:isFedBy bldg:AHU_Floor5 ;
+    brick:feeds bldg:Zone_5.11 ,
+                bldg:Zone_5.19 ,
+                bldg:Zone_5.24 ,
+                bldg:Zone_5.34 .
+
+bldg:Air_Temperature_Sensor_5.11 brick:isPointOf bldg:VAV_Floor5_SouthEast .
+bldg:Air_Temperature_Sensor_5.19 brick:isPointOf bldg:VAV_Floor5_SouthEast .
+bldg:Air_Temperature_Sensor_5.24 brick:isPointOf bldg:VAV_Floor5_SouthEast .
+bldg:Air_Temperature_Sensor_5.34 brick:isPointOf bldg:VAV_Floor5_SouthEast .
+
+# West wing: zones 5.01, 5.02, 5.10, 5.15, 5.16
+bldg:VAV_Floor5_West a owl:NamedIndividual , brick:VAV ;
+    rdfs:label "VAV Box Floor 5 West Wing"@en ;
+    brick:hasLocation bldg:west-Zone ;
+    brick:isFedBy bldg:AHU_Floor5 ;
+    brick:feeds bldg:Zone_5.01 ,
+                bldg:Zone_5.02 ,
+                bldg:Zone_5.10 ,
+                bldg:Zone_5.15 ,
+                bldg:Zone_5.16 .
+
+bldg:Air_Temperature_Sensor_5.01 brick:isPointOf bldg:VAV_Floor5_West .
+bldg:Air_Temperature_Sensor_5.02 brick:isPointOf bldg:VAV_Floor5_West .
+bldg:Air_Temperature_Sensor_5.10 brick:isPointOf bldg:VAV_Floor5_West .
+bldg:Air_Temperature_Sensor_5.15 brick:isPointOf bldg:VAV_Floor5_West .
+bldg:Air_Temperature_Sensor_5.16 brick:isPointOf bldg:VAV_Floor5_West .
+
+# Zones not covered by directional zones (corridor/internal spaces)
+# Assigned to central AHU_Floor5 directly
+bldg:VAV_Floor5_Central a owl:NamedIndividual , brick:VAV ;
+    rdfs:label "VAV Box Floor 5 Central / Corridor Areas"@en ;
+    brick:hasLocation bldg:Floor5 ;
+    brick:isFedBy bldg:AHU_Floor5 ;
+    brick:feeds bldg:Zone_5.03 ,
+                bldg:Zone_5.06 ,
+                bldg:Zone_5.07 ,
+                bldg:Zone_5.12 ,
+                bldg:Zone_5.26 ,
+                bldg:Zone_5.27 ,
+                bldg:Zone_5.31 ,
+                bldg:Zone_5.32 ,
+                bldg:Zone_5.33 .
+
+bldg:AHU_Floor5 brick:feeds bldg:VAV_Floor5_Central .
+
+bldg:Air_Temperature_Sensor_5.03 brick:isPointOf bldg:VAV_Floor5_Central .
+bldg:Air_Temperature_Sensor_5.06 brick:isPointOf bldg:VAV_Floor5_Central .
+bldg:Air_Temperature_Sensor_5.07 brick:isPointOf bldg:VAV_Floor5_Central .
+bldg:Air_Temperature_Sensor_5.12 brick:isPointOf bldg:VAV_Floor5_Central .
+bldg:Air_Temperature_Sensor_5.26 brick:isPointOf bldg:VAV_Floor5_Central .
+bldg:Air_Temperature_Sensor_5.27 brick:isPointOf bldg:VAV_Floor5_Central .
+bldg:Air_Temperature_Sensor_5.31 brick:isPointOf bldg:VAV_Floor5_Central .
+bldg:Air_Temperature_Sensor_5.32 brick:isPointOf bldg:VAV_Floor5_Central .
+bldg:Air_Temperature_Sensor_5.33 brick:isPointOf bldg:VAV_Floor5_Central .
+
+
+# ============================================================
+# TODO 6: Zone adjacency
+# Based on directional zone groupings and geographic proximity
+# brick:isAdjacentTo is symmetric
+# ============================================================
+
+# Within east wing: 04, 05, 25, 28
+bldg:Zone_5.04 brick:isAdjacentTo bldg:Zone_5.05 , bldg:Zone_5.25 .
+bldg:Zone_5.05 brick:isAdjacentTo bldg:Zone_5.04 , bldg:Zone_5.28 .
+bldg:Zone_5.25 brick:isAdjacentTo bldg:Zone_5.04 , bldg:Zone_5.28 .
+bldg:Zone_5.28 brick:isAdjacentTo bldg:Zone_5.05 , bldg:Zone_5.25 .
+
+# Within north-east wing: 18, 20, 21, 23, 30
+bldg:Zone_5.18 brick:isAdjacentTo bldg:Zone_5.20 , bldg:Zone_5.23 .
+bldg:Zone_5.20 brick:isAdjacentTo bldg:Zone_5.18 , bldg:Zone_5.21 .
+bldg:Zone_5.21 brick:isAdjacentTo bldg:Zone_5.20 , bldg:Zone_5.23 .
+bldg:Zone_5.23 brick:isAdjacentTo bldg:Zone_5.18 , bldg:Zone_5.21 , bldg:Zone_5.30 .
+bldg:Zone_5.30 brick:isAdjacentTo bldg:Zone_5.23 .
+
+# Within north-west wing: 17, 22
+bldg:Zone_5.17 brick:isAdjacentTo bldg:Zone_5.22 .
+bldg:Zone_5.22 brick:isAdjacentTo bldg:Zone_5.17 .
+
+# Within south wing: 08, 09, 13, 14, 29
+bldg:Zone_5.08 brick:isAdjacentTo bldg:Zone_5.09 , bldg:Zone_5.13 .
+bldg:Zone_5.09 brick:isAdjacentTo bldg:Zone_5.08 , bldg:Zone_5.14 .
+bldg:Zone_5.13 brick:isAdjacentTo bldg:Zone_5.08 , bldg:Zone_5.14 .
+bldg:Zone_5.14 brick:isAdjacentTo bldg:Zone_5.09 , bldg:Zone_5.13 , bldg:Zone_5.29 .
+bldg:Zone_5.29 brick:isAdjacentTo bldg:Zone_5.14 .
+
+# Within south-east wing: 11, 19, 24, 34
+bldg:Zone_5.11 brick:isAdjacentTo bldg:Zone_5.19 , bldg:Zone_5.24 .
+bldg:Zone_5.19 brick:isAdjacentTo bldg:Zone_5.11 , bldg:Zone_5.34 .
+bldg:Zone_5.24 brick:isAdjacentTo bldg:Zone_5.11 , bldg:Zone_5.34 .
+bldg:Zone_5.34 brick:isAdjacentTo bldg:Zone_5.19 , bldg:Zone_5.24 .
+
+# Within west wing: 01, 02, 10, 15, 16
+bldg:Zone_5.01 brick:isAdjacentTo bldg:Zone_5.02 , bldg:Zone_5.10 .
+bldg:Zone_5.02 brick:isAdjacentTo bldg:Zone_5.01 , bldg:Zone_5.15 .
+bldg:Zone_5.10 brick:isAdjacentTo bldg:Zone_5.01 , bldg:Zone_5.16 .
+bldg:Zone_5.15 brick:isAdjacentTo bldg:Zone_5.02 , bldg:Zone_5.16 .
+bldg:Zone_5.16 brick:isAdjacentTo bldg:Zone_5.10 , bldg:Zone_5.15 .
+
+# Cross-wing adjacency (geographically touching wings)
+# East ↔ North-East
+bldg:Zone_5.05 brick:isAdjacentTo bldg:Zone_5.18 .
+bldg:Zone_5.18 brick:isAdjacentTo bldg:Zone_5.05 .
+bldg:Zone_5.28 brick:isAdjacentTo bldg:Zone_5.23 .
+bldg:Zone_5.23 brick:isAdjacentTo bldg:Zone_5.28 .
+
+# East ↔ South-East
+bldg:Zone_5.04 brick:isAdjacentTo bldg:Zone_5.11 .
+bldg:Zone_5.11 brick:isAdjacentTo bldg:Zone_5.04 .
+bldg:Zone_5.25 brick:isAdjacentTo bldg:Zone_5.24 .
+bldg:Zone_5.24 brick:isAdjacentTo bldg:Zone_5.25 .
+
+# North-East ↔ North-West
+bldg:Zone_5.20 brick:isAdjacentTo bldg:Zone_5.17 .
+bldg:Zone_5.17 brick:isAdjacentTo bldg:Zone_5.20 .
+bldg:Zone_5.30 brick:isAdjacentTo bldg:Zone_5.22 .
+bldg:Zone_5.22 brick:isAdjacentTo bldg:Zone_5.30 .
+
+# North-West ↔ West
+bldg:Zone_5.17 brick:isAdjacentTo bldg:Zone_5.16 .
+bldg:Zone_5.16 brick:isAdjacentTo bldg:Zone_5.17 .
+bldg:Zone_5.22 brick:isAdjacentTo bldg:Zone_5.02 .
+bldg:Zone_5.02 brick:isAdjacentTo bldg:Zone_5.22 .
+
+# West ↔ South
+bldg:Zone_5.01 brick:isAdjacentTo bldg:Zone_5.08 .
+bldg:Zone_5.08 brick:isAdjacentTo bldg:Zone_5.01 .
+bldg:Zone_5.10 brick:isAdjacentTo bldg:Zone_5.09 .
+bldg:Zone_5.09 brick:isAdjacentTo bldg:Zone_5.10 .
+bldg:Zone_5.15 brick:isAdjacentTo bldg:Zone_5.14 .
+bldg:Zone_5.14 brick:isAdjacentTo bldg:Zone_5.15 .
+bldg:Zone_5.16 brick:isAdjacentTo bldg:Zone_5.13 .
+bldg:Zone_5.13 brick:isAdjacentTo bldg:Zone_5.16 .
+
+# South ↔ South-East
+bldg:Zone_5.09 brick:isAdjacentTo bldg:Zone_5.11 .
+bldg:Zone_5.11 brick:isAdjacentTo bldg:Zone_5.09 .
+bldg:Zone_5.14 brick:isAdjacentTo bldg:Zone_5.19 .
+bldg:Zone_5.19 brick:isAdjacentTo bldg:Zone_5.14 .
+bldg:Zone_5.29 brick:isAdjacentTo bldg:Zone_5.34 .
+bldg:Zone_5.34 brick:isAdjacentTo bldg:Zone_5.29 .
+
+# Central/corridor zones adjacent to nearby numbered zones
+bldg:Zone_5.03 brick:isAdjacentTo bldg:Zone_5.02 , bldg:Zone_5.04 .
+bldg:Zone_5.02 brick:isAdjacentTo bldg:Zone_5.03 .
+bldg:Zone_5.04 brick:isAdjacentTo bldg:Zone_5.03 .
+
+bldg:Zone_5.06 brick:isAdjacentTo bldg:Zone_5.05 , bldg:Zone_5.07 .
+bldg:Zone_5.05 brick:isAdjacentTo bldg:Zone_5.06 .
+bldg:Zone_5.07 brick:isAdjacentTo bldg:Zone_5.06 , bldg:Zone_5.08 .
+bldg:Zone_5.08 brick:isAdjacentTo bldg:Zone_5.07 .
+
+bldg:Zone_5.12 brick:isAdjacentTo bldg:Zone_5.11 , bldg:Zone_5.13 .
+bldg:Zone_5.11 brick:isAdjacentTo bldg:Zone_5.12 .
+bldg:Zone_5.13 brick:isAdjacentTo bldg:Zone_5.12 .
+
+bldg:Zone_5.26 brick:isAdjacentTo bldg:Zone_5.25 , bldg:Zone_5.27 .
+bldg:Zone_5.25 brick:isAdjacentTo bldg:Zone_5.26 .
+bldg:Zone_5.27 brick:isAdjacentTo bldg:Zone_5.26 , bldg:Zone_5.28 .
+bldg:Zone_5.28 brick:isAdjacentTo bldg:Zone_5.27 .
+
+bldg:Zone_5.31 brick:isAdjacentTo bldg:Zone_5.30 , bldg:Zone_5.32 .
+bldg:Zone_5.30 brick:isAdjacentTo bldg:Zone_5.31 .
+bldg:Zone_5.32 brick:isAdjacentTo bldg:Zone_5.31 , bldg:Zone_5.33 .
+bldg:Zone_5.33 brick:isAdjacentTo bldg:Zone_5.32 , bldg:Zone_5.34 .
+bldg:Zone_5.34 brick:isAdjacentTo bldg:Zone_5.33 .

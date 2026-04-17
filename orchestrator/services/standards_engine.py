@@ -156,14 +156,82 @@ _BUILT_IN_STANDARDS: Dict[str, Any] = {
     },
 
     "cibse_kg2": {
-        "name": "CIBSE Guide A / TM52 — Thermal Comfort",
-        "version": "2015",
+        "name": "CIBSE Guide A / TM52 / TM59 — Thermal Comfort & Overheating (UK)",
+        "version": "2015/2017",
         "categories": {
-            "comfort_temp_summer_c": {"min": 22.0, "max": 25.0, "unit": "°C", "label": "Comfort temperature (UK summer)"},
+            "temp_c": {"min": 21.0, "max": 25.0, "unit": "°C", "label": "Operative temperature (average office)"},
             "co2_ppm": {"max": 1000, "unit": "ppm", "label": "CO2 guidance limit"},
             "humidity_rh": {"min": 40.0, "max": 70.0, "unit": "%RH", "label": "Relative humidity guidance"},
+            "temp_c_tm52_extreme": {"max": 28.0, "unit": "°C", "label": "TM52 Overheating threshold (absolute)"},
         },
-        "references": ["CIBSE Guide A 2015 §1.3", "CIBSE TM52 Overheating criteria"],
+        "references": ["CIBSE Guide A 2015 §1.3", "CIBSE TM52 Overheating criteria", "CIBSE TM59 Design methodology"],
+    },
+
+    "leed_v41": {
+        "name": "LEED v4.1 O+M — Indoor Environmental Quality",
+        "version": "v4.1",
+        "url": "https://www.usgbc.org/leed/v41",
+        "parameters": {
+            "co2_ppm": {"max": 1000, "unit": "ppm", "label": "CO2 Concentration (IEQ limit)"},
+            "tvoc_ppb": {"max": 500, "unit": "µg/m³", "label": "Total VOC"},
+            "pm25_ugm3": {"max": 12.0, "unit": "µg/m³", "label": "PM2.5 (annual limit)"},
+            "pm10_ugm3": {"max": 50.0, "unit": "µg/m³", "label": "PM10 (annual limit)"},
+            "formaldehyde_ppb": {"max": 27.0, "unit": "ppb", "label": "Formaldehyde"},
+            "ozone_ppb": {"max": 51.0, "unit": "ppb", "label": "Ozone (Averaging over 8 hours)"},
+        },
+        "credits": "EQ Credit: Indoor Environmental Quality Performance",
+        "references": ["LEED v4.1 Operations and Maintenance"],
+    },
+
+    "nabers_ieq": {
+        "name": "NABERS Indoor Environment (Australia)",
+        "version": "v1.2",
+        "url": "https://www.nabers.gov.au",
+        "parameters": {
+            "temp_c": {"min": 20.0, "max": 26.0, "unit": "°C", "label": "Temperature Range (Core Target)"},
+            "humidity_rh": {"min": 30.0, "max": 60.0, "unit": "%RH", "label": "Humidity Range"},
+            "co2_ppm": {"max": 800, "unit": "ppm", "label": "CO2 Base Target (<800 ppm)"},
+            "pm10_ugm3": {"max": 50.0, "unit": "µg/m³", "label": "PM10 Limit"},
+            "tvoc_ppb": {"max": 500, "unit": "µg/m³", "label": "TVOC Maximum"},
+            "illuminance_lux": {"min": 320, "max": 400, "unit": "lux", "label": "Task Lighting Target"},
+        },
+        "references": ["NABERS Rules for Indoor Environment for Offices"],
+    },
+
+    "green_star": {
+        "name": "Green Star Buildings (Australia / GBCA)",
+        "version": "v1",
+        "url": "https://new.gbca.org.au",
+        "parameters": {
+            "co2_ppm": {"max": 800, "unit": "ppm", "label": "CO2 (Continuous Limit)"},
+            "tvoc_ppb": {"max": 500, "unit": "µg/m³", "label": "TVOC (Clean Air Category)"},
+            "pm25_ugm3": {"max": 10.0, "unit": "µg/m³", "label": "PM2.5 (High Performance Rating)"},
+            "pm10_ugm3": {"max": 40.0, "unit": "µg/m³", "label": "PM10 Threshold"},
+            "illuminance_lux": {"min": 160, "unit": "lux", "label": "Minimum Ambient Light"},
+        },
+        "references": ["Green Star Buildings v1 (Good Practice Credit)"],
+    },
+
+    "ashrae_90_1": {
+        "name": "ASHRAE 90.1 — Energy Standard for Buildings",
+        "version": "2022",
+        "parameters": {
+            "eui_kwh_m2_year": {"max": 120.0, "unit": "kWh/m²/yr", "label": "Baseline Target EUI (Office)"},
+            "lighting_power_density_wm2": {"max": 9.6, "unit": "W/m²", "label": "LPD (Office Areas)"},
+        },
+        "references": ["ASHRAE 90.1-2022 Appendix G"],
+    },
+
+    "osha_safety": {
+        "name": "OSHA / Safe Work / HSE (Industrial Safety & Health Hazards)",
+        "version": "Current",
+        "parameters": {
+            "co2_ppm": {"max": 5000, "unit": "ppm", "label": "CO2 (8-hour Workplace Exposure Limit)"},
+            "co_ppm": {"max": 50.0, "unit": "ppm", "label": "Carbon Monoxide (Time-Weighted Average)"},
+            "pm25_ugm3": {"max": 5000.0, "unit": "µg/m³", "label": "Respirable Dust/PM2.5 Absolute Max"},
+            "temp_c": {"min": 16.0, "max": 38.0, "unit": "°C", "label": "Extreme Safety Bounds (Non-Office)"},
+        },
+        "references": ["OSHA PEL", "HSE EH40 (UK)", "Safe Work Australia WES"],
     },
 }
 
@@ -351,7 +419,10 @@ class StandardsEngine:
             season = "summer" if temp >= 24 else "winter"
         for param, variants in params.items():
             if param in readings:
-                threshold = variants.get(season, list(variants.values())[0])
+                if isinstance(variants, dict) and any(k in variants for k in ("min", "max")):
+                    threshold = variants
+                else:
+                    threshold = variants.get(season, list(variants.values())[0])
                 checks.append(self._eval_threshold(param, readings[param], threshold, std["name"]))
         return checks
 

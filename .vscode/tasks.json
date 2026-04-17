@@ -1,71 +1,115 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "docker-compose up affected services",
-			"type": "shell",
-			"command": "docker-compose up -d mytb http_server ollama nl2sparql",
-			"isBackground": false,
-			"problemMatcher": [
-				"$eslint-stylish"
-			],
-			"group": "build"
-		},
-		{
-			"label": "Rebuild api and visualiser for health endpoints",
-			"type": "shell",
-			"command": "docker-compose build api visualiser microservices && docker-compose up -d api visualiser microservices",
-			"isBackground": false,
-			"group": "build"
-		},
-		{
-			"label": "Run scripts/check-health.ps1",
-			"type": "shell",
-			"command": "pwsh -NoProfile -File scripts/check-health.ps1",
-			"isBackground": false,
-			"group": "build"
-		},
-		{
-			"label": "Run scripts/check-health.sh",
-			"type": "shell",
-			"command": "bash scripts/check-health.sh",
-			"isBackground": false,
-			"group": "build"
-		},
-		{
-			"label": "Train Rasa model",
-			"type": "shell",
-			"command": "docker compose",
-			"args": [
-				"--project-directory",
-				"c:\\Users\\suhas\\Documents\\GitHub\\OntoBot",
-				"run",
-				"--rm",
-				"rasa-train"
-			],
-			"isBackground": false,
-			"problemMatcher": [],
-			"group": "build"
-		},
-		{
-			"label": "Generate sensor lookup from sensor_list.txt",
-			"type": "shell",
-			"command": "pwsh",
-			"args": [
-				"-NoLogo",
-				"-NoProfile",
-				"-Command",
-				"$src = 'rasa-bldg2/actions/sensor_list.txt'; $dst = 'rasa-bldg2/data/lookup/sensor_type.md'; if (Test-Path $src) { Get-Content $src | ForEach-Object { if($_ -and -not $_.StartsWith('#')) { $_.Trim() } } | Set-Content -Encoding UTF8 $dst } else { Write-Error \"Missing $src\" }"
-			]
-		},
-		{
-			"label": "Rasa validate training data",
-			"type": "shell",
-			"command": "docker compose run --rm --no-deps rasa data validate -v",
-			"problemMatcher": [
-				"$eslint-stylish"
-			],
-			"group": "build"
-		}
-	]
+    "version": "2.0.0",
+    "tasks": [
+        // ── Stack management ──────────────────────────────────────────────
+        {
+            "label": "Stack: Start all services",
+            "type": "shell",
+            "command": "docker-compose up -d",
+            "group": "build",
+            "presentation": { "reveal": "always", "panel": "shared" },
+            "problemMatcher": []
+        },
+        {
+            "label": "Stack: Stop all services",
+            "type": "shell",
+            "command": "docker-compose down",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Stack: Rebuild orchestrator",
+            "type": "shell",
+            "command": "docker-compose build orchestrator && docker-compose up -d orchestrator",
+            "group": "build",
+            "presentation": { "reveal": "always", "panel": "shared" },
+            "problemMatcher": []
+        },
+        {
+            "label": "Stack: Rebuild rag-service",
+            "type": "shell",
+            "command": "docker-compose build rag-service && docker-compose up -d rag-service",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Stack: View orchestrator logs",
+            "type": "shell",
+            "command": "docker-compose logs -f orchestrator",
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "dedicated" }
+        },
+        // ── Health checks ────────────────────────────────────────────────
+        {
+            "label": "Health: Check all services",
+            "type": "shell",
+            "command": "curl -sf http://localhost:8000/health && echo 'OK orchestrator' || echo 'FAIL orchestrator'; curl -sf http://localhost:8001/health && echo 'OK rag-service' || echo 'FAIL rag-service'; curl -sf http://localhost:8002/health && echo 'OK code-executor' || echo 'FAIL code-executor'; docker exec redis redis-cli ping 2>/dev/null && echo 'OK redis' || echo 'FAIL redis'",
+            "group": "test",
+            "presentation": { "reveal": "always", "panel": "shared" },
+            "problemMatcher": []
+        },
+        // ── Tests ────────────────────────────────────────────────────────
+        {
+            "label": "Test: Unit tests (fast)",
+            "type": "shell",
+            "command": "pytest -m unit -x -v 2>&1 | tail -50",
+            "group": { "kind": "test", "isDefault": true },
+            "presentation": { "reveal": "always", "panel": "shared" },
+            "problemMatcher": []
+        },
+        {
+            "label": "Test: Unit tests with coverage",
+            "type": "shell",
+            "command": "pytest -m unit --cov=orchestrator --cov-report=term-missing 2>&1 | tail -60",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Test: Integration tests (requires stack up)",
+            "type": "shell",
+            "command": "pytest -m integration -v 2>&1 | tail -50",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Test: All tests",
+            "type": "shell",
+            "command": "pytest tests/ -v 2>&1 | tail -80",
+            "group": "test",
+            "problemMatcher": []
+        },
+        // ── Linting & formatting ─────────────────────────────────────────
+        {
+            "label": "Lint: Format with black + isort",
+            "type": "shell",
+            "command": "black --line-length 100 orchestrator/ shared/ scripts/ tests/ && isort --profile black orchestrator/ tests/",
+            "group": "build",
+            "presentation": { "reveal": "always", "panel": "shared" },
+            "problemMatcher": []
+        },
+        {
+            "label": "Lint: Check (no auto-fix)",
+            "type": "shell",
+            "command": "black --check --line-length 100 orchestrator/ shared/ scripts/ tests/ && isort --check-only --profile black orchestrator/ tests/ && flake8 orchestrator/ --max-line-length 110 --extend-ignore=E203,E501,W503",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Security: Bandit scan",
+            "type": "shell",
+            "command": "bandit -r orchestrator/ shared/ -ll --exclude orchestrator/tests",
+            "group": "test",
+            "presentation": { "reveal": "always", "panel": "shared" },
+            "problemMatcher": []
+        },
+        // ── Building onboarding ──────────────────────────────────────────
+        {
+            "label": "Onboard: New building (bldg1)",
+            "type": "shell",
+            "command": "python scripts/onboard_building.py --building-id bldg1 --non-interactive",
+            "group": "build",
+            "problemMatcher": []
+        }
+    ]
 }

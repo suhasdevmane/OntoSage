@@ -153,36 +153,27 @@ class SQLAgent:
             # Continue with valid UUIDs only
             uuids = valid_uuids
 
-            # Group UUIDs by storage location
-            # Default to 'default' if no map provided or storage not found
-            grouped_uuids = {"default": []}
-            
+            # Group UUIDs by storage location.
+            # _resolve_storage_key extracts the fragment from any URI form:
+            #   "bldg:database1"  →  "database1"
+            #   "http://...#database4" →  "database4"
+            grouped_uuids: Dict[str, List[str]] = {}
+
             if storage_map:
                 for uuid in uuids:
                     storage = storage_map.get(uuid)
-                    # Normalize storage string (remove prefixes if needed)
-                    if storage:
-                        if "database1" in storage:
-                            key = "database1"
-                        else:
-                            key = "default" # Fallback to default for now
-                    else:
-                        key = "default"
-                    
-                    if key not in grouped_uuids:
-                        grouped_uuids[key] = []
-                    grouped_uuids[key].append(uuid)
+                    key = adapter_registry._resolve_storage_key(storage) if storage else "default"
+                    grouped_uuids.setdefault(key, []).append(uuid)
             else:
-                grouped_uuids["default"] = uuids
+                grouped_uuids["default"] = list(uuids)
             
-            # OPTIMIZATION: If too many UUIDs, limit to first one to avoid SQL truncation
-            # This handles cases where user asks for specific sensor but SPARQL returns many matches
+            # Cap UUIDs per group — deterministic SQL handles many UUIDs correctly,
+            # so we can allow up to 30 sensors per query for broad "all zones" requests.
+            _UUID_CAP = 30
             for key in grouped_uuids:
-                if len(grouped_uuids[key]) > 3:
-                    logger.warning(f"⚠️  Too many UUIDs ({len(grouped_uuids[key])}) from SPARQL. Limiting to first 3 to avoid SQL issues.")
-                    logger.warning(f"   User asked for specific sensor, but SPARQL returned multiple matches.")
-                    logger.warning(f"   Using UUIDs: {grouped_uuids[key][:3]}")
-                    grouped_uuids[key] = grouped_uuids[key][:3]
+                if len(grouped_uuids[key]) > _UUID_CAP:
+                    logger.warning(f"⚠️  Too many UUIDs ({len(grouped_uuids[key])}). Limiting to {_UUID_CAP}.")
+                    grouped_uuids[key] = grouped_uuids[key][:_UUID_CAP]
 
             all_data = []
             
@@ -201,8 +192,28 @@ class SQLAgent:
                 
                 # Format UUIDs for SQL IN clause
                 uuid_list_str = ", ".join([f"'{u}'" for u in group_uuids])
-                
-                # Construct time context
+
+                # For non-SQL adapters (MongoDB, InfluxDB, Redis TS) let the adapter
+                # build its own native query string; SQL adapters return None here and
+                # fall through to the deterministic SQL builder below.
+                native_query = adapter.build_timeseries_query(
+                    uuids=group_uuids,
+                    ts_col=ts_col,
+                    start_date=start_date,
+                    end_date=end_date,
+                    limit=1000,
+                ) if adapter else None
+
+                # For SQL adapters: build deterministic SQL (no LLM drift).
+                deterministic_sql = native_query or self._build_uuid_union_query(
+                    group_uuids=group_uuids,
+                    ts_col=ts_col,
+                    start_date=start_date,
+                    end_date=end_date,
+                    limit=1000,
+                )
+
+                # Construct time context (for LLM fallback)
                 time_context = ""
                 if start_date:
                     time_context += f"Start Date: {start_date}\n"
@@ -234,8 +245,11 @@ CRITICAL REQUIREMENTS:
 
 Return ONLY the SQL query, no markdown, no explanations.
 """
-                sql_query = await llm_manager.generate(prompt)
-                sql_query = sql_query.replace("```sql", "").replace("```", "").strip()
+                if deterministic_sql:
+                    sql_query = deterministic_sql
+                else:
+                    sql_query = await llm_manager.generate(prompt)
+                    sql_query = sql_query.replace("```sql", "").replace("```", "").strip()
                 
                 logger.info(f"\n📝 Generated SQL for UUIDs ({storage_key}):")
                 logger.info(f"   {sql_query}")
@@ -421,6 +435,54 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
             sql = response.strip()
         
         return sql
+
+    def _sanitize_datetime(self, value: Optional[str]) -> Optional[str]:
+        """Sanitize datetime strings to avoid SQL injection in deterministic queries."""
+        if not value or not isinstance(value, str):
+            return None
+        v = value.strip()
+        # Allow digits, space, T, Z, colon, dash, dot, plus
+        import re
+        if re.match(r'^[0-9T:\\-\\.Z\\+\\s]+$', v):
+            return v
+        return None
+
+    def _build_uuid_union_query(
+        self,
+        group_uuids: List[str],
+        ts_col: str,
+        start_date: Optional[str],
+        end_date: Optional[str],
+        limit: int = 1000
+    ) -> str:
+        """Build deterministic SQL for UUID columns using UNION ALL."""
+        ts_safe = f"`{ts_col}`"
+        start = self._sanitize_datetime(start_date)
+        end = self._sanitize_datetime(end_date)
+
+        time_clauses = []
+        if start:
+            time_clauses.append(f"{ts_safe} >= '{start}'")
+        elif not end:
+            # No bounds at all — default to last 30 days to prevent full table scans
+            time_clauses.append(f"{ts_safe} >= DATE_SUB(NOW(), INTERVAL 30 DAY)")
+        if end:
+            time_clauses.append(f"{ts_safe} <= '{end}'")
+        time_filter = " AND ".join(time_clauses)
+        if time_filter:
+            time_filter = f"{time_filter} AND "
+
+        parts = []
+        for uuid in group_uuids:
+            parts.append(
+                f"SELECT {ts_safe} AS timestamp, '{uuid}' AS uuid, `{uuid}` AS value "
+                f"FROM sensor_data WHERE {time_filter}`{uuid}` IS NOT NULL"
+            )
+
+        if len(parts) == 1:
+            return parts[0] + f" ORDER BY timestamp DESC LIMIT {limit};"
+        union = ") UNION ALL (".join(parts)
+        return f"({union}) ORDER BY timestamp DESC LIMIT {limit};"
     
     def validate_sql(self, sql: str) -> bool:
         """

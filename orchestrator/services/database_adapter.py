@@ -23,8 +23,12 @@ from typing import Any, Dict, List, Optional
 class AdapterType(str, Enum):
     MYSQL = "mysql"
     POSTGRESQL = "postgresql"
-    INFLUXDB = "influxdb"
-    TIMESCALEDB = "timescaledb"  # PostgreSQL extension
+    TIMESCALEDB = "timescaledb"     # PostgreSQL + hypertable extension
+    MONGODB = "mongodb"
+    INFLUXDB = "influxdb"           # InfluxDB 2.x (Flux queries)
+    SQLITE = "sqlite"
+    CASSANDRA = "cassandra"         # Apache Cassandra (CQL)
+    REDIS_TIMESERIES = "redis_timeseries"  # Redis with RedisTimeSeries module
 
 
 @dataclass
@@ -111,24 +115,60 @@ class DatabaseAdapter(ABC):
 
     def get_dialect_hints(self) -> str:
         """
-        Return SQL dialect-specific prompt hints for the LLM.
-        Subclasses may override to provide backend-specific rules.
+        Return query language / dialect-specific prompt hints for the LLM.
+        Subclasses override to provide backend-specific rules.
         """
         return ""
+
+    def build_timeseries_query(
+        self,
+        uuids: List[str],
+        ts_col: str,
+        start_date: Optional[str],
+        end_date: Optional[str],
+        limit: int = 1000,
+    ) -> Optional[str]:
+        """
+        Build a native query string to fetch time-series rows for the given UUIDs.
+
+        Returns None for SQL-based adapters — sql_agent will fall back to its
+        own _build_uuid_union_query() SQL builder.
+
+        Non-SQL adapters (MongoDB, InfluxDB, Redis TS) MUST override this and
+        return a native query string that their execute_query() understands.
+        """
+        return None
 
 
 def get_adapter_from_storage_uri(storage_uri: str) -> AdapterType:
     """
-    Infer the adapter type from a ref:storedAt URI or storage key.
+    Infer adapter type from a ref:storedAt URI or storage key fragment.
+    Used as a fallback when the database_registry.yaml key is not found.
+
     Examples:
-        "bldg:database1"    → MYSQL
-        "pg://..."          → POSTGRESQL
+        "postgres://..."    → POSTGRESQL
+        "timescale"         → TIMESCALEDB
         "influx://..."      → INFLUXDB
+        "mongodb://..."     → MONGODB
+        "cassandra://..."   → CASSANDRA
+        "redis://..."       → REDIS_TIMESERIES
+        "sqlite:/..."       → SQLITE
+        anything else       → MYSQL (default)
     """
     s = (storage_uri or "").lower()
-    if "postgres" in s or "pg:" in s or "timescale" in s:
+    if "timescale" in s:
+        return AdapterType.TIMESCALEDB
+    if "postgres" in s or "pg:" in s or "pghost" in s:
         return AdapterType.POSTGRESQL
     if "influx" in s:
         return AdapterType.INFLUXDB
+    if "mongo" in s:
+        return AdapterType.MONGODB
+    if "cassandra" in s or "cql" in s:
+        return AdapterType.CASSANDRA
+    if "redis" in s:
+        return AdapterType.REDIS_TIMESERIES
+    if "sqlite" in s:
+        return AdapterType.SQLITE
     # Default: MySQL
     return AdapterType.MYSQL

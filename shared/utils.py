@@ -27,7 +27,12 @@ _LOG_FORMAT = os.environ.get(
     "%(asctime)s [%(trace_id)s] %(name)s %(levelname)s %(message)s",
 )
 logging.basicConfig(level=logging.INFO, format=_LOG_FORMAT)
-logging.getLogger().addFilter(_TraceIdFilter())
+_trace_filter = _TraceIdFilter()
+logging.getLogger().addFilter(_trace_filter)
+# Also attach to root handlers: propagated child-logger records skip the logger
+# filter and go directly to handlers, so the handler must inject trace_id too.
+for _h in logging.getLogger().handlers:
+    _h.addFilter(_trace_filter)
 
 
 def get_logger(name: str) -> logging.Logger:

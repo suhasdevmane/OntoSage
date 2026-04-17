@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 # gpt-4o-mini Tier-1: 500 RPM, Tier-2+: 5000 RPM
 # Set conservatively at 1s; increase only if you hit 429 errors
 OPENAI_RATE_LIMIT_DELAY = float(os.environ.get('OPENAI_RATE_LIMIT_DELAY', '1.0'))
+OPENAI_RETRY_DELAY_S = float(os.environ.get('OPENAI_RETRY_DELAY_S', '20.0'))
 
 # Retry / timeout configuration
 LLM_MAX_RETRIES = int(os.environ.get('LLM_MAX_RETRIES', '3'))
@@ -167,10 +168,16 @@ class LLMManager:
             # Exponential backoff before retry
             if attempt < LLM_MAX_RETRIES:
                 backoff = LLM_BACKOFF_BASE_S * (LLM_BACKOFF_FACTOR ** (attempt - 1))
+                # Enforce a minimum retry delay for OpenAI to avoid 429 thrashing
+                if self.provider in ["openai", "ollama_cloud"]:
+                    backoff = max(backoff, OPENAI_RETRY_DELAY_S)
                 logger.info(f"LLM retry backoff: {backoff:.1f}s")
                 await asyncio.sleep(backoff)
 
         raise last_error or RuntimeError("LLM generation failed after all retries")
+
+    # Injected into every LLM call to prevent language drift
+    _LANGUAGE_INSTRUCTION = "Always respond in English, regardless of the language used in the user's message or any prior context."
 
     async def _generate_once(
         self,
@@ -179,16 +186,19 @@ class LLMManager:
         temperature: Optional[float] = None,
     ) -> str:
         """Single LLM call without retry logic."""
+        # Prepend language instruction to every system message
+        if system_message:
+            effective_system = f"{self._LANGUAGE_INSTRUCTION}\n\n{system_message}"
+        else:
+            effective_system = self._LANGUAGE_INSTRUCTION
+
         if self.provider in ["openai", "ollama_cloud"]:
             try:
                 from langchain.schema import SystemMessage as SysMsg, HumanMessage as HumMsg
             except ImportError:
                 from langchain_core.messages import SystemMessage as SysMsg, HumanMessage as HumMsg
 
-            messages = []
-            if system_message:
-                messages.append(SysMsg(content=system_message))
-            messages.append(HumMsg(content=prompt))
+            messages = [SysMsg(content=effective_system), HumMsg(content=prompt)]
 
             invoke_kwargs = {}
             if temperature is not None:
@@ -198,9 +208,7 @@ class LLMManager:
             return response.content
 
         else:  # ollama (local)
-            full_prompt = prompt
-            if system_message:
-                full_prompt = f"System: {system_message}\n\nUser: {prompt}"
+            full_prompt = f"System: {effective_system}\n\nUser: {prompt}"
             response = await self.client.ainvoke(full_prompt)
             return response
     
@@ -216,16 +224,19 @@ class LLMManager:
         Note: temperature is passed via invoke kwargs to avoid mutating shared client state.
         """
         try:
+            # Prepend language instruction to every streaming call
+            if system_message:
+                effective_system = f"{self._LANGUAGE_INSTRUCTION}\n\n{system_message}"
+            else:
+                effective_system = self._LANGUAGE_INSTRUCTION
+
             if self.provider in ["openai", "ollama_cloud"]:
                 try:
                     from langchain.schema import SystemMessage as SysMsg, HumanMessage as HumMsg
                 except ImportError:
                     from langchain_core.messages import SystemMessage as SysMsg, HumanMessage as HumMsg
 
-                messages = []
-                if system_message:
-                    messages.append(SysMsg(content=system_message))
-                messages.append(HumMsg(content=prompt))
+                messages = [SysMsg(content=effective_system), HumMsg(content=prompt)]
 
                 stream_kwargs = {}
                 if temperature is not None:
@@ -235,10 +246,7 @@ class LLMManager:
                     yield chunk.content
 
             else:  # ollama (local)
-                full_prompt = prompt
-                if system_message:
-                    full_prompt = f"System: {system_message}\n\nUser: {prompt}"
-
+                full_prompt = f"System: {effective_system}\n\nUser: {prompt}"
                 async for chunk in self.client.astream(full_prompt):
                     yield chunk
 

@@ -282,12 +282,20 @@ Rules:
     async def _run_analytics(self, state: ConversationState, query: str, ctx: Dict) -> Dict:
         from orchestrator.agents.analytics_agent import AnalyticsAgent
         sql_result = ctx.get("sql_result", {})
-        return await AnalyticsAgent().analyze(state, query, data=sql_result)
+        # analytics_agent.analyze() expects data = {"data": [...]}, but sql_result
+        # returned by fetch_data_for_uuids has the rows under sql_result["results"]["data"].
+        data = sql_result.get("results", {}) if isinstance(sql_result, dict) else {}
+        if not isinstance(data, dict) or "data" not in data:
+            data = {"data": data} if isinstance(data, list) else {"data": []}
+        sensor_metadata = self._extract_sensor_metadata(ctx.get("sparql_result", {}))
+        return await AnalyticsAgent().analyze(state, query, data=data, sensor_metadata=sensor_metadata)
 
     async def _run_anomaly(self, state: ConversationState, query: str, ctx: Dict) -> Dict:
         from orchestrator.agents.anomaly_agent import AnomalyDetectionAgent
         sql_result = ctx.get("sql_result", {})
-        return await AnomalyDetectionAgent().detect(state, query, sensor_data=sql_result)
+        # Pass the data rows directly (anomaly agent accepts {"data": [...]})
+        data = sql_result.get("results", sql_result) if isinstance(sql_result, dict) else sql_result
+        return await AnomalyDetectionAgent().detect(state, query, sensor_data=data)
 
     async def _run_report(self, state: ConversationState, query: str,
                           ctx: Dict, params: Dict) -> Dict:
