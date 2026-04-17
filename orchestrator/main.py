@@ -1789,6 +1789,12 @@ async def openai_chat_completions(
                 # Initial role chunk
                 yield sse_chunk(role="assistant")
 
+                # Collect status steps; emit as a collapsible <details> block so
+                # they are visible during processing but do not pollute the final
+                # answer.  Open WebUI (and any markdown-capable UI) renders
+                # <details> as a collapsed toggle — the answer appears cleanly
+                # below it, matching the behaviour of ChatGPT / Claude.
+                status_steps = []
                 last_step = None
                 async for step in orchestrator.stream_execute(state):
                     last_step = step
@@ -1796,21 +1802,29 @@ async def openai_chat_completions(
                         continue
                     status = None
                     if "dialogue" in step:
-                        status = "Status: analyzing intent..."
+                        status = "Analyzing intent"
                     elif "sparql" in step:
-                        status = "Status: querying building ontology..."
+                        status = "Querying building ontology"
                     elif "sql" in step:
-                        status = "Status: fetching sensor data..."
+                        status = "Fetching sensor data"
                     elif "analytics" in step:
-                        status = "Status: performing analysis..."
+                        status = "Performing analysis"
                     elif "visualization" in step:
-                        status = "Status: creating visualization..."
+                        status = "Creating visualization"
                     elif "report" in step:
-                        status = "Status: assembling report..."
+                        status = "Assembling report"
                     elif "document" in step:
-                        status = "Status: generating document output..."
+                        status = "Generating document output"
                     if status:
-                        yield sse_chunk(content=f"{status}\n")
+                        status_steps.append(status)
+
+                # Emit status steps as a single collapsed block (visible on
+                # expand, does not appear inline with the answer)
+                if show_status and status_steps:
+                    steps_md = "\n".join(f"- {s}" for s in status_steps)
+                    yield sse_chunk(
+                        content=f"<details>\n<summary>Pipeline steps</summary>\n\n{steps_md}\n\n</details>\n\n"
+                    )
 
                 # Extract final state from last streamed step (avoid re-executing)
                 final_state = state
