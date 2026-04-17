@@ -84,8 +84,12 @@ class TestDialogueIntentDetection:
             "explanation": "Test mock"
         })
 
-        with patch.object(agent, '_call_llm', new_callable=AsyncMock,
-                          return_value=llm_response):
+        with patch('orchestrator.agents.dialogue_agent.llm_manager.generate',
+                   new_callable=AsyncMock, return_value=llm_response), \
+             patch('orchestrator.agents.dialogue_agent.redis_manager.get_cache',
+                   new_callable=AsyncMock, return_value=None), \
+             patch('orchestrator.agents.dialogue_agent.redis_manager.set_cache',
+                   new_callable=AsyncMock, return_value=None):
             state = make_state(query)
             result = await agent.detect_intent(state)
 
@@ -162,8 +166,8 @@ class TestAnomalyPipeline:
         }
         state = make_state("are there any anomalies in temperature?", "anomaly")
 
-        with patch.object(agent, '_narrate', new_callable=AsyncMock,
-                          return_value="⚠️ 2 anomalies detected: spike at 35°C and cold at 8°C."):
+        with patch.object(agent, '_generate_summary', new_callable=AsyncMock,
+                          return_value="2 anomalies detected: spike at 35 degrees and cold at 8 degrees."):
             result = await agent.detect(state, "anomalies?", sensor_data=sql)
 
         assert isinstance(result, dict)
@@ -191,8 +195,8 @@ class TestReportPipeline:
         sparql = mock_sparql_result()
         state = make_state("generate a building report", "report")
 
-        with patch.object(agent, '_narrate_with_llm', new_callable=AsyncMock,
-                          return_value="Summary: Avg temperature 22.1°C. All metrics within range."):
+        with patch.object(agent, '_narrate', new_callable=AsyncMock,
+                          return_value="Summary: Avg temperature 22.1 degrees C. All metrics within range."):
             result = await agent.generate(state, "weekly report", sensor_data=sql, metadata=sparql)
 
         assert isinstance(result, dict)
@@ -226,8 +230,18 @@ class TestPlannerPipeline:
         })
         state = make_state("check CO2 levels and export as CSV", "planner")
 
-        with patch.object(agent, '_decompose_with_llm', new_callable=AsyncMock,
-                          return_value=plan_json):
+        from orchestrator.agents.planner_agent import ExecutionPlan, PlanStep
+        mock_plan = ExecutionPlan(
+            user_query="check CO2 and export CSV",
+            rationale="Fetch CO2 sensor data then export",
+            steps=[
+                PlanStep(index=1, agent="sparql", description="Get CO2 sensor UUIDs"),
+                PlanStep(index=2, agent="sql",    description="Fetch CO2 readings"),
+                PlanStep(index=3, agent="export", description="Export to CSV"),
+            ]
+        )
+        with patch.object(agent, '_build_plan', new_callable=AsyncMock,
+                          return_value=mock_plan):
             with patch.object(agent, '_execute_plan', new_callable=AsyncMock,
                               return_value={"success": True, "formatted_response": "Done."}):
                 result = await agent.plan_and_execute(state, "check CO2 and export CSV")

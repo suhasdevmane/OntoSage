@@ -48,7 +48,8 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.details
-  - pymdownx.tabbed
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.tasklist
   - pymdownx.snippets
   - pymdownx.emoji
@@ -80,3 +81,16 @@ nav:
   - Developer Guide: DEVELOPER_GUIDE.md
   - User Guide: USER_GUIDE.md
   - Security: SECURITY.md
+  - Design Notes:
+    - Plans:
+      - Orchestrator Recovery: superpowers/plans/2026-03-31-orchestrator-recovery.md
+      - Claude Config Setup: superpowers/plans/2026-04-11-claude-config-setup.md
+      - Paper Pipeline: superpowers/plans/2026-04-11-paper-pipeline.md
+      - Building Bootstrap: superpowers/plans/2026-04-14-building-bootstrap.md
+      - MCP Server: superpowers/plans/2026-04-14-mcp-server.md
+    - Specs:
+      - Orchestrator Recovery Design: superpowers/specs/2026-03-31-orchestrator-recovery-design.md
+      - Claude Config Design: superpowers/specs/2026-04-11-claude-config-design.md
+      - Paper Writing Design: superpowers/specs/2026-04-11-paper-writing-design.md
+      - Building Bootstrap Design: superpowers/specs/2026-04-14-building-bootstrap-design.md
+      - MCP Server Design: superpowers/specs/2026-04-14-mcp-server-design.md
