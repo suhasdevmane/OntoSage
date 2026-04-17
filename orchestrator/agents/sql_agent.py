@@ -1,45 +1,47 @@
 """
 SQL Agent - Time-series data queries for Building 1
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 import json
-from pathlib import Path
-from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
-from shared.models import ConversationState
-from shared.utils import get_logger
-from shared.config import settings
+
 from orchestrator.llm_manager import llm_manager
 from orchestrator.services.adapters.registry import adapter_registry
 from orchestrator.services.prompt_builder import get_prompt_builder
+from shared.config import settings
+from shared.models import ConversationState
+from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
+
 class SQLAgent:
     """Generates and executes SQL queries for time-series data"""
-    
+
     def __init__(self):
         self.db_config = {
-            'host': settings.MYSQL_HOST,
-            'port': settings.MYSQL_PORT,
-            'user': settings.MYSQL_USER,
-            'password': settings.MYSQL_PASSWORD,
-            'db': settings.MYSQL_DATABASE
+            "host": settings.MYSQL_HOST,
+            "port": settings.MYSQL_PORT,
+            "user": settings.MYSQL_USER,
+            "password": settings.MYSQL_PASSWORD,
+            "db": settings.MYSQL_DATABASE,
         }
         # C.2: Dynamic prompt builder for dialect-aware SQL generation
         self._prompt_builder = get_prompt_builder()
-    
+
     async def generate_and_execute(
-        self,
-        state: ConversationState,
-        user_query: str
+        self, state: ConversationState, user_query: str
     ) -> Dict[str, Any]:
         """
         Generate and execute SQL query
-        
+
         Returns:
             Dict with 'query', 'results', 'formatted_response'
         """
@@ -66,36 +68,31 @@ class SQLAgent:
 
             # Step 4: Format results
             formatted = await self._format_results(results, user_query, sql_query)
-            
+
             return {
                 "success": True,
                 "query": sql_query,
                 "results": {"data": results},
                 "formatted_response": formatted,
                 "schema": schema,
-                "analytics_required": True  # SQL queries are always data queries
+                "analytics_required": True,  # SQL queries are always data queries
             }
-            
+
         except Exception as e:
             logger.error(f"SQL generation error: {e}", exc_info=True)
-            return {
-                "success": False,
-                "error": str(e),
-                "query": None,
-                "results": None
-            }
-    
+            return {"success": False, "error": str(e), "query": None, "results": None}
+
     async def fetch_data_for_uuids(
         self,
         uuids: List[str],
         user_query: str,
         storage_map: Optional[Dict[str, str]] = None,
         start_date: Optional[str] = None,
-        end_date: Optional[str] = None
+        end_date: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Fetch data for specific UUIDs, respecting storage locations.
-        
+
         Args:
             uuids: List of sensor UUIDs
             user_query: Original user query (for time filtering)
@@ -106,7 +103,9 @@ class SQLAgent:
         try:
             # Graceful degradation: check adapter availability before doing work
             if not adapter_registry.is_available:
-                logger.warning("SQL Agent: No database adapters available — database is unreachable")
+                logger.warning(
+                    "SQL Agent: No database adapters available — database is unreachable"
+                )
                 return {
                     "success": False,
                     "error": "database_unavailable",
@@ -116,40 +115,40 @@ class SQLAgent:
                     "analytics_required": False,
                 }
 
-            logger.info("="*80)
+            logger.info("=" * 80)
             logger.info("SQL AGENT: Fetching Data for UUIDs")
-            logger.info("="*80)
+            logger.info("=" * 80)
             logger.info(f"User Query: {user_query}")
             logger.info(f"UUIDs to fetch: {len(uuids)}")
             for i, uuid in enumerate(uuids, 1):
-                storage = storage_map.get(uuid, 'N/A') if storage_map else 'N/A'
+                storage = storage_map.get(uuid, "N/A") if storage_map else "N/A"
                 logger.info(f"   {i}. {uuid} (Storage: {storage})")
-            
+
             # VALIDATION: Validate UUIDs against DB columns (via adapter registry)
             # Use the first non-null storage URI from the storage_map to route to correct DB
             primary_storage_uri = None
             if storage_map:
-                primary_storage_uri = next(
-                    (v for v in storage_map.values() if v), None
-                )
+                primary_storage_uri = next((v for v in storage_map.values() if v), None)
             valid_uuids = await adapter_registry.get_valid_uuids(uuids, primary_storage_uri)
             missing_uuids = set(uuids) - set(valid_uuids)
-            
+
             if missing_uuids:
-                logger.warning(f"⚠️  {len(missing_uuids)} UUIDs found in Ontology are MISSING in SQL Database.")
+                logger.warning(
+                    f"⚠️  {len(missing_uuids)} UUIDs found in Ontology are MISSING in SQL Database."
+                )
                 # logger.debug(f"Missing: {missing_uuids}")
 
             if not valid_uuids:
                 msg = f"Found {len(uuids)} sensors in metadata, but none exist in the time-series database."
                 logger.warning(f"❌ {msg}")
                 return {
-                    "success": True, 
+                    "success": True,
                     "query": "Metadata Check (No Columns)",
                     "results": {"data": []},
                     "formatted_response": msg,
-                    "analytics_required": False
+                    "analytics_required": False,
                 }
-            
+
             # Continue with valid UUIDs only
             uuids = valid_uuids
 
@@ -166,43 +165,51 @@ class SQLAgent:
                     grouped_uuids.setdefault(key, []).append(uuid)
             else:
                 grouped_uuids["default"] = list(uuids)
-            
+
             # Cap UUIDs per group — deterministic SQL handles many UUIDs correctly,
             # so we can allow up to 30 sensors per query for broad "all zones" requests.
             _UUID_CAP = 30
             for key in grouped_uuids:
                 if len(grouped_uuids[key]) > _UUID_CAP:
-                    logger.warning(f"⚠️  Too many UUIDs ({len(grouped_uuids[key])}). Limiting to {_UUID_CAP}.")
+                    logger.warning(
+                        f"⚠️  Too many UUIDs ({len(grouped_uuids[key])}). Limiting to {_UUID_CAP}."
+                    )
                     grouped_uuids[key] = grouped_uuids[key][:_UUID_CAP]
 
             all_data = []
-            
+
             # Process each storage group (currently only supporting MySQL/default)
             for storage_key, group_uuids in grouped_uuids.items():
                 if not group_uuids:
                     continue
-                    
-                logger.info(f"Fetching data for {len(group_uuids)} UUIDs from storage: {storage_key}")
+
+                logger.info(
+                    f"Fetching data for {len(group_uuids)} UUIDs from storage: {storage_key}"
+                )
 
                 # Phase 2.5: Pick the right adapter for this storage location
                 adapter = adapter_registry.get(storage_key)
                 schema_text = adapter_registry.get_schema_text(storage_key)
                 ts_col = adapter_registry.get_timestamp_column(storage_key)
                 dialect_hints = adapter.get_dialect_hints() if adapter else ""
-                
+
                 # Format UUIDs for SQL IN clause
                 uuid_list_str = ", ".join([f"'{u}'" for u in group_uuids])
 
                 # For non-SQL adapters (MongoDB, InfluxDB, Redis TS) let the adapter
                 # build its own native query string; SQL adapters return None here and
                 # fall through to the deterministic SQL builder below.
-                native_query = adapter.build_timeseries_query(
-                    uuids=group_uuids,
-                    ts_col=ts_col,
-                    start_date=start_date,
-                    end_date=end_date,
-                    limit=1000,
-                ) if adapter else None
+                native_query = (
+                    adapter.build_timeseries_query(
+                        uuids=group_uuids,
+                        ts_col=ts_col,
+                        start_date=start_date,
+                        end_date=end_date,
+                        limit=1000,
+                    )
+                    if adapter
+                    else None
+                )
 
                 # For SQL adapters: build deterministic SQL (no LLM drift).
                 deterministic_sql = native_query or self._build_uuid_union_query(
@@ -250,11 +257,13 @@ Return ONLY the SQL query, no markdown, no explanations.
                 else:
                     sql_query = await llm_manager.generate(prompt)
                     sql_query = sql_query.replace("```sql", "").replace("```", "").strip()
-                
+
                 logger.info(f"\n📝 Generated SQL for UUIDs ({storage_key}):")
                 logger.info(f"   {sql_query}")
 
-                logger.info(f"\n⚙️  Executing SQL query via adapter ({adapter.adapter_type.value if adapter else 'unknown'})...")
+                logger.info(
+                    f"\n⚙️  Executing SQL query via adapter ({adapter.adapter_type.value if adapter else 'unknown'})..."
+                )
                 if adapter:
                     query_result = await adapter.execute_query(sql_query)
                     results = query_result.data if query_result.success else []
@@ -263,22 +272,42 @@ Return ONLY the SQL query, no markdown, no explanations.
                 else:
                     logger.error("No adapter available for storage: " + storage_key)
                     results = []
-                
+
                 # AUTO-EXPAND: If 0 rows and user didn't specify an explicit time range,
                 # fall back to fetching the most recent available data regardless of date.
                 # Treat relative defaults like 'now-1d' as non-explicit
-                _is_default_range = (
-                    not start_date or 
-                    str(start_date).strip().lower() in ('none', 'null', '', 'now-1d', 'now-24h')
+                _is_default_range = not start_date or str(start_date).strip().lower() in (
+                    "none",
+                    "null",
+                    "",
+                    "now-1d",
+                    "now-24h",
                 )
                 if not results and _is_default_range:
-                    has_explicit_time = any(kw in user_query.lower() for kw in [
-                        "today", "yesterday", "last week", "last month",
-                        "hour", "day", "week", "month", "year",
-                        "since", "before", "after", "between", "from", "until"
-                    ])
+                    has_explicit_time = any(
+                        kw in user_query.lower()
+                        for kw in [
+                            "today",
+                            "yesterday",
+                            "last week",
+                            "last month",
+                            "hour",
+                            "day",
+                            "week",
+                            "month",
+                            "year",
+                            "since",
+                            "before",
+                            "after",
+                            "between",
+                            "from",
+                            "until",
+                        ]
+                    )
                     if not has_explicit_time:
-                        logger.warning("⚠️  0 rows with default time window. Retrying with latest available data...")
+                        logger.warning(
+                            "⚠️  0 rows with default time window. Retrying with latest available data..."
+                        )
                         # Build a simple fallback query that fetches the most recent rows
                         fallback_parts = []
                         for uuid in group_uuids:
@@ -291,12 +320,18 @@ Return ONLY the SQL query, no markdown, no explanations.
                         if len(fallback_parts) == 1:
                             fallback_sql = fallback_parts[0] + ";"
                         else:
-                            fallback_sql = "(" + ") UNION ALL (".join(fallback_parts) + ") ORDER BY timestamp DESC LIMIT 1000;"
+                            fallback_sql = (
+                                "("
+                                + ") UNION ALL (".join(fallback_parts)
+                                + ") ORDER BY timestamp DESC LIMIT 1000;"
+                            )
                         logger.info(f"📝 Fallback SQL: {fallback_sql[:200]}...")
                         results = await self._execute_query(fallback_sql)
                         if results:
-                            logger.info(f"✅ Fallback query returned {len(results)} rows (latest available data)")
-                
+                            logger.info(
+                                f"✅ Fallback query returned {len(results)} rows (latest available data)"
+                            )
+
                 if results:
                     logger.info(f"✅ Query returned {len(results)} rows")
                     if results:
@@ -308,15 +343,15 @@ Return ONLY the SQL query, no markdown, no explanations.
             # Standardize output format for Analytics Agent
             # We want a flat list of records: [{"timestamp": "...", "uuid": "...", "value": ...}, ...]
             standardized_data = {"data": all_data}
-            
+
             formatted = await self._format_results(all_data, user_query, "Multiple Queries")
-            
+
             return {
                 "success": True,
                 "query": "Multiple Queries (Storage Aware)",
-                "results": standardized_data, # Standardized JSON for Analytics
+                "results": standardized_data,  # Standardized JSON for Analytics
                 "formatted_response": formatted,
-                "analytics_required": True
+                "analytics_required": True,
             }
         except Exception as e:
             logger.error(f"Fetch data for UUIDs failed: {e}")
@@ -378,13 +413,12 @@ CRITICAL RULES:
 Respond with ONLY the SQL query, no markdown, no explanations."""
 
         response = await llm_manager.generate(sql_prompt)
-        
+
         # Extract SQL from response
         sql = self._extract_sql(response)
-        
+
         logger.info(f"Generated SQL query:\n{sql}")
         return sql
-
 
     def _parse_time_references(self, query: str) -> str:
         """Parse time references from natural language"""
@@ -393,47 +427,48 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
             now = datetime.now(ZoneInfo(settings.BUILDING_TIMEZONE))
         except Exception:
             now = datetime.now()
-        
+
         time_info = "Current time: " + now.strftime("%Y-%m-%d %H:%M:%S %Z") + "\n"
-        
+
         if "today" in query_lower:
             start = now.replace(hour=0, minute=0, second=0)
             time_info += f"Today starts at: {start.strftime('%Y-%m-%d %H:%M:%S')}\n"
-        
+
         if "yesterday" in query_lower:
             yesterday = now - timedelta(days=1)
             time_info += f"Yesterday: {yesterday.strftime('%Y-%m-%d')}\n"
-        
+
         if "last week" in query_lower:
             week_ago = now - timedelta(days=7)
             time_info += f"One week ago: {week_ago.strftime('%Y-%m-%d %H:%M:%S')}\n"
-        
+
         if "last month" in query_lower:
             month_ago = now - timedelta(days=30)
             time_info += f"One month ago: {month_ago.strftime('%Y-%m-%d %H:%M:%S')}\n"
-        
+
         # Extract specific hours/days mentions
         if "hour" in query_lower:
             import re
-            match = re.search(r'(\d+)\s*hours?', query_lower)
+
+            match = re.search(r"(\d+)\s*hours?", query_lower)
             if match:
                 hours = int(match.group(1))
                 time_ago = now - timedelta(hours=hours)
                 time_info += f"{hours} hours ago: {time_ago.strftime('%Y-%m-%d %H:%M:%S')}\n"
-        
+
         return time_info
-    
+
     def _extract_sql(self, response: str) -> str:
         """Extract SQL query from LLM response"""
         # Remove markdown code blocks
         response = response.replace("```sql", "").replace("```", "").strip()
-        
+
         # Get first SQL statement
         if ";" in response:
             sql = response.split(";")[0].strip() + ";"
         else:
             sql = response.strip()
-        
+
         return sql
 
     def _sanitize_datetime(self, value: Optional[str]) -> Optional[str]:
@@ -443,7 +478,8 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
         v = value.strip()
         # Allow digits, space, T, Z, colon, dash, dot, plus
         import re
-        if re.match(r'^[0-9T:\\-\\.Z\\+\\s]+$', v):
+
+        if re.match(r"^[0-9T:\\-\\.Z\\+\\s]+$", v):
             return v
         return None
 
@@ -453,7 +489,7 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
         ts_col: str,
         start_date: Optional[str],
         end_date: Optional[str],
-        limit: int = 1000
+        limit: int = 1000,
     ) -> str:
         """Build deterministic SQL for UUID columns using UNION ALL."""
         ts_safe = f"`{ts_col}`"
@@ -483,35 +519,47 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
             return parts[0] + f" ORDER BY timestamp DESC LIMIT {limit};"
         union = ") UNION ALL (".join(parts)
         return f"({union}) ORDER BY timestamp DESC LIMIT {limit};"
-    
+
     def validate_sql(self, sql: str) -> bool:
         """
         Validate SQL query for security and safety.
         Returns True if safe, raises ValueError if unsafe.
         """
         sql_upper = sql.upper().strip()
-        
+
         # 1. Ensure it's a SELECT query
-        if not sql_upper.startswith("SELECT") and not sql_upper.startswith("WITH") and not sql_upper.startswith("("):
+        if (
+            not sql_upper.startswith("SELECT")
+            and not sql_upper.startswith("WITH")
+            and not sql_upper.startswith("(")
+        ):
             raise ValueError("Only SELECT queries are allowed.")
-            
+
         # 2. Check for forbidden keywords (DML/DDL)
         # Note: We check for keyword + space to avoid matching substrings like "UPDATE_TIME"
         forbidden_keywords = [
-            "DROP ", "DELETE ", "INSERT ", "UPDATE ", "ALTER ", 
-            "TRUNCATE ", "GRANT ", "REVOKE ", "CREATE ", "REPLACE "
+            "DROP ",
+            "DELETE ",
+            "INSERT ",
+            "UPDATE ",
+            "ALTER ",
+            "TRUNCATE ",
+            "GRANT ",
+            "REVOKE ",
+            "CREATE ",
+            "REPLACE ",
         ]
-        
+
         for keyword in forbidden_keywords:
             if keyword in sql_upper:
                 raise ValueError(f"Forbidden keyword detected: {keyword.strip()}")
-                
+
         # 3. Check for multiple statements (prevention of stacking queries)
         if ";" in sql:
             # Allow a single trailing semicolon
             if sql.count(";") > 1 or (sql.count(";") == 1 and not sql.strip().endswith(";")):
-                 raise ValueError("Multiple SQL statements are not allowed.")
-                 
+                raise ValueError("Multiple SQL statements are not allowed.")
+
         return True
 
     _SQL_SAFETY_LIMIT = 10000
@@ -534,21 +582,18 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
         except Exception as e:
             logger.error(f"SQL execution error: {e}")
             raise Exception(f"Failed to execute SQL query: {str(e)}")
-    
+
     async def _format_results(
-        self,
-        results: List[Dict[str, Any]],
-        user_query: str,
-        sql_query: str
+        self, results: List[Dict[str, Any]], user_query: str, sql_query: str
     ) -> str:
         """Format SQL results into natural language"""
-        
+
         if not results:
             return "No data found for your query."
-        
+
         # Convert results to readable format
         result_text = f"Found {len(results)} record(s):\n\n"
-        
+
         for i, row in enumerate(results[:10], 1):  # Limit to 10 rows
             result_text += f"{i}. "
             for key, value in row.items():
@@ -556,10 +601,10 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
                     value = value.strftime("%Y-%m-%d %H:%M:%S")
                 result_text += f"{key}: {value} | "
             result_text = result_text.rstrip(" | ") + "\n"
-        
+
         if len(results) > 10:
             result_text += f"\n... and {len(results) - 10} more records"
-        
+
         # Generate natural language summary
         summary_prompt = f"""Convert these SQL query results into a natural language response.
 

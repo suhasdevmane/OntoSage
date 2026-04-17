@@ -19,21 +19,25 @@ Usage:
     result  = await adapter.execute_query(query)
     schema  = adapter_registry.get_schema_text("bldg:database1")
 """
-import sys
+
 import os
 import re
-sys.path.append('/app')
+import sys
+
+sys.path.append("/app")
 
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from shared.utils import get_logger
-from orchestrator.services.database_adapter import (
-    AdapterType, DatabaseAdapter, get_adapter_from_storage_uri
-)
 from orchestrator.services.adapters.mysql_adapter import MySQLAdapter
 from orchestrator.services.adapters.postgresql_adapter import PostgreSQLAdapter
+from orchestrator.services.database_adapter import (
+    AdapterType,
+    DatabaseAdapter,
+    get_adapter_from_storage_uri,
+)
 from orchestrator.services.database_schema_discovery import DatabaseSchemaDiscovery
+from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -58,10 +62,12 @@ def _expand_env(value: Any) -> Any:
     """
     if not isinstance(value, str):
         return value
+
     def _replace(m: re.Match) -> str:
         var_name = m.group(1)
-        default  = m.group(2) if m.group(2) is not None else ""
+        default = m.group(2) if m.group(2) is not None else ""
         return os.environ.get(var_name, default)
+
     return _ENV_PATTERN.sub(_replace, value)
 
 
@@ -73,6 +79,7 @@ def _expand_dict(d: Dict[str, Any]) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
+
 
 class AdapterRegistry:
     """
@@ -146,10 +153,7 @@ class AdapterRegistry:
 
         self._initialized = True
         if self._adapters:
-            logger.info(
-                f"AdapterRegistry: ready — backends: "
-                f"{list(self._adapters.keys())}"
-            )
+            logger.info(f"AdapterRegistry: ready — backends: " f"{list(self._adapters.keys())}")
         else:
             logger.warning("AdapterRegistry: no database adapters available.")
 
@@ -191,20 +195,17 @@ class AdapterRegistry:
                 await adapter.connect()
                 discovery = DatabaseSchemaDiscovery(adapter)
                 await discovery.run()
-                self._adapters[db_key]    = adapter
+                self._adapters[db_key] = adapter
                 self._discoveries[db_key] = discovery
-                logger.info(
-                    f"AdapterRegistry: [{db_key}] {db_type} adapter ready"
-                )
+                logger.info(f"AdapterRegistry: [{db_key}] {db_type} adapter ready")
             except Exception as e:
-                logger.warning(
-                    f"AdapterRegistry: [{db_key}] {db_type} init failed — {e}"
-                )
+                logger.warning(f"AdapterRegistry: [{db_key}] {db_type} init failed — {e}")
 
     def _build_adapter(self, db_type: str, cfg: Dict[str, Any]) -> DatabaseAdapter:
         """Instantiate the correct DatabaseAdapter subclass for db_type."""
         if db_type == "mysql":
             from orchestrator.services.adapters.mysql_adapter import MySQLAdapter
+
             return MySQLAdapter(
                 host=cfg.get("host") or None,
                 port=int(cfg.get("port", 3306)) or None,
@@ -214,7 +215,10 @@ class AdapterRegistry:
             )
 
         if db_type == "postgresql":
-            from orchestrator.services.adapters.postgresql_adapter import PostgreSQLAdapter
+            from orchestrator.services.adapters.postgresql_adapter import (
+                PostgreSQLAdapter,
+            )
+
             return PostgreSQLAdapter(
                 host=cfg.get("host") or None,
                 port=int(cfg.get("port", 5432)) or None,
@@ -224,7 +228,10 @@ class AdapterRegistry:
             )
 
         if db_type == "timescaledb":
-            from orchestrator.services.adapters.timescaledb_adapter import TimescaleDBAdapter
+            from orchestrator.services.adapters.timescaledb_adapter import (
+                TimescaleDBAdapter,
+            )
+
             return TimescaleDBAdapter(
                 host=cfg.get("host") or None,
                 port=int(cfg.get("port", 5432)) or None,
@@ -235,6 +242,7 @@ class AdapterRegistry:
 
         if db_type == "mongodb":
             from orchestrator.services.adapters.mongodb_adapter import MongoDBAdapter
+
             return MongoDBAdapter(
                 host=cfg.get("host") or "mongodb",
                 port=int(cfg.get("port", 27017)),
@@ -246,6 +254,7 @@ class AdapterRegistry:
 
         if db_type == "influxdb":
             from orchestrator.services.adapters.influxdb_adapter import InfluxDBAdapter
+
             return InfluxDBAdapter(
                 url=cfg.get("url") or "http://influxdb:8086",
                 token=cfg.get("token") or "",
@@ -255,10 +264,14 @@ class AdapterRegistry:
 
         if db_type == "sqlite":
             from orchestrator.services.adapters.sqlite_adapter import SQLiteAdapter
+
             return SQLiteAdapter(path=cfg.get("path") or "/app/data/ontosage.db")
 
         if db_type == "cassandra":
-            from orchestrator.services.adapters.cassandra_adapter import CassandraAdapter
+            from orchestrator.services.adapters.cassandra_adapter import (
+                CassandraAdapter,
+            )
+
             return CassandraAdapter(
                 host=cfg.get("host") or "cassandra",
                 port=int(cfg.get("port", 9042)),
@@ -269,7 +282,10 @@ class AdapterRegistry:
             )
 
         if db_type == "redis_timeseries":
-            from orchestrator.services.adapters.redis_timeseries_adapter import RedisTimeSeriesAdapter
+            from orchestrator.services.adapters.redis_timeseries_adapter import (
+                RedisTimeSeriesAdapter,
+            )
+
             return RedisTimeSeriesAdapter(
                 url=cfg.get("url") or "redis://redis:6379/1",
                 password=cfg.get("password") or None,
@@ -292,9 +308,9 @@ class AdapterRegistry:
             disc_mysql = DatabaseSchemaDiscovery(mysql)
             await disc_mysql.run()
             self._adapters["database1"] = mysql
-            self._adapters["default"]   = mysql   # backwards-compat alias
+            self._adapters["default"] = mysql  # backwards-compat alias
             self._discoveries["database1"] = disc_mysql
-            self._discoveries["default"]   = disc_mysql
+            self._discoveries["default"] = disc_mysql
             logger.info("AdapterRegistry(legacy): MySQLAdapter ready as 'database1'/'default'")
         except Exception as e:
             logger.warning(f"AdapterRegistry(legacy): MySQLAdapter failed — {e}")
@@ -357,9 +373,7 @@ class AdapterRegistry:
         )
         return (disc.timestamp_column if disc else None) or "Datetime"
 
-    async def get_valid_uuids(
-        self, candidates: list, storage_uri: Optional[str] = None
-    ) -> list:
+    async def get_valid_uuids(self, candidates: list, storage_uri: Optional[str] = None) -> list:
         """Validate UUIDs against the matched adapter's column/field list."""
         key = self._resolve_storage_key(storage_uri or "")
         disc = (

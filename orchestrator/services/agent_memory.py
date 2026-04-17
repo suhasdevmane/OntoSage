@@ -25,10 +25,10 @@ Usage:
     from orchestrator.services.agent_memory import AgentMemoryService
 
     memory = AgentMemoryService(qdrant_url="http://qdrant:6333")
-    
+
     # At conversation start
     context = await memory.retrieve_context(user_id="alice", query="temp in room 5")
-    
+
     # After successful response
     await memory.store_success(
         user_id="alice",
@@ -38,88 +38,95 @@ Usage:
         answer_summary="Temperature is 22.5°C, within ASHRAE comfort range."
     )
 """
+
 from __future__ import annotations
 
-import os
-import json
-import time
 import hashlib
+import json
 import logging
+import os
+import time
 from typing import Any, Dict, List, Optional
 
 from shared.config import settings
 
 logger = logging.getLogger(__name__)
 
-QDRANT_URL       = os.environ.get("QDRANT_URL", "http://qdrant:6333")
-MEMORY_ENABLED   = os.environ.get("AGENT_MEMORY_ENABLED", "true").lower() == "true"
-COLLECTION_NAME  = "user_memory"
-MAX_MEMORIES     = int(os.environ.get("AGENT_MEMORY_MAX", "200"))     # per user
-RETRIEVE_TOP_K   = int(os.environ.get("AGENT_MEMORY_TOP_K", "5"))     # memories per query
-EMBED_MODEL      = os.environ.get("AGENT_MEMORY_EMBED_MODEL", "text-embedding-3-small")
+QDRANT_URL = os.environ.get("QDRANT_URL", "http://qdrant:6333")
+MEMORY_ENABLED = os.environ.get("AGENT_MEMORY_ENABLED", "true").lower() == "true"
+COLLECTION_NAME = "user_memory"
+MAX_MEMORIES = int(os.environ.get("AGENT_MEMORY_MAX", "200"))  # per user
+RETRIEVE_TOP_K = int(os.environ.get("AGENT_MEMORY_TOP_K", "5"))  # memories per query
+EMBED_MODEL = os.environ.get("AGENT_MEMORY_EMBED_MODEL", "text-embedding-3-small")
 
 
 class MemoryEntry:
     """A single episodic memory record."""
 
-    def __init__(self, user_id: str, query: str, intent: str,
-                 entities: List[str], answer_summary: str,
-                 memory_type: str = "qa_pair",
-                 score: float = 1.0):
-        self.user_id        = user_id
-        self.query          = query
-        self.intent         = intent
-        self.entities       = entities
+    def __init__(
+        self,
+        user_id: str,
+        query: str,
+        intent: str,
+        entities: List[str],
+        answer_summary: str,
+        memory_type: str = "qa_pair",
+        score: float = 1.0,
+    ):
+        self.user_id = user_id
+        self.query = query
+        self.intent = intent
+        self.entities = entities
         self.answer_summary = answer_summary
-        self.memory_type    = memory_type
-        self.score          = score
-        self.timestamp      = time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        self.id             = hashlib.sha256(f"{user_id}{query}{self.timestamp}".encode()).hexdigest()[:24]
+        self.memory_type = memory_type
+        self.score = score
+        self.timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.id = hashlib.sha256(f"{user_id}{query}{self.timestamp}".encode()).hexdigest()[:24]
 
     def to_payload(self) -> Dict:
         return {
-            "user_id":        self.user_id,
-            "query":          self.query,
-            "intent":         self.intent,
-            "entities":       self.entities,
+            "user_id": self.user_id,
+            "query": self.query,
+            "intent": self.intent,
+            "entities": self.entities,
             "answer_summary": self.answer_summary,
-            "memory_type":    self.memory_type,
-            "score":          self.score,
-            "timestamp":      self.timestamp,
+            "memory_type": self.memory_type,
+            "score": self.score,
+            "timestamp": self.timestamp,
         }
 
     @classmethod
     def from_payload(cls, payload: Dict) -> "MemoryEntry":
         m = cls.__new__(cls)
-        m.user_id        = payload.get("user_id", "")
-        m.query          = payload.get("query", "")
-        m.intent         = payload.get("intent", "general")
-        m.entities       = payload.get("entities", [])
+        m.user_id = payload.get("user_id", "")
+        m.query = payload.get("query", "")
+        m.intent = payload.get("intent", "general")
+        m.entities = payload.get("entities", [])
         m.answer_summary = payload.get("answer_summary", "")
-        m.memory_type    = payload.get("memory_type", "qa_pair")
-        m.score          = payload.get("score", 1.0)
-        m.timestamp      = payload.get("timestamp", "")
-        m.id             = payload.get("id", "")
+        m.memory_type = payload.get("memory_type", "qa_pair")
+        m.score = payload.get("score", 1.0)
+        m.timestamp = payload.get("timestamp", "")
+        m.id = payload.get("id", "")
         return m
 
 
 class AgentMemoryService:
     """
     Per-user episodic memory backed by Qdrant.
-    
+
     Falls back to a simple in-memory dict when Qdrant is unavailable
     (development mode). In-memory store is NOT persisted across restarts.
     """
 
-    def __init__(self, qdrant_url: str = QDRANT_URL,
-                 llm_manager=None,
-                 enabled: bool = MEMORY_ENABLED):
-        self._url     = qdrant_url
-        self._llm     = llm_manager
+    def __init__(
+        self, qdrant_url: str = QDRANT_URL, llm_manager=None, enabled: bool = MEMORY_ENABLED
+    ):
+        self._url = qdrant_url
+        self._llm = llm_manager
         self._enabled = enabled
-        self._client  = None
+        self._client = None
         self._fallback_store: Dict[str, List[MemoryEntry]] = {}  # user_id → memories
-        self._ready   = False
+        self._ready = False
 
     async def initialise(self):
         """Connect to Qdrant and ensure collection exists."""
@@ -129,6 +136,7 @@ class AgentMemoryService:
         try:
             from qdrant_client import AsyncQdrantClient
             from qdrant_client.models import Distance, VectorParams
+
             self._client = AsyncQdrantClient(url=self._url)
 
             # Determine the actual embedding dimension from the embed model
@@ -169,25 +177,33 @@ class AgentMemoryService:
     # Store
     # ─────────────────────────────────────────────────────────────────────────
 
-    async def store_success(self, user_id: str, query: str, intent: str,
-                            entities: List[str], answer_summary: str,
-                            memory_type: str = "qa_pair"):
+    async def store_success(
+        self,
+        user_id: str,
+        query: str,
+        intent: str,
+        entities: List[str],
+        answer_summary: str,
+        memory_type: str = "qa_pair",
+    ):
         """Persist a successful QA interaction to memory."""
         if not self._enabled:
             return
-        entry = MemoryEntry(user_id, query, intent, entities, answer_summary,
-                            memory_type)
+        entry = MemoryEntry(user_id, query, intent, entities, answer_summary, memory_type)
         if self._ready and self._client:
             try:
                 embedding = await self._embed(query)
                 from qdrant_client.models import PointStruct
+
                 await self._client.upsert(
                     collection_name=COLLECTION_NAME,
-                    points=[PointStruct(
-                        id=int(hashlib.sha256(entry.id.encode()).hexdigest()[:15], 16),
-                        vector=embedding,
-                        payload=entry.to_payload(),
-                    )],
+                    points=[
+                        PointStruct(
+                            id=int(hashlib.sha256(entry.id.encode()).hexdigest()[:15], 16),
+                            vector=embedding,
+                            payload=entry.to_payload(),
+                        )
+                    ],
                 )
                 logger.debug(f"Memory stored for {user_id}: {intent}")
             except Exception as e:
@@ -220,9 +236,11 @@ class AgentMemoryService:
 
         lines = ["**Relevant memories from this user's history:**"]
         for m in memories[:RETRIEVE_TOP_K]:
-            lines.append(f"- Q: \"{m.query}\" → Intent: {m.intent}, "
-                         f"Entities: {', '.join(m.entities) or 'none'}, "
-                         f"Answer: {m.answer_summary[:120]}...")
+            lines.append(
+                f'- Q: "{m.query}" → Intent: {m.intent}, '
+                f"Entities: {', '.join(m.entities) or 'none'}, "
+                f"Answer: {m.answer_summary[:120]}..."
+            )
         return "\n".join(lines)
 
     async def _search(self, user_id: str, query: str) -> List[MemoryEntry]:
@@ -251,13 +269,14 @@ class AgentMemoryService:
         """Generate embedding via OpenAI or fallback to simple hash-based vector."""
         try:
             import openai
-            response = await openai.AsyncOpenAI().embeddings.create(
-                model=EMBED_MODEL, input=text
-            )
+
+            response = await openai.AsyncOpenAI().embeddings.create(model=EMBED_MODEL, input=text)
             return response.data[0].embedding
         except Exception:
             # Fallback: deterministic pseudo-embedding (for dev/CI)
-            import hashlib, math
+            import hashlib
+            import math
+
             h = hashlib.sha256(text.encode()).digest()
             dim = settings.embedding_dimension
             vals = []
@@ -277,9 +296,9 @@ class AgentMemoryService:
             try:
                 await self._client.delete(
                     collection_name=COLLECTION_NAME,
-                    points_selector={"filter": {"must": [
-                        {"key": "user_id", "match": {"value": user_id}}
-                    ]}},
+                    points_selector={
+                        "filter": {"must": [{"key": "user_id", "match": {"value": user_id}}]}
+                    },
                 )
                 logger.info(f"Memories deleted for user: {user_id}")
             except Exception as e:
@@ -291,14 +310,14 @@ class AgentMemoryService:
             try:
                 info = await self._client.get_collection(COLLECTION_NAME)
                 return {
-                    "backend":      "qdrant",
+                    "backend": "qdrant",
                     "total_points": info.points_count,
-                    "enabled":      self._enabled,
+                    "enabled": self._enabled,
                 }
             except Exception:
                 pass
         return {
-            "backend":      "fallback",
+            "backend": "fallback",
             "total_points": sum(len(v) for v in self._fallback_store.values()),
-            "enabled":      self._enabled,
+            "enabled": self._enabled,
         }

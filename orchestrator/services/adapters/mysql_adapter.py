@@ -5,27 +5,41 @@ Implements DatabaseAdapter for MySQL / MariaDB backends using aiomysql.
 Encapsulates all MySQL-specific connection, schema introspection, and
 query execution logic previously scattered in sql_agent.py.
 """
-import sys
-sys.path.append('/app')
 
-import aiomysql
-from decimal import Decimal
+import sys
+
+sys.path.append("/app")
+
 from datetime import datetime
+from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set
 
+import aiomysql
+
+from orchestrator.services.circuit_breaker import circuit_breaker_for
+from orchestrator.services.database_adapter import (
+    AdapterType,
+    DatabaseAdapter,
+    QueryResult,
+    SchemaInfo,
+)
 from shared.config import settings
 from shared.utils import get_logger
-from orchestrator.services.database_adapter import (
-    DatabaseAdapter, AdapterType, QueryResult, SchemaInfo
-)
-from orchestrator.services.circuit_breaker import circuit_breaker_for
 
 logger = get_logger(__name__)
 
 # SQL keywords that are forbidden for safety
 _FORBIDDEN_KEYWORDS = [
-    "DROP ", "DELETE ", "INSERT ", "UPDATE ", "ALTER ",
-    "TRUNCATE ", "GRANT ", "REVOKE ", "CREATE ", "REPLACE ",
+    "DROP ",
+    "DELETE ",
+    "INSERT ",
+    "UPDATE ",
+    "ALTER ",
+    "TRUNCATE ",
+    "GRANT ",
+    "REVOKE ",
+    "CREATE ",
+    "REPLACE ",
 ]
 
 
@@ -42,15 +56,20 @@ class MySQLAdapter(DatabaseAdapter):
     _POOL_MIN = 2
     _POOL_MAX = 10
 
-    def __init__(self, host: Optional[str] = None, port: Optional[int] = None,
-                 user: Optional[str] = None, password: Optional[str] = None,
-                 database: Optional[str] = None):
+    def __init__(
+        self,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        database: Optional[str] = None,
+    ):
         self._config = {
-            "host":     host     or settings.MYSQL_HOST,
-            "port":     port     or settings.MYSQL_PORT,
-            "user":     user     or settings.MYSQL_USER,
+            "host": host or settings.MYSQL_HOST,
+            "port": port or settings.MYSQL_PORT,
+            "user": user or settings.MYSQL_USER,
             "password": password or settings.MYSQL_PASSWORD,
-            "db":       database or settings.MYSQL_DATABASE,
+            "db": database or settings.MYSQL_DATABASE,
         }
         self._pool: Optional[aiomysql.Pool] = None
         self._schema_cache: Optional[SchemaInfo] = None
@@ -118,9 +137,7 @@ class MySQLAdapter(DatabaseAdapter):
                         for col in col_rows:
                             col_name = col[0]
                             col_type = (
-                                col[1].decode("utf-8")
-                                if isinstance(col[1], bytes)
-                                else str(col[1])
+                                col[1].decode("utf-8") if isinstance(col[1], bytes) else str(col[1])
                             )
                             col_list.append((col_name, col_type))
                             # Auto-detect timestamp column
@@ -178,9 +195,7 @@ class MySQLAdapter(DatabaseAdapter):
         for kw in _FORBIDDEN_KEYWORDS:
             if kw in sql_upper:
                 raise ValueError(f"Forbidden keyword detected: {kw.strip()}")
-        if sql.count(";") > 1 or (
-            sql.count(";") == 1 and not sql.strip().endswith(";")
-        ):
+        if sql.count(";") > 1 or (sql.count(";") == 1 and not sql.strip().endswith(";")):
             raise ValueError("Multiple SQL statements are not allowed.")
         return True
 
@@ -221,8 +236,7 @@ class MySQLAdapter(DatabaseAdapter):
 
             logger.info(f"MySQLAdapter: query returned {len(clean_rows)} rows")
             breaker.record_success()
-            return QueryResult(success=True, data=clean_rows,
-                               row_count=len(clean_rows), query=sql)
+            return QueryResult(success=True, data=clean_rows, row_count=len(clean_rows), query=sql)
 
         except Exception as e:
             logger.error(f"MySQLAdapter.execute_query error: {e}")

@@ -1,44 +1,56 @@
 """
 LangGraph Workflow - Orchestrates agent execution
 """
-import sys
-import os
-import json
-import re
-import asyncio
-sys.path.append('/app')
 
-from typing import Dict, Any, Literal, Optional
+import asyncio
+import json
+import os
+import re
+import sys
+
+sys.path.append("/app")
+
+from typing import Any, Dict, Literal, Optional
 from uuid import uuid4
-from langgraph.graph import StateGraph, END
-from shared.models import ConversationState, Message
-from shared.utils import get_logger
-from shared.config import settings
+
+from langgraph.graph import END, StateGraph
+
 from orchestrator.agents import (
+    AnalyticsAgent,
     DialogueAgent,
     SPARQLAgent,
     SQLAgent,
-    AnalyticsAgent,
-    VisualizationAgent
+    VisualizationAgent,
 )
-# Phase 4 agents
-from orchestrator.agents.report_agent import ReportAgent
-from orchestrator.agents.data_export_agent import DataExportAgent
-from orchestrator.agents.planner_agent import PlannerAgent
 from orchestrator.agents.anomaly_agent import AnomalyDetectionAgent
+from orchestrator.agents.data_export_agent import DataExportAgent
+
 # CAP-01: Document agent
 from orchestrator.agents.document_agent import DocumentAgent
+from orchestrator.agents.planner_agent import PlannerAgent
+
+# Phase 4 agents
+from orchestrator.agents.report_agent import ReportAgent
+
 # B.7: Deterministic analytics engine
-from orchestrator.services.analytics_engine import AnalyticsEngine, AnalysisRequest
+from orchestrator.services.analytics_engine import AnalysisRequest, AnalyticsEngine
+
 # CAP-03: Persona-aware post-processing
 from orchestrator.services.persona_adapter import get_persona_adapter
-# CAP-04: Compliance standards engine
-from orchestrator.services.standards_engine import get_standards_engine
+
 # CAP-07: Multi-hop reasoning engine
 from orchestrator.services.reasoning_engine import get_reasoning_engine
+
+# CAP-04: Compliance standards engine
+from orchestrator.services.standards_engine import get_standards_engine
+from shared.config import settings
+from shared.models import ConversationState, Message
+from shared.utils import get_logger
+
 # WIRE-A: i18n service (translate query in, response out)
 try:
     from orchestrator.services.i18n_service import I18nService
+
     _I18N_AVAILABLE = True
 except ImportError:
     _I18N_AVAILABLE = False
@@ -47,9 +59,10 @@ from orchestrator.services.disambiguation_service import get_disambiguation_serv
 
 logger = get_logger(__name__)
 
+
 class WorkflowOrchestrator:
     """LangGraph-based conversation workflow"""
-    
+
     def __init__(self, redis_manager=None, postgres_manager=None):
         # Initialize agents
         self.dialogue_agent = DialogueAgent()
@@ -67,15 +80,16 @@ class WorkflowOrchestrator:
         self.redis_manager = redis_manager
         self.postgres_manager = postgres_manager
         self.response_cache = None  # injected by main.py lifespan after Redis is ready
-        self.agent_memory = None    # injected by main.py lifespan after Qdrant is ready
-        self.smart_cache = None     # injected by main.py lifespan after Redis is ready
+        self.agent_memory = None  # injected by main.py lifespan after Qdrant is ready
+        self.smart_cache = None  # injected by main.py lifespan after Redis is ready
         # B.7: Deterministic analytics engine (no LLM needed for known analysis types)
         self.analytics_engine = AnalyticsEngine()
         # WIRE-A: i18n service singleton (stateless, lazy-init)
-        self._i18n: 'I18nService | None' = None
+        self._i18n: "I18nService | None" = None
         if _I18N_AVAILABLE:
             try:
                 from orchestrator.llm_manager import llm_manager as _llm
+
                 self._i18n = I18nService(llm_manager=_llm)
                 logger.info("i18n service initialized")
             except Exception as _ie:
@@ -86,7 +100,7 @@ class WorkflowOrchestrator:
         self._standards_engine = get_standards_engine()
         # CAP-07: Multi-hop reasoning engine
         self._reasoning_engine = get_reasoning_engine()
-        
+
         # Load sensor map
         self.sensor_map = {}
         try:
@@ -95,25 +109,29 @@ class WorkflowOrchestrator:
                     self.sensor_map = json.load(f)
                 logger.info(f"Loaded {len(self.sensor_map)} sensors from cache")
             else:
-                logger.warning(f"{settings.SENSOR_MAP_PATH} not found. Run scripts/cache_sensor_map.py")
+                logger.warning(
+                    f"{settings.SENSOR_MAP_PATH} not found. Run scripts/cache_sensor_map.py"
+                )
         except Exception as e:
             logger.error(f"Failed to load sensor map: {e}")
-        
+
         # Configuration: Use semantic agent by default, fallback to SPARQL
         self.use_semantic_ontology = settings.USE_SEMANTIC_ONTOLOGY
         self.ontology_mode = settings.ONTOLOGY_QUERY_MODE
-        
-        logger.info(f"Ontology query mode: {self.ontology_mode}, Use semantic: {self.use_semantic_ontology}")
-        
+
+        logger.info(
+            f"Ontology query mode: {self.ontology_mode}, Use semantic: {self.use_semantic_ontology}"
+        )
+
         # Build workflow graph
         self.graph = self._build_graph()
-    
+
     def _build_graph(self) -> StateGraph:
         """Build LangGraph state machine"""
-        
+
         # Create state graph
         workflow = StateGraph(ConversationState)
-        
+
         # Core nodes — dialogue and response are never wrapped (they are the
         # entry/exit of the pipeline and must always run).  Data-fetching nodes
         # are wrapped with _safe_node for graceful degradation on failures.
@@ -121,7 +139,9 @@ class WorkflowOrchestrator:
         workflow.add_node("sparql", self._safe_node(self._sparql_node, "sparql"))
         workflow.add_node("sql", self._safe_node(self._sql_node, "sql"))
         workflow.add_node("analytics", self._safe_node(self._analytics_node, "analytics"))
-        workflow.add_node("visualization", self._safe_node(self._visualization_node, "visualization"))
+        workflow.add_node(
+            "visualization", self._safe_node(self._visualization_node, "visualization")
+        )
         workflow.add_node("response", self._response_node)
         # Phase 4 nodes
         workflow.add_node("planner", self._safe_node(self._planner_node, "planner"))
@@ -129,10 +149,10 @@ class WorkflowOrchestrator:
         workflow.add_node("anomaly", self._safe_node(self._anomaly_node, "anomaly"))
         workflow.add_node("export", self._safe_node(self._export_node, "export"))
         workflow.add_node("document", self._safe_node(self._document_node, "document"))
-        
+
         # Entry
         workflow.set_entry_point("dialogue")
-        
+
         # Dialogue routing (14 intents)
         workflow.add_conditional_edges(
             "dialogue",
@@ -147,53 +167,62 @@ class WorkflowOrchestrator:
                 "anomaly": "anomaly",
                 "export": "export",
                 "response": "response",
-                "end": END
-            }
+                "end": END,
+            },
         )
-        
+
         # SPARQL → SQL / analytics / response
         workflow.add_conditional_edges(
             "sparql",
             self._route_from_data_node,
-            {"visualization": "visualization", "response": "response", "sql": "sql", "analytics": "analytics"}
+            {
+                "visualization": "visualization",
+                "response": "response",
+                "sql": "sql",
+                "analytics": "analytics",
+            },
         )
-        
+
         # SQL → Analytics / response
         workflow.add_conditional_edges(
             "sql",
             self._route_from_sql,
-            {"analytics": "analytics", "visualization": "visualization",
-             "anomaly": "anomaly", "report": "report", "response": "response"}
+            {
+                "analytics": "analytics",
+                "visualization": "visualization",
+                "anomaly": "anomaly",
+                "report": "report",
+                "response": "response",
+            },
         )
-        
+
         # Analytics → Viz / response
         workflow.add_conditional_edges(
             "analytics",
             self._route_from_analytics_node,
-            {"visualization": "visualization", "response": "response"}
+            {"visualization": "visualization", "response": "response"},
         )
-        
+
         # Phase 4 nodes all lead to response (report may optionally create a document)
         workflow.add_edge("planner", "response")
         workflow.add_conditional_edges(
-            "report",
-            self._route_from_report,
-            {"document": "document", "response": "response"}
+            "report", self._route_from_report, {"document": "document", "response": "response"}
         )
         workflow.add_edge("anomaly", "response")
         workflow.add_edge("export", "response")
         workflow.add_edge("visualization", "response")
         workflow.add_edge("document", "response")
         workflow.add_edge("response", END)
-        
+
         return workflow.compile()
-    
+
     def _safe_node(self, node_fn, node_name: str):
         """
         Wrap a node function with try/except for graceful degradation.
         On unhandled exception, the pipeline continues with a user-friendly
         error stored in intermediate_results rather than crashing.
         """
+
         async def wrapper(state: ConversationState) -> ConversationState:
             try:
                 return await node_fn(state)
@@ -203,18 +232,25 @@ class WorkflowOrchestrator:
                 state.intermediate_results[f"{node_name}_error"] = str(e)
                 # For data nodes, ensure downstream nodes see empty-but-valid data
                 if node_name == "sparql":
-                    state.intermediate_results["sparql_result"] = {"success": False, "error": str(e)}
+                    state.intermediate_results["sparql_result"] = {
+                        "success": False,
+                        "error": str(e),
+                    }
                     state.query_results = {}
                 elif node_name == "sql":
                     state.intermediate_results["sql_result"] = {"success": False, "error": str(e)}
                     state.query_results = {"data": []}
                 elif node_name == "analytics":
-                    state.intermediate_results["analytics_result"] = {"success": False, "error": str(e)}
+                    state.intermediate_results["analytics_result"] = {
+                        "success": False,
+                        "error": str(e),
+                    }
                 # Store the friendly error for the response node to pick up
                 state.intermediate_results.setdefault("degraded_services", []).append(
                     {"node": node_name, "message": friendly}
                 )
                 return state
+
         return wrapper
 
     async def _dialogue_node(self, state: ConversationState) -> ConversationState:
@@ -238,25 +274,25 @@ class WorkflowOrchestrator:
                 state.intermediate_results["_user_lang"] = _user_lang
             except Exception as _i18n_err:
                 logger.debug(f"i18n input translation skipped: {_i18n_err}")
-        
+
         # NEW: Auto-titling for new conversations
         if len(state.messages) == 1 and state.title == "New Conversation":
             try:
                 logger.info("🏷️ Generating conversation title...")
-                title = await self.dialogue_agent.context_manager.generate_title(state.messages[0].content)
+                title = await self.dialogue_agent.context_manager.generate_title(
+                    state.messages[0].content
+                )
                 state.title = title
                 logger.info(f"🏷️ Title generated: {title}")
-                
+
                 # Update user's conversation list in Redis
                 if self.redis_manager and state.user_id:
                     await self.redis_manager.add_conversation_to_user(
-                        state.user_id, 
-                        state.conversation_id, 
-                        title
+                        state.user_id, state.conversation_id, title
                     )
             except Exception as e:
                 logger.error(f"Failed to generate title: {e}")
-        
+
         # B.3: Inject relevant user memories as context for the dialogue agent
         if self.agent_memory and state.user_id:
             try:
@@ -269,7 +305,7 @@ class WorkflowOrchestrator:
 
         # NEW: Get LLM-based intent detection result
         intent_result = await self.dialogue_agent.detect_intent(state)
-        
+
         # Extract fields from LLM response (New Structure)
         intent = intent_result.get("intent", "general")
         entities = intent_result.get("entities") or []
@@ -287,16 +323,29 @@ class WorkflowOrchestrator:
         # the existing query_results from the prior turn and (b) inherit the
         # real building entities so downstream nodes stay coherent.
         _STANDARD_NAMES = {
-            "ashrae", "well", "breeam", "leed", "en15251", "en 15251",
-            "iso", "iea", "smacna", "nfpa", "cibse", "iesve", "ies ve",
-            "ashrae 55", "ashrae 62", "ashrae 90", "ashrae standard",
+            "ashrae",
+            "well",
+            "breeam",
+            "leed",
+            "en15251",
+            "en 15251",
+            "iso",
+            "iea",
+            "smacna",
+            "nfpa",
+            "cibse",
+            "iesve",
+            "ies ve",
+            "ashrae 55",
+            "ashrae 62",
+            "ashrae 90",
+            "ashrae standard",
         }
         _CONTEXTUAL_INTENTS = {"compliance", "compare", "trend", "recommend"}
 
         if intent in _CONTEXTUAL_INTENTS:
             building_entities = [
-                e for e in entities
-                if not any(s in e.lower() for s in _STANDARD_NAMES)
+                e for e in entities if not any(s in e.lower() for s in _STANDARD_NAMES)
             ]
 
             if not building_entities:
@@ -311,9 +360,7 @@ class WorkflowOrchestrator:
 
                 # If the prior turn already fetched sensor data, skip SPARQL+SQL
                 _prior_data = state.query_results
-                _has_prior_data = bool(
-                    isinstance(_prior_data, dict) and _prior_data.get("data")
-                )
+                _has_prior_data = bool(isinstance(_prior_data, dict) and _prior_data.get("data"))
                 if _has_prior_data:
                     state.intermediate_results["use_existing_query_results"] = True
                     logger.info(
@@ -322,21 +369,21 @@ class WorkflowOrchestrator:
                     )
 
         # Backward compatibility mapping
-        is_general = (intent == "general")
+        is_general = intent == "general"
         analytics_required = (intent == "analytics") or (len(required_analytics) > 0)
         # Contextual follow-up intents always need the full SPARQL→SQL→Analytics pipeline
         if intent in _CONTEXTUAL_INTENTS:
             analytics_required = True
-        sparql_query = "" # No longer generated by DialogueAgent
-        
+        sparql_query = ""  # No longer generated by DialogueAgent
+
         start_date = time_range.get("start")
         end_date = time_range.get("end")
-        
+
         logger.info(f"📊 Intent Analysis:")
         logger.info(f"   ├─ Intent: {intent}")
         logger.info(f"   ├─ Entities: {entities}")
         logger.info(f"   ├─ Analytics Required: {analytics_required}")
-        
+
         # Store in state for routing decisions and downstream agents
         state.intermediate_results["llm_intent"] = intent_result
         state.intermediate_results["intent"] = intent
@@ -349,8 +396,10 @@ class WorkflowOrchestrator:
         # Phase 4.1 new fields
         state.intermediate_results["export_format"] = intent_result.get("export_format")
         state.intermediate_results["report_type"] = intent_result.get("report_type")
-        state.intermediate_results["recommendation_domain"] = intent_result.get("recommendation_domain")
-        
+        state.intermediate_results["recommendation_domain"] = intent_result.get(
+            "recommendation_domain"
+        )
+
         # ── Data-driven disambiguation ────────────────────────────────────
         # Check BEFORE routing: if the user mentioned "sensor 5.XX" without a
         # type keyword, generate a data-driven "Did you mean…?" response.
@@ -373,14 +422,16 @@ class WorkflowOrchestrator:
             state.current_intent = "clarification"
             state.needs_clarification = True
             state.clarification_question = clarification_question
-            state.intermediate_results["dialogue_response"] = clarification_question or \
-                "Could you please provide more details about your question?"
+            state.intermediate_results["dialogue_response"] = (
+                clarification_question
+                or "Could you please provide more details about your question?"
+            )
 
         elif intent == "discovery":
             state.current_intent = "discovery"
             # For spatial/zone queries, skip sensor-map response — let SPARQL handle it
             _uq = (state.messages[-1].content if state.messages else "").lower()
-            _spatial = ['zone', 'floor', 'room', 'space', 'level', 'area', 'location']
+            _spatial = ["zone", "floor", "room", "space", "level", "area", "location"]
             if any(w in _uq for w in _spatial):
                 pass  # dialogue_response intentionally not set; SPARQL node will answer
             else:
@@ -398,7 +449,8 @@ class WorkflowOrchestrator:
         elif intent == "greeting":
             state.current_intent = "greeting"
             state.intermediate_results["dialogue_response"] = (
-                direct_response or "Hello! I'm OntoSage, your smart building assistant. How can I help you today?"
+                direct_response
+                or "Hello! I'm OntoSage, your smart building assistant. How can I help you today?"
             )
 
         elif intent in ("planner",):
@@ -440,19 +492,19 @@ class WorkflowOrchestrator:
             else:
                 state.current_intent = "sparql"
             state.intermediate_results["llm_sparql_query"] = ""
-            
+
         logger.info(f"Final intent for routing: {state.current_intent}")
         return state
-    
+
     async def _sparql_node(self, state: ConversationState) -> ConversationState:
         """
         Execute ontology query using LLM-generated SPARQL or semantic agent
-        
+
         """
         logger.info("Executing SPARQL/ontology query node")
-        
+
         latest_message = state.messages[-1].content if state.messages else ""
-        
+
         # UNIFIED AGENT APPROACH:
         # Use SPARQLAgent for everything (it now handles semantic fallback internally)
         logger.info("Using Unified Ontology Agent (SPARQL + Semantic Fallback)")
@@ -466,7 +518,7 @@ class WorkflowOrchestrator:
 
         state.intermediate_results["sparql_result"] = result
         state.query_results = result.get("results", {})
-        
+
         # Set analytics_required:
         # - SPARQL's explicit False overrides dialogue True when SPARQL has a valid formatted_response
         #   (e.g. zone counts, sensor listings, floor hierarchy — no time-series data needed)
@@ -482,10 +534,13 @@ class WorkflowOrchestrator:
             if isinstance(_raw_results, dict)
             else []
         )
-        _UUID_RE = re.compile(r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$', re.IGNORECASE)
+        _UUID_RE = re.compile(
+            r"^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$", re.IGNORECASE
+        )
         _sparql_has_uuids = any(
             _UUID_RE.match(str(b.get(v, {}).get("value", "")))
-            for b in _bindings for v in b
+            for b in _bindings
+            for v in b
             if "uuid" in v.lower() or "id" in v.lower()
         )
         # ── Compliance/follow-up: recover if SPARQL found ontology vocab but no sensor UUIDs ──
@@ -495,9 +550,7 @@ class WorkflowOrchestrator:
             # SPARQL returned ontology vocabulary or empty results — no sensor data.
             # Check if the previous SQL turn left sensor readings in state.query_results.
             _saved_qr = state.intermediate_results.get("_saved_query_results")
-            _prior_rows = (
-                _saved_qr.get("data") if isinstance(_saved_qr, dict) else None
-            )
+            _prior_rows = _saved_qr.get("data") if isinstance(_saved_qr, dict) else None
             if _prior_rows:
                 # Restore prior data and route to analytics
                 state.query_results = _saved_qr
@@ -523,20 +576,26 @@ class WorkflowOrchestrator:
                     ),
                 }
                 state.analytics_required = False
-                logger.info("[compliance] No sensor UUIDs and no prior data — returning clarification")
+                logger.info(
+                    "[compliance] No sensor UUIDs and no prior data — returning clarification"
+                )
         elif not sparql_analytics and sparql_has_answer and not _sparql_has_uuids:
             # SPARQL resolved the query with no sensor UUIDs (e.g. zone counts, floor listing,
             # hierarchy) — skip SQL entirely
             state.analytics_required = False
-            logger.info("✅ SPARQL resolved query fully (no UUIDs) — overriding dialogue analytics_required=True")
+            logger.info(
+                "✅ SPARQL resolved query fully (no UUIDs) — overriding dialogue analytics_required=True"
+            )
         else:
             state.analytics_required = sparql_analytics or dialogue_analytics
-        logger.info(f"✅ Ontology Agent determined: analytics_required={state.analytics_required} "
-                    f"(sparql={sparql_analytics}, dialogue={dialogue_analytics}, "
-                    f"sparql_has_answer={sparql_has_answer}, sparql_has_uuids={_sparql_has_uuids})")
+        logger.info(
+            f"✅ Ontology Agent determined: analytics_required={state.analytics_required} "
+            f"(sparql={sparql_analytics}, dialogue={dialogue_analytics}, "
+            f"sparql_has_answer={sparql_has_answer}, sparql_has_uuids={_sparql_has_uuids})"
+        )
         if result.get("llm_reasoning"):
             logger.info(f"💭 LLM reasoning: {result.get('llm_reasoning')}")
-        
+
         # NEW: Save analytics decision and results as JSON
         if result.get("success"):
             self._save_query_output(
@@ -546,27 +605,27 @@ class WorkflowOrchestrator:
                 results=result.get("results"),
                 analytics_required=state.analytics_required,
                 llm_reasoning=result.get("llm_reasoning", ""),
-                formatted_response=result.get("formatted_response")
+                formatted_response=result.get("formatted_response"),
             )
-        
+
         return state
 
     # DEPRECATED: Old logic removed
     async def _sparql_node_legacy(self, state: ConversationState) -> ConversationState:
         pass
-    
+
     async def _sql_node(self, state: ConversationState) -> ConversationState:
         """Execute SQL query generation and execution"""
         logger.info("Executing SQL node")
-        
+
         latest_message = state.messages[-1].content if state.messages else ""
-        
+
         # Check if we have SPARQL results with UUIDs (from previous step)
         sparql_result = state.intermediate_results.get("sparql_result", {})
-        
+
         uuids = []
         storage_map = {}
-        
+
         if state.analytics_required and sparql_result.get("success"):
             try:
                 # Handle standard SPARQL JSON results
@@ -575,33 +634,35 @@ class WorkflowOrchestrator:
                 for binding in bindings:
                     current_uuid = None
                     current_storage = None
-                    
+
                     # Look for 'uuid' or 'id' variable — validate with UUID4 regex
                     _UUID_RE = re.compile(
-                        r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$',
-                        re.IGNORECASE
+                        r"^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                        re.IGNORECASE,
                     )
                     for var in binding:
                         if "uuid" in var.lower() or "id" in var.lower():
                             val = binding[var]["value"]
                             if val and _UUID_RE.match(val):
                                 current_uuid = val
-                        
+
                         # Look for 'storage' variable
                         if "storage" in var.lower():
                             current_storage = binding[var]["value"]
-                    
+
                     if current_uuid:
                         uuids.append(current_uuid)
                         if current_storage:
                             storage_map[current_uuid] = current_storage
-                
+
                 uuids = list(set(uuids))
 
                 # Disambiguate by sensor type if the user asked for a specific kind (e.g., temperature)
                 preferred_kind = self._infer_query_kind(latest_message)
                 if preferred_kind and sensor_metadata:
-                    filtered = {u: m for u, m in sensor_metadata.items() if m.get("kind") == preferred_kind}
+                    filtered = {
+                        u: m for u, m in sensor_metadata.items() if m.get("kind") == preferred_kind
+                    }
                     if filtered:
                         uuids = [u for u in uuids if u in filtered]
                         storage_map = {u: s for u, s in storage_map.items() if u in uuids}
@@ -614,23 +675,28 @@ class WorkflowOrchestrator:
                 logger.warning(f"Failed to extract UUIDs from SPARQL result: {e}")
 
         if uuids:
-            logger.info("="*80)
+            logger.info("=" * 80)
             logger.info(f"🔍 Found {len(uuids)} UUIDs from SPARQL results, fetching data...")
             logger.info("UUID → Storage Mapping:")
             for uuid in uuids:
-                storage = storage_map.get(uuid, 'Unknown')
+                storage = storage_map.get(uuid, "Unknown")
                 logger.info(f"   • {uuid} → {storage}")
-            logger.info("="*80)
+            logger.info("=" * 80)
             start_date = state.intermediate_results.get("start_date")
             end_date = state.intermediate_results.get("end_date")
-            result = await self.sql_agent.fetch_data_for_uuids(uuids, latest_message, storage_map, start_date, end_date)
+            result = await self.sql_agent.fetch_data_for_uuids(
+                uuids, latest_message, storage_map, start_date, end_date
+            )
         elif sparql_result.get("method") == "semantic_rag" or (
-            sparql_result.get("success") and not sparql_result.get("analytics_required", True)
+            sparql_result.get("success")
+            and not sparql_result.get("analytics_required", True)
             and sparql_result.get("formatted_response")
         ):
             # SPARQL fell back to semantic RAG (no sensor UUIDs for this query type).
             # Skip text-to-SQL — the semantic answer already covers what's available.
-            logger.info("No UUIDs and SPARQL used semantic RAG — skipping text-to-SQL, using semantic answer")
+            logger.info(
+                "No UUIDs and SPARQL used semantic RAG — skipping text-to-SQL, using semantic answer"
+            )
             result = {
                 "success": True,
                 "query": "SEMANTIC_RAG_NO_UUIDS",
@@ -643,9 +709,9 @@ class WorkflowOrchestrator:
             # Fallback to standard SQL generation (text-to-SQL)
             logger.info("No UUIDs found or not analytics flow, using standard Text-to-SQL")
             result = await self.sql_agent.generate_and_execute(state, latest_message)
-        
+
         state.intermediate_results["sql_result"] = result
-        
+
         # Handle SQL failures properly
         if result.get("success"):
             state.query_results = result.get("results", {"data": []})
@@ -662,31 +728,35 @@ class WorkflowOrchestrator:
         else:
             state.query_results = {"data": []}  # Empty but valid structure
             logger.error(f"SQL failed: {result.get('error', 'Unknown error')}")
-        
+
         # Only mark analytics_required for intents that actually need data processing
         # Don't override False set by the semantic-RAG shortcut above.
         _analytics_intents = {"analytics", "compare", "trend", "recommend", "compliance", "anomaly"}
         if state.current_intent in _analytics_intents and state.analytics_required:
             # analytics_required already True (or set by UUID path) — keep it
-            logger.info(f"✅ Intent '{state.current_intent}' requires analytics: analytics_required=True")
+            logger.info(
+                f"✅ Intent '{state.current_intent}' requires analytics: analytics_required=True"
+            )
         elif state.current_intent in _analytics_intents and not state.analytics_required:
             # Semantic-RAG shortcut already set analytics_required=False — respect it
-            logger.info(f"ℹ️  Intent '{state.current_intent}' — analytics skipped (semantic RAG answered)")
+            logger.info(
+                f"ℹ️  Intent '{state.current_intent}' — analytics skipped (semantic RAG answered)"
+            )
         else:
             state.analytics_required = False
             logger.info(f"ℹ️  Intent '{state.current_intent}' does not require analytics post-SQL")
-        
+
         return state
-    
+
     async def _analytics_node(self, state: ConversationState) -> ConversationState:
         """Execute analytics code generation and execution"""
-        logger.info("="*80)
+        logger.info("=" * 80)
         logger.info("🔬 Executing Analytics Node")
-        logger.info("="*80)
-        
+        logger.info("=" * 80)
+
         latest_message = state.messages[-1].content if state.messages else ""
         data = state.query_results
-        
+
         # Extract sensor metadata (UUID to human-readable label mapping) from SPARQL results
         sensor_metadata = state.intermediate_results.get("sensor_metadata")
         if not sensor_metadata:
@@ -695,41 +765,43 @@ class WorkflowOrchestrator:
             if sparql_result.get("success"):
                 bindings = sparql_result.get("results", {}).get("results", {}).get("bindings", [])
                 sensor_metadata = self._build_sensor_metadata_from_bindings(bindings)
-        
+
         logger.info(f"📋 Extracted sensor metadata for {len(sensor_metadata)} sensors")
         for uuid, meta in sensor_metadata.items():
             logger.info(f"   • {uuid[:30]}... → {meta['label']}")
-        
+
         # Store sensor metadata for response formatting
         state.intermediate_results["sensor_metadata"] = sensor_metadata
-        
+
         # Save data to standard JSON format locally for analytics
         data_filename = "current_data.json"
         try:
             import json
             import os
-            
+
             # Ensure directory exists
             os.makedirs(settings.OUTPUT_DATA_DIR, exist_ok=True)
 
             # Standard format: {"data": [...], "metadata": {...}}
             standard_data = {
                 "data": data.get("data", []) if isinstance(data, dict) else data,
-                "metadata": sensor_metadata
+                "metadata": sensor_metadata,
             }
 
             # Save to shared volume path with unique filename per user/conversation
             # This ensures data isolation between users
-            safe_user_id = "".join(c for c in state.user_id if c.isalnum() or c in ('-', '_'))
-            safe_conv_id = "".join(c for c in state.conversation_id if c.isalnum() or c in ('-', '_'))
+            safe_user_id = "".join(c for c in state.user_id if c.isalnum() or c in ("-", "_"))
+            safe_conv_id = "".join(
+                c for c in state.conversation_id if c.isalnum() or c in ("-", "_")
+            )
             data_filename = f"{safe_user_id}_{safe_conv_id}_data.json"
             data_path = f"{settings.OUTPUT_DATA_DIR}/{data_filename}"
-            
+
             with open(data_path, "w", encoding="utf-8") as f:
                 json.dump(standard_data, f, indent=2, default=str)
-            
+
             logger.info(f"💾 Saved analytics data to {data_path}")
-            
+
         except Exception as e:
             logger.error(f"Failed to save analytics data locally: {e}")
             # Use a unique fallback name to prevent concurrent-request collisions
@@ -742,7 +814,9 @@ class WorkflowOrchestrator:
             data=data,
         )
         if det_result:
-            logger.info(f"✅ Deterministic analytics handled intent='{state.current_intent}' (saved LLM call)")
+            logger.info(
+                f"✅ Deterministic analytics handled intent='{state.current_intent}' (saved LLM call)"
+            )
             state.intermediate_results["analytics_result"] = {
                 "formatted_response": det_result.formatted_response,
                 "success": det_result.success,
@@ -755,7 +829,9 @@ class WorkflowOrchestrator:
             return state
 
         # Fallback: LLM-generated Python code via analytics_agent
-        result = await self.analytics_agent.analyze(state, latest_message, data, sensor_metadata, data_filename)
+        result = await self.analytics_agent.analyze(
+            state, latest_message, data, sensor_metadata, data_filename
+        )
 
         state.intermediate_results["analytics_result"] = result
 
@@ -767,15 +843,18 @@ class WorkflowOrchestrator:
 
     _INTENT_TO_ANALYSIS: dict = {
         "compliance": "compliance",
-        "trend":      "trend",
+        "trend": "trend",
     }
 
     _QUERY_KEYWORDS_TO_ANALYSIS: list = [
-        ({"comfort", "ashrae", "well", "en15251", "temperature range", "humidity range"}, "comfort"),
-        ({"energy", "kwh", "watt", "power", "electricity", "peak", "eui"},               "energy"),
-        ({"iaq", "air quality", "co2", "co₂", "voc", "pm2", "pm10"},                     "iaq"),
-        ({"trend", "increasing", "decreasing", "mann-kendall", "slope"},                  "trend"),
-        ({"comply", "compliance", "standard", "regulation", "breeam", "leed"},            "compliance"),
+        (
+            {"comfort", "ashrae", "well", "en15251", "temperature range", "humidity range"},
+            "comfort",
+        ),
+        ({"energy", "kwh", "watt", "power", "electricity", "peak", "eui"}, "energy"),
+        ({"iaq", "air quality", "co2", "co₂", "voc", "pm2", "pm10"}, "iaq"),
+        ({"trend", "increasing", "decreasing", "mann-kendall", "slope"}, "trend"),
+        ({"comply", "compliance", "standard", "regulation", "breeam", "leed"}, "compliance"),
     ]
 
     async def _try_deterministic_analytics(self, intent: str, query: str, data) -> object:
@@ -823,9 +902,12 @@ class WorkflowOrchestrator:
                     _latest = rows[-1] if rows else {}
                     _readings = {}
                     _param_map = {
-                        "temperature": "temp_c", "co2": "co2_ppm",
-                        "humidity": "humidity_rh", "pm25": "pm25_ugm3",
-                        "pm10": "pm10_ugm3", "voc": "tvoc_ppb",
+                        "temperature": "temp_c",
+                        "co2": "co2_ppm",
+                        "humidity": "humidity_rh",
+                        "pm25": "pm25_ugm3",
+                        "pm10": "pm10_ugm3",
+                        "voc": "tvoc_ppb",
                     }
                     for col, pkey in _param_map.items():
                         for k, v in _latest.items():
@@ -843,7 +925,9 @@ class WorkflowOrchestrator:
                                 if result.metrics is None:
                                     result.metrics = {}
                                 result.metrics[f"standards_{std_id}"] = std_check
-                                logger.info(f"CAP-04: {std_id} compliance: {std_check['overall_status']}")
+                                logger.info(
+                                    f"CAP-04: {std_id} compliance: {std_check['overall_status']}"
+                                )
                                 break
                 except Exception as _std_err:
                     logger.debug(f"Standards engine augmentation skipped: {_std_err}")
@@ -852,24 +936,24 @@ class WorkflowOrchestrator:
         except Exception as e:
             logger.warning(f"Deterministic analytics failed ({analysis_type}): {e}")
             return None
-    
+
     async def _visualization_node(self, state: ConversationState) -> ConversationState:
         """Execute visualization generation"""
         logger.info("Executing visualization node")
-        
+
         latest_message = state.messages[-1].content if state.messages else ""
         data = state.query_results
-        
+
         result = await self.viz_agent.create_visualization(state, latest_message, data)
-        
+
         state.intermediate_results["viz_result"] = result
-        
+
         return state
-    
+
     async def _response_node(self, state: ConversationState) -> ConversationState:
         """Format final response — with response-cache store after generation."""
         logger.info("Executing response node")
-        
+
         # Gather all results
         sparql_result = state.intermediate_results.get("sparql_result", {})
         sql_result = state.intermediate_results.get("sql_result", {})
@@ -877,7 +961,7 @@ class WorkflowOrchestrator:
         viz_result = state.intermediate_results.get("viz_result", {})
         document_result = state.intermediate_results.get("document_result", {})
         dialogue_response = state.intermediate_results.get("dialogue_response")
-        
+
         # Build response - Prioritize most downstream result
         media_payload = None
         if dialogue_response:
@@ -887,8 +971,9 @@ class WorkflowOrchestrator:
             final_response = viz_result["formatted_response"]
             media_payload = viz_result.get("media")
         # Phase 4 results (highest priority after viz)
-        elif state.intermediate_results.get("planner_result", {}).get("formatted_response") or \
-             state.intermediate_results.get("planner_result", {}).get("formatted_text"):
+        elif state.intermediate_results.get("planner_result", {}).get(
+            "formatted_response"
+        ) or state.intermediate_results.get("planner_result", {}).get("formatted_text"):
             pr = state.intermediate_results["planner_result"]
             final_response = pr.get("formatted_response") or pr.get("formatted_text")
         elif document_result.get("success"):
@@ -916,7 +1001,9 @@ class WorkflowOrchestrator:
             if analytics_node_metadata:
                 for uuid, metadata in analytics_node_metadata.items():
                     if uuid in final_response:
-                        final_response = final_response.replace(uuid, metadata.get("label", "Unknown Sensor"))
+                        final_response = final_response.replace(
+                            uuid, metadata.get("label", "Unknown Sensor")
+                        )
         elif sql_result.get("formatted_response"):
             final_response = sql_result["formatted_response"]
         elif sparql_result.get("formatted_response"):
@@ -924,7 +1011,6 @@ class WorkflowOrchestrator:
         else:
             final_response = "I processed your request, but couldn't generate a response."
 
-        
         # If any nodes degraded, append a brief notice so the user knows
         degraded = state.intermediate_results.get("degraded_services")
         if degraded:
@@ -934,9 +1020,7 @@ class WorkflowOrchestrator:
 
         # Apply persona formatting
         final_response = await self.dialogue_agent.format_response(
-            state,
-            final_response,
-            state.current_intent
+            state, final_response, state.current_intent
         )
 
         # Phase 7.2: Append proactive follow-up suggestions based on intent
@@ -949,6 +1033,7 @@ class WorkflowOrchestrator:
         if persona and persona != "general":
             try:
                 from orchestrator.llm_manager import llm_manager as _llm
+
                 final_response = await self._persona_adapter.enhance(
                     final_response,
                     persona=persona,
@@ -968,11 +1053,13 @@ class WorkflowOrchestrator:
                 logger.debug(f"i18n output translation skipped: {_i18n_out_err}")
 
         # Add to messages
-        state.messages.append(Message(
-            role="assistant",
-            content=final_response,
-            metadata={"media": media_payload} if media_payload else None
-        ))
+        state.messages.append(
+            Message(
+                role="assistant",
+                content=final_response,
+                metadata={"media": media_payload} if media_payload else None,
+            )
+        )
 
         # B.2: Store in response cache (non-blocking, best-effort)
         if self.response_cache:
@@ -1005,8 +1092,15 @@ class WorkflowOrchestrator:
                 logger.debug(f"Agent memory store skipped: {_mem_err}")
 
         # Phase 5.5: Clean up bulky intermediate results to reduce Redis state size
-        _bulky_keys = ["sparql_result", "sql_result", "analytics_result", "viz_result",
-                       "sensor_metadata", "degraded_services", "memory_context"]
+        _bulky_keys = [
+            "sparql_result",
+            "sql_result",
+            "analytics_result",
+            "viz_result",
+            "sensor_metadata",
+            "degraded_services",
+            "memory_context",
+        ]
         for key in _bulky_keys:
             state.intermediate_results.pop(key, None)
 
@@ -1015,19 +1109,21 @@ class WorkflowOrchestrator:
     def _handle_sensor_discovery(self, discovery_filter: str = None, entities: list = None) -> str:
         """
         Build a sensor discovery response from the cached sensor_map.
-        
+
         Args:
             discovery_filter: Optional keyword to filter sensors (e.g. "temperature", "zone 5")
             entities: Optional entity list from intent detection
-            
+
         Returns:
             Formatted string listing available sensors
         """
         if not self.sensor_map:
-            return ("I don't have a cached sensor catalogue right now. "
-                    "You can ask me about specific sensor types like temperature, "
-                    "humidity, or air quality sensors.")
-        
+            return (
+                "I don't have a cached sensor catalogue right now. "
+                "You can ask me about specific sensor types like temperature, "
+                "humidity, or air quality sensors."
+            )
+
         # Deduplicate: sensor_map has multiple key formats (name, label, URI) pointing
         # to the same sensor. Collect unique sensors by their URI.
         unique_sensors = {}
@@ -1039,53 +1135,65 @@ class WorkflowOrchestrator:
                     "uuid": info.get("uuid", ""),
                     "storage": info.get("storage", ""),
                 }
-        
+
         # Apply filter
         filter_text = discovery_filter or ""
         if entities and not filter_text:
             filter_text = " ".join(entities)
         filter_lower = filter_text.lower().strip()
-        
+
         if filter_lower:
             filtered = {
-                uri: s for uri, s in unique_sensors.items()
+                uri: s
+                for uri, s in unique_sensors.items()
                 if filter_lower in s["label"].lower() or filter_lower in uri.lower()
             }
         else:
             filtered = unique_sensors
-        
+
         total = len(unique_sensors)
         matched = len(filtered)
-        
+
         if matched == 0:
             # No match — show summary of available types
             type_counts = self._count_sensor_types(unique_sensors)
-            type_summary = ", ".join(f"**{t}** ({c})" for t, c in sorted(type_counts.items(), key=lambda x:-x[1])[:10])
-            return (f"I couldn't find sensors matching **\"{filter_text}\"**.\n\n"
-                    f"I have **{total}** sensors total. Available types: {type_summary}.\n\n"
-                    f"Try asking about a specific type (e.g., *\"list all temperature sensors\"*).")
-        
+            type_summary = ", ".join(
+                f"**{t}** ({c})" for t, c in sorted(type_counts.items(), key=lambda x: -x[1])[:10]
+            )
+            return (
+                f'I couldn\'t find sensors matching **"{filter_text}"**.\n\n'
+                f"I have **{total}** sensors total. Available types: {type_summary}.\n\n"
+                f'Try asking about a specific type (e.g., *"list all temperature sensors"*).'
+            )
+
         # If too many results, show a grouped summary
         if matched > 20:
             type_counts = self._count_sensor_types(filtered)
-            type_summary = "\n".join(f"- **{t}**: {c} sensors" for t, c in sorted(type_counts.items(), key=lambda x:-x[1]))
-            filter_note = f" matching **\"{filter_text}\"**" if filter_lower else ""
-            return (f"Found **{matched}** sensors{filter_note} (out of {total} total):\n\n"
-                    f"{type_summary}\n\n"
-                    f"To see specific sensors, ask something like *\"list all Air Temperature sensors\"* "
-                    f"or *\"what sensors are in zone 5?\"*.")
-        
+            type_summary = "\n".join(
+                f"- **{t}**: {c} sensors"
+                for t, c in sorted(type_counts.items(), key=lambda x: -x[1])
+            )
+            filter_note = f' matching **"{filter_text}"**' if filter_lower else ""
+            return (
+                f"Found **{matched}** sensors{filter_note} (out of {total} total):\n\n"
+                f"{type_summary}\n\n"
+                f'To see specific sensors, ask something like *"list all Air Temperature sensors"* '
+                f'or *"what sensors are in zone 5?"*.'
+            )
+
         # Show individual sensors
         lines = []
         for uri, s in sorted(filtered.items(), key=lambda x: x[1]["label"]):
             lines.append(f"- **{s['label']}** (storage: {s['storage'] or 'N/A'})")
-        
+
         sensor_list = "\n".join(lines)
-        filter_note = f" matching **\"{filter_text}\"**" if filter_lower else ""
-        return (f"Found **{matched}** sensors{filter_note}:\n\n{sensor_list}\n\n"
-                f"You can ask about any of these sensors, for example: "
-                f"*\"What is the current reading of {list(filtered.values())[0]['label']}?\"*")
-    
+        filter_note = f' matching **"{filter_text}"**' if filter_lower else ""
+        return (
+            f"Found **{matched}** sensors{filter_note}:\n\n{sensor_list}\n\n"
+            f"You can ask about any of these sensors, for example: "
+            f"*\"What is the current reading of {list(filtered.values())[0]['label']}?\"*"
+        )
+
     @staticmethod
     def _count_sensor_types(sensors: dict) -> dict:
         """Group sensors by type (e.g. Air_Temperature, Humidity, CO2)"""
@@ -1110,14 +1218,25 @@ class WorkflowOrchestrator:
         # Exception: discovery with spatial/zone keywords should run SPARQL
         if intent == "discovery":
             user_query = (state.messages[-1].content if state.messages else "").lower()
-            spatial_words = ['zone', 'floor', 'room', 'space', 'level', 'area', 'location',
-                             'list zone', 'list floor', 'list room', 'how many zone',
-                             'how many floor', 'how many room']
+            spatial_words = [
+                "zone",
+                "floor",
+                "room",
+                "space",
+                "level",
+                "area",
+                "location",
+                "list zone",
+                "list floor",
+                "list room",
+                "how many zone",
+                "how many floor",
+                "how many room",
+            ]
             if any(w in user_query for w in spatial_words):
                 return "sparql"
             return "response"
-        if intent in ["greeting", "clarification", "unknown",
-                      "general_knowledge", "control"]:
+        if intent in ["greeting", "clarification", "unknown", "general_knowledge", "control"]:
             return "response"
         # Phase 4 multi-agent paths
         elif intent == "planner":
@@ -1136,7 +1255,9 @@ class WorkflowOrchestrator:
         elif intent in ["analytics", "compare", "trend", "recommend", "compliance"]:
             # Short-circuit: skip SPARQL+SQL when prior data already covers the query
             if state.intermediate_results.get("use_existing_query_results"):
-                logger.info("[route] Compliance/follow-up with existing data — routing directly to analytics")
+                logger.info(
+                    "[route] Compliance/follow-up with existing data — routing directly to analytics"
+                )
                 return "analytics"
             return "sparql"  # SPARQL → SQL → Analytics
         elif intent == "visualization":
@@ -1145,7 +1266,7 @@ class WorkflowOrchestrator:
             return "sparql"
         else:
             return "response"
-    
+
     # ── Negation-aware visualization intent detection ─────────────────────────
     #
     # _VIZ_KEYWORDS  — any word/phrase that signals "I want a visual output"
@@ -1156,140 +1277,320 @@ class WorkflowOrchestrator:
     #   2. If ANY positive keyword appears (and no negation) → True.
     #   3. Otherwise → False.
 
-    _VIZ_KEYWORDS = frozenset([
-        # --- direct chart/plot/graph requests ---
-        "plot", "plots", "plotted", "plotting",
-        "chart", "charts", "charted", "charting",
-        "graph", "graphs", "graphed", "graphing",
-        "diagram", "diagrams",
-        "figure", "figures",
-        "visualize", "visualise", "visualization", "visualisation",
-        "visualizing", "visualising",
-        "draw", "drawing", "render", "rendered",
-        "display", "displays",
-
-        # --- specific chart types ---
-        "line chart", "line graph", "line plot",
-        "bar chart", "bar graph", "bar plot", "histogram",
-        "scatter plot", "scatter chart", "scatter graph",
-        "pie chart", "pie graph",
-        "area chart", "area graph",
-        "heatmap", "heat map",
-        "box plot", "boxplot", "violin plot",
-        "time series", "time-series chart", "time series chart",
-        "sparkline", "candlestick",
-        "waterfall chart", "gantt chart",
-        "bubble chart", "bubble plot",
-        "radar chart", "spider chart",
-        "map", "geo map", "choropleth",
-        "dashboard", "panel",
-
-        # --- "show me" intent with visual objects ---
-        "show graph", "show chart", "show plot", "show figure",
-        "show me the graph", "show me the chart", "show me the plot",
-        "show me a graph", "show me a chart", "show me a plot",
-        "show trend", "show the trend", "show trends",
-        "show pattern", "show patterns",
-        "show distribution", "show correlation",
-        "show comparison", "show over time",
-        "show visually", "show graphically",
-        "show me visually", "show me graphically",
-        "see the graph", "see the chart", "see the plot",
-        "view the graph", "view the chart",
-
-        # --- "create / generate / make / produce" intent ---
-        "create chart", "create graph", "create plot", "create visualization",
-        "generate chart", "generate graph", "generate plot", "generate visualization",
-        "generate a chart", "generate a graph", "generate a plot",
-        "make chart", "make graph", "make plot", "make a chart",
-        "make me a chart", "make me a graph", "make me a plot",
-        "produce chart", "produce graph", "produce visualization",
-        "build chart", "build graph",
-        "draw chart", "draw graph", "draw a chart",
-
-        # --- image / picture requests ---
-        "image", "picture", "visual", "visuals", "illustration",
-        "screenshot", "snapshot", "thumbnail",
-
-        # --- trend / pattern requests implying visual output ---
-        "trend chart", "trend graph", "trend line", "trendline",
-        "show the trend line", "show trendline",
-        "plot the trend", "graph the trend", "chart the trend",
-
-        # --- explicit output format ---
-        "png", "svg", "jpeg", "pdf chart", "pdf graph",
-        "export chart", "export graph", "export plot",
-        "save chart", "save graph", "save plot",
-        "embed chart", "embed graph",
-
-        # --- implicit visual intent phrases ---
-        "graphically", "visually", "in a chart", "in a graph",
-        "as a chart", "as a graph", "as a plot", "as a figure",
-        "into a chart", "into a graph",
-        "overlay", "annotate on chart",
-        "compare visually", "plot comparison",
-    ])
+    _VIZ_KEYWORDS = frozenset(
+        [
+            # --- direct chart/plot/graph requests ---
+            "plot",
+            "plots",
+            "plotted",
+            "plotting",
+            "chart",
+            "charts",
+            "charted",
+            "charting",
+            "graph",
+            "graphs",
+            "graphed",
+            "graphing",
+            "diagram",
+            "diagrams",
+            "figure",
+            "figures",
+            "visualize",
+            "visualise",
+            "visualization",
+            "visualisation",
+            "visualizing",
+            "visualising",
+            "draw",
+            "drawing",
+            "render",
+            "rendered",
+            "display",
+            "displays",
+            # --- specific chart types ---
+            "line chart",
+            "line graph",
+            "line plot",
+            "bar chart",
+            "bar graph",
+            "bar plot",
+            "histogram",
+            "scatter plot",
+            "scatter chart",
+            "scatter graph",
+            "pie chart",
+            "pie graph",
+            "area chart",
+            "area graph",
+            "heatmap",
+            "heat map",
+            "box plot",
+            "boxplot",
+            "violin plot",
+            "time series",
+            "time-series chart",
+            "time series chart",
+            "sparkline",
+            "candlestick",
+            "waterfall chart",
+            "gantt chart",
+            "bubble chart",
+            "bubble plot",
+            "radar chart",
+            "spider chart",
+            "map",
+            "geo map",
+            "choropleth",
+            "dashboard",
+            "panel",
+            # --- "show me" intent with visual objects ---
+            "show graph",
+            "show chart",
+            "show plot",
+            "show figure",
+            "show me the graph",
+            "show me the chart",
+            "show me the plot",
+            "show me a graph",
+            "show me a chart",
+            "show me a plot",
+            "show trend",
+            "show the trend",
+            "show trends",
+            "show pattern",
+            "show patterns",
+            "show distribution",
+            "show correlation",
+            "show comparison",
+            "show over time",
+            "show visually",
+            "show graphically",
+            "show me visually",
+            "show me graphically",
+            "see the graph",
+            "see the chart",
+            "see the plot",
+            "view the graph",
+            "view the chart",
+            # --- "create / generate / make / produce" intent ---
+            "create chart",
+            "create graph",
+            "create plot",
+            "create visualization",
+            "generate chart",
+            "generate graph",
+            "generate plot",
+            "generate visualization",
+            "generate a chart",
+            "generate a graph",
+            "generate a plot",
+            "make chart",
+            "make graph",
+            "make plot",
+            "make a chart",
+            "make me a chart",
+            "make me a graph",
+            "make me a plot",
+            "produce chart",
+            "produce graph",
+            "produce visualization",
+            "build chart",
+            "build graph",
+            "draw chart",
+            "draw graph",
+            "draw a chart",
+            # --- image / picture requests ---
+            "image",
+            "picture",
+            "visual",
+            "visuals",
+            "illustration",
+            "screenshot",
+            "snapshot",
+            "thumbnail",
+            # --- trend / pattern requests implying visual output ---
+            "trend chart",
+            "trend graph",
+            "trend line",
+            "trendline",
+            "show the trend line",
+            "show trendline",
+            "plot the trend",
+            "graph the trend",
+            "chart the trend",
+            # --- explicit output format ---
+            "png",
+            "svg",
+            "jpeg",
+            "pdf chart",
+            "pdf graph",
+            "export chart",
+            "export graph",
+            "export plot",
+            "save chart",
+            "save graph",
+            "save plot",
+            "embed chart",
+            "embed graph",
+            # --- implicit visual intent phrases ---
+            "graphically",
+            "visually",
+            "in a chart",
+            "in a graph",
+            "as a chart",
+            "as a graph",
+            "as a plot",
+            "as a figure",
+            "into a chart",
+            "into a graph",
+            "overlay",
+            "annotate on chart",
+            "compare visually",
+            "plot comparison",
+        ]
+    )
 
     _VIZ_NEGATIONS = (
         # --- direct negations ---
-        "do not", "don't", "dont", "no need", "not needed",
-        "don't need", "do not need", "i don't want", "i do not want",
-        "no, don't", "please don't", "please do not",
-
+        "do not",
+        "don't",
+        "dont",
+        "no need",
+        "not needed",
+        "don't need",
+        "do not need",
+        "i don't want",
+        "i do not want",
+        "no, don't",
+        "please don't",
+        "please do not",
         # --- "no <viz-word>" patterns ---
-        "no chart", "no charts", "no graph", "no graphs",
-        "no plot", "no plots", "no figure", "no figures",
-        "no image", "no images", "no picture", "no pictures",
-        "no visual", "no visuals", "no visualization", "no visualisation",
-        "no diagram", "no diagrams", "no display",
-
+        "no chart",
+        "no charts",
+        "no graph",
+        "no graphs",
+        "no plot",
+        "no plots",
+        "no figure",
+        "no figures",
+        "no image",
+        "no images",
+        "no picture",
+        "no pictures",
+        "no visual",
+        "no visuals",
+        "no visualization",
+        "no visualisation",
+        "no diagram",
+        "no diagrams",
+        "no display",
         # --- "without <viz-word>" patterns ---
-        "without chart", "without charts", "without graph", "without graphs",
-        "without plot", "without plots", "without image", "without images",
-        "without visual", "without visualization", "without visualisation",
-        "without diagram", "without figure",
-
+        "without chart",
+        "without charts",
+        "without graph",
+        "without graphs",
+        "without plot",
+        "without plots",
+        "without image",
+        "without images",
+        "without visual",
+        "without visualization",
+        "without visualisation",
+        "without diagram",
+        "without figure",
         # --- "skip/omit/exclude/hide/remove <viz-word>" ---
-        "skip chart", "skip graph", "skip plot", "skip visual",
-        "skip the chart", "skip the graph", "skip the plot",
-        "omit chart", "omit graph", "omit plot", "omit visual",
-        "omit the chart", "omit the graph", "omit the plot",
-        "exclude chart", "exclude graph", "exclude plot",
-        "hide chart", "hide graph", "hide plot",
-        "remove chart", "remove graph", "remove plot",
-        "suppress chart", "suppress graph", "suppress plot",
-        "avoid chart", "avoid graph", "avoid plot",
-
+        "skip chart",
+        "skip graph",
+        "skip plot",
+        "skip visual",
+        "skip the chart",
+        "skip the graph",
+        "skip the plot",
+        "omit chart",
+        "omit graph",
+        "omit plot",
+        "omit visual",
+        "omit the chart",
+        "omit the graph",
+        "omit the plot",
+        "exclude chart",
+        "exclude graph",
+        "exclude plot",
+        "hide chart",
+        "hide graph",
+        "hide plot",
+        "remove chart",
+        "remove graph",
+        "remove plot",
+        "suppress chart",
+        "suppress graph",
+        "suppress plot",
+        "avoid chart",
+        "avoid graph",
+        "avoid plot",
         # --- "not a/the <viz-word>" ---
-        "not a chart", "not a graph", "not a plot", "not a figure",
-        "not the chart", "not the graph", "not the plot",
-
+        "not a chart",
+        "not a graph",
+        "not a plot",
+        "not a figure",
+        "not the chart",
+        "not the graph",
+        "not the plot",
         # --- "text-only / numbers-only / stats-only" ---
-        "just text", "text only", "text-only",
-        "numbers only", "numbers-only", "just numbers",
-        "stats only", "stats-only", "just stats",
-        "data only", "data-only", "just data",
-        "raw data only", "raw numbers only",
-        "words only", "in words",
-        "no visuals", "purely text", "plain text",
-        "just the numbers", "just statistics", "just the stats",
-
+        "just text",
+        "text only",
+        "text-only",
+        "numbers only",
+        "numbers-only",
+        "just numbers",
+        "stats only",
+        "stats-only",
+        "just stats",
+        "data only",
+        "data-only",
+        "just data",
+        "raw data only",
+        "raw numbers only",
+        "words only",
+        "in words",
+        "no visuals",
+        "purely text",
+        "plain text",
+        "just the numbers",
+        "just statistics",
+        "just the stats",
         # --- "don't show" patterns ---
-        "don't show a chart", "do not show a chart",
-        "don't show a graph", "do not show a graph",
-        "don't show a plot", "do not show a plot",
-        "don't show the chart", "do not show the chart",
-        "don't display", "do not display",
-
+        "don't show a chart",
+        "do not show a chart",
+        "don't show a graph",
+        "do not show a graph",
+        "don't show a plot",
+        "do not show a plot",
+        "don't show the chart",
+        "do not show the chart",
+        "don't display",
+        "do not display",
         # --- informal negations ---
-        "no viz", "no charts please", "no graphs please",
-        "no plots please", "charts not needed", "graph not needed",
-        "plot not needed", "chart not required", "graph not required",
-        "chart not necessary", "visualization not needed",
-        "i don't need a chart", "i don't need a graph",
-        "i do not need a chart", "i do not need a graph",
-        "no need for a chart", "no need for a graph",
-        "no need for a plot", "no need for visualization",
+        "no viz",
+        "no charts please",
+        "no graphs please",
+        "no plots please",
+        "charts not needed",
+        "graph not needed",
+        "plot not needed",
+        "chart not required",
+        "graph not required",
+        "chart not necessary",
+        "visualization not needed",
+        "i don't need a chart",
+        "i don't need a graph",
+        "i do not need a chart",
+        "i do not need a graph",
+        "no need for a chart",
+        "no need for a graph",
+        "no need for a plot",
+        "no need for visualization",
     )
 
     @classmethod
@@ -1327,15 +1628,20 @@ class WorkflowOrchestrator:
     def _route_from_data_node(self, state: ConversationState) -> str:
         """Route from SPARQL based on whether analytics/visualization is needed"""
         # Short-circuit: compliance/follow-up recovered prior sensor data → go direct to analytics
-        if state.intermediate_results.get("use_existing_query_results") and state.analytics_required:
+        if (
+            state.intermediate_results.get("use_existing_query_results")
+            and state.analytics_required
+        ):
             logger.info("[route] SPARQL→Analytics (prior data recovered for compliance)")
             return "analytics"
 
         # Check if analytics is required (and we are coming from SPARQL)
         # Allow routing to SQL if intent is 'sparql' OR 'analytics'
-        if state.analytics_required and (state.current_intent == "sparql" or state.current_intent == "analytics"):
-             logger.info("Routing SPARQL -> SQL for data fetching (analytics=True)")
-             return "sql"
+        if state.analytics_required and (
+            state.current_intent == "sparql" or state.current_intent == "analytics"
+        ):
+            logger.info("Routing SPARQL -> SQL for data fetching (analytics=True)")
+            return "sql"
 
         latest_message = state.messages[-1].content if state.messages else ""
         if self._user_wants_visualization(latest_message):
@@ -1389,7 +1695,15 @@ class WorkflowOrchestrator:
         if fmt in ("pdf", "docx", "html"):
             return True
         msg = (state.messages[-1].content if state.messages else "").lower()
-        keywords = ["pdf", "docx", "word document", "download report", "report file", "formal report", "document"]
+        keywords = [
+            "pdf",
+            "docx",
+            "word document",
+            "download report",
+            "report file",
+            "formal report",
+            "document",
+        ]
         return any(k in msg for k in keywords)
 
     # ------------------------------------------------------------------
@@ -1412,8 +1726,10 @@ class WorkflowOrchestrator:
         sparql_result = state.intermediate_results.get("sparql_result")
         export_fmt = state.intermediate_results.get("export_format")
         result = await self.report_agent.generate(
-            state, latest_message,
-            sensor_data=sql_result, metadata=sparql_result,
+            state,
+            latest_message,
+            sensor_data=sql_result,
+            metadata=sparql_result,
             export_format=export_fmt,
         )
         state.intermediate_results["report_result"] = result
@@ -1450,14 +1766,17 @@ class WorkflowOrchestrator:
 
         sql_result = state.intermediate_results.get("sql_result") or {}
         # Extract raw rows list from sql_result (result.results.data)
-        rows = sql_result.get("results", {}).get("data", []) or \
-               sql_result.get("data") or sql_result.get("rows") or []
+        rows = (
+            sql_result.get("results", {}).get("data", [])
+            or sql_result.get("data")
+            or sql_result.get("rows")
+            or []
+        )
         if not rows and isinstance(sql_result, list):
             rows = sql_result
 
         result = await self.export_agent.export(
-            data=rows, label="sensor_export", fmt=fmt,
-            title=latest_message[:80]
+            data=rows, label="sensor_export", fmt=fmt, title=latest_message[:80]
         )
         state.intermediate_results["export_result"] = result
         return state
@@ -1500,7 +1819,13 @@ class WorkflowOrchestrator:
             return "air_quality"
         if "occupancy" in text or "occupant" in text:
             return "occupancy"
-        if "energy" in text or "electric" in text or "power" in text or "kwh" in text or "kw" in text:
+        if (
+            "energy" in text
+            or "electric" in text
+            or "power" in text
+            or "kwh" in text
+            or "kw" in text
+        ):
             return "energy"
         if "pressure" in text:
             return "pressure"
@@ -1547,8 +1872,12 @@ class WorkflowOrchestrator:
 
             if uuid_val:
                 if not label_val and sensor_val:
-                    sensor_name = sensor_val.split('#')[-1] if '#' in sensor_val else sensor_val.split('/')[-1]
-                    label_val = sensor_name.replace('_', ' ')
+                    sensor_name = (
+                        sensor_val.split("#")[-1]
+                        if "#" in sensor_val
+                        else sensor_val.split("/")[-1]
+                    )
+                    label_val = sensor_name.replace("_", " ")
 
                 kind = self._infer_sensor_kind(label_val, sensor_val)
                 unit = unit_val or self._unit_for_kind(kind)
@@ -1557,7 +1886,7 @@ class WorkflowOrchestrator:
                     "sensor_uri": sensor_val or "Unknown",
                     "uuid": uuid_val,
                     "kind": kind or "",
-                    "unit": unit or ""
+                    "unit": unit or "",
                 }
 
         return sensor_metadata
@@ -1574,7 +1903,9 @@ class WorkflowOrchestrator:
             "trend": "trend",
             "full": "full",
         }
-        document_type = state.intermediate_results.get("document_type") or doc_type_map.get(report_type, "summary")
+        document_type = state.intermediate_results.get("document_type") or doc_type_map.get(
+            report_type, "summary"
+        )
         if state.current_intent == "compliance":
             document_type = "compliance_report"
 
@@ -1593,10 +1924,10 @@ class WorkflowOrchestrator:
     async def execute(self, state: ConversationState) -> ConversationState:
         """
         Execute workflow for given state
-        
+
         Args:
             state: Initial conversation state
-            
+
         Returns:
             Updated conversation state with response
         """
@@ -1612,12 +1943,16 @@ class WorkflowOrchestrator:
                     user_id=state.user_id,
                 )
                 if cached:
-                    logger.info(f"Response cache HIT — skipping pipeline (type={cached.get('cache_type')})")
-                    state.messages.append(Message(
-                        role="assistant",
-                        content=cached["response"],
-                        metadata={"cache_hit": True, "cache_type": cached.get("cache_type")}
-                    ))
+                    logger.info(
+                        f"Response cache HIT — skipping pipeline (type={cached.get('cache_type')})"
+                    )
+                    state.messages.append(
+                        Message(
+                            role="assistant",
+                            content=cached["response"],
+                            metadata={"cache_hit": True, "cache_type": cached.get("cache_type")},
+                        )
+                    )
                     state.current_intent = cached.get("intent", "general")
                     state.intermediate_results["cache_hit"] = True
                     return state
@@ -1631,10 +1966,12 @@ class WorkflowOrchestrator:
                 )
             except asyncio.TimeoutError:
                 logger.error(f"Workflow timed out after {timeout_s}s for {state.conversation_id}")
-                state.messages.append(Message(
-                    role="assistant",
-                    content="Your request took too long to process. Please try a simpler question or try again later."
-                ))
+                state.messages.append(
+                    Message(
+                        role="assistant",
+                        content="Your request took too long to process. Please try a simpler question or try again later.",
+                    )
+                )
                 return state
 
             # LangGraph may return a dict-like state; rehydrate if needed
@@ -1656,10 +1993,7 @@ class WorkflowOrchestrator:
 
             # Map known error types to user-friendly messages
             error_msg = self._user_friendly_error(e)
-            state.messages.append(Message(
-                role="assistant",
-                content=error_msg
-            ))
+            state.messages.append(Message(role="assistant", content=error_msg))
 
             return state
 
@@ -1704,11 +2038,11 @@ class WorkflowOrchestrator:
         results: Dict[str, Any],
         analytics_required: bool,
         llm_reasoning: str,
-        formatted_response: str
+        formatted_response: str,
     ):
         """
         Save query output as JSON file with analytics decision
-        
+
         Output format:
         {
             "conversation_id": "...",
@@ -1724,17 +2058,17 @@ class WorkflowOrchestrator:
         import json
         from datetime import datetime
         from pathlib import Path
-        
+
         try:
             # Create output directory if it doesn't exist
             output_dir = Path(settings.QUERY_RESULTS_DIR)
             output_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Generate filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{conversation_id}_{timestamp}.json"
             filepath = output_dir / filename
-            
+
             # Prepare output data
             output_data = {
                 "conversation_id": conversation_id,
@@ -1746,37 +2080,38 @@ class WorkflowOrchestrator:
                 "sparql_results": results,
                 "formatted_response": formatted_response,
                 "metadata": {
-                    "result_count": len(results.get("results", {}).get("bindings", [])) if isinstance(results, dict) else 0,
-                    "execution_successful": True
-                }
+                    "result_count": (
+                        len(results.get("results", {}).get("bindings", []))
+                        if isinstance(results, dict)
+                        else 0
+                    ),
+                    "execution_successful": True,
+                },
             }
-            
+
             # Save to file
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(output_data, f, indent=2, ensure_ascii=False)
-            
+
             logger.info(f"✅ Saved query output to: {filepath}")
             logger.info(f"   Analytics required: {analytics_required}")
-            
+
         except Exception as e:
             logger.error(f"Failed to save query output: {e}", exc_info=True)
-    
+
     async def stream_execute(self, state: ConversationState):
         """
         Execute workflow with streaming
-        
+
         Yields:
             Intermediate states as they're processed
         """
         try:
             logger.info(f"Starting streaming workflow for conversation {state.conversation_id}")
-            
+
             async for step in self.graph.astream(state):
                 yield step
-                
+
         except Exception as e:
             logger.error(f"Streaming workflow error: {e}", exc_info=True)
-            yield {
-                "error": str(e),
-                "state": state
-            }
+            yield {"error": str(e), "state": state}

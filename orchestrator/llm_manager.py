@@ -2,34 +2,38 @@
 LLM Manager for OntoSage 2.0
 Handles LLM interactions with support for Ollama and OpenAI
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 import asyncio
 import os
 import time
-from typing import List, Dict, Any, Optional
-from shared.config import settings, get_llm_config
-from shared.utils import get_logger
+from typing import Any, Dict, List, Optional
+
 from orchestrator.services.circuit_breaker import circuit_breaker_for
+from shared.config import get_llm_config, settings
+from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
 # Rate limiting for OpenAI
 # gpt-4o-mini Tier-1: 500 RPM, Tier-2+: 5000 RPM
 # Set conservatively at 1s; increase only if you hit 429 errors
-OPENAI_RATE_LIMIT_DELAY = float(os.environ.get('OPENAI_RATE_LIMIT_DELAY', '1.0'))
-OPENAI_RETRY_DELAY_S = float(os.environ.get('OPENAI_RETRY_DELAY_S', '20.0'))
+OPENAI_RATE_LIMIT_DELAY = float(os.environ.get("OPENAI_RATE_LIMIT_DELAY", "1.0"))
+OPENAI_RETRY_DELAY_S = float(os.environ.get("OPENAI_RETRY_DELAY_S", "20.0"))
 
 # Retry / timeout configuration
-LLM_MAX_RETRIES = int(os.environ.get('LLM_MAX_RETRIES', '3'))
-LLM_TIMEOUT_S = float(os.environ.get('LLM_TIMEOUT_S', '60'))
-LLM_BACKOFF_BASE_S = float(os.environ.get('LLM_BACKOFF_BASE_S', '1.0'))
-LLM_BACKOFF_FACTOR = float(os.environ.get('LLM_BACKOFF_FACTOR', '2.0'))
+LLM_MAX_RETRIES = int(os.environ.get("LLM_MAX_RETRIES", "3"))
+LLM_TIMEOUT_S = float(os.environ.get("LLM_TIMEOUT_S", "60"))
+LLM_BACKOFF_BASE_S = float(os.environ.get("LLM_BACKOFF_BASE_S", "1.0"))
+LLM_BACKOFF_FACTOR = float(os.environ.get("LLM_BACKOFF_FACTOR", "2.0"))
+
 
 class LLMManager:
     """Manages LLM interactions with multiple providers"""
-    
+
     def __init__(self):
         self.config = get_llm_config()
         self.provider = self.config["provider"]
@@ -37,7 +41,7 @@ class LLMManager:
         self.last_request_time = 0.0
         self._breaker = circuit_breaker_for("llm", failure_threshold=5, recovery_timeout=30.0)
         self._initialize_client()
-    
+
     def _initialize_client(self):
         """Initialize LLM client based on provider"""
         if self.provider == "openai":
@@ -46,56 +50,60 @@ class LLMManager:
             self._initialize_ollama_cloud()
         else:  # ollama
             self._initialize_ollama()
-    
+
     def _initialize_openai(self):
         """Initialize OpenAI client"""
         try:
             from langchain_openai import ChatOpenAI
-            
+
             self.client = ChatOpenAI(
                 model=self.config["model"],
                 api_key=self.config["api_key"],
                 temperature=self.config["temperature"],
-                max_tokens=4096  # Increased token limit
+                max_tokens=4096,  # Increased token limit
             )
             logger.info(f"Initialized OpenAI LLM: {self.config['model']}")
         except ImportError:
             logger.error("langchain-openai not installed. Run: pip install langchain-openai")
             raise
-    
+
     def _initialize_ollama(self):
         """Initialize Ollama client"""
         try:
             from langchain_ollama import OllamaLLM
-            
+
             self.client = OllamaLLM(
                 base_url=self.config["base_url"],
                 model=self.config["model"],
-                temperature=self.config["temperature"]
+                temperature=self.config["temperature"],
             )
-            logger.info(f"Initialized Ollama LLM: {self.config['model']} at {self.config['base_url']}")
+            logger.info(
+                f"Initialized Ollama LLM: {self.config['model']} at {self.config['base_url']}"
+            )
         except ImportError:
             logger.error("langchain-ollama not installed. Run: pip install langchain-ollama")
             raise
-    
+
     def _initialize_ollama_cloud(self):
         """Initialize Ollama Cloud client (OpenAI-compatible API)"""
         try:
             from langchain_openai import ChatOpenAI
-            
+
             # Ollama Cloud uses OpenAI-compatible API
             self.client = ChatOpenAI(
                 base_url=self.config["base_url"],
                 model=self.config["model"],
                 api_key=self.config["api_key"],
                 temperature=self.config["temperature"],
-                max_tokens=4096  # Increased token limit
+                max_tokens=4096,  # Increased token limit
             )
-            logger.info(f"Initialized Ollama Cloud LLM: {self.config['model']} at {self.config['base_url']}")
+            logger.info(
+                f"Initialized Ollama Cloud LLM: {self.config['model']} at {self.config['base_url']}"
+            )
         except ImportError:
             logger.error("langchain-openai not installed. Run: pip install langchain-openai")
             raise
-    
+
     def _is_retryable(self, error: Exception) -> bool:
         """Check if an error is transient and should be retried."""
         error_str = str(error).lower()
@@ -108,15 +116,17 @@ class LLMManager:
             return True
         # Check for specific exception types
         error_type = type(error).__name__
-        if error_type in ("RateLimitError", "APIConnectionError", "InternalServerError", "ServiceUnavailableError"):
+        if error_type in (
+            "RateLimitError",
+            "APIConnectionError",
+            "InternalServerError",
+            "ServiceUnavailableError",
+        ):
             return True
         return False
 
     async def generate(
-        self,
-        prompt: str,
-        system_message: Optional[str] = None,
-        temperature: Optional[float] = None
+        self, prompt: str, system_message: Optional[str] = None, temperature: Optional[float] = None
     ) -> str:
         """
         Generate text from prompt with circuit breaker, retry, and timeout.
@@ -161,7 +171,10 @@ class LLMManager:
                 last_error = e
                 self._breaker.record_failure()
                 if not self._is_retryable(e) or attempt == LLM_MAX_RETRIES:
-                    logger.error(f"LLM generation error (attempt {attempt}, non-retryable): {e}", exc_info=True)
+                    logger.error(
+                        f"LLM generation error (attempt {attempt}, non-retryable): {e}",
+                        exc_info=True,
+                    )
                     raise
                 logger.warning(f"LLM retryable error (attempt {attempt}/{LLM_MAX_RETRIES}): {e}")
 
@@ -194,9 +207,11 @@ class LLMManager:
 
         if self.provider in ["openai", "ollama_cloud"]:
             try:
-                from langchain.schema import SystemMessage as SysMsg, HumanMessage as HumMsg
+                from langchain.schema import HumanMessage as HumMsg
+                from langchain.schema import SystemMessage as SysMsg
             except ImportError:
-                from langchain_core.messages import SystemMessage as SysMsg, HumanMessage as HumMsg
+                from langchain_core.messages import HumanMessage as HumMsg
+                from langchain_core.messages import SystemMessage as SysMsg
 
             messages = [SysMsg(content=effective_system), HumMsg(content=prompt)]
 
@@ -211,12 +226,9 @@ class LLMManager:
             full_prompt = f"System: {effective_system}\n\nUser: {prompt}"
             response = await self.client.ainvoke(full_prompt)
             return response
-    
+
     async def astream_generate(
-        self,
-        prompt: str,
-        system_message: Optional[str] = None,
-        temperature: Optional[float] = None
+        self, prompt: str, system_message: Optional[str] = None, temperature: Optional[float] = None
     ):
         """
         Stream generated text from prompt.
@@ -232,9 +244,11 @@ class LLMManager:
 
             if self.provider in ["openai", "ollama_cloud"]:
                 try:
-                    from langchain.schema import SystemMessage as SysMsg, HumanMessage as HumMsg
+                    from langchain.schema import HumanMessage as HumMsg
+                    from langchain.schema import SystemMessage as SysMsg
                 except ImportError:
-                    from langchain_core.messages import SystemMessage as SysMsg, HumanMessage as HumMsg
+                    from langchain_core.messages import HumanMessage as HumMsg
+                    from langchain_core.messages import SystemMessage as SysMsg
 
                 messages = [SysMsg(content=effective_system), HumMsg(content=prompt)]
 
@@ -255,51 +269,49 @@ class LLMManager:
             yield f"Error: {str(e)}"
 
     async def generate_with_examples(
-        self,
-        prompt: str,
-        examples: List[Dict[str, str]],
-        system_message: Optional[str] = None
+        self, prompt: str, examples: List[Dict[str, str]], system_message: Optional[str] = None
     ) -> str:
         """
         Generate with few-shot examples
-        
+
         Args:
             prompt: User prompt
             examples: List of {"input": ..., "output": ...} examples
             system_message: Optional system message
-            
+
         Returns:
             Generated text
         """
         # Build few-shot prompt
         few_shot_prompt = ""
-        
+
         if system_message:
             few_shot_prompt += f"{system_message}\n\n"
-        
+
         few_shot_prompt += "Examples:\n\n"
-        
+
         for i, example in enumerate(examples, 1):
             few_shot_prompt += f"Example {i}:\n"
             few_shot_prompt += f"Input: {example['input']}\n"
             few_shot_prompt += f"Output: {example['output']}\n\n"
-        
+
         few_shot_prompt += f"Now, for the following input:\n{prompt}\n\nOutput:"
-        
+
         return await self.generate(few_shot_prompt)
-    
+
     def get_client(self):
         """Get underlying LangChain client"""
         return self.client
-    
+
     def get_info(self) -> Dict[str, Any]:
         """Get LLM information"""
         return {
             "provider": self.provider,
             "model": self.config.get("model"),
             "base_url": self.config.get("base_url"),
-            "temperature": self.config.get("temperature")
+            "temperature": self.config.get("temperature"),
         }
+
 
 # Global instance
 llm_manager = LLMManager()

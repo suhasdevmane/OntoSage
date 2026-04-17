@@ -26,17 +26,18 @@ Usage:
 
 from __future__ import annotations
 
-import os
-import time
 import hashlib
 import logging
+import os
+import time
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 try:
     import yaml
+
     YAML_OK = True
 except ImportError:
     YAML_OK = False
@@ -44,6 +45,7 @@ except ImportError:
 # ─────────────────────────────────────────────────────────────────────────────
 # Data classes
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class BuildingConfig:
     """Parsed, validated representation of a single building's configuration."""
@@ -54,34 +56,34 @@ class BuildingConfig:
 
         # Core identity
         bldg = raw.get("building", {})
-        self.id          = bldg.get("id", "unknown")
-        self.name        = bldg.get("name", self.id)
-        self.namespace   = bldg.get("namespace", "")
-        self.prefix      = bldg.get("prefix", "bldg")
-        self.timezone    = bldg.get("timezone", "UTC")
-        self.abox_file   = bldg.get("abox_file", "")
-        self.tbox_file   = bldg.get("tbox_file", "")
+        self.id = bldg.get("id", "unknown")
+        self.name = bldg.get("name", self.id)
+        self.namespace = bldg.get("namespace", "")
+        self.prefix = bldg.get("prefix", "bldg")
+        self.timezone = bldg.get("timezone", "UTC")
+        self.abox_file = bldg.get("abox_file", "")
+        self.tbox_file = bldg.get("tbox_file", "")
 
         # Ontology
         onto = raw.get("ontology", {})
-        self.schema      = onto.get("schema", "brick")
-        self.schema_uri  = onto.get("schema_uri", "https://brickschema.org/schema/Brick#")
+        self.schema = onto.get("schema", "brick")
+        self.schema_uri = onto.get("schema_uri", "https://brickschema.org/schema/Brick#")
         self.extra_prefixes = onto.get("extra_prefixes", [])
 
         # Storage
         stor = raw.get("storage", {})
-        self.backend     = stor.get("backend", "mysql")
-        self.database    = stor.get("database", self.id)
-        self.table       = stor.get("table", "sensor_data")
-        cols             = stor.get("columns", {})
-        self.col_uuid    = cols.get("uuid", "uuid")
-        self.col_value   = cols.get("value", "value")
-        self.col_time    = cols.get("timestamp", "time")
-        self.col_sensor  = cols.get("sensor_name", "sensor_name")
+        self.backend = stor.get("backend", "mysql")
+        self.database = stor.get("database", self.id)
+        self.table = stor.get("table", "sensor_data")
+        cols = stor.get("columns", {})
+        self.col_uuid = cols.get("uuid", "uuid")
+        self.col_value = cols.get("value", "value")
+        self.col_time = cols.get("timestamp", "time")
+        self.col_sensor = cols.get("sensor_name", "sensor_name")
 
         # Computed
         self._last_loaded = time.time()
-        self._file_hash   = ""
+        self._file_hash = ""
 
     def to_dict(self) -> Dict:
         return self._raw
@@ -115,6 +117,7 @@ class BuildingConfig:
 # Manager
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class MultiBuildingConfigManager:
     """
     Discovers, loads, and routes between multiple building configurations.
@@ -127,9 +130,9 @@ class MultiBuildingConfigManager:
 
     def __init__(self, config_dir: str = "config/"):
         self._config_dir = Path(config_dir)
-        self._configs: Dict[str, BuildingConfig] = {}   # id → config
-        self._namespace_index: Dict[str, str] = {}      # namespace → id
-        self._file_mtimes: Dict[str, float] = {}        # path → mtime
+        self._configs: Dict[str, BuildingConfig] = {}  # id → config
+        self._namespace_index: Dict[str, str] = {}  # namespace → id
+        self._file_mtimes: Dict[str, float] = {}  # path → mtime
 
     # ─────────────────────────────────────────────────────────────────────────
     # Discovery & loading
@@ -141,8 +144,9 @@ class MultiBuildingConfigManager:
             logger.warning(f"Config directory not found: {self._config_dir}")
             return []
 
-        candidates = list(self._config_dir.glob("**/*.yaml")) + \
-                     list(self._config_dir.glob("**/*.yml"))
+        candidates = list(self._config_dir.glob("**/*.yaml")) + list(
+            self._config_dir.glob("**/*.yml")
+        )
 
         # Filter: must contain a "building:" key
         valid = []
@@ -263,9 +267,11 @@ class MultiBuildingConfigManager:
         """
         q_lower = user_query.lower()
         for cfg in self._configs.values():
-            if (cfg.id.lower() in q_lower or
-                    cfg.name.lower() in q_lower or
-                    cfg.prefix.lower() in q_lower):
+            if (
+                cfg.id.lower() in q_lower
+                or cfg.name.lower() in q_lower
+                or cfg.prefix.lower() in q_lower
+            ):
                 return cfg
         return None
 

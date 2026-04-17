@@ -21,18 +21,20 @@ Usage:
     planner = PlannerAgent()
     result = await planner.plan_and_execute(state, user_query)
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 import json
 import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from orchestrator.llm_manager import llm_manager
 from shared.config import settings
 from shared.models import ConversationState
 from shared.utils import get_logger
-from orchestrator.llm_manager import llm_manager
 
 logger = get_logger(__name__)
 
@@ -40,9 +42,10 @@ logger = get_logger(__name__)
 @dataclass
 class PlanStep:
     """A single step in the execution plan."""
+
     index: int
-    agent: str          # "sparql" | "sql" | "analytics" | "report" | "export" | "anomaly"
-    description: str    # Human-readable description
+    agent: str  # "sparql" | "sql" | "analytics" | "report" | "export" | "anomaly"
+    description: str  # Human-readable description
     params: Dict[str, Any] = field(default_factory=dict)
     result: Optional[Any] = None
     success: bool = False
@@ -52,6 +55,7 @@ class PlanStep:
 @dataclass
 class ExecutionPlan:
     """A fully resolved execution plan."""
+
     user_query: str
     steps: List[PlanStep]
     rationale: str = ""
@@ -79,18 +83,25 @@ class PlannerAgent:
 
     # Keywords that trigger planner routing (vs direct SPARQL)
     COMPLEX_TRIGGERS = [
-        "report", "export", "generate", "create", "download",
-        "anomaly", "alert", "trend report", "weekly", "monthly",
-        "compare and export", "analyze and report",
+        "report",
+        "export",
+        "generate",
+        "create",
+        "download",
+        "anomaly",
+        "alert",
+        "trend report",
+        "weekly",
+        "monthly",
+        "compare and export",
+        "analyze and report",
     ]
 
     def is_complex_query(self, query: str) -> bool:
         q = query.lower()
         return any(kw in q for kw in self.COMPLEX_TRIGGERS)
 
-    async def plan_and_execute(
-        self, state: ConversationState, user_query: str
-    ) -> Dict[str, Any]:
+    async def plan_and_execute(self, state: ConversationState, user_query: str) -> Dict[str, Any]:
         """
         Main entry: build a plan then execute it step-by-step.
         """
@@ -151,7 +162,7 @@ Rules:
 
         try:
             response = await llm_manager.generate(prompt, temperature=0.1)
-            match = re.search(r'\{[\s\S]*\}', response)
+            match = re.search(r"\{[\s\S]*\}", response)
             if not match:
                 raise ValueError("LLM returned no JSON")
             plan_dict = json.loads(match.group(0))
@@ -176,24 +187,34 @@ Rules:
     def _fallback_plan(self, user_query: str) -> ExecutionPlan:
         """Minimal 2-step plan as fallback when LLM decomposition fails."""
         q = user_query.lower()
-        steps = [PlanStep(index=1, agent="sparql", description="Retrieve sensor metadata and UUIDs")]
+        steps = [
+            PlanStep(index=1, agent="sparql", description="Retrieve sensor metadata and UUIDs")
+        ]
         if any(w in q for w in ["current", "reading", "value", "data", "average", "trend"]):
-            steps.append(PlanStep(index=2, agent="sql", description="Fetch sensor time-series data"))
+            steps.append(
+                PlanStep(index=2, agent="sql", description="Fetch sensor time-series data")
+            )
         if "report" in q:
-            steps.append(PlanStep(index=len(steps) + 1, agent="report", description="Generate report"))
+            steps.append(
+                PlanStep(index=len(steps) + 1, agent="report", description="Generate report")
+            )
         if "export" in q or "download" in q:
             fmt = "csv" if "csv" in q else ("html" if "html" in q else "json")
-            steps.append(PlanStep(index=len(steps) + 1, agent="export",
-                                  description=f"Export as {fmt}", params={"format": fmt}))
+            steps.append(
+                PlanStep(
+                    index=len(steps) + 1,
+                    agent="export",
+                    description=f"Export as {fmt}",
+                    params={"format": fmt},
+                )
+            )
         return ExecutionPlan(user_query=user_query, steps=steps, rationale="Fallback plan")
 
     # ------------------------------------------------------------------
     # Plan execution
     # ------------------------------------------------------------------
 
-    async def _execute_plan(
-        self, state: ConversationState, plan: ExecutionPlan
-    ) -> Dict[str, Any]:
+    async def _execute_plan(self, state: ConversationState, plan: ExecutionPlan) -> Dict[str, Any]:
         """Execute plan steps sequentially, passing context forward."""
         context: Dict[str, Any] = {}
         provenance: List[str] = []
@@ -210,7 +231,9 @@ Rules:
                 elif step.agent == "sql":
                     uuids = context.get("uuids", [])
                     storage_map = context.get("storage_map", {})
-                    result = await self._run_sql(state, plan.user_query, uuids, storage_map, step.params)
+                    result = await self._run_sql(
+                        state, plan.user_query, uuids, storage_map, step.params
+                    )
                     context["sql_result"] = result
 
                 elif step.agent == "analytics":
@@ -247,13 +270,21 @@ Rules:
     ) -> Dict[str, Any]:
         """Build final response from accumulated context."""
         # Prefer report > analytics > sql > sparql for the formatted response
-        for key in ["report_result", "analytics_result", "export_result", "sql_result", "sparql_result"]:
+        for key in [
+            "report_result",
+            "analytics_result",
+            "export_result",
+            "sql_result",
+            "sparql_result",
+        ]:
             if key in context:
                 r = context[key]
                 if isinstance(r, dict) and r.get("success"):
                     return {
                         "success": True,
-                        "formatted_response": r.get("formatted_text") or r.get("formatted_response") or str(r),
+                        "formatted_response": r.get("formatted_text")
+                        or r.get("formatted_response")
+                        or str(r),
                         "provenance": provenance,
                         "plan_rationale": plan.rationale,
                         "context": context,
@@ -270,17 +301,21 @@ Rules:
 
     async def _run_sparql(self, state: ConversationState, query: str, params: Dict) -> Dict:
         from orchestrator.agents.sparql_agent import SPARQLAgent
+
         return await SPARQLAgent().generate_query(state, query)
 
-    async def _run_sql(self, state: ConversationState, query: str,
-                       uuids: List, storage_map: Dict, params: Dict) -> Dict:
+    async def _run_sql(
+        self, state: ConversationState, query: str, uuids: List, storage_map: Dict, params: Dict
+    ) -> Dict:
         from orchestrator.agents.sql_agent import SQLAgent
+
         if uuids:
             return await SQLAgent().fetch_data_for_uuids(uuids, query, storage_map)
         return await SQLAgent().generate_and_execute(state, query)
 
     async def _run_analytics(self, state: ConversationState, query: str, ctx: Dict) -> Dict:
         from orchestrator.agents.analytics_agent import AnalyticsAgent
+
         sql_result = ctx.get("sql_result", {})
         # analytics_agent.analyze() expects data = {"data": [...]}, but sql_result
         # returned by fetch_data_for_uuids has the rows under sql_result["results"]["data"].
@@ -288,20 +323,26 @@ Rules:
         if not isinstance(data, dict) or "data" not in data:
             data = {"data": data} if isinstance(data, list) else {"data": []}
         sensor_metadata = self._extract_sensor_metadata(ctx.get("sparql_result", {}))
-        return await AnalyticsAgent().analyze(state, query, data=data, sensor_metadata=sensor_metadata)
+        return await AnalyticsAgent().analyze(
+            state, query, data=data, sensor_metadata=sensor_metadata
+        )
 
     async def _run_anomaly(self, state: ConversationState, query: str, ctx: Dict) -> Dict:
         from orchestrator.agents.anomaly_agent import AnomalyDetectionAgent
+
         sql_result = ctx.get("sql_result", {})
         # Pass the data rows directly (anomaly agent accepts {"data": [...]})
         data = sql_result.get("results", sql_result) if isinstance(sql_result, dict) else sql_result
         return await AnomalyDetectionAgent().detect(state, query, sensor_data=data)
 
-    async def _run_report(self, state: ConversationState, query: str,
-                          ctx: Dict, params: Dict) -> Dict:
+    async def _run_report(
+        self, state: ConversationState, query: str, ctx: Dict, params: Dict
+    ) -> Dict:
         from orchestrator.agents.report_agent import ReportAgent
+
         return await ReportAgent().generate(
-            state, query,
+            state,
+            query,
             sensor_data=ctx.get("sql_result"),
             metadata=ctx.get("sparql_result"),
             export_format=params.get("export_format"),
@@ -309,8 +350,10 @@ Rules:
 
     async def _run_export(self, ctx: Dict, params: Dict) -> Dict:
         from orchestrator.agents.data_export_agent import DataExportAgent
-        data = (ctx.get("sql_result") or ctx.get("anomaly_result") or
-                ctx.get("analytics_result") or {})
+
+        data = (
+            ctx.get("sql_result") or ctx.get("anomaly_result") or ctx.get("analytics_result") or {}
+        )
         fmt = params.get("format", "json")
         return await DataExportAgent().export(data=data, label="planner_export", fmt=fmt)
 

@@ -4,26 +4,40 @@ PostgreSQLAdapter — Phase 2.3
 Implements DatabaseAdapter for PostgreSQL / TimescaleDB using asyncpg.
 Supports both wide-column format (like MySQL) and narrow/time-series table format.
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
+
+import uuid as uuid_mod
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Any, Dict, List, Optional, Set
 
 import asyncpg
-from decimal import Decimal
-from datetime import datetime, date
-from typing import Any, Dict, List, Optional, Set
-import uuid as uuid_mod
 
+from orchestrator.services.database_adapter import (
+    AdapterType,
+    DatabaseAdapter,
+    QueryResult,
+    SchemaInfo,
+)
 from shared.config import settings
 from shared.utils import get_logger
-from orchestrator.services.database_adapter import (
-    DatabaseAdapter, AdapterType, QueryResult, SchemaInfo
-)
 
 logger = get_logger(__name__)
 
 _FORBIDDEN_KEYWORDS = [
-    "DROP ", "DELETE ", "INSERT ", "UPDATE ", "ALTER ",
-    "TRUNCATE ", "GRANT ", "REVOKE ", "CREATE ", "REPLACE ",
+    "DROP ",
+    "DELETE ",
+    "INSERT ",
+    "UPDATE ",
+    "ALTER ",
+    "TRUNCATE ",
+    "GRANT ",
+    "REVOKE ",
+    "CREATE ",
+    "REPLACE ",
 ]
 
 
@@ -35,10 +49,15 @@ class PostgreSQLAdapter(DatabaseAdapter):
 
     adapter_type = AdapterType.POSTGRESQL
 
-    def __init__(self, dsn: Optional[str] = None,
-                 host: Optional[str] = None, port: Optional[int] = None,
-                 user: Optional[str] = None, password: Optional[str] = None,
-                 database: Optional[str] = None):
+    def __init__(
+        self,
+        dsn: Optional[str] = None,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        database: Optional[str] = None,
+    ):
         self._dsn = dsn or self._build_dsn(host, port, user, password, database)
         self._pool: Optional[asyncpg.Pool] = None
         self._schema_cache: Optional[SchemaInfo] = None
@@ -95,7 +114,7 @@ class PostgreSQLAdapter(DatabaseAdapter):
                     "SELECT column_name, data_type FROM information_schema.columns "
                     "WHERE table_schema = 'public' AND table_name = $1 "
                     "ORDER BY ordinal_position",
-                    table_name
+                    table_name,
                 )
                 col_list = []
                 for col in col_rows:
@@ -183,8 +202,7 @@ class PostgreSQLAdapter(DatabaseAdapter):
                 clean_rows.append(clean_row)
 
             logger.info(f"PostgreSQLAdapter: query returned {len(clean_rows)} rows")
-            return QueryResult(success=True, data=clean_rows,
-                               row_count=len(clean_rows), query=sql)
+            return QueryResult(success=True, data=clean_rows, row_count=len(clean_rows), query=sql)
 
         except Exception as e:
             logger.error(f"PostgreSQLAdapter.execute_query error: {e}")
@@ -195,7 +213,7 @@ class PostgreSQLAdapter(DatabaseAdapter):
             "PostgreSQL dialect rules:\n"
             "- Timestamp column: usually 'time' or 'timestamp'\n"
             "- Time functions: NOW(), CURRENT_DATE, interval syntax e.g. NOW() - INTERVAL '1 day'\n"
-            "- Column names use double-quotes for reserved words: \"timestamp\"\n"
+            '- Column names use double-quotes for reserved words: "timestamp"\n'
             "- For TimescaleDB hypertables, use time_bucket() for aggregations\n"
             "- Default time window: timestamp >= NOW() - INTERVAL '1 day'\n"
         )

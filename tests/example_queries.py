@@ -87,7 +87,7 @@ TEST_SCENARIOS = [
             "Hello, I'm a student",
             "Show me temperature sensors",
             "What was the temperature yesterday?",
-        ]
+        ],
     },
     {
         "persona": "researcher",
@@ -96,7 +96,7 @@ TEST_SCENARIOS = [
             "List all sensors",
             "Analyze temperature trends",
             "Create a line chart",
-        ]
+        ],
     },
     {
         "persona": "facility_manager",
@@ -104,6 +104,6 @@ TEST_SCENARIOS = [
             "I'm a facility manager",
             "Show me current sensor readings",
             "Are there any issues?",
-        ]
+        ],
     },
 ]

@@ -24,14 +24,15 @@ Usage:
     engine = SelfCorrectionEngine()
     result = await engine.execute_with_correction(state, raw_query, sparql_agent)
 """
+
 from __future__ import annotations
 
-import re
-import time
 import asyncio
 import logging
+import re
+import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Callable, Awaitable
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -40,24 +41,25 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────────────────────────
 
 MAX_CORRECTION_ATTEMPTS = 3
-EMPTY_RESULT_THRESHOLD  = 0     # retry if result count ≤ this
-CORRECTION_TIMEOUT_S    = 30.0  # max seconds per correction attempt
+EMPTY_RESULT_THRESHOLD = 0  # retry if result count ≤ this
+CORRECTION_TIMEOUT_S = 30.0  # max seconds per correction attempt
 
 # Standard SPARQL prefixes injected during prefix repair
 STANDARD_PREFIXES = {
-    "brick":  "https://brickschema.org/schema/Brick#",
-    "ref":    "https://brickschema.org/schema/Brick/ref#",
-    "rdf":    "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    "rdfs":   "http://www.w3.org/2000/01/rdf-schema#",
-    "xsd":    "http://www.w3.org/2001/XMLSchema#",
-    "owl":    "http://www.w3.org/2002/07/owl#",
-    "rec":    "https://w3id.org/rec#",
-    "s223":   "http://data.ashrae.org/standard223#",
+    "brick": "https://brickschema.org/schema/Brick#",
+    "ref": "https://brickschema.org/schema/Brick/ref#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rec": "https://w3id.org/rec#",
+    "s223": "http://data.ashrae.org/standard223#",
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Data classes
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 @dataclass
 class CorrectionAttempt:
@@ -105,29 +107,29 @@ class CorrectionLog:
 # Correction Strategies
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class StrategyBase:
     name: str = "base"
 
-    async def apply(self, query: str, error: Optional[str],
-                    context: Dict) -> tuple[str, str]:
+    async def apply(self, query: str, error: Optional[str], context: Dict) -> tuple[str, str]:
         """Return (corrected_query, explanation)."""
         raise NotImplementedError
 
 
 class SyntaxFixStrategy(StrategyBase):
     """Use rdflib to detect and fix common SPARQL syntax errors."""
+
     name = "syntax_fix"
 
-    async def apply(self, query: str, error: Optional[str],
-                    context: Dict) -> tuple[str, str]:
+    async def apply(self, query: str, error: Optional[str], context: Dict) -> tuple[str, str]:
         fixed = query
         explanation = "Applied syntax auto-fix"
 
         # Fix 1: Missing dot separators in WHERE clause
-        fixed = re.sub(r'(\}\s*\{)', r'} . {', fixed)
+        fixed = re.sub(r"(\}\s*\{)", r"} . {", fixed)
 
         # Fix 2: Unclosed braces
-        open_count  = fixed.count("{")
+        open_count = fixed.count("{")
         close_count = fixed.count("}")
         if open_count > close_count:
             fixed += " }" * (open_count - close_count)
@@ -135,27 +137,27 @@ class SyntaxFixStrategy(StrategyBase):
 
         # Fix 3: Remove invalid FILTER syntax
         if error and "FILTER" in (error or ""):
-            fixed = re.sub(r'FILTER\s*\([^)]*\)\s*', '', fixed)
+            fixed = re.sub(r"FILTER\s*\([^)]*\)\s*", "", fixed)
             explanation += "; removed malformed FILTER"
 
         # Fix 4: Remove double SELECT
-        fixed = re.sub(r'SELECT\s+SELECT', 'SELECT', fixed, flags=re.IGNORECASE)
+        fixed = re.sub(r"SELECT\s+SELECT", "SELECT", fixed, flags=re.IGNORECASE)
 
         return fixed, explanation
 
 
 class PrefixRepairStrategy(StrategyBase):
     """Inject missing PREFIX declarations inferred from query usage."""
+
     name = "prefix_repair"
 
-    async def apply(self, query: str, error: Optional[str],
-                    context: Dict) -> tuple[str, str]:
+    async def apply(self, query: str, error: Optional[str], context: Dict) -> tuple[str, str]:
         added = []
         # Extract used prefixes: patterns like "prefix:LocalName"
-        used_prefixes = set(re.findall(r'\b([a-zA-Z][a-zA-Z0-9_]*):', query))
+        used_prefixes = set(re.findall(r"\b([a-zA-Z][a-zA-Z0-9_]*):", query))
 
         # Find existing declared prefixes
-        declared = set(re.findall(r'PREFIX\s+([a-zA-Z][a-zA-Z0-9_]*):', query, re.IGNORECASE))
+        declared = set(re.findall(r"PREFIX\s+([a-zA-Z][a-zA-Z0-9_]*):", query, re.IGNORECASE))
 
         # Add missing standard prefixes
         missing = used_prefixes - declared
@@ -173,16 +175,18 @@ class PrefixRepairStrategy(StrategyBase):
             added.append(building_prefix)
 
         fixed = prefix_block + query if prefix_block else query
-        explanation = f"Injected missing prefixes: {added}" if added else "No prefix injection needed"
+        explanation = (
+            f"Injected missing prefixes: {added}" if added else "No prefix injection needed"
+        )
         return fixed, explanation
 
 
 class LLMRegenerationStrategy(StrategyBase):
     """Ask the LLM to regenerate the query with the error context provided."""
+
     name = "llm_regeneration"
 
-    async def apply(self, query: str, error: Optional[str],
-                    context: Dict) -> tuple[str, str]:
+    async def apply(self, query: str, error: Optional[str], context: Dict) -> tuple[str, str]:
         llm_call: Optional[Callable] = context.get("llm_call")
         user_query: str = context.get("user_query", "")
         schema_hint: str = context.get("schema_hint", "Brick v1.3")
@@ -213,11 +217,10 @@ Return ONLY the corrected SPARQL query, no explanation."""
 
         try:
             corrected = await asyncio.wait_for(
-                llm_call(correction_prompt),
-                timeout=CORRECTION_TIMEOUT_S
+                llm_call(correction_prompt), timeout=CORRECTION_TIMEOUT_S
             )
             # Extract query from markdown code block if present
-            match = re.search(r'```(?:sparql)?\s*(.*?)```', corrected, re.DOTALL)
+            match = re.search(r"```(?:sparql)?\s*(.*?)```", corrected, re.DOTALL)
             if match:
                 corrected = match.group(1).strip()
             return corrected.strip(), "LLM regenerated query with error context"
@@ -229,6 +232,7 @@ Return ONLY the corrected SPARQL query, no explanation."""
 
 class TemplateSchemaFallbackStrategy(StrategyBase):
     """Fall back to a simple, guaranteed-to-work template query."""
+
     name = "template_fallback"
 
     # Safe fallback query — discovers all sensor types
@@ -245,11 +249,10 @@ SELECT DISTINCT ?sensor ?type ?label WHERE {{
 }}
 LIMIT 50"""
 
-    async def apply(self, query: str, error: Optional[str],
-                    context: Dict) -> tuple[str, str]:
+    async def apply(self, query: str, error: Optional[str], context: Dict) -> tuple[str, str]:
         namespace = context.get("building_namespace", "http://example.com/building#")
-        prefix    = context.get("building_prefix", "bldg")
-        fallback  = self.FALLBACK_TEMPLATE.format(namespace=namespace, prefix=prefix)
+        prefix = context.get("building_prefix", "bldg")
+        fallback = self.FALLBACK_TEMPLATE.format(namespace=namespace, prefix=prefix)
         return fallback, (
             "All correction strategies exhausted — falling back to safe sensor discovery query. "
             "Results may be broader than expected."
@@ -259,6 +262,7 @@ LIMIT 50"""
 # ─────────────────────────────────────────────────────────────────────────────
 # Self-Correction Engine
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class SelfCorrectionEngine:
     """
@@ -312,8 +316,7 @@ class SelfCorrectionEngine:
             # ── Execute ────────────────────────────────────────────────────
             try:
                 result = await asyncio.wait_for(
-                    execute_fn(current_query),
-                    timeout=CORRECTION_TIMEOUT_S
+                    execute_fn(current_query), timeout=CORRECTION_TIMEOUT_S
                 )
             except asyncio.TimeoutError:
                 result = {"success": False, "error": "Query execution timeout", "results": {}}
@@ -332,23 +335,29 @@ class SelfCorrectionEngine:
             # Determine if we consider this a real success
             real_success = is_success and result_count > EMPTY_RESULT_THRESHOLD
 
-            strategy_used = "initial" if attempt_num == 1 else self._strategies[attempt_num - 2].name
+            strategy_used = (
+                "initial" if attempt_num == 1 else self._strategies[attempt_num - 2].name
+            )
 
-            log.attempts.append(CorrectionAttempt(
-                attempt_num=attempt_num,
-                strategy=strategy_used,
-                original_query=initial_query if attempt_num == 1 else current_query,
-                corrected_query=current_query,
-                error=error,
-                success=real_success,
-                result_count=result_count,
-                duration_ms=duration_ms,
-            ))
+            log.attempts.append(
+                CorrectionAttempt(
+                    attempt_num=attempt_num,
+                    strategy=strategy_used,
+                    original_query=initial_query if attempt_num == 1 else current_query,
+                    corrected_query=current_query,
+                    error=error,
+                    success=real_success,
+                    result_count=result_count,
+                    duration_ms=duration_ms,
+                )
+            )
             log.total_attempts = attempt_num
 
             if real_success:
-                logger.info(f"✅ Self-correction: success on attempt {attempt_num} "
-                            f"(strategy={strategy_used}, results={result_count})")
+                logger.info(
+                    f"✅ Self-correction: success on attempt {attempt_num} "
+                    f"(strategy={strategy_used}, results={result_count})"
+                )
                 log.succeeded = True
                 log.final_strategy = strategy_used
                 break
@@ -366,18 +375,20 @@ class SelfCorrectionEngine:
             # type simply doesn't exist in the ontology.  Stop here so the caller
             # can fall through to semantic RAG quickly.
             if error == "Empty result set":
-                logger.info("⚡ Empty result set — skipping further corrections, falling back to semantic RAG")
+                logger.info(
+                    "⚡ Empty result set — skipping further corrections, falling back to semantic RAG"
+                )
                 break
 
             # ── Apply next correction strategy ─────────────────────────────
             strategy = self._strategies[attempt_num - 1]
-            logger.info(f"🔄 Self-correction attempt {attempt_num + 1}: "
-                        f"strategy={strategy.name}, error={error!r}")
+            logger.info(
+                f"🔄 Self-correction attempt {attempt_num + 1}: "
+                f"strategy={strategy.name}, error={error!r}"
+            )
 
             prev_query = current_query
-            current_query, explanation = await strategy.apply(
-                current_query, last_error, context
-            )
+            current_query, explanation = await strategy.apply(current_query, last_error, context)
             log.attempts[-1].explanation = explanation
 
             # If strategy produced identical query, skip to next strategy

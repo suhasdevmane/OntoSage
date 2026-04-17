@@ -12,11 +12,15 @@ Usage:
     classes  = intro.sensor_classes        # list of Brick class IRIs
     ns_map   = intro.namespace_map         # dict {prefix: uri}
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
+
+from typing import Dict, List, Optional
 
 import httpx
-from typing import Dict, List, Optional
+
 from shared.config import settings
 from shared.utils import get_logger
 
@@ -40,9 +44,9 @@ class OntologyIntrospector:
 
     def __init__(self) -> None:
         self._initialized: bool = False
-        self.entity_types: List[str] = []       # all distinct rdf:type IRIs
-        self.sensor_classes: List[str] = []     # subsets matching Sensor pattern
-        self.namespace_map: Dict[str, str] = {} # prefix → base URI
+        self.entity_types: List[str] = []  # all distinct rdf:type IRIs
+        self.sensor_classes: List[str] = []  # subsets matching Sensor pattern
+        self.namespace_map: Dict[str, str] = {}  # prefix → base URI
         self.building_namespace: str = settings.BUILDING_NAMESPACE
         self.building_prefix: str = settings.BUILDING_PREFIX
 
@@ -90,11 +94,7 @@ ORDER BY STR(?type)
 LIMIT 200
 """
         results = await self._sparql_select(query)
-        self.entity_types = [
-            row["type"]["value"]
-            for row in results
-            if "type" in row
-        ]
+        self.entity_types = [row["type"]["value"] for row in results if "type" in row]
         logger.info(f"  discovered {len(self.entity_types)} entity types")
 
     async def _discover_namespaces(self) -> None:
@@ -104,17 +104,17 @@ LIMIT 200
         """
         known_ns = {
             "brick": "https://brickschema.org/schema/Brick#",
-            "rdf":   "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-            "rdfs":  "http://www.w3.org/2000/01/rdf-schema#",
-            "owl":   "http://www.w3.org/2002/07/owl#",
-            "xsd":   "http://www.w3.org/2001/XMLSchema#",
-            "skos":  "http://www.w3.org/2004/02/skos/core#",
-            "sosa":  "http://www.w3.org/ns/sosa/",
-            "rec":   "https://w3id.org/rec#",
-            "ref":   "https://brickschema.org/schema/Brick/ref#",
-            "s223":  "http://data.ashrae.org/standard223#",
-            "qudt":  "http://qudt.org/schema/qudt/",
-            "unit":  "http://qudt.org/vocab/unit/",
+            "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "owl": "http://www.w3.org/2002/07/owl#",
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+            "skos": "http://www.w3.org/2004/02/skos/core#",
+            "sosa": "http://www.w3.org/ns/sosa/",
+            "rec": "https://w3id.org/rec#",
+            "ref": "https://brickschema.org/schema/Brick/ref#",
+            "s223": "http://data.ashrae.org/standard223#",
+            "qudt": "http://qudt.org/schema/qudt/",
+            "unit": "http://qudt.org/vocab/unit/",
         }
         # Add the building-specific namespace
         known_ns[self.building_prefix] = self.building_namespace
@@ -154,8 +154,7 @@ SELECT DISTINCT ?p WHERE { ?s ?p ?o . } LIMIT 300
         """
         sensor_keywords = ["sensor", "setpoint", "alarm", "command", "status", "meter", "point"]
         self.sensor_classes = [
-            t for t in self.entity_types
-            if any(kw in t.lower() for kw in sensor_keywords)
+            t for t in self.entity_types if any(kw in t.lower() for kw in sensor_keywords)
         ]
         logger.info(f"  identified {len(self.sensor_classes)} sensor-like classes")
 

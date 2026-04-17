@@ -3,8 +3,10 @@ conftest.py — Shared pytest fixtures for OntoSage
 ==================================================
 Provides reusable fixtures available to all test modules.
 """
-import sys
+
 import os
+import sys
+
 import pytest
 
 # Ensure project root is in path
@@ -12,12 +14,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from tests.fixtures.ontology_fixtures import (
     brick_fixture,
+    mock_anomalous_readings,
+    mock_sensor_readings,
+    mock_sparql_result,
+    mock_sql_result,
     rec_fixture,
     s223_fixture,
-    mock_sensor_readings,
-    mock_anomalous_readings,
-    mock_sql_result,
-    mock_sparql_result,
 )
 
 
@@ -67,6 +69,7 @@ def sparql_result():
 def mock_state():
     """Minimal ConversationState mock."""
     from unittest.mock import MagicMock
+
     state = MagicMock()
     state.conversation_id = "test-conv-001"
     state.user_id = "test-user"

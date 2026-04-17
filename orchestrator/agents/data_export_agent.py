@@ -12,8 +12,10 @@ Usage:
     agent = DataExportAgent()
     result = await agent.export(data=rows, label="co2_readings", fmt="csv")
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 import csv
 import html as html_lib
@@ -63,7 +65,10 @@ class DataExportAgent:
         """
         fmt = fmt.lower().strip()
         if fmt not in SUPPORTED_FORMATS:
-            return {"success": False, "error": f"Unsupported format '{fmt}'. Use: {SUPPORTED_FORMATS}"}
+            return {
+                "success": False,
+                "error": f"Unsupported format '{fmt}'. Use: {SUPPORTED_FORMATS}",
+            }
 
         # Normalize input to list of dicts
         rows = self._normalize(data)
@@ -78,12 +83,19 @@ class DataExportAgent:
             # PDF/DOCX: delegate to DocumentBuilder
             if fmt in ("pdf", "docx"):
                 from orchestrator.services.document_builder import DocumentBuilder
+
                 builder = DocumentBuilder()
-                doc_data = {"readings_summary": {}, "anomalies": [], "highlights": [],
-                            "narrative": f"Data export: {len(rows)} records"}
+                doc_data = {
+                    "readings_summary": {},
+                    "anomalies": [],
+                    "highlights": [],
+                    "narrative": f"Data export: {len(rows)} records",
+                }
                 doc_result = builder.render(
-                    report_data=doc_data, report_type="summary",
-                    output_format=fmt, title=title or label,
+                    report_data=doc_data,
+                    report_type="summary",
+                    output_format=fmt,
+                    title=title or label,
                 )
                 if doc_result.get("success"):
                     download_url = builder.save_to_exports(doc_result)
@@ -155,7 +167,8 @@ class DataExportAgent:
     def _to_json(self, rows: List[Dict]) -> str:
         return json.dumps(
             {"exported_at": datetime.utcnow().isoformat() + "Z", "count": len(rows), "data": rows},
-            indent=2, default=str
+            indent=2,
+            default=str,
         )
 
     def _to_csv(self, rows: List[Dict]) -> str:
@@ -208,7 +221,6 @@ class DataExportAgent:
         header_row = "| " + " | ".join(str(k) for k in keys) + " |"
         sep_row = "| " + " | ".join("---" for _ in keys) + " |"
         data_rows = "\n".join(
-            "| " + " | ".join(str(row.get(k, "")) for k in keys) + " |"
-            for row in rows
+            "| " + " | ".join(str(row.get(k, "")) for k in keys) + " |" for row in rows
         )
         return f"# {title}\n\n*{len(rows)} records — {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}*\n\n{header_row}\n{sep_row}\n{data_rows}\n"

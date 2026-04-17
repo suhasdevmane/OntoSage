@@ -68,7 +68,9 @@ async def test_executive_persona_uses_llm():
     PersonaAdapter = persona_mod.PersonaAdapter
 
     adapter = PersonaAdapter()
-    mock_llm = SimpleNamespace(generate=AsyncMock(return_value="Executive summary with key metrics included."))
+    mock_llm = SimpleNamespace(
+        generate=AsyncMock(return_value="Executive summary with key metrics included.")
+    )
 
     result = await adapter.enhance(
         "Detailed analytics output.",

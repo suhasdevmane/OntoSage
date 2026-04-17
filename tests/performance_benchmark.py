@@ -19,24 +19,26 @@ Usage:
     python tests/performance_benchmark.py --component analytics --concurrency 20
     python tests/performance_benchmark.py --output results/perf_report.md
 """
+
 from __future__ import annotations
 
-import sys
-import os
-import time
-import json
-import asyncio
-import statistics
-import datetime
 import argparse
+import asyncio
+import datetime
+import json
+import os
+import statistics
+import sys
+import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Timer helper
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class Timer:
     def __init__(self):
@@ -59,15 +61,15 @@ class Timer:
         if not self._samples:
             return {"label": label, "n": 0}
         return {
-            "label":   label,
-            "n":       len(self._samples),
+            "label": label,
+            "n": len(self._samples),
             "mean_ms": round(statistics.mean(self._samples), 2),
-            "min_ms":  round(min(self._samples), 2),
-            "max_ms":  round(max(self._samples), 2),
-            "p50_ms":  round(statistics.median(self._samples), 2),
-            "p90_ms":  round(_percentile(self._samples, 90), 2),
-            "p99_ms":  round(_percentile(self._samples, 99), 2),
-            "std_ms":  round(statistics.stdev(self._samples), 2) if len(self._samples) > 1 else 0.0,
+            "min_ms": round(min(self._samples), 2),
+            "max_ms": round(max(self._samples), 2),
+            "p50_ms": round(statistics.median(self._samples), 2),
+            "p90_ms": round(_percentile(self._samples, 90), 2),
+            "p99_ms": round(_percentile(self._samples, 99), 2),
+            "std_ms": round(statistics.stdev(self._samples), 2) if len(self._samples) > 1 else 0.0,
         }
 
 
@@ -81,26 +83,33 @@ def _percentile(data: List[float], p: int) -> float:
 # Benchmark: Analytics Engine
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 async def benchmark_analytics(n_runs: int = 50) -> List[Dict]:
     results = []
     try:
-        from orchestrator.services.analytics_engine import AnalyticsEngine, AnalysisRequest
-        from tests.fixtures.ontology_fixtures import mock_sensor_readings, mock_anomalous_readings
+        from orchestrator.services.analytics_engine import (
+            AnalysisRequest,
+            AnalyticsEngine,
+        )
+        from tests.fixtures.ontology_fixtures import (
+            mock_anomalous_readings,
+            mock_sensor_readings,
+        )
     except ImportError:
         print("  ⚠️  AnalyticsEngine not importable — skipping")
         return [{"label": "analytics_engine", "error": "not importable"}]
 
-    engine  = AnalyticsEngine()
+    engine = AnalyticsEngine()
     rows_50 = mock_sensor_readings("uuid-temp-101", n=50)
 
     SCHEMA_COMFORT = {"temperature": "value", "humidity": "value"}
-    SCHEMA_TREND   = {"value": "value"}
+    SCHEMA_TREND = {"value": "value"}
 
     for analyser_type, schema, data in [
-        ("comfort",    SCHEMA_COMFORT, rows_50),
-        ("energy",     {"energy": "value"}, rows_50),
-        ("iaq",        {"co2": "value"}, rows_50),
-        ("trend",      SCHEMA_TREND, rows_50),
+        ("comfort", SCHEMA_COMFORT, rows_50),
+        ("energy", {"energy": "value"}, rows_50),
+        ("iaq", {"co2": "value"}, rows_50),
+        ("trend", SCHEMA_TREND, rows_50),
         ("compliance", SCHEMA_COMFORT, rows_50),
     ]:
         timer = Timer()
@@ -117,6 +126,7 @@ async def benchmark_analytics(n_runs: int = 50) -> List[Dict]:
 # ─────────────────────────────────────────────────────────────────────────────
 # Benchmark: Self-Correction Engine
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 async def benchmark_self_correction(n_runs: int = 20) -> List[Dict]:
     results = []
@@ -140,8 +150,10 @@ async def benchmark_self_correction(n_runs: int = 20) -> List[Dict]:
             return {"success": False, "error": "Syntax error at line 1"}
         return {"success": True, "results": {"results": {"bindings": [{"s": {"value": "x"}}]}}}
 
-    for label, fn in [("happy_path", mock_execute_success),
-                      ("1_correction", mock_execute_fail_then_pass)]:
+    for label, fn in [
+        ("happy_path", mock_execute_success),
+        ("1_correction", mock_execute_fail_then_pass),
+    ]:
         timer = Timer()
         for _ in range(n_runs):
             await timer.measure(
@@ -160,6 +172,7 @@ async def benchmark_self_correction(n_runs: int = 20) -> List[Dict]:
 # ─────────────────────────────────────────────────────────────────────────────
 # Benchmark: Data Export Agent
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 async def benchmark_export(n_runs: int = 30) -> List[Dict]:
     results = []
@@ -187,19 +200,23 @@ async def benchmark_export(n_runs: int = 30) -> List[Dict]:
 # Benchmark: Concurrent load simulation
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 async def benchmark_concurrent(concurrency_levels: List[int] = None) -> List[Dict]:
     if concurrency_levels is None:
         concurrency_levels = [1, 10, 25, 50]
     results = []
     try:
-        from orchestrator.services.analytics_engine import AnalyticsEngine, AnalysisRequest
+        from orchestrator.services.analytics_engine import (
+            AnalysisRequest,
+            AnalyticsEngine,
+        )
         from tests.fixtures.ontology_fixtures import mock_sensor_readings
     except ImportError:
         return [{"label": "concurrent", "error": "not importable"}]
 
     engine = AnalyticsEngine()
-    data   = mock_sensor_readings("uuid", n=50)
-    req    = AnalysisRequest("comfort", data, {"temperature": "value", "humidity": "value"})
+    data = mock_sensor_readings("uuid", n=50)
+    req = AnalysisRequest("comfort", data, {"temperature": "value", "humidity": "value"})
 
     for c in concurrency_levels:
         t0 = time.monotonic()
@@ -208,15 +225,17 @@ async def benchmark_concurrent(concurrency_levels: List[int] = None) -> List[Dic
         elapsed = (time.monotonic() - t0) * 1000
         throughput = round(c / (elapsed / 1000), 1)
         stat = {
-            "label":          f"concurrent:{c}req",
-            "concurrency":    c,
-            "total_ms":       round(elapsed, 1),
+            "label": f"concurrent:{c}req",
+            "concurrency": c,
+            "total_ms": round(elapsed, 1),
             "throughput_rps": throughput,
-            "avg_ms":         round(elapsed / c, 2),
+            "avg_ms": round(elapsed / c, 2),
         }
         results.append(stat)
-        print(f"    ✅ {stat['label']:25s} total={stat['total_ms']}ms  "
-              f"throughput={throughput} rps")
+        print(
+            f"    ✅ {stat['label']:25s} total={stat['total_ms']}ms  "
+            f"throughput={throughput} rps"
+        )
 
     return results
 
@@ -224,6 +243,7 @@ async def benchmark_concurrent(concurrency_levels: List[int] = None) -> List[Dic
 # ─────────────────────────────────────────────────────────────────────────────
 # Report generation
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def format_perf_report(all_results: List[Dict], total_time: float) -> str:
     lines = [
@@ -255,6 +275,7 @@ def format_perf_report(all_results: List[Dict], total_time: float) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 async def main(args):
     print(f"\n{'='*60}")
@@ -300,8 +321,12 @@ async def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="OntoSage Performance Benchmark")
-    parser.add_argument("--component", choices=["analytics", "self_correction", "export", "concurrent"],
-                        default=None, help="Benchmark a single component (default: all)")
+    parser.add_argument(
+        "--component",
+        choices=["analytics", "self_correction", "export", "concurrent"],
+        default=None,
+        help="Benchmark a single component (default: all)",
+    )
     parser.add_argument("--runs", type=int, default=30, help="Iterations per benchmark")
     parser.add_argument("--output", default="outputs/benchmark/perf_report.md")
     args = parser.parse_args()

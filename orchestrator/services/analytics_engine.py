@@ -25,13 +25,14 @@ Usage:
         options={"standard": "ashrae55"},
     ))
 """
+
 from __future__ import annotations
 
 import json
+import logging
 import math
 import os
 import statistics
-import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
@@ -44,12 +45,13 @@ _STANDARDS_DIR = Path(__file__).resolve().parent.parent / "data" / "standards"
 # Data types
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class AnalysisRequest:
-    analysis_type: str                # "comfort","energy","iaq","occupancy","trend","compliance"
-    data: List[Dict[str, Any]]        # list of row dicts (from SQL results)
-    schema: Dict[str, str]            # column alias → actual column name
-    unit: str = "metric"              # "metric" | "imperial"
+    analysis_type: str  # "comfort","energy","iaq","occupancy","trend","compliance"
+    data: List[Dict[str, Any]]  # list of row dicts (from SQL results)
+    schema: Dict[str, str]  # column alias → actual column name
+    unit: str = "metric"  # "metric" | "imperial"
     options: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -60,7 +62,7 @@ class AnalysisResult:
     summary: str
     metrics: Dict[str, Any]
     violations: List[Dict]
-    grade: Optional[str]              # A/B/C/D/F
+    grade: Optional[str]  # A/B/C/D/F
     recommendations: List[str]
     formatted_response: str
 
@@ -68,6 +70,7 @@ class AnalysisResult:
 # ─────────────────────────────────────────────────────────────────────────────
 # Comfort Standards
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _load_comfort_standards() -> Dict:
     """Load comfort standards from JSON; convert lists to tuples for range checks."""
@@ -78,17 +81,22 @@ def _load_comfort_standards() -> Dict:
         standards = {}
         for key, cfg in raw.items():
             standards[key] = {
-                k: tuple(v) for k, v in cfg.items()
-                if isinstance(v, list) and len(v) == 2
+                k: tuple(v) for k, v in cfg.items() if isinstance(v, list) and len(v) == 2
             }
         return standards
     except Exception as e:
         logger.warning(f"Failed to load {path}, using built-in defaults: {e}")
         return {
             "ashrae55": {"temperature": (20.0, 26.0), "humidity": (30.0, 60.0), "co2": (0, 1000)},
-            "well": {"temperature": (20.0, 25.5), "humidity": (30.0, 60.0), "co2": (0, 900), "pm25": (0, 15)},
+            "well": {
+                "temperature": (20.0, 25.5),
+                "humidity": (30.0, 60.0),
+                "co2": (0, 900),
+                "pm25": (0, 15),
+            },
             "en15251": {"temperature": (20.0, 26.0), "humidity": (25.0, 65.0), "co2": (0, 1200)},
         }
+
 
 def _load_iaq_grades() -> List[Dict]:
     path = _STANDARDS_DIR / "iaq_grades.json"
@@ -98,12 +106,13 @@ def _load_iaq_grades() -> List[Dict]:
     except Exception as e:
         logger.warning(f"Failed to load {path}, using built-in defaults: {e}")
         return [
-            {"grade": "A", "co2_max": 800,  "pm25_max": 10,  "label": "Excellent"},
-            {"grade": "B", "co2_max": 1000, "pm25_max": 15,  "label": "Good"},
-            {"grade": "C", "co2_max": 1200, "pm25_max": 25,  "label": "Fair"},
-            {"grade": "D", "co2_max": 1500, "pm25_max": 35,  "label": "Poor"},
+            {"grade": "A", "co2_max": 800, "pm25_max": 10, "label": "Excellent"},
+            {"grade": "B", "co2_max": 1000, "pm25_max": 15, "label": "Good"},
+            {"grade": "C", "co2_max": 1200, "pm25_max": 25, "label": "Fair"},
+            {"grade": "D", "co2_max": 1500, "pm25_max": 35, "label": "Poor"},
             {"grade": "F", "co2_max": 9999, "pm25_max": 9999, "label": "Very Poor"},
         ]
+
 
 COMFORT_STANDARDS = _load_comfort_standards()
 IAQ_GRADES = _load_iaq_grades()
@@ -111,6 +120,7 @@ IAQ_GRADES = _load_iaq_grades()
 # ─────────────────────────────────────────────────────────────────────────────
 # Helper utilities
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _extract_numeric(rows: List[Dict], col: str) -> List[float]:
     """Extract non-None numeric values for a column."""
@@ -129,11 +139,11 @@ def _stats(values: List[float]) -> Dict:
     if not values:
         return {"count": 0, "mean": None, "min": None, "max": None, "std": None, "median": None}
     return {
-        "count":  len(values),
-        "mean":   round(statistics.mean(values), 2),
-        "min":    round(min(values), 2),
-        "max":    round(max(values), 2),
-        "std":    round(statistics.stdev(values), 3) if len(values) > 1 else 0.0,
+        "count": len(values),
+        "mean": round(statistics.mean(values), 2),
+        "min": round(min(values), 2),
+        "max": round(max(values), 2),
+        "std": round(statistics.stdev(values), 3) if len(values) > 1 else 0.0,
         "median": round(statistics.median(values), 2),
     }
 
@@ -145,16 +155,21 @@ def _pct_in_range(values: List[float], lo: float, hi: float) -> float:
 
 
 def _grade_from_pct(pct_ok: float) -> str:
-    if pct_ok >= 95: return "A"
-    if pct_ok >= 85: return "B"
-    if pct_ok >= 75: return "C"
-    if pct_ok >= 60: return "D"
+    if pct_ok >= 95:
+        return "A"
+    if pct_ok >= 85:
+        return "B"
+    if pct_ok >= 75:
+        return "C"
+    if pct_ok >= 60:
+        return "D"
     return "F"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Analysers
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class ComfortAnalyser:
     """ASHRAE 55 / WELL / EN 15251 thermal comfort analysis."""
@@ -183,21 +198,33 @@ class ComfortAnalyser:
             if pct < 95:
                 n_out = int((100 - pct) * len(vals) / 100)
                 severity = "high" if pct < 75 else "medium"
-                violations.append({
-                    "parameter": alias, "standard": standard,
-                    "expected_range": [lo, hi],
-                    "pct_in_range": pct, "n_violations": n_out,
-                    "severity": severity,
-                })
+                violations.append(
+                    {
+                        "parameter": alias,
+                        "standard": standard,
+                        "expected_range": [lo, hi],
+                        "pct_in_range": pct,
+                        "n_violations": n_out,
+                        "severity": severity,
+                    }
+                )
                 if alias == "temperature":
                     if s["mean"] and s["mean"] > hi:
-                        recommendations.append(f"Reduce cooling setpoint — avg {alias} {s['mean']}°C exceeds {hi}°C target.")
+                        recommendations.append(
+                            f"Reduce cooling setpoint — avg {alias} {s['mean']}°C exceeds {hi}°C target."
+                        )
                     else:
-                        recommendations.append(f"Increase heating setpoint — avg {alias} {s['mean']}°C below {lo}°C target.")
+                        recommendations.append(
+                            f"Increase heating setpoint — avg {alias} {s['mean']}°C below {lo}°C target."
+                        )
                 elif alias == "humidity":
-                    recommendations.append(f"Review humidification/dehumidification — avg RH {s['mean']}% outside {lo}-{hi}% range.")
+                    recommendations.append(
+                        f"Review humidification/dehumidification — avg RH {s['mean']}% outside {lo}-{hi}% range."
+                    )
                 elif alias == "co2":
-                    recommendations.append(f"Increase ventilation rate — avg CO₂ {s['mean']} ppm exceeds limit of {hi} ppm.")
+                    recommendations.append(
+                        f"Increase ventilation rate — avg CO₂ {s['mean']} ppm exceeds limit of {hi} ppm."
+                    )
 
         pct_ok = statistics.mean(overall_pcts) if overall_pcts else 0.0
         grade = _grade_from_pct(pct_ok)
@@ -206,7 +233,8 @@ class ComfortAnalyser:
         if violations:
             v_lines = "\n\n**Violations detected:**\n" + "\n".join(
                 f"  • {v['parameter'].title()}: {v['pct_in_range']}% in range "
-                f"(expected ≥95%) — {v['n_violations']} readings out-of-range" for v in violations
+                f"(expected ≥95%) — {v['n_violations']} readings out-of-range"
+                for v in violations
             )
 
         r_lines = ""
@@ -240,8 +268,9 @@ class EnergyAnalyser:
         col = req.schema.get("energy", req.schema.get("value", "value"))
         vals = _extract_numeric(req.data, col)
         if not vals:
-            return AnalysisResult("energy", False, "No energy data.", {}, [], None, [],
-                                  "No energy data available.")
+            return AnalysisResult(
+                "energy", False, "No energy data.", {}, [], None, [], "No energy data available."
+            )
 
         s = _stats(vals)
         peak = max(vals)
@@ -264,8 +293,11 @@ class EnergyAnalyser:
                 "Low load factor detected — consider rightsizing HVAC equipment."
             )
 
-        grade = "A" if (n_peaks == 0 and (load_factor or 1) > 0.7) else \
-                "B" if n_peaks <= 2 else "C" if n_peaks <= 5 else "D"
+        grade = (
+            "A"
+            if (n_peaks == 0 and (load_factor or 1) > 0.7)
+            else "B" if n_peaks <= 2 else "C" if n_peaks <= 5 else "D"
+        )
 
         summary = (
             f"Energy analysis — **Grade {grade}**. "
@@ -281,7 +313,8 @@ class EnergyAnalyser:
             violations=[],
             grade=grade,
             recommendations=recommendations,
-            formatted_response=summary + (f"\n\n**Recommendations:**\n{rec_lines}" if rec_lines else ""),
+            formatted_response=summary
+            + (f"\n\n**Recommendations:**\n{rec_lines}" if rec_lines else ""),
         )
 
 
@@ -293,22 +326,24 @@ class AirQualityAnalyser:
         data = req.data
         metrics: Dict[str, Any] = {}
 
-        co2_col  = schema.get("co2",  "co2")
+        co2_col = schema.get("co2", "co2")
         pm25_col = schema.get("pm25", "pm25")
 
-        co2_vals  = _extract_numeric(data, co2_col)
+        co2_vals = _extract_numeric(data, co2_col)
         pm25_vals = _extract_numeric(data, pm25_col)
 
-        co2_mean  = statistics.mean(co2_vals)  if co2_vals  else None
+        co2_mean = statistics.mean(co2_vals) if co2_vals else None
         pm25_mean = statistics.mean(pm25_vals) if pm25_vals else None
 
-        if co2_vals:  metrics["co2"]  = _stats(co2_vals)
-        if pm25_vals: metrics["pm25"] = _stats(pm25_vals)
+        if co2_vals:
+            metrics["co2"] = _stats(co2_vals)
+        if pm25_vals:
+            metrics["pm25"] = _stats(pm25_vals)
 
         # Determine grade
         grade = "F"
         for band in IAQ_GRADES:
-            co2_ok  = co2_mean  is None or co2_mean  <= band["co2_max"]
+            co2_ok = co2_mean is None or co2_mean <= band["co2_max"]
             pm25_ok = pm25_mean is None or pm25_mean <= band["pm25_max"]
             if co2_ok and pm25_ok:
                 grade = band["grade"]
@@ -318,13 +353,19 @@ class AirQualityAnalyser:
 
         recommendations = []
         if co2_mean and co2_mean > 1000:
-            recommendations.append(f"CO₂ avg {co2_mean:.0f} ppm — increase fresh air ventilation by ≥20%.")
+            recommendations.append(
+                f"CO₂ avg {co2_mean:.0f} ppm — increase fresh air ventilation by ≥20%."
+            )
         if pm25_mean and pm25_mean > 15:
-            recommendations.append(f"PM2.5 avg {pm25_mean:.1f} µg/m³ — upgrade filters to MERV-13 or higher.")
+            recommendations.append(
+                f"PM2.5 avg {pm25_mean:.1f} µg/m³ — upgrade filters to MERV-13 or higher."
+            )
 
         summary = f"Indoor Air Quality — **Grade {grade}** ({grade_label})."
-        if co2_mean:  summary += f" CO₂ avg: {co2_mean:.0f} ppm."
-        if pm25_mean: summary += f" PM2.5 avg: {pm25_mean:.1f} µg/m³."
+        if co2_mean:
+            summary += f" CO₂ avg: {co2_mean:.0f} ppm."
+        if pm25_mean:
+            summary += f" PM2.5 avg: {pm25_mean:.1f} µg/m³."
 
         return AnalysisResult(
             analysis_type="iaq",
@@ -334,9 +375,11 @@ class AirQualityAnalyser:
             violations=[],
             grade=grade,
             recommendations=recommendations,
-            formatted_response=summary + (
+            formatted_response=summary
+            + (
                 "\n\n**Recommendations:**\n" + "\n".join(f"  • {r}" for r in recommendations)
-                if recommendations else ""
+                if recommendations
+                else ""
             ),
         )
 
@@ -349,9 +392,16 @@ class TrendAnalyser:
         vals = _extract_numeric(req.data, col)
 
         if len(vals) < 3:
-            return AnalysisResult("trend", False, "Insufficient data for trend analysis.",
-                                  {}, [], None, [],
-                                  "Need at least 3 data points for trend analysis.")
+            return AnalysisResult(
+                "trend",
+                False,
+                "Insufficient data for trend analysis.",
+                {},
+                [],
+                None,
+                [],
+                "Need at least 3 data points for trend analysis.",
+            )
 
         # Simple Mann-Kendall trend test (tau sign)
         concordant = discordant = 0
@@ -359,8 +409,10 @@ class TrendAnalyser:
         for i in range(n - 1):
             for j in range(i + 1, n):
                 diff = vals[j] - vals[i]
-                if diff > 0: concordant += 1
-                elif diff < 0: discordant += 1
+                if diff > 0:
+                    concordant += 1
+                elif diff < 0:
+                    discordant += 1
 
         tau = (concordant - discordant) / (n * (n - 1) / 2)
 
@@ -390,14 +442,23 @@ class TrendAnalyser:
             analysis_type="trend",
             success=True,
             summary=summary,
-            metrics={"tau": round(tau, 4), "slope": round(slope, 6),
-                     "direction": trend_dir, "strength": trend_strength,
-                     "n_points": n, **_stats(vals)},
+            metrics={
+                "tau": round(tau, 4),
+                "slope": round(slope, 6),
+                "direction": trend_dir,
+                "strength": trend_strength,
+                "n_points": n,
+                **_stats(vals),
+            },
             violations=[],
             grade=None,
-            recommendations=([
-                f"Values are {trend_dir} at {abs(slope):.3f} per interval. Consider scheduled maintenance review."
-            ] if trend_strength in ("moderate", "strong") else []),
+            recommendations=(
+                [
+                    f"Values are {trend_dir} at {abs(slope):.3f} per interval. Consider scheduled maintenance review."
+                ]
+                if trend_strength in ("moderate", "strong")
+                else []
+            ),
             formatted_response=summary,
         )
 
@@ -423,41 +484,39 @@ class ComplianceChecker:
     """
 
     # Severity thresholds (% of readings out-of-range)
-    _CRITICAL_PCT  = 25.0   # >25% out → critical
-    _MODERATE_PCT  =  5.0   # 5-25%   → moderate
+    _CRITICAL_PCT = 25.0  # >25% out → critical
+    _MODERATE_PCT = 5.0  # 5-25%   → moderate
     # <5% out → borderline (still flagged but minor)
 
     # Standard-name aliases for the StandardsEngine
     _STD_MAP = {
-        "ashrae55":   "ashrae55",
-        "ashrae":     "ashrae55",
-        "ashrae 55":  "ashrae55",
-        "ashrae62":   "ashrae621",
-        "ashrae 62":  "ashrae621",
-        "ashrae621":  "ashrae621",
-        "well":       "well_v2",
-        "well_v2":    "well_v2",
-        "breeam":     "breeam",
-        "en15251":    "en15251",
-        "en16798":    "en15251",
-        "cibse":      "cibse_kg2",
-        "iso50001":   "iso50001",
+        "ashrae55": "ashrae55",
+        "ashrae": "ashrae55",
+        "ashrae 55": "ashrae55",
+        "ashrae62": "ashrae621",
+        "ashrae 62": "ashrae621",
+        "ashrae621": "ashrae621",
+        "well": "well_v2",
+        "well_v2": "well_v2",
+        "breeam": "breeam",
+        "en15251": "en15251",
+        "en16798": "en15251",
+        "cibse": "cibse_kg2",
+        "iso50001": "iso50001",
     }
 
     # Column-name → StandardsEngine parameter key
     _COL_PARAM_MAP = [
-        ({"temperature", "temp", "air_temp", "temp_c", "air_temperature"},        "temp_c"),
-        ({"humidity", "rh", "relative_humidity", "humidity_rh"},                   "humidity_rh"),
-        ({"co2", "co2_ppm", "carbon_dioxide"},                                     "co2_ppm"),
-        ({"pm25", "pm2_5", "pm25_ugm3", "particulate"},                            "pm25_ugm3"),
-        ({"tvoc", "voc", "tvoc_ppb", "total_voc"},                                 "tvoc_ppb"),
-        ({"illuminance", "lux", "illuminance_lux"},                                "illuminance_lux"),
-        ({"eui", "eui_kwh_m2_year", "energy_use_intensity"},                       "eui_kwh_m2_year"),
+        ({"temperature", "temp", "air_temp", "temp_c", "air_temperature"}, "temp_c"),
+        ({"humidity", "rh", "relative_humidity", "humidity_rh"}, "humidity_rh"),
+        ({"co2", "co2_ppm", "carbon_dioxide"}, "co2_ppm"),
+        ({"pm25", "pm2_5", "pm25_ugm3", "particulate"}, "pm25_ugm3"),
+        ({"tvoc", "voc", "tvoc_ppb", "total_voc"}, "tvoc_ppb"),
+        ({"illuminance", "lux", "illuminance_lux"}, "illuminance_lux"),
+        ({"eui", "eui_kwh_m2_year", "energy_use_intensity"}, "eui_kwh_m2_year"),
     ]
 
-    def _map_schema_to_readings(
-        self, data: List[Dict], schema: Dict[str, str]
-    ) -> Dict[str, Dict]:
+    def _map_schema_to_readings(self, data: List[Dict], schema: Dict[str, str]) -> Dict[str, Dict]:
         """
         Return a dict of {param_key: {"values": [...], "col": col_name}} for
         every parameter we can find in the data.
@@ -492,23 +551,25 @@ class ComplianceChecker:
         median_ = statistics.median(vals)
         stdev_ = statistics.pstdev(vals) if n > 1 else 0.0
         sorted_v = sorted(vals)
-        p5  = sorted_v[max(0, int(0.05 * n))]
+        p5 = sorted_v[max(0, int(0.05 * n))]
         p25 = sorted_v[max(0, int(0.25 * n))]
         p75 = sorted_v[min(n - 1, int(0.75 * n))]
         p95 = sorted_v[min(n - 1, int(0.95 * n))]
         return {
-            "n": n, "mean": round(mean_, 2), "median": round(median_, 2),
+            "n": n,
+            "mean": round(mean_, 2),
+            "median": round(median_, 2),
             "stdev": round(stdev_, 2),
-            "min": round(min(vals), 2), "max": round(max(vals), 2),
-            "p5": round(p5, 2), "p25": round(p25, 2),
-            "p75": round(p75, 2), "p95": round(p95, 2),
+            "min": round(min(vals), 2),
+            "max": round(max(vals), 2),
+            "p5": round(p5, 2),
+            "p25": round(p25, 2),
+            "p75": round(p75, 2),
+            "p95": round(p95, 2),
         }
 
     def _pct_outside(self, vals: List[float], lo: Optional[float], hi: Optional[float]) -> float:
-        outside = sum(
-            1 for v in vals
-            if (hi is not None and v > hi) or (lo is not None and v < lo)
-        )
+        outside = sum(1 for v in vals if (hi is not None and v > hi) or (lo is not None and v < lo))
         return round(outside / len(vals) * 100, 1) if vals else 0.0
 
     def _severity(self, pct_outside: float) -> str:
@@ -521,17 +582,20 @@ class ComplianceChecker:
     def run(self, req: AnalysisRequest) -> AnalysisResult:
         from orchestrator.services.standards_engine import get_standards_engine
 
-        engine      = get_standards_engine()
-        data        = req.data
-        schema      = req.schema
-        param_data  = self._map_schema_to_readings(data, schema)
+        engine = get_standards_engine()
+        data = req.data
+        schema = req.schema
+        param_data = self._map_schema_to_readings(data, schema)
 
         if not param_data:
             return AnalysisResult(
                 analysis_type="compliance",
                 success=False,
                 summary="Insufficient sensor data for compliance analysis.",
-                metrics={}, violations=[], grade=None, recommendations=[],
+                metrics={},
+                violations=[],
+                grade=None,
+                recommendations=[],
                 formatted_response=(
                     "**Compliance Analysis — Insufficient Data**\n\n"
                     "No measurable environmental parameters (temperature, humidity, CO₂, etc.) "
@@ -589,30 +653,36 @@ class ComplianceChecker:
                 vals = param_data.get(param, {}).get("values", [])
                 pct_out = self._pct_outside(vals, lo, hi) if vals else None
                 severity = self._severity(pct_out) if pct_out is not None and pct_out > 0 else None
-                enriched_checks.append({
-                    **c,
-                    "statistics": ts,
-                    "pct_outside_threshold": pct_out,
-                    "severity": severity,
-                })
-                if pct_out is not None and pct_out > 0:
-                    all_violations.append({
+                enriched_checks.append(
+                    {
                         **c,
-                        "standard_id": eng_id,
-                        "pct_outside": pct_out,
-                        "severity": severity,
                         "statistics": ts,
-                    })
+                        "pct_outside_threshold": pct_out,
+                        "severity": severity,
+                    }
+                )
+                if pct_out is not None and pct_out > 0:
+                    all_violations.append(
+                        {
+                            **c,
+                            "standard_id": eng_id,
+                            "pct_outside": pct_out,
+                            "severity": severity,
+                            "statistics": ts,
+                        }
+                    )
 
-            std_results.append({
-                "standard_id":     eng_id,
-                "standard_name":   check.get("standard"),
-                "overall_status":  check.get("overall_status"),
-                "compliance_score": check.get("compliance_score"),
-                "references":      check.get("references", []),
-                "checks":          enriched_checks,
-                "violations_count": len(std_violations),
-            })
+            std_results.append(
+                {
+                    "standard_id": eng_id,
+                    "standard_name": check.get("standard"),
+                    "overall_status": check.get("overall_status"),
+                    "compliance_score": check.get("compliance_score"),
+                    "references": check.get("references", []),
+                    "checks": enriched_checks,
+                    "violations_count": len(std_violations),
+                }
+            )
 
             # Recommendations
             for c in enriched_checks:
@@ -692,8 +762,12 @@ class ComplianceChecker:
         report_lines += ["| Parameter | n | Mean | Median | σ | Min | Max | P5 | P95 | Unit |"]
         report_lines += ["|-----------|---|------|--------|---|-----|-----|----|-----|------|"]
         _PARAM_UNITS = {
-            "temp_c": "°C", "humidity_rh": "%RH", "co2_ppm": "ppm",
-            "pm25_ugm3": "µg/m³", "tvoc_ppb": "ppb", "illuminance_lux": "lux",
+            "temp_c": "°C",
+            "humidity_rh": "%RH",
+            "co2_ppm": "ppm",
+            "pm25_ugm3": "µg/m³",
+            "tvoc_ppb": "ppb",
+            "illuminance_lux": "lux",
         }
         for p, s in param_stats.items():
             unit = _PARAM_UNITS.get(p, "")
@@ -706,8 +780,10 @@ class ComplianceChecker:
         # Per-standard results
         report_lines += ["### Compliance Assessment by Standard", ""]
         for r in std_results:
-            status_icon = "✅" if r["overall_status"] == "compliant" else (
-                "⚠️" if r["overall_status"] == "borderline" else "❌"
+            status_icon = (
+                "✅"
+                if r["overall_status"] == "compliant"
+                else ("⚠️" if r["overall_status"] == "borderline" else "❌")
             )
             score_pct = round(r["compliance_score"] * 100, 1)
             report_lines += [
@@ -716,20 +792,28 @@ class ComplianceChecker:
                 "",
             ]
             if r["checks"]:
-                report_lines += ["| Parameter | Value | Threshold | Status | % Outside | Severity |"]
-                report_lines += ["|-----------|-------|-----------|--------|-----------|----------|"]
+                report_lines += [
+                    "| Parameter | Value | Threshold | Status | % Outside | Severity |"
+                ]
+                report_lines += [
+                    "|-----------|-------|-----------|--------|-----------|----------|"
+                ]
                 for c in r["checks"]:
                     thr = c["threshold"]
                     lo = thr.get("min", "—")
                     hi = thr.get("max", "—")
-                    thr_str = f"{lo}–{hi} {c['unit']}" if lo != "—" and hi != "—" else (
-                        f"≤{hi} {c['unit']}" if hi != "—" else f"≥{lo} {c['unit']}"
+                    thr_str = (
+                        f"{lo}–{hi} {c['unit']}"
+                        if lo != "—" and hi != "—"
+                        else (f"≤{hi} {c['unit']}" if hi != "—" else f"≥{lo} {c['unit']}")
                     )
                     pct_out = c.get("pct_outside_threshold")
                     pct_str = f"{pct_out}%" if pct_out is not None else "—"
                     sev = c.get("severity") or "—"
-                    st_icon = "✅" if c["status"] == "compliant" else (
-                        "⚠️" if c["status"] == "borderline" else "❌"
+                    st_icon = (
+                        "✅"
+                        if c["status"] == "compliant"
+                        else ("⚠️" if c["status"] == "borderline" else "❌")
                     )
                     report_lines.append(
                         f"| {c['label']} | {c['value']}{c['unit']} | {thr_str} "
@@ -757,8 +841,13 @@ class ComplianceChecker:
                         val = v["value"]
                         unit = v["unit"]
                         direction = (
-                            f"{round(val - hi, 2)}{unit} above limit" if hi and val > hi else
-                            f"{round(lo - val, 2)}{unit} below minimum" if lo and val < lo else "out of range"
+                            f"{round(val - hi, 2)}{unit} above limit"
+                            if hi and val > hi
+                            else (
+                                f"{round(lo - val, 2)}{unit} below minimum"
+                                if lo and val < lo
+                                else "out of range"
+                            )
                         )
                         stats_ = v.get("statistics", {})
                         report_lines.append(
@@ -816,6 +905,7 @@ class ComplianceChecker:
 # Main AnalyticsEngine
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class AnalyticsEngine:
     """
     Dispatcher for deterministic analytics modules.
@@ -823,11 +913,11 @@ class AnalyticsEngine:
     """
 
     _ANALYSERS = {
-        "comfort":    ComfortAnalyser,
-        "energy":     EnergyAnalyser,
-        "iaq":        AirQualityAnalyser,
-        "air_quality":AirQualityAnalyser,
-        "trend":      TrendAnalyser,
+        "comfort": ComfortAnalyser,
+        "energy": EnergyAnalyser,
+        "iaq": AirQualityAnalyser,
+        "air_quality": AirQualityAnalyser,
+        "trend": TrendAnalyser,
         "compliance": ComplianceChecker,
     }
 
@@ -852,8 +942,10 @@ class AnalyticsEngine:
         try:
             analyser = analyser_cls()
             result = analyser.run(req)
-            logger.info(f"Analytics [{req.analysis_type}]: grade={result.grade}, "
-                        f"violations={len(result.violations)}")
+            logger.info(
+                f"Analytics [{req.analysis_type}]: grade={result.grade}, "
+                f"violations={len(result.violations)}"
+            )
             return result
         except Exception as e:
             logger.error(f"Analytics [{req.analysis_type}] failed: {e}", exc_info=True)

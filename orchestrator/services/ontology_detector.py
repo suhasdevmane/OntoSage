@@ -25,11 +25,12 @@ Usage:
     print(result.building_ns)    # "http://example.com/mybldg#"
     print(result.sensor_count)   # 142
 """
+
 from __future__ import annotations
 
+import logging
 import os
 import re
-import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
@@ -104,8 +105,15 @@ SCHEMA_PREFIXES = {
 
 # Brick sensor type indicators
 SENSOR_CLASS_PATTERNS = [
-    "Sensor", "Meter", "Setpoint", "Command", "Parameter",
-    "Status", "Alarm", "Point", "Actuator",
+    "Sensor",
+    "Meter",
+    "Setpoint",
+    "Command",
+    "Parameter",
+    "Status",
+    "Alarm",
+    "Point",
+    "Actuator",
 ]
 
 CONFIDENCE_THRESHOLD = float(os.environ.get("ONTOLOGY_DETECT_THRESHOLD", "0.75"))
@@ -114,16 +122,17 @@ CONFIDENCE_THRESHOLD = float(os.environ.get("ONTOLOGY_DETECT_THRESHOLD", "0.75")
 @dataclass
 class DetectionResult:
     """Result from OntologySchemaDetector.detect()."""
-    schemas:        List[str] = field(default_factory=list)
-    confidence:     float = 0.0
+
+    schemas: List[str] = field(default_factory=list)
+    confidence: float = 0.0
     score_breakdown: Dict[str, float] = field(default_factory=dict)
-    prefix_block:   str = ""
-    building_ns:    str = ""
+    prefix_block: str = ""
+    building_ns: str = ""
     building_prefix: str = "bldg"
-    sensor_count:   int = 0
-    class_count:    int = 0
-    detected:       bool = False
-    notes:          List[str] = field(default_factory=list)
+    sensor_count: int = 0
+    class_count: int = 0
+    detected: bool = False
+    notes: List[str] = field(default_factory=list)
 
     def to_config_yaml(self) -> str:
         """Returns a building_config.yaml `schema` section for auto-population."""
@@ -131,38 +140,37 @@ class DetectionResult:
         return (
             f"# Auto-detected by OntologySchemaDetector (confidence={self.confidence:.0%})\n"
             f"building:\n"
-            f"  namespace: \"{self.building_ns}\"\n"
-            f"  prefix: \"{self.building_prefix}\"\n"
-            f"  schema: \"{schema_str}\"\n"
+            f'  namespace: "{self.building_ns}"\n'
+            f'  prefix: "{self.building_prefix}"\n'
+            f'  schema: "{schema_str}"\n'
         )
 
     def to_dict(self) -> Dict:
         return {
-            "schemas":         self.schemas,
-            "confidence":      round(self.confidence, 3),
+            "schemas": self.schemas,
+            "confidence": round(self.confidence, 3),
             "score_breakdown": {k: round(v, 3) for k, v in self.score_breakdown.items()},
-            "prefix_block":    self.prefix_block,
-            "building_ns":     self.building_ns,
+            "prefix_block": self.prefix_block,
+            "building_ns": self.building_ns,
             "building_prefix": self.building_prefix,
-            "sensor_count":    self.sensor_count,
-            "class_count":     self.class_count,
-            "detected":        self.detected,
-            "notes":           self.notes,
+            "sensor_count": self.sensor_count,
+            "class_count": self.class_count,
+            "detected": self.detected,
+            "notes": self.notes,
         }
 
 
 class OntologySchemaDetector:
     """
     Detects which ontology schema is used in a TTL file without manual configuration.
-    
+
     Works with rdflib (always available in the OntoSage environment via rag-service).
     Also supports detection from a running GraphDB instance by sampling the SPARQL endpoint.
     """
 
-    def __init__(self, sample_limit: int = 500,
-                 confidence_threshold: float = CONFIDENCE_THRESHOLD):
-        self._sample      = sample_limit
-        self._threshold   = confidence_threshold
+    def __init__(self, sample_limit: int = 500, confidence_threshold: float = CONFIDENCE_THRESHOLD):
+        self._sample = sample_limit
+        self._threshold = confidence_threshold
 
     # ─────────────────────────────────────────────────────────────────────────
     # Entry points
@@ -172,6 +180,7 @@ class OntologySchemaDetector:
         """Detect schema from a local .ttl file."""
         try:
             import rdflib
+
             g = rdflib.Graph()
             g.parse(ttl_path, format="turtle")
             return self._analyse_graph(g)
@@ -181,26 +190,26 @@ class OntologySchemaDetector:
             logger.error(f"Ontology detection error: {e}")
             return DetectionResult(notes=[f"Parse error: {e}"])
 
-    async def detect_from_graphdb(self, graphdb_url: str,
-                                   repository: str = "bldg") -> DetectionResult:
+    async def detect_from_graphdb(
+        self, graphdb_url: str, repository: str = "bldg"
+    ) -> DetectionResult:
         """Detect schema by sampling types from a live GraphDB instance."""
         try:
             import httpx
-            sparql = (
-                "SELECT DISTINCT ?type WHERE { "
-                "  ?s a ?type . "
-                f"}} LIMIT {self._sample}"
-            )
+
+            sparql = "SELECT DISTINCT ?type WHERE { " "  ?s a ?type . " f"}} LIMIT {self._sample}"
             url = f"{graphdb_url}/repositories/{repository}"
             async with httpx.AsyncClient(timeout=30.0) as client:
-                resp = await client.get(url, params={
-                    "query": sparql,
-                    "format": "application/sparql-results+json",
-                })
+                resp = await client.get(
+                    url,
+                    params={
+                        "query": sparql,
+                        "format": "application/sparql-results+json",
+                    },
+                )
                 resp.raise_for_status()
                 bindings = resp.json()["results"]["bindings"]
-                type_uris = [b["type"]["value"] for b in bindings
-                             if b["type"]["type"] == "uri"]
+                type_uris = [b["type"]["value"] for b in bindings if b["type"]["type"] == "uri"]
             return self._analyse_type_uris(type_uris, graphdb_url)
         except Exception as e:
             logger.error(f"GraphDB detection error: {e}")
@@ -210,6 +219,7 @@ class OntologySchemaDetector:
         """Detect schema from a TTL string (for testing)."""
         try:
             import rdflib
+
             g = rdflib.Graph()
             g.parse(data=ttl_content, format="turtle")
             return self._analyse_graph(g)
@@ -223,13 +233,14 @@ class OntologySchemaDetector:
     def _analyse_graph(self, g) -> DetectionResult:
         """Analyse an rdflib Graph to detect schema."""
         import rdflib
-        RDF  = rdflib.RDF
+
+        RDF = rdflib.RDF
         RDFS = rdflib.RDFS
 
         type_uris: List[str] = []
         subject_ns: Dict[str, int] = {}
         sensor_count = 0
-        class_count  = 0
+        class_count = 0
 
         for s, p, o in g.triples((None, RDF.type, None)):
             type_uri = str(o)
@@ -250,21 +261,27 @@ class OntologySchemaDetector:
             subject_ns[ns] = subject_ns.get(ns, 0) + 1
 
         building_ns, building_prefix = self._infer_building_ns(subject_ns, type_uris)
-        return self._analyse_type_uris(type_uris, building_ns,
-                                        sensor_count=sensor_count,
-                                        class_count=class_count,
-                                        building_prefix=building_prefix)
+        return self._analyse_type_uris(
+            type_uris,
+            building_ns,
+            sensor_count=sensor_count,
+            class_count=class_count,
+            building_prefix=building_prefix,
+        )
 
-    def _analyse_type_uris(self, type_uris: List[str],
-                            building_ns: str = "",
-                            sensor_count: int = 0,
-                            class_count: int = 0,
-                            building_prefix: str = "bldg") -> DetectionResult:
+    def _analyse_type_uris(
+        self,
+        type_uris: List[str],
+        building_ns: str = "",
+        sensor_count: int = 0,
+        class_count: int = 0,
+        building_prefix: str = "bldg",
+    ) -> DetectionResult:
         """Score schemas from a list of type URI strings."""
         if not type_uris:
             return DetectionResult(notes=["No rdf:type triples found"])
 
-        total  = len(type_uris)
+        total = len(type_uris)
         scores: Dict[str, int] = {schema: 0 for schema in SCHEMA_NAMESPACES}
 
         for uri in type_uris:
@@ -293,27 +310,28 @@ class OntologySchemaDetector:
             if schema in SCHEMA_PREFIXES:
                 prefix_block += SCHEMA_PREFIXES[schema]
         if building_ns:
-            prefix_block += f'PREFIX bldg: <{building_ns}>\n'
+            prefix_block += f"PREFIX bldg: <{building_ns}>\n"
 
         return DetectionResult(
-            schemas          = detected_schemas,
-            confidence       = top_score,
-            score_breakdown  = {s: round(v, 3) for s, v in norm_scores.items() if v > 0},
-            prefix_block     = prefix_block,
-            building_ns      = building_ns,
-            building_prefix  = building_prefix,
-            sensor_count     = sensor_count,
-            class_count      = class_count,
-            detected         = top_score >= self._threshold,
-            notes            = notes,
+            schemas=detected_schemas,
+            confidence=top_score,
+            score_breakdown={s: round(v, 3) for s, v in norm_scores.items() if v > 0},
+            prefix_block=prefix_block,
+            building_ns=building_ns,
+            building_prefix=building_prefix,
+            sensor_count=sensor_count,
+            class_count=class_count,
+            detected=top_score >= self._threshold,
+            notes=notes,
         )
 
     # ─────────────────────────────────────────────────────────────────────────
     # Building namespace inference
     # ─────────────────────────────────────────────────────────────────────────
 
-    def _infer_building_ns(self, subject_ns: Dict[str, int],
-                            type_uris: List[str]) -> Tuple[str, str]:
+    def _infer_building_ns(
+        self, subject_ns: Dict[str, int], type_uris: List[str]
+    ) -> Tuple[str, str]:
         """
         Infer the building-specific namespace (the most frequent
         non-schema subject namespace).
@@ -336,9 +354,9 @@ class OntologySchemaDetector:
         }
 
         candidates = {
-            ns: count for ns, count in subject_ns.items()
-            if not any(ns.startswith(p) for p in schema_ns_prefixes | STANDARD_NS)
-            and count > 1
+            ns: count
+            for ns, count in subject_ns.items()
+            if not any(ns.startswith(p) for p in schema_ns_prefixes | STANDARD_NS) and count > 1
         }
 
         if not candidates:
@@ -353,6 +371,6 @@ class OntologySchemaDetector:
     def _ns_to_prefix(ns: str) -> str:
         """Derive a short, clean prefix from a namespace URI."""
         ns_clean = ns.rstrip("#/")
-        segment  = ns_clean.split("/")[-1] or ns_clean.split("/")[-2]
-        segment  = re.sub(r"[^a-zA-Z0-9]", "", segment).lower()
+        segment = ns_clean.split("/")[-1] or ns_clean.split("/")[-2]
+        segment = re.sub(r"[^a-zA-Z0-9]", "", segment).lower()
         return segment[:8] if segment else "bldg"

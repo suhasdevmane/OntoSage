@@ -23,13 +23,16 @@ Hypertable-aware features available via dialect hints:
 
 Install: pip install asyncpg   (same as PostgreSQL)
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 from typing import Optional
 
 from orchestrator.services.adapters.postgresql_adapter import PostgreSQLAdapter
 from orchestrator.services.database_adapter import AdapterType
+
 
 class TimescaleDBAdapter(PostgreSQLAdapter):
     """
@@ -48,8 +51,9 @@ class TimescaleDBAdapter(PostgreSQLAdapter):
         password: Optional[str] = None,
         database: Optional[str] = None,
     ) -> None:
-        super().__init__(dsn=dsn, host=host, port=port,
-                         user=user, password=password, database=database)
+        super().__init__(
+            dsn=dsn, host=host, port=port, user=user, password=password, database=database
+        )
 
     def get_dialect_hints(self) -> str:
         return (

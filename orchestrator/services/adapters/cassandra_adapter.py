@@ -21,23 +21,35 @@ Expected Cassandra table schema (example):
 
 Install: pip install cassandra-driver
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 import asyncio
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Set
 
-from shared.utils import get_logger
 from orchestrator.services.database_adapter import (
-    DatabaseAdapter, AdapterType, QueryResult, SchemaInfo
+    AdapterType,
+    DatabaseAdapter,
+    QueryResult,
+    SchemaInfo,
 )
+from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
 _FORBIDDEN_KEYWORDS = [
-    "DROP ", "DELETE ", "INSERT ", "UPDATE ", "ALTER ",
-    "TRUNCATE ", "GRANT ", "REVOKE ", "CREATE ",
+    "DROP ",
+    "DELETE ",
+    "INSERT ",
+    "UPDATE ",
+    "ALTER ",
+    "TRUNCATE ",
+    "GRANT ",
+    "REVOKE ",
+    "CREATE ",
 ]
 
 
@@ -59,14 +71,14 @@ class CassandraAdapter(DatabaseAdapter):
         password: Optional[str] = None,
         table: str = "sensor_data",
     ) -> None:
-        self._host     = host
-        self._port     = port
+        self._host = host
+        self._port = port
         self._keyspace = keyspace
-        self._user     = user
+        self._user = user
         self._password = password
         self._default_table = table
-        self._cluster  = None
-        self._session  = None
+        self._cluster = None
+        self._session = None
         self._schema_cache: Optional[SchemaInfo] = None
         self._columns_cache: Optional[Set[str]] = None
 
@@ -77,17 +89,15 @@ class CassandraAdapter(DatabaseAdapter):
     async def connect(self) -> None:
         """Connect to Cassandra and set the keyspace."""
         try:
-            from cassandra.cluster import Cluster
             from cassandra.auth import PlainTextAuthProvider
+            from cassandra.cluster import Cluster
 
             loop = asyncio.get_event_loop()
 
             def _connect():
                 auth = None
                 if self._user and self._password:
-                    auth = PlainTextAuthProvider(
-                        username=self._user, password=self._password
-                    )
+                    auth = PlainTextAuthProvider(username=self._user, password=self._password)
                 cluster = Cluster(
                     [self._host],
                     port=self._port,
@@ -122,9 +132,9 @@ class CassandraAdapter(DatabaseAdapter):
         if self._schema_cache:
             return self._schema_cache
 
-        tables:        List[str]             = []
-        columns:       Dict[str, List[tuple]] = {}
-        timestamp_col: Optional[str]         = None
+        tables: List[str] = []
+        columns: Dict[str, List[tuple]] = {}
+        timestamp_col: Optional[str] = None
 
         try:
             loop = asyncio.get_event_loop()
@@ -132,18 +142,19 @@ class CassandraAdapter(DatabaseAdapter):
             def _fetch_schema():
                 rows = self._session.execute(
                     "SELECT table_name FROM system_schema.tables WHERE keyspace_name = %s",
-                    (self._keyspace,)
+                    (self._keyspace,),
                 )
                 return [r.table_name for r in rows]
 
             tables = await loop.run_in_executor(None, _fetch_schema)
 
             for table in tables:
+
                 def _fetch_cols(t=table):
                     rows = self._session.execute(
                         "SELECT column_name, type FROM system_schema.columns "
                         "WHERE keyspace_name = %s AND table_name = %s",
-                        (self._keyspace, t)
+                        (self._keyspace, t),
                     )
                     return [(r.column_name, r.type) for r in rows]
 
@@ -151,16 +162,19 @@ class CassandraAdapter(DatabaseAdapter):
                 columns[table] = col_list
                 for col_name, _ in col_list:
                     if not timestamp_col and any(
-                        kw in col_name.lower()
-                        for kw in ("timestamp", "time", "datetime")
+                        kw in col_name.lower() for kw in ("timestamp", "time", "datetime")
                     ):
                         timestamp_col = col_name
         except Exception as e:
             logger.error(f"CassandraAdapter.get_schema failed: {e}")
-            tables  = [self._default_table]
-            columns = {self._default_table: [
-                ("uuid", "text"), ("timestamp", "timestamp"), ("value", "double")
-            ]}
+            tables = [self._default_table]
+            columns = {
+                self._default_table: [
+                    ("uuid", "text"),
+                    ("timestamp", "timestamp"),
+                    ("value", "double"),
+                ]
+            }
             timestamp_col = "timestamp"
 
         self._schema_cache = SchemaInfo(
@@ -196,10 +210,7 @@ class CassandraAdapter(DatabaseAdapter):
     def validate_query(self, cql: str) -> bool:
         """SELECT-only safety check for CQL."""
         cql_upper = cql.upper().strip()
-        if not (
-            cql_upper.startswith("SELECT")
-            or cql_upper.startswith("WITH")
-        ):
+        if not (cql_upper.startswith("SELECT") or cql_upper.startswith("WITH")):
             raise ValueError("Only SELECT queries are allowed.")
         for kw in _FORBIDDEN_KEYWORDS:
             if kw in cql_upper:

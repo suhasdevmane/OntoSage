@@ -20,17 +20,22 @@ it needs to query MongoDB directly (e.g., for analytics queries).
 
 Install: pip install motor
 """
+
 import sys
-sys.path.append('/app')
+
+sys.path.append("/app")
 
 import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from shared.utils import get_logger
 from orchestrator.services.database_adapter import (
-    DatabaseAdapter, AdapterType, QueryResult, SchemaInfo
+    AdapterType,
+    DatabaseAdapter,
+    QueryResult,
+    SchemaInfo,
 )
+from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -89,14 +94,13 @@ class MongoDBAdapter(DatabaseAdapter):
         """Create a motor AsyncIOMotorClient and test connectivity."""
         try:
             import motor.motor_asyncio as motor
+
             uri = self._build_uri()
             self._client = motor.AsyncIOMotorClient(uri, serverSelectionTimeoutMS=5000)
             self._db = self._client[self._database]
             # Trigger a round-trip to verify the connection
             await self._client.server_info()
-            logger.info(
-                f"MongoDBAdapter: connected to {self._host}:{self._port}/{self._database}"
-            )
+            logger.info(f"MongoDBAdapter: connected to {self._host}:{self._port}/{self._database}")
         except ImportError:
             raise RuntimeError("motor is not installed. Run: pip install motor")
         except Exception as e:
@@ -200,14 +204,14 @@ class MongoDBAdapter(DatabaseAdapter):
         except json.JSONDecodeError as e:
             return QueryResult.failure(f"Invalid JSON query: {e}", query=query)
 
-        coll_name  = params.get("collection", self._default_collection)
-        flt        = params.get("filter",     {})
+        coll_name = params.get("collection", self._default_collection)
+        flt = params.get("filter", {})
         projection = params.get("projection", {"_id": 0})
-        sort_spec  = params.get("sort",       [["timestamp", -1]])
-        limit      = int(params.get("limit",  1000))
+        sort_spec = params.get("sort", [["timestamp", -1]])
+        limit = int(params.get("limit", 1000))
 
         try:
-            coll   = self._db[coll_name]
+            coll = self._db[coll_name]
             cursor = coll.find(flt, projection).sort(sort_spec).limit(limit)
             rows: List[Dict[str, Any]] = []
             async for doc in cursor:
@@ -215,7 +219,9 @@ class MongoDBAdapter(DatabaseAdapter):
                 for k, v in doc.items():
                     if isinstance(v, datetime):
                         clean[k] = v.isoformat()
-                    elif hasattr(v, "__str__") and not isinstance(v, (int, float, str, bool, type(None))):
+                    elif hasattr(v, "__str__") and not isinstance(
+                        v, (int, float, str, bool, type(None))
+                    ):
                         clean[k] = str(v)
                     else:
                         clean[k] = v
@@ -248,10 +254,10 @@ class MongoDBAdapter(DatabaseAdapter):
 
         query_doc = {
             "collection": self._default_collection,
-            "filter":     flt,
+            "filter": flt,
             "projection": {"_id": 0},
-            "sort":       [[ts_col, -1]],
-            "limit":      limit,
+            "sort": [[ts_col, -1]],
+            "limit": limit,
         }
         return json.dumps(query_doc)
 

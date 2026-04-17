@@ -21,6 +21,7 @@ Usage:
     agent = DocumentAgent()
     result = await agent.generate(state, document_type="compliance_report", format="pdf")
 """
+
 from __future__ import annotations
 
 import logging
@@ -41,17 +42,17 @@ TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "document_templates"
 
 # Map document types to template filenames
 TEMPLATE_MAP: Dict[str, str] = {
-    "weekly_summary":    "weekly_summary.html",
-    "executive_kpi":     "executive_kpi.html",
-    "anomaly_digest":    "anomaly_digest.html",
+    "weekly_summary": "weekly_summary.html",
+    "executive_kpi": "executive_kpi.html",
+    "anomaly_digest": "anomaly_digest.html",
     "compliance_report": "compliance_report.html",
-    "energy_report":     "energy_report.html",
-    "iaq_report":        "base.html",        # fallback to base template
-    "research_export":   "base.html",
-    "summary":           "weekly_summary.html",
-    "full":              "base.html",
-    "trend":             "weekly_summary.html",
-    "comparison":        "executive_kpi.html",
+    "energy_report": "energy_report.html",
+    "iaq_report": "base.html",  # fallback to base template
+    "research_export": "base.html",
+    "summary": "weekly_summary.html",
+    "full": "base.html",
+    "trend": "weekly_summary.html",
+    "comparison": "executive_kpi.html",
 }
 
 
@@ -95,6 +96,7 @@ class DocumentAgent:
 
             # Delegate to DocumentBuilder
             from orchestrator.services.document_builder import DocumentBuilder
+
             builder = DocumentBuilder()
 
             doc_result = builder.render(
@@ -178,6 +180,7 @@ class DocumentAgent:
         readings_summary: Dict[str, Any] = {}
         if data_rows:
             import statistics
+
             try:
                 values = [float(r.get("value", 0)) for r in data_rows if r.get("value") is not None]
                 if values:
