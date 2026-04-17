@@ -2,46 +2,29 @@ name: Claude - Delete Failed Workflow Runs
 
 on:
   workflow_dispatch:
-    inputs:
-      prompt:
-        description: 'Instruction for Claude'
-        required: false
-        default: 'Delete all failed workflow runs in this repository'
-  issues:
-    types: [opened]
-  issue_comment:
-    types: [created]
-  pull_request:
-    types: [opened, synchronize]
 
 jobs:
-  claude:
+  delete-failed-runs:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       actions: write
-      issues: write
-      pull-requests: write
-      id-token: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Delete all failed workflow runs
-        uses: anthropics/claude-code-action@beta
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          direct_prompt: |
-            Delete all failed workflow runs in this GitHub repository (suhasdevmane/OntoSage).
-
-            Use the GitHub CLI (gh) to:
-            1. List all workflow runs with status=failure
-            2. Delete each failed run using its run ID
-
-            Run these commands:
-            gh run list --repo suhasdevmane/OntoSage --status failure --limit 100 --json databaseId -q '.[].databaseId' | xargs -I {} gh run delete {} --repo suhasdevmane/OntoSage
-
-            Repeat if there are more than 100 failed runs until all are deleted.
-            Confirm how many failed runs were deleted.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Fetching failed workflow runs..."
+          DELETED=0
+          while true; do
+            IDS=$(gh run list --repo suhasdevmane/OntoSage --status failure --limit 100 --json databaseId -q '.[].databaseId')
+            if [ -z "$IDS" ]; then
+              echo "No more failed runs found."
+              break
+            fi
+            for ID in $IDS; do
+              echo "Deleting run ID: $ID"
+              gh run delete "$ID" --repo suhasdevmane/OntoSage
+              DELETED=$((DELETED + 1))
+            done
+          done
+          echo "Done! Deleted $DELETED failed workflow run(s)."
