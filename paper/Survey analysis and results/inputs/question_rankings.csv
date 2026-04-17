@@ -1,0 +1,601 @@
+Username,Topic_ID,Topic_Label,Rank_1_QID,Rank_2_QID,Rank_3_QID,Rank_4_QID,UpdatedAt
+mae baker,1,Indoor Temperature Control,1-2,1-1,1-4,1-3,2026-04-13 03:20:10
+mae baker,2,Air Quality & Ventilation,2-3,2-2,2-1,2-4,2026-04-13 03:20:10
+mae baker,3,Lighting & Daylight,3-2,3-1,3-4,3-3,2026-04-13 03:20:10
+mae baker,4,Noise & Acoustics,4-1,4-4,4-3,4-2,2026-04-13 03:20:10
+mae baker,5,Energy Consumption,5-3,5-4,5-2,5-1,2026-04-13 03:20:10
+mae baker,6,Security & Access Control,6-1,6-4,6-3,6-2,2026-04-13 03:20:10
+mae baker,7,Occupancy & Space Utilisation,7-2,7-4,7-1,7-3,2026-04-13 03:20:10
+mae baker,8,Fire Safety & Emergency,8-3,8-2,8-4,8-1,2026-04-13 03:20:10
+mae baker,10,Waste & Recycling,10-2,10-1,10-3,10-4,2026-04-13 03:20:10
+mae baker,12,Green Spaces & Biodiversity,12-3,12-2,12-1,12-4,2026-04-13 03:20:10
+codefusion lab,3,Lighting & Daylight,3-1,3-3,3-4,3-2,2026-04-12 15:35:33
+codefusion lab,5,Energy Consumption,5-1,5-3,5-4,5-2,2026-04-12 15:35:33
+codefusion lab,7,Occupancy & Space Utilisation,7-2,7-3,7-1,7-4,2026-04-12 15:35:33
+codefusion lab,8,Fire Safety & Emergency,8-3,8-1,8-4,8-2,2026-04-12 15:35:33
+codefusion lab,10,Waste & Recycling,10-3,10-1,10-2,10-4,2026-04-12 15:35:33
+codefusion lab,11,Renewable Energy & Solar,11-2,11-4,11-1,11-3,2026-04-12 15:35:33
+codefusion lab,13,Health & Well-being,13-3,13-2,13-1,13-4,2026-04-12 15:35:33
+codefusion lab,15,"Lifts, Stairs & Internal Transport",15-2,15-3,15-1,15-4,2026-04-12 15:35:33
+codefusion lab,16,Parking & EV Charging,16-2,16-1,16-4,16-3,2026-04-12 15:35:33
+codefusion lab,19,Building Maintenance & Faults,19-2,19-1,19-4,19-3,2026-04-12 15:35:33
+ernestine,1,Indoor Temperature Control,1-1,1-3,1-2,1-4,2026-04-12 15:22:23
+ernestine,2,Air Quality & Ventilation,2-3,2-2,2-1,2-4,2026-04-12 15:22:23
+ernestine,3,Lighting & Daylight,3-2,3-1,3-4,3-3,2026-04-12 15:22:23
+ernestine,4,Noise & Acoustics,4-1,4-4,4-3,4-2,2026-04-12 15:22:23
+ernestine,5,Energy Consumption,5-1,5-3,5-2,5-4,2026-04-12 15:22:23
+ernestine,6,Security & Access Control,6-2,6-1,6-4,6-3,2026-04-12 15:22:23
+ernestine,8,Fire Safety & Emergency,8-3,8-2,8-1,8-4,2026-04-12 15:22:23
+ernestine,10,Waste & Recycling,10-2,10-3,10-4,10-1,2026-04-12 15:22:23
+ernestine,11,Renewable Energy & Solar,11-1,11-3,11-4,11-2,2026-04-12 15:22:23
+ernestine,13,Health & Well-being,13-2,13-1,13-4,13-3,2026-04-12 15:22:23
+david witham,1,Indoor Temperature Control,1-1,1-4,1-3,1-2,2026-04-12 14:24:11
+david witham,3,Lighting & Daylight,3-1,3-3,3-2,3-4,2026-04-12 14:24:11
+david witham,4,Noise & Acoustics,4-2,4-1,4-4,4-3,2026-04-12 14:24:11
+david witham,6,Security & Access Control,6-1,6-3,6-2,6-4,2026-04-12 14:24:11
+david witham,7,Occupancy & Space Utilisation,7-1,7-3,7-2,7-4,2026-04-12 14:24:11
+david witham,9,Water Management,9-2,9-1,9-4,9-3,2026-04-12 14:24:11
+david witham,10,Waste & Recycling,10-1,10-4,10-3,10-2,2026-04-12 14:24:11
+david witham,11,Renewable Energy & Solar,11-2,11-4,11-3,11-1,2026-04-12 14:24:11
+david witham,12,Green Spaces & Biodiversity,12-1,12-3,12-2,12-4,2026-04-12 14:24:11
+david witham,14,IoT Sensors & Data Analytics,14-1,14-4,14-3,14-2,2026-04-12 14:24:11
+pat,1,Indoor Temperature Control,1-2,1-1,1-3,1-4,2026-04-12 12:12:00
+pat,2,Air Quality & Ventilation,2-1,2-4,2-3,2-2,2026-04-12 12:12:00
+pat,3,Lighting & Daylight,3-1,3-3,3-4,3-2,2026-04-12 12:12:00
+pat,5,Energy Consumption,5-1,5-3,5-4,5-2,2026-04-12 12:12:00
+pat,6,Security & Access Control,6-4,6-3,6-1,6-2,2026-04-12 12:12:00
+pat,8,Fire Safety & Emergency,8-2,8-1,8-4,8-3,2026-04-12 12:12:00
+pat,12,Green Spaces & Biodiversity,12-1,12-3,12-2,12-4,2026-04-12 12:12:00
+pat,15,"Lifts, Stairs & Internal Transport",15-1,15-4,15-3,15-2,2026-04-12 12:12:00
+pat,18,User Apps & Digital Interaction,18-4,18-3,18-2,18-1,2026-04-12 12:12:00
+pat,20,Carbon Footprint & Net Zero,20-1,20-3,20-4,20-2,2026-04-12 12:12:00
+chadwick bricker,1,Indoor Temperature Control,1-3,1-1,1-4,1-2,2026-04-12 12:00:26
+chadwick bricker,2,Air Quality & Ventilation,2-2,2-1,2-4,2-3,2026-04-12 12:00:26
+chadwick bricker,3,Lighting & Daylight,3-1,3-4,3-3,3-2,2026-04-12 12:00:26
+chadwick bricker,4,Noise & Acoustics,4-1,4-4,4-3,4-2,2026-04-12 12:00:26
+chadwick bricker,5,Energy Consumption,5-2,5-1,5-4,5-3,2026-04-12 12:00:26
+chadwick bricker,6,Security & Access Control,6-1,6-3,6-4,6-2,2026-04-12 12:00:26
+chadwick bricker,7,Occupancy & Space Utilisation,7-1,7-4,7-3,7-2,2026-04-12 12:00:26
+chadwick bricker,8,Fire Safety & Emergency,8-1,8-4,8-3,8-2,2026-04-12 12:00:26
+chadwick bricker,9,Water Management,9-2,9-1,9-4,9-3,2026-04-12 12:00:26
+chadwick bricker,13,Health & Well-being,13-2,13-1,13-4,13-3,2026-04-12 12:00:26
+mark johnson,2,Air Quality & Ventilation,2-1,2-4,2-2,2-3,2026-04-12 09:38:59
+mark johnson,5,Energy Consumption,5-1,5-3,5-2,5-4,2026-04-12 09:38:59
+mark johnson,6,Security & Access Control,6-4,6-3,6-1,6-2,2026-04-12 09:38:59
+mark johnson,7,Occupancy & Space Utilisation,7-1,7-4,7-3,7-2,2026-04-12 09:38:59
+mark johnson,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4,2026-04-12 09:38:59
+mark johnson,9,Water Management,9-1,9-3,9-2,9-4,2026-04-12 09:38:59
+mark johnson,10,Waste & Recycling,10-4,10-2,10-3,10-1,2026-04-12 09:38:59
+mark johnson,13,Health & Well-being,13-1,13-4,13-3,13-2,2026-04-12 09:38:59
+mark johnson,19,Building Maintenance & Faults,19-1,19-3,19-2,19-4,2026-04-12 09:38:59
+mark johnson,20,Carbon Footprint & Net Zero,20-3,20-1,20-4,20-2,2026-04-12 09:38:59
+wendy rager,1,Indoor Temperature Control,1-1,1-3,1-4,1-2,2026-04-12 08:41:29
+wendy rager,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1,2026-04-12 08:41:29
+wendy rager,4,Noise & Acoustics,4-1,4-3,4-2,4-4,2026-04-12 08:41:29
+wendy rager,5,Energy Consumption,5-3,5-4,5-2,5-1,2026-04-12 08:41:29
+wendy rager,7,Occupancy & Space Utilisation,7-1,7-4,7-2,7-3,2026-04-12 08:41:29
+wendy rager,8,Fire Safety & Emergency,8-3,8-1,8-4,8-2,2026-04-12 08:41:29
+wendy rager,9,Water Management,9-3,9-1,9-2,9-4,2026-04-12 08:41:29
+wendy rager,12,Green Spaces & Biodiversity,12-4,12-1,12-3,12-2,2026-04-12 08:41:29
+wendy rager,14,IoT Sensors & Data Analytics,14-4,14-1,14-3,14-2,2026-04-12 08:41:29
+wendy rager,17,Building Automation & AI,17-4,17-3,17-2,17-1,2026-04-12 08:41:29
+david cara,1,Indoor Temperature Control,1-1,1-3,1-2,1-4,2026-04-12 01:04:34
+david cara,2,Air Quality & Ventilation,2-2,2-4,2-3,2-1,2026-04-12 01:04:34
+david cara,5,Energy Consumption,5-2,5-1,5-4,5-3,2026-04-12 01:04:34
+david cara,6,Security & Access Control,6-1,6-4,6-3,6-2,2026-04-12 01:04:34
+david cara,7,Occupancy & Space Utilisation,7-3,7-2,7-1,7-4,2026-04-12 01:04:34
+david cara,8,Fire Safety & Emergency,8-1,8-3,8-4,8-2,2026-04-12 01:04:34
+david cara,10,Waste & Recycling,10-2,10-1,10-4,10-3,2026-04-12 01:04:34
+david cara,12,Green Spaces & Biodiversity,12-3,12-2,12-1,12-4,2026-04-12 01:04:34
+david cara,13,Health & Well-being,13-2,13-1,13-3,13-4,2026-04-12 01:04:34
+david cara,16,Parking & EV Charging,16-2,16-4,16-1,16-3,2026-04-12 01:04:34
+theresa bastion,1,Indoor Temperature Control,1-1,1-3,1-4,1-2,2026-04-11 23:06:08
+theresa bastion,2,Air Quality & Ventilation,2-3,2-2,2-1,2-4,2026-04-11 23:06:08
+theresa bastion,4,Noise & Acoustics,4-4,4-3,4-2,4-1,2026-04-11 23:06:08
+theresa bastion,6,Security & Access Control,6-1,6-3,6-4,6-2,2026-04-11 23:06:08
+theresa bastion,7,Occupancy & Space Utilisation,7-1,7-3,7-2,7-4,2026-04-11 23:06:08
+theresa bastion,11,Renewable Energy & Solar,11-3,11-2,11-1,11-4,2026-04-11 23:06:08
+theresa bastion,12,Green Spaces & Biodiversity,12-2,12-1,12-4,12-3,2026-04-11 23:06:08
+theresa bastion,13,Health & Well-being,13-4,13-3,13-2,13-1,2026-04-11 23:06:08
+theresa bastion,14,IoT Sensors & Data Analytics,14-1,14-3,14-4,14-2,2026-04-11 23:06:08
+theresa bastion,15,"Lifts, Stairs & Internal Transport",15-2,15-4,15-1,15-3,2026-04-11 23:06:08
+mani,1,Indoor Temperature Control,1-3,1-4,1-1,1-2,2026-04-11 22:43:10
+mani,3,Lighting & Daylight,3-2,3-3,3-1,3-4,2026-04-11 22:43:10
+mani,8,Fire Safety & Emergency,8-2,8-3,8-4,8-1,2026-04-11 22:43:10
+mani,9,Water Management,9-3,9-1,9-4,9-2,2026-04-11 22:43:10
+mani,10,Waste & Recycling,10-3,10-1,10-4,10-2,2026-04-11 22:43:10
+mani,14,IoT Sensors & Data Analytics,14-2,14-1,14-3,14-4,2026-04-11 22:43:10
+mani,15,"Lifts, Stairs & Internal Transport",15-2,15-4,15-1,15-3,2026-04-11 22:43:10
+mani,16,Parking & EV Charging,16-2,16-4,16-3,16-1,2026-04-11 22:43:10
+mani,18,User Apps & Digital Interaction,18-2,18-4,18-1,18-3,2026-04-11 22:43:10
+mani,19,Building Maintenance & Faults,19-3,19-1,19-4,19-2,2026-04-11 22:43:10
+eileen chrzanowski,1,Indoor Temperature Control,1-2,1-1,1-4,1-3,2026-04-11 21:32:52
+eileen chrzanowski,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2,2026-04-11 21:32:52
+eileen chrzanowski,3,Lighting & Daylight,3-1,3-4,3-3,3-2,2026-04-11 21:32:52
+eileen chrzanowski,4,Noise & Acoustics,4-2,4-4,4-3,4-1,2026-04-11 21:32:52
+eileen chrzanowski,5,Energy Consumption,5-1,5-3,5-2,5-4,2026-04-11 21:32:52
+eileen chrzanowski,6,Security & Access Control,6-2,6-1,6-4,6-3,2026-04-11 21:32:52
+eileen chrzanowski,7,Occupancy & Space Utilisation,7-2,7-1,7-4,7-3,2026-04-11 21:32:52
+eileen chrzanowski,8,Fire Safety & Emergency,8-1,8-3,8-4,8-2,2026-04-11 21:32:52
+eileen chrzanowski,10,Waste & Recycling,10-3,10-2,10-1,10-4,2026-04-11 21:32:52
+eileen chrzanowski,13,Health & Well-being,13-1,13-2,13-4,13-3,2026-04-11 21:32:52
+joseph david,1,Indoor Temperature Control,1-3,1-2,1-1,1-4,2026-04-11 21:31:06
+joseph david,3,Lighting & Daylight,3-3,3-2,3-1,3-4,2026-04-11 21:31:06
+joseph david,4,Noise & Acoustics,4-1,4-3,4-4,4-2,2026-04-11 21:31:06
+joseph david,5,Energy Consumption,5-1,5-3,5-4,5-2,2026-04-11 21:31:06
+joseph david,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1,2026-04-11 21:31:06
+joseph david,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1,2026-04-11 21:31:06
+joseph david,9,Water Management,9-4,9-3,9-2,9-1,2026-04-11 21:31:06
+joseph david,10,Waste & Recycling,10-3,10-1,10-4,10-2,2026-04-11 21:31:06
+joseph david,13,Health & Well-being,13-4,13-3,13-2,13-1,2026-04-11 21:31:06
+joseph david,14,IoT Sensors & Data Analytics,14-4,14-1,14-3,14-2,2026-04-11 21:31:06
+candis neustadter,3,Lighting & Daylight,3-1,3-4,3-2,3-3,2026-04-11 18:50:29
+candis neustadter,5,Energy Consumption,5-2,5-1,5-4,5-3,2026-04-11 18:50:29
+candis neustadter,6,Security & Access Control,6-2,6-1,6-4,6-3,2026-04-11 18:50:29
+candis neustadter,8,Fire Safety & Emergency,8-2,8-1,8-4,8-3,2026-04-11 18:50:29
+candis neustadter,9,Water Management,9-2,9-1,9-4,9-3,2026-04-11 18:50:29
+candis neustadter,10,Waste & Recycling,10-2,10-1,10-4,10-3,2026-04-11 18:50:29
+candis neustadter,11,Renewable Energy & Solar,11-4,11-1,11-3,11-2,2026-04-11 18:50:29
+candis neustadter,14,IoT Sensors & Data Analytics,14-2,14-1,14-3,14-4,2026-04-11 18:50:29
+candis neustadter,15,"Lifts, Stairs & Internal Transport",15-1,15-3,15-2,15-4,2026-04-11 18:50:29
+candis neustadter,16,Parking & EV Charging,16-2,16-1,16-4,16-3,2026-04-11 18:50:29
+tasha robinson,1,Indoor Temperature Control,1-1,1-2,1-3,1-4,2026-04-11 17:55:01
+tasha robinson,2,Air Quality & Ventilation,2-1,2-2,2-3,2-4,2026-04-11 17:55:01
+tasha robinson,3,Lighting & Daylight,3-1,3-2,3-3,3-4,2026-04-11 17:55:01
+tasha robinson,5,Energy Consumption,5-1,5-2,5-3,5-4,2026-04-11 17:55:01
+tasha robinson,6,Security & Access Control,6-1,6-2,6-3,6-4,2026-04-11 17:55:01
+tasha robinson,7,Occupancy & Space Utilisation,7-1,7-2,7-3,7-4,2026-04-11 17:55:01
+tasha robinson,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4,2026-04-11 17:55:01
+tasha robinson,9,Water Management,9-1,9-2,9-3,9-4,2026-04-11 17:55:01
+tasha robinson,13,Health & Well-being,13-1,13-2,13-3,13-4,2026-04-11 17:55:01
+tasha robinson,17,Building Automation & AI,17-1,17-2,17-3,17-4,2026-04-11 17:55:01
+david hosilyk,1,Indoor Temperature Control,1-1,1-3,1-4,1-2,2026-04-11 16:02:39
+david hosilyk,2,Air Quality & Ventilation,2-2,2-4,2-3,2-1,2026-04-11 16:02:39
+david hosilyk,3,Lighting & Daylight,3-3,3-4,3-2,3-1,2026-04-11 16:02:39
+david hosilyk,4,Noise & Acoustics,4-2,4-1,4-3,4-4,2026-04-11 16:02:39
+david hosilyk,5,Energy Consumption,5-1,5-2,5-4,5-3,2026-04-11 16:02:39
+david hosilyk,8,Fire Safety & Emergency,8-1,8-3,8-2,8-4,2026-04-11 16:02:39
+david hosilyk,9,Water Management,9-3,9-1,9-4,9-2,2026-04-11 16:02:39
+david hosilyk,11,Renewable Energy & Solar,11-1,11-3,11-4,11-2,2026-04-11 16:02:39
+david hosilyk,12,Green Spaces & Biodiversity,12-1,12-3,12-2,12-4,2026-04-11 16:02:39
+david hosilyk,13,Health & Well-being,13-1,13-3,13-2,13-4,2026-04-11 16:02:39
+deanna prevo,1,Indoor Temperature Control,1-4,1-3,1-1,1-2,2026-04-11 14:40:00
+deanna prevo,2,Air Quality & Ventilation,2-4,2-2,2-1,2-3,2026-04-11 14:40:00
+deanna prevo,4,Noise & Acoustics,4-1,4-4,4-2,4-3,2026-04-11 14:40:00
+deanna prevo,5,Energy Consumption,5-3,5-1,5-4,5-2,2026-04-11 14:40:00
+deanna prevo,6,Security & Access Control,6-2,6-1,6-4,6-3,2026-04-11 14:40:00
+deanna prevo,8,Fire Safety & Emergency,8-1,8-3,8-2,8-4,2026-04-11 14:40:00
+deanna prevo,9,Water Management,9-3,9-4,9-1,9-2,2026-04-11 14:40:00
+deanna prevo,13,Health & Well-being,13-3,13-1,13-4,13-2,2026-04-11 14:40:00
+deanna prevo,19,Building Maintenance & Faults,19-2,19-1,19-4,19-3,2026-04-11 14:40:00
+deanna prevo,20,Carbon Footprint & Net Zero,20-1,20-3,20-2,20-4,2026-04-11 14:40:00
+a9hq3e0f2agvo,1,Indoor Temperature Control,1-1,1-2,1-4,1-3,2026-04-11 14:33:58
+a9hq3e0f2agvo,2,Air Quality & Ventilation,2-2,2-3,2-4,2-1,2026-04-11 14:33:58
+a9hq3e0f2agvo,3,Lighting & Daylight,3-2,3-4,3-3,3-1,2026-04-11 14:33:58
+a9hq3e0f2agvo,4,Noise & Acoustics,4-3,4-2,4-1,4-4,2026-04-11 14:33:58
+a9hq3e0f2agvo,5,Energy Consumption,5-2,5-3,5-4,5-1,2026-04-11 14:33:58
+a9hq3e0f2agvo,6,Security & Access Control,6-2,6-3,6-4,6-1,2026-04-11 14:33:58
+a9hq3e0f2agvo,8,Fire Safety & Emergency,8-2,8-3,8-1,8-4,2026-04-11 14:33:58
+a9hq3e0f2agvo,9,Water Management,9-2,9-3,9-4,9-1,2026-04-11 14:33:58
+a9hq3e0f2agvo,18,User Apps & Digital Interaction,18-2,18-3,18-4,18-1,2026-04-11 14:33:58
+a9hq3e0f2agvo,20,Carbon Footprint & Net Zero,20-2,20-3,20-4,20-1,2026-04-11 14:33:58
+alicia white,1,Indoor Temperature Control,1-1,1-2,1-4,1-3,2026-04-11 14:25:32
+alicia white,2,Air Quality & Ventilation,2-3,2-2,2-1,2-4,2026-04-11 14:25:32
+alicia white,3,Lighting & Daylight,3-1,3-2,3-3,3-4,2026-04-11 14:25:32
+alicia white,4,Noise & Acoustics,4-3,4-1,4-4,4-2,2026-04-11 14:25:32
+alicia white,5,Energy Consumption,5-1,5-2,5-4,5-3,2026-04-11 14:25:32
+alicia white,6,Security & Access Control,6-3,6-1,6-4,6-2,2026-04-11 14:25:32
+alicia white,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4,2026-04-11 14:25:32
+alicia white,10,Waste & Recycling,10-2,10-1,10-3,10-4,2026-04-11 14:25:32
+alicia white,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1,2026-04-11 14:25:32
+alicia white,20,Carbon Footprint & Net Zero,20-3,20-1,20-4,20-2,2026-04-11 14:25:32
+john smith,1,Indoor Temperature Control,1-1,1-3,1-2,1-4,2026-04-11 10:01:05
+john smith,2,Air Quality & Ventilation,2-3,2-1,2-2,2-4,2026-04-11 10:01:05
+john smith,5,Energy Consumption,5-2,5-4,5-1,5-3,2026-04-11 10:01:05
+john smith,6,Security & Access Control,6-2,6-3,6-4,6-1,2026-04-11 10:01:05
+john smith,8,Fire Safety & Emergency,8-2,8-4,8-1,8-3,2026-04-11 10:01:05
+john smith,10,Waste & Recycling,10-2,10-3,10-4,10-1,2026-04-11 10:01:05
+john smith,11,Renewable Energy & Solar,11-1,11-4,11-2,11-3,2026-04-11 10:01:05
+john smith,12,Green Spaces & Biodiversity,12-2,12-4,12-1,12-3,2026-04-11 10:01:05
+john smith,13,Health & Well-being,13-1,13-2,13-3,13-4,2026-04-11 10:01:05
+john smith,19,Building Maintenance & Faults,19-1,19-2,19-3,19-4,2026-04-11 10:01:05
+mark fuller,1,Indoor Temperature Control,1-4,1-3,1-2,1-1,2026-04-11 08:51:50
+mark fuller,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1,2026-04-11 08:51:50
+mark fuller,3,Lighting & Daylight,3-4,3-3,3-2,3-1,2026-04-11 08:51:50
+mark fuller,4,Noise & Acoustics,4-4,4-3,4-2,4-1,2026-04-11 08:51:50
+mark fuller,6,Security & Access Control,6-4,6-3,6-2,6-1,2026-04-11 08:51:50
+mark fuller,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1,2026-04-11 08:51:50
+mark fuller,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1,2026-04-11 08:51:50
+mark fuller,13,Health & Well-being,13-4,13-3,13-2,13-1,2026-04-11 08:51:50
+mark fuller,16,Parking & EV Charging,16-4,16-3,16-2,16-1,2026-04-11 08:51:50
+mark fuller,18,User Apps & Digital Interaction,18-4,18-3,18-2,18-1,2026-04-11 08:51:50
+aaron,1,Indoor Temperature Control,1-1,1-2,1-4,1-3,2026-04-11 05:51:54
+aaron,2,Air Quality & Ventilation,2-1,2-2,2-4,2-3,2026-04-11 05:51:54
+aaron,5,Energy Consumption,5-4,5-1,5-3,5-2,2026-04-11 05:51:54
+aaron,6,Security & Access Control,6-4,6-3,6-2,6-1,2026-04-11 05:51:54
+aaron,8,Fire Safety & Emergency,8-1,8-4,8-2,8-3,2026-04-11 05:51:54
+aaron,9,Water Management,9-3,9-4,9-2,9-1,2026-04-11 05:51:54
+aaron,10,Waste & Recycling,10-1,10-4,10-3,10-2,2026-04-11 05:51:54
+aaron,12,Green Spaces & Biodiversity,12-3,12-2,12-1,12-4,2026-04-11 05:51:54
+aaron,13,Health & Well-being,13-4,13-1,13-3,13-2,2026-04-11 05:51:54
+aaron,20,Carbon Footprint & Net Zero,20-3,20-4,20-2,20-1,2026-04-11 05:51:54
+a26mron9xgpvb5,1,Indoor Temperature Control,1-4,1-3,1-2,1-1,2026-04-11 00:12:35
+a26mron9xgpvb5,2,Air Quality & Ventilation,2-4,2-1,2-3,2-2,2026-04-11 00:12:35
+a26mron9xgpvb5,3,Lighting & Daylight,3-1,3-4,3-2,3-3,2026-04-11 00:12:35
+a26mron9xgpvb5,5,Energy Consumption,5-4,5-2,5-1,5-3,2026-04-11 00:12:35
+a26mron9xgpvb5,9,Water Management,9-4,9-2,9-1,9-3,2026-04-11 00:12:35
+a26mron9xgpvb5,10,Waste & Recycling,10-3,10-2,10-1,10-4,2026-04-11 00:12:35
+a26mron9xgpvb5,11,Renewable Energy & Solar,11-4,11-1,11-3,11-2,2026-04-11 00:12:35
+a26mron9xgpvb5,12,Green Spaces & Biodiversity,12-4,12-2,12-1,12-3,2026-04-11 00:12:35
+a26mron9xgpvb5,15,"Lifts, Stairs & Internal Transport",15-1,15-3,15-4,15-2,2026-04-11 00:12:35
+a26mron9xgpvb5,16,Parking & EV Charging,16-1,16-3,16-2,16-4,2026-04-11 00:12:35
+michele f,1,Indoor Temperature Control,1-2,1-3,1-4,1-1,2026-04-09 22:37:21
+michele f,2,Air Quality & Ventilation,2-2,2-3,2-4,2-1,2026-04-09 22:37:21
+michele f,3,Lighting & Daylight,3-3,3-4,3-1,3-2,2026-04-09 22:37:21
+michele f,7,Occupancy & Space Utilisation,7-3,7-4,7-2,7-1,2026-04-09 22:37:21
+michele f,8,Fire Safety & Emergency,8-4,8-2,8-1,8-3,2026-04-09 22:37:21
+michele f,12,Green Spaces & Biodiversity,12-3,12-2,12-4,12-1,2026-04-09 22:37:21
+michele f,13,Health & Well-being,13-2,13-4,13-1,13-3,2026-04-09 22:37:21
+michele f,15,"Lifts, Stairs & Internal Transport",15-1,15-4,15-3,15-2,2026-04-09 22:37:21
+michele f,16,Parking & EV Charging,16-1,16-4,16-3,16-2,2026-04-09 22:37:21
+michele f,19,Building Maintenance & Faults,19-1,19-4,19-2,19-3,2026-04-09 22:37:21
+laverne jones,1,Indoor Temperature Control,1-2,1-3,1-1,1-4,2026-04-09 21:37:08
+laverne jones,2,Air Quality & Ventilation,2-2,2-1,2-3,2-4,2026-04-09 21:37:08
+laverne jones,4,Noise & Acoustics,4-1,4-2,4-3,4-4,2026-04-09 21:37:08
+laverne jones,5,Energy Consumption,5-1,5-3,5-2,5-4,2026-04-09 21:37:08
+laverne jones,6,Security & Access Control,6-1,6-2,6-3,6-4,2026-04-09 21:37:08
+laverne jones,8,Fire Safety & Emergency,8-1,8-4,8-2,8-3,2026-04-09 21:37:08
+laverne jones,9,Water Management,9-1,9-2,9-3,9-4,2026-04-09 21:37:08
+laverne jones,10,Waste & Recycling,10-1,10-2,10-3,10-4,2026-04-09 21:37:08
+laverne jones,11,Renewable Energy & Solar,11-1,11-2,11-3,11-4,2026-04-09 21:37:08
+laverne jones,19,Building Maintenance & Faults,19-1,19-2,19-4,19-3,2026-04-09 21:37:08
+alexander,1,Indoor Temperature Control,1-4,1-3,1-1,1-2,2026-04-09 20:08:57
+alexander,2,Air Quality & Ventilation,2-2,2-4,2-1,2-3,2026-04-09 20:08:57
+alexander,3,Lighting & Daylight,3-3,3-4,3-2,3-1,2026-04-09 20:08:57
+alexander,4,Noise & Acoustics,4-2,4-3,4-1,4-4,2026-04-09 20:08:57
+alexander,5,Energy Consumption,5-1,5-2,5-4,5-3,2026-04-09 20:08:57
+alexander,6,Security & Access Control,6-2,6-3,6-4,6-1,2026-04-09 20:08:57
+alexander,8,Fire Safety & Emergency,8-2,8-1,8-3,8-4,2026-04-09 20:08:57
+alexander,9,Water Management,9-1,9-2,9-3,9-4,2026-04-09 20:08:57
+alexander,13,Health & Well-being,13-2,13-1,13-3,13-4,2026-04-09 20:08:57
+alexander,15,"Lifts, Stairs & Internal Transport",15-1,15-2,15-3,15-4,2026-04-09 20:08:57
+a2a4lhpxf2e2gs,1,Indoor Temperature Control,1-2,1-3,1-4,1-1,2026-04-09 18:58:59
+a2a4lhpxf2e2gs,2,Air Quality & Ventilation,2-2,2-1,2-4,2-3,2026-04-09 18:58:59
+a2a4lhpxf2e2gs,3,Lighting & Daylight,3-3,3-2,3-4,3-1,2026-04-09 18:58:59
+a2a4lhpxf2e2gs,5,Energy Consumption,5-1,5-2,5-3,5-4,2026-04-09 18:58:59
+a2a4lhpxf2e2gs,6,Security & Access Control,6-2,6-1,6-3,6-4,2026-04-09 18:58:59
+a2a4lhpxf2e2gs,7,Occupancy & Space Utilisation,7-2,7-3,7-4,7-1,2026-04-09 18:58:59
+a2a4lhpxf2e2gs,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4,2026-04-09 18:58:59
+a2a4lhpxf2e2gs,12,Green Spaces & Biodiversity,12-2,12-3,12-1,12-4,2026-04-09 18:58:59
+a2a4lhpxf2e2gs,13,Health & Well-being,13-2,13-1,13-3,13-4,2026-04-09 18:58:59
+a2a4lhpxf2e2gs,17,Building Automation & AI,17-4,17-1,17-2,17-3,2026-04-09 18:58:59
+dessarie delgado,1,Indoor Temperature Control,1-1,1-3,1-4,1-2,2026-04-09 16:40:06
+dessarie delgado,3,Lighting & Daylight,3-3,3-2,3-1,3-4,2026-04-09 16:40:06
+dessarie delgado,4,Noise & Acoustics,4-2,4-4,4-3,4-1,2026-04-09 16:40:06
+dessarie delgado,6,Security & Access Control,6-2,6-1,6-4,6-3,2026-04-09 16:40:06
+dessarie delgado,7,Occupancy & Space Utilisation,7-2,7-1,7-4,7-3,2026-04-09 16:40:06
+dessarie delgado,8,Fire Safety & Emergency,8-2,8-1,8-4,8-3,2026-04-09 16:40:06
+dessarie delgado,11,Renewable Energy & Solar,11-4,11-1,11-3,11-2,2026-04-09 16:40:06
+dessarie delgado,12,Green Spaces & Biodiversity,12-2,12-4,12-3,12-1,2026-04-09 16:40:06
+dessarie delgado,13,Health & Well-being,13-3,13-2,13-4,13-1,2026-04-09 16:40:06
+dessarie delgado,14,IoT Sensors & Data Analytics,14-2,14-1,14-4,14-3,2026-04-09 16:40:06
+lacy scraper,1,Indoor Temperature Control,1-1,1-2,1-3,1-4,2026-04-09 13:55:37
+lacy scraper,2,Air Quality & Ventilation,2-1,2-2,2-3,2-4,2026-04-09 13:55:37
+lacy scraper,4,Noise & Acoustics,4-1,4-2,4-3,4-4,2026-04-09 13:55:37
+lacy scraper,5,Energy Consumption,5-1,5-2,5-3,5-4,2026-04-09 13:55:37
+lacy scraper,6,Security & Access Control,6-1,6-2,6-3,6-4,2026-04-09 13:55:37
+lacy scraper,7,Occupancy & Space Utilisation,7-1,7-2,7-3,7-4,2026-04-09 13:55:37
+lacy scraper,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4,2026-04-09 13:55:37
+lacy scraper,9,Water Management,9-1,9-2,9-3,9-4,2026-04-09 13:55:37
+lacy scraper,13,Health & Well-being,13-1,13-2,13-3,13-4,2026-04-09 13:55:37
+lacy scraper,19,Building Maintenance & Faults,19-1,19-2,19-3,19-4,2026-04-09 13:55:37
+marissa,1,Indoor Temperature Control,1-1,1-2,1-4,1-3,2026-04-09 13:00:29
+marissa,2,Air Quality & Ventilation,2-1,2-2,2-4,2-3,2026-04-09 13:00:29
+marissa,3,Lighting & Daylight,3-1,3-4,3-2,3-3,2026-04-09 13:00:29
+marissa,5,Energy Consumption,5-1,5-2,5-3,5-4,2026-04-09 13:00:29
+marissa,6,Security & Access Control,6-2,6-3,6-4,6-1,2026-04-09 13:00:29
+marissa,15,"Lifts, Stairs & Internal Transport",15-1,15-4,15-3,15-2,2026-04-09 13:00:29
+marissa,16,Parking & EV Charging,16-1,16-2,16-3,16-4,2026-04-09 13:00:29
+marissa,17,Building Automation & AI,17-1,17-2,17-4,17-3,2026-04-09 13:00:29
+marissa,18,User Apps & Digital Interaction,18-2,18-3,18-4,18-1,2026-04-09 13:00:29
+marissa,19,Building Maintenance & Faults,19-1,19-3,19-2,19-4,2026-04-09 13:00:29
+damian plebuch,1,Indoor Temperature Control,1-4,1-3,1-2,1-1,2026-04-09 12:08:09
+damian plebuch,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2,2026-04-09 12:08:09
+damian plebuch,3,Lighting & Daylight,3-1,3-3,3-4,3-2,2026-04-09 12:08:09
+damian plebuch,6,Security & Access Control,6-1,6-3,6-4,6-2,2026-04-09 12:08:09
+damian plebuch,7,Occupancy & Space Utilisation,7-3,7-2,7-1,7-4,2026-04-09 12:08:09
+damian plebuch,11,Renewable Energy & Solar,11-4,11-3,11-2,11-1,2026-04-09 12:08:09
+damian plebuch,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1,2026-04-09 12:08:09
+damian plebuch,14,IoT Sensors & Data Analytics,14-4,14-3,14-2,14-1,2026-04-09 12:08:09
+damian plebuch,15,"Lifts, Stairs & Internal Transport",15-4,15-3,15-2,15-1,2026-04-09 12:08:09
+damian plebuch,18,User Apps & Digital Interaction,18-4,18-3,18-2,18-1,2026-04-09 12:08:09
+suman01,1,Indoor Temperature Control,1-4,1-3,1-2,1-1,2026-04-09 11:39:26
+suman01,2,Air Quality & Ventilation,2-1,2-4,2-3,2-2,2026-04-09 11:39:26
+suman01,5,Energy Consumption,5-4,5-3,5-2,5-1,2026-04-09 11:39:26
+suman01,6,Security & Access Control,6-2,6-1,6-4,6-3,2026-04-09 11:39:26
+suman01,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1,2026-04-09 11:39:26
+suman01,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1,2026-04-09 11:39:26
+suman01,9,Water Management,9-4,9-3,9-2,9-1,2026-04-09 11:39:26
+suman01,13,Health & Well-being,13-4,13-3,13-2,13-1,2026-04-09 11:39:26
+suman01,14,IoT Sensors & Data Analytics,14-4,14-3,14-2,14-1,2026-04-09 11:39:26
+suman01,17,Building Automation & AI,17-4,17-3,17-2,17-1,2026-04-09 11:39:26
+michael murphy,2,Air Quality & Ventilation,2-2,2-1,2-4,2-3,2026-04-09 11:34:24
+michael murphy,3,Lighting & Daylight,3-2,3-4,3-1,3-3,2026-04-09 11:34:24
+michael murphy,5,Energy Consumption,5-2,5-4,5-1,5-3,2026-04-09 11:34:24
+michael murphy,6,Security & Access Control,6-1,6-3,6-4,6-2,2026-04-09 11:34:24
+michael murphy,8,Fire Safety & Emergency,8-2,8-1,8-4,8-3,2026-04-09 11:34:24
+michael murphy,9,Water Management,9-2,9-4,9-1,9-3,2026-04-09 11:34:24
+michael murphy,10,Waste & Recycling,10-4,10-3,10-2,10-1,2026-04-09 11:34:24
+michael murphy,12,Green Spaces & Biodiversity,12-2,12-3,12-1,12-4,2026-04-09 11:34:24
+michael murphy,13,Health & Well-being,13-1,13-4,13-2,13-3,2026-04-09 11:34:24
+michael murphy,20,Carbon Footprint & Net Zero,20-3,20-4,20-2,20-1,2026-04-09 11:34:24
+bruce whatley,1,Indoor Temperature Control,1-1,1-3,1-4,1-2,2026-04-09 11:25:41
+bruce whatley,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2,2026-04-09 11:25:41
+bruce whatley,3,Lighting & Daylight,3-2,3-1,3-4,3-3,2026-04-09 11:25:41
+bruce whatley,6,Security & Access Control,6-1,6-3,6-2,6-4,2026-04-09 11:25:41
+bruce whatley,7,Occupancy & Space Utilisation,7-2,7-1,7-4,7-3,2026-04-09 11:25:41
+bruce whatley,8,Fire Safety & Emergency,8-3,8-2,8-1,8-4,2026-04-09 11:25:41
+bruce whatley,11,Renewable Energy & Solar,11-4,11-3,11-2,11-1,2026-04-09 11:25:41
+bruce whatley,12,Green Spaces & Biodiversity,12-2,12-1,12-4,12-3,2026-04-09 11:25:41
+bruce whatley,14,IoT Sensors & Data Analytics,14-3,14-2,14-1,14-4,2026-04-09 11:25:41
+bruce whatley,15,"Lifts, Stairs & Internal Transport",15-3,15-2,15-1,15-4,2026-04-09 11:25:41
+billy parker,1,Indoor Temperature Control,1-1,1-2,1-3,1-4,2026-04-09 11:21:58
+billy parker,2,Air Quality & Ventilation,2-1,2-2,2-3,2-4,2026-04-09 11:21:58
+billy parker,3,Lighting & Daylight,3-1,3-2,3-3,3-4,2026-04-09 11:21:58
+billy parker,4,Noise & Acoustics,4-1,4-2,4-3,4-4,2026-04-09 11:21:58
+billy parker,5,Energy Consumption,5-1,5-2,5-3,5-4,2026-04-09 11:21:58
+billy parker,6,Security & Access Control,6-1,6-2,6-3,6-4,2026-04-09 11:21:58
+billy parker,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4,2026-04-09 11:21:58
+billy parker,9,Water Management,9-1,9-2,9-3,9-4,2026-04-09 11:21:58
+billy parker,13,Health & Well-being,13-1,13-2,13-3,13-4,2026-04-09 11:21:58
+billy parker,19,Building Maintenance & Faults,19-1,19-2,19-3,19-4,2026-04-09 11:21:58
+william withem,1,Indoor Temperature Control,1-1,1-2,1-3,1-4,2026-04-09 11:14:45
+william withem,2,Air Quality & Ventilation,2-1,2-2,2-3,2-4,2026-04-09 11:14:45
+william withem,3,Lighting & Daylight,3-1,3-2,3-3,3-4,2026-04-09 11:14:45
+william withem,5,Energy Consumption,5-1,5-3,5-2,5-4,2026-04-09 11:14:45
+william withem,6,Security & Access Control,6-1,6-2,6-3,6-4,2026-04-09 11:14:45
+william withem,7,Occupancy & Space Utilisation,7-1,7-2,7-3,7-4,2026-04-09 11:14:45
+william withem,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4,2026-04-09 11:14:45
+william withem,9,Water Management,9-1,9-2,9-3,9-4,2026-04-09 11:14:45
+william withem,13,Health & Well-being,13-1,13-2,13-3,13-4,2026-04-09 11:14:45
+william withem,19,Building Maintenance & Faults,19-1,19-2,19-3,19-4,2026-04-09 11:14:45
+dennis fager,1,Indoor Temperature Control,1-1,1-3,1-4,1-2,2026-04-09 10:46:51
+dennis fager,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2,2026-04-09 10:46:51
+dennis fager,3,Lighting & Daylight,3-4,3-3,3-2,3-1,2026-04-09 10:46:51
+dennis fager,4,Noise & Acoustics,4-4,4-3,4-2,4-1,2026-04-09 10:46:51
+dennis fager,6,Security & Access Control,6-3,6-2,6-1,6-4,2026-04-09 10:46:51
+dennis fager,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1,2026-04-09 10:46:51
+dennis fager,8,Fire Safety & Emergency,8-3,8-2,8-1,8-4,2026-04-09 10:46:51
+dennis fager,9,Water Management,9-2,9-1,9-4,9-3,2026-04-09 10:46:51
+dennis fager,10,Waste & Recycling,10-3,10-1,10-4,10-2,2026-04-09 10:46:51
+dennis fager,12,Green Spaces & Biodiversity,12-2,12-1,12-4,12-3,2026-04-09 10:46:51
+giyoh shey,1,Indoor Temperature Control,1-1,1-3,1-4,1-2,2026-04-09 06:58:10
+giyoh shey,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2,2026-04-09 06:58:10
+giyoh shey,4,Noise & Acoustics,4-1,4-4,4-3,4-2,2026-04-09 06:58:10
+giyoh shey,5,Energy Consumption,5-1,5-4,5-3,5-2,2026-04-09 06:58:10
+giyoh shey,6,Security & Access Control,6-2,6-1,6-3,6-4,2026-04-09 06:58:10
+giyoh shey,7,Occupancy & Space Utilisation,7-1,7-4,7-3,7-2,2026-04-09 06:58:10
+giyoh shey,8,Fire Safety & Emergency,8-1,8-4,8-3,8-2,2026-04-09 06:58:10
+giyoh shey,11,Renewable Energy & Solar,11-1,11-4,11-3,11-2,2026-04-09 06:58:10
+giyoh shey,12,Green Spaces & Biodiversity,12-2,12-4,12-3,12-1,2026-04-09 06:58:10
+giyoh shey,14,IoT Sensors & Data Analytics,14-1,14-4,14-3,14-2,2026-04-09 06:58:10
+michael,1,Indoor Temperature Control,1-1,1-4,1-3,1-2,2026-04-09 05:27:28
+michael,2,Air Quality & Ventilation,2-4,2-3,2-1,2-2,2026-04-09 05:27:28
+michael,3,Lighting & Daylight,3-2,3-4,3-3,3-1,2026-04-09 05:27:28
+michael,4,Noise & Acoustics,4-4,4-2,4-3,4-1,2026-04-09 05:27:28
+michael,6,Security & Access Control,6-3,6-4,6-2,6-1,2026-04-09 05:27:28
+michael,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4,2026-04-09 05:27:28
+michael,12,Green Spaces & Biodiversity,12-2,12-4,12-3,12-1,2026-04-09 05:27:28
+michael,13,Health & Well-being,13-1,13-4,13-3,13-2,2026-04-09 05:27:28
+michael,15,"Lifts, Stairs & Internal Transport",15-1,15-4,15-3,15-2,2026-04-09 05:27:28
+michael,16,Parking & EV Charging,16-1,16-3,16-4,16-2,2026-04-09 05:27:28
+sidroy6290,1,Indoor Temperature Control,1-2,1-1,1-3,1-4,2026-04-09 00:47:44
+sidroy6290,2,Air Quality & Ventilation,2-4,2-1,2-3,2-2,2026-04-09 00:47:44
+sidroy6290,3,Lighting & Daylight,3-1,3-2,3-4,3-3,2026-04-09 00:47:44
+sidroy6290,5,Energy Consumption,5-3,5-2,5-1,5-4,2026-04-09 00:47:44
+sidroy6290,6,Security & Access Control,6-2,6-4,6-1,6-3,2026-04-09 00:47:44
+sidroy6290,7,Occupancy & Space Utilisation,7-4,7-2,7-1,7-3,2026-04-09 00:47:44
+sidroy6290,8,Fire Safety & Emergency,8-1,8-2,8-4,8-3,2026-04-09 00:47:44
+sidroy6290,9,Water Management,9-2,9-3,9-1,9-4,2026-04-09 00:47:44
+sidroy6290,13,Health & Well-being,13-1,13-3,13-2,13-4,2026-04-09 00:47:44
+sidroy6290,20,Carbon Footprint & Net Zero,20-3,20-4,20-1,20-2,2026-04-09 00:47:44
+milly,1,Indoor Temperature Control,1-1,1-3,1-4,1-2,2026-04-08 23:01:05
+milly,4,Noise & Acoustics,4-1,4-3,4-2,4-4,2026-04-08 23:01:05
+milly,5,Energy Consumption,5-3,5-4,5-1,5-2,2026-04-08 23:01:05
+milly,7,Occupancy & Space Utilisation,7-3,7-2,7-1,7-4,2026-04-08 23:01:05
+milly,8,Fire Safety & Emergency,8-3,8-2,8-1,8-4,2026-04-08 23:01:05
+milly,11,Renewable Energy & Solar,11-2,11-4,11-1,11-3,2026-04-08 23:01:05
+milly,13,Health & Well-being,13-2,13-1,13-4,13-3,2026-04-08 23:01:05
+milly,15,"Lifts, Stairs & Internal Transport",15-2,15-1,15-4,15-3,2026-04-08 23:01:05
+milly,17,Building Automation & AI,17-1,17-4,17-3,17-2,2026-04-08 23:01:05
+milly,19,Building Maintenance & Faults,19-1,19-4,19-3,19-2,2026-04-08 23:01:05
+david,1,Indoor Temperature Control,1-3,1-2,1-1,1-4,2026-04-08 22:51:23
+david,2,Air Quality & Ventilation,2-1,2-4,2-3,2-2,2026-04-08 22:51:23
+david,3,Lighting & Daylight,3-2,3-4,3-1,3-3,2026-04-08 22:51:23
+david,8,Fire Safety & Emergency,8-4,8-2,8-1,8-3,2026-04-08 22:51:23
+david,9,Water Management,9-2,9-1,9-4,9-3,2026-04-08 22:51:23
+david,11,Renewable Energy & Solar,11-1,11-3,11-4,11-2,2026-04-08 22:51:23
+david,12,Green Spaces & Biodiversity,12-2,12-4,12-1,12-3,2026-04-08 22:51:23
+david,14,IoT Sensors & Data Analytics,14-2,14-4,14-1,14-3,2026-04-08 22:51:23
+david,17,Building Automation & AI,17-1,17-3,17-2,17-4,2026-04-08 22:51:23
+david,18,User Apps & Digital Interaction,18-4,18-3,18-1,18-2,2026-04-08 22:51:23
+brain patnaude,1,Indoor Temperature Control,1-2,1-4,1-3,1-1,2026-04-08 22:15:32
+brain patnaude,2,Air Quality & Ventilation,2-3,2-1,2-2,2-4,2026-04-08 22:15:32
+brain patnaude,5,Energy Consumption,5-1,5-3,5-2,5-4,2026-04-08 22:15:32
+brain patnaude,6,Security & Access Control,6-2,6-4,6-3,6-1,2026-04-08 22:15:32
+brain patnaude,10,Waste & Recycling,10-3,10-2,10-1,10-4,2026-04-08 22:15:32
+brain patnaude,11,Renewable Energy & Solar,11-2,11-4,11-3,11-1,2026-04-08 22:15:32
+brain patnaude,12,Green Spaces & Biodiversity,12-2,12-4,12-3,12-1,2026-04-08 22:15:32
+brain patnaude,13,Health & Well-being,13-3,13-4,13-2,13-1,2026-04-08 22:15:32
+brain patnaude,14,IoT Sensors & Data Analytics,14-3,14-2,14-1,14-4,2026-04-08 22:15:32
+brain patnaude,17,Building Automation & AI,17-2,17-4,17-3,17-1,2026-04-08 22:15:32
+sok,2,Air Quality & Ventilation,2-3,2-1,2-4,2-2,2026-04-08 22:15:23
+sok,3,Lighting & Daylight,3-4,3-1,3-2,3-3,2026-04-08 22:15:23
+sok,5,Energy Consumption,5-1,5-2,5-4,5-3,2026-04-08 22:15:23
+sok,7,Occupancy & Space Utilisation,7-3,7-2,7-1,7-4,2026-04-08 22:15:23
+sok,8,Fire Safety & Emergency,8-2,8-4,8-1,8-3,2026-04-08 22:15:23
+sok,9,Water Management,9-1,9-2,9-3,9-4,2026-04-08 22:15:23
+sok,10,Waste & Recycling,10-2,10-3,10-1,10-4,2026-04-08 22:15:23
+sok,11,Renewable Energy & Solar,11-1,11-2,11-3,11-4,2026-04-08 22:15:23
+sok,12,Green Spaces & Biodiversity,12-1,12-2,12-3,12-4,2026-04-08 22:15:23
+sok,19,Building Maintenance & Faults,19-3,19-4,19-1,19-2,2026-04-08 22:15:23
+kay sims,1,Indoor Temperature Control,1-1,1-2,1-4,1-3,2026-04-08 22:11:24
+kay sims,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2,2026-04-08 22:11:24
+kay sims,3,Lighting & Daylight,3-2,3-3,3-1,3-4,2026-04-08 22:11:24
+kay sims,4,Noise & Acoustics,4-2,4-4,4-1,4-3,2026-04-08 22:11:24
+kay sims,6,Security & Access Control,6-1,6-4,6-3,6-2,2026-04-08 22:11:24
+kay sims,7,Occupancy & Space Utilisation,7-2,7-4,7-1,7-3,2026-04-08 22:11:24
+kay sims,8,Fire Safety & Emergency,8-2,8-3,8-1,8-4,2026-04-08 22:11:24
+kay sims,13,Health & Well-being,13-2,13-1,13-3,13-4,2026-04-08 22:11:24
+kay sims,15,"Lifts, Stairs & Internal Transport",15-3,15-2,15-4,15-1,2026-04-08 22:11:24
+kay sims,16,Parking & EV Charging,16-2,16-4,16-1,16-3,2026-04-08 22:11:24
+alec,1,Indoor Temperature Control,1-1,1-3,1-4,1-2,2026-04-08 19:51:06
+alec,3,Lighting & Daylight,3-1,3-2,3-3,3-4,2026-04-08 19:51:06
+alec,6,Security & Access Control,6-1,6-2,6-3,6-4,2026-04-08 19:51:06
+alec,7,Occupancy & Space Utilisation,7-1,7-4,7-3,7-2,2026-04-08 19:51:06
+alec,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4,2026-04-08 19:51:06
+alec,9,Water Management,9-4,9-3,9-2,9-1,2026-04-08 19:51:06
+alec,13,Health & Well-being,13-1,13-2,13-3,13-4,2026-04-08 19:51:06
+alec,15,"Lifts, Stairs & Internal Transport",15-1,15-3,15-4,15-2,2026-04-08 19:51:06
+alec,16,Parking & EV Charging,16-1,16-2,16-3,16-4,2026-04-08 19:51:06
+alec,18,User Apps & Digital Interaction,18-2,18-3,18-1,18-4,2026-04-08 19:51:06
+a3696jxtrkl2fi,1,Indoor Temperature Control,1-1,1-2,1-4,1-3,2026-04-08 18:05:31
+a3696jxtrkl2fi,2,Air Quality & Ventilation,2-2,2-1,2-3,2-4,2026-04-08 18:05:31
+a3696jxtrkl2fi,3,Lighting & Daylight,3-1,3-3,3-2,3-4,2026-04-08 18:05:31
+a3696jxtrkl2fi,4,Noise & Acoustics,4-1,4-2,4-4,4-3,2026-04-08 18:05:31
+a3696jxtrkl2fi,5,Energy Consumption,5-2,5-1,5-4,5-3,2026-04-08 18:05:31
+a3696jxtrkl2fi,6,Security & Access Control,6-1,6-2,6-4,6-3,2026-04-08 18:05:31
+a3696jxtrkl2fi,7,Occupancy & Space Utilisation,7-1,7-2,7-4,7-3,2026-04-08 18:05:31
+a3696jxtrkl2fi,8,Fire Safety & Emergency,8-1,8-3,8-2,8-4,2026-04-08 18:05:31
+a3696jxtrkl2fi,11,Renewable Energy & Solar,11-1,11-3,11-4,11-2,2026-04-08 18:05:31
+a3696jxtrkl2fi,17,Building Automation & AI,17-2,17-1,17-3,17-4,2026-04-08 18:05:31
+kirsten,1,Indoor Temperature Control,1-1,1-2,1-3,1-4,2026-04-08 17:33:50
+kirsten,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2,2026-04-08 17:33:50
+kirsten,3,Lighting & Daylight,3-4,3-2,3-3,3-1,2026-04-08 17:33:50
+kirsten,6,Security & Access Control,6-2,6-4,6-3,6-1,2026-04-08 17:33:50
+kirsten,7,Occupancy & Space Utilisation,7-1,7-2,7-3,7-4,2026-04-08 17:33:50
+kirsten,8,Fire Safety & Emergency,8-1,8-4,8-2,8-3,2026-04-08 17:33:50
+kirsten,9,Water Management,9-1,9-2,9-4,9-3,2026-04-08 17:33:50
+kirsten,10,Waste & Recycling,10-1,10-2,10-4,10-3,2026-04-08 17:33:50
+kirsten,15,"Lifts, Stairs & Internal Transport",15-1,15-4,15-3,15-2,2026-04-08 17:33:50
+kirsten,19,Building Maintenance & Faults,19-1,19-3,19-4,19-2,2026-04-08 17:33:50
+andrew smith,1,Indoor Temperature Control,1-4,1-1,1-3,1-2,2026-04-08 17:12:29
+andrew smith,2,Air Quality & Ventilation,2-3,2-4,2-1,2-2,2026-04-08 17:12:29
+andrew smith,5,Energy Consumption,5-3,5-4,5-2,5-1,2026-04-08 17:12:29
+andrew smith,6,Security & Access Control,6-3,6-4,6-2,6-1,2026-04-08 17:12:29
+andrew smith,7,Occupancy & Space Utilisation,7-3,7-4,7-2,7-1,2026-04-08 17:12:29
+andrew smith,8,Fire Safety & Emergency,8-1,8-4,8-3,8-2,2026-04-08 17:12:29
+andrew smith,13,Health & Well-being,13-1,13-4,13-3,13-2,2026-04-08 17:12:29
+andrew smith,14,IoT Sensors & Data Analytics,14-2,14-4,14-1,14-3,2026-04-08 17:12:29
+andrew smith,17,Building Automation & AI,17-3,17-4,17-2,17-1,2026-04-08 17:12:29
+andrew smith,19,Building Maintenance & Faults,19-1,19-4,19-2,19-3,2026-04-08 17:12:29
+natalie,2,Air Quality & Ventilation,2-4,2-2,2-3,2-1,2026-04-08 17:11:23
+natalie,5,Energy Consumption,5-4,5-2,5-3,5-1,2026-04-08 17:11:23
+natalie,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1,2026-04-08 17:11:23
+natalie,8,Fire Safety & Emergency,8-4,8-2,8-1,8-3,2026-04-08 17:11:23
+natalie,9,Water Management,9-3,9-4,9-2,9-1,2026-04-08 17:11:23
+natalie,10,Waste & Recycling,10-4,10-3,10-2,10-1,2026-04-08 17:11:23
+natalie,11,Renewable Energy & Solar,11-4,11-2,11-1,11-3,2026-04-08 17:11:23
+natalie,12,Green Spaces & Biodiversity,12-4,12-2,12-3,12-1,2026-04-08 17:11:23
+natalie,13,Health & Well-being,13-4,13-2,13-3,13-1,2026-04-08 17:11:23
+natalie,20,Carbon Footprint & Net Zero,20-4,20-2,20-3,20-1,2026-04-08 17:11:23
+gene wood,1,Indoor Temperature Control,1-3,1-2,1-1,1-4,2026-04-08 16:57:36
+gene wood,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1,2026-04-08 16:57:36
+gene wood,3,Lighting & Daylight,3-1,3-2,3-3,3-4,2026-04-08 16:57:36
+gene wood,5,Energy Consumption,5-2,5-4,5-3,5-1,2026-04-08 16:57:36
+gene wood,13,Health & Well-being,13-4,13-3,13-2,13-1,2026-04-08 16:57:36
+gene wood,15,"Lifts, Stairs & Internal Transport",15-4,15-3,15-1,15-2,2026-04-08 16:57:36
+gene wood,16,Parking & EV Charging,16-3,16-2,16-1,16-4,2026-04-08 16:57:36
+gene wood,18,User Apps & Digital Interaction,18-4,18-2,18-1,18-3,2026-04-08 16:57:36
+gene wood,19,Building Maintenance & Faults,19-4,19-2,19-1,19-3,2026-04-08 16:57:36
+gene wood,20,Carbon Footprint & Net Zero,20-4,20-3,20-2,20-1,2026-04-08 16:57:36
+sharon ho,1,Indoor Temperature Control,1-1,1-4,1-3,1-2,2026-04-08 16:52:22
+sharon ho,2,Air Quality & Ventilation,2-1,2-4,2-2,2-3,2026-04-08 16:52:22
+sharon ho,3,Lighting & Daylight,3-1,3-4,3-2,3-3,2026-04-08 16:52:22
+sharon ho,5,Energy Consumption,5-1,5-2,5-3,5-4,2026-04-08 16:52:22
+sharon ho,6,Security & Access Control,6-1,6-2,6-4,6-3,2026-04-08 16:52:22
+sharon ho,7,Occupancy & Space Utilisation,7-1,7-4,7-2,7-3,2026-04-08 16:52:22
+sharon ho,8,Fire Safety & Emergency,8-1,8-4,8-2,8-3,2026-04-08 16:52:22
+sharon ho,9,Water Management,9-1,9-4,9-3,9-2,2026-04-08 16:52:22
+sharon ho,13,Health & Well-being,13-1,13-4,13-2,13-3,2026-04-08 16:52:22
+sharon ho,19,Building Maintenance & Faults,19-1,19-2,19-3,19-4,2026-04-08 16:52:22
+j burnette,1,Indoor Temperature Control,1-3,1-2,1-1,1-4,2026-04-08 16:50:17
+j burnette,2,Air Quality & Ventilation,2-4,2-1,2-2,2-3,2026-04-08 16:50:17
+j burnette,3,Lighting & Daylight,3-3,3-4,3-2,3-1,2026-04-08 16:50:17
+j burnette,4,Noise & Acoustics,4-3,4-2,4-4,4-1,2026-04-08 16:50:17
+j burnette,6,Security & Access Control,6-4,6-2,6-3,6-1,2026-04-08 16:50:17
+j burnette,8,Fire Safety & Emergency,8-2,8-4,8-3,8-1,2026-04-08 16:50:17
+j burnette,11,Renewable Energy & Solar,11-2,11-1,11-3,11-4,2026-04-08 16:50:17
+j burnette,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1,2026-04-08 16:50:17
+j burnette,13,Health & Well-being,13-2,13-1,13-4,13-3,2026-04-08 16:50:17
+j burnette,20,Carbon Footprint & Net Zero,20-4,20-3,20-1,20-2,2026-04-08 16:50:17
+accxc5v05c9r9,1,Indoor Temperature Control,1-2,1-1,1-4,1-3,2026-04-08 16:46:51
+accxc5v05c9r9,2,Air Quality & Ventilation,2-1,2-3,2-2,2-4,2026-04-08 16:46:51
+accxc5v05c9r9,6,Security & Access Control,6-2,6-1,6-3,6-4,2026-04-08 16:46:51
+accxc5v05c9r9,8,Fire Safety & Emergency,8-1,8-4,8-2,8-3,2026-04-08 16:46:51
+accxc5v05c9r9,9,Water Management,9-1,9-3,9-4,9-2,2026-04-08 16:46:51
+accxc5v05c9r9,10,Waste & Recycling,10-4,10-2,10-1,10-3,2026-04-08 16:46:51
+accxc5v05c9r9,11,Renewable Energy & Solar,11-2,11-1,11-4,11-3,2026-04-08 16:46:51
+accxc5v05c9r9,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1,2026-04-08 16:46:51
+accxc5v05c9r9,13,Health & Well-being,13-4,13-1,13-2,13-3,2026-04-08 16:46:51
+accxc5v05c9r9,18,User Apps & Digital Interaction,18-2,18-1,18-4,18-3,2026-04-08 16:46:51
+travis cope,1,Indoor Temperature Control,1-1,1-3,1-2,1-4,2026-04-08 16:33:14
+travis cope,2,Air Quality & Ventilation,2-1,2-3,2-2,2-4,2026-04-08 16:33:14
+travis cope,3,Lighting & Daylight,3-3,3-1,3-4,3-2,2026-04-08 16:33:14
+travis cope,4,Noise & Acoustics,4-2,4-1,4-4,4-3,2026-04-08 16:33:14
+travis cope,5,Energy Consumption,5-2,5-4,5-1,5-3,2026-04-08 16:33:14
+travis cope,6,Security & Access Control,6-1,6-3,6-2,6-4,2026-04-08 16:33:14
+travis cope,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4,2026-04-08 16:33:14
+travis cope,14,IoT Sensors & Data Analytics,14-1,14-3,14-2,14-4,2026-04-08 16:33:14
+travis cope,19,Building Maintenance & Faults,19-1,19-2,19-4,19-3,2026-04-08 16:33:14
+travis cope,20,Carbon Footprint & Net Zero,20-1,20-2,20-3,20-4,2026-04-08 16:33:14
+ryan,1,Indoor Temperature Control,1-4,1-1,1-3,1-2,2026-04-08 16:17:59
+ryan,2,Air Quality & Ventilation,2-3,2-4,2-1,2-2,2026-04-08 16:17:59
+ryan,3,Lighting & Daylight,3-2,3-1,3-4,3-3,2026-04-08 16:17:59
+ryan,4,Noise & Acoustics,4-3,4-1,4-4,4-2,2026-04-08 16:17:59
+ryan,5,Energy Consumption,5-4,5-2,5-3,5-1,2026-04-08 16:17:59
+ryan,6,Security & Access Control,6-3,6-4,6-1,6-2,2026-04-08 16:17:59
+ryan,7,Occupancy & Space Utilisation,7-3,7-1,7-4,7-2,2026-04-08 16:17:59
+ryan,14,IoT Sensors & Data Analytics,14-3,14-1,14-4,14-2,2026-04-08 16:17:59
+ryan,17,Building Automation & AI,17-3,17-2,17-4,17-1,2026-04-08 16:17:59
+ryan,18,User Apps & Digital Interaction,18-3,18-1,18-4,18-2,2026-04-08 16:17:59
+suhasdevmane,1,Indoor Temperature Control,1-2,1-1,1-4,1-3,2026-04-01 20:18:24
+suhasdevmane,2,Air Quality & Ventilation,2-1,2-2,2-3,2-4,2026-04-01 20:18:24
+suhasdevmane,3,Lighting & Daylight,3-2,3-3,3-4,3-1,2026-04-01 20:18:24
+suhasdevmane,4,Noise & Acoustics,4-1,4-2,4-3,4-4,2026-04-01 20:18:24
+suhasdevmane,5,Energy Consumption,5-1,5-3,5-2,5-4,2026-04-01 20:18:24
+suhasdevmane,6,Security & Access Control,6-1,6-2,6-3,6-4,2026-04-01 20:18:24
+suhasdevmane,7,Occupancy & Space Utilisation,7-1,7-2,7-3,7-4,2026-04-01 20:18:24
+suhasdevmane,11,Renewable Energy & Solar,11-1,11-2,11-3,11-4,2026-04-01 20:18:24
+suhasdevmane,12,Green Spaces & Biodiversity,12-2,12-1,12-4,12-3,2026-04-01 20:18:24
+suhasdevmane,13,Health & Well-being,13-2,13-3,13-1,13-4,2026-04-01 20:18:24
+asma irfan,2,Air Quality & Ventilation,2-1,2-2,2-4,2-3,2026-04-01 17:12:03
+asma irfan,3,Lighting & Daylight,3-4,3-3,3-2,3-1,2026-04-01 17:12:03
+asma irfan,4,Noise & Acoustics,4-2,4-3,4-1,4-4,2026-04-01 17:12:03
+asma irfan,9,Water Management,9-2,9-1,9-4,9-3,2026-04-01 17:12:03
+asma irfan,10,Waste & Recycling,10-2,10-1,10-4,10-3,2026-04-01 17:12:03
+asma irfan,12,Green Spaces & Biodiversity,12-3,12-1,12-4,12-2,2026-04-01 17:12:03
+asma irfan,14,IoT Sensors & Data Analytics,14-3,14-1,14-4,14-2,2026-04-01 17:12:03
+asma irfan,16,Parking & EV Charging,16-1,16-4,16-3,16-2,2026-04-01 17:12:03
+asma irfan,18,User Apps & Digital Interaction,18-4,18-3,18-2,18-1,2026-04-01 17:12:03
+asma irfan,20,Carbon Footprint & Net Zero,20-2,20-1,20-3,20-4,2026-04-01 17:12:03
+charith,1,Indoor Temperature Control,1-1,1-3,1-2,1-4,2026-04-01 08:40:45
+charith,6,Security & Access Control,6-1,6-3,6-2,6-4,2026-04-01 08:40:45
+charith,8,Fire Safety & Emergency,8-4,8-1,8-2,8-3,2026-04-01 08:40:45
+charith,9,Water Management,9-1,9-3,9-4,9-2,2026-04-01 08:40:45
+charith,10,Waste & Recycling,10-4,10-3,10-2,10-1,2026-04-01 08:40:45
+charith,13,Health & Well-being,13-2,13-1,13-4,13-3,2026-04-01 08:40:45
+charith,14,IoT Sensors & Data Analytics,14-4,14-3,14-1,14-2,2026-04-01 08:40:45
+charith,15,"Lifts, Stairs & Internal Transport",15-4,15-3,15-2,15-1,2026-04-01 08:40:45
+charith,16,Parking & EV Charging,16-4,16-3,16-2,16-1,2026-04-01 08:40:45
+charith,18,User Apps & Digital Interaction,18-4,18-3,18-2,18-1,2026-04-01 08:40:45
+suhasdevmane5,1,Indoor Temperature Control,1-1,1-2,1-3,1-4,2026-02-27 16:55:15
+suhasdevmane5,2,Air Quality & Ventilation,2-1,2-2,2-3,2-4,2026-02-27 16:55:15
+suhasdevmane5,3,Lighting & Daylight,3-1,3-2,3-3,3-4,2026-02-27 16:55:15
+suhasdevmane5,4,Noise & Acoustics,4-1,4-2,4-3,4-4,2026-02-27 16:55:15
+suhasdevmane5,5,Energy Consumption,5-3,5-2,5-1,5-4,2026-02-27 16:55:15
+suhasdevmane5,6,Security & Access Control,6-1,6-2,6-3,6-4,2026-02-27 16:55:15
+suhasdevmane5,7,Occupancy & Space Utilisation,7-1,7-2,7-3,7-4,2026-02-27 16:55:15
+suhasdevmane5,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4,2026-02-27 16:55:15
+suhasdevmane5,9,Water Management,9-1,9-2,9-3,9-4,2026-02-27 16:55:15
+suhasdevmane5,10,Waste & Recycling,10-1,10-2,10-3,10-4,2026-02-27 16:55:15
