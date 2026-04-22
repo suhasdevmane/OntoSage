@@ -137,7 +137,7 @@ services:
       - ./orchestrator:/app/orchestrator # Mount source code for hot-reloading
       - ./shared:/app/shared # Mount shared module for hot-reloading
       - ./input:/app/input:ro # Mount input folder for raw ontology files (PDFs read-only)
-      - ./volumes/floor-plans:/app/input/.floor_plans # Writable — pipeline writes manifests + PNGs here
+      - ./volumes/floor-plans:/app/floor_plans # Writable — pipeline writes manifests + PNGs here
       - ./outputs:/app/outputs # Mount shared outputs (data, plots, query results)
       - ./orchestrator/agents/.env:/app/agents/.env:ro # Mount OpenAI credentials
       - ./data:/app/data:ro # Mount sensor map and other data files
@@ -228,7 +228,11 @@ services:
       - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-60}
       - RATE_LIMIT_WINDOW_S=${RATE_LIMIT_WINDOW_S:-60}
       - PLANNER_MAX_STEPS=${PLANNER_MAX_STEPS:-6}
-      - STATIC_BASE_URL=${STATIC_BASE_URL:-http://localhost:8000}
+      # STATIC_BASE_URL: base URL for floor plan PDF/PNG links embedded in chat responses.
+      # ⚠️  Must point to the Nginx file-server (port 8080), NOT the orchestrator (port 8000).
+      # For local dev:        http://localhost:8080
+      # For public deployment: https://talk2futurebuildings.systems
+      - STATIC_BASE_URL=${STATIC_BASE_URL:-http://localhost:8080}
     depends_on:
       redis:
         condition: service_healthy

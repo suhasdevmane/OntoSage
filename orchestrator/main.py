@@ -1587,6 +1587,7 @@ _OAI_NODE_LABELS: dict = {
     "planner":       "🗺️ Planning multi-step task",
     "recommend":     "💡 Generating recommendations",
     "response":      "✍️ Composing response",
+    "floor_plan":    "🗺️ Resolving floor plan",  # ← added for OpenWebUI pipeline disclosure
 }
 
 
@@ -1599,28 +1600,19 @@ def _oai_auth(authorization: Optional[str] = Header(None)) -> None:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
 
-@app.get("/v1/models")
-async def oai_list_models(_: None = Depends(_oai_auth)):
-    """Return the single OntoSage model so Open WebUI can populate the dropdown."""
-    now = int(datetime.utcnow().timestamp())
-    return JSONResponse({
-        "object": "list",
-        "data": [
-            {
-                "id": _OAI_MODEL_ID,
-                "object": "model",
-                "created": now,
-                "owned_by": "ontosage",
-                "permission": [],
-                "root": _OAI_MODEL_ID,
-                "parent": None,
-            }
-        ],
-    })
+# NOTE: The GET /v1/models and POST /v1/chat/completions routes are defined
+# in the 'OpenAI Compatibility Layer' section below.  Do not add duplicate
+# route decorators here — FastAPI uses the FIRST matching route, and a
+# duplicate silently shadows the better handler.
 
 
-@app.post("/v1/chat/completions")
-async def oai_chat_completions(
+# (POST /v1/chat/completions moved to OpenAI Compatibility Layer ~line 2094
+# to avoid FastAPI route shadowing — the handler there correctly
+# reconstructs conversation history, detects personas, and
+# includes floor_plan in the pipeline-step disclosure block.)
+
+
+async def _unused_oai_chat_completions(
     request: Request,
     _: None = Depends(_oai_auth),
 ):
@@ -2250,6 +2242,8 @@ async def openai_chat_completions(
                         status = "Assembling report"
                     elif "document" in step:
                         status = "Generating document output"
+                    elif "floor_plan" in step:
+                        status = "🗺️ Resolving floor plan"
                     if status:
                         status_steps.append(status)
 
