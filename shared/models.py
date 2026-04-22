@@ -14,16 +14,24 @@ from pydantic import BaseModel, Field
 class Message(BaseModel):
     """Single message in a conversation"""
 
-    role: Literal["user", "assistant", "system"] = Field(..., description="Message sender role")
+    role: Literal["user", "assistant", "system"] = Field(
+        ..., description="Message sender role"
+    )
     content: str = Field(..., description="Message content")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Message timestamp")
-    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata")
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow, description="Message timestamp"
+    )
+    metadata: Optional[Dict[str, Any]] = Field(
+        default=None, description="Additional metadata"
+    )
 
 
 class ConversationHistory(BaseModel):
     """Conversation history container"""
 
-    messages: List[Message] = Field(default_factory=list, description="List of messages")
+    messages: List[Message] = Field(
+        default_factory=list, description="List of messages"
+    )
     conversation_id: str = Field(..., description="Unique conversation ID")
 
     def add_message(self, role: str, content: str, metadata: Optional[Dict] = None):
@@ -52,7 +60,9 @@ class RetrievalRequest(BaseModel):
         "docs",
     ] = Field(..., description="Collection to search in")
     top_k: int = Field(default=5, description="Number of results to return")
-    filters: Optional[Dict[str, Any]] = Field(default=None, description="Metadata filters")
+    filters: Optional[Dict[str, Any]] = Field(
+        default=None, description="Metadata filters"
+    )
 
 
 class RetrievalResult(BaseModel):
@@ -60,13 +70,17 @@ class RetrievalResult(BaseModel):
 
     text: str = Field(..., description="Retrieved text content")
     score: float = Field(..., description="Similarity score")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Associated metadata")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Associated metadata"
+    )
 
 
 class RetrievalResponse(BaseModel):
     """Response from RAG retrieval"""
 
-    results: List[RetrievalResult] = Field(default_factory=list, description="Retrieved results")
+    results: List[RetrievalResult] = Field(
+        default_factory=list, description="Retrieved results"
+    )
     query: str = Field(..., description="Original query")
     collection: str = Field(..., description="Collection searched")
 
@@ -130,15 +144,21 @@ class SPARQLQuery(BaseModel):
     """SPARQL query and metadata"""
 
     query: str = Field(..., description="SPARQL query string")
-    explanation: Optional[str] = Field(default=None, description="Human-readable explanation")
-    generated_by: str = Field(default="sparql_agent", description="Agent that generated query")
+    explanation: Optional[str] = Field(
+        default=None, description="Human-readable explanation"
+    )
+    generated_by: str = Field(
+        default="sparql_agent", description="Agent that generated query"
+    )
 
 
 class SPARQLResult(BaseModel):
     """SPARQL query execution result"""
 
     success: bool = Field(..., description="Whether query executed successfully")
-    data: Optional[List[Dict[str, Any]]] = Field(default=None, description="Query results")
+    data: Optional[List[Dict[str, Any]]] = Field(
+        default=None, description="Query results"
+    )
     error: Optional[str] = Field(default=None, description="Error message if failed")
     query: str = Field(..., description="Executed query")
 
@@ -150,15 +170,21 @@ class SQLQuery(BaseModel):
     """SQL query and metadata"""
 
     query: str = Field(..., description="SQL query string")
-    database: Literal["mysql", "timescale", "cassandra"] = Field(..., description="Target database")
-    explanation: Optional[str] = Field(default=None, description="Human-readable explanation")
+    database: Literal["mysql", "timescale", "cassandra"] = Field(
+        ..., description="Target database"
+    )
+    explanation: Optional[str] = Field(
+        default=None, description="Human-readable explanation"
+    )
 
 
 class SQLResult(BaseModel):
     """SQL query execution result"""
 
     success: bool = Field(..., description="Whether query executed successfully")
-    data: Optional[List[Dict[str, Any]]] = Field(default=None, description="Query results")
+    data: Optional[List[Dict[str, Any]]] = Field(
+        default=None, description="Query results"
+    )
     error: Optional[str] = Field(default=None, description="Error message if failed")
     query: str = Field(..., description="Executed query")
     row_count: int = Field(default=0, description="Number of rows returned")
@@ -202,7 +228,9 @@ class ConversationState(BaseModel):
     # User context
     conversation_id: str = Field(..., description="Unique conversation ID")
     user_id: str = Field(default="anonymous", description="User identifier")
-    title: Optional[str] = Field(default="New Conversation", description="Conversation title")
+    title: Optional[str] = Field(
+        default="New Conversation", description="Conversation title"
+    )
     summary: Optional[str] = Field(default=None, description="Conversation summary")
     building_id: str = Field(default="bldg1", description="Building context")
     persona: Literal[
@@ -224,7 +252,9 @@ class ConversationState(BaseModel):
 
     # Current interaction
     user_message: str = Field(..., description="Current user input")
-    messages: List[Message] = Field(default_factory=list, description="Conversation history")
+    messages: List[Message] = Field(
+        default_factory=list, description="Conversation history"
+    )
     # current_intent is the authoritative routing field; intent is a read alias
     current_intent: Optional[str] = Field(
         default=None, description="Detected intent (used for routing)"
@@ -232,14 +262,29 @@ class ConversationState(BaseModel):
     intermediate_results: Dict[str, Any] = Field(
         default_factory=dict, description="Temporary results between agents"
     )
-    query_results: Any = Field(default_factory=dict, description="Last query results (SPARQL/SQL)")
+    query_results: Any = Field(
+        default_factory=dict, description="Last query results (SPARQL/SQL)"
+    )
     user_preferences: Dict[str, Any] = Field(
         default_factory=dict, description="User preferences/persona/language"
     )
 
+    # Floor plan / spatial context — persisted across turns within a session
+    floor_context: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=(
+            "Active floor/zone context carried across turns. "
+            "Keys: floor (int), zone (str|None), pdf_url (str)."
+        ),
+    )
+
     # Intent understanding
-    needs_clarification: bool = Field(default=False, description="Whether to ask for clarification")
-    clarification_question: Optional[str] = Field(default=None, description="Question to ask user")
+    needs_clarification: bool = Field(
+        default=False, description="Whether to ask for clarification"
+    )
+    clarification_question: Optional[str] = Field(
+        default=None, description="Question to ask user"
+    )
 
     # RAG retrieval results
     ontology_context: List[RetrievalResult] = Field(
@@ -253,14 +298,20 @@ class ConversationState(BaseModel):
     )
 
     # Generated queries
-    sparql_query: Optional[SPARQLQuery] = Field(default=None, description="Generated SPARQL query")
-    sql_query: Optional[SQLQuery] = Field(default=None, description="Generated SQL query")
+    sparql_query: Optional[SPARQLQuery] = Field(
+        default=None, description="Generated SPARQL query"
+    )
+    sql_query: Optional[SQLQuery] = Field(
+        default=None, description="Generated SQL query"
+    )
 
     # Query results
     sparql_results: Optional[SPARQLResult] = Field(
         default=None, description="SPARQL execution results"
     )
-    sql_results: Optional[SQLResult] = Field(default=None, description="SQL execution results")
+    sql_results: Optional[SQLResult] = Field(
+        default=None, description="SQL execution results"
+    )
 
     # Analytics
     analytics_request: Optional[AnalyticsRequest] = Field(
@@ -279,14 +330,138 @@ class ConversationState(BaseModel):
     retry_count: int = Field(default=0, description="Number of retry attempts")
 
     # Final response
-    assistant_message: Optional[str] = Field(default=None, description="Final assistant response")
+    assistant_message: Optional[str] = Field(
+        default=None, description="Final assistant response"
+    )
 
     # Routing flags
     next_step: Optional[str] = Field(default=None, description="Next agent to invoke")
-    is_complete: bool = Field(default=False, description="Whether conversation turn is complete")
+    is_complete: bool = Field(
+        default=False, description="Whether conversation turn is complete"
+    )
 
     class Config:
         arbitrary_types_allowed = True
+
+
+# ==================== Floor Plan Models ====================
+
+
+class NormalisedPoint(BaseModel):
+    """2-D coordinate normalised to [0, 1] relative to rendered image dimensions."""
+
+    x: float = Field(..., ge=0.0, le=1.0)
+    y: float = Field(..., ge=0.0, le=1.0)
+
+
+class NormalisedBBox(BaseModel):
+    """Bounding box normalised to [0, 1]. (x, y) is the top-left corner."""
+
+    x: float = Field(..., ge=0.0, le=1.0)
+    y: float = Field(..., ge=0.0, le=1.0)
+    w: float = Field(..., ge=0.0, le=1.0)
+    h: float = Field(..., ge=0.0, le=1.0)
+
+
+SpaceType = Literal[
+    "office",
+    "lab",
+    "meeting_room",
+    "classroom",
+    "lecture",
+    "toilet",
+    "kitchen",
+    "server_room",
+    "storage",
+    "staircase",
+    "lift",
+    "reception",
+    "corridor",
+    "utility",
+    "zone",
+    "unknown",
+]
+
+
+class Space(BaseModel):
+    """
+    A single identifiable space (room, zone, corridor, facility) on a floor.
+
+    ``id`` is globally unique: ``"<building_id>.<zone_id>"``.
+    All spatial coordinates are normalised [0, 1] relative to the rendered PNG.
+    """
+
+    id: str = Field(..., description="Global unique ID: <building_id>.<zone_id>")
+    zone_id: str = Field(..., description="Zone/room identifier, e.g. '3.01'")
+    label: str = Field(..., description="Human-readable label extracted from the floor plan")
+    aliases: List[str] = Field(default_factory=list)
+    type: SpaceType = Field(default="unknown")
+    tags: List[str] = Field(default_factory=list)
+    centroid: Optional[NormalisedPoint] = None
+    bbox: Optional[NormalisedBBox] = None
+    polygon: Optional[List[NormalisedPoint]] = None
+    sensor_uuids: List[str] = Field(default_factory=list)
+    ontology_iri: Optional[str] = None
+    source: Literal["text_extraction", "llm", "manual"] = "text_extraction"
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+
+
+class RenderedImage(BaseModel):
+    """Metadata about the PNG render of a floor plan page."""
+
+    png_url: str
+    thumbnail_url: str
+    width_px: int
+    height_px: int
+    dpi: int
+
+
+class FloorPlanManifest(BaseModel):
+    """
+    Canonical representation of one floor of one building.
+
+    Generated once from the source PDF by FloorPlanPipeline and consumed
+    by every downstream component (FloorPlanAgent, API, frontend viewer).
+    Schema version is ``"1.0"``; readers must reject unknown versions.
+    """
+
+    schema_version: Literal["1.0"] = "1.0"
+    building_id: str
+    building_name: str
+    floor: int
+    floor_label: str
+    source_pdf: str
+    source_sha256: str
+    generated_at: datetime
+    generator_version: str = "1.0.0"
+    page_count: int = 1
+    rendered_image: RenderedImage
+    pdf_url: str
+    bounding_box: Dict[str, float] = Field(default_factory=dict)
+    spaces: List[Space] = Field(default_factory=list)
+    facilities: Dict[str, List[str]] = Field(default_factory=dict)
+    ontology_links: Dict[str, str] = Field(default_factory=dict)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class FloorPlanResult(BaseModel):
+    """
+    Structured result returned by FloorPlanAgent.resolve().
+
+    ``markdown`` is always populated for fallback text rendering.
+    ``interactive=True`` signals that the frontend should render the viewer.
+    """
+
+    building_id: str
+    floor: Optional[int] = None
+    selected_space: Optional[Space] = None
+    candidates: List[Space] = Field(default_factory=list)
+    manifest_url: Optional[str] = None
+    image_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    pdf_url: Optional[str] = None
+    interactive: bool = True
+    markdown: str = ""
 
 
 # ==================== API Response Models ====================
@@ -296,7 +471,9 @@ class ChatRequest(BaseModel):
     """Request to /chat endpoint"""
 
     message: str = Field(..., description="User message")
-    conversation_id: Optional[str] = Field(default=None, description="Conversation ID (optional)")
+    conversation_id: Optional[str] = Field(
+        default=None, description="Conversation ID (optional)"
+    )
     user_id: str = Field(default="anonymous", description="User ID")
     persona: Literal[
         "student",
@@ -313,7 +490,9 @@ class ChatRequest(BaseModel):
         "guest",
         "officer",
     ] = Field(default="general", description="User persona")
-    audio_data: Optional[str] = Field(default=None, description="Base64 encoded audio (optional)")
+    audio_data: Optional[str] = Field(
+        default=None, description="Base64 encoded audio (optional)"
+    )
 
 
 class ChatResponse(BaseModel):
@@ -321,23 +500,35 @@ class ChatResponse(BaseModel):
 
     conversation_id: str = Field(..., description="Conversation ID")
     message: str = Field(..., description="Assistant response")
-    sparql_query: Optional[str] = Field(default=None, description="Generated SPARQL query")
+    sparql_query: Optional[str] = Field(
+        default=None, description="Generated SPARQL query"
+    )
     sql_query: Optional[str] = Field(default=None, description="Generated SQL query")
-    visualization_url: Optional[str] = Field(default=None, description="URL to visualization")
-    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata")
+    visualization_url: Optional[str] = Field(
+        default=None, description="URL to visualization"
+    )
+    metadata: Optional[Dict[str, Any]] = Field(
+        default=None, description="Additional metadata"
+    )
 
 
 class HealthResponse(BaseModel):
     """Health check response"""
 
-    status: Literal["healthy", "unhealthy"] = Field(..., description="Service health status")
+    status: Literal["healthy", "unhealthy"] = Field(
+        ..., description="Service health status"
+    )
     service: str = Field(..., description="Service name")
     version: str = Field(default="2.0.0", description="Service version")
-    model_provider: Optional[str] = Field(default=None, description="Current model provider")
+    model_provider: Optional[str] = Field(
+        default=None, description="Current model provider"
+    )
     timestamp: datetime = Field(
         default_factory=datetime.utcnow, description="Health check timestamp"
     )
-    details: Optional[Dict[str, Any]] = Field(default=None, description="Additional health details")
+    details: Optional[Dict[str, Any]] = Field(
+        default=None, description="Additional health details"
+    )
 
 
 class APIResponse(BaseModel):
@@ -379,12 +570,22 @@ class ChatRequest(BaseModel):
         default=None, max_length=200, description="Existing conversation ID"
     )
     session_id: Optional[str] = Field(
-        default=None, max_length=200, description="Session ID for conversation continuity"
+        default=None,
+        max_length=200,
+        description="Session ID for conversation continuity",
     )
-    persona: Optional[str] = Field(default="general", description="Persona for response style")
-    language: Optional[str] = Field(default="en", max_length=10, description="Response language")
+    persona: Optional[str] = Field(
+        default="general", description="Persona for response style"
+    )
+    language: Optional[str] = Field(
+        default="en", max_length=10, description="Response language"
+    )
     building: Optional[str] = Field(
         default="building1", max_length=100, description="Target building ID"
+    )
+    fresh_session: bool = Field(
+        default=False,
+        description="When True, skip injecting prior cross-session memory context for this request",
     )
 
     @classmethod

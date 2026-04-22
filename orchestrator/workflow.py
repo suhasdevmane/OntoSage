@@ -31,6 +31,7 @@ from orchestrator.agents.planner_agent import PlannerAgent
 
 # Phase 4 agents
 from orchestrator.agents.report_agent import ReportAgent
+from orchestrator.llm_manager import TaskType, llm_manager
 
 # B.7: Deterministic analytics engine
 from orchestrator.services.analytics_engine import AnalysisRequest, AnalyticsEngine
@@ -50,12 +51,14 @@ from shared.utils import get_logger
 # WIRE-A: i18n service (translate query in, response out)
 try:
     from orchestrator.services.i18n_service import I18nService
-
     _I18N_AVAILABLE = True
-except ImportError:
+except Exception:  # noqa: BLE001 — catches ImportError, SyntaxError, etc.
     _I18N_AVAILABLE = False
 
 from orchestrator.services.disambiguation_service import get_disambiguation_service
+
+# Floor plan service
+from orchestrator.services.floor_plan_service import floor_plan_service
 
 logger = get_logger(__name__)
 
@@ -138,7 +141,9 @@ class WorkflowOrchestrator:
         workflow.add_node("dialogue", self._dialogue_node)
         workflow.add_node("sparql", self._safe_node(self._sparql_node, "sparql"))
         workflow.add_node("sql", self._safe_node(self._sql_node, "sql"))
-        workflow.add_node("analytics", self._safe_node(self._analytics_node, "analytics"))
+        workflow.add_node(
+            "analytics", self._safe_node(self._analytics_node, "analytics")
+        )
         workflow.add_node(
             "visualization", self._safe_node(self._visualization_node, "visualization")
         )
@@ -149,11 +154,14 @@ class WorkflowOrchestrator:
         workflow.add_node("anomaly", self._safe_node(self._anomaly_node, "anomaly"))
         workflow.add_node("export", self._safe_node(self._export_node, "export"))
         workflow.add_node("document", self._safe_node(self._document_node, "document"))
+        workflow.add_node(
+            "floor_plan", self._safe_node(self._floor_plan_node, "floor_plan")
+        )
 
         # Entry
         workflow.set_entry_point("dialogue")
 
-        # Dialogue routing (14 intents)
+        # Dialogue routing (15 intents)
         workflow.add_conditional_edges(
             "dialogue",
             self._route_from_dialogue,
@@ -166,6 +174,7 @@ class WorkflowOrchestrator:
                 "report": "report",
                 "anomaly": "anomaly",
                 "export": "export",
+                "floor_plan": "floor_plan",
                 "response": "response",
                 "end": END,
             },
@@ -206,12 +215,15 @@ class WorkflowOrchestrator:
         # Phase 4 nodes all lead to response (report may optionally create a document)
         workflow.add_edge("planner", "response")
         workflow.add_conditional_edges(
-            "report", self._route_from_report, {"document": "document", "response": "response"}
+            "report",
+            self._route_from_report,
+            {"document": "document", "response": "response"},
         )
         workflow.add_edge("anomaly", "response")
         workflow.add_edge("export", "response")
         workflow.add_edge("visualization", "response")
         workflow.add_edge("document", "response")
+        workflow.add_edge("floor_plan", "response")
         workflow.add_edge("response", END)
 
         return workflow.compile()
@@ -238,7 +250,10 @@ class WorkflowOrchestrator:
                     }
                     state.query_results = {}
                 elif node_name == "sql":
-                    state.intermediate_results["sql_result"] = {"success": False, "error": str(e)}
+                    state.intermediate_results["sql_result"] = {
+                        "success": False,
+                        "error": str(e),
+                    }
                     state.query_results = {"data": []}
                 elif node_name == "analytics":
                     state.intermediate_results["analytics_result"] = {
@@ -294,14 +309,41 @@ class WorkflowOrchestrator:
                 logger.error(f"Failed to generate title: {e}")
 
         # B.3: Inject relevant user memories as context for the dialogue agent
-        if self.agent_memory and state.user_id:
+        _fresh_session = state.intermediate_results.get("fresh_session", False)
+        from orchestrator.services.agent_memory import CROSS_SESSION_MEMORY_ENABLED
+
+        if self.agent_memory and state.user_id and CROSS_SESSION_MEMORY_ENABLED and not _fresh_session:
             try:
                 user_query = state.messages[-1].content if state.messages else ""
-                memory_context = await self.agent_memory.retrieve_context(state.user_id, user_query)
+                memory_context = await self.agent_memory.retrieve_context(
+                    state.user_id, user_query
+                )
                 if memory_context:
                     state.intermediate_results["memory_context"] = memory_context
             except Exception as _mem_err:
                 logger.debug(f"Agent memory retrieve skipped: {_mem_err}")
+
+        # ── Session-context: resolve pending clarification answer ─────────────
+        # If the previous turn asked a clarification question (e.g. "which sensor?"),
+        # parse the user's current message for an answer and accumulate it.
+        _pending_qtype = state.intermediate_results.get("pending_clarification_type")
+        _user_ctx: dict = state.intermediate_results.get("user_context", {})
+        if _pending_qtype and state.messages:
+            try:
+                _disambig_svc_early = get_disambiguation_service()
+                _ctx_answer = _disambig_svc_early.extract_clarification_answer(
+                    state.messages[-1].content, _pending_qtype
+                )
+                if _ctx_answer:
+                    _user_ctx = {**_user_ctx, **_ctx_answer}
+                    state.intermediate_results["user_context"] = _user_ctx
+                    logger.info(
+                        f"[disambiguation] Session context updated from answer: {_ctx_answer}"
+                    )
+            except Exception as _ctx_err:
+                logger.debug(f"Clarification answer extraction skipped: {_ctx_err}")
+            # Clear the pending type regardless — don't keep re-asking
+            state.intermediate_results.pop("pending_clarification_type", None)
 
         # NEW: Get LLM-based intent detection result
         intent_result = await self.dialogue_agent.detect_intent(state)
@@ -360,7 +402,9 @@ class WorkflowOrchestrator:
 
                 # If the prior turn already fetched sensor data, skip SPARQL+SQL
                 _prior_data = state.query_results
-                _has_prior_data = bool(isinstance(_prior_data, dict) and _prior_data.get("data"))
+                _has_prior_data = bool(
+                    isinstance(_prior_data, dict) and _prior_data.get("data")
+                )
                 if _has_prior_data:
                     state.intermediate_results["use_existing_query_results"] = True
                     logger.info(
@@ -400,15 +444,27 @@ class WorkflowOrchestrator:
             "recommendation_domain"
         )
 
-        # ── Data-driven disambiguation ────────────────────────────────────
-        # Check BEFORE routing: if the user mentioned "sensor 5.XX" without a
-        # type keyword, generate a data-driven "Did you mean…?" response.
+        # ── Data-driven disambiguation (context-aware) ────────────────────
+        # Check BEFORE routing: use the session context to avoid re-asking
+        # questions the user already answered in a prior turn.
         _user_query_raw = state.messages[-1].content if state.messages else ""
+        _user_ctx = state.intermediate_results.get("user_context", {})
         try:
             _disambig_svc = get_disambiguation_service()
-            _clarify_msg = await _disambig_svc.check_and_clarify(_user_query_raw)
+            _clarify_msg, _ctx_updates, _pending_type = (
+                await _disambig_svc.check_and_clarify_with_context(
+                    _user_query_raw, _user_ctx
+                )
+            )
+            if _ctx_updates:
+                _user_ctx = {**_user_ctx, **_ctx_updates}
+                state.intermediate_results["user_context"] = _user_ctx
+            if _pending_type:
+                state.intermediate_results["pending_clarification_type"] = _pending_type
             if _clarify_msg:
-                logger.info("[disambiguation] Ambiguous sensor ref — returning clarification")
+                logger.info(
+                    "[disambiguation] Ambiguous sensor ref — returning clarification"
+                )
                 state.current_intent = "clarification"
                 state.needs_clarification = True
                 state.intermediate_results["dialogue_response"] = _clarify_msg
@@ -435,7 +491,9 @@ class WorkflowOrchestrator:
             if any(w in _uq for w in _spatial):
                 pass  # dialogue_response intentionally not set; SPARQL node will answer
             else:
-                discovery_response = self._handle_sensor_discovery(discovery_filter, entities)
+                discovery_response = self._handle_sensor_discovery(
+                    discovery_filter, entities
+                )
                 state.intermediate_results["dialogue_response"] = discovery_response
 
         elif intent in ("control",):
@@ -467,9 +525,10 @@ class WorkflowOrchestrator:
             state.current_intent = "export"
 
         elif intent in ("compare", "trend", "recommend", "compliance"):
-            # For these intents, run through SPARQL + SQL + analytics pipeline
+            # Preserve specific intent — each routes via SPARQL→SQL→analytics pipeline
+            # but the analytics node handles them differently (recommend→_recommend_node, etc.)
             logger.info(f"☕ Intent '{intent}' routes via SPARQL→SQL→Analytics")
-            state.current_intent = "analytics"
+            state.current_intent = intent
 
         elif intent == "visualization":
             state.current_intent = "visualization"
@@ -525,7 +584,9 @@ class WorkflowOrchestrator:
         # - SPARQL True always elevates to True (it knows it needs UUIDs)
         sparql_analytics = result.get("analytics_required", False)
         dialogue_analytics = state.intermediate_results.get("analytics_required", False)
-        sparql_has_answer = result.get("success") and bool(result.get("formatted_response"))
+        sparql_has_answer = result.get("success") and bool(
+            result.get("formatted_response")
+        )
         # Check if any sensor UUIDs were returned — if yes, SQL is needed for time-series data
         # answer_semantically() returns results as a list; guard against AttributeError.
         _raw_results = result.get("results", {})
@@ -535,7 +596,8 @@ class WorkflowOrchestrator:
             else []
         )
         _UUID_RE = re.compile(
-            r"^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$", re.IGNORECASE
+            r"^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            re.IGNORECASE,
         )
         _sparql_has_uuids = any(
             _UUID_RE.match(str(b.get(v, {}).get("value", "")))
@@ -545,7 +607,8 @@ class WorkflowOrchestrator:
         )
         # ── Compliance/follow-up: recover if SPARQL found ontology vocab but no sensor UUIDs ──
         _original_intent = state.intermediate_results.get("intent", "")
-        _contextual_intents = {"compliance", "compare", "trend", "recommend"}
+        # "recommend" is excluded: _recommend_node can answer without sensor UUIDs
+        _contextual_intents = {"compliance", "compare", "trend"}
         if _original_intent in _contextual_intents and not _sparql_has_uuids:
             # SPARQL returned ontology vocabulary or empty results — no sensor data.
             # Check if the previous SQL turn left sensor readings in state.query_results.
@@ -629,7 +692,11 @@ class WorkflowOrchestrator:
         if state.analytics_required and sparql_result.get("success"):
             try:
                 # Handle standard SPARQL JSON results
-                bindings = sparql_result.get("results", {}).get("results", {}).get("bindings", [])
+                bindings = (
+                    sparql_result.get("results", {})
+                    .get("results", {})
+                    .get("bindings", [])
+                )
                 sensor_metadata = self._build_sensor_metadata_from_bindings(bindings)
                 for binding in bindings:
                     current_uuid = None
@@ -661,11 +728,15 @@ class WorkflowOrchestrator:
                 preferred_kind = self._infer_query_kind(latest_message)
                 if preferred_kind and sensor_metadata:
                     filtered = {
-                        u: m for u, m in sensor_metadata.items() if m.get("kind") == preferred_kind
+                        u: m
+                        for u, m in sensor_metadata.items()
+                        if m.get("kind") == preferred_kind
                     }
                     if filtered:
                         uuids = [u for u in uuids if u in filtered]
-                        storage_map = {u: s for u, s in storage_map.items() if u in uuids}
+                        storage_map = {
+                            u: s for u, s in storage_map.items() if u in uuids
+                        }
                         state.intermediate_results["sensor_metadata"] = filtered
                     else:
                         state.intermediate_results["sensor_metadata"] = sensor_metadata
@@ -676,7 +747,9 @@ class WorkflowOrchestrator:
 
         if uuids:
             logger.info("=" * 80)
-            logger.info(f"🔍 Found {len(uuids)} UUIDs from SPARQL results, fetching data...")
+            logger.info(
+                f"🔍 Found {len(uuids)} UUIDs from SPARQL results, fetching data..."
+            )
             logger.info("UUID → Storage Mapping:")
             for uuid in uuids:
                 storage = storage_map.get(uuid, "Unknown")
@@ -707,7 +780,9 @@ class WorkflowOrchestrator:
             state.analytics_required = False
         else:
             # Fallback to standard SQL generation (text-to-SQL)
-            logger.info("No UUIDs found or not analytics flow, using standard Text-to-SQL")
+            logger.info(
+                "No UUIDs found or not analytics flow, using standard Text-to-SQL"
+            )
             result = await self.sql_agent.generate_and_execute(state, latest_message)
 
         state.intermediate_results["sql_result"] = result
@@ -731,20 +806,99 @@ class WorkflowOrchestrator:
 
         # Only mark analytics_required for intents that actually need data processing
         # Don't override False set by the semantic-RAG shortcut above.
-        _analytics_intents = {"analytics", "compare", "trend", "recommend", "compliance", "anomaly"}
+        _analytics_intents = {
+            "analytics",
+            "compare",
+            "trend",
+            "recommend",
+            "compliance",
+            "anomaly",
+        }
         if state.current_intent in _analytics_intents and state.analytics_required:
             # analytics_required already True (or set by UUID path) — keep it
             logger.info(
                 f"✅ Intent '{state.current_intent}' requires analytics: analytics_required=True"
             )
-        elif state.current_intent in _analytics_intents and not state.analytics_required:
+        elif (
+            state.current_intent in _analytics_intents and not state.analytics_required
+        ):
             # Semantic-RAG shortcut already set analytics_required=False — respect it
             logger.info(
                 f"ℹ️  Intent '{state.current_intent}' — analytics skipped (semantic RAG answered)"
             )
         else:
             state.analytics_required = False
-            logger.info(f"ℹ️  Intent '{state.current_intent}' does not require analytics post-SQL")
+            logger.info(
+                f"ℹ️  Intent '{state.current_intent}' does not require analytics post-SQL"
+            )
+
+        return state
+
+    async def _recommend_node(
+        self, state: ConversationState, query: str, data: Any
+    ) -> ConversationState:
+        """Generate actionable HVAC/energy/comfort recommendations from sensor data via LLM."""
+        logger.info("[recommend] Generating recommendations (skipping code execution)")
+
+        sparql_result = state.intermediate_results.get("sparql_result", {})
+        sensor_metadata = state.intermediate_results.get("sensor_metadata", {})
+        recommendation_domain = state.intermediate_results.get(
+            "dialogue_result", {}
+        ).get("recommendation_domain", "general")
+
+        # Build a compact data summary (last 5 rows max)
+        rows = (data.get("data", []) if isinstance(data, dict) else data) or []
+        data_summary = ""
+        if rows:
+            sample = rows[-5:] if len(rows) >= 5 else rows
+            data_summary = "\n".join(
+                f"  {r}" for r in sample
+            )
+        sparql_summary = sparql_result.get("formatted_response", "")
+
+        ontology_summary = ""
+        if sensor_metadata:
+            labels = [m.get("label", uid) for uid, m in list(sensor_metadata.items())[:10]]
+            ontology_summary = "Available sensors: " + ", ".join(labels)
+
+        prompt = f"""You are an expert smart-building consultant. The user asked:
+"{query}"
+
+Based on the building data below, provide clear, ACTIONABLE recommendations.
+Focus on domain: {recommendation_domain or "general (HVAC, energy, air quality, comfort)"}.
+
+=== SENSOR DATA (latest readings) ===
+{data_summary if data_summary else "No real-time data available — provide general best-practice recommendations."}
+
+=== BUILDING CONTEXT ===
+{sparql_summary[:800] if sparql_summary else ontology_summary or "Smart building system."}
+
+Instructions:
+- Give 3-6 specific, numbered recommendations
+- For each recommendation, explain WHY (link to a measured value if available)
+- Use plain English — avoid jargon for general users
+- If relevant, mention target setpoints, timings, or energy-saving percentages
+- End with a brief priority summary: "Most important action first: ..."
+"""
+        try:
+            response_text = await llm_manager.generate(
+                prompt, task_type=TaskType.ANALYTICS  # o4-mini for best reasoning
+            )
+            state.intermediate_results["analytics_result"] = {
+                "formatted_response": response_text,
+                "success": True,
+                "source": "recommend_llm",
+            }
+        except Exception as e:
+            logger.error(f"[recommend] LLM call failed: {e}", exc_info=True)
+            state.intermediate_results["analytics_result"] = {
+                "formatted_response": (
+                    "I was unable to generate recommendations at this time. "
+                    "Please try again or rephrase your question."
+                ),
+                "success": False,
+                "error": str(e),
+            }
 
         return state
 
@@ -757,13 +911,20 @@ class WorkflowOrchestrator:
         latest_message = state.messages[-1].content if state.messages else ""
         data = state.query_results
 
-        # Extract sensor metadata (UUID to human-readable label mapping) from SPARQL results
+        # ── RECOMMEND shortcut: generate actionable advice via LLM, skip code execution ──
+        if state.current_intent == "recommend":
+            return await self._recommend_node(state, latest_message, data)
+
         sensor_metadata = state.intermediate_results.get("sensor_metadata")
         if not sensor_metadata:
             sensor_metadata = {}
             sparql_result = state.intermediate_results.get("sparql_result", {})
             if sparql_result.get("success"):
-                bindings = sparql_result.get("results", {}).get("results", {}).get("bindings", [])
+                bindings = (
+                    sparql_result.get("results", {})
+                    .get("results", {})
+                    .get("bindings", [])
+                )
                 sensor_metadata = self._build_sensor_metadata_from_bindings(bindings)
 
         logger.info(f"📋 Extracted sensor metadata for {len(sensor_metadata)} sensors")
@@ -790,7 +951,9 @@ class WorkflowOrchestrator:
 
             # Save to shared volume path with unique filename per user/conversation
             # This ensures data isolation between users
-            safe_user_id = "".join(c for c in state.user_id if c.isalnum() or c in ("-", "_"))
+            safe_user_id = "".join(
+                c for c in state.user_id if c.isalnum() or c in ("-", "_")
+            )
             safe_conv_id = "".join(
                 c for c in state.conversation_id if c.isalnum() or c in ("-", "_")
             )
@@ -835,6 +998,49 @@ class WorkflowOrchestrator:
 
         state.intermediate_results["analytics_result"] = result
 
+        # ── CAP-04 Auto-compliance check ──────────────────────────────────────
+        # After data is fetched, build a scalar readings dict from the latest
+        # row and run auto_check() so compliance info can be appended to the
+        # response without the user needing to explicitly ask.
+        try:
+            _rows = data.get("data", []) if isinstance(data, dict) else []
+            if _rows:
+                _latest_row = _rows[-1] if _rows else {}
+                _param_col_map = {
+                    "temp_c": ["temperature", "temp"],
+                    "humidity_rh": ["humidity", "rh"],
+                    "co2_ppm": ["co2", "co₂", "carbon"],
+                    "pm25_ugm3": ["pm25", "pm2.5"],
+                    "pm10_ugm3": ["pm10"],
+                    "tvoc_ppb": ["tvoc", "voc"],
+                    "illuminance_lux": ["illuminance", "light", "lux"],
+                }
+                _auto_readings: dict = {}
+                for pkey, kws in _param_col_map.items():
+                    for col, val in _latest_row.items():
+                        if any(kw in str(col).lower() for kw in kws):
+                            try:
+                                _auto_readings[pkey] = float(val)
+                            except (TypeError, ValueError):
+                                pass
+                            break
+
+                if _auto_readings:
+                    _auto_results = self._standards_engine.auto_check(_auto_readings)
+                    _compliance_block = self._standards_engine.format_for_llm(
+                        _auto_results
+                    )
+                    if _compliance_block:
+                        state.intermediate_results["compliance_context"] = (
+                            _compliance_block
+                        )
+                        logger.info(
+                            f"[standards] Auto-check generated compliance block "
+                            f"({len(_auto_results)} standards checked)"
+                        )
+        except Exception as _ac_err:
+            logger.debug(f"Auto-compliance check skipped: {_ac_err}")
+
         return state
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -848,16 +1054,28 @@ class WorkflowOrchestrator:
 
     _QUERY_KEYWORDS_TO_ANALYSIS: list = [
         (
-            {"comfort", "ashrae", "well", "en15251", "temperature range", "humidity range"},
+            {
+                "comfort",
+                "ashrae",
+                "well",
+                "en15251",
+                "temperature range",
+                "humidity range",
+            },
             "comfort",
         ),
         ({"energy", "kwh", "watt", "power", "electricity", "peak", "eui"}, "energy"),
         ({"iaq", "air quality", "co2", "co₂", "voc", "pm2", "pm10"}, "iaq"),
         ({"trend", "increasing", "decreasing", "mann-kendall", "slope"}, "trend"),
-        ({"comply", "compliance", "standard", "regulation", "breeam", "leed"}, "compliance"),
+        (
+            {"comply", "compliance", "standard", "regulation", "breeam", "leed"},
+            "compliance",
+        ),
     ]
 
-    async def _try_deterministic_analytics(self, intent: str, query: str, data) -> object:
+    async def _try_deterministic_analytics(
+        self, intent: str, query: str, data
+    ) -> object:
         """
         Attempt to resolve the analytics request using a deterministic module.
         Returns an AnalysisResult if handled, or None to fall through to LLM.
@@ -883,7 +1101,14 @@ class WorkflowOrchestrator:
         if rows:
             for col in rows[0].keys():
                 col_lower = col.lower()
-                for known in ("temperature", "humidity", "co2", "voc", "energy", "power"):
+                for known in (
+                    "temperature",
+                    "humidity",
+                    "co2",
+                    "voc",
+                    "energy",
+                    "power",
+                ):
                     if known in col_lower and known not in schema:
                         schema[known] = col
                         break
@@ -919,9 +1144,20 @@ class WorkflowOrchestrator:
 
                     if _readings:
                         query_lower = query.lower()
-                        for std_id in ("breeam", "well_v2", "ashrae55", "en15251", "iso50001"):
-                            if std_id.replace("_", "") in query_lower or std_id in query_lower:
-                                std_check = self._standards_engine.check(std_id, _readings)
+                        for std_id in (
+                            "breeam",
+                            "well_v2",
+                            "ashrae55",
+                            "en15251",
+                            "iso50001",
+                        ):
+                            if (
+                                std_id.replace("_", "") in query_lower
+                                or std_id in query_lower
+                            ):
+                                std_check = self._standards_engine.check(
+                                    std_id, _readings
+                                )
                                 if result.metrics is None:
                                     result.metrics = {}
                                 result.metrics[f"standards_{std_id}"] = std_check
@@ -976,17 +1212,27 @@ class WorkflowOrchestrator:
         ) or state.intermediate_results.get("planner_result", {}).get("formatted_text"):
             pr = state.intermediate_results["planner_result"]
             final_response = pr.get("formatted_response") or pr.get("formatted_text")
+        elif state.intermediate_results.get("floor_plan_result"):
+            final_response = state.intermediate_results["floor_plan_result"]
         elif document_result.get("success"):
             filename = document_result.get("filename", "document")
             download_url = document_result.get("download_url")
             if download_url:
-                final_response = f"Document ready — **{filename}**\n\nDownload: {download_url}"
+                final_response = (
+                    f"Document ready — **{filename}**\n\nDownload: {download_url}"
+                )
             else:
                 final_response = f"Document generated — **{filename}**"
         elif state.intermediate_results.get("report_result", {}).get("formatted_text"):
-            final_response = state.intermediate_results["report_result"]["formatted_text"]
-        elif state.intermediate_results.get("anomaly_result", {}).get("formatted_response"):
-            final_response = state.intermediate_results["anomaly_result"]["formatted_response"]
+            final_response = state.intermediate_results["report_result"][
+                "formatted_text"
+            ]
+        elif state.intermediate_results.get("anomaly_result", {}).get(
+            "formatted_response"
+        ):
+            final_response = state.intermediate_results["anomaly_result"][
+                "formatted_response"
+            ]
         elif state.intermediate_results.get("export_result", {}).get("success"):
             er = state.intermediate_results["export_result"]
             final_response = (
@@ -997,7 +1243,9 @@ class WorkflowOrchestrator:
             final_response = analytics_result["formatted_response"]
             media_payload = analytics_result.get("media")
             # Replace UUIDs with human-readable sensor names
-            analytics_node_metadata = state.intermediate_results.get("sensor_metadata", {})
+            analytics_node_metadata = state.intermediate_results.get(
+                "sensor_metadata", {}
+            )
             if analytics_node_metadata:
                 for uuid, metadata in analytics_node_metadata.items():
                     if uuid in final_response:
@@ -1009,7 +1257,39 @@ class WorkflowOrchestrator:
         elif sparql_result.get("formatted_response"):
             final_response = sparql_result["formatted_response"]
         else:
-            final_response = "I processed your request, but couldn't generate a response."
+            final_response = (
+                "I processed your request, but couldn't generate a response."
+            )
+
+        # ── CAP-04: Append auto-compliance block (if produced by analytics node)
+        _compliance_block = state.intermediate_results.get("compliance_context")
+        if _compliance_block and state.current_intent not in (
+            "clarification",
+            "greeting",
+            "general_knowledge",
+            "recommend",  # recommendations already include relevant thresholds
+        ):
+            final_response = f"{final_response}\n\n{_compliance_block}"
+
+        # ── Floor-plan card injection ─────────────────────────────────────────
+        # When any sensor/analytics/SQL response resolves to a known zone,
+        # append a small floor-plan link so users can locate it on the plan.
+        _fp_intent_ok = state.current_intent not in (
+            "floor_plan", "clarification", "greeting", "general_knowledge",
+        )
+        if _fp_intent_ok and "floor_plan_result" not in state.intermediate_results:
+            _fc = state.floor_context or {}
+            _zone = _fc.get("zone")
+            _bid = _fc.get("building_id", "abacws")
+            if _zone and "floor-plans" not in final_response:
+                try:
+                    from orchestrator.services.floor_plan_service import floor_plan_service
+
+                    _fp_link = floor_plan_service.suggest_floor_plan_link(_zone, _bid)
+                    if _fp_link:
+                        final_response += _fp_link
+                except Exception as _fpe:
+                    logger.debug(f"Floor-plan card injection skipped: {_fpe}")
 
         # If any nodes degraded, append a brief notice so the user knows
         degraded = state.intermediate_results.get("degraded_services")
@@ -1047,7 +1327,9 @@ class WorkflowOrchestrator:
         _user_lang = state.intermediate_results.get("_user_lang", "en")
         if self._i18n and _user_lang and _user_lang != "en":
             try:
-                final_response = await self._i18n.from_english(final_response, _user_lang)
+                final_response = await self._i18n.from_english(
+                    final_response, _user_lang
+                )
                 logger.info(f"i18n: translated response to {_user_lang}")
             except Exception as _i18n_out_err:
                 logger.debug(f"i18n output translation skipped: {_i18n_out_err}")
@@ -1064,7 +1346,9 @@ class WorkflowOrchestrator:
         # B.2: Store in response cache (non-blocking, best-effort)
         if self.response_cache:
             try:
-                original_query = state.messages[-2].content if len(state.messages) >= 2 else ""
+                original_query = (
+                    state.messages[-2].content if len(state.messages) >= 2 else ""
+                )
                 if original_query:
                     await self.response_cache.put(
                         question=original_query,
@@ -1079,7 +1363,9 @@ class WorkflowOrchestrator:
         # B.3: Store successful interaction in agent memory for future context retrieval
         if self.agent_memory and state.user_id:
             try:
-                original_query = state.messages[-2].content if len(state.messages) >= 2 else ""
+                original_query = (
+                    state.messages[-2].content if len(state.messages) >= 2 else ""
+                )
                 entities = state.intermediate_results.get("entities", [])
                 await self.agent_memory.store_success(
                     user_id=state.user_id,
@@ -1088,6 +1374,16 @@ class WorkflowOrchestrator:
                     entities=entities if isinstance(entities, list) else [],
                     answer_summary=final_response[:200],
                 )
+                # ── Phase 7.4-B: Detect and persist user preferences ──────────
+                if original_query:
+                    try:
+                        await self.agent_memory.detect_and_store_preferences(
+                            user_id=state.user_id,
+                            query=original_query,
+                            answer_summary=final_response[:200],
+                        )
+                    except Exception as _pref_err:
+                        logger.debug(f"Preference detection skipped: {_pref_err}")
             except Exception as _mem_err:
                 logger.debug(f"Agent memory store skipped: {_mem_err}")
 
@@ -1100,13 +1396,19 @@ class WorkflowOrchestrator:
             "sensor_metadata",
             "degraded_services",
             "memory_context",
+            "compliance_context",  # consumed above; clear after appending
+            "floor_plan_result",      # consumed above; clear after appending
+            "floor_plan_structured",  # consumed by response node; clear after appending
+            "floor_context_hint",     # consumed by SPARQL agent; clear so it doesn't bleed across turns
         ]
         for key in _bulky_keys:
             state.intermediate_results.pop(key, None)
 
         return state
 
-    def _handle_sensor_discovery(self, discovery_filter: str = None, entities: list = None) -> str:
+    def _handle_sensor_discovery(
+        self, discovery_filter: str = None, entities: list = None
+    ) -> str:
         """
         Build a sensor discovery response from the cached sensor_map.
 
@@ -1158,7 +1460,8 @@ class WorkflowOrchestrator:
             # No match — show summary of available types
             type_counts = self._count_sensor_types(unique_sensors)
             type_summary = ", ".join(
-                f"**{t}** ({c})" for t, c in sorted(type_counts.items(), key=lambda x: -x[1])[:10]
+                f"**{t}** ({c})"
+                for t, c in sorted(type_counts.items(), key=lambda x: -x[1])[:10]
             )
             return (
                 f'I couldn\'t find sensors matching **"{filter_text}"**.\n\n'
@@ -1213,11 +1516,18 @@ class WorkflowOrchestrator:
     def _route_from_dialogue(self, state: ConversationState) -> str:
         """Route from dialogue node based on intent (17 intents supported)."""
         intent = state.current_intent
+        user_query = state.messages[-1].content if state.messages else ""
+
+        # ── Floor plan override: catch even if LLM picks "sparql" or "discovery" ──
+        if intent == "floor_plan" or floor_plan_service.is_floor_plan_query(user_query):
+            logger.info(f"[route] floor_plan query detected (intent={intent})")
+            state.current_intent = "floor_plan"
+            return "floor_plan"
 
         # Direct-to-response intents (no data fetching needed)
         # Exception: discovery with spatial/zone keywords should run SPARQL
         if intent == "discovery":
-            user_query = (state.messages[-1].content if state.messages else "").lower()
+            user_query = user_query.lower()
             spatial_words = [
                 "zone",
                 "floor",
@@ -1236,7 +1546,13 @@ class WorkflowOrchestrator:
             if any(w in user_query for w in spatial_words):
                 return "sparql"
             return "response"
-        if intent in ["greeting", "clarification", "unknown", "general_knowledge", "control"]:
+        if intent in [
+            "greeting",
+            "clarification",
+            "unknown",
+            "general_knowledge",
+            "control",
+        ]:
             return "response"
         # Phase 4 multi-agent paths
         elif intent == "planner":
@@ -1244,7 +1560,9 @@ class WorkflowOrchestrator:
         elif intent == "report":
             return "sparql"  # report routes through SPARQL -> SQL -> report
         elif intent == "anomaly":
-            return "sparql"  # need UUIDs first, then SQL, then anomaly in _route_from_sql
+            return (
+                "sparql"  # need UUIDs first, then SQL, then anomaly in _route_from_sql
+            )
         elif intent == "export":
             return "export"
         # Standard paths
@@ -1264,6 +1582,8 @@ class WorkflowOrchestrator:
             # BUG-C FIX: visualization needs data first → route through SPARQL → SQL → viz
             # The visualization node is reached after SQL via _route_from_sql→visualization
             return "sparql"
+        elif intent == "floor_plan":
+            return "floor_plan"
         else:
             return "response"
 
@@ -1632,14 +1952,17 @@ class WorkflowOrchestrator:
             state.intermediate_results.get("use_existing_query_results")
             and state.analytics_required
         ):
-            logger.info("[route] SPARQL→Analytics (prior data recovered for compliance)")
+            logger.info(
+                "[route] SPARQL→Analytics (prior data recovered for compliance)"
+            )
             return "analytics"
 
         # Check if analytics is required (and we are coming from SPARQL)
-        # Allow routing to SQL if intent is 'sparql' OR 'analytics'
-        if state.analytics_required and (
-            state.current_intent == "sparql" or state.current_intent == "analytics"
-        ):
+        # Allow routing to SQL for any data-fetching intent
+        _sql_intents = {
+            "sparql", "analytics", "compare", "trend", "recommend", "compliance", "visualization"
+        }
+        if state.analytics_required and state.current_intent in _sql_intents:
             logger.info("Routing SPARQL -> SQL for data fetching (analytics=True)")
             return "sql"
 
@@ -1654,7 +1977,9 @@ class WorkflowOrchestrator:
         # If analytics already embedded a plot in its output, skip the separate viz node
         analytics_result = state.intermediate_results.get("analytics_result", {})
         if analytics_result.get("media"):
-            logger.info("[route] Analytics already produced a plot — skipping visualization node")
+            logger.info(
+                "[route] Analytics already produced a plot — skipping visualization node"
+            )
             return "response"
 
         latest_message = state.messages[-1].content if state.messages else ""
@@ -1672,6 +1997,9 @@ class WorkflowOrchestrator:
             return "anomaly"
         if intent in ("report",):
             return "report"
+        # Visualization intent: always route to viz after SQL (data is now loaded)
+        if intent == "visualization":
+            return "visualization"
 
         if state.analytics_required:
             return "analytics"
@@ -1679,7 +2007,13 @@ class WorkflowOrchestrator:
         latest_message = state.messages[-1].content if state.messages else ""
         if self._user_wants_visualization(latest_message):
             return "visualization"
-        analytics_keywords = ["analyze", "analysis", "pattern", "correlation", "statistics"]
+        analytics_keywords = [
+            "analyze",
+            "analysis",
+            "pattern",
+            "correlation",
+            "statistics",
+        ]
         if any(keyword in latest_message.lower() for keyword in analytics_keywords):
             return "analytics"
         return "response"
@@ -1740,7 +2074,9 @@ class WorkflowOrchestrator:
         logger.info("Executing Phase 4 Anomaly Detection Node")
         latest_message = state.messages[-1].content if state.messages else ""
         sql_result = state.intermediate_results.get("sql_result")
-        result = await self.anomaly_agent.detect(state, latest_message, sensor_data=sql_result)
+        result = await self.anomaly_agent.detect(
+            state, latest_message, sensor_data=sql_result
+        )
         state.intermediate_results["anomaly_result"] = result
         return state
 
@@ -1753,7 +2089,9 @@ class WorkflowOrchestrator:
         # If SPARQL hasn't run yet (export intent bypasses sparql node), run it now
         if not state.intermediate_results.get("sparql_result"):
             logger.info("Export: running SPARQL agent to get sensor UUIDs")
-            sparql_result = await self.sparql_agent.generate_query(state, latest_message)
+            sparql_result = await self.sparql_agent.generate_query(
+                state, latest_message
+            )
             state.intermediate_results["sparql_result"] = sparql_result
             state.query_results = sparql_result.get("results", {})
 
@@ -1807,7 +2145,9 @@ class WorkflowOrchestrator:
             return "flow"
         return None
 
-    def _infer_sensor_kind(self, label: Optional[str], sensor_uri: Optional[str]) -> Optional[str]:
+    def _infer_sensor_kind(
+        self, label: Optional[str], sensor_uri: Optional[str]
+    ) -> Optional[str]:
         text = f"{label or ''} {sensor_uri or ''}".lower()
         if "temperature" in text or "temp" in text:
             return "temperature"
@@ -1852,7 +2192,9 @@ class WorkflowOrchestrator:
             return "m³/s"
         return ""
 
-    def _build_sensor_metadata_from_bindings(self, bindings: list) -> Dict[str, Dict[str, str]]:
+    def _build_sensor_metadata_from_bindings(
+        self, bindings: list
+    ) -> Dict[str, Dict[str, str]]:
         sensor_metadata: Dict[str, Dict[str, str]] = {}
         for binding in bindings:
             uuid_val = None
@@ -1861,7 +2203,11 @@ class WorkflowOrchestrator:
             unit_val = None
 
             for var in binding:
-                if "uuid" in var.lower() or "id" in var.lower() or "timeseries" in var.lower():
+                if (
+                    "uuid" in var.lower()
+                    or "id" in var.lower()
+                    or "timeseries" in var.lower()
+                ):
                     uuid_val = binding[var]["value"]
                 elif "label" in var.lower():
                     label_val = binding[var]["value"]
@@ -1891,11 +2237,100 @@ class WorkflowOrchestrator:
 
         return sensor_metadata
 
+    async def _floor_plan_node(self, state: ConversationState) -> ConversationState:
+        """
+        Floor Plan node — thin wrapper around FloorPlanAgent.resolve().
+
+        Delegates all resolution logic to the agent (which uses manifests
+        when available, falling back to legacy PDF-text extraction).
+
+        State keys written:
+          intermediate_results["floor_plan_result"]   — markdown for response node
+          intermediate_results["floor_plan_structured"] — FloorPlanResult dict
+          intermediate_results["floor_context_hint"]  — spatial hint for SPARQL agent
+          state.floor_context                         — persisted across turns
+        """
+        from orchestrator.agents.floor_plan_agent import get_floor_plan_agent
+
+        logger.info("[floor_plan] Executing Floor Plan Node (manifest-aware)")
+        user_query = state.user_message or (
+            state.messages[-1].content if state.messages else ""
+        )
+
+        try:
+            agent = get_floor_plan_agent()
+            result = await agent.resolve(user_query, state)
+
+            # Persist floor context for subsequent turns
+            if result.floor is not None:
+                state.floor_context = {
+                    "building_id": result.building_id,
+                    "floor": result.floor,
+                    "zone": result.selected_space.zone_id if result.selected_space else None,
+                    "pdf_url": result.pdf_url or "",
+                    "image_url": result.image_url or "",
+                }
+
+            # Store structured result for response node and potential SPARQL pass-through
+            state.intermediate_results["floor_plan_result"] = result.markdown
+            state.intermediate_results["floor_plan_structured"] = result.model_dump(
+                exclude_none=True
+            )
+
+            # Bridge selected space into SPARQL/SQL pipeline
+            if result.selected_space:
+                space = result.selected_space
+                _user_ctx = state.intermediate_results.get("user_context", {})
+                _user_ctx["resolved_floor"] = result.floor
+                _user_ctx["resolved_zone"] = space.zone_id
+                state.intermediate_results["user_context"] = _user_ctx
+                building_name = result.building_id.replace("_", " ").title()
+                state.intermediate_results["floor_context_hint"] = (
+                    f"Spatial context: the user is asking about "
+                    f"{space.label} (zone {space.zone_id}) "
+                    f"on {state.floor_context.get('floor', result.floor)} "
+                    f"of the {building_name} building. "
+                    f"Constrain SPARQL/SQL queries to this zone."
+                )
+                if space.ontology_iri:
+                    state.intermediate_results["floor_context_hint"] += (
+                        f" Ontology IRI: {space.ontology_iri}"
+                    )
+                logger.info(
+                    f"[floor_plan] Resolved: floor={result.floor}, "
+                    f"zone={space.zone_id}, type={space.type}"
+                )
+            elif not result.candidates:
+                # No space, no candidates → needs clarification
+                state.needs_clarification = True
+                state.clarification_question = result.markdown
+                state.intermediate_results["pending_clarification_type"] = "floor"
+            else:
+                # Has candidates → waiting for user to pick
+                state.needs_clarification = True
+                state.clarification_question = result.markdown
+                state.intermediate_results["pending_clarification_type"] = "zone"
+                logger.info(
+                    f"[floor_plan] Disambiguation: floor={result.floor}, "
+                    f"candidates={len(result.candidates)}"
+                )
+
+        except Exception as e:
+            logger.error(f"[floor_plan] Unexpected error: {e}", exc_info=True)
+            state.intermediate_results["error"] = f"floor_plan: {str(e)}"
+            state.intermediate_results["floor_plan_result"] = (
+                "I encountered an error loading the floor plan. Please try again."
+            )
+
+        return state
+
     async def _document_node(self, state: ConversationState) -> ConversationState:
         """CAP-01 — Generate a formal document from current pipeline outputs."""
         logger.info("Executing Document Node")
 
-        report_type = (state.intermediate_results.get("report_type") or "summary").lower()
+        report_type = (
+            state.intermediate_results.get("report_type") or "summary"
+        ).lower()
         doc_type_map = {
             "summary": "summary",
             "anomaly": "anomaly_digest",
@@ -1903,9 +2338,9 @@ class WorkflowOrchestrator:
             "trend": "trend",
             "full": "full",
         }
-        document_type = state.intermediate_results.get("document_type") or doc_type_map.get(
-            report_type, "summary"
-        )
+        document_type = state.intermediate_results.get(
+            "document_type"
+        ) or doc_type_map.get(report_type, "summary")
         if state.current_intent == "compliance":
             document_type = "compliance_report"
 
@@ -1932,7 +2367,9 @@ class WorkflowOrchestrator:
             Updated conversation state with response
         """
         try:
-            logger.info(f"Starting workflow execution for conversation {state.conversation_id}")
+            logger.info(
+                f"Starting workflow execution for conversation {state.conversation_id}"
+            )
 
             # B.2: Check response cache before running the full pipeline
             if self.response_cache:
@@ -1950,7 +2387,10 @@ class WorkflowOrchestrator:
                         Message(
                             role="assistant",
                             content=cached["response"],
-                            metadata={"cache_hit": True, "cache_type": cached.get("cache_type")},
+                            metadata={
+                                "cache_hit": True,
+                                "cache_type": cached.get("cache_type"),
+                            },
                         )
                     )
                     state.current_intent = cached.get("intent", "general")
@@ -1965,7 +2405,9 @@ class WorkflowOrchestrator:
                     timeout=timeout_s,
                 )
             except asyncio.TimeoutError:
-                logger.error(f"Workflow timed out after {timeout_s}s for {state.conversation_id}")
+                logger.error(
+                    f"Workflow timed out after {timeout_s}s for {state.conversation_id}"
+                )
                 state.messages.append(
                     Message(
                         role="assistant",
@@ -2107,7 +2549,9 @@ class WorkflowOrchestrator:
             Intermediate states as they're processed
         """
         try:
-            logger.info(f"Starting streaming workflow for conversation {state.conversation_id}")
+            logger.info(
+                f"Starting streaming workflow for conversation {state.conversation_id}"
+            )
 
             async for step in self.graph.astream(state):
                 yield step

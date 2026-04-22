@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-from orchestrator.llm_manager import llm_manager
+from orchestrator.llm_manager import TaskType, llm_manager
 from orchestrator.redis_manager import redis_manager
 from orchestrator.services.context_manager import ContextManager
 from shared.config import settings
@@ -25,7 +25,9 @@ logger = get_logger(__name__)
 
 # P6: Few-shot library for intent detection
 _FEW_SHOT_LIB: Optional[Dict] = None
-_FEW_SHOT_PATH = Path(__file__).resolve().parent.parent / "data" / "few_shot_library.json"
+_FEW_SHOT_PATH = (
+    Path(__file__).resolve().parent.parent / "data" / "few_shot_library.json"
+)
 
 
 def _load_few_shot_library() -> Dict:
@@ -90,7 +92,9 @@ def format_conversation_history(messages: List[Message], max_messages: int = 5) 
 
     # Get last N messages (excluding the current one)
     recent_messages = (
-        messages[-(max_messages + 1) : -1] if len(messages) > max_messages else messages[:-1]
+        messages[-(max_messages + 1) : -1]
+        if len(messages) > max_messages
+        else messages[:-1]
     )
 
     if not recent_messages:
@@ -212,10 +216,14 @@ class DialogueAgent:
                         summary = data.get("summary", "")
                         triples = data.get("triples", [])
                         contexts = [summary] + triples
-                        logger.info(f"✅ Retrieved {len(contexts)} context items from GraphDB RAG")
+                        logger.info(
+                            f"✅ Retrieved {len(contexts)} context items from GraphDB RAG"
+                        )
                         return contexts[:top_k]
                     else:
-                        logger.warning(f"GraphDB retrieval returned status {response.status_code}")
+                        logger.warning(
+                            f"GraphDB retrieval returned status {response.status_code}"
+                        )
                         return []
                 except Exception as e:
                     logger.warning(f"GraphDB retrieval failed: {e}")
@@ -266,7 +274,9 @@ class DialogueAgent:
                 )
 
         # Format conversation history (Summary + Recent)
-        recent_messages = self.context_manager.prune_messages(state.messages, max_messages=5)
+        recent_messages = self.context_manager.prune_messages(
+            state.messages, max_messages=5
+        )
         conversation_history = format_conversation_history(recent_messages)
 
         if state.summary:
@@ -296,7 +306,7 @@ class DialogueAgent:
         # Call LLM to detect intent
         logger.info("🧠 Calling LLM for intent detection and query generation...")
         try:
-            llm_response = await llm_manager.generate(prompt)
+            llm_response = await llm_manager.generate(prompt, task_type=TaskType.INTENT)
             logger.info(f"📤 LLM Response received (length: {len(llm_response)} chars)")
 
             # Parse JSON response
@@ -312,7 +322,9 @@ class DialogueAgent:
             logger.info(f"   ├─ Entities: {result.get('entities', [])}")
             logger.info(f"   ├─ Analytics: {result.get('required_analytics', [])}")
             if result.get("intent") == "general":
-                logger.info(f"   └─ Direct Response: {result.get('response', '')[:100]}...")
+                logger.info(
+                    f"   └─ Direct Response: {result.get('response', '')[:100]}..."
+                )
             else:
                 logger.info(f"   └─ Explanation: {result.get('explanation', '')}")
             logger.info("═" * 80)
@@ -369,21 +381,84 @@ Current Date and Time: {current_time_str}
 
 Your task is to analyze the user's question and return a JSON response.
 
-1. "intent" (string): One of the following 14 intents:
+1. "intent" (string): One of the following 15 intents. Choose the MOST SPECIFIC one that applies.
+
+   === INTENT DEFINITIONS WITH EXAMPLES ===
+
    - "general"       : General knowledge / greetings / non-building questions.
-   - "metadata"      : Static properties (list sensors, where is X, what type is Y).
-   - "analytics"     : Dynamic data queries (current reading, average, history, time-series).
-   - "clarification" : Query too vague — need more info before proceeding.
-   - "discovery"     : Explore available sensors, zones, data types, capabilities.
-   - "report"        : Generate a structured building report (daily, weekly, anomaly, comparison).
+                        e.g. "Hello", "What can you do?", "What is HVAC?"
+
+   - "metadata"      : Static structure queries — list entities, look up types, describe a thing.
+                        e.g. "What sensors are in zone 5?", "What type of sensor is X?", "List all floors."
+
+   - "discovery"     : Explore available sensors, zones, data types, system capabilities.
+                        e.g. "What can I monitor?", "Show me all available data types.", "How many sensors does the building have?"
+
+   - "analytics"     : ONLY for direct statistical computation on a single dataset — averages, min/max, sums,
+                        counts, histograms, distribution, current readings. NOT for comparisons, NOT for recommendations.
+                        e.g. "What is the average CO2 last week?", "Show temperature history for zone 5.", "Current humidity?"
+
+   - "compare"       : Side-by-side comparison of TWO OR MORE sensors, zones, floors, or time periods.
+                        ALWAYS use this when the user says "compare", "vs", "versus", "difference between",
+                        "higher/lower than", "which is better/worse", or names two distinct things.
+                        e.g. "Compare air quality between floor 1 and floor 5.", "Is zone 3 hotter than zone 5?",
+                        "How does this week compare to last week?"
+
+   - "trend"         : How a single metric has CHANGED OVER TIME — increasing, decreasing, stable, rate of change.
+                        e.g. "Is energy consumption trending up?", "How has CO2 changed since Monday?", "Is temperature rising?"
+
+   - "recommend"     : Request ACTIONABLE ADVICE — what to change, how to improve, what settings to use.
+                        ALWAYS use this when the user says "recommend", "suggest", "should I", "how can I improve",
+                        "what settings", "optimize", "what should I do", "tips", "advice".
+                        e.g. "What HVAC settings do you recommend?", "How can I improve air quality?",
+                        "Suggest energy saving measures.", "What should the temperature setpoint be?"
+
+   - "anomaly"       : Detect out-of-range, spike, drop, or unusual sensor readings.
+                        e.g. "Any unusual readings today?", "Are there temperature spikes?", "Detect anomalies in CO2."
+
+   - "report"        : Generate a structured building report (daily/weekly summary, full energy report).
+                        e.g. "Generate a weekly energy report.", "Create a building summary.", "Daily occupancy report."
+
    - "export"        : Export query results or report to a file (CSV, JSON, HTML, Markdown).
-   - "anomaly"       : Detect out-of-range, spike, or unusual sensor readings.
-   - "compare"       : Compare multiple sensors, zones, floors, or time periods.
-   - "trend"         : Ask about time-series evolution or rate of change over time.
-   - "recommend"     : Request recommendations (optimize HVAC, improve air quality, reduce energy).
-   - "planner"       : Multi-step task requiring multiple agents (e.g., "generate CO2 report and export as CSV").
-   - "control"       : Request to change a building system state (reserved — inform user it's not yet supported).
-   - "compliance"    : Check against regulatory or comfort standards (ASHRAE, WELL, BREEAM).
+                        e.g. "Export last week's data as CSV.", "Download the report as JSON."
+
+   - "compliance"    : Check sensor readings against regulatory or comfort standards (ASHRAE, WELL, BREEAM, EN15251).
+                        e.g. "Is zone 5 within ASHRAE 55 limits?", "Check BREEAM compliance.", "Is CO2 within safe limits?"
+
+   - "planner"       : Multi-step task requiring multiple agents or producing multiple outputs.
+                        e.g. "Generate CO2 report and export as CSV.", "Analyse energy, then create a chart and export."
+
+   - "control"       : Request to physically change a building system state (not yet supported).
+                        e.g. "Turn on the AC.", "Set temperature to 22°C."
+
+   - "clarification" : Query is too vague to proceed without more information.
+                        e.g. "Show me data." (no sensor/zone specified), "What happened?" (no context)
+
+   - "floor_plan"    : User wants to see a floor plan, locate a room/zone/sensor on a floor,
+                        navigate the building layout, or get a building overview.
+                        ALWAYS use this when the user says: "floor plan", "show me floor", "layout",
+                        "where is [room/zone/facility]", "which floor is", "locate", "find my location",
+                        "building map", "navigate", "directions to", "how do I get to",
+                        "where can I find", "building directory", "building overview", "all floors",
+                        "which floor has", "find the office", "where is the lab", "server room location",
+                        "toilet", "meeting room location", "lift", "elevator", "staircase",
+                        or mentions a floor number with spatial/location intent.
+                        e.g. "Show me floor 3 plan.", "Where is zone 5.12?", "Which floor am I on?",
+                        "Can you show me the layout of floor 2?", "Where is the server room?",
+                        "Which floor has the meeting rooms?", "Navigate me to the lab.",
+                        "Show me what's on each floor.", "Where are the toilets?",
+                        "Give me a building overview.", "Find the reception."
+
+   === DISAMBIGUATION RULES ===
+   - If the user asks to see a floor plan, map, or layout → "floor_plan"
+   - If the user asks where a room/zone/facility is located → "floor_plan"
+   - If the user asks for a building overview or wants to know what's on each floor → "floor_plan"
+   - If the user mentions navigation, directions, or finding a specific room/facility → "floor_plan"
+   - If the query contains "recommend", "suggest", "improve", "optimize", "what should" → "recommend"
+   - If the query compares two or more entities/periods → "compare"
+   - If the query asks about change over time → "trend"
+   - If the query checks a standard or regulation → "compliance"
+   - Use "analytics" ONLY when none of the above apply and the user wants raw statistics
 
 2. "entities" (list): All specific building entities mentioned. Normalize names if possible.
 
@@ -449,7 +524,9 @@ Return ONLY the JSON object.
                     "intent": result.get("intent", "general"),
                     "entities": result.get("entities", []),
                     "required_analytics": result.get("required_analytics", []),
-                    "time_range": result.get("time_range", {"start": None, "end": None}),
+                    "time_range": result.get(
+                        "time_range", {"start": None, "end": None}
+                    ),
                     "response": result.get("response", ""),
                     "clarification_question": result.get("clarification_question", ""),
                     "discovery_filter": result.get("discovery_filter"),
@@ -494,7 +571,9 @@ Return ONLY the JSON object.
                 "end_date": None,
             }
 
-    async def generate_response(self, state: ConversationState, persona: str = "general") -> str:
+    async def generate_response(
+        self, state: ConversationState, persona: str = "general"
+    ) -> str:
         """Generate a conversational response using selected persona"""
 
         persona_config = PERSONAS.get(persona, PERSONAS["general"])
@@ -513,9 +592,7 @@ Return ONLY the JSON object.
             if "sparql_results" in state.intermediate_results:
                 context = f"\\n\\nQuery Results: {state.intermediate_results['sparql_results']}"
             elif "sql_results" in state.intermediate_results:
-                context = (
-                    f"\\n\\nData Analysis Results: {state.intermediate_results['sql_results']}"
-                )
+                context = f"\\n\\nData Analysis Results: {state.intermediate_results['sql_results']}"
 
         prompt = f"""{persona_config['system_message']}
 
@@ -527,7 +604,7 @@ User's current question: {latest_query}
 
 Provide a helpful, {persona_config['style']} response."""
 
-        response = await llm_manager.generate(prompt)
+        response = await llm_manager.generate(prompt, task_type=TaskType.GENERAL)
         return response
 
     async def request_clarification(self, state: ConversationState) -> str:
@@ -546,10 +623,12 @@ This question is unclear. Generate a helpful clarification request that:
 
 Keep it friendly and concise (<100 words)."""
 
-        response = await llm_manager.generate(prompt)
+        response = await llm_manager.generate(prompt, task_type=TaskType.DISAMBIGUATION)
         return response
 
-    async def format_response(self, state: ConversationState, response: str, intent: str) -> str:
+    async def format_response(
+        self, state: ConversationState, response: str, intent: str
+    ) -> str:
         """
         Format response with persona-aware styling via a single LLM call.
 
@@ -591,7 +670,7 @@ ORIGINAL RESPONSE:
 Rewritten response:"""
 
         try:
-            formatted = await llm_manager.generate(prompt)
+            formatted = await llm_manager.generate(prompt, task_type=TaskType.REWRITE)
             if formatted and len(formatted.strip()) > 20:
                 return formatted.strip()
         except Exception as e:

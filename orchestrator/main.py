@@ -19,9 +19,11 @@ from fastapi import (
     Cookie,
     Depends,
     FastAPI,
+    File,
     Header,
     HTTPException,
     Request,
+    UploadFile,
     WebSocket,
     WebSocketDisconnect,
 )
@@ -40,6 +42,7 @@ from orchestrator.postgres_manager import PostgresManager
 from orchestrator.redis_manager import RedisManager
 from orchestrator.services.adapters.registry import adapter_registry
 from orchestrator.services.agent_memory import AgentMemoryService
+from orchestrator.services.floor_plan_service import floor_plan_service
 from orchestrator.services.hybrid_retrieval import hybrid_retrieval
 from orchestrator.services.multi_building_manager import get_building_manager
 from orchestrator.services.ontology_detector import OntologySchemaDetector
@@ -99,10 +102,19 @@ _PERSONA_KEYWORD_MAP = [
         "sustainability_officer",
     ),
     (
-        ["safety_officer", "safety officer", "hse officer", "health and safety", "h&s officer"],
+        [
+            "safety_officer",
+            "safety officer",
+            "hse officer",
+            "health and safety",
+            "h&s officer",
+        ],
         "safety_officer",
     ),
-    (["energy_manager", "energy manager", "energy analyst", "energy engineer"], "energy_manager"),
+    (
+        ["energy_manager", "energy manager", "energy analyst", "energy engineer"],
+        "energy_manager",
+    ),
     (
         [
             "it_admin",
@@ -114,7 +126,10 @@ _PERSONA_KEYWORD_MAP = [
         ],
         "it_admin",
     ),
-    (["researcher", "analyst", "data scientist", "ontologist", "data analyst"], "researcher"),
+    (
+        ["researcher", "analyst", "data scientist", "ontologist", "data analyst"],
+        "researcher",
+    ),
     (
         [
             "executive",
@@ -129,7 +144,10 @@ _PERSONA_KEYWORD_MAP = [
         ],
         "executive",
     ),
-    (["occupant", "tenant", "office worker", "building occupant", "end user"], "occupant"),
+    (
+        ["occupant", "tenant", "office worker", "building occupant", "end user"],
+        "occupant",
+    ),
     (["student", "learner", "intern", "trainee"], "student"),
 ]
 
@@ -181,11 +199,17 @@ def _detect_persona(messages: list, explicit_persona: str) -> tuple:
         from the user message, so the caller can replace user_message with it.
     """
     # 1. Explicit non-general persona — pass straight through
-    if explicit_persona and explicit_persona != "general" and explicit_persona in VALID_PERSONAS:
+    if (
+        explicit_persona
+        and explicit_persona != "general"
+        and explicit_persona in VALID_PERSONAS
+    ):
         return explicit_persona, None
 
     # 2. System prompt scan (OpenWebUI system prompt is a {"role":"system"} message)
-    system_content = next((m.get("content", "") for m in messages if m.get("role") == "system"), "")
+    system_content = next(
+        (m.get("content", "") for m in messages if m.get("role") == "system"), ""
+    )
     if system_content:
         sys_lower = system_content.lower()
         for keywords, persona in _PERSONA_KEYWORD_MAP:
@@ -194,7 +218,8 @@ def _detect_persona(messages: list, explicit_persona: str) -> tuple:
 
     # 3. "As <role>:" prefix in the last user message
     raw_user = next(
-        (m.get("content", "") for m in reversed(messages) if m.get("role") == "user"), ""
+        (m.get("content", "") for m in reversed(messages) if m.get("role") == "user"),
+        "",
     )
     if raw_user:
         m = _AS_ROLE_RE.match(raw_user.strip())
@@ -245,12 +270,13 @@ auth_manager: AuthManager = None
 response_cache: ResponseCacheService = None
 ontology_detector: OntologySchemaDetector = None
 agent_memory: AgentMemoryService = None
+doc_ingestion = None  # DocumentIngestionService — lazy import to avoid load-time errors
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle manager for startup/shutdown"""
-    global redis_manager, postgres_manager, orchestrator, auth_manager, response_cache, ontology_detector, agent_memory
+    global redis_manager, postgres_manager, orchestrator, auth_manager, response_cache, ontology_detector, agent_memory, doc_ingestion
 
     # Startup
     logger.info("Starting OntoSage 2.0 Orchestrator...")
@@ -309,7 +335,9 @@ async def lifespan(app: FastAPI):
                         }
                         for cls in ontology_introspector.sensor_classes
                     }
-                    _os.makedirs(_os.path.dirname(_sensor_map_path) or ".", exist_ok=True)
+                    _os.makedirs(
+                        _os.path.dirname(_sensor_map_path) or ".", exist_ok=True
+                    )
                     with open(_sensor_map_path, "w") as _f:
                         _json.dump(_sensor_map, _f, indent=2)
                     logger.info(
@@ -336,7 +364,9 @@ async def lifespan(app: FastAPI):
                     # Store on app state for downstream use
                     app.state.detected_ontology = detect_result
                 else:
-                    logger.warning(f"Ontology auto-detection inconclusive: {detect_result.notes}")
+                    logger.warning(
+                        f"Ontology auto-detection inconclusive: {detect_result.notes}"
+                    )
             except Exception as e:
                 logger.warning(f"Ontology detector failed (non-fatal): {e}")
         else:
@@ -371,6 +401,47 @@ async def lifespan(app: FastAPI):
         logger.info("Agent memory service initialized")
     except Exception as e:
         logger.warning(f"Agent memory initialization failed (non-fatal): {e}")
+
+    # Phase 8.1: Initialize document ingestion service (user-uploaded doc RAG)
+    try:
+        from orchestrator.services.document_ingestion import DocumentIngestionService
+        from orchestrator.services.hybrid_retrieval import hybrid_retrieval as _hybrid_retrieval
+
+        doc_ingestion = DocumentIngestionService(qdrant_url=settings.QDRANT_URL)
+        await doc_ingestion.initialise()
+        # Wire into hybrid retrieval so sparql_agent can search user docs during RAG
+        _hybrid_retrieval._doc_service = doc_ingestion
+        logger.info("Document ingestion service initialized")
+    except Exception as e:
+        logger.warning(f"Document ingestion initialization failed (non-fatal): {e}")
+
+    # Floor plan pipeline — render, extract, classify, index all PDFs (idempotent)
+    try:
+        from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
+
+        _fp_pipeline = get_floor_plan_pipeline()
+        manifests = await _fp_pipeline.ingest_all()
+        logger.info(
+            f"Floor plan pipeline ready — {len(manifests)} manifests generated "
+            f"for floors: {[m.floor for m in manifests]}"
+        )
+    except Exception as e:
+        logger.warning(f"Floor plan pipeline failed (non-fatal): {e}")
+
+    # Legacy Qdrant text-index (kept for backwards compatibility — pipeline replaces it)
+    try:
+        await floor_plan_service.index_all()
+    except Exception as e:
+        logger.debug(f"Legacy floor plan index skipped: {e}")
+
+    # File watcher — auto-reingest when PDFs are dropped into /app/input/
+    try:
+        from orchestrator.services.floor_plan_watcher import watch_forever as _fp_watch
+
+        asyncio.create_task(_fp_watch())
+        logger.info("Floor plan file watcher started")
+    except Exception as e:
+        logger.warning(f"Floor plan file watcher failed to start (non-fatal): {e}")
 
     # B.6: Initialize multi-building manager — discovers and loads all building configs
     try:
@@ -427,7 +498,9 @@ os.makedirs("/app/outputs", exist_ok=True)
 app.mount("/static", StaticFiles(directory="/app/outputs"), name="static")
 
 # E.1: CORS — use CORS_ORIGINS env var; '*' for dev, explicit origins for production
-_cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()] or ["*"]
+_cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()] or [
+    "*"
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
@@ -464,7 +537,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """Simple in-process per-IP rate limiter (token bucket, not distributed)."""
 
     def __init__(
-        self, app, requests: int = _RATE_LIMIT_REQUESTS, window: int = _RATE_LIMIT_WINDOW_S
+        self,
+        app,
+        requests: int = _RATE_LIMIT_REQUESTS,
+        window: int = _RATE_LIMIT_WINDOW_S,
     ):
         super().__init__(app)
         self._requests = requests
@@ -502,7 +578,11 @@ async def root():
     """Root endpoint"""
     return APIResponse(
         success=True,
-        data={"service": "OntoSage 2.0 Orchestrator", "version": "2.0.0", "status": "running"},
+        data={
+            "service": "OntoSage 2.0 Orchestrator",
+            "version": "2.0.0",
+            "status": "running",
+        },
     )
 
 
@@ -575,7 +655,9 @@ async def health_check():
             r = await client.get(
                 f"http://{settings.RAG_SERVICE_HOST}:{settings.RAG_SERVICE_PORT}/health"
             )
-            checks["rag_service"] = {"status": "ok" if r.status_code == 200 else "error"}
+            checks["rag_service"] = {
+                "status": "ok" if r.status_code == 200 else "error"
+            }
     except Exception as e:
         checks["rag_service"] = {"status": "unreachable", "error": str(e)}
 
@@ -585,7 +667,9 @@ async def health_check():
             r = await client.get(
                 f"http://{settings.CODE_EXECUTOR_HOST}:{settings.CODE_EXECUTOR_PORT}/health"
             )
-            checks["code_executor"] = {"status": "ok" if r.status_code == 200 else "error"}
+            checks["code_executor"] = {
+                "status": "ok" if r.status_code == 200 else "error"
+            }
     except Exception as e:
         checks["code_executor"] = {"status": "unreachable", "error": str(e)}
 
@@ -608,7 +692,9 @@ async def health_check():
 
     # Overall status
     critical = ["redis", "mysql", "graphdb"]
-    critical_ok = all(checks.get(k, {}).get("status") in ("ok", "connected") for k in critical)
+    critical_ok = all(
+        checks.get(k, {}).get("status") in ("ok", "connected") for k in critical
+    )
     any_error = any(
         checks.get(k, {}).get("status") in ("error", "unreachable", "unavailable")
         for k in checks
@@ -865,7 +951,9 @@ async def logout_user(
 
 
 @app.get("/auth/me", response_model=APIResponse)
-async def get_current_user_info(current_user: Optional[str] = Depends(get_current_user)):
+async def get_current_user_info(
+    current_user: Optional[str] = Depends(get_current_user),
+):
     """Get current authenticated user info"""
     try:
         if not current_user:
@@ -887,7 +975,9 @@ async def get_current_user_info(current_user: Optional[str] = Depends(get_curren
 
 
 @app.get("/history/{username}", response_model=APIResponse)
-async def get_user_history(username: str, current_user: Optional[str] = Depends(get_current_user)):
+async def get_user_history(
+    username: str, current_user: Optional[str] = Depends(get_current_user)
+):
     """
     Get chat history for a specific user
 
@@ -918,7 +1008,9 @@ async def get_user_history(username: str, current_user: Optional[str] = Depends(
                             "message_count": len(messages),
                             "last_message": messages[-1] if messages else None,
                             "created_at": (
-                                conv["created_at"].isoformat() if conv["created_at"] else None
+                                conv["created_at"].isoformat()
+                                if conv["created_at"]
+                                else None
                             ),
                         }
                     )
@@ -965,7 +1057,9 @@ async def get_user_history(username: str, current_user: Optional[str] = Depends(
 
 @app.post("/history/{username}", response_model=APIResponse)
 async def save_user_history(
-    username: str, request: Dict[str, Any], current_user: Optional[str] = Depends(get_current_user)
+    username: str,
+    request: Dict[str, Any],
+    current_user: Optional[str] = Depends(get_current_user),
 ):
     """
     Save chat history for a user
@@ -990,7 +1084,9 @@ async def save_user_history(
         # Save to Postgres if available
         if postgres_manager and postgres_manager.pool:
             # Create conversation first
-            await postgres_manager.create_conversation(conv_id, username, title="Imported Chat")
+            await postgres_manager.create_conversation(
+                conv_id, username, title="Imported Chat"
+            )
 
             for msg in messages:
                 await postgres_manager.save_message(
@@ -1008,7 +1104,8 @@ async def save_user_history(
                 )
 
         return APIResponse(
-            success=True, data={"conversation_id": conv_id, "message_count": len(messages)}
+            success=True,
+            data={"conversation_id": conv_id, "message_count": len(messages)},
         )
 
     except Exception as e:
@@ -1134,12 +1231,16 @@ async def aggregate_health():
     status["ollama"] = ollama_info
     # Normalize Redis health: treat 'ok', 'no-pong', or 'connected' as acceptable
     redis_healthy = status.get("redis") in ["ok", "no-pong", "connected"]
-    status["status"] = "healthy" if redis_healthy and ollama_info.get("reachable") else "degraded"
+    status["status"] = (
+        "healthy" if redis_healthy and ollama_info.get("reachable") else "degraded"
+    )
     return APIResponse(success=True, data=status)
 
 
 @app.post("/chat", response_model=APIResponse)
-async def chat(request: ChatRequest, current_user: Optional[str] = Depends(get_current_user)):
+async def chat(
+    request: ChatRequest, current_user: Optional[str] = Depends(get_current_user)
+):
     """
     Synchronous chat endpoint (requires authentication)
 
@@ -1195,14 +1296,18 @@ async def chat(request: ChatRequest, current_user: Optional[str] = Depends(get_c
         # Add user message
         from datetime import datetime
 
-        state.messages.append(Message(role="user", content=user_message, timestamp=datetime.now()))
+        state.messages.append(
+            Message(role="user", content=user_message, timestamp=datetime.now())
+        )
 
         # Save message
         await redis_manager.save_message(conversation_id, "user", user_message)
 
         # Save to Postgres if available
         if postgres_manager and postgres_manager.pool:
-            await postgres_manager.save_message(conversation_id, "user", user_message, username)
+            await postgres_manager.save_message(
+                conversation_id, "user", user_message, username
+            )
 
         # Execute workflow
         logger.info("=" * 100)
@@ -1249,7 +1354,9 @@ async def chat(request: ChatRequest, current_user: Optional[str] = Depends(get_c
                         logger.info(f"   🔍 Sample row: {data[0]}")
 
             # Analytics Results
-            analytics_result = updated_state.intermediate_results.get("analytics_result", {})
+            analytics_result = updated_state.intermediate_results.get(
+                "analytics_result", {}
+            )
             if analytics_result:
                 logger.info("\n3️⃣ Analytics Agent Results:")
                 analytics_output = analytics_result.get("output")
@@ -1266,7 +1373,9 @@ async def chat(request: ChatRequest, current_user: Optional[str] = Depends(get_c
 
         # Get assistant response
         assistant_entry = updated_state.messages[-1] if updated_state.messages else None
-        assistant_message = assistant_entry.content if assistant_entry else "No response generated"
+        assistant_message = (
+            assistant_entry.content if assistant_entry else "No response generated"
+        )
         assistant_metadata = assistant_entry.metadata if assistant_entry else None
         logger.info(f"✅ Assistant Response: {assistant_message[:200]}...")
 
@@ -1292,7 +1401,9 @@ async def chat(request: ChatRequest, current_user: Optional[str] = Depends(get_c
                 "intent": updated_state.current_intent,
                 "username": username,
                 "analytics": analytics_flag,
-                "media": assistant_metadata.get("media") if assistant_metadata else None,
+                "media": (
+                    assistant_metadata.get("media") if assistant_metadata else None
+                ),
             },
         )
 
@@ -1307,8 +1418,23 @@ async def chat_stream(
 ):
     """
     Streaming chat endpoint (Server-Sent Events).
-    Request body validated via ChatRequest Pydantic model.
+    Emits `progress` events per LangGraph node, then `token` with the final response.
     """
+    # Node → user-friendly label map shared between SSE generator and WS handler
+    _NODE_LABELS: dict = {
+        "dialogue": "🧠 Analyzing your question...",
+        "sparql": "📡 Querying building ontology...",
+        "sql": "📊 Fetching sensor data...",
+        "analytics": "🔬 Running analytics...",
+        "visualization": "📈 Creating visualization...",
+        "report": "📋 Assembling report...",
+        "anomaly": "🔍 Detecting anomalies...",
+        "export": "💾 Exporting data...",
+        "planner": "🗺️ Planning tasks...",
+        "recommend": "💡 Building recommendations...",
+        "response": "✍️ Composing response...",
+    }
+
     try:
         username = current_user or "guest"
 
@@ -1325,6 +1451,7 @@ async def chat_stream(
 
         language = req.language or "en"
         building = req.building or settings.BUILDING_ID
+        fresh_session = req.fresh_session
 
         async def event_generator():
             try:
@@ -1345,6 +1472,10 @@ async def chat_stream(
                 else:
                     state.user_message = user_message
 
+                # Propagate fresh_session flag into state so workflow skips memory injection
+                if fresh_session:
+                    state.intermediate_results["fresh_session"] = True
+
                 # Add user message
                 from datetime import datetime
 
@@ -1364,19 +1495,45 @@ async def chat_stream(
                     username, conversation_id, user_message[:30] + "..."
                 )
 
-                # Execute workflow (Synchronous for now to ensure full context)
-                # We simulate streaming by sending the full response
-                updated_state = await orchestrator.execute(state)
+                # Stream workflow execution — emit progress events per node, then final response
+                updated_state = state
+                async for step in orchestrator.stream_execute(state):
+                    if isinstance(step, dict):
+                        for node_name, node_state in step.items():
+                            label = _NODE_LABELS.get(node_name)
+                            if label:
+                                yield (
+                                    f"data: {json.dumps({'type': 'progress', 'node': node_name, 'label': label})}\n\n"
+                                )
+                            # LangGraph may yield ConversationState OR dict
+                            if isinstance(node_state, ConversationState):
+                                updated_state = node_state
+                            elif isinstance(node_state, dict) and "messages" in node_state:
+                                try:
+                                    updated_state = ConversationState(**node_state)
+                                except Exception:
+                                    pass
 
-                assistant_entry = updated_state.messages[-1] if updated_state.messages else None
-                full_response = (
-                    assistant_entry.content if assistant_entry else "No response generated"
+                # Get last assistant message (not user's, which may also be last)
+                assistant_entry = next(
+                    (m for m in reversed(updated_state.messages) if m.role == "assistant"),
+                    None,
                 )
-                assistant_metadata = assistant_entry.metadata if assistant_entry else None
+                full_response = (
+                    assistant_entry.content
+                    if assistant_entry
+                    else updated_state.intermediate_results.get("dialogue_response", "No response generated")
+                )
+                assistant_metadata = (
+                    assistant_entry.metadata if assistant_entry else None
+                )
 
                 # Save assistant message
                 await redis_manager.save_message(
-                    conversation_id, "assistant", full_response, metadata=assistant_metadata
+                    conversation_id,
+                    "assistant",
+                    full_response,
+                    metadata=assistant_metadata,
                 )
 
                 # Save to Postgres if available
@@ -1388,8 +1545,7 @@ async def chat_stream(
                 # Save updated state
                 await redis_manager.save_state(updated_state)
 
-                # Stream the response (simulate chunks or send all at once)
-                # Frontend expects {"type": "token", "content": "..."}
+                # Deliver final response as token event, then media (if any), then DONE
                 yield f"data: {json.dumps({'type': 'token', 'content': full_response})}\n\n"
                 if assistant_metadata and assistant_metadata.get("media"):
                     yield f"data: {json.dumps({'type': 'metadata', 'media': assistant_metadata['media']})}\n\n"
@@ -1404,6 +1560,233 @@ async def chat_stream(
     except Exception as e:
         logger.error(f"Chat stream setup error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OpenAI-Compatible API  (/v1/*)
+# Open WebUI is pointed at http://ontosage-orchestrator:8000/v1 via
+# OPENAI_API_BASE_URL.  These two endpoints make OntoSage a drop-in
+# OpenAI-compatible backend.  Progress steps are streamed inside
+# <think>…</think> blocks so Open WebUI renders them as a collapsible
+# "Thinking…" panel — identical to the Claude Code / ChatGPT o1 UX.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_OAI_MODEL_ID = "ontosage"
+_OAI_AUTH_KEYS = {"sk-ontobot-pipeline"}  # set in docker-compose OPENAI_API_KEY
+
+_OAI_NODE_LABELS: dict = {
+    "dialogue":      "🧠 Analyzing your question",
+    "sparql":        "📡 Querying building ontology",
+    "sql":           "📊 Fetching sensor data",
+    "analytics":     "🔬 Running analytics",
+    "visualization": "📈 Generating visualization",
+    "report":        "📋 Compiling report",
+    "anomaly":       "🔍 Checking for anomalies",
+    "export":        "💾 Preparing export",
+    "planner":       "🗺️ Planning multi-step task",
+    "recommend":     "💡 Generating recommendations",
+    "response":      "✍️ Composing response",
+}
+
+
+def _oai_auth(authorization: Optional[str] = Header(None)) -> None:
+    """Validate the Bearer token sent by Open WebUI."""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    token = authorization.removeprefix("Bearer ").strip()
+    if token not in _OAI_AUTH_KEYS:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+
+@app.get("/v1/models")
+async def oai_list_models(_: None = Depends(_oai_auth)):
+    """Return the single OntoSage model so Open WebUI can populate the dropdown."""
+    now = int(datetime.utcnow().timestamp())
+    return JSONResponse({
+        "object": "list",
+        "data": [
+            {
+                "id": _OAI_MODEL_ID,
+                "object": "model",
+                "created": now,
+                "owned_by": "ontosage",
+                "permission": [],
+                "root": _OAI_MODEL_ID,
+                "parent": None,
+            }
+        ],
+    })
+
+
+@app.post("/v1/chat/completions")
+async def oai_chat_completions(
+    request: Request,
+    _: None = Depends(_oai_auth),
+):
+    """
+    OpenAI-compatible streaming chat endpoint consumed by Open WebUI.
+
+    Streaming format:
+      1. <think> … progress steps … </think>   ← Open WebUI renders as collapsible panel
+      2. Final response tokens                  ← streamed word-by-word
+
+    Non-streaming: returns a full completion JSON object.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    messages_raw: List[Dict] = body.get("messages", [])
+    stream: bool = body.get("stream", True)
+    model: str = body.get("model", _OAI_MODEL_ID)
+
+    # Extract user text from the last user message (handles str and list content)
+    user_message = ""
+    user_msg_obj = next(
+        (m for m in reversed(messages_raw) if m.get("role") == "user"), None
+    )
+    if user_msg_obj:
+        raw_content = user_msg_obj.get("content", "")
+        if isinstance(raw_content, str):
+            user_message = raw_content
+        elif isinstance(raw_content, list):
+            user_message = " ".join(
+                p.get("text", "") for p in raw_content if isinstance(p, dict) and p.get("type") == "text"
+            )
+
+    if not user_message.strip():
+        raise HTTPException(status_code=400, detail="No user message found")
+
+    # Use Open WebUI's X-Chat-Id header → body field → stable hash of first user message
+    chat_id_header = request.headers.get("X-Chat-Id") or request.headers.get("x-chat-id")
+    conversation_id = (
+        chat_id_header
+        or body.get("conversation_id")
+        or f"owui_{abs(hash(messages_raw[0].get('content', '') if messages_raw else user_message))}"
+    )
+    user_id = body.get("user") or request.headers.get("X-User-Id", "openwebui-user")
+
+    # ── Build ConversationState ───────────────────────────────────────────────
+    state = ConversationState(
+        conversation_id=conversation_id,
+        user_id=user_id,
+        user_message=user_message,
+        building_id=os.environ.get("DEFAULT_BUILDING_ID", "bldg1"),
+        messages=[Message(role="user", content=user_message)],
+        intermediate_results={},
+    )
+
+    completion_id = f"chatcmpl-{_uuid_mod.uuid4().hex}"
+    created_ts = int(datetime.utcnow().timestamp())
+
+    def _chunk(content: str, finish_reason: Optional[str] = None) -> str:
+        """Serialize one OpenAI SSE delta chunk."""
+        delta = {"content": content} if content else {}
+        choice: dict = {"index": 0, "delta": delta, "finish_reason": finish_reason}
+        obj = {
+            "id": completion_id,
+            "object": "chat.completion.chunk",
+            "created": created_ts,
+            "model": model,
+            "choices": [choice],
+        }
+        return f"data: {json.dumps(obj)}\n\n"
+
+    async def stream_generator():
+        try:
+            progress_lines: List[str] = []
+            updated_state = state
+
+            # ── 1. Collect progress events and final state ─────────────────
+            async for step in orchestrator.stream_execute(state):
+                if not isinstance(step, dict):
+                    continue
+                for node_name, node_state in step.items():
+                    label = _OAI_NODE_LABELS.get(node_name)
+                    if label:
+                        progress_lines.append(f"{label}…")
+                    if isinstance(node_state, ConversationState):
+                        updated_state = node_state
+                    elif isinstance(node_state, dict) and "messages" in node_state:
+                        try:
+                            updated_state = ConversationState(**node_state)
+                        except Exception:
+                            pass
+
+            # ── 2. Stream the <think> block (progress steps) ───────────────
+            if progress_lines:
+                yield _chunk("<think>\n")
+                for line in progress_lines:
+                    yield _chunk(f"{line}\n")
+                yield _chunk("</think>\n\n")
+
+            # ── 3. Extract final assistant response ────────────────────────
+            assistant_entry = next(
+                (m for m in reversed(updated_state.messages) if m.role == "assistant"),
+                None,
+            )
+            full_response = (
+                assistant_entry.content
+                if assistant_entry
+                else updated_state.intermediate_results.get(
+                    "dialogue_response", "I'm sorry, I couldn't generate a response."
+                )
+            )
+
+            # ── 4. Stream response word-by-word ────────────────────────────
+            words = full_response.split(" ")
+            for i, word in enumerate(words):
+                token = word if i == 0 else f" {word}"
+                yield _chunk(token)
+            yield _chunk("", finish_reason="stop")
+            yield "data: [DONE]\n\n"
+
+        except Exception as e:
+            logger.error(f"[/v1/chat/completions] stream error: {e}", exc_info=True)
+            err_chunk = {
+                "id": completion_id,
+                "object": "chat.completion.chunk",
+                "created": created_ts,
+                "model": model,
+                "choices": [{"index": 0, "delta": {"content": f"\n\n❌ Error: {e}"}, "finish_reason": "stop"}],
+            }
+            yield f"data: {json.dumps(err_chunk)}\n\n"
+            yield "data: [DONE]\n\n"
+
+    if stream:
+        return StreamingResponse(
+            stream_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",  # Nginx: disable buffering so chunks flow live
+            },
+        )
+
+    # ── Non-streaming fallback ────────────────────────────────────────────────
+    updated_state = await orchestrator.execute(state)
+    assistant_entry = next(
+        (m for m in reversed(updated_state.messages) if m.role == "assistant"),
+        None,
+    )
+    full_response = (
+        assistant_entry.content if assistant_entry else "No response generated."
+    )
+    return JSONResponse({
+        "id": completion_id,
+        "object": "chat.completion",
+        "created": created_ts,
+        "model": model,
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": full_response},
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+    })
 
 
 @app.websocket("/stream")
@@ -1435,10 +1818,14 @@ async def websocket_stream(websocket: WebSocket):
 
             user_message = request.get("message")
             if not user_message:
-                await websocket.send_json({"type": "error", "data": "Message is required"})
+                await websocket.send_json(
+                    {"type": "error", "data": "Message is required"}
+                )
                 continue
 
-            conversation_id = request.get("conversation_id") or generate_conversation_id()
+            conversation_id = (
+                request.get("conversation_id") or generate_conversation_id()
+            )
             persona = request.get("persona", "general")
             language = request.get("language", "en")
             building = request.get("building", settings.BUILDING_ID)
@@ -1461,7 +1848,9 @@ async def websocket_stream(websocket: WebSocket):
                 )
 
             # Add user message
-            state.messages.append(Message(role="user", content=user_message, timestamp=None))
+            state.messages.append(
+                Message(role="user", content=user_message, timestamp=None)
+            )
 
             await redis_manager.save_message(conversation_id, "user", user_message)
 
@@ -1471,7 +1860,9 @@ async def websocket_stream(websocket: WebSocket):
                 last_step = step
                 # Send progress updates
                 if "dialogue" in step:
-                    await websocket.send_json({"type": "progress", "data": "Analyzing intent..."})
+                    await websocket.send_json(
+                        {"type": "progress", "data": "Analyzing intent..."}
+                    )
                 elif "sparql" in step:
                     await websocket.send_json(
                         {"type": "progress", "data": "Querying building ontology..."}
@@ -1504,10 +1895,14 @@ async def websocket_stream(websocket: WebSocket):
 
             # Get response
             assistant_message = (
-                final_state.messages[-1].content if final_state.messages else "No response"
+                final_state.messages[-1].content
+                if final_state.messages
+                else "No response"
             )
 
-            await redis_manager.save_message(conversation_id, "assistant", assistant_message)
+            await redis_manager.save_message(
+                conversation_id, "assistant", assistant_message
+            )
 
             # Send final response
             await websocket.send_json(
@@ -1527,8 +1922,8 @@ async def websocket_stream(websocket: WebSocket):
         logger.error(f"WebSocket error: {e}", exc_info=True)
         try:
             await websocket.send_json({"type": "error", "data": str(e)})
-        except:
-            pass
+        except Exception:
+            pass  # WebSocket may already be closed
 
 
 @app.get("/conversation/{conversation_id}", response_model=APIResponse)
@@ -1539,7 +1934,11 @@ async def get_conversation(conversation_id: str):
 
         return APIResponse(
             success=True,
-            data={"conversation_id": conversation_id, "messages": messages, "count": len(messages)},
+            data={
+                "conversation_id": conversation_id,
+                "messages": messages,
+                "count": len(messages),
+            },
         )
 
     except Exception as e:
@@ -1636,7 +2035,9 @@ async def generate_report(
             try:
                 adapter = adapter_registry.get()
                 if adapter:
-                    recent_sql = "SELECT * FROM sensor_data ORDER BY Datetime DESC LIMIT 50"
+                    recent_sql = (
+                        "SELECT * FROM sensor_data ORDER BY Datetime DESC LIMIT 50"
+                    )
                     qr = await adapter.execute_query(recent_sql)
                     if qr.success and qr.data:
                         report_data["readings"] = qr.data[:20]
@@ -1656,7 +2057,9 @@ async def generate_report(
         )
 
         if not result.get("success"):
-            return APIResponse(success=False, error=result.get("error", "Report generation failed"))
+            return APIResponse(
+                success=False, error=result.get("error", "Report generation failed")
+            )
 
         # For binary formats, save to exports and return download path
         if output_format in ("pdf", "docx"):
@@ -1712,7 +2115,9 @@ async def openai_chat_completions(
         username = data.get("user") or "openwebui_user"
 
         # Extract last user message
-        last_user_msg = next((m for m in reversed(messages) if m["role"] == "user"), None)
+        last_user_msg = next(
+            (m for m in reversed(messages) if m["role"] == "user"), None
+        )
         if not last_user_msg:
             raise HTTPException(status_code=400, detail="No user message found")
 
@@ -1721,10 +2126,13 @@ async def openai_chat_completions(
         user_message = sanitize_user_input(last_user_msg["content"])
         if len(user_message) > CHAT_MAX_MESSAGE_LENGTH:
             raise HTTPException(
-                status_code=400, detail=f"Message too long (max {CHAT_MAX_MESSAGE_LENGTH} chars)"
+                status_code=400,
+                detail=f"Message too long (max {CHAT_MAX_MESSAGE_LENGTH} chars)",
             )
         if not user_message:
-            raise HTTPException(status_code=400, detail="Message is empty after sanitization")
+            raise HTTPException(
+                status_code=400, detail="Message is empty after sanitization"
+            )
 
         # Generate conversation ID
         conversation_id = f"owui_{generate_conversation_id()}:{username}"
@@ -1743,7 +2151,8 @@ async def openai_chat_completions(
             user_message = _san(stripped_message)
             if not user_message:
                 raise HTTPException(
-                    status_code=400, detail="Message is empty after stripping persona prefix"
+                    status_code=400,
+                    detail="Message is empty after stripping persona prefix",
                 )
 
         # Reconstruct prior conversation history from the OpenAI-format
@@ -1782,7 +2191,9 @@ async def openai_chat_completions(
         )
 
         # Add the current message to the history so the agent can see it
-        state.messages.append(Message(role="user", content=user_message, timestamp=datetime.now()))
+        state.messages.append(
+            Message(role="user", content=user_message, timestamp=datetime.now())
+        )
 
         stream = bool(data.get("stream"))
         show_status = bool(data.get("show_status", True))
@@ -1799,7 +2210,9 @@ async def openai_chat_completions(
                         "object": "chat.completion.chunk",
                         "created": created_ts,
                         "model": data.get("model", "ontobot-pipeline"),
-                        "choices": [{"index": 0, "delta": {}, "finish_reason": finish_reason}],
+                        "choices": [
+                            {"index": 0, "delta": {}, "finish_reason": finish_reason}
+                        ],
                     }
                     if role:
                         payload["choices"][0]["delta"]["role"] = role
@@ -1899,9 +2312,14 @@ async def openai_chat_completions(
 
         if postgres_manager and postgres_manager.pool:
             await postgres_manager.create_user(
-                username, "placeholder_hash", "placeholder_salt", metadata={"source": "open_webui"}
+                username,
+                "placeholder_hash",
+                "placeholder_salt",
+                metadata={"source": "open_webui"},
             )
-            await postgres_manager.save_message(conversation_id, "user", user_message, username)
+            await postgres_manager.save_message(
+                conversation_id, "user", user_message, username
+            )
             await postgres_manager.save_message(
                 conversation_id, "assistant", assistant_message, username
             )
@@ -1954,12 +2372,250 @@ async def download_export(filename: str):
         raise HTTPException(status_code=400, detail="Invalid filename")
     file_path = os.path.join(settings.EXPORTS_DIR, filename)
     if not os.path.isfile(file_path):
-        raise HTTPException(status_code=404, detail=f"Export file '{filename}' not found")
+        raise HTTPException(
+            status_code=404, detail=f"Export file '{filename}' not found"
+        )
     return FileResponse(
         path=file_path,
         filename=filename,
         media_type="application/octet-stream",
     )
+
+
+# ── Floor Plan endpoints ───────────────────────────────────────────────────────
+
+
+@app.get("/floor-plans/")
+async def list_floor_plans():
+    """List all available floor plan PDFs for the Abacws building."""
+    floors = floor_plan_service.get_available_floors()
+    return {
+        "floors": [
+            {
+                "floor": f,
+                "pdf_url": floor_plan_service.get_pdf_url(f),
+                "filename": floor_plan_service.get_pdf_path(f).name
+                if floor_plan_service.get_pdf_path(f)
+                else None,
+            }
+            for f in floors
+        ],
+        "total": len(floors),
+    }
+
+
+@app.get("/floor-plans/floor-{floor_num}.pdf")
+async def serve_floor_plan_pdf(floor_num: int):
+    """Serve the floor plan PDF for a specific floor."""
+    from fastapi.responses import FileResponse
+
+    pdf_path = floor_plan_service.get_pdf_path(floor_num)
+    if pdf_path is None or not pdf_path.exists():
+        available = floor_plan_service.get_available_floors()
+        raise HTTPException(
+            status_code=404,
+            detail=f"Floor plan for floor {floor_num} not found. Available: {available}",
+        )
+    return FileResponse(
+        path=str(pdf_path),
+        filename=pdf_path.name,
+        media_type="application/pdf",
+    )
+
+
+# ── Phase 9: Floor Plan Standardization API (/api/v1/floor-plans/) ──────────────
+#
+# All endpoints below are manifest-aware and building-agnostic.
+# The legacy /floor-plans/ endpoints above are kept as-is for backwards compat.
+
+
+@app.get("/api/v1/floor-plans", response_model=APIResponse)
+async def list_floor_plan_manifests(
+    user: UserContext = Depends(create_rbac_dependency(token_manager, "metadata:read")),
+):
+    """List all buildings + floors with their manifest status."""
+    try:
+        from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
+
+        pipeline = get_floor_plan_pipeline()
+        result = []
+        for building_id, floor in pipeline.list_manifests():
+            manifest = pipeline.load_manifest(building_id, floor)
+            result.append(
+                {
+                    "building_id": building_id,
+                    "building_name": manifest.building_name if manifest else building_id,
+                    "floor": floor,
+                    "floor_label": manifest.floor_label if manifest else f"Floor {floor}",
+                    "manifest_url": f"/api/v1/floor-plans/{building_id}/{floor}/manifest",
+                    "image_url": manifest.rendered_image.png_url if manifest else None,
+                    "thumbnail_url": manifest.rendered_image.thumbnail_url if manifest else None,
+                    "pdf_url": manifest.pdf_url if manifest else None,
+                    "spaces_count": len(manifest.spaces) if manifest else 0,
+                    "generated_at": manifest.generated_at.isoformat() if manifest else None,
+                    "warnings_count": len(manifest.warnings) if manifest else 0,
+                }
+            )
+        return APIResponse(success=True, data={"floors": result, "total": len(result)})
+    except Exception as e:
+        logger.error(f"list_floor_plan_manifests failed: {e}")
+        return APIResponse(success=False, error=str(e), data={"floors": [], "total": 0})
+
+
+@app.get("/api/v1/floor-plans/{building_id}/{floor}/manifest", response_model=APIResponse)
+async def get_floor_plan_manifest(
+    building_id: str,
+    floor: int,
+    user: UserContext = Depends(create_rbac_dependency(token_manager, "metadata:read")),
+):
+    """Return the full FloorPlanManifest JSON for a specific building floor."""
+    try:
+        from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
+
+        manifest = get_floor_plan_pipeline().load_manifest(building_id, floor)
+        if not manifest:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No manifest for building={building_id}, floor={floor}. "
+                "Drop the PDF into /app/input/ and the pipeline will generate it.",
+            )
+        return APIResponse(success=True, data=manifest.model_dump())
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"get_floor_plan_manifest failed: {e}")
+        return APIResponse(success=False, error=str(e), data={})
+
+
+@app.get("/api/v1/floor-plans/search", response_model=APIResponse)
+async def search_floor_plan_spaces(
+    q: str,
+    building: str = "abacws",
+    floor: Optional[int] = None,
+    user: UserContext = Depends(create_rbac_dependency(token_manager, "metadata:read")),
+):
+    """Cross-floor semantic space search (by label, type, or zone_id)."""
+    try:
+        results = floor_plan_service.search_spaces(q, building_id=building, floor=floor)
+        return APIResponse(
+            success=True,
+            data={"results": results, "total": len(results), "query": q},
+        )
+    except Exception as e:
+        logger.error(f"search_floor_plan_spaces failed: {e}")
+        return APIResponse(success=False, error=str(e), data={"results": []})
+
+
+@app.get("/api/v1/floor-plans/overview", response_model=APIResponse)
+async def get_floor_plan_overview(
+    building: str = "abacws",
+    user: UserContext = Depends(create_rbac_dependency(token_manager, "metadata:read")),
+):
+    """Building-level overview: per-floor space counts, types, and plan links."""
+    try:
+        from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
+
+        pipeline = get_floor_plan_pipeline()
+        floors = []
+        for bid, fl in pipeline.list_manifests():
+            if bid != building:
+                continue
+            manifest = pipeline.load_manifest(bid, fl)
+            if not manifest:
+                continue
+            type_counts: Dict[str, int] = {}
+            for space in manifest.spaces:
+                type_counts[space.type] = type_counts.get(space.type, 0) + 1
+            floors.append(
+                {
+                    "floor": fl,
+                    "floor_label": manifest.floor_label,
+                    "spaces_by_type": type_counts,
+                    "total_spaces": len(manifest.spaces),
+                    "manifest_url": f"/api/v1/floor-plans/{bid}/{fl}/manifest",
+                    "image_url": manifest.rendered_image.png_url,
+                    "thumbnail_url": manifest.rendered_image.thumbnail_url,
+                    "pdf_url": manifest.pdf_url,
+                    "warnings": manifest.warnings,
+                }
+            )
+        markdown = floor_plan_service.get_building_overview_markdown(building)
+        return APIResponse(
+            success=True,
+            data={"building_id": building, "floors": floors, "markdown": markdown},
+        )
+    except Exception as e:
+        logger.error(f"get_floor_plan_overview failed: {e}")
+        return APIResponse(success=False, error=str(e), data={})
+
+
+@app.get("/api/v1/floor-plans/facilities", response_model=APIResponse)
+async def get_floor_plan_facilities(
+    type: str,
+    building: str = "abacws",
+    user: UserContext = Depends(create_rbac_dependency(token_manager, "metadata:read")),
+):
+    """Facility locator — find all spaces of a given type across all floors."""
+    try:
+        results = floor_plan_service.get_facilities_by_type(type, building_id=building)
+        return APIResponse(
+            success=True,
+            data={"facility_type": type, "results": results, "total": len(results)},
+        )
+    except Exception as e:
+        logger.error(f"get_floor_plan_facilities failed: {e}")
+        return APIResponse(success=False, error=str(e), data={"results": []})
+
+
+@app.post("/api/v1/floor-plans/reingest", response_model=APIResponse)
+async def reingest_floor_plans(
+    building: Optional[str] = None,
+    floor: Optional[int] = None,
+    user: UserContext = Depends(create_rbac_dependency(token_manager, "system:admin")),
+):
+    """Admin-only: force regeneration of floor plan manifests."""
+    try:
+        from pathlib import Path
+        from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
+
+        pipeline = get_floor_plan_pipeline()
+        pdf_dir = Path("/app/input")
+        pattern = _re.compile(
+            r"^(?P<bldg>.+?)\s+floor\s+(?P<fl>\d+)\.pdf$", _re.IGNORECASE
+        )
+        pdfs_to_ingest = []
+        for path in sorted(pdf_dir.glob("*.pdf")):
+            m = pattern.match(path.name)
+            if not m:
+                continue
+            bid = _re.sub(r"[^a-z0-9]+", "_", m.group("bldg").lower()).strip("_")
+            fl = int(m.group("fl"))
+            if building and bid != building:
+                continue
+            if floor is not None and fl != floor:
+                continue
+            pdfs_to_ingest.append(path)
+
+        results = []
+        for path in pdfs_to_ingest:
+            manifest = await pipeline.ingest_file(path)
+            if manifest:
+                results.append(
+                    {
+                        "building_id": manifest.building_id,
+                        "floor": manifest.floor,
+                        "spaces": len(manifest.spaces),
+                        "warnings": len(manifest.warnings),
+                    }
+                )
+
+        return APIResponse(
+            success=True,
+            data={"reingested": results, "total": len(results)},
+        )
+    except Exception as e:
+        logger.error(f"reingest_floor_plans failed: {e}", exc_info=True)
+        return APIResponse(success=False, error=str(e), data={})
 
 
 @app.get("/buildings", response_model=APIResponse)
@@ -1973,6 +2629,80 @@ async def list_buildings():
     except Exception as e:
         logger.error(f"List buildings failed: {e}")
         return APIResponse(success=False, error=str(e), data={"buildings": []})
+
+
+# ── Phase 8.1: Document upload / management endpoints ────────────────────────
+
+
+@app.post("/api/v1/documents/upload", response_model=APIResponse)
+async def upload_document(
+    file: UploadFile = File(...),
+    current_user: Optional[str] = Depends(get_current_user),
+):
+    """
+    Phase 8.1: Upload and ingest a document (PDF, DOCX, TXT, CSV, XLSX, MD).
+
+    The document is chunked, embedded, and stored in Qdrant so future queries
+    can retrieve relevant passages alongside ontology data.
+    Requires authentication.  Max file size: 20 MB.
+    """
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if not doc_ingestion:
+        raise HTTPException(status_code=503, detail="Document storage service unavailable")
+
+    content = await file.read()
+    filename = file.filename or "upload"
+    result = await doc_ingestion.ingest(content, filename, user_id=current_user)
+
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    return APIResponse(
+        success=True,
+        data={
+            "doc_id": result["doc_id"],
+            "filename": result["filename"],
+            "chunks": result["chunks"],
+            "message": f"Document '{filename}' ingested successfully ({result['chunks']} chunks).",
+        },
+    )
+
+
+@app.get("/api/v1/documents", response_model=APIResponse)
+async def list_user_documents(current_user: Optional[str] = Depends(get_current_user)):
+    """
+    Phase 8.1: List all documents uploaded by the current user.
+    Requires authentication.
+    """
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if not doc_ingestion:
+        return APIResponse(success=True, data={"documents": [], "count": 0})
+
+    docs = await doc_ingestion.list_documents(user_id=current_user)
+    return APIResponse(success=True, data={"documents": docs, "count": len(docs)})
+
+
+@app.delete("/api/v1/documents/{doc_id}", response_model=APIResponse)
+async def delete_user_document(
+    doc_id: str,
+    current_user: Optional[str] = Depends(get_current_user),
+):
+    """
+    Phase 8.1: Delete a document (all chunks) owned by the current user.
+    Requires authentication.
+    """
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if not doc_ingestion:
+        raise HTTPException(status_code=503, detail="Document storage service unavailable")
+
+    ok = await doc_ingestion.delete_document(doc_id=doc_id, user_id=current_user)
+    if not ok:
+        raise HTTPException(status_code=404, detail=f"Document '{doc_id}' not found or already deleted")
+
+    return APIResponse(success=True, data={"deleted": doc_id})
 
 
 # ── E.9: Prometheus metrics endpoint ─────────────────────────────────────────
