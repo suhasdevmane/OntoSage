@@ -52,3 +52,12 @@ prometheus-client>=0.20.0
 Jinja2>=3.1.0
 pdfkit>=1.0.0       # PDF output (requires wkhtmltopdf binary)
 python-docx>=1.0.0  # DOCX output
+
+# Phase 8.1 — Document upload / ingestion
+pdfplumber>=0.11.0  # PDF text extraction
+openpyxl>=3.1.0     # Excel (.xlsx) parsing
+python-multipart>=0.0.9  # FastAPI UploadFile support
+
+# Floor plan standardization (Phase 9)
+PyMuPDF>=1.24.0     # PDF rendering to PNG + coordinate-aware text extraction
+watchfiles>=0.21.0  # Async file watcher for auto-ingestion
