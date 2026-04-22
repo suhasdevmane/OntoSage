@@ -49,9 +49,56 @@ logger = get_logger(__name__)
 
 GENERATOR_VERSION = "1.0.0"
 _DEFAULT_PDF_DIR = Path("/app/input")
-_DEFAULT_MANIFEST_DIR = Path("/app/input/.floor_plans")
+_DEFAULT_MANIFEST_DIR = Path("/app/floor_plans")  # separate writable volume
 _RENDER_DPI = 200
 _THUMB_WIDTH = 400
+
+# ── Prometheus metrics (§15) — graceful degradation if unavailable ─────────────
+try:
+    from prometheus_client import Counter, Histogram
+
+    _FP_INGESTION_TOTAL = Counter(
+        "floor_plan_ingestion_total",
+        "Total floor plan ingestion runs",
+        ["building", "floor", "outcome"],  # outcome: success | skipped | failed
+    )
+    _FP_INGESTION_DURATION = Histogram(
+        "floor_plan_ingestion_duration_seconds",
+        "Floor plan ingestion duration per step",
+        ["building", "floor", "step"],
+        buckets=[0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 30],
+    )
+    _FP_MANIFEST_WARNINGS = Counter(
+        "floor_plan_manifest_warnings",
+        "Number of warnings recorded in floor plan manifests",
+        ["building", "floor"],
+    )
+    _FP_API_REQUESTS = Counter(
+        "floor_plan_api_requests_total",
+        "Total floor plan API requests",
+        ["endpoint", "status"],
+    )
+    _PROM_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    _PROM_AVAILABLE = False
+
+
+def _prom_observe(histogram, labels: dict, value: float) -> None:  # noqa: ANN001
+    """Safely record a histogram observation."""
+    if _PROM_AVAILABLE:
+        try:
+            histogram.labels(**labels).observe(value)
+        except Exception:  # pragma: no cover
+            pass
+
+
+def _prom_inc(counter, labels: dict, amount: float = 1.0) -> None:  # noqa: ANN001
+    """Safely increment a counter."""
+    if _PROM_AVAILABLE:
+        try:
+            counter.labels(**labels).inc(amount)
+        except Exception:  # pragma: no cover
+            pass
 
 # Facility-type keyword map (used in rule-based classification, step 6)
 _FACILITY_KEYWORDS: Dict[str, List[str]] = {
@@ -121,6 +168,10 @@ class FloorPlanPipeline:
 
     async def ingest_file(self, pdf_path: Path) -> Optional[FloorPlanManifest]:
         """Ingest one PDF through all 10 steps."""
+        import time as _time
+
+        t_start = _time.monotonic()
+
         # Step 1: discover
         m = self._pdf_pattern.match(pdf_path.name)
         if not m:
@@ -135,6 +186,8 @@ class FloorPlanPipeline:
         manifest_path = self._manifest_path(building_id, floor)
         warnings: List[str] = []
 
+        _labels = {"building": building_id, "floor": str(floor)}
+
         logger.info(f"[pipeline] Ingesting {pdf_path.name} → building={building_id}, floor={floor}")
 
         # Step 2: fingerprint — skip if unchanged
@@ -144,26 +197,33 @@ class FloorPlanPipeline:
                 existing = FloorPlanManifest.model_validate_json(manifest_path.read_text("utf-8"))
                 if existing.source_sha256 == sha:
                     logger.info(f"[pipeline] {pdf_path.name} unchanged — skipping.")
+                    _prom_inc(_FP_INGESTION_TOTAL, {**_labels, "outcome": "skipped"})
                     return existing
             except Exception:
                 pass  # Corrupt manifest — regenerate
 
         # Step 3: render pages → PNG + thumbnail
+        _t3 = _time.monotonic()
         image_info, render_warnings = await _run_in_executor(
             _render_pdf, pdf_path, self._manifest_dir, building_id, floor, cfg.default_dpi
         )
+        _prom_observe(_FP_INGESTION_DURATION, {**_labels, "step": "render"}, _time.monotonic() - _t3)
         warnings.extend(render_warnings)
         if image_info is None:
             logger.error(f"[pipeline] Render failed for {pdf_path.name} — aborting.")
+            _prom_inc(_FP_INGESTION_TOTAL, {**_labels, "outcome": "failed"})
             return None
 
         # Step 4: extract text layer
+        _t4 = _time.monotonic()
         text_blocks, extract_warnings = await _run_in_executor(
             _extract_text_blocks, pdf_path
         )
+        _prom_observe(_FP_INGESTION_DURATION, {**_labels, "step": "extract"}, _time.monotonic() - _t4)
         warnings.extend(extract_warnings)
 
         # Step 5: detect spaces (regex then LLM)
+        _t5 = _time.monotonic()
         raw_spaces, detect_warnings = _detect_spaces_regex(text_blocks, building_id, floor, cfg)
         warnings.extend(detect_warnings)
 
@@ -173,6 +233,7 @@ class FloorPlanPipeline:
             )
             raw_spaces.extend(llm_spaces)
             warnings.extend(llm_warnings)
+        _prom_observe(_FP_INGESTION_DURATION, {**_labels, "step": "detect_spaces"}, _time.monotonic() - _t5)
 
         # Step 6: classify types
         raw_spaces = _classify_types(raw_spaces)
@@ -181,8 +242,10 @@ class FloorPlanPipeline:
         raw_spaces = _normalise_ids(raw_spaces, building_id, floor)
 
         # Step 8: link ontology
+        _t8 = _time.monotonic()
         link_warnings = await self._link_ontology(raw_spaces, building_id, floor)
         warnings.extend(link_warnings)
+        _prom_observe(_FP_INGESTION_DURATION, {**_labels, "step": "link_ontology"}, _time.monotonic() - _t8)
 
         # Build facilities map
         facilities: Dict[str, List[str]] = {}
@@ -233,16 +296,26 @@ class FloorPlanPipeline:
         )
 
         # Step 9: embed + index into Qdrant
+        _t9 = _time.monotonic()
         await self._embed_and_index(manifest)
+        _prom_observe(_FP_INGESTION_DURATION, {**_labels, "step": "embed_index"}, _time.monotonic() - _t9)
 
         # Step 10: write manifest to disk + Redis
         await self._write_manifest(manifest)
 
+        # Emit success metrics
+        _prom_inc(_FP_INGESTION_TOTAL, {**_labels, "outcome": "success"})
+        _prom_observe(_FP_INGESTION_DURATION, {**_labels, "step": "total"}, _time.monotonic() - t_start)
+        if warnings:
+            _prom_inc(_FP_MANIFEST_WARNINGS, _labels, amount=len(warnings))
+
         logger.info(
-            f"[pipeline] Done: building={building_id}, floor={floor}, "
-            f"spaces={len(raw_spaces)}, warnings={len(warnings)}"
+            f"[floor_plan_pipeline] building={building_id} floor={floor} step=total "
+            f"duration_ms={round((_time.monotonic() - t_start) * 1000)} ok=true "
+            f"spaces={len(raw_spaces)} warnings={len(warnings)}"
         )
         return manifest
+
 
     # ── Manifest I/O ──────────────────────────────────────────────────────────
 

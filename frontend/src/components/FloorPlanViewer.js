@@ -53,6 +53,7 @@ export default function FloorPlanViewer({
   manifest,
   onSelectSpace,
   showSensors = true,
+  showSidePanel = true,   // T3: side panel visible by default
   apiBase = "",
   className = "",
 }) {
@@ -63,6 +64,13 @@ export default function FloorPlanViewer({
   const [imgLoaded, setImgLoaded] = useState(false);
   const imgRef = useRef(null);
   const containerRef = useRef(null);
+
+  // ── T3 side panel state ────────────────────────────────────────────────
+  const [panelOpen, setPanelOpen] = useState(showSidePanel);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState(null);   // null = all types
+  const [searchResults, setSearchResults] = useState(null);  // null = use manifest
+  const [searching, setSearching] = useState(false);
 
   const imageUrl = manifest?.rendered_image?.png_url || "";
   const spaces = manifest?.spaces || [];
@@ -102,6 +110,64 @@ export default function FloorPlanViewer({
 
     return () => ctrl.abort();
   }, [showSensors, spaces, apiBase]);
+
+  // ── T3: search across manifest (local) or API (cross-floor) ───────────
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      return;
+    }
+    const ctrl = new AbortController();
+    setSearching(true);
+    const building = manifest?.building_id || "abacws";
+    fetch(
+      `${apiBase}/api/v1/floor-plans/search?q=${encodeURIComponent(searchQuery)}&building=${building}`,
+      { signal: ctrl.signal }
+    )
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.data) {
+          setSearchResults(data.data.map((d) => d.space || d));
+        } else {
+          // Fallback: filter locally within the loaded manifest
+          const q = searchQuery.toLowerCase();
+          setSearchResults(
+            spaces.filter(
+              (s) =>
+                s.label.toLowerCase().includes(q) ||
+                s.zone_id.toLowerCase().includes(q) ||
+                s.type.toLowerCase().includes(q)
+            )
+          );
+        }
+        setSearching(false);
+      })
+      .catch(() => {
+        // Offline fallback
+        const q = searchQuery.toLowerCase();
+        setSearchResults(
+          spaces.filter(
+            (s) =>
+              s.label.toLowerCase().includes(q) ||
+              s.zone_id.toLowerCase().includes(q) ||
+              s.type.toLowerCase().includes(q)
+          )
+        );
+        setSearching(false);
+      });
+
+    return () => ctrl.abort();
+  }, [searchQuery, spaces, manifest, apiBase]);
+
+  // Derive the list shown in the side panel
+  const panelSpaces = useCallback(() => {
+    let list = searchResults !== null ? searchResults : spaces;
+    if (typeFilter) list = list.filter((s) => s.type === typeFilter);
+    return list;
+  }, [searchResults, spaces, typeFilter]);
+
+  // All distinct types for the filter chips
+  const allTypes = [...new Set(spaces.map((s) => s.type))].sort();
 
   const handleSpaceClick = useCallback(
     (space) => {
@@ -293,33 +359,14 @@ export default function FloorPlanViewer({
         })()}
       </div>
 
-      {/* ── Space legend / list ──────────────────────────────────────── */}
-      {spaces.length > 0 && (
-        <div style={styles.legend}>
-          <span style={styles.legendTitle}>Spaces ({spaces.length})</span>
-          <div style={styles.legendGrid}>
-            {spaces.slice(0, 20).map((space) => (
-              <button
-                key={space.id}
-                onClick={() => handleSpaceClick(space)}
-                style={{
-                  ...styles.legendItem,
-                  background: selected === space.id ? "#1e40af" : "#1e293b",
-                  border: selected === space.id ? "1px solid #3b82f6" : "1px solid #334155",
-                }}
-                title={space.zone_id}
-              >
-                {TYPE_ICONS[space.type] || "📍"} {space.label.length > 18 ? space.label.slice(0, 16) + "…" : space.label}
-              </button>
-            ))}
-            {spaces.length > 20 && (
-              <span style={{ color: "#94a3b8", fontSize: 11, alignSelf: "center" }}>
-                +{spaces.length - 20} more
-              </span>
-            )}
-          </div>
-        </div>
-      )}
+      {/* ── T3 Side Panel toggle ────────────────────────────────────── */}
+      <button
+        onClick={() => setPanelOpen((o) => !o)}
+        style={styles.panelToggle}
+        title={panelOpen ? "Hide space list" : "Show space list"}
+      >
+        {panelOpen ? "◀ Hide" : "▶ Spaces"}
+      </button>
 
       {/* ── Status legend ────────────────────────────────────────────── */}
       {showSensors && Object.keys(sensorReadings).length > 0 && (
@@ -333,6 +380,91 @@ export default function FloorPlanViewer({
         </div>
       )}
     </div>
+
+    {/* ── T3 Side Panel ───────────────────────────────────────────────── */}
+    {panelOpen && (
+      <div style={styles.sidePanel}>
+        {/* Search box */}
+        <input
+          id="floor-plan-search"
+          type="search"
+          placeholder="Search spaces…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={styles.searchInput}
+          aria-label="Search spaces"
+        />
+
+        {/* Type filter chips */}
+        <div style={styles.filterRow}>
+          <button
+            onClick={() => setTypeFilter(null)}
+            style={{
+              ...styles.filterChip,
+              background: typeFilter === null ? "#3b82f6" : "#1e293b",
+              border: typeFilter === null ? "1px solid #60a5fa" : "1px solid #334155",
+            }}
+          >
+            All
+          </button>
+          {allTypes.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTypeFilter(t === typeFilter ? null : t)}
+              style={{
+                ...styles.filterChip,
+                background: typeFilter === t ? "#3b82f6" : "#1e293b",
+                border: typeFilter === t ? "1px solid #60a5fa" : "1px solid #334155",
+              }}
+            >
+              {TYPE_ICONS[t] || ""} {t.replace(/_/g, " ")}
+            </button>
+          ))}
+        </div>
+
+        {/* Space list */}
+        <div style={styles.spaceList}>
+          {searching && (
+            <div style={styles.searchingNote}>Searching…</div>
+          )}
+          {!searching && panelSpaces().length === 0 && (
+            <div style={styles.searchingNote}>No spaces match your search.</div>
+          )}
+          {!searching && panelSpaces().map((space) => (
+            <button
+              key={space.id}
+              onClick={() => handleSpaceClick(space)}
+              style={{
+                ...styles.spaceRow,
+                background: selected === space.id ? "#1e3a8a" : "transparent",
+                borderLeft: selected === space.id
+                  ? "3px solid #3b82f6"
+                  : "3px solid transparent",
+              }}
+            >
+              <span style={styles.spaceRowIcon}>
+                {TYPE_ICONS[space.type] || "📍"}
+              </span>
+              <span style={styles.spaceRowLabel}>
+                {space.label}
+                {space.zone_id && space.zone_id !== space.label && (
+                  <span style={styles.spaceRowZone}> · {space.zone_id}</span>
+                )}
+              </span>
+              <span style={styles.spaceRowType}>
+                {space.type.replace(/_/g, " ")}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div style={styles.panelFooter}>
+          {panelSpaces().length} space{panelSpaces().length !== 1 ? "s" : ""}
+          {typeFilter ? ` · ${typeFilter.replace(/_/g, " ")}` : ""}
+        </div>
+      </div>
+    )}
+  </div>
   );
 }
 
@@ -421,5 +553,107 @@ const styles = {
     padding: "4px 8px",
     background: "#0f172a",
     borderRadius: 6,
+  },
+  // ── T3 side panel ─────────────────────────────────────────────────────────
+  panelToggle: {
+    marginTop: 6,
+    padding: "4px 10px",
+    background: "#1e293b",
+    color: "#94a3b8",
+    border: "1px solid #334155",
+    borderRadius: 4,
+    cursor: "pointer",
+    fontSize: 11,
+    transition: "background 0.15s",
+  },
+  sidePanel: {
+    marginTop: 8,
+    background: "#0f172a",
+    border: "1px solid #1e293b",
+    borderRadius: 6,
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+    maxHeight: 480,
+  },
+  searchInput: {
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "7px 10px",
+    background: "#1e293b",
+    border: "none",
+    borderBottom: "1px solid #334155",
+    color: "#e2e8f0",
+    fontSize: 12,
+    outline: "none",
+  },
+  filterRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 4,
+    padding: "6px 8px",
+    borderBottom: "1px solid #1e293b",
+  },
+  filterChip: {
+    padding: "2px 8px",
+    borderRadius: 12,
+    cursor: "pointer",
+    fontSize: 10,
+    color: "#e2e8f0",
+    transition: "background 0.15s",
+    whiteSpace: "nowrap",
+  },
+  spaceList: {
+    overflowY: "auto",
+    flex: 1,
+    padding: "4px 0",
+  },
+  spaceRow: {
+    display: "flex",
+    alignItems: "center",
+    width: "100%",
+    padding: "5px 10px",
+    border: "none",
+    cursor: "pointer",
+    color: "#e2e8f0",
+    textAlign: "left",
+    gap: 6,
+    transition: "background 0.1s",
+  },
+  spaceRowIcon: {
+    fontSize: 14,
+    flexShrink: 0,
+    width: 20,
+    textAlign: "center",
+  },
+  spaceRowLabel: {
+    flex: 1,
+    fontSize: 12,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  spaceRowZone: {
+    color: "#64748b",
+    fontSize: 10,
+  },
+  spaceRowType: {
+    fontSize: 10,
+    color: "#64748b",
+    flexShrink: 0,
+    textTransform: "capitalize",
+  },
+  panelFooter: {
+    padding: "5px 10px",
+    fontSize: 10,
+    color: "#475569",
+    borderTop: "1px solid #1e293b",
+    background: "#0f172a",
+  },
+  searchingNote: {
+    padding: "8px 10px",
+    color: "#64748b",
+    fontSize: 12,
+    fontStyle: "italic",
   },
 };

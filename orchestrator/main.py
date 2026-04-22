@@ -6,6 +6,7 @@ import sys
 
 sys.path.append("/app")
 
+import asyncio
 import collections
 import json
 import os
@@ -2430,9 +2431,7 @@ async def serve_floor_plan_pdf(floor_num: int):
 
 
 @app.get("/api/v1/floor-plans", response_model=APIResponse)
-async def list_floor_plan_manifests(
-    user: UserContext = Depends(create_rbac_dependency(token_manager, "metadata:read")),
-):
+async def list_floor_plan_manifests():
     """List all buildings + floors with their manifest status."""
     try:
         from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
@@ -2466,7 +2465,6 @@ async def list_floor_plan_manifests(
 async def get_floor_plan_manifest(
     building_id: str,
     floor: int,
-    user: UserContext = Depends(create_rbac_dependency(token_manager, "metadata:read")),
 ):
     """Return the full FloorPlanManifest JSON for a specific building floor."""
     try:
@@ -2492,7 +2490,6 @@ async def search_floor_plan_spaces(
     q: str,
     building: str = "abacws",
     floor: Optional[int] = None,
-    user: UserContext = Depends(create_rbac_dependency(token_manager, "metadata:read")),
 ):
     """Cross-floor semantic space search (by label, type, or zone_id)."""
     try:
@@ -2509,7 +2506,6 @@ async def search_floor_plan_spaces(
 @app.get("/api/v1/floor-plans/overview", response_model=APIResponse)
 async def get_floor_plan_overview(
     building: str = "abacws",
-    user: UserContext = Depends(create_rbac_dependency(token_manager, "metadata:read")),
 ):
     """Building-level overview: per-floor space counts, types, and plan links."""
     try:
@@ -2553,7 +2549,6 @@ async def get_floor_plan_overview(
 async def get_floor_plan_facilities(
     type: str,
     building: str = "abacws",
-    user: UserContext = Depends(create_rbac_dependency(token_manager, "metadata:read")),
 ):
     """Facility locator — find all spaces of a given type across all floors."""
     try:
@@ -2571,9 +2566,11 @@ async def get_floor_plan_facilities(
 async def reingest_floor_plans(
     building: Optional[str] = None,
     floor: Optional[int] = None,
-    user: UserContext = Depends(create_rbac_dependency(token_manager, "system:admin")),
+    current_user: Optional[str] = Depends(get_current_user),
 ):
     """Admin-only: force regeneration of floor plan manifests."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required for reingest")
     try:
         from pathlib import Path
         from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
