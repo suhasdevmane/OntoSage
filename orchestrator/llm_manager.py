@@ -10,7 +10,19 @@ sys.path.append("/app")
 import asyncio
 import os
 import time
+from enum import Enum
 from typing import Any, Dict, List, Optional
+
+
+class TaskType(Enum):
+    """Hint for the type of task — currently informational, not used for routing."""
+    INTENT = "intent"
+    GENERAL = "general"
+    DISAMBIGUATION = "disambiguation"
+    REWRITE = "rewrite"
+    ANALYTICS = "analytics"
+    SPARQL = "sparql"
+    REPORT = "report"
 
 from orchestrator.services.circuit_breaker import circuit_breaker_for
 from shared.config import get_llm_config, settings
@@ -126,7 +138,11 @@ class LLMManager:
         return False
 
     async def generate(
-        self, prompt: str, system_message: Optional[str] = None, temperature: Optional[float] = None
+        self,
+        prompt: str,
+        system_message: Optional[str] = None,
+        temperature: Optional[float] = None,
+        task_type: Optional[TaskType] = None,
     ) -> str:
         """
         Generate text from prompt with circuit breaker, retry, and timeout.

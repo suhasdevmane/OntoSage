@@ -157,6 +157,9 @@ class WorkflowOrchestrator:
         workflow.add_node(
             "floor_plan", self._safe_node(self._floor_plan_node, "floor_plan")
         )
+        workflow.add_node(
+            "spatial_query", self._safe_node(self._spatial_query_node, "spatial_query")
+        )
 
         # Entry
         workflow.set_entry_point("dialogue")
@@ -175,6 +178,7 @@ class WorkflowOrchestrator:
                 "anomaly": "anomaly",
                 "export": "export",
                 "floor_plan": "floor_plan",
+                "spatial_query": "spatial_query",
                 "response": "response",
                 "end": END,
             },
@@ -224,6 +228,7 @@ class WorkflowOrchestrator:
         workflow.add_edge("visualization", "response")
         workflow.add_edge("document", "response")
         workflow.add_edge("floor_plan", "response")
+        workflow.add_edge("spatial_query", "response")
         workflow.add_edge("response", END)
 
         return workflow.compile()
@@ -1584,6 +1589,8 @@ Instructions:
             return "sparql"
         elif intent == "floor_plan":
             return "floor_plan"
+        elif intent == "spatial_query":
+            return "spatial_query"
         else:
             return "response"
 
@@ -2320,6 +2327,38 @@ Instructions:
             state.intermediate_results["error"] = f"floor_plan: {str(e)}"
             state.intermediate_results["floor_plan_result"] = (
                 "I encountered an error loading the floor plan. Please try again."
+            )
+
+        return state
+
+    async def _spatial_query_node(self, state: ConversationState) -> ConversationState:
+        """DW4 — Answer quantitative geometry questions from DWG manifest data."""
+        user_query = state.messages[-1].content if state.messages else state.user_message
+        # Mirror FloorPlanAgent._detect_building: prefer floor_context, then state,
+        # then fall back to "abacws" (the default building_id "bldg1" is not a real building).
+        building_id = (
+            (state.floor_context or {}).get("building_id")
+            or (state.building_id if state.building_id != "bldg1" else None)
+            or "abacws"
+        )
+        floor = state.floor_context.get("floor") if state.floor_context else None
+
+        logger.info(
+            f"[spatial_query] intent={state.current_intent}, "
+            f"building={building_id}, floor={floor}"
+        )
+
+        try:
+            from orchestrator.agents.spatial_agent import get_spatial_agent
+
+            agent = get_spatial_agent()
+            markdown = await agent.resolve(user_query, building_id, floor)
+            state.intermediate_results["floor_plan_result"] = markdown
+        except Exception as e:
+            logger.error(f"[spatial_query] Unexpected error: {e}", exc_info=True)
+            state.intermediate_results["error"] = f"spatial_query: {str(e)}"
+            state.intermediate_results["floor_plan_result"] = (
+                "I encountered an error analysing the spatial data. Please try again."
             )
 
         return state

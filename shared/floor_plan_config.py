@@ -37,6 +37,34 @@ from pydantic import BaseModel, Field
 # Default regex that matches Abacws-style zone IDs: "3.01", "5.28"
 _DEFAULT_ZONE_PATTERN = r"\b(\d+)\.(\d{2})\b"
 
+# AIA/NCS layer naming conventions → semantic role
+_DEFAULT_LAYER_MAP: Dict[str, str] = {
+    r"(?i)A[_-]?AREA": "room_boundary",
+    r"(?i)A[_-]?ROOM": "room_boundary",
+    r"(?i)A[_-]?SPAC": "room_boundary",
+    r"(?i)A[_-]?FLOR[_-]?AREA": "room_boundary",
+    r"(?i)A[_-]?WALL": "wall",
+    r"(?i)A[_-]?DOOR": "door",
+    r"(?i)A[_-]?GLAZ": "window",
+    r"(?i)A[_-]?WIND": "window",
+    r"(?i)A[_-]?FURN": "furniture",
+    r"(?i)A[_-]?EQPM": "equipment",
+    r"(?i)A[_-]?ANNO": "annotation",
+    r"(?i)A[_-]?TEXT": "annotation",
+    r"(?i)A[_-]?NPLT": "annotation",
+    r"(?i)A[_-]?ROOM[_-]?NPLT": "room_label",
+    r"(?i)M[_-]?HVAC": "hvac",
+    r"(?i)M[_-]?MECH": "mechanical",
+    r"(?i)E[_-]?LITE": "lighting",
+    r"(?i)E[_-]?POWR": "power",
+    r"(?i)F[_-]": "fire_protection",
+    r"(?i)P[_-]": "plumbing",
+    r"(?i)STAIR": "staircase",
+    r"(?i)LIFT|ELEV": "lift",
+    r"(?i)DEFPOINT|DIMS|DIM": "dimension",
+    r"(?i)^0$": "default",
+}
+
 
 class BuildingConfig(BaseModel):
     """
@@ -56,6 +84,10 @@ class BuildingConfig(BaseModel):
     floors_label_override: Dict[int, str] = Field(default_factory=dict)
     pdf_filename_pattern: str = r"(?P<building>.+?)\s+floor\s+(?P<floor>\d+)\.pdf"
     llm_extract_enabled: bool = True
+    # DW1 — per-building layer overrides (merged on top of _DEFAULT_LAYER_MAP)
+    layer_map: Dict[str, str] = Field(default_factory=dict)
+    min_room_area_m2: float = Field(default=2.0, ge=0.1)
+    max_room_area_m2: float = Field(default=10_000.0)
 
     @property
     def effective_display_name(self) -> str:
@@ -81,6 +113,12 @@ class BuildingConfig(BaseModel):
         elif "{nn}" in pattern:
             pattern = pattern.replace("{nn}", r"(?P<zone>\d{2})")
         return re.compile(pattern)
+
+    def merged_layer_map(self) -> Dict[str, str]:
+        """Return the combined AIA/NCS defaults + any building-specific overrides."""
+        combined = dict(_DEFAULT_LAYER_MAP)
+        combined.update(self.layer_map)
+        return combined
 
     @classmethod
     def from_yaml(cls, yaml_path: Path) -> "BuildingConfig":

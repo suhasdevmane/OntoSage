@@ -416,24 +416,41 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Document ingestion initialization failed (non-fatal): {e}")
 
-    # Floor plan pipeline — render, extract, classify, index all PDFs (idempotent)
+    # Floor plan registry — runs DWG + PDF pipelines in parallel, merges results (idempotent)
     try:
-        from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
+        from orchestrator.services.floor_plan_registry import get_floor_plan_registry
 
-        _fp_pipeline = get_floor_plan_pipeline()
-        manifests = await _fp_pipeline.ingest_all()
-        logger.info(
-            f"Floor plan pipeline ready — {len(manifests)} manifests generated "
-            f"for floors: {[m.floor for m in manifests]}"
+        _fp_registry = get_floor_plan_registry()
+        manifests = await _fp_registry.ingest_all()
+
+        pdf_only = [m for m in manifests if m.data_sources == ["pdf"]]
+        dwg_only = [m for m in manifests if m.data_sources == ["dwg"]]
+        both = [m for m in manifests if "pdf" in m.data_sources and "dwg" in m.data_sources]
+        skipped = sum(
+            1 for m in manifests
+            if not any(w for w in m.warnings if "unchanged" not in w.lower())
         )
-    except Exception as e:
-        logger.warning(f"Floor plan pipeline failed (non-fatal): {e}")
 
-    # Legacy Qdrant text-index (kept for backwards compatibility — pipeline replaces it)
-    try:
-        await floor_plan_service.index_all()
+        logger.info(
+            f"Floor plan registry ready — {len(manifests)} floor(s) ingested: "
+            f"{len(both)} PDF+DWG merged, {len(pdf_only)} PDF-only, {len(dwg_only)} DWG-only. "
+            f"Floors: {sorted(m.floor for m in manifests)}"
+        )
+        if not manifests:
+            logger.info(
+                "Floor plan registry: no PDF or DWG files found in /app/input/ — "
+                "drop files there and they will be auto-ingested by the file watcher."
+            )
     except Exception as e:
-        logger.debug(f"Legacy floor plan index skipped: {e}")
+        logger.warning(f"Floor plan registry failed (non-fatal): {e}")
+
+    # Legacy Qdrant text-index — run as background task so it doesn't block server startup
+    async def _legacy_index():
+        try:
+            await floor_plan_service.index_all()
+        except Exception as e:
+            logger.debug(f"Legacy floor plan index skipped: {e}")
+    asyncio.create_task(_legacy_index())
 
     # File watcher — auto-reingest when PDFs are dropped into /app/input/
     try:
@@ -2562,21 +2579,27 @@ async def reingest_floor_plans(
     floor: Optional[int] = None,
     current_user: Optional[str] = Depends(get_current_user),
 ):
-    """Admin-only: force regeneration of floor plan manifests."""
+    """DW6: Force regeneration of floor plan manifests (PDF + DWG via registry)."""
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required for reingest")
     try:
         from pathlib import Path
+        from orchestrator.services.floor_plan_registry import get_floor_plan_registry
         from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
+        from orchestrator.services.dwg_pipeline import get_dwg_pipeline
 
-        pipeline = get_floor_plan_pipeline()
-        pdf_dir = Path("/app/input")
-        pattern = _re.compile(
-            r"^(?P<bldg>.+?)\s+floor\s+(?P<fl>\d+)\.pdf$", _re.IGNORECASE
+        registry = get_floor_plan_registry()
+        input_dir = Path("/app/input")
+        _file_re = _re.compile(
+            r"^(?P<bldg>.+?)\s+floor\s+(?P<fl>\d+)\.(?:pdf|dwg)$", _re.IGNORECASE
         )
-        pdfs_to_ingest = []
-        for path in sorted(pdf_dir.glob("*.pdf")):
-            m = pattern.match(path.name)
+
+        # Collect files to reingest
+        files_to_ingest = []
+        for path in sorted(input_dir.glob("*")):
+            if path.suffix.lower() not in {".pdf", ".dwg"}:
+                continue
+            m = _file_re.match(path.name)
             if not m:
                 continue
             bid = _re.sub(r"[^a-z0-9]+", "_", m.group("bldg").lower()).strip("_")
@@ -2585,21 +2608,52 @@ async def reingest_floor_plans(
                 continue
             if floor is not None and fl != floor:
                 continue
-            pdfs_to_ingest.append(path)
+            files_to_ingest.append(path)
 
-        results = []
-        for path in pdfs_to_ingest:
-            manifest = await pipeline.ingest_file(path)
-            if manifest:
-                results.append(
-                    {
-                        "building_id": manifest.building_id,
-                        "floor": manifest.floor,
-                        "spaces": len(manifest.spaces),
-                        "warnings": len(manifest.warnings),
-                    }
-                )
+        # Process each file and merge via registry
+        pdf_pipeline = get_floor_plan_pipeline()
+        dwg_pipeline = get_dwg_pipeline()
+        results_map: dict = {}  # (building_id, floor) → result dict
 
+        for path in files_to_ingest:
+            try:
+                if path.suffix.lower() == ".pdf":
+                    manifest = await pdf_pipeline.ingest_file(path)
+                else:
+                    manifest = await dwg_pipeline.ingest_file(path)
+
+                if not manifest:
+                    continue
+                key = (manifest.building_id, manifest.floor)
+                results_map[key] = results_map.get(key) or {
+                    "building_id": manifest.building_id,
+                    "floor": manifest.floor,
+                    "data_sources": [],
+                    "spaces": 0,
+                    "warnings": 0,
+                }
+                if path.suffix.lower() == ".pdf":
+                    results_map[key]["data_sources"].append("pdf")
+                    results_map[key]["spaces"] = max(results_map[key]["spaces"], len(manifest.spaces))
+                    results_map[key]["warnings"] += len(manifest.warnings)
+                else:
+                    results_map[key]["data_sources"].append("dwg")
+            except Exception as file_err:
+                logger.warning(f"[reingest] {path.name} failed: {file_err}")
+
+        # Run final merge pass for all affected floors
+        for (bid, fl) in list(results_map.keys()):
+            try:
+                dwg_m = dwg_pipeline.load_manifest(bid, fl)
+                pdf_m = pdf_pipeline.load_manifest(bid, fl)
+                merged = registry._merge(dwg_m, pdf_m)
+                if merged:
+                    await registry._write_manifest(merged)
+                    results_map[(bid, fl)]["schema_version"] = merged.schema_version
+            except Exception as merge_err:
+                logger.warning(f"[reingest] merge failed for {bid}/floor {fl}: {merge_err}")
+
+        results = list(results_map.values())
         return APIResponse(
             success=True,
             data={"reingested": results, "total": len(results)},
@@ -2607,6 +2661,187 @@ async def reingest_floor_plans(
     except Exception as e:
         logger.error(f"reingest_floor_plans failed: {e}", exc_info=True)
         return APIResponse(success=False, error=str(e), data={})
+
+
+@app.get("/api/v1/floor-plans/{building_id}/{floor}/polygons", response_model=APIResponse)
+async def get_floor_plan_polygons(building_id: str, floor: int):
+    """DW5: Return space polygons as JSON for frontend SVG overlay rendering."""
+    try:
+        from orchestrator.services.floor_plan_registry import get_floor_plan_registry
+
+        manifest = get_floor_plan_registry().load_manifest(building_id, floor)
+        if not manifest:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No manifest for building={building_id}, floor={floor}.",
+            )
+
+        spaces_with_polygons = []
+        for s in manifest.spaces:
+            if not s.polygon:
+                continue
+            spaces_with_polygons.append(
+                {
+                    "zone_id": s.zone_id,
+                    "label": s.label,
+                    "type": s.type,
+                    "area_m2": s.area_m2,
+                    "centroid": s.centroid.model_dump() if s.centroid else None,
+                    "polygon": [[p.x, p.y] for p in s.polygon],
+                    "adjacent_spaces": s.adjacent_spaces,
+                    "sensor_uuids": s.sensor_uuids,
+                    "ontology_iri": s.ontology_iri,
+                }
+            )
+
+        return APIResponse(
+            success=True,
+            data={
+                "building_id": building_id,
+                "floor": floor,
+                "floor_label": manifest.floor_label,
+                "schema_version": manifest.schema_version,
+                "total_spaces": len(manifest.spaces),
+                "spaces_with_polygons": len(spaces_with_polygons),
+                "spaces": spaces_with_polygons,
+                "blocks": [
+                    {
+                        "type": b.type,
+                        "block_name": b.block_name,
+                        "position": b.position.model_dump(),
+                        "layer": b.layer,
+                        "space_id": b.space_id,
+                    }
+                    for b in manifest.blocks
+                ],
+            },
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"get_floor_plan_polygons failed: {e}")
+        return APIResponse(success=False, error=str(e), data={})
+
+
+@app.get("/api/v1/floor-plans/{building_id}/{floor}/svg")
+async def get_floor_plan_svg(
+    building_id: str,
+    floor: int,
+    width: int = 800,
+    height: int = 600,
+    show_labels: bool = True,
+    show_blocks: bool = True,
+):
+    """DW5: Return an inline SVG with colour-coded room polygons overlaid on the floor plan."""
+    from fastapi.responses import Response as FastAPIResponse
+
+    _TYPE_COLOUR = {
+        "office": "#93c5fd", "lab": "#86efac", "meeting_room": "#fde68a",
+        "classroom": "#c4b5fd", "lecture": "#a5b4fc", "toilet": "#d1d5db",
+        "kitchen": "#fdba74", "server_room": "#f87171", "storage": "#d1fae5",
+        "staircase": "#e5e7eb", "lift": "#e5e7eb", "reception": "#fbcfe8",
+        "corridor": "#f3f4f6", "utility": "#fef9c3", "zone": "#bfdbfe",
+        "unknown": "#f9fafb",
+    }
+    _BLOCK_SYMBOL = {
+        "door": "D", "window": "W", "fire_exit": "FE", "sensor": "S",
+        "hvac_diffuser": "H", "fire_alarm": "FA", "light_fixture": "L",
+        "power_outlet": "P", "equipment": "E", "unknown": "?",
+    }
+
+    try:
+        from orchestrator.services.floor_plan_registry import get_floor_plan_registry
+
+        manifest = get_floor_plan_registry().load_manifest(building_id, floor)
+        if not manifest:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No manifest for building={building_id}, floor={floor}.",
+            )
+
+        vw, vh = width, height
+        parts = [
+            f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {vw} {vh}" '
+            f'width="{vw}" height="{vh}">',
+            f'<title>{manifest.building_name} — {manifest.floor_label}</title>',
+            '<rect width="100%" height="100%" fill="#f8fafc" stroke="#e2e8f0"/>',
+        ]
+
+        # Background PNG image if available
+        if manifest.rendered_image and manifest.rendered_image.png_url:
+            parts.append(
+                f'<image href="{manifest.rendered_image.png_url}" '
+                f'x="0" y="0" width="{vw}" height="{vh}" opacity="0.4"/>'
+            )
+
+        # Room polygons
+        for s in manifest.spaces:
+            if not s.polygon:
+                continue
+            fill = _TYPE_COLOUR.get(s.type, "#f9fafb")
+            pts = " ".join(f"{p.x * vw:.1f},{p.y * vh:.1f}" for p in s.polygon)
+            parts.append(
+                f'<polygon points="{pts}" fill="{fill}" fill-opacity="0.6" '
+                f'stroke="#475569" stroke-width="1">'
+                f'<title>{s.label} ({s.zone_id})</title></polygon>'
+            )
+            # Label at centroid
+            if show_labels and s.centroid:
+                cx = s.centroid.x * vw
+                cy = s.centroid.y * vh
+                short = s.zone_id if len(s.zone_id) <= 6 else s.zone_id[:6]
+                parts.append(
+                    f'<text x="{cx:.1f}" y="{cy:.1f}" font-size="9" '
+                    f'text-anchor="middle" dominant-baseline="middle" '
+                    f'fill="#1e293b" font-family="monospace">{short}</text>'
+                )
+
+        # Block markers
+        if show_blocks:
+            for b in manifest.blocks:
+                bx = b.position.x * vw
+                by = b.position.y * vh
+                sym = _BLOCK_SYMBOL.get(b.type, "?")
+                parts.append(
+                    f'<circle cx="{bx:.1f}" cy="{by:.1f}" r="5" '
+                    f'fill="#1e40af" opacity="0.7">'
+                    f'<title>{b.block_name} ({b.type})</title></circle>'
+                )
+                if show_labels:
+                    parts.append(
+                        f'<text x="{bx:.1f}" y="{by:.1f}" font-size="7" '
+                        f'text-anchor="middle" dominant-baseline="middle" '
+                        f'fill="white" font-family="monospace">{sym}</text>'
+                    )
+
+        # Legend
+        legend_y = vh - 10
+        legend_x = 8
+        for stype, colour in list(_TYPE_COLOUR.items())[:6]:
+            parts.append(
+                f'<rect x="{legend_x}" y="{legend_y - 8}" width="10" height="8" fill="{colour}" stroke="#94a3b8"/>'
+            )
+            parts.append(
+                f'<text x="{legend_x + 12}" y="{legend_y}" font-size="7" fill="#334155">{stype}</text>'
+            )
+            legend_x += 80
+
+        parts.append("</svg>")
+        svg_content = "\n".join(parts)
+
+        return FastAPIResponse(
+            content=svg_content,
+            media_type="image/svg+xml",
+            headers={"Cache-Control": "public, max-age=300"},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"get_floor_plan_svg failed: {e}")
+        return FastAPIResponse(
+            content=f'<svg xmlns="http://www.w3.org/2000/svg"><text y="20">Error: {e}</text></svg>',
+            media_type="image/svg+xml",
+        )
 
 
 @app.get("/buildings", response_model=APIResponse)

@@ -4,11 +4,15 @@ FROM python:3.11-slim-bookworm
 WORKDIR /app
 
 # Install system dependencies
+# libredwg-utils (provides dwg2dxf) is in Debian sid/trixie but not bookworm;
+# install it best-effort — the DWG pipeline degrades gracefully if absent.
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     curl \
     wkhtmltopdf \
+    tesseract-ocr \
+    && ( apt-get install -y libredwg-utils || true ) \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy shared module first

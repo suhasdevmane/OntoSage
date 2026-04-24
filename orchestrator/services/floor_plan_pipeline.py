@@ -119,6 +119,10 @@ _FACILITY_KEYWORDS: Dict[str, List[str]] = {
 }
 
 
+# Matches Z-format zone IDs like "3Z04", "1Z01" (collaboration/tutorial niches)
+_Z_ZONE_RE = re.compile(r"\b(\d+)Z(\d{2,3})\b")
+
+
 class FloorPlanPipeline:
     """
     Idempotent pipeline that converts PDF floor plans → FloorPlanManifest.
@@ -516,7 +520,11 @@ class FloorPlanPipeline:
     # ── Step 9 Qdrant indexing ─────────────────────────────────────────────────
 
     async def _embed_and_index(self, manifest: FloorPlanManifest) -> None:
-        """Embed each space and upsert into Qdrant floor_plans collection."""
+        """Embed each space and upsert into Qdrant floor_plans collection.
+
+        Payload includes DWG-enriched fields (area_m2, adjacency, polygon) when
+        available so RAG context answers can reference geometry facts.
+        """
         try:
             client = await self._get_qdrant_client()
             if not client:
@@ -524,18 +532,24 @@ class FloorPlanPipeline:
 
             from qdrant_client.models import PointStruct
 
-            texts = [
-                f"{s.label} {s.type} floor {manifest.floor} {manifest.building_name}"
-                for s in manifest.spaces
-            ]
-            if not texts:
+            if not manifest.spaces:
                 return
 
+            # Richer embedding text: include area and type so semantic search
+            # can match "large office" or "small meeting room" correctly.
+            def _space_text(s: Space) -> str:
+                area_str = f"{s.area_m2:.0f}m2" if s.area_m2 else ""
+                adj_str = f"adjacent to {' '.join(s.adjacent_spaces[:3])}" if s.adjacent_spaces else ""
+                return f"{s.label} {s.type} floor {manifest.floor} {manifest.building_name} {area_str} {adj_str}".strip()
+
+            texts = [_space_text(s) for s in manifest.spaces]
             embeddings = await self._batch_embed(texts)
             points = []
             for space, emb in zip(manifest.spaces, embeddings):
                 pid = int(
-                    hashlib.md5(f"{manifest.building_id}.{manifest.floor}.{space.zone_id}".encode()).hexdigest(),
+                    hashlib.md5(
+                        f"{manifest.building_id}.{manifest.floor}.{space.zone_id}".encode()
+                    ).hexdigest(),
                     16,
                 ) % (2**63)
                 points.append(
@@ -543,6 +557,7 @@ class FloorPlanPipeline:
                         id=pid,
                         vector=emb,
                         payload={
+                            # Core identification
                             "building_id": manifest.building_id,
                             "floor": manifest.floor,
                             "floor_label": manifest.floor_label,
@@ -552,17 +567,28 @@ class FloorPlanPipeline:
                             "type": space.type,
                             "tags": space.tags,
                             "ontology_iri": space.ontology_iri,
+                            "sensor_uuids": space.sensor_uuids,
+                            # Navigation
                             "pdf_url": manifest.pdf_url,
-                            "image_url": manifest.rendered_image.png_url,
-                            "source": "floor_plan_space",
+                            "image_url": manifest.rendered_image.png_url if manifest.rendered_image else "",
+                            "schema_version": manifest.schema_version,
+                            "source": space.source,
+                            # DWG geometry (populated when schema_version == "2.0")
+                            "area_m2": space.area_m2,
+                            "perimeter_m": space.perimeter_m,
+                            "has_polygon": bool(space.polygon),
+                            "adjacent_spaces": space.adjacent_spaces,
+                            "layer": space.layer,
                         },
                     )
                 )
 
             COLL = "floor_plans"
             await client.upsert(collection_name=COLL, points=points)
+            geo_count = sum(1 for s in manifest.spaces if s.area_m2 is not None)
             logger.info(
-                f"[pipeline] Indexed {len(points)} spaces for "
+                f"[pipeline] Indexed {len(points)} spaces "
+                f"({geo_count} with geometry) for "
                 f"building={manifest.building_id}, floor={manifest.floor}"
             )
         except Exception as e:
@@ -710,6 +736,44 @@ def _extract_text_blocks(
                     },
                 }
             )
+        # OCR fallback for PDFs where text is rendered as vector paths (e.g. floor 0)
+        if not blocks:
+            logger.info(
+                f"[pipeline] No text layer in {pdf_path.name} — attempting OCR (requires Tesseract)"
+            )
+            try:
+                tp = page.get_textpage_ocr(language="eng", dpi=200)
+                for b in tp.extractBLOCKS():
+                    if b[6] != 0:
+                        continue
+                    txt = b[4].strip().replace("\n", " ")
+                    if not txt:
+                        continue
+                    cx = min(((b[0] + b[2]) / 2) / page_w, 1.0)
+                    cy = min(((b[1] + b[3]) / 2) / page_h, 1.0)
+                    blocks.append(
+                        {
+                            "text": txt,
+                            "centroid": {"x": cx, "y": cy},
+                            "bbox": {
+                                "x": b[0] / page_w,
+                                "y": b[1] / page_h,
+                                "w": (b[2] - b[0]) / page_w,
+                                "h": (b[3] - b[1]) / page_h,
+                            },
+                        }
+                    )
+                if blocks:
+                    logger.info(f"[pipeline] OCR recovered {len(blocks)} blocks from {pdf_path.name}")
+                else:
+                    warnings.append(
+                        f"{pdf_path.name}: OCR produced no text — install Tesseract for vector-text PDFs"
+                    )
+            except Exception as ocr_err:
+                warnings.append(
+                    f"{pdf_path.name}: OCR failed ({ocr_err}) — install Tesseract for vector-text PDFs"
+                )
+
         doc.close()
         logger.debug(f"[pipeline] Extracted {len(blocks)} text blocks from {pdf_path.name}")
     except ImportError:
@@ -730,6 +794,14 @@ def _extract_text_blocks(
     except Exception as e:
         warnings.append(f"Text extraction failed: {e}")
     return blocks, warnings
+
+
+def _zone_floor_matches(zone_id: str, expected_floor: int) -> bool:
+    """Return True if the zone_id belongs to expected_floor (e.g. "3.01" → floor 3)."""
+    m = re.match(r"^(\d+)[.Z]", zone_id)
+    if m:
+        return int(m.group(1)) == expected_floor
+    return True  # can't determine — allow through
 
 
 def _detect_spaces_regex(
@@ -766,10 +838,13 @@ def _detect_spaces_regex(
             else None
         )
 
-        # Match zone IDs
-        for match in zone_re.finditer(text):
-            zone_id = match.group(0).strip()
+        # Match zone IDs — dot-format (3.01) and Z-format (3Z04)
+        candidate_ids = [m.group(0).strip() for m in zone_re.finditer(text)]
+        candidate_ids += [m.group(0).strip() for m in _Z_ZONE_RE.finditer(text)]
+        for zone_id in candidate_ids:
             if zone_id in seen_ids:
+                continue
+            if not _zone_floor_matches(zone_id, floor):
                 continue
             seen_ids.add(zone_id)
             spaces.append(
