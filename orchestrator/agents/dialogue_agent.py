@@ -449,9 +449,21 @@ Your task is to analyze the user's question and return a JSON response.
                         "Show me what's on each floor.", "Where are the toilets?",
                         "Give me a building overview.", "Find the reception."
 
+   - "spatial_query" : User asks quantitative/analytical geometry questions about the building —
+                        room sizes, areas, adjacency relationships, counts, or MEP block locations.
+                        Use this when the user asks ABOUT DATA derived from the floor plan, not to SEE it.
+                        e.g. "Which rooms are larger than 50 m²?", "What is the total area of floor 3?",
+                        "How many meeting rooms are on floor 4?", "Which rooms are adjacent to 3.01?",
+                        "What is the smallest room on floor 2?", "How many sensors are on floor 3?",
+                        "List all labs with area between 20 and 80 m².", "Where are the fire exits?",
+                        "What rooms are next to the server room?", "Total area of the building.",
+                        "How many doors are on floor 1?", "Count the rooms on each floor."
+                        DISAMBIGUATION: "show me / where is / find" → "floor_plan". "how many / area / size / adjacent" → "spatial_query".
+
    === DISAMBIGUATION RULES ===
    - If the user asks to see a floor plan, map, or layout → "floor_plan"
    - If the user asks where a room/zone/facility is located → "floor_plan"
+   - If the user asks for counts, areas, sizes, or adjacency data → "spatial_query"
    - If the user asks for a building overview or wants to know what's on each floor → "floor_plan"
    - If the user mentions navigation, directions, or finding a specific room/facility → "floor_plan"
    - If the query contains "recommend", "suggest", "improve", "optimize", "what should" → "recommend"

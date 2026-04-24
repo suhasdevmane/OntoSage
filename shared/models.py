@@ -383,6 +383,31 @@ SpaceType = Literal[
 ]
 
 
+BlockType = Literal[
+    "door",
+    "window",
+    "fire_exit",
+    "sensor",
+    "hvac_diffuser",
+    "fire_alarm",
+    "light_fixture",
+    "power_outlet",
+    "equipment",
+    "unknown",
+]
+
+
+class Block(BaseModel):
+    """A DWG INSERT entity (door, sensor, equipment, etc.) placed on the floor plan."""
+
+    type: BlockType = "unknown"
+    block_name: str
+    position: NormalisedPoint
+    layer: Optional[str] = None
+    attributes: Dict[str, str] = Field(default_factory=dict)
+    space_id: Optional[str] = None
+
+
 class Space(BaseModel):
     """
     A single identifiable space (room, zone, corridor, facility) on a floor.
@@ -402,8 +427,13 @@ class Space(BaseModel):
     polygon: Optional[List[NormalisedPoint]] = None
     sensor_uuids: List[str] = Field(default_factory=list)
     ontology_iri: Optional[str] = None
-    source: Literal["text_extraction", "llm", "manual"] = "text_extraction"
+    source: Literal["text_extraction", "llm", "manual", "dwg"] = "text_extraction"
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    # DW2 — geometry enrichment from DWG source
+    area_m2: Optional[float] = None
+    perimeter_m: Optional[float] = None
+    layer: Optional[str] = None
+    adjacent_spaces: List[str] = Field(default_factory=list)
 
 
 class RenderedImage(BaseModel):
@@ -425,7 +455,7 @@ class FloorPlanManifest(BaseModel):
     Schema version is ``"1.0"``; readers must reject unknown versions.
     """
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["1.0", "2.0"] = "1.0"
     building_id: str
     building_name: str
     floor: int
@@ -442,6 +472,15 @@ class FloorPlanManifest(BaseModel):
     facilities: Dict[str, List[str]] = Field(default_factory=dict)
     ontology_links: Dict[str, str] = Field(default_factory=dict)
     warnings: List[str] = Field(default_factory=list)
+    # DW2 — v2.0 fields (populated when DWG source is available)
+    source_dwg: Optional[str] = None
+    source_dwg_sha256: Optional[str] = None
+    dwg_units: str = "m"
+    data_sources: List[str] = Field(default_factory=lambda: ["pdf"])
+    total_area_m2: Optional[float] = None
+    blocks: List[Block] = Field(default_factory=list)
+    layers: List[Dict[str, Any]] = Field(default_factory=list)
+    adjacency: Dict[str, List[str]] = Field(default_factory=dict)
 
 
 class FloorPlanResult(BaseModel):

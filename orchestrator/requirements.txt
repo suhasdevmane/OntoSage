@@ -61,3 +61,7 @@ python-multipart>=0.0.9  # FastAPI UploadFile support
 # Floor plan standardization (Phase 9)
 PyMuPDF>=1.24.0     # PDF rendering to PNG + coordinate-aware text extraction
 watchfiles>=0.21.0  # Async file watcher for auto-ingestion
+
+# DWG/DXF ingestion (Phase DW1+DW2)
+ezdxf>=1.3.0        # DXF parsing (DWG converted to DXF via libredwg-utils)
+shapely>=2.0.0      # Polygon area, point-in-polygon, adjacency detection
