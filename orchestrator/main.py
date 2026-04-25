@@ -604,6 +604,12 @@ async def root():
     )
 
 
+@app.get("/ping")
+async def ping():
+    """Lightweight liveness check — no downstream probes. Used by Docker health check."""
+    return {"status": "ok"}
+
+
 @app.get("/health", response_model=APIResponse)
 async def health_check():
     """

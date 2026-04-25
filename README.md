@@ -32,7 +32,9 @@ No SQL, no SPARQL, no schema knowledge required from the user.
 
 | Capability | Description |
 |---|---|
-| **14 Intent Types** | sensor readings, analytics, anomaly detection, reports, exports, recommendations, forecasts, discovery, comparison, and more |
+| **16 Intent Types** | sensor readings, analytics, anomaly detection, reports, exports, recommendations, forecasts, discovery, comparison, floor plans, spatial geometry, and more |
+| **Floor Plan Intelligence** | Automatic PDF + AutoCAD DWG ingestion — room polygons, areas, adjacency, and sensor locations extracted at startup and searchable via natural language |
+| **Spatial Geometry Queries** | Ask "how many rooms on floor 3 larger than 50 m²?" or "what is adjacent to 3.01?" — answered from DWG geometry with no SQL or SPARQL |
 | **Zero-Knowledge Interaction** | Users need no knowledge of sensor IDs, SPARQL, SQL, or ontology classes |
 | **Multi-Building Support** | 8 database backends: MySQL, PostgreSQL, TimescaleDB, InfluxDB, MongoDB, SQLite, Cassandra, Redis TimeSeries |
 | **Semantic Grounding** | GraphDB similarity indexing maps natural language to RDF entities — no external vector database needed |
@@ -52,9 +54,10 @@ graph TD
 
     subgraph "Agent Pipeline"
         Orch --> DA["Dialogue Agent\nIntent · Entities · Time range"]
-        DA -->|routes| SA["SPARQL Agent\nOntology queries"]
-        DA -->|routes| RA["Report Agent"]
-        DA -->|routes| AA["Anomaly Agent"]
+        DA -->|sensor/analytics/report| SA["SPARQL Agent\nOntology queries"]
+        DA -->|floor_plan| FPA["Floor Plan Agent\nManifest + PNG render"]
+        DA -->|spatial_query| SPA["Spatial Agent\nArea · Adjacency · Counts"]
+        DA -->|anomaly/export| AA["Anomaly / Export Agent"]
         SA --> SQ["SQL Agent\nTime-series fetch"]
         SQ --> AnA["Analytics Agent\nPython sandbox"]
         AnA --> VA["Visualization Agent\nCharts"]
@@ -64,6 +67,17 @@ graph TD
         SA -->|SPARQL| GDB[("GraphDB :7200\nBrick / REC Ontology")]
         SA -->|Semantic RAG| RAGS["RAG Service :8001"]
         RAGS --> GDB
+    end
+
+    subgraph "Floor Plan Layer"
+        FPA -->|reads| MF[("Manifests\n/app/floor_plans/")]
+        SPA -->|reads| MF
+        PDF["PDF files\n/app/input/*.pdf"] -->|startup ingest| FPP["FloorPlanPipeline\nOCR · zone regex"]
+        DWG["DWG files\n/app/input/*.dwg"] -->|startup ingest| DWGP["DWGPipeline\ndwg2dxf · shapely"]
+        FPP --> REG["FloorPlanRegistry\nmerge + index"]
+        DWGP --> REG
+        REG --> MF
+        REG -->|upsert| QD[("Qdrant :6333\nRoom vectors + geometry")]
     end
 
     subgraph "Data Layer"
@@ -180,12 +194,24 @@ See the [Deployment Guide](https://suhasdevmane.github.io/OntoSage/DEPLOYMENT/) 
 | "Generate a weekly building report" | `report` | Multi-section formatted report |
 | "Export yesterday's sensor data as CSV" | `export` | SPARQL → SQL → CSV download |
 | "Forecast temperature for tomorrow" | `forecast` | SPARQL → SQL → trend projection |
+| "Show me floor 3 / where is room 3.01?" | `floor_plan` | Floor plan manifest → PNG image + room list |
+| "How many rooms larger than 50 m² on floor 4?" | `spatial_query` | DWG geometry → filtered room table |
+| "What rooms are adjacent to the server room?" | `spatial_query` | DWG adjacency graph → neighbour list |
+| "How many sensors are on floor 3?" | `spatial_query` | DWG INSERT blocks → count by type |
+| "Total floor area of the building?" | `spatial_query` | DWG area data → per-floor and grand total |
 
 ---
 
 ## Connecting Your Building
 
 OntoSage adapts to your building — you don't rewrite your data to fit OntoSage.
+
+There are two independent knowledge domains you can connect — either one works independently:
+
+| Domain | Files | What it enables |
+|---|---|---|
+| **Sensor data** | `.ttl` ontology + time-series database | "What's the CO₂ in zone 3.01 right now?", trends, anomalies, reports |
+| **Floor plans** | `.pdf` and/or `.dwg` drawings | "Show me floor 3", room areas, adjacency, block/MEP locations |
 
 ### Step 1: Prepare your ontology
 
@@ -216,6 +242,86 @@ curl -X POST http://localhost:7200/repositories/ontosage/statements \
 ```
 
 Then follow the [Building Onboarding Guide](https://suhasdevmane.github.io/OntoSage/BUILDING_ONBOARDING/) to create the semantic search index.
+
+---
+
+## Floor Plan Intelligence
+
+OntoSage automatically ingests architectural drawings at startup and makes them queryable in natural language — no manual import steps required.
+
+### How it works
+
+Drop your floor plan files into `/app/input/` and the system does the rest:
+
+```
+/app/input/
+  Abacws floor 0.pdf      ← rendered image + room labels via OCR
+  Abacws floor 0.dwg      ← AutoCAD geometry: polygons, areas, adjacency
+  Abacws floor 1.pdf
+  Abacws floor 1.dwg
+  ...
+```
+
+On every startup the **FloorPlanRegistry** runs both pipelines in parallel:
+
+| Pipeline | Input | What it extracts |
+|---|---|---|
+| **PDF pipeline** | `*.pdf` | Room labels (OCR fallback for vector-path text), zone IDs, rendered PNG |
+| **DWG pipeline** | `*.dwg` | Room polygons (shapely), area (m²), perimeter, adjacency graph, door/sensor/HVAC block locations |
+
+The two outputs are merged per floor — DWG wins for geometry, PDF wins for the rendered image — and the result is written to `floor_plans/<building_id>/floor_N.manifest.json` and indexed in Qdrant.
+
+**Idempotent**: files are SHA-256 fingerprinted; unchanged files are skipped on restart. Only new or modified files are reprocessed.
+
+**Live file watching**: drop a new `.pdf` or `.dwg` into `/app/input/` while the system is running and it will be ingested within 3 seconds — no restart needed.
+
+**Graceful degradation**: if `dwg2dxf` (libredwg-utils) is not installed, the DWG pipeline is skipped and only PDF-based `schema_version="1.0"` manifests are produced. The rest of the system continues normally.
+
+### Spatial query examples
+
+Once floor plans are ingested, the `spatial_query` intent answers geometry questions directly from the manifests — no LLM call, sub-second response:
+
+```
+"How many meeting rooms are on floor 3?"          → count filtered by type
+"Show rooms larger than 50 m² on floor 4"         → sorted area table
+"What spaces are adjacent to zone 3.01?"           → adjacency graph lookup
+"How many fire exits are on floor 2?"              → DWG block count by type
+"Total usable area across all floors"              → sum of all space areas
+```
+
+### REST API for floor plan data
+
+```bash
+# List all ingested manifests
+GET /api/v1/floor-plans
+
+# Full manifest JSON for a specific floor
+GET /api/v1/floor-plans/abacws/3/manifest
+
+# Room polygon coordinates (normalised 0–1)
+GET /api/v1/floor-plans/abacws/3/polygons
+
+# Inline SVG floor plan (colour-coded by room type)
+GET /api/v1/floor-plans/abacws/3/svg?width=1200&show_labels=true
+
+# Force re-ingest all files
+POST /api/v1/floor-plans/reingest
+```
+
+### Per-building configuration
+
+Override zone ID patterns, AIA/NCS layer names, DPI, and floor labels via a YAML file:
+
+```yaml
+# /app/input/cardiff_eng/building.yaml
+building_id: cardiff_eng
+building_name: Cardiff School of Engineering
+zone_id_pattern: "R{floor}{nn}"    # matches R301, R415
+default_dpi: 200
+floors_label_override:
+  0: "Ground Floor"
+  1: "First Floor"
+```
 
 ---
 
@@ -269,7 +375,7 @@ MODEL_PROVIDER=local docker compose --profile local-gpu restart orchestrator
 | **3307** | MySQL | Sensor time-series data |
 | **5433** | PostgreSQL | User accounts + RBAC |
 | **27017** | MongoDB | Chat history |
-| **6333** | Qdrant | Agent memory (vector search) |
+| **6333** | Qdrant | Room geometry vectors (`floor_plans`) + cross-session agent memory (`user_memory`) |
 
 ---
 

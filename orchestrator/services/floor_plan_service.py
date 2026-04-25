@@ -339,8 +339,32 @@ class FloorPlanService:
             i += chunk_size - overlap
         return chunks
 
+    async def _floor_already_indexed(self, client, floor: int) -> bool:
+        """Return True if Qdrant already holds at least one point for this floor."""
+        try:
+            from qdrant_client.models import FieldCondition, Filter, MatchValue
+
+            result = await client.scroll(
+                collection_name=COLLECTION_NAME,
+                scroll_filter=Filter(
+                    must=[FieldCondition(key="floor", match=MatchValue(value=floor))]
+                ),
+                limit=1,
+                with_payload=False,
+                with_vectors=False,
+            )
+            return bool(result[0])
+        except Exception:
+            return False
+
     async def index_all(self) -> None:
-        """Extract, embed, and upsert all floor plan PDFs into Qdrant. Idempotent."""
+        """Extract, embed, and upsert all floor plan PDFs into Qdrant. Idempotent.
+
+        PDF text extraction (pdfplumber) is CPU/IO-bound; it runs in a thread-pool
+        executor so the asyncio event loop stays responsive during indexing.
+        """
+        import asyncio
+
         if not self._floor_map:
             logger.info("[FloorPlanService] No floor plans to index.")
             return
@@ -354,7 +378,15 @@ class FloorPlanService:
 
         for floor, path in sorted(self._floor_map.items()):
             try:
-                text = self.get_pdf_text(floor)
+                # Skip floors that are already in Qdrant (e.g. after container restart)
+                if await self._floor_already_indexed(client, floor):
+                    logger.debug(
+                        f"[FloorPlanService] Floor {floor} already indexed — skipping."
+                    )
+                    continue
+
+                # Run blocking pdfplumber extraction in a thread so we don't stall the loop
+                text = await asyncio.to_thread(self.get_pdf_text, floor)
                 if not text:
                     continue
                 chunks = self._chunk_text(text)
