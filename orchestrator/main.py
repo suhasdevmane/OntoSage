@@ -51,6 +51,8 @@ from orchestrator.services.ontology_introspector import ontology_introspector
 from orchestrator.services.ontology_validator import ontology_validator
 from orchestrator.services.plugin_registry import PluginRegistry, get_plugin_registry
 from orchestrator.services.response_cache import ResponseCacheService
+from orchestrator.services.alert_monitor import AlertMonitor
+from orchestrator.services.connection_manager import ConnectionManager
 from orchestrator.services.sparql_validator import sparql_validator
 from orchestrator.workflow import WorkflowOrchestrator
 from shared.config import settings
@@ -323,6 +325,18 @@ async def lifespan(app: FastAPI):
     )
     logger.info("Workflow orchestrator initialized")
 
+    # Start proactive alert monitor
+    try:
+        alert_monitor = AlertMonitor(
+            sql_agent=orchestrator.sql_agent,
+            connection_manager=connection_manager,
+            redis_client=redis_manager.client,
+        )
+        asyncio.create_task(alert_monitor.run_forever())
+        logger.info("AlertMonitor started")
+    except Exception as _e:
+        logger.warning(f"AlertMonitor not started: {_e}")
+
     # Phase 1: Validate ontology and introspect building schema at startup
     try:
         logger.info(f"Building: {settings.BUILDING_NAME} ({settings.BUILDING_ID})")
@@ -529,6 +543,8 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan,
 )
+
+connection_manager = ConnectionManager()
 
 # Ensure outputs directory exists
 os.makedirs("/app/outputs", exist_ok=True)
@@ -1846,6 +1862,7 @@ async def websocket_stream(websocket: WebSocket):
         {"type": "done"}
     """
     await websocket.accept()
+    connection_manager.register(websocket)
 
     try:
         while True:
@@ -1961,6 +1978,8 @@ async def websocket_stream(websocket: WebSocket):
             await websocket.send_json({"type": "error", "data": str(e)})
         except Exception:
             pass  # WebSocket may already be closed
+    finally:
+        connection_manager.unregister(websocket)
 
 
 @app.get("/conversation/{conversation_id}", response_model=APIResponse)
