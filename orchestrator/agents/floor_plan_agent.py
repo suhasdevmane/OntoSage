@@ -21,6 +21,7 @@ import re
 import urllib.parse
 from typing import Any, Dict, List, Optional
 
+from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
 from shared.models import ConversationState, FloorPlanManifest, FloorPlanResult, Space
 from shared.utils import get_logger
 
@@ -84,8 +85,6 @@ class FloorPlanAgent:
     async def _resolve(
         self, query: str, state: ConversationState
     ) -> FloorPlanResult:
-        from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
-
         pipeline = get_floor_plan_pipeline()
 
         # 1. Determine building
@@ -114,6 +113,13 @@ class FloorPlanAgent:
         q_lower = query.lower()
         if any(kw in q_lower for kw in _OVERVIEW_KEYWORDS):
             return self._build_overview_result(pipeline, building_id, building_name)
+
+        # 4b. Zone ID detected but no floor stated → infer floor from zone prefix (e.g. "3.12" → floor 3)
+        if floor is None and zone_id:
+            try:
+                floor = int(zone_id.split(".")[0])
+            except (ValueError, IndexError):
+                pass
 
         # 5. Cross-floor search if user mentions a space type/name but no floor
         if floor is None and (
