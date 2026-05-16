@@ -510,12 +510,7 @@ class WorkflowOrchestrator:
                 state.intermediate_results["dialogue_response"] = discovery_response
 
         elif intent in ("control",):
-            # Control commands not yet supported
             state.current_intent = "control"
-            state.intermediate_results["dialogue_response"] = (
-                "🔒 Building system control commands are not yet supported in this version. "
-                "Please contact your facilities team for manual adjustments."
-            )
 
         elif intent == "greeting":
             state.current_intent = "greeting"
@@ -2385,7 +2380,7 @@ Instructions:
             state.intermediate_results["error"] = f"control: {e}"
         return state
 
-    async def _persist_control_log(self, log_entry: dict) -> None:
+    async def _persist_control_log(self, log_entry: Dict[str, Any]) -> None:
         """Write control command to control_log table."""
         try:
             async with self.postgres_manager.pool.acquire() as conn:
