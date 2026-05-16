@@ -36,7 +36,7 @@ class TestControlAgentPermissions:
         })):
             result = await agent.execute_command(state)
         assert result["status"] == "simulated"
-        assert "HVAC Zone 3" in result["device"]
+        assert result["device"] == "HVAC Zone 3"
 
     @pytest.mark.asyncio
     async def test_analyst_is_denied(self):
@@ -68,7 +68,6 @@ class TestControlAgentPermissions:
 class TestControlAgentLogging:
     @pytest.mark.asyncio
     async def test_log_entry_written(self):
-        """execute_command must produce a log_entry dict in the result."""
         agent = ControlAgent()
         state = _make_state("Set HVAC Zone 3 to 21°C", role="operator")
         with patch.object(agent.bms, "send_command", new=AsyncMock(return_value={

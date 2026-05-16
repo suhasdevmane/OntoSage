@@ -24,17 +24,7 @@ class ControlAgent:
         self.bms = BMSAdapter()
 
     async def execute_command(self, state: ConversationState) -> Dict[str, Any]:
-        """
-        Check permission, dispatch command, return result dict.
-
-        Result keys:
-          status     : 'simulated' | 'executed' | 'denied' | 'failed'
-          device     : device string
-          action     : action string
-          value      : target_value string
-          message    : human-readable response text
-          log_entry  : dict for control_log table (absent on 'denied')
-        """
+        """Check RBAC permission and dispatch device command via BMSAdapter."""
         role = state.intermediate_results.get("user_role", "readonly")
         user_id = state.intermediate_results.get("user_id", "unknown")
         building_id = state.intermediate_results.get("building_id", "unknown")
@@ -55,23 +45,24 @@ class ControlAgent:
         action = next((e["value"] for e in entities if e.get("type") == "action"), "set")
         target_value = next((e["value"] for e in entities if e.get("type") == "target_value"), "")
 
-        result = await self.bms.send_command(device, action, target_value, building_id)
-        result["log_entry"] = {
+        bms_result = await self.bms.send_command(device, action, target_value, building_id)
+        log_entry = {
             "building_id": building_id,
             "device": device,
             "action": action,
             "target_value": target_value,
-            "status": result["status"],
+            "status": bms_result["status"],
             "user_id": user_id,
             "user_role": role,
             "session_id": state.conversation_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
-
-        mode_note = " (simulation mode — no real BMS configured)" if result.get("mode") == "simulation" else ""
-        result["message"] = (
+        mode_note = (
+            " (simulation mode — no real BMS configured)" if bms_result.get("mode") == "simulation" else ""
+        )
+        message = (
             f"✅ Command acknowledged{mode_note}: {device} → {action}"
             + (f"({target_value})" if target_value else "")
-            + f"\nLogged at: {result['log_entry']['timestamp']}"
+            + f"\nLogged at: {log_entry['timestamp']}"
         )
-        return result
+        return {**bms_result, "log_entry": log_entry, "message": message}
