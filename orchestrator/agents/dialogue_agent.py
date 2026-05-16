@@ -428,8 +428,12 @@ Your task is to analyze the user's question and return a JSON response.
    - "planner"       : Multi-step task requiring multiple agents or producing multiple outputs.
                         e.g. "Generate CO2 report and export as CSV.", "Analyse energy, then create a chart and export."
 
-   - "control"       : Request to physically change a building system state (not yet supported).
-                        e.g. "Turn on the AC.", "Set temperature to 22°C."
+   - "control"      : User issues a command to physically change a building system state.
+                       e.g. "Set HVAC zone 3 to 21°C", "Turn off the lights in room 2.04",
+                       "Lock down floor 4", "Increase ventilation in Lab 3.07".
+                       Entities: device (the system to control), action (set/on/off/lock/
+                       unlock/increase/decrease), target_value (e.g. "21°C", "50%"),
+                       zone/room.
 
    - "clarification" : Query is too vague to proceed without more information.
                         e.g. "Show me data." (no sensor/zone specified), "What happened?" (no context)

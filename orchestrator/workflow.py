@@ -23,6 +23,7 @@ from orchestrator.agents import (
     VisualizationAgent,
 )
 from orchestrator.agents.anomaly_agent import AnomalyDetectionAgent
+from orchestrator.agents.control_agent import ControlAgent
 from orchestrator.agents.data_export_agent import DataExportAgent
 
 # CAP-01: Document agent
@@ -80,6 +81,7 @@ class WorkflowOrchestrator:
         self.anomaly_agent = AnomalyDetectionAgent()
         # CAP-01: Document agent
         self.document_agent = DocumentAgent()
+        self.control_agent = ControlAgent()
         self.redis_manager = redis_manager
         self.postgres_manager = postgres_manager
         self.response_cache = None  # injected by main.py lifespan after Redis is ready
@@ -160,6 +162,8 @@ class WorkflowOrchestrator:
         workflow.add_node(
             "spatial_query", self._safe_node(self._spatial_query_node, "spatial_query")
         )
+        workflow.add_node("control", self._safe_node(self._control_node, "control"))
+        workflow.add_node("maintenance", self._safe_node(self._maintenance_node, "maintenance"))
 
         # Entry
         workflow.set_entry_point("dialogue")
@@ -179,6 +183,8 @@ class WorkflowOrchestrator:
                 "export": "export",
                 "floor_plan": "floor_plan",
                 "spatial_query": "spatial_query",
+                "control": "control",
+                "maintenance": "maintenance",
                 "response": "response",
                 "end": END,
             },
@@ -229,6 +235,8 @@ class WorkflowOrchestrator:
         workflow.add_edge("document", "response")
         workflow.add_edge("floor_plan", "response")
         workflow.add_edge("spatial_query", "response")
+        workflow.add_edge("control", "response")
+        workflow.add_edge("maintenance", "response")
         workflow.add_edge("response", END)
 
         return workflow.compile()
@@ -1556,7 +1564,6 @@ Instructions:
             "clarification",
             "unknown",
             "general_knowledge",
-            "control",
         ]:
             return "response"
         # Phase 4 multi-agent paths
@@ -1589,6 +1596,10 @@ Instructions:
             return "floor_plan"
         elif intent == "spatial_query":
             return "spatial_query"
+        elif intent == "control":
+            return "control"
+        elif intent == "maintenance":
+            return "maintenance"
         else:
             return "response"
 
@@ -2359,6 +2370,50 @@ Instructions:
                 "I encountered an error analysing the spatial data. Please try again."
             )
 
+        return state
+
+    async def _control_node(self, state: ConversationState) -> ConversationState:
+        """Execute RBAC-gated device control command."""
+        logger.info(f"[control_node] intent={state.intermediate_results.get('intent')}")
+        try:
+            result = await self.control_agent.execute_command(state)
+            state.intermediate_results["control_result"] = result
+            if self.postgres_manager and result.get("log_entry"):
+                await self._persist_control_log(result["log_entry"])
+        except Exception as e:
+            logger.error(f"[control_node] Error: {e}", exc_info=True)
+            state.intermediate_results["error"] = f"control: {e}"
+        return state
+
+    async def _persist_control_log(self, log_entry: dict) -> None:
+        """Write control command to control_log table."""
+        try:
+            async with self.postgres_manager.pool.acquire() as conn:
+                await conn.execute(
+                    """
+                    INSERT INTO control_log
+                        (building_id, device, action, target_value, status, user_id, role, session_id)
+                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+                    """,
+                    log_entry.get("building_id"),
+                    log_entry.get("device"),
+                    log_entry.get("action"),
+                    log_entry.get("target_value"),
+                    log_entry.get("status"),
+                    log_entry.get("user_id"),
+                    log_entry.get("user_role"),
+                    log_entry.get("session_id"),
+                )
+        except Exception as e:
+            logger.warning(f"[control_node] Failed to persist log: {e}")
+
+    async def _maintenance_node(self, state: ConversationState) -> ConversationState:
+        """Stub — maintenance scheduling and work-order intent handler (Sprint 3)."""
+        logger.info(f"[maintenance_node] intent={state.intermediate_results.get('intent')}")
+        state.intermediate_results["maintenance_result"] = {
+            "status": "not_implemented",
+            "message": "Maintenance scheduling is not yet supported.",
+        }
         return state
 
     async def _document_node(self, state: ConversationState) -> ConversationState:

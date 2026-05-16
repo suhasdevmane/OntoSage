@@ -69,9 +69,6 @@ class TestIntentRouting:
     def test_general_knowledge_routes_to_response(self):
         assert self._route("general_knowledge") == "response"
 
-    def test_control_routes_to_response(self):
-        assert self._route("control") == "response"
-
     # SPARQL-bound intents
     def test_sparql_routes_to_sparql(self):
         assert self._route("sparql") == "sparql"
