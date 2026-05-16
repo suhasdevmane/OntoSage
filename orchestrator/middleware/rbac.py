@@ -69,6 +69,8 @@ ALL_PERMISSIONS = {
     "building:read",
     "building:write",
     "building:delete",
+    # Device control
+    "device:control",
     # System
     "system:admin",
     "system:health",
@@ -91,6 +93,7 @@ ROLE_PERMISSIONS: Dict[str, Set[str]] = {
         "config:write",
         "building:read",
         "building:write",
+        "device:control",
         "system:health",
     },
     "analyst": {
@@ -113,6 +116,7 @@ ROLE_PERMISSIONS: Dict[str, Set[str]] = {
         "anomaly:read",
         "trend:read",
         "building:read",
+        "device:control",
         "system:health",
     },
     "occupant": {

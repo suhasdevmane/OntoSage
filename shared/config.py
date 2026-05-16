@@ -161,6 +161,12 @@ class Settings(BaseSettings):
         default="http://whisper-stt:8003", description="Whisper STT service URL"
     )
 
+    # ==================== BMS (Building Management System) ====================
+    BMS_ENDPOINT: str = Field(
+        default="",
+        description="BMS API endpoint for device control. Empty = simulation mode.",
+    )
+
     RAG_SERVICE_HOST: str = Field(default="rag-service", description="RAG service hostname")
     RAG_SERVICE_PORT: int = Field(default=8001, description="RAG service port")
 
