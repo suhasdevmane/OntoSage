@@ -1563,7 +1563,7 @@ Instructions:
         elif intent == "planner":
             return "planner"
         elif intent == "report":
-            return "sparql"  # report routes through SPARQL -> SQL -> report
+            return "planner"
         elif intent == "anomaly":
             return (
                 "sparql"  # need UUIDs first, then SQL, then anomaly in _route_from_sql
