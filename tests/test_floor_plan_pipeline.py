@@ -413,22 +413,25 @@ class TestPydanticModels:
         from pydantic import ValidationError
         from shared.models import FloorPlanManifest, RenderedImage
 
-        with pytest.raises(ValidationError):
-            FloorPlanManifest(
-                schema_version="2.0",  # only "1.0" is valid
-                building_id="x",
-                building_name="X",
-                floor=1,
-                floor_label="Floor 1",
-                source_pdf="x.pdf",
-                source_sha256="abc",
-                generated_at=datetime.utcnow(),
+        def _make(**kw):
+            return FloorPlanManifest(
+                building_id="x", building_name="X", floor=1, floor_label="Floor 1",
+                source_pdf="x.pdf", source_sha256="abc", generated_at=datetime.utcnow(),
                 rendered_image=RenderedImage(
-                    png_url="/a.png", thumbnail_url="/t.png",
-                    width_px=1, height_px=1, dpi=72,
+                    png_url="/a.png", thumbnail_url="/t.png", width_px=1, height_px=1, dpi=72,
                 ),
-                pdf_url="/x.pdf",
+                pdf_url="/x.pdf", **kw,
             )
+
+        # Both "1.0" (PDF-only) and "2.0" (DWG-enriched) are valid schema versions
+        m1 = _make(schema_version="1.0")
+        assert m1.schema_version == "1.0"
+        m2 = _make(schema_version="2.0")
+        assert m2.schema_version == "2.0"
+
+        # Invalid versions must still be rejected
+        with pytest.raises(ValidationError):
+            _make(schema_version="3.0")
 
     def test_floor_plan_result_defaults(self):
         from shared.models import FloorPlanResult
