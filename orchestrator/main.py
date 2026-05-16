@@ -315,6 +315,28 @@ async def lifespan(app: FastAPI):
     except Exception as _e:
         logger.warning(f"control_log table creation skipped: {_e}")
 
+    # Create maintenance_tickets table if not exists
+    try:
+        async with postgres_manager.pool.acquire() as _conn:
+            await _conn.execute("""
+                CREATE TABLE IF NOT EXISTS maintenance_tickets (
+                    id          VARCHAR(12)  PRIMARY KEY,
+                    building_id VARCHAR(64)  NOT NULL,
+                    location    VARCHAR(256),
+                    device      VARCHAR(256),
+                    description TEXT         NOT NULL,
+                    status      VARCHAR(32)  DEFAULT 'OPEN',
+                    reporter_id VARCHAR(256),
+                    assignee    VARCHAR(256),
+                    created_at  TIMESTAMPTZ  DEFAULT NOW(),
+                    updated_at  TIMESTAMPTZ  DEFAULT NOW(),
+                    session_id  VARCHAR(256)
+                )
+            """)
+        logger.info("maintenance_tickets table ready")
+    except Exception as _e:
+        logger.warning(f"maintenance_tickets table creation skipped: {_e}")
+
     # Initialize authentication manager
     auth_manager = AuthManager(redis_manager, postgres_manager)
     logger.info("Auth manager initialized")

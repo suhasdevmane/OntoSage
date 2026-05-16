@@ -24,6 +24,7 @@ from orchestrator.agents import (
 )
 from orchestrator.agents.anomaly_agent import AnomalyDetectionAgent
 from orchestrator.agents.control_agent import ControlAgent
+from orchestrator.agents.maintenance_agent import MaintenanceAgent
 from orchestrator.agents.data_export_agent import DataExportAgent
 
 # CAP-01: Document agent
@@ -82,6 +83,7 @@ class WorkflowOrchestrator:
         # CAP-01: Document agent
         self.document_agent = DocumentAgent()
         self.control_agent = ControlAgent()
+        self.maintenance_agent = MaintenanceAgent()
         self.redis_manager = redis_manager
         self.postgres_manager = postgres_manager
         self.response_cache = None  # injected by main.py lifespan after Redis is ready
@@ -2403,13 +2405,97 @@ Instructions:
             logger.warning(f"[control_node] Failed to persist log: {e}")
 
     async def _maintenance_node(self, state: ConversationState) -> ConversationState:
-        """Stub — maintenance scheduling and work-order intent handler (Sprint 3)."""
+        """Handle maintenance ticket CRUD operations."""
         logger.info(f"[maintenance_node] intent={state.intermediate_results.get('intent')}")
-        state.intermediate_results["maintenance_result"] = {
-            "status": "not_implemented",
-            "message": "Maintenance scheduling is not yet supported.",
-        }
+        try:
+            result = await self.maintenance_agent.handle(state)
+            state.intermediate_results["maintenance_result"] = result
+            if self.postgres_manager and result.get("operation"):
+                await self._execute_maintenance_db(result, state)
+        except Exception as e:
+            logger.error(f"[maintenance_node] Error: {e}", exc_info=True)
+            state.intermediate_results["error"] = f"maintenance: {e}"
         return state
+
+    async def _execute_maintenance_db(self, result: Dict[str, Any], state: ConversationState) -> None:
+        """Persist maintenance ticket operation to PostgreSQL."""
+        op = result.get("operation")
+        try:
+            async with self.postgres_manager.pool.acquire() as conn:
+                if op == "CREATE":
+                    counter = await conn.fetchval(
+                        "SELECT COALESCE(MAX(CAST(SUBSTRING(id FROM 4) AS INTEGER)), 0) + 1 "
+                        "FROM maintenance_tickets WHERE building_id = $1",
+                        result.get("building_id"),
+                    )
+                    ticket_id = self.maintenance_agent._generate_ticket_id(counter)
+                    await conn.execute(
+                        """
+                        INSERT INTO maintenance_tickets
+                            (id, building_id, location, description, status, reporter_id, session_id)
+                        VALUES ($1,$2,$3,$4,'OPEN',$5,$6)
+                        """,
+                        ticket_id,
+                        result.get("building_id"),
+                        result.get("location"),
+                        result.get("description"),
+                        result.get("reporter_id"),
+                        result.get("session_id"),
+                    )
+                    result["ticket_id"] = ticket_id
+                    result["message"] = (
+                        f"🔧 Maintenance ticket created: {ticket_id}\n"
+                        f"Location: {result.get('location')}\n"
+                        f"Issue: {result.get('description')}\n"
+                        f"Status: OPEN\n\n"
+                        f"Use \"Check ticket {ticket_id}\" to follow up."
+                    )
+                elif op == "STATUS":
+                    row = await conn.fetchrow(
+                        "SELECT * FROM maintenance_tickets WHERE id = $1",
+                        result.get("ticket_id"),
+                    )
+                    if row:
+                        result["message"] = (
+                            f"📋 Ticket {row['id']}\n"
+                            f"Location: {row['location']}\n"
+                            f"Status: {row['status']}\n"
+                            f"Assignee: {row['assignee'] or 'unassigned'}\n"
+                            f"Last updated: {row['updated_at']}"
+                        )
+                    else:
+                        result["message"] = f"Ticket {result.get('ticket_id')} not found."
+                elif op == "LIST":
+                    rows = await conn.fetch(
+                        "SELECT id, location, description, status FROM maintenance_tickets "
+                        "WHERE building_id = $1 AND status = $2 LIMIT 10",
+                        result.get("building_id"), result.get("filter", "OPEN"),
+                    )
+                    if rows:
+                        lines = [f"📋 Open tickets ({len(rows)}):"]
+                        for r in rows:
+                            lines.append(f"• {r['id']}: {r['location']} — {r['description'][:60]}")
+                        result["message"] = "\n".join(lines)
+                    else:
+                        result["message"] = "No open tickets found."
+                elif op == "ASSIGN":
+                    await conn.execute(
+                        "UPDATE maintenance_tickets SET assignee=$1, status='ASSIGNED', "
+                        "updated_at=NOW() WHERE id=$2",
+                        result.get("assignee"), result.get("ticket_id"),
+                    )
+                    result["message"] = f"✅ Ticket {result.get('ticket_id')} assigned to {result.get('assignee')}."
+                elif op in ("RESOLVE", "CLOSE"):
+                    new_status = "RESOLVED" if op == "RESOLVE" else "CLOSED"
+                    await conn.execute(
+                        "UPDATE maintenance_tickets SET status=$1, updated_at=NOW() WHERE id=$2",
+                        new_status, result.get("ticket_id"),
+                    )
+                    result["message"] = f"✅ Ticket {result.get('ticket_id')} marked as {new_status}."
+        except Exception as e:
+            logger.warning(f"[maintenance_node] DB operation failed: {e}")
+            if "message" not in result:
+                result["message"] = f"Operation completed but could not update database: {e}"
 
     async def _document_node(self, state: ConversationState) -> ConversationState:
         """CAP-01 — Generate a formal document from current pipeline outputs."""

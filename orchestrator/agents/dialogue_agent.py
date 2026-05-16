@@ -435,6 +435,13 @@ Your task is to analyze the user's question and return a JSON response.
                        unlock/increase/decrease), target_value (e.g. "21°C", "50%"),
                        zone/room.
 
+   - "maintenance"   : User reports a fault, raises a work order, checks ticket status,
+                       or updates a maintenance ticket.
+                       Trigger phrases: "broken", "not working", "report fault", "raise ticket",
+                       "fix the", "maintenance request", "check ticket", "status of MT-".
+                       Entities: device, location, fault_description, ticket_id (format MT-XXXX),
+                       assignee.
+
    - "clarification" : Query is too vague to proceed without more information.
                         e.g. "Show me data." (no sensor/zone specified), "What happened?" (no context)
 
