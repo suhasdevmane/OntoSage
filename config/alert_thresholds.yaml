@@ -1,0 +1,39 @@
+# OntoSage proactive alert thresholds.
+# Each rule defines when the system auto-generates an alert message.
+#
+# Fields:
+#   sensor_type : Brick schema class name (matches SPARQL results)
+#   metric      : human label for the measured quantity
+#   threshold   : numeric threshold value
+#   comparator  : one of ">" "<" ">=" "<="
+#   severity    : "warning" | "critical"
+#   message     : f-string with {zone} and {value} placeholders
+
+thresholds:
+  - sensor_type: CO2_Sensor
+    metric: ppm
+    threshold: 1000
+    comparator: ">"
+    severity: warning
+    message: "CO₂ in {zone} is {value} ppm — above safe limit (1,000 ppm). Consider increasing ventilation."
+
+  - sensor_type: Temperature_Sensor
+    metric: celsius
+    threshold: 28
+    comparator: ">"
+    severity: critical
+    message: "Temperature in {zone} is {value}°C — possible HVAC failure. Check system status."
+
+  - sensor_type: Humidity_Sensor
+    metric: percent
+    threshold: 70
+    comparator: ">"
+    severity: warning
+    message: "Humidity in {zone} is {value}% — above comfort range. Dehumidification may be needed."
+
+  - sensor_type: Temperature_Sensor
+    metric: celsius
+    threshold: 15
+    comparator: "<"
+    severity: warning
+    message: "Temperature in {zone} is {value}°C — below minimum comfort level. Check heating."

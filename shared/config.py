@@ -167,6 +167,16 @@ class Settings(BaseSettings):
         description="BMS API endpoint for device control. Empty = simulation mode.",
     )
 
+    # ==================== Alert Monitor ====================
+    ALERT_POLL_INTERVAL_SECS: int = Field(
+        default=60,
+        description="How often AlertMonitor polls sensor data for threshold breaches.",
+    )
+    ALERT_THRESHOLDS_PATH: str = Field(
+        default="/app/config/alert_thresholds.yaml",
+        description="Path to YAML file defining sensor alert thresholds.",
+    )
+
     RAG_SERVICE_HOST: str = Field(default="rag-service", description="RAG service hostname")
     RAG_SERVICE_PORT: int = Field(default=8001, description="RAG service port")
 
