@@ -1062,13 +1062,14 @@ SELECT DISTINCT ?space (COUNT(?sensor) AS ?sensor_count) WHERE {{
                 # For generic 'hvac' keyword, query all HVAC-related types (AHU, VAV, etc.)
                 if kw == "hvac":
                     return self._prefix_block() + """
+# HVAC Equipment listing
 SELECT ?equip ?label ?type WHERE {
-  { ?equip a brick:Air_Handler_Unit . BIND("Air Handler Unit" AS ?type) }
-  UNION { ?equip a brick:VAV . BIND("VAV" AS ?type) }
-  UNION { ?equip a brick:Boiler . BIND("Boiler" AS ?type) }
-  UNION { ?equip a brick:Chiller . BIND("Chiller" AS ?type) }
-  UNION { ?equip a brick:Fan . BIND("Fan" AS ?type) }
-  UNION { ?equip a brick:Pump . BIND("Pump" AS ?type) }
+  { ?equip a brick:Air_Handler_Unit . BIND("HVAC Air Handler Unit" AS ?type) }
+  UNION { ?equip a brick:VAV . BIND("HVAC VAV" AS ?type) }
+  UNION { ?equip a brick:Boiler . BIND("HVAC Boiler" AS ?type) }
+  UNION { ?equip a brick:Chiller . BIND("HVAC Chiller" AS ?type) }
+  UNION { ?equip a brick:Fan . BIND("HVAC Fan" AS ?type) }
+  UNION { ?equip a brick:Pump . BIND("HVAC Pump" AS ?type) }
   OPTIONAL { ?equip rdfs:label ?label . }
 } ORDER BY ?type ?equip LIMIT 100"""
                 return self._prefix_block() + f"""
