@@ -121,6 +121,13 @@ class TestIntentRouting:
     def test_unrecognized_intent_routes_to_response(self):
         assert self._route("completely_unknown_xyz") == "response"
 
+    # Control and maintenance intents (Sprint 2)
+    def test_control_routes_to_control(self):
+        assert self._route("control") == "control"
+
+    def test_maintenance_routes_to_maintenance(self):
+        assert self._route("maintenance") == "maintenance"
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # E.6 cont. — SPARQL template coverage for the 5 new patterns (E.5)
