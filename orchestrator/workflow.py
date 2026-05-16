@@ -1584,9 +1584,7 @@ Instructions:
                 return "analytics"
             return "sparql"  # SPARQL → SQL → Analytics
         elif intent == "visualization":
-            # BUG-C FIX: visualization needs data first → route through SPARQL → SQL → viz
-            # The visualization node is reached after SQL via _route_from_sql→visualization
-            return "sparql"
+            return "visualization"
         elif intent == "floor_plan":
             return "floor_plan"
         elif intent == "spatial_query":
