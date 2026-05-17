@@ -273,11 +273,13 @@ class TestAnalyticsRequired:
 # ---------------------------------------------------------------------------
 class TestNewIntentsRouting:
     def _make_state(self, intent):
-        from unittest.mock import MagicMock
+        from shared.models import ConversationState
 
-        s = MagicMock()
-        s.current_intent = intent
-        return s
+        return ConversationState(
+            conversation_id="test-route-001",
+            user_message="hello",
+            current_intent=intent,
+        )
 
     def _get_orchestrator(self):
         from unittest.mock import MagicMock

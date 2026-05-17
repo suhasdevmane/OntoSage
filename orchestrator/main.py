@@ -710,7 +710,7 @@ async def health_check():
                 qr = await adapter.execute_query("SELECT 1 AS ping")
                 checks["mysql"] = {
                     "status": "ok" if qr.success else "error",
-                    "backends": [t.value for t in adapter_registry._adapters],
+                    "backends": list(adapter_registry._adapters.keys()),
                 }
             else:
                 checks["mysql"] = {"status": "no_adapter"}
@@ -2381,8 +2381,36 @@ async def openai_chat_completions(
 
             return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-        # Non-streaming: Execute workflow
-        updated_state = await orchestrator.execute(state)
+        # Non-streaming: Execute workflow (with per-request timeout to prevent cascade failures)
+        try:
+            updated_state = await asyncio.wait_for(
+                orchestrator.execute(state), timeout=float(settings.REQUEST_TIMEOUT_SECS)
+            )
+        except asyncio.TimeoutError:
+            logger.warning(
+                f"[/v1/chat/completions] Pipeline timed out after {settings.REQUEST_TIMEOUT_SECS}s: "
+                f"{user_message[:80]!r}"
+            )
+            return {
+                "id": f"chatcmpl-{conversation_id}",
+                "object": "chat.completion",
+                "created": int(datetime.now().timestamp()),
+                "model": data.get("model", "ontobot-pipeline"),
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": (
+                                "Your request took too long to process. "
+                                "Please try a simpler question or try again later."
+                            ),
+                        },
+                        "finish_reason": "stop",
+                    }
+                ],
+                "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+            }
 
         assistant_message = (
             updated_state.messages[-1].content

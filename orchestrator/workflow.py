@@ -696,6 +696,23 @@ class WorkflowOrchestrator:
         # Check if we have SPARQL results with UUIDs (from previous step)
         sparql_result = state.intermediate_results.get("sparql_result", {})
 
+        # Recompute whether SPARQL returned any sensor UUIDs (needed for skip-SQL guards below)
+        _UUID_RE_SQL = re.compile(
+            r"^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            re.IGNORECASE,
+        )
+        _sql_bindings = (
+            sparql_result.get("results", {}).get("results", {}).get("bindings", [])
+            if isinstance(sparql_result.get("results", {}), dict)
+            else []
+        )
+        _sparql_has_uuids = any(
+            _UUID_RE_SQL.match(str(b.get(v, {}).get("value", "")))
+            for b in _sql_bindings
+            for v in b
+            if "uuid" in v.lower() or "id" in v.lower()
+        )
+
         uuids = []
         storage_map = {}
 
@@ -788,6 +805,110 @@ class WorkflowOrchestrator:
                 "analytics_required": False,
             }
             state.analytics_required = False
+        elif not _sparql_has_uuids and state.current_intent in ("recommend", "forecast"):
+            # No sensor UUIDs found for a recommend/forecast query.
+            # Text-to-SQL would fetch unrelated rows → LLM spends 90s generating bad advice.
+            # Skip SQL entirely; the analytics/recommend node will answer using SPARQL context
+            # (building description) and domain knowledge alone — much faster and more accurate.
+            logger.info(
+                f"[{state.current_intent}] No UUIDs found — skipping text-to-SQL, "
+                "analytics node will use building context only"
+            )
+            result = {
+                "success": True,
+                "query": "NO_UUIDS_SKIP_SQL",
+                "results": {"data": []},
+                "formatted_response": sparql_result.get("formatted_response", ""),
+                "analytics_required": True,
+            }
+        elif not _sparql_has_uuids and state.current_intent in (
+            "analytics", "compare", "trend", "anomaly", "compliance"
+        ):
+            # SPARQL returned no sensor UUIDs for an analytics-type query.
+            # Text-to-SQL fallback would generate incorrect or wide-open queries that
+            # take 60s+ and return unrelated data. Detect if the user asked about a
+            # sensor type that's genuinely unavailable in this building, and return a
+            # clear explanation rather than attempting a doomed SQL generation.
+            _q = latest_message.lower()
+            _unavailable = {
+                "occupancy": {"occupancy", "people count", "head count", "how many people",
+                              "occupant", "occupants", "presence", "motion", "desk usage",
+                              "utilization", "occupied", "footfall"},
+                "energy": {"energy", "power", "electricity", "kilowatt", "kwh", "watt",
+                           "energy meter", "energy consumption", "power meter", "eui",
+                           "carbon footprint", "co2e", "energy cost"},
+            }
+            _missing_type = None
+            for stype, keywords in _unavailable.items():
+                if any(kw in _q for kw in keywords):
+                    _missing_type = stype
+                    break
+
+            if _missing_type == "occupancy":
+                logger.info(
+                    f"[{state.current_intent}] No UUIDs + occupancy query — "
+                    "Abacws has no occupancy sensors, skipping text-to-SQL"
+                )
+                result = {
+                    "success": False,
+                    "query": "NO_OCCUPANCY_SENSORS",
+                    "results": {"data": []},
+                    "formatted_response": (
+                        "**0 occupancy sensors identified** — "
+                        "occupancy data is not available for the Abacws building.\n\n"
+                        "This building does not have occupancy sensors, motion detectors, "
+                        "or desk-utilisation monitors installed. As a result, occupancy "
+                        "patterns, headcounts, and space utilisation reports cannot be "
+                        "generated from sensor data.\n\n"
+                        "Abacws actively monitors: **temperature**, **CO₂**, **humidity**, "
+                        "**air quality** (PM2.5 / TVOC / NO₂), **illuminance**, and **gas** sensors. "
+                        "Would you like to check one of those instead?"
+                    ),
+                    "analytics_required": False,
+                }
+                state.analytics_required = False
+            elif _missing_type == "energy":
+                logger.info(
+                    f"[{state.current_intent}] No UUIDs + energy query — "
+                    "Abacws has no energy meters, skipping text-to-SQL"
+                )
+                result = {
+                    "success": False,
+                    "query": "NO_ENERGY_METERS",
+                    "results": {"data": []},
+                    "formatted_response": (
+                        "**Energy meter data is not available for the Abacws building.**\n\n"
+                        "This building does not have smart energy meters or power consumption "
+                        "sensors. Direct kWh readings, Energy Use Intensity (EUI) calculations, "
+                        "and energy cost estimates cannot be produced from the installed hardware.\n\n"
+                        "Abacws actively monitors: **temperature**, **CO₂**, **humidity**, "
+                        "**air quality** (PM2.5 / TVOC / NO₂), **illuminance**, and **gas** sensors. "
+                        "Energy efficiency can be *inferred* from these — for example, "
+                        "over-heating or poor ventilation often indicates wasted energy. "
+                        "Would you like that kind of analysis instead?"
+                    ),
+                    "analytics_required": False,
+                }
+                state.analytics_required = False
+            else:
+                # Generic: no UUIDs, no specific unavailable type detected.
+                # Still skip text-to-SQL to avoid slow/wrong queries.
+                logger.info(
+                    f"[{state.current_intent}] No UUIDs found — skipping text-to-SQL "
+                    "(no specific sensor type detected; returning SPARQL context response)"
+                )
+                result = {
+                    "success": False,
+                    "query": "NO_UUIDS_NO_SQL",
+                    "results": {"data": []},
+                    "formatted_response": sparql_result.get("formatted_response") or (
+                        "I wasn't able to find specific sensor data for your request. "
+                        "Try asking about temperature, CO₂, humidity, or air quality — "
+                        "those are the sensor types available in this building."
+                    ),
+                    "analytics_required": False,
+                }
+                state.analytics_required = False
         else:
             # Fallback to standard SQL generation (text-to-SQL)
             logger.info(
@@ -871,14 +992,32 @@ class WorkflowOrchestrator:
             labels = [m.get("label", uid) for uid, m in list(sensor_metadata.items())[:10]]
             ontology_summary = "Available sensors: " + ", ".join(labels)
 
+        # Detect if this is an energy-specific recommendation when no energy data is available
+        _q_lower = query.lower()
+        _energy_keywords = {"energy", "power", "electricity", "kWh", "kwh", "watt", "consumption", "eui", "carbon", "co2e"}
+        _is_energy_focused = any(kw in _q_lower for kw in _energy_keywords)
+        _has_energy_data = rows and any(
+            any(kw in str(k).lower() for kw in ("power", "energy", "watt", "kwh")) for r in rows for k in r.keys()
+        )
+
+        # Context note about what sensors ARE available (for energy queries with no energy data)
+        _sensor_context = ""
+        if _is_energy_focused and not _has_energy_data:
+            _sensor_context = (
+                "\n\nNOTE: This building (Abacws) does NOT have energy meters or power consumption sensors. "
+                "Available sensors: temperature, CO₂, humidity, air quality (PM2.5, TVOC, NO₂), illuminance. "
+                "Recommendations should focus on HVAC efficiency, ventilation optimisation, and comfort "
+                "improvements inferred from these environmental sensors (e.g. over-heating = wasted energy)."
+            )
+
         prompt = f"""You are an expert smart-building consultant. The user asked:
 "{query}"
 
 Based on the building data below, provide clear, ACTIONABLE recommendations.
-Focus on domain: {recommendation_domain or "general (HVAC, energy, air quality, comfort)"}.
+Focus on domain: {recommendation_domain or "general (HVAC, energy, air quality, comfort)"}.{_sensor_context}
 
 === SENSOR DATA (latest readings) ===
-{data_summary if data_summary else "No real-time data available — provide general best-practice recommendations."}
+{data_summary if data_summary else "No real-time data available — provide general best-practice recommendations based on building type and available sensor types."}
 
 === BUILDING CONTEXT ===
 {sparql_summary[:800] if sparql_summary else ontology_summary or "Smart building system."}
@@ -887,6 +1026,7 @@ Instructions:
 - Give 3-6 specific, numbered recommendations
 - For each recommendation, explain WHY (link to a measured value if available)
 - Use plain English — avoid jargon for general users
+- If no energy meters are available, infer energy efficiency opportunities from temperature/CO₂/humidity readings
 - If relevant, mention target setpoints, timings, or energy-saving percentages
 - End with a brief priority summary: "Most important action first: ..."
 """
@@ -1249,6 +1389,46 @@ Instructions:
                 f"✅ Export complete — **{er['filename']}** ({er['row_count']} rows, {er['size_bytes']} bytes).\n\n"
                 f"Preview (first 2000 chars):\n```\n{er['content'][:2000]}\n```"
             )
+        elif state.intermediate_results.get("control_result", {}).get("message"):
+            cr = state.intermediate_results["control_result"]
+            final_response = cr["message"]
+        elif state.intermediate_results.get("maintenance_result"):
+            mr = state.intermediate_results["maintenance_result"]
+            op = mr.get("operation", "UNKNOWN")
+            ticket_id = mr.get("ticket_id")
+            if op == "CREATE" and ticket_id:
+                final_response = (
+                    f"✅ Maintenance ticket **{ticket_id}** created.\n"
+                    f"- **Location:** {mr.get('location', 'unspecified')}\n"
+                    f"- **Description:** {mr.get('description', 'No description')}\n"
+                    f"- **Reporter:** {mr.get('reporter_id', 'unknown')}\n\n"
+                    "A facility manager will be notified. You can check the status with "
+                    f"`Check status of ticket {ticket_id}`."
+                )
+            elif op == "STATUS" and ticket_id:
+                ticket_data = mr.get("ticket_data")
+                if ticket_data:
+                    final_response = (
+                        f"📋 Ticket **{ticket_id}** — Status: **{ticket_data.get('status', 'unknown')}**\n\n"
+                        f"- **Description:** {ticket_data.get('description', 'N/A')}\n"
+                        f"- **Assigned to:** {ticket_data.get('assigned_to', 'unassigned')}\n"
+                        f"- **Created:** {ticket_data.get('created_at', 'unknown')}"
+                    )
+                else:
+                    final_response = f"Ticket **{ticket_id}** not found. Please check the ticket number."
+            elif op == "LIST":
+                tickets = mr.get("tickets", [])
+                if tickets:
+                    lines = [f"📋 Open maintenance tickets for **{mr.get('building_id', 'this building')}**:\n"]
+                    for t in tickets[:10]:
+                        lines.append(f"- **{t.get('ticket_id')}**: {t.get('description', '')[:60]} [{t.get('status')}]")
+                    final_response = "\n".join(lines)
+                else:
+                    final_response = f"No open maintenance tickets for this building. ✅"
+            elif mr.get("message"):
+                final_response = mr["message"]
+            else:
+                final_response = f"Maintenance request processed (operation: {op})."
         elif analytics_result.get("formatted_response"):
             final_response = analytics_result["formatted_response"]
             media_payload = analytics_result.get("media")

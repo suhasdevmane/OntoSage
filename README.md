@@ -381,16 +381,18 @@ MODEL_PROVIDER=local docker compose --profile local-gpu restart orchestrator
 
 ## Documentation
 
-Full documentation at **[suhasdevmane.github.io/OntoSage](https://suhasdevmane.github.io/OntoSage/)**
+**[ONTOSAGE.md](ONTOSAGE.md)** — The single comprehensive reference document. Everything you need to understand, deploy, extend, and operate OntoSage from scratch: all 16 intents, 11 agents, 10 personas, floor plan intelligence, 4 RAG systems, 3 LLM providers, 8 database backends, security, compliance standards, API reference, MCP integration, building onboarding, troubleshooting, and research background.
+
+Full hosted documentation at **[suhasdevmane.github.io/OntoSage](https://suhasdevmane.github.io/OntoSage/)**
 
 | Guide | Description |
 |---|---|
+| [ONTOSAGE.md](ONTOSAGE.md) | Complete system reference (start here) |
 | [Deployment](https://suhasdevmane.github.io/OntoSage/DEPLOYMENT/) | Deploy from scratch — OpenAI or local GPU |
 | [Building Onboarding](https://suhasdevmane.github.io/OntoSage/BUILDING_ONBOARDING/) | Connect your building's ontology and sensor database |
 | [Configuration](https://suhasdevmane.github.io/OntoSage/CONFIGURATION/) | All environment variables and settings |
 | [GraphDB Setup](https://suhasdevmane.github.io/OntoSage/GRAPHDB_SETUP/) | Create the semantic similarity index |
 | [Architecture](https://suhasdevmane.github.io/OntoSage/ARCHITECTURE/) | Component design and data flow |
-| [User Guide](https://suhasdevmane.github.io/OntoSage/USER_GUIDE/) | How to query the system with examples |
 | [Developer Guide](https://suhasdevmane.github.io/OntoSage/DEVELOPER_GUIDE/) | Local dev setup, adding agents, CI |
 | [Security](https://suhasdevmane.github.io/OntoSage/SECURITY/) | Auth, RBAC, sandbox isolation |
 | [Runbook](https://suhasdevmane.github.io/OntoSage/RUNBOOK/) | Operations: health checks, backups, troubleshooting |

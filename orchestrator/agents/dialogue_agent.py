@@ -471,16 +471,22 @@ Your task is to analyze the user's question and return a JSON response.
                         "How many doors are on floor 1?", "Count the rooms on each floor."
                         DISAMBIGUATION: "show me / where is / find" → "floor_plan". "how many / area / size / adjacent" → "spatial_query".
 
-   === DISAMBIGUATION RULES ===
+   === DISAMBIGUATION RULES (apply in this priority order) ===
    - If the user asks to see a floor plan, map, or layout → "floor_plan"
    - If the user asks where a room/zone/facility is located → "floor_plan"
    - If the user asks for counts, areas, sizes, or adjacency data → "spatial_query"
    - If the user asks for a building overview or wants to know what's on each floor → "floor_plan"
    - If the user mentions navigation, directions, or finding a specific room/facility → "floor_plan"
    - If the query contains "recommend", "suggest", "improve", "optimize", "what should" → "recommend"
-   - If the query compares two or more entities/periods → "compare"
-   - If the query asks about change over time → "trend"
-   - If the query checks a standard or regulation → "compliance"
+   - CRITICAL: If the query explicitly uses the word "compare", "vs", "versus", "difference between",
+     "higher than", "lower than", or names TWO OR MORE distinct zones/sensors/time-periods side-by-side
+     → ALWAYS "compare". This overrides compliance even if CO2/temperature/air quality is mentioned.
+     Examples: "Compare CO2 in zones 5.08 and 5.10" → "compare" (NOT compliance)
+               "Is zone 3 warmer than zone 5?" → "compare" (NOT analytics)
+               "Average CO2 this week vs last week" → "compare" (NOT trend)
+   - If the query asks about change over time for a SINGLE entity → "trend"
+   - If the query ONLY checks whether readings comply with ASHRAE/WELL/BREEAM/ISO standard
+     AND does NOT use the word "compare" → "compliance"
    - Use "analytics" ONLY when none of the above apply and the user wants raw statistics
 
 2. "entities" (list): All specific building entities mentioned. Normalize names if possible.
@@ -568,6 +574,46 @@ Return ONLY the JSON object.
                 else:
                     normalized["start_date"] = None
                     normalized["end_date"] = None
+
+                # Deterministic override: force "compare" when comparison keywords
+                # appear with two distinct entity references, regardless of LLM choice.
+                # LLMs reliably fail on this: "Compare CO2 in zones A and B" → compliance.
+                _q_lower = user_query.lower()
+                _has_compare_kw = any(
+                    kw in _q_lower
+                    for kw in ("compare ", "comparison", " vs ", " vs.", " versus ", "difference between",
+                               "higher than", "lower than", "more than", "less than")
+                )
+                _two_zones = len(normalized.get("entities", [])) >= 2
+                if (
+                    _has_compare_kw
+                    and normalized.get("intent") in ("compliance", "analytics", "trend")
+                    and _two_zones
+                ):
+                    logger.info(
+                        f"[intent-override] Forcing 'compare' (was '{normalized['intent']}') "
+                        f"— compare keyword + {len(normalized['entities'])} entities"
+                    )
+                    normalized["intent"] = "compare"
+                    normalized["analytics"] = False
+                    normalized["general"] = False
+
+                # Correlation queries are analytics, not clarification.
+                # gpt-4o-mini tends to escalate multi-variable queries to clarification;
+                # override when the query explicitly asks for a correlation/relationship analysis.
+                _has_correlate_kw = any(
+                    kw in _q_lower
+                    for kw in ("correlat", "correlation between", "relationship between",
+                               "relationship of", "pattern between", "link between")
+                )
+                if _has_correlate_kw and normalized.get("intent") == "clarification":
+                    logger.info(
+                        "[intent-override] Forcing 'analytics' (was 'clarification') "
+                        "— correlation keyword detected"
+                    )
+                    normalized["intent"] = "analytics"
+                    normalized["analytics"] = True
+                    normalized["general"] = False
 
                 logger.info("✅ Successfully parsed LLM JSON response")
                 return normalized

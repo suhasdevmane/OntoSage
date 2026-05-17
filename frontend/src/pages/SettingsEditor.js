@@ -117,8 +117,8 @@ export default function SettingsEditor() {
 
   return (
     <>
-      <h4>Rasa — Edit & Validate</h4>
-      <p className="text-muted">Edit your Rasa project files, validate data, and lint custom actions before training.</p>
+      <h4>Configuration — Edit & Validate</h4>
+      <p className="text-muted">Edit your project configuration files and validate settings.</p>
       <div className="row g-3">
         <div className="col-12 col-md-4">
           <div className="card">

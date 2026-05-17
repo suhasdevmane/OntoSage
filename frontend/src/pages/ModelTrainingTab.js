@@ -285,8 +285,8 @@ const ModelTrainingTab = () => {
 
   return (
     <div className="model-training-tab">
-      <h3>T5 Model Training</h3>
-      <p className="text-muted">Train the NL2SPARQL model with custom examples</p>
+      <h3>Model Training</h3>
+      <p className="text-muted">Configure and manage custom models (deprecated feature)</p>
 
       {/* Add/Edit Example Form */}
       <div className="card mb-4">

@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-from orchestrator.llm_manager import llm_manager
+from orchestrator.llm_manager import TaskType, llm_manager
 from shared.config import settings
 from shared.models import ConversationState
 from shared.utils import extract_code_from_llm_response, get_logger
@@ -112,24 +112,52 @@ class AnalyticsAgent:
             # Check if we have any data
             if data_count == 0:
                 logger.warning("⚠️  No data available for analysis")
-                # Check if SQL failed
+                # Build a context-aware, user-friendly message
                 sql_result = state.intermediate_results.get("sql_result", {})
+                entities = state.intermediate_results.get("entities", [])
+                time_range = state.intermediate_results.get("time_range", {})
+                entity_hint = (
+                    f" for **{entities[0]}**" if entities else " for the requested sensor(s)"
+                )
+                time_hint = ""
+                if time_range:
+                    start = time_range.get("start_time", "")
+                    end = time_range.get("end_time", "")
+                    if start or end:
+                        time_hint = f" in the period {start[:10] if start else ''}–{end[:10] if end else 'now'}"
+
                 if not sql_result.get("success"):
-                    error_msg = sql_result.get("error", "Unknown database error")
+                    # The SQL query itself failed (connection error, schema mismatch, etc.)
+                    # Prefer the pre-built message from the SQL agent (it has building-specific
+                    # context about which sensor types are available). Fall back to generic.
+                    sql_msg = sql_result.get("formatted_response")
+                    user_msg = sql_msg or (
+                        f"I wasn't able to retrieve sensor readings{entity_hint}{time_hint}. "
+                        "This may be because the sensor type isn't monitored in this building, "
+                        "or the data isn't available for the requested time window. "
+                        "Try asking about temperature, CO₂, humidity, or air quality — "
+                        "these are the sensor types actively monitored here."
+                    )
                     return {
                         "success": False,
                         "code": None,
                         "output": None,
-                        "error": f"Database query failed: {error_msg}",
-                        "formatted_response": f"I apologize, but I encountered a database error while retrieving the sensor data: {error_msg}. Please verify the database connection and schema configuration.",
+                        "error": "sql_query_failed",
+                        "formatted_response": user_msg,
                     }
                 else:
+                    # SQL succeeded but returned no rows (no data for that period)
                     return {
                         "success": False,
                         "code": None,
                         "output": None,
-                        "error": "No data available",
-                        "formatted_response": "No data was found matching your query. The sensor may not have recorded any data in the specified time period, or the sensor might not be actively transmitting data.",
+                        "error": "no_data_available",
+                        "formatted_response": (
+                            f"No readings were found{entity_hint}{time_hint}. "
+                            "The sensor may not have recorded any data in that period, "
+                            "or the sensor might not be actively transmitting. "
+                            "Try a more recent time window, or check another sensor zone."
+                        ),
                     }
 
             if sensor_metadata:
@@ -174,7 +202,17 @@ class AnalyticsAgent:
 
         except Exception as e:
             logger.error(f"Analytics error: {e}", exc_info=True)
-            return {"success": False, "error": str(e), "code": None, "output": None}
+            return {
+                "success": False,
+                "error": str(e),
+                "code": None,
+                "output": None,
+                "formatted_response": (
+                    "I encountered an issue processing your request. "
+                    "Please try rephrasing your question, or ask about a specific "
+                    "zone or sensor (e.g. 'temperature in Zone 5.28', 'CO₂ in Zone 5.08')."
+                ),
+            }
 
     def _get_template_code(
         self,
@@ -609,7 +647,7 @@ else:
 
 Respond with ONLY the Python code, wrapped in ```python blocks."""
 
-        response = await llm_manager.generate(code_prompt)
+        response = await llm_manager.generate(code_prompt, task_type=TaskType.ANALYTICS)
 
         # Extract code from response
         code = extract_code_from_llm_response(response)
@@ -741,7 +779,7 @@ Fix the code to resolve the error. Common issues:
 
 Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
 
-        response = await llm_manager.generate(fix_prompt)
+        response = await llm_manager.generate(fix_prompt, task_type=TaskType.ANALYTICS)
         fixed_code = extract_code_from_llm_response(response)
 
         logger.info(f"Fixed code:\n{fixed_code}")
@@ -756,7 +794,12 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
         """Format analysis results into natural language"""
 
         if not result.get("success"):
-            return f"Analysis failed: {result.get('error', 'Unknown error')}", []
+            # Return the pre-formatted user-friendly message if available, otherwise a generic one
+            user_msg = result.get("formatted_response") or (
+                "I wasn't able to complete the analysis. Please try rephrasing your question "
+                "or ask about a different time period or sensor."
+            )
+            return user_msg, []
 
         output = result.get("output", "")
 
@@ -837,27 +880,51 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
             if image_url
             else "No chart was generated for this query."
         )
-        summary_prompt = f"""Convert this Python analysis output into a natural language response.
+
+        # Add sustainability/compliance context if relevant keywords present
+        _q_lower = user_query.lower()
+        compliance_hint = ""
+        if any(kw in _q_lower for kw in [
+            "ashrae", "well", "breeam", "iso 50001", "leed", "compliance",
+            "standard", "threshold", "limit", "comfort", "esg", "carbon",
+            "emission", "sustainability", "energy target", "kpi",
+        ]):
+            compliance_hint = """
+Sustainability/Compliance Context:
+- ASHRAE 55 thermal comfort: temperature 20–26°C, humidity 20–60%RH
+- ASHRAE 62.1 air quality: CO₂ < 1100 ppm, PM2.5 < 35 µg/m³, TVOC < 500 ppb
+- WELL v2 air quality: CO₂ < 1000 ppm, PM2.5 < 15 µg/m³, humidity 30–60%RH
+- BREEAM Hea 02 (indoor air quality): CO₂ < 1000 ppm
+- EN 15251 Category II: temperature 20–25°C (heating), 23–26°C (cooling)
+- ISO 50001: track energy baseline, targets, and continual improvement
+When findings violate a standard, clearly state which standard and by how much.
+Use ✅ for compliant, ⚠️ for borderline, ❌ for non-compliant.
+"""
+
+        summary_prompt = f"""You are an expert building analytics assistant. Convert this sensor data analysis into a professional, actionable response.
 
 User Query: {user_query}
 
 Analysis Output:
 {output}
 {sensor_context}
+{compliance_hint}
 Visualization status: {viz_note}
 
-Generate a concise, natural response that:
-1. Explains what analysis was performed
-2. Highlights key findings and numbers (latest reading, mean, min, max, std dev if present)
-3. Uses clear, non-technical language
-4. Uses human-readable sensor names (from Sensor Information above), NOT UUIDs
-5. Includes units for any numeric values when provided
-6. If a chart was generated, mention it briefly — do NOT say "no visualizations"
+Generate a response that:
+1. Opens with the key finding (the single most important number or status) — bold it
+2. Provides context: is this reading normal, concerning, or compliant with standards?
+3. Uses ✅/⚠️/❌ status icons where relevant
+4. Includes specific numbers with units
+5. Ends with ONE concrete actionable recommendation if relevant
+6. Uses human-readable sensor names (from Sensor Information above), NOT UUIDs
+7. Is concise — 3–6 sentences for simple queries, up to 10 for complex ones
+8. Does NOT include caveats like "I cannot provide" or "data not shown" — if data was analysed, report it
 
 Response:"""
 
         try:
-            summary = await llm_manager.generate(summary_prompt)
+            summary = await llm_manager.generate(summary_prompt, task_type=TaskType.ANALYTICS)
             return summary.strip() + plot_markdown, media
-        except:
+        except Exception:
             return f"Analysis complete. Output:\n{output}" + plot_markdown, media

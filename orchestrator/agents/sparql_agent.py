@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 import httpx
 
 from orchestrator.agents.dialogue_agent import format_conversation_history
-from orchestrator.llm_manager import llm_manager
+from orchestrator.llm_manager import TaskType, llm_manager
 from orchestrator.redis_manager import redis_manager
 from orchestrator.services.hybrid_retrieval import (
     QueryType,
@@ -117,25 +117,27 @@ class SPARQLAgent:
             context_text = "No relevant ontology information found."
 
         # Build reasoning prompt
-        reasoning_prompt = f"""You are an expert at understanding building ontologies. Answer the user's question based ONLY on the provided ontology fragments.
+        reasoning_prompt = f"""You are an expert building management assistant. Answer the user's question based on the provided building ontology data.
 
 User Question: "{user_query}"
 
-Relevant Ontology Data:
+Building Ontology Data:
 {context_text}
 
 Instructions:
-1. Carefully read the ontology fragments above
-2. Find the exact information the user is asking for
-3. Answer concisely and accurately
-4. If you find a label (rdfs:label), definition (rdfs:comment or skos:definition), or other properties, include them
-5. If the information is NOT in the ontology fragments, say "I couldn't find this information in the ontology"
-6. Format your answer clearly (use bold for labels, bullets for multiple items)
+1. Carefully read the building data above
+2. Answer concisely and accurately using what you find
+3. If the user asks for a sensor type that is NOT in the ontology (e.g. power meters, occupancy counters, VOC sensors), clearly state:
+   "This building does not have [sensor type] sensors." Then suggest what IS available.
+4. The Abacws building sensors include: temperature, CO₂, humidity, air quality (PM1, PM2.5, PM10, TVOC, NO₂), illuminance, gas sensors (MQ2, MQ3, MQ5, MQ9), oxygen — but NOT energy meters, power consumption sensors, or people counters.
+5. If you find a label (rdfs:label) or definition, include it
+6. Format your answer clearly (use bold for key values, bullets for lists)
+7. Always be helpful — if data isn't available, suggest the closest relevant sensor type that IS available
 
 Your Answer:"""
 
         try:
-            response = await llm_manager.generate(reasoning_prompt, temperature=0.1)
+            response = await llm_manager.generate(reasoning_prompt, temperature=0.1, task_type=TaskType.SPARQL)
             return {
                 "text": response.strip(),
                 "confidence": "high" if len(context_text) > 100 else "low",
@@ -648,7 +650,7 @@ Example:
             logger.info(f"✅ Cache hit for SPARQL generation: {prompt_hash}")
             return cached_result
 
-        response = await llm_manager.generate(sparql_prompt)
+        response = await llm_manager.generate(sparql_prompt, task_type=TaskType.SPARQL)
 
         # Parse JSON response from LLM
         try:
@@ -713,7 +715,7 @@ Please fix the syntax errors and return a valid SPARQL query. Common issues:
 
 Return ONLY the corrected SPARQL query."""
 
-        response = await llm_manager.generate(repair_prompt)
+        response = await llm_manager.generate(repair_prompt, task_type=TaskType.SPARQL)
         repaired = extract_sparql_from_llm_response(response)
 
         logger.info(f"Repaired SPARQL query:\n{repaired}")
@@ -1712,7 +1714,7 @@ Generate your response now:"""
         if used_template:
             # For template queries, always use LLM formatting for better UX
             try:
-                summary = await llm_manager.generate(summary_prompt)
+                summary = await llm_manager.generate(summary_prompt, task_type=TaskType.GENERAL)
                 return summary.strip()
             except Exception as e:
                 logger.warning(f"LLM formatting failed, using structured fallback: {e}")
@@ -1720,7 +1722,7 @@ Generate your response now:"""
                 return self._clean_uri_output(result_text)
 
         try:
-            summary = await llm_manager.generate(summary_prompt)
+            summary = await llm_manager.generate(summary_prompt, task_type=TaskType.GENERAL)
             return summary.strip()
         except Exception as e:
             logger.warning(f"LLM summarization failed, fallback to cleaned output: {e}")

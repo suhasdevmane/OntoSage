@@ -1,0 +1,2282 @@
+# =============================================================================
+# Abacws Building — Brick Schema v1.4 A-Box Metadata
+#
+# This file adds comprehensive Brick v1.4 metadata to the Abacws building
+# (School of Computer Science and Informatics, Cardiff University).
+# It is designed to be loaded alongside bldg1_expanded_protege_clean.ttl
+# into the same GraphDB repository.
+#
+# What this file adds:
+#   - brick:Building typing for bldg:Abacws (was rec:Building only)
+#   - brick:Floor typing for Floors 0-5 + Rooftop (were rec:Space only)
+#   - Brick-subclass room types for every room on every floor
+#   - brick:HVAC_Zone declarations for all 34 zones on Floor 5
+#   - HVAC equipment: AHU per floor, Boiler, Chiller, Heat_Pump
+#   - Electrical: Building_Electrical_Meter, Breaker_Panel per floor, Emergency_Generator
+#   - Fire safety: Fire_Alarm_Control_Panel, AED locations, First_Aid_Kit per floor
+#   - Water: Building_Water_Meter, Hot_Water_System
+#   - Vertical transport: 2 Elevators, Stairwell_North, Stairwell_South
+#   - IT/Communications: Server rooms, Telecom rooms
+#   - Security: Cameras at entrance + each floor
+#   - Parking: Parking_Level, 6 EV Charging Stations
+#   - Renewable: PV array on Rooftop
+#
+# Sensor names (all *_5.XX entities) are NOT modified here.
+# =============================================================================
+
+@prefix brick:   <https://brickschema.org/schema/Brick#> .
+@prefix bldg:    <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@base <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+# ---------------------------------------------------------------------------
+# Ontology header
+# ---------------------------------------------------------------------------
+
+bldg:AbacwsMetadataOntology
+    rdf:type owl:Ontology ;
+    rdfs:label "Abacws Building Metadata — Brick v1.4 A-Box" ;
+    rdfs:comment "Comprehensive Brick Schema v1.4 instance metadata for the Abacws building at Cardiff University. Companion file to bldg1_expanded_protege_clean.ttl." ;
+    owl:imports <https://brickschema.org/schema/1.4/Brick> ;
+    dcterms:creator "Cardiff University Smart Buildings Team" ;
+    dcterms:created "2026-04-25"^^xsd:date ;
+    owl:versionInfo "1.0" .
+
+
+# ===========================================================================
+# BUILDING
+# ===========================================================================
+
+bldg:Abacws
+    rdf:type owl:NamedIndividual ,
+             brick:Building ;
+    rdfs:label "Abacws Building" ;
+    rdfs:comment "School of Computer Science and Informatics, Cardiff University, Senghennydd Road, Cardiff CF24 4AG" ;
+    brick:hasPart bldg:Floor0 ,
+                  bldg:Floor1 ,
+                  bldg:Floor2 ,
+                  bldg:Floor3 ,
+                  bldg:Floor4 ,
+                  bldg:Floor5 ,
+                  bldg:Rooftop ,
+                  bldg:Parking_Level_Ground ;
+    brick:hasLocation bldg:HVAC_Plant_Building .
+
+
+# ===========================================================================
+# FLOORS
+# ===========================================================================
+
+bldg:Floor0
+    rdf:type owl:NamedIndividual ,
+             brick:Floor ;
+    rdfs:label "Floor 0 (Ground Floor)" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart  bldg:Room0.01 ,
+                   bldg:Room0.04 ,
+                   bldg:Room0.05 ,
+                   bldg:Room0.06 ,
+                   bldg:Room0.07 ,
+                   bldg:Room0.08 ,
+                   bldg:Room0.10 ,
+                   bldg:Room0.17 ,
+                   bldg:Room0.18 ,
+                   bldg:Room0.19 ,
+                   bldg:Room0.20 ,
+                   bldg:Room0.29 ,
+                   bldg:Room0.31 ,
+                   bldg:Room0.32 ,
+                   bldg:Room0.33 ,
+                   bldg:Room0.34 ,
+                   bldg:HVAC_Zone_F0 ,
+                   bldg:AHU_F0 ,
+                   bldg:Breaker_Panel_F0 ,
+                   bldg:Fire_Alarm_F0 ,
+                   bldg:First_Aid_Kit_F0 ,
+                   bldg:Security_Camera_F0 ,
+                   bldg:Stairwell_North ,
+                   bldg:Stairwell_South ,
+                   bldg:Lift_1 ,
+                   bldg:Lift_2 .
+
+bldg:Floor1
+    rdf:type owl:NamedIndividual ,
+             brick:Floor ;
+    rdfs:label "Floor 1 (First Floor)" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart  bldg:Room1.04 ,
+                   bldg:Room1.06 ,
+                   bldg:Room1.07 ,
+                   bldg:Room1.08 ,
+                   bldg:Room1.09 ,
+                   bldg:Room1.25 ,
+                   bldg:Room1.26 ,
+                   bldg:Room1.34 ,
+                   bldg:Room1.37 ,
+                   bldg:Room1.38 ,
+                   bldg:Room1.39 ,
+                   bldg:Room1.40 ,
+                   bldg:Room1.41 ,
+                   bldg:HVAC_Zone_F1 ,
+                   bldg:AHU_F1 ,
+                   bldg:Breaker_Panel_F1 ,
+                   bldg:Fire_Alarm_F1 ,
+                   bldg:First_Aid_Kit_F1 ,
+                   bldg:Security_Camera_F1 .
+
+bldg:Floor2
+    rdf:type owl:NamedIndividual ,
+             brick:Floor ;
+    rdfs:label "Floor 2 (Second Floor)" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart  bldg:Room2.01 ,
+                   bldg:Room2.02 ,
+                   bldg:Room2.03 ,
+                   bldg:Room2.04 ,
+                   bldg:Room2.05 ,
+                   bldg:Room2.06 ,
+                   bldg:Room2.07 ,
+                   bldg:Room2.08 ,
+                   bldg:Room2.09 ,
+                   bldg:Room2.10 ,
+                   bldg:Room2.11 ,
+                   bldg:Room2.12 ,
+                   bldg:Room2.13 ,
+                   bldg:Room2.14 ,
+                   bldg:Room2.15 ,
+                   bldg:Room2.17 ,
+                   bldg:Room2.18 ,
+                   bldg:Room2.19 ,
+                   bldg:Room2.20 ,
+                   bldg:Room2.21 ,
+                   bldg:Room2.22 ,
+                   bldg:Room2.24 ,
+                   bldg:Room2.26 ,
+                   bldg:Room2.34 ,
+                   bldg:Room2.35 ,
+                   bldg:Room2.36 ,
+                   bldg:Room2.44 ,
+                   bldg:Room2.47 ,
+                   bldg:Room2.48 ,
+                   bldg:Room2.49 ,
+                   bldg:Room2.50 ,
+                   bldg:Room2.52 ,
+                   bldg:Room2.53 ,
+                   bldg:Room2.54 ,
+                   bldg:Room2.55 ,
+                   bldg:Room2.56 ,
+                   bldg:Room2.57 ,
+                   bldg:Room2.58 ,
+                   bldg:Room2.59 ,
+                   bldg:Room2.60 ,
+                   bldg:Room2.61 ,
+                   bldg:Room2.62 ,
+                   bldg:Room2.63 ,
+                   bldg:Room2.64 ,
+                   bldg:Room2.65 ,
+                   bldg:Room2.66 ,
+                   bldg:Room2.67 ,
+                   bldg:HVAC_Zone_F2 ,
+                   bldg:AHU_F2 ,
+                   bldg:Breaker_Panel_F2 ,
+                   bldg:Fire_Alarm_F2 ,
+                   bldg:First_Aid_Kit_F2 ,
+                   bldg:Security_Camera_F2 .
+
+bldg:Floor3
+    rdf:type owl:NamedIndividual ,
+             brick:Floor ;
+    rdfs:label "Floor 3 (Third Floor)" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart  bldg:Room3.01 ,
+                   bldg:Room3.02 ,
+                   bldg:Room3.03 ,
+                   bldg:Room3.04 ,
+                   bldg:Room3.05 ,
+                   bldg:Room3.06 ,
+                   bldg:Room3.07 ,
+                   bldg:Room3.08 ,
+                   bldg:Room3.09 ,
+                   bldg:Room3.10 ,
+                   bldg:Room3.11 ,
+                   bldg:Room3.12 ,
+                   bldg:Room3.13 ,
+                   bldg:Room3.14 ,
+                   bldg:Room3.15 ,
+                   bldg:Room3.16 ,
+                   bldg:Room3.17 ,
+                   bldg:Room3.18 ,
+                   bldg:Room3.20 ,
+                   bldg:Room3.22 ,
+                   bldg:Room3.26 ,
+                   bldg:Room3.27 ,
+                   bldg:Room3.36 ,
+                   bldg:Room3.37 ,
+                   bldg:Room3.38 ,
+                   bldg:Room3.46 ,
+                   bldg:Room3.48 ,
+                   bldg:Room3.50 ,
+                   bldg:Room3.51 ,
+                   bldg:Room3.52 ,
+                   bldg:Room3.53 ,
+                   bldg:Room3.54 ,
+                   bldg:Room3.56 ,
+                   bldg:Room3.57 ,
+                   bldg:Room3.58 ,
+                   bldg:Room3.59 ,
+                   bldg:Room3.60 ,
+                   bldg:Room3.61 ,
+                   bldg:Room3.62 ,
+                   bldg:Room3.63 ,
+                   bldg:Room3.64 ,
+                   bldg:Room3.65 ,
+                   bldg:Room3.66 ,
+                   bldg:Room3.67 ,
+                   bldg:Room3.68 ,
+                   bldg:Room3.69 ,
+                   bldg:Room3.70 ,
+                   bldg:Room3.71 ,
+                   bldg:HVAC_Zone_F3 ,
+                   bldg:AHU_F3 ,
+                   bldg:Breaker_Panel_F3 ,
+                   bldg:Fire_Alarm_F3 ,
+                   bldg:First_Aid_Kit_F3 ,
+                   bldg:Security_Camera_F3 .
+
+bldg:Floor4
+    rdf:type owl:NamedIndividual ,
+             brick:Floor ;
+    rdfs:label "Floor 4 (Fourth Floor)" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart  bldg:Room4.01 ,
+                   bldg:Room4.02 ,
+                   bldg:Room4.03 ,
+                   bldg:Room4.05 ,
+                   bldg:Room4.06 ,
+                   bldg:Room4.07 ,
+                   bldg:Room4.08 ,
+                   bldg:Room4.09 ,
+                   bldg:Room4.10 ,
+                   bldg:Room4.11 ,
+                   bldg:Room4.12 ,
+                   bldg:Room4.13 ,
+                   bldg:Room4.14 ,
+                   bldg:Room4.15 ,
+                   bldg:Room4.16 ,
+                   bldg:Room4.18 ,
+                   bldg:Room4.19 ,
+                   bldg:Room4.20 ,
+                   bldg:Room4.21 ,
+                   bldg:Room4.22 ,
+                   bldg:Room4.23 ,
+                   bldg:Room4.24 ,
+                   bldg:Room4.34 ,
+                   bldg:Room4.35 ,
+                   bldg:Room4.36 ,
+                   bldg:Room4.38 ,
+                   bldg:Room4.44 ,
+                   bldg:Room4.47 ,
+                   bldg:Room4.49 ,
+                   bldg:Room4.50 ,
+                   bldg:Room4.51 ,
+                   bldg:Room4.52 ,
+                   bldg:Room4.53 ,
+                   bldg:Room4.55 ,
+                   bldg:Room4.56 ,
+                   bldg:Room4.57 ,
+                   bldg:Room4.58 ,
+                   bldg:Room4.59 ,
+                   bldg:Room4.60 ,
+                   bldg:Room4.61 ,
+                   bldg:Room4.62 ,
+                   bldg:Room4.63 ,
+                   bldg:Room4.64 ,
+                   bldg:Room4.65 ,
+                   bldg:Room4.66 ,
+                   bldg:Room4.67 ,
+                   bldg:Room4.68 ,
+                   bldg:Room4.69 ,
+                   bldg:Room4.70 ,
+                   bldg:Room4.71 ,
+                   bldg:HVAC_Zone_F4 ,
+                   bldg:AHU_F4 ,
+                   bldg:Breaker_Panel_F4 ,
+                   bldg:Fire_Alarm_F4 ,
+                   bldg:First_Aid_Kit_F4 ,
+                   bldg:Security_Camera_F4 .
+
+bldg:Floor5
+    rdf:type owl:NamedIndividual ,
+             brick:Floor ;
+    rdfs:label "Floor 5 (Fifth Floor)" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart  bldg:Room5.01 ,
+                   bldg:Room5.02 ,
+                   bldg:Room5.03 ,
+                   bldg:Room5.04 ,
+                   bldg:Room5.05 ,
+                   bldg:Room5.06 ,
+                   bldg:Room5.07 ,
+                   bldg:Room5.08 ,
+                   bldg:Room5.09 ,
+                   bldg:Room5.10 ,
+                   bldg:Room5.11 ,
+                   bldg:Room5.12 ,
+                   bldg:Room5.13 ,
+                   bldg:Room5.14 ,
+                   bldg:Room5.15 ,
+                   bldg:Room5.16 ,
+                   bldg:Room5.17 ,
+                   bldg:Room5.18 ,
+                   bldg:Room5.20 ,
+                   bldg:Room5.21 ,
+                   bldg:Room5.22 ,
+                   bldg:Room5.23 ,
+                   bldg:Room5.26 ,
+                   bldg:Room5.34 ,
+                   bldg:Room5.35 ,
+                   bldg:Room5.36 ,
+                   bldg:Room5.44 ,
+                   bldg:Room5.45 ,
+                   bldg:Room5.48 ,
+                   bldg:Room5.49 ,
+                   bldg:Room5.50 ,
+                   bldg:Room5.51 ,
+                   bldg:Room5.52 ,
+                   bldg:Room5.53 ,
+                   bldg:Room5.54 ,
+                   bldg:Room5.56 ,
+                   bldg:Room5.57 ,
+                   bldg:Room5.58 ,
+                   bldg:Room5.59 ,
+                   bldg:Room5.60 ,
+                   bldg:Room5.61 ,
+                   bldg:Room5.62 ,
+                   bldg:Room5.63 ,
+                   bldg:Room5.64 ,
+                   bldg:Room5.65 ,
+                   bldg:Room5.66 ,
+                   bldg:Room5.67 ,
+                   bldg:Room5.68 ,
+                   bldg:Room5.69 ,
+                   bldg:Room5.70 ,
+                   bldg:Room5.71 ,
+                   bldg:Zone_5.01 ,
+                   bldg:Zone_5.02 ,
+                   bldg:Zone_5.03 ,
+                   bldg:Zone_5.04 ,
+                   bldg:Zone_5.05 ,
+                   bldg:Zone_5.06 ,
+                   bldg:Zone_5.07 ,
+                   bldg:Zone_5.08 ,
+                   bldg:Zone_5.09 ,
+                   bldg:Zone_5.10 ,
+                   bldg:Zone_5.11 ,
+                   bldg:Zone_5.12 ,
+                   bldg:Zone_5.13 ,
+                   bldg:Zone_5.14 ,
+                   bldg:Zone_5.15 ,
+                   bldg:Zone_5.16 ,
+                   bldg:Zone_5.17 ,
+                   bldg:Zone_5.18 ,
+                   bldg:Zone_5.19 ,
+                   bldg:Zone_5.20 ,
+                   bldg:Zone_5.21 ,
+                   bldg:Zone_5.22 ,
+                   bldg:Zone_5.23 ,
+                   bldg:Zone_5.24 ,
+                   bldg:Zone_5.25 ,
+                   bldg:Zone_5.26 ,
+                   bldg:Zone_5.27 ,
+                   bldg:Zone_5.28 ,
+                   bldg:Zone_5.29 ,
+                   bldg:Zone_5.30 ,
+                   bldg:Zone_5.31 ,
+                   bldg:Zone_5.32 ,
+                   bldg:Zone_5.33 ,
+                   bldg:Zone_5.34 ,
+                   bldg:AHU_F5 ,
+                   bldg:Breaker_Panel_F5 ,
+                   bldg:Fire_Alarm_F5 ,
+                   bldg:First_Aid_Kit_F5 ,
+                   bldg:Security_Camera_F5 .
+
+bldg:Rooftop
+    rdf:type owl:NamedIndividual ,
+             brick:Rooftop ;
+    rdfs:label "Abacws Rooftop" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart  bldg:PV_Array_1 ,
+                   bldg:PV_Array_2 ,
+                   bldg:Cooling_Tower_1 ,
+                   bldg:Emergency_Generator_1 .
+
+
+# ===========================================================================
+# FLOOR 0 — ROOM TYPES (Ground Floor)
+# ===========================================================================
+
+bldg:Room0.01
+    rdf:type owl:NamedIndividual , brick:Reception ;
+    rdfs:label "Room 0.01 — Main Reception" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.04
+    rdf:type owl:NamedIndividual , brick:Mechanical_Room ;
+    rdfs:label "Room 0.04 — Mechanical Plant Room" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.05
+    rdf:type owl:NamedIndividual , brick:Mechanical_Room ;
+    rdfs:label "Room 0.05 — Mechanical Plant Room" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.06
+    rdf:type owl:NamedIndividual , brick:Storage_Room ;
+    rdfs:label "Room 0.06 — Loading and Goods Storage" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.07
+    rdf:type owl:NamedIndividual , brick:Mechanical_Room ;
+    rdfs:label "Room 0.07 — Service Room" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.08
+    rdf:type owl:NamedIndividual , brick:Mechanical_Room ;
+    rdfs:label "Room 0.08 — Service Room" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.10
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 0.10 — Building Management Office" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.17
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 0.17 — Office" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.18
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 0.18 — Office" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.19
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 0.19 — Office" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.20
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 0.20 — Office" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.29
+    rdf:type owl:NamedIndividual , brick:Storage_Room ;
+    rdfs:label "Room 0.29 — Storage Room" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.31
+    rdf:type owl:NamedIndividual , brick:Mechanical_Room ;
+    rdfs:label "Room 0.31 — Mechanical/Service Room" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.32
+    rdf:type owl:NamedIndividual , brick:Mechanical_Room ;
+    rdfs:label "Room 0.32 — Mechanical/Service Room" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.33
+    rdf:type owl:NamedIndividual , brick:Mechanical_Room ;
+    rdfs:label "Room 0.33 — Mechanical/Service Room" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Room0.34
+    rdf:type owl:NamedIndividual , brick:Telecom_Room ;
+    rdfs:label "Room 0.34 — Building Telecommunications Room" ;
+    brick:isPartOf bldg:Floor0 .
+
+
+# ===========================================================================
+# FLOOR 1 — ROOM TYPES
+# ===========================================================================
+
+bldg:Room1.04
+    rdf:type owl:NamedIndividual , brick:Common_Space ;
+    rdfs:label "Room 1.04 — Common Area / Atrium" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.06
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 1.06 — Computer Laboratory" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.07
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 1.07 — Computer Laboratory" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.08
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 1.08 — Computer Laboratory" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.09
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 1.09 — Computer Laboratory" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.25
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 1.25 — Conference/Seminar Room" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.26
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 1.26 — Conference/Seminar Room" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.34
+    rdf:type owl:NamedIndividual , brick:Telecom_Room ;
+    rdfs:label "Room 1.34 — Telecommunications Room" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.37
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 1.37 — Academic Office" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.38
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 1.38 — Academic Office" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.39
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 1.39 — Academic Office" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.40
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 1.40 — Academic Office" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Room1.41
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 1.41 — Academic Office" ;
+    brick:isPartOf bldg:Floor1 .
+
+
+# ===========================================================================
+# FLOOR 2 — ROOM TYPES
+# ===========================================================================
+
+bldg:Room2.01
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.01 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.02
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.02 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.03
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.03 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.04
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.04 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.05
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.05 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.06
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.06 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.07
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.07 — Computer Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.08
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.08 — Computer Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.09
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.09 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.10
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.10 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.11
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.11 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.12
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.12 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.13
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 2.13 — Meeting Room" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.14
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 2.14 — Meeting Room" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.15
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 2.15 — Seminar Room" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.17
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.17 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.18
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.18 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.19
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.19 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.20
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.20 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.21
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.21 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.22
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.22 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.24
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.24 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.26
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.26 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.34
+    rdf:type owl:NamedIndividual , brick:Telecom_Room ;
+    rdfs:label "Room 2.34 — Telecommunications Room" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.35
+    rdf:type owl:NamedIndividual , brick:Restroom ;
+    rdfs:label "Room 2.35 — Restroom (Male)" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.36
+    rdf:type owl:NamedIndividual , brick:Restroom ;
+    rdfs:label "Room 2.36 — Restroom (Female)" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.44
+    rdf:type owl:NamedIndividual , brick:Server_Room ;
+    rdfs:label "Room 2.44 — Server Room" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.47
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.47 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.48
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.48 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.49
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.49 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.50
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.50 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.52
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.52 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.53
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.53 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.54
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.54 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.55
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.55 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.56
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.56 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.57
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 2.57 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.58
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.58 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.59
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.59 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.60
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.60 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.61
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.61 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.62
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.62 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.63
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.63 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.64
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.64 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.65
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 2.65 — Academic Office" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.66
+    rdf:type owl:NamedIndividual , brick:Break_Room ;
+    rdfs:label "Room 2.66 — Staff Break Room / Kitchen" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Room2.67
+    rdf:type owl:NamedIndividual , brick:Storage_Room ;
+    rdfs:label "Room 2.67 — Storage Room" ;
+    brick:isPartOf bldg:Floor2 .
+
+
+# ===========================================================================
+# FLOOR 3 — ROOM TYPES
+# ===========================================================================
+
+bldg:Room3.01
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.01 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.02
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.02 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.03
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.03 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.04
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.04 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.05
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.05 — Computer Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.06
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.06 — Computer Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.07
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.07 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.08
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.08 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.09
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.09 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.10
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.10 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.11
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.11 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.12
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.12 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.13
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 3.13 — Seminar Room" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.14
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 3.14 — Seminar Room" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.15
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 3.15 — Meeting Room" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.16
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 3.16 — Meeting Room" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.17
+    rdf:type owl:NamedIndividual , brick:Break_Room ;
+    rdfs:label "Room 3.17 — Staff Common Room" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.18
+    rdf:type owl:NamedIndividual , brick:Office_Kitchen ;
+    rdfs:label "Room 3.18 — Kitchen" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.20
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.20 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.22
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.22 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.26
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 3.26 — Meeting Room" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.27
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 3.27 — Meeting Room" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.36
+    rdf:type owl:NamedIndividual , brick:Restroom ;
+    rdfs:label "Room 3.36 — Restroom (Male)" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.37
+    rdf:type owl:NamedIndividual , brick:Restroom ;
+    rdfs:label "Room 3.37 — Restroom (Female)" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.38
+    rdf:type owl:NamedIndividual , brick:Telecom_Room ;
+    rdfs:label "Room 3.38 — Telecommunications Room" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.46
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.46 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.48
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.48 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.50
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.50 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.51
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.51 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.52
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.52 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.53
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.53 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.54
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.54 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.56
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.56 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.57
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.57 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.58
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 3.58 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.59
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.59 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.60
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.60 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.61
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.61 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.62
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.62 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.63
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.63 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.64
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.64 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.65
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.65 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.66
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.66 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.67
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.67 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.68
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.68 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.69
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.69 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.70
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.70 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Room3.71
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 3.71 — Academic Office" ;
+    brick:isPartOf bldg:Floor3 .
+
+
+# ===========================================================================
+# FLOOR 4 — ROOM TYPES
+# ===========================================================================
+
+bldg:Room4.01
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.01 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.02
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.02 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.03
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.03 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.05
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.05 — Computer Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.06
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.06 — Computer Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.07
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.07 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.08
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.08 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.09
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.09 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.10
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.10 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.11
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 4.11 — Meeting Room" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.12
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 4.12 — Meeting Room" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.13
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 4.13 — Seminar Room" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.14
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.14 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.15
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.15 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.16
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.16 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.18
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.18 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.19
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.19 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.20
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.20 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.21
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.21 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.22
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.22 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.23
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.23 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.24
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.24 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.34
+    rdf:type owl:NamedIndividual , brick:Telecom_Room ;
+    rdfs:label "Room 4.34 — Telecommunications Room" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.35
+    rdf:type owl:NamedIndividual , brick:Restroom ;
+    rdfs:label "Room 4.35 — Restroom (Male)" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.36
+    rdf:type owl:NamedIndividual , brick:Restroom ;
+    rdfs:label "Room 4.36 — Restroom (Female)" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.38
+    rdf:type owl:NamedIndividual , brick:Mechanical_Room ;
+    rdfs:label "Room 4.38 — Mechanical/Service Room" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.44
+    rdf:type owl:NamedIndividual , brick:Server_Room ;
+    rdfs:label "Room 4.44 — Server Room" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.47
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.47 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.49
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.49 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.50
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.50 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.51
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.51 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.52
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.52 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.53
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.53 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.55
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.55 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.56
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.56 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.57
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.57 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.58
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.58 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.59
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.59 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.60
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 4.60 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.61
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.61 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.62
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.62 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.63
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.63 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.64
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.64 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.65
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.65 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.66
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.66 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.67
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.67 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.68
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.68 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.69
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 4.69 — Academic Office" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.70
+    rdf:type owl:NamedIndividual , brick:Break_Room ;
+    rdfs:label "Room 4.70 — Staff Break Room" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Room4.71
+    rdf:type owl:NamedIndividual , brick:Storage_Room ;
+    rdfs:label "Room 4.71 — Storage Room" ;
+    brick:isPartOf bldg:Floor4 .
+
+
+# ===========================================================================
+# FLOOR 5 — ROOM TYPES
+# ===========================================================================
+
+bldg:Room5.01
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.01 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.02
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.02 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.03
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.03 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.04
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.04 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.05
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.05 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.06
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.06 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.07
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.07 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.08
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.08 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.09
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.09 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.10
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.10 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.11
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.11 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.12
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.12 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.13
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.13 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.14
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.14 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.15
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 5.15 — Seminar / Conference Room" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.16
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 5.16 — Seminar / Conference Room" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.17
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 5.17 — Meeting Room" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.18
+    rdf:type owl:NamedIndividual , brick:Conference_Room ;
+    rdfs:label "Room 5.18 — Meeting Room" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.20
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.20 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.21
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.21 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.22
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.22 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.23
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.23 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.26
+    rdf:type owl:NamedIndividual , brick:Break_Room ;
+    rdfs:label "Room 5.26 — Staff Break Room / Kitchen" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.34
+    rdf:type owl:NamedIndividual , brick:Telecom_Room ;
+    rdfs:label "Room 5.34 — Telecommunications Room" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.35
+    rdf:type owl:NamedIndividual , brick:Restroom ;
+    rdfs:label "Room 5.35 — Restroom (Male)" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.36
+    rdf:type owl:NamedIndividual , brick:Restroom ;
+    rdfs:label "Room 5.36 — Restroom (Female)" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.44
+    rdf:type owl:NamedIndividual , brick:Server_Room ;
+    rdfs:label "Room 5.44 — Server Room" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.45
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.45 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.48
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.48 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.49
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.49 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.50
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.50 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.51
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.51 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.52
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.52 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.53
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.53 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.54
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.54 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.56
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.56 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.57
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.57 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.58
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.58 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.59
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.59 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.60
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.60 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.61
+    rdf:type owl:NamedIndividual , brick:Laboratory ;
+    rdfs:label "Room 5.61 — Research Laboratory" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.62
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.62 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.63
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.63 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.64
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.64 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.65
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.65 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.66
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.66 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.67
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.67 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.68
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.68 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.69
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.69 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.70
+    rdf:type owl:NamedIndividual , brick:Office ;
+    rdfs:label "Room 5.70 — Academic Office" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Room5.71
+    rdf:type owl:NamedIndividual , brick:Storage_Room ;
+    rdfs:label "Room 5.71 — Storage Room" ;
+    brick:isPartOf bldg:Floor5 .
+
+
+# ===========================================================================
+# HVAC ZONES — FLOOR 5 (all 34 zones, declared as brick:HVAC_Zone)
+# Sensors in bldg1_expanded_protege_clean.ttl reference these via
+# brick:hasLocation — here we add their type and containment.
+# ===========================================================================
+
+bldg:Zone_5.01
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.01" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.02
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.02" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.03
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.03" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.04
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.04" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.05
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.05" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.06
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.06" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.07
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.07" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.08
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.08" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.09
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.09" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.10
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.10" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.11
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.11" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.12
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.12" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.13
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.13" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.14
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.14" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.15
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.15" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.16
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.16" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.17
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.17" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.18
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.18" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.19
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.19" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.20
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.20" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.21
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.21" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.22
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.22" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.23
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.23" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.24
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.24" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.25
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.25" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.26
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.26" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.27
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.27" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.28
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.28" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.29
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.29" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.30
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.30" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.31
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.31" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.32
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.32" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.33
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.33" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Zone_5.34
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone 5.34" ;
+    brick:isPartOf bldg:Floor5 .
+
+
+# ===========================================================================
+# HVAC ZONES — FLOORS 0-4 (aggregate per-floor zones)
+# ===========================================================================
+
+bldg:HVAC_Zone_F0
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone — Ground Floor (Floor 0)" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:HVAC_Zone_F1
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone — First Floor (Floor 1)" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:HVAC_Zone_F2
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone — Second Floor (Floor 2)" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:HVAC_Zone_F3
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone — Third Floor (Floor 3)" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:HVAC_Zone_F4
+    rdf:type owl:NamedIndividual , brick:HVAC_Zone ;
+    rdfs:label "HVAC Zone — Fourth Floor (Floor 4)" ;
+    brick:isPartOf bldg:Floor4 .
+
+
+# ===========================================================================
+# HVAC EQUIPMENT
+# ===========================================================================
+
+bldg:HVAC_Plant_Building
+    rdf:type owl:NamedIndividual , brick:HVAC_System ;
+    rdfs:label "Abacws Central HVAC System" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart bldg:AHU_F0 ,
+                  bldg:AHU_F1 ,
+                  bldg:AHU_F2 ,
+                  bldg:AHU_F3 ,
+                  bldg:AHU_F4 ,
+                  bldg:AHU_F5 ,
+                  bldg:Boiler_1 ,
+                  bldg:Boiler_2 ,
+                  bldg:Chiller_1 ,
+                  bldg:Heat_Pump_1 .
+
+bldg:AHU_F0
+    rdf:type owl:NamedIndividual , brick:Air_Handling_Unit ;
+    rdfs:label "Air Handling Unit — Floor 0" ;
+    brick:isPartOf bldg:Floor0 ;
+    brick:feeds bldg:HVAC_Zone_F0 .
+
+bldg:AHU_F1
+    rdf:type owl:NamedIndividual , brick:Air_Handling_Unit ;
+    rdfs:label "Air Handling Unit — Floor 1" ;
+    brick:isPartOf bldg:Floor1 ;
+    brick:feeds bldg:HVAC_Zone_F1 .
+
+bldg:AHU_F2
+    rdf:type owl:NamedIndividual , brick:Air_Handling_Unit ;
+    rdfs:label "Air Handling Unit — Floor 2" ;
+    brick:isPartOf bldg:Floor2 ;
+    brick:feeds bldg:HVAC_Zone_F2 .
+
+bldg:AHU_F3
+    rdf:type owl:NamedIndividual , brick:Air_Handling_Unit ;
+    rdfs:label "Air Handling Unit — Floor 3" ;
+    brick:isPartOf bldg:Floor3 ;
+    brick:feeds bldg:HVAC_Zone_F3 .
+
+bldg:AHU_F4
+    rdf:type owl:NamedIndividual , brick:Air_Handling_Unit ;
+    rdfs:label "Air Handling Unit — Floor 4" ;
+    brick:isPartOf bldg:Floor4 ;
+    brick:feeds bldg:HVAC_Zone_F4 .
+
+bldg:AHU_F5
+    rdf:type owl:NamedIndividual , brick:Air_Handling_Unit ;
+    rdfs:label "Air Handling Unit — Floor 5" ;
+    brick:isPartOf bldg:Floor5 ;
+    brick:feeds bldg:Zone_5.01 ,
+                bldg:Zone_5.02 ,
+                bldg:Zone_5.03 ,
+                bldg:Zone_5.04 ,
+                bldg:Zone_5.05 ,
+                bldg:Zone_5.06 ,
+                bldg:Zone_5.07 ,
+                bldg:Zone_5.08 ,
+                bldg:Zone_5.09 ,
+                bldg:Zone_5.10 ,
+                bldg:Zone_5.11 ,
+                bldg:Zone_5.12 ,
+                bldg:Zone_5.13 ,
+                bldg:Zone_5.14 ,
+                bldg:Zone_5.15 ,
+                bldg:Zone_5.16 ,
+                bldg:Zone_5.17 ,
+                bldg:Zone_5.18 ,
+                bldg:Zone_5.19 ,
+                bldg:Zone_5.20 ,
+                bldg:Zone_5.21 ,
+                bldg:Zone_5.22 ,
+                bldg:Zone_5.23 ,
+                bldg:Zone_5.24 ,
+                bldg:Zone_5.25 ,
+                bldg:Zone_5.26 ,
+                bldg:Zone_5.27 ,
+                bldg:Zone_5.28 ,
+                bldg:Zone_5.29 ,
+                bldg:Zone_5.30 ,
+                bldg:Zone_5.31 ,
+                bldg:Zone_5.32 ,
+                bldg:Zone_5.33 ,
+                bldg:Zone_5.34 .
+
+bldg:Boiler_1
+    rdf:type owl:NamedIndividual , brick:Boiler ;
+    rdfs:label "Gas Boiler 1 — Building Central Plant" ;
+    brick:isPartOf bldg:Rooftop .
+
+bldg:Boiler_2
+    rdf:type owl:NamedIndividual , brick:Boiler ;
+    rdfs:label "Gas Boiler 2 — Building Central Plant (Standby)" ;
+    brick:isPartOf bldg:Rooftop .
+
+bldg:Chiller_1
+    rdf:type owl:NamedIndividual , brick:Chiller ;
+    rdfs:label "Chiller 1 — Building Central Cooling Plant" ;
+    brick:isPartOf bldg:Rooftop .
+
+bldg:Heat_Pump_1
+    rdf:type owl:NamedIndividual , brick:Heat_Pump ;
+    rdfs:label "Heat Pump 1 — Building Heating/Cooling Plant" ;
+    brick:isPartOf bldg:Rooftop .
+
+bldg:Cooling_Tower_1
+    rdf:type owl:NamedIndividual , brick:Cooling_Tower ;
+    rdfs:label "Cooling Tower 1 — Rooftop" ;
+    brick:isPartOf bldg:Rooftop .
+
+
+# ===========================================================================
+# ELECTRICAL INFRASTRUCTURE
+# ===========================================================================
+
+bldg:Electrical_System
+    rdf:type owl:NamedIndividual , brick:Electrical_System ;
+    rdfs:label "Abacws Electrical Distribution System" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart bldg:Building_Electrical_Meter ,
+                  bldg:Breaker_Panel_F0 ,
+                  bldg:Breaker_Panel_F1 ,
+                  bldg:Breaker_Panel_F2 ,
+                  bldg:Breaker_Panel_F3 ,
+                  bldg:Breaker_Panel_F4 ,
+                  bldg:Breaker_Panel_F5 ,
+                  bldg:Emergency_Generator_1 .
+
+bldg:Building_Electrical_Meter
+    rdf:type owl:NamedIndividual , brick:Building_Electrical_Meter ;
+    rdfs:label "Building-Level Electrical Meter" ;
+    brick:isPartOf bldg:Abacws .
+
+bldg:Breaker_Panel_F0
+    rdf:type owl:NamedIndividual , brick:Breaker_Panel ;
+    rdfs:label "Electrical Breaker Panel — Floor 0" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Breaker_Panel_F1
+    rdf:type owl:NamedIndividual , brick:Breaker_Panel ;
+    rdfs:label "Electrical Breaker Panel — Floor 1" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Breaker_Panel_F2
+    rdf:type owl:NamedIndividual , brick:Breaker_Panel ;
+    rdfs:label "Electrical Breaker Panel — Floor 2" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Breaker_Panel_F3
+    rdf:type owl:NamedIndividual , brick:Breaker_Panel ;
+    rdfs:label "Electrical Breaker Panel — Floor 3" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Breaker_Panel_F4
+    rdf:type owl:NamedIndividual , brick:Breaker_Panel ;
+    rdfs:label "Electrical Breaker Panel — Floor 4" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Breaker_Panel_F5
+    rdf:type owl:NamedIndividual , brick:Breaker_Panel ;
+    rdfs:label "Electrical Breaker Panel — Floor 5" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Emergency_Generator_1
+    rdf:type owl:NamedIndividual , brick:Emergency_Generator ;
+    rdfs:label "Emergency Diesel Generator" ;
+    brick:isPartOf bldg:Rooftop .
+
+
+# ===========================================================================
+# FIRE SAFETY EQUIPMENT
+# ===========================================================================
+
+bldg:Fire_Safety_System
+    rdf:type owl:NamedIndividual , brick:Fire_Safety_System ;
+    rdfs:label "Abacws Fire Safety System" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart bldg:Fire_Alarm_Control_Panel ,
+                  bldg:Fire_Alarm_F0 ,
+                  bldg:Fire_Alarm_F1 ,
+                  bldg:Fire_Alarm_F2 ,
+                  bldg:Fire_Alarm_F3 ,
+                  bldg:Fire_Alarm_F4 ,
+                  bldg:Fire_Alarm_F5 ,
+                  bldg:AED_Reception ,
+                  bldg:AED_Floor3 ,
+                  bldg:AED_Floor5 ,
+                  bldg:First_Aid_Kit_F0 ,
+                  bldg:First_Aid_Kit_F1 ,
+                  bldg:First_Aid_Kit_F2 ,
+                  bldg:First_Aid_Kit_F3 ,
+                  bldg:First_Aid_Kit_F4 ,
+                  bldg:First_Aid_Kit_F5 .
+
+bldg:Fire_Alarm_Control_Panel
+    rdf:type owl:NamedIndividual , brick:Fire_Alarm_Control_Panel ;
+    rdfs:label "Building Fire Alarm Control Panel" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Fire_Alarm_F0
+    rdf:type owl:NamedIndividual , brick:Fire_Alarm ;
+    rdfs:label "Fire Alarm Zone — Floor 0" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Fire_Alarm_F1
+    rdf:type owl:NamedIndividual , brick:Fire_Alarm ;
+    rdfs:label "Fire Alarm Zone — Floor 1" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Fire_Alarm_F2
+    rdf:type owl:NamedIndividual , brick:Fire_Alarm ;
+    rdfs:label "Fire Alarm Zone — Floor 2" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Fire_Alarm_F3
+    rdf:type owl:NamedIndividual , brick:Fire_Alarm ;
+    rdfs:label "Fire Alarm Zone — Floor 3" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Fire_Alarm_F4
+    rdf:type owl:NamedIndividual , brick:Fire_Alarm ;
+    rdfs:label "Fire Alarm Zone — Floor 4" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Fire_Alarm_F5
+    rdf:type owl:NamedIndividual , brick:Fire_Alarm ;
+    rdfs:label "Fire Alarm Zone — Floor 5" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:AED_Reception
+    rdf:type owl:NamedIndividual , brick:Automated_External_Defibrillator ;
+    rdfs:label "Automated External Defibrillator — Ground Floor Reception" ;
+    brick:isPartOf bldg:Room0.01 .
+
+bldg:AED_Floor3
+    rdf:type owl:NamedIndividual , brick:Automated_External_Defibrillator ;
+    rdfs:label "Automated External Defibrillator — Floor 3 Common Area" ;
+    brick:isPartOf bldg:Room3.17 .
+
+bldg:AED_Floor5
+    rdf:type owl:NamedIndividual , brick:Automated_External_Defibrillator ;
+    rdfs:label "Automated External Defibrillator — Floor 5 Break Room" ;
+    brick:isPartOf bldg:Room5.26 .
+
+bldg:First_Aid_Kit_F0
+    rdf:type owl:NamedIndividual , brick:First_Aid_Kit ;
+    rdfs:label "First Aid Kit — Floor 0" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:First_Aid_Kit_F1
+    rdf:type owl:NamedIndividual , brick:First_Aid_Kit ;
+    rdfs:label "First Aid Kit — Floor 1" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:First_Aid_Kit_F2
+    rdf:type owl:NamedIndividual , brick:First_Aid_Kit ;
+    rdfs:label "First Aid Kit — Floor 2" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:First_Aid_Kit_F3
+    rdf:type owl:NamedIndividual , brick:First_Aid_Kit ;
+    rdfs:label "First Aid Kit — Floor 3" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:First_Aid_Kit_F4
+    rdf:type owl:NamedIndividual , brick:First_Aid_Kit ;
+    rdfs:label "First Aid Kit — Floor 4" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:First_Aid_Kit_F5
+    rdf:type owl:NamedIndividual , brick:First_Aid_Kit ;
+    rdfs:label "First Aid Kit — Floor 5" ;
+    brick:isPartOf bldg:Floor5 .
+
+
+# ===========================================================================
+# WATER INFRASTRUCTURE
+# ===========================================================================
+
+bldg:Water_System
+    rdf:type owl:NamedIndividual , brick:Water_System ;
+    rdfs:label "Abacws Water Distribution System" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart bldg:Building_Water_Meter ,
+                  bldg:Hot_Water_System .
+
+bldg:Building_Water_Meter
+    rdf:type owl:NamedIndividual , brick:Building_Water_Meter ;
+    rdfs:label "Building-Level Water Meter" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Hot_Water_System
+    rdf:type owl:NamedIndividual , brick:Hot_Water_System ;
+    rdfs:label "Building Domestic Hot Water System" ;
+    brick:isPartOf bldg:Abacws .
+
+
+# ===========================================================================
+# VERTICAL TRANSPORT (Lifts and Stairs)
+# ===========================================================================
+
+bldg:Lift_1
+    rdf:type owl:NamedIndividual , brick:Elevator ;
+    rdfs:label "Passenger Lift 1" ;
+    brick:isPartOf bldg:Abacws ;
+    rdfs:comment "Serves Floors 0-5" .
+
+bldg:Lift_2
+    rdf:type owl:NamedIndividual , brick:Elevator ;
+    rdfs:label "Passenger Lift 2 / Goods Lift" ;
+    brick:isPartOf bldg:Abacws ;
+    rdfs:comment "Serves Floors 0-5; also accessible for goods and wheelchair use" .
+
+bldg:Stairwell_North
+    rdf:type owl:NamedIndividual , brick:Staircase ;
+    rdfs:label "North Stairwell — Fire Escape Route" ;
+    brick:isPartOf bldg:Abacws .
+
+bldg:Stairwell_South
+    rdf:type owl:NamedIndividual , brick:Staircase ;
+    rdfs:label "South Stairwell — Fire Escape Route" ;
+    brick:isPartOf bldg:Abacws .
+
+
+# ===========================================================================
+# IT / COMMUNICATIONS INFRASTRUCTURE
+# ===========================================================================
+
+bldg:Server_Room_F2
+    rdf:type owl:NamedIndividual , brick:Server_Room ;
+    rdfs:label "Server Room — Floor 2 (Room 2.44)" ;
+    brick:isPartOf bldg:Room2.44 .
+
+bldg:Server_Room_F4
+    rdf:type owl:NamedIndividual , brick:Server_Room ;
+    rdfs:label "Server Room — Floor 4 (Room 4.44)" ;
+    brick:isPartOf bldg:Room4.44 .
+
+bldg:Server_Room_F5
+    rdf:type owl:NamedIndividual , brick:Server_Room ;
+    rdfs:label "Server Room — Floor 5 (Room 5.44)" ;
+    brick:isPartOf bldg:Room5.44 .
+
+bldg:Telecom_Room_F0
+    rdf:type owl:NamedIndividual , brick:Telecom_Room ;
+    rdfs:label "Telecommunications Room — Floor 0 (Room 0.34)" ;
+    brick:isPartOf bldg:Room0.34 .
+
+bldg:Telecom_Room_F1
+    rdf:type owl:NamedIndividual , brick:Telecom_Room ;
+    rdfs:label "Telecommunications Room — Floor 1 (Room 1.34)" ;
+    brick:isPartOf bldg:Room1.34 .
+
+bldg:Telecom_Room_F2
+    rdf:type owl:NamedIndividual , brick:Telecom_Room ;
+    rdfs:label "Telecommunications Room — Floor 2 (Room 2.34)" ;
+    brick:isPartOf bldg:Room2.34 .
+
+bldg:Telecom_Room_F3
+    rdf:type owl:NamedIndividual , brick:Telecom_Room ;
+    rdfs:label "Telecommunications Room — Floor 3 (Room 3.38)" ;
+    brick:isPartOf bldg:Room3.38 .
+
+bldg:Telecom_Room_F4
+    rdf:type owl:NamedIndividual , brick:Telecom_Room ;
+    rdfs:label "Telecommunications Room — Floor 4 (Room 4.34)" ;
+    brick:isPartOf bldg:Room4.34 .
+
+bldg:Telecom_Room_F5
+    rdf:type owl:NamedIndividual , brick:Telecom_Room ;
+    rdfs:label "Telecommunications Room — Floor 5 (Room 5.34)" ;
+    brick:isPartOf bldg:Room5.34 .
+
+
+# ===========================================================================
+# SECURITY CAMERAS
+# ===========================================================================
+
+bldg:Security_Camera_Entrance
+    rdf:type owl:NamedIndividual , brick:Camera ;
+    rdfs:label "CCTV Camera — Main Building Entrance" ;
+    brick:isPartOf bldg:Room0.01 .
+
+bldg:Security_Camera_F0
+    rdf:type owl:NamedIndividual , brick:Camera ;
+    rdfs:label "CCTV Camera — Ground Floor Corridor" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Security_Camera_F1
+    rdf:type owl:NamedIndividual , brick:Camera ;
+    rdfs:label "CCTV Camera — Floor 1 Corridor" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Security_Camera_F2
+    rdf:type owl:NamedIndividual , brick:Camera ;
+    rdfs:label "CCTV Camera — Floor 2 Corridor" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Security_Camera_F3
+    rdf:type owl:NamedIndividual , brick:Camera ;
+    rdfs:label "CCTV Camera — Floor 3 Corridor" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Security_Camera_F4
+    rdf:type owl:NamedIndividual , brick:Camera ;
+    rdfs:label "CCTV Camera — Floor 4 Corridor" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Security_Camera_F5
+    rdf:type owl:NamedIndividual , brick:Camera ;
+    rdfs:label "CCTV Camera — Floor 5 Corridor" ;
+    brick:isPartOf bldg:Floor5 .
+
+
+# ===========================================================================
+# PARKING AND EV CHARGING
+# ===========================================================================
+
+bldg:Parking_Level_Ground
+    rdf:type owl:NamedIndividual , brick:Parking_Level ;
+    rdfs:label "Ground Level Parking — Abacws" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart bldg:EV_Charger_1 ,
+                  bldg:EV_Charger_2 ,
+                  bldg:EV_Charger_3 ,
+                  bldg:EV_Charger_4 ,
+                  bldg:EV_Charger_5 ,
+                  bldg:EV_Charger_6 .
+
+bldg:EV_Charger_1
+    rdf:type owl:NamedIndividual , brick:Electric_Vehicle_Charging_Station ;
+    rdfs:label "EV Charging Station 1 — Parking Level" ;
+    brick:isPartOf bldg:Parking_Level_Ground .
+
+bldg:EV_Charger_2
+    rdf:type owl:NamedIndividual , brick:Electric_Vehicle_Charging_Station ;
+    rdfs:label "EV Charging Station 2 — Parking Level" ;
+    brick:isPartOf bldg:Parking_Level_Ground .
+
+bldg:EV_Charger_3
+    rdf:type owl:NamedIndividual , brick:Electric_Vehicle_Charging_Station ;
+    rdfs:label "EV Charging Station 3 — Parking Level" ;
+    brick:isPartOf bldg:Parking_Level_Ground .
+
+bldg:EV_Charger_4
+    rdf:type owl:NamedIndividual , brick:Electric_Vehicle_Charging_Station ;
+    rdfs:label "EV Charging Station 4 — Parking Level" ;
+    brick:isPartOf bldg:Parking_Level_Ground .
+
+bldg:EV_Charger_5
+    rdf:type owl:NamedIndividual , brick:Electric_Vehicle_Charging_Station ;
+    rdfs:label "EV Charging Station 5 — Parking Level" ;
+    brick:isPartOf bldg:Parking_Level_Ground .
+
+bldg:EV_Charger_6
+    rdf:type owl:NamedIndividual , brick:Electric_Vehicle_Charging_Station ;
+    rdfs:label "EV Charging Station 6 — Parking Level" ;
+    brick:isPartOf bldg:Parking_Level_Ground .
+
+
+# ===========================================================================
+# RENEWABLE ENERGY (PV Panels)
+# ===========================================================================
+
+bldg:Renewable_Energy_System
+    rdf:type owl:NamedIndividual , brick:Renewable_Energy_System ;
+    rdfs:label "Abacws Photovoltaic Generation System" ;
+    brick:isPartOf bldg:Abacws ;
+    brick:hasPart bldg:PV_Array_1 ,
+                  bldg:PV_Array_2 ,
+                  bldg:PV_Inverter_1 .
+
+bldg:PV_Array_1
+    rdf:type owl:NamedIndividual , brick:PV_Panel ;
+    rdfs:label "Rooftop PV Array 1 (South-facing)" ;
+    brick:isPartOf bldg:Rooftop .
+
+bldg:PV_Array_2
+    rdf:type owl:NamedIndividual , brick:PV_Panel ;
+    rdfs:label "Rooftop PV Array 2 (West-facing)" ;
+    brick:isPartOf bldg:Rooftop .
+
+bldg:PV_Inverter_1
+    rdf:type owl:NamedIndividual , brick:Inverter ;
+    rdfs:label "PV System Inverter 1" ;
+    brick:isPartOf bldg:Rooftop .
+
+
+# ===========================================================================
+# ENERGY STORAGE
+# ===========================================================================
+
+bldg:Battery_Storage_1
+    rdf:type owl:NamedIndividual , brick:Energy_Storage ;
+    rdfs:label "Building Battery Energy Storage System" ;
+    brick:isPartOf bldg:Floor0 .
+
+
+# End of bldg1_abacws_metadata.ttl

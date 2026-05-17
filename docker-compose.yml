@@ -141,6 +141,7 @@ services:
       - ./outputs:/app/outputs # Mount shared outputs (data, plots, query results)
       - ./orchestrator/agents/.env:/app/agents/.env:ro # Mount OpenAI credentials
       - ./data:/app/data:ro # Mount sensor map and other data files
+      - ./config:/app/config:ro # Mount alert thresholds and other config files
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -397,8 +398,8 @@ services:
       - .env
     volumes:
       - ./outputs:/app/outputs # Mount shared outputs
-    mem_limit: 1g
-    cpus: 1.0
+    mem_limit: 2g
+    cpus: 2.0
     security_opt:
       - no-new-privileges:true
     networks:

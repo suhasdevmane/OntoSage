@@ -293,6 +293,7 @@ article/
 
 volumes/
 outputs/
+graphify-out/
 
 *.zip
 blobs/
@@ -314,3 +315,5 @@ paper/post_design_survey/sessions/
 # Claude Code local settings (machine-specific, not for sharing)
 ##############################
 .claude/settings.local.json
+markdown/
+presentation/

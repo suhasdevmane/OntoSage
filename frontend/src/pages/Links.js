@@ -14,7 +14,7 @@ export default function Links() {
           <li><a href="https://hub.docker.com/repositories/devmanenvision" target="_blank" rel="noreferrer">Docker Images</a></li>
           <li><a href="https://huggingface.co/suhasdevmane" target="_blank" rel="noreferrer">LLM models</a></li>
           <li><a href="https://ontosage-docs.github.io/" target="_blank" rel="noreferrer">Project Documentation</a></li>
-          <li><a href="https://rasa.com/docs/rasa/" target="_blank" rel="noreferrer">Rasa Docs</a></li>
+          <li><a href="https://brickschema.org/" target="_blank" rel="noreferrer">Brick Schema Specification</a></li>
         </ul>
       </div>
     </div>
