@@ -47,7 +47,11 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = Field(
         default="", description="OpenAI API key (required if MODEL_PROVIDER=openai)"
     )
-    OPENAI_MODEL: str = Field(default="o3-mini", description="OpenAI model name")
+    OPENAI_MODEL: str = Field(default="o3-mini", description="OpenAI model for complex tasks (analytics, reports, compliance)")
+    OPENAI_MODEL_FAST: str = Field(
+        default="gpt-4o-mini",
+        description="OpenAI model for fast tasks (intent classification, SPARQL gen, rewrites)",
+    )
     OPENAI_TEMPERATURE: float = Field(default=0.1, description="LLM temperature for generation")
 
     # ==================== Embedding Configuration ====================
@@ -272,6 +276,10 @@ class Settings(BaseSettings):
         description="Comma-separated allowed CORS origins. Use '*' for development, explicit URLs for production.",
     )
 
+    REQUEST_TIMEOUT_SECS: int = Field(
+        default=150, description="Max seconds for a single pipeline execution before timeout response"
+    )
+
     # ==================== Conversation Settings ====================
     CONVERSATION_TTL: int = Field(
         default=3600, description="Conversation state TTL in Redis (seconds)"
@@ -374,13 +382,15 @@ _load_building_yaml(settings)
 
 def get_llm_config() -> dict:
     """
-    Get LLM configuration based on provider
-    Returns dict with model params for LangChain
+    Get LLM configuration based on provider.
+    Returns dict with model params; 'model_fast' is the lightweight model for
+    intent classification, SPARQL generation, and rewrites.
     """
     if settings.MODEL_PROVIDER == "openai":
         return {
             "provider": "openai",
             "model": settings.OPENAI_MODEL,
+            "model_fast": settings.OPENAI_MODEL_FAST,
             "api_key": settings.OPENAI_API_KEY,
             "temperature": settings.OPENAI_TEMPERATURE,
         }
@@ -389,6 +399,7 @@ def get_llm_config() -> dict:
             "provider": "ollama_cloud",
             "base_url": settings.OLLAMA_CLOUD_BASE_URL,
             "model": settings.OLLAMA_CLOUD_MODEL,
+            "model_fast": settings.OLLAMA_CLOUD_MODEL,  # same model for cloud Ollama
             "api_key": settings.OLLAMA_CLOUD_API_KEY,
             "temperature": settings.OPENAI_TEMPERATURE,
         }
@@ -397,6 +408,7 @@ def get_llm_config() -> dict:
             "provider": "ollama",
             "base_url": settings.OLLAMA_BASE_URL,
             "model": settings.OLLAMA_MODEL,
+            "model_fast": settings.OLLAMA_MODEL,  # same model for local Ollama
             "temperature": settings.OPENAI_TEMPERATURE,
         }
 

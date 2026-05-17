@@ -9,13 +9,15 @@ export default function About() {
       <div className="container mt-4">
         <h2>About this Project</h2>
         <p>
-          This Rasa-based assistant integrates a custom action server, Duckling for entity extraction,
-          and a local file server for serving generated artifacts. It supports per-user authentication
-          and per-user chat history and artifacts.
+          OntoSage is an agentic AI framework for smart buildings. It integrates a knowledge graph
+          (GraphDB/SPARQL), time-series databases, and language models to answer natural language
+          questions about building systems, sensor data, and operations.
         </p>
         <p>
-          Use the chat widget to ask questions, generate data artifacts (JSON/CSV/HTML/PDF/audio/video),
-          and download them directly. The system is dockerized for quick setup and development.
+          Use the chat widget to ask questions about building analytics, discover sensors and zones,
+          generate reports, detect anomalies, and download artifacts (CSV/JSON/HTML). The system
+          supports per-user authentication, RBAC, and chat history. It is fully dockerized for
+          quick setup and scalable deployment.
         </p>
       </div>
     </div>

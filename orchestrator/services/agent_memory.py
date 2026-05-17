@@ -60,6 +60,13 @@ MAX_MEMORIES = int(os.environ.get("AGENT_MEMORY_MAX", "200"))  # per user
 RETRIEVE_TOP_K = int(os.environ.get("AGENT_MEMORY_TOP_K", "5"))  # memories per query
 EMBED_MODEL = os.environ.get("AGENT_MEMORY_EMBED_MODEL", "text-embedding-3-small")
 
+# Known OpenAI embedding model → vector dimension mapping
+_EMBED_MODEL_DIMS: Dict[str, int] = {
+    "text-embedding-3-small": 1536,
+    "text-embedding-3-large": 3072,
+    "text-embedding-ada-002": 1536,
+}
+
 
 class MemoryEntry:
     """A single episodic memory record."""
@@ -140,9 +147,9 @@ class AgentMemoryService:
 
             self._client = AsyncQdrantClient(url=self._url)
 
-            # Determine the actual embedding dimension from the embed model
-            # text-embedding-* (OpenAI) → 1536; local sentence-transformers → settings value
-            embed_dim = 1536 if "text-embedding" in EMBED_MODEL else settings.embedding_dimension
+            # Determine the actual embedding dimension from the embed model name.
+            # Use the known-dims lookup first; fall back to settings.embedding_dimension.
+            embed_dim = _EMBED_MODEL_DIMS.get(EMBED_MODEL, settings.embedding_dimension)
 
             collections = await self._client.get_collections()
             names = [c.name for c in collections.collections]
@@ -247,14 +254,18 @@ class AgentMemoryService:
     async def _search(self, user_id: str, query: str) -> List[MemoryEntry]:
         if self._ready and self._client:
             try:
+                from qdrant_client.models import FieldCondition, Filter, MatchValue
+
                 embedding = await self._embed(query)
-                results = await self._client.search(
+                results = await self._client.query_points(
                     collection_name=COLLECTION_NAME,
-                    query_vector=embedding,
-                    query_filter={"must": [{"key": "user_id", "match": {"value": user_id}}]},
+                    query=embedding,
+                    query_filter=Filter(
+                        must=[FieldCondition(key="user_id", match=MatchValue(value=user_id))]
+                    ),
                     limit=RETRIEVE_TOP_K,
                 )
-                return [MemoryEntry.from_payload(r.payload) for r in results]
+                return [MemoryEntry.from_payload(r.payload) for r in results.points]
             except Exception as e:
                 logger.warning(f"Memory search error: {e}")
 

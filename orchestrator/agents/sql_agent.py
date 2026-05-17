@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
-from orchestrator.llm_manager import llm_manager
+from orchestrator.llm_manager import TaskType, llm_manager
 from orchestrator.services.adapters.registry import adapter_registry
 from orchestrator.services.prompt_builder import get_prompt_builder
 from shared.config import settings
@@ -80,7 +80,21 @@ class SQLAgent:
 
         except Exception as e:
             logger.error(f"SQL generation error: {e}", exc_info=True)
-            return {"success": False, "error": str(e), "query": None, "results": None}
+            return {
+                "success": False,
+                "error": str(e),
+                "query": None,
+                "results": {"data": []},
+                "formatted_response": (
+                    "I wasn't able to query the time-series database for this request. "
+                    "This may be because the sensor type you're asking about (e.g. energy meters, "
+                    "occupancy counters) isn't monitored in this building. "
+                    "The Abacws building actively monitors: temperature, CO₂, humidity, "
+                    "air quality (PM1/PM2.5/PM10/TVOC/NO₂), illuminance, and gas sensors. "
+                    "Try asking about one of these sensor types instead."
+                ),
+                "analytics_required": False,
+            }
 
     async def fetch_data_for_uuids(
         self,
@@ -564,12 +578,29 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
 
     _SQL_SAFETY_LIMIT = 10000
 
+    @staticmethod
+    def _ensure_top_level_limit(sql: str, cap: int) -> str:
+        """Ensure a top-level LIMIT exists without duplicating one already there.
+
+        LLM-generated UNION ALL queries sometimes include a LIMIT inside a subquery
+        (valid) but then the safety-cap code blindly appended another LIMIT at the end
+        (invalid MySQL syntax).  This method checks whether the SQL, after stripping
+        trailing whitespace/semicolon, already ends with "LIMIT <n>" at the top level.
+        If not, it appends one.
+        """
+        import re as _re
+
+        stripped = sql.rstrip().rstrip(";").rstrip()
+        # Does the statement end with a top-level LIMIT clause?
+        if _re.search(r"\bLIMIT\s+\d+\s*$", stripped, _re.IGNORECASE):
+            return stripped + ";"
+        return stripped + f" LIMIT {cap};"
+
     async def _execute_query(self, sql: str) -> List[Dict[str, Any]]:
         """Execute SQL query via the adapter registry (delegates to the default/MySQL adapter)."""
         try:
-            # Phase 5.2: Enforce LIMIT safety cap if query doesn't already have one
-            if "LIMIT" not in sql.upper():
-                sql = sql.rstrip().rstrip(";") + f" LIMIT {self._SQL_SAFETY_LIMIT};"
+            # Enforce LIMIT safety cap — only add one if no top-level LIMIT already present.
+            sql = self._ensure_top_level_limit(sql, self._SQL_SAFETY_LIMIT)
 
             adapter = adapter_registry.get()
             if not adapter:
@@ -622,7 +653,7 @@ Generate a concise, natural response that:
 Response:"""
 
         try:
-            summary = await llm_manager.generate(summary_prompt)
+            summary = await llm_manager.generate(summary_prompt, task_type=TaskType.GENERAL)
             return summary.strip()
         except:
             return result_text  # Fallback to raw results

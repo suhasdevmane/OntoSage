@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 
 
 class TaskType(Enum):
-    """Hint for the type of task — currently informational, not used for routing."""
+    """Task type hint — routes to fast (gpt-4o-mini) or complex (gpt-5.4) model."""
     INTENT = "intent"
     GENERAL = "general"
     DISAMBIGUATION = "disambiguation"
@@ -23,6 +23,11 @@ class TaskType(Enum):
     ANALYTICS = "analytics"
     SPARQL = "sparql"
     REPORT = "report"
+
+
+# Task types that use the lightweight fast model.
+_FAST_TASK_TYPES = {TaskType.INTENT, TaskType.GENERAL, TaskType.DISAMBIGUATION,
+                    TaskType.REWRITE, TaskType.SPARQL}
 
 from orchestrator.services.circuit_breaker import circuit_breaker_for
 from shared.config import get_llm_config, settings
@@ -44,18 +49,26 @@ LLM_BACKOFF_FACTOR = float(os.environ.get("LLM_BACKOFF_FACTOR", "2.0"))
 
 
 class LLMManager:
-    """Manages LLM interactions with multiple providers"""
+    """Manages LLM interactions with multiple providers.
+
+    Maintains two clients when MODEL_PROVIDER=openai:
+      - client_fast: gpt-4o-mini for intent, SPARQL, general, rewrite, disambiguation
+      - client:      primary model (e.g. gpt-5.4) for analytics, reports, compliance
+    For local/cloud Ollama both point to the same model.
+    """
 
     def __init__(self):
         self.config = get_llm_config()
         self.provider = self.config["provider"]
         self.client = None
-        self.last_request_time = 0.0
+        self.client_fast = None
+        self.last_request_time = 0.0       # rate-limit tracker for complex model
+        self.last_request_time_fast = 0.0  # rate-limit tracker for fast model
         self._breaker = circuit_breaker_for("llm", failure_threshold=5, recovery_timeout=30.0)
         self._initialize_client()
 
     def _initialize_client(self):
-        """Initialize LLM client based on provider"""
+        """Initialize LLM client(s) based on provider."""
         if self.provider == "openai":
             self._initialize_openai()
         elif self.provider == "ollama_cloud":
@@ -64,7 +77,7 @@ class LLMManager:
             self._initialize_ollama()
 
     def _initialize_openai(self):
-        """Initialize OpenAI client"""
+        """Initialize OpenAI clients — complex model + fast model."""
         try:
             from langchain_openai import ChatOpenAI
 
@@ -72,15 +85,24 @@ class LLMManager:
                 model=self.config["model"],
                 api_key=self.config["api_key"],
                 temperature=self.config["temperature"],
-                max_tokens=4096,  # Increased token limit
+                max_tokens=4096,
             )
-            logger.info(f"Initialized OpenAI LLM: {self.config['model']}")
+            fast_model = self.config.get("model_fast", "gpt-4o-mini")
+            self.client_fast = ChatOpenAI(
+                model=fast_model,
+                api_key=self.config["api_key"],
+                temperature=self.config["temperature"],
+                max_tokens=2048,
+            )
+            logger.info(
+                f"Initialized OpenAI LLMs: complex={self.config['model']}, fast={fast_model}"
+            )
         except ImportError:
             logger.error("langchain-openai not installed. Run: pip install langchain-openai")
             raise
 
     def _initialize_ollama(self):
-        """Initialize Ollama client"""
+        """Initialize Ollama client (single model for both fast and complex)."""
         try:
             from langchain_ollama import OllamaLLM
 
@@ -89,6 +111,7 @@ class LLMManager:
                 model=self.config["model"],
                 temperature=self.config["temperature"],
             )
+            self.client_fast = self.client  # same model
             logger.info(
                 f"Initialized Ollama LLM: {self.config['model']} at {self.config['base_url']}"
             )
@@ -97,24 +120,29 @@ class LLMManager:
             raise
 
     def _initialize_ollama_cloud(self):
-        """Initialize Ollama Cloud client (OpenAI-compatible API)"""
+        """Initialize Ollama Cloud client (OpenAI-compatible API, single model)."""
         try:
             from langchain_openai import ChatOpenAI
 
-            # Ollama Cloud uses OpenAI-compatible API
             self.client = ChatOpenAI(
                 base_url=self.config["base_url"],
                 model=self.config["model"],
                 api_key=self.config["api_key"],
                 temperature=self.config["temperature"],
-                max_tokens=4096,  # Increased token limit
+                max_tokens=4096,
             )
+            self.client_fast = self.client  # same model for cloud Ollama
             logger.info(
                 f"Initialized Ollama Cloud LLM: {self.config['model']} at {self.config['base_url']}"
             )
         except ImportError:
             logger.error("langchain-openai not installed. Run: pip install langchain-openai")
             raise
+
+    def _pick_client(self, task_type: Optional[TaskType]):
+        """Return (client, is_fast) based on task type."""
+        use_fast = task_type in _FAST_TASK_TYPES
+        return (self.client_fast, True) if use_fast else (self.client, False)
 
     def _is_retryable(self, error: Exception) -> bool:
         """Check if an error is transient and should be retried."""
@@ -147,11 +175,14 @@ class LLMManager:
         """
         Generate text from prompt with circuit breaker, retry, and timeout.
 
+        Routes to the fast model (gpt-4o-mini) for intent/SPARQL/general tasks and
+        to the complex model for analytics/reports.  Each client has its own
+        rate-limit tracker so they don't block each other.
+
         Circuit breaker fast-fails when the LLM provider is unresponsive.
-        Retries up to LLM_MAX_RETRIES times on transient errors (429, 5xx, connection errors)
-        with exponential backoff. Each attempt is capped at LLM_TIMEOUT_S seconds.
+        Retries up to LLM_MAX_RETRIES times on transient errors (429, 5xx, connection
+        errors) with exponential backoff. Each attempt is capped at LLM_TIMEOUT_S.
         """
-        # Circuit breaker: fast-fail if LLM is known to be down
         if not self._breaker.allow_request():
             raise RuntimeError(
                 f"LLM circuit breaker is OPEN — the {self.provider} provider "
@@ -159,48 +190,56 @@ class LLMManager:
                 f"~{self._breaker.recovery_timeout:.0f}s."
             )
 
+        active_client, is_fast = self._pick_client(task_type)
+        client_label = "fast" if is_fast else "complex"
+
         last_error = None
 
         for attempt in range(1, LLM_MAX_RETRIES + 1):
             try:
-                # Rate limiting for OpenAI
+                # Per-client rate limiting
                 if self.provider in ["openai", "ollama_cloud"]:
                     current_time = time.time()
-                    elapsed = current_time - self.last_request_time
-                    if elapsed < OPENAI_RATE_LIMIT_DELAY:
-                        wait_time = OPENAI_RATE_LIMIT_DELAY - elapsed
-                        await asyncio.sleep(wait_time)
-                    self.last_request_time = time.time()
+                    if is_fast:
+                        elapsed = current_time - self.last_request_time_fast
+                        if elapsed < OPENAI_RATE_LIMIT_DELAY:
+                            await asyncio.sleep(OPENAI_RATE_LIMIT_DELAY - elapsed)
+                        self.last_request_time_fast = time.time()
+                    else:
+                        elapsed = current_time - self.last_request_time
+                        if elapsed < OPENAI_RATE_LIMIT_DELAY:
+                            await asyncio.sleep(OPENAI_RATE_LIMIT_DELAY - elapsed)
+                        self.last_request_time = time.time()
 
                 result = await asyncio.wait_for(
-                    self._generate_once(prompt, system_message, temperature),
+                    self._generate_once(prompt, system_message, temperature, active_client),
                     timeout=LLM_TIMEOUT_S,
                 )
                 self._breaker.record_success()
                 return result
 
             except asyncio.TimeoutError:
-                last_error = TimeoutError(f"LLM call timed out after {LLM_TIMEOUT_S}s")
-                logger.warning(f"LLM timeout (attempt {attempt}/{LLM_MAX_RETRIES})")
+                last_error = TimeoutError(f"LLM [{client_label}] timed out after {LLM_TIMEOUT_S}s")
+                logger.warning(f"LLM [{client_label}] timeout (attempt {attempt}/{LLM_MAX_RETRIES})")
                 self._breaker.record_failure()
             except Exception as e:
                 last_error = e
                 self._breaker.record_failure()
                 if not self._is_retryable(e) or attempt == LLM_MAX_RETRIES:
                     logger.error(
-                        f"LLM generation error (attempt {attempt}, non-retryable): {e}",
+                        f"LLM [{client_label}] error (attempt {attempt}, non-retryable): {e}",
                         exc_info=True,
                     )
                     raise
-                logger.warning(f"LLM retryable error (attempt {attempt}/{LLM_MAX_RETRIES}): {e}")
+                logger.warning(
+                    f"LLM [{client_label}] retryable error (attempt {attempt}/{LLM_MAX_RETRIES}): {e}"
+                )
 
-            # Exponential backoff before retry
             if attempt < LLM_MAX_RETRIES:
                 backoff = LLM_BACKOFF_BASE_S * (LLM_BACKOFF_FACTOR ** (attempt - 1))
-                # Enforce a minimum retry delay for OpenAI to avoid 429 thrashing
                 if self.provider in ["openai", "ollama_cloud"]:
                     backoff = max(backoff, OPENAI_RETRY_DELAY_S)
-                logger.info(f"LLM retry backoff: {backoff:.1f}s")
+                logger.info(f"LLM [{client_label}] retry backoff: {backoff:.1f}s")
                 await asyncio.sleep(backoff)
 
         raise last_error or RuntimeError("LLM generation failed after all retries")
@@ -213,9 +252,11 @@ class LLMManager:
         prompt: str,
         system_message: Optional[str] = None,
         temperature: Optional[float] = None,
+        client=None,
     ) -> str:
-        """Single LLM call without retry logic."""
-        # Prepend language instruction to every system message
+        """Single LLM call without retry logic. Uses provided client or falls back to self.client."""
+        active = client if client is not None else self.client
+
         if system_message:
             effective_system = f"{self._LANGUAGE_INSTRUCTION}\n\n{system_message}"
         else:
@@ -230,29 +271,28 @@ class LLMManager:
                 from langchain_core.messages import SystemMessage as SysMsg
 
             messages = [SysMsg(content=effective_system), HumMsg(content=prompt)]
-
             invoke_kwargs = {}
             if temperature is not None:
                 invoke_kwargs["temperature"] = temperature
-
-            response = await self.client.ainvoke(messages, **invoke_kwargs)
+            response = await active.ainvoke(messages, **invoke_kwargs)
             return response.content
 
         else:  # ollama (local)
             full_prompt = f"System: {effective_system}\n\nUser: {prompt}"
-            response = await self.client.ainvoke(full_prompt)
+            response = await active.ainvoke(full_prompt)
             return response
 
     async def astream_generate(
-        self, prompt: str, system_message: Optional[str] = None, temperature: Optional[float] = None
+        self,
+        prompt: str,
+        system_message: Optional[str] = None,
+        temperature: Optional[float] = None,
+        task_type: Optional[TaskType] = None,
     ):
-        """
-        Stream generated text from prompt.
-
-        Note: temperature is passed via invoke kwargs to avoid mutating shared client state.
-        """
+        """Stream generated text. Routes to fast or complex client based on task_type."""
         try:
-            # Prepend language instruction to every streaming call
+            active_client, _ = self._pick_client(task_type)
+
             if system_message:
                 effective_system = f"{self._LANGUAGE_INSTRUCTION}\n\n{system_message}"
             else:
@@ -267,17 +307,15 @@ class LLMManager:
                     from langchain_core.messages import SystemMessage as SysMsg
 
                 messages = [SysMsg(content=effective_system), HumMsg(content=prompt)]
-
                 stream_kwargs = {}
                 if temperature is not None:
                     stream_kwargs["temperature"] = temperature
-
-                async for chunk in self.client.astream(messages, **stream_kwargs):
+                async for chunk in active_client.astream(messages, **stream_kwargs):
                     yield chunk.content
 
             else:  # ollama (local)
                 full_prompt = f"System: {effective_system}\n\nUser: {prompt}"
-                async for chunk in self.client.astream(full_prompt):
+                async for chunk in active_client.astream(full_prompt):
                     yield chunk
 
         except Exception as e:
@@ -324,6 +362,7 @@ class LLMManager:
         return {
             "provider": self.provider,
             "model": self.config.get("model"),
+            "model_fast": self.config.get("model_fast"),
             "base_url": self.config.get("base_url"),
             "temperature": self.config.get("temperature"),
         }
