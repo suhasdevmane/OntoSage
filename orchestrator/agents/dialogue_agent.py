@@ -406,6 +406,49 @@ class DialogueAgent:
 
         if cached_result:
             logger.info(f"✅ Cache hit for intent detection: {prompt_hash}")
+            # Re-apply capability keyword override — the override may have been added
+            # after this entry was cached, so we must always re-check on cache hits.
+            _q_lower = user_query.lower()
+            _capability_kw = (
+                "fire safety", "fire alarm", "evacuation", "assembly point",
+                "sprinkler", "fire exit", "fire warden", "fire drill",
+                "power outage", "backup power", "generator", "ups",
+                "access control", "swipe card", "security camera", "cctv",
+                "after hours", "out of hours", "building access", "who can enter",
+                "card access", "key fob", "can i access", "enter the building",
+                "access the building",
+                "smart device", "can i control", "can the building",
+                "can we control", "smart building",
+                "wifi", "eduroam", "it support", "it helpdesk",
+                "wheelchair", "accessible", "disability", "lift access",
+                "cafe", "canteen", "vending machine", "kitchen facilities",
+                "shower", "bike storage", "amenities", "facilities",
+                "complaint", "how do i report", "who do i contact",
+                "how to book", "room booking", "opening hours", "is it open",
+                "sustainability", "breeam", "recycling", "green building",
+                "emergency contact", "first aid", "defibrillator", "aed",
+                "safety feature", "building feature", "building capability",
+                "what does this building", "what can this building",
+                "what sensors are", "what is measured", "sensor coverage",
+                "what is monitored", "what data is collected",
+                "occupancy limit", "room capacity", "fire capacity",
+                "policy", "building policy", "building rule",
+                "evacuation plan", "emergency procedure",
+            )
+            _no_data_intent = cached_result.get("intent") in (
+                "general", "clarification", "unknown", "general_knowledge",
+                "sparql", "discovery", "metadata",
+            )
+            if any(kw in _q_lower for kw in _capability_kw) and _no_data_intent:
+                logger.info(
+                    "[intent-override/cache] Forcing 'capability' (was '%s') "
+                    "— capability/off-ontology keyword detected",
+                    cached_result.get("intent"),
+                )
+                cached_result = dict(cached_result)
+                cached_result["intent"] = "capability"
+                cached_result["analytics"] = False
+                cached_result["general"] = False
             return cached_result
 
         # Call LLM to detect intent
@@ -731,6 +774,9 @@ Return ONLY the JSON object.
                     "sprinkler", "fire exit", "fire warden", "fire drill",
                     "power outage", "backup power", "generator", "ups",
                     "access control", "swipe card", "security camera", "cctv",
+                    "after hours", "out of hours", "building access", "who can enter",
+                    "card access", "key fob", "can i access", "enter the building",
+                    "access the building",
                     "smart device", "can i control", "can the building",
                     "can we control", "smart building",
                     "wifi", "eduroam", "it support", "it helpdesk",

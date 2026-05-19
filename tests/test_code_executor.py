@@ -70,12 +70,12 @@ os.system('ls')
     @pytest.mark.asyncio
     async def test_code_validation(self, client):
         """Test code syntax validation"""
-        response = await client.post("/validate", json={"code": "print('valid')"})
+        response = await client.post("/validate", params={"code": "print('valid')"})
         assert response.status_code == 200
         data = response.json()
         assert data["valid"] is True
 
-        response = await client.post("/validate", json={"code": "print('invalid'"})
+        response = await client.post("/validate", params={"code": "print('invalid'"})
         assert response.status_code == 200
         data = response.json()
         assert data["valid"] is False

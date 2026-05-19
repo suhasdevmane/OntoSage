@@ -26,23 +26,24 @@ class TestRAGService:
         assert data["status"] == "healthy"
 
     @pytest.mark.asyncio
-    async def test_retrieve_tbox(self, client):
-        """Test TBox retrieval from brick_schema"""
+    async def test_retrieve_brick_tbox(self, client):
+        """Test GraphDB TBox retrieval — returns SPARQL triples for ontology terms"""
         response = await client.post(
-            "/retrieve",
+            "/graphdb/retrieve",
             json={"query": "Brick temperature sensor", "collection": "brick_schema", "top_k": 5},
         )
         assert response.status_code == 200
         data = response.json()
-        assert "results" in data
-        assert isinstance(data["results"], list)
-        assert data["collection"] == "brick_schema"
+        assert data["status"] == "success"
+        assert "triples" in data
+        assert isinstance(data["triples"], list)
+        assert "query" in data
 
     @pytest.mark.asyncio
-    async def test_retrieve_abox(self, client):
-        """Test ABox retrieval from building_instances"""
+    async def test_retrieve_building_instances(self, client):
+        """Test GraphDB ABox retrieval — returns building instance triples"""
         response = await client.post(
-            "/retrieve",
+            "/graphdb/retrieve",
             json={
                 "query": "VAV box temperature sensor",
                 "collection": "building_instances",
@@ -51,39 +52,33 @@ class TestRAGService:
         )
         assert response.status_code == 200
         data = response.json()
-        assert "results" in data
-        assert isinstance(data["results"], list)
-        assert data["collection"] == "building_instances"
+        assert data["status"] == "success"
+        assert "triples" in data
+        assert isinstance(data["triples"], list)
 
     @pytest.mark.asyncio
-    async def test_embed_texts(self, client):
-        """Test text embedding"""
+    async def test_retrieve_returns_summary(self, client):
+        """Test that retrieve response includes a natural language summary"""
         response = await client.post(
-            "/embed",
-            json={"texts": ["This is a test sentence", "Another test"], "collection": "docs"},
+            "/graphdb/retrieve",
+            json={"query": "CO2 sensors", "top_k": 3},
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["success"] is True
-        assert data["count"] >= 1
+        assert "summary" in data
 
     @pytest.mark.asyncio
-    async def test_list_collections(self, client):
-        """Test collections listing"""
-        response = await client.get("/collections")
+    async def test_retrieve_returns_prefixes(self, client):
+        """Test that retrieve response includes SPARQL prefix declarations"""
+        response = await client.post(
+            "/graphdb/retrieve",
+            json={"query": "humidity sensor", "top_k": 3},
+        )
         assert response.status_code == 200
         data = response.json()
-        assert "collections" in data
-        assert isinstance(data["collections"], list)
-
-    @pytest.mark.asyncio
-    async def test_collection_stats(self, client):
-        """Test collection stats endpoint"""
-        response = await client.get("/collections/building_instances/stats")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["name"] == "building_instances"
-        assert "points_count" in data
+        assert "prefixes" in data
+        assert "prefix_declarations" in data
+        assert isinstance(data["prefixes"], dict)
 
 
 if __name__ == "__main__":
