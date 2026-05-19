@@ -325,6 +325,55 @@ SELECT DISTINCT ?sensor ?label ?uuid WHERE {{
         msg = self.format_clarification(user_query, node, candidates)
         return msg
 
+    async def check_and_clarify_with_context(
+        self,
+        user_query: str,
+        user_context: dict,
+    ):
+        """
+        Phase 4 — structured clarification with dialogue state.
+
+        Returns (clarification_msg, context_updates, pending_type) where:
+          clarification_msg  — str | None
+          context_updates    — dict of context fields to merge into state
+          pending_type       — str | None  ("sensor_disambiguation" etc.)
+
+        Stores candidate list in context_updates["pending_candidates"] so the
+        next turn can bind directly to a numbered choice without re-querying.
+        """
+        node = self.extract_ambiguous_node(user_query)
+        if node is None:
+            return None, {}, None
+
+        # Check if the user has already provided a clarification in this context
+        if user_context.get("bound_node") == node and user_context.get("bound_sensor"):
+            # Already resolved in a prior turn — don't re-ask
+            return None, {}, None
+
+        # Check if this is a follow-up numeric response ("1", "2", "3")
+        pending = user_context.get("pending_candidates", [])
+        if pending:
+            stripped = user_query.strip()
+            if stripped.isdigit():
+                idx = int(stripped) - 1
+                if 0 <= idx < len(pending):
+                    chosen = pending[idx]
+                    ctx_updates = {
+                        "bound_node": node,
+                        "bound_sensor": chosen.get("uri"),
+                        "bound_sensor_name": chosen.get("display_name"),
+                        "pending_candidates": [],
+                    }
+                    return None, ctx_updates, None
+
+        logger.info(f"[disambiguation] Ambiguous sensor ref detected — node {node}")
+        candidates = await self.get_candidates(node)
+
+        # Store candidates in context for resolution on the next turn
+        ctx_updates = {"pending_node": node, "pending_candidates": candidates}
+        msg = self.format_clarification(user_query, node, candidates)
+        return msg, ctx_updates, "sensor_disambiguation"
+
 
 # Module-level singleton
 _disambiguation_service: Optional[DisambiguationService] = None

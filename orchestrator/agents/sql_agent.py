@@ -283,6 +283,18 @@ Return ONLY the SQL query, no markdown, no explanations.
                     results = query_result.data if query_result.success else []
                     if not query_result.success:
                         logger.warning(f"Adapter query failed: {query_result.error}")
+                        # Phase 2 — SQL repair loop (no repair for deterministic queries)
+                        if not deterministic_sql:
+                            results = await self._repair_sql(
+                                sql_query=sql_query,
+                                error=query_result.error or "query failed",
+                                user_query=user_query,
+                                schema_text=schema_text,
+                                uuid_list_str=uuid_list_str,
+                                ts_col=ts_col,
+                                dialect_hints=dialect_hints,
+                                adapter=adapter,
+                            )
                 else:
                     logger.error("No adapter available for storage: " + storage_key)
                     results = []
@@ -385,6 +397,64 @@ Return ONLY the SQL query, no markdown, no explanations.
     async def _get_schema(self) -> str:
         """Get schema text from the default adapter."""
         return adapter_registry.get_schema_text()
+
+    async def _repair_sql(
+        self,
+        sql_query: str,
+        error: str,
+        user_query: str,
+        schema_text: str,
+        uuid_list_str: str,
+        ts_col: str,
+        dialect_hints: str,
+        adapter,
+        max_attempts: int = 2,
+    ) -> List[Dict[str, Any]]:
+        """Phase 2: bounded SQL repair loop — feed error + failed SQL back to LLM."""
+        _MAX = max_attempts
+        failed_sql = sql_query
+        last_error = error
+
+        for attempt in range(1, _MAX + 1):
+            repair_prompt = f"""The following SQL query failed with an error.
+Fix ONLY the SQL syntax/schema issue; keep the same logical intent.
+
+=== FAILED SQL ===
+{failed_sql}
+
+=== DB ERROR ===
+{last_error}
+
+=== SCHEMA ===
+{schema_text}
+
+=== RULES ===
+{dialect_hints}
+- Target UUIDs (wide-format columns): {uuid_list_str}
+- Timestamp column is '{ts_col}' (use EXACT case).
+- Return ONLY the corrected SQL, no explanation."""
+
+            try:
+                repaired = await llm_manager.generate(repair_prompt, task_type=TaskType.GENERAL)
+                repaired_sql = repaired.replace("```sql", "").replace("```", "").strip()
+                query_result = await adapter.execute_query(repaired_sql)
+                if query_result.success:
+                    logger.info(
+                        f"[sql_repair] Recovered on attempt {attempt} — "
+                        f"original error: {last_error!r}"
+                    )
+                    return query_result.data
+                last_error = query_result.error or "unknown error"
+                failed_sql = repaired_sql
+                logger.warning(
+                    f"[sql_repair] Attempt {attempt} still failed: {last_error}"
+                )
+            except Exception as exc:
+                logger.warning(f"[sql_repair] Attempt {attempt} exception: {exc}")
+                last_error = str(exc)
+
+        logger.warning(f"[sql_repair] All {_MAX} repair attempts exhausted")
+        return []
 
     async def _generate_sql(self, user_query: str, schema: str) -> str:
         """Generate SQL query using LLM with dialect-aware prompts (C.2)."""

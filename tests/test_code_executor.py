@@ -35,8 +35,8 @@ print(f"2 + 2 = {result}")
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
-        assert "output" in data
-        assert "Hello, World!" in data["output"]
+        assert "stdout" in data
+        assert "Hello, World!" in data["stdout"]
 
     @pytest.mark.asyncio
     async def test_pandas_execution(self, client):
