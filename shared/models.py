@@ -630,7 +630,7 @@ class ChatRequest(BaseModel):
         default="en", max_length=10, description="Response language"
     )
     building: Optional[str] = Field(
-        default="building1", max_length=100, description="Target building ID"
+        default=None, max_length=100, description="Target building ID"
     )
     fresh_session: bool = Field(
         default=False,
