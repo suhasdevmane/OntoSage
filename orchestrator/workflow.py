@@ -26,6 +26,8 @@ from orchestrator.agents.anomaly_agent import AnomalyDetectionAgent
 from orchestrator.agents.control_agent import ControlAgent
 from orchestrator.agents.maintenance_agent import MaintenanceAgent
 from orchestrator.agents.data_export_agent import DataExportAgent
+from orchestrator.agents.capability_agent import CapabilityAgent
+from orchestrator.agents.verifier_agent import VerifierAgent
 
 # CAP-01: Document agent
 from orchestrator.agents.document_agent import DocumentAgent
@@ -84,6 +86,8 @@ class WorkflowOrchestrator:
         self.document_agent = DocumentAgent()
         self.control_agent = ControlAgent()
         self.maintenance_agent = MaintenanceAgent()
+        self.capability_agent = CapabilityAgent()
+        self.verifier_agent = VerifierAgent()
         self.redis_manager = redis_manager
         self.postgres_manager = postgres_manager
         self.response_cache = None  # injected by main.py lifespan after Redis is ready
@@ -166,6 +170,7 @@ class WorkflowOrchestrator:
         )
         workflow.add_node("control", self._safe_node(self._control_node, "control"))
         workflow.add_node("maintenance", self._safe_node(self._maintenance_node, "maintenance"))
+        workflow.add_node("capability", self._safe_node(self._capability_node, "capability"))
 
         # Entry
         workflow.set_entry_point("dialogue")
@@ -187,6 +192,7 @@ class WorkflowOrchestrator:
                 "spatial_query": "spatial_query",
                 "control": "control",
                 "maintenance": "maintenance",
+                "capability": "capability",
                 "response": "response",
                 "end": END,
             },
@@ -239,6 +245,7 @@ class WorkflowOrchestrator:
         workflow.add_edge("spatial_query", "response")
         workflow.add_edge("control", "response")
         workflow.add_edge("maintenance", "response")
+        workflow.add_edge("capability", "response")
         workflow.add_edge("response", END)
 
         return workflow.compile()
@@ -458,6 +465,9 @@ class WorkflowOrchestrator:
         state.intermediate_results["recommendation_domain"] = intent_result.get(
             "recommendation_domain"
         )
+        # Phase 0 (cross-cutting): persist G1 six-tuple for every turn
+        if "g1_taxonomy" in intent_result:
+            state.intermediate_results["g1_taxonomy"] = intent_result["g1_taxonomy"]
 
         # ── Data-driven disambiguation (context-aware) ────────────────────
         # Check BEFORE routing: use the session context to avoid re-asking
@@ -534,6 +544,10 @@ class WorkflowOrchestrator:
         elif intent in ("export",):
             state.current_intent = "export"
 
+        elif intent == "capability":
+            # Phase 0: off-ontology / building capability queries
+            state.current_intent = "capability"
+
         elif intent in ("compare", "trend", "recommend", "compliance"):
             # Preserve specific intent — each routes via SPARQL→SQL→analytics pipeline
             # but the analytics node handles them differently (recommend→_recommend_node, etc.)
@@ -582,6 +596,20 @@ class WorkflowOrchestrator:
         _prior_qr = state.query_results
         if isinstance(_prior_qr, dict) and _prior_qr.get("data"):
             state.intermediate_results["_saved_query_results"] = _prior_qr
+
+        # Phase 3: inject persona domain priors as a lightweight SPARQL context hint
+        try:
+            from shared.persona_registry import get_persona_registry as _get_preg
+            _preg = _get_preg()
+            _persona_str = getattr(state, "persona", "general") or "general"
+            _priors = _preg.get_priors(_persona_str)
+            if _priors.top_domains:
+                state.intermediate_results["persona_domain_hint"] = (
+                    f"User persona: {_persona_str}. "
+                    f"Prioritise sensor types related to: {', '.join(_priors.top_domains[:3])}."
+                )
+        except Exception:
+            pass
 
         result = await self.sparql_agent.generate_query(state, latest_message)
 
@@ -1340,6 +1368,12 @@ Instructions:
         """Format final response — with response-cache store after generation."""
         logger.info("Executing response node")
 
+        # Phase 1: attach grounding verification record (rule-based, no LLM call)
+        try:
+            state = await self.verifier_agent.verify(state)
+        except Exception as _ve:
+            logger.debug(f"Verifier skipped: {_ve}")
+
         # Gather all results
         sparql_result = state.intermediate_results.get("sparql_result", {})
         sql_result = state.intermediate_results.get("sql_result", {})
@@ -1551,19 +1585,40 @@ Instructions:
                 logger.debug(f"Response cache store skipped: {_cache_err}")
 
         # B.3: Store successful interaction in agent memory for future context retrieval
+        # Phase 5: Also store failures so the correction corpus grows.
         if self.agent_memory and state.user_id:
             try:
                 original_query = (
                     state.messages[-2].content if len(state.messages) >= 2 else ""
                 )
                 entities = state.intermediate_results.get("entities", [])
-                await self.agent_memory.store_success(
-                    user_id=state.user_id,
-                    query=original_query,
-                    intent=state.current_intent or "general",
-                    entities=entities if isinstance(entities, list) else [],
-                    answer_summary=final_response[:200],
-                )
+                _verification = state.intermediate_results.get("verification", {})
+                _is_grounded = _verification.get("grounded", True)
+                _degraded = state.intermediate_results.get("degraded_services")
+                _has_error = bool(state.intermediate_results.get("error"))
+
+                if _is_grounded and not _has_error and not _degraded:
+                    await self.agent_memory.store_success(
+                        user_id=state.user_id,
+                        query=original_query,
+                        intent=state.current_intent or "general",
+                        entities=entities if isinstance(entities, list) else [],
+                        answer_summary=final_response[:200],
+                    )
+                else:
+                    # Phase 5 — capture failure for correction corpus
+                    error_info = (
+                        state.intermediate_results.get("error")
+                        or (f"degraded: {_degraded}" if _degraded else "ungrounded")
+                    )
+                    await self.agent_memory.store_failure(
+                        user_id=state.user_id,
+                        query=original_query,
+                        intent=state.current_intent or "general",
+                        entities=entities if isinstance(entities, list) else [],
+                        error_summary=str(error_info)[:200],
+                        persona=getattr(state, "persona", "general") or "general",
+                    )
                 # ── Phase 7.4-B: Detect and persist user preferences ──────────
                 if original_query:
                     try:
@@ -1777,6 +1832,8 @@ Instructions:
             return "control"
         elif intent == "maintenance":
             return "maintenance"
+        elif intent == "capability":
+            return "capability"
         else:
             return "response"
 
@@ -2676,6 +2733,20 @@ Instructions:
             logger.warning(f"[maintenance_node] DB operation failed: {e}")
             if "message" not in result:
                 result["message"] = f"Operation completed but could not update database: {e}"
+
+    async def _capability_node(self, state: ConversationState) -> ConversationState:
+        """Phase 0 — Answer CAPABILITY / off-ontology queries from the building KB."""
+        logger.info(
+            f"[capability_node] intent={state.current_intent}, "
+            f"building={state.building_id}"
+        )
+        state = await self.capability_agent.answer(state)
+        # Surface the KB response into the standard dialogue_response slot
+        # so the response node picks it up consistently.
+        result = state.intermediate_results.get("capability_result", {})
+        if result.get("response"):
+            state.intermediate_results["dialogue_response"] = result["response"]
+        return state
 
     async def _document_node(self, state: ConversationState) -> ConversationState:
         """CAP-01 — Generate a formal document from current pipeline outputs."""

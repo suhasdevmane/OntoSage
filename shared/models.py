@@ -340,6 +340,16 @@ class ConversationState(BaseModel):
         default=False, description="Whether conversation turn is complete"
     )
 
+    # Phase 4 — structured dialogue state (survey H: 26.7% disambiguation rate)
+    dialogue_state: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=(
+            "Structured clarification state: turn_phase, pending_clarification, "
+            "bound_entities, candidates.  Persisted across turns so the system "
+            "can resume on a bound entity without re-asking."
+        ),
+    )
+
     class Config:
         arbitrary_types_allowed = True
 

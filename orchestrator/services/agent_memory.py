@@ -299,6 +299,57 @@ class AgentMemoryService:
             return vals
 
     # ─────────────────────────────────────────────────────────────────────────
+    # Phase 5 — Failure / correction capture (G4 "closed-loop feedback log")
+    # ─────────────────────────────────────────────────────────────────────────
+
+    async def store_failure(
+        self,
+        user_id: str,
+        query: str,
+        intent: str,
+        entities: List[str],
+        error_summary: str,
+        persona: str = "general",
+    ):
+        """
+        Persist a FAILED interaction so the correction corpus can grow.
+        Survey G4: "closed-loop feedback log — failures too, not just successes."
+        Stored with memory_type='failure' for separate retrieval/analysis.
+        """
+        await self.store_success(
+            user_id=user_id,
+            query=query,
+            intent=intent,
+            entities=entities,
+            answer_summary=f"[FAILURE] {error_summary[:200]}",
+            memory_type="failure",
+        )
+
+    async def store_correction(
+        self,
+        user_id: str,
+        query: str,
+        wrong_answer: str,
+        corrected_answer: str,
+        intent: str,
+        persona: str = "general",
+    ):
+        """
+        Persist a user-corrected interaction as a few-shot example.
+        Used by the dialogue agent for retrieval-augmented intent + entity resolution.
+        Stored with memory_type='correction'.
+        """
+        summary = f"[CORRECTION] wrong={wrong_answer[:100]} → correct={corrected_answer[:100]}"
+        await self.store_success(
+            user_id=user_id,
+            query=query,
+            intent=intent,
+            entities=[],
+            answer_summary=summary,
+            memory_type="correction",
+        )
+
+    # ─────────────────────────────────────────────────────────────────────────
     # Housekeeping
     # ─────────────────────────────────────────────────────────────────────────
 

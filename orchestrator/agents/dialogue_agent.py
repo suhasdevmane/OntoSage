@@ -19,6 +19,7 @@ from orchestrator.redis_manager import redis_manager
 from orchestrator.services.context_manager import ContextManager
 from shared.config import settings
 from shared.models import ConversationState, Message
+from shared.persona_registry import get_persona_registry
 from shared.utils import generate_hash, get_logger
 
 logger = get_logger(__name__)
@@ -108,6 +109,110 @@ def format_conversation_history(messages: List[Message], max_messages: int = 5) 
         formatted += f"{role}: {content}\n"
 
     return formatted.strip()
+
+
+# ── G1 six-tuple taxonomy derivation ─────────────────────────────────────────
+# Survey corpus: 5,916 classified questions across 81 participants.
+# G1 classification framework: (domain_l1, query_type_l2, intent,
+#   temporal, spatial, complexity).
+
+_DOMAIN_MAP = {
+    "THERMAL": ("temperature", "thermal", "hvac", "heating", "cooling", "comfort",
+                "warm", "cold", "hot", "thermostat"),
+    "AIR_QUALITY": ("co2", "carbon dioxide", "air quality", "humidity", "ventilation",
+                    "pm2.5", "pm10", "voc", "pollut", "stuffy", "fresh air"),
+    "ENERGY": ("energy", "electricity", "power", "kwh", "watt", "consumption",
+               "usage", "load", "metering"),
+    "LIGHTING": ("light", "lighting", "lux", "bright", "dim", "led", "daylight",
+                 "blind", "shading"),
+    "OCCUPANCY": ("occupancy", "occupied", "people", "crowd", "headcount", "presence",
+                  "how many people", "attendance"),
+    "ACCESS_SECURITY": ("access", "security", "cctv", "camera", "lock", "door",
+                        "card", "badge", "swipe", "entry"),
+    "FIRE_SAFETY": ("fire", "evacuation", "alarm", "sprinkler", "extinguisher",
+                    "emergency exit", "muster", "assembly"),
+    "INFORMATIONAL": ("policy", "rule", "procedure", "contact", "helpdesk",
+                      "booking", "amenity", "cafe", "wifi", "hours", "open",
+                      "capability", "feature", "what can"),
+}
+
+_QUERY_TYPE_MAP = {
+    # intent → query_type_l2
+    "sensor_data": "STATUS",
+    "analytics": "AGGREGATION",
+    "compare": "COMPARISON",
+    "anomaly": "ANOMALY",
+    "discovery": "LOOKUP",
+    "report": "AGGREGATION",
+    "trend": "HISTORICAL",
+    "forecast": "HISTORICAL",
+    "compliance": "AGGREGATION",
+    "recommend": "AGGREGATION",
+    "export": "AGGREGATION",
+    "planner": "MULTI_STEP",
+    "capability": "CAPABILITY",
+    "general": "LOOKUP",
+    "clarification": "LOOKUP",
+    "floor_plan": "LOOKUP",
+    "spatial_query": "LOOKUP",
+    "maintenance": "STATUS",
+    "alert": "ANOMALY",
+    "control": "CAPABILITY",
+}
+
+_SPATIAL_KW = ("zone", "floor", "room", "area", "space", "section", "level",
+               "corridor", "lab", "office", "building")
+_TIME_KW = ("today", "yesterday", "last", "past", "hour", "day", "week",
+            "month", "year", "since", "between", "trend", "history", "historical")
+
+
+def _derive_g1_taxonomy(
+    query: str,
+    intent: str,
+    entities: list,
+    time_range: dict | None,
+) -> dict:
+    """Derive the G1 survey-taxonomy six-tuple from query + parsed intent."""
+    q = query.lower()
+
+    # domain_l1
+    domain_l1 = "OTHER"
+    best_hits = 0
+    for domain, kws in _DOMAIN_MAP.items():
+        hits = sum(1 for kw in kws if kw in q)
+        if hits > best_hits:
+            best_hits = hits
+            domain_l1 = domain
+
+    # query_type_l2
+    query_type_l2 = _QUERY_TYPE_MAP.get(intent, "LOOKUP")
+
+    # temporal — has an explicit time range or time keywords
+    has_temporal = bool(
+        (time_range and (time_range.get("start") or time_range.get("end")))
+        or any(kw in q for kw in _TIME_KW)
+    )
+
+    # spatial — mentions a zone/room/floor
+    has_spatial = any(kw in q for kw in _SPATIAL_KW)
+
+    # complexity
+    n_entities = len(entities) if isinstance(entities, list) else 0
+    if intent in ("planner", "report") or n_entities >= 3:
+        complexity = "COMPLEX"
+    elif intent in ("analytics", "compare", "anomaly", "compliance", "trend", "forecast") or n_entities >= 2:
+        complexity = "MODERATE"
+    else:
+        complexity = "SIMPLE"
+
+    return {
+        "domain_l1": domain_l1,
+        "query_type_l2": query_type_l2,
+        "intent": intent,
+        "temporal": has_temporal,
+        "spatial": has_spatial,
+        "complexity": complexity,
+    }
 
 
 # Phase 4.5 — Expanded persona system (10 personas)
@@ -614,6 +719,88 @@ Return ONLY the JSON object.
                     normalized["intent"] = "analytics"
                     normalized["analytics"] = True
                     normalized["general"] = False
+
+                # ── Capability / off-ontology override ────────────────────────────
+                # Queries about building features, safety, policies, amenities, contacts,
+                # and procedures are off-ontology (OTHER/CAPABILITY stratum in survey G2).
+                # These currently fall through SPARQL→RAG and hallucinate.
+                # Route to capability agent when strong capability keywords detected and
+                # the current intent provides no grounded data path.
+                _CAPABILITY_KW = (
+                    "fire safety", "fire alarm", "evacuation", "assembly point",
+                    "sprinkler", "fire exit", "fire warden", "fire drill",
+                    "power outage", "backup power", "generator", "ups",
+                    "access control", "swipe card", "security camera", "cctv",
+                    "smart device", "can i control", "can the building",
+                    "can we control", "smart building",
+                    "wifi", "eduroam", "it support", "it helpdesk",
+                    "wheelchair", "accessible", "disability", "lift access",
+                    "cafe", "canteen", "vending machine", "kitchen facilities",
+                    "shower", "bike storage", "amenities", "facilities",
+                    "complaint", "how do i report", "who do i contact",
+                    "how to book", "room booking", "opening hours", "is it open",
+                    "sustainability", "breeam", "recycling", "green building",
+                    "emergency contact", "first aid", "defibrillator", "aed",
+                    "safety feature", "building feature", "building capability",
+                    "what does this building", "what can this building",
+                    "what sensors are", "what is measured", "sensor coverage",
+                    "what is monitored", "what data is collected",
+                    "occupancy limit", "room capacity", "fire capacity",
+                    "policy", "building policy", "building rule",
+                    "evacuation plan", "emergency procedure",
+                )
+                _has_capability_kw = any(kw in _q_lower for kw in _CAPABILITY_KW)
+                # Also override sparql/discovery when capability keywords are present —
+                # these are off-ontology queries that SPARQL cannot answer from sensor data.
+                _no_data_intent = normalized.get("intent") in (
+                    "general", "clarification", "unknown", "general_knowledge",
+                    "sparql", "discovery", "metadata",
+                )
+                if _has_capability_kw and _no_data_intent:
+                    logger.info(
+                        "[intent-override] Forcing 'capability' (was '%s') "
+                        "— capability/off-ontology keyword detected",
+                        normalized.get("intent"),
+                    )
+                    normalized["intent"] = "capability"
+                    normalized["analytics"] = False
+                    normalized["general"] = False
+
+                # ── G1 six-tuple emission (cross-cutting, survey taxonomy) ─────────
+                # Emitted on every turn; persisted in intermediate_results["g1_taxonomy"].
+                # Drives Phase 0 routing, makes every phase measurable against the
+                # survey's own taxonomy, and enables production traffic analysis
+                # with the same Phase-B scripts.
+                g1 = _derive_g1_taxonomy(
+                    query=user_query,
+                    intent=normalized.get("intent", "general"),
+                    entities=normalized.get("entities", []),
+                    time_range=normalized.get("time_range"),
+                )
+                normalized["g1_taxonomy"] = g1
+
+                # Phase 3 — Persona-biased domain disambiguation
+                # When the G1 domain is OTHER (ambiguous/tie) and the current
+                # persona has strong priors, override with the persona's top domain.
+                # This implements D3 survey finding: personas have distinct domain
+                # mixes, not just tone differences.
+                if g1.get("domain_l1") == "OTHER" and normalized.get("intent") not in (
+                    "capability", "general", "general_knowledge", "clarification"
+                ):
+                    try:
+                        _persona_key = getattr(state, "persona", "general") or "general"
+                        _registry = get_persona_registry()
+                        _priors = _registry.get_priors(_persona_key)
+                        if _priors.top_domains:
+                            g1 = dict(g1)
+                            g1["domain_l1"] = _priors.top_domains[0]
+                            normalized["g1_taxonomy"] = g1
+                            logger.info(
+                                f"[persona-domain-bias] {_persona_key} → "
+                                f"domain_l1={g1['domain_l1']}"
+                            )
+                    except Exception:
+                        pass
 
                 logger.info("✅ Successfully parsed LLM JSON response")
                 return normalized

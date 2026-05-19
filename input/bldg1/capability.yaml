@@ -1,0 +1,285 @@
+# Building Capability Knowledge Base — Abacws, Cardiff University
+# Schema: capability_schema.py
+# Covers CAPABILITY (25.6%) and OTHER/off-ontology (24%) query strata from survey corpus.
+# Each entry has: id, category, keywords, content, source
+
+building_info:
+  id: bldg1
+  name: Abacws Building
+  institution: Cardiff University
+  location: Senghennydd Road, Roath, Cardiff, CF24 4AG, Wales, UK
+  year_built: 2021
+  floors: 6
+  floor_range: "Ground (0) to Floor 5"
+  total_area_m2: ~14000
+  occupancy_type: Mixed-use academic (computer science, data innovation, research labs)
+  smart_building: true
+  sensor_count: ~680
+  description: >
+    Abacws is Cardiff University's flagship digital innovation building, opened in 2021.
+    It houses the School of Computer Science and Informatics together with
+    the Data Innovation Research Institute. The building features a comprehensive
+    IoT sensor network with ~680 sensors monitoring temperature, CO2, humidity,
+    and other environmental parameters across six floors.
+
+capabilities:
+  - id: hvac_zoning
+    category: HVAC
+    keywords: [hvac, heating, cooling, air conditioning, ventilation, zone, thermal control,
+               temperature control, climate control, thermostat]
+    content: >
+      The building has a zone-based HVAC system with independent climate control per zone.
+      Zones are mapped to BACnet IDs. Occupants cannot directly adjust HVAC settings;
+      facility management controls setpoints. The system adjusts automatically based on
+      occupancy schedules and sensor feedback. Contact facility management for comfort
+      complaints or temperature adjustments.
+    source: building_management_system
+
+  - id: fire_safety
+    category: FIRE_SAFETY
+    keywords: [fire, fire alarm, evacuation, emergency exit, fire escape, smoke detector,
+               sprinkler, fire safety, assembly point, muster point, fire warden, extinguisher,
+               fire drill, fire door, fire exit, fire suppression]
+    content: >
+      Fire safety features include: (1) Automatic smoke and heat detectors on every floor;
+      (2) Manual call points (red break-glass units) at every stairwell and exit;
+      (3) Wet pipe sprinkler system throughout; (4) Fire doors on all stairwells and
+      corridors; (5) Emergency lighting with battery backup; (6) Public address system
+      for evacuation instructions. Assembly point: the open area on Senghennydd Road
+      directly outside the main entrance. Fire wardens are designated per floor.
+      The building undergoes annual fire drills. Do not use lifts during evacuation.
+    source: fire_safety_management_plan
+
+  - id: emergency_evacuation
+    category: FIRE_SAFETY
+    keywords: [evacuate, evacuation, emergency, assembly point, muster, escape route,
+               emergency exit, disabled evacuation, PEEP, refuge]
+    content: >
+      Evacuation procedure: (1) On alarm activation, leave the building via the nearest
+      marked fire exit; (2) Do not use the lifts; (3) Proceed to the assembly point on
+      Senghennydd Road; (4) Report to the floor fire warden for roll call.
+      Refuge areas (for persons unable to use stairs) are located at each stairwell landing;
+      press the refuge intercom to alert security. Personal Emergency Evacuation Plans
+      (PEEPs) are coordinated by Building Management for permanent occupants with mobility needs.
+    source: fire_safety_management_plan
+
+  - id: power_resilience
+    category: POWER
+    keywords: [power outage, power cut, backup power, generator, ups, electricity failure,
+               power failure, can the building operate, emergency power]
+    content: >
+      The building has an uninterruptible power supply (UPS) for critical systems:
+      emergency lighting, fire alarm panels, server rooms, and security systems.
+      A diesel standby generator provides emergency power for server rooms and critical
+      lab equipment within ~30 seconds of a mains failure. General lighting, heating,
+      and non-critical office equipment will lose power in an outage. The building can
+      maintain basic safety functions (alarms, emergency lighting, security) during
+      a power outage but normal operations (teaching, lab work) will be suspended.
+    source: estates_engineering
+
+  - id: access_control
+    category: SECURITY
+    keywords: [access control, entry, card access, key fob, door lock, security,
+               who can enter, authorised access, after hours, swipe card, smart card,
+               door, unlock, badge, building access]
+    content: >
+      Access to Abacws uses a proximity card (swipe card / fob) system. All external
+      doors and internal secure areas require a valid Cardiff University card or visitor
+      pass. General academic areas (open-plan offices, study spaces) are accessible to
+      all card holders during standard hours (07:00–22:00 weekdays, 08:00–18:00 weekends).
+      Labs, server rooms, and restricted areas require specific access grants — request
+      via IT Service Desk. After-hours access is available to staff and registered
+      postgraduate students. Visitors must sign in at reception and be escorted.
+      Security is staffed 24/7 at the main reception.
+    source: security_management
+
+  - id: cctv_surveillance
+    category: SECURITY
+    keywords: [cctv, camera, surveillance, security camera, monitored, recording, watching]
+    content: >
+      CCTV cameras are installed throughout the building's public areas, corridors,
+      entrances, and car parks. Cameras operate 24/7 and footage is retained for 30 days.
+      The system is monitored by Cardiff University Security Services. CCTV signage is
+      displayed at all camera locations in compliance with GDPR requirements. For CCTV
+      requests (e.g. incident investigation), contact Security Services or submit a
+      Subject Access Request through the university's data protection office.
+    source: security_management
+
+  - id: smart_controls
+    category: SMART_BUILDING
+    keywords: [smart device, iot, control, smart, automate, can i control, adjust,
+               controllable, voice control, app control, building app, smart switch]
+    content: >
+      The building's IoT sensors (temperature, CO2, humidity, lighting) are read-only
+      monitoring devices — occupants cannot directly control them via a public interface.
+      Lighting in open-plan areas uses presence-detection and daylight harvesting and
+      adjusts automatically. Building management staff can adjust setpoints via the
+      BMS (Building Management System). A future occupant app is planned but not yet
+      deployed. For lighting or HVAC control requests, contact facility management.
+    source: building_management_system
+
+  - id: lighting
+    category: LIGHTING
+    keywords: [lighting, light, lux, brightness, dim, bright, lights, led, natural light,
+               daylight, blinds, shading, artificial light]
+    content: >
+      The building uses LED lighting throughout with daylight harvesting and
+      occupancy-based presence detection. Lights automatically adjust to maintain
+      target lux levels and switch off in unoccupied areas. Ceiling-mounted PIR
+      presence sensors control individual zones. External shading (automated blinds)
+      on south-facing facades reduces solar gain. Manual override switches are available
+      in some office areas. Lighting faults should be reported to facilities management.
+    source: building_management_system
+
+  - id: wifi_it
+    category: IT_INFRASTRUCTURE
+    keywords: [wifi, wireless, internet, network, it, broadband, eduroam, connectivity,
+               it support, printer, it service desk, it helpdesk, computer]
+    content: >
+      Wifi coverage is provided by Cardiff University's 'eduroam' network throughout
+      the building. Guests can use 'CU_Guest' wifi (registration required). Wired
+      ethernet ports are available in offices, labs, and some study areas.
+      IT support is provided by the Cardiff University IT Service Desk (itservicedesk.cardiff.ac.uk,
+      029 2251 1111). Printer/MFD devices are on every floor (PaperCut system).
+      Server rooms are located on Floor 2 and Floor 4.
+    source: it_services
+
+  - id: accessibility
+    category: ACCESSIBILITY
+    keywords: [wheelchair, lift, elevator, accessible, disability, disabled, step-free,
+               hearing loop, induction loop, ramp, accessible toilet, accessible parking]
+    content: >
+      The building is fully accessible: (1) Step-free access at the main entrance and
+      all secondary entrances; (2) Passenger lifts on the main atrium serve all floors;
+      (3) Accessible toilets on every floor; (4) Hearing induction loops at reception
+      and main lecture spaces; (5) Accessible parking bays on Senghennydd Road
+      (blue badge required); (6) Refuge areas at each stairwell landing for evacuation
+      assistance. For disability-related queries, contact the Disability and Dyslexia
+      Service (disability@cardiff.ac.uk).
+    source: estates_accessibility_audit
+
+  - id: catering_amenities
+    category: AMENITIES
+    keywords: [cafe, canteen, food, coffee, vending machine, eating, lunch, refreshment,
+               kitchen, water, drinking water, toilet, bathroom, WC, locker, shower,
+               bike storage, parking]
+    content: >
+      Abacws amenities include: (1) Ground-floor café (Abacws Café) open 08:00–16:30
+      weekdays, serving hot drinks, food, and snacks; (2) Vending machines on Floor 1
+      and Floor 3; (3) Kitchen/breakout areas on Floors 2, 3, and 4 with microwaves
+      and filtered water; (4) Toilets on every floor, with accessible and gender-neutral
+      facilities; (5) Shower facilities on Floor 1; (6) Secure bike storage in the
+      basement; (7) Limited car parking available on Senghennydd Road.
+    source: estates_facilities
+
+  - id: quiet_study
+    category: AMENITIES
+    keywords: [study, quiet, library, workspace, desk, book a room, meeting room,
+               collaboration space, quiet area, hot desk, pod]
+    content: >
+      Study and workspace options: (1) Open-plan study areas on Floors 1 and 2 —
+      general quiet working; (2) Collaborative 'pods' on Floor 3 for small group work;
+      (3) Bookable meeting rooms (Book via the Staff Intranet or Microsoft Teams room
+      booking); (4) Lab spaces booked via academic staff; (5) The ground floor
+      atrium has informal seating. Noise levels in study areas should be kept
+      to a minimum.
+    source: estates_facilities
+
+  - id: complaints_feedback
+    category: POLICY
+    keywords: [complaint, complain, feedback, report issue, report problem, fault,
+               broken, not working, raise issue, contact, who to contact, report,
+               maintenance request]
+    content: >
+      To report a building issue, fault, or complaint: (1) Facilities/maintenance issues
+      (broken fixtures, heating, cleaning): report via Cardiff University's FM helpdesk
+      at estates@cardiff.ac.uk or phone the estates helpdesk (029 2087 6026);
+      (2) IT issues (wifi, printers, computers): IT Service Desk (itservicedesk.cardiff.ac.uk);
+      (3) Security concerns: Security Services (security@cardiff.ac.uk, 029 2087 4444);
+      (4) Complaints about the building or services: contact the Building Manager via
+      estates@cardiff.ac.uk. All issues can also be reported via the Cardiff University
+      MyUniHub app.
+    source: estates_management
+
+  - id: sustainability
+    category: SUSTAINABILITY
+    keywords: [sustainability, green, environment, carbon, recycling, energy efficiency,
+               solar, renewable, breeam, epc, environmental, eco, waste, bins,
+               green building]
+    content: >
+      Abacws was designed to BREEAM 'Excellent' specification. Sustainability features:
+      (1) High-performance building fabric with triple-glazed facades; (2) Mechanical
+      heat recovery ventilation; (3) LED lighting with daylight harvesting throughout;
+      (4) Electric vehicle charging points in the car park; (5) Green roof on the
+      second-floor terrace; (6) Rainwater harvesting for toilet flushing; (7) Building
+      energy performance is monitored in real-time. Recycling facilities (general waste,
+      paper, glass, cans) are available on every floor.
+    source: sustainability_report
+
+  - id: emergency_contacts
+    category: EMERGENCY
+    keywords: [emergency, contact, who to call, phone number, first aid, medical,
+               ambulance, police, help, urgent, accident, incident]
+    content: >
+      Emergency contacts for Abacws: (1) Emergency services: 999; (2) Cardiff University
+      Security (24/7): 029 2087 4444 or internal x74444; (3) First aid: trained first
+      aiders are on each floor (names posted on floor notice boards), or call Security;
+      (4) Estates emergency helpdesk (out-of-hours building issues): 029 2087 5555;
+      (5) Health & Safety: safety@cardiff.ac.uk. First aid kits are located at each
+      floor reception point and in labs. AED (defibrillator) units are on the Ground
+      Floor and Floor 3.
+    source: health_and_safety
+
+  - id: bookings_reservations
+    category: POLICY
+    keywords: [book, booking, reserve, reservation, schedule, timetable, meeting room,
+               room booking, lab booking, how to book, who can book]
+    content: >
+      Room and space bookings: (1) Meeting rooms: staff book via the Staff Intranet
+      room booking system or through Microsoft Outlook/Teams; (2) Teaching spaces:
+      allocated by Timetabling; (3) Labs: booked through academic supervisors;
+      (4) External event hire: contact Cardiff University Conference Services;
+      (5) Informal spaces (atrium, pods) are first-come-first-served and cannot be
+      reserved. Check Cardiff University's online room booking portal for availability.
+    source: timetabling_and_facilities
+
+  - id: working_hours
+    category: POLICY
+    keywords: [opening hours, open, close, when does it open, what time, hours,
+               is it open, 24 hours, weekend, holiday, bank holiday, out of hours]
+    content: >
+      Standard building hours: Monday–Friday 07:00–22:00; Saturday–Sunday 08:00–18:00.
+      The building may open earlier or close later during exam periods.
+      Out-of-hours access (after standard hours) is available to authorised staff and
+      registered postgraduate students with appropriate card access. The building is
+      generally closed on bank holidays except for security-monitored access.
+      Check the Cardiff University website for holiday opening schedules.
+    source: estates_management
+
+  - id: data_sensors_coverage
+    category: SMART_BUILDING
+    keywords: [what sensors, sensor coverage, monitored, measured, tracked, what is measured,
+               sensor types, building data, what data, information collected, instruments]
+    content: >
+      The building's IoT monitoring network includes approximately 680 sensors covering:
+      (1) Air temperature (thermal comfort) — all zones; (2) CO2 concentration
+      (indoor air quality) — all zones; (3) Relative humidity — selected zones;
+      (4) Occupancy/presence detection (PIR-based) — selective areas; (5) Energy
+      sub-metering (electricity by floor/zone). Sensor data is available via the
+      OntoSage building management system. The ontology is based on the Brick Schema
+      with ASHRAE 223 and BACnet extensions. Some areas (e.g. external plant rooms)
+      may have limited sensor coverage.
+    source: building_management_system
+
+  - id: occupancy_policies
+    category: POLICY
+    keywords: [capacity, maximum occupancy, how many people, capacity limit, overcrowding,
+               headcount, occupancy limit, room capacity, fire capacity]
+    content: >
+      Occupancy limits are set per room and displayed on the door. The building's
+      maximum permitted occupancy is determined by fire safety regulations and is
+      managed by building management. Overcrowding should be reported to Security.
+      Real-time occupancy monitoring is limited — the building has presence sensors
+      in some areas but not a full head-count system. For fire safety purposes,
+      the building fire roll-call system is managed by floor wardens.
+    source: health_and_safety

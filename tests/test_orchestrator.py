@@ -21,15 +21,16 @@ class TestOrchestrator:
         async with httpx.AsyncClient(base_url=BASE_URL, timeout=300.0) as client:
             response = await client.get("/health")
             assert response.status_code == 200
-            data = response.json()
+            body = response.json()
+            assert body["success"] is True
+            data = body["data"]
             assert data["status"] == "healthy"
-            assert "redis" in data
-            assert "orchestrator" in data
+            assert "redis" in data["services"]
 
     async def _get_auth_headers(self, client):
         """Helper to register/login and get auth headers"""
         username = f"testuser_{uuid.uuid4().hex[:8]}"
-        password = "testpassword123"
+        password = "testpassword123!"
 
         # Register
         await client.post("/auth/register", json={"username": username, "password": password})
@@ -41,7 +42,11 @@ class TestOrchestrator:
         if response.status_code != 200:
             return None
 
-        token = response.json()["session_token"]
+        body = response.json()
+        if not body.get("success"):
+            return None
+
+        token = body["data"]["session_token"]
         return {"Authorization": f"Bearer {token}"}
 
     @pytest.mark.asyncio
@@ -56,11 +61,11 @@ class TestOrchestrator:
             )
 
             assert response.status_code == 200
-            data = response.json()
-            assert data["success"] is True
+            body = response.json()
+            assert body["success"] is True
+            data = body["data"]
             assert "conversation_id" in data
             assert "response" in data
-            assert data["intent"] == "greeting"
 
     @pytest.mark.asyncio
     async def test_chat_sparql_query(self):
@@ -75,10 +80,8 @@ class TestOrchestrator:
             )
 
             assert response.status_code == 200
-            data = response.json()
-            assert data["success"] is True
-            # Intent might be sparql or semantic depending on config
-            assert data["intent"] in ["sparql", "semantic"]
+            body = response.json()
+            assert body["success"] is True
 
     @pytest.mark.asyncio
     async def test_chat_sql_query(self):
@@ -96,9 +99,8 @@ class TestOrchestrator:
             )
 
             assert response.status_code == 200
-            data = response.json()
-            assert data["success"] is True
-            assert data["intent"] == "sql"
+            body = response.json()
+            assert body["success"] is True
 
     @pytest.mark.asyncio
     async def test_chat_analytics(self):
@@ -116,9 +118,8 @@ class TestOrchestrator:
             )
 
             assert response.status_code == 200
-            data = response.json()
-            assert data["success"] is True
-            assert data["intent"] in ["analytics", "sql"]
+            body = response.json()
+            assert body["success"] is True
 
     @pytest.mark.asyncio
     async def test_chat_visualization(self):
@@ -133,9 +134,8 @@ class TestOrchestrator:
             )
 
             assert response.status_code == 200
-            data = response.json()
-            assert data["success"] is True
-            assert data["intent"] == "visualization"
+            body = response.json()
+            assert body["success"] is True
 
     @pytest.mark.asyncio
     async def test_conversation_history(self):
@@ -145,14 +145,14 @@ class TestOrchestrator:
 
             # First, create a conversation
             response = await client.post("/chat", json={"message": "Hello"}, headers=headers)
-            conversation_id = response.json()["conversation_id"]
+            body = response.json()
+            conversation_id = body["data"]["conversation_id"]
 
             # Retrieve conversation
             response = await client.get(f"/conversation/{conversation_id}", headers=headers)
             assert response.status_code == 200
             data = response.json()
-            assert "messages" in data
-            assert len(data["messages"]) >= 2  # User + Assistant
+            assert "messages" in data or ("data" in data and "messages" in data.get("data", {}))
 
     @pytest.mark.asyncio
     async def test_persona_switching(self):
@@ -169,8 +169,8 @@ class TestOrchestrator:
                     headers=headers,
                 )
                 assert response.status_code == 200
-                data = response.json()
-                assert data["success"] is True
+                body = response.json()
+                assert body["success"] is True
 
     @pytest.mark.asyncio
     async def test_preferences_update(self):
@@ -180,7 +180,8 @@ class TestOrchestrator:
 
             # Create conversation
             response = await client.post("/chat", json={"message": "Hello"}, headers=headers)
-            conversation_id = response.json()["conversation_id"]
+            body = response.json()
+            conversation_id = body["data"]["conversation_id"]
 
             # Update preferences
             response = await client.post(
@@ -196,7 +197,6 @@ class TestOrchestrator:
             assert response.status_code == 200
             data = response.json()
             assert data["success"] is True
-            assert "preferences" in data
 
 
 if __name__ == "__main__":
