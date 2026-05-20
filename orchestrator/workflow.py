@@ -1769,13 +1769,15 @@ Instructions:
         # proper pipeline.  Only override when the LLM chose a non-data intent.
         # Any intent that implies a data-fetching pipeline — "floor N" in these
         # queries is a location qualifier, not a request to show the floor plan.
-        # "sparql" and "sql" appear when the LLM outputs the pipeline stage name
-        # directly instead of the semantic intent name.
-        _data_intents = {
-            "sensor_data", "analytics", "anomaly", "comparison", "forecast",
-            "report", "export", "recommend", "planner", "spatial_query", "maintenance",
-            "sparql", "sql", "discovery", "alert", "control",
-        }
+        # "sparql"/"sql" appear when the LLM outputs a pipeline stage name directly.
+        # "compare"/"trend"/"compliance"/"visualization" are LLM-returnable data intents
+        # that must not be stolen by the floor-plan heuristic.
+        _data_intents = frozenset({
+            "sensor_data", "analytics", "anomaly", "comparison", "compare",
+            "forecast", "report", "export", "recommend", "planner",
+            "spatial_query", "maintenance", "sparql", "sql", "discovery",
+            "alert", "control", "trend", "compliance", "visualization",
+        })
         if intent == "floor_plan" or (
             floor_plan_service.is_floor_plan_query(user_query) and intent not in _data_intents
         ):

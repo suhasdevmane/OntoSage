@@ -24,6 +24,60 @@ from shared.utils import generate_hash, get_logger
 
 logger = get_logger(__name__)
 
+# Off-ontology capability keywords — queries matching any of these are routed to the
+# CapabilityAgent (KB lookup) rather than SPARQL/LLM, because they cannot be answered
+# from sensor time-series data.  Defined once at module level so the hot-path and the
+# Redis intent-cache-hit path always use the same set (no sync drift).
+_CAPABILITY_KW: frozenset = frozenset({
+    "fire safety", "fire alarm", "evacuation", "assembly point",
+    "sprinkler", "fire exit", "fire warden", "fire drill",
+    "power outage", "backup power", "generator", "ups",
+    "access control", "swipe card", "security camera", "cctv",
+    "after hours", "out of hours", "building access", "who can enter",
+    "card access", "key fob", "can i access", "enter the building",
+    "access the building",
+    "smart device", "can i control", "can the building",
+    "can we control", "smart building",
+    "wifi", "eduroam", "it support", "it helpdesk",
+    "wheelchair", "accessible", "disability", "lift access",
+    "cafe", "canteen", "vending machine", "kitchen facilities",
+    "shower", "bike storage", "amenities", "facilities",
+    "complaint", "how do i report", "who do i contact",
+    "how to book", "room booking", "opening hours", "is it open",
+    "sustainability", "breeam", "recycling", "green building",
+    "emergency contact", "first aid", "defibrillator", "aed",
+    "safety feature", "building feature", "building capability",
+    "what does this building", "what can this building",
+    "what sensors are", "what is measured", "sensor coverage",
+    "what is monitored", "what data is collected",
+    "occupancy limit", "room capacity", "fire capacity",
+    "policy", "building policy", "building rule",
+    "evacuation plan", "emergency procedure",
+    # Transport / parking
+    "parking", "car park", "how to get here", "directions",
+    "public transport", "bus stop", "train station", "cycle",
+    "ev charging", "electric vehicle",
+    # Printing
+    "printer", "printing", "papercut", "scan", "photocopier",
+    "how to print", "print credit",
+    # Wellbeing
+    "prayer room", "reflection room", "nursing room", "quiet room",
+    "wellbeing", "mental health", "gender neutral",
+    # GDPR / data privacy
+    "gdpr", "data privacy", "personal data", "who sees my data",
+    "data protection", "smart building privacy", "sensor privacy",
+    "location tracking", "right to know",
+    # Building management contacts
+    "building manager", "who manages", "facilities manager",
+    "estate manager", "who is responsible", "building contact",
+    # Visitor policy
+    "visitor", "guest", "external visitor", "sign in", "visitor badge",
+    "can guests come", "can i bring someone", "invite a visitor",
+    # Thermal comfort complaints
+    "too hot", "too cold", "overheating", "freezing", "stuffy",
+    "uncomfortable temperature", "thermal comfort", "temperature complaint",
+})
+
 # P6: Few-shot library for intent detection
 _FEW_SHOT_LIB: Optional[Dict] = None
 _FEW_SHOT_PATH = (
@@ -408,54 +462,13 @@ class DialogueAgent:
             logger.info(f"✅ Cache hit for intent detection: {prompt_hash}")
             # Re-apply capability keyword override — the override may have been added
             # after this entry was cached, so we must always re-check on cache hits.
+            # Use the module-level _CAPABILITY_KW constant — never inline a copy here.
             _q_lower = user_query.lower()
-            _capability_kw = (
-                "fire safety", "fire alarm", "evacuation", "assembly point",
-                "sprinkler", "fire exit", "fire warden", "fire drill",
-                "power outage", "backup power", "generator", "ups",
-                "access control", "swipe card", "security camera", "cctv",
-                "after hours", "out of hours", "building access", "who can enter",
-                "card access", "key fob", "can i access", "enter the building",
-                "access the building",
-                "smart device", "can i control", "can the building",
-                "can we control", "smart building",
-                "wifi", "eduroam", "it support", "it helpdesk",
-                "wheelchair", "accessible", "disability", "lift access",
-                "cafe", "canteen", "vending machine", "kitchen facilities",
-                "shower", "bike storage", "amenities", "facilities",
-                "complaint", "how do i report", "who do i contact",
-                "how to book", "room booking", "opening hours", "is it open",
-                "sustainability", "breeam", "recycling", "green building",
-                "emergency contact", "first aid", "defibrillator", "aed",
-                "safety feature", "building feature", "building capability",
-                "what does this building", "what can this building",
-                "what sensors are", "what is measured", "sensor coverage",
-                "what is monitored", "what data is collected",
-                "occupancy limit", "room capacity", "fire capacity",
-                "policy", "building policy", "building rule",
-                "evacuation plan", "emergency procedure",
-                "parking", "car park", "how to get here", "directions",
-                "public transport", "bus stop", "train station", "cycle",
-                "ev charging", "electric vehicle",
-                "printer", "printing", "papercut", "scan", "photocopier",
-                "how to print", "print credit",
-                "prayer room", "reflection room", "nursing room", "quiet room",
-                "wellbeing", "mental health", "gender neutral",
-                "gdpr", "data privacy", "personal data", "who sees my data",
-                "data protection", "smart building privacy", "sensor privacy",
-                "location tracking", "right to know",
-                "building manager", "who manages", "facilities manager",
-                "estate manager", "who is responsible", "building contact",
-                "visitor", "guest", "external visitor", "sign in", "visitor badge",
-                "can guests come", "invite a visitor",
-                "too hot", "too cold", "overheating", "freezing", "stuffy",
-                "uncomfortable temperature", "thermal comfort", "temperature complaint",
-            )
             _no_data_intent = cached_result.get("intent") in (
                 "general", "clarification", "unknown", "general_knowledge",
                 "sparql", "discovery", "metadata",
             )
-            if any(kw in _q_lower for kw in _capability_kw) and _no_data_intent:
+            if any(kw in _q_lower for kw in _CAPABILITY_KW) and _no_data_intent:
                 logger.info(
                     "[intent-override/cache] Forcing 'capability' (was '%s') "
                     "— capability/off-ontology keyword detected",
@@ -785,55 +798,7 @@ Return ONLY the JSON object.
                 # These currently fall through SPARQL→RAG and hallucinate.
                 # Route to capability agent when strong capability keywords detected and
                 # the current intent provides no grounded data path.
-                _CAPABILITY_KW = (
-                    "fire safety", "fire alarm", "evacuation", "assembly point",
-                    "sprinkler", "fire exit", "fire warden", "fire drill",
-                    "power outage", "backup power", "generator", "ups",
-                    "access control", "swipe card", "security camera", "cctv",
-                    "after hours", "out of hours", "building access", "who can enter",
-                    "card access", "key fob", "can i access", "enter the building",
-                    "access the building",
-                    "smart device", "can i control", "can the building",
-                    "can we control", "smart building",
-                    "wifi", "eduroam", "it support", "it helpdesk",
-                    "wheelchair", "accessible", "disability", "lift access",
-                    "cafe", "canteen", "vending machine", "kitchen facilities",
-                    "shower", "bike storage", "amenities", "facilities",
-                    "complaint", "how do i report", "who do i contact",
-                    "how to book", "room booking", "opening hours", "is it open",
-                    "sustainability", "breeam", "recycling", "green building",
-                    "emergency contact", "first aid", "defibrillator", "aed",
-                    "safety feature", "building feature", "building capability",
-                    "what does this building", "what can this building",
-                    "what sensors are", "what is measured", "sensor coverage",
-                    "what is monitored", "what data is collected",
-                    "occupancy limit", "room capacity", "fire capacity",
-                    "policy", "building policy", "building rule",
-                    "evacuation plan", "emergency procedure",
-                    # Transport / parking (new)
-                    "parking", "car park", "how to get here", "directions",
-                    "public transport", "bus stop", "train station", "cycle",
-                    "bike storage", "ev charging", "electric vehicle",
-                    # Printing (new)
-                    "printer", "printing", "papercut", "scan", "photocopier",
-                    "how to print", "print credit",
-                    # Wellbeing (new)
-                    "prayer room", "reflection room", "nursing room", "quiet room",
-                    "wellbeing", "mental health", "gender neutral",
-                    # Data privacy (new)
-                    "gdpr", "data privacy", "personal data", "who sees my data",
-                    "data protection", "smart building privacy", "sensor privacy",
-                    "location tracking", "right to know",
-                    # Building management contacts (new)
-                    "building manager", "who manages", "facilities manager",
-                    "estate manager", "who is responsible", "building contact",
-                    # Visitors (new)
-                    "visitor", "guest", "external visitor", "sign in", "visitor badge",
-                    "can guests come", "can i bring someone", "invite a visitor",
-                    # Thermal comfort complaints (new)
-                    "too hot", "too cold", "overheating", "freezing", "stuffy",
-                    "uncomfortable temperature", "thermal comfort", "temperature complaint",
-                )
+                # Uses the module-level _CAPABILITY_KW frozenset — do NOT redefine inline.
                 _has_capability_kw = any(kw in _q_lower for kw in _CAPABILITY_KW)
                 # Also override sparql/discovery when capability keywords are present —
                 # these are off-ontology queries that SPARQL cannot answer from sensor data.
