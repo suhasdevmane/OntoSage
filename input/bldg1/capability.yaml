@@ -283,3 +283,116 @@ capabilities:
       in some areas but not a full head-count system. For fire safety purposes,
       the building fire roll-call system is managed by floor wardens.
     source: health_and_safety
+
+  - id: transport_parking
+    category: AMENITIES
+    keywords: [parking, car park, transport, bus, train, cycle, cycling, arrive, get here,
+               directions, how to get, travel, commute, public transport, tram, uber,
+               taxi, disabled parking, blue badge, motorcycle, scooter, ev charging,
+               electric vehicle, train station, cardiff central]
+    content: >
+      Getting to Abacws (Senghennydd Road, Cardiff CF24 4AG): (1) By train: Cardiff Central
+      station is ~15 min walk or 5 min taxi; (2) By bus: Routes 8, 9, 26, 27 stop on
+      Cathays Terrace (2 min walk). Frequent service from Cardiff city centre; (3) By bike:
+      secure bike storage in the basement (swipe card access); on-street cycle parking on
+      Senghennydd Road; (4) By car: limited on-street pay-and-display parking nearby;
+      Cardiff University has a car park on Corbett Road (permit required for staff).
+      Electric vehicle charging points are available in the car park area.
+      Disabled parking bays (blue badge) are on Senghennydd Road directly outside the entrance.
+    source: estates_facilities
+
+  - id: printing_scanning
+    category: IT_INFRASTRUCTURE
+    keywords: [print, printer, printing, scan, scanning, copy, photocopier, mfd, multi-function,
+               papercut, print credit, how to print, printing cost, a3, colour print,
+               where is the printer, print room]
+    content: >
+      Printing and scanning is available via Multi-Function Devices (MFDs) on every floor.
+      The system uses Cardiff University's PaperCut print management. To print: (1) Send
+      a document to the 'Secure Print' queue from any university computer; (2) Swipe your
+      university card at any MFD to release your print job. Colour and A3 printing
+      available on all floors. Scanning is free — scan to email or USB. Print credit
+      can be topped up online at print.cardiff.ac.uk. For issues contact the IT Service
+      Desk (itservicedesk.cardiff.ac.uk, 029 2251 1111).
+    source: it_services
+
+  - id: wellbeing_facilities
+    category: AMENITIES
+    keywords: [prayer room, quiet room, reflection, meditation, wellbeing, nursing, baby,
+               mother, prayer, faith, religious, gender neutral, changing room,
+               mental health, welfare, chaplain, counselling]
+    content: >
+      Wellbeing facilities in Abacws: (1) A multi-faith prayer and reflection room is
+      located on Floor 1 (room 1.04) — available to all; (2) Gender-neutral toilet
+      facilities are available on every floor; (3) A nursing/feeding room for parents
+      is on Floor 2; (4) Welfare and mental health support is available through Cardiff
+      University Student Services (studentconnect.cardiff.ac.uk) and the Staff Wellbeing
+      team. The building has a calm, quiet breakout area on Floor 4 for focused work
+      or informal welfare conversations.
+    source: estates_facilities
+
+  - id: data_privacy_gdpr
+    category: POLICY
+    keywords: [gdpr, data privacy, personal data, who sees my data, data protection,
+               smart building privacy, sensor privacy, location tracking, data collected,
+               consent, privacy policy, information governance, data subject, right to know,
+               occupant data, monitoring, surveillance]
+    content: >
+      The Abacws smart building collects environmental sensor data (temperature, CO2,
+      humidity, occupancy presence via PIR) for building management purposes. This data
+      is aggregated and anonymised — it does not identify individuals or track personal
+      movements. CCTV footage is handled separately under Cardiff University's CCTV
+      policy with 30-day retention. The building's data processing is governed by Cardiff
+      University's Data Protection Policy (GDPR compliant). For Subject Access Requests
+      or data privacy queries, contact the University Data Protection Officer at
+      dataprotection@cardiff.ac.uk. Full privacy notices are published on the Cardiff
+      University website.
+    source: data_protection_office
+
+  - id: building_management_contact
+    category: POLICY
+    keywords: [building manager, who manages, facilities manager, estate manager, contact,
+               who is responsible, building management, facilities management, estates,
+               property management, building contact, key holder, management team]
+    content: >
+      Abacws Building is managed by Cardiff University Estates and Facilities Management.
+      Key contacts: (1) Facilities helpdesk (general building issues, cleaning, maintenance):
+      estates@cardiff.ac.uk or 029 2087 6026; (2) IT Service Desk: itservicedesk.cardiff.ac.uk
+      or 029 2251 1111; (3) Security Services (24/7): security@cardiff.ac.uk or 029 2087 4444;
+      (4) Room bookings: Staff Intranet room booking system; (5) Health & Safety:
+      safety@cardiff.ac.uk. The School of Computer Science and Informatics administration
+      is on Floor 2. For research lab access, contact your academic supervisor or
+      the school administrator.
+    source: estates_management
+
+  - id: visitor_guest_policy
+    category: POLICY
+    keywords: [visitor, guest, external, invite, sign in, reception, visitor badge,
+               visitor pass, external collaborator, external visitor, host visitor,
+               can guests come, can i bring, can someone visit, meeting a visitor]
+    content: >
+      Visitor policy for Abacws: (1) All external visitors must sign in at the main
+      reception (Ground Floor) and will be issued a visitor badge; (2) Visitors must
+      be escorted by a Cardiff University member of staff or student at all times;
+      (3) Visitor wifi: use 'CU_Guest' network (self-registration at the portal);
+      (4) For large groups or events, notify Building Management in advance;
+      (5) Contractors and suppliers must check in with Security and complete a
+      building induction. Visitors are not permitted in server rooms, labs, or other
+      restricted areas unless specifically authorised by the area owner.
+    source: security_management
+
+  - id: temperature_comfort_complaints
+    category: HVAC
+    keywords: [too hot, too cold, uncomfortable, freezing, stuffy, overheating, draft,
+               draughty, temperature complaint, not comfortable, cold room, hot room,
+               thermal comfort, feels warm, feels cold, temperature adjustment]
+    content: >
+      If you find the temperature uncomfortable in Abacws: (1) The building HVAC
+      is zone-controlled — occupants cannot directly adjust thermostats; (2) Report
+      comfort complaints to the Facilities helpdesk (estates@cardiff.ac.uk or
+      extension 76026) describing the specific zone or room number, floor, and
+      whether it is too hot or too cold; (3) Facility management can investigate
+      and adjust zone setpoints; (4) Sensor data is available via OntoSage to check
+      whether the measured temperature is within the ASHRAE comfort range (20–24°C).
+      Persistent issues should be escalated to the Building Manager.
+    source: building_management_system

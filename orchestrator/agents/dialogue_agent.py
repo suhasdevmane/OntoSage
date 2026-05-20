@@ -434,6 +434,22 @@ class DialogueAgent:
                 "occupancy limit", "room capacity", "fire capacity",
                 "policy", "building policy", "building rule",
                 "evacuation plan", "emergency procedure",
+                "parking", "car park", "how to get here", "directions",
+                "public transport", "bus stop", "train station", "cycle",
+                "ev charging", "electric vehicle",
+                "printer", "printing", "papercut", "scan", "photocopier",
+                "how to print", "print credit",
+                "prayer room", "reflection room", "nursing room", "quiet room",
+                "wellbeing", "mental health", "gender neutral",
+                "gdpr", "data privacy", "personal data", "who sees my data",
+                "data protection", "smart building privacy", "sensor privacy",
+                "location tracking", "right to know",
+                "building manager", "who manages", "facilities manager",
+                "estate manager", "who is responsible", "building contact",
+                "visitor", "guest", "external visitor", "sign in", "visitor badge",
+                "can guests come", "invite a visitor",
+                "too hot", "too cold", "overheating", "freezing", "stuffy",
+                "uncomfortable temperature", "thermal comfort", "temperature complaint",
             )
             _no_data_intent = cached_result.get("intent") in (
                 "general", "clarification", "unknown", "general_knowledge",
@@ -794,6 +810,29 @@ Return ONLY the JSON object.
                     "occupancy limit", "room capacity", "fire capacity",
                     "policy", "building policy", "building rule",
                     "evacuation plan", "emergency procedure",
+                    # Transport / parking (new)
+                    "parking", "car park", "how to get here", "directions",
+                    "public transport", "bus stop", "train station", "cycle",
+                    "bike storage", "ev charging", "electric vehicle",
+                    # Printing (new)
+                    "printer", "printing", "papercut", "scan", "photocopier",
+                    "how to print", "print credit",
+                    # Wellbeing (new)
+                    "prayer room", "reflection room", "nursing room", "quiet room",
+                    "wellbeing", "mental health", "gender neutral",
+                    # Data privacy (new)
+                    "gdpr", "data privacy", "personal data", "who sees my data",
+                    "data protection", "smart building privacy", "sensor privacy",
+                    "location tracking", "right to know",
+                    # Building management contacts (new)
+                    "building manager", "who manages", "facilities manager",
+                    "estate manager", "who is responsible", "building contact",
+                    # Visitors (new)
+                    "visitor", "guest", "external visitor", "sign in", "visitor badge",
+                    "can guests come", "can i bring someone", "invite a visitor",
+                    # Thermal comfort complaints (new)
+                    "too hot", "too cold", "overheating", "freezing", "stuffy",
+                    "uncomfortable temperature", "thermal comfort", "temperature complaint",
                 )
                 _has_capability_kw = any(kw in _q_lower for kw in _CAPABILITY_KW)
                 # Also override sparql/discovery when capability keywords are present —

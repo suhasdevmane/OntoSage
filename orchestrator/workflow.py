@@ -1763,8 +1763,22 @@ Instructions:
         intent = state.current_intent
         user_query = state.messages[-1].content if state.messages else ""
 
-        # ── Floor plan override: catch even if LLM picks "sparql" or "discovery" ──
-        if intent == "floor_plan" or floor_plan_service.is_floor_plan_query(user_query):
+        # ── Floor plan override: only when LLM didn't assign a data intent ──
+        # Data intents (sensor_data, analytics, anomaly, etc.) mention "floor N" as a
+        # location qualifier — the heuristic must NOT steal those queries from their
+        # proper pipeline.  Only override when the LLM chose a non-data intent.
+        # Any intent that implies a data-fetching pipeline — "floor N" in these
+        # queries is a location qualifier, not a request to show the floor plan.
+        # "sparql" and "sql" appear when the LLM outputs the pipeline stage name
+        # directly instead of the semantic intent name.
+        _data_intents = {
+            "sensor_data", "analytics", "anomaly", "comparison", "forecast",
+            "report", "export", "recommend", "planner", "spatial_query", "maintenance",
+            "sparql", "sql", "discovery", "alert", "control",
+        }
+        if intent == "floor_plan" or (
+            floor_plan_service.is_floor_plan_query(user_query) and intent not in _data_intents
+        ):
             logger.info(f"[route] floor_plan query detected (intent={intent})")
             state.current_intent = "floor_plan"
             return "floor_plan"
