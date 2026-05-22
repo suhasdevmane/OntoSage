@@ -43,7 +43,8 @@ orchestrator/
 ├── requirements.txt        # Python dependencies
 │
 ├── agents/
-│   ├── dialogue_agent.py   # Intent classification (14 types), entity extraction, time range parsing
+│   ├── dialogue_agent.py   # Intent classification (16 types), entity extraction, time range parsing, SemanticRouter probe
+│   ├── capability_agent.py # NEW v3.1 — answers off-ontology questions from per-building KB
 │   ├── sparql_agent.py     # SPARQL generation + execution + RAG fallback + UUID extraction
 │   ├── sql_agent.py        # Time-series data fetching via storage adapters
 │   ├── analytics_agent.py  # LLM-generated Python code; calls code-executor; interprets results
@@ -53,17 +54,25 @@ orchestrator/
 │   ├── planner_agent.py    # Multi-step task orchestration (planner intent)
 │   ├── data_export_agent.py # Data export to CSV/JSON/HTML
 │   ├── document_agent.py   # Building document generation
+│   ├── floor_plan_agent.py # Floor plan rendering + manifest lookup
+│   ├── spatial_agent.py    # Spatial geometry queries from DWG manifests (no LLM)
 │   └── semantic_ontology_agent.py # Semantic ontology search and grounding
 │
 ├── services/
 │   ├── adapters/           # Database storage adapters (see below)
 │   ├── analytics_engine.py # Deterministic analytics without LLM (mean, std, trend)
+│   ├── capability_indexer.py # NEW v3.1 — startup pipeline: capability.yaml → Qdrant (SHA-256 idempotent)
 │   ├── circuit_breaker.py  # Circuit breaker pattern for external service calls
 │   ├── context_manager.py  # Conversation context windowing and summarisation
 │   ├── database_adapter.py # Abstract base class (ABC) for all storage adapters
 │   ├── disambiguation_service.py # Resolve ambiguous entity mentions (multiple zones match)
 │   ├── document_builder.py # Structured document assembly for report/export agents
+│   ├── embedding_service.py # NEW v3.1 — provider-agnostic embeddings (OpenAI 1536-d / local 384-d) with Redis cache
+│   ├── floor_plan_pipeline.py # PDF + DWG ingestion → manifest → Qdrant
+│   ├── floor_plan_registry.py # Merge orchestrator for PDF + DWG floor plan data
+│   ├── floor_plan_watcher.py  # File-watcher (watchfiles) for live ingest on file drop
 │   ├── hybrid_retrieval.py # Hybrid RAG retrieval (GraphDB similarity + SPARQL context)
+│   ├── i18n_service.py     # Language detection + translation (30+ languages)
 │   ├── multi_building_manager.py # Multi-building context switching
 │   ├── ontology_detector.py # Detect ontology schema from TTL (Brick/REC/S223)
 │   ├── ontology_introspector.py # Live GraphDB introspection (class counts, available sensors)
@@ -73,6 +82,7 @@ orchestrator/
 │   ├── reasoning_engine.py # Chain-of-thought reasoning for complex multi-step queries
 │   ├── response_cache.py   # Redis-backed response caching (SPARQL + SQL results)
 │   ├── self_correction_engine.py # Auto-repair SPARQL/code errors and retry
+│   ├── semantic_router.py  # NEW v3.1 — query-time classifier (three-band threshold logic)
 │   ├── smart_cache.py      # Intelligent cache key generation (semantic deduplication)
 │   ├── sparql_validator.py # SPARQL syntax validation before execution
 │   └── standards_engine.py # ASHRAE/comfort/air quality standards evaluation
@@ -96,7 +106,7 @@ The heart of OntoSage. This file contains the entire LangGraph state machine:
 | 137–190 | `add_edge()` calls — pipeline structure |
 | 191–220 | `_safe_node()` — the exception-catching wrapper |
 | 843–1079 | `_response_node()` — full markdown response assembly |
-| 1079–1130 | `_route_from_dialogue()` — all 14 intent branches |
+| 1079–1130 | `_route_from_dialogue()` — all 16 intent branches (incl. `capability` v3.1) |
 
 #### `orchestrator/main.py`
 
@@ -277,7 +287,8 @@ docs/
 ├── BUILDING_ONBOARDING.md  # Connecting a new building ontology and database
 ├── CONFIGURATION.md        # Complete environment variable reference
 ├── GRAPHDB_SETUP.md        # Similarity index creation guide
-├── USER_GUIDE.md           # End-user guide with examples for all 14 intent types
+├── USER_GUIDE.md           # End-user guide with examples for all 16 intent types
+├── CAPABILITY_ROUTING.md   # NEW v3.1 — semantic vector routing for off-ontology queries
 ├── DEVELOPER_GUIDE.md      # Dev setup, adding agents, testing, CI
 ├── SECURITY.md             # Auth, RBAC, sandbox, secrets management
 ├── RUNBOOK.md              # Operations: start/stop, backups, troubleshooting

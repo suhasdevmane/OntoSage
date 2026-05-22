@@ -30,6 +30,7 @@ graph LR
         FW["FastAPI + Auth"]
         LG["LangGraph State Machine"]
         DA["Dialogue Agent"]
+        CAPA["Capability Agent"]
         SPA["SPARQL Agent"]
         SQLA["SQL Agent"]
         ANA["Analytics Agent"]
@@ -38,11 +39,20 @@ graph LR
         ANO["Anomaly Agent"]
         PLA["Planner Agent"]
         EXP["Export Agent"]
+        FPA["Floor Plan Agent"]
+        SQA["Spatial Agent"]
+    end
+
+    subgraph "Capability Routing — v3.1"
+        SR["SemanticRouter"]
+        CI["CapabilityIndexer"]
+        ES["EmbeddingService"]
     end
 
     subgraph "Knowledge"
         RAGS["RAG Service :8001"]
         GDB["GraphDB :7200"]
+        QD["Qdrant :6333"]
     end
 
     subgraph "Storage"
@@ -59,15 +69,26 @@ graph LR
     subgraph "LLM"
         OAI["OpenAI API"]
         OLL["Ollama :11434"]
+        ST["sentence-transformers<br/>(in-process)"]
     end
 
     OW --> FW
     FW --> LG
     LG --> DA
+    DA --> SR
+    SR --> ES
+    SR --> QD
+    SR -. score ≥ override_min .-> CAPA
+    CI --> ES
+    CI --> QD
+    ES --> OAI
+    ES --> ST
     DA --> SPA
     DA --> REP
     DA --> ANO
     DA --> PLA
+    DA --> FPA
+    DA --> SQA
     SPA --> SQLA
     SQLA --> ANA
     ANA --> VISA
@@ -79,11 +100,14 @@ graph LR
     ANA --> CE
     VISA --> CE
     LG --> Redis
+    ES --> Redis
     FW --> PG
     FW --> Mongo
     LG --> OAI
     LG --> OLL
 ```
+
+> **Capability routing pipeline (v3.1)** sits in front of the LLM intent classifier. At startup, `CapabilityIndexer` embeds the per-building `capability.yaml` into Qdrant. On every query, `SemanticRouter` probes that collection — if `score ≥ override_min`, the dialogue node skips the LLM intent call entirely and routes straight to `CapabilityAgent`. See [Capability Routing](CAPABILITY_ROUTING.md) for the full pipeline.
 
 ---
 
@@ -197,9 +221,9 @@ workflow.add_node("sparql", self._safe_node(self._sparql_node, "sparql"))
 
 ---
 
-## The 14 Intent Types
+## The 16 Intent Types
 
-The Dialogue Agent classifies every query into one of 14 intent types. The routing decision is determined entirely by the classified intent.
+The Dialogue Agent classifies every query into one of 16 intent types. The routing decision is determined entirely by the classified intent. For the `capability` intent the classifier may be bypassed entirely by the SemanticRouter fast-path (see [Capability Routing](CAPABILITY_ROUTING.md)).
 
 | Intent | Route | Description |
 |---|---|---|
@@ -213,6 +237,9 @@ The Dialogue Agent classifies every query into one of 14 intent types. The routi
 | `recommend` | sparql → sql → response | HVAC, energy, and comfort recommendations |
 | `planner` | planner → response | Multi-step orchestrated tasks |
 | `forecast` | sparql → sql → analytics → response | Predictions and forward projections |
+| `floor_plan` | floor_plan → response | Show floor plan, locate a room, visual navigation |
+| `spatial_query` | spatial_query → response | Area, adjacency, room counts, block/MEP queries |
+| `capability` ⚡ | capability → response | **NEW (v3.1)** Off-ontology Q&A (fire safety, amenities, policies). Sub-50 ms when router score ≥ override_min |
 | `control` | response | Not yet supported — informs the user |
 | `general` | response | Greetings, general knowledge questions |
 | `clarification` | response | Query too vague — asks follow-up question |
@@ -228,12 +255,30 @@ The Dialogue Agent classifies every query into one of 14 intent types. The routi
 
 The first node in every pipeline execution. Its responsibilities:
 
-1. **Context retrieval** — Calls the RAG Service to fetch relevant ontology context (entity labels, types, triples) for the user's query
-2. **Intent classification** — Sends the query + context to the LLM, receives a structured JSON response containing `intent`, `entities`, `time_range`, and other metadata
-3. **Redis caching** — Caches intent classification results by query hash (1-hour TTL) to avoid redundant LLM calls
-4. **Response formatting** — For `general` and `clarification` intents, composes and returns the final response directly
+1. **Capability semantic probe (v3.1)** — Calls `SemanticRouter.classify()` BEFORE the LLM intent call. If `score ≥ override_min` (e.g. 0.60 for local MiniLM), the intent is set to `capability`, KB matches are stashed on `state.intermediate_results["capability_matches"]`, and the LLM call is **skipped entirely** (~600 ms saved). See [Capability Routing](CAPABILITY_ROUTING.md).
+2. **Context retrieval** — Calls the RAG Service to fetch relevant ontology context (entity labels, types, triples) for the user's query
+3. **Intent classification** — Sends the query + context to the LLM, receives a structured JSON response containing `intent`, `entities`, `time_range`, and other metadata
+4. **Soft-override pass** — If the LLM picked a non-data intent but the router score is in `[threshold, override_min)`, route corrects to `capability` (medium-confidence band)
+5. **Deterministic overrides** — Protective keyword rules for `compare`, `correlation`, `floor_plan` patterns the LLM occasionally misclassifies
+6. **Redis caching** — Caches intent classification results by query hash (1-hour TTL) to avoid redundant LLM calls
+7. **Response formatting** — For `general` and `clarification` intents, composes and returns the final response directly
 
 The intent classification prompt includes persona-aware system messages that adapt the response style based on the inferred user role.
+
+### Capability Agent (v3.1)
+
+**File:** `orchestrator/agents/capability_agent.py`
+
+Answers off-ontology questions — fire safety procedures, amenities, IT, accessibility, policies — that SPARQL and SQL cannot answer. Corpus analysis of 5,916 survey questions shows this stratum covers ~50% of real building queries (CAPABILITY 25.6%, OTHER 24.0%).
+
+Pipeline:
+
+1. Reads `state.intermediate_results["capability_matches"]` — pre-fetched by SemanticRouter inside the dialogue node (no second KB search)
+2. Formats matched `CapabilityEntry` objects into a grounded response, citing source (e.g. `fire_safety_management_plan`)
+3. Records provenance: `capability_kb` (hit), `kb_no_match` (router fired but no entries above threshold), or `no_kb` (building has no `capability.yaml`)
+4. On a miss, returns an **explicit boundary message** with facility-management contact — never hallucinated answers
+
+For the full pipeline (indexer, router, threshold bands, calibration, multi-intent extension), see [Capability Routing](CAPABILITY_ROUTING.md).
 
 ### SPARQL Agent
 

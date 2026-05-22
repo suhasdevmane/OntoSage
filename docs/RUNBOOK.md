@@ -497,6 +497,79 @@ The circuit resets automatically after 60 seconds when the service recovers. For
 docker compose restart orchestrator
 ```
 
+### Capability Semantic Routing Not Firing *(v3.1)*
+
+**Symptom:** Off-ontology queries ("What are the fire procedures?") fall through to SPARQL or get a generic LLM response instead of a KB answer.
+
+**Diagnostic steps:**
+
+```bash
+# 1. Verify the per-building Qdrant collection exists
+curl -s http://localhost:6333/collections | jq '.result.collections[].name' | grep capability_
+
+# Expected: capability_bldg1 (one per onboarded building)
+# Missing: indexer didn't run — check next step
+
+# 2. Check indexer status at startup
+docker logs ontosage-orchestrator 2>&1 | grep capability_indexer
+
+# Healthy:  status=indexed  entries=N  points=M  sha=<8-hex>
+# Skipped:  status=skipped  reason=sha_match     (idempotent, good)
+# Degraded: status=degraded reason=<error>       (see below)
+# Missing:  no log line                          (capability.yaml absent for that building)
+
+# 3. Inspect a stored point's yaml_sha (idempotency check)
+curl -s 'http://localhost:6333/collections/capability_bldg1/points/scroll?limit=1' \
+  | jq '.result.points[0].payload.yaml_sha'
+
+# 4. Inspect router behaviour on a specific query
+docker logs ontosage-orchestrator 2>&1 | grep "\[semantic-route\]"
+
+# Look for lines like:
+# [semantic-route] score=0.72 source=qdrant matches=3 → HARD override (capability)
+# [semantic-route] score=0.58 source=qdrant matches=2 → SOFT override band
+# [semantic-route] score=0.32 source=qdrant matches=0 → below threshold
+```
+
+**Common causes:**
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `status=degraded reason=qdrant_unreachable` | Qdrant container down | `docker compose restart qdrant` |
+| `status=degraded reason=embedding_api_down` | OpenAI API key invalid or rate-limited | check `OPENAI_API_KEY`; or switch to `EMBEDDING_PROVIDER=local` |
+| `status=degraded reason=yaml_parse_error` | Malformed `capability.yaml` | validate with `python -c "import yaml; yaml.safe_load(open('input/bldg1/capability.yaml'))"` |
+| `[semantic-route] score=<low>` for clear KB queries | Thresholds too high for embedding model | re-tune `building.yaml::capability_routing.threshold` and `override_min` (see [Capability Routing § Threshold calibration](CAPABILITY_ROUTING.md#threshold-calibration)) |
+
+### Capability Returns Wrong KB Entry
+
+Lower the threshold temporarily to see all candidates ranked:
+
+```yaml
+# input/<bldg>/building.yaml
+capability_routing:
+  threshold: 0.30      # see everything in logs
+  override_min: 0.50
+```
+
+Restart, send the query, check logs for `[semantic-route]` lines showing per-entry scores. The router groups raw Qdrant points by `entry_id` with max-pool scoring.
+
+### Provider Switch Didn't Trigger Collection Rebuild
+
+When `EMBEDDING_PROVIDER` changes, `CapabilityIndexer` should detect the dimension mismatch and rebuild. If it doesn't:
+
+```bash
+# 1. Force delete the collection
+curl -X DELETE http://localhost:6333/collections/capability_bldg1
+
+# 2. Restart orchestrator — indexer will rebuild from capability.yaml
+docker compose restart orchestrator
+
+# 3. Verify new dimensions
+curl -s http://localhost:6333/collections/capability_bldg1 \
+  | jq '.result.config.params.vectors.size'
+# Expected: 1536 (OpenAI) or 384 (local MiniLM)
+```
+
 ---
 
 ## Disaster Recovery
