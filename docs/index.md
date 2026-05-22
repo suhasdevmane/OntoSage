@@ -25,14 +25,18 @@ OntoSage:
 
 | Capability | Description |
 |---|---|
-| **14 Intent Types** | Routes sensor queries, analytics, anomaly detection, reports, exports, recommendations, forecasts, discovery, and more |
+| **16 Intent Types** | Routes sensor queries, analytics, anomaly detection, reports, exports, recommendations, forecasts, discovery, comparison, floor plan, spatial geometry, **capability** — and more |
+| **Smart Capability Routing (v3.1)** | Per-building YAML knowledge base embedded into Qdrant at startup; query-time vector search bypasses the LLM for off-ontology questions (fire safety, amenities, policies, IT) — **sub-50 ms** confident path |
+| **Floor Plan Intelligence** | Automatic PDF + AutoCAD DWG ingestion — room polygons, areas, adjacency, and sensor locations extracted at startup and searchable in natural language |
 | **Zero-Knowledge Interaction** | Users need no knowledge of sensor IDs, ontology classes, or database schemas |
 | **Multi-Building Support** | Per-building storage adapters support MySQL, PostgreSQL, TimescaleDB, InfluxDB, MongoDB, SQLite, Cassandra, and Redis TimeSeries |
-| **Semantic Grounding** | GraphDB similarity indexing maps natural language to RDF entities |
+| **Semantic Grounding** | GraphDB similarity indexing maps natural language to RDF entities; Qdrant per-building capability collections for off-ontology lookups |
+| **Embedding Provider Switch** | OpenAI `text-embedding-3-small` (1536-d) ↔ local `sentence-transformers/all-MiniLM-L6-v2` (384-d) — toggle via single env var; collection auto-rebuilds |
 | **Safe Analytics** | Python code generation executed in a resource-limited Docker sandbox |
 | **Role-Based Access Control** | 6 roles, 20 permissions enforced at every API endpoint |
 | **LLM Flexibility** | Switch between local Ollama models and OpenAI with a single environment variable |
 | **Conversation Memory** | Redis-backed conversation state with 1-hour TTL; full history in PostgreSQL |
+| **Honest Boundaries** | Capability misses return an explicit "no record" with facility-management contact — never hallucinated answers |
 
 ---
 
@@ -45,12 +49,25 @@ graph TD
 
     subgraph "Agent Pipeline"
         Orch --> DA["Dialogue Agent<br/>Intent · Entities · Time range"]
+        DA -. "score ≥ override_min<br/>(~50 ms fast-path)" .-> CA["Capability Agent<br/>KB lookup · no LLM"]
         DA -->|routes| SA["SPARQL Agent<br/>Ontology queries"]
+        DA -->|routes| FPA["Floor Plan Agent<br/>Manifest + PNG"]
+        DA -->|routes| SQA["Spatial Agent<br/>Area · Adjacency"]
         DA -->|routes| RA["Report Agent"]
         DA -->|routes| AA["Anomaly Agent"]
         SA --> SQ["SQL Agent<br/>Time-series fetch"]
         SQ --> AnA["Analytics Agent<br/>Python sandbox"]
         AnA --> VA["Visualization Agent<br/>Charts"]
+    end
+
+    subgraph "Capability Routing Layer (v3.1)"
+        DA -->|every query| SR["SemanticRouter<br/>three-band threshold"]
+        SR -->|matches| CA
+        CapYAML["capability.yaml<br/>/app/input/&lt;bldg&gt;/"] -.->|startup SHA-256| CI["CapabilityIndexer"]
+        ES["EmbeddingService<br/>OpenAI 1536-d OR<br/>local MiniLM 384-d"] -.-> CI
+        ES -.-> SR
+        CI -->|upsert| QDC[("Qdrant<br/>capability_&lt;bldg&gt;")]
+        SR --> QDC
     end
 
     subgraph "Knowledge Layer"
@@ -62,7 +79,7 @@ graph TD
     subgraph "Data Layer"
         SQ -->|per-building adapter| MySQL[("MySQL :3306<br/>Sensor time-series")]
         SQ -->|per-building adapter| PG[("PostgreSQL :5433<br/>User accounts · RBAC")]
-        Orch -->|state cache| Redis[("Redis :6379")]
+        Orch -->|state cache + embed cache| Redis[("Redis :6379")]
         Orch -->|chat history| Mongo[("MongoDB :27017")]
         AnA -->|execute code| CE["Code Executor :8002<br/>(Docker sandbox)"]
     end
@@ -70,6 +87,8 @@ graph TD
     subgraph "LLM Layer"
         Orch -. "MODEL_PROVIDER=openai" .-> OpenAI["OpenAI API"]
         Orch -. "MODEL_PROVIDER=local" .-> Ollama["Ollama :11434<br/>deepseek-r1:32b"]
+        ES -. "EMBEDDING_PROVIDER" .-> OpenAI
+        ES -. "EMBEDDING_PROVIDER=local" .-> ST["sentence-transformers<br/>in-process"]
     end
 ```
 
@@ -81,7 +100,7 @@ graph TD
 | Guide | Purpose |
 |---|---|
 | [Deployment](DEPLOYMENT.md) | Deploy the full stack with Docker Compose in minutes |
-| [Building Onboarding](BUILDING_ONBOARDING.md) | Connect your building's ontology and sensor database |
+| [Building Onboarding](BUILDING_ONBOARDING.md) | Connect your building's ontology, sensor database, and capability KB |
 | [Configuration](CONFIGURATION.md) | All environment variables and tuning parameters |
 | [GraphDB Setup](GRAPHDB_SETUP.md) | Create the semantic similarity index for your ontology |
 
@@ -91,6 +110,7 @@ graph TD
 | [Architecture](ARCHITECTURE.md) | Component design, data flow, and design decisions |
 | [Workflow Deep Dive](WORKFLOW.md) | Step-by-step trace of every request through the pipeline |
 | [Services](SERVICES.md) | Every service: ports, health checks, dependencies, duties |
+| [**Capability Routing**](CAPABILITY_ROUTING.md) | **NEW** Semantic vector routing for off-ontology queries — schema, calibration, performance |
 | [Project Structure](PROJECT_STRUCTURE.md) | Repository layout, file roles, coding conventions |
 
 ### Using and Operating
@@ -137,11 +157,14 @@ OntoSage is designed for every stakeholder in a smart building, not just IT team
 |---|---|
 | **Facility Manager** | "Which VAV boxes are outside their airflow setpoints?" |
 | **Sustainability Team** | "Show energy consumption trend for Level 3 over the last month" |
-| **Occupant / Tenant** | "Why is the conference room so cold today?" |
-| **Health & Safety Officer** | "Have any CO₂ sensors exceeded 1000 ppm this week?" |
+| **Occupant / Tenant** | "Why is the conference room so cold today?" · "Where can I park my bike?" · "Is there a prayer room?" |
+| **Health & Safety Officer** | "Have any CO₂ sensors exceeded 1000 ppm this week?" · "What are the fire evacuation procedures?" |
+| **Visitor** | "When does reception close?" · "What happens during a power outage?" |
 | **Building Owner** | "What is the average temperature deviation across all zones?" |
 | **IT / Data Scientist** | "Export all temperature sensor readings from yesterday as CSV" |
 | **Compliance Officer** | "List all sensors in Zone B with their calibration metadata" |
+
+The italicised questions are answered from the per-building **Capability KB** (Qdrant-backed semantic search) — sub-50 ms response with explicit provenance. The bold questions are answered from the **ontology + time-series** pipeline.
 
 ---
 

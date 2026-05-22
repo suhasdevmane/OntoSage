@@ -176,6 +176,37 @@ Ask about threshold breaches or set up threshold checks.
 
 **What you get:** A filtered list of events where readings crossed defined thresholds, with times and values.
 
+### Floor Plans and Spatial Queries
+
+Ask to see a floor or query room geometry.
+
+> "Show me floor 3"
+> "Where is room 3.01?"
+> "How many meeting rooms are on floor 4?"
+> "Which rooms are adjacent to the server room?"
+> "What is the total area of the building?"
+
+**What you get:** A floor plan image (PDF render or DWG-rendered SVG) plus structured room data — area in m², adjacency lists, sensor block counts.
+
+### Capability Questions (v3.1) — Off-Ontology Q&A
+
+Ask about building features, policies, amenities, fire safety, IT — anything that isn't a sensor reading or analytics question. Answered from the per-building **Capability KB** (Qdrant-backed semantic search) in **under 50 ms** when the system is confident.
+
+> "What are the fire evacuation procedures?"
+> "Where can I park my bike?"
+> "What happens during a power outage?"
+> "Is there a prayer room?"
+> "When does reception close?"
+> "How does access control work?"
+> "Is there a quiet room?"
+> "Can I bring my dog into the building?"
+
+**What you get:** A structured answer drawn directly from the building's knowledge profile, with citation of the source document (e.g. `fire_safety_management_plan`). If the KB has no record, you'll get an **explicit boundary message** — never a hallucinated answer:
+
+> "I don't have that specific information on record for **Abacws Building**. For building-specific queries please contact facility management at estates@cardiff.ac.uk or call the estates helpdesk (029 2087 6026)."
+
+**Why this matters:** corpus analysis of 5,916 survey questions shows that ~50% of real building queries are off-ontology — they can't be answered from sensor data or SPARQL alone. The capability KB closes that gap honestly. See [Capability Routing](CAPABILITY_ROUTING.md) for the technical pipeline.
+
 ---
 
 ## Interaction Tips

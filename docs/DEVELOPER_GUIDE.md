@@ -290,6 +290,96 @@ INTENT_TYPES = [
 
 ---
 
+## Working with the Capability Routing Pipeline *(v3.1)*
+
+The capability semantic routing pipeline ships with four collaborating components. When extending or debugging them, follow these guidelines.
+
+### Architecture quick reference
+
+| Component | File | Role |
+|---|---|---|
+| `EmbeddingService` | `orchestrator/services/embedding_service.py` | Provider switching · Redis embed cache |
+| `CapabilityIndexer` | `orchestrator/services/capability_indexer.py` | Startup pipeline · SHA-256 idempotency |
+| `SemanticRouter` | `orchestrator/services/semantic_router.py` | Query-time classifier · three-band threshold |
+| `CapabilityAgent` | `orchestrator/agents/capability_agent.py` | Response formatting · provenance |
+
+### Adding a new building's capability KB (zero code changes)
+
+```bash
+# 1. Author input/<new_bldg>/capability.yaml (see CAPABILITY_ROUTING.md for schema)
+# 2. (Optional) tune in input/<new_bldg>/building.yaml::capability_routing
+# 3. Restart orchestrator
+docker compose restart orchestrator
+
+# 4. Verify
+docker logs ontosage-orchestrator | grep capability_indexer
+# Expected: status=indexed entries=N points=M sha=<8-hex>
+```
+
+No Python edits, no migrations, no docker-compose changes.
+
+### Adding a new semantic intent (multi-intent extension)
+
+Beyond `capability`, you can register additional intents that benefit from semantic routing (e.g. `floor_plan`, `maintenance`). Opt-in per building:
+
+```yaml
+# input/<bldg>/building.yaml
+intent_routing:
+  maintenance:
+    enabled: true
+    descriptors:
+      - "create a maintenance ticket"
+      - "log a fault"
+      - "report a broken sensor"
+    threshold: 0.60
+    override_min: 0.70
+    top_k: 3
+```
+
+Then in `SemanticRouter.__init__`, the new intent is auto-registered. The dialogue agent will receive `SemanticRouteResult(intent="maintenance", ...)` and apply the same band logic. See `docs/superpowers/specs/2026-05-22-multi-intent-semantic-routing.md`.
+
+### Calibrating thresholds for a new embedding model
+
+Default thresholds (`threshold=0.65`, `override_min=0.85`) target a generic distribution. Real models produce tighter or wider ranges. Calibrate as follows:
+
+```bash
+# 1. Capture a baseline of golden queries
+python scripts/capture_baseline.py --building bldg1 \
+  --output tests/baselines/your_model.json
+
+# 2. Sweep thresholds
+python scripts/calibrate_intent_routing.py \
+  --building bldg1 \
+  --baseline tests/baselines/your_model.json \
+  --threshold-range 0.40:0.75:0.02 \
+  --override-range 0.50:0.85:0.02
+```
+
+The script outputs per-band precision/recall and an F1-optimal `(threshold, override_min)` pair.
+
+### Testing capability routing changes
+
+```bash
+# Unit (fast)
+pytest tests/test_embedding_service.py \
+       tests/test_capability_indexer.py \
+       tests/test_semantic_router.py \
+       tests/test_capability_routing_config.py -v
+
+# Live (requires Docker stack)
+pytest tests/test_capability_e2e.py \
+       tests/test_capability_edge_cases.py \
+       tests/test_capability_semantic_quality.py \
+       tests/test_non_regression_intents.py -v
+
+# Performance
+pytest tests/perf/test_capability_performance.py -v
+```
+
+The non-regression contract test (`test_non_regression_intents.py`) verifies that adding capability routing did not break any of the other 15 intents. Always run it after any change to `dialogue_agent.py` or `semantic_router.py`.
+
+---
+
 ## Adding a New Storage Adapter
 
 To support a new database type (e.g., ClickHouse):
