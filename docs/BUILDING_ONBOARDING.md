@@ -6,11 +6,20 @@ This guide walks you through connecting a new building to OntoSage — from prep
 
 ## Overview
 
-OntoSage is designed to adapt to *your* building — not the other way around. You do not need to rewrite your databases or migrate your sensor data into a new schema. The process has three parts:
+OntoSage is designed to adapt to *your* building — not the other way around. You do not need to rewrite your databases or migrate your sensor data into a new schema. There are **three independent knowledge domains** — any subset works; failures in one domain never block the others:
+
+| Domain | Files | What it enables |
+|---|---|---|
+| **Sensor data** | `.ttl` ontology + time-series database | "What's the CO₂ in zone 3.01 right now?", trends, anomalies, reports |
+| **Floor plans** | `.pdf` and/or `.dwg` drawings | "Show me floor 3", room areas, adjacency, block/MEP locations |
+| **Capability KB** *(v3.1)* | `capability.yaml` per building | "Fire procedures?", "Bike parking?", "Power outage behaviour?" — off-ontology questions |
+
+The full process has four parts:
 
 1. **Prepare your ontology** — the Turtle (`.ttl`) file that describes your building's structure
 2. **Configure OntoSage** — point the system at your existing time-series database
 3. **Load and index** — import the ontology into GraphDB and create the similarity search index
+4. **(Optional) Author capability KB and floor plans** — drop YAML / PDF / DWG into `input/<bldg>/`
 
 After these steps, users can ask natural language questions and receive answers drawn directly from your building's real data.
 
@@ -20,11 +29,14 @@ After these steps, users can ask natural language questions and receive answers 
 
 | Item | Required | Notes |
 |------|----------|-------|
-| Building ontology file (`.ttl` or `.rdf`) | Yes | ABox — building instances |
+| Building ontology file (`.ttl` or `.rdf`) | Yes (for sensor data) | ABox — building instances |
 | Brick Schema or vocabulary file | Recommended | TBox — schema definitions |
-| Time-series database connection details | Yes | Host, port, credentials, table names |
+| Time-series database connection details | Yes (for sensor data) | Host, port, credentials, table names |
+| `capability.yaml` for the building | Optional (recommended) | Enables off-ontology Q&A — see Part 10 |
+| Floor plans (`.pdf` / `.dwg`) | Optional | Enables spatial geometry queries |
 | Docker stack running | Yes | `docker compose up -d` |
 | GraphDB accessible | Yes | `http://localhost:7200` |
+| Qdrant accessible | Yes (for capability KB) | `http://localhost:6333` |
 
 ---
 
@@ -431,6 +443,83 @@ curl -s -X POST http://localhost:8000/v1/chat/completions \
     "messages": [{"role": "user", "content": "What sensors are available in this building?"}]
   }' | python -m json.tool
 ```
+
+---
+
+## Part 10: (Optional) Author the Capability KB
+
+**Why:** Roughly **50% of real-world building queries are off-ontology** — fire procedures, amenities, IT, accessibility, policies. SPARQL can't answer them and pure LLMs hallucinate. The capability KB solves both: a structured per-building YAML file is embedded into Qdrant at startup; semantic vector search at query time bypasses the LLM when confidence is high (sub-50 ms grounded answers with explicit provenance).
+
+### 10.1 Author `input/<building_id>/capability.yaml`
+
+```yaml
+building_info:
+  id: my_bldg
+  name: Acme HQ
+  institution: Acme Corp
+  location: 100 Main Street, Springfield
+  floors: 8
+  smart_building: true
+  sensor_count: ~450
+
+capabilities:
+  - id: fire_safety
+    category: FIRE_SAFETY
+    keywords: [fire, fire alarm, evacuation, emergency exit, sprinkler,
+               assembly point, fire warden, fire drill]
+    content: >
+      Fire safety features: automatic smoke detectors on every floor;
+      manual call points at all stairwells; wet pipe sprinkler system
+      throughout; emergency lighting with battery backup. Assembly point:
+      car park on south side. Do not use lifts during evacuation.
+    source: fire_safety_management_plan
+
+  - id: bike_parking
+    category: AMENITIES
+    keywords: [bike, bicycle, cycle, bike rack, cycling]
+    content: >
+      Covered bike racks for ~30 bicycles outside the main entrance.
+      Showers and changing rooms on the ground floor (level 0).
+    source: building_facilities
+```
+
+**Recommended categories** (used by persona system and report templates): `FIRE_SAFETY`, `SECURITY`, `HVAC`, `POWER`, `LIGHTING`, `IT_INFRASTRUCTURE`, `ACCESSIBILITY`, `AMENITIES`, `POLICY`, `SUSTAINABILITY`, `EMERGENCY`, `SMART_BUILDING`, `BUILDING_OVERVIEW`. Custom categories are allowed.
+
+### 10.2 (Optional) Tune routing in `input/<building_id>/building.yaml`
+
+```yaml
+capability_routing:
+  enabled: true
+  embedding_model: auto       # follows EMBEDDING_PROVIDER
+  threshold: 0.56             # MiniLM-calibrated default
+  override_min: 0.60          # hard skip-LLM threshold
+  top_k: 5
+  fallback_on_qdrant_failure: skip
+```
+
+> **Defaults are fine for most buildings.** Only tune if you observe false positives (data queries routing to capability) or false negatives (KB queries missed). See [Capability Routing § Threshold calibration](CAPABILITY_ROUTING.md#threshold-calibration).
+
+### 10.3 Restart and verify
+
+```bash
+docker compose restart orchestrator
+
+# Check the indexer status
+docker logs ontosage-orchestrator 2>&1 | grep capability_indexer
+# Expected: status=indexed entries=N points=M sha=<8-hex>
+
+# Confirm the Qdrant collection was created
+curl -s http://localhost:6333/collections \
+  | jq '.result.collections[].name' | grep capability_my_bldg
+
+# Smoke test (replace <session-token> with your auth token)
+curl -X POST http://localhost:8000/chat \
+  -H "Authorization: <session-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"What are the fire procedures?","session_id":"smoke","building_id":"my_bldg"}'
+```
+
+**Zero Python edits required.** No agent code, workflow, or routing logic changes per building. See [Capability Routing](CAPABILITY_ROUTING.md) for the full pipeline, observability endpoints, multi-intent extension, and failure-mode matrix.
 
 ---
 

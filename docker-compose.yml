@@ -217,6 +217,15 @@ services:
       - I18N_DETECT_CONFIDENCE=0.85
       # 7.7 Ontology Auto-Detection
       - ONTOLOGY_DETECT_THRESHOLD=0.75
+      # ── Capability Semantic Routing (2026-05-21) ─────────────────────────────
+      # Controls which embedding provider backs the capability KB indexer and
+      # query-time semantic router.  Defaults to 'openai' when MODEL_PROVIDER=openai.
+      # Switch to 'local' for fully-offline operation (sentence-transformers MiniLM).
+      # NOTE: changing provider triggers automatic Qdrant collection rebuild on next boot.
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-openai}
+      - EMBEDDING_MODEL_OPENAI=${EMBEDDING_MODEL_OPENAI:-text-embedding-3-small}
+      - EMBEDDING_MODEL_LOCAL=${EMBEDDING_MODEL_LOCAL:-sentence-transformers/all-MiniLM-L6-v2}
+      - EMBEDDING_CACHE_TTL_SECONDS=${EMBEDDING_CACHE_TTL_SECONDS:-86400}
       # Analytics & RBAC
       - RBAC_ENABLED=${RBAC_ENABLED:-true}
       - BUILDING_CONFIG_FILE=/app/input/building_config.yaml
@@ -782,14 +791,12 @@ services:
     networks:
       - ontobot-agentic
     healthcheck:
+      # Accept 200 (index exists) or 403 (directory listing disabled — nginx is still live).
+      # The original --spider check failed with 403 when the artifacts dir has no index.html.
       test:
         [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://localhost/",
+          "CMD-SHELL",
+          "wget -qS --spider http://127.0.0.1/ 2>&1 | grep -qE 'HTTP/1\\.[01] (200|403)' || exit 1",
         ]
       interval: 30s
       timeout: 10s

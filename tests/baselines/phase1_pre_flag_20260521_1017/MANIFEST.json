@@ -1,0 +1,19 @@
+{
+  "timestamp": "20260521_1017",
+  "captured_at": "2026-05-21T10:17:10.803744",
+  "purpose": "Phase 1 pre-flag baseline for capability semantic routing migration",
+  "spec_section": "17.1 (pre-flight)",
+  "files": [
+    "code_fingerprints.json",
+    "docker_compose_ps.json",
+    "graphdb_repositories.json",
+    "qdrant_collection_brick_schema.json",
+    "qdrant_collection_building_instances.json",
+    "qdrant_collection_floor_plans.json",
+    "qdrant_collection_user_documents.json",
+    "qdrant_collection_user_memory.json",
+    "qdrant_collection_user_preferences.json",
+    "qdrant_collections.json",
+    "settings_snapshot.json"
+  ]
+}

@@ -93,13 +93,35 @@ If any node raises an exception, `_safe_node()` catches it, logs it with the tra
 
 **File:** `orchestrator/agents/dialogue_agent.py`
 
-This is always the first node. It produces the routing decision for every other node.
+This is always the first node. It produces the routing decision for every other node. **Six substeps run in this order**, with the SemanticRouter probe (v3.1) in front to enable a fast-path bypass of the LLM.
 
-### 5a. Cache Check
+### 5a. Capability Semantic Router Probe (v3.1)
 
-Before any LLM call, the agent computes `hash(user_query + recent_context)` and checks Redis. If a cached intent result exists (from an identical or near-identical recent query), it is returned immediately. This eliminates LLM latency for repeated questions.
+**Before** any LLM call, the agent embeds the user query and searches the per-building Qdrant collection `capability_<bldg>`. The match scores are grouped by `entry_id` with max-pool aggregation; the highest group score is checked against `building.yaml::capability_routing` thresholds:
 
-### 5b. Ontology Context Retrieval
+```python
+sem = await self.semantic_router.classify(user_query, building_id)
+if sem.score >= override_min:        # hard override (skip LLM entirely)
+    state.intermediate_results["capability_matches"] = sem.matches
+    return {"intent": "capability", "general": False, ...}
+# else: continue to cache + LLM path; possible soft override later
+```
+
+**Decision bands** (calibrated per building):
+
+| Score band | Action | LLM call? | Latency saved |
+|---|---|---|---|
+| `score ≥ override_min` (e.g. 0.60) | Hard override → `capability` | ❌ Skipped | ~600 ms |
+| `threshold ≤ score < override_min` (e.g. 0.56–0.60) | Soft override after LLM | ✅ Once | ~0 |
+| `score < threshold` | No router signal | ✅ Once | ~0 |
+
+When the router fires high-band, the `CapabilityAgent` reads `state.intermediate_results["capability_matches"]` directly — no second KB search. See [Capability Routing](CAPABILITY_ROUTING.md).
+
+### 5b. Cache Check
+
+If the router did not fire a hard override, the agent computes `hash(user_query + recent_context)` and checks Redis. If a cached intent result exists, it is returned immediately. This eliminates LLM latency for repeated questions.
+
+### 5c. Ontology Context Retrieval
 
 The agent calls the RAG Service:
 
@@ -114,13 +136,13 @@ POST http://rag-service:8001/graphdb/retrieve
 
 The RAG Service returns entity IRIs, nearby triples, and a plain-text summary. This context grounds the LLM's understanding of the building's structure — it knows "Zone 5" maps to `<http://building.org/Zone_5_01>` and that it contains `brick:Temperature_Sensor` instances.
 
-### 5c. Intent Classification Prompt
+### 5d. Intent Classification Prompt
 
 The LLM receives a structured prompt containing:
 - Recent conversation history (last N turns)
 - Retrieved ontology context
 - The user's current query
-- A list of all 14 intent types with descriptions
+- A list of all 16 intent types with descriptions
 
 The LLM returns a JSON object:
 
@@ -136,14 +158,23 @@ The LLM returns a JSON object:
 }
 ```
 
-### 5d. Routing Decision
+### 5e. Soft Override + Deterministic Overrides
+
+After the LLM returns:
+
+1. **Soft override** — if the semantic router score is in `[threshold, override_min)` AND the LLM picked a non-data intent, route corrects to `capability`
+2. **Deterministic keyword overrides** — protective rules for `compare`, `correlation`, `floor_plan` patterns the LLM occasionally misclassifies (e.g. "Show me floor 3" classified as `sparql`)
+
+### 5f. Routing Decision
 
 The router `_route_from_dialogue()` reads `state.intermediate_results["intent"]` and returns the name of the next node:
 
 ```python
 def _route_from_dialogue(self, state: ConversationState) -> str:
     intent = state.intermediate_results.get("intent", "general")
-    if intent == "sensor_data":
+    if intent == "capability":           # v3.1 — KB lookup, no SPARQL
+        return "capability"
+    elif intent == "sensor_data":
         return "sparql"
     elif intent == "analytics":
         return "sparql"
@@ -155,9 +186,13 @@ def _route_from_dialogue(self, state: ConversationState) -> str:
         return "sparql"
     elif intent == "planner":
         return "planner"
+    elif intent == "floor_plan":
+        return "floor_plan"
+    elif intent == "spatial_query":
+        return "spatial_query"
     elif intent in ("general", "clarification"):
         return "response"
-    # ... 14 branches total
+    # ... 16 branches total
     else:
         return "response"  # safe default
 ```

@@ -32,7 +32,8 @@ No SQL, no SPARQL, no schema knowledge required from the user.
 
 | Capability | Description |
 |---|---|
-| **16 Intent Types** | sensor readings, analytics, anomaly detection, reports, exports, recommendations, forecasts, discovery, comparison, floor plans, spatial geometry, and more |
+| **16 Intent Types** | sensor readings, analytics, anomaly detection, reports, exports, recommendations, forecasts, discovery, comparison, floor plans, spatial geometry, capability — and more |
+| **Smart Capability Routing** | Per-building YAML knowledge base (fire safety, amenities, policies, IT) embedded into Qdrant at startup; query-time vector search bypasses the LLM for off-ontology questions — **sub-50 ms** confident path with full provider switching (OpenAI 1536-d or local MiniLM 384-d) |
 | **Floor Plan Intelligence** | Automatic PDF + AutoCAD DWG ingestion — room polygons, areas, adjacency, and sensor locations extracted at startup and searchable via natural language |
 | **Spatial Geometry Queries** | Ask "how many rooms on floor 3 larger than 50 m²?" or "what is adjacent to 3.01?" — answered from DWG geometry with no SQL or SPARQL |
 | **Zero-Knowledge Interaction** | Users need no knowledge of sensor IDs, SPARQL, SQL, or ontology classes |
@@ -42,6 +43,7 @@ No SQL, no SPARQL, no schema knowledge required from the user.
 | **Role-Based Access Control** | 6 roles, 20 permissions enforced at every API endpoint |
 | **LLM Flexibility** | Switch between local Ollama models and OpenAI with a single environment variable |
 | **Conversation Memory** | Redis-backed conversation state with 1-hour TTL; full history in MongoDB |
+| **Honest Boundaries** | Capability misses return an explicit *"I don't have that on record"* with facility-management contact — never hallucinated answers |
 
 ---
 
@@ -54,6 +56,7 @@ graph TD
 
     subgraph "Agent Pipeline"
         Orch --> DA["Dialogue Agent\nIntent · Entities · Time range"]
+        DA -. "score ≥ override_min\n(~50 ms fast-path)" .-> CA["Capability Agent\nKB lookup · no LLM"]
         DA -->|sensor/analytics/report| SA["SPARQL Agent\nOntology queries"]
         DA -->|floor_plan| FPA["Floor Plan Agent\nManifest + PNG render"]
         DA -->|spatial_query| SPA["Spatial Agent\nArea · Adjacency · Counts"]
@@ -61,6 +64,16 @@ graph TD
         SA --> SQ["SQL Agent\nTime-series fetch"]
         SQ --> AnA["Analytics Agent\nPython sandbox"]
         AnA --> VA["Visualization Agent\nCharts"]
+    end
+
+    subgraph "Capability Routing Layer (NEW)"
+        DA -->|query| SR["SemanticRouter\nQdrant vector search\nthreshold bands"]
+        SR -->|matches| CA
+        CapYAML["capability.yaml\n/app/input/<bldg>/"] -.->|startup, SHA-256 idempotent| CI["CapabilityIndexer\nembed · upsert"]
+        CI -->|capability_<bldg>| QDC[("Qdrant :6333\ncapability collections")]
+        SR --> QDC
+        ES["EmbeddingService\nOpenAI 1536-d OR\nlocal MiniLM 384-d"] -.->|provider switch| CI
+        ES -.-> SR
     end
 
     subgraph "Knowledge Layer"
@@ -83,7 +96,7 @@ graph TD
     subgraph "Data Layer"
         SQ -->|per-building adapter| MySQL[("MySQL :3306\nSensor time-series")]
         SQ -->|per-building adapter| PG[("PostgreSQL :5433\nUser accounts · RBAC")]
-        Orch -->|state cache| Redis[("Redis :6379")]
+        Orch -->|state cache + embed cache| Redis[("Redis :6379")]
         Orch -->|chat history| Mongo[("MongoDB :27017")]
         AnA -->|execute code| CE["Code Executor :8002\n(Docker sandbox)"]
     end
@@ -91,6 +104,8 @@ graph TD
     subgraph "LLM Layer"
         Orch -. "MODEL_PROVIDER=openai" .-> OpenAI["OpenAI API"]
         Orch -. "MODEL_PROVIDER=local" .-> Ollama["Ollama :11434\ndeepseek-r1:32b"]
+        ES -. "EMBEDDING_PROVIDER" .-> OpenAI
+        ES -. "EMBEDDING_PROVIDER=local" .-> ST["sentence-transformers\nin-process (MiniLM)"]
     end
 ```
 
@@ -199,6 +214,11 @@ See the [Deployment Guide](https://suhasdevmane.github.io/OntoSage/DEPLOYMENT/) 
 | "What rooms are adjacent to the server room?" | `spatial_query` | DWG adjacency graph → neighbour list |
 | "How many sensors are on floor 3?" | `spatial_query` | DWG INSERT blocks → count by type |
 | "Total floor area of the building?" | `spatial_query` | DWG area data → per-floor and grand total |
+| "What are the fire evacuation procedures?" | `capability` | Capability KB (Qdrant) — sub-50 ms, no LLM call |
+| "Where can I park my bike?" | `capability` | Capability KB → amenities entry |
+| "What happens during a power outage?" | `capability` | Capability KB → POWER category |
+| "Is there a prayer room?" | `capability` | Capability KB → amenities lookup |
+| "When does reception close?" | `capability` | Capability KB → policy entry |
 
 ---
 
@@ -206,12 +226,15 @@ See the [Deployment Guide](https://suhasdevmane.github.io/OntoSage/DEPLOYMENT/) 
 
 OntoSage adapts to your building — you don't rewrite your data to fit OntoSage.
 
-There are two independent knowledge domains you can connect — either one works independently:
+There are **three independent knowledge domains** you can connect — any subset works:
 
 | Domain | Files | What it enables |
 |---|---|---|
 | **Sensor data** | `.ttl` ontology + time-series database | "What's the CO₂ in zone 3.01 right now?", trends, anomalies, reports |
 | **Floor plans** | `.pdf` and/or `.dwg` drawings | "Show me floor 3", room areas, adjacency, block/MEP locations |
+| **Capability KB** | `capability.yaml` per building | "Fire procedures?", "Bike parking?", "Power outage behaviour?" — off-ontology questions |
+
+All three are picked up at startup from `input/<building_id>/`. Add one, all, or none — failures in any one domain never block the others.
 
 ### Step 1: Prepare your ontology
 
@@ -322,6 +345,135 @@ floors_label_override:
   0: "Ground Floor"
   1: "First Floor"
 ```
+
+---
+
+## Smart Capability Routing (NEW)
+
+Roughly **50% of real-world building queries are off-ontology** — fire safety procedures, amenities, IT support, accessibility, opening hours, policies. SPARQL can't answer them and pure LLMs hallucinate. OntoSage solves this with a per-building **Capability Knowledge Base** plus a semantic router that bypasses the LLM when confidence is high.
+
+### Architecture at a glance
+
+```mermaid
+flowchart LR
+    YAML["capability.yaml<br/>(per building)"]
+    subgraph Startup["Startup pipeline (idempotent · SHA-256 fingerprint)"]
+        YAML --> CI[CapabilityIndexer]
+        CI -->|embeds keywords + content| ES1[EmbeddingService]
+        ES1 -->|upsert points| QC[("Qdrant<br/>capability_&lt;bldg&gt;")]
+    end
+
+    subgraph Query["Query-time (every user message)"]
+        Q[User query] --> DA[Dialogue Agent]
+        DA -->|classify| SR[SemanticRouter]
+        SR --> ES2[EmbeddingService]
+        ES2 --> QC
+        QC -->|top-k matches| SR
+        SR -->|score ≥ override_min| CA[CapabilityAgent<br/>fast-path: skip LLM]
+        SR -.->|threshold ≤ score &lt; override_min| LLM[LLM intent classifier<br/>soft-override band]
+        SR -.->|score &lt; threshold| LLM
+        LLM -.->|recovers as capability| CA
+        CA --> R[Grounded response<br/>with provenance]
+    end
+```
+
+### Routing decision (three threshold bands)
+
+The router groups Qdrant points by `entry_id` and max-pools the cosine similarity. The resulting score lands in one of three bands:
+
+| Score band | Routing decision | LLM call? | Why |
+|---|---|---|---|
+| `score ≥ override_min` (default 0.60 local / 0.55 OpenAI) | **Hard override** → intent = capability | ❌ Skipped | High-confidence KB match; LLM would only confirm |
+| `threshold ≤ score < override_min` (default 0.56 / 0.50) | **Soft override** — LLM runs; if it picks a non-data intent, router corrects to capability | ✅ Once | Medium confidence; protect data intents from accidental capture |
+| `score < threshold` | No router signal; LLM intent classification proceeds normally | ✅ Once | Low confidence; let the LLM decide |
+
+The two-band design preserves the existing 16-intent pipeline while letting high-confidence KB matches short-circuit the LLM call entirely.
+
+### `capability.yaml` schema
+
+A single file at `input/<building_id>/capability.yaml` declares the building's off-ontology knowledge:
+
+```yaml
+building_info:
+  id: bldg1
+  name: Abacws Building
+  institution: Cardiff University
+  smart_building: true
+  sensor_count: ~680
+
+capabilities:
+  - id: fire_safety
+    category: FIRE_SAFETY
+    keywords: [fire, fire alarm, evacuation, emergency exit, sprinkler,
+               assembly point, fire warden, fire extinguisher]
+    content: >
+      Fire safety features include: automatic smoke detectors on every
+      floor; manual call points at every stairwell; wet pipe sprinkler
+      system throughout; fire doors on all stairwells; emergency lighting
+      with battery backup. Assembly point: Senghennydd Road outside the
+      main entrance. Do not use lifts during evacuation.
+    source: fire_safety_management_plan
+
+  - id: bike_parking
+    category: AMENITIES
+    keywords: [bike, bicycle, cycle, bike park, bike rack, cycling]
+    content: >
+      Covered bike racks for ~40 bicycles are located outside the main
+      entrance on Senghennydd Road. Showers and changing rooms are
+      available on the ground floor for cyclists.
+    source: building_facilities
+```
+
+Drop this file into `input/<bldg>/`, restart the orchestrator, and the new KB is indexed automatically. **Zero Python edits required.**
+
+### Per-building tuning (`building.yaml`)
+
+```yaml
+# /app/input/bldg1/building.yaml
+capability_routing:
+  enabled: true
+  embedding_model: auto      # follows EMBEDDING_PROVIDER (openai|local)
+  threshold: 0.56            # soft-override band lower bound
+  override_min: 0.60         # hard skip-LLM threshold
+  top_k: 5                   # max KB entries returned
+  fallback_on_qdrant_failure: skip   # silently fall back to LLM-only
+```
+
+Defaults are calibrated for **local MiniLM 384-d** embeddings. Switching to OpenAI `text-embedding-3-small` (1536-d) shifts the score distribution downward — re-tune via `scripts/calibrate_intent_routing.py`.
+
+### Provider switching (one env var)
+
+| Variable | OpenAI mode (default) | Local mode (offline) |
+|---|---|---|
+| `EMBEDDING_PROVIDER` | `openai` | `local` |
+| Model | `text-embedding-3-small` (1536-d) | `sentence-transformers/all-MiniLM-L6-v2` (384-d) |
+| Cost | ~$0.02 / 1M tokens | $0 |
+| Latency (cold) | 80–150 ms | 30–80 ms (CPU) |
+| Latency (warm, Redis cache hit) | <5 ms | <5 ms |
+| Privacy | Query text sent to OpenAI | Fully on-device |
+
+The collection is **automatically rebuilt** if you switch providers (vector dimension mismatch is detected at startup).
+
+### Performance characteristics
+
+| Metric | Value | Notes |
+|---|---|---|
+| Cold query (first request after restart) | 80–150 ms | Embedding + Qdrant search |
+| Warm query (Redis embed cache hit) | <10 ms | 24 h TTL by default |
+| Hard-override fast-path saving | ~600 ms / query | Skips the full LLM intent call |
+| Indexer startup (32 entries, 8 buildings) | ~1–2 s | One-time per restart; idempotent thereafter |
+| Re-index after YAML edit | ~200–500 ms | SHA-256 mismatch triggers rebuild |
+
+### Graceful degradation
+
+| Failure | Behavior | Impact |
+|---|---|---|
+| Qdrant unreachable | `source=fallback`; LLM intent path runs | Slower but correct |
+| Embedding API down | Indexer marks collection `degraded`; router falls back | KB temporarily inaccessible; ontology+SQL unaffected |
+| `capability.yaml` missing for a building | Indexer skips that building; logs warning | No capability answers; agent returns explicit "no KB" message |
+| `capability.yaml` malformed | Pydantic validation error; service still boots | Operator sees clear error; other buildings keep working |
+
+The principle: **the orchestrator always boots, and capability failures never block sensor/analytics queries.**
 
 ---
 

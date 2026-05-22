@@ -464,15 +464,101 @@ The column name is the sensor UUID as stored in the ontology (`ref:hasTimeseries
 
 ### Responsibilities
 
-- Provides vector similarity search for agent memory
-- Available for future embedding workflows
-- Current RAG operates on GraphDB's native similarity index; Qdrant is available for extended use cases
+- **`floor_plans`** collection — room description vectors + DWG geometry payload for semantic spatial search
+- **`user_memory`** collection — per-user successful (query, intent, entities, answer) tuples for cross-session personalisation
+- **`capability_<bldg>`** collections *(v3.1)* — one per building; embeds keyword + content variants of every `CapabilityEntry`. SHA-256 fingerprint on every point ensures idempotent restarts.
+- **`intent_<bldg>_<intent>`** collections *(v3.1 opt-in)* — per-building per-intent descriptor vectors for the multi-intent semantic routing extension
+
+### Collection schema
+
+| Collection | Vector dimension | Distance | Notes |
+|---|---|---|---|
+| `floor_plans` | depends on EMBEDDING_PROVIDER | cosine | Payload includes DWG geometry, room labels, floor number |
+| `user_memory` | depends on EMBEDDING_PROVIDER | cosine | Per-user namespacing via payload filter |
+| `capability_<bldg>` | 1536 (OpenAI) or 384 (local) | cosine | Auto-detects + rebuilds on provider switch |
+| `intent_<bldg>_<intent>` | 1536 or 384 | cosine | Dormant unless `intent_routing.enabled: true` in building.yaml |
 
 ### Volume
 
 | Host path | Container path | Purpose |
 |---|---|---|
 | `qdrant-data` (named) | `/qdrant/storage` | Vector index storage |
+
+### Health verification
+
+```bash
+# List all collections
+curl -s http://localhost:6333/collections | jq '.result.collections[].name'
+
+# Inspect a single capability collection
+curl -s http://localhost:6333/collections/capability_bldg1 | jq '.result.config.params.vectors'
+
+# Check yaml_sha fingerprint of a point (idempotency verification)
+curl -s 'http://localhost:6333/collections/capability_bldg1/points/scroll?limit=1' \
+  | jq '.result.points[0].payload.yaml_sha'
+```
+
+---
+
+## In-Process Services (Orchestrator-Hosted)
+
+The following services run inside the orchestrator process (not separate Docker containers) but are independent components with clear interfaces.
+
+### EmbeddingService *(v3.1)*
+
+**File:** `orchestrator/services/embedding_service.py`
+
+| Property | Value |
+|---|---|
+| **Module** | `orchestrator.services.embedding_service.EmbeddingService` |
+| **Providers** | `openai` (`text-embedding-3-small`, 1536-d) · `local` (`sentence-transformers/all-MiniLM-L6-v2`, 384-d) |
+| **Switch** | `EMBEDDING_PROVIDER` env var |
+| **Cache** | Redis `cache:embed:*` · TTL `EMBEDDING_CACHE_TTL_SECONDS` (default 86400) |
+
+**Responsibilities:**
+- Provider-agnostic single-vector and batch embedding
+- Redis caching keyed by SHA-256 of `(provider, model, text)`
+- Dimension auto-detection — first call probes the model to populate `dimension` property
+- Graceful failure: returns `EmbedResult(success=False, error=...)` instead of raising; upstream chooses behaviour
+
+### CapabilityIndexer *(v3.1)*
+
+**File:** `orchestrator/services/capability_indexer.py`
+
+| Property | Value |
+|---|---|
+| **Module** | `orchestrator.services.capability_indexer.CapabilityIndexer` |
+| **Trigger** | Startup (FastAPI lifespan), then idle |
+| **Idempotency** | SHA-256 of `capability.yaml` stored on every Qdrant point — unchanged YAML = no embedding calls |
+| **Auto-rebuild on** | YAML edit (SHA mismatch), provider switch (dimension mismatch), forced via admin API |
+
+**Responsibilities:**
+- Iterate `input/<bldg>/capability.yaml` files at startup
+- For each `CapabilityEntry`, embed every keyword **and** the content string as separate Qdrant points (max-pool scoring at query time)
+- Store yaml_sha + entry_id + category + source on every point
+- Emit one `IndexResult` per building with status `indexed | skipped | degraded | disabled`
+
+### SemanticRouter *(v3.1)*
+
+**File:** `orchestrator/services/semantic_router.py`
+
+| Property | Value |
+|---|---|
+| **Module** | `orchestrator.services.semantic_router.SemanticRouter` |
+| **Called by** | `DialogueAgent.detect_intent()` — every query |
+| **Latency p50/p95** | 12 ms / 22 ms (warm) · 110 ms / 180 ms (cold) |
+
+**Responsibilities:**
+- Embed user query (or hit Redis cache)
+- Search per-building Qdrant collection — top-k points
+- Group points by `entry_id`; **max-pool** the cosine similarity within each group
+- Apply three-band threshold logic from `building.yaml::capability_routing`:
+  - `score ≥ override_min` → hard override (skip LLM)
+  - `threshold ≤ score < override_min` → soft override (post-LLM correction)
+  - `score < threshold` → no signal, LLM proceeds normally
+- Return `SemanticRouteResult(intent, score, matches, source)` where `source` is `qdrant` or `fallback`
+
+> See [Capability Routing](CAPABILITY_ROUTING.md) for end-to-end pipeline, calibration guide, and failure modes.
 
 ---
 

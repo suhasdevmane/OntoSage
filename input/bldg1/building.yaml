@@ -1,0 +1,52 @@
+# Per-building config for the Abacws building (bldg1).
+# Read by orchestrator services (SemanticRouter, CapabilityIndexer, etc.)
+#
+# When this file is absent, defaults from shared/capability_schema.py apply.
+
+# ── Capability semantic routing thresholds ────────────────────────────────────
+#
+# Calibrated 2026-05-22 against LOCAL sentence-transformers/all-MiniLM-L6-v2
+# (384-dim) on bldg1.
+#
+# Observed score distribution across 11 representative queries:
+#   - Capability queries (lift, shower, baby change, fire, etc.): 0.629 - 0.810
+#   - Non-capability queries:
+#       - Off-domain ("airspeed of swallow"):       0.318
+#       - Sensor data (CO2, temp on floor 3):       0.441 - 0.479
+#       - Analytics ("compare CO2 floors 1 vs 3"):  0.367
+#       - Floor plan ("show me floor 3"):           0.558  ← closest false-positive risk
+#
+# Gap: 0.071 (floor_plan max = 0.558  ↔  baby_changing min = 0.629)
+# (vs OpenAI text-embedding-3-small: gap was 0.16; local model has a tighter band.)
+#
+# Settings:
+#   threshold    = 0.56  — must sit ABOVE 0.558 (the highest non-capability score)
+#                          to prevent floor_plan queries from triggering a soft
+#                          semantic override.
+#   override_min = 0.60  — must sit BELOW 0.629 (the lowest capability score) so
+#                          baby_changing paraphrases still trigger high-confidence
+#                          skip-LLM.
+#
+# Tighter than the OpenAI tuning because the score distribution is narrower.
+#
+# History:
+#   2026-05-21: First calibration against OpenAI text-embedding-3-small.
+#               threshold=0.50, override_min=0.55.
+#   2026-05-22: Switched provider to local; re-calibrated.
+#               threshold=0.56, override_min=0.60.
+#
+# RE-CALIBRATION CONTRACT:
+# If you change EMBEDDING_PROVIDER or EMBEDDING_MODEL_*, the CapabilityIndexer
+# detects the dim mismatch and rebuilds the Qdrant collection automatically on
+# next startup, but cosine similarity distributions differ between models so
+# these thresholds MUST be re-tuned. Use:
+#   1. scripts/capture_baseline.py for a snapshot
+#   2. The 11-query calibration batch (see commit history of this file)
+#   3. Update threshold/override_min and restart
+capability_routing:
+  enabled: true
+  embedding_model: auto   # follows EMBEDDING_PROVIDER (openai | local)
+  threshold: 0.56
+  override_min: 0.60
+  top_k: 5
+  fallback_on_qdrant_failure: skip

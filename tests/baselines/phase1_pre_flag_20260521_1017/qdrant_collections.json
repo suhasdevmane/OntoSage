@@ -1,0 +1,26 @@
+{
+  "result": {
+    "collections": [
+      {
+        "name": "user_documents"
+      },
+      {
+        "name": "floor_plans"
+      },
+      {
+        "name": "user_memory"
+      },
+      {
+        "name": "user_preferences"
+      },
+      {
+        "name": "brick_schema"
+      },
+      {
+        "name": "building_instances"
+      }
+    ]
+  },
+  "status": "ok",
+  "time": 8.225e-06
+}
