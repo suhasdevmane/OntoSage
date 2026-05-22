@@ -1,0 +1,30 @@
+  T7-L3 occupancy weekly patterns: 21.2s
+  T7-L4 space utilisation report: 57.6s
+  T8-L4 emergency preparedness report: 77.5s
+  T14-L4 cross-sensor analytics report: 75.8s
+  T17-L4 AI optimisation report: 49.1s
+  T19-L4 predictive maintenance report: 48.1s
+  T20-L1 carbon emissions: 23.2s
+  T20-L4 net-zero progress report: 49.4s
+  PERSONA-1 facility_manager maintenance: 72.2s
+  PERSONA-4 energy_manager forecast: 28.7s
+  PERSONA-5 researcher occupancy: 24.4s
+  DOC-1 full building health report: 60.9s
+  DOC-2 export CSV temperature 24h: 20.6s
+  DISC-2 zones and floors: 22.7s
+
+Latency: avg=20.6s  median=13.7s  max=77.5s
+
+[Category Breakdown]
+  Sensor data (T1-T5,T7,T14,T20 L1)   8/8  [########]
+  Analytics (L2-L3)                   13/13  [#############]
+  Reports (L4)                        9/9  [#########]
+  KB capability                       12/12  [############]
+  Floor plan / spatial                4/4  [####]
+  Routing edge cases                  4/4  [####]
+  Personas                            5/5  [#####]
+  Documents                           4/4  [####]
+  Discovery                           3/3  [###]
+  Robustness                          5/5  [#####]
+
+Full results saved to: survey_test_results.json

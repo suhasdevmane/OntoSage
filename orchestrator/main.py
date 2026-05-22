@@ -528,6 +528,86 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Multi-building manager initialization failed (non-fatal): {e}")
 
+    # Capability semantic routing — embed KB into Qdrant per building (idempotent
+    # via SHA-256 fingerprint).  Always runs, regardless of feature flag, so the
+    # data is ready when the flag is flipped on.  Failure is non-fatal — orchestrator
+    # boots, SemanticRouter returns source="fallback" at query time.
+    try:
+        from qdrant_client import AsyncQdrantClient
+        from orchestrator.services.capability_indexer import CapabilityIndexer
+        from orchestrator.services.embedding_service import EmbeddingService
+        from orchestrator.services.semantic_router import SemanticRouter
+
+        _qdrant_async = AsyncQdrantClient(url=settings.QDRANT_URL)
+        _embedding_service = EmbeddingService(
+            redis_manager=redis_manager,
+            cache_ttl_seconds=settings.EMBEDDING_CACHE_TTL_SECONDS,
+        )
+        capability_indexer = CapabilityIndexer(
+            qdrant_client=_qdrant_async,
+            embedding_service=_embedding_service,
+            input_root="/app/input",
+        )
+        index_results = await capability_indexer.index_all_buildings()
+        for bldg, result in index_results.items():
+            logger.info(
+                f"[capability_indexer] {bldg}: status={result.status} "
+                f"entries={result.entries} points={result.points} "
+                f"duration_ms={result.duration_ms:.0f}"
+                + (f" reason={result.reason}" if result.reason else "")
+            )
+
+        semantic_router = SemanticRouter(
+            qdrant_client=_qdrant_async,
+            embedding_service=_embedding_service,
+            input_root="/app/input",
+        )
+        semantic_router.register_intent("capability", "capability_")
+
+        # Multi-intent extension (2026-05-22): for each building, peek at its
+        # intent_routing block in building.yaml and register any enabled extra
+        # intents. Each one gets its own Qdrant collection prefix `intent_<name>_`.
+        # Indexing of those collections happened inside index_all_buildings() above.
+        import yaml as _yaml_for_intents
+        from pathlib import Path as _Path
+        _input_root_path = _Path("/app/input")
+        _extra_intents_registered = set()
+        if _input_root_path.exists():
+            for _bldg_dir in _input_root_path.iterdir():
+                _bldg_yaml = _bldg_dir / "building.yaml"
+                if not _bldg_yaml.exists():
+                    continue
+                try:
+                    with open(_bldg_yaml, "r", encoding="utf-8") as fh:
+                        _data = _yaml_for_intents.safe_load(fh) or {}
+                    _intent_block = _data.get("intent_routing") or {}
+                    for _intent_name, _raw in _intent_block.items():
+                        if (_raw or {}).get("enabled"):
+                            _extra_intents_registered.add(_intent_name)
+                except Exception as _e:
+                    logger.debug(
+                        f"[capability_routing] building.yaml parse skipped for "
+                        f"{_bldg_dir.name}: {_e}"
+                    )
+        for _intent in sorted(_extra_intents_registered):
+            semantic_router.register_intent(_intent, f"intent_{_intent}_")
+
+        app.state.capability_indexer = capability_indexer
+        app.state.semantic_router = semantic_router
+        app.state.embedding_service = _embedding_service
+        # Expose the per-building IndexResult so /api/v1/admin/capability-indexer/status
+        # can surface it.  Keys are building_id, values are IndexResult dataclasses.
+        app.state.capability_index_results = index_results
+
+        # Inject into orchestrator so dialogue_agent can use it
+        if orchestrator and hasattr(orchestrator, "dialogue_agent"):
+            orchestrator.dialogue_agent.semantic_router = semantic_router
+            logger.info(
+                "[capability_routing] SemanticRouter wired into dialogue_agent"
+            )
+    except Exception as e:
+        logger.warning(f"Capability semantic routing init failed (non-fatal): {e}")
+
     # P1: Initialize plugin registry — discovers plugins from plugins/ dir, env var, and entry_points
     try:
         plugin_registry = get_plugin_registry()
@@ -2566,6 +2646,72 @@ async def list_floor_plan_manifests():
     except Exception as e:
         logger.error(f"list_floor_plan_manifests failed: {e}")
         return APIResponse(success=False, error=str(e), data={"floors": [], "total": 0})
+
+
+@app.get("/api/v1/admin/capability-indexer/status", response_model=APIResponse)
+async def capability_indexer_status():
+    """Per-building status of the capability KB indexer.
+
+    Surfaces the IndexResult that the FastAPI lifespan recorded at startup.
+    Used by ops dashboards and by integration tests that previously skipped
+    because there was no API surface for this data.
+
+    Read-only.  No auth required (parity with /health) since it exposes no
+    secrets — just operational state.
+
+    Returns:
+        {
+          "success": true,
+          "data": {
+            "indexer_ready": bool,
+            "router_ready": bool,
+            "router_intents": ["capability", ...],
+            "embedding_provider": "openai"|"local",
+            "embedding_dimension": int,
+            "buildings": {
+              "<bldg_id>": {
+                "status": "indexed"|"skipped"|"degraded"|"disabled",
+                "entries": int,
+                "points": int,
+                "duration_ms": float,
+                "yaml_sha": str,
+                "reason": str
+              }
+            }
+          }
+        }
+    """
+    try:
+        indexer = getattr(app.state, "capability_indexer", None)
+        router = getattr(app.state, "semantic_router", None)
+        results = getattr(app.state, "capability_index_results", None) or {}
+        embedder = getattr(app.state, "embedding_service", None)
+
+        building_status = {}
+        for bldg_id, result in results.items():
+            building_status[bldg_id] = {
+                "status": result.status,
+                "entries": result.entries,
+                "points": result.points,
+                "duration_ms": round(result.duration_ms, 1),
+                "yaml_sha": result.yaml_sha,
+                "reason": result.reason,
+            }
+
+        return APIResponse(
+            success=True,
+            data={
+                "indexer_ready": indexer is not None,
+                "router_ready": router is not None,
+                "router_intents": list(router._intents.keys()) if router else [],
+                "embedding_provider": embedder.provider if embedder else None,
+                "embedding_dimension": embedder.dimension if embedder else None,
+                "buildings": building_status,
+            },
+        )
+    except Exception as e:
+        logger.error(f"capability_indexer_status failed: {e}")
+        return APIResponse(success=False, error=str(e), data={})
 
 
 @app.get("/api/v1/floor-plans/{building_id}/{floor}/manifest", response_model=APIResponse)

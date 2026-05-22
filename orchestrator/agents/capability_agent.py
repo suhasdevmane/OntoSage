@@ -88,8 +88,24 @@ class CapabilityAgent:
             }
             return state
 
-        # Find matching KB entries
-        matches: List[CapabilityEntry] = kb.search(user_query, max_results=3)
+        # ── Read pre-fetched semantic matches populated by SemanticRouter ──
+        # The dialogue agent embeds the query and queries the per-building Qdrant
+        # collection BEFORE this node runs; matches land in state.intermediate_results.
+        # When matches are present (the normal case), use them directly — they're
+        # ranked by semantic similarity and are more accurate than keyword search.
+        # When absent (Qdrant outage with fallback=skip, or non-capability route
+        # leaked through), respond with the explicit "no info" boundary message.
+        matches: List[CapabilityEntry] = []
+        pre_fetched = state.intermediate_results.get("capability_matches") or []
+        if pre_fetched:
+            # SemanticRouter returns CapabilityMatch objects with .entry attribute.
+            # Defensive: filter Nones (entry might be None if KB was stale during routing).
+            matches = [m.entry for m in pre_fetched if getattr(m, "entry", None) is not None]
+            if matches:
+                logger.info(
+                    f"[capability] using {len(matches)} pre-fetched semantic match(es): "
+                    f"{[e.id for e in matches]}"
+                )
 
         if not matches:
             # Explicit, honest boundary — do not guess or hallucinate

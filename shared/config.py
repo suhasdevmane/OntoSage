@@ -245,6 +245,10 @@ class Settings(BaseSettings):
         default=True,
         description="Enable Redis-backed response cache for identical/similar queries.",
     )
+    EMBEDDING_CACHE_TTL_SECONDS: int = Field(
+        default=86400,
+        description="TTL for Redis-cached embeddings (cache:embed:*). Default 24h.",
+    )
     WORKFLOW_TIMEOUT_S: int = Field(
         default=120, description="Max seconds for entire workflow execution"
     )

@@ -65,3 +65,10 @@ watchfiles>=0.21.0  # Async file watcher for auto-ingestion
 # DWG/DXF ingestion (Phase DW1+DW2)
 ezdxf>=1.3.0        # DXF parsing (DWG converted to DXF via libredwg-utils)
 shapely>=2.0.0      # Polygon area, point-in-polygon, adjacency detection
+
+# Capability semantic routing (2026-05-21) — local embedding option
+# When EMBEDDING_PROVIDER=local, EmbeddingService uses this; produces 384-dim
+# vectors (vs 1536-dim for OpenAI text-embedding-3-small).  CapabilityIndexer
+# detects the dim mismatch and rebuilds the capability_<bldg> Qdrant collection
+# automatically on startup, so provider switches require no manual intervention.
+sentence-transformers>=2.2.0

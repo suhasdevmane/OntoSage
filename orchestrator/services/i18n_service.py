@@ -114,6 +114,13 @@ class I18nService:
         if not self._enabled or len(text) < SKIP_SHORT_QUERIES:
             return "en", 1.0
 
+        # ASCII-dominant text (>90%) is English, code, or SQL injection — skip langdetect.
+        # Real non-English queries (French, Spanish, Arabic, etc.) contain non-ASCII chars
+        # (accents, diacritics, non-Latin scripts) so their ASCII ratio will be below 0.90.
+        ascii_ratio = sum(c.isascii() for c in text) / max(len(text), 1)
+        if ascii_ratio > 0.90:
+            return "en", 1.0
+
         # Try langdetect
         try:
             from langdetect import detect_langs
@@ -127,10 +134,6 @@ class I18nService:
         except Exception as e:
             logger.debug(f"Language detection error: {e}")
 
-        # Fallback: simple ASCII ratio heuristic
-        ascii_ratio = sum(c.isascii() for c in text) / max(len(text), 1)
-        if ascii_ratio > 0.90:
-            return "en", 0.75  # Probably English
         return "en", 0.50  # Unknown, assume English
 
     # ─────────────────────────────────────────────────────────────────────────
