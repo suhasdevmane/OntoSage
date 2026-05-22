@@ -1,0 +1,636 @@
+{
+  "timestamp": "2026-05-22T10:40:10.489101",
+  "total": 70,
+  "passed": 70,
+  "pass_rate_pct": 100,
+  "results": [
+    {
+      "label": "T1-L1 current temp reading",
+      "query": "What is the current temperature reading in a specific room?",
+      "status": "PASS",
+      "response_len": 81,
+      "response_preview": "Which specific room are you referring to? Please provide the room number or name.",
+      "elapsed": 5.3,
+      "pass": true
+    },
+    {
+      "label": "T1-L2 temp compare zones",
+      "query": "Compare temperature settings and readings across all zones in the buil",
+      "status": "PASS",
+      "response_len": 3711,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Hvac**  If you find the temperature uncomfortable in Abacws: (1) The building HVAC is zone-controlled — occupants cannot directly adjust thermostats; (2) Report comfort complaints ",
+      "elapsed": 1.6,
+      "pass": true
+    },
+    {
+      "label": "T1-L3 temp trends anomaly detect",
+      "query": "Analyse temperature trends and daily patterns over the past month to d",
+      "status": "PASS",
+      "response_len": 1215,
+      "response_preview": "**Air Temperature Sensor 5.01 is currently at 18.98 °C, which is below its monthly average of 23.00 °C by 4.02 °C.**  ✅ Over the past month, Air Temperature Sensor 5.01 appears broadly stable, with readings centered around a mean of 23.00 °C and medi",
+      "elapsed": 18.1,
+      "pass": true
+    },
+    {
+      "label": "T1-L4 thermal comfort report",
+      "query": "Generate a thermal comfort report with recommendations to improve temp",
+      "status": "PASS",
+      "response_len": 3304,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Hvac**  If you find the temperature uncomfortable in Abacws: (1) The building HVAC is zone-controlled — occupants cannot directly adjust thermostats; (2) Report comfort complaints ",
+      "elapsed": 1.8,
+      "pass": true
+    },
+    {
+      "label": "T2-L1 CO2 basic",
+      "query": "What is the current CO2 level in the office area?",
+      "status": "PASS",
+      "response_len": 666,
+      "response_preview": "I found a total of 13 floors in the building, but I don't have specific CO2 level data for each floor. If you're looking for the current CO2 levels in the office area, please specify which floor or area you are interested in, and I can help you find ",
+      "elapsed": 12.5,
+      "pass": true
+    },
+    {
+      "label": "T2-L2 air quality compare floors",
+      "query": "Compare air quality readings between different floors and zones of the",
+      "status": "PASS",
+      "response_len": 481,
+      "response_preview": "**Compliance Check — Zone or Sensor Required**  To assess ASHRAE / WELL / BREEAM compliance I need live sensor readings from a specific zone or sensor.  Please try one of:  - *'Is the temperature in Zone 5.28 within ASHRAE 55 comfort limits?'* - *'Ch",
+      "elapsed": 11.0,
+      "pass": true
+    },
+    {
+      "label": "T2-L3 ventilation daily trends",
+      "query": "Show how ventilation rates and CO2 levels change throughout a typical ",
+      "status": "PASS",
+      "response_len": 975,
+      "response_preview": "**CO2 Level Sensor 5.01 averaged 803.6 ppm over the workday, with a peak of 1,199 ppm.** ✅ The latest reading is 474 ppm, which is very good and suggests the space is currently well ventilated. ⚠️ Over the day, CO2 ranged from 400 ppm to 1,199 ppm, i",
+      "elapsed": 19.4,
+      "pass": true
+    },
+    {
+      "label": "T2-L4 ventilation optimisation report",
+      "query": "Produce a ventilation optimisation plan with graphs and alerts for poo",
+      "status": "PASS",
+      "response_len": 1208,
+      "response_preview": "# Building Management Anomaly Report   **Building:** Abacws Building   **Report Type:** Anomaly   **Generated:** 2026-05-22 06:56 BST    ## 1. Executive Summary   No sensor readings, anomalies, or highlight data were available for this reporting peri",
+      "elapsed": 72.3,
+      "pass": true
+    },
+    {
+      "label": "T3-L1 light level",
+      "query": "What is the current light level in a specific room or area?",
+      "status": "PASS",
+      "response_len": 82,
+      "response_preview": "Which specific room or area are you referring to? Please provide a name or number.",
+      "elapsed": 5.3,
+      "pass": true
+    },
+    {
+      "label": "T3-L2 lighting compare",
+      "query": "Compare lighting levels across different zones and identify areas that",
+      "status": "PASS",
+      "response_len": 481,
+      "response_preview": "**Compliance Check — Zone or Sensor Required**  To assess ASHRAE / WELL / BREEAM compliance I need live sensor readings from a specific zone or sensor.  Please try one of:  - *'Is the temperature in Zone 5.28 within ASHRAE 55 comfort limits?'* - *'Ch",
+      "elapsed": 16.9,
+      "pass": true
+    },
+    {
+      "label": "T3-L3 daylight patterns analysis",
+      "query": "Analyse daylight patterns and artificial lighting usage over time from",
+      "status": "PASS",
+      "response_len": 499,
+      "response_preview": "**Compliance Check — Zone or Sensor Required**  To assess ASHRAE / WELL / BREEAM compliance I need live sensor readings from a specific zone or sensor.  Please try one of:  - *'Is the temperature in Zone 5.28 within ASHRAE 55 comfort limits?'* - *'Ch",
+      "elapsed": 23.6,
+      "pass": true
+    },
+    {
+      "label": "T4-L1 noise level",
+      "query": "What is the current noise level in the open-plan office?",
+      "status": "PASS",
+      "response_len": 683,
+      "response_preview": "I found 13 noise level sensors across various floors of the building. Here’s a summary of their locations:  **Ground Floor:** - Noise_Sensor_Floor0  **First Floor:** - Noise_Sensor_Floor1  **Second Floor:** - Noise_Sensor_Floor2  **Third Floor:** - N",
+      "elapsed": 17.0,
+      "pass": true
+    },
+    {
+      "label": "T4-L3 noise hourly trends",
+      "query": "Show hourly noise trends and identify peak noise periods from acoustic",
+      "status": "PASS",
+      "response_len": 499,
+      "response_preview": "**Compliance Check — Zone or Sensor Required**  To assess ASHRAE / WELL / BREEAM compliance I need live sensor readings from a specific zone or sensor.  Please try one of:  - *'Is the temperature in Zone 5.28 within ASHRAE 55 comfort limits?'* - *'Ch",
+      "elapsed": 22.1,
+      "pass": true
+    },
+    {
+      "label": "T5-L1 energy total",
+      "query": "What is the current total energy consumption of the building?",
+      "status": "PASS",
+      "response_len": 3778,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Sustainability**  Abacws was designed to BREEAM 'Excellent' specification. Sustainability features: (1) High-performance building fabric with triple-glazed facades; (2) Mechanical ",
+      "elapsed": 1.5,
+      "pass": true
+    },
+    {
+      "label": "T5-L2 energy breakdown",
+      "query": "Break down energy usage by floor zone or equipment category from the d",
+      "status": "PASS",
+      "response_len": 1280,
+      "response_preview": "# Building Management Summary Report  ## 1. Executive Summary A review was requested to break down energy usage by floor zone or equipment category for the Abacws Building. However, the available dataset contains no sensor records or energy data poin",
+      "elapsed": 63.9,
+      "pass": true
+    },
+    {
+      "label": "T5-L3 energy trends 6 months",
+      "query": "Identify energy consumption trends peak demand periods and unusual spi",
+      "status": "PASS",
+      "response_len": 499,
+      "response_preview": "**Compliance Check — Zone or Sensor Required**  To assess ASHRAE / WELL / BREEAM compliance I need live sensor readings from a specific zone or sensor.  Please try one of:  - *'Is the temperature in Zone 5.28 within ASHRAE 55 comfort limits?'* - *'Ch",
+      "elapsed": 21.6,
+      "pass": true
+    },
+    {
+      "label": "T5-L4 energy optimisation report",
+      "query": "Produce an energy optimisation report with cost-saving recommendations",
+      "status": "PASS",
+      "response_len": 1492,
+      "response_preview": "# Building Management Summary Report   **Building:** Abacws Building   **Report Type:** Summary   **Generated:** 2026-05-22 07:00 BST    ## 1. Executive Summary   A review was requested to support energy optimisation, cost-saving recommendations, ben",
+      "elapsed": 59.1,
+      "pass": true
+    },
+    {
+      "label": "T7-L1 occupancy current",
+      "query": "How many people are currently in the building or a specific room?",
+      "status": "PASS",
+      "response_len": 3099,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Policy**  Occupancy limits are set per room and displayed on the door. The building's maximum permitted occupancy is determined by fire safety regulations and is managed by buildin",
+      "elapsed": 1.5,
+      "pass": true
+    },
+    {
+      "label": "T7-L3 occupancy weekly patterns",
+      "query": "Analyse weekly occupancy patterns and identify underused spaces from h",
+      "status": "PASS",
+      "response_len": 499,
+      "response_preview": "**Compliance Check — Zone or Sensor Required**  To assess ASHRAE / WELL / BREEAM compliance I need live sensor readings from a specific zone or sensor.  Please try one of:  - *'Is the temperature in Zone 5.28 within ASHRAE 55 comfort limits?'* - *'Ch",
+      "elapsed": 18.2,
+      "pass": true
+    },
+    {
+      "label": "T7-L4 space utilisation report",
+      "query": "Create a space utilisation report with recommendations for redesigning",
+      "status": "PASS",
+      "response_len": 1347,
+      "response_preview": "# Space Utilisation Summary Report   **Building:** Abacws Building   **Report Type:** Summary   **Generated:** 2026-05-22 07:01 BST    ## 1. Executive Summary   A space utilisation review was requested for the Abacws Building, including recommendatio",
+      "elapsed": 55.6,
+      "pass": true
+    },
+    {
+      "label": "T8-L1 fire alarm status",
+      "query": "Are all fire alarms and smoke detectors currently operational?",
+      "status": "PASS",
+      "response_len": 644,
+      "response_preview": "Currently, there are **8 operational fire alarms and smoke detectors** in the building. Here’s the breakdown of the sensors:  **Fire Alarms:** 1. Fire_Alarm_F0 2. Fire_Alarm_F1 3. Fire_Alarm_F2 4. Fire_Alarm_F3 5. Fire_Alarm_F4 6. Fire_Alarm_F5  **Sm",
+      "elapsed": 17.2,
+      "pass": true
+    },
+    {
+      "label": "T8-L2 emergency system status",
+      "query": "Show the status of emergency systems across all floors including fire ",
+      "status": "PASS",
+      "response_len": 699,
+      "response_preview": "I found the status of emergency systems across all floors of the building, including fire doors and exit signs. Here’s a summary of the floors:  **Ground Floor:** - Floor 0 (Ground Floor)  **First Floor:** - Floor 1 (First Floor)  **Second Floor:** -",
+      "elapsed": 14.0,
+      "pass": true
+    },
+    {
+      "label": "T8-L4 emergency preparedness report",
+      "query": "Generate an emergency preparedness report with risk scoring equipment ",
+      "status": "PASS",
+      "response_len": 1306,
+      "response_preview": "# Emergency Preparedness Summary Report   **Building:** Abacws Building   **Report Type:** Summary   **Generated:** 2026-05-22 07:03 BST    ## 1. Executive Summary   This emergency preparedness summary for the Abacws Building was generated without su",
+      "elapsed": 88.4,
+      "pass": true
+    },
+    {
+      "label": "T14-L1 active sensor count",
+      "query": "How many IoT sensors are currently active and online in the building?",
+      "status": "PASS",
+      "response_len": 2653,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Smart Building**  The building's IoT monitoring network includes approximately 680 sensors covering: (1) Air temperature (thermal comfort) — all zones; (2) CO2 concentration (indoo",
+      "elapsed": 2.1,
+      "pass": true
+    },
+    {
+      "label": "T14-L2 sensor coverage gaps",
+      "query": "Show sensor coverage across all zones and identify areas with no monit",
+      "status": "PASS",
+      "response_len": 2224,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Smart Building**  The building's IoT monitoring network includes approximately 680 sensors covering: (1) Air temperature (thermal comfort) — all zones; (2) CO2 concentration (indoo",
+      "elapsed": 1.8,
+      "pass": true
+    },
+    {
+      "label": "T14-L4 cross-sensor analytics report",
+      "query": "Produce a data analytics report showing cross-sensor insights anomaly ",
+      "status": "PASS",
+      "response_len": 1262,
+      "response_preview": "# Building Management Anomaly Report  ## 1. Executive Summary An anomaly detection report was generated for the Abacws Building on 2026-05-22. No sensor records, readings summaries, anomaly events, or highlight insights were available in the provided",
+      "elapsed": 47.7,
+      "pass": true
+    },
+    {
+      "label": "T17-L1 automated systems status",
+      "query": "What building systems are currently running in automated mode?",
+      "status": "PASS",
+      "response_len": 4170,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Smart Building**  Building systems currently running in automated mode: (1) HVAC — zone-based climate control with automatic setpoint adjustment based on occupancy schedules and se",
+      "elapsed": 1.8,
+      "pass": true
+    },
+    {
+      "label": "T17-L4 AI optimisation report",
+      "query": "Produce an AI-driven optimisation report with predictive models automa",
+      "status": "PASS",
+      "response_len": 1384,
+      "response_preview": "# Building Management Summary Report   **Building:** Abacws Building   **Report Type:** Summary   **Generated:** 2026-05-22 07:06 BST  ## 1. Executive Summary This report was generated for the Abacws Building; however, no sensor records, data points,",
+      "elapsed": 88.1,
+      "pass": true
+    },
+    {
+      "label": "T19-L1 active faults",
+      "query": "Are there any active fault alerts or maintenance tickets in the buildi",
+      "status": "PASS",
+      "response_len": 124,
+      "response_preview": "I currently do not have access to specific information regarding active fault alerts or maintenance tickets in the building.",
+      "elapsed": 4.8,
+      "pass": true
+    },
+    {
+      "label": "T19-L3 maintenance prediction",
+      "query": "Analyse equipment failure trends and predict upcoming maintenance need",
+      "status": "PASS",
+      "response_len": 1002,
+      "response_preview": "**Key finding: No valid sensor health data is currently available for Air Quality Level Sensor 5.01, so equipment failure trends and upcoming maintenance needs cannot be reliably predicted.**  ⚠️ **Status:** Monitoring is incomplete because no usable",
+      "elapsed": 20.2,
+      "pass": true
+    },
+    {
+      "label": "T19-L4 predictive maintenance report",
+      "query": "Generate a predictive maintenance report with risk dashboards spare pa",
+      "status": "PASS",
+      "response_len": 1412,
+      "response_preview": "# Predictive Maintenance Summary Report   **Building:** Abacws Building   **Report Type:** Summary   **Generated:** 2026-05-22 07:07 BST    ## 1. Executive Summary   A predictive maintenance review was requested for Abacws Building; however, no senso",
+      "elapsed": 73.2,
+      "pass": true
+    },
+    {
+      "label": "T20-L1 carbon emissions",
+      "query": "What is the building's current estimated carbon emissions rate?",
+      "status": "PASS",
+      "response_len": 1102,
+      "response_preview": "**Current estimated building CO₂ level: 730 ppm (average across 22 sensors).** This is generally **acceptable indoor air quality** and is ✅ compliant with **ASHRAE 62.1** (<1100 ppm), ✅ **WELL v2** (<1000 ppm average context), and ✅ **BREEAM Hea 02**",
+      "elapsed": 26.6,
+      "pass": true
+    },
+    {
+      "label": "T20-L4 net-zero progress report",
+      "query": "Produce a net-zero progress report with pathway visualisations offset ",
+      "status": "PASS",
+      "response_len": 1548,
+      "response_preview": "# Net-Zero Progress Summary Report   **Building:** Abacws Building   **Report Type:** Summary   **Generated:** 22 May 2026  ## 1. Executive Summary A net-zero progress assessment was requested for the Abacws Building, including pathway visualisations",
+      "elapsed": 54.5,
+      "pass": true
+    },
+    {
+      "label": "KB-1 fire evacuation procedures",
+      "query": "What are the fire evacuation procedures for the building?",
+      "status": "PASS",
+      "response_len": 3400,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Fire Safety**  Evacuation procedure: (1) On alarm activation, leave the building via the nearest marked fire exit; (2) Do not use the lifts; (3) Proceed to the assembly point on Se",
+      "elapsed": 1.5,
+      "pass": true
+    },
+    {
+      "label": "KB-2 after-hours access",
+      "query": "How do I access the building outside of normal hours?",
+      "status": "PASS",
+      "response_len": 239,
+      "response_preview": "Here is the information I have on record for **Abacws Building**: Standard building hours are Monday–Friday 08:00 to 18:00. For access outside of these hours, please refer to the building's access policy or contact the facility management.",
+      "elapsed": 5.8,
+      "pass": true
+    },
+    {
+      "label": "KB-3 parking near building",
+      "query": "Where can I park my car near the Abacws building?",
+      "status": "PASS",
+      "response_len": 3141,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Amenities**  Getting to Abacws (Senghennydd Road, Cardiff CF24 4AG): (1) By train: Cardiff Central station is ~15 min walk or 5 min taxi; (2) By bus: Routes 8, 9, 26, 27 stop on Ca",
+      "elapsed": 1.5,
+      "pass": true
+    },
+    {
+      "label": "KB-4 wifi eduroam connection",
+      "query": "How do I connect to WiFi or eduroam in this building?",
+      "status": "PASS",
+      "response_len": 3743,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **It Infrastructure**  Wifi coverage is provided by Cardiff University's 'eduroam' network throughout the building. Guests can use 'CU_Guest' wifi (registration required). Wired ethe",
+      "elapsed": 1.8,
+      "pass": true
+    },
+    {
+      "label": "KB-5 prayer room wellbeing",
+      "query": "Is there a prayer room or reflection space in the building?",
+      "status": "PASS",
+      "response_len": 3199,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Amenities**  Wellbeing facilities in Abacws: (1) A multi-faith prayer and reflection room is located on Floor 1 (room 1.04) — available to all; (2) Gender-neutral toilet facilities",
+      "elapsed": 1.5,
+      "pass": true
+    },
+    {
+      "label": "KB-6 data privacy location tracking",
+      "query": "Does the building track my location through sensors?",
+      "status": "PASS",
+      "response_len": 1808,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Policy**  Your privacy is protected. The Abacws smart building does NOT track individual people or personal movements. Environmental sensors (temperature, CO2, humidity, PIR presen",
+      "elapsed": 7.5,
+      "pass": true
+    },
+    {
+      "label": "KB-7 building manager contact",
+      "query": "Who manages this building and how do I report an issue?",
+      "status": "PASS",
+      "response_len": 3813,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Policy**  To report a building issue, fault, or complaint: (1) Facilities/maintenance issues (broken fixtures, heating, cleaning): report via Cardiff University's FM helpdesk at es",
+      "elapsed": 1.9,
+      "pass": true
+    },
+    {
+      "label": "KB-8 visitor guest policy",
+      "query": "Can I bring a guest or external visitor to the building?",
+      "status": "PASS",
+      "response_len": 3502,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Policy**  Visitor policy for Abacws: (1) All external visitors must sign in at the main reception (Ground Floor) and will be issued a visitor badge; (2) Visitors must be escorted b",
+      "elapsed": 1.4,
+      "pass": true
+    },
+    {
+      "label": "KB-9 thermal comfort complaint",
+      "query": "The building is too cold — who do I contact about thermal comfort?",
+      "status": "PASS",
+      "response_len": 3439,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Hvac**  If you find the temperature uncomfortable in Abacws: (1) The building HVAC is zone-controlled — occupants cannot directly adjust thermostats; (2) Report comfort complaints ",
+      "elapsed": 1.5,
+      "pass": true
+    },
+    {
+      "label": "KB-10 sustainability BREEAM",
+      "query": "What sustainability or BREEAM certifications does this building have?",
+      "status": "PASS",
+      "response_len": 4164,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Sustainability**  Abacws was designed to BREEAM 'Excellent' specification. Sustainability features: (1) High-performance building fabric with triple-glazed facades; (2) Mechanical ",
+      "elapsed": 1.6,
+      "pass": true
+    },
+    {
+      "label": "KB-11 printing papercut",
+      "query": "How do I print from my laptop in this building?",
+      "status": "PASS",
+      "response_len": 3461,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **It Infrastructure**  Printing and scanning is available via Multi-Function Devices (MFDs) on every floor. The system uses Cardiff University's PaperCut print management. To print: ",
+      "elapsed": 1.5,
+      "pass": true
+    },
+    {
+      "label": "KB-12 power outage backup",
+      "query": "What happens if there is a power outage in the building?",
+      "status": "PASS",
+      "response_len": 3776,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Power**  The building has an uninterruptible power supply (UPS) for critical systems: emergency lighting, fire alarm panels, server rooms, and security systems. A diesel standby ge",
+      "elapsed": 2.0,
+      "pass": true
+    },
+    {
+      "label": "FP-1 show floor 3 plan",
+      "query": "Show me the floor plan for floor 3.",
+      "status": "PASS",
+      "response_len": 274,
+      "response_preview": "\"I found the floor plan for **Floor 3** (Third Floor). Here are the details:  - **Floor 3**: This floor is part of the building's layout and is designated as the third level.  If you need more specific information about this floor or any particular a",
+      "elapsed": 7.5,
+      "pass": true
+    },
+    {
+      "label": "FP-2 room count floor 2",
+      "query": "How many rooms are on floor 2?",
+      "status": "PASS",
+      "response_len": 3434,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Building Overview**  Abacws houses two Cardiff University schools: (1) School of Computer Science and Informatics; (2) School of Mathematics (including financial mathematics and st",
+      "elapsed": 1.5,
+      "pass": true
+    },
+    {
+      "label": "FP-3 area of floor 1",
+      "query": "What is the total area of floor 1?",
+      "status": "PASS",
+      "response_len": 441,
+      "response_preview": "The total area of Floor 1 (First Floor) has been identified, but the specific area measurement was not included in the query results. However, I can confirm that Floor 1 is part of the building and is labeled as such.  If you need more detailed infor",
+      "elapsed": 7.4,
+      "pass": true
+    },
+    {
+      "label": "FP-4 adjacency room 3.01",
+      "query": "Which rooms are adjacent to room 3.01?",
+      "status": "PASS",
+      "response_len": 3254,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Building Overview**  Abacws houses two Cardiff University schools: (1) School of Computer Science and Informatics; (2) School of Mathematics (including financial mathematics and st",
+      "elapsed": 1.6,
+      "pass": true
+    },
+    {
+      "label": "EDGE-1 temp floor3 -> must NOT route floor_plan",
+      "query": "What is the temperature on floor 3?",
+      "status": "PASS",
+      "response_len": 436,
+      "response_preview": "\"I found the temperature information for Floor 3. Here are the details:  **Floor 3 (Third Floor):** - Temperature sensors are available, but specific temperature readings were not provided in the results.  If you need more detailed information about ",
+      "elapsed": 0.0,
+      "pass": true
+    },
+    {
+      "label": "EDGE-2 analytics floor2 -> must NOT route floor_plan",
+      "query": "Show me analytics for CO2 sensors on floor 2.",
+      "status": "PASS",
+      "response_len": 856,
+      "response_preview": "**CO2 Level Sensor 5.01 is currently at 1,152 ppm**, which is **elevated** for indoor air quality. ⚠️ This is above the commonly preferred comfort range of **below 800–1,000 ppm**, suggesting ventilation on floor 2 may be insufficient at the moment. ",
+      "elapsed": 16.0,
+      "pass": true
+    },
+    {
+      "label": "EDGE-3 sensor count floor1 -> must NOT route floor_plan",
+      "query": "How many CO2 sensors are on floor 1?",
+      "status": "PASS",
+      "response_len": 3493,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Smart Building**  The building's IoT monitoring network includes approximately 680 sensors covering: (1) Air temperature (thermal comfort) — all zones; (2) CO2 concentration (indoo",
+      "elapsed": 2.1,
+      "pass": true
+    },
+    {
+      "label": "EDGE-4 compare floor1 floor3 -> must NOT route floor_plan",
+      "query": "Compare energy usage on floor 1 vs floor 3 last month.",
+      "status": "PASS",
+      "response_len": 481,
+      "response_preview": "**Compliance Check — Zone or Sensor Required**  To assess ASHRAE / WELL / BREEAM compliance I need live sensor readings from a specific zone or sensor.  Please try one of:  - *'Is the temperature in Zone 5.28 within ASHRAE 55 comfort limits?'* - *'Ch",
+      "elapsed": 8.5,
+      "pass": true
+    },
+    {
+      "label": "PERSONA-1 facility_manager maintenance",
+      "query": "As a facility manager, show me a weekly maintenance and fault summary ",
+      "status": "PASS",
+      "response_len": 1240,
+      "response_preview": "# Weekly HVAC Maintenance and Fault Summary   **Building:** Abacws Building   **Report Type:** Summary   **Generated:** 2026-05-22 07:11 BST    ## 1. Executive Summary No HVAC maintenance, fault, or sensor data was available for this reporting period",
+      "elapsed": 64.3,
+      "pass": true
+    },
+    {
+      "label": "PERSONA-2 analyst CO2 variance",
+      "query": "I need to run a statistical analysis of CO2 sensor variance by floor f",
+      "status": "PASS",
+      "response_len": 1157,
+      "response_preview": "**Key finding: CO2 Level Sensor 5.01 shows a standard deviation of 227.50 ppm**, indicating substantial variability in CO2 levels over the 1,000 recorded readings.   ⚠️ The mean concentration was **803.23 ppm** (median **803.50 ppm**), with values ra",
+      "elapsed": 19.1,
+      "pass": true
+    },
+    {
+      "label": "PERSONA-3 safety_officer fire risk",
+      "query": "I am a building safety officer. What are the current fire safety risks",
+      "status": "PASS",
+      "response_len": 3548,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Fire Safety**  Fire safety features include: (1) Automatic smoke and heat detectors on every floor; (2) Manual call points (red break-glass units) at every stairwell and exit; (3) ",
+      "elapsed": 1.8,
+      "pass": true
+    },
+    {
+      "label": "PERSONA-4 energy_manager forecast",
+      "query": "As an energy manager, forecast energy consumption trends for next mont",
+      "status": "PASS",
+      "response_len": 499,
+      "response_preview": "**Compliance Check — Zone or Sensor Required**  To assess ASHRAE / WELL / BREEAM compliance I need live sensor readings from a specific zone or sensor.  Please try one of:  - *'Is the temperature in Zone 5.28 within ASHRAE 55 comfort limits?'* - *'Ch",
+      "elapsed": 18.6,
+      "pass": true
+    },
+    {
+      "label": "PERSONA-5 researcher occupancy",
+      "query": "I'm a student researcher studying occupancy patterns. Show me weekly o",
+      "status": "PASS",
+      "response_len": 639,
+      "response_preview": "I found a total of 13 floors in the building for your occupancy study. Here’s a summary of the weekly occupancy data organized by floor:  **Ground Floor:** - **Floor 0** (Ground Floor)  **First Floor:** - **Floor 1** (First Floor)  **Second Floor:** ",
+      "elapsed": 13.3,
+      "pass": true
+    },
+    {
+      "label": "DOC-1 full building health report",
+      "query": "Generate a full building health report covering temperature, CO2, ener",
+      "status": "PASS",
+      "response_len": 1311,
+      "response_preview": "# Building Health Summary Report   **Building:** Abacws Building   **Period:** This week   **Report Generated:** 2026-05-22 07:13 BST    ## 1. Executive Summary   A weekly building health summary was requested covering temperature, CO2, energy, and h",
+      "elapsed": 35.8,
+      "pass": true
+    },
+    {
+      "label": "DOC-2 export CSV temperature 24h",
+      "query": "Export the last 24 hours of temperature sensor data as CSV.",
+      "status": "PASS",
+      "response_len": 2121,
+      "response_preview": "✅ Export complete — **sensor_export_20260522_071349.csv** (1000 rows, 62918 bytes).  Preview (first 2000 chars): ``` timestamp,uuid,value 2026-05-22T07:13:38,5dd49972-071f-420c-a527-8cdbd1f1e6af,22.73 2026-05-22T07:13:08,5dd49972-071f-420c-a527-8cdbd",
+      "elapsed": 14.3,
+      "pass": true
+    },
+    {
+      "label": "DOC-3 anomaly report 48h",
+      "query": "Detect and report any anomalies across all sensors in the last 48 hour",
+      "status": "PASS",
+      "response_len": 755,
+      "response_preview": "I detected 2 anomalies from the air quality sensors in the last 48 hours. Here are the details:  **Sensor Information:** - **Sensor Name:** Air_Quality_Level_Sensor_5.01   - **Location:** West Zone   - **UUID:** 26f2c139-f60c-49dd-b3aa-2a38215123ab  ",
+      "elapsed": 14.1,
+      "pass": true
+    },
+    {
+      "label": "DOC-4 temperature forecast 7 days",
+      "query": "Forecast temperature trends for the next 7 days based on current senso",
+      "status": "PASS",
+      "response_len": 825,
+      "response_preview": "**Current baseline: Air Temperature Sensor 5.01 is reading 22.84 °C.** ✅ This is a normal, comfortable ambient temperature for most indoor environments and does not indicate any immediate concern. Based on the current sensor data available, the next ",
+      "elapsed": 12304.3,
+      "pass": true
+    },
+    {
+      "label": "DISC-1 sensor types discovery",
+      "query": "What types of sensors are installed in the Abacws building?",
+      "status": "PASS",
+      "response_len": 4139,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Smart Building**  The building's IoT monitoring network includes approximately 680 sensors covering: (1) Air temperature (thermal comfort) — all zones; (2) CO2 concentration (indoo",
+      "elapsed": 3.2,
+      "pass": true
+    },
+    {
+      "label": "DISC-2 zones and floors",
+      "query": "List all the zones and floors in this building.",
+      "status": "PASS",
+      "response_len": 1575,
+      "response_preview": "I found a total of 48 zones and floors in the building. Here’s a clear breakdown of the floors and zones:  **Floors:** - **Floor 0**: 2 sensors - **Floor 1**: 2 sensors - **Floor 2**: 2 sensors - **Floor 3**: 2 sensors - **Floor 4**: 2 sensors - **Fl",
+      "elapsed": 18.4,
+      "pass": true
+    },
+    {
+      "label": "DISC-3 HVAC equipment",
+      "query": "What HVAC equipment is installed in the building?",
+      "status": "PASS",
+      "response_len": 3607,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Hvac**  The building has a zone-based HVAC system with independent climate control per zone. Zones are mapped to BACnet IDs. Occupants cannot directly adjust HVAC settings; facilit",
+      "elapsed": 2.0,
+      "pass": true
+    },
+    {
+      "label": "ROBUST-1 empty query -> should clarify not crash",
+      "query": "",
+      "status": "PASS (422)",
+      "elapsed": 0,
+      "pass": true
+    },
+    {
+      "label": "ROBUST-2 multi-floor analytics (must NOT go floor_plan)",
+      "query": "Compare floor 1 and floor 3 temperatures over the last week.",
+      "status": "PASS",
+      "response_len": 481,
+      "response_preview": "**Compliance Check — Zone or Sensor Required**  To assess ASHRAE / WELL / BREEAM compliance I need live sensor readings from a specific zone or sensor.  Please try one of:  - *'Is the temperature in Zone 5.28 within ASHRAE 55 comfort limits?'* - *'Ch",
+      "elapsed": 9.7,
+      "pass": true
+    },
+    {
+      "label": "ROBUST-3 multi-sensor single query",
+      "query": "What is the current temperature, CO2 level, and humidity all at once?",
+      "status": "PASS",
+      "response_len": 1596,
+      "response_preview": "I found the current temperature, CO2 levels, and humidity for various floors in the building. Here’s a summary of the data organized by floor:  ### **Ground Floor (Floor 0)** - **Temperature:** [Value not provided] - **CO2 Level:** [Value not provide",
+      "elapsed": 12.1,
+      "pass": true
+    },
+    {
+      "label": "ROBUST-4 vague open-ended query",
+      "query": "Tell me everything about this building.",
+      "status": "PASS",
+      "response_len": 3778,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Building Overview**  Abacws houses two Cardiff University schools: (1) School of Computer Science and Informatics; (2) School of Mathematics (including financial mathematics and st",
+      "elapsed": 1.7,
+      "pass": true
+    },
+    {
+      "label": "ROBUST-5 SQL injection attempt -> safe natural language",
+      "query": "'; DROP TABLE sensors; --",
+      "status": "PASS",
+      "response_len": 4330,
+      "response_preview": "Here is the information I have on record for **Abacws Building**:   **Smart Building**  The building's IoT monitoring network includes approximately 680 sensors covering: (1) Air temperature (thermal comfort) — all zones; (2) CO2 concentration (indoo",
+      "elapsed": 4.9,
+      "pass": true
+    }
+  ]
+}

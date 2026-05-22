@@ -187,6 +187,45 @@ Use these as the **first `Read` call** for any task — jump straight to the rig
 | OpenAI-compat chat endpoint | `orchestrator/main.py` | 2112 | `@app.post("/v1/chat/completions")` |
 | Floor plan REST endpoints | `orchestrator/main.py` | 2406 | `@app.get("/floor-plans/")` |
 | Docker service definitions | `docker-compose.yml` | 1 | all service blocks |
+| Capability KB answer node | `orchestrator/agents/capability_agent.py` | 60 | `CapabilityAgent.answer()` |
+| Capability semantic indexer | `orchestrator/services/capability_indexer.py` | 60 | `class CapabilityIndexer` |
+| Capability semantic router | `orchestrator/services/semantic_router.py` | 71 | `class SemanticRouter` |
+| Embedding service wrapper | `orchestrator/services/embedding_service.py` | 50 | `class EmbeddingService` |
+| Capability routing config | `shared/capability_schema.py` | 22 | `class CapabilityRoutingConfig` |
+
+---
+
+## Capability semantic routing (added 2026-05-21)
+
+The dialogue agent has a fast-path for capability queries (off-ontology building features, policies, amenities) that bypasses the LLM intent call when a high-confidence semantic match exists.
+
+**Pipeline:**
+
+1. At startup, `CapabilityIndexer` reads each `input/<bldg>/capability.yaml`, embeds every keyword + content snippet via `EmbeddingService` (OpenAI or local), and upserts into a Qdrant collection `capability_<bldg>`. SHA-256 fingerprint stored on every point — unchanged YAML on restart triggers zero embedding API calls (idempotent).
+
+2. On every query, `dialogue_agent.detect_intent()` calls `SemanticRouter.classify(query, building_id)` BEFORE the LLM intent call.
+
+3. Decision rule (per-building tunable in `input/<bldg>/building.yaml`):
+   - `score >= override_min` (calibrated 0.55) → intent=capability, skip LLM call entirely
+   - `threshold <= score < override_min` (calibrated 0.50) → soft override after LLM (only if LLM picked a non-data intent)
+   - `score < threshold` → no signal, LLM intent classification proceeds normally
+
+4. `CapabilityAgent.answer()` reads pre-fetched matches from `state.intermediate_results["capability_matches"]` and formats the response — no second KB search.
+
+**Per-building config** (`input/<bldg>/building.yaml`):
+
+```yaml
+capability_routing:
+  enabled: true
+  threshold: 0.50       # soft override band lower bound
+  override_min: 0.55    # skip-LLM threshold
+  top_k: 5
+  embedding_model: auto # 'auto' follows EMBEDDING_PROVIDER
+```
+
+**Adding a new building's capability KB:** drop `capability.yaml` into `input/<bldg>/`, restart the orchestrator. Zero Python edits required. Failure (Qdrant down, embedding API down) is graceful — orchestrator boots, router returns `source="fallback"`, dialogue agent reverts to LLM-only intent.
+
+**Threshold calibration:** the defaults assume OpenAI `text-embedding-3-small` (1536-dim). If `EMBEDDING_PROVIDER` switches to local (sentence-transformers, 384-dim), `CapabilityIndexer` detects the dim mismatch on next startup and rebuilds the collection automatically, but score distributions differ between models — re-tune `threshold` / `override_min` per the calibration script in `scripts/capture_baseline.py`.
 
 ---
 
@@ -313,6 +352,35 @@ curl -s -X POST http://localhost:7200/repositories/ontosage/sparql \
 curl http://localhost:8000/api/v1/floor-plans/abacws/3/manifest | python -m json.tool | grep schema_version
 ```
 
+### Capability semantic routing not firing
+```bash
+# 1. Verify the per-building collection exists in Qdrant
+curl -s http://localhost:6333/collections | python -m json.tool | grep capability_
+
+# 2. If missing, check indexer logs at startup
+docker logs ontosage-orchestrator | grep capability_indexer
+# Look for: "status=indexed entries=N points=M" (success) vs "status=degraded"
+
+# 3. Most common degraded reason: embedding API down
+# Either install sentence-transformers (in requirements.txt — auto on next build),
+# OR switch EMBEDDING_PROVIDER=openai in .env (uses existing OPENAI_API_KEY)
+
+# 4. Inspect a stored point to verify yaml_sha (idempotency fingerprint)
+curl -s 'http://localhost:6333/collections/capability_bldg1/points/scroll?limit=1' \
+  | python -m json.tool | grep yaml_sha
+```
+
+### Capability returns wrong KB entry
+```bash
+# Lower threshold temporarily to see all candidates ranked
+# Edit input/<bldg>/building.yaml:
+#   capability_routing:
+#     threshold: 0.30      # see everything
+#     override_min: 0.50
+# Restart, send the query, check logs for "[semantic-route]" lines showing scores.
+# The router groups raw Qdrant points by entry_id with max-pool scoring.
+```
+
 ---
 
 ## Installed Skills Guide
@@ -360,3 +428,5 @@ Call out bad logic, weak assumptions, and blind spots immediately — even if I 
 Especially then. The more certain I sound, the more I need pushback.
 If you catch yourself about to start a response with
 “That’s a great point” or “You’re absolutely right” - stop and rewrite. Start with the most useful thing you can say instead
+
+DO NOT PUSH CHANGES TO GIT UNTILL I SAY IT EXPLICITELY. Always wait for my approval before making any commits or pushing to the repository. I want to review and understand the changes before they are added to the codebase.

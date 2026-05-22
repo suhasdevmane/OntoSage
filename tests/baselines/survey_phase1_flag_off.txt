@@ -1,0 +1,25 @@
+  T17-L4 AI optimisation report: 80.9s
+  T19-L3 maintenance prediction: 23.6s
+  T19-L4 predictive maintenance report: 62.5s
+  T20-L1 carbon emissions: 22.7s
+  T20-L4 net-zero progress report: 52.5s
+  PERSONA-1 facility_manager maintenance: 66.1s
+  PERSONA-3 safety_officer fire risk: 25.1s
+  PERSONA-4 energy_manager forecast: 23.3s
+  DOC-1 full building health report: 50.3s
+
+Latency: avg=21.4s  median=14.2s  max=80.9s
+
+[Category Breakdown]
+  Sensor data (T1-T5,T7,T14,T20 L1)   8/8  [########]
+  Analytics (L2-L3)                   13/13  [#############]
+  Reports (L4)                        9/9  [#########]
+  KB capability                       12/12  [############]
+  Floor plan / spatial                4/4  [####]
+  Routing edge cases                  4/4  [####]
+  Personas                            5/5  [#####]
+  Documents                           4/4  [####]
+  Discovery                           3/3  [###]
+  Robustness                          5/5  [#####]
+
+Full results saved to: survey_test_results.json

@@ -24,59 +24,7 @@ from shared.utils import generate_hash, get_logger
 
 logger = get_logger(__name__)
 
-# Off-ontology capability keywords — queries matching any of these are routed to the
-# CapabilityAgent (KB lookup) rather than SPARQL/LLM, because they cannot be answered
-# from sensor time-series data.  Defined once at module level so the hot-path and the
-# Redis intent-cache-hit path always use the same set (no sync drift).
-_CAPABILITY_KW: frozenset = frozenset({
-    "fire safety", "fire alarm", "evacuation", "assembly point",
-    "sprinkler", "fire exit", "fire warden", "fire drill",
-    "power outage", "backup power", "generator", "ups",
-    "access control", "swipe card", "security camera", "cctv",
-    "after hours", "out of hours", "building access", "who can enter",
-    "card access", "key fob", "can i access", "enter the building",
-    "access the building",
-    "smart device", "can i control", "can the building",
-    "can we control", "smart building",
-    "wifi", "eduroam", "it support", "it helpdesk",
-    "wheelchair", "accessible", "disability", "lift access",
-    "cafe", "canteen", "vending machine", "kitchen facilities",
-    "shower", "bike storage", "amenities", "facilities",
-    "complaint", "how do i report", "who do i contact",
-    "how to book", "room booking", "opening hours", "is it open",
-    "sustainability", "breeam", "recycling", "green building",
-    "emergency contact", "first aid", "defibrillator", "aed",
-    "safety feature", "building feature", "building capability",
-    "what does this building", "what can this building",
-    "what sensors are", "what is measured", "sensor coverage",
-    "what is monitored", "what data is collected",
-    "occupancy limit", "room capacity", "fire capacity",
-    "policy", "building policy", "building rule",
-    "evacuation plan", "emergency procedure",
-    # Transport / parking
-    "parking", "car park", "how to get here", "directions",
-    "public transport", "bus stop", "train station", "cycle",
-    "ev charging", "electric vehicle",
-    # Printing
-    "printer", "printing", "papercut", "scan", "photocopier",
-    "how to print", "print credit",
-    # Wellbeing
-    "prayer room", "reflection room", "nursing room", "quiet room",
-    "wellbeing", "mental health", "gender neutral",
-    # GDPR / data privacy
-    "gdpr", "data privacy", "personal data", "who sees my data",
-    "data protection", "smart building privacy", "sensor privacy",
-    "location tracking", "right to know",
-    # Building management contacts
-    "building manager", "who manages", "facilities manager",
-    "estate manager", "who is responsible", "building contact",
-    # Visitor policy
-    "visitor", "guest", "external visitor", "sign in", "visitor badge",
-    "can guests come", "can i bring someone", "invite a visitor",
-    # Thermal comfort complaints
-    "too hot", "too cold", "overheating", "freezing", "stuffy",
-    "uncomfortable temperature", "thermal comfort", "temperature complaint",
-})
+
 
 # P6: Few-shot library for intent detection
 _FEW_SHOT_LIB: Optional[Dict] = None
@@ -349,6 +297,10 @@ class DialogueAgent:
 
     def __init__(self):
         self.context_manager = ContextManager(llm_manager)
+        # Injected by main.py lifespan once Qdrant + EmbeddingService are ready.
+        # When None (e.g. during unit tests, or if init failed), semantic routing
+        # is silently skipped — the legacy keyword override path runs as before.
+        self.semantic_router = None  # type: ignore[assignment]
 
     async def _retrieve_ontology_context(self, query: str, top_k: int = 5) -> List[str]:
         """
@@ -419,6 +371,67 @@ class DialogueAgent:
         logger.info(f"📥 User Query: {user_query}")
         logger.info(f"📜 Conversation History: {len(state.messages)} messages total")
 
+        # ── Capability semantic-first routing (Phase 1 migration) ──
+        # Flag-gated. When the flag is OFF, this block is a no-op and the legacy
+        # keyword-based override (further down) handles capability routing as today.
+        #
+        # When ON: query Qdrant for a high-confidence capability match BEFORE the
+        # LLM intent call.  A score >= override_min lets us skip the LLM entirely
+        # (saves ~200ms).  A score in [threshold, override_min) is recorded on
+        # state for the post-LLM soft-override step.  Below threshold → no signal.
+        #
+        # Failures (Qdrant down, embedding API down) return source="fallback" and
+        # the LLM intent classification proceeds normally — non-fatal by design.
+        if (
+self.semantic_router is not None
+            and user_query
+            and user_query.strip()
+        ):
+            try:
+                bldg_id = state.building_id or "bldg1"
+                semantic_result = await self.semantic_router.classify(user_query, bldg_id)
+                state.intermediate_results["_semantic_route"] = {
+                    "score": semantic_result.score,
+                    "source": semantic_result.source,
+                    "match_count": len(semantic_result.matches),
+                }
+                if semantic_result.intent == "capability":
+                    state.intermediate_results["capability_matches"] = semantic_result.matches
+                    state.intermediate_results["semantic_route_score"] = semantic_result.score
+                    logger.info(
+                        f"[semantic-route] HIGH-CONFIDENCE capability hit "
+                        f"(score={semantic_result.score:.3f}, top={semantic_result.matches[0].entry_id if semantic_result.matches else '?'}) "
+                        f"— skipping LLM intent call"
+                    )
+                    return {
+                        "intent": "capability",
+                        "general": False,
+                        "analytics": False,
+                        "sparql_query": "",
+                        "response": "",
+                    }
+                elif semantic_result.intent:
+                    # Multi-intent extension: any other registered intent (floor_plan,
+                    # spatial_query, ...) that crossed override_min. No pre-fetched
+                    # data — the downstream node (floor_plan node, spatial_query node)
+                    # owns its own data path.
+                    state.intermediate_results["semantic_route_score"] = semantic_result.score
+                    state.intermediate_results["semantic_route_intent"] = semantic_result.intent
+                    logger.info(
+                        f"[semantic-route] HIGH-CONFIDENCE {semantic_result.intent} hit "
+                        f"(score={semantic_result.score:.3f}) — skipping LLM intent call"
+                    )
+                    return {
+                        "intent": semantic_result.intent,
+                        "general": False,
+                        "analytics": False,
+                        "sparql_query": "",
+                        "response": "",
+                    }
+            except Exception as e:
+                # Never let semantic routing block intent detection
+                logger.warning(f"[semantic-route] check failed (non-fatal): {e}")
+
         # Retrieve ontology context from RAG service
         logger.info("🔍 Retrieving ontology context from GraphDB RAG...")
         ontology_context = await self._retrieve_ontology_context(user_query, top_k=5)
@@ -460,24 +473,6 @@ class DialogueAgent:
 
         if cached_result:
             logger.info(f"✅ Cache hit for intent detection: {prompt_hash}")
-            # Re-apply capability keyword override — the override may have been added
-            # after this entry was cached, so we must always re-check on cache hits.
-            # Use the module-level _CAPABILITY_KW constant — never inline a copy here.
-            _q_lower = user_query.lower()
-            _no_data_intent = cached_result.get("intent") in (
-                "general", "clarification", "unknown", "general_knowledge",
-                "sparql", "discovery", "metadata",
-            )
-            if any(kw in _q_lower for kw in _CAPABILITY_KW) and _no_data_intent:
-                logger.info(
-                    "[intent-override/cache] Forcing 'capability' (was '%s') "
-                    "— capability/off-ontology keyword detected",
-                    cached_result.get("intent"),
-                )
-                cached_result = dict(cached_result)
-                cached_result["intent"] = "capability"
-                cached_result["analytics"] = False
-                cached_result["general"] = False
             return cached_result
 
         # Call LLM to detect intent
@@ -488,6 +483,46 @@ class DialogueAgent:
 
             # Parse JSON response
             result = self._parse_llm_response(llm_response, user_query)
+
+            # ── Capability semantic SOFT override (medium-band) ────────────────
+            # Flag-gated. Runs AFTER _parse_llm_response so the keyword override
+            # has had a chance to fire first. Only kicks in when:
+            #   - Flag enabled AND semantic router available
+            #   - LLM picked a NON-data intent AND keyword override did NOT already
+            #     route to capability
+            #   - Semantic score is in [threshold, override_min) — the medium band
+            # High-band overrides already short-circuited before the LLM call.
+            if (
+self.semantic_router is not None
+                and result.get("intent") != "capability"
+            ):
+                _sem_meta = state.intermediate_results.get("_semantic_route") or {}
+                _sem_score = float(_sem_meta.get("score") or 0.0)
+                _llm_intent = result.get("intent")
+                _NON_DATA_INTENTS = {
+                    "general", "clarification", "unknown", "general_knowledge",
+                    "sparql", "discovery", "metadata",
+                }
+                if (
+                    _sem_score > 0.0
+                    and _sem_meta.get("match_count", 0) > 0
+                    and _llm_intent in _NON_DATA_INTENTS
+                ):
+                    try:
+                        _bldg_id = state.building_id or "bldg1"
+                        _sem = await self.semantic_router.classify(user_query, _bldg_id)
+                        if _sem.matches:
+                            state.intermediate_results["capability_matches"] = _sem.matches
+                            state.intermediate_results["semantic_route_score"] = _sem.score
+                            logger.info(
+                                f"[semantic-route] SOFT override (was '{_llm_intent}', "
+                                f"score={_sem.score:.3f}) → capability"
+                            )
+                            result["intent"] = "capability"
+                            result["analytics"] = False
+                            result["general"] = False
+                    except Exception as _sem_e:
+                        logger.debug(f"[semantic-route] soft override skipped: {_sem_e}")
 
             # Cache result
             await redis_manager.set_cache(cache_key, result, ttl=3600)
@@ -792,27 +827,26 @@ Return ONLY the JSON object.
                     normalized["analytics"] = True
                     normalized["general"] = False
 
-                # ── Capability / off-ontology override ────────────────────────────
-                # Queries about building features, safety, policies, amenities, contacts,
-                # and procedures are off-ontology (OTHER/CAPABILITY stratum in survey G2).
-                # These currently fall through SPARQL→RAG and hallucinate.
-                # Route to capability agent when strong capability keywords detected and
-                # the current intent provides no grounded data path.
-                # Uses the module-level _CAPABILITY_KW frozenset — do NOT redefine inline.
-                _has_capability_kw = any(kw in _q_lower for kw in _CAPABILITY_KW)
-                # Also override sparql/discovery when capability keywords are present —
-                # these are off-ontology queries that SPARQL cannot answer from sensor data.
-                _no_data_intent = normalized.get("intent") in (
-                    "general", "clarification", "unknown", "general_knowledge",
-                    "sparql", "discovery", "metadata",
+                # Floor plan navigation queries must always route to floor_plan, not sparql.
+                # gpt-4o-mini occasionally classifies "Show me floor N" as "sparql" or
+                # "discovery" because it interprets "floor" as an ontology entity lookup.
+                # These phrases unambiguously request a visual/structural floor plan.
+                _FLOOR_PLAN_KWS = (
+                    "show me floor", "floor plan", "floor layout", "floor map",
+                    "building map", "building layout", "building overview",
+                    "all floors", "where is room", "where is zone",
+                    "locate room", "find room", "navigate to room",
+                    "directions to room", "how do i get to",
                 )
-                if _has_capability_kw and _no_data_intent:
+                _has_floor_plan_kw = any(kw in _q_lower for kw in _FLOOR_PLAN_KWS)
+                if _has_floor_plan_kw and normalized.get("intent") not in (
+                    "floor_plan", "spatial_query"
+                ):
                     logger.info(
-                        "[intent-override] Forcing 'capability' (was '%s') "
-                        "— capability/off-ontology keyword detected",
-                        normalized.get("intent"),
+                        f"[intent-override] Forcing 'floor_plan' (was '{normalized.get('intent')}') "
+                        "— floor plan navigation keyword detected"
                     )
-                    normalized["intent"] = "capability"
+                    normalized["intent"] = "floor_plan"
                     normalized["analytics"] = False
                     normalized["general"] = False
 
