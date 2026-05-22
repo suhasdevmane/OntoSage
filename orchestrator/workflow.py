@@ -1777,7 +1777,24 @@ Instructions:
             "forecast", "report", "export", "recommend", "planner",
             "spatial_query", "maintenance", "sparql", "sql", "discovery",
             "alert", "control", "trend", "compliance", "visualization",
+            "capability",  # KB lookup has its own grounded data path
         })
+
+        # Guard: LLM sometimes misfires "compare floor X vs floor Y" as floor_plan.
+        # When comparison + data keywords both appear, override back to comparison.
+        if intent == "floor_plan":
+            _ql = user_query.lower()
+            _COMPARE_KW = frozenset({"compare", "comparison", " vs ", " versus ", "difference between"})
+            _DATA_KW = frozenset({
+                "temperature", "co2", "energy", "humidity", "sensor", "consumption",
+                "usage", "reading", "level", "analytics", "trend", "data",
+                "noise", "light", "occupancy", "carbon", "emission",
+            })
+            if any(kw in _ql for kw in _COMPARE_KW) and any(kw in _ql for kw in _DATA_KW):
+                logger.info(f"[route] floor_plan → comparison override (compare+data keywords in query)")
+                intent = "comparison"
+                state.current_intent = "comparison"
+
         if intent == "floor_plan" or (
             floor_plan_service.is_floor_plan_query(user_query) and intent not in _data_intents
         ):

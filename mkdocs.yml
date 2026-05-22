@@ -1,5 +1,5 @@
-site_name: OntoSage 2.0
-site_description: Agentic AI for Intelligent Buildings
+site_name: OntoSage 3.1
+site_description: Agentic AI for Intelligent Buildings — with capability semantic routing
 site_url: https://suhasdevmane.github.io/OntoSage/
 repo_url: https://github.com/suhasdevmane/OntoSage
 repo_name: suhasdevmane/OntoSage
@@ -73,6 +73,7 @@ nav:
   - Architecture: ARCHITECTURE.md
   - Workflow Deep Dive: WORKFLOW.md
   - Services: SERVICES.md
+  - Capability Routing (v3.1): CAPABILITY_ROUTING.md
   - Configuration: CONFIGURATION.md
   - GraphDB Setup: GRAPHDB_SETUP.md
   - Building Onboarding: BUILDING_ONBOARDING.md
@@ -88,9 +89,12 @@ nav:
       - Paper Pipeline: superpowers/plans/2026-04-11-paper-pipeline.md
       - Building Bootstrap: superpowers/plans/2026-04-14-building-bootstrap.md
       - MCP Server: superpowers/plans/2026-04-14-mcp-server.md
+      - Capability Semantic Routing: superpowers/plans/2026-05-21-capability-semantic-routing-plan.md
     - Specs:
       - Orchestrator Recovery Design: superpowers/specs/2026-03-31-orchestrator-recovery-design.md
       - Claude Config Design: superpowers/specs/2026-04-11-claude-config-design.md
       - Paper Writing Design: superpowers/specs/2026-04-11-paper-writing-design.md
       - Building Bootstrap Design: superpowers/specs/2026-04-14-building-bootstrap-design.md
       - MCP Server Design: superpowers/specs/2026-04-14-mcp-server-design.md
+      - Capability Semantic Routing Design: superpowers/specs/2026-05-21-capability-semantic-routing-design.md
+      - Multi-Intent Semantic Routing: superpowers/specs/2026-05-22-multi-intent-semantic-routing.md

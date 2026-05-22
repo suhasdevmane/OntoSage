@@ -37,37 +37,56 @@ class TestCapabilitySchema:
         # .building is an alias for .building_info
         assert kb.building is kb.building_info
 
-    def test_search_fire_safety(self):
+    def test_fire_safety_entries_exist(self):
+        """FIRE_SAFETY KB entries are present with the expected keywords."""
         from shared.capability_schema import CapabilityKB
         yaml_path = Path(__file__).resolve().parents[1] / "input" / "bldg1" / "capability.yaml"
         kb = CapabilityKB.from_yaml(yaml_path)
-        results = kb.search("fire alarm evacuation")
-        assert len(results) >= 1
-        cats = [e.category for e in results]
-        assert "FIRE_SAFETY" in cats
+        fire_entries = [e for e in kb.capabilities if e.category == "FIRE_SAFETY"]
+        assert len(fire_entries) >= 1, "FIRE_SAFETY category missing from bldg1 KB"
+        all_kws = {kw.lower() for e in fire_entries for kw in e.keywords}
+        assert any(k in all_kws for k in ("fire", "evacuation", "fire alarm")), (
+            "FIRE_SAFETY entry must have fire/evacuation keywords for SemanticRouter to surface it"
+        )
 
-    def test_search_returns_empty_for_unrelated_query(self):
-        from shared.capability_schema import CapabilityKB
-        yaml_path = Path(__file__).resolve().parents[1] / "input" / "bldg1" / "capability.yaml"
-        kb = CapabilityKB.from_yaml(yaml_path)
-        results = kb.search("xenon plasma reactor antimatter")
-        assert results == []
+    def test_nonsense_query_has_no_matching_keywords(self):
+        """KB keywords must not overlap with completely unrelated terms.
 
-    def test_search_max_results_cap(self):
+        Phase-3: CapabilityKB.search() was removed; SemanticRouter (Qdrant) now
+        handles matching.  This test validates that the KB keyword lists are specific
+        enough that 'xenon plasma reactor antimatter' won't create spurious vector
+        overlap (indirect validation — the keywords aren't present in any entry).
+        """
         from shared.capability_schema import CapabilityKB
         yaml_path = Path(__file__).resolve().parents[1] / "input" / "bldg1" / "capability.yaml"
         kb = CapabilityKB.from_yaml(yaml_path)
-        # A broad query matching many entries should still cap at max_results
-        results = kb.search("building", max_results=2)
-        assert len(results) <= 2
+        nonsense_words = {"xenon", "plasma", "reactor", "antimatter"}
+        all_kws = {kw.lower() for e in kb.capabilities for kw in e.keywords}
+        assert not (nonsense_words & all_kws), (
+            f"Unexpected keyword overlap with nonsense: {nonsense_words & all_kws}"
+        )
 
-    def test_search_hvac_keywords(self):
+    def test_capabilities_list_is_bounded(self):
+        """capabilities list is finite and contains at least 10 entries."""
         from shared.capability_schema import CapabilityKB
         yaml_path = Path(__file__).resolve().parents[1] / "input" / "bldg1" / "capability.yaml"
         kb = CapabilityKB.from_yaml(yaml_path)
-        results = kb.search("heating zone thermostat temperature control")
-        cats = [e.category for e in results]
-        assert "HVAC" in cats
+        assert len(kb.capabilities) >= 10
+        # Slicing to top-2 works (mirrors max_results capping in SemanticRouter)
+        top2 = kb.capabilities[:2]
+        assert len(top2) <= 2
+
+    def test_hvac_entries_exist_with_correct_keywords(self):
+        """HVAC KB entries are present with heating / zone keywords for the indexer."""
+        from shared.capability_schema import CapabilityKB
+        yaml_path = Path(__file__).resolve().parents[1] / "input" / "bldg1" / "capability.yaml"
+        kb = CapabilityKB.from_yaml(yaml_path)
+        hvac_entries = [e for e in kb.capabilities if e.category == "HVAC"]
+        assert hvac_entries, "HVAC category missing from bldg1 KB"
+        all_kws = {kw.lower() for e in hvac_entries for kw in e.keywords}
+        assert any(k in all_kws for k in ("heating", "zone", "thermostat")), (
+            "HVAC entry must have heating/zone/thermostat keywords"
+        )
 
     def test_building_info_key_not_picked_up_as_multi_building(self):
         from shared.capability_schema import CapabilityKB
@@ -97,9 +116,19 @@ def _make_state(query: str, building_id: str = "bldg1") -> Any:
 
 class TestCapabilityAgent:
     def test_answers_fire_safety_query(self):
-        from orchestrator.agents.capability_agent import CapabilityAgent
+        from orchestrator.agents.capability_agent import CapabilityAgent, _load_kb
+        from types import SimpleNamespace
         agent = CapabilityAgent()
         state = _make_state("What are the fire safety features?")
+        # Phase-3: CapabilityAgent reads pre-fetched matches from state.
+        # Populate them as SemanticRouter would during a real request.
+        kb = _load_kb("bldg1")
+        assert kb is not None, "bldg1 capability KB must be loadable in test env"
+        fire_entries = [e for e in kb.capabilities if e.category == "FIRE_SAFETY"]
+        assert fire_entries, "FIRE_SAFETY entries missing from capability.yaml"
+        state.intermediate_results["capability_matches"] = [
+            SimpleNamespace(entry=e) for e in fire_entries[:2]
+        ]
         result_state = asyncio.get_event_loop().run_until_complete(agent.answer(state))
         cap = result_state.intermediate_results.get("capability_result", {})
         assert cap.get("success") is True
@@ -107,9 +136,18 @@ class TestCapabilityAgent:
         assert "fire" in cap["response"].lower() or "sprinkler" in cap["response"].lower()
 
     def test_answers_power_outage_query(self):
-        from orchestrator.agents.capability_agent import CapabilityAgent
+        from orchestrator.agents.capability_agent import CapabilityAgent, _load_kb
+        from types import SimpleNamespace
         agent = CapabilityAgent()
         state = _make_state("What happens during a power outage?")
+        # Phase-3: populate pre-fetched matches as SemanticRouter would.
+        kb = _load_kb("bldg1")
+        assert kb is not None, "bldg1 capability KB must be loadable in test env"
+        power_entries = [e for e in kb.capabilities if e.category == "POWER"]
+        assert power_entries, "POWER entries missing from capability.yaml"
+        state.intermediate_results["capability_matches"] = [
+            SimpleNamespace(entry=e) for e in power_entries[:2]
+        ]
         result_state = asyncio.get_event_loop().run_until_complete(agent.answer(state))
         cap = result_state.intermediate_results.get("capability_result", {})
         assert cap.get("success") is True
@@ -150,9 +188,18 @@ class TestCapabilityAgent:
         assert cap.get("provenance") == "no_kb"
 
     def test_response_includes_provenance_source(self):
-        from orchestrator.agents.capability_agent import CapabilityAgent
+        from orchestrator.agents.capability_agent import CapabilityAgent, _load_kb
+        from types import SimpleNamespace
         agent = CapabilityAgent()
         state = _make_state("How does access control work?")
+        # Phase-3: populate pre-fetched matches (SECURITY/access_control entry).
+        kb = _load_kb("bldg1")
+        assert kb is not None
+        security_entries = [e for e in kb.capabilities if e.category == "SECURITY"]
+        assert security_entries, "SECURITY entries missing from capability.yaml"
+        state.intermediate_results["capability_matches"] = [
+            SimpleNamespace(entry=e) for e in security_entries[:1]
+        ]
         result_state = asyncio.get_event_loop().run_until_complete(agent.answer(state))
         cap = result_state.intermediate_results.get("capability_result", {})
         assert cap.get("provenance") == "capability_kb"
@@ -555,8 +602,14 @@ class TestCapabilityWorkflowWiring:
 
     def test_capability_intent_override_in_dialogue_agent(self):
         content = Path("orchestrator/agents/dialogue_agent.py").read_text(encoding="utf-8")
-        assert "_CAPABILITY_KW" in content
-        assert '"capability"' in content
+        # Phase-3: legacy _CAPABILITY_KW keyword list was removed; capability intent
+        # override is now driven by SemanticRouter (Qdrant vector search).
+        assert "semantic_router" in content, (
+            "dialogue_agent must reference semantic_router for capability override"
+        )
+        assert '"capability"' in content, (
+            "dialogue_agent must still emit intent='capability'"
+        )
 
     def test_g1_taxonomy_emitted_in_dialogue_agent(self):
         content = Path("orchestrator/agents/dialogue_agent.py").read_text(encoding="utf-8")

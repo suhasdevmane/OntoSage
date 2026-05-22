@@ -277,7 +277,7 @@ These URL environment variables point services to each other within the Docker n
 
 ## Qdrant Vector Database
 
-Qdrant stores agent memory (historical queries, analytics code snippets) and enables vector search for query suggestions.
+Qdrant stores agent memory, floor-plan vectors, and (v3.1) per-building capability KB collections.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -286,6 +286,57 @@ Qdrant stores agent memory (historical queries, analytics code snippets) and ena
 | `QDRANT_QUERIES_COLLECTION` | `queries` | Collection for historical SPARQL query cache |
 | `QDRANT_ANALYTICS_COLLECTION` | `analytics` | Collection for reusable analytics code snippets |
 | `QDRANT_DOCS_COLLECTION` | `documentation` | Collection for help text and documentation |
+
+Per-building collections (auto-managed; no env var needed):
+
+| Collection name pattern | Created by | Purpose |
+|---|---|---|
+| `capability_<building_id>` | `CapabilityIndexer` at startup | KB lookup for off-ontology questions |
+| `intent_<building_id>_<intent>` | Indexer if `intent_routing.enabled: true` | Multi-intent routing (opt-in) |
+| `floor_plans` | `FloorPlanRegistry` | Room description + DWG geometry |
+| `user_memory` | `AgentMemoryService` | Per-user cross-session memory |
+
+---
+
+## Capability Semantic Routing *(v3.1)*
+
+Controls the embedding provider behind the capability KB indexer and the query-time semantic router. When `EMBEDDING_PROVIDER` is unset, it defaults to `openai` (uses `OPENAI_API_KEY`).
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `EMBEDDING_PROVIDER` | `openai` | `openai` (uses OpenAI API) or `local` (uses sentence-transformers in-process) |
+| `EMBEDDING_MODEL_OPENAI` | `text-embedding-3-small` | OpenAI embedding model (1536 dims) |
+| `EMBEDDING_MODEL_LOCAL` | `sentence-transformers/all-MiniLM-L6-v2` | Local model name (384 dims, ~90 MB) |
+| `EMBEDDING_CACHE_TTL_SECONDS` | `86400` | Redis `cache:embed:*` TTL — 24 h by default |
+
+> **Provider switching is free at runtime.** Changing `EMBEDDING_PROVIDER` and restarting triggers automatic Qdrant collection rebuild — `CapabilityIndexer` detects the dimension mismatch and re-embeds. Thresholds in `input/<bldg>/building.yaml` may need re-calibration when switching models (the score distribution differs); see [Capability Routing § Threshold calibration](CAPABILITY_ROUTING.md#threshold-calibration).
+
+### Per-building routing config
+
+Lives in `input/<building_id>/building.yaml`. Read by `SemanticRouter` at query time.
+
+```yaml
+capability_routing:
+  enabled: true
+  embedding_model: auto       # 'auto' follows EMBEDDING_PROVIDER
+  threshold: 0.56             # soft-override band lower bound
+  override_min: 0.60          # hard skip-LLM threshold
+  top_k: 5                    # max KB entries returned
+  fallback_on_qdrant_failure: skip   # silent LLM-only fallback
+```
+
+**Calibrated values for bldg1 (Abacws, 32 KB entries):**
+
+| Embedding model | Dimensions | `threshold` | `override_min` |
+|---|---|---|---|
+| OpenAI `text-embedding-3-small` | 1536 | 0.50 | 0.55 |
+| Local `all-MiniLM-L6-v2` | 384 | **0.56** | **0.60** |
+
+**Validation rules** (Pydantic, fail-fast at startup):
+- `override_min >= threshold` (boundary `==` allowed)
+- `0.0 <= threshold, override_min <= 1.0`
+- `1 <= top_k <= 50`
+- `fallback_on_qdrant_failure ∈ {"skip"}` (legacy `"keyword"` removed in Phase 3 cleanup)
 
 ---
 

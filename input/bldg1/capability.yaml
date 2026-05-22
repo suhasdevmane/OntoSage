@@ -12,15 +12,20 @@ building_info:
   floors: 6
   floor_range: "Ground (0) to Floor 5"
   total_area_m2: ~14000
-  occupancy_type: Mixed-use academic (computer science, data innovation, research labs)
+  cost_gbp: "£39m"
+  architect: "Stride Treglown with Adjaye Associates"
+  contractor: ISG
+  occupancy_type: Mixed-use academic (computer science, mathematics, data innovation, research labs)
   smart_building: true
   sensor_count: ~680
+  reception_hours: "Monday–Friday 09:00–16:30; Saturday–Sunday Closed"
   description: >
     Abacws is Cardiff University's flagship digital innovation building, opened in 2021.
-    It houses the School of Computer Science and Informatics together with
-    the Data Innovation Research Institute. The building features a comprehensive
-    IoT sensor network with ~680 sensors monitoring temperature, CO2, humidity,
-    and other environmental parameters across six floors.
+    It houses the School of Computer Science and Informatics and the School of Mathematics,
+    together with the Data Innovation Research Institute. Designed by Stride Treglown with
+    Adjaye Associates (cost £39m), it sits on Senghennydd Road adjacent to Cathays railway
+    station. The building features a comprehensive IoT sensor network with ~680 sensors
+    monitoring temperature, CO2, humidity, and other environmental parameters across six floors.
 
 capabilities:
   - id: hvac_zoning
@@ -107,15 +112,22 @@ capabilities:
 
   - id: smart_controls
     category: SMART_BUILDING
-    keywords: [smart device, iot, control, smart, automate, can i control, adjust,
-               controllable, voice control, app control, building app, smart switch]
+    keywords: [smart device, iot, iot sensor, internet of things, control, smart, automate,
+               can i control, adjust, controllable, voice control, app control, building app,
+               smart switch, building system, building systems, automated mode, automation,
+               bms, building management system, automated control, smart building system,
+               what systems are running, systems in automated mode]
     content: >
-      The building's IoT sensors (temperature, CO2, humidity, lighting) are read-only
-      monitoring devices — occupants cannot directly control them via a public interface.
-      Lighting in open-plan areas uses presence-detection and daylight harvesting and
-      adjusts automatically. Building management staff can adjust setpoints via the
-      BMS (Building Management System). A future occupant app is planned but not yet
-      deployed. For lighting or HVAC control requests, contact facility management.
+      Building systems currently running in automated mode: (1) HVAC — zone-based climate
+      control with automatic setpoint adjustment based on occupancy schedules and sensor
+      feedback; (2) Lighting — presence-detection and daylight harvesting across all
+      open-plan areas, switching off automatically when unoccupied; (3) Ventilation —
+      CO2-driven demand-controlled ventilation adjusts fresh air supply automatically;
+      (4) Security — access control, CCTV, and door locks operate on automated schedules.
+      The building uses a BMS (Building Management System) for centralised monitoring and
+      control. Occupants cannot directly adjust automated settings; facility management
+      staff control setpoints via the BMS. For lighting or HVAC control requests,
+      contact facility management (estates@cardiff.ac.uk).
     source: building_management_system
 
   - id: lighting
@@ -259,7 +271,9 @@ capabilities:
   - id: data_sensors_coverage
     category: SMART_BUILDING
     keywords: [what sensors, sensor coverage, monitored, measured, tracked, what is measured,
-               sensor types, building data, what data, information collected, instruments]
+               sensor types, building data, what data, information collected, instruments,
+               iot sensors, active sensors, online sensors, how many sensors, sensor count,
+               sensors installed, sensor network, environmental monitoring, smart sensors]
     content: >
       The building's IoT monitoring network includes approximately 680 sensors covering:
       (1) Air temperature (thermal comfort) — all zones; (2) CO2 concentration
@@ -336,17 +350,24 @@ capabilities:
     keywords: [gdpr, data privacy, personal data, who sees my data, data protection,
                smart building privacy, sensor privacy, location tracking, data collected,
                consent, privacy policy, information governance, data subject, right to know,
-               occupant data, monitoring, surveillance]
+               occupant data, monitoring, surveillance,
+               track my location, track your location, does the building track,
+               building track, are sensors tracking, am i tracked, do sensors track,
+               track people, sensors track, are you tracking, privacy sensors,
+               sensor monitoring, location data, tracked by sensors, being tracked]
     content: >
-      The Abacws smart building collects environmental sensor data (temperature, CO2,
-      humidity, occupancy presence via PIR) for building management purposes. This data
-      is aggregated and anonymised — it does not identify individuals or track personal
-      movements. CCTV footage is handled separately under Cardiff University's CCTV
-      policy with 30-day retention. The building's data processing is governed by Cardiff
-      University's Data Protection Policy (GDPR compliant). For Subject Access Requests
-      or data privacy queries, contact the University Data Protection Officer at
-      dataprotection@cardiff.ac.uk. Full privacy notices are published on the Cardiff
-      University website.
+      Your privacy is protected. The Abacws smart building does NOT track individual
+      people or personal movements. Environmental sensors (temperature, CO2, humidity,
+      PIR presence) collect zone-level aggregated data only — no personal identifiers
+      are recorded or linked to individuals. GDPR compliance: (1) Data is collected
+      solely for building management (energy optimisation, comfort, maintenance);
+      (2) All sensor data is anonymised at the point of collection; (3) No data is
+      shared with third parties without consent; (4) Retention periods follow Cardiff
+      University's data schedule. CCTV cameras operate separately under Cardiff
+      University's CCTV policy (footage retained 30 days, access restricted to Security
+      Services and authorised investigators). For a full privacy notice, Subject Access
+      Request, or to contact the Data Protection Officer: dataprotection@cardiff.ac.uk
+      or visit the Cardiff University data protection pages online.
     source: data_protection_office
 
   - id: building_management_contact
@@ -396,3 +417,107 @@ capabilities:
       whether the measured temperature is within the ASHRAE comfort range (20–24°C).
       Persistent issues should be escalated to the Building Manager.
     source: building_management_system
+
+  - id: schools_and_key_facilities
+    category: BUILDING_OVERVIEW
+    keywords: [school of computer science, school of mathematics, mathematics department,
+               computer science department, what is abacws, what schools, which department,
+               makerspace, trading room, cybersecurity lab, simulation lab, student project,
+               computer lab, lecture theatre, seminar room, industrial partner, research lab,
+               what facilities, what rooms, it workshop, collaborative workspace, abacws features,
+               who is in the building, what is taught here, financial mathematics]
+    content: >
+      Abacws houses two Cardiff University schools: (1) School of Computer Science and
+      Informatics; (2) School of Mathematics (including financial mathematics and statistics).
+      Key named facilities: (1) Makerspace and IT Workshop — practical hardware/software
+      project space; (2) Simulated Trading Room — for financial mathematics and data
+      analytics teaching; (3) Cybersecurity Lab — dedicated teaching and research facility;
+      (4) Computer labs — designed for group work, classes, and individual study;
+      (5) Flexible lecture theatres and seminar rooms with innovative layouts to encourage
+      interaction; (6) Dedicated student project work spaces; (7) Spaces open to industrial
+      partners for student engagement. The ground-floor atrium has informal seating and is
+      open to visitors. Industrial partner zones allow real-world project collaboration.
+    source: cardiff_university_abacws_page
+
+  - id: reception_and_hours
+    category: POLICY
+    keywords: [reception, opening times, open hours, what time does it open, when is it open,
+               reception hours, is reception open, front desk, reception desk, sign in,
+               monday hours, friday hours, weekend hours, opening hours, what hours,
+               when does reception close]
+    content: >
+      Abacws Reception (Ground Floor, main entrance) is open: Monday–Friday 09:00–16:30;
+      Saturday and Sunday — Closed. The building itself has broader access hours
+      (07:00–22:00 weekdays, 08:00–18:00 weekends) for card-holders — reception staffing
+      and visitor sign-in are only available during the hours above. Out-of-hours queries
+      should be directed to Cardiff University Security Services (029 2087 4444, 24/7).
+    source: cardiff_university_abacws_page
+
+  - id: bicycle_parking_detail
+    category: AMENITIES
+    keywords: [bicycle, bike, cycling, cycle, bike rack, bicycle storage, bike lock,
+               where to park bike, covered cycle, cycle parking, bike shelter,
+               rear entrance, west entrance, cycle rack location]
+    content: >
+      Covered bicycle racks are located at two points outside the building: (1) to the
+      rear of the building; (2) on the west side of the building. Access to the covered
+      racks requires a valid Cardiff University staff or student card. On-street cycle
+      parking is also available on Senghennydd Road. There are no indoor bicycle storage
+      facilities within the building itself. Repair tools or pumps are not on-site;
+      the nearest cycle repair service is on City Road.
+    source: cardiff_university_accessibility_page
+
+  - id: lift_accessibility_detail
+    category: ACCESSIBILITY
+    keywords: [lift dimensions, lift size, lift weight limit, lift capacity, lift features,
+               braille lift, tactile buttons, lift mirror, lift announcer, lift indicator,
+               left lift, main lift, lift door width, lift lobby, how big is the lift,
+               can wheelchair fit in lift, lift access all floors]
+    content: >
+      Main passenger lift (located left from the front entrance, approximately 25m from
+      the entrance): serves floors G, 1, 2, 3, 4 and 5. Key specifications: weight
+      limit 1000 kg; door clear width 90 cm; internal dimensions 106 cm × 220 cm;
+      automatic double doors to lift lobby on all floors; 150 cm × 150 cm clear
+      manoeuvring space in front of the lift. Accessible features: Braille markings
+      on controls; tactile (raised) button markings; audible floor announcer; visual
+      floor indicator; mirror inside for reversing out; external controls 90–110 cm
+      from floor; internal controls 90–120 cm from floor; high visual contrast between
+      controls and wall. No hearing loop inside the lift. No staff activation needed.
+      Signs indicating the lift are visible from the entrance.
+    source: cardiff_university_accessibility_page
+
+  - id: shower_facilities_detail
+    category: AMENITIES
+    keywords: [shower, shower room, shower location, shower accessibility, shower facilities,
+               accessible shower, standard shower, where is the shower, shower floor,
+               shower door width, shower card reader, level access shower]
+    content: >
+      Shower facilities are located on Floor 1. There are both accessible and standard
+      shower cubicles. To reach them from the main entrance: take the right-hand lift,
+      then turn right from the lift on Floor 1. Access details: (1) Level access
+      throughout — no steps; (2) The door to the shower cubicle lobby is a single,
+      heavy door, push to open (opens away from you), width 87 cm; (3) Card reader
+      entry height 115 cm; exit button height 115 cm; (4) Individual cubicle door is
+      single, light, push to open, width 57 cm. For accessibility support or if you
+      require a PEEP (Personal Emergency Evacuation Plan), contact Building Management
+      or the Disability and Dyslexia Service (disability@cardiff.ac.uk).
+    source: cardiff_university_accessibility_page
+
+  - id: toilet_facilities_by_floor
+    category: AMENITIES
+    keywords: [toilet location, toilets by floor, where are toilets, accessible toilet floor,
+               female toilet, male toilet, gender neutral toilet, which floor toilet,
+               baby changing, baby change facility, changing table, accessible wc,
+               disabled toilet, bathroom location, wc location, ladies toilet, mens toilet]
+    content: >
+      Toilet and changing facilities by floor: Ground floor — shared (gender-neutral)
+      standard toilets; accessible toilet with baby changing facilities; Floor 1 —
+      shared (gender-neutral) standard toilets; accessible toilet; accessible shower;
+      standard shower; Floor 2 — female standard toilets; male standard toilets;
+      accessible toilet; Floor 3 — female standard toilets; male standard toilets;
+      accessible toilet; Floor 4 — female standard toilets; male standard toilets;
+      accessible toilet; Floor 5 — female standard toilets; male standard toilets;
+      accessible toilet. Summary: accessible toilets are on every floor (Ground–5);
+      baby changing is on the Ground floor only; showers (accessible and standard) are
+      on Floor 1 only; gender-neutral (shared) facilities are on Ground and Floor 1.
+    source: cardiff_university_accessibility_page
