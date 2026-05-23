@@ -1,0 +1,134 @@
+# ── Publish OntoSage container images to GHCR ────────────────────────────────
+#
+# Builds and pushes the four service images that OntoSage owns
+# (orchestrator, rag-service, code-executor, mcp-server) to the GitHub
+# Container Registry (ghcr.io/<owner>/ontosage-<service>).
+#
+# Triggers:
+#   - release:published     → tagged with the release tag + `latest`
+#   - workflow_dispatch     → manual fire, optional `tag` input
+#
+# Image names produced (for release `v3.1.0`):
+#   ghcr.io/suhasdevmane/ontosage-orchestrator:3.1.0
+#   ghcr.io/suhasdevmane/ontosage-orchestrator:3.1
+#   ghcr.io/suhasdevmane/ontosage-orchestrator:latest
+#   (same pattern for rag-service, code-executor, mcp-server)
+#
+# Consumer pull example:
+#   docker pull ghcr.io/suhasdevmane/ontosage-orchestrator:latest
+#
+name: Publish Container Images (GHCR)
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Override tag (e.g. v3.1.0). Empty = use commit SHA."
+        required: false
+        default: ""
+
+# GHCR push requires `packages: write`. `contents: read` is needed for checkout.
+# `id-token: write` reserved for future image signing (cosign + OIDC).
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  # GHCR namespace is always lowercase; github.repository_owner can have mixed case
+  # but the action lowercases it for us via the metadata-action.
+  IMAGE_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  build-push:
+    name: Build & push ${{ matrix.service.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          # Build contexts mirror docker-compose.yml exactly.  Three services
+          # use the repo root as context (so they can COPY shared/) and one
+          # uses its own subdirectory.
+          - name: orchestrator
+            context: .
+            dockerfile: orchestrator/Dockerfile
+          - name: rag-service
+            context: .
+            dockerfile: rag-service/graphdbRAG/Dockerfile
+          - name: code-executor
+            context: .
+            dockerfile: code-executor/Dockerfile
+          - name: mcp-server
+            context: ./mcp-server
+            dockerfile: Dockerfile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags + labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/ontosage-${{ matrix.service.name }}
+          # Tag strategy:
+          #   - v3.1.0 → :3.1.0, :3.1, and :latest (only on release events)
+          #   - workflow_dispatch with `tag` → that exact tag
+          #   - workflow_dispatch without `tag` → manual-<sha7>
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ github.event_name == 'release' }}
+            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
+            type=raw,value=manual-{{sha}},enable=${{ github.event_name == 'workflow_dispatch' && inputs.tag == '' }}
+          labels: |
+            org.opencontainers.image.title=OntoSage ${{ matrix.service.name }}
+            org.opencontainers.image.description=Agentic AI for Intelligent Buildings — ${{ matrix.service.name }} service
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.documentation=https://suhasdevmane.github.io/OntoSage/
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.vendor=Cardiff University
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          file: ${{ matrix.service.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Per-service buildx cache scope so multi-matrix jobs don't thrash.
+          cache-from: type=gha,scope=${{ matrix.service.name }}
+          cache-to: type=gha,scope=${{ matrix.service.name }},mode=max
+          provenance: false   # disable provenance manifest until cosign signing is wired
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## ${{ matrix.service.name }}"
+            echo ""
+            echo "Pushed tags:"
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+            echo ""
+            echo "Pull example:"
+            echo '```bash'
+            echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/ontosage-${{ matrix.service.name }}:latest"
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
