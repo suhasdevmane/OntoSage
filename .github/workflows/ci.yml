@@ -19,6 +19,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Explicit token permissions — required when the repo's default
+# "Workflow permissions" setting (Settings → Actions → General) is set to
+# "Read repository contents and packages permissions" or restricted further.
+# Without this, actions/checkout@v4 fails with
+#   fatal: could not read Username for 'https://github.com/'
+# on PRs because the GITHUB_TOKEN gets stripped of contents:read scope.
+permissions:
+  contents: read          # actions/checkout
+  pull-requests: write    # github-script PR comments (rag-benchmark job)
+  packages: read          # docker/build-push-action cache-from gha
+
 env:
   PYTHON_VERSION: "3.11"
   DOCKER_BUILDKIT: 1
