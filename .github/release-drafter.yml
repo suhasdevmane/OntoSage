@@ -1,0 +1,159 @@
+# ── Release Drafter config ────────────────────────────────────────────────────
+#
+# Drives .github/workflows/release-drafter.yml.
+#
+# Behaviour:
+#   - Categorises merged PRs by label (autolabelled from conventional-commit
+#     PR title) into the sections below.
+#   - Resolves the next version (major / minor / patch) from the strongest
+#     label present in the unreleased range — see version-resolver.
+#   - Renders the release body using `template` with $CHANGES substitution.
+#
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+# Top-level release body. $CHANGES gets the categorised PR list; $CONTRIBUTORS
+# the @-mention list of merge authors; $PREVIOUS_TAG the latest published
+# release tag (or initial commit if there are no prior releases).
+template: |
+  ## What's new
+
+  $CHANGES
+
+  ## Contributors
+
+  $CONTRIBUTORS
+
+  ---
+
+  **Full changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
+
+  **Container images**: published to GHCR by `Publish Container Images (GHCR)` on this tag
+  (`ghcr.io/$OWNER/ontosage-{orchestrator,rag-service,code-executor,mcp-server}:$RESOLVED_VERSION`)
+
+categories:
+  - title: Breaking Changes
+    labels:
+      - breaking
+      - breaking-change
+      - major
+  - title: Features
+    labels:
+      - feature
+      - enhancement
+      - feat
+  - title: Bug Fixes
+    labels:
+      - bug
+      - fix
+      - bugfix
+  - title: Documentation
+    labels:
+      - documentation
+      - docs
+  - title: Tests
+    labels:
+      - test
+      - tests
+  - title: CI / Infrastructure
+    labels:
+      - ci
+      - infrastructure
+      - devops
+  - title: Refactoring & Chores
+    labels:
+      - refactor
+      - chore
+      - maintenance
+      - style
+  - title: Dependencies
+    labels:
+      - dependencies
+      - deps
+    collapse-after: 5
+
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
+# Prevent angle brackets and underscores in PR titles from being interpreted
+# as markdown by the renderer.
+change-title-escapes: '\<*_&'
+
+# ── Autolabeler ──────────────────────────────────────────────────────────────
+# Apply labels based on conventional-commit PR title prefix.
+# Note: `!` after the scope (e.g. `feat!:` or `feat(api)!:`) marks a breaking
+# change and gets the `breaking` label so version-resolver bumps the major.
+autolabeler:
+  - label: breaking
+    title:
+      - '/^[a-z]+(\(.+\))?!:/'
+      - "/BREAKING CHANGE/"
+  - label: feature
+    title:
+      - '/^feat(\(.+\))?:/'
+  - label: bug
+    title:
+      - '/^fix(\(.+\))?:/'
+  - label: documentation
+    title:
+      - '/^docs(\(.+\))?:/'
+  - label: refactor
+    title:
+      - '/^refactor(\(.+\))?:/'
+  - label: chore
+    title:
+      - '/^chore(\(.+\))?:/'
+  - label: ci
+    title:
+      - '/^ci(\(.+\))?:/'
+      - '/^build(\(.+\))?:/'
+  - label: test
+    title:
+      - '/^tests?(\(.+\))?:/'
+  - label: dependencies
+    title:
+      - '/^deps(\(.+\))?:/'
+      - '/^(build|chore)\(deps.*\):/'
+  - label: style
+    title:
+      - '/^style(\(.+\))?:/'
+      - '/^perf(\(.+\))?:/'
+
+# ── Version resolver ─────────────────────────────────────────────────────────
+# Picks the next semver bump based on the strongest label in unreleased PRs:
+#   major: anything in `major.labels`
+#   minor: anything in `minor.labels` (and no major)
+#   patch: anything in `patch.labels` (and no major/minor)
+version-resolver:
+  major:
+    labels:
+      - breaking
+      - breaking-change
+      - major
+  minor:
+    labels:
+      - feature
+      - enhancement
+      - feat
+      - minor
+  patch:
+    labels:
+      - bug
+      - fix
+      - bugfix
+      - documentation
+      - docs
+      - refactor
+      - chore
+      - ci
+      - test
+      - tests
+      - style
+      - dependencies
+      - deps
+      - patch
+  default: patch
+
+# PRs labelled with any of these are silently dropped from the changelog.
+exclude-labels:
+  - skip-changelog
+  - ignore-for-release
+  - dependabot-merged

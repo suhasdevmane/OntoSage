@@ -1,0 +1,44 @@
+# ── Release Drafter ───────────────────────────────────────────────────────────
+#
+# Maintains a draft release for the next version. Every PR merge to main
+# updates the draft; you only have to click "Publish release" when ready.
+#
+# The PR-trigger half also auto-labels incoming PRs based on their conventional-
+# commit title (feat:, fix:, docs:, …) so the changelog stays organised without
+# manual triage.
+#
+# Config: .github/release-drafter.yml
+# Action: https://github.com/release-drafter/release-drafter
+#
+name: Release Drafter
+
+on:
+  push:
+    branches: [main]
+  # `pull_request_target` runs in the base-repo context so it can apply labels
+  # even for first-time contributors from forks (the regular `pull_request`
+  # event has read-only token scope for forks).
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+  workflow_dispatch:
+
+# `contents: write` to create/update the draft release.
+# `pull-requests: write` to apply autolabels.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update_release_draft:
+    name: Update draft release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run release-drafter
+        uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+          # Disable the GitHub-created auto-changelog so release-drafter's
+          # categorisation is the single source of truth.
+          disable-autolabeler: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
