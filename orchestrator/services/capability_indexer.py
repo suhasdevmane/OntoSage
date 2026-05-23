@@ -20,18 +20,16 @@ Returns IndexResult per building with: status, entries, points, duration_ms, rea
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal
 
 import yaml
 
 from shared.capability_schema import (
-    CapabilityEntry,
     CapabilityKB,
     CapabilityRoutingConfig,
 )

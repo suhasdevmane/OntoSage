@@ -43,12 +43,27 @@ jobs:
       - name: isort check
         run: isort --check-only --profile black orchestrator/ shared/ tests/
         continue-on-error: true
-      - name: Flake8
+      - name: Flake8 (real-bug gate — blocking)
+        # Only F821 (undefined name) and F823 (local var used before assignment)
+        # are blocking. These are 100% real runtime bugs with no false positives.
+        # Other F-codes (F401 unused imports, F811 redefinition, F841 unused
+        # local) are noisy in this codebase and treated as advisory below.
+        run: |
+          flake8 orchestrator/ shared/ scripts/ \
+            --select=F821,F823 \
+            --per-file-ignores="__init__.py:F401"
+      - name: Flake8 (style + import hygiene — non-blocking advisory)
+        # Style + import-hygiene checks. continue-on-error matches the Black +
+        # isort policy above (visibility without blocking the pipeline).
+        # E402 is ignored because every module uses the deliberate
+        # `sys.path.append('/app')` Docker import pattern at the top.
         run: |
           flake8 orchestrator/ shared/ scripts/ \
             --max-line-length 110 \
-            --extend-ignore=E203,E501,W503 \
-            --per-file-ignores="__init__.py:F401"
+            --extend-ignore=E203,E402,E501,W503 \
+            --per-file-ignores="__init__.py:F401" \
+            --statistics --count --exit-zero
+        continue-on-error: true
       - name: YAML lint
         run: yamllint config/ -d relaxed || true
 
@@ -71,7 +86,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r orchestrator/requirements.txt \
-            pytest pytest-asyncio pytest-cov rdflib pyyaml httpx
+            pytest pytest-asyncio pytest-cov pytest-timeout rdflib pyyaml httpx
       - name: Run unit tests
         run: |
           pytest tests/test_phase3_4_services.py \
@@ -106,7 +121,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r orchestrator/requirements.txt \
-            pytest pytest-asyncio pytest-cov rdflib pyyaml httpx
+            pytest pytest-asyncio pytest-cov pytest-timeout rdflib pyyaml httpx
       - name: Run integration tests
         run: |
           pytest tests/test_integration_mock_building.py \

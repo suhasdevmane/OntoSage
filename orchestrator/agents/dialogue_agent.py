@@ -482,7 +482,7 @@ self.semantic_router is not None
             logger.info(f"📤 LLM Response received (length: {len(llm_response)} chars)")
 
             # Parse JSON response
-            result = self._parse_llm_response(llm_response, user_query)
+            result = self._parse_llm_response(llm_response, user_query, state=state)
 
             # ── Capability semantic SOFT override (medium-band) ────────────────
             # Flag-gated. Runs AFTER _parse_llm_response so the keyword override
@@ -739,13 +739,19 @@ Return ONLY the JSON object.
 """
         return prompt
 
-    def _parse_llm_response(self, llm_response: str, user_query: str) -> Dict[str, Any]:
+    def _parse_llm_response(
+        self,
+        llm_response: str,
+        user_query: str,
+        state: Optional["ConversationState"] = None,
+    ) -> Dict[str, Any]:
         """
         Parse the LLM's JSON response
 
         Args:
             llm_response: Raw LLM response
             user_query: Original user query (for fallback)
+            state: ConversationState (optional, enables persona-biased domain disambiguation)
 
         Returns:
             Parsed dictionary with intent, entities, required_analytics, time_range, response fields
@@ -872,7 +878,9 @@ Return ONLY the JSON object.
                     "capability", "general", "general_knowledge", "clarification"
                 ):
                     try:
-                        _persona_key = getattr(state, "persona", "general") or "general"
+                        _persona_key = (
+                            getattr(state, "persona", "general") if state is not None else "general"
+                        ) or "general"
                         _registry = get_persona_registry()
                         _priors = _registry.get_priors(_persona_key)
                         if _priors.top_domains:
