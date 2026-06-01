@@ -271,6 +271,30 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             # Clear the pending type regardless — don't keep re-asking
             state.intermediate_results.pop("pending_clarification_type", None)
 
+        # ── Co-reference resolution ───────────────────────────────────────────
+        # Rewrite context-dependent follow-ups ("and humidity there?") into
+        # self-contained queries BEFORE intent detection so entity extraction and
+        # the downstream SPARQL node (both read messages[-1].content) resolve
+        # references like "there"/"that" to the prior turn's entities.
+        try:
+            _standalone = await self.dialogue_agent.rewrite_to_standalone(state)
+            if _standalone:
+                _orig = state.messages[-1].content
+                _meta = dict(state.messages[-1].metadata or {})
+                _meta["original_query"] = _orig
+                state.messages[-1] = Message(
+                    role=state.messages[-1].role,
+                    content=_standalone,
+                    metadata=_meta,
+                )
+                state.intermediate_results["coref_rewrite"] = {
+                    "original": _orig,
+                    "rewritten": _standalone,
+                }
+                logger.info(f"[coref] follow-up rewritten: {_orig!r} -> {_standalone!r}")
+        except Exception as _coref_err:
+            logger.debug(f"[coref] resolution skipped: {_coref_err}")
+
         # NEW: Get LLM-based intent detection result
         intent_result = await self.dialogue_agent.detect_intent(state)
 
