@@ -5,7 +5,7 @@ FORECAST_QUERIES = [
     "Predict temperature for tomorrow afternoon",
     "Forecast energy usage for next week",
     "What will the CO2 level be tomorrow?",
-    "Expected temperature next Monday",
+    "What will be the temperature tomorrow?",
     "Is temperature projected to rise next week?",
     "What will humidity be like tomorrow morning?",
 ]
@@ -14,6 +14,8 @@ NON_FORECAST_QUERIES = [
     "Show me floor 3 layout",
     "What are the fire evacuation procedures?",
     "Hello, what can you do?",
+    "Show me energy data for next week",
+    "What is the expected sensor output?",
 ]
 
 
