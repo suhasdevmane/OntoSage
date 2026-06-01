@@ -8,7 +8,7 @@
 [![Brick Schema](https://img.shields.io/badge/Brick_Schema-1.3-orange.svg)](https://brickschema.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml/badge.svg)](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-225%20passing-brightgreen.svg)](#run-the-tests)
+[![Tests](https://img.shields.io/badge/tests-251%20passing-brightgreen.svg)](#run-the-tests)
 
 ---
 
@@ -18,7 +18,9 @@ OntoSage decomposes it into two sub-intents (`floor_plan` + `spatial_query`), ro
 
 No SQL, no SPARQL, no schema knowledge required from the user.
 
-> **Full technical reference:** see [ONTOSAGE.md](./ONTOSAGE.md) — architecture, all 22 intents, multi-tenant / multi-persona / multi-intent model, the Phase 11-18 changelog, test coverage, and known issues.
+Ask a follow-up — *"and what about humidity there?"* — and it remembers you meant floor 3: OntoSage carries conversation context across turns and resolves references before answering.
+
+> **Full technical reference:** see [ONTOSAGE.md](./ONTOSAGE.md) — architecture, all 22 intents, multi-tenant / multi-persona / multi-intent model, conversation memory + co-reference, the forecasting pipeline, the Phase 11-22 changelog, test coverage, and known issues.
 
 ---
 
@@ -29,14 +31,18 @@ RESULTS: 94/95 PASS  ·  1 WARN  ·  0 FAIL  (99% clean pass)
 Latency: avg 16.7s · median 9.2s · max 71.2s
 ```
 
-Floor Plan/Spatial category is now 4/4 (was 3/4 in every prior baseline) thanks to the libredwg source build delivering real DWG geometry — the orchestrator now answers *"What is the total area of floor 1?"* with a full markdown table covering all 6 floors and a **20,370.2 m²** building total. Deterministic unit suite: **225 tests pass / 3 skip / 0 fail** on Python 3.12.
+Floor Plan/Spatial category is now 4/4 (was 3/4 in every prior baseline) thanks to the libredwg source build delivering real DWG geometry — the orchestrator now answers *"What is the total area of floor 1?"* with a full markdown table covering all 6 floors and a **20,370.2 m²** building total. Deterministic unit suite: **251 tests pass / 3 skip / 0 fail** on the Python 3.10/3.11/3.12 matrix (after the Phase 21-22 memory + co-reference additions).
 
 ---
 
-## What's new (Phase 11-19)
+## What's new (Phase 11-22)
 
 | Capability | What it does | Phase |
 |---|---|---|
+| **Follow-up co-reference** | *"and what about humidity there?"* is rewritten to a self-contained query (*"average humidity on floor 3"*) before classification, so the answer scopes to the right floor. Gated fast-LLM "condense question" step; flag `COREFERENCE_REWRITE_ENABLED` | **22** |
+| **Conversation memory** | Two-tier: Redis holds the recent conversation (count-bounded, no time-expiry by default); Postgres `turn_memory` keeps per-turn summaries + carries forward forecast/analytics artifacts (*"now plot that"*) and injects older-turn context. Secrets masked in config repr; `STRICT_SECRETS` boot guard | **21** |
+| **Forecasting pipeline** | `trend` queries with forecast/predict intent run a multi-model time-series forecast (ARIMA / exp-smoothing / linear) with auto model selection, horizon parsing, and RMSE/R² metrics; result is charted | **20** |
+| **Async job queue** | Long-running tasks run on a Redis-backed `JobQueue`; poll status via `GET /jobs/{job_id}` (auth-enforced) | **20** |
 | **Unified user-report intake** | Any persona reports a fault, complaint, safety hazard, feedback, or suggestion in plain English. Auto-classified + prioritised (gas/fire → URGENT, broken → HIGH), persona-stamped, stored in the `user_reports` Postgres table, acknowledged with a tracking ID. Admins triage in pgAdmin via auto-created views (`v_urgent_reports`, `v_reports_by_persona`, …) | **19** |
 
 ### Earlier (Phase 11-18)
@@ -115,7 +121,9 @@ curl -X POST http://localhost:8000/chat \
   }'
 ```
 
-Or use the [OpenWebUI](http://localhost:3000) chat interface that ships with the stack.
+**Follow-up that remembers context (Phase 22):** ask *"what is the average temperature on floor 3"*, then in the same session ask *"and what about humidity there"* — OntoSage resolves "there" to floor 3 instead of asking you to repeat it.
+
+Or use the [OpenWebUI](http://localhost:3000) chat interface that ships with the stack — its multi-turn chat exercises the full conversation-memory + co-reference path.
 
 ---
 
@@ -151,8 +159,8 @@ Underneath:
 
 - **GraphDB** (port 7200) — Brick/BACnet RDF (the ontology)
 - **MySQL** (3306) — Time-series sensor readings
-- **PostgreSQL** (5433) — User accounts + RBAC
-- **Redis** (6379) — Conversation state + response cache + sessions
+- **PostgreSQL** (5433) — User accounts + RBAC + `turn_memory` (per-turn summaries) + `user_reports`
+- **Redis** (6379) — Conversation state (count-bounded, no time-expiry by default) + carry-forward + response cache + sessions
 - **Qdrant** (6333) — Capability KB embeddings + floor-plan room vectors
 - **rag-service** (8001) — Semantic fallback when SPARQL returns empty
 - **code-executor** (8002) — Sandboxed Python for analytics
@@ -211,7 +219,7 @@ The TTL validator hard-fails on `@prefix bldg:` ↔ `ontology_namespace` mismatc
 
 ## Run the tests
 
-The CI suite (`.github/workflows/ci.yml`) runs **225 deterministic tests** across 13 files in ~20s:
+The CI suite (`.github/workflows/ci.yml`) runs **251 deterministic tests** across 16 files in ~20s on the Python 3.10/3.11/3.12 matrix:
 
 ```bash
 pytest tests/test_phase3_4_services.py tests/test_blended_persona.py \
@@ -220,7 +228,9 @@ pytest tests/test_phase3_4_services.py tests/test_blended_persona.py \
        tests/test_state_persistence.py tests/test_swap_building.py \
        tests/test_unregistered_intent_safety_net.py tests/test_workflow_wiring.py \
        tests/test_survey_aligned_phases.py tests/test_phase_a_fixes.py \
-       tests/services/test_ttl_validator.py
+       tests/services/test_ttl_validator.py \
+       tests/test_turn_memory.py tests/test_conversation_memory_e2e.py \
+       tests/test_coreference_rewrite.py
 ```
 
 For a live regression battery (needs the stack running):
@@ -241,7 +251,7 @@ To set expectations honestly:
 - **Not multi-tenant in v1.** One building at a time. The code is forward-compatible (per-building registry caches, ContextVar-scoped SPARQL bctx, per-building Qdrant collections) for the upcoming Onto-community release, but `BUILDING_ID` selects exactly one active building today.
 - **Not a building automation system.** OntoSage observes and reports. It doesn't actuate HVAC, lock doors, or override setpoints (the `control` intent politely declines and logs the attempt).
 - **Not a substitute for SCADA / BMS.** It's a question-answering layer on top of your existing data. Real-time control still belongs in your BMS.
-- **Not magic.** The LLM occasionally misclassifies intents (the survey hits ~92/95). The routing audit trail (Phase 13A) lets you see exactly why every query went where it did.
+- **Not magic.** The LLM occasionally misclassifies intents (the live survey hits ~94/95). The routing audit trail (Phase 13A) lets you see exactly why every query went where it did, and the co-reference rewrite (Phase 22) is gated + graceful so a bad rewrite is "no worse than before".
 
 ---
 
@@ -265,7 +275,7 @@ To set expectations honestly:
 | **[README.md](./README.md)** | New users | This file — what it is, how to start, what's new |
 | **[ONTOSAGE.md](./ONTOSAGE.md)** | Operators + contributors | Complete system reference — architecture, all phases, configuration, tests, known issues |
 | **[CLAUDE.md](./CLAUDE.md)** | Future AI assistants | Operational rules, navigation index, debugging patterns, workflow conventions |
-| **[.claude/rules/](./. claude/rules/)** | Contributors | Style + agent + API + SPARQL patterns |
+| **[.claude/rules/](./.claude/rules/)** | Contributors | Style + agent + API + SPARQL patterns |
 
 ---
 
@@ -273,4 +283,4 @@ To set expectations honestly:
 
 MIT. See [LICENSE](./LICENSE).
 
-The Phase 11-17 work was developed against Cardiff University's Abacws building (`bldg1`) with `bldg2` as a multi-tenant fixture. Brick Schema is BSD-licensed.
+The Phase 11-22 work was developed against Cardiff University's Abacws building (`bldg1`) with `bldg2` as a multi-tenant fixture. Brick Schema is BSD-licensed.

@@ -74,6 +74,8 @@ nav:
   - Workflow Deep Dive: WORKFLOW.md
   - Services: SERVICES.md
   - Capability Routing (v3.1): CAPABILITY_ROUTING.md
+  - Conversation Intelligence: CONVERSATION_INTELLIGENCE.md
+  - Forecasting: FORECASTING.md
   - Configuration: CONFIGURATION.md
   - GraphDB Setup: GRAPHDB_SETUP.md
   - Building Onboarding: BUILDING_ONBOARDING.md

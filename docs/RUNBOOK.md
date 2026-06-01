@@ -136,6 +136,18 @@ curl -s -X POST http://localhost:8000/v1/chat/completions \
 
 A healthy response will include intent `"discovery"` and a list of sensor types. Any `"error"` key in the response indicates a pipeline failure.
 
+### Long-Running Jobs (async queue)
+
+Heavy operations (large exports, multi-step reports) can run asynchronously on a Redis-backed job queue. The request returns a `job_id`; poll its status:
+
+```bash
+curl -s -H "Authorization: $TOKEN" \
+  http://localhost:8000/jobs/<job_id> | python -m json.tool
+# status: queued | running | completed | failed
+```
+
+If a job is stuck in `running`, check the orchestrator logs for the trace ID and confirm Redis is healthy (the queue is backed by Redis). Jobs do not survive a Redis flush.
+
 ---
 
 ## Log Access

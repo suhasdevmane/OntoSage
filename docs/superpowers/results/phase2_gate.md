@@ -79,7 +79,7 @@ All §15 commitments hold:
 | "Is there a changing table for infants?" | MISS — keyword "baby changing" not present in query | **HIT** `toilet_facilities_by_floor` (score 0.694, high-confidence) |
 | "Do you have secure storage for my bicycle?" | MISS — keyword "bike storage" not in query | **HIT** `bicycle_parking_detail` (matched via "bike", "rack") |
 
-Full detail in [`tests/results/semantic_recall_report.md`](../../../tests/results/semantic_recall_report.md).
+Full detail in `tests/results/semantic_recall_report.md` (in the repository, outside the docs site).
 
 ---
 

@@ -196,6 +196,9 @@ All services should show `Up` or `healthy` status. If any service is `unhealthy`
 docker-compose logs -f <service-name>
 ```
 
+!!! note "Async jobs & production secrets"
+    Long-running requests are dispatched to a Redis-backed job queue and polled via `GET /jobs/{job_id}` (see the [Runbook](RUNBOOK.md)). For production, set `STRICT_SECRETS=true` so the orchestrator refuses to start on default credentials (see [Security](SECURITY.md)).
+
 ### 2. Create a GraphDB Repository
 
 Before ingesting your building ontology, create the repository in GraphDB:

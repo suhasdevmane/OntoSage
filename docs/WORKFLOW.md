@@ -70,7 +70,12 @@ If no state exists (new conversation), a fresh `ConversationState` is created wi
 - An empty `messages` list
 - An empty `intermediate_results` dict
 
-The state object is the single source of truth for the entire pipeline. It is passed to every agent node, mutated in place, and saved back to Redis after the pipeline completes.
+The state object is the single source of truth for the entire pipeline. It is passed to every agent node, mutated in place, and **persisted to two-tier memory** after the pipeline completes:
+
+- **Redis** `conversation:<id>` — the recent state, **count-bounded** to `CONVERSATION_MAX_MESSAGES` (no time-expiry by default).
+- **PostgreSQL** `turn_memory` — a deterministic one-line summary of the turn plus `carry_forward` (forecast/analytics artifacts), so the next turn can reuse prior results.
+
+On load, recent messages, carried-forward artifacts, and older-turn summaries are read back. See [Conversation Intelligence](CONVERSATION_INTELLIGENCE.md).
 
 ---
 
@@ -93,7 +98,11 @@ If any node raises an exception, `_safe_node()` catches it, logs it with the tra
 
 **File:** `orchestrator/agents/dialogue_agent.py`
 
-This is always the first node. It produces the routing decision for every other node. **Six substeps run in this order**, with the SemanticRouter probe (v3.1) in front to enable a fast-path bypass of the LLM.
+This is always the first node. It produces the routing decision for every other node. A **co-reference rewrite** runs first (Phase 22), then the SemanticRouter probe (v3.1) enables a fast-path bypass of the LLM, followed by the classification substeps.
+
+### 5.0 Follow-up Co-reference Rewrite (Phase 22)
+
+If the turn is a likely follow-up (a short query, or one with deictic markers like *there* / *that* / *the same* / a leading *and*), a fast LLM rewrites it into a self-contained query using recent history — *"and what about humidity there"* → *"what is the average humidity on floor 3"*. The rewrite is **gated** (skips self-contained queries) and **graceful** (falls back to the original on any failure). The standalone query replaces `messages[-1]` so every downstream substep and the SPARQL/SQL stages resolve the reference. Controlled by `COREFERENCE_REWRITE_ENABLED`. See [Conversation Intelligence](CONVERSATION_INTELLIGENCE.md).
 
 ### 5a. Capability Semantic Router Probe (v3.1)
 

@@ -445,7 +445,7 @@ The capability routing pipeline ships with comprehensive test coverage — **all
 - [Services](SERVICES.md) — Detailed reference for `EmbeddingService`, `CapabilityIndexer`, `SemanticRouter`
 - [Configuration](CONFIGURATION.md#capability-semantic-routing-v31) — All env vars and YAML knobs
 - [Building Onboarding](BUILDING_ONBOARDING.md#part-10-optional-author-the-capability-kb) — Step-by-step capability KB onboarding
-- [Workflow Deep Dive](WORKFLOW.md#step-5-dialogue-agent--intent-and-entities) — Six-step dialogue node trace including router probe
+- [Workflow Deep Dive](WORKFLOW.md#step-5-dialogue-agent-intent-and-entities) — Dialogue node trace including the co-reference rewrite and router probe
 - [Developer Guide](DEVELOPER_GUIDE.md#working-with-the-capability-routing-pipeline-v31) — Extending the pipeline
 - [Runbook](RUNBOOK.md#capability-semantic-routing-not-firing-v31) — Operations & troubleshooting
 - Design spec: `docs/superpowers/specs/2026-05-21-capability-semantic-routing-design.md`

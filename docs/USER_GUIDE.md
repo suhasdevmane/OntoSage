@@ -137,7 +137,7 @@ Ask for predictions of future sensor values (if historical data is available).
 > "Forecast energy consumption for the next 7 days."
 > "Will CO₂ levels be acceptable during Friday's conference?"
 
-**What you get:** A trend-based forecast with a confidence band and the methodology used.
+**What you get:** A multi-model forecast — OntoSage automatically selects the best-fitting model (ARIMA, exponential smoothing, or linear), parses your horizon from plain language ("next week", "tomorrow afternoon"), and reports the model used and its accuracy (RMSE / R²) alongside the chart. Forecasts are honest about confidence rather than presented as certainty. See the [Forecasting](FORECASTING.md) guide for details.
 
 ---
 
@@ -209,6 +209,20 @@ Ask about building features, policies, amenities, fire safety, IT — anything t
 
 ---
 
+### Reporting Issues — Faults, Complaints, Safety, Feedback
+
+Report a problem or share feedback in plain English — no forms, no categories to pick. OntoSage classifies and prioritises it automatically and gives you a tracking ID.
+
+> "The light in room 3.01 is broken."
+> "There's a gas smell near the kitchen on floor 2."  *(→ flagged URGENT)*
+> "The meeting room is always too cold in the mornings."
+> "Suggestion: add more bike racks by the south entrance."
+> "Great job fixing the lift so quickly!"
+
+**What you get:** An acknowledgement with a tracking reference. Safety hazards (gas, fire, smoke) are escalated to **URGENT**; broken equipment to **HIGH**. Each report is stamped with your role and stored for the facilities team, who triage them through admin views. Be specific (location + what's wrong) for the fastest routing.
+
+---
+
 ## Interaction Tips
 
 ### You Do Not Need to Know Sensor Names or IDs
@@ -224,7 +238,7 @@ OntoSage understands natural language. You never need to know a sensor's UUID, d
 
 ### Context Is Preserved Within a Conversation
 
-You can ask follow-up questions without repeating context:
+You can ask follow-up questions without repeating context. OntoSage remembers the conversation and resolves references like *"there"*, *"that"*, and *"the same"* to what you meant earlier:
 
 > **You:** "What is the CO₂ level in Zone 5?"
 > **OntoSage:** "The current CO₂ level in Zone 5 is 842 ppm (measured at 14:23)."
@@ -234,6 +248,11 @@ You can ask follow-up questions without repeating context:
 >
 > **You:** "And how does that compare to Zone 3?"
 > **OntoSage:** *(compares Zone 5 vs Zone 3, yesterday)*
+>
+> **You:** "and what about humidity there?"
+> **OntoSage:** *(resolves "there" → Zone 3 and answers humidity — no need to restate the zone)*
+
+It also **carries results forward**: after a forecast or analysis you can say *"now plot that"* or *"show it as a table"* and OntoSage reuses the previous result. See [Conversation Intelligence](CONVERSATION_INTELLIGENCE.md) for how this works.
 
 ### Be Specific About Time Ranges When Needed
 
