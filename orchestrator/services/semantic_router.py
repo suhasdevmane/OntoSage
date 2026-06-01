@@ -19,9 +19,10 @@ Failure modes (all non-raising):
 
 from __future__ import annotations
 
+import re as _re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Literal, Optional
+from typing import Dict, FrozenSet, List, Literal, Optional
 
 import yaml
 
@@ -34,6 +35,126 @@ from shared.capability_schema import (
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
+
+# ── Data-query bypass ─────────────────────────────────────────────────────────
+# Queries that match any of these patterns are LIVE-DATA requests (SPARQL /
+# analytics pipeline).  They must never be captured by the KB capability router,
+# even when KB entries happen to score high because they mention sensor counts or
+# zone names in their content text.
+#
+# The check is pure regex + frozenset substring — no embedding call needed.
+
+# Sensor ID patterns: Air_Temperature_Sensor_5.28, CO2_Sensor_5.08, etc.
+_SENSOR_ID_RE = _re.compile(
+    r"\b([A-Za-z][A-Za-z0-9]*_)+Sensor_[\d.]+\b",
+    _re.IGNORECASE,
+)
+# Zone ID patterns: Zone_5.28, zone 5.28
+_ZONE_ID_RE = _re.compile(
+    r"\bzone[_\s][\d]+\.[\d]+\b",
+    _re.IGNORECASE,
+)
+
+# ── Data-keyword exclusion for floor-plan bypass ──────────────────────────────
+# When a query mentions "floor N" AND data/analytics keywords, it is a data
+# request, not a floor plan visualisation request.  Queries like
+# "Show average temperature trend for floor 2 last week" must NOT be routed
+# to floor_plan even though they contain "show" and "floor 2".
+_DATA_ANALYTIC_WORDS: FrozenSet[str] = frozenset([
+    "temperature", "co2", "humidity", "noise", "occupancy", "pressure",
+    "sensor", "reading", "level", "value", "measurement",
+    "trend", "average", "mean", "analytics", "analysis", "statistics",
+    "energy", "consumption", "usage", "power", "kw", "kwh",
+    "report", "compare", "comparison", "forecast", "predict",
+    "last week", "last month", "last hour", "yesterday", "today",
+    "over time", "time series", "historical", "current reading",
+    "highest", "lowest", "maximum", "minimum", "variance", "std",
+    "anomaly", "spike", "alert", "threshold", "exceed",
+])
+
+# Phrase-level signals: any of these substrings in the lowercased query → bypass.
+_DATA_BYPASS_PHRASES: FrozenSet[str] = frozenset([
+    # Enumeration / listing queries
+    "list all sensors",   "list all temperature sensors", "list all co2 sensors",
+    "list all humidity sensors", "list all noise sensors", "list all occupancy sensors",
+    "list all zones",     "list all floors",  "list all hvac",
+    "list the sensors",   "list the zones",   "show all sensors",
+    "show me all sensors",
+    # Counting queries
+    "how many zones",     "how many sensors",  "how many floors",
+    "how many rooms",     "how many co2 sensors", "how many temperature sensors",
+    "how many humidity sensors", "how many noise sensors",
+    "number of sensors",  "number of zones",   "number of floors",
+    # Lookup / membership queries
+    "which sensors are in", "which sensors are on",
+    "what sensors are in",  "what sensors are on",
+    "sensors in zone",      "sensors on floor",
+    # Sensor-type discovery (asking SPARQL, not KB description)
+    "what sensor types",  "sensor types installed", "types of sensors installed",
+    "what types of sensors", "sensor types available",
+    # HVAC equipment listing via SPARQL
+    "what hvac equipment", "list all hvac equipment", "hvac equipment installed",
+    "hvac equipment in the building",
+    # UUID / metadata lookup
+    "uuid for", "what is the uuid", "get the uuid",
+    # Report / analytics pipeline queries — these go to SPARQL+SQL+report, not KB
+    "maintenance report", "energy report", "generate report", "generate a report",
+    "create a report", "show me a report", "build a report",
+    "weekly report", "monthly report", "daily report", "annual report",
+    "temperature report", "co2 report", "sensor report", "hvac report",
+    "trend report", "analytics report", "compliance report",
+    "show me a maintenance", "maintenance summary", "maintenance schedule",
+    "show trend", "show average", "show analysis", "statistical analysis",
+    "sensor variance", "sensor readings for", "historical data",
+    "energy consumption", "energy usage trend", "power consumption",
+    # Anomaly / alert pipeline queries
+    "anomaly detection", "detect anomaly", "temperature spike",
+    "alert me if", "notify me when", "warn me if", "set an alert",
+    "if co2 exceeds", "if temperature goes above", "if humidity drops",
+    "threshold exceeded", "out of range", "unusual reading",
+    # Maintenance schedule / ticket queries — go to maintenance intent, not KB
+    "maintenance schedule", "scheduled maintenance", "planned maintenance",
+    "maintenance this week", "maintenance this month", "maintenance next",
+    "open maintenance tickets", "outstanding maintenance", "maintenance tasks",
+    "maintenance work scheduled", "what maintenance", "maintenance is scheduled",
+    "scheduled for", "is scheduled for building maintenance",
+])
+
+# ── Floor-plan bypass ────────────────────────────────────────────────────────
+# Queries with explicit floor-plan/spatial signals must skip the KB router and
+# go to the floor_plan agent.  The KB has entries about facilities/rooms that
+# score high for "see the rooms" but that's NOT what these queries want —
+# they want the actual floor plan PDF/image.
+
+# Matches "floor N", "Nth floor", "fifth floor", "top floor"
+_FLOOR_NUMBER_RE = _re.compile(
+    r"\b(?:floor|level|storey|story)\s*\d+\b"
+    r"|\b\d+(?:st|nd|rd|th)\s+floor\b"
+    r"|\b(?:ground|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|top|highest|uppermost)\s+floor\b",
+    _re.IGNORECASE,
+)
+
+_FLOOR_PLAN_BYPASS_PHRASES: FrozenSet[str] = frozenset([
+    "floor plan", "floorplan", "floor map", "building map", "building layout",
+    "show me floor", "see floor", "see the floor", "view floor",
+    "show me the layout", "show me the plan", "room layout", "open the plan",
+    "actual rooms", "actual layout", "see the rooms", "see the actual rooms",
+    "where is room", "where is the room", "where is zone", "where is the zone",
+    "locate the room", "locate the zone", "find the room", "find the zone",
+    "show me where", "navigate to", "directions to",
+    "building overview", "building directory",
+])
+
+# ── Spatial-query bypass ─────────────────────────────────────────────────────
+# Quantitative geometry queries (area, count, adjacency) must reach the
+# spatial_query agent which reads the DWG manifest, not the KB router.
+_SPATIAL_BYPASS_PHRASES: FrozenSet[str] = frozenset([
+    "area of floor", "total area of", "how big is",
+    "adjacent to", "next to room", "rooms adjacent",
+    "largest room", "smallest room", "biggest room",
+    "room sizes", "room areas", "room dimensions",
+    "square meters", "square metres", "square feet",
+])
 
 
 @dataclass
@@ -101,6 +222,67 @@ class SemanticRouter:
 
     # ── public API ──────────────────────────────────────────────────────────────
 
+    @staticmethod
+    def is_data_query(query: str) -> bool:
+        """Return True when the query is clearly a live-data / SPARQL request.
+
+        Such queries should bypass the KB capability router entirely, even when
+        KB content happens to mention sensor counts or zone names.
+
+        Checks (in order, short-circuits on first match):
+          1. Explicit sensor ID pattern (Air_Temperature_Sensor_5.28, etc.)
+          2. Explicit zone ID pattern (Zone_5.28, zone 5.28)
+          3. Known data-query phrases (enumeration, counting, lookup)
+        """
+        if not query or not query.strip():
+            return False
+        q = query.lower()
+        if _SENSOR_ID_RE.search(query):
+            return True
+        if _ZONE_ID_RE.search(query):
+            return True
+        return any(phrase in q for phrase in _DATA_BYPASS_PHRASES)
+
+    @staticmethod
+    def is_floor_plan_query(query: str) -> bool:
+        """Return True when query clearly asks for the floor plan / spatial map.
+
+        These must bypass the KB router so the floor_plan agent can return
+        the actual PDF/image, not a generic facilities description.
+
+        Guard: if the query contains data/analytics keywords alongside floor
+        mentions (e.g. "temperature trend for floor 2"), it is a data request
+        and must NOT be classified as a floor plan query.
+        """
+        if not query or not query.strip():
+            return False
+        q = query.lower()
+        # Data/analytics exclusion: "show temperature trend for floor 2" is NOT
+        # a floor plan request even though it contains "show" and "floor N".
+        if any(word in q for word in _DATA_ANALYTIC_WORDS):
+            return False
+        # Phrase matches
+        if any(phrase in q for phrase in _FLOOR_PLAN_BYPASS_PHRASES):
+            return True
+        # Floor number + visual verb (only when no data keywords present — checked above)
+        # "show me floor 5", "open floor 3", "view the 2nd floor"
+        if _FLOOR_NUMBER_RE.search(query) and any(
+            v in q for v in (
+                "show", "open", "view", "see", "display", "give me", "pull up",
+                "bring up", "draw", "plan", "layout", "map",
+            )
+        ):
+            return True
+        return False
+
+    @staticmethod
+    def is_spatial_query(query: str) -> bool:
+        """Return True when query is a quantitative geometry question."""
+        if not query or not query.strip():
+            return False
+        q = query.lower()
+        return any(phrase in q for phrase in _SPATIAL_BYPASS_PHRASES)
+
     def register_intent(self, intent: str, collection_prefix: str) -> None:
         """Extension hook for adding new intent bindings (e.g. floor_plan later)."""
         self._intents[intent] = _IntentBinding(intent=intent, collection_prefix=collection_prefix)
@@ -118,6 +300,36 @@ class SemanticRouter:
         # Empty/whitespace queries — no embedding call needed
         if not query or not query.strip():
             return SemanticRouteResult(intent=None, score=0.0, matches=[], source="semantic")
+
+        # Too-short queries are vague/clarification requests; skip KB routing entirely.
+        # A 1-3 word query like "It" or "that" has no semantic signal for KB matching
+        # and will produce spurious high-score matches on short KB entry keywords.
+        if len(query.split()) <= 3:
+            return SemanticRouteResult(intent=None, score=0.0, matches=[], source="semantic")
+
+        # Data-query bypass: sensor/zone/discovery queries must go to SPARQL, not KB.
+        # Check this BEFORE embedding so we pay zero cost on the fast path.
+        if self.is_data_query(query):
+            logger.debug(f"[semantic_router] data-query bypass (no KB lookup): '{query[:70]}'")
+            return SemanticRouteResult(intent=None, score=0.0, matches=[], source="semantic")
+
+        # Floor-plan bypass: explicit floor plan / room visualisation requests
+        # must reach the floor_plan agent which returns the actual PDF/image,
+        # not a generic KB capability description.  Return intent directly so
+        # downstream routing is deterministic, not heuristic.
+        if self.is_floor_plan_query(query):
+            logger.info(f"[semantic_router] floor-plan bypass: '{query[:70]}'")
+            return SemanticRouteResult(
+                intent="floor_plan", score=1.0, matches=[], source="bypass"
+            )
+
+        # Spatial-query bypass: quantitative geometry (area, count, adjacency)
+        # must reach the spatial_query agent which reads the DWG manifest.
+        if self.is_spatial_query(query):
+            logger.info(f"[semantic_router] spatial-query bypass: '{query[:70]}'")
+            return SemanticRouteResult(
+                intent="spatial_query", score=1.0, matches=[], source="bypass"
+            )
 
         if not self._intents:
             return SemanticRouteResult(intent=None, score=0.0, matches=[], source="disabled")

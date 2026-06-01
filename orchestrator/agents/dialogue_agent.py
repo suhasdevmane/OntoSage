@@ -178,6 +178,14 @@ _SENSOR_METRIC_KWS = (
     "consumption", "power", "air quality", "occupancy",
     "noise", "pressure", "sensor", "reading",
 )
+# Exported for testing — maintenance schedule pre-classifier
+_MAINTENANCE_SCHEDULE_KWS = (
+    "maintenance schedule", "scheduled maintenance", "planned maintenance",
+    "maintenance this week", "maintenance this month", "maintenance next",
+    "open maintenance tickets", "outstanding maintenance", "maintenance tasks",
+    "maintenance work scheduled", "what maintenance is", "what maintenance work",
+    "list maintenance", "show maintenance", "is scheduled", "scheduled for",
+)
 
 
 def _derive_g1_taxonomy(
@@ -978,6 +986,24 @@ Return ONLY the JSON object.
                     )
                     normalized["intent"] = "trend"
                     normalized["analytics"] = True
+                    normalized["general"] = False
+
+                # Maintenance schedule queries must route to maintenance, not metadata.
+                # "What maintenance is scheduled" has structural similarity to
+                # metadata list queries, so the LLM often picks metadata.
+                _has_maintenance_schedule = any(
+                    kw in _q_lower for kw in _MAINTENANCE_SCHEDULE_KWS
+                )
+                if (
+                    _has_maintenance_schedule
+                    and normalized.get("intent") not in ("maintenance",)
+                ):
+                    logger.info(
+                        f"[intent-override] Forcing 'maintenance' (was '{normalized.get('intent')}') "
+                        "— maintenance schedule keyword detected"
+                    )
+                    normalized["intent"] = "maintenance"
+                    normalized["analytics"] = False
                     normalized["general"] = False
 
                 # ── G1 six-tuple emission (cross-cutting, survey taxonomy) ─────────
