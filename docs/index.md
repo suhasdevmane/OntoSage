@@ -19,23 +19,28 @@ OntoSage:
 5. Runs Python analytics code in a sandboxed container to compute statistics and detect threshold breaches
 6. Returns a formatted, human-readable answer with optional chart — no SQL, no SPARQL, no schema knowledge required from the user
 
+Then the manager asks a follow-up: *"and what about humidity there?"* — OntoSage remembers the conversation, resolves *"there"* to Zone 5.01, and answers without making them repeat themselves.
+
 ---
 
 ## Core Capabilities
 
 | Capability | Description |
 |---|---|
-| **16 Intent Types** | Routes sensor queries, analytics, anomaly detection, reports, exports, recommendations, forecasts, discovery, comparison, floor plan, spatial geometry, **capability** — and more |
+| **22+ Intent Types** | Routes sensor data, analytics, anomaly detection, reports, exports, recommendations, **trend & forecasting**, discovery, comparison, compliance, floor plan, spatial geometry, **capability**, control, and the **report-intake** family (maintenance, complaint, safety, feedback, suggestion) — defined in a YAML registry, extensible without code |
+| **Conversation Memory** | Two-tier: Redis holds the recent turn-by-turn state (**count-bounded, no time-expiry by default**); PostgreSQL `turn_memory` keeps per-turn summaries and **carries forward** forecast/analytics artifacts so follow-ups like *"now plot that"* just work — [details](CONVERSATION_INTELLIGENCE.md) |
+| **Follow-up Co-reference** | A context-dependent follow-up — *"and what about humidity **there**?"* — is rewritten into a self-contained query (*"average humidity on floor 3"*) before classification, so the answer scopes to the right place. Gated, graceful "condense-question" rewrite — [details](CONVERSATION_INTELLIGENCE.md) |
+| **Time-Series Forecasting** | Multi-model forecasting (ARIMA / exponential-smoothing / linear) with automatic model selection, natural-language horizon parsing, and RMSE/R² accuracy reporting — [details](FORECASTING.md) |
 | **Smart Capability Routing (v3.1)** | Per-building YAML knowledge base embedded into Qdrant at startup; query-time vector search bypasses the LLM for off-ontology questions (fire safety, amenities, policies, IT) — **sub-50 ms** confident path |
 | **Floor Plan Intelligence** | Automatic PDF + AutoCAD DWG ingestion — room polygons, areas, adjacency, and sensor locations extracted at startup and searchable in natural language |
+| **Unified Report Intake** | Any user files a fault, complaint, safety hazard, feedback, or suggestion in plain English; auto-classified and prioritised (gas/fire → URGENT), persona-stamped, stored, and acknowledged with a tracking ID |
 | **Zero-Knowledge Interaction** | Users need no knowledge of sensor IDs, ontology classes, or database schemas |
 | **Multi-Building Support** | Per-building storage adapters support MySQL, PostgreSQL, TimescaleDB, InfluxDB, MongoDB, SQLite, Cassandra, and Redis TimeSeries |
 | **Semantic Grounding** | GraphDB similarity indexing maps natural language to RDF entities; Qdrant per-building capability collections for off-ontology lookups |
 | **Embedding Provider Switch** | OpenAI `text-embedding-3-small` (1536-d) ↔ local `sentence-transformers/all-MiniLM-L6-v2` (384-d) — toggle via single env var; collection auto-rebuilds |
-| **Safe Analytics** | Python code generation executed in a resource-limited Docker sandbox |
-| **Role-Based Access Control** | 6 roles, 20 permissions enforced at every API endpoint |
+| **Safe Analytics** | Python code generation executed in a resource-limited Docker sandbox; long-running jobs run async via a Redis-backed queue (`GET /jobs/{id}`) |
+| **Role-Based Access Control** | 6 roles, 20 permissions enforced at every API endpoint; secrets masked in config, optional `STRICT_SECRETS` boot guard |
 | **LLM Flexibility** | Switch between local Ollama models and OpenAI with a single environment variable |
-| **Conversation Memory** | Redis-backed conversation state with 1-hour TTL; full history in PostgreSQL |
 | **Honest Boundaries** | Capability misses return an explicit "no record" with facility-management contact — never hallucinated answers |
 
 ---
@@ -48,7 +53,8 @@ graph TD
     WebUI -->|REST + WebSocket| Orch["OntoSage Orchestrator :8000<br/>(FastAPI + LangGraph)"]
 
     subgraph "Agent Pipeline"
-        Orch --> DA["Dialogue Agent<br/>Intent · Entities · Time range"]
+        Orch --> CR["Co-reference Rewrite<br/>follow-up → standalone query"]
+        CR --> DA["Dialogue Agent<br/>Intent · Entities · Time range"]
         DA -. "score ≥ override_min<br/>(~50 ms fast-path)" .-> CA["Capability Agent<br/>KB lookup · no LLM"]
         DA -->|routes| SA["SPARQL Agent<br/>Ontology queries"]
         DA -->|routes| FPA["Floor Plan Agent<br/>Manifest + PNG"]
@@ -57,7 +63,9 @@ graph TD
         DA -->|routes| AA["Anomaly Agent"]
         SA --> SQ["SQL Agent<br/>Time-series fetch"]
         SQ --> AnA["Analytics Agent<br/>Python sandbox"]
+        AnA -. "trend + forecast" .-> FC["Forecast Agent<br/>ARIMA · ETS · linear"]
         AnA --> VA["Visualization Agent<br/>Charts"]
+        FC --> VA
     end
 
     subgraph "Capability Routing Layer (v3.1)"
@@ -78,8 +86,9 @@ graph TD
 
     subgraph "Data Layer"
         SQ -->|per-building adapter| MySQL[("MySQL :3306<br/>Sensor time-series")]
-        SQ -->|per-building adapter| PG[("PostgreSQL :5433<br/>User accounts · RBAC")]
-        Orch -->|state cache + embed cache| Redis[("Redis :6379")]
+        SQ -->|per-building adapter| PG[("PostgreSQL :5433<br/>Users · RBAC · turn_memory · user_reports")]
+        Orch -->|conversation state (count-bounded)<br/>+ carry-forward + embed cache| Redis[("Redis :6379")]
+        Orch -->|per-turn summaries| PG
         Orch -->|chat history| Mongo[("MongoDB :27017")]
         AnA -->|execute code| CE["Code Executor :8002<br/>(Docker sandbox)"]
     end
@@ -110,7 +119,9 @@ graph TD
 | [Architecture](ARCHITECTURE.md) | Component design, data flow, and design decisions |
 | [Workflow Deep Dive](WORKFLOW.md) | Step-by-step trace of every request through the pipeline |
 | [Services](SERVICES.md) | Every service: ports, health checks, dependencies, duties |
-| [**Capability Routing**](CAPABILITY_ROUTING.md) | **NEW** Semantic vector routing for off-ontology queries — schema, calibration, performance |
+| [**Capability Routing**](CAPABILITY_ROUTING.md) | Semantic vector routing for off-ontology queries — schema, calibration, performance |
+| [**Conversation Intelligence**](CONVERSATION_INTELLIGENCE.md) | **NEW** Conversation memory (Redis + Postgres) and follow-up co-reference resolution |
+| [**Forecasting**](FORECASTING.md) | **NEW** Multi-model time-series forecasting pipeline |
 | [Project Structure](PROJECT_STRUCTURE.md) | Repository layout, file roles, coding conventions |
 
 ### Using and Operating

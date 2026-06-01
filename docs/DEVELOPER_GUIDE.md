@@ -207,11 +207,17 @@ The wrapper catches all exceptions, logs them with context, and returns state wi
 
 ## Adding a New Intent Type
 
-To add a new intent (e.g., `predictive_maintenance`), follow this checklist exactly:
+!!! tip "Registry-driven (2 steps) — the current path"
+    Adding an intent **no longer requires editing the graph wiring**. The graph auto-registers nodes from the YAML intent registry, so the modern path is just **two steps**:
+
+    1. Append an entry to `orchestrator/intents/intent_definitions.yaml` (or a per-building `input/<bldg>/intents.yaml` overlay) with `pipeline_group`, optional `route_target`, and `node_method`.
+    2. Implement that `node_method` on `WorkflowOrchestrator` in `orchestrator/workflow/_orchestrator.py`.
+
+    Restart — outgoing edges and conditional routing are generated automatically; a YAML-added intent with no node falls through to a safe `response`. The manual steps below remain useful only for **shared pipeline stages** (sparql/sql/analytics/response) that are not 1:1 with an intent.
 
 ### Step 1: Implement the Node Function
 
-In `orchestrator/workflow.py`, add an `async def` method to `WorkflowOrchestrator`:
+In `orchestrator/workflow/_orchestrator.py`, add an `async def` method to `WorkflowOrchestrator`:
 
 ```python
 async def _maintenance_node_fn(self, state: ConversationState) -> ConversationState:
@@ -478,10 +484,17 @@ tests/
 ├── test_phase_a_fixes.py            # Phase A regression tests
 ├── test_phase_bc_services.py        # RBAC, caching, analytics services
 ├── test_phase3_4_services.py        # Ontology detection, similarity
+├── test_routing_accuracy.py         # 29 canonical routing cases + audit invariants
+├── test_turn_memory.py              # Phase 21 — Redis count-eviction, no-TTL SET, turn_memory schema
+├── test_conversation_memory_e2e.py  # Phase 21 — carry-forward + older-context round-trip
+├── test_coreference_rewrite.py      # Phase 22 — follow-up heuristic gate + gated rewrite (mocked LLM)
+├── test_forecast_pipeline.py        # Phase 20 — forecasting models + metrics (live-stack)
 ├── test_code_executor.py            # Code sandbox security and execution
 ├── test_rag_service.py              # RAG retrieval quality tests
 └── performance_benchmark.py         # Latency benchmarks (not in CI)
 ```
+
+The CI unit-tests job runs a curated deterministic suite (**251 tests, 3 skipped, 0 fail** on the Python 3.10/3.11/3.12 matrix) — see `.github/workflows/ci.yml` for the exact file list, which now gates the turn-memory and co-reference tests.
 
 ### Running Tests
 

@@ -1,8 +1,8 @@
-# OntoSage — System Reference (post-Phase-17)
+# OntoSage — System Reference (post-Phase-22)
 
-**Comprehensive technical reference for the OntoSage agentic-AI framework for smart buildings.** This document covers the architecture, every Phase 11-17 improvement, the routing pipeline, the multi-tenant / multi-persona / multi-intent model, the operational surface (configuration, swap workflow, CI), the test coverage, and known issues — accurate as of 2026-05-29.
+**Comprehensive technical reference for the OntoSage agentic-AI framework for smart buildings.** This document covers the architecture, every Phase 11-22 improvement, the routing pipeline, the multi-tenant / multi-persona / multi-intent model, conversation memory, follow-up co-reference resolution, the forecasting pipeline, the operational surface (configuration, swap workflow, CI), the test coverage, and known issues — accurate as of 2026-06-01.
 
-Two-line summary: A user types a question in plain English. OntoSage classifies the intent, blends the user's stacked personas, routes to the right pipeline (SPARQL → SQL → analytics, or floor-plan, or capability KB, or one of the standalone agents), and returns a structured answer with full per-request audit trail.
+Two-line summary: A user types a question in plain English. OntoSage resolves follow-up references against conversation memory, classifies the intent, blends the user's stacked personas, routes to the right pipeline (SPARQL → SQL → analytics / forecasting, or floor-plan, or capability KB, or one of the standalone agents), and returns a structured answer with full per-request audit trail — remembering the conversation across turns.
 
 ---
 
@@ -52,6 +52,11 @@ sparql  capability floor_plan spatial control maintenance export planner
 
 The 17 graph nodes auto-register from `orchestrator/intents/intent_definitions.yaml` (see Phase 13B). Shared pipeline stages (`dialogue`, `sparql`, `sql`, `analytics`, `response`) and downstream-only nodes (`anomaly`, `report`, `document`) are hardcoded because they aren't 1:1 with any intent.
 
+**Around the graph, two cross-cutting layers run every turn (Phase 21-22):**
+
+- **Before `dialogue`** — *co-reference resolution* (Phase 22): a context-dependent follow-up such as *"and what about humidity there?"* is rewritten into a self-contained query (*"average humidity on floor 3"*) so intent classification, entity extraction, and SPARQL all resolve the reference. See §5.4.
+- **After `response`** — *conversation memory* (Phase 21): the full state is persisted to Redis (count-bounded, no time-expiry by default) and a structured one-line summary of the turn is written to the Postgres `turn_memory` table. The next turn reads back recent messages, carries forward forecast/analytics artifacts, and injects older-turn summaries as long-term context. See §5.5.
+
 ### 2.2 Source layout (post Phase 17)
 
 ```
@@ -65,11 +70,12 @@ orchestrator/
 │   ├── __init__.py
 │   ├── registry.py                 # IntentDefinition, IntentRegistry, route_target_for()
 │   └── intent_definitions.yaml     # 22 intents — single source of truth
-├── agents/                         # one file per agent (16 agents)
-│   ├── dialogue_agent.py           # LLM intent classification + entity extraction
+├── agents/                         # one file per agent (17 agents)
+│   ├── dialogue_agent.py           # LLM intent classification + entity extraction + co-reference rewrite (Phase 22)
 │   ├── sparql_agent.py             # SPARQL generation + execution + ContextVar bctx (Phase 15A)
 │   ├── sql_agent.py                # Time-series fetch
 │   ├── analytics_agent.py          # Code-executor sandboxed analysis
+│   ├── forecast_agent.py           # Phase 20 — multi-model time-series forecasting
 │   ├── floor_plan_agent.py
 │   ├── spatial_agent.py
 │   ├── capability_agent.py
@@ -88,11 +94,16 @@ orchestrator/
 │   ├── ttl_validator.py            # Phase 12B — TTL prefix/namespace consistency check
 │   ├── ttl_uploader.py             # Phase 3 — idempotent TTL upload on startup
 │   ├── multi_intent_detector.py    # Phase 14 — compound-query decomposition
+│   ├── turn_memory.py              # Phase 21 — TurnMemoryService (Postgres per-turn summaries + carry-forward)
+│   ├── report_intake_service.py    # Phase 19 — fault/complaint/safety/feedback intake → user_reports table
+│   ├── job_queue.py                # Async job queue (Redis-backed) for long-running tasks (GET /jobs/{id})
 │   ├── semantic_router.py          # Capability KB semantic routing
 │   ├── capability_indexer.py       # Embeds capability.yaml into Qdrant
 │   ├── floor_plan_pipeline.py      # PDF → manifest
 │   ├── dwg_pipeline.py             # DWG → DXF → polygons
 │   ├── floor_plan_registry.py      # Merge PDF + DWG manifests
+│   ├── forecasting/                # Phase 20 — preprocessor, horizon_parser, model_selector,
+│   │                               #   metrics, models/ (ARIMA, exp-smoothing, linear)
 │   ├── adapters/                   # Storage backend abstraction
 │   └── …
 ├── auth_manager.py                 # Argon2id + Redis sessions (see Known Issues §10)
@@ -100,7 +111,8 @@ orchestrator/
 └── main.py                         # FastAPI app + lifespan + endpoints
 
 shared/
-├── config.py                       # Settings (Pydantic v2); MULTI_INTENT_MIN_LENGTH=50 (Phase 16A)
+├── config.py                       # Settings (Pydantic v2); secrets masked via repr=False (Phase 21);
+│                                    #   MULTI_INTENT_MIN_LENGTH=50, COREFERENCE_REWRITE_ENABLED, STRICT_SECRETS
 ├── models.py                       # ConversationState, ChatRequest (with personas: List[str] Phase 14A)
 ├── persona_registry.py             # PersonaPriors + get_blended_priors() (Phase 14A)
 ├── persona_loader.py               # YAML overlays from input/_defaults/personas/ + input/<bldg>/personas/
@@ -124,11 +136,11 @@ scripts/
 ├── onboard_building.py             # Legacy onboarding flow
 └── survey_live_test.py             # 95-query regression survey
 
-tests/                              # 225 deterministic tests; see §9
+tests/                              # 251 deterministic tests; see §9
 ├── fixtures/buildings/bldg2/       # Phase 12A — fixture for multi-tenant tests
-└── …                               # 13 test files in CI
+└── …                               # 16 test files in CI
 
-.github/workflows/ci.yml            # Phase 16C — runs all 13 deterministic test files
+.github/workflows/ci.yml            # Phase 16C+ — runs all 16 deterministic test files (3.10/3.11/3.12)
 ```
 
 ### 2.3 Storage layer
@@ -137,8 +149,8 @@ tests/                              # 225 deterministic tests; see §9
 |---|---|---|
 | **GraphDB** | 7200 | RDF ontology (Brick/BACnet TTL). Used by SPARQL agent. |
 | **MySQL** | 3306 | Time-series sensor readings, keyed by UUID. |
-| **PostgreSQL** | 5433 | User accounts, Argon2id password hashes, RBAC. |
-| **Redis** | 6379 | Conversation state (1h TTL), response cache (`resp_cache:*`), session salt (see §10). |
+| **PostgreSQL** | 5433 | User accounts + Argon2id hashes + RBAC; `turn_memory` (per-turn conversation summaries, Phase 21); `user_reports` (fault/complaint intake, Phase 19). |
+| **Redis** | 6379 | Conversation state (`conversation:<id>` — **no time-expiry by default**, count-bounded to `CONVERSATION_MAX_MESSAGES`; Phase 21), response cache (`resp_cache:*`), session salt (see §10). |
 | **Qdrant** | 6333 | `floor_plans` (room vectors + geometry payload), `capability_<bldg>` (KB embeddings), `user_memory`. |
 | **MongoDB** | 27017 | Full chat-history transcripts (OpenWebUI). |
 | **rag-service** | 8001 | Semantic fallback for empty SPARQL results. |
@@ -186,6 +198,8 @@ All intents live in `orchestrator/intents/intent_definitions.yaml`. Each has `na
 | `lab_booking` | standalone (bldg1 overlay) | (no node → safety net) | — |
 
 The `route_target_for(intent_name)` resolver in `intents/registry.py:485` returns the explicit `route_target` if set, otherwise applies pipeline-group defaults (`data`→`sparql`, `standalone`→intent name, `meta`→`response`).
+
+**Forecasting (Phase 20):** the `trend` intent flows through `sparql → sql → analytics`. When the query also carries forecast/predict keywords (e.g. *"predict CO₂ for next week"*), the analytics stage hands the fetched series to the **`ForecastAgent`** (`agents/forecast_agent.py`), which preprocesses, auto-selects a model (ARIMA / exponential-smoothing / linear), parses the horizon, computes accuracy metrics (RMSE/R²), and writes `forecast_result` for visualization. See §5.6.
 
 ---
 
@@ -334,6 +348,53 @@ When triggered, `state.current_intent` is rewritten to `"planner"` and the enhan
 
 Feature flag: `settings.MULTI_INTENT_ENABLED` (default `True`).
 
+### 5.4 Follow-up co-reference resolution (Phase 22)
+
+Follow-up turns that refer back with a pronoun or deictic — *"and what about humidity **there**?"*, *"the same for floor 5"*, *"how about floor 2"* — are rewritten into self-contained queries before classification. This is the industry-standard "condense question" step, **gated** so the extra LLM call only fires when it's likely worth it.
+
+```
+Turn 1: "what is the average temperature on floor 3"
+Turn 2: "and what about humidity there"
+                                    ▲ "there" = floor 3
+        → rewritten to "what is the average humidity on floor 3"
+```
+
+| Stage | Mechanism |
+|---|---|
+| **Gate** (zero-LLM) | `dialogue_agent._is_followup_query()` — fires on short queries (≤4 words) OR deictic markers (`there`, `that`, `the same`, leading `and`/`what about`, …) |
+| **Rewrite** | `DialogueAgent.rewrite_to_standalone()` — a fast LLM (`TaskType.REWRITE`) resolves the reference against the last 6 turns; returns the original on any failure (fully graceful); no-ops self-contained queries |
+| **Apply** | `_dialogue_node` rewrites `messages[-1]` before `detect_intent`, so intent + entity extraction **and** the SPARQL node (both read `messages[-1].content`) resolve the reference. Original preserved in `metadata["original_query"]` + `intermediate_results["coref_rewrite"]` |
+
+Feature flag: `settings.COREFERENCE_REWRITE_ENABLED` (default `True`). Tests: `tests/test_coreference_rewrite.py` (16 cases — heuristic gate + gated rewrite, LLM mocked).
+
+### 5.5 Conversation memory (Phase 21)
+
+Two complementary stores keep a conversation coherent across turns:
+
+| Layer | Store | What it holds | Eviction |
+|---|---|---|---|
+| **Short-term** | Redis `conversation:<id>` | Full `ConversationState` blob (messages + `intermediate_results`) | **Count-based** — the stored blob is trimmed to `CONVERSATION_MAX_MESSAGES` (default 20). `CONVERSATION_TTL=0` ⇒ no time-expiry by default (set >0 to re-enable) |
+| **Long-term** | Postgres `turn_memory` | One row per turn: `user_query`, `intent`, `entities`, a deterministic 1-line `result_summary` (no raw sensor arrays), and `carry_forward` (forecast/analytics artifacts) | Persistent |
+
+On each turn (`/v1/chat/completions`): `TurnMemoryService.get_carry_forward()` re-injects the previous turn's `forecast_result` / `analytics_result` (so *"now plot that"* works), and `get_older_context()` prepends compact summaries of turns older than the recent window as a long-term-memory system prefix. Secrets are masked in the pydantic `Settings` repr (`repr=False`) so they never leak into logs. Tests: `tests/test_turn_memory.py`, `tests/test_conversation_memory_e2e.py`.
+
+### 5.6 Forecasting pipeline (Phase 20)
+
+`agents/forecast_agent.py` + `services/forecasting/` add PhD-grade multi-model time-series forecasting, triggered inside the `trend` pipeline when the query carries forecast/predict intent:
+
+```
+sql series ─► preprocessor ─► model_selector ─► {ARIMA | exp-smoothing | linear}
+                                   │
+                              horizon_parser ("next week" → N steps)
+                                   │
+                                   ▼
+                         forecast_result {model, horizon, metrics{rmse,r2}, points}
+                                   │
+                                   ▼  visualization node renders the chart
+```
+
+The selector picks the best model for the series' characteristics; `metrics.py` reports RMSE / R². Tests: `tests/test_forecast_pipeline.py`, `tests/test_forecast_routing.py` (live-stack suites).
+
 ---
 
 ## 6. Adding stuff (the YAML-only path)
@@ -408,7 +469,7 @@ The swap CLI exits **2** on:
 
 ---
 
-## 7. Phase 11-17 changelog
+## 7. Phase 11-22 changelog
 
 This section captures every architectural change since v1.0 (Phase 11 onwards). See `CLAUDE.md` for the operational quick-reference.
 
@@ -504,6 +565,39 @@ This section captures every architectural change since v1.0 (Phase 11 onwards). 
 
 **Phase 18 verified:** 225 unit tests pass · live survey **94/95 PASS / 1 WARN / 0 FAIL (99%)** · auth fail-closed verified with `docker stop` · Postgres retry verified by log line `Postgres connected (attempt 1/5)` · weasyprint PDF verified in-container · `dwg2dxf 0.13.3` callable; the persistent **T7-SP2 (area of floor 1) WARN was upgraded to PASS** for the first time in the project's history, taking the Floor Plan/Spatial category to 4/4.
 
+### Phase 19 — Unified user-report intake
+
+| Sub | Change |
+|---|---|
+| 19A | `services/report_intake_service.py` — any persona reports a fault, complaint, safety hazard, feedback, or suggestion in plain English. Auto-classified + prioritised (gas/fire → URGENT, broken → HIGH), persona-stamped, stored in the Postgres `user_reports` table, acknowledged with a tracking ID |
+| 19B | `maintenance` / `complaint` / `feedback` / `safety_report` / `suggestion` intents route to the `report_intake` handler; admin triage via auto-created views (`v_urgent_reports`, `v_reports_by_persona`, …). Flag: `REPORT_INTAKE_ENABLED` |
+
+### Phase 20 — PhD-grade forecasting + async job queue
+
+| Sub | Change |
+|---|---|
+| 20A | `agents/forecast_agent.py` + `services/forecasting/` (preprocessor, `horizon_parser`, `model_selector`, `metrics`, `models/` = ARIMA / exponential-smoothing / linear). Triggered inside the `trend` pipeline on forecast/predict queries; emits `forecast_result {model, horizon, metrics{rmse,r2}, points}` for the visualization node (see §5.6) |
+| 20B | `services/job_queue.py` — Redis-backed async `JobQueue` for long-running tasks; status via `GET /jobs/{job_id}` (auth-enforced) |
+
+### Phase 21 — Conversation memory + secret/config hardening
+
+| Sub | Change |
+|---|---|
+| 21A | `services/turn_memory.py` — `TurnMemoryService`: per-turn structured summary into the Postgres `turn_memory` table; `get_carry_forward()` (forecast/analytics artifacts) + `get_older_context()` (long-term summaries) wired into `/v1/chat/completions` |
+| 21B | Redis `save_state` now **count-bounds the stored `conversation:<id>` blob** (`state_dict["messages"][-CONVERSATION_MAX_MESSAGES:]`) — the trim acts on the blob `load_state` actually reads. `CONVERSATION_TTL` default → `0` (no time-expiry; count-eviction instead); `.env`/`.env.example` aligned |
+| 21C | Secret hygiene: `repr=False` on `OPENAI_API_KEY`, `OLLAMA_CLOUD_API_KEY`, `GRAPHDB_PASSWORD`, `POSTGRES_USER_PASSWORD`, `MYSQL_PASSWORD`, `SECRET_KEY` — pydantic `Settings` repr no longer leaks secrets into logs/test output. `STRICT_SECRETS` validator refuses startup when any password equals its default |
+| 21D | `tests/test_turn_memory.py` + `tests/test_conversation_memory_e2e.py` wired into CI |
+
+### Phase 22 — Follow-up co-reference resolution
+
+| Sub | Change |
+|---|---|
+| 22A | `dialogue_agent._is_followup_query()` — zero-LLM gate (short query OR deictic markers); `DialogueAgent.rewrite_to_standalone()` — gated fast-LLM "condense question" rewrite, graceful fallback, no-ops self-contained queries |
+| 22B | `_dialogue_node` rewrites `messages[-1]` before `detect_intent` so intent/entity extraction **and** the SPARQL node resolve the reference; original preserved in `metadata` + `intermediate_results["coref_rewrite"]`. Flag: `COREFERENCE_REWRITE_ENABLED` |
+| 22C | **Verified live:** *"avg temperature on floor 3"* → *"and humidity there"* now scopes to floor 3 (previously returned floor 5). `tests/test_coreference_rewrite.py` (16 cases) wired into CI |
+
+**Phase 19-22 verified:** deterministic suite **251 pass / 3 skip / 0 fail** on Python 3.10/3.11/3.12; full `docker-compose up --build` boots healthy; co-reference fix confirmed end-to-end against the live stack.
+
 ---
 
 ## 8. Configuration surface
@@ -518,6 +612,11 @@ This section captures every architectural change since v1.0 (Phase 11 onwards). 
 | `EMBEDDING_PROVIDER` | `openai` | Independent of `MODEL_PROVIDER` |
 | `MULTI_INTENT_ENABLED` | `true` | Phase 14 |
 | `MULTI_INTENT_MIN_LENGTH` | `50` | Phase 16A |
+| `COREFERENCE_REWRITE_ENABLED` | `true` | Phase 22 — gated follow-up query rewrite |
+| `CONVERSATION_TTL` | `0` | Phase 21 — Redis state TTL in seconds; `0` = no expiry (count-bounded) |
+| `CONVERSATION_MAX_MESSAGES` | `20` | Phase 21 — max messages kept in the Redis blob |
+| `REPORT_INTAKE_ENABLED` | `true` | Phase 19 — user-report intake |
+| `STRICT_SECRETS` | `false` | Phase 21 — refuse boot if any password is still the default |
 | `TTL_VALIDATION_SHACL` | `false` | Phase 12B — needs brickschema |
 
 ### 8.2 `input/<bldg>/building.yaml` (per-building)
@@ -562,9 +661,9 @@ capabilities:
 
 ## 9. Test coverage
 
-### 9.1 Deterministic suite (CI — Phase 16C)
+### 9.1 Deterministic suite (CI — Phase 16C, expanded Phase 21-22)
 
-13 files, **225 tests pass, 3 skipped, 0 fail**:
+16 files, **251 tests pass, 3 skipped, 0 fail** (Python 3.10/3.11/3.12 matrix):
 
 | File | Tests | Coverage |
 |---|---|---|
@@ -581,6 +680,9 @@ capabilities:
 | `test_state_persistence.py` | 7 | ConversationState ↔ JSON round-trip with `personas` |
 | `test_swap_building.py` | 6 | swap_building CLI integration (dry-run, apply, mismatch, missing dir, no-op) |
 | `services/test_ttl_validator.py` | 10 | TTL parse + prefix/namespace + SHACL gating |
+| `test_turn_memory.py` | 10 | Phase 21 — Redis count-eviction, no-TTL SET, Postgres `turn_memory` schema |
+| `test_conversation_memory_e2e.py` | — | Phase 21 — carry-forward round-trip, older-context format, no raw arrays stored |
+| `test_coreference_rewrite.py` | 16 | Phase 22 — follow-up heuristic gate + gated LLM rewrite (mocked) |
 
 ### 9.2 Live e2e suite (NOT in CI — needs running stack)
 
@@ -701,7 +803,9 @@ pytest tests/test_phase3_4_services.py tests/test_blended_persona.py \
        tests/test_state_persistence.py tests/test_swap_building.py \
        tests/test_unregistered_intent_safety_net.py tests/test_workflow_wiring.py \
        tests/test_survey_aligned_phases.py tests/test_phase_a_fixes.py \
-       tests/services/test_ttl_validator.py
+       tests/services/test_ttl_validator.py \
+       tests/test_turn_memory.py tests/test_conversation_memory_e2e.py \
+       tests/test_coreference_rewrite.py
 ```
 
 (Or just rely on `.github/workflows/ci.yml` which runs the exact same list.)
@@ -739,6 +843,6 @@ docker exec redis-memory-store redis-cli GET conversation:conv_<session_id>:<use
 
 ## 12. License + provenance
 
-OntoSage is MIT-licensed. The Phase 11-17 work documented here was developed against Cardiff University's Abacws building (`bldg1`) with `bldg2` as a multi-tenant fixture. The Brick Schema ontology is BSD-licensed; the orchestrator's LLM provider abstraction supports both OpenAI and local Ollama models for cost / privacy flexibility.
+OntoSage is MIT-licensed. The Phase 11-22 work documented here was developed against Cardiff University's Abacws building (`bldg1`) with `bldg2` as a multi-tenant fixture. The Brick Schema ontology is BSD-licensed; the orchestrator's LLM provider abstraction supports both OpenAI and local Ollama models for cost / privacy flexibility.
 
 The single-building-at-a-time design is intentional for v1. The future Onto-community release will support multiple simultaneous buildings; the per-building infrastructure (registry caches, BuildingContext resolver, per-building Qdrant collections, persona overlays) is the forward-compatible foundation already in place.

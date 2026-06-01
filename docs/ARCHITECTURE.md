@@ -184,7 +184,7 @@ The entry node is always `dialogue`. After intent classification, `_route_from_d
 
 ### Conversation State
 
-All agents share a single `ConversationState` object (defined in `shared/models.py`). This is the only communication channel between nodes.
+All agents share a single `ConversationState` object (defined in `shared/models.py`). This is the only communication channel between nodes. Between turns it is persisted to a **two-tier memory**: Redis holds the recent state (count-bounded, no time-expiry by default) and PostgreSQL `turn_memory` holds per-turn summaries with forecast/analytics carry-forward — see [Conversation Intelligence](CONVERSATION_INTELLIGENCE.md).
 
 ```python
 class ConversationState(BaseModel):
@@ -221,9 +221,9 @@ workflow.add_node("sparql", self._safe_node(self._sparql_node, "sparql"))
 
 ---
 
-## The 16 Intent Types
+## The Intent Types
 
-The Dialogue Agent classifies every query into one of 16 intent types. The routing decision is determined entirely by the classified intent. For the `capability` intent the classifier may be bypassed entirely by the SemanticRouter fast-path (see [Capability Routing](CAPABILITY_ROUTING.md)).
+The Dialogue Agent classifies every query into one of **22+ intent types**, defined in a YAML registry (`orchestrator/intents/intent_definitions.yaml`) and extensible per building without code changes. The routing decision is determined by the classified intent. For the `capability` intent the classifier may be bypassed entirely by the SemanticRouter fast-path (see [Capability Routing](CAPABILITY_ROUTING.md)). A context-dependent follow-up is first rewritten into a self-contained query (see [Conversation Intelligence](CONVERSATION_INTELLIGENCE.md)).
 
 | Intent | Route | Description |
 |---|---|---|
@@ -236,12 +236,14 @@ The Dialogue Agent classifies every query into one of 16 intent types. The routi
 | `export` | sparql → sql → export → response | Download data as CSV / JSON / HTML |
 | `recommend` | sparql → sql → response | HVAC, energy, and comfort recommendations |
 | `planner` | planner → response | Multi-step orchestrated tasks |
-| `forecast` | sparql → sql → analytics → response | Predictions and forward projections |
+| `trend` / `forecast` | sparql → sql → analytics → **forecast** → response | Temporal trends and forward projections — runs the [multi-model forecasting pipeline](FORECASTING.md) on forecast/predict queries |
+| `compliance` | sparql → sql → analytics → response | ASHRAE / WELL / BREEAM standards checks |
 | `floor_plan` | floor_plan → response | Show floor plan, locate a room, visual navigation |
 | `spatial_query` | spatial_query → response | Area, adjacency, room counts, block/MEP queries |
-| `capability` ⚡ | capability → response | **NEW (v3.1)** Off-ontology Q&A (fire safety, amenities, policies). Sub-50 ms when router score ≥ override_min |
+| `capability` ⚡ | capability → response | **(v3.1)** Off-ontology Q&A (fire safety, amenities, policies). Sub-50 ms when router score ≥ override_min |
+| `maintenance` / `complaint` / `safety_report` / `feedback` / `suggestion` | report_intake → response | **Unified report intake** — auto-classified, prioritised, persona-stamped, stored in `user_reports` |
 | `control` | response | Not yet supported — informs the user |
-| `general` | response | Greetings, general knowledge questions |
+| `general` / `greeting` | response | Greetings, general knowledge questions |
 | `clarification` | response | Query too vague — asks follow-up question |
 | `alert` | sparql → sql → anomaly → response | Threshold-based alerting |
 
@@ -332,6 +334,24 @@ Generates Python analytics code and executes it in the Code Executor sandbox.
 - Retries up to 3 times on error, passing the error back to the LLM for auto-correction
 - Returns `formatted_response` (text summary) and optional plot file path
 - Replaces UUID identifiers in output with human-readable sensor labels
+
+### Forecast Agent
+
+**File:** `orchestrator/agents/forecast_agent.py` · **Module:** `orchestrator/services/forecasting/`
+
+Multi-model time-series forecasting, invoked inside the `trend` pipeline when the query carries forecast/predict intent.
+
+- Preprocesses the fetched series (clean, resample, gap-fill)
+- Parses the horizon from natural language (*"next week"* → N steps)
+- Auto-selects among ARIMA, exponential smoothing, and linear models
+- Reports accuracy (RMSE / R²) and emits `forecast_result {model, horizon, metrics, points}` for the Visualization Agent
+- See the [Forecasting](FORECASTING.md) guide for the full pipeline
+
+### Report-Intake Agent
+
+**File:** `orchestrator/services/report_intake_service.py`
+
+Handles the `maintenance` / `complaint` / `safety_report` / `feedback` / `suggestion` intents. Auto-classifies and prioritises the report (gas/fire → URGENT), stamps it with the user's persona, persists it to the `user_reports` table, and returns a tracking ID.
 
 ### Visualization Agent
 

@@ -362,10 +362,13 @@ If the code generates a plot with `plt.savefig("output.png")`, the response incl
 
 | Key pattern | TTL | Content |
 |---|---|---|
-| `conv:{conversation_id}` | 1 hour | `ConversationState` JSON |
-| `intent:{query_hash}` | 1 hour | Intent classification result |
-| `sparql:{query_hash}` | 1 hour | Generated SPARQL query |
+| `conversation:{id}` | **none by default** (count-bounded to `CONVERSATION_MAX_MESSAGES`) | `ConversationState` JSON — recent messages + carry-forward artifacts |
+| `resp_cache:*` | 1 hour | Cached final responses (skip repeat LLM calls) |
+| `cache:embed:*` | 24 hours | Embedding cache (`EMBEDDING_CACHE_TTL_SECONDS`) |
 | `session:{token}` | 7 days | Session metadata (user_id, role) |
+
+!!! note
+    Conversation state is now **count-bounded** rather than time-expired (`CONVERSATION_TTL=0` by default). Long-term per-turn history lives in PostgreSQL `turn_memory` — see [Conversation Intelligence](CONVERSATION_INTELLIGENCE.md).
 
 ---
 
@@ -419,7 +422,8 @@ The column name is the sensor UUID as stored in the ontology (`ref:hasTimeseries
 
 - Stores user accounts, passwords (Argon2id hashed), and roles
 - Provides the RBAC data store
-- Stores long-term conversation history (as complement to Redis ephemeral state)
+- `turn_memory` table — long-term per-turn conversation summaries + carry-forward ([Conversation Intelligence](CONVERSATION_INTELLIGENCE.md))
+- `user_reports` table — fault/complaint/safety/feedback intake, with admin triage views
 - Used by Open WebUI for user account persistence
 
 ### Volume

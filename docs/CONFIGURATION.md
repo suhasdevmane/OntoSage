@@ -259,9 +259,14 @@ These URL environment variables point services to each other within the Docker n
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CONVERSATION_TTL` | `3600` | Seconds before Redis expires a conversation's state. `86400` = 24-hour retention |
-| `MAX_CONVERSATION_HISTORY` | `20` | Maximum messages to keep in context (sliding window). Higher = more context, more memory |
+| `CONVERSATION_TTL` | `0` | Seconds before Redis time-expires a conversation's state. **`0` = no time-expiry** (state is count-bounded instead, see below). Set e.g. `86400` to re-enable 24-hour expiry |
+| `CONVERSATION_MAX_MESSAGES` | `20` | Count-based eviction — max messages retained in the stored Redis conversation blob. The active bound when `CONVERSATION_TTL=0` |
+| `MAX_CONVERSATION_HISTORY` | `20` | Maximum prior turns injected into the LLM context (sliding window) |
+| `COREFERENCE_REWRITE_ENABLED` | `true` | Resolve context-dependent follow-ups ("and humidity *there*?") into self-contained queries via a gated fast-LLM rewrite. See [Conversation Intelligence](CONVERSATION_INTELLIGENCE.md) |
 | `MAX_RETRY_ATTEMPTS` | `3` | Automatic retry count for SPARQL errors, code execution failures, and LLM API timeouts |
+
+!!! note "Memory eviction changed"
+    OntoSage now bounds conversation state by **message count** (`CONVERSATION_MAX_MESSAGES`) rather than a fixed TTL. `CONVERSATION_TTL` defaults to `0` (no time-expiry). See [Conversation Intelligence](CONVERSATION_INTELLIGENCE.md) for the two-tier memory model (Redis + Postgres `turn_memory`).
 
 ---
 
@@ -386,6 +391,10 @@ For debugging, set `LOG_LEVEL=DEBUG` to see:
 |----------|---------|-------------|
 | `API_KEY` | `change_me` | API key for the building management API. **Change in production** |
 | `SECRET_KEY` | — | Application secret key for token signing. Generate with `openssl rand -hex 32` |
+| `STRICT_SECRETS` | `false` | When `true`, the orchestrator **refuses to start** if any password (GraphDB, Postgres, MySQL) is still its built-in default — a fail-closed guard for production |
+
+!!! tip "Secret hygiene"
+    Secret-bearing settings (`OPENAI_API_KEY`, `GRAPHDB_PASSWORD`, `SECRET_KEY`, …) are masked in the application's config representation, so they are not echoed into logs or test output. Enable `STRICT_SECRETS=true` in production to block startup on default credentials.
 
 See the [Security Guide](SECURITY.md) for full documentation on authentication, RBAC, and secrets management.
 

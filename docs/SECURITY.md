@@ -270,6 +270,22 @@ cp .env.example .env
 # Edit .env — add real credentials
 ```
 
+### Secret Hygiene Built In
+
+OntoSage hardens secret handling in two ways:
+
+- **Masked configuration.** Secret-bearing settings (`OPENAI_API_KEY`, `OLLAMA_CLOUD_API_KEY`, `GRAPHDB_PASSWORD`, `POSTGRES_USER_PASSWORD`, `MYSQL_PASSWORD`, `SECRET_KEY`) are excluded from the application's config representation, so they are never echoed into logs, error traces, or test output.
+- **`STRICT_SECRETS` boot guard.** Set `STRICT_SECRETS=true` in production and the orchestrator **refuses to start** if any password is still its built-in default (e.g. the shipped GraphDB/Postgres/MySQL placeholders). This fails closed — a misconfigured deployment never silently runs on default credentials.
+
+```bash
+# Production .env
+STRICT_SECRETS=true
+GRAPHDB_PASSWORD=<your-strong-password>
+POSTGRES_USER_PASSWORD=<your-strong-password>
+MYSQL_PASSWORD=<your-strong-password>
+SECRET_KEY=<openssl rand -hex 32>
+```
+
 ### Production: Docker Secrets
 
 For production, use Docker Secrets to avoid storing credentials in environment variables (which appear in `docker inspect`):

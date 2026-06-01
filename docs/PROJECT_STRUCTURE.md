@@ -43,11 +43,13 @@ orchestrator/
 ├── requirements.txt        # Python dependencies
 │
 ├── agents/
-│   ├── dialogue_agent.py   # Intent classification (16 types), entity extraction, time range parsing, SemanticRouter probe
-│   ├── capability_agent.py # NEW v3.1 — answers off-ontology questions from per-building KB
+│   ├── dialogue_agent.py   # Intent classification (22+ types), entity extraction, time-range parsing,
+│   │                       #   SemanticRouter probe + follow-up co-reference rewrite (Phase 22)
+│   ├── capability_agent.py # v3.1 — answers off-ontology questions from per-building KB
 │   ├── sparql_agent.py     # SPARQL generation + execution + RAG fallback + UUID extraction
 │   ├── sql_agent.py        # Time-series data fetching via storage adapters
 │   ├── analytics_agent.py  # LLM-generated Python code; calls code-executor; interprets results
+│   ├── forecast_agent.py   # Phase 20 — multi-model time-series forecasting (ARIMA/ETS/linear)
 │   ├── visualization_agent.py # Chart generation (matplotlib/plotly); calls code-executor
 │   ├── report_agent.py     # Structured building reports (multi-section formatted output)
 │   ├── anomaly_agent.py    # Threshold breach detection and anomaly summarisation
@@ -67,7 +69,11 @@ orchestrator/
 │   ├── database_adapter.py # Abstract base class (ABC) for all storage adapters
 │   ├── disambiguation_service.py # Resolve ambiguous entity mentions (multiple zones match)
 │   ├── document_builder.py # Structured document assembly for report/export agents
-│   ├── embedding_service.py # NEW v3.1 — provider-agnostic embeddings (OpenAI 1536-d / local 384-d) with Redis cache
+│   ├── embedding_service.py # v3.1 — provider-agnostic embeddings (OpenAI 1536-d / local 384-d) with Redis cache
+│   ├── turn_memory.py       # Phase 21 — TurnMemoryService: Postgres per-turn summaries + carry-forward
+│   ├── forecasting/         # Phase 20 — preprocessor, horizon_parser, model_selector, metrics, models/
+│   ├── job_queue.py         # Redis-backed async job queue (long-running tasks → GET /jobs/{id})
+│   ├── report_intake_service.py # Phase 19 — fault/complaint/safety/feedback intake → user_reports table
 │   ├── floor_plan_pipeline.py # PDF + DWG ingestion → manifest → Qdrant
 │   ├── floor_plan_registry.py # Merge orchestrator for PDF + DWG floor plan data
 │   ├── floor_plan_watcher.py  # File-watcher (watchfiles) for live ingest on file drop
@@ -174,7 +180,7 @@ class ConversationState(BaseModel):
     intermediate_results: Dict[str, Any] = {}  # the main data bus
 ```
 
-The `intermediate_results` dict has 16+ reserved keys (see [Architecture](ARCHITECTURE.md#conversationstate)).
+The `intermediate_results` dict has many reserved keys (see [Architecture](ARCHITECTURE.md#conversation-state)).
 
 ---
 
