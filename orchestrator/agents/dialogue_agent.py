@@ -170,9 +170,8 @@ _TIME_KW = ("today", "yesterday", "last", "past", "hour", "day", "week",
 # Exported for testing — forecast/predict pre-classifier
 _FORECAST_KWS = (
     "predict", "forecast", "projected", "projection",
-    "what will", "what would", "expected", "expected to be",
-    "likely to be", "tomorrow", "next week", "next month",
-    "next hour", "in the next",
+    "what will", "what would", "expected to be",
+    "likely to be",
 )
 _SENSOR_METRIC_KWS = (
     "temperature", "temp", "co2", "humidity", "energy",
