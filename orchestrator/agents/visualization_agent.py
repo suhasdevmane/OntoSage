@@ -271,7 +271,8 @@ Description:"""
         try:
             description = await llm_manager.generate(desc_prompt)
             return description.strip()
-        except:
+        except Exception as e:
+            logger.warning(f"[visualization_agent] Description generation failed: {e}")
             return f"Created a {chart_type.replace('_', ' ')} visualization."
 
     async def create_report(

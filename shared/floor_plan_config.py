@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import yaml
 from pydantic import BaseModel, Field
@@ -66,6 +66,66 @@ _DEFAULT_LAYER_MAP: Dict[str, str] = {
 }
 
 
+class StorageRoute(BaseModel):
+    """A single UUID-pattern → backend routing rule.
+
+    Allows per-building heterogeneous time-series setups (e.g. temp sensors on
+    MySQL, energy meters on InfluxDB).  When a sensor UUID matches `pattern`,
+    queries are routed to the named `backend` key (resolved against
+    database_registry.yaml).
+
+    Patterns use shell-glob syntax (`*` matches anything).  Patterns are
+    evaluated in declaration order, first match wins.
+    """
+
+    pattern: str = Field(..., description="UUID glob pattern, e.g. 'temp-*'")
+    backend: str = Field(..., description="Backend key from database_registry.yaml")
+
+
+class StorageConfig(BaseModel):
+    """Per-building storage backend selection.
+
+    When omitted from building.yaml, the AdapterRegistry initialises EVERY
+    backend declared in database_registry.yaml (legacy behaviour).  When
+    present, only the listed backends are initialised, dramatically reducing
+    startup time and noise from failed connection attempts.
+
+    Example:
+        storage:
+          databases:                # subset of database_registry.yaml keys
+            - database1
+            - database8
+          primary: database1        # default backend when SPARQL result has no
+                                    # ref:storedAt hint
+          routes:                   # optional UUID-pattern routing
+            - pattern: "temp-*"
+              backend: database1
+            - pattern: "power-*"
+              backend: influxdb1
+          fallback: database1       # used if no route matches
+    """
+
+    databases: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Keys from database_registry.yaml that this building needs. "
+            "Empty list = initialise every available adapter (legacy)."
+        ),
+    )
+    primary: Optional[str] = Field(
+        default=None,
+        description="Default backend key when storage URI lookup fails.",
+    )
+    routes: List[StorageRoute] = Field(
+        default_factory=list,
+        description="UUID-pattern → backend routing rules (first match wins).",
+    )
+    fallback: Optional[str] = Field(
+        default=None,
+        description="Used by the registry when no route matches.",
+    )
+
+
 class BuildingConfig(BaseModel):
     """
     Per-building configuration loaded from building.yaml (or defaults).
@@ -88,6 +148,20 @@ class BuildingConfig(BaseModel):
     layer_map: Dict[str, str] = Field(default_factory=dict)
     min_room_area_m2: float = Field(default=2.0, ge=0.1)
     max_room_area_m2: float = Field(default=10_000.0)
+    # Phase 2 — per-building storage adapter binding
+    storage: Optional[StorageConfig] = Field(
+        default=None,
+        description="Storage backend selection; omit for legacy 'init all' behaviour.",
+    )
+    # Phase 4 — alias names this building also answers to.
+    # Resolves the historical mismatch where logical BUILDING_ID (e.g. "bldg1")
+    # differs from the floor-plan registry slug (e.g. "abacws" derived from
+    # filename "Abacws floor N.pdf").  Callers using the alias get the same
+    # config / floor-plan data as callers using the primary building_id.
+    floor_plan_aliases: List[str] = Field(
+        default_factory=list,
+        description="Additional IDs that resolve to this building (e.g. floor-plan PDF slugs).",
+    )
 
     @property
     def effective_display_name(self) -> str:

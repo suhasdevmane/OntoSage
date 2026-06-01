@@ -1,0 +1,41 @@
+# Minimal bldg2 config for Phase 11A multi-tenant validation.
+#
+# This building reuses bldg1's MySQL backend (database1) so we don't need to
+# stand up a separate database — but everything else is bldg2-specific:
+#   - distinct building_id and building_name
+#   - distinct SPARQL namespace
+#   - per-building intent overlay (intents.yaml)
+#   - per-building persona overlay (personas/)
+#
+# Activate by sending a request with `building_id: bldg2`.  When the active
+# settings.BUILDING_ID stays at "bldg1", the orchestrator still serves bldg1
+# globally — this YAML only kicks in when a request explicitly names bldg2.
+
+building_id: bldg2
+building_name: Cardiff Research Tower
+
+# Distinct ontology namespace.  In a real bldg2 deployment, sensor URIs
+# would actually live under this namespace.  For Phase 11A validation we
+# verify the namespace flows through the SPARQL prompt without errors.
+ontology_namespace: http://cardiff-research-tower.example/bldg2#
+building_prefix: bldg2
+building_timezone: Europe/London
+
+# Reuse bldg1's storage adapters since no separate DB is provisioned.
+# In a real second building this would be a different `database*` key.
+storage:
+  databases:
+    - database1
+
+# Phase 4 alias mechanism (no aliases needed for bldg2 — fresh deployment).
+floor_plan_aliases: []
+
+# Per-building capability routing thresholds (calibrated for OpenAI embeddings
+# in line with bldg1 — could be re-tuned for a real bldg2 KB).
+capability_routing:
+  enabled: true
+  embedding_model: auto
+  threshold: 0.56
+  override_min: 0.60
+  top_k: 5
+  fallback_on_qdrant_failure: skip

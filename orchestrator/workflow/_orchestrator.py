@@ -1401,17 +1401,221 @@ Instructions:
             return None
 
     async def _visualization_node(self, state: ConversationState) -> ConversationState:
-        """Execute visualization generation"""
+        """Execute visualization generation.
+
+        Fast path: when the user asks to graph a *previous forecast result*
+        (e.g. "show me the graph for the above", "plot that prediction"),
+        we generate deterministic matplotlib code from the stored forecast_result
+        instead of letting the LLM invent placeholder data.
+
+        Normal path: delegate to viz_agent.create_visualization as before.
+        """
         logger.info("Executing visualization node")
 
         latest_message = state.messages[-1].content if state.messages else ""
         data = state.query_results
 
+        # ── Forecast chart fast path ──────────────────────────────────────────
+        _forecast_result = state.intermediate_results.get("forecast_result") or {}
+        _PREV_VIZ_KWS = (
+            "previous", "above", "that forecast", "those results",
+            "that prediction", "those predictions", "that result",
+            "the prediction", "the forecast", "show the graph", "plot it",
+            "graph it", "graph for the", "chart for the", "visualise it",
+            "visualize it", "chart of that", "plot of that", "for the above",
+            "from before", "last result", "previous result",
+        )
+        _is_prev_viz = (
+            _forecast_result.get("success")
+            and any(kw in latest_message.lower() for kw in _PREV_VIZ_KWS)
+        )
+
+        if _is_prev_viz:
+            logger.info(
+                "[viz_node] Detected 'visualize previous forecast' request — "
+                "generating chart from stored forecast_result (no LLM code generation)"
+            )
+            result = await self._render_forecast_chart(state, _forecast_result)
+            state.intermediate_results["viz_result"] = result
+            return state
+
+        # ── Normal visualization path ─────────────────────────────────────────
         result = await self.viz_agent.create_visualization(state, latest_message, data)
-
         state.intermediate_results["viz_result"] = result
-
         return state
+
+    async def _render_forecast_chart(
+        self,
+        state: ConversationState,
+        forecast_result: dict,
+    ) -> dict:
+        """Generate and execute a matplotlib forecast chart with CI bands.
+
+        Uses the code executor sandbox so no matplotlib import is needed in
+        the orchestrator process itself.  All forecast data is serialised as
+        inline Python literals inside the generated code string.
+        """
+        import json as _json
+
+        # Extract forecast data from the stored result
+        future_index  = forecast_result.get("future_index", [])
+        fc_values     = forecast_result.get("forecast", [])
+        lower_80      = forecast_result.get("lower_80", [])
+        upper_80      = forecast_result.get("upper_80", [])
+        lower_95      = forecast_result.get("lower_95", [])
+        upper_95      = forecast_result.get("upper_95", [])
+        sensor_label  = forecast_result.get("sensor_label", "Sensor")
+        model_name    = forecast_result.get("model", "Statistical Model")
+        unit          = forecast_result.get("unit", "")
+        horizon       = forecast_result.get("horizon", "forecast")
+        metrics       = forecast_result.get("metrics") or {}
+        rmse  = metrics.get("rmse", 0)
+        mae   = metrics.get("mae", 0)
+        mape  = metrics.get("mape", 0)
+
+        if not future_index or not fc_values:
+            logger.warning("[viz_node] forecast_result has no data — falling back to generic viz")
+            latest_message = state.messages[-1].content if state.messages else ""
+            return await self.viz_agent.create_visualization(state, latest_message, state.query_results)
+
+        # Inline data as Python literals so the sandbox has no import dependency
+        code = f"""
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import base64
+import io as _io
+import warnings
+warnings.filterwarnings('ignore')
+
+# ── Forecast data (from ForecastAgent, previous turn) ─────────────────────
+future_index  = {_json.dumps(future_index)}
+fc_values     = {_json.dumps(fc_values)}
+lower_80      = {_json.dumps(lower_80)}
+upper_80      = {_json.dumps(upper_80)}
+lower_95      = {_json.dumps(lower_95)}
+upper_95      = {_json.dumps(upper_95)}
+sensor_label  = {_json.dumps(sensor_label)}
+model_name    = {_json.dumps(model_name)}
+unit          = {_json.dumps(unit)}
+horizon_label = {_json.dumps(horizon)}
+rmse          = {rmse}
+mae           = {mae}
+mape          = {mape}
+
+ts = pd.to_datetime(future_index)
+n  = len(ts)
+
+fig, ax = plt.subplots(figsize=(13, 6))
+plt.style.use('seaborn-v0_8-whitegrid')
+
+# 95% confidence band (lightest)
+if lower_95 and upper_95:
+    ax.fill_between(ts, lower_95, upper_95, alpha=0.12, color='steelblue',
+                    label='95% Confidence Interval')
+
+# 80% confidence band (slightly darker)
+if lower_80 and upper_80:
+    ax.fill_between(ts, lower_80, upper_80, alpha=0.25, color='steelblue',
+                    label='80% Confidence Interval')
+
+# Point forecast line
+ax.plot(ts, fc_values, color='steelblue', linewidth=2.5,
+        marker='o', markersize=3.5, markerfacecolor='white',
+        markeredgewidth=1.5, label='Predicted Value', zorder=5)
+
+# Dashed horizontal reference at first predicted value
+ax.axhline(y=fc_values[0], color='gray', linestyle='--', linewidth=0.8,
+           alpha=0.6, label=f'Baseline ({fc_values[0]:.2f}{{unit}})')
+
+# Axis formatting
+ax.set_title(
+    f'Forecast: {{sensor_label}}\\n'
+    f'Horizon: {{horizon_label}}  ·  Model: {{model_name}}  ·  '
+    f'RMSE={{rmse:.3f}}{{unit}}  ·  MAE={{mae:.3f}}{{unit}}  ·  MAPE={{mape:.1f}}%',
+    fontsize=11, pad=12,
+)
+ax.set_xlabel('Time', fontsize=10)
+ax.set_ylabel(f'{"Value" if not unit else unit}', fontsize=10)
+
+# Rotate x-axis labels
+if n > 12:
+    plt.xticks(rotation=45, ha='right', fontsize=8)
+else:
+    plt.xticks(rotation=30, ha='right', fontsize=9)
+
+ax.legend(loc='upper right', fontsize=9, framealpha=0.85)
+
+# Annotate first and last predicted value
+ax.annotate(f'{{fc_values[0]:.2f}}{{unit}}',
+            xy=(ts[0], fc_values[0]),
+            xytext=(8, 8), textcoords='offset points',
+            fontsize=8, color='steelblue')
+ax.annotate(f'{{fc_values[-1]:.2f}}{{unit}}',
+            xy=(ts[-1], fc_values[-1]),
+            xytext=(-40, 8), textcoords='offset points',
+            fontsize=8, color='steelblue')
+
+plt.tight_layout()
+
+# Output as base64
+_buf = _io.BytesIO()
+plt.savefig(_buf, format='png', bbox_inches='tight', dpi=110)
+plt.close()
+_buf.seek(0)
+print("PLOT_BASE64: " + base64.b64encode(_buf.read()).decode('utf-8'))
+print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, horizon={{horizon_label}}")
+"""
+
+        # Execute in the code executor sandbox
+        try:
+            import httpx as _httpx
+            from shared.config import settings as _cfg
+            executor_url = f"http://{_cfg.CODE_EXECUTOR_HOST}:{_cfg.CODE_EXECUTOR_PORT}"
+            resp = await _httpx.AsyncClient(timeout=45).post(
+                f"{executor_url}/execute",
+                json={"code": code},
+            )
+            exec_result = resp.json()
+        except Exception as e:
+            logger.error(f"[viz_node] Code executor call failed: {e}", exc_info=True)
+            return {"success": False, "error": str(e),
+                    "formatted_response": "Could not render the forecast chart — code executor unavailable."}
+
+        # Parse output
+        output = exec_result.get("output", "")
+        error  = exec_result.get("error", "")
+
+        if error and "PLOT_BASE64" not in output:
+            logger.warning(f"[viz_node] Forecast chart code error: {error[:200]}")
+            return {"success": False, "error": error,
+                    "formatted_response": f"Chart generation failed: {error[:200]}"}
+
+        # Extract base64 image
+        media_payload = None
+        for line in output.split("\n"):
+            if line.startswith("PLOT_BASE64: "):
+                b64 = line[len("PLOT_BASE64: "):]
+                media_payload = {"type": "image", "format": "png", "data": b64}
+                break
+
+        desc = (
+            f"Forecast chart for **{sensor_label}** — {horizon}\n\n"
+            f"- **Model:** {model_name}\n"
+            f"- **Shaded bands:** 80% and 95% confidence intervals\n"
+            f"- **Accuracy (hold-out):** RMSE={rmse:.3f}{unit} · MAE={mae:.3f}{unit} · MAPE={mape:.1f}%\n\n"
+            f"> The shaded areas show prediction uncertainty: inner band = 80% CI, "
+            f"outer band = 95% CI. Bands widen over time because uncertainty grows with the forecast horizon."
+        )
+
+        return {
+            "success": True,
+            "formatted_response": desc,
+            "media": media_payload,
+            "chart_type": "forecast_ci",
+            "sensor": sensor_label,
+            "model": model_name,
+        }
 
     async def _response_node(self, state: ConversationState) -> ConversationState:
         """Format final response — with response-cache store after generation.

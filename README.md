@@ -1,6 +1,6 @@
-# OntoSage — Agentic AI for Intelligent Buildings
+# OntoSage — Agentic AI for Smart Buildings
 
-**Natural language interaction with smart building systems — no technical knowledge required.**
+**Ask your building anything in plain English. Get sensor-grounded, persona-aware, multi-intent answers.**
 
 [![Python](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com/)
@@ -8,611 +8,269 @@
 [![Brick Schema](https://img.shields.io/badge/Brick_Schema-1.3-orange.svg)](https://brickschema.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml/badge.svg)](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-GitHub_Pages-blue)](https://suhasdevmane.github.io/OntoSage/)
+[![Tests](https://img.shields.io/badge/tests-225%20passing-brightgreen.svg)](#run-the-tests)
 
 ---
 
-**OntoSage** is an open-source agentic AI platform that translates plain English questions into real-time answers sourced from building ontologies (knowledge graphs) and sensor time-series databases.
+A facility manager opens the chat and asks: *"Show me floor 3 layout and also tell me how many rooms are there."*
 
-A facility manager types: *"Which zones on Floor 3 exceeded 1000 ppm CO₂ for more than 15 minutes this week?"*
-
-OntoSage:
-1. Classifies the query as an **analytics** intent
-2. Searches the semantic knowledge graph (GraphDB) for CO₂ sensor URIs in Floor 3 zones
-3. Generates and executes a SPARQL query to find sensor UUIDs
-4. Fetches last-7-day readings from the MySQL sensor database
-5. Runs Python analytics code in a sandboxed container to compute threshold breaches
-6. Returns a formatted table with zone names, peak values, durations, and timestamps
+OntoSage decomposes it into two sub-intents (`floor_plan` + `spatial_query`), routes each to the right agent, and returns both the floor map PDF and the room count in one response. Behind the scenes, it ran two LLM calls, validated the user's session, blended their stacked personas (`facility_manager` + `sustainability_officer`), consulted the building's Brick ontology + MySQL time-series + DWG geometry, and wrote a complete routing audit trail to Redis.
 
 No SQL, no SPARQL, no schema knowledge required from the user.
 
----
-
-## What Makes OntoSage Different
-
-| Capability | Description |
-|---|---|
-| **16 Intent Types** | sensor readings, analytics, anomaly detection, reports, exports, recommendations, forecasts, discovery, comparison, floor plans, spatial geometry, capability — and more |
-| **Smart Capability Routing** | Per-building YAML knowledge base (fire safety, amenities, policies, IT) embedded into Qdrant at startup; query-time vector search bypasses the LLM for off-ontology questions — **sub-50 ms** confident path with full provider switching (OpenAI 1536-d or local MiniLM 384-d) |
-| **Floor Plan Intelligence** | Automatic PDF + AutoCAD DWG ingestion — room polygons, areas, adjacency, and sensor locations extracted at startup and searchable via natural language |
-| **Spatial Geometry Queries** | Ask "how many rooms on floor 3 larger than 50 m²?" or "what is adjacent to 3.01?" — answered from DWG geometry with no SQL or SPARQL |
-| **Zero-Knowledge Interaction** | Users need no knowledge of sensor IDs, SPARQL, SQL, or ontology classes |
-| **Multi-Building Support** | 8 database backends: MySQL, PostgreSQL, TimescaleDB, InfluxDB, MongoDB, SQLite, Cassandra, Redis TimeSeries |
-| **Semantic Grounding** | GraphDB similarity indexing maps natural language to RDF entities — no external vector database needed |
-| **Safe Analytics Sandbox** | Python code generation executed in a resource-limited Docker sandbox with no filesystem or network access |
-| **Role-Based Access Control** | 6 roles, 20 permissions enforced at every API endpoint |
-| **LLM Flexibility** | Switch between local Ollama models and OpenAI with a single environment variable |
-| **Conversation Memory** | Redis-backed conversation state with 1-hour TTL; full history in MongoDB |
-| **Honest Boundaries** | Capability misses return an explicit *"I don't have that on record"* with facility-management contact — never hallucinated answers |
+> **Full technical reference:** see [ONTOSAGE.md](./ONTOSAGE.md) — architecture, all 22 intents, multi-tenant / multi-persona / multi-intent model, the Phase 11-18 changelog, test coverage, and known issues.
 
 ---
 
-## Architecture
+## Latest live-survey baseline (Phase 18 + libredwg, 2026-05-30)
 
-```mermaid
-graph TD
-    User["User (Browser / Voice)"] -->|HTTPS| WebUI["Open WebUI :3000"]
-    WebUI -->|REST + WebSocket| Orch["OntoSage Orchestrator :8000\n(FastAPI + LangGraph)"]
-
-    subgraph "Agent Pipeline"
-        Orch --> DA["Dialogue Agent\nIntent · Entities · Time range"]
-        DA -. "score ≥ override_min\n(~50 ms fast-path)" .-> CA["Capability Agent\nKB lookup · no LLM"]
-        DA -->|sensor/analytics/report| SA["SPARQL Agent\nOntology queries"]
-        DA -->|floor_plan| FPA["Floor Plan Agent\nManifest + PNG render"]
-        DA -->|spatial_query| SPA["Spatial Agent\nArea · Adjacency · Counts"]
-        DA -->|anomaly/export| AA["Anomaly / Export Agent"]
-        SA --> SQ["SQL Agent\nTime-series fetch"]
-        SQ --> AnA["Analytics Agent\nPython sandbox"]
-        AnA --> VA["Visualization Agent\nCharts"]
-    end
-
-    subgraph "Capability Routing Layer (NEW)"
-        DA -->|query| SR["SemanticRouter\nQdrant vector search\nthreshold bands"]
-        SR -->|matches| CA
-        CapYAML["capability.yaml\n/app/input/<bldg>/"] -.->|startup, SHA-256 idempotent| CI["CapabilityIndexer\nembed · upsert"]
-        CI -->|capability_<bldg>| QDC[("Qdrant :6333\ncapability collections")]
-        SR --> QDC
-        ES["EmbeddingService\nOpenAI 1536-d OR\nlocal MiniLM 384-d"] -.->|provider switch| CI
-        ES -.-> SR
-    end
-
-    subgraph "Knowledge Layer"
-        SA -->|SPARQL| GDB[("GraphDB :7200\nBrick / REC Ontology")]
-        SA -->|Semantic RAG| RAGS["RAG Service :8001"]
-        RAGS --> GDB
-    end
-
-    subgraph "Floor Plan Layer"
-        FPA -->|reads| MF[("Manifests\n/app/floor_plans/")]
-        SPA -->|reads| MF
-        PDF["PDF files\n/app/input/*.pdf"] -->|startup ingest| FPP["FloorPlanPipeline\nOCR · zone regex"]
-        DWG["DWG files\n/app/input/*.dwg"] -->|startup ingest| DWGP["DWGPipeline\ndwg2dxf · shapely"]
-        FPP --> REG["FloorPlanRegistry\nmerge + index"]
-        DWGP --> REG
-        REG --> MF
-        REG -->|upsert| QD[("Qdrant :6333\nRoom vectors + geometry")]
-    end
-
-    subgraph "Data Layer"
-        SQ -->|per-building adapter| MySQL[("MySQL :3306\nSensor time-series")]
-        SQ -->|per-building adapter| PG[("PostgreSQL :5433\nUser accounts · RBAC")]
-        Orch -->|state cache + embed cache| Redis[("Redis :6379")]
-        Orch -->|chat history| Mongo[("MongoDB :27017")]
-        AnA -->|execute code| CE["Code Executor :8002\n(Docker sandbox)"]
-    end
-
-    subgraph "LLM Layer"
-        Orch -. "MODEL_PROVIDER=openai" .-> OpenAI["OpenAI API"]
-        Orch -. "MODEL_PROVIDER=local" .-> Ollama["Ollama :11434\ndeepseek-r1:32b"]
-        ES -. "EMBEDDING_PROVIDER" .-> OpenAI
-        ES -. "EMBEDDING_PROVIDER=local" .-> ST["sentence-transformers\nin-process (MiniLM)"]
-    end
 ```
+RESULTS: 94/95 PASS  ·  1 WARN  ·  0 FAIL  (99% clean pass)
+Latency: avg 16.7s · median 9.2s · max 71.2s
+```
+
+Floor Plan/Spatial category is now 4/4 (was 3/4 in every prior baseline) thanks to the libredwg source build delivering real DWG geometry — the orchestrator now answers *"What is the total area of floor 1?"* with a full markdown table covering all 6 floors and a **20,370.2 m²** building total. Deterministic unit suite: **225 tests pass / 3 skip / 0 fail** on Python 3.12.
 
 ---
 
-## Quick Start (5 Minutes)
+## What's new (Phase 11-19)
 
-### Prerequisites
-
-- Docker Desktop (Windows / macOS) or Docker Engine (Linux)
-- 8 GB RAM minimum (16 GB recommended)
-- OpenAI API key **or** NVIDIA GPU for local inference
-
-### 1. Clone
-
-```bash
-git clone https://github.com/suhasdevmane/OntoSage.git
-cd OntoSage
-```
-
-### 2. Configure
-
-```bash
-cp .env.example .env
-```
-
-Open `.env` and set at minimum:
-
-```bash
-# For OpenAI (no GPU required — recommended for getting started)
-MODEL_PROVIDER=openai
-OPENAI_API_KEY=sk-your-key-here
-OPENAI_MODEL=gpt-4o-mini
-
-# Database passwords (change from defaults)
-MYSQL_ROOT_PASSWORD=yourpassword
-MYSQL_PASSWORD=yourpassword
-POSTGRES_USER_PASSWORD=yourpassword
-```
-
-### 3. Start
-
-```bash
-docker compose up -d
-```
-
-First run pulls images (~2–5 minutes). Subsequent starts take under 30 seconds.
-
-### 4. Verify
-
-```bash
-curl http://localhost:8000/health
-```
-
-### 5. Open the Chat Interface
-
-```
-http://localhost:3000
-```
-
-Create an account (first user becomes admin), then start asking questions.
-
----
-
-## Local GPU Mode (Ollama)
-
-For a fully private, offline deployment:
-
-```bash
-# Install NVIDIA Container Toolkit (Ubuntu)
-sudo apt-get install nvidia-container-toolkit
-sudo systemctl restart docker
-
-# Start with GPU profile
-docker compose --profile local-gpu up -d
-
-# Pull the model (first run only — ~20 GB download)
-docker exec ollama ollama pull deepseek-r1:32b
-```
-
-Then set in `.env`:
-
-```bash
-MODEL_PROVIDER=local
-OLLAMA_MODEL=deepseek-r1:32b
-```
-
-See the [Deployment Guide](https://suhasdevmane.github.io/OntoSage/DEPLOYMENT/) for options including `llama3.2:7b` (8 GB VRAM) and `deepseek-r1:14b` (16 GB VRAM).
-
----
-
-## Example Queries
-
-| Query | Intent type | What happens |
+| Capability | What it does | Phase |
 |---|---|---|
-| "What sensors are on Floor 3?" | `discovery` | SPARQL query → ontology graph |
-| "CO₂ level in Zone 5 right now" | `sensor_data` | SPARQL → UUID → SQL → latest value |
-| "Temperature trend this week" | `analytics` | SPARQL → SQL → Python analytics → chart |
-| "Which zones exceeded 1000 ppm CO₂?" | `anomaly` | SPARQL → SQL → threshold detection |
-| "Compare energy use Floor 2 vs Floor 3" | `comparison` | SPARQL → SQL → analytics → bar chart |
-| "Generate a weekly building report" | `report` | Multi-section formatted report |
-| "Export yesterday's sensor data as CSV" | `export` | SPARQL → SQL → CSV download |
-| "Forecast temperature for tomorrow" | `forecast` | SPARQL → SQL → trend projection |
-| "Show me floor 3 / where is room 3.01?" | `floor_plan` | Floor plan manifest → PNG image + room list |
-| "How many rooms larger than 50 m² on floor 4?" | `spatial_query` | DWG geometry → filtered room table |
-| "What rooms are adjacent to the server room?" | `spatial_query` | DWG adjacency graph → neighbour list |
-| "How many sensors are on floor 3?" | `spatial_query` | DWG INSERT blocks → count by type |
-| "Total floor area of the building?" | `spatial_query` | DWG area data → per-floor and grand total |
-| "What are the fire evacuation procedures?" | `capability` | Capability KB (Qdrant) — sub-50 ms, no LLM call |
-| "Where can I park my bike?" | `capability` | Capability KB → amenities entry |
-| "What happens during a power outage?" | `capability` | Capability KB → POWER category |
-| "Is there a prayer room?" | `capability` | Capability KB → amenities lookup |
-| "When does reception close?" | `capability` | Capability KB → policy entry |
+| **Unified user-report intake** | Any persona reports a fault, complaint, safety hazard, feedback, or suggestion in plain English. Auto-classified + prioritised (gas/fire → URGENT, broken → HIGH), persona-stamped, stored in the `user_reports` Postgres table, acknowledged with a tracking ID. Admins triage in pgAdmin via auto-created views (`v_urgent_reports`, `v_reports_by_persona`, …) | **19** |
+
+### Earlier (Phase 11-18)
+
+| Capability | What it does | Phase |
+|---|---|---|
+| **DWG geometry pipeline live** | `libredwg 0.13.3` built from source in a multi-stage Dockerfile. The orchestrator now ingests all `.dwg` files at startup and the `spatial_query` agent returns room areas, polygons, floor totals from real CAD data | **18 (libredwg)** |
+| **PDF backend swapped to weasyprint** | `wkhtmltopdf` was removed from Debian trixie (dead upstream, unfixed CVEs); switched to Python-native weasyprint as primary, pdfkit as legacy fallback | 18 |
+| **Base image CVE remediation** | All 7 Dockerfiles moved from `python:3.11-slim-bookworm` to `python:3.12-slim-trixie`. Python 3.11 itself had unfixed CVEs after Oct 2024 maintenance end; the bump to 3.12 + Debian 13 clears the IDE-flagged critical+13 high vulns | 18 |
+| **Auth fails closed honestly** | When Postgres is unreachable mid-request, `/auth/login` now returns *"Authentication service is temporarily unavailable"* instead of misleading *"Invalid password"* | 18 |
+| **Postgres connect retry on startup** | `lifespan` retries 5 times with 2→4→8→16→30s backoff — survives the well-known orchestrator-boots-before-Postgres race | 18 |
+| **Building-swap CLI** | `python scripts/swap_building.py --to bldg2` validates TTL ↔ namespace consistency, archives the old dir, flushes the response cache, updates `.env` | 12C |
+| **TTL startup validator** | Orchestrator refuses to boot if any TTL's `@prefix bldg:` doesn't match `building.yaml`'s `ontology_namespace` — no more silently-empty SPARQL | 12B |
+| **Routing audit trail** | Every turn writes `state.intermediate_results["route_decision"]` with `{intent, overrides_applied, final_node, decision_source}` | 13A |
+| **Auto-wired graph** | Adding a new intent is 2 steps: YAML entry + `_my_node_fn`. The graph builds itself | 13B |
+| **Multi-persona blending** | Pass `personas: ["facility_manager", "researcher"]` and the registry rank-vote-merges `top_domains`, takes `max(complexity)`, `min(threshold)` | 14A |
+| **Multi-intent decomposition** | "show me X and tell me Y" → planner fans out 2-5 sub-intents | 14B |
+| **Multi-tenant SPARQL** | `ContextVar` threads per-request building namespace through every SPARQL helper (forward-compat for Onto-community) | 15A |
+| **Persona-aware intent prompt** | LLM dialogue agent sees the blended persona's domains, complexity, clarification threshold for better classification | 16B |
+| **Multi-intent threshold tuning** | Lowered from 80→50 chars; catches "show me floor 3 layout and tell me how many rooms" (55 chars) | 16A |
+| **`workflow.py` package split** | 3,220-line monolith → `workflow/__init__.py` + `_orchestrator.py` + `_graph.py` + `_routing.py` via mixins; zero behavior change | 17 |
 
 ---
 
-## Connecting Your Building
+## Quick start
 
-OntoSage adapts to your building — you don't rewrite your data to fit OntoSage.
-
-There are **three independent knowledge domains** you can connect — any subset works:
-
-| Domain | Files | What it enables |
-|---|---|---|
-| **Sensor data** | `.ttl` ontology + time-series database | "What's the CO₂ in zone 3.01 right now?", trends, anomalies, reports |
-| **Floor plans** | `.pdf` and/or `.dwg` drawings | "Show me floor 3", room areas, adjacency, block/MEP locations |
-| **Capability KB** | `capability.yaml` per building | "Fire procedures?", "Bike parking?", "Power outage behaviour?" — off-ontology questions |
-
-All three are picked up at startup from `input/<building_id>/`. Add one, all, or none — failures in any one domain never block the others.
-
-### Step 1: Prepare your ontology
-
-Your building's Turtle (`.ttl`) file needs:
-- Sensor declarations with RDF types (`brick:Temperature_Sensor`, etc.)
-- Time-series linkage connecting sensors to database UUIDs:
-
-```turtle
-bldg:sensor_001 brick:hasExternalReference _:ref .
-_:ref ref:hasTimeseriesId "a8df8757-009a-4c3b-b1f2-ec59f8ce3e21" ;
-      ref:storedAt bldg:database1 .
-```
-
-### Step 2: Run the onboarding CLI
+### 1. Bring the stack up
 
 ```bash
-python scripts/onboard_building.py
+cp .env.example .env             # set OPENAI_API_KEY (or MODEL_PROVIDER=local)
+docker-compose up -d              # 12 services start; wait ~90s for first boot
+curl http://localhost:8000/health # should report all services healthy
 ```
 
-This interactive wizard validates your TTL, generates a `building_config.yaml`, and tests database connectivity.
-
-### Step 3: Load into GraphDB and create the similarity index
+### 2. Register a user
 
 ```bash
-# Load ontology
-curl -X POST http://localhost:7200/repositories/ontosage/statements \
-  -H "Content-Type: text/turtle" --data-binary @mybuilding.ttl
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"you","password":"pickone","email":"you@example.com"}'
 ```
 
-Then follow the [Building Onboarding Guide](https://suhasdevmane.github.io/OntoSage/BUILDING_ONBOARDING/) to create the semantic search index.
+### 3. Ask a question
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"you","password":"pickone"}' \
+  | python -c "import sys,json; print(json.load(sys.stdin)['data']['session_token'])")
+
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" -H "Authorization: $TOKEN" \
+  -d '{"message":"What is the current temperature in zone 5.28?","session_id":"demo"}'
+```
+
+### 4. Try the new capabilities
+
+**Multi-persona (blends two role priors):**
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" -H "Authorization: $TOKEN" \
+  -d '{
+    "message": "what should I look at this week?",
+    "session_id": "demo2",
+    "personas": ["facility_manager", "sustainability_officer"]
+  }'
+```
+
+**Multi-intent (one turn, two sub-tasks):**
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" -H "Authorization: $TOKEN" \
+  -d '{
+    "message": "show me floor 3 layout and also tell me how many rooms are there",
+    "session_id": "demo3"
+  }'
+```
+
+Or use the [OpenWebUI](http://localhost:3000) chat interface that ships with the stack.
 
 ---
 
-## Floor Plan Intelligence
-
-OntoSage automatically ingests architectural drawings at startup and makes them queryable in natural language — no manual import steps required.
-
-### How it works
-
-Drop your floor plan files into `/app/input/` and the system does the rest:
+## Architecture at a glance
 
 ```
-/app/input/
-  Abacws floor 0.pdf      ← rendered image + room labels via OCR
-  Abacws floor 0.dwg      ← AutoCAD geometry: polygons, areas, adjacency
-  Abacws floor 1.pdf
-  Abacws floor 1.dwg
-  ...
+                       POST /chat
+                            │
+                            ▼
+                    ┌───────────────┐
+                    │   dialogue    │ ← LLM classifies intent + extracts entities
+                    └───────┬───────┘     (persona priors surfaced into prompt — Phase 16B)
+                            │
+                            │ _route_from_dialogue (Python, audit-logged — Phase 13A)
+                            ▼
+   ┌───────┬────────────┬─────────┬─────────────┬───────────┬───────┬──────┐
+   ▼       ▼            ▼         ▼             ▼           ▼       ▼      ▼
+ sparql  capability  floor_plan spatial_q   control   maintenance export planner
+   │      │           │          │           │           │           │     │
+   ▼      └───────────┴──────────┴───────────┴───────────┴───────────┘     │
+  sql                                                                       │
+   │                                                                        │
+   ▼                                                                        │
+analytics ───► visualization                                                │
+   │                                                                        │
+   └────────────────────────────────────► response ◄────────────────────────┘
+                                              │
+                                              ▼
+                                            client
 ```
 
-On every startup the **FloorPlanRegistry** runs both pipelines in parallel:
+Underneath:
 
-| Pipeline | Input | What it extracts |
-|---|---|---|
-| **PDF pipeline** | `*.pdf` | Room labels (OCR fallback for vector-path text), zone IDs, rendered PNG |
-| **DWG pipeline** | `*.dwg` | Room polygons (shapely), area (m²), perimeter, adjacency graph, door/sensor/HVAC block locations |
+- **GraphDB** (port 7200) — Brick/BACnet RDF (the ontology)
+- **MySQL** (3306) — Time-series sensor readings
+- **PostgreSQL** (5433) — User accounts + RBAC
+- **Redis** (6379) — Conversation state + response cache + sessions
+- **Qdrant** (6333) — Capability KB embeddings + floor-plan room vectors
+- **rag-service** (8001) — Semantic fallback when SPARQL returns empty
+- **code-executor** (8002) — Sandboxed Python for analytics
 
-The two outputs are merged per floor — DWG wins for geometry, PDF wins for the rendered image — and the result is written to `floor_plans/<building_id>/floor_N.manifest.json` and indexed in Qdrant.
+Full source layout and per-component detail in [ONTOSAGE.md §2](./ONTOSAGE.md#2-architecture).
 
-**Idempotent**: files are SHA-256 fingerprinted; unchanged files are skipped on restart. Only new or modified files are reprocessed.
+---
 
-**Live file watching**: drop a new `.pdf` or `.dwg` into `/app/input/` while the system is running and it will be ingested within 3 seconds — no restart needed.
+## Add stuff via YAML — no code changes
 
-**Graceful degradation**: if `dwg2dxf` (libredwg-utils) is not installed, the DWG pipeline is skipped and only PDF-based `schema_version="1.0"` manifests are produced. The rest of the system continues normally.
+### A new intent
 
-### Spatial query examples
-
-Once floor plans are ingested, the `spatial_query` intent answers geometry questions directly from the manifests — no LLM call, sub-second response:
-
-```
-"How many meeting rooms are on floor 3?"          → count filtered by type
-"Show rooms larger than 50 m² on floor 4"         → sorted area table
-"What spaces are adjacent to zone 3.01?"           → adjacency graph lookup
-"How many fire exits are on floor 2?"              → DWG block count by type
-"Total usable area across all floors"              → sum of all space areas
-```
-
-### REST API for floor plan data
-
-```bash
-# List all ingested manifests
-GET /api/v1/floor-plans
-
-# Full manifest JSON for a specific floor
-GET /api/v1/floor-plans/abacws/3/manifest
-
-# Room polygon coordinates (normalised 0–1)
-GET /api/v1/floor-plans/abacws/3/polygons
-
-# Inline SVG floor plan (colour-coded by room type)
-GET /api/v1/floor-plans/abacws/3/svg?width=1200&show_labels=true
-
-# Force re-ingest all files
-POST /api/v1/floor-plans/reingest
-```
-
-### Per-building configuration
-
-Override zone ID patterns, AIA/NCS layer names, DPI, and floor labels via a YAML file:
+Drop into `orchestrator/intents/intent_definitions.yaml`:
 
 ```yaml
-# /app/input/cardiff_eng/building.yaml
-building_id: cardiff_eng
-building_name: Cardiff School of Engineering
-zone_id_pattern: "R{floor}{nn}"    # matches R301, R415
-default_dpi: 200
-floors_label_override:
-  0: "Ground Floor"
-  1: "First Floor"
+- name: my_intent
+  description: |-
+    What this intent handles. Include trigger phrases.
+  examples:
+    - '"trigger query 1"'
+  pipeline_group: standalone
+  node_method: _my_node_fn
 ```
 
----
+Add `_my_node_fn(self, state)` to `orchestrator/workflow/_orchestrator.py`. Restart. Done. [Details](./ONTOSAGE.md#61-add-a-new-intent).
 
-## Smart Capability Routing (NEW)
-
-Roughly **50% of real-world building queries are off-ontology** — fire safety procedures, amenities, IT support, accessibility, opening hours, policies. SPARQL can't answer them and pure LLMs hallucinate. OntoSage solves this with a per-building **Capability Knowledge Base** plus a semantic router that bypasses the LLM when confidence is high.
-
-### Architecture at a glance
-
-```mermaid
-flowchart LR
-    YAML["capability.yaml<br/>(per building)"]
-    subgraph Startup["Startup pipeline (idempotent · SHA-256 fingerprint)"]
-        YAML --> CI[CapabilityIndexer]
-        CI -->|embeds keywords + content| ES1[EmbeddingService]
-        ES1 -->|upsert points| QC[("Qdrant<br/>capability_&lt;bldg&gt;")]
-    end
-
-    subgraph Query["Query-time (every user message)"]
-        Q[User query] --> DA[Dialogue Agent]
-        DA -->|classify| SR[SemanticRouter]
-        SR --> ES2[EmbeddingService]
-        ES2 --> QC
-        QC -->|top-k matches| SR
-        SR -->|score ≥ override_min| CA[CapabilityAgent<br/>fast-path: skip LLM]
-        SR -.->|threshold ≤ score &lt; override_min| LLM[LLM intent classifier<br/>soft-override band]
-        SR -.->|score &lt; threshold| LLM
-        LLM -.->|recovers as capability| CA
-        CA --> R[Grounded response<br/>with provenance]
-    end
-```
-
-### Routing decision (three threshold bands)
-
-The router groups Qdrant points by `entry_id` and max-pools the cosine similarity. The resulting score lands in one of three bands:
-
-| Score band | Routing decision | LLM call? | Why |
-|---|---|---|---|
-| `score ≥ override_min` (default 0.60 local / 0.55 OpenAI) | **Hard override** → intent = capability | ❌ Skipped | High-confidence KB match; LLM would only confirm |
-| `threshold ≤ score < override_min` (default 0.56 / 0.50) | **Soft override** — LLM runs; if it picks a non-data intent, router corrects to capability | ✅ Once | Medium confidence; protect data intents from accidental capture |
-| `score < threshold` | No router signal; LLM intent classification proceeds normally | ✅ Once | Low confidence; let the LLM decide |
-
-The two-band design preserves the existing 16-intent pipeline while letting high-confidence KB matches short-circuit the LLM call entirely.
-
-### `capability.yaml` schema
-
-A single file at `input/<building_id>/capability.yaml` declares the building's off-ontology knowledge:
+### A new persona
 
 ```yaml
-building_info:
-  id: bldg1
-  name: Abacws Building
-  institution: Cardiff University
-  smart_building: true
-  sensor_count: ~680
-
-capabilities:
-  - id: fire_safety
-    category: FIRE_SAFETY
-    keywords: [fire, fire alarm, evacuation, emergency exit, sprinkler,
-               assembly point, fire warden, fire extinguisher]
-    content: >
-      Fire safety features include: automatic smoke detectors on every
-      floor; manual call points at every stairwell; wet pipe sprinkler
-      system throughout; fire doors on all stairwells; emergency lighting
-      with battery backup. Assembly point: Senghennydd Road outside the
-      main entrance. Do not use lifts during evacuation.
-    source: fire_safety_management_plan
-
-  - id: bike_parking
-    category: AMENITIES
-    keywords: [bike, bicycle, cycle, bike park, bike rack, cycling]
-    content: >
-      Covered bike racks for ~40 bicycles are located outside the main
-      entrance on Senghennydd Road. Showers and changing rooms are
-      available on the ground floor for cyclists.
-    source: building_facilities
+# input/<bldg>/personas/safety_officer.yaml
+name: safety_officer
+top_domains: [FIRE_SAFETY, OCCUPANCY, THERMAL]
+default_complexity: MODERATE
+clarification_threshold: 0.40
+borda_topics: [Fire Safety, Occupancy, Air Quality]
+aliases: [fire_officer, safety]
 ```
 
-Drop this file into `input/<bldg>/`, restart the orchestrator, and the new KB is indexed automatically. **Zero Python edits required.**
+No code changes. [Details](./ONTOSAGE.md#62-add-a-new-persona).
 
-### Per-building tuning (`building.yaml`)
-
-```yaml
-# /app/input/bldg1/building.yaml
-capability_routing:
-  enabled: true
-  embedding_model: auto      # follows EMBEDDING_PROVIDER (openai|local)
-  threshold: 0.56            # soft-override band lower bound
-  override_min: 0.60         # hard skip-LLM threshold
-  top_k: 5                   # max KB entries returned
-  fallback_on_qdrant_failure: skip   # silently fall back to LLM-only
-```
-
-Defaults are calibrated for **local MiniLM 384-d** embeddings. Switching to OpenAI `text-embedding-3-small` (1536-d) shifts the score distribution downward — re-tune via `scripts/calibrate_intent_routing.py`.
-
-### Provider switching (one env var)
-
-| Variable | OpenAI mode (default) | Local mode (offline) |
-|---|---|---|
-| `EMBEDDING_PROVIDER` | `openai` | `local` |
-| Model | `text-embedding-3-small` (1536-d) | `sentence-transformers/all-MiniLM-L6-v2` (384-d) |
-| Cost | ~$0.02 / 1M tokens | $0 |
-| Latency (cold) | 80–150 ms | 30–80 ms (CPU) |
-| Latency (warm, Redis cache hit) | <5 ms | <5 ms |
-| Privacy | Query text sent to OpenAI | Fully on-device |
-
-The collection is **automatically rebuilt** if you switch providers (vector dimension mismatch is detected at startup).
-
-### Performance characteristics
-
-| Metric | Value | Notes |
-|---|---|---|
-| Cold query (first request after restart) | 80–150 ms | Embedding + Qdrant search |
-| Warm query (Redis embed cache hit) | <10 ms | 24 h TTL by default |
-| Hard-override fast-path saving | ~600 ms / query | Skips the full LLM intent call |
-| Indexer startup (32 entries, 8 buildings) | ~1–2 s | One-time per restart; idempotent thereafter |
-| Re-index after YAML edit | ~200–500 ms | SHA-256 mismatch triggers rebuild |
-
-### Graceful degradation
-
-| Failure | Behavior | Impact |
-|---|---|---|
-| Qdrant unreachable | `source=fallback`; LLM intent path runs | Slower but correct |
-| Embedding API down | Indexer marks collection `degraded`; router falls back | KB temporarily inaccessible; ontology+SQL unaffected |
-| `capability.yaml` missing for a building | Indexer skips that building; logs warning | No capability answers; agent returns explicit "no KB" message |
-| `capability.yaml` malformed | Pydantic validation error; service still boots | Operator sees clear error; other buildings keep working |
-
-The principle: **the orchestrator always boots, and capability failures never block sensor/analytics queries.**
-
----
-
-## Supported Database Backends
-
-The `config/database_registry.yaml` file maps TTL `ref:storedAt` identifiers to database connections. OntoSage supports:
-
-| Backend | Technology | Use case |
-|---|---|---|
-| `mysql` | MySQL, MariaDB, TiDB | Standard IoT sensor stores |
-| `postgresql` | PostgreSQL, Aurora, Neon | Enterprise deployments |
-| `timescaledb` | TimescaleDB hypertables | High-frequency time-series |
-| `mongodb` | MongoDB, Atlas, DocumentDB | Document-model sensor data |
-| `influxdb` | InfluxDB 2.x | Native time-series platforms |
-| `sqlite` | SQLite, DuckDB | Local / embedded deployments |
-| `cassandra` | Cassandra, ScyllaDB | High-write IoT at scale |
-| `redis_timeseries` | Redis + RedisTimeSeries | Real-time edge data |
-
-Multiple buildings can use different backends simultaneously. Each sensor in the ontology declares its own `ref:storedAt` adapter key — routing is fully automatic.
-
----
-
-## Switching LLM Providers
-
-Switch at any time without rebuilding:
+### A new building
 
 ```bash
-# Switch to OpenAI
-MODEL_PROVIDER=openai docker compose restart orchestrator
-
-# Switch to local Ollama
-MODEL_PROVIDER=local docker compose --profile local-gpu restart orchestrator
-
-# Windows PowerShell
-.\switch-provider.ps1 openai
-.\switch-provider.ps1 local
+# 1. Drop files under input/<new>/ (building.yaml + TTLs + optional DWG/PDF/capability/personas)
+# 2. Validate
+python scripts/swap_building.py --to <new> --dry-run
+# 3. Apply (updates .env, archives old, flushes resp_cache)
+python scripts/swap_building.py --to <new> --archive
+# 4. Restart
+docker-compose restart orchestrator
 ```
+
+The TTL validator hard-fails on `@prefix bldg:` ↔ `ontology_namespace` mismatch. [Details](./ONTOSAGE.md#63-swap-to-a-new-building).
 
 ---
 
-## Service Ports
+## Run the tests
 
-| Port | Service | Purpose |
+The CI suite (`.github/workflows/ci.yml`) runs **225 deterministic tests** across 13 files in ~20s:
+
+```bash
+pytest tests/test_phase3_4_services.py tests/test_blended_persona.py \
+       tests/test_compound_query_e2e.py tests/test_intent_graph_autowire.py \
+       tests/test_multi_tenant_fixture.py tests/test_routing_accuracy.py \
+       tests/test_state_persistence.py tests/test_swap_building.py \
+       tests/test_unregistered_intent_safety_net.py tests/test_workflow_wiring.py \
+       tests/test_survey_aligned_phases.py tests/test_phase_a_fixes.py \
+       tests/services/test_ttl_validator.py
+```
+
+For a live regression battery (needs the stack running):
+
+```bash
+python scripts/survey_live_test.py
+# Phase 18 + libredwg baseline: 94/95 PASS · 1 WARN · 0 FAIL  (99% clean pass)
+```
+
+[Full test inventory](./ONTOSAGE.md#9-test-coverage).
+
+---
+
+## What this is NOT
+
+To set expectations honestly:
+
+- **Not multi-tenant in v1.** One building at a time. The code is forward-compatible (per-building registry caches, ContextVar-scoped SPARQL bctx, per-building Qdrant collections) for the upcoming Onto-community release, but `BUILDING_ID` selects exactly one active building today.
+- **Not a building automation system.** OntoSage observes and reports. It doesn't actuate HVAC, lock doors, or override setpoints (the `control` intent politely declines and logs the attempt).
+- **Not a substitute for SCADA / BMS.** It's a question-answering layer on top of your existing data. Real-time control still belongs in your BMS.
+- **Not magic.** The LLM occasionally misclassifies intents (the survey hits ~92/95). The routing audit trail (Phase 13A) lets you see exactly why every query went where it did.
+
+---
+
+## Known issues
+
+| Issue | Status | Workaround / fix |
 |---|---|---|
-| **3000** | Open WebUI | Chat interface |
-| **8000** | Orchestrator API | REST + WebSocket + `/v1/chat/completions` |
-| **8001** | RAG Service | Semantic entity retrieval |
-| **8002** | Code Executor | Analytics sandbox |
-| **7200** | GraphDB | Ontology store + Workbench UI |
-| **6379** | Redis | Conversation state cache |
-| **3307** | MySQL | Sensor time-series data |
-| **5433** | PostgreSQL | User accounts + RBAC |
-| **27017** | MongoDB | Chat history |
-| **6333** | Qdrant | Room geometry vectors (`floor_plans`) + cross-session agent memory (`user_memory`) |
+| ~~Argon2 salt stored in Redis only~~ | **FIXED in Phase 18** | Audit found salt was already in Postgres; the user-visible symptom was the silent Redis fallback path which now fails closed with an honest "service unavailable" error |
+| ~~Postgres connect race after Docker restart~~ | **FIXED in Phase 18** | `lifespan` retries 5 times with exponential backoff (2→4→8→16→30s) |
+| ~~`dwg2dxf` missing — no DWG geometry~~ | **FIXED in Phase 18 libredwg build** | `libredwg 0.13.3` built from source in a multi-stage Dockerfile; the orchestrator now parses 6 floors at startup and the `spatial_query` agent answers area/polygon/floor-totals questions from real CAD data |
+| Maintenance ticket via "report broken light" | Open (T15-S5 WARN in survey) | The maintenance agent returns "I processed your request, but couldn't generate a response" — needs a better default for the maintenance intent's nominal-create path |
+
+[Details + proper fixes](./ONTOSAGE.md#10-known-issues).
 
 ---
 
-## Documentation
+## Documentation map
 
-**[ONTOSAGE.md](ONTOSAGE.md)** — The single comprehensive reference document. Everything you need to understand, deploy, extend, and operate OntoSage from scratch: all 16 intents, 11 agents, 10 personas, floor plan intelligence, 4 RAG systems, 3 LLM providers, 8 database backends, security, compliance standards, API reference, MCP integration, building onboarding, troubleshooting, and research background.
-
-Full hosted documentation at **[suhasdevmane.github.io/OntoSage](https://suhasdevmane.github.io/OntoSage/)**
-
-| Guide | Description |
-|---|---|
-| [ONTOSAGE.md](ONTOSAGE.md) | Complete system reference (start here) |
-| [Deployment](https://suhasdevmane.github.io/OntoSage/DEPLOYMENT/) | Deploy from scratch — OpenAI or local GPU |
-| [Building Onboarding](https://suhasdevmane.github.io/OntoSage/BUILDING_ONBOARDING/) | Connect your building's ontology and sensor database |
-| [Configuration](https://suhasdevmane.github.io/OntoSage/CONFIGURATION/) | All environment variables and settings |
-| [GraphDB Setup](https://suhasdevmane.github.io/OntoSage/GRAPHDB_SETUP/) | Create the semantic similarity index |
-| [Architecture](https://suhasdevmane.github.io/OntoSage/ARCHITECTURE/) | Component design and data flow |
-| [Developer Guide](https://suhasdevmane.github.io/OntoSage/DEVELOPER_GUIDE/) | Local dev setup, adding agents, CI |
-| [Security](https://suhasdevmane.github.io/OntoSage/SECURITY/) | Auth, RBAC, sandbox isolation |
-| [Runbook](https://suhasdevmane.github.io/OntoSage/RUNBOOK/) | Operations: health checks, backups, troubleshooting |
-
----
-
-## Development
-
-```bash
-# Set up virtual environment
-python -m venv .venv && source .venv/bin/activate  # Linux/macOS
-python -m venv .venv && .venv\Scripts\activate     # Windows
-
-# Install dependencies
-pip install -r orchestrator/requirements.txt
-pip install pytest pytest-asyncio black isort flake8
-
-# Start infrastructure services only (GraphDB, Redis, MySQL, etc.)
-docker compose up -d graphdb redis mysql postgres-user-data code-executor rag-service
-
-# Run orchestrator locally with hot reload
-PYTHONPATH=. uvicorn orchestrator.main:app --reload --port 8000
-```
-
-### Running Tests
-
-```bash
-pytest tests/ -v                      # all tests
-pytest -m unit                        # fast unit tests only
-pytest -m integration                 # requires Docker services
-pytest tests/ --cov=orchestrator      # with coverage report
-```
-
-### Code Style
-
-```bash
-black --line-length 100 orchestrator/ shared/ scripts/ tests/
-isort --profile black orchestrator/ tests/
-flake8 orchestrator/ shared/ --max-line-length 110
-```
-
----
-
-## Research Background
-
-OntoSage was developed as part of research at **Cardiff University** (Devmane, Rana, Perera) into zero-knowledge interaction with built environments. The system was evaluated across three real buildings with 81 participants and 5,916 pre-development survey questions analysing how different building stakeholders — from facility managers to occupants — ask questions about their buildings.
-
-A paper describing the methodology, corpus analysis, and evaluation results is in preparation for **ACM IMWUT (Proceedings of the ACM on Interactive, Mobile, Wearable and Ubiquitous Technologies)**.
-
----
-
-## Contributing
-
-Contributions are welcome. Please:
-
-1. Fork the repository and create a feature branch
-2. Run the test suite and linters before submitting
-3. Follow the conventions in the [Developer Guide](https://suhasdevmane.github.io/OntoSage/DEVELOPER_GUIDE/)
-4. Open a pull request against `main`
-
-For bug reports and feature requests, open a [GitHub Issue](https://github.com/suhasdevmane/OntoSage/issues).
+| Doc | Audience | Scope |
+|---|---|---|
+| **[README.md](./README.md)** | New users | This file — what it is, how to start, what's new |
+| **[ONTOSAGE.md](./ONTOSAGE.md)** | Operators + contributors | Complete system reference — architecture, all phases, configuration, tests, known issues |
+| **[CLAUDE.md](./CLAUDE.md)** | Future AI assistants | Operational rules, navigation index, debugging patterns, workflow conventions |
+| **[.claude/rules/](./. claude/rules/)** | Contributors | Style + agent + API + SPARQL patterns |
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT. See [LICENSE](./LICENSE).
 
----
-
-*OntoSage is open source. Built with [LangGraph](https://github.com/langchain-ai/langgraph), [FastAPI](https://fastapi.tiangolo.com/), [GraphDB](https://graphdb.ontotext.com/), and [Brick Schema](https://brickschema.org/).*
+The Phase 11-17 work was developed against Cardiff University's Abacws building (`bldg1`) with `bldg2` as a multi-tenant fixture. Brick Schema is BSD-licensed.

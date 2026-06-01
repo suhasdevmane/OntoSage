@@ -94,6 +94,69 @@ def _build_extended_prefixes() -> list:
 EXTENDED_PREFIXES = _build_extended_prefixes()
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase 15A — request-scoped building context.
+#
+# The SPARQLAgent is a SINGLETON shared across requests; we cannot attach the
+# active building's namespace/prefix to the instance.  Instead we use a
+# ContextVar — async-safe, per-coroutine, automatically isolated across
+# concurrent requests.  `sparql_node` SETS it on entry; every helper method
+# READS it via `_active_bctx()` with a safe fallback to settings.
+#
+# This closes the multi-tenant gap left in Phase 11B (which only converted the
+# `_generate_sparql` prompt) without threading `building_id` through 7+ helper
+# signatures.
+# ─────────────────────────────────────────────────────────────────────────────
+
+from contextvars import ContextVar
+
+_REQUEST_BCTX: ContextVar = ContextVar("sparql_request_bctx", default=None)
+
+
+def _active_bctx():
+    """Return the BuildingContext for the active request, or None.
+
+    Helpers should fall back to `settings.BUILDING_*` when this returns None
+    (e.g. when called outside a request context, like tests or scripts).
+    """
+    return _REQUEST_BCTX.get()
+
+
+def _active_namespace() -> str:
+    """Per-request building namespace; falls back to the process-global default."""
+    bctx = _active_bctx()
+    return bctx.namespace if bctx else settings.BUILDING_NAMESPACE
+
+
+def _active_prefix() -> str:
+    """Per-request building prefix; falls back to the process-global default."""
+    bctx = _active_bctx()
+    return bctx.prefix if bctx else settings.BUILDING_PREFIX
+
+
+def set_request_bctx(building_id: Optional[str]) -> Optional[object]:
+    """Set the active request's BuildingContext.  Returns the token needed
+    to `reset()` it; pair with a try/finally in the caller.
+
+    `sparql_node` in workflow.py wraps the SPARQL agent call with this.
+    """
+    try:
+        from orchestrator.services.building_context import resolve_building_context
+        bctx = resolve_building_context(building_id) if building_id else None
+    except Exception:
+        bctx = None
+    return _REQUEST_BCTX.set(bctx)
+
+
+def reset_request_bctx(token) -> None:
+    """Reset the request bctx token returned by `set_request_bctx`."""
+    if token is not None:
+        try:
+            _REQUEST_BCTX.reset(token)
+        except (ValueError, LookupError):
+            pass
+
+
 class SPARQLAgent:
     """Generates and executes SPARQL queries with RAG support"""
 
@@ -246,8 +309,11 @@ Your Answer:"""
             if sparql_query is None:
                 logger.info("🤖 Using LLM to generate SPARQL query with conversation context")
                 # LLM generation - returns dict with sparql, analytics, reasoning
+                # Phase 10E — pass building_id so the SPARQL prompt's prefix
+                # block uses this conversation's per-building namespace.
                 llm_result = await self._generate_sparql(
-                    user_query, context, instance_candidates, class_target, conversation_history
+                    user_query, context, instance_candidates, class_target, conversation_history,
+                    building_id=getattr(state, "building_id", None),
                 )
                 sparql_query = llm_result["sparql"]
                 analytics_required = llm_result["analytics"]
@@ -282,9 +348,26 @@ Your Answer:"""
                 except Exception as _ex:
                     return {"success": False, "results": {}, "error": str(_ex)}
 
+            # Phase 11B — correction engine context is per-request; resolve the
+            # building namespace/prefix from the active conversation so multi-tenant
+            # SPARQL repair targets the right ontology graph.
+            _bctx_for_correction = None
+            try:
+                from orchestrator.services.building_context import resolve_building_context
+                _bctx_for_correction = resolve_building_context(
+                    getattr(state, "building_id", None)
+                )
+            except Exception:
+                pass
             _ctx = {
-                "building_namespace": settings.BUILDING_NAMESPACE,
-                "building_prefix": settings.BUILDING_PREFIX,
+                "building_namespace": (
+                    _bctx_for_correction.namespace
+                    if _bctx_for_correction else settings.BUILDING_NAMESPACE
+                ),
+                "building_prefix": (
+                    _bctx_for_correction.prefix
+                    if _bctx_for_correction else settings.BUILDING_PREFIX
+                ),
                 "user_query": user_query,
                 "llm_call": None,
             }
@@ -406,6 +489,7 @@ TRIPLES (Graph Structure):
         candidates: List[str],
         class_target: Optional[str],
         conversation_history: str = "",
+        building_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Generate SPARQL query using LLM with Brick Schema context
@@ -424,9 +508,22 @@ TRIPLES (Graph Structure):
                 - 'reasoning': str - LLM's reasoning about whether exact answer exists in context
         """
 
+        # Phase 11B — resolve building context once for use throughout the prompt;
+        # falls back to settings when no building_id was supplied.
+        try:
+            from orchestrator.services.building_context import resolve_building_context
+            _bctx = resolve_building_context(building_id)
+            _bldg_prefix = _bctx.prefix
+            _bldg_namespace = _bctx.namespace
+            _bldg_timezone = _bctx.timezone or settings.BUILDING_TIMEZONE
+        except Exception:
+            _bldg_prefix = settings.BUILDING_PREFIX
+            _bldg_namespace = settings.BUILDING_NAMESPACE
+            _bldg_timezone = settings.BUILDING_TIMEZONE
+
         # Get current time in building's local timezone
         try:
-            local_time = datetime.now(ZoneInfo(settings.BUILDING_TIMEZONE))
+            local_time = datetime.now(ZoneInfo(_bldg_timezone))
             current_time_str = local_time.strftime("%A, %B %d, %Y, %H:%M %Z")
         except Exception:
             current_time_str = datetime.now().strftime("%A, %B %d, %Y, %H:%M (UTC)")
@@ -532,7 +629,7 @@ Respond with JSON containing exactly TWO keys:
    DO NOT use 'bldg:connstring' unless it explicitly appears in the context triples.
 
 5. Use ONLY the following prefixes (if needed):
-{self._prefix_block()}
+{self._prefix_block(building_id=building_id)}
 
 6. Use exact URIs from context. Prefer OPTIONAL for optional properties.
 
@@ -556,7 +653,7 @@ Respond with JSON containing exactly TWO keys:
 === MANDATORY SPARQL PATTERN FOR SENSORS ===
 If the query involves a specific sensor or device, you MUST generate a query matching this EXACT pattern:
 
-PREFIX {settings.BUILDING_PREFIX}: <{settings.BUILDING_NAMESPACE}>
+PREFIX {_bldg_prefix}: <{_bldg_namespace}>
 PREFIX ref: <https://brickschema.org/schema/Brick/ref#>
 PREFIX ashrae: <http://data.ashrae.org/standard223#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -564,17 +661,17 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 SELECT ?timeseriesID ?database
 WHERE {{
     ?sensor ashrae:hasExternalReference ?extRef .
-    
+
     ?extRef ref:hasTimeseriesId ?timeseriesID ;
             ref:storedAt ?database .
-            
+
     # Filter for the specific entity found in context/query
-    FILTER(?sensor = {settings.BUILDING_PREFIX}:ENTITY_NAME)
+    FILTER(?sensor = {_bldg_prefix}:ENTITY_NAME)
 }}
 
-Replace {settings.BUILDING_PREFIX}:ENTITY_NAME with the actual URI found in the context (e.g. {settings.BUILDING_PREFIX}:CO2_Level_Sensor_5.08).
+Replace {_bldg_prefix}:ENTITY_NAME with the actual URI found in the context (e.g. {_bldg_prefix}:CO2_Level_Sensor_5.08).
 Do NOT add other OPTIONAL blocks or properties.
-Do NOT use '{settings.BUILDING_PREFIX}:connstring'.
+Do NOT use '{_bldg_prefix}:connstring'.
 Do NOT use 'ref:hasExternalReference' directly on the sensor (use ashrae:hasExternalReference).
 """
         else:
@@ -1017,7 +1114,8 @@ SELECT DISTINCT ?space (COUNT(?sensor) AS ?sensor_count) WHERE {{
 
         # T3b: Sensors located in a specific zone/floor/room (entity = location)
         # Only trigger for bldg: instance entities (not class references like brick:Sensor)
-        location_entities = [e for e in entities if e.startswith(f"{settings.BUILDING_PREFIX}:")]
+        # Phase 15A: per-request building prefix.
+        location_entities = [e for e in entities if e.startswith(f"{_active_prefix()}:")]
         if location_entities and re.search(r"\\b(in|on|at|within)\\b", uq):
             patterns = []
             for ent in location_entities:
@@ -1175,11 +1273,13 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
             "tvoc": "brick:TVOC_Sensor",
         }
         if ontology_introspector.is_ready():
+            # Phase 15A: per-request building prefix (falls back to settings).
+            _bldg_pfx = _active_prefix()
             for local_name in ontology_introspector.sensor_classes:
                 keyword = local_name.replace("_Sensor", "").replace("_", " ").lower()
                 ns = (
-                    settings.BUILDING_PREFIX
-                    if local_name.startswith(settings.BUILDING_PREFIX)
+                    _bldg_pfx
+                    if local_name.startswith(_bldg_pfx)
                     else "brick"
                 )
                 if keyword not in static_map:
@@ -1195,11 +1295,16 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
         return None
 
     async def _get_instances_for_class(self, brick_class: str, limit: int = 40) -> List[str]:
-        """Query GraphDB for instances of a Brick class. Returns <prefix>: URIs only."""
+        """Query GraphDB for instances of a Brick class. Returns <prefix>: URIs only.
+
+        Phase 15A: reads the active building's namespace/prefix from the
+        request-scoped ContextVar so multi-building deployments hit the right
+        ABox.  Falls back to settings when called outside a request context.
+        """
         if brick_class in self._instance_cache:
             return self._instance_cache[brick_class]
-        bldg_ns = settings.BUILDING_NAMESPACE
-        bldg_pfx = settings.BUILDING_PREFIX
+        bldg_ns = _active_namespace()
+        bldg_pfx = _active_prefix()
         q = f"""{self._prefix_block()}
 SELECT ?s WHERE {{ ?s rdf:type {brick_class} . FILTER(STRSTARTS(STR(?s), '{bldg_ns}')) }} LIMIT {limit}"""
         try:
@@ -1243,8 +1348,9 @@ SELECT ?s WHERE {{ ?s rdf:type {brick_class} . FILTER(STRSTARTS(STR(?s), '{bldg_
             )
         if not token:
             return []
-        bldg_ns = settings.BUILDING_NAMESPACE
-        bldg_pfx = settings.BUILDING_PREFIX
+        # Phase 15A — per-request building context.
+        bldg_ns = _active_namespace()
+        bldg_pfx = _active_prefix()
         # Use regex on URI string via FILTER(CONTAINS())
         q = f"""{self._prefix_block()}
 SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(STR(?s), '{token}_Sensor')) }} LIMIT {limit}"""
@@ -1315,7 +1421,27 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
 
         return self._prefix_block() + "\n" + clean_sparql
 
-    def _prefix_block(self) -> str:
+    def _prefix_block(self, building_id: Optional[str] = None) -> str:
+        """Return the SPARQL prefix block for the given building.
+
+        Phase 10E — when `building_id` is provided, the building prefix
+        line comes from that building's BuildingContext (read from
+        input/<bid>/building.yaml).  When None, falls back to the
+        process-global EXTENDED_PREFIXES (active settings building).
+        """
+        if building_id:
+            try:
+                from orchestrator.services.building_context import resolve_building_context
+                bctx = resolve_building_context(building_id)
+                custom = (
+                    _STANDARD_PREFIXES
+                    + [f"PREFIX {bctx.prefix}: <{bctx.namespace}>"]
+                )
+                return "\n".join(custom)
+            except Exception as e:
+                logger.debug(
+                    f"[sparql] per-building prefix lookup failed for {building_id}: {e}"
+                )
         return "\n".join(EXTENDED_PREFIXES)
 
     def _extract_entities(self, user_query: str) -> List[str]:
@@ -1436,7 +1562,8 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
                         # Compact known namespaces
                         for ns, pref in (
                             ("https://brickschema.org/schema/Brick#", "brick:"),
-                            (settings.BUILDING_NAMESPACE, f"{settings.BUILDING_PREFIX}:"),
+                            # Phase 15A: per-request building namespace.
+                            (_active_namespace(), f"{_active_prefix()}:"),
                             ("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf:"),
                             ("http://www.w3.org/2000/01/rdf-schema#", "rdfs:"),
                             ("http://www.w3.org/2002/07/owl#", "owl:"),
@@ -1548,11 +1675,11 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
         brick_class = m.group(1)
         token = brick_class.split(":", 1)[1].replace("_Sensor", "")
 
-        # Pattern-based query
+        # Pattern-based query (Phase 15A: per-request building namespace).
         alt_query = self._prefix_block() + f"""
 SELECT ?sensor ?location ?uuid WHERE {{
     ?sensor ?p ?o .
-    FILTER(STRSTARTS(STR(?sensor), 'http://abacwsbuilding.cardiff.ac.uk/abacws#') && CONTAINS(STR(?sensor), '{token}_Sensor'))
+    FILTER(STRSTARTS(STR(?sensor), '{_active_namespace()}') && CONTAINS(STR(?sensor), '{token}_Sensor'))
     OPTIONAL {{ ?sensor brick:hasLocation ?location . }}
     OPTIONAL {{ ?sensor bldg:connstring ?uuid . }}
 }} LIMIT 50"""
@@ -1875,9 +2002,12 @@ Generate your response now:"""
         # Remove common URI prefixes
         cleaned = result_text
 
-        # Replace full URIs with just the local name
+        # Replace full URIs with just the local name.  Phase 15A: read the
+        # building namespace from the request-scoped ContextVar so each
+        # tenant's URIs are stripped against ITS namespace, not the global one.
+        _bldg_ns_escaped = re.escape(_active_namespace())
         uri_patterns = [
-            (r"http://abacwsbuilding\.cardiff\.ac\.uk/abacws#", ""),
+            (_bldg_ns_escaped, ""),
             (r"https://brickschema\.org/schema/Brick#", "brick:"),
             (r"http://www\.w3\.org/1999/02/22-rdf-syntax-ns#", "rdf:"),
             (r"http://www\.w3\.org/2000/01/rdf-schema#", "rdfs:"),

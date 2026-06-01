@@ -105,15 +105,34 @@ class FloorPlanRegistry:
         return merged
 
     def load_manifest(self, building_id: str, floor: int) -> Optional[FloorPlanManifest]:
-        """Load the final merged manifest from disk."""
-        p = self._manifest_dir / building_id / f"floor_{floor}.manifest.json"
-        if not p.exists():
-            return None
+        """Load the final merged manifest from disk (Phase 4 — alias-aware)."""
+        # Phase 4 — try the requested ID first, then each alias declared in the
+        # BuildingRegistry.  This keeps manifests written under legacy slugs
+        # (e.g. "abacws") accessible to callers using the logical ID ("bldg1").
+        candidates = [building_id]
         try:
-            return FloorPlanManifest.model_validate_json(p.read_text("utf-8"))
-        except Exception as e:
-            logger.warning(f"[registry] Could not load manifest {p}: {e}")
-            return None
+            from orchestrator.services.building_registry import get_building_registry
+            reg = get_building_registry()
+            primary = reg.resolve_id(building_id)
+            if primary and primary not in candidates:
+                candidates.append(primary)
+            cfg = reg.get(primary or building_id)
+            if cfg is not None:
+                for alias in cfg.floor_plan_aliases or []:
+                    if alias not in candidates:
+                        candidates.append(alias)
+        except Exception:
+            pass
+
+        for bid in candidates:
+            p = self._manifest_dir / bid / f"floor_{floor}.manifest.json"
+            if not p.exists():
+                continue
+            try:
+                return FloorPlanManifest.model_validate_json(p.read_text("utf-8"))
+            except Exception as e:
+                logger.warning(f"[registry] Could not load manifest {p}: {e}")
+        return None
 
     # ── Merge logic ───────────────────────────────────────────────────────────
 

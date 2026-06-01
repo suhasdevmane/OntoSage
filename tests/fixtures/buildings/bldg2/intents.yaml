@@ -1,0 +1,32 @@
+# Per-building intent overlay for bldg2 (Cardiff Research Tower).
+#
+# Adds a "lab_equipment" intent unique to this research-focused building.
+# Demonstrates that per-building intents stack on top of shipped defaults
+# without touching Python or the global YAML.
+
+intents:
+  - name: lab_equipment
+    description: |-
+      User asks about a research lab's instruments — equipment uptime, last
+      calibration date, fault history, or scheduled maintenance.  Specific to
+      the Cardiff Research Tower's instrumentation; not relevant to general
+      sensor data queries.
+    examples:
+      - '"When was the mass spectrometer last calibrated?"'
+      - '"Show uptime for the electron microscope this month."'
+      - '"List labs with overdue equipment service."'
+    pipeline_group: standalone
+    cacheable: false
+
+  # Override the shipped recommend intent with a research-tower-specific
+  # bias toward energy optimisation in high-load labs.
+  - name: recommend
+    description: |-
+      RESEARCH-TOWER SPECIFIC: Actionable advice with strong emphasis on lab
+      equipment efficiency, fume hood scheduling, and HPC cooling load.
+      Honours standard "recommend / suggest / should I" triggers.
+    examples:
+      - '"Recommend a fume hood sash schedule for energy savings."'
+      - '"How can I reduce HPC cluster cooling load this week?"'
+      - '"Suggest a lab off-hours shutdown plan."'
+    pipeline_group: data

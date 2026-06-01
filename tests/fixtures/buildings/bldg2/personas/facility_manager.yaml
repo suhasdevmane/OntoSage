@@ -1,0 +1,31 @@
+# Per-building persona override for bldg2 (Cardiff Research Tower).
+#
+# A research-tower FM cares more about equipment uptime and HPC cooling
+# than HVAC comfort.  This override is loaded ONLY when the conversation's
+# building_id == 'bldg2'.
+
+name: facility_manager
+description: Cardiff Research Tower facility manager — equipment + HPC focus.
+
+aliases:
+  - facilities
+  - facility manager
+  - fm
+  - estates
+
+top_domains:
+  - EQUIPMENT
+  - ENERGY
+  - FIRE_SAFETY
+  - OCCUPANCY
+
+lookup_share: 0.55
+default_complexity: COMPLEX
+clarification_threshold: 0.7
+
+borda_topics:
+  - Equipment Uptime
+  - HPC Cooling Load
+  - Energy
+  - Fire Safety
+  - Cleanroom Status
