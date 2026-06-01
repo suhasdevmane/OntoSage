@@ -2665,25 +2665,8 @@ async def openai_chat_completions(
                 )
         prior_messages = prior_messages[-max_history:]
 
-        # Carry forward selected intermediate_results from the previous turn so
-        # nodes like _visualization_node can reference prior forecast/analytics
-        # data (e.g. "show me the graph for the above").
-        _CARRY_FORWARD_KEYS = {"forecast_result", "analytics_result"}
-        carry_forward: dict = {}
-        try:
-            _prev = await redis_manager.load_state(conversation_id)
-            if _prev and _prev.intermediate_results:
-                carry_forward = {
-                    k: v for k, v in _prev.intermediate_results.items()
-                    if k in _CARRY_FORWARD_KEYS
-                }
-                if carry_forward:
-                    logger.info(
-                        f"[/v1/chat/completions] carried forward from Redis: {list(carry_forward.keys())}"
-                    )
-        except Exception as _ce:
-            logger.debug(f"[/v1/chat/completions] Redis carry-forward skipped: {_ce}")
-
+        # Carry-forward (forecast/analytics artifacts from the previous turn) is
+        # loaded below via TurnMemoryService once `state` exists; start empty here.
         state = ConversationState(
             conversation_id=conversation_id,
             user_message=user_message,
@@ -2691,7 +2674,7 @@ async def openai_chat_completions(
             building_id=data.get("building_id", settings.BUILDING_ID),
             persona=req_persona,
             user_id=username,
-            intermediate_results=carry_forward,
+            intermediate_results={},
         )
 
         logger.info(

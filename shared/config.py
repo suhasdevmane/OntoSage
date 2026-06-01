@@ -35,7 +35,9 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = Field(default="deepseek-r1:32b", description="Ollama model name")
 
     # Cloud (Ollama Cloud)
-    OLLAMA_CLOUD_API_KEY: str = Field(default="", description="Ollama Cloud API key")
+    OLLAMA_CLOUD_API_KEY: str = Field(
+        default="", description="Ollama Cloud API key", repr=False
+    )
     OLLAMA_CLOUD_BASE_URL: str = Field(
         default="https://api.ollama.ai/v1", description="Ollama Cloud API endpoint"
     )
@@ -45,7 +47,9 @@ class Settings(BaseSettings):
 
     # Cloud (OpenAI)
     OPENAI_API_KEY: str = Field(
-        default="", description="OpenAI API key (required if MODEL_PROVIDER=openai)"
+        default="",
+        description="OpenAI API key (required if MODEL_PROVIDER=openai)",
+        repr=False,
     )
     OPENAI_MODEL: str = Field(default="o3-mini", description="OpenAI model for complex tasks (analytics, reports, compliance)")
     OPENAI_MODEL_FAST: str = Field(
@@ -128,7 +132,9 @@ class Settings(BaseSettings):
     GRAPHDB_PORT: int = Field(default=7200, description="GraphDB port")
     GRAPHDB_REPOSITORY: str = Field(default="bldg", description="GraphDB repository name")
     GRAPHDB_USER: str = Field(default="admin", description="GraphDB username")
-    GRAPHDB_PASSWORD: str = Field(default="Admin@GraphDB2024", description="GraphDB password")
+    GRAPHDB_PASSWORD: str = Field(
+        default="Admin@GraphDB2024", description="GraphDB password", repr=False
+    )
     GRAPHDB_SIMILARITY_INDEX: str = Field(
         default="bldg_index", description="GraphDB similarity index name"
     )
@@ -141,7 +147,9 @@ class Settings(BaseSettings):
         default="ontobot", description="Postgres username for user data"
     )
     POSTGRES_USER_PASSWORD: str = Field(
-        default="ontobot_secret", description="Postgres password for user data"
+        default="ontobot_secret",
+        description="Postgres password for user data",
+        repr=False,
     )
     POSTGRES_USER_DB: str = Field(
         default="ontobot", description="Postgres database name for user data"
@@ -154,7 +162,9 @@ class Settings(BaseSettings):
     MYSQL_HOST: str = Field(default="mysql", description="MySQL host (Building 1)")
     MYSQL_PORT: int = Field(default=3306, description="MySQL port")
     MYSQL_USER: str = Field(default="root", description="MySQL username")
-    MYSQL_PASSWORD: str = Field(default="mysql", description="MySQL password")
+    MYSQL_PASSWORD: str = Field(
+        default="mysql", description="MySQL password", repr=False
+    )
     MYSQL_DATABASE: str = Field(default="sensordb", description="MySQL database name")
 
     RAG_SERVICE_URL: str = Field(default="http://rag-service:8001", description="RAG service URL")
@@ -255,6 +265,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = Field(
         default="change-me-in-production-use-32-random-bytes",
         description="JWT signing secret for RBAC tokens. Override via SECRET_KEY env var.",
+        repr=False,
     )
     RBAC_ENABLED: bool = Field(
         default=True,

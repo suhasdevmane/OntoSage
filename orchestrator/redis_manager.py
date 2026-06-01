@@ -55,8 +55,24 @@ class RedisManager:
             key = f"conversation:{state.conversation_id}"
             state_dict = state.dict()
 
+            # Count-based eviction on the stored blob itself.  load_state() reads
+            # this conversation:{id} blob, so trimming state_dict["messages"] here
+            # is what actually bounds the conversation when CONVERSATION_TTL==0
+            # (no time-based expiry).  We trim the serialised copy, not the live
+            # state object, so callers that keep using `state` are unaffected.
+            stored_messages = state_dict.get("messages")
+            if (
+                isinstance(stored_messages, list)
+                and self.max_messages
+                and len(stored_messages) > self.max_messages
+            ):
+                state_dict["messages"] = stored_messages[-self.max_messages :]
+
             logger.info(f"💾 REDIS SAVE: conversation_id={state.conversation_id}")
-            logger.info(f"   ├─ Messages count: {len(state.messages)}")
+            logger.info(
+                f"   ├─ Messages count: {len(state.messages)} "
+                f"(stored: {len(state_dict.get('messages') or [])})"
+            )
             logger.info(f"   ├─ User: {state.user_id}")
             ir_keys = (
                 list(state.intermediate_results.keys())
