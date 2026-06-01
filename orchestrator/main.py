@@ -2703,6 +2703,54 @@ async def openai_chat_completions(
             f"[/v1/chat/completions] loaded {len(prior_messages)} prior turns into state"
         )
 
+        # Turn memory service — wraps the Postgres pool for per-turn summaries
+        from orchestrator.services.turn_memory import TurnMemoryService as _TMS
+        _turn_memory = _TMS(
+            pool=postgres_manager.pool if postgres_manager else None
+        )
+
+        # Carry forward forecast/analytics artifacts from the previous turn.
+        # Primary source: Postgres turn_memory (persistent across Redis restarts).
+        # Fallback: Redis hot-cache (same session, faster path).
+        carry_forward: dict = {}
+        try:
+            carry_forward = await _turn_memory.get_carry_forward(conversation_id)
+            if not carry_forward:
+                _prev = await redis_manager.load_state(conversation_id)
+                if _prev and _prev.intermediate_results:
+                    _cf_keys = {"forecast_result", "analytics_result"}
+                    carry_forward = {
+                        k: v for k, v in _prev.intermediate_results.items()
+                        if k in _cf_keys
+                    }
+            if carry_forward:
+                logger.info(
+                    "[/v1/chat/completions] carry-forward loaded: "
+                    f"{list(carry_forward.keys())}"
+                )
+        except Exception as _ce:
+            logger.debug(f"[/v1/chat/completions] carry-forward skipped: {_ce}")
+
+        if carry_forward:
+            state.intermediate_results.update(carry_forward)
+
+        # Inject older turn summaries as system-context prefix for long-term memory
+        older_context = ""
+        try:
+            older_context = await _turn_memory.get_older_context(
+                conversation_id,
+                skip_recent=settings.CONVERSATION_MAX_MESSAGES,
+            )
+        except Exception as _oe:
+            logger.debug(f"[/v1/chat/completions] older_context skipped: {_oe}")
+
+        # Prepend older turn summaries as system message for long-term memory
+        if older_context:
+            state.messages.insert(
+                0,
+                Message(role="system", content=older_context, timestamp=datetime.now()),
+            )
+
         # Add the current message to the history so the agent can see it
         state.messages.append(
             Message(role="user", content=user_message, timestamp=datetime.now())
@@ -2812,6 +2860,22 @@ async def openai_chat_completions(
                         conversation_id, "assistant", assistant_message, username
                     )
 
+                # Persist state to Redis hot-cache for carry-forward fallback
+                try:
+                    await redis_manager.save_state(final_state)
+                except Exception as _rse:
+                    logger.debug(
+                        f"[/v1/chat/completions] Redis save skipped: {_rse}"
+                    )
+
+                # Persist structured turn summary to Postgres for long-term memory
+                try:
+                    await _turn_memory.save_turn(final_state)
+                except Exception as _tse:
+                    logger.debug(
+                        f"[/v1/chat/completions] turn_memory save skipped: {_tse}"
+                    )
+
                 # Stream final response in chunks (helps UI show gradual output)
                 chunk_size = 200
                 for i in range(0, len(assistant_message), chunk_size):
@@ -2878,6 +2942,20 @@ async def openai_chat_completions(
             )
             await postgres_manager.save_message(
                 conversation_id, "assistant", assistant_message, username
+            )
+
+        try:
+            await redis_manager.save_state(updated_state)
+        except Exception as _rse:
+            logger.debug(
+                f"[/v1/chat/completions] Redis save skipped: {_rse}"
+            )
+
+        try:
+            await _turn_memory.save_turn(updated_state)
+        except Exception as _tse:
+            logger.debug(
+                f"[/v1/chat/completions] turn_memory save skipped: {_tse}"
             )
 
         return {
