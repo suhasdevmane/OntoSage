@@ -177,8 +177,9 @@ class RedisManager:
             # Add to list
             await self.client.rpush(key, json.dumps(message))
 
-            # Set TTL
-            await self.client.expire(key, self.conversation_ttl)
+            # Set TTL (skip when ttl=0 — EXPIRE key 0 deletes the key immediately)
+            if self.conversation_ttl > 0:
+                await self.client.expire(key, self.conversation_ttl)
 
             # Trim to max history
             await self.client.ltrim(key, -settings.MAX_CONVERSATION_HISTORY, -1)

@@ -2616,12 +2616,11 @@ async def openai_chat_completions(
             )
 
         # Use X-Chat-Id header (sent by Open WebUI) for a stable, session-scoped
-        # conversation_id so intermediate_results (e.g. forecast_result) persist
-        # across turns.  Without this, a new UUID was generated every request,
-        # preventing cross-turn visualization of previous query results.
+        # conversation_id so turn_memory and Redis intermediate_results (e.g.
+        # forecast_result) persist across turns.  Without this, a new UUID was
+        # generated every request, preventing cross-turn carry-forward.
         chat_id_header = (
-            request.headers.get("X-Chat-Id")
-            or request.headers.get("x-chat-id")
+            request.headers.get("X-Chat-Id") or request.headers.get("x-chat-id")
         )
         if chat_id_header:
             conversation_id = f"owui_{chat_id_header}:{username}"
