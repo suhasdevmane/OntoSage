@@ -108,7 +108,7 @@ class PostgresManager:
                     turn_index      INTEGER NOT NULL DEFAULT 0,
                     user_query      TEXT NOT NULL,
                     intent          VARCHAR(100),
-                    entities        JSONB    DEFAULT '{}'::jsonb,
+                    entities        JSONB    DEFAULT '[]'::jsonb,
                     result_summary  TEXT,
                     carry_forward   JSONB    DEFAULT '{}'::jsonb,
                     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
