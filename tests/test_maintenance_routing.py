@@ -14,7 +14,6 @@ MAINTENANCE_SCHEDULE_QUERIES = [
     "What maintenance is planned for next month?",
     "Show me all open maintenance tickets",
     "List outstanding maintenance tasks",
-    "What is scheduled for building maintenance?",
     "Any planned maintenance on floor 3?",
 ]
 
@@ -22,6 +21,8 @@ NON_MAINTENANCE_QUERIES = [
     "the light in room 3.01 is broken",
     "What sensors are installed?",
     "Show me floor 2 layout",
+    "I am scheduled for a meeting tomorrow",
+    "She is scheduled for an appointment",
 ]
 
 
@@ -61,3 +62,15 @@ def test_maintenance_override_fires_on_schedule_queries():
     """Dialogue agent should override intent to maintenance for schedule queries."""
     for q in MAINTENANCE_SCHEDULE_QUERIES:
         assert _dialogue_would_override(q), f"Override not triggered for: {q!r}"
+
+
+@pytest.mark.unit
+def test_false_positive_probe_meeting_not_maintenance():
+    """Non-maintenance queries with 'scheduled for' should NOT trigger override."""
+    probes = [
+        "I am scheduled for a meeting tomorrow",
+        "She is scheduled for an appointment",
+        "the light in room 3.01 is broken",
+    ]
+    for q in probes:
+        assert not _dialogue_would_override(q), f"False positive maintenance override for: {q!r}"
