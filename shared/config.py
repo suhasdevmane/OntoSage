@@ -348,7 +348,19 @@ class Settings(BaseSettings):
 
     # ==================== Conversation Settings ====================
     CONVERSATION_TTL: int = Field(
-        default=3600, description="Conversation state TTL in Redis (seconds)"
+        default=0,
+        description=(
+            "Conversation state TTL in Redis seconds. "
+            "0 = no expiry (count-based eviction via CONVERSATION_MAX_MESSAGES). "
+            "Set to e.g. 86400 to re-enable time-based expiry."
+        ),
+    )
+    CONVERSATION_MAX_MESSAGES: int = Field(
+        default=20,
+        description="Max verbatim messages kept per conversation in Redis hot cache.",
+    )
+    MAX_CONVERSATION_HISTORY: int = Field(
+        default=20, description="Max prior turns injected into LLM context from Redis."
     )
 
     # ==================== RAG System Selection ====================
@@ -365,9 +377,6 @@ class Settings(BaseSettings):
     USE_SEMANTIC_ONTOLOGY: bool = Field(
         default=True,
         description="Enable semantic RAG-based ontology querying (bypasses SPARQL generation)",
-    )
-    MAX_CONVERSATION_HISTORY: int = Field(
-        default=20, description="Max messages to keep in conversation history"
     )
 
     # ==================== Logging ====================
