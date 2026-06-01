@@ -58,10 +58,12 @@ class RedisManager:
             logger.info(f"💾 REDIS SAVE: conversation_id={state.conversation_id}")
             logger.info(f"   ├─ Messages count: {len(state.messages)}")
             logger.info(f"   ├─ User: {state.user_id}")
-            logger.info(
-                f"   ├─ Intermediate results keys: "
-                f"{list(state.intermediate_results.keys()) if state.intermediate_results else 'None'}"
+            ir_keys = (
+                list(state.intermediate_results.keys())
+                if state.intermediate_results
+                else "None"
             )
+            logger.info(f"   ├─ Intermediate results keys: {ir_keys}")
 
             serialized = json.dumps(state_dict, default=str)
             if self.conversation_ttl > 0:
@@ -112,9 +114,12 @@ class RedisManager:
                     logger.info(f"   ├─ Last 3 messages:")
                     for i, msg in enumerate(state.messages[-3:]):
                         logger.info(f"   │   [{i+1}] {msg.role}: {msg.content[:60]}...")
-                logger.info(
-                    f"   └─ Intermediate results: {list(state.intermediate_results.keys()) if state.intermediate_results else 'None'}"
+                ir_keys = (
+                    list(state.intermediate_results.keys())
+                    if state.intermediate_results
+                    else "None"
                 )
+                logger.info(f"   └─ Intermediate results: {ir_keys}")
                 return state
             else:
                 logger.info(
