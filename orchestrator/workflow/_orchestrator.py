@@ -63,12 +63,24 @@ from orchestrator.services.disambiguation_service import get_disambiguation_serv
 
 # Floor plan service
 from orchestrator.services.floor_plan_service import floor_plan_service
+from orchestrator.workflow._graph import WorkflowGraphMixin
+from orchestrator.workflow._routing import WorkflowRoutingMixin
 
 logger = get_logger(__name__)
 
 
-class WorkflowOrchestrator:
-    """LangGraph-based conversation workflow"""
+class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
+    """LangGraph-based conversation workflow.
+
+    Phase 17 (2026-05-29) — the monolithic workflow.py was split into a package:
+      * `_graph.py` (WorkflowGraphMixin) — `_build_graph()`
+      * `_routing.py` (WorkflowRoutingMixin) — 4 downstream `_route_from_*` methods
+      * `_orchestrator.py` — node implementations, `_route_from_dialogue`,
+                              `_user_wants_visualization`, `_safe_node`, `_wants_document`
+
+    Python MRO resolves attribute lookups across the mixins: when the graph
+    mixin calls `self._dialogue_node`, MRO finds it on this class (defined below).
+    """
 
     def __init__(self, redis_manager=None, postgres_manager=None):
         # Initialize agents
@@ -137,118 +149,10 @@ class WorkflowOrchestrator:
         # Build workflow graph
         self.graph = self._build_graph()
 
-    def _build_graph(self) -> StateGraph:
-        """Build LangGraph state machine"""
-
-        # Create state graph
-        workflow = StateGraph(ConversationState)
-
-        # Core nodes — dialogue and response are never wrapped (they are the
-        # entry/exit of the pipeline and must always run).  Data-fetching nodes
-        # are wrapped with _safe_node for graceful degradation on failures.
-        workflow.add_node("dialogue", self._dialogue_node)
-        workflow.add_node("sparql", self._safe_node(self._sparql_node, "sparql"))
-        workflow.add_node("sql", self._safe_node(self._sql_node, "sql"))
-        workflow.add_node(
-            "analytics", self._safe_node(self._analytics_node, "analytics")
-        )
-        workflow.add_node(
-            "visualization", self._safe_node(self._visualization_node, "visualization")
-        )
-        workflow.add_node("response", self._response_node)
-        # Phase 4 nodes
-        workflow.add_node("planner", self._safe_node(self._planner_node, "planner"))
-        workflow.add_node("report", self._safe_node(self._report_node, "report"))
-        workflow.add_node("anomaly", self._safe_node(self._anomaly_node, "anomaly"))
-        workflow.add_node("export", self._safe_node(self._export_node, "export"))
-        workflow.add_node("document", self._safe_node(self._document_node, "document"))
-        workflow.add_node(
-            "floor_plan", self._safe_node(self._floor_plan_node, "floor_plan")
-        )
-        workflow.add_node(
-            "spatial_query", self._safe_node(self._spatial_query_node, "spatial_query")
-        )
-        workflow.add_node("control", self._safe_node(self._control_node, "control"))
-        workflow.add_node("maintenance", self._safe_node(self._maintenance_node, "maintenance"))
-        workflow.add_node("capability", self._safe_node(self._capability_node, "capability"))
-
-        # Entry
-        workflow.set_entry_point("dialogue")
-
-        # Dialogue routing (15 intents)
-        workflow.add_conditional_edges(
-            "dialogue",
-            self._route_from_dialogue,
-            {
-                "sparql": "sparql",
-                "sql": "sql",
-                "analytics": "analytics",
-                "visualization": "visualization",
-                "planner": "planner",
-                "report": "report",
-                "anomaly": "anomaly",
-                "export": "export",
-                "floor_plan": "floor_plan",
-                "spatial_query": "spatial_query",
-                "control": "control",
-                "maintenance": "maintenance",
-                "capability": "capability",
-                "response": "response",
-                "end": END,
-            },
-        )
-
-        # SPARQL → SQL / analytics / response
-        workflow.add_conditional_edges(
-            "sparql",
-            self._route_from_data_node,
-            {
-                "visualization": "visualization",
-                "response": "response",
-                "sql": "sql",
-                "analytics": "analytics",
-            },
-        )
-
-        # SQL → Analytics / response
-        workflow.add_conditional_edges(
-            "sql",
-            self._route_from_sql,
-            {
-                "analytics": "analytics",
-                "visualization": "visualization",
-                "anomaly": "anomaly",
-                "report": "report",
-                "response": "response",
-            },
-        )
-
-        # Analytics → Viz / response
-        workflow.add_conditional_edges(
-            "analytics",
-            self._route_from_analytics_node,
-            {"visualization": "visualization", "response": "response"},
-        )
-
-        # Phase 4 nodes all lead to response (report may optionally create a document)
-        workflow.add_edge("planner", "response")
-        workflow.add_conditional_edges(
-            "report",
-            self._route_from_report,
-            {"document": "document", "response": "response"},
-        )
-        workflow.add_edge("anomaly", "response")
-        workflow.add_edge("export", "response")
-        workflow.add_edge("visualization", "response")
-        workflow.add_edge("document", "response")
-        workflow.add_edge("floor_plan", "response")
-        workflow.add_edge("spatial_query", "response")
-        workflow.add_edge("control", "response")
-        workflow.add_edge("maintenance", "response")
-        workflow.add_edge("capability", "response")
-        workflow.add_edge("response", END)
-
-        return workflow.compile()
+    # Phase 17C (2026-05-29) — `_build_graph()` was extracted to
+    # `workflow/_graph.py`'s `WorkflowGraphMixin`.  See the inheritance line
+    # above.  All node methods and `_safe_node` remain here because they ARE
+    # the orchestrator (the mixin just composes them into a graph).
 
     def _safe_node(self, node_fn, node_name: str):
         """
@@ -557,6 +461,23 @@ class WorkflowOrchestrator:
         elif intent == "visualization":
             state.current_intent = "visualization"
 
+        elif intent == "floor_plan":
+            state.current_intent = "floor_plan"
+
+        elif intent == "spatial_query":
+            state.current_intent = "spatial_query"
+
+        elif intent == "maintenance":
+            state.current_intent = "maintenance"
+
+        elif intent in ("complaint", "feedback", "safety_report", "suggestion"):
+            # Phase 19 — report-intake categories pass through to _report_intake_node
+            state.current_intent = intent
+
+        elif intent in ("sensor_data", "metadata"):
+            # These flow through the SPARQL pipeline as before
+            state.current_intent = intent
+
         elif is_general:
             state.current_intent = "general_knowledge"
             state.intermediate_results["dialogue_response"] = direct_response
@@ -575,6 +496,40 @@ class WorkflowOrchestrator:
             else:
                 state.current_intent = "sparql"
             state.intermediate_results["llm_sparql_query"] = ""
+
+        # ── Multi-intent decomposition ────────────────────────────────────
+        # After single-intent classification, check whether the query is a
+        # compound question spanning multiple intent domains.  If so, override
+        # to "planner" so the enhanced PlannerAgent handles all sub-tasks.
+        _skip_decompose = frozenset({
+            "clarification", "greeting", "general_knowledge", "unknown",
+        })
+        if (
+            settings.MULTI_INTENT_ENABLED
+            and state.current_intent not in _skip_decompose
+        ):
+            try:
+                from orchestrator.services.multi_intent_detector import MultiIntentDetector
+
+                _detector = MultiIntentDetector()
+                _user_q = state.messages[-1].content if state.messages else ""
+                _sub_intents = await _detector.detect(
+                    _user_q, state.current_intent, entities
+                )
+                if _sub_intents and len(_sub_intents) > 1:
+                    logger.info(
+                        f"[multi-intent] Decomposed into {len(_sub_intents)} sub-intents: "
+                        f"{[s.intent for s in _sub_intents]}"
+                    )
+                    state.intermediate_results["multi_intent_plan"] = {
+                        "sub_intents": [s.to_dict() for s in _sub_intents],
+                        "primary_intent": state.current_intent,
+                    }
+                    state.current_intent = "planner"
+            except Exception as _mid_err:
+                logger.warning(
+                    f"[multi-intent] Detection failed (non-fatal): {_mid_err}"
+                )
 
         logger.info(f"Final intent for routing: {state.current_intent}")
         return state
@@ -597,21 +552,48 @@ class WorkflowOrchestrator:
         if isinstance(_prior_qr, dict) and _prior_qr.get("data"):
             state.intermediate_results["_saved_query_results"] = _prior_qr
 
-        # Phase 3: inject persona domain priors as a lightweight SPARQL context hint
+        # Phase 3/14A: inject persona domain priors as a lightweight SPARQL context hint.
+        # Phase 14A: when state.personas (list) is non-empty, blend priors across all
+        # personas so SPARQL retrieval is biased toward every persona's domains.
         try:
             from shared.persona_registry import get_persona_registry as _get_preg
             _preg = _get_preg()
-            _persona_str = getattr(state, "persona", "general") or "general"
-            _priors = _preg.get_priors(_persona_str)
+            _personas_list = list(getattr(state, "personas", []) or [])
+            if _personas_list:
+                _priors = _preg.get_blended_priors(_personas_list)
+                _persona_label = "+".join(_priors.name.split("+")[:3])
+            else:
+                _persona_str = getattr(state, "persona", "general") or "general"
+                _priors = _preg.get_priors(_persona_str)
+                _persona_label = _persona_str
             if _priors.top_domains:
                 state.intermediate_results["persona_domain_hint"] = (
-                    f"User persona: {_persona_str}. "
-                    f"Prioritise sensor types related to: {', '.join(_priors.top_domains[:3])}."
+                    f"User persona: {_persona_label}. "
+                    f"Prioritise sensor types related to: "
+                    f"{', '.join(_priors.top_domains[:3])}."
                 )
+                # Phase 14A diagnostics
+                state.intermediate_results["persona_blended"] = {
+                    "personas": _personas_list or [_persona_label],
+                    "top_domains": _priors.top_domains[:6],
+                    "complexity": _priors.default_complexity,
+                    "clarification_threshold": _priors.clarification_threshold,
+                }
         except Exception:
             pass
 
-        result = await self.sparql_agent.generate_query(state, latest_message)
+        # Phase 15A — set request-scoped building context so every SPARQL helper
+        # (instance lookup, fallback pattern search, URI standardization, output
+        # cleanup) uses THIS conversation's building namespace/prefix instead of
+        # the process-global default.  Pair with reset in `finally` so the
+        # ContextVar is unbound even on exceptions, preventing leak into the
+        # next request on the same event loop.
+        from orchestrator.agents.sparql_agent import set_request_bctx, reset_request_bctx
+        _bctx_token = set_request_bctx(getattr(state, "building_id", None))
+        try:
+            result = await self.sparql_agent.generate_query(state, latest_message)
+        finally:
+            reset_request_bctx(_bctx_token)
 
         state.intermediate_results["sparql_result"] = result
         state.query_results = result.get("results", {})
@@ -662,23 +644,45 @@ class WorkflowOrchestrator:
                     f"restoring {len(_prior_rows)} prior rows for compliance analytics"
                 )
             else:
-                # No prior data — give the user a targeted clarification instead of
-                # surfacing 554 raw ontology triples.
-                state.intermediate_results["sparql_result"] = {
-                    "success": True,
-                    "analytics_required": False,
-                    "formatted_response": (
+                # No prior data — give an intent-appropriate clarification rather than
+                # a compliance-specific template (which is confusing for trend/compare queries).
+                _entities_hint = ", ".join(
+                    state.intermediate_results.get("entities", [])[:3]
+                ) or "the requested sensor or zone"
+                if _original_intent == "trend":
+                    _fallback_msg = (
+                        f"I couldn't retrieve trend data for {_entities_hint} directly. "
+                        "The sensor may be referenced by a different label in the ontology. "
+                        "To get a weekly or daily trend, try specifying the zone instead — "
+                        "e.g. *'Show CO2 sensor trend for Zone 5.08 over the last 7 days'* "
+                        "or *'What was the average CO2 in Zone 5.08 this week?'*  "
+                        "Ventilation adequacy can be assessed once I have zone-level sensor data."
+                    )
+                elif _original_intent == "compare":
+                    _fallback_msg = (
+                        f"Comparing {_entities_hint} requires sensors with linked time-series data. "
+                        "Floor-level energy or zone comparison works best when referencing specific "
+                        "zone IDs — e.g. *'Compare temperature in Zone 5.01 vs Zone 5.28 last month'* "
+                        "or *'Which floor had higher average CO2 this week?'*  "
+                        "I can pull data for any sensor zone once a specific zone or sensor ID is provided."
+                    )
+                else:
+                    _fallback_msg = (
                         "**Compliance Check — Zone or Sensor Required**\n\n"
                         "To assess ASHRAE / WELL / BREEAM compliance I need live sensor readings "
                         "from a specific zone or sensor.  Please try one of:\n\n"
                         "- *'Is the temperature in Zone 5.28 within ASHRAE 55 comfort limits?'*\n"
                         "- *'Check ASHRAE 62.1 compliance for Zone 5.28'*\n"
                         "- *'What is the temperature across all zones?'* (then click **Check compliance against ASHRAE?**)"
-                    ),
+                    )
+                state.intermediate_results["sparql_result"] = {
+                    "success": True,
+                    "analytics_required": False,
+                    "formatted_response": _fallback_msg,
                 }
                 state.analytics_required = False
                 logger.info(
-                    "[compliance] No sensor UUIDs and no prior data — returning clarification"
+                    f"[compliance] No sensor UUIDs and no prior data — returning {_original_intent}-specific clarification"
                 )
         elif not sparql_analytics and sparql_has_answer and not _sparql_has_uuids:
             # SPARQL resolved the query with no sensor UUIDs (e.g. zone counts, floor listing,
@@ -1093,6 +1097,51 @@ Instructions:
         if state.current_intent == "recommend":
             return await self._recommend_node(state, latest_message, data)
 
+        # ── FORECAST shortcut: real multi-model time-series prediction ────────
+        # Triggers when intent is "trend" AND the query contains forecast/predict
+        # keywords. Uses ForecastAgent (ARIMA, Holt-Winters, Linear Trend) instead
+        # of ad-hoc LLM code generation for statistically valid predictions.
+        from orchestrator.agents.forecast_agent import ForecastAgent as _ForecastAgent
+        from orchestrator.services.forecasting.horizon_parser import parse_horizon as _parse_horizon
+
+        _FORECAST_TRIGGER_KWS = (
+            "predict", "forecast", "projected", "projection",
+            "what will", "what would", "expected to be", "likely to be",
+            "tomorrow", "next week", "next month", "next hour", "in the next",
+        )
+        _is_forecast = (
+            state.current_intent == "trend"
+            and any(kw in latest_message.lower() for kw in _FORECAST_TRIGGER_KWS)
+        )
+
+        if _is_forecast:
+            logger.info(
+                "[analytics_node] Forecast keywords detected → routing to ForecastAgent "
+                f"(query: {latest_message[:80]!r})"
+            )
+            sql_data = state.intermediate_results.get("sql_result") or {}
+            _sensor_meta = state.intermediate_results.get("sensor_metadata") or {}
+
+            _forecast_agent = _ForecastAgent()
+            _forecast_result = await _forecast_agent.predict(
+                state, latest_message, sql_data, _sensor_meta
+            )
+            state.intermediate_results["forecast_result"] = _forecast_result
+            # Also set analytics_result so the response node picks it up
+            state.intermediate_results["analytics_result"] = {
+                "success": _forecast_result.get("success", False),
+                "formatted_response": _forecast_result.get("formatted_response", ""),
+                "source": "forecast_agent",
+                "model": _forecast_result.get("model"),
+                "metrics": _forecast_result.get("metrics"),
+            }
+            logger.info(
+                f"[analytics_node] ForecastAgent done: "
+                f"model={_forecast_result.get('model','?')} "
+                f"success={_forecast_result.get('success')}"
+            )
+            return state
+
         sensor_metadata = state.intermediate_results.get("sensor_metadata")
         if not sensor_metadata:
             sensor_metadata = {}
@@ -1365,7 +1414,12 @@ Instructions:
         return state
 
     async def _response_node(self, state: ConversationState) -> ConversationState:
-        """Format final response — with response-cache store after generation."""
+        """Format final response — with response-cache store after generation.
+
+        Phase 7B — all READS of `intermediate_results` for response building
+        now flow through the typed `state.pipeline_ctx` snapshot.  Writes
+        (cache storage, follow-up suggestions) continue to use the dict.
+        """
         logger.info("Executing response node")
 
         # Phase 1: attach grounding verification record (rule-based, no LLM call)
@@ -1374,13 +1428,19 @@ Instructions:
         except Exception as _ve:
             logger.debug(f"Verifier skipped: {_ve}")
 
-        # Gather all results
-        sparql_result = state.intermediate_results.get("sparql_result", {})
-        sql_result = state.intermediate_results.get("sql_result", {})
-        analytics_result = state.intermediate_results.get("analytics_result", {})
-        viz_result = state.intermediate_results.get("viz_result", {})
-        document_result = state.intermediate_results.get("document_result", {})
-        dialogue_response = state.intermediate_results.get("dialogue_response")
+        # Phase 7B — typed snapshot of the pipeline state.  Subsequent reads
+        # benefit from IDE autocomplete + mypy safety.  The snapshot is taken
+        # AFTER verifier.verify() so any keys it sets are visible.
+        ctx = state.pipeline_ctx
+
+        # Gather all results (with sensible empty-dict fallbacks for the
+        # ones we want to chain .get() on)
+        sparql_result = ctx.sparql_result or {}
+        sql_result = ctx.sql_result or {}
+        analytics_result = ctx.analytics_result or {}
+        viz_result = ctx.viz_result or {}
+        document_result = ctx.document_result or {}
+        dialogue_response = ctx.dialogue_response
 
         # Build response - Prioritize most downstream result
         media_payload = None
@@ -1391,13 +1451,14 @@ Instructions:
             final_response = viz_result["formatted_response"]
             media_payload = viz_result.get("media")
         # Phase 4 results (highest priority after viz)
-        elif state.intermediate_results.get("planner_result", {}).get(
-            "formatted_response"
-        ) or state.intermediate_results.get("planner_result", {}).get("formatted_text"):
-            pr = state.intermediate_results["planner_result"]
+        elif ctx.planner_result and (
+            ctx.planner_result.get("formatted_response")
+            or ctx.planner_result.get("formatted_text")
+        ):
+            pr = ctx.planner_result
             final_response = pr.get("formatted_response") or pr.get("formatted_text")
-        elif state.intermediate_results.get("floor_plan_result"):
-            final_response = state.intermediate_results["floor_plan_result"]
+        elif ctx.floor_plan_result:
+            final_response = ctx.floor_plan_result
         elif document_result.get("success"):
             filename = document_result.get("filename", "document")
             download_url = document_result.get("download_url")
@@ -1407,27 +1468,21 @@ Instructions:
                 )
             else:
                 final_response = f"Document generated — **{filename}**"
-        elif state.intermediate_results.get("report_result", {}).get("formatted_text"):
-            final_response = state.intermediate_results["report_result"][
-                "formatted_text"
-            ]
-        elif state.intermediate_results.get("anomaly_result", {}).get(
-            "formatted_response"
-        ):
-            final_response = state.intermediate_results["anomaly_result"][
-                "formatted_response"
-            ]
-        elif state.intermediate_results.get("export_result", {}).get("success"):
-            er = state.intermediate_results["export_result"]
+        elif ctx.report_result and ctx.report_result.get("formatted_text"):
+            final_response = ctx.report_result["formatted_text"]
+        elif ctx.anomaly_result and ctx.anomaly_result.get("formatted_response"):
+            final_response = ctx.anomaly_result["formatted_response"]
+        elif ctx.export_result and ctx.export_result.get("success"):
+            er = ctx.export_result
             final_response = (
                 f"✅ Export complete — **{er['filename']}** ({er['row_count']} rows, {er['size_bytes']} bytes).\n\n"
                 f"Preview (first 2000 chars):\n```\n{er['content'][:2000]}\n```"
             )
-        elif state.intermediate_results.get("control_result", {}).get("message"):
-            cr = state.intermediate_results["control_result"]
+        elif ctx.control_result and ctx.control_result.get("message"):
+            cr = ctx.control_result
             final_response = cr["message"]
-        elif state.intermediate_results.get("maintenance_result"):
-            mr = state.intermediate_results["maintenance_result"]
+        elif ctx.maintenance_result:
+            mr = ctx.maintenance_result
             op = mr.get("operation", "UNKNOWN")
             ticket_id = mr.get("ticket_id")
             if op == "CREATE" and ticket_id:
@@ -1467,9 +1522,7 @@ Instructions:
             final_response = analytics_result["formatted_response"]
             media_payload = analytics_result.get("media")
             # Replace UUIDs with human-readable sensor names
-            analytics_node_metadata = state.intermediate_results.get(
-                "sensor_metadata", {}
-            )
+            analytics_node_metadata = ctx.sensor_metadata or {}
             if analytics_node_metadata:
                 for uuid, metadata in analytics_node_metadata.items():
                     if uuid in final_response:
@@ -1486,7 +1539,7 @@ Instructions:
             )
 
         # ── CAP-04: Append auto-compliance block (if produced by analytics node)
-        _compliance_block = state.intermediate_results.get("compliance_context")
+        _compliance_block = ctx.compliance_context
         if _compliance_block and state.current_intent not in (
             "clarification",
             "greeting",
@@ -1498,13 +1551,15 @@ Instructions:
         # ── Floor-plan card injection ─────────────────────────────────────────
         # When any sensor/analytics/SQL response resolves to a known zone,
         # append a small floor-plan link so users can locate it on the plan.
+        # NOTE: must use raw dict for `key not in` semantics — `ctx.X is None`
+        # doesn't distinguish "key absent" from "key set to None".
         _fp_intent_ok = state.current_intent not in (
             "floor_plan", "clarification", "greeting", "general_knowledge",
         )
         if _fp_intent_ok and "floor_plan_result" not in state.intermediate_results:
             _fc = state.floor_context or {}
             _zone = _fc.get("zone")
-            _bid = _fc.get("building_id", "abacws")
+            _bid = _fc.get("building_id") or settings.BUILDING_ID
             if _zone and "floor-plans" not in final_response:
                 try:
                     from orchestrator.services.floor_plan_service import floor_plan_service
@@ -1759,29 +1814,56 @@ Instructions:
         return type_counts
 
     def _route_from_dialogue(self, state: ConversationState) -> str:
-        """Route from dialogue node based on intent (17 intents supported)."""
+        """Route from dialogue node based on intent.
+
+        Phase 6D — the imperative if/elif chain that lived here was replaced
+        by `orchestrator.intents.IntentRegistry.route_target_for()`.  Routing
+        for known intents is now data-driven: each intent declares its target
+        node (or relies on the pipeline_group default) in `intent_definitions.yaml`.
+
+        A handful of *contextual* overrides remain in code because they depend
+        on the user query text, not just the intent label:
+          - "floor_plan" keyword detection on the raw query
+          - "floor_plan" misroute when comparison+data keywords appear
+          - "discovery" with spatial words → sparql instead of response
+          - cached-data short-circuit for analytics-family intents
+
+        Phase 13A — every override/decision logs a structured route_decision
+        record under state.intermediate_results["route_decision"] so we can
+        audit routing correctness without guessing from interleaved logs.
+        """
         intent = state.current_intent
+        original_intent = intent  # for the audit trail
         user_query = state.messages[-1].content if state.messages else ""
 
-        # ── Floor plan override: only when LLM didn't assign a data intent ──
-        # Data intents (sensor_data, analytics, anomaly, etc.) mention "floor N" as a
-        # location qualifier — the heuristic must NOT steal those queries from their
-        # proper pipeline.  Only override when the LLM chose a non-data intent.
-        # Any intent that implies a data-fetching pipeline — "floor N" in these
-        # queries is a location qualifier, not a request to show the floor plan.
-        # "sparql"/"sql" appear when the LLM outputs a pipeline stage name directly.
-        # "compare"/"trend"/"compliance"/"visualization" are LLM-returnable data intents
-        # that must not be stolen by the floor-plan heuristic.
-        _data_intents = frozenset({
-            "sensor_data", "analytics", "anomaly", "comparison", "compare",
-            "forecast", "report", "export", "recommend", "planner",
-            "spatial_query", "maintenance", "sparql", "sql", "discovery",
-            "alert", "control", "trend", "compliance", "visualization",
-            "capability",  # KB lookup has its own grounded data path
-        })
+        # Phase 13A — structured audit trail.  Updated incrementally as we
+        # walk through overrides; flushed at end of routing.
+        route_decision: Dict[str, Any] = {
+            "intent_from_dialogue": original_intent,
+            "intent_after_overrides": original_intent,
+            "overrides_applied": [],
+            "final_node": None,
+            "decision_source": "registry",   # 'registry' | 'override' | 'fallback'
+        }
 
-        # Guard: LLM sometimes misfires "compare floor X vs floor Y" as floor_plan.
-        # When comparison + data keywords both appear, override back to comparison.
+        # Lazy import to avoid circular load at module import time.
+        # Phase 11A: pass per-request building_id so YAML overlays for the
+        # active tenant apply (e.g. bldg2's lab_equipment intent).
+        from orchestrator.intents import get_intent_registry
+        _registry = get_intent_registry(getattr(state, "building_id", None))
+
+        # The "non-floor-plan" exclusion set used by the floor-plan keyword
+        # override.  Built from every intent that has its OWN grounding so
+        # the heuristic doesn't steal queries that another agent answers.
+        # That includes both the data pipeline group AND standalone agents
+        # like capability (KB) and maintenance (ticket DB).
+        _data_intents = (
+            _registry.in_group("data")
+            | _registry.in_group("standalone")
+            | frozenset({"sparql", "sql", "comparison"})  # pipeline stages + alias
+        ) - frozenset({"floor_plan"})  # floor_plan itself remains routable here
+
+        # ── Contextual override #1: floor_plan misroute for compare queries ──
         if intent == "floor_plan":
             _ql = user_query.lower()
             _COMPARE_KW = frozenset({"compare", "comparison", " vs ", " versus ", "difference between"})
@@ -1791,84 +1873,117 @@ Instructions:
                 "noise", "light", "occupancy", "carbon", "emission",
             })
             if any(kw in _ql for kw in _COMPARE_KW) and any(kw in _ql for kw in _DATA_KW):
-                logger.info(f"[route] floor_plan → comparison override (compare+data keywords in query)")
+                logger.info("[route] floor_plan → comparison override (compare+data keywords in query)")
                 intent = "comparison"
                 state.current_intent = "comparison"
+                route_decision["intent_after_overrides"] = "comparison"
+                route_decision["overrides_applied"].append("floor_plan_to_comparison_keywords")
+                route_decision["decision_source"] = "override"
 
+        # ── Contextual override #2: floor_plan keyword detection ──
         if intent == "floor_plan" or (
             floor_plan_service.is_floor_plan_query(user_query) and intent not in _data_intents
         ):
             logger.info(f"[route] floor_plan query detected (intent={intent})")
+            if intent != "floor_plan":
+                route_decision["overrides_applied"].append("floor_plan_keyword_detection")
+                route_decision["decision_source"] = "override"
             state.current_intent = "floor_plan"
+            route_decision["intent_after_overrides"] = "floor_plan"
+            route_decision["final_node"] = "floor_plan"
+            state.intermediate_results["route_decision"] = route_decision
             return "floor_plan"
 
-        # Direct-to-response intents (no data fetching needed)
-        # Exception: discovery with spatial/zone keywords should run SPARQL
+        # ── Contextual override #3: discovery with spatial words → sparql ──
         if intent == "discovery":
-            user_query = user_query.lower()
+            _ql = user_query.lower()
             spatial_words = [
-                "zone",
-                "floor",
-                "room",
-                "space",
-                "level",
-                "area",
-                "location",
-                "list zone",
-                "list floor",
-                "list room",
-                "how many zone",
-                "how many floor",
-                "how many room",
+                "zone", "floor", "room", "space", "level", "area", "location",
+                "list zone", "list floor", "list room",
+                "how many zone", "how many floor", "how many room",
             ]
-            if any(w in user_query for w in spatial_words):
+            if any(w in _ql for w in spatial_words):
+                route_decision["overrides_applied"].append("discovery_spatial_words")
+                route_decision["decision_source"] = "override"
+                route_decision["final_node"] = "sparql"
+                state.intermediate_results["route_decision"] = route_decision
                 return "sparql"
+            route_decision["final_node"] = "response"
+            state.intermediate_results["route_decision"] = route_decision
             return "response"
-        if intent in [
-            "greeting",
-            "clarification",
-            "unknown",
-            "general_knowledge",
-        ]:
+
+        # Direct-to-response group (no override needed beyond what the registry
+        # already says: pipeline_group=meta → route_target=response).
+        if intent in ("greeting", "clarification", "unknown", "general_knowledge"):
+            route_decision["final_node"] = "response"
+            state.intermediate_results["route_decision"] = route_decision
             return "response"
-        # Phase 4 multi-agent paths
-        elif intent == "planner":
-            return "planner"
-        elif intent == "report":
-            return "planner"
-        elif intent == "anomaly":
-            return (
-                "sparql"  # need UUIDs first, then SQL, then anomaly in _route_from_sql
-            )
-        elif intent == "export":
-            return "export"
-        # Standard paths
-        elif intent in ["sparql", "metadata"]:
-            return "sparql"
-        elif intent == "sql":
-            return "sql"
-        elif intent in ["analytics", "compare", "trend", "recommend", "compliance"]:
-            # Short-circuit: skip SPARQL+SQL when prior data already covers the query
+
+        # ── Contextual override #4: analytics-family short-circuit when prior data exists ──
+        if intent in ("analytics", "compare", "trend", "recommend", "compliance"):
             if state.intermediate_results.get("use_existing_query_results"):
                 logger.info(
                     "[route] Compliance/follow-up with existing data — routing directly to analytics"
                 )
+                route_decision["overrides_applied"].append("analytics_followup_existing_data")
+                route_decision["decision_source"] = "override"
+                route_decision["final_node"] = "analytics"
+                state.intermediate_results["route_decision"] = route_decision
                 return "analytics"
-            return "sparql"  # SPARQL → SQL → Analytics
-        elif intent == "visualization":
-            return "visualization"
-        elif intent == "floor_plan":
-            return "floor_plan"
-        elif intent == "spatial_query":
-            return "spatial_query"
-        elif intent == "control":
-            return "control"
-        elif intent == "maintenance":
-            return "maintenance"
-        elif intent == "capability":
-            return "capability"
-        else:
-            return "response"
+            # Fall through to registry dispatch (default → sparql)
+
+        # ── Default dispatch from the registry ──
+        target = _registry.route_target_for(intent)
+        if target:
+            # Phase 10G — safety net: if a YAML-added intent's route_target
+            # points to a node that isn't registered in _build_graph, fall
+            # back to "response" so LangGraph doesn't crash with
+            # "branch returned unknown node".
+            _REGISTERED_NODES = frozenset({
+                "sparql", "sql", "analytics", "visualization", "planner",
+                "report", "anomaly", "export", "floor_plan", "spatial_query",
+                "control", "maintenance", "capability", "response",
+                # Phase 19 - unified report-intake category nodes.
+                "complaint", "feedback", "safety_report", "suggestion",
+            })
+            if target not in _REGISTERED_NODES:
+                logger.info(
+                    f"[route] intent '{intent}' has route_target='{target}' "
+                    "which is not a registered workflow node — falling back to response"
+                )
+                # Surface a polite message via dialogue_response so the
+                # response node has something to say.
+                state.intermediate_results["dialogue_response"] = (
+                    f"I understand you're asking about '{intent}', but that capability "
+                    "is not yet wired up in this deployment.  Please rephrase your "
+                    "question or contact the operator if you expect this feature."
+                )
+                route_decision["overrides_applied"].append("unregistered_node_safety_net")
+                route_decision["decision_source"] = "fallback"
+                route_decision["final_node"] = "response"
+                state.intermediate_results["route_decision"] = route_decision
+                return "response"
+            route_decision["final_node"] = target
+            state.intermediate_results["route_decision"] = route_decision
+            return target
+
+        # Last-resort: legacy pipeline stage names not in the registry.
+        if intent in ("sparql", "metadata", "sensor_data"):
+            route_decision["overrides_applied"].append("legacy_pipeline_alias")
+            route_decision["final_node"] = "sparql"
+            state.intermediate_results["route_decision"] = route_decision
+            return "sparql"
+        if intent == "sql":
+            route_decision["overrides_applied"].append("legacy_pipeline_alias")
+            route_decision["final_node"] = "sql"
+            state.intermediate_results["route_decision"] = route_decision
+            return "sql"
+
+        logger.info(f"[route] no target for intent '{intent}' — falling through to response")
+        route_decision["decision_source"] = "fallback"
+        route_decision["final_node"] = "response"
+        state.intermediate_results["route_decision"] = route_decision
+        return "response"
 
     # ── Negation-aware visualization intent detection ─────────────────────────
     #
@@ -2228,87 +2343,17 @@ Instructions:
                 return False
         return any(kw in msg for kw in cls._VIZ_KEYWORDS)
 
-    def _route_from_data_node(self, state: ConversationState) -> str:
-        """Route from SPARQL based on whether analytics/visualization is needed"""
-        # Short-circuit: compliance/follow-up recovered prior sensor data → go direct to analytics
-        if (
-            state.intermediate_results.get("use_existing_query_results")
-            and state.analytics_required
-        ):
-            logger.info(
-                "[route] SPARQL→Analytics (prior data recovered for compliance)"
-            )
-            return "analytics"
-
-        # Check if analytics is required (and we are coming from SPARQL)
-        # Allow routing to SQL for any data-fetching intent
-        _sql_intents = {
-            "sparql", "analytics", "compare", "trend", "recommend", "compliance", "visualization"
-        }
-        if state.analytics_required and state.current_intent in _sql_intents:
-            logger.info("Routing SPARQL -> SQL for data fetching (analytics=True)")
-            return "sql"
-
-        latest_message = state.messages[-1].content if state.messages else ""
-        if self._user_wants_visualization(latest_message):
-            return "visualization"
-
-        return "response"
-
-    def _route_from_analytics_node(self, state: ConversationState) -> str:
-        """Route from Analytics based on whether visualization is needed"""
-        # If analytics already embedded a plot in its output, skip the separate viz node
-        analytics_result = state.intermediate_results.get("analytics_result", {})
-        if analytics_result.get("media"):
-            logger.info(
-                "[route] Analytics already produced a plot — skipping visualization node"
-            )
-            return "response"
-
-        latest_message = state.messages[-1].content if state.messages else ""
-        if self._user_wants_visualization(latest_message):
-            return "visualization"
-
-        return "response"
-
-    def _route_from_sql(self, state: ConversationState) -> str:
-        """Route from SQL node — extended for Phase 4 anomaly/report intents."""
-        intent = state.current_intent
-
-        # Phase 4: anomaly and report intents use SQL data for their agents
-        if intent == "anomaly":
-            return "anomaly"
-        if intent in ("report",):
-            return "report"
-        # Visualization intent: always route to viz after SQL (data is now loaded)
-        if intent == "visualization":
-            return "visualization"
-
-        if state.analytics_required:
-            return "analytics"
-
-        latest_message = state.messages[-1].content if state.messages else ""
-        if self._user_wants_visualization(latest_message):
-            return "visualization"
-        analytics_keywords = [
-            "analyze",
-            "analysis",
-            "pattern",
-            "correlation",
-            "statistics",
-        ]
-        if any(keyword in latest_message.lower() for keyword in analytics_keywords):
-            return "analytics"
-        return "response"
-
-    def _route_from_report(self, state: ConversationState) -> str:
-        """Route from report node to optional document generation."""
-        return "document" if self._wants_document(state) else "response"
+    # Phase 17B (2026-05-29) — `_route_from_data_node`, `_route_from_analytics_node`,
+    # `_route_from_sql`, and `_route_from_report` were extracted to
+    # `workflow/_routing.py`'s `WorkflowRoutingMixin`.  See the inheritance line above.
 
     @staticmethod
     def _wants_document(state: ConversationState) -> bool:
-        """Detect if the user requested a formal document (PDF/DOCX/HTML)."""
-        fmt = (state.intermediate_results.get("export_format") or "").lower().strip()
+        """Detect if the user requested a formal document (PDF/DOCX/HTML).
+
+        Phase 7B — typed read of `pipeline_ctx.export_format`.
+        """
+        fmt = (state.pipeline_ctx.export_format or "").lower().strip()
         if fmt in ("pdf", "docx", "html"):
             return True
         msg = (state.messages[-1].content if state.messages else "").lower()
@@ -2610,12 +2655,12 @@ Instructions:
     async def _spatial_query_node(self, state: ConversationState) -> ConversationState:
         """DW4 — Answer quantitative geometry questions from DWG manifest data."""
         user_query = state.messages[-1].content if state.messages else state.user_message
-        # Mirror FloorPlanAgent._detect_building: prefer floor_context, then state,
-        # then fall back to "abacws" (the default building_id "bldg1" is not a real building).
+        # Phase 4 — alias-aware: floor_context > state.building_id > settings.
+        # The BuildingRegistry alias map resolves legacy slugs to the logical ID.
         building_id = (
             (state.floor_context or {}).get("building_id")
-            or (state.building_id if state.building_id != "bldg1" else None)
-            or "abacws"
+            or state.building_id
+            or settings.BUILDING_ID
         )
         floor = state.floor_context.get("floor") if state.floor_context else None
 
@@ -2674,18 +2719,94 @@ Instructions:
         except Exception as e:
             logger.warning(f"[control_node] Failed to persist log: {e}")
 
-    async def _maintenance_node(self, state: ConversationState) -> ConversationState:
-        """Handle maintenance ticket CRUD operations."""
-        logger.info(f"[maintenance_node] intent={state.intermediate_results.get('intent')}")
+    async def _report_intake_node(self, state: ConversationState) -> ConversationState:
+        """Phase 19 - unified user-report intake.
+
+        Handles maintenance / complaint / feedback / safety / suggestion in one
+        node.  The report CATEGORY comes from the classified intent; the ACTION
+        (create / status / list) comes from the message text.  Every report is
+        persisted to the `user_reports` Postgres table with the reporter's
+        blended persona, and the user always gets an honest acknowledgment with
+        a tracking ID (never a silent drop).
+        """
+        intent = state.current_intent or "maintenance"
+        user_message = state.messages[-1].content if state.messages else state.user_message
+        logger.info(f"[report_intake] intent={intent}")
         try:
-            result = await self.maintenance_agent.handle(state)
-            state.intermediate_results["maintenance_result"] = result
-            if self.postgres_manager and result.get("operation"):
-                await self._execute_maintenance_db(result, state)
+            from orchestrator.services.report_intake_service import (
+                get_report_intake_service,
+            )
+            service = get_report_intake_service(self.postgres_manager)
+            category = service.category_for_intent(intent)
+            action = service.classify_action(user_message or "")
+            reporter_id = (
+                getattr(state, "user_id", None)
+                or state.intermediate_results.get("user_id")
+                or "anonymous"
+            )
+            building_id = getattr(state, "building_id", None) or settings.BUILDING_ID
+            personas_list = list(getattr(state, "personas", []) or [])
+            persona_label = (
+                "+".join(personas_list[:3])
+                if personas_list
+                else (getattr(state, "persona", "general") or "general")
+            )
+
+            if action == "status":
+                rid = service.extract_report_id(user_message or "")
+                if not rid:
+                    msg = (
+                        "Please include the report ID (format **REP-XXXXXX**) so "
+                        "I can look it up."
+                    )
+                else:
+                    res = await service.get_report_status(rid, reporter_id=reporter_id)
+                    msg = res.get("message", "I couldn't retrieve that report.")
+            elif action == "list":
+                res = await service.list_user_reports(reporter_id)
+                msg = res.get("message", "I couldn't list your reports.")
+            else:  # create
+                entities = state.intermediate_results.get("entities", []) or []
+                location = next(
+                    (e.get("value") for e in entities
+                     if isinstance(e, dict) and e.get("type") == "location"),
+                    None,
+                )
+                device = next(
+                    (e.get("value") for e in entities
+                     if isinstance(e, dict) and e.get("type") in ("device", "equipment")),
+                    None,
+                )
+                res = await service.create_report(
+                    description=user_message or "(no description provided)",
+                    building_id=building_id,
+                    category=category,
+                    reporter_id=reporter_id,
+                    persona=persona_label,
+                    location=location,
+                    device=device,
+                    session_id=state.conversation_id,
+                )
+                msg = res.get("message", "Your report has been received.")
+
+            state.intermediate_results["report_intake_result"] = {
+                "category": category, "action": action, "persona": persona_label,
+            }
+            state.intermediate_results["dialogue_response"] = msg
         except Exception as e:
-            logger.error(f"[maintenance_node] Error: {e}", exc_info=True)
-            state.intermediate_results["error"] = f"maintenance: {e}"
+            logger.error(f"[report_intake] Error: {e}", exc_info=True)
+            state.intermediate_results["error"] = f"report_intake: {e}"
+            state.intermediate_results["dialogue_response"] = (
+                "I wasn't able to log your report just now. Please try again, or "
+                "contact facilities directly if it's urgent."
+            )
         return state
+
+    async def _maintenance_node(self, state: ConversationState) -> ConversationState:
+        """Backward-compat alias - Phase 19 routes maintenance through the
+        unified report intake.  Retained so any external reference to the old
+        node name keeps working."""
+        return await self._report_intake_node(state)
 
     async def _execute_maintenance_db(self, result: Dict[str, Any], state: ConversationState) -> None:
         """Persist maintenance ticket operation to PostgreSQL."""
