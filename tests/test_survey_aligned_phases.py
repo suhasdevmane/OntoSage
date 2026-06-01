@@ -129,7 +129,7 @@ class TestCapabilityAgent:
         state.intermediate_results["capability_matches"] = [
             SimpleNamespace(entry=e) for e in fire_entries[:2]
         ]
-        result_state = asyncio.get_event_loop().run_until_complete(agent.answer(state))
+        result_state = asyncio.run(agent.answer(state))
         cap = result_state.intermediate_results.get("capability_result", {})
         assert cap.get("success") is True
         assert "FIRE_SAFETY" in cap.get("matched_categories", [])
@@ -148,7 +148,7 @@ class TestCapabilityAgent:
         state.intermediate_results["capability_matches"] = [
             SimpleNamespace(entry=e) for e in power_entries[:2]
         ]
-        result_state = asyncio.get_event_loop().run_until_complete(agent.answer(state))
+        result_state = asyncio.run(agent.answer(state))
         cap = result_state.intermediate_results.get("capability_result", {})
         assert cap.get("success") is True
         assert "POWER" in cap.get("matched_categories", [])
@@ -171,7 +171,7 @@ class TestCapabilityAgent:
         )
         state.messages.append(Message(role="user", content="anything at all"))
         state.current_intent = "capability"
-        result_state = asyncio.get_event_loop().run_until_complete(agent.answer(state))
+        result_state = asyncio.run(agent.answer(state))
         cap = result_state.intermediate_results.get("capability_result", {})
         assert cap.get("success") is True
         assert cap.get("provenance") == "kb_no_match"
@@ -182,7 +182,7 @@ class TestCapabilityAgent:
         from orchestrator.agents.capability_agent import CapabilityAgent
         agent = CapabilityAgent()
         state = _make_state("Fire exits?", building_id="bldg999")
-        result_state = asyncio.get_event_loop().run_until_complete(agent.answer(state))
+        result_state = asyncio.run(agent.answer(state))
         cap = result_state.intermediate_results.get("capability_result", {})
         assert cap.get("success") is False
         assert cap.get("provenance") == "no_kb"
@@ -200,7 +200,7 @@ class TestCapabilityAgent:
         state.intermediate_results["capability_matches"] = [
             SimpleNamespace(entry=e) for e in security_entries[:1]
         ]
-        result_state = asyncio.get_event_loop().run_until_complete(agent.answer(state))
+        result_state = asyncio.run(agent.answer(state))
         cap = result_state.intermediate_results.get("capability_result", {})
         assert cap.get("provenance") == "capability_kb"
 
@@ -246,7 +246,7 @@ class TestVerifierAgent:
         from orchestrator.agents.verifier_agent import VerifierAgent
         agent = VerifierAgent()
         state = _make_verify_state(intent="capability", capability_success=True)
-        result = asyncio.get_event_loop().run_until_complete(agent.verify(state))
+        result = asyncio.run(agent.verify(state))
         v = result.intermediate_results["verification"]
         assert v["grounded"] is True
         assert v["source"] == "capability_kb"
@@ -256,7 +256,7 @@ class TestVerifierAgent:
         from orchestrator.agents.verifier_agent import VerifierAgent
         agent = VerifierAgent()
         state = _make_verify_state(intent="sensor_data", sql_rows=5)
-        result = asyncio.get_event_loop().run_until_complete(agent.verify(state))
+        result = asyncio.run(agent.verify(state))
         v = result.intermediate_results["verification"]
         assert v["grounded"] is True
         assert v["source"] == "sql"
@@ -266,7 +266,7 @@ class TestVerifierAgent:
         agent = VerifierAgent()
         binding = [{"sensor": {"value": "uuid-123"}}]
         state = _make_verify_state(intent="discovery", sparql_bindings=binding)
-        result = asyncio.get_event_loop().run_until_complete(agent.verify(state))
+        result = asyncio.run(agent.verify(state))
         v = result.intermediate_results["verification"]
         assert v["grounded"] is True
         assert v["source"] == "sparql"
@@ -275,7 +275,7 @@ class TestVerifierAgent:
         from orchestrator.agents.verifier_agent import VerifierAgent
         agent = VerifierAgent()
         state = _make_verify_state(intent="sensor_data")
-        result = asyncio.get_event_loop().run_until_complete(agent.verify(state))
+        result = asyncio.run(agent.verify(state))
         v = result.intermediate_results["verification"]
         assert v["grounded"] is False
         assert v["source"] == "none"
@@ -289,7 +289,7 @@ class TestVerifierAgent:
             sql_rows=3,
             time_range={"start": "2026-05-01", "end": "2026-05-02"},
         )
-        result = asyncio.get_event_loop().run_until_complete(agent.verify(state))
+        result = asyncio.run(agent.verify(state))
         v = result.intermediate_results["verification"]
         assert v["time_window"] is not None
         assert "2026-05-01" in v["time_window"]
@@ -298,7 +298,7 @@ class TestVerifierAgent:
         from orchestrator.agents.verifier_agent import VerifierAgent
         agent = VerifierAgent()
         state = _make_verify_state(intent="analytics", analytics_success=True)
-        result = asyncio.get_event_loop().run_until_complete(agent.verify(state))
+        result = asyncio.run(agent.verify(state))
         v = result.intermediate_results["verification"]
         assert v["grounded"] is True
         assert v["source"] == "analytics"
@@ -314,7 +314,7 @@ class TestVerifierAgent:
             building_id="bldg1",
         )
         # Should not raise
-        result = asyncio.get_event_loop().run_until_complete(agent.verify(state))
+        result = asyncio.run(agent.verify(state))
         assert "verification" in result.intermediate_results
 
 
@@ -344,7 +344,7 @@ class TestSelfCorrectionPolicy:
         def error(s):
             return s.intermediate_results.get("error_detail", "")
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             p.repair("test_node", state, attempt, success, error, "test_strategy")
         )
         assert call_count["n"] == 1
@@ -369,7 +369,7 @@ class TestSelfCorrectionPolicy:
         def error(s):
             return "still broken"
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             p.repair("test_node", state, attempt, success, error, "test_strategy")
         )
         assert call_count["n"] == 2
@@ -390,7 +390,7 @@ class TestSelfCorrectionPolicy:
         def error(s):
             return ""
 
-        result = asyncio.get_event_loop().run_until_complete(
+        result = asyncio.run(
             p.repair("trace_node", state, attempt, success, error, "trace_strat")
         )
         assert "correction_trace" in result.intermediate_results
