@@ -113,3 +113,41 @@ async def test_trim_messages_called_after_save():
     # ltrim should have been called on the messages key
     ltrim_calls = [str(c) for c in rm.client.ltrim.call_args_list]
     assert any("messages:" in s for s in ltrim_calls)
+
+
+@pytest.mark.asyncio
+async def test_init_schema_creates_turn_memory_table():
+    """_init_schema must CREATE TABLE IF NOT EXISTS turn_memory."""
+    from pathlib import Path
+    import importlib.util
+
+    # Import directly from the module to bypass orchestrator.__init__ issues
+    postgres_manager_path = Path(__file__).parent.parent / "orchestrator" / "postgres_manager.py"
+    spec = importlib.util.spec_from_file_location(
+        "postgres_manager_direct",
+        str(postgres_manager_path)
+    )
+    postgres_mgr_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(postgres_mgr_mod)
+    PostgresManager = postgres_mgr_mod.PostgresManager
+
+    pm = PostgresManager()
+    executed_sqls = []
+
+    mock_conn = AsyncMock()
+    mock_conn.execute = AsyncMock(side_effect=lambda sql: executed_sqls.append(sql))
+
+    mock_pool = MagicMock()
+    mock_pool.acquire = MagicMock(return_value=AsyncMock(
+        __aenter__=AsyncMock(return_value=mock_conn),
+        __aexit__=AsyncMock(return_value=False),
+    ))
+    pm.pool = mock_pool
+
+    await pm._init_schema()
+
+    combined = " ".join(executed_sqls)
+    assert "turn_memory" in combined, "turn_memory table not created in _init_schema"
+    assert "conversation_id" in combined
+    assert "result_summary" in combined
+    assert "carry_forward" in combined
