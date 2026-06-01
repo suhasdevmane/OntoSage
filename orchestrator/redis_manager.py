@@ -27,6 +27,7 @@ class RedisManager:
         self.redis_url = settings.REDIS_URL
         self.client: Optional[redis.Redis] = None
         self.conversation_ttl = settings.CONVERSATION_TTL
+        self.max_messages = settings.CONVERSATION_MAX_MESSAGES
 
     async def connect(self):
         """Connect to Redis"""
@@ -46,35 +47,33 @@ class RedisManager:
             logger.info("Closed Redis connection")
 
     async def save_state(self, state: ConversationState) -> bool:
-        """
-        Save conversation state to Redis
-
-        Args:
-            state: ConversationState object
-
-        Returns:
-            Success boolean
-        """
+        """Save conversation state to Redis (no TTL when CONVERSATION_TTL==0)."""
         if not self.client:
             await self.connect()
 
         try:
             key = f"conversation:{state.conversation_id}"
-
-            # Convert to dict for storage
             state_dict = state.dict()
 
-            # Log what we're saving
             logger.info(f"💾 REDIS SAVE: conversation_id={state.conversation_id}")
             logger.info(f"   ├─ Messages count: {len(state.messages)}")
             logger.info(f"   ├─ User: {state.user_id}")
             logger.info(
-                f"   ├─ Intermediate results keys: {list(state.intermediate_results.keys()) if state.intermediate_results else 'None'}"
+                f"   ├─ Intermediate results keys: "
+                f"{list(state.intermediate_results.keys()) if state.intermediate_results else 'None'}"
             )
-            logger.info(f"   └─ TTL: {self.conversation_ttl}s")
 
-            # Store as JSON
-            await self.client.setex(key, self.conversation_ttl, json.dumps(state_dict, default=str))
+            serialized = json.dumps(state_dict, default=str)
+            if self.conversation_ttl > 0:
+                logger.info(f"   └─ TTL: {self.conversation_ttl}s")
+                await self.client.setex(key, self.conversation_ttl, serialized)
+            else:
+                logger.info("   └─ TTL: none (count-based eviction)")
+                await self.client.set(key, serialized)
+
+            # Count-based message eviction — trim to max_messages
+            msgs_key = f"messages:{state.conversation_id}"
+            await self.client.ltrim(msgs_key, -self.max_messages, -1)
 
             logger.info(f"✅ Successfully saved state for {state.conversation_id}")
             return True
