@@ -109,6 +109,8 @@ jobs:
             tests/test_survey_aligned_phases.py \
             tests/test_phase_a_fixes.py \
             tests/services/test_ttl_validator.py \
+            tests/test_turn_memory.py \
+            tests/test_conversation_memory_e2e.py \
             -v --timeout=120 \
             --cov=orchestrator \
             --cov-report=xml:coverage-unit.xml \
