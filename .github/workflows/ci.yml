@@ -88,9 +88,28 @@ jobs:
           pip install -r orchestrator/requirements.txt \
             pytest pytest-asyncio pytest-cov pytest-timeout rdflib pyyaml httpx
       - name: Run unit tests
+        # Phase 16C (2026-05-29) — expanded from a single test file to the
+        # full Phase 11-16 deterministic suite.  Live e2e suites
+        # (test_capability_e2e.py, test_floor_plan_e2e.py,
+        # test_non_regression_intents.py, test_ontology_integrity.py)
+        # are EXCLUDED from CI — they need a running orchestrator + Redis
+        # + GraphDB + Qdrant and belong in a separate integration job.
         run: |
-          pytest tests/test_phase3_4_services.py \
-            -v --timeout=60 \
+          pytest \
+            tests/test_phase3_4_services.py \
+            tests/test_blended_persona.py \
+            tests/test_compound_query_e2e.py \
+            tests/test_intent_graph_autowire.py \
+            tests/test_multi_tenant_fixture.py \
+            tests/test_routing_accuracy.py \
+            tests/test_state_persistence.py \
+            tests/test_swap_building.py \
+            tests/test_unregistered_intent_safety_net.py \
+            tests/test_workflow_wiring.py \
+            tests/test_survey_aligned_phases.py \
+            tests/test_phase_a_fixes.py \
+            tests/services/test_ttl_validator.py \
+            -v --timeout=120 \
             --cov=orchestrator \
             --cov-report=xml:coverage-unit.xml \
             --cov-report=term-missing \

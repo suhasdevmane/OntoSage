@@ -1,0 +1,51 @@
+# Minimal capability KB for bldg2 (Cardiff Research Tower).
+#
+# Phase 11A validation: verify per-building capability KB is loaded into
+# Qdrant under a separate collection (capability_bldg2) and is consulted
+# only when state.building_id == 'bldg2'.
+
+building_info:
+  id: bldg2
+  name: Cardiff Research Tower
+  institution: Cardiff University
+  location: Cardiff, Wales, UK
+  floors: 12
+  occupancy_type: Research (chemistry, HPC, cleanroom)
+  smart_building: true
+  description: >
+    The Cardiff Research Tower is a 12-storey research building hosting
+    the School of Chemistry, the High-Performance Computing centre, and
+    shared cleanroom facilities.
+
+capabilities:
+  - id: building_overview
+    category: BUILDING_OVERVIEW
+    keywords: [research tower, chemistry, hpc, cleanroom, overview, what is in,
+               what is this building, about, summary]
+    content: >
+      The Cardiff Research Tower is a 12-storey research building hosting
+      the School of Chemistry, the High-Performance Computing centre, and
+      shared cleanroom facilities. Distinct from the Abacws Building, which
+      hosts Computer Science and Mathematics.
+    source: building_overview
+
+  - id: contact_facilities
+    category: POLICY
+    keywords: [contact, facilities, report issue, research estates, helpdesk,
+               who to call, who do I contact, problem]
+    content: >
+      Cardiff Research Tower facilities are managed by the Research Estates
+      team. Email research-estates@example.cardiff.ac.uk or call the lab
+      services desk on extension 4242 to report issues.
+    source: facilities_policy
+
+  - id: lab_access_hours
+    category: AMENITIES
+    keywords: [lab access, hours, cleanroom, permit, opening hours, out of hours,
+               when can I use, when is the lab open]
+    content: >
+      Standard lab access is 07:00 to 19:00 Monday to Friday. Out-of-hours
+      access requires a permit from your PI and is logged via the swipe-card
+      system. Cleanrooms have additional restrictions; consult the dedicated
+      cleanroom rota at cleanroom-bookings.example.cardiff.ac.uk.
+    source: lab_access_policy

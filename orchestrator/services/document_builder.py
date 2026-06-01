@@ -182,7 +182,27 @@ class DocumentBuilder:
         return kpis
 
     def _render_pdf(self, html_content: str, filename: str) -> Dict[str, Any]:
-        """Convert HTML to PDF using pdfkit (wkhtmltopdf)."""
+        """Convert HTML to PDF.
+
+        Phase 18 (2026-05-29): primary backend is **weasyprint** (Python-native,
+        in Debian trixie as python3-weasyprint, no external binary needed).
+        wkhtmltopdf upstream is dead (unfixed CVEs; removed from trixie) so
+        the legacy pdfkit path is now a *secondary* fallback only — kept for
+        deployments still on bookworm with wkhtmltopdf already installed.
+        Final fallback returns the raw HTML so the user gets something usable.
+        """
+        # Primary: weasyprint
+        try:
+            from weasyprint import HTML  # type: ignore
+
+            pdf_bytes = HTML(string=html_content).write_pdf()
+            return self._result(pdf_bytes, filename, "pdf")
+        except ImportError:
+            logger.info("weasyprint not installed — trying pdfkit/wkhtmltopdf")
+        except Exception as e:
+            logger.warning(f"weasyprint PDF generation failed: {e} — trying pdfkit")
+
+        # Secondary: legacy pdfkit (wkhtmltopdf) — for bookworm-era deployments
         try:
             import pdfkit
 
@@ -201,11 +221,16 @@ class DocumentBuilder:
             )
             return self._result(pdf_bytes, filename, "pdf")
         except ImportError:
-            logger.warning("pdfkit not installed — falling back to HTML output")
+            logger.warning(
+                "Neither weasyprint nor pdfkit installed — falling back to HTML"
+            )
             html_filename = filename.replace(".pdf", ".html")
             result = self._result(html_content, html_filename, "html")
             result["fallback"] = True
-            result["fallback_reason"] = "pdfkit not installed; install pdfkit + wkhtmltopdf for PDF"
+            result["fallback_reason"] = (
+                "PDF backends unavailable. Install weasyprint (recommended) "
+                "or pdfkit+wkhtmltopdf for PDF output."
+            )
             return result
         except Exception as e:
             logger.warning(f"PDF generation failed: {e} — falling back to HTML")

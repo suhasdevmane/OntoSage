@@ -492,7 +492,7 @@ class FloorPlanService:
     # ── Manifest-aware methods (Phase 9) ─────────────────────────────────────
 
     def get_manifest(
-        self, floor: int, building_id: str = "abacws"
+        self, floor: int, building_id: str
     ) -> Optional[Any]:
         """
         Return the FloorPlanManifest for a floor, or None if not yet generated.
@@ -507,7 +507,7 @@ class FloorPlanService:
             return None
 
     def get_all_manifests(
-        self, building_id: str = "abacws"
+        self, building_id: str
     ) -> Dict[int, Any]:
         """Return {floor: manifest} for all available manifests of a building."""
         try:
@@ -526,7 +526,7 @@ class FloorPlanService:
     def search_spaces(
         self,
         query: str,
-        building_id: str = "abacws",
+        building_id: str,
         floor: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
@@ -575,13 +575,13 @@ class FloorPlanService:
         return results
 
     def get_facilities_by_type(
-        self, facility_type: str, building_id: str = "abacws"
+        self, facility_type: str, building_id: str
     ) -> List[Dict[str, Any]]:
         """Return all spaces of a given type across all floors."""
         return self.search_spaces(facility_type, building_id=building_id)
 
     def get_building_overview_markdown(
-        self, building_id: str = "abacws"
+        self, building_id: str
     ) -> str:
         """Return a markdown building overview card per floor (manifest-based)."""
         manifests = self.get_all_manifests(building_id)
@@ -622,7 +622,7 @@ class FloorPlanService:
         return "\n".join(lines)
 
     def suggest_floor_plan_link(
-        self, zone_id: str, building_id: str = "abacws"
+        self, zone_id: str, building_id: str
     ) -> str:
         """
         Given a zone_id like '5.12', return a small markdown footer linking

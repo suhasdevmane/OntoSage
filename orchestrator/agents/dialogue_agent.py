@@ -167,6 +167,26 @@ _SPATIAL_KW = ("zone", "floor", "room", "area", "space", "section", "level",
 _TIME_KW = ("today", "yesterday", "last", "past", "hour", "day", "week",
             "month", "year", "since", "between", "trend", "history", "historical")
 
+# Exported for testing — forecast/predict pre-classifier
+_FORECAST_KWS = (
+    "predict", "forecast", "projected", "projection",
+    "what will", "what would", "expected to be",
+    "likely to be",
+)
+_SENSOR_METRIC_KWS = (
+    "temperature", "temp", "co2", "humidity", "energy",
+    "consumption", "power", "air quality", "occupancy",
+    "noise", "pressure", "sensor", "reading",
+)
+# Exported for testing — maintenance schedule pre-classifier
+_MAINTENANCE_SCHEDULE_KWS = (
+    "maintenance schedule", "scheduled maintenance", "planned maintenance",
+    "maintenance this week", "maintenance this month", "maintenance next",
+    "open maintenance tickets", "outstanding maintenance", "maintenance tasks",
+    "maintenance work scheduled", "what maintenance is", "what maintenance work",
+    "list maintenance", "show maintenance",
+)
+
 
 def _derive_g1_taxonomy(
     query: str,
@@ -382,13 +402,17 @@ class DialogueAgent:
         #
         # Failures (Qdrant down, embedding API down) return source="fallback" and
         # the LLM intent classification proceeds normally — non-fatal by design.
+        from orchestrator.services.semantic_router import SemanticRouter as _SR  # local import avoids cycle
         if (
-self.semantic_router is not None
+            self.semantic_router is not None
             and user_query
             and user_query.strip()
+            # Skip KB router entirely for queries that are live-data / SPARQL requests.
+            # is_data_query() is a zero-cost keyword check — no embedding call.
+            and not _SR.is_data_query(user_query)
         ):
             try:
-                bldg_id = state.building_id or "bldg1"
+                bldg_id = state.building_id or settings.BUILDING_ID
                 semantic_result = await self.semantic_router.classify(user_query, bldg_id)
                 state.intermediate_results["_semantic_route"] = {
                     "score": semantic_result.score,
@@ -457,13 +481,24 @@ self.semantic_router is not None
         # Phase 3.2: Retrieve memory context (set by workflow _dialogue_node B.3 block)
         memory_context = state.intermediate_results.get("memory_context", "")
 
-        # Build the LLM prompt for intent detection and query generation
+        # Build the LLM prompt for intent detection and query generation.
+        # Phase 10 — pass the conversation's building_id so the prompt scope
+        # rule uses the right per-building name/timezone instead of the
+        # process-global active building's settings.
+        # Phase 14A: if `state.personas` (list) is non-empty, pass it as a
+        # joined label so the prompt's persona hint reflects the blend.
+        _personas_list = list(getattr(state, "personas", []) or [])
+        if _personas_list:
+            _persona_label = "+".join(_personas_list[:3])
+        else:
+            _persona_label = getattr(state, "persona", "general") or "general"
         prompt = self._build_intent_detection_prompt(
             user_query=user_query,
             ontology_context=ontology_context,
             conversation_history=conversation_history,
-            persona=getattr(state, "persona", "general") or "general",
+            persona=_persona_label,
             memory_context=memory_context,
+            building_id=getattr(state, "building_id", None),
         )
 
         # Check cache
@@ -499,9 +534,11 @@ self.semantic_router is not None
                 _sem_meta = state.intermediate_results.get("_semantic_route") or {}
                 _sem_score = float(_sem_meta.get("score") or 0.0)
                 _llm_intent = result.get("intent")
+                # Only pure non-data intents get the soft KB override.
+                # "discovery" and "metadata" are SPARQL intents — they must NOT
+                # be overridden to capability even with a medium-band KB score.
                 _NON_DATA_INTENTS = {
                     "general", "clarification", "unknown", "general_knowledge",
-                    "sparql", "discovery", "metadata",
                 }
                 if (
                     _sem_score > 0.0
@@ -509,7 +546,7 @@ self.semantic_router is not None
                     and _llm_intent in _NON_DATA_INTENTS
                 ):
                     try:
-                        _bldg_id = state.building_id or "bldg1"
+                        _bldg_id = state.building_id or settings.BUILDING_ID
                         _sem = await self.semantic_router.classify(user_query, _bldg_id)
                         if _sem.matches:
                             state.intermediate_results["capability_matches"] = _sem.matches
@@ -560,6 +597,7 @@ self.semantic_router is not None
         conversation_history: str,
         persona: str = "general",
         memory_context: str = "",
+        building_id: Optional[str] = None,
     ) -> str:
         """
         Build the prompt for LLM-based intent detection
@@ -568,13 +606,22 @@ self.semantic_router is not None
             user_query: The user's question
             ontology_context: Retrieved ontology fragments from vector DB
             conversation_history: Formatted conversation history
+            building_id: ConversationState building_id; when provided, the
+                SCOPE rule + timezone come from THIS building's config
+                (per-request multi-tenant).  When None, falls back to the
+                active settings building (legacy behaviour).
 
         Returns:
             Formatted prompt string
         """
+        # Phase 10 — resolve per-request building context once and use it for
+        # both the timezone and the SCOPE rule.  Falls back to settings.
+        from orchestrator.services.building_context import resolve_building_context
+        bctx = resolve_building_context(building_id)
+
         # Get current time in building's local timezone
         try:
-            local_time = datetime.now(ZoneInfo(settings.BUILDING_TIMEZONE))
+            local_time = datetime.now(ZoneInfo(bctx.timezone))
             current_time_str = local_time.strftime("%A, %B %d, %Y, %H:%M %Z")
         except Exception as e:
             logger.warning(f"Failed to get local time: {e}")
@@ -587,101 +634,76 @@ self.semantic_router is not None
             for i, ctx in enumerate(ontology_context, 1):
                 context_str += f"{i}. {ctx}\\n"
 
-        # Phase 4.1 — Expanded 14-intent taxonomy
+        # Phase 6 — intent definitions come from orchestrator/intents/intent_definitions.yaml
+        # so adding/tuning intents no longer requires editing this prompt by hand.
+        # Phase 11A — pass the active building_id so per-building intent overlays
+        # (e.g. bldg2's lab_equipment) appear in the LLM's intent list.
+        from orchestrator.intents import get_intent_registry
+        _registry_for_prompt = get_intent_registry(building_id)
+        _intent_block = _registry_for_prompt.descriptions_markdown()
+        _intent_count = len(_registry_for_prompt.names())
+
+        # Phase 16B — surface blended persona priors to the LLM so intent
+        # classification is informed by WHO is asking, not just WHAT they're
+        # asking.  A facility_manager+researcher blend tells the LLM:
+        #   * prefer ENERGY/THERMAL domains when ambiguous
+        #   * expect COMPLEX-level depth in the response
+        #   * be willing to ask for clarification (low threshold)
+        # `persona` arrives here as either a single name or "name1+name2+..."
+        # (joined by the caller when state.personas is non-empty).
+        try:
+            from shared.persona_registry import get_persona_registry
+            _preg_for_prompt = get_persona_registry()
+            _personas_for_prompt = (
+                [p for p in persona.split("+") if p]
+                if "+" in (persona or "")
+                else [persona]
+            )
+            _priors_for_prompt = _preg_for_prompt.get_blended_priors(
+                _personas_for_prompt
+            )
+            _persona_hint_block = (
+                f"\n   === USER PERSONA HINTS (Phase 16B — informs classification) ===\n"
+                f"   Active persona(s): {', '.join(_personas_for_prompt)}\n"
+                f"   Priority domains (use to break ties when intent is "
+                f"ambiguous): {', '.join(_priors_for_prompt.top_domains[:5])}\n"
+                f"   Expected answer depth: {_priors_for_prompt.default_complexity} "
+                f"(prefer concise lookups for SIMPLE, detailed analysis for COMPLEX)\n"
+                f"   Clarification threshold: "
+                f"{_priors_for_prompt.clarification_threshold:.2f} "
+                f"(lower = ask for clarification more readily; >= 0.7 = answer "
+                f"with best guess instead of asking)\n"
+            )
+        except Exception:
+            # Persona priors are an OPTIONAL signal — don't fail intent
+            # classification if the registry blows up.
+            _persona_hint_block = ""
+
         prompt = f"""You are an intelligent assistant analyzing user questions about a smart building management system.
 Current Date and Time: {current_time_str}
 
 Your task is to analyze the user's question and return a JSON response.
 
-1. "intent" (string): One of the following 15 intents. Choose the MOST SPECIFIC one that applies.
+1. "intent" (string): One of the following {_intent_count} intents. Choose the MOST SPECIFIC one that applies.
 
    === INTENT DEFINITIONS WITH EXAMPLES ===
 
-   - "general"       : General knowledge / greetings / non-building questions.
-                        e.g. "Hello", "What can you do?", "What is HVAC?"
-
-   - "metadata"      : Static structure queries — list entities, look up types, describe a thing.
-                        e.g. "What sensors are in zone 5?", "What type of sensor is X?", "List all floors."
-
-   - "discovery"     : Explore available sensors, zones, data types, system capabilities.
-                        e.g. "What can I monitor?", "Show me all available data types.", "How many sensors does the building have?"
-
-   - "analytics"     : ONLY for direct statistical computation on a single dataset — averages, min/max, sums,
-                        counts, histograms, distribution, current readings. NOT for comparisons, NOT for recommendations.
-                        e.g. "What is the average CO2 last week?", "Show temperature history for zone 5.", "Current humidity?"
-
-   - "compare"       : Side-by-side comparison of TWO OR MORE sensors, zones, floors, or time periods.
-                        ALWAYS use this when the user says "compare", "vs", "versus", "difference between",
-                        "higher/lower than", "which is better/worse", or names two distinct things.
-                        e.g. "Compare air quality between floor 1 and floor 5.", "Is zone 3 hotter than zone 5?",
-                        "How does this week compare to last week?"
-
-   - "trend"         : How a single metric has CHANGED OVER TIME — increasing, decreasing, stable, rate of change.
-                        e.g. "Is energy consumption trending up?", "How has CO2 changed since Monday?", "Is temperature rising?"
-
-   - "recommend"     : Request ACTIONABLE ADVICE — what to change, how to improve, what settings to use.
-                        ALWAYS use this when the user says "recommend", "suggest", "should I", "how can I improve",
-                        "what settings", "optimize", "what should I do", "tips", "advice".
-                        e.g. "What HVAC settings do you recommend?", "How can I improve air quality?",
-                        "Suggest energy saving measures.", "What should the temperature setpoint be?"
-
-   - "anomaly"       : Detect out-of-range, spike, drop, or unusual sensor readings.
-                        e.g. "Any unusual readings today?", "Are there temperature spikes?", "Detect anomalies in CO2."
-
-   - "report"        : Generate a structured building report (daily/weekly summary, full energy report).
-                        e.g. "Generate a weekly energy report.", "Create a building summary.", "Daily occupancy report."
-
-   - "export"        : Export query results or report to a file (CSV, JSON, HTML, Markdown).
-                        e.g. "Export last week's data as CSV.", "Download the report as JSON."
-
-   - "compliance"    : Check sensor readings against regulatory or comfort standards (ASHRAE, WELL, BREEAM, EN15251).
-                        e.g. "Is zone 5 within ASHRAE 55 limits?", "Check BREEAM compliance.", "Is CO2 within safe limits?"
-
-   - "planner"       : Multi-step task requiring multiple agents or producing multiple outputs.
-                        e.g. "Generate CO2 report and export as CSV.", "Analyse energy, then create a chart and export."
-
-   - "control"      : User issues a command to physically change a building system state.
-                       e.g. "Set HVAC zone 3 to 21°C", "Turn off the lights in room 2.04",
-                       "Lock down floor 4", "Increase ventilation in Lab 3.07".
-                       Entities: device (the system to control), action (set/on/off/lock/
-                       unlock/increase/decrease), target_value (e.g. "21°C", "50%"),
-                       zone/room.
-
-   - "maintenance"   : User reports a fault, raises a work order, checks ticket status,
-                       or updates a maintenance ticket.
-                       Trigger phrases: "broken", "not working", "report fault", "raise ticket",
-                       "fix the", "maintenance request", "check ticket", "status of MT-".
-                       Entities: device, location, fault_description, ticket_id (format MT-XXXX),
-                       assignee.
-
-   - "clarification" : Query is too vague to proceed without more information.
-                        e.g. "Show me data." (no sensor/zone specified), "What happened?" (no context)
-
-   - "floor_plan"    : User wants to see a floor plan, locate a room/zone/sensor on a floor,
-                        navigate the building layout, or get a building overview.
-                        ALWAYS use this when the user says: "floor plan", "show me floor", "layout",
-                        "where is [room/zone/facility]", "which floor is", "locate", "find my location",
-                        "building map", "navigate", "directions to", "how do I get to",
-                        "where can I find", "building directory", "building overview", "all floors",
-                        "which floor has", "find the office", "where is the lab", "server room location",
-                        "toilet", "meeting room location", "lift", "elevator", "staircase",
-                        or mentions a floor number with spatial/location intent.
-                        e.g. "Show me floor 3 plan.", "Where is zone 5.12?", "Which floor am I on?",
-                        "Can you show me the layout of floor 2?", "Where is the server room?",
-                        "Which floor has the meeting rooms?", "Navigate me to the lab.",
-                        "Show me what's on each floor.", "Where are the toilets?",
-                        "Give me a building overview.", "Find the reception."
-
-   - "spatial_query" : User asks quantitative/analytical geometry questions about the building —
-                        room sizes, areas, adjacency relationships, counts, or MEP block locations.
-                        Use this when the user asks ABOUT DATA derived from the floor plan, not to SEE it.
-                        e.g. "Which rooms are larger than 50 m²?", "What is the total area of floor 3?",
-                        "How many meeting rooms are on floor 4?", "Which rooms are adjacent to 3.01?",
-                        "What is the smallest room on floor 2?", "How many sensors are on floor 3?",
-                        "List all labs with area between 20 and 80 m².", "Where are the fire exits?",
-                        "What rooms are next to the server room?", "Total area of the building.",
-                        "How many doors are on floor 1?", "Count the rooms on each floor."
-                        DISAMBIGUATION: "show me / where is / find" → "floor_plan". "how many / area / size / adjacent" → "spatial_query".
+{_intent_block}
+{_persona_hint_block}
+   === SCOPE RULE (highest priority — apply before everything else) ===
+   OntoSage is EXCLUSIVELY a smart building management assistant for the {bctx.name}.
+   If the user's question has NO connection to: buildings, sensors, zones, floors, temperature,
+   CO2, humidity, energy, occupancy, HVAC, air quality, fire safety, floor plans, or building
+   management — it is OUT OF SCOPE.  For out-of-scope questions:
+     - Set intent = "general"
+     - Set response = "I specialise in smart building management for the {bctx.name}.
+       I can help with sensor data, energy monitoring, air quality, floor plans, occupancy,
+       and building analytics. What building-related question can I help you with?"
+   Examples of OUT-OF-SCOPE (return the redirect, nothing else):
+     "What is the capital of France?" → out-of-scope → redirect
+     "Write me a Python script to sort a list." → out-of-scope → redirect
+     "Who won the Premier League?" → out-of-scope → redirect
+     "What is the weather in London?" → out-of-scope → redirect
 
    === DISAMBIGUATION RULES (apply in this priority order) ===
    - If the user asks to see a floor plan, map, or layout → "floor_plan"
@@ -793,6 +815,37 @@ Return ONLY the JSON object.
                     normalized["start_date"] = None
                     normalized["end_date"] = None
 
+                # ── Out-of-domain guard ─────────────────────────────────────────
+                # If the LLM classified the query as "general" and the response
+                # it generated contains ZERO building-related keywords, the user
+                # asked something completely off-topic.  Redirect to building scope
+                # rather than letting the LLM answer freely (e.g. "capital of France",
+                # "sort a Python list").
+                _BUILDING_KWS = (
+                    "sensor", "zone", "floor", "temperature", "co2", "humidity",
+                    "energy", "hvac", "building", "ventilation", "occupancy",
+                    "air quality", "abacws", "ontosage", "smart building", "iot",
+                    "bms", "facility", "room", "heat", "comfort", "carbon",
+                )
+                _OOD_REDIRECT = (
+                    "I specialise in smart building management for the Abacws building. "
+                    "I can help with sensor data, energy monitoring, air quality, "
+                    "floor plans, occupancy, and building analytics. "
+                    "What building-related question can I help you with?"
+                )
+                if normalized.get("intent") == "general":
+                    _q_check = user_query.lower()
+                    _resp_check = (normalized.get("response") or "").lower()
+                    _has_building_context = any(
+                        kw in _q_check or kw in _resp_check for kw in _BUILDING_KWS
+                    )
+                    if not _has_building_context and len(user_query.strip()) > 8:
+                        logger.info(
+                            f"[ood-guard] Out-of-domain query detected — redirecting to building scope: "
+                            f"'{user_query[:60]}'"
+                        )
+                        normalized["response"] = _OOD_REDIRECT
+
                 # Deterministic override: force "compare" when comparison keywords
                 # appear with two distinct entity references, regardless of LLM choice.
                 # LLMs reliably fail on this: "Compare CO2 in zones A and B" → compliance.
@@ -803,10 +856,13 @@ Return ONLY the JSON object.
                                "higher than", "lower than", "more than", "less than")
                 )
                 _two_zones = len(normalized.get("entities", [])) >= 2
+                # Also match "floor N vs floor M" even if LLM didn't extract both as entities.
+                import re as _re_dia
+                _two_floors = len(set(_re_dia.findall(r'\bfloor\s*\d+', _q_lower))) >= 2
                 if (
                     _has_compare_kw
                     and normalized.get("intent") in ("compliance", "analytics", "trend")
-                    and _two_zones
+                    and (_two_zones or _two_floors)
                 ):
                     logger.info(
                         f"[intent-override] Forcing 'compare' (was '{normalized['intent']}') "
@@ -815,6 +871,64 @@ Return ONLY the JSON object.
                     normalized["intent"] = "compare"
                     normalized["analytics"] = False
                     normalized["general"] = False
+
+                # Sensor-ID-in-compliance override: when a specific sensor ID is referenced
+                # alongside trend keywords ("over the last N days", "weekly trend"), the user
+                # wants historical/trend analysis, not a compliance standard check.
+                # The compliance node returns "Zone or Sensor Required" when it can't find data,
+                # which is the WARN symptom — force analytics instead.
+                _has_sensor_id_pattern = bool(
+                    _re_dia.search(r'[A-Za-z0-9]+_[Ss]ensor_[\d.]+', user_query)
+                )
+                _has_trend_kw = any(
+                    kw in _q_lower
+                    for kw in ("trend", "over the last", "past week", "last 7 days",
+                               "weekly", "over time", "history", "historical", "last week",
+                               "past 7 days", "over time", "daily trend")
+                )
+                if (
+                    _has_sensor_id_pattern
+                    and normalized.get("intent") == "compliance"
+                    and _has_trend_kw
+                ):
+                    logger.info(
+                        f"[intent-override] Forcing 'analytics' (was 'compliance') "
+                        "— specific sensor ID + trend keyword"
+                    )
+                    normalized["intent"] = "analytics"
+                    normalized["analytics"] = True
+                    normalized["general"] = False
+
+                # Vague-complaint override: queries like "fix everything" / "things seem off"
+                # have no specific control target, so routing to "control" causes a misleading
+                # RBAC denial.  Route to "clarification" so the system asks what's wrong.
+                _VAGUE_COMPLAINT_KWS = (
+                    "fix everything", "things seem off", "something seems off",
+                    "something is wrong", "all broken", "fix it all", "sort everything out",
+                    "not working today",
+                )
+                _SPECIFIC_CONTROL_KWS = (
+                    "hvac", "thermostat", "turn off", "turn on", "set temperature",
+                    "set hvac", "lights", "ventilation rate", "override", "setpoint",
+                )
+                _has_vague_complaint = any(kw in _q_lower for kw in _VAGUE_COMPLAINT_KWS)
+                _has_specific_control = any(kw in _q_lower for kw in _SPECIFIC_CONTROL_KWS)
+                if (
+                    _has_vague_complaint
+                    and normalized.get("intent") in ("control", "clarification")
+                    and not _has_specific_control
+                ):
+                    logger.info(
+                        "[intent-override] Forcing 'clarification' (was 'control') "
+                        "— vague complaint without specific control target"
+                    )
+                    normalized["intent"] = "clarification"
+                    normalized["clarification_question"] = (
+                        "Could you be more specific? Which area or system seems to have an issue? "
+                        "I can check sensor readings, anomalies, or HVAC status for specific zones."
+                    )
+                    normalized["general"] = False
+                    normalized["analytics"] = False
 
                 # Correlation queries are analytics, not clarification.
                 # gpt-4o-mini tends to escalate multi-variable queries to clarification;
@@ -853,6 +967,42 @@ Return ONLY the JSON object.
                         "— floor plan navigation keyword detected"
                     )
                     normalized["intent"] = "floor_plan"
+                    normalized["analytics"] = False
+                    normalized["general"] = False
+
+                # Forecast / prediction queries must route to trend, not general.
+                # The LLM sometimes classifies "predict X tomorrow" as general_knowledge
+                # because it treats future-state queries as outside building data scope.
+                _has_forecast_kw = any(kw in _q_lower for kw in _FORECAST_KWS)
+                _has_metric_kw = any(kw in _q_lower for kw in _SENSOR_METRIC_KWS)
+                if (
+                    _has_forecast_kw
+                    and _has_metric_kw
+                    and normalized.get("intent") not in ("trend", "analytics", "sensor_data")
+                ):
+                    logger.info(
+                        f"[intent-override] Forcing 'trend' (was '{normalized.get('intent')}') "
+                        "— forecast/predict keyword with sensor metric detected"
+                    )
+                    normalized["intent"] = "trend"
+                    normalized["analytics"] = True
+                    normalized["general"] = False
+
+                # Maintenance schedule queries must route to maintenance, not metadata.
+                # "What maintenance is scheduled" has structural similarity to
+                # metadata list queries, so the LLM often picks metadata.
+                _has_maintenance_schedule = any(
+                    kw in _q_lower for kw in _MAINTENANCE_SCHEDULE_KWS
+                )
+                if (
+                    _has_maintenance_schedule
+                    and normalized.get("intent") not in ("maintenance",)
+                ):
+                    logger.info(
+                        f"[intent-override] Forcing 'maintenance' (was '{normalized.get('intent')}') "
+                        "— maintenance schedule keyword detected"
+                    )
+                    normalized["intent"] = "maintenance"
                     normalized["analytics"] = False
                     normalized["general"] = False
 

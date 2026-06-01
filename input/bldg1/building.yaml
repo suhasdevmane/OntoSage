@@ -3,6 +3,12 @@
 #
 # When this file is absent, defaults from shared/capability_schema.py apply.
 
+# Logical building ID — matches settings.BUILDING_ID / env var BUILDING_ID.
+# The floor plan PDF filenames slugify to "abacws", which is declared in
+# `floor_plan_aliases` below so both keys resolve to the same data.
+building_id: bldg1
+building_name: Abacws Building
+
 # ── Capability semantic routing thresholds ────────────────────────────────────
 #
 # Calibrated 2026-05-22 against LOCAL sentence-transformers/all-MiniLM-L6-v2
@@ -50,3 +56,31 @@ capability_routing:
   override_min: 0.60
   top_k: 5
   fallback_on_qdrant_failure: skip
+
+# ── Storage adapter binding (Phase 2 — 2026-05-29) ───────────────────────────
+#
+# Only initialise the database adapters this building actually uses.  Each key
+# below is resolved against config/database_registry.yaml.
+#
+# Omit this block entirely (or leave the `databases:` list empty) to fall back
+# to the legacy behaviour of initialising every available adapter — useful
+# during development, noisy in production.
+#
+# bldg1 (Abacws) uses the primary MySQL backend for all sensor data.  TTL
+# references appear as `ref:storedAt bldg:database1`.
+storage:
+  databases:
+    - database1
+
+# ── Floor-plan aliases (Phase 4 — 2026-05-29) ────────────────────────────────
+#
+# Legacy floor-plan PDFs were named "Abacws floor N.pdf" and the registry
+# slugged the building as "abacws", which differed from the logical
+# BUILDING_ID "bldg1".  By declaring "abacws" as an alias here, the system
+# treats both IDs as referring to this building — lookups under either
+# "bldg1" or "abacws" succeed.
+#
+# When a new building is onboarded with consistent IDs, this block can be
+# omitted entirely.
+floor_plan_aliases:
+  - abacws

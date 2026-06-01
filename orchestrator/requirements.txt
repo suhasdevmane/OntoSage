@@ -50,7 +50,10 @@ prometheus-client>=0.20.0
 
 # P4 — Document generation pipeline
 Jinja2>=3.1.0
-pdfkit>=1.0.0       # PDF output (requires wkhtmltopdf binary)
+# Phase 18 (2026-05-29): weasyprint is the primary PDF backend after wkhtmltopdf
+# was removed from Debian trixie.  Native deps installed in the Dockerfile.
+weasyprint>=63.0    # PDF output (primary; Python-native)
+pdfkit>=1.0.0       # PDF output (legacy fallback; uses wkhtmltopdf binary)
 python-docx>=1.0.0  # DOCX output
 
 # Phase 8.1 — Document upload / ingestion
@@ -72,3 +75,13 @@ shapely>=2.0.0      # Polygon area, point-in-polygon, adjacency detection
 # detects the dim mismatch and rebuilds the capability_<bldg> Qdrant collection
 # automatically on startup, so provider switches require no manual intervention.
 sentence-transformers>=2.2.0
+
+# ── Time-series forecasting (PhD-grade prediction pipeline) ──────────────────
+# statsmodels: ARIMA, SARIMA, ExponentialSmoothing (Holt-Winters), STL decomposition
+statsmodels>=0.14.0
+# scikit-learn: LinearRegression, Ridge, metrics (RMSE, MAE, R²), train/test split
+scikit-learn>=1.4.0
+# pmdarima: auto_arima — automatic ARIMA order selection (p,d,q) via AIC/BIC
+pmdarima>=2.0.4
+# scipy: already pulled by statsmodels; explicit pin for STL + signal processing
+scipy>=1.13.0

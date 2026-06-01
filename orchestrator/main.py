@@ -54,6 +54,7 @@ from orchestrator.services.response_cache import ResponseCacheService
 from orchestrator.services.alert_monitor import AlertMonitor
 from orchestrator.services.connection_manager import ConnectionManager
 from orchestrator.services.sparql_validator import sparql_validator
+from orchestrator.services.job_queue import JobQueue, JobStatus as _JobStatus
 from orchestrator.workflow import WorkflowOrchestrator
 from shared.config import settings
 from shared.models import APIResponse, ChatRequest, ConversationState, Message
@@ -274,12 +275,13 @@ response_cache: ResponseCacheService = None
 ontology_detector: OntologySchemaDetector = None
 agent_memory: AgentMemoryService = None
 doc_ingestion = None  # DocumentIngestionService — lazy import to avoid load-time errors
+job_queue: Optional[JobQueue] = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle manager for startup/shutdown"""
-    global redis_manager, postgres_manager, orchestrator, auth_manager, response_cache, ontology_detector, agent_memory, doc_ingestion
+    global redis_manager, postgres_manager, orchestrator, auth_manager, response_cache, ontology_detector, agent_memory, doc_ingestion, job_queue
 
     # Startup
     logger.info("Starting OntoSage 2.0 Orchestrator...")
@@ -289,10 +291,46 @@ async def lifespan(app: FastAPI):
     await redis_manager.connect()
     logger.info("Redis connected")
 
-    # Initialize Postgres
+    # Task 5: Initialize async job queue (backed by Redis)
+    job_queue = JobQueue(redis_manager.client)
+    logger.info("Job queue initialised")
+
+    # Initialize Postgres.
+    # Phase-18 (2026-05-29): retry with exponential backoff to survive the
+    # well-known race where the orchestrator container starts before
+    # postgres-user-data reports `healthy` (docker-compose `depends_on:
+    # service_healthy` is enforced but not 100% reliable on some hosts).
+    # When the orchestrator booted before Postgres came up, the previous code
+    # logged "Postgres connected" but left `postgres_manager.pool == None`,
+    # making `auth_manager.login` fail with confusing "Invalid password" errors.
     postgres_manager = PostgresManager()
-    await postgres_manager.connect()
-    logger.info("Postgres connected")
+    _pg_attempts = 5
+    _pg_backoff = 2  # seconds
+    for _attempt in range(1, _pg_attempts + 1):
+        try:
+            await postgres_manager.connect()
+            if postgres_manager.pool is not None:
+                logger.info(f"Postgres connected (attempt {_attempt}/{_pg_attempts})")
+                break
+            logger.warning(
+                f"Postgres connect attempt {_attempt}/{_pg_attempts} returned "
+                f"None pool; retrying in {_pg_backoff}s"
+            )
+        except Exception as _pg_err:
+            logger.warning(
+                f"Postgres connect attempt {_attempt}/{_pg_attempts} failed: "
+                f"{type(_pg_err).__name__}: {_pg_err}; retrying in {_pg_backoff}s"
+            )
+        await asyncio.sleep(_pg_backoff)
+        _pg_backoff = min(_pg_backoff * 2, 30)  # 2, 4, 8, 16, 30
+    else:
+        # Connect did not succeed in any attempt — log loudly and proceed.
+        # Auth/login will fail closed (Phase-18 guard in auth_manager) until
+        # the operator restarts the orchestrator after Postgres recovers.
+        logger.error(
+            f"Postgres did not become available after {_pg_attempts} attempts; "
+            "auth + RBAC features will be DEGRADED until orchestrator restart."
+        )
 
     # Create control_log table if not exists
     try:
@@ -336,6 +374,127 @@ async def lifespan(app: FastAPI):
         logger.info("maintenance_tickets table ready")
     except Exception as _e:
         logger.warning(f"maintenance_tickets table creation skipped: {_e}")
+
+    # Phase 19 — Unified user-report intake table.
+    # Holds EVERY kind of user-submitted issue: maintenance, complaint,
+    # feedback, safety, suggestion.  Admins triage it in pgAdmin
+    # (port 5050, postgres-user-data).  Reporter persona is captured so admins
+    # can see which kind of user raised each issue.
+    try:
+        async with postgres_manager.pool.acquire() as _conn:
+            await _conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_reports (
+                    id           VARCHAR(16)  PRIMARY KEY,
+                    building_id  VARCHAR(64)  NOT NULL,
+                    category     VARCHAR(32)  NOT NULL DEFAULT 'maintenance',
+                    priority     VARCHAR(16)  NOT NULL DEFAULT 'NORMAL',
+                    status       VARCHAR(24)  NOT NULL DEFAULT 'OPEN',
+                    title        VARCHAR(256),
+                    description  TEXT         NOT NULL,
+                    location     VARCHAR(256),
+                    device       VARCHAR(256),
+                    reporter_id  VARCHAR(256),
+                    persona      VARCHAR(128),
+                    assignee     VARCHAR(256),
+                    admin_notes  TEXT,
+                    session_id   VARCHAR(256),
+                    created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+                    updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+                    resolved_at  TIMESTAMPTZ
+                )
+            """)
+            for _idx_sql in (
+                "CREATE INDEX IF NOT EXISTS idx_user_reports_status ON user_reports (status)",
+                "CREATE INDEX IF NOT EXISTS idx_user_reports_category ON user_reports (category)",
+                "CREATE INDEX IF NOT EXISTS idx_user_reports_priority ON user_reports (priority)",
+                "CREATE INDEX IF NOT EXISTS idx_user_reports_building ON user_reports (building_id)",
+                "CREATE INDEX IF NOT EXISTS idx_user_reports_reporter ON user_reports (reporter_id)",
+            ):
+                await _conn.execute(_idx_sql)
+        logger.info("user_reports table + indexes ready (Phase 19 intake)")
+    except Exception as _e:
+        logger.warning(f"user_reports table creation skipped: {_e}")
+
+    # Phase 19 — backward-compat: expose the maintenance subset of user_reports
+    # as the legacy `maintenance_tickets` shape, but ONLY when no real
+    # maintenance_tickets table already exists (fresh deployments).  Existing
+    # deployments keep their real table untouched; new reports go to user_reports.
+    try:
+        async with postgres_manager.pool.acquire() as _conn:
+            _is_table = await _conn.fetchval(
+                """
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_name = 'maintenance_tickets' AND table_type = 'BASE TABLE'
+                )
+                """
+            )
+            if not _is_table:
+                await _conn.execute("""
+                    CREATE OR REPLACE VIEW maintenance_tickets AS
+                    SELECT id, building_id, location, device, description,
+                           status, reporter_id, assignee, created_at, updated_at,
+                           session_id
+                    FROM user_reports
+                    WHERE category = 'maintenance'
+                """)
+                logger.info("maintenance_tickets compat VIEW created over user_reports")
+            else:
+                logger.info(
+                    "maintenance_tickets exists as a real table — leaving it; "
+                    "new reports go to user_reports"
+                )
+    except Exception as _e:
+        logger.warning(f"maintenance_tickets compat view skipped: {_e}")
+
+    # Phase 19 - admin triage VIEWS over user_reports, auto-created so admins
+    # can open pgAdmin and double-click them with no SQL.  Canonical definitions
+    # live in scripts/sql/report_admin_views.sql.
+    try:
+        async with postgres_manager.pool.acquire() as _conn:
+            await _conn.execute("""
+                CREATE OR REPLACE VIEW v_open_reports AS
+                SELECT id, created_at, building_id, category, priority, status,
+                       persona, title, location, device, reporter_id, assignee
+                FROM user_reports
+                WHERE status NOT IN ('RESOLVED', 'CLOSED', 'REJECTED')
+                ORDER BY CASE priority WHEN 'URGENT' THEN 0 WHEN 'HIGH' THEN 1
+                                       WHEN 'NORMAL' THEN 2 ELSE 3 END,
+                         created_at DESC
+            """)
+            await _conn.execute("""
+                CREATE OR REPLACE VIEW v_urgent_reports AS
+                SELECT id, created_at, building_id, category, priority, status,
+                       persona, title, location, device, reporter_id
+                FROM user_reports
+                WHERE priority IN ('URGENT', 'HIGH')
+                  AND status IN ('OPEN', 'ACKNOWLEDGED')
+                ORDER BY CASE priority WHEN 'URGENT' THEN 0 ELSE 1 END,
+                         created_at ASC
+            """)
+            await _conn.execute("""
+                CREATE OR REPLACE VIEW v_reports_by_persona AS
+                SELECT COALESCE(persona, '(unknown)') AS persona, category,
+                       COUNT(*) AS total,
+                       COUNT(*) FILTER (
+                         WHERE status NOT IN ('RESOLVED','CLOSED','REJECTED')
+                       ) AS open_count,
+                       MAX(created_at) AS latest
+                FROM user_reports
+                GROUP BY COALESCE(persona, '(unknown)'), category
+                ORDER BY total DESC
+            """)
+            await _conn.execute("""
+                CREATE OR REPLACE VIEW v_reports_by_category AS
+                SELECT category, status, priority, COUNT(*) AS total,
+                       MAX(created_at) AS latest
+                FROM user_reports
+                GROUP BY category, status, priority
+                ORDER BY category, status
+            """)
+        logger.info("user_reports admin triage views ready (Phase 19)")
+    except Exception as _e:
+        logger.warning(f"user_reports admin views skipped: {_e}")
 
     # Initialize authentication manager
     auth_manager = AuthManager(redis_manager, postgres_manager)
@@ -527,6 +686,58 @@ async def lifespan(app: FastAPI):
         app.state.building_manager = building_manager
     except Exception as e:
         logger.warning(f"Multi-building manager initialization failed (non-fatal): {e}")
+
+    # Phase 12B (2026-05-29): TTL validation BEFORE upload.
+    # Ensures the TTL's `@prefix bldg:` matches building.yaml's
+    # `ontology_namespace`.  Mismatch → hard-fail (orchestrator refuses to boot)
+    # because SPARQL queries would silently return zero rows otherwise.
+    # SHACL conformance is checked when run_shacl=True (off by default to keep
+    # startup fast and avoid requiring the optional brickschema package).
+    try:
+        from orchestrator.services.building_context import resolve_building_context
+        from orchestrator.services.ttl_validator import assert_ttl_validation_or_die
+
+        _bctx_for_validation = resolve_building_context(settings.BUILDING_ID)
+        assert_ttl_validation_or_die(
+            building_id=settings.BUILDING_ID,
+            declared_namespace=_bctx_for_validation.namespace,
+            building_prefix=_bctx_for_validation.prefix,
+            run_shacl=bool(getattr(settings, "TTL_VALIDATION_SHACL", False)),
+        )
+    except Exception as _ttl_err:
+        # `assert_ttl_validation_or_die` raises TTLValidationError on
+        # hard-failures — re-raise so the orchestrator process exits with a
+        # clear, actionable error.  Other unexpected errors also propagate
+        # because a TTL deployment bug is exactly the case we want loud.
+        logger.error(
+            f"[ttl_validator] startup HALTED — TTL validation failed:\n{_ttl_err}"
+        )
+        raise
+
+    # Phase 3 (2026-05-29): TTL auto-upload on startup.
+    # Scan input/ for TTL files belonging to the active building(s), upload
+    # any whose SHA-256 has changed since the last boot.  This eliminates the
+    # manual `python scripts/onboard_building.py` step for new TTL files.
+    # Non-fatal — orchestrator boots even if GraphDB is unreachable.
+    try:
+        from orchestrator.services.ttl_uploader import run_idempotent_uploads
+
+        # Use the registered building IDs from the manager if available, else
+        # fall back to the active BUILDING_ID from settings.
+        _bldg_ids: list = []
+        try:
+            _bldg_ids = list(getattr(building_manager, "_configs", {}).keys())
+        except Exception:
+            pass
+        if not _bldg_ids:
+            _bldg_ids = [settings.BUILDING_ID]
+        summary = await run_idempotent_uploads(building_ids=_bldg_ids)
+        logger.info(
+            f"[ttl_uploader] startup ingestion: uploaded={len(summary['uploaded'])} "
+            f"skipped={len(summary['skipped'])} failed={len(summary['failed'])}"
+        )
+    except Exception as e:
+        logger.warning(f"TTL auto-upload failed (non-fatal): {e}")
 
     # Capability semantic routing — embed KB into Qdrant per building (idempotent
     # via SHA-256 fingerprint).  Always runs, regardless of feature flag, so the
@@ -1400,6 +1611,37 @@ async def aggregate_health():
     return APIResponse(success=True, data=status)
 
 
+async def _run_workflow_as_job(
+    job_id: str,
+    state,
+    conversation_id: str,
+    username: str,
+) -> None:
+    """Background task: run orchestrator workflow and update job status in Redis."""
+    try:
+        await job_queue.update_job(job_id, _JobStatus.RUNNING)
+        updated_state = await orchestrator.execute(state)
+        await redis_manager.save_state(updated_state)
+
+        response_text = updated_state.intermediate_results.get("response", "")
+        intent = getattr(updated_state, "current_intent", "unknown")
+
+        await job_queue.update_job(
+            job_id,
+            _JobStatus.DONE,
+            result={
+                "conversation_id": conversation_id,
+                "response": response_text,
+                "intent": intent,
+                "username": username,
+            },
+        )
+        logger.info(f"[job] job_id={job_id} completed intent={intent}")
+    except Exception as e:
+        logger.error(f"[job] job_id={job_id} failed: {e}", exc_info=True)
+        await job_queue.update_job(job_id, _JobStatus.FAILED, error=str(e))
+
+
 @app.post("/chat", response_model=APIResponse)
 async def chat(
     request: ChatRequest, current_user: Optional[str] = Depends(get_current_user)
@@ -1435,6 +1677,10 @@ async def chat(
             logger.info(f"Using provided conversation_id: {conversation_id}")
 
         persona = req.persona or "general"
+        # Phase 14A — multi-persona support.  `personas` (list) takes precedence
+        # over the legacy single-string `persona` field.  The PersonaRegistry
+        # blends priors across the list at agent time.
+        personas_list = list(getattr(req, "personas", []) or [])
         language = req.language or "en"
         building = req.building or settings.BUILDING_ID
 
@@ -1443,18 +1689,31 @@ async def chat(
 
         if not state:
             # New conversation
+            # Phase 14A: persona is no longer Literal-constrained; the registry
+            # resolves unknowns via alias map.  When personas list is provided,
+            # back-fill persona with the first entry for legacy code paths.
+            _primary_persona = personas_list[0] if personas_list else persona
             state = ConversationState(
                 conversation_id=conversation_id,
                 user_message=user_message,  # Add current message
                 messages=[],
                 building_id=building,
-                persona=persona if persona in VALID_PERSONAS else "general",
+                persona=_primary_persona,
+                personas=personas_list,
             )
             # Store user association
             state.user_id = username
         else:
             # Update existing conversation with new message
             state.user_message = user_message
+            # Phase 14A: per-turn persona override.  A new turn can change the
+            # active personas (e.g. the user becomes "facility_manager+student").
+            if personas_list:
+                state.personas = personas_list
+                state.persona = personas_list[0]
+            elif persona and persona != "general":
+                state.persona = persona
+                state.personas = []
 
         # Add user message
         from datetime import datetime
@@ -1482,6 +1741,45 @@ async def chat(
         logger.info(f"🏢 Building: {state.building_id}")
         logger.info(f"🎭 Persona: {state.persona}")
         logger.info("=" * 100)
+
+        # Long-running report queries are offloaded to a background task so
+        # the client does not time out. Response cache is checked first —
+        # warm-cache hits still use the synchronous path.
+        _REPORT_TRIGGER_PHRASES = (
+            "generate report",
+            "create report",
+            "build report",
+            "generate a report",
+            "create a report",
+            "energy report",
+            "monthly report",
+            "weekly report",
+            "daily report",
+            "annual report",
+        )
+        _is_report_query = any(ph in user_message.lower() for ph in _REPORT_TRIGGER_PHRASES)
+
+        if _is_report_query and job_queue is not None:
+            _job_id = await job_queue.create_job(conversation_id, user_message, intent="report")
+            asyncio.create_task(
+                _run_workflow_as_job(_job_id, state, conversation_id, username)
+            )
+            logger.info(f"[async-job] report offloaded job_id={_job_id}")
+            return APIResponse(
+                success=True,
+                data={
+                    "job_id": _job_id,
+                    "status": "queued",
+                    "message": (
+                        "Your report is being generated. "
+                        f"Poll GET /jobs/{_job_id} for the result."
+                    ),
+                    "poll_url": f"/jobs/{_job_id}",
+                    "conversation_id": conversation_id,
+                    "intent": "report",
+                    "username": username,
+                },
+            )
 
         updated_state = await orchestrator.execute(state)
 
@@ -1827,7 +2125,7 @@ async def _unused_oai_chat_completions(
         conversation_id=conversation_id,
         user_id=user_id,
         user_message=user_message,
-        building_id=os.environ.get("DEFAULT_BUILDING_ID", "bldg1"),
+        building_id=os.environ.get("DEFAULT_BUILDING_ID") or settings.BUILDING_ID,
         messages=[Message(role="user", content=user_message)],
         intermediate_results={},
     )
@@ -2085,7 +2383,10 @@ async def websocket_stream(websocket: WebSocket):
 
 
 @app.get("/conversation/{conversation_id}", response_model=APIResponse)
-async def get_conversation(conversation_id: str):
+async def get_conversation(
+    conversation_id: str,
+    current_user: Optional[str] = Depends(get_current_user),
+):
     """Get conversation history"""
     try:
         messages = await redis_manager.get_messages(conversation_id)
@@ -2105,7 +2406,10 @@ async def get_conversation(conversation_id: str):
 
 
 @app.delete("/conversation/{conversation_id}", response_model=APIResponse)
-async def delete_conversation(conversation_id: str):
+async def delete_conversation(
+    conversation_id: str,
+    current_user: Optional[str] = Depends(get_current_user),
+):
     """Delete conversation"""
     try:
         # Delete state and messages
@@ -2119,6 +2423,25 @@ async def delete_conversation(conversation_id: str):
     except Exception as e:
         logger.error(f"Delete conversation error: {e}")
         return APIResponse(success=False, error=str(e))
+
+
+@app.get("/jobs/{job_id}", response_model=APIResponse)
+async def get_job_status(
+    job_id: str,
+    current_user: Optional[str] = Depends(get_current_user),
+):
+    """Poll the status of a background job (created when a long-running report is queued)."""
+    if not current_user:
+        return APIResponse(success=False, error="Authentication required")
+    if job_queue is None:
+        return APIResponse(success=False, error="Job queue not initialised")
+    job = await job_queue.get_job(job_id)
+    if job is None:
+        return APIResponse(
+            success=False,
+            error=f"Job {job_id!r} not found or expired (TTL: 1 hour)",
+        )
+    return APIResponse(success=True, data=job)
 
 
 @app.post("/preferences", response_model=APIResponse)
@@ -2292,8 +2615,19 @@ async def openai_chat_completions(
                 status_code=400, detail="Message is empty after sanitization"
             )
 
-        # Generate conversation ID
-        conversation_id = f"owui_{generate_conversation_id()}:{username}"
+        # Use X-Chat-Id header (sent by Open WebUI) for a stable, session-scoped
+        # conversation_id so turn_memory and Redis intermediate_results (e.g.
+        # forecast_result) persist across turns.  Without this, a new UUID was
+        # generated every request, preventing cross-turn carry-forward.
+        chat_id_header = (
+            request.headers.get("X-Chat-Id") or request.headers.get("x-chat-id")
+        )
+        if chat_id_header:
+            conversation_id = f"owui_{chat_id_header}:{username}"
+        else:
+            # Stable fallback: hash of first user message content
+            first_content = messages[0].get("content", "") if messages else user_message
+            conversation_id = f"owui_{abs(hash(first_content))}:{username}"
 
         # Auto-detect persona from system prompt or "As <role>:" prefix when
         # the client (e.g. OpenWebUI) does not send an explicit persona field.
@@ -2331,6 +2665,8 @@ async def openai_chat_completions(
                 )
         prior_messages = prior_messages[-max_history:]
 
+        # Carry-forward (forecast/analytics artifacts from the previous turn) is
+        # loaded below via TurnMemoryService once `state` exists; start empty here.
         state = ConversationState(
             conversation_id=conversation_id,
             user_message=user_message,
@@ -2338,6 +2674,7 @@ async def openai_chat_completions(
             building_id=data.get("building_id", settings.BUILDING_ID),
             persona=req_persona,
             user_id=username,
+            intermediate_results={},
         )
 
         logger.info(
@@ -2347,6 +2684,54 @@ async def openai_chat_completions(
         logger.info(
             f"[/v1/chat/completions] loaded {len(prior_messages)} prior turns into state"
         )
+
+        # Turn memory service — wraps the Postgres pool for per-turn summaries
+        from orchestrator.services.turn_memory import TurnMemoryService as _TMS
+        _turn_memory = _TMS(
+            pool=postgres_manager.pool if postgres_manager else None
+        )
+
+        # Carry forward forecast/analytics artifacts from the previous turn.
+        # Primary source: Postgres turn_memory (persistent across Redis restarts).
+        # Fallback: Redis hot-cache (same session, faster path).
+        carry_forward: dict = {}
+        try:
+            carry_forward = await _turn_memory.get_carry_forward(conversation_id)
+            if not carry_forward:
+                _prev = await redis_manager.load_state(conversation_id)
+                if _prev and _prev.intermediate_results:
+                    _cf_keys = {"forecast_result", "analytics_result"}
+                    carry_forward = {
+                        k: v for k, v in _prev.intermediate_results.items()
+                        if k in _cf_keys
+                    }
+            if carry_forward:
+                logger.info(
+                    "[/v1/chat/completions] carry-forward loaded: "
+                    f"{list(carry_forward.keys())}"
+                )
+        except Exception as _ce:
+            logger.debug(f"[/v1/chat/completions] carry-forward skipped: {_ce}")
+
+        if carry_forward:
+            state.intermediate_results.update(carry_forward)
+
+        # Inject older turn summaries as system-context prefix for long-term memory
+        older_context = ""
+        try:
+            older_context = await _turn_memory.get_older_context(
+                conversation_id,
+                skip_recent=settings.CONVERSATION_MAX_MESSAGES,
+            )
+        except Exception as _oe:
+            logger.debug(f"[/v1/chat/completions] older_context skipped: {_oe}")
+
+        # Prepend older turn summaries as system message for long-term memory
+        if older_context:
+            state.messages.insert(
+                0,
+                Message(role="system", content=older_context, timestamp=datetime.now()),
+            )
 
         # Add the current message to the history so the agent can see it
         state.messages.append(
@@ -2435,6 +2820,13 @@ async def openai_chat_completions(
                     else "No response generated"
                 )
 
+                # Persist state to Redis so the next turn can carry forward
+                # intermediate_results (e.g. forecast_result for viz requests)
+                try:
+                    await redis_manager.save_state(final_state)
+                except Exception as _rse:
+                    logger.debug(f"[/v1/chat/completions] Redis save skipped: {_rse}")
+
                 # Save to Postgres if available
                 if postgres_manager and postgres_manager.pool:
                     await postgres_manager.create_user(
@@ -2448,6 +2840,22 @@ async def openai_chat_completions(
                     )
                     await postgres_manager.save_message(
                         conversation_id, "assistant", assistant_message, username
+                    )
+
+                # Persist state to Redis hot-cache for carry-forward fallback
+                try:
+                    await redis_manager.save_state(final_state)
+                except Exception as _rse:
+                    logger.debug(
+                        f"[/v1/chat/completions] Redis save skipped: {_rse}"
+                    )
+
+                # Persist structured turn summary to Postgres for long-term memory
+                try:
+                    await _turn_memory.save_turn(final_state)
+                except Exception as _tse:
+                    logger.debug(
+                        f"[/v1/chat/completions] turn_memory save skipped: {_tse}"
                     )
 
                 # Stream final response in chunks (helps UI show gradual output)
@@ -2498,6 +2906,12 @@ async def openai_chat_completions(
             else "No response generated"
         )
 
+        # Persist state to Redis (non-streaming path)
+        try:
+            await redis_manager.save_state(updated_state)
+        except Exception as _rse:
+            logger.debug(f"[/v1/chat/completions] Redis save skipped: {_rse}")
+
         if postgres_manager and postgres_manager.pool:
             await postgres_manager.create_user(
                 username,
@@ -2510,6 +2924,20 @@ async def openai_chat_completions(
             )
             await postgres_manager.save_message(
                 conversation_id, "assistant", assistant_message, username
+            )
+
+        try:
+            await redis_manager.save_state(updated_state)
+        except Exception as _rse:
+            logger.debug(
+                f"[/v1/chat/completions] Redis save skipped: {_rse}"
+            )
+
+        try:
+            await _turn_memory.save_turn(updated_state)
+        except Exception as _tse:
+            logger.debug(
+                f"[/v1/chat/completions] turn_memory save skipped: {_tse}"
             )
 
         return {
@@ -2549,7 +2977,10 @@ async def openai_models():
 
 
 @app.get("/api/files/{filename}")
-async def download_export(filename: str):
+async def download_export(
+    filename: str,
+    current_user: Optional[str] = Depends(get_current_user),
+):
     """D.2: Download a previously generated export file (CSV, JSON, HTML, Markdown)."""
     import re as _re
 
@@ -2574,7 +3005,7 @@ async def download_export(filename: str):
 
 
 @app.get("/floor-plans/")
-async def list_floor_plans():
+async def list_floor_plans(current_user: Optional[str] = Depends(get_current_user)):
     """List all available floor plan PDFs for the Abacws building."""
     floors = floor_plan_service.get_available_floors()
     return {
@@ -2741,10 +3172,11 @@ async def get_floor_plan_manifest(
 @app.get("/api/v1/floor-plans/search", response_model=APIResponse)
 async def search_floor_plan_spaces(
     q: str,
-    building: str = "abacws",
+    building: Optional[str] = None,
     floor: Optional[int] = None,
 ):
     """Cross-floor semantic space search (by label, type, or zone_id)."""
+    building = building or settings.BUILDING_ID
     try:
         results = floor_plan_service.search_spaces(q, building_id=building, floor=floor)
         return APIResponse(
@@ -2758,9 +3190,10 @@ async def search_floor_plan_spaces(
 
 @app.get("/api/v1/floor-plans/overview", response_model=APIResponse)
 async def get_floor_plan_overview(
-    building: str = "abacws",
+    building: Optional[str] = None,
 ):
     """Building-level overview: per-floor space counts, types, and plan links."""
+    building = building or settings.BUILDING_ID
     try:
         from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
 
@@ -2801,9 +3234,10 @@ async def get_floor_plan_overview(
 @app.get("/api/v1/floor-plans/facilities", response_model=APIResponse)
 async def get_floor_plan_facilities(
     type: str,
-    building: str = "abacws",
+    building: Optional[str] = None,
 ):
     """Facility locator — find all spaces of a given type across all floors."""
+    building = building or settings.BUILDING_ID
     try:
         results = floor_plan_service.get_facilities_by_type(type, building_id=building)
         return APIResponse(

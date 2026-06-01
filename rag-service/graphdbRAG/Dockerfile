@@ -1,6 +1,6 @@
 # OntoSage 2.0 - GraphDB RAG Service Dockerfile
 
-FROM python:3.11-slim
+FROM python:3.12-slim-trixie
 
 # Set working directory
 WORKDIR /app

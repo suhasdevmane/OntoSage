@@ -96,6 +96,32 @@ class PostgresManager:
                     metadata JSONB DEFAULT '{}'::jsonb
                 );
             """)
+
+            # Turn memory table — one row per conversation turn.
+            # Stores a structured summary (no raw sensor arrays) for long-term
+            # context injection and cross-turn carry-forward artifacts.
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS turn_memory (
+                    id              SERIAL PRIMARY KEY,
+                    conversation_id VARCHAR(255) NOT NULL,
+                    user_id         VARCHAR(255),
+                    turn_index      INTEGER NOT NULL DEFAULT 0,
+                    user_query      TEXT NOT NULL,
+                    intent          VARCHAR(100),
+                    entities        JSONB    DEFAULT '[]'::jsonb,
+                    result_summary  TEXT,
+                    carry_forward   JSONB    DEFAULT '{}'::jsonb,
+                    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+            await conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_turn_memory_conv
+                ON turn_memory(conversation_id, turn_index DESC);
+            """)
+            await conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_turn_memory_user
+                ON turn_memory(user_id);
+            """)
             logger.info("PostgreSQL schema initialized")
 
     # ==================== User Operations ====================

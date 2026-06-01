@@ -333,6 +333,17 @@ class DWGPipeline:
                 return BuildingConfig.from_yaml(yaml_path)
             except Exception as e:
                 logger.warning(f"[dwg_pipeline] Could not load {yaml_path}: {e}")
+        # Phase 4 — consult the BuildingRegistry so PDF slugs (e.g. "abacws")
+        # that are declared as aliases by a logical building (e.g. "bldg1")
+        # return the logical config rather than a stub.  Lazy import to keep
+        # this module loadable in isolation.
+        try:
+            from orchestrator.services.building_registry import get_building_registry
+            cfg = get_building_registry().get(building_id)
+            if cfg is not None:
+                return cfg
+        except Exception:
+            pass
         if building_id == "abacws":
             return ABACWS_CONFIG
         return BuildingConfig(building_id=building_id)

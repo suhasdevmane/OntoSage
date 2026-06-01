@@ -73,17 +73,30 @@ class TestPersonas:
         )
         assert state.persona == persona
 
-    def test_invalid_persona_rejected(self):
-        from pydantic import ValidationError
-
+    def test_unknown_persona_falls_back_to_general(self):
+        """Phase 14A — the `persona` field is no longer Literal-constrained
+        (YAML-added personas would have been blocked otherwise).  Pydantic
+        accepts any string at construction time; the PersonaRegistry resolves
+        unknowns to 'general' at lookup time."""
         from shared.models import ConversationState
+        from shared.persona_registry import get_persona_registry
 
-        with pytest.raises(ValidationError):
-            ConversationState(
-                conversation_id="test-001",
-                user_message="hello",
-                persona="hacker",  # not in allowed list
-            )
+        # The model now accepts any string.
+        state = ConversationState(
+            conversation_id="test-001",
+            user_message="hello",
+            persona="hacker",
+        )
+        assert state.persona == "hacker"
+
+        # But the registry resolves it to 'general' priors at lookup,
+        # so downstream code never sees a malformed persona.
+        reg = get_persona_registry()
+        priors = reg.get_priors("hacker")
+        assert priors.name == "general", (
+            "Unknown persona should resolve to 'general' priors via the "
+            "PersonaRegistry, even though the Pydantic field accepts any str."
+        )
 
 
 # ---------------------------------------------------------------------------

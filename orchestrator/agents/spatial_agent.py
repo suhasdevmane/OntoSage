@@ -437,23 +437,45 @@ class SpatialAgent:
                 return stype
         return None
 
+    def _candidate_building_ids(self, building_id: str) -> set:
+        """Phase 4 — accept aliases when matching manifests on disk."""
+        cands: set = {building_id}
+        try:
+            from orchestrator.services.building_registry import get_building_registry
+            reg = get_building_registry()
+            primary = reg.resolve_id(building_id) or building_id
+            cands.add(primary)
+            cfg = reg.get(primary)
+            if cfg is not None:
+                cands.update(cfg.floor_plan_aliases or [])
+        except Exception:
+            pass
+        return cands
+
     def _load_manifests(
         self, building_id: str, floor: Optional[int]
     ) -> List[FloorPlanManifest]:
-        """Load manifests from registry (covers both PDF and DWG-only floors)."""
+        """Load manifests from registry (alias-aware over both PDF and DWG floors)."""
         try:
             from orchestrator.services.floor_plan_registry import get_floor_plan_registry
             registry = get_floor_plan_registry()
+            candidates = self._candidate_building_ids(building_id)
             if floor is not None:
-                m = registry.load_manifest(building_id, floor)
-                return [m] if m else []
+                # Try each candidate ID; first hit wins.
+                for cand in candidates:
+                    m = registry.load_manifest(cand, floor)
+                    if m:
+                        return [m]
+                return []
             results = []
+            seen_floors: set = set()
             for bid, fl in registry.list_manifests():
-                if bid != building_id:
+                if bid not in candidates or fl in seen_floors:
                     continue
                 manifest = registry.load_manifest(bid, fl)
                 if manifest:
                     results.append(manifest)
+                    seen_floors.add(fl)
             return results
         except Exception as e:
             logger.warning(f"[SpatialAgent] Could not load manifests: {e}")

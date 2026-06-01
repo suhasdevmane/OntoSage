@@ -317,3 +317,18 @@ paper/post_design_survey/sessions/
 .claude/settings.local.json
 markdown/
 presentation/
+
+##############################
+# Local review / planning notes (not for sharing)
+##############################
+review docs/
+review\ docs/
+# Generated survey/test-run artifacts (ad-hoc outputs, not source)
+survey_run*.json
+survey_test_results*.json
+survey_*_post.txt
+survey_test_output*.txt
+
+# Harness scheduled-task lock
+.claude/scheduled_tasks.lock
+.claude/*.lock

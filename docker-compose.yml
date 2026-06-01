@@ -788,6 +788,7 @@ services:
       - ./config/nginx-file-server.conf:/etc/nginx/conf.d/default.conf:ro  # Custom config (non-nested aliases)
       - ./input:/srv/floor-plan-pdfs:ro                                # PDFs at /floor-plans/<name>
       - ./volumes/floor-plans:/srv/floor-plan-renders:ro               # PNGs at /floor-plans/renders/<building>/
+      - ./outputs:/srv/static:ro                                       # Analytics/viz plots at /static/<filename>
     networks:
       - ontobot-agentic
     healthcheck:

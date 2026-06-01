@@ -1,0 +1,31 @@
+# Per-building persona override — Cardiff Engineering Building
+#
+# Example of how the same persona name has different priors in different
+# buildings.  An engineering campus's facility_manager cares more about
+# equipment uptime and energy than HVAC comfort.
+
+name: facility_manager
+description: Cardiff Engineering facility manager — heavy lab/equipment focus.
+
+aliases:
+  - facilities
+  - facility manager
+  - fm
+  - estates
+
+top_domains:
+  - ENERGY
+  - EQUIPMENT
+  - FIRE_SAFETY
+  - OCCUPANCY
+
+lookup_share: 0.55
+default_complexity: COMPLEX     # engineering FMs run deeper diagnostics
+clarification_threshold: 0.7
+
+borda_topics:
+  - Energy
+  - Equipment Uptime
+  - Fire Safety
+  - Lab Inventory
+  - Power Quality
