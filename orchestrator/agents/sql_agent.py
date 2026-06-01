@@ -725,5 +725,6 @@ Response:"""
         try:
             summary = await llm_manager.generate(summary_prompt, task_type=TaskType.GENERAL)
             return summary.strip()
-        except:
+        except Exception as e:
+            logger.warning(f"[sql_agent] LLM summary generation failed, returning raw results: {e}")
             return result_text  # Fallback to raw results

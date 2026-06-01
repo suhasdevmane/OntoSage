@@ -2615,8 +2615,20 @@ async def openai_chat_completions(
                 status_code=400, detail="Message is empty after sanitization"
             )
 
-        # Generate conversation ID
-        conversation_id = f"owui_{generate_conversation_id()}:{username}"
+        # Use X-Chat-Id header (sent by Open WebUI) for a stable, session-scoped
+        # conversation_id so intermediate_results (e.g. forecast_result) persist
+        # across turns.  Without this, a new UUID was generated every request,
+        # preventing cross-turn visualization of previous query results.
+        chat_id_header = (
+            request.headers.get("X-Chat-Id")
+            or request.headers.get("x-chat-id")
+        )
+        if chat_id_header:
+            conversation_id = f"owui_{chat_id_header}:{username}"
+        else:
+            # Stable fallback: hash of first user message content
+            first_content = messages[0].get("content", "") if messages else user_message
+            conversation_id = f"owui_{abs(hash(first_content))}:{username}"
 
         # Auto-detect persona from system prompt or "As <role>:" prefix when
         # the client (e.g. OpenWebUI) does not send an explicit persona field.
@@ -2654,6 +2666,25 @@ async def openai_chat_completions(
                 )
         prior_messages = prior_messages[-max_history:]
 
+        # Carry forward selected intermediate_results from the previous turn so
+        # nodes like _visualization_node can reference prior forecast/analytics
+        # data (e.g. "show me the graph for the above").
+        _CARRY_FORWARD_KEYS = {"forecast_result", "analytics_result"}
+        carry_forward: dict = {}
+        try:
+            _prev = await redis_manager.load_state(conversation_id)
+            if _prev and _prev.intermediate_results:
+                carry_forward = {
+                    k: v for k, v in _prev.intermediate_results.items()
+                    if k in _CARRY_FORWARD_KEYS
+                }
+                if carry_forward:
+                    logger.info(
+                        f"[/v1/chat/completions] carried forward from Redis: {list(carry_forward.keys())}"
+                    )
+        except Exception as _ce:
+            logger.debug(f"[/v1/chat/completions] Redis carry-forward skipped: {_ce}")
+
         state = ConversationState(
             conversation_id=conversation_id,
             user_message=user_message,
@@ -2661,6 +2692,7 @@ async def openai_chat_completions(
             building_id=data.get("building_id", settings.BUILDING_ID),
             persona=req_persona,
             user_id=username,
+            intermediate_results=carry_forward,
         )
 
         logger.info(
@@ -2758,6 +2790,13 @@ async def openai_chat_completions(
                     else "No response generated"
                 )
 
+                # Persist state to Redis so the next turn can carry forward
+                # intermediate_results (e.g. forecast_result for viz requests)
+                try:
+                    await redis_manager.save_state(final_state)
+                except Exception as _rse:
+                    logger.debug(f"[/v1/chat/completions] Redis save skipped: {_rse}")
+
                 # Save to Postgres if available
                 if postgres_manager and postgres_manager.pool:
                     await postgres_manager.create_user(
@@ -2820,6 +2859,12 @@ async def openai_chat_completions(
             if updated_state.messages
             else "No response generated"
         )
+
+        # Persist state to Redis (non-streaming path)
+        try:
+            await redis_manager.save_state(updated_state)
+        except Exception as _rse:
+            logger.debug(f"[/v1/chat/completions] Redis save skipped: {_rse}")
 
         if postgres_manager and postgres_manager.pool:
             await postgres_manager.create_user(

@@ -194,12 +194,21 @@ def manifest_on_disk(pipeline, tmp_building):
 
 
 class TestFloorPlanAgentE2E:
-    def _make_state(self, query: str):
+    def _make_state(self, query: str, building_id: str = "abacws"):
+        """Build a ConversationState; defaults building_id to the PDF slug 'abacws'
+        which is what the e2e fixture pipeline registers manifests under.
+
+        Phase 4 note: in production, the BuildingRegistry alias mechanism maps
+        the logical settings.BUILDING_ID (e.g. 'bldg1') to the manifest slug
+        ('abacws').  These end-to-end fixture tests pass 'abacws' explicitly
+        instead of relying on alias resolution because the test pipeline does
+        not run the registry scan."""
         from shared.models import ConversationState, Message
 
         return ConversationState(
             conversation_id="test-e2e",
             user_id="tester",
+            building_id=building_id,
             user_message=query,
             messages=[Message(role="user", content=query)],
         )

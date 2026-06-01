@@ -76,7 +76,53 @@ async def _my_node_fn(self, state: ConversationState) -> ConversationState:
 
 Do NOT raise from inside a node — always catch, log, set error key, and return state.
 
-## 5. Adding a New Node — Complete Checklist
+## 5. Adding a New Node — Complete Checklist (Phase 13B — 2026-05-29)
+
+Adding a new pipeline intent is now **two steps**, not five.  The previous
+manual `_build_graph` / `_route_from_dialogue` edits are obsolete.
+
+```yaml
+# Step 1: Append to orchestrator/intents/intent_definitions.yaml
+#         (or input/<BUILDING_ID>/intents.yaml for per-building overlays)
+- name: my_intent
+  description: |-
+    Tell the LLM what this intent handles.  Include trigger phrases.
+  examples:
+    - '"example user query 1"'
+    - '"example user query 2"'
+  pipeline_group: standalone           # data | standalone | meta
+  route_target: my_node                # graph node name (defaults to intent name)
+  node_method: _my_node_fn             # method on WorkflowOrchestrator
+```
+
+```python
+# Step 2: Implement the handler on WorkflowOrchestrator
+async def _my_node_fn(self, state: ConversationState) -> ConversationState:
+    """One-line description."""
+    # ... agent logic ...
+    state.intermediate_results["my_result"] = result
+    return state
+```
+
+Outgoing edges, routing dispatch, and graph wiring are all auto-generated.
+Restart the orchestrator and your intent is live.
+
+Tests:
+
+```python
+# tests/test_routing_accuracy.py — add a canonical case
+("trigger query phrasing", "my_intent", "my_node"),
+
+# tests/test_intent_graph_autowire.py runs on every build and asserts:
+#   - the intent's node_method exists on WorkflowOrchestrator
+#   - the resulting node was registered into the LangGraph state machine
+```
+
+Only modify `_build_graph` directly when adding a **shared pipeline stage**
+(sparql, sql, analytics, response) — those are not 1:1 with any intent and
+remain hardcoded.
+
+### Legacy 5-step checklist (pre-Phase-13, kept for context only)
 
 ```python
 # Step 1: Implement node function in WorkflowOrchestrator class

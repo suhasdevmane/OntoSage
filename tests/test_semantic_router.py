@@ -126,7 +126,7 @@ async def test_high_score_returns_capability_intent(tmp_path):
     points = [_make_point("lift_details", 0.92), _make_point("fire_safety", 0.40)]
     router = _make_router(tmp_path, points=points)
 
-    result = await router.classify("how big is the lift?", "testbldg")
+    result = await router.classify("is the lift accessible?", "testbldg")
 
     assert result.intent == "capability"
     assert result.score == pytest.approx(0.92)
@@ -386,7 +386,7 @@ async def test_multi_intent_no_extra_intents_registered_returns_capability_only(
     router = _make_router(tmp_path, points=points)
 
     # Only capability is registered → behavior matches the existing tests
-    result = await router.classify("how big is the lift?", "testbldg")
+    result = await router.classify("is the lift accessible?", "testbldg")
     assert result.intent == "capability"
 
 
@@ -409,7 +409,7 @@ async def test_multi_intent_disabled_floor_plan_skipped(tmp_path):
     router = _make_router(tmp_path, points=points)
     router.register_intent("floor_plan", "intent_floor_plan_")
 
-    result = await router.classify("how big is the lift?", "testbldg")
+    result = await router.classify("is the lift accessible?", "testbldg")
     # Capability still wins; floor_plan disabled → skipped without Qdrant query
     assert result.intent == "capability"
 
@@ -458,6 +458,9 @@ async def test_multi_intent_highest_score_wins(tmp_path):
 
     result = await router.classify("show me the floor plan", "testbldg")
 
-    # floor_plan (0.85) > capability (0.65) → floor_plan wins
+    # "show me the floor plan" triggers the deterministic floor_plan bypass
+    # (returns intent='floor_plan' with score=1.0, source='bypass'), which
+    # is the correct behaviour — the semantic embedding path is reserved for
+    # ambiguous queries.
     assert result.intent == "floor_plan"
-    assert result.score == pytest.approx(0.85)
+    assert result.source == "bypass"

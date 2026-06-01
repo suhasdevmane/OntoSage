@@ -49,6 +49,39 @@ bandit -r orchestrator/ shared/ -ll --exclude orchestrator/tests
 python scripts/onboard_building.py --building-id bldg2 --non-interactive
 ```
 
+### Swapping the active building (Phase 12C — added 2026-05-29)
+
+OntoSage v1 serves one building at a time.  To swap from `bldg1` to a new
+`bldg2`:
+
+```bash
+# 1. Drop the new building's files under input/bldg2/
+#    Required: building.yaml, *.ttl (with @prefix bldg: matching the
+#    ontology_namespace declared in building.yaml).  Optional: *.dwg, *.pdf,
+#    capability.yaml, intents.yaml, personas/.
+
+# 2. Dry-run the swap to validate consistency without writing anything.
+python scripts/swap_building.py --to bldg2 --dry-run
+
+# 3. Apply the swap (updates .env, optionally archives the old input dir).
+python scripts/swap_building.py --to bldg2 --archive
+
+# 4. Restart the orchestrator.  The TTL validator runs first; mismatches
+#    hard-fail boot with a clear error.
+docker-compose restart orchestrator
+docker-compose logs -f orchestrator | grep ttl_validator
+```
+
+The swap CLI fails (exit code 2) if:
+- `input/<new>/` does not exist
+- `building.yaml` is missing required keys or its `building_id` ≠ directory name
+- Any TTL declares a `@prefix bldg:` that does not match `ontology_namespace`
+
+OntoSage v2 (Onto-community) will support multiple buildings concurrently.
+The per-building infrastructure in code today (registry cache keyed by
+`building_id`, `BuildingContextResolver`, per-building Qdrant collections)
+is the forward-compatible foundation for that.
+
 ---
 
 ## Architecture
@@ -195,6 +228,138 @@ Use these as the **first `Read` call** for any task — jump straight to the rig
 
 ---
 
+## Multi-intent + multi-persona (Phase 14 — added 2026-05-29)
+
+OntoSage handles a single user turn that mixes **multiple intents** AND **multiple personas**.  Both features are on by default and degrade gracefully to single-intent / single-persona when not used.
+
+### Multi-intent — one turn, several sub-tasks
+
+A user can ask several distinct sub-tasks in one message; the system decomposes them, dispatches each to the right node, and aggregates the responses.
+
+Pipeline:
+
+```
+dialogue_agent → multi_intent_detector → planner → [sub-task pipeline] → response
+                       ↑ two-stage gate
+```
+
+Gates (both must pass before LLM decomposition):
+
+1. **Heuristic gate** (~1ms, no LLM call): query length ≥ `MULTI_INTENT_MIN_LENGTH` (default 80 chars) AND contains an explicit compound connective (`"and also"`, `"tell me"`, `"1."`, `"first/then/finally"`, etc.) AND keywords from ≥ 2 distinct intent-domain sets.
+2. **LLM decomposition**: returns 2–5 sub-intents validated against `VALID_INTENTS` (the registry).
+
+Feature flag: `settings.MULTI_INTENT_ENABLED` (default `True`).
+
+Example compound query that triggers decomposition:
+
+> *"Show me the floor 3 layout and also tell me how many rooms are there on that floor"*
+
+Decomposes to:
+
+```python
+[SubIntent(intent="floor_plan",    sub_query="floor 3 layout"),
+ SubIntent(intent="spatial_query", sub_query="how many rooms on floor 3")]
+```
+
+`state.current_intent` is rewritten to `"planner"` and the enhanced PlannerAgent fans out each sub-intent.
+
+Tests: `tests/test_compound_query_e2e.py` (heuristic gate + LLM decomposition).
+
+### Multi-persona — blended priors across stacked roles
+
+A turn can declare multiple personas; the registry blends their priors:
+
+```jsonc
+POST /chat
+{
+  "message": "what should I look at this week?",
+  "session_id": "...",
+  "personas": ["facility_manager", "sustainability_officer"]   // Phase 14A
+}
+```
+
+Blending rules (see `shared.persona_registry.PersonaRegistry.get_blended_priors`):
+
+| Field | Blend rule |
+|---|---|
+| `top_domains`        | Rank-vote merge (1st = 8 pts, 2nd = 7, …); ties keep first-encountered persona's order |
+| `borda_topics`       | Same rank-voting |
+| `lookup_share`       | Arithmetic mean |
+| `default_complexity` | Max of `{SIMPLE < MODERATE < COMPLEX}` |
+| `clarification_threshold` | Min (more willing to clarify) |
+
+Backward-compat:
+
+* Old callers passing just `persona: "facility_manager"` work unchanged — the legacy single-string field still routes through `get_priors()`.
+* When `personas` (list) is present, it takes precedence; `state.persona` is back-filled with `personas[0]` for any code still reading the scalar.
+* `Literal[...]` constraint on `persona` was relaxed to `str` so YAML-added personas (`input/<bldg>/personas/*.yaml`, `input/_defaults/personas/*.yaml`) resolve without a code change.
+
+Diagnostics: the SPARQL node emits `state.intermediate_results["persona_blended"]` with `{personas, top_domains, complexity, clarification_threshold}` for every turn that used a non-empty persona list.
+
+Tests: `tests/test_blended_persona.py` (14 cases — single, blended, conflict, alias, unknown).
+
+---
+
+## Adding a new intent (Phase 13B — added 2026-05-29)
+
+Adding a new pipeline intent no longer requires editing `workflow.py`.  Two
+steps end-to-end:
+
+1. **Append an entry to `orchestrator/intents/intent_definitions.yaml`** with
+   `node_method` pointing to the handler you'll add in step 2:
+
+   ```yaml
+   - name: my_new_intent
+     description: |-
+       Describe to the LLM what queries this intent handles.  Include trigger
+       phrases the user might say.
+     examples:
+       - '"trigger query example 1"'
+       - '"trigger query example 2"'
+     pipeline_group: standalone           # data | standalone | meta
+     route_target: my_new_intent          # graph node name (defaults to intent name)
+     node_method: _my_new_intent_node     # method on WorkflowOrchestrator
+   ```
+
+2. **Implement the node handler on `WorkflowOrchestrator`** in `workflow.py`:
+
+   ```python
+   async def _my_new_intent_node(self, state: ConversationState) -> ConversationState:
+       """One-line description."""
+       # ... agent logic ...
+       state.intermediate_results["my_new_intent_result"] = result
+       return state
+   ```
+
+That's it.  `_build_graph` reads the registry on every orchestrator startup and
+auto-registers the node + the conditional edge from `dialogue` to your node.
+
+Per-building intent overlays work the same way — drop the YAML entry into
+`input/<BUILDING_ID>/intents.yaml`.  The per-building registry cache
+(`get_intent_registry(building_id)`) picks it up.
+
+If your YAML-added intent has no `node_method` (or its method is missing), the
+Phase 10G runtime safety net routes the query to `response` with a polite
+message instead of crashing LangGraph.  The same safety filter at graph-build
+time keeps the build itself from failing.
+
+Diagnostics: every routing decision writes `state.intermediate_results["route_decision"]`:
+
+```python
+{
+    "intent_from_dialogue": "my_new_intent",
+    "intent_after_overrides": "my_new_intent",
+    "overrides_applied": [],          # list of override names if any fired
+    "final_node": "my_new_intent",
+    "decision_source": "registry",    # 'registry' | 'override' | 'fallback'
+}
+```
+
+Inspect via the conversation state or via `tests/test_routing_accuracy.py`
+(29 canonical routing cases, runs in ~3s).
+
+---
+
 ## Capability semantic routing (added 2026-05-21)
 
 The dialogue agent has a fast-path for capability queries (off-ontology building features, policies, amenities) that bypasses the LLM intent call when a high-confidence semantic match exists.
@@ -229,30 +394,41 @@ capability_routing:
 
 ---
 
-## 16 Intent Types
+## Intent Types (canonical names from `orchestrator/intents/intent_definitions.yaml`)
 
-The dialogue agent classifies every query into one of:
+The dialogue agent classifies every query into one of the intents registered in the YAML registry.
+**Always refer to the YAML for the authoritative list** — this table is a summary only.
 
-| Intent | Route | Description |
-|--------|-------|-------------|
-| `sensor_data` | sparql → sql → response | Current or historical sensor readings |
-| `analytics` | sparql → sql → analytics → response | Statistical analysis, trends, averages |
-| `discovery` | sparql → response | Explore available sensors/zones/devices |
-| `report` | sparql → sql → report → response | Structured building report |
-| `anomaly` | sparql → sql → anomaly → response | Out-of-range / spike detection |
-| `comparison` | sparql → sql → analytics → response | Compare zones/devices/time periods |
-| `export` | sparql → sql → export → response | Download data as CSV/JSON/HTML |
-| `recommend` | sparql → sql → response | HVAC/energy/comfort recommendations |
-| `planner` | planner → response | Multi-step orchestrated tasks |
-| `forecast` | sparql → sql → analytics → response | Future predictions |
-| `floor_plan` | floor_plan → response | Show floor map, locate a room, visual navigation |
-| `spatial_query` | spatial_query → response | Area, adjacency, room counts, block/MEP queries |
-| `control` | response | Not yet supported — informs user |
-| `general` | response | Greetings / non-building questions |
-| `clarification` | response | Query too vague — asks follow-up |
-| `alert` | sparql → sql → anomaly → response | Threshold-based alerting |
+| Intent (YAML name) | Alias | Route | Description |
+|--------|-------|-------|-------------|
+| `sensor_data` | — | sparql → sql → response | Current or historical sensor readings |
+| `analytics` | — | sparql → sql → analytics → response | Statistical computation on a single dataset |
+| `metadata` | — | sparql → response | List entities, look up types, describe a thing |
+| `discovery` | — | sparql → response | Explore available sensors/zones/system capabilities |
+| `report` | — | planner → (sparql+sql+report) → response | Structured building report |
+| `anomaly` | — | sparql → sql → anomaly → response | Out-of-range / spike detection |
+| `compare` | `comparison` | sparql → sql → analytics → response | Compare zones/devices/time periods |
+| `export` | — | export → response | Download data as CSV/JSON/HTML |
+| `recommend` | — | sparql → sql → response | HVAC/energy/comfort recommendations |
+| `planner` | — | planner → response | Multi-step orchestrated tasks |
+| `trend` | `forecast` | sparql → sql → analytics → response | Temporal trends + future predictions |
+| `compliance` | — | sparql → sql → analytics → response | ASHRAE/WELL/BREEAM standards check |
+| `floor_plan` | — | floor_plan → response | Show floor map, locate a room, visual navigation |
+| `spatial_query` | — | spatial_query → response | Area, adjacency, room counts, block/MEP queries |
+| `control` | — | response | Not yet supported — informs user |
+| `maintenance` | — | report_intake → response | Fault reports, work orders, scheduled maintenance |
+| `complaint` | — | report_intake → response | Complaints about building conditions |
+| `feedback` | — | report_intake → response | General feedback or compliments |
+| `safety_report` | — | report_intake → response | Safety hazard reports |
+| `suggestion` | — | report_intake → response | Improvement suggestions |
+| `alert` | — | sparql → response | Threshold-based alerting setup |
+| `capability` | — | capability → response | KB queries: policies, amenities, contacts |
+| `visualization` | — | visualization → response | Direct chart/plot request |
+| `general` | `general_knowledge` | response | Greetings / non-building questions |
+| `greeting` | — | response | Friendly greeting |
+| `clarification` | — | response | Query too vague — asks follow-up |
 
-**Disambiguation rule**: "show me / where is / find" → `floor_plan`. "how many / area / size / adjacent" → `spatial_query`.
+**Disambiguation rule**: "show me / where is / find [floor N layout]" → `floor_plan`. "how many / area / size / adjacent" → `spatial_query`. Data+floor N → NOT floor_plan (data route wins).
 
 ---
 

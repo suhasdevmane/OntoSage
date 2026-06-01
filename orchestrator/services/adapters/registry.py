@@ -41,8 +41,12 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
-# Paths where database_registry.yaml can live (Docker vs local dev)
+# Paths where database_registry.yaml can live (Docker vs local dev).  Phase 9
+# moved the canonical home under `input/` so all mutable config sits in one
+# place; the legacy `config/` paths are still searched for backward compat.
 _REGISTRY_SEARCH_PATHS = [
+    Path("/app/input/database_registry.yaml"),
+    Path("input/database_registry.yaml"),
     Path("/app/config/database_registry.yaml"),
     Path("config/database_registry.yaml"),
 ]
@@ -180,14 +184,64 @@ class AdapterRegistry:
                     logger.error(f"AdapterRegistry: failed to parse {path}: {e}")
         return None
 
+    def _get_active_keys_for_current_building(self) -> Optional[set]:
+        """Return the subset of database_registry keys this building actually uses.
+
+        Reads input/<BUILDING_ID>/building.yaml.  If a `storage.databases:`
+        block is present, return its contents as a set.  Otherwise return
+        None, signalling "initialise every key" (legacy behaviour).
+
+        Failures are non-fatal — any error returns None to preserve legacy
+        behaviour rather than blocking startup.
+        """
+        try:
+            from shared.config import settings
+            from shared.floor_plan_config import BuildingConfig
+
+            # Search for building.yaml in conventional locations.
+            for base in (Path("/app/input"), Path("input")):
+                yaml_path = base / settings.BUILDING_ID / "building.yaml"
+                if yaml_path.exists():
+                    cfg = BuildingConfig.from_yaml(yaml_path)
+                    if cfg.storage and cfg.storage.databases:
+                        active = set(cfg.storage.databases)
+                        logger.info(
+                            f"AdapterRegistry: building.yaml storage filter "
+                            f"active — using {sorted(active)}"
+                        )
+                        return active
+                    break
+        except Exception as e:
+            logger.debug(
+                f"AdapterRegistry: no per-building storage filter — {e}"
+            )
+        return None
+
     async def _initialize_from_yaml(self, config: Dict[str, Any]) -> None:
-        """Create and connect one adapter per entry in the databases section."""
+        """Create and connect one adapter per entry in the databases section.
+
+        When a per-building `storage.databases:` filter exists in
+        input/<BUILDING_ID>/building.yaml, only adapters matching that set are
+        initialised.  This eliminates startup noise from failed connections to
+        unrelated backends.
+        """
         databases: Dict[str, Any] = config.get("databases", {})
         if not databases:
             logger.warning("AdapterRegistry: YAML config has no 'databases' section.")
             return
 
+        active_keys = self._get_active_keys_for_current_building()
+        if active_keys is not None:
+            skipped = [k for k in databases.keys() if k not in active_keys]
+            if skipped:
+                logger.info(
+                    f"AdapterRegistry: skipping {len(skipped)} unused backends "
+                    f"per building.yaml filter"
+                )
+
         for db_key, raw_cfg in databases.items():
+            if active_keys is not None and db_key not in active_keys:
+                continue
             cfg = _expand_dict(raw_cfg)
             db_type = cfg.get("type", "mysql").lower()
             try:

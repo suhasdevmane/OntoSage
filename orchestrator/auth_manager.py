@@ -251,13 +251,58 @@ class AuthManager:
             Login result with session token
         """
         try:
-            # Get user data
+            # Get user data.
+            # Phase-18 (2026-05-29): when Postgres is configured but unreachable
+            # (`self.postgres` exists but `self.postgres.pool is None` — happens
+            # during the well-known orchestrator-boot-before-Postgres-healthy
+            # race), the previous code silently fell through to the Redis
+            # fallback and reported "Invalid password" for users that DO exist
+            # in Postgres.  Fail closed instead so the operator sees the real
+            # problem (auth service degraded) and can restart the orchestrator.
             user_data = None
+            _postgres_degraded = False
             if self.postgres:
-                user_data = await self.postgres.get_user(username)
+                # If Postgres is configured we trust it as the source of truth.
+                # Distinguish three states:
+                #   1. pool is None → never connected → degraded (boot race)
+                #   2. pool exists, acquire raises → DB just went down → degraded
+                #   3. pool exists, query returns None → user genuinely missing
+                if getattr(self.postgres, "pool", None) is None:
+                    _postgres_degraded = True
+                else:
+                    try:
+                        # Quick connectivity probe before user lookup so a
+                        # mid-flight Postgres outage gives a clear error
+                        # instead of pretending the user doesn't exist.
+                        async with self.postgres.pool.acquire() as _probe:
+                            await _probe.fetchval("SELECT 1")
+                        user_data = await self.postgres.get_user(username)
+                    except Exception as _pg_err:
+                        logger.error(
+                            f"Login Postgres probe failed for {username}: "
+                            f"{type(_pg_err).__name__}: {_pg_err}"
+                        )
+                        _postgres_degraded = True
 
-            # Fallback to Redis if not found in Postgres or Postgres not available
-            if not user_data:
+                if _postgres_degraded:
+                    logger.error(
+                        f"Login failed for {username}: Postgres user store is "
+                        "configured but unavailable.  Restart orchestrator "
+                        "after Postgres recovers."
+                    )
+                    return {
+                        "success": False,
+                        "error": (
+                            "Authentication service is temporarily unavailable. "
+                            "Please retry in a moment or contact the operator."
+                        ),
+                    }
+
+            # Fallback to Redis ONLY for legacy deployments that never had
+            # Postgres configured.  When Postgres IS configured, a missing
+            # Postgres row means the user genuinely doesn't exist — do not
+            # look in Redis (it would only ever have stale state).
+            if not user_data and not self.postgres:
                 user_data = await self.redis.client.hgetall(f"user:{username}")
 
             if not user_data:

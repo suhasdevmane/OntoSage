@@ -1,0 +1,30 @@
+# Per-building intent overlay for bldg1 (Abacws)
+#
+# This file demonstrates the Phase 8 overlay mechanism — it adds a building-
+# specific intent without editing any Python code and without changing the
+# system-shipped intent_definitions.yaml.
+#
+# The registry merges entries from THREE places (later wins):
+#   1. orchestrator/intents/intent_definitions.yaml   (shipped defaults)
+#   2. input/intents.yaml                              (global overlay)
+#   3. input/<BUILDING_ID>/intents.yaml                (this file)
+#
+# Add a new intent: append to `intents:` below.  Restart the orchestrator.
+# Override an existing intent: use the same `name:` — the YAML wins.
+
+intents:
+  # Demo intent — Abacws-specific lab booking queries.  The dialogue agent
+  # learns about it via the LLM prompt (which is built from the registry),
+  # so users can ask "How do I book the cybersecurity lab?" and the LLM
+  # will classify intent="lab_booking" instead of falling back to "general".
+  - name: lab_booking
+    description: |-
+      User wants to book or check availability of a specific Abacws lab or
+      teaching space (Cybersecurity Lab, Simulated Trading Room, Makerspace,
+      computer labs, lecture theatres, project work spaces).
+    examples:
+      - '"How do I book the cybersecurity lab?"'
+      - '"Is the trading room free tomorrow at 2pm?"'
+      - '"Reserve the Makerspace for next Tuesday."'
+    pipeline_group: standalone
+    cacheable: false

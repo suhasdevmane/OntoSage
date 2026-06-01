@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from shared.capability_schema import CapabilityKB, CapabilityEntry
+from shared.config import settings
 from shared.models import ConversationState
 from shared.utils import get_logger
 
@@ -71,7 +72,7 @@ class CapabilityAgent:
             f"building={state.building_id}"
         )
 
-        building_id = state.building_id or "bldg1"
+        building_id = state.building_id or settings.BUILDING_ID
 
         kb = _load_kb(building_id)
 

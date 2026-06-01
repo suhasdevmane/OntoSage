@@ -1,0 +1,35 @@
+# Per-building intent overlay — Cardiff Engineering Building
+#
+# Adds an "equipment_status" intent unique to this building (electrical
+# panels, lab equipment, machinery uptime).  The LLM intent classifier sees
+# this definition at startup and will route matching queries here.
+#
+# This is an OVERLAY — the 21 shipped intents (analytics, anomaly, ...) are
+# still active.  Only the entries listed below are added or overridden.
+
+intents:
+  - name: equipment_status
+    description: |-
+      User asks about the operational state of building equipment — electrical
+      panels, lab instruments, machinery, HVAC units.  Includes uptime
+      percentage, fault history, last maintenance date, and remaining service
+      interval.
+    examples:
+      - '"Is panel P-203 online?"'
+      - '"When was the laser cutter last serviced?"'
+      - '"Uptime for the spectrometer this month."'
+    pipeline_group: data
+    cacheable: true
+
+  # Override the shipped recommend intent — this engineering campus
+  # wants the LLM to bias toward energy-efficiency advice.
+  - name: recommend
+    description: |-
+      ENGINEERING-SPECIFIC: Request actionable advice with emphasis on energy
+      efficiency, equipment optimisation, or lab safety procedures.  Includes
+      typical "recommend", "suggest", "should I", "optimize" triggers.
+    examples:
+      - '"Recommend an energy-saving schedule for Lab B."'
+      - '"How can I reduce HVAC load while keeping the wind tunnel running?"'
+      - '"Suggest a thermal cycle for the test chamber."'
+    pipeline_group: data

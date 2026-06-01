@@ -1,7 +1,7 @@
 # OntoSage 2.0 - Code Executor Dockerfile
 # Heavily restricted for security
 
-FROM python:3.11-slim
+FROM python:3.12-slim-trixie
 
 WORKDIR /app
 

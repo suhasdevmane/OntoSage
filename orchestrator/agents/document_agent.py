@@ -209,17 +209,23 @@ class DocumentAgent:
         if report_result and isinstance(report_result, dict):
             narrative = report_result.get("formatted_response", "")
 
+        # Phase 10 — per-request building context.  The document template
+        # uses building name / id from the conversation's building, not the
+        # process-global setting.
+        from orchestrator.services.building_context import resolve_building_context
+        bctx = resolve_building_context(getattr(state, "building_id", None))
+
         # Best title
         doc_title = (
             title
             or ir.get("document_title")
-            or f"{document_type.replace('_', ' ').title()} — {settings.BUILDING_NAME} — {generated_at}"
+            or f"{document_type.replace('_', ' ').title()} — {bctx.name} — {generated_at}"
         )
 
         ctx: Dict[str, Any] = {
             "title": doc_title,
-            "building_name": settings.BUILDING_NAME,
-            "building_id": settings.BUILDING_ID,
+            "building_name": bctx.name,
+            "building_id": bctx.building_id,
             "generated_at": generated_at,
             "document_type": document_type,
             "persona": persona,
