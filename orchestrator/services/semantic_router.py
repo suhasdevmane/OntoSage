@@ -117,7 +117,6 @@ _DATA_BYPASS_PHRASES: FrozenSet[str] = frozenset([
     "maintenance this week", "maintenance this month", "maintenance next",
     "open maintenance tickets", "outstanding maintenance", "maintenance tasks",
     "maintenance work scheduled", "what maintenance", "maintenance is scheduled",
-    "scheduled for", "is scheduled for building maintenance",
 ])
 
 # ── Floor-plan bypass ────────────────────────────────────────────────────────

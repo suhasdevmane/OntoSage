@@ -184,7 +184,7 @@ _MAINTENANCE_SCHEDULE_KWS = (
     "maintenance this week", "maintenance this month", "maintenance next",
     "open maintenance tickets", "outstanding maintenance", "maintenance tasks",
     "maintenance work scheduled", "what maintenance is", "what maintenance work",
-    "list maintenance", "show maintenance", "is scheduled", "scheduled for",
+    "list maintenance", "show maintenance",
 )
 
 
