@@ -1,0 +1,39 @@
+# Per-building persona override for bldg1 (Abacws).
+#
+# Demonstrates the per-building persona overlay mechanism added in Phase 5
+# and the file-discovery convention shared across input/<bldg>/* files.
+#
+# The PersonaRegistry merges:
+#   1. shared.persona_registry._REGISTRY                (hardcoded defaults)
+#   2. input/personas/<name>.yaml                       (global overlay)
+#   3. input/<BUILDING_ID>/personas/<name>.yaml          (this file — wins)
+#
+# Here we strengthen the facility_manager's preference for fire-safety topics
+# (Abacws hosts a teaching campus where compliance is heavily audited) and
+# raise the clarification threshold so we don't constantly ping the FM with
+# follow-up questions during operational reviews.
+
+name: facility_manager
+description: Abacws facility manager — operations, maintenance, energy, fire safety.
+
+aliases:
+  - facilities
+  - facility manager
+  - fm
+
+top_domains:
+  - FIRE_SAFETY       # Promoted from rank 4 to rank 1 for this building
+  - ENERGY
+  - THERMAL
+  - OCCUPANCY
+
+lookup_share: 0.55
+default_complexity: MODERATE
+clarification_threshold: 0.65    # less chatty than the global default
+
+borda_topics:
+  - Fire Safety
+  - Energy
+  - Temperature
+  - Occupancy
+  - Air Quality

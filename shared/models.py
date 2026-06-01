@@ -233,22 +233,27 @@ class ConversationState(BaseModel):
     )
     summary: Optional[str] = Field(default=None, description="Conversation summary")
     building_id: str = Field(default="bldg1", description="Building context")
-    persona: Literal[
-        "student",
-        "researcher",
-        "facility_manager",
-        "occupant",
-        "energy_manager",
-        "safety_officer",
-        "it_admin",
-        "executive",
-        "sustainability_officer",
-        "general",
-        # Legacy aliases kept for backward compatibility
-        "stakeholder",
-        "guest",
-        "officer",
-    ] = Field(default="general", description="User persona for response customization")
+    # Phase 14A — persona is now `str` not `Literal[...]` so YAML-added
+    # personas resolve without a code change.  When `personas` (list) is
+    # populated, it takes precedence; `persona` is the primary/legacy
+    # single-string value and the first element of `personas` is used
+    # to back-fill it.
+    persona: str = Field(
+        default="general",
+        description=(
+            "Primary user persona (legacy single-string field).  When "
+            "`personas` is non-empty, this is set to personas[0] for "
+            "backward compat."
+        ),
+    )
+    personas: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Phase 14A — list of stacked personas.  When non-empty, the "
+            "PersonaRegistry blends priors across all entries.  Empty "
+            "list means single-persona mode (uses the `persona` field)."
+        ),
+    )
 
     # Current interaction
     user_message: str = Field(..., description="Current user input")
@@ -265,6 +270,21 @@ class ConversationState(BaseModel):
     query_results: Any = Field(
         default_factory=dict, description="Last query results (SPARQL/SQL)"
     )
+
+    # ── Phase 7A — typed view over intermediate_results ───────────────────
+    #
+    # Use `state.pipeline_ctx.<field>` for IDE autocomplete + mypy safety on
+    # any of the 49 known pipeline keys.  Returns a SNAPSHOT (mutations on
+    # the returned object are NOT written back unless you call
+    # `pipeline_ctx.apply_to_state(self)` afterwards).
+    #
+    # Existing callers using `state.intermediate_results["key"]` continue to
+    # work; this property is additive only.
+    @property
+    def pipeline_ctx(self) -> Any:
+        """Return a typed PipelineContext snapshot of intermediate_results."""
+        from shared.pipeline_context import PipelineContext
+        return PipelineContext.from_state(self)
     user_preferences: Dict[str, Any] = Field(
         default_factory=dict, description="User preferences/persona/language"
     )
@@ -524,21 +544,18 @@ class ChatRequest(BaseModel):
         default=None, description="Conversation ID (optional)"
     )
     user_id: str = Field(default="anonymous", description="User ID")
-    persona: Literal[
-        "student",
-        "researcher",
-        "facility_manager",
-        "occupant",
-        "energy_manager",
-        "safety_officer",
-        "it_admin",
-        "executive",
-        "sustainability_officer",
-        "general",
-        "stakeholder",
-        "guest",
-        "officer",
-    ] = Field(default="general", description="User persona")
+    # Phase 14A — persona relaxed to `str`; YAML-added personas resolve via
+    # PersonaRegistry's alias map at request time.  `personas` (list) takes
+    # precedence when non-empty and blends priors across all entries.
+    persona: str = Field(default="general", description="User persona (legacy single-string)")
+    personas: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Phase 14A — list of stacked personas to blend.  Empty list = "
+            "single-persona mode (uses `persona`).  Non-empty = registry "
+            "blends top_domains, complexity, and clarification thresholds."
+        ),
+    )
     audio_data: Optional[str] = Field(
         default=None, description="Base64 encoded audio (optional)"
     )

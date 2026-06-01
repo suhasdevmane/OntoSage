@@ -27,6 +27,7 @@ class RedisManager:
         self.redis_url = settings.REDIS_URL
         self.client: Optional[redis.Redis] = None
         self.conversation_ttl = settings.CONVERSATION_TTL
+        self.max_messages = settings.CONVERSATION_MAX_MESSAGES
 
     async def connect(self):
         """Connect to Redis"""
@@ -46,35 +47,51 @@ class RedisManager:
             logger.info("Closed Redis connection")
 
     async def save_state(self, state: ConversationState) -> bool:
-        """
-        Save conversation state to Redis
-
-        Args:
-            state: ConversationState object
-
-        Returns:
-            Success boolean
-        """
+        """Save conversation state to Redis (no TTL when CONVERSATION_TTL==0)."""
         if not self.client:
             await self.connect()
 
         try:
             key = f"conversation:{state.conversation_id}"
-
-            # Convert to dict for storage
             state_dict = state.dict()
 
-            # Log what we're saving
-            logger.info(f"💾 REDIS SAVE: conversation_id={state.conversation_id}")
-            logger.info(f"   ├─ Messages count: {len(state.messages)}")
-            logger.info(f"   ├─ User: {state.user_id}")
-            logger.info(
-                f"   ├─ Intermediate results keys: {list(state.intermediate_results.keys()) if state.intermediate_results else 'None'}"
-            )
-            logger.info(f"   └─ TTL: {self.conversation_ttl}s")
+            # Count-based eviction on the stored blob itself.  load_state() reads
+            # this conversation:{id} blob, so trimming state_dict["messages"] here
+            # is what actually bounds the conversation when CONVERSATION_TTL==0
+            # (no time-based expiry).  We trim the serialised copy, not the live
+            # state object, so callers that keep using `state` are unaffected.
+            stored_messages = state_dict.get("messages")
+            if (
+                isinstance(stored_messages, list)
+                and self.max_messages
+                and len(stored_messages) > self.max_messages
+            ):
+                state_dict["messages"] = stored_messages[-self.max_messages :]
 
-            # Store as JSON
-            await self.client.setex(key, self.conversation_ttl, json.dumps(state_dict, default=str))
+            logger.info(f"💾 REDIS SAVE: conversation_id={state.conversation_id}")
+            logger.info(
+                f"   ├─ Messages count: {len(state.messages)} "
+                f"(stored: {len(state_dict.get('messages') or [])})"
+            )
+            logger.info(f"   ├─ User: {state.user_id}")
+            ir_keys = (
+                list(state.intermediate_results.keys())
+                if state.intermediate_results
+                else "None"
+            )
+            logger.info(f"   ├─ Intermediate results keys: {ir_keys}")
+
+            serialized = json.dumps(state_dict, default=str)
+            if self.conversation_ttl > 0:
+                logger.info(f"   └─ TTL: {self.conversation_ttl}s")
+                await self.client.setex(key, self.conversation_ttl, serialized)
+            else:
+                logger.info("   └─ TTL: none (count-based eviction)")
+                await self.client.set(key, serialized)
+
+            # Count-based message eviction — trim to max_messages
+            msgs_key = f"messages:{state.conversation_id}"
+            await self.client.ltrim(msgs_key, -self.max_messages, -1)
 
             logger.info(f"✅ Successfully saved state for {state.conversation_id}")
             return True
@@ -113,9 +130,12 @@ class RedisManager:
                     logger.info(f"   ├─ Last 3 messages:")
                     for i, msg in enumerate(state.messages[-3:]):
                         logger.info(f"   │   [{i+1}] {msg.role}: {msg.content[:60]}...")
-                logger.info(
-                    f"   └─ Intermediate results: {list(state.intermediate_results.keys()) if state.intermediate_results else 'None'}"
+                ir_keys = (
+                    list(state.intermediate_results.keys())
+                    if state.intermediate_results
+                    else "None"
                 )
+                logger.info(f"   └─ Intermediate results: {ir_keys}")
                 return state
             else:
                 logger.info(
@@ -173,8 +193,9 @@ class RedisManager:
             # Add to list
             await self.client.rpush(key, json.dumps(message))
 
-            # Set TTL
-            await self.client.expire(key, self.conversation_ttl)
+            # Set TTL (skip when ttl=0 — EXPIRE key 0 deletes the key immediately)
+            if self.conversation_ttl > 0:
+                await self.client.expire(key, self.conversation_ttl)
 
             # Trim to max history
             await self.client.ltrim(key, -settings.MAX_CONVERSATION_HISTORY, -1)

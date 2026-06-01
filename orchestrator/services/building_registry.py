@@ -41,6 +41,11 @@ class BuildingRegistry:
         self._pdf_dir = pdf_dir or Path("/app/input")
         self._configs: Dict[str, BuildingConfig] = {}
         self._floor_map: Dict[str, Dict[int, Path]] = {}
+        # Phase 4 — alias → primary building_id table.  Populated from each
+        # registered BuildingConfig.floor_plan_aliases.  Look-up methods
+        # (get / get_or_default / floors_for / pdf_path) consult this map
+        # before reporting "unknown building".
+        self._aliases: Dict[str, str] = {}
 
     def scan(self) -> None:
         """Scan pdf_dir, register buildings and their floor PDFs."""
@@ -48,8 +53,36 @@ class BuildingRegistry:
             logger.warning(f"[BuildingRegistry] PDF dir not found: {self._pdf_dir}")
             return
 
-        # Always register Abacws as the default (it may not have a YAML file)
-        self._register(ABACWS_CONFIG)
+        # Phase 4 — pre-scan input/*/building.yaml FIRST so:
+        #   (a) buildings without PDFs at the top level (e.g. logical "bldg1"
+        #       whose floor plans live under "Abacws floor N.pdf") are
+        #       registered with their aliases;
+        #   (b) aliases are known before the PDF slug discovery so the slug
+        #       can be matched to a primary building_id.
+        pre_scanned_aliases: set = set()
+        for sub in sorted(self._pdf_dir.iterdir()):
+            if not sub.is_dir():
+                continue
+            yaml_path = sub / "building.yaml"
+            if not yaml_path.exists():
+                continue
+            try:
+                cfg = BuildingConfig.from_yaml(yaml_path)
+                if cfg.building_id not in self._configs:
+                    self._register(cfg)
+                    pre_scanned_aliases.update(cfg.floor_plan_aliases or [])
+                    logger.info(
+                        f"[BuildingRegistry] Pre-registered {cfg.building_id} from "
+                        f"{yaml_path} (aliases={cfg.floor_plan_aliases or []})"
+                    )
+            except Exception as e:
+                logger.warning(f"[BuildingRegistry] Failed to load {yaml_path}: {e}")
+
+        # Register Abacws as a default ONLY when no pre-scanned building has
+        # already claimed its ID via an alias.  This prevents the default
+        # config from shadowing the logical building that aliases to it.
+        if "abacws" not in pre_scanned_aliases and "abacws" not in self._configs:
+            self._register(ABACWS_CONFIG)
 
         for path in sorted(self._pdf_dir.glob("*.pdf")):
             m = _DEFAULT_PDF_PATTERN.match(path.name)
@@ -58,7 +91,13 @@ class BuildingRegistry:
             building_slug = _slugify(m.group("building"))
             floor_num = int(m.group("floor"))
 
-            if building_slug not in self._configs:
+            # Phase 4 — when the PDF slug already resolves via an alias to a
+            # pre-scanned building, do NOT register a duplicate config under
+            # the slug.  The alias subsumes it.
+            if (
+                building_slug not in self._configs
+                and self.resolve_id(building_slug) is None
+            ):
                 # Try to load a building.yaml from <pdf_dir>/<building_id>/
                 yaml_path = self._pdf_dir / building_slug / "building.yaml"
                 if yaml_path.exists():
@@ -84,9 +123,13 @@ class BuildingRegistry:
                     )
                 self._register(cfg)
 
-            if building_slug not in self._floor_map:
-                self._floor_map[building_slug] = {}
-            self._floor_map[building_slug][floor_num] = path
+            # Phase 4 — if the PDF's slug is an alias for a pre-scanned
+            # building, store the floor under the PRIMARY building_id so
+            # floors_for(primary) returns the PDF.  Otherwise key by slug.
+            primary = self.resolve_id(building_slug) or building_slug
+            if primary not in self._floor_map:
+                self._floor_map[primary] = {}
+            self._floor_map[primary][floor_num] = path
 
         logger.info(
             f"[BuildingRegistry] Registered buildings: {list(self._configs.keys())} "
@@ -95,26 +138,52 @@ class BuildingRegistry:
 
     def _register(self, cfg: BuildingConfig) -> None:
         self._configs[cfg.building_id] = cfg
+        # Phase 4 — record any declared aliases so look-ups via either ID
+        # land on the same data.
+        for alias in cfg.floor_plan_aliases:
+            if alias and alias != cfg.building_id:
+                self._aliases[alias] = cfg.building_id
+
+    def resolve_id(self, building_id: Optional[str]) -> Optional[str]:
+        """Translate a building ID through the alias map.
+
+        Returns the primary building_id, or None if completely unknown.  Use
+        this when callers may reference a building under either its logical
+        ID (e.g. 'bldg1') or its floor-plan slug (e.g. 'abacws').
+        """
+        if not building_id:
+            return None
+        if building_id in self._configs:
+            return building_id
+        return self._aliases.get(building_id)
 
     def get(self, building_id: str) -> Optional[BuildingConfig]:
-        """Return config for building_id, or None if unknown."""
-        return self._configs.get(building_id)
+        """Return config for building_id (alias-aware), or None if unknown."""
+        primary = self.resolve_id(building_id)
+        return self._configs.get(primary) if primary else None
 
     def get_or_default(self, building_id: Optional[str]) -> BuildingConfig:
         """Return config for building_id, falling back to Abacws default."""
-        if building_id and building_id in self._configs:
-            return self._configs[building_id]
+        primary = self.resolve_id(building_id)
+        if primary:
+            return self._configs[primary]
         return ABACWS_CONFIG
 
     def building_ids(self) -> List[str]:
         return sorted(self._configs.keys())
 
+    def aliases(self) -> Dict[str, str]:
+        """Return a copy of the alias → primary_id mapping (debug / introspection)."""
+        return dict(self._aliases)
+
     def floors_for(self, building_id: str) -> Dict[int, Path]:
-        """Return {floor_num: pdf_path} for a building."""
-        return dict(self._floor_map.get(building_id, {}))
+        """Return {floor_num: pdf_path} for a building (alias-aware)."""
+        primary = self.resolve_id(building_id) or building_id
+        return dict(self._floor_map.get(primary, {}))
 
     def pdf_path(self, building_id: str, floor: int) -> Optional[Path]:
-        return self._floor_map.get(building_id, {}).get(floor)
+        primary = self.resolve_id(building_id) or building_id
+        return self._floor_map.get(primary, {}).get(floor)
 
     def all_floors(self) -> List[tuple]:
         """Return [(building_id, floor_num)] for every discovered PDF."""

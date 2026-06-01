@@ -27,12 +27,32 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
-_DEFAULT_BUILDING_ID = "abacws"
-_DEFAULT_BUILDING_NAME = "Abacws"
+from shared.config import settings
+
+# Building defaults flow from the global BUILDING_ID setting.  The Phase 4
+# alias mechanism in BuildingRegistry transparently maps legacy floor-plan
+# slugs (e.g. "abacws") to the logical building_id (e.g. "bldg1"), so the
+# floor plan agent can use settings.BUILDING_ID everywhere.
+_DEFAULT_BUILDING_ID = settings.BUILDING_ID
+_DEFAULT_BUILDING_NAME = settings.BUILDING_NAME
 _STATIC_BASE_URL = "http://localhost:8080"
 
 # Patterns for detecting floor and zone references in natural language
+# Matches: "floor 5", "level 5", "storey 5"
 _FLOOR_RE = re.compile(r"\b(?:floor|level|storey|story)\s*(\d+)\b", re.IGNORECASE)
+# Matches: "5th floor", "1st floor", "2nd floor", "3rd floor"
+_ORDINAL_FLOOR_RE = re.compile(r"\b(\d+)(?:st|nd|rd|th)\s+floor\b", re.IGNORECASE)
+# Matches written ordinals: "first floor", "second floor", ..., "tenth floor"
+_WORD_ORDINAL_MAP = {
+    "ground": 0, "first": 1, "second": 2, "third": 3, "fourth": 4,
+    "fifth": 5, "sixth": 6, "seventh": 7, "eighth": 8, "ninth": 9, "tenth": 10,
+}
+_WORD_FLOOR_RE = re.compile(
+    r"\b(" + "|".join(_WORD_ORDINAL_MAP.keys()) + r")\s+floor\b",
+    re.IGNORECASE,
+)
+# Matches: "top floor", "highest floor"
+_TOP_FLOOR_RE = re.compile(r"\b(?:top|highest|uppermost)\s+floor\b", re.IGNORECASE)
 _ZONE_RE = re.compile(r"\b(\d+)\.(\d{2,3})\b")
 
 # Keywords that suggest a building-overview request
@@ -192,14 +212,36 @@ class FloorPlanAgent:
     # ── Building/floor/space detection ───────────────────────────────────────
 
     def _detect_building(self, query: str, state: ConversationState) -> str:
-        if state.floor_context:
-            return state.floor_context.get("building_id", _DEFAULT_BUILDING_ID)
+        # Phase 4 — precedence: floor_context > state.building_id > default.
+        # The BuildingRegistry alias map (consulted by the pipeline) translates
+        # the logical id to whichever slug the manifest is stored under.
+        if state.floor_context and state.floor_context.get("building_id"):
+            return state.floor_context["building_id"]
+        if state.building_id:
+            return state.building_id
         return _DEFAULT_BUILDING_ID
 
     def _detect_floor(self, query: str, state: ConversationState) -> Optional[int]:
+        # "floor 5", "level 5"
         m = _FLOOR_RE.search(query)
         if m:
             return int(m.group(1))
+        # "5th floor", "1st floor"
+        m = _ORDINAL_FLOOR_RE.search(query)
+        if m:
+            return int(m.group(1))
+        # "fifth floor", "ground floor"
+        m = _WORD_FLOOR_RE.search(query)
+        if m:
+            return _WORD_ORDINAL_MAP.get(m.group(1).lower())
+        # "top floor" / "highest floor" → maximum available floor
+        if _TOP_FLOOR_RE.search(query):
+            available = self._available_floors(
+                get_floor_plan_pipeline(),
+                self._detect_building(query, state),
+            )
+            if available:
+                return max(available)
         if state.floor_context:
             return state.floor_context.get("floor")
         return None
@@ -241,8 +283,15 @@ class FloorPlanAgent:
     def _available_floors(
         self, pipeline, building_id: str
     ) -> List[int]:
+        # Phase 4 — accept both the primary building_id and its aliases when
+        # matching manifests on disk (legacy slug paths remain valid).
+        candidates: set = {building_id}
+        try:
+            candidates.update(pipeline._candidate_building_ids(building_id))
+        except Exception:
+            pass
         return sorted(
-            fl for bid, fl in pipeline.list_manifests() if bid == building_id
+            fl for bid, fl in pipeline.list_manifests() if bid in candidates
         )
 
     # ── Space lookup ──────────────────────────────────────────────────────────

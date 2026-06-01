@@ -96,9 +96,14 @@ class ReportAgent:
             report_type = _detect_report_type(user_query)
             logger.info(f"Report type: {report_type.value}")
 
-            # Build report sections
+            # Build report sections.  Phase 10 — pass building_id so the
+            # report uses the right per-building name/timezone.
             sections = await self._build_sections(
-                user_query, report_type, sensor_data or {}, metadata or {}
+                user_query,
+                report_type,
+                sensor_data or {},
+                metadata or {},
+                building_id=getattr(state, "building_id", None),
             )
 
             # LLM narration
@@ -161,18 +166,22 @@ class ReportAgent:
         rtype: ReportType,
         sensor_data: Dict,
         metadata: Dict,
+        building_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Extract structured sections from raw data."""
         records = sensor_data.get("data", []) or []
         sensors = metadata.get("sensors", []) or []
 
+        # Phase 10 — per-request building context: name and timezone come
+        # from this conversation's building, not the process-global setting.
+        from orchestrator.services.building_context import resolve_building_context
+        bctx = resolve_building_context(building_id)
+
         # Section 1: Overview
         overview = {
-            "building": (
-                settings.BUILDING_NAME if hasattr(settings, "BUILDING_NAME") else "Smart Building"
-            ),
+            "building": bctx.name,
             "report_type": rtype.value,
-            "generated_at": datetime.now(ZoneInfo(settings.BUILDING_TIMEZONE)).isoformat(),
+            "generated_at": datetime.now(ZoneInfo(bctx.timezone)).isoformat(),
             "sensor_count": len(sensors),
             "data_points": len(records),
         }

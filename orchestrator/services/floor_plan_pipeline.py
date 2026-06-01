@@ -328,16 +328,55 @@ class FloorPlanPipeline:
         d.mkdir(parents=True, exist_ok=True)
         return d / f"floor_{floor}.manifest.json"
 
-    def load_manifest(self, building_id: str, floor: int) -> Optional[FloorPlanManifest]:
-        """Load a manifest from disk (synchronous, hot-path)."""
-        p = self._manifest_path(building_id, floor)
-        if not p.exists():
-            return None
+    def _candidate_building_ids(self, building_id: str) -> List[str]:
+        """Return [primary] + [aliases] to search for a manifest on disk.
+
+        Phase 4 — manifests written under the LEGACY slug path (e.g.
+        `volumes/floor-plans/abacws/...`) must remain discoverable after the
+        registry starts keying buildings by their logical ID (e.g. `bldg1`).
+        We try the primary first, then each declared alias, then the original
+        input as a final fallback.
+        """
+        seen: set = set()
+        ordered: List[str] = []
         try:
-            return FloorPlanManifest.model_validate_json(p.read_text("utf-8"))
-        except Exception as e:
-            logger.warning(f"[pipeline] Could not load manifest {p}: {e}")
-            return None
+            from orchestrator.services.building_registry import get_building_registry
+            reg = get_building_registry()
+            primary = reg.resolve_id(building_id) or building_id
+            if primary not in seen:
+                ordered.append(primary)
+                seen.add(primary)
+            cfg = reg.get(primary)
+            if cfg is not None:
+                for alias in cfg.floor_plan_aliases or []:
+                    if alias not in seen:
+                        ordered.append(alias)
+                        seen.add(alias)
+        except Exception:
+            pass
+        if building_id not in seen:
+            ordered.append(building_id)
+        return ordered
+
+    def _resolve_building_alias(self, building_id: str) -> str:
+        """Translate a building ID through the BuildingRegistry alias map."""
+        try:
+            from orchestrator.services.building_registry import get_building_registry
+            return get_building_registry().resolve_id(building_id) or building_id
+        except Exception:
+            return building_id
+
+    def load_manifest(self, building_id: str, floor: int) -> Optional[FloorPlanManifest]:
+        """Load a manifest from disk (alias-aware, legacy-path-aware)."""
+        for bid in self._candidate_building_ids(building_id):
+            p = self._manifest_path(bid, floor)
+            if not p.exists():
+                continue
+            try:
+                return FloorPlanManifest.model_validate_json(p.read_text("utf-8"))
+            except Exception as e:
+                logger.warning(f"[pipeline] Could not load manifest {p}: {e}")
+        return None
 
     def list_manifests(self) -> List[Tuple[str, int]]:
         """Return [(building_id, floor)] for every manifest on disk."""
@@ -377,6 +416,15 @@ class FloorPlanPipeline:
                 return BuildingConfig.from_yaml(yaml_path)
             except Exception as e:
                 logger.warning(f"[pipeline] Could not load {yaml_path}: {e}")
+        # Phase 4 — consult the BuildingRegistry so PDF slugs declared as
+        # aliases by a logical building return the logical config.
+        try:
+            from orchestrator.services.building_registry import get_building_registry
+            cfg = get_building_registry().get(building_id)
+            if cfg is not None:
+                return cfg
+        except Exception:
+            pass
         if building_id == "abacws":
             return ABACWS_CONFIG
         return BuildingConfig(building_id=building_id)
