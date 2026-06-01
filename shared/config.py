@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Literal, Optional
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 
 try:
@@ -216,13 +216,32 @@ class Settings(BaseSettings):
         description="IANA timezone for the building (e.g. 'Europe/London', 'America/New_York')",
     )
 
+    # Phase 12B — TTL validation at startup.
+    # When True, run SHACL conformance check against Brick reference shapes.
+    # Requires the optional `brickschema` package; if it's not installed the
+    # validator silently skips SHACL even when this is True.
+    TTL_VALIDATION_SHACL: bool = Field(
+        default=False,
+        description=(
+            "Run SHACL Brick conformance check on each TTL at startup. "
+            "Off by default — adds 5-30s per file and requires brickschema."
+        ),
+    )
+
     # Ontology Files
     BRICK_TBOX_FILE: str = Field(
         default="trial/dataset/Brick.ttl",
         description="Brick Schema TBox file (vocabulary definitions)",
     )
-    BLDG1_ABOX_FILE: str = Field(
-        default="trial/dataset/bldg1_protege.ttl", description="Building 1 ABox file (instances)"
+    # BUILDING_ABOX_FILE — the per-building ontology ABox.
+    # Legacy alias: BLDG1_ABOX_FILE (still honoured via env-var compat shim).
+    BUILDING_ABOX_FILE: str = Field(
+        default="trial/dataset/bldg1_protege.ttl",
+        description=(
+            "Per-building ABox file (sensor instances). Renamed from "
+            "BLDG1_ABOX_FILE; the old env var is still honoured."
+        ),
+        validation_alias="BLDG1_ABOX_FILE",
     )
 
     # RAG Collections
@@ -240,6 +259,13 @@ class Settings(BaseSettings):
     RBAC_ENABLED: bool = Field(
         default=True,
         description="Enable RBAC middleware. Enabled by default for production safety. Set False only for local dev.",
+    )
+    STRICT_SECRETS: bool = Field(
+        default=False,
+        description=(
+            "When True, refuses to start if any service password equals its "
+            "insecure default value. Set to True in all production deployments."
+        ),
     )
     RESPONSE_CACHE_ENABLED: bool = Field(
         default=True,
@@ -262,6 +288,42 @@ class Settings(BaseSettings):
     PLANNER_MAX_STEPS: int = Field(
         default=6, description="Maximum steps for multi-step planner agent"
     )
+    MULTI_INTENT_ENABLED: bool = Field(
+        default=True,
+        description="Enable multi-intent decomposition for compound queries",
+    )
+    MULTI_INTENT_MIN_LENGTH: int = Field(
+        default=50,
+        description=(
+            "Phase 16A — minimum query length (chars) before multi-intent "
+            "decomposition triggers.  Lowered from 80→50 (2026-05-29) after "
+            "audit found common compound patterns ('show temp in 5.28 and "
+            "tell me where lift is' = 57 chars; 'show floor 3 and how many "
+            "rooms' = 55 chars) were missed at the old threshold.  The "
+            "explicit-connective gate AND the 2-domain-keyword gate still "
+            "guard against false positives; length just skips obviously "
+            "short queries from paying the LLM decomposition cost."
+        ),
+    )
+
+    # ── Phase 19 — Unified user-report / complaint intake ─────────────────────
+    REPORT_INTAKE_ENABLED: bool = Field(
+        default=True,
+        description=(
+            "Enable the unified user-report intake (maintenance / complaint / "
+            "feedback / safety / suggestion).  Reports are stored in the "
+            "`user_reports` Postgres table and viewable in pgAdmin."
+        ),
+    )
+    ADMIN_USERNAMES: str = Field(
+        default="admin",
+        description=(
+            "Comma-separated usernames allowed to call /admin/reports endpoints. "
+            "Interim gate until per-user RBAC role assignment is wired into "
+            "auth_manager; pgAdmin remains the primary admin surface regardless."
+        ),
+    )
+
     SENSOR_MAP_PATH: str = Field(
         default="data/sensor_map.json", description="Path to sensor map cache JSON file"
     )
@@ -315,6 +377,40 @@ class Settings(BaseSettings):
         env_file = ".env"
         case_sensitive = True
         extra = "ignore"
+        populate_by_name = True
+
+    @model_validator(mode="after")
+    def _check_strict_secrets(self) -> "Settings":
+        """Refuse startup when STRICT_SECRETS=True and any password is the default."""
+        if not self.STRICT_SECRETS:
+            return self
+        _DEFAULT_PASSWORDS = {
+            "GRAPHDB_PASSWORD": "Admin@GraphDB2024",
+            "POSTGRES_USER_PASSWORD": "ontobot_secret",
+            "MYSQL_PASSWORD": "mysql",
+        }
+        offenders = [
+            name
+            for name, default in _DEFAULT_PASSWORDS.items()
+            if getattr(self, name, None) == default
+        ]
+        if offenders:
+            raise ValueError(
+                f"STRICT_SECRETS=true but the following passwords equal their "
+                f"insecure defaults — set them via environment variables before "
+                f"starting: {', '.join(offenders)}"
+            )
+        return self
+
+    # ── Backward-compat property for BLDG1_ABOX_FILE → BUILDING_ABOX_FILE ─────
+    @property
+    def BLDG1_ABOX_FILE(self) -> str:
+        """Deprecated alias for BUILDING_ABOX_FILE. Kept for backward compatibility."""
+        return self.BUILDING_ABOX_FILE
+
+    @BLDG1_ABOX_FILE.setter
+    def BLDG1_ABOX_FILE(self, value: str) -> None:
+        self.BUILDING_ABOX_FILE = value
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -374,14 +470,76 @@ def _load_building_yaml(s: "Settings") -> None:
         # Ontology files
         if "BRICK_TBOX_FILE" not in env and data.get("building", {}).get("tbox_file"):
             s.BRICK_TBOX_FILE = data["building"]["tbox_file"]
-        if "BLDG1_ABOX_FILE" not in env and data.get("building", {}).get("abox_file"):
-            s.BLDG1_ABOX_FILE = data["building"]["abox_file"]
+        # BUILDING_ABOX_FILE (formerly BLDG1_ABOX_FILE — alias retained)
+        if (
+            "BUILDING_ABOX_FILE" not in env
+            and "BLDG1_ABOX_FILE" not in env
+            and data.get("building", {}).get("abox_file")
+        ):
+            s.BUILDING_ABOX_FILE = data["building"]["abox_file"]
     except Exception:
         pass  # YAML errors are non-fatal — defaults/env vars remain
 
 
+def _load_per_building_yaml(s: "Settings") -> None:
+    """Phase 9 — also read `input/<BUILDING_ID>/building.yaml` so that the
+    same file driving per-building floor plans / storage / aliases can also
+    set BUILDING_NAME and BUILDING_NAMESPACE.
+
+    Field mapping in input/<bldg>/building.yaml (FLAT layout):
+      building_id:        → settings.BUILDING_ID
+      building_name:      → settings.BUILDING_NAME
+      ontology_namespace: → settings.BUILDING_NAMESPACE
+
+    Env vars always win over YAML; YAML always wins over hardcoded defaults.
+    Non-fatal on any error.
+    """
+    try:
+        import yaml as _yaml
+        for base in (Path("/app/input"), Path("input")):
+            yaml_path = base / s.BUILDING_ID / "building.yaml"
+            if not yaml_path.exists():
+                continue
+            with open(yaml_path, "r", encoding="utf-8") as fh:
+                data = _yaml.safe_load(fh) or {}
+            env = os.environ
+            if "BUILDING_NAME" not in env and data.get("building_name"):
+                s.BUILDING_NAME = data["building_name"]
+            if "BUILDING_NAMESPACE" not in env and data.get("ontology_namespace"):
+                # input/<bldg>/building.yaml uses `ontology_namespace`; keep
+                # the settings field name unchanged for compat.
+                s.BUILDING_NAMESPACE = data["ontology_namespace"]
+            break
+    except Exception:
+        pass
+
+
 # Apply YAML overrides after env-based init
 _load_building_yaml(settings)
+_load_per_building_yaml(settings)
+
+
+def _warn_if_building_id_default(s: Settings) -> None:
+    """Soft validation: warn (don't fail) when BUILDING_ID is a generic default.
+
+    Production deployments for new buildings should set BUILDING_ID explicitly
+    via env var or building.yaml.  Generic defaults like 'bldg1' are reserved
+    for the legacy Abacws development environment.
+    """
+    env_set = "BUILDING_ID" in os.environ
+    is_legacy_default = s.BUILDING_ID in ("bldg1", "bldg2", "bldg3")
+    if is_legacy_default and not env_set:
+        import logging
+        _log = logging.getLogger("shared.config")
+        _log.warning(
+            "BUILDING_ID is at legacy default '%s'. For production deployments "
+            "of new buildings, set BUILDING_ID explicitly via env var or "
+            "config/building_config.yaml.",
+            s.BUILDING_ID,
+        )
+
+
+_warn_if_building_id_default(settings)
 
 
 def get_llm_config() -> dict:
