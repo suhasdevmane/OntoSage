@@ -113,6 +113,44 @@ def format_conversation_history(messages: List[Message], max_messages: int = 5) 
     return formatted.strip()
 
 
+# ── Co-reference / follow-up detection ───────────────────────────────────────
+# Cheap, zero-LLM gate used to decide whether a turn is a context-dependent
+# follow-up worth rewriting into a self-contained query. Conservative: a false
+# positive only costs one fast-LLM call (the rewrite no-ops self-contained
+# queries), while a false negative leaves the reference unresolved.
+_FOLLOWUP_MARKER_WORDS = frozenset({
+    "there", "that", "those", "these", "it", "them", "they", "same",
+    "again", "instead", "ones", "one",
+})
+_FOLLOWUP_MARKER_PHRASES = (
+    "the same", "the above", "the previous", "that one", "those ones",
+    "what about", "how about", "what of",
+)
+_FOLLOWUP_START_PREFIXES = (
+    "and ", "also ", "then ", "what about", "how about", "and what",
+    "and how", "ok ", "okay ",
+)
+
+
+def _is_followup_query(query: str) -> bool:
+    """Heuristic: does this query likely depend on prior-turn context?
+
+    Returns True for short queries or ones containing deictic/anaphoric markers
+    ("there", "that", "the same", "what about", a leading "and", etc.).
+    """
+    q = (query or "").strip().lower()
+    if not q:
+        return False
+    words = q.split()
+    if len(words) <= 4:
+        return True
+    if any(q.startswith(p) for p in _FOLLOWUP_START_PREFIXES):
+        return True
+    if any(p in q for p in _FOLLOWUP_MARKER_PHRASES):
+        return True
+    return bool(_FOLLOWUP_MARKER_WORDS.intersection(words))
+
+
 # ── G1 six-tuple taxonomy derivation ─────────────────────────────────────────
 # Survey corpus: 5,916 classified questions across 81 participants.
 # G1 classification framework: (domain_l1, query_type_l2, intent,
@@ -321,6 +359,61 @@ class DialogueAgent:
         # When None (e.g. during unit tests, or if init failed), semantic routing
         # is silently skipped — the legacy keyword override path runs as before.
         self.semantic_router = None  # type: ignore[assignment]
+
+    async def rewrite_to_standalone(self, state: ConversationState) -> Optional[str]:
+        """Rewrite a context-dependent follow-up into a self-contained query.
+
+        Industry-standard "condense question" step: when the latest message is a
+        likely follow-up (gated by `_is_followup_query`), a fast LLM resolves
+        references like "there"/"that"/"the same" against recent history so that
+        downstream intent classification, entity extraction, and SPARQL all see a
+        query that stands on its own.
+
+        Returns the rewritten standalone query, or None when no rewrite is
+        warranted or anything fails (fully graceful — caller keeps the original).
+        """
+        if not getattr(settings, "COREFERENCE_REWRITE_ENABLED", True):
+            return None
+        msgs = state.messages or []
+        if len(msgs) < 2 or not msgs[-1]:  # need at least one prior turn
+            return None
+        latest = (msgs[-1].content or "").strip()
+        if not latest or not _is_followup_query(latest):
+            return None
+
+        history = format_conversation_history(msgs, max_messages=6)
+        if history == "(No previous conversation)":
+            return None
+
+        prompt = (
+            "You rewrite a user's latest message into a fully self-contained "
+            "question for a smart-building assistant.\n\n"
+            f"Conversation so far:\n{history}\n\n"
+            f'Latest user message: "{latest}"\n\n'
+            "Rewrite the latest message so it can be understood with NO prior "
+            "context. Resolve references such as \"there\", \"that\", \"it\", "
+            "\"those\", \"the same\", \"again\" to the concrete entity (room, "
+            "floor, zone, sensor, system, or time period) mentioned earlier. "
+            "Preserve the user's intent and any NEW details they added. If the "
+            "message is already self-contained, return it unchanged. Return ONLY "
+            "the rewritten question — no quotes, labels, or explanation."
+        )
+
+        try:
+            rewritten = await llm_manager.generate(prompt, task_type=TaskType.REWRITE)
+        except Exception as e:  # graceful — keep original on any LLM failure
+            logger.debug(f"[coref] rewrite skipped: {e}")
+            return None
+
+        if not rewritten:
+            return None
+        rewritten = rewritten.strip().strip('"').strip()
+        # Reject empty, over-long, or no-op rewrites.
+        if not rewritten or len(rewritten) > 500:
+            return None
+        if rewritten.lower() == latest.lower():
+            return None
+        return rewritten
 
     async def _retrieve_ontology_context(self, query: str, top_k: int = 5) -> List[str]:
         """
