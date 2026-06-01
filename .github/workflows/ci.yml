@@ -97,6 +97,7 @@ jobs:
         run: |
           pytest \
             tests/test_phase3_4_services.py \
+            tests/test_coreference_rewrite.py \
             tests/test_blended_persona.py \
             tests/test_compound_query_e2e.py \
             tests/test_intent_graph_autowire.py \
