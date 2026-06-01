@@ -373,6 +373,14 @@ class Settings(BaseSettings):
     MAX_CONVERSATION_HISTORY: int = Field(
         default=20, description="Max prior turns injected into LLM context from Redis."
     )
+    COREFERENCE_REWRITE_ENABLED: bool = Field(
+        default=True,
+        description=(
+            "Resolve context-dependent follow-ups (e.g. 'and humidity there?') into "
+            "self-contained queries via a gated fast-LLM rewrite before intent/SPARQL. "
+            "Set False to disable and fall back to per-turn-only understanding."
+        ),
+    )
 
     # ==================== RAG System Selection ====================
     RAG_SYSTEM: Literal["graphdbRAG", "GraphRAG", "RAG_system", "RAG_system_advance"] = Field(
