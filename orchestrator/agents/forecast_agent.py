@@ -258,9 +258,9 @@ class ForecastAgent:
         if counts:
             best_uuid = counts.most_common(1)[0][0]
             if sensor_metadata and best_uuid in sensor_metadata:
-                label = sensor_metadata[best_uuid].get("label", best_uuid[:12])
+                label = sensor_metadata[best_uuid].get("label") or f"Sensor {best_uuid[:8]}..."
             else:
-                label = best_uuid[:12] + "..."
+                label = f"Sensor {best_uuid[:8]}..." if best_uuid else "Unknown Sensor"
             return best_uuid, label
 
         return "", "Unknown Sensor"
@@ -374,7 +374,8 @@ class ForecastAgent:
             f"- **Hold-out RMSE:** {m.rmse:.3f}{unit}",
             f"- **Hold-out MAE:** {m.mae:.3f}{unit}",
             f"- **MAPE:** {m.mape:.1f}% → **{reliability} reliability**",
-            f"- **R²:** {m.r2:.3f}",
+            f"- **R²:** {m.r2:.3f}"
+            + (" *(< 0: near-stationary series — mean is a competitive baseline)*" if m.r2 < 0 else ""),
             f"- **Confidence intervals:** 80% and 95% (wider = more uncertainty at longer horizon)",
         ]
 
