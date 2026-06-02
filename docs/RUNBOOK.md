@@ -509,7 +509,7 @@ The circuit resets automatically after 60 seconds when the service recovers. For
 docker compose restart orchestrator
 ```
 
-### Capability Semantic Routing Not Firing *(v3.1)*
+### Capability Semantic Routing Not Firing *(v2.0)*
 
 **Symptom:** Off-ontology queries ("What are the fire procedures?") fall through to SPARQL or get a generic LLM response instead of a KB answer.
 

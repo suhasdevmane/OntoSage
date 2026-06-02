@@ -1,12 +1,75 @@
-/* Basic brand overrides for Material */
+/* ============================================================
+   OntoSage 2.0 — Material for MkDocs style overrides
+   ============================================================ */
+
+/* Frosted header */
 .md-header {
-  backdrop-filter: saturate(120%) blur(6px);
+  backdrop-filter: saturate(140%) blur(8px);
 }
-.md-typeset h1, .md-typeset h2, .md-typeset h3 {
+
+/* Headings — tighter, more deliberate */
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
   letter-spacing: 0.2px;
+  font-weight: 700;
 }
-/* Wide tables */
+.md-typeset h1 {
+  font-weight: 800;
+}
+/* Accent rule under section headings */
+.md-typeset h2 {
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+/* Wide tables scroll instead of overflowing */
 .md-typeset table:not([class]) {
   display: block;
   overflow-x: auto;
+}
+
+/* ---- Grid cards: subtle lift + accent on hover ---- */
+.md-typeset .grid.cards > ul > li,
+.md-typeset .grid > .card {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.6rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.md-typeset .grid.cards > ul > li:hover,
+.md-typeset .grid > .card:hover {
+  transform: translateY(-3px);
+  border-color: var(--md-accent-fg-color);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.12);
+}
+.md-typeset .grid.cards > ul > li > hr {
+  margin: 0.6rem 0;
+}
+
+/* "new" badge — a small gold star next to fresh pages */
+.md-typeset .new svg {
+  color: #f0b429;
+  fill: #f0b429;
+}
+
+/* Admonitions — a touch rounder */
+.md-typeset .admonition,
+.md-typeset details {
+  border-radius: 0.5rem;
+}
+
+/* Code blocks — rounded corners */
+.md-typeset pre > code {
+  border-radius: 0.4rem;
+}
+
+/* Tables — header emphasis */
+.md-typeset table:not([class]) th {
+  font-weight: 700;
+  background: var(--md-default-fg-color--lightest);
+}
+
+/* Footer social row spacing */
+.md-footer-meta {
+  font-size: 0.72rem;
 }

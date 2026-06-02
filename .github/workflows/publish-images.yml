@@ -8,7 +8,7 @@
 #   - release:published     → tagged with the release tag + `latest`
 #   - workflow_dispatch     → manual fire, optional `tag` input
 #
-# Image names produced (for release `v3.1.0`):
+# Image names produced (for release `v2.0.0`):
 #   ghcr.io/suhasdevmane/ontosage-orchestrator:3.1.0
 #   ghcr.io/suhasdevmane/ontosage-orchestrator:3.1
 #   ghcr.io/suhasdevmane/ontosage-orchestrator:latest
@@ -25,7 +25,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Override tag (e.g. v3.1.0). Empty = use commit SHA."
+        description: "Override tag (e.g. v2.0.0). Empty = use commit SHA."
         required: false
         default: ""
 
@@ -86,7 +86,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/ontosage-${{ matrix.service.name }}
           # Tag strategy:
-          #   - v3.1.0 → :3.1.0, :3.1, and :latest (only on release events)
+          #   - v2.0.0 → :2.0.0, :2.0, and :latest (only on release events)
           #   - workflow_dispatch with `tag` → that exact tag
           #   - workflow_dispatch without `tag` → manual-<sha7>
           tags: |

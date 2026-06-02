@@ -282,7 +282,7 @@ These URL environment variables point services to each other within the Docker n
 
 ## Qdrant Vector Database
 
-Qdrant stores agent memory, floor-plan vectors, and (v3.1) per-building capability KB collections.
+Qdrant stores agent memory, floor-plan vectors, and (v2.0) per-building capability KB collections.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -303,7 +303,7 @@ Per-building collections (auto-managed; no env var needed):
 
 ---
 
-## Capability Semantic Routing *(v3.1)*
+## Capability Semantic Routing *(v2.0)*
 
 Controls the embedding provider behind the capability KB indexer and the query-time semantic router. When `EMBEDDING_PROVIDER` is unset, it defaults to `openai` (uses `OPENAI_API_KEY`).
 

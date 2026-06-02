@@ -43,7 +43,7 @@ graph LR
         SQA["Spatial Agent"]
     end
 
-    subgraph "Capability Routing — v3.1"
+    subgraph "Capability Routing — v2.0"
         SR["SemanticRouter"]
         CI["CapabilityIndexer"]
         ES["EmbeddingService"]
@@ -107,7 +107,7 @@ graph LR
     LG --> OLL
 ```
 
-> **Capability routing pipeline (v3.1)** sits in front of the LLM intent classifier. At startup, `CapabilityIndexer` embeds the per-building `capability.yaml` into Qdrant. On every query, `SemanticRouter` probes that collection — if `score ≥ override_min`, the dialogue node skips the LLM intent call entirely and routes straight to `CapabilityAgent`. See [Capability Routing](CAPABILITY_ROUTING.md) for the full pipeline.
+> **Capability routing pipeline (v2.0)** sits in front of the LLM intent classifier. At startup, `CapabilityIndexer` embeds the per-building `capability.yaml` into Qdrant. On every query, `SemanticRouter` probes that collection — if `score ≥ override_min`, the dialogue node skips the LLM intent call entirely and routes straight to `CapabilityAgent`. See [Capability Routing](CAPABILITY_ROUTING.md) for the full pipeline.
 
 ---
 
@@ -240,7 +240,7 @@ The Dialogue Agent classifies every query into one of **22+ intent types**, defi
 | `compliance` | sparql → sql → analytics → response | ASHRAE / WELL / BREEAM standards checks |
 | `floor_plan` | floor_plan → response | Show floor plan, locate a room, visual navigation |
 | `spatial_query` | spatial_query → response | Area, adjacency, room counts, block/MEP queries |
-| `capability` ⚡ | capability → response | **(v3.1)** Off-ontology Q&A (fire safety, amenities, policies). Sub-50 ms when router score ≥ override_min |
+| `capability` ⚡ | capability → response | **(v2.0)** Off-ontology Q&A (fire safety, amenities, policies). Sub-50 ms when router score ≥ override_min |
 | `maintenance` / `complaint` / `safety_report` / `feedback` / `suggestion` | report_intake → response | **Unified report intake** — auto-classified, prioritised, persona-stamped, stored in `user_reports` |
 | `control` | response | Not yet supported — informs the user |
 | `general` / `greeting` | response | Greetings, general knowledge questions |
@@ -257,7 +257,7 @@ The Dialogue Agent classifies every query into one of **22+ intent types**, defi
 
 The first node in every pipeline execution. Its responsibilities:
 
-1. **Capability semantic probe (v3.1)** — Calls `SemanticRouter.classify()` BEFORE the LLM intent call. If `score ≥ override_min` (e.g. 0.60 for local MiniLM), the intent is set to `capability`, KB matches are stashed on `state.intermediate_results["capability_matches"]`, and the LLM call is **skipped entirely** (~600 ms saved). See [Capability Routing](CAPABILITY_ROUTING.md).
+1. **Capability semantic probe (v2.0)** — Calls `SemanticRouter.classify()` BEFORE the LLM intent call. If `score ≥ override_min` (e.g. 0.60 for local MiniLM), the intent is set to `capability`, KB matches are stashed on `state.intermediate_results["capability_matches"]`, and the LLM call is **skipped entirely** (~600 ms saved). See [Capability Routing](CAPABILITY_ROUTING.md).
 2. **Context retrieval** — Calls the RAG Service to fetch relevant ontology context (entity labels, types, triples) for the user's query
 3. **Intent classification** — Sends the query + context to the LLM, receives a structured JSON response containing `intent`, `entities`, `time_range`, and other metadata
 4. **Soft-override pass** — If the LLM picked a non-data intent but the router score is in `[threshold, override_min)`, route corrects to `capability` (medium-confidence band)
@@ -267,7 +267,7 @@ The first node in every pipeline execution. Its responsibilities:
 
 The intent classification prompt includes persona-aware system messages that adapt the response style based on the inferred user role.
 
-### Capability Agent (v3.1)
+### Capability Agent (v2.0)
 
 **File:** `orchestrator/agents/capability_agent.py`
 

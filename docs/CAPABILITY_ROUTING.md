@@ -1,6 +1,6 @@
 # Capability Semantic Routing
 
-> **Added in v3.1 (May 2026).** Replaces the legacy `_CAPABILITY_KW` keyword-matching path with semantic vector routing. Reduces median latency for off-ontology questions from ~700 ms (LLM intent + KB search) to **&lt;50 ms warm** / &lt;150 ms cold, and eliminates an entire class of misclassification errors where the LLM picked `sparql` or `discovery` for questions that had no ontological answer.
+> **Added in v2.0 (May 2026).** Replaces the legacy `_CAPABILITY_KW` keyword-matching path with semantic vector routing. Reduces median latency for off-ontology questions from ~700 ms (LLM intent + KB search) to **&lt;50 ms warm** / &lt;150 ms cold, and eliminates an entire class of misclassification errors where the LLM picked `sparql` or `discovery` for questions that had no ontological answer.
 
 ---
 
@@ -14,7 +14,7 @@ Corpus analysis of **5,916 pre-development survey questions** across 81 particip
 | OTHER / off-ontology | 24.0% | "Where's the bike rack?", "Is there a prayer room?" |
 | **Total off-ontology** | **~50%** | |
 
-Pre-v3.1, these queries either fell through to a generic LLM response (hallucination risk) or matched a brittle hand-maintained keyword list (`_CAPABILITY_KW`) that grew unmaintainable past ~30 entries. Semantic routing solves both problems with a single Qdrant collection per building.
+Pre-v2.0, these queries either fell through to a generic LLM response (hallucination risk) or matched a brittle hand-maintained keyword list (`_CAPABILITY_KW`) that grew unmaintainable past ~30 entries. Semantic routing solves both problems with a single Qdrant collection per building.
 
 ---
 

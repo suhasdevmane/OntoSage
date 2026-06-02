@@ -98,13 +98,13 @@ If any node raises an exception, `_safe_node()` catches it, logs it with the tra
 
 **File:** `orchestrator/agents/dialogue_agent.py`
 
-This is always the first node. It produces the routing decision for every other node. A **co-reference rewrite** runs first (Phase 22), then the SemanticRouter probe (v3.1) enables a fast-path bypass of the LLM, followed by the classification substeps.
+This is always the first node. It produces the routing decision for every other node. A **co-reference rewrite** runs first (Phase 22), then the SemanticRouter probe (v2.0) enables a fast-path bypass of the LLM, followed by the classification substeps.
 
 ### 5.0 Follow-up Co-reference Rewrite (Phase 22)
 
 If the turn is a likely follow-up (a short query, or one with deictic markers like *there* / *that* / *the same* / a leading *and*), a fast LLM rewrites it into a self-contained query using recent history — *"and what about humidity there"* → *"what is the average humidity on floor 3"*. The rewrite is **gated** (skips self-contained queries) and **graceful** (falls back to the original on any failure). The standalone query replaces `messages[-1]` so every downstream substep and the SPARQL/SQL stages resolve the reference. Controlled by `COREFERENCE_REWRITE_ENABLED`. See [Conversation Intelligence](CONVERSATION_INTELLIGENCE.md).
 
-### 5a. Capability Semantic Router Probe (v3.1)
+### 5a. Capability Semantic Router Probe (v2.0)
 
 **Before** any LLM call, the agent embeds the user query and searches the per-building Qdrant collection `capability_<bldg>`. The match scores are grouped by `entry_id` with max-pool aggregation; the highest group score is checked against `building.yaml::capability_routing` thresholds:
 
@@ -181,7 +181,7 @@ The router `_route_from_dialogue()` reads `state.intermediate_results["intent"]`
 ```python
 def _route_from_dialogue(self, state: ConversationState) -> str:
     intent = state.intermediate_results.get("intent", "general")
-    if intent == "capability":           # v3.1 — KB lookup, no SPARQL
+    if intent == "capability":           # v2.0 — KB lookup, no SPARQL
         return "capability"
     elif intent == "sensor_data":
         return "sparql"

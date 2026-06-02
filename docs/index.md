@@ -31,7 +31,7 @@ Then the manager asks a follow-up: *"and what about humidity there?"* — OntoSa
 | **Conversation Memory** | Two-tier: Redis holds the recent turn-by-turn state (**count-bounded, no time-expiry by default**); PostgreSQL `turn_memory` keeps per-turn summaries and **carries forward** forecast/analytics artifacts so follow-ups like *"now plot that"* just work — [details](CONVERSATION_INTELLIGENCE.md) |
 | **Follow-up Co-reference** | A context-dependent follow-up — *"and what about humidity **there**?"* — is rewritten into a self-contained query (*"average humidity on floor 3"*) before classification, so the answer scopes to the right place. Gated, graceful "condense-question" rewrite — [details](CONVERSATION_INTELLIGENCE.md) |
 | **Time-Series Forecasting** | Multi-model forecasting (ARIMA / exponential-smoothing / linear) with automatic model selection, natural-language horizon parsing, and RMSE/R² accuracy reporting — [details](FORECASTING.md) |
-| **Smart Capability Routing (v3.1)** | Per-building YAML knowledge base embedded into Qdrant at startup; query-time vector search bypasses the LLM for off-ontology questions (fire safety, amenities, policies, IT) — **sub-50 ms** confident path |
+| **Smart Capability Routing (v2.0)** | Per-building YAML knowledge base embedded into Qdrant at startup; query-time vector search bypasses the LLM for off-ontology questions (fire safety, amenities, policies, IT) — **sub-50 ms** confident path |
 | **Floor Plan Intelligence** | Automatic PDF + AutoCAD DWG ingestion — room polygons, areas, adjacency, and sensor locations extracted at startup and searchable in natural language |
 | **Unified Report Intake** | Any user files a fault, complaint, safety hazard, feedback, or suggestion in plain English; auto-classified and prioritised (gas/fire → URGENT), persona-stamped, stored, and acknowledged with a tracking ID |
 | **Zero-Knowledge Interaction** | Users need no knowledge of sensor IDs, ontology classes, or database schemas |
@@ -68,7 +68,7 @@ graph TD
         FC --> VA
     end
 
-    subgraph "Capability Routing Layer (v3.1)"
+    subgraph "Capability Routing Layer (v2.0)"
         DA -->|every query| SR["SemanticRouter<br/>three-band threshold"]
         SR -->|matches| CA
         CapYAML["capability.yaml<br/>/app/input/&lt;bldg&gt;/"] -.->|startup SHA-256| CI["CapabilityIndexer"]
@@ -105,32 +105,135 @@ graph TD
 
 ## Documentation Structure
 
-### Getting Started
-| Guide | Purpose |
-|---|---|
-| [Deployment](DEPLOYMENT.md) | Deploy the full stack with Docker Compose in minutes |
-| [Building Onboarding](BUILDING_ONBOARDING.md) | Connect your building's ontology, sensor database, and capability KB |
-| [Configuration](CONFIGURATION.md) | All environment variables and tuning parameters |
-| [GraphDB Setup](GRAPHDB_SETUP.md) | Create the semantic similarity index for your ontology |
+### :material-rocket-launch: Getting Started
 
-### Understanding the System
-| Guide | Purpose |
-|---|---|
-| [Architecture](ARCHITECTURE.md) | Component design, data flow, and design decisions |
-| [Workflow Deep Dive](WORKFLOW.md) | Step-by-step trace of every request through the pipeline |
-| [Services](SERVICES.md) | Every service: ports, health checks, dependencies, duties |
-| [**Capability Routing**](CAPABILITY_ROUTING.md) | Semantic vector routing for off-ontology queries — schema, calibration, performance |
-| [**Conversation Intelligence**](CONVERSATION_INTELLIGENCE.md) | **NEW** Conversation memory (Redis + Postgres) and follow-up co-reference resolution |
-| [**Forecasting**](FORECASTING.md) | **NEW** Multi-model time-series forecasting pipeline |
-| [Project Structure](PROJECT_STRUCTURE.md) | Repository layout, file roles, coding conventions |
+<div class="grid cards" markdown>
 
-### Using and Operating
-| Guide | Purpose |
-|---|---|
-| [User Guide](USER_GUIDE.md) | How to query, what to expect, example interactions |
-| [Developer Guide](DEVELOPER_GUIDE.md) | Local dev setup, adding agents, testing, CI |
-| [Security](SECURITY.md) | Authentication, RBAC, sandbox isolation, secret management |
-| [Runbook](RUNBOOK.md) | Start/stop procedures, health checks, backups, troubleshooting |
+-   __Deployment__
+
+    ---
+
+    Bring the full stack up with Docker Compose in minutes.
+
+    [:octicons-arrow-right-24: Deploy the stack](DEPLOYMENT.md)
+
+-   __Building Onboarding__
+
+    ---
+
+    Connect a new building's ontology, sensor database, and capability KB.
+
+    [:octicons-arrow-right-24: Onboard a building](BUILDING_ONBOARDING.md)
+
+-   __Configuration__
+
+    ---
+
+    Every environment variable and tuning parameter, explained.
+
+    [:octicons-arrow-right-24: Configure](CONFIGURATION.md)
+
+-   __GraphDB Setup__
+
+    ---
+
+    Create the semantic similarity index for your ontology.
+
+    [:octicons-arrow-right-24: Set up GraphDB](GRAPHDB_SETUP.md)
+
+</div>
+
+### :material-sitemap: Understanding the System
+
+<div class="grid cards" markdown>
+
+-   __Architecture__
+
+    ---
+
+    Component design, data flow, and the decisions behind them.
+
+    [:octicons-arrow-right-24: Architecture](ARCHITECTURE.md)
+
+-   __Workflow Deep Dive__
+
+    ---
+
+    A step-by-step trace of every request through the pipeline.
+
+    [:octicons-arrow-right-24: Workflow](WORKFLOW.md)
+
+-   __Services__
+
+    ---
+
+    Every service: ports, health checks, dependencies, duties.
+
+    [:octicons-arrow-right-24: Services](SERVICES.md)
+
+-   __Conversation Intelligence__ :material-star:{ .new }
+
+    ---
+
+    Conversation memory (Redis + Postgres) and follow-up co-reference resolution.
+
+    [:octicons-arrow-right-24: Conversation Intelligence](CONVERSATION_INTELLIGENCE.md)
+
+-   __Forecasting__ :material-star:{ .new }
+
+    ---
+
+    Multi-model time-series forecasting (ARIMA · ETS · linear).
+
+    [:octicons-arrow-right-24: Forecasting](FORECASTING.md)
+
+-   __Capability Routing__
+
+    ---
+
+    Semantic vector routing for off-ontology queries — schema, calibration, performance.
+
+    [:octicons-arrow-right-24: Capability Routing](CAPABILITY_ROUTING.md)
+
+</div>
+
+### :material-account-wrench: Using and Operating
+
+<div class="grid cards" markdown>
+
+-   __User Guide__
+
+    ---
+
+    How to query, what to expect, and example multi-turn conversations.
+
+    [:octicons-arrow-right-24: User Guide](USER_GUIDE.md)
+
+-   __Developer Guide__
+
+    ---
+
+    Local dev setup, adding intents/agents, testing, and CI.
+
+    [:octicons-arrow-right-24: Developer Guide](DEVELOPER_GUIDE.md)
+
+-   __Security__
+
+    ---
+
+    Authentication, RBAC, sandbox isolation, and secret management.
+
+    [:octicons-arrow-right-24: Security](SECURITY.md)
+
+-   __Runbook__
+
+    ---
+
+    Start/stop procedures, health checks, backups, troubleshooting.
+
+    [:octicons-arrow-right-24: Runbook](RUNBOOK.md)
+
+</div>
 
 ---
 

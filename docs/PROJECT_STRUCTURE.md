@@ -45,7 +45,7 @@ orchestrator/
 ├── agents/
 │   ├── dialogue_agent.py   # Intent classification (22+ types), entity extraction, time-range parsing,
 │   │                       #   SemanticRouter probe + follow-up co-reference rewrite (Phase 22)
-│   ├── capability_agent.py # v3.1 — answers off-ontology questions from per-building KB
+│   ├── capability_agent.py # v2.0 — answers off-ontology questions from per-building KB
 │   ├── sparql_agent.py     # SPARQL generation + execution + RAG fallback + UUID extraction
 │   ├── sql_agent.py        # Time-series data fetching via storage adapters
 │   ├── analytics_agent.py  # LLM-generated Python code; calls code-executor; interprets results
@@ -63,13 +63,13 @@ orchestrator/
 ├── services/
 │   ├── adapters/           # Database storage adapters (see below)
 │   ├── analytics_engine.py # Deterministic analytics without LLM (mean, std, trend)
-│   ├── capability_indexer.py # NEW v3.1 — startup pipeline: capability.yaml → Qdrant (SHA-256 idempotent)
+│   ├── capability_indexer.py # NEW v2.0 — startup pipeline: capability.yaml → Qdrant (SHA-256 idempotent)
 │   ├── circuit_breaker.py  # Circuit breaker pattern for external service calls
 │   ├── context_manager.py  # Conversation context windowing and summarisation
 │   ├── database_adapter.py # Abstract base class (ABC) for all storage adapters
 │   ├── disambiguation_service.py # Resolve ambiguous entity mentions (multiple zones match)
 │   ├── document_builder.py # Structured document assembly for report/export agents
-│   ├── embedding_service.py # v3.1 — provider-agnostic embeddings (OpenAI 1536-d / local 384-d) with Redis cache
+│   ├── embedding_service.py # v2.0 — provider-agnostic embeddings (OpenAI 1536-d / local 384-d) with Redis cache
 │   ├── turn_memory.py       # Phase 21 — TurnMemoryService: Postgres per-turn summaries + carry-forward
 │   ├── forecasting/         # Phase 20 — preprocessor, horizon_parser, model_selector, metrics, models/
 │   ├── job_queue.py         # Redis-backed async job queue (long-running tasks → GET /jobs/{id})
@@ -88,7 +88,7 @@ orchestrator/
 │   ├── reasoning_engine.py # Chain-of-thought reasoning for complex multi-step queries
 │   ├── response_cache.py   # Redis-backed response caching (SPARQL + SQL results)
 │   ├── self_correction_engine.py # Auto-repair SPARQL/code errors and retry
-│   ├── semantic_router.py  # NEW v3.1 — query-time classifier (three-band threshold logic)
+│   ├── semantic_router.py  # NEW v2.0 — query-time classifier (three-band threshold logic)
 │   ├── smart_cache.py      # Intelligent cache key generation (semantic deduplication)
 │   ├── sparql_validator.py # SPARQL syntax validation before execution
 │   └── standards_engine.py # ASHRAE/comfort/air quality standards evaluation
@@ -108,7 +108,7 @@ The heart of OntoSage — the LangGraph state machine. The former single `workfl
 | Module | What it does |
 |--------|--------------|
 | `__init__.py` | Re-exports `WorkflowOrchestrator` |
-| `_orchestrator.py` | All node implementations + `_route_from_dialogue()` (registry-driven routing across the 22+ intents, incl. `capability` v3.1, the co-reference rewrite, and forecasting dispatch) |
+| `_orchestrator.py` | All node implementations + `_route_from_dialogue()` (registry-driven routing across the 22+ intents, incl. `capability` v2.0, the co-reference rewrite, and forecasting dispatch) |
 | `_graph.py` | `WorkflowGraphMixin._build_graph()` — auto-registers nodes from the YAML intent registry + `_safe_node()` wrapper |
 | `_routing.py` | `WorkflowRoutingMixin` — the downstream routing methods |
 
@@ -294,7 +294,7 @@ docs/
 ├── CONFIGURATION.md        # Complete environment variable reference
 ├── GRAPHDB_SETUP.md        # Similarity index creation guide
 ├── USER_GUIDE.md           # End-user guide with examples for all 22+ intent types
-├── CAPABILITY_ROUTING.md   # NEW v3.1 — semantic vector routing for off-ontology queries
+├── CAPABILITY_ROUTING.md   # NEW v2.0 — semantic vector routing for off-ontology queries
 ├── DEVELOPER_GUIDE.md      # Dev setup, adding agents, testing, CI
 ├── SECURITY.md             # Auth, RBAC, sandbox, secrets management
 ├── RUNBOOK.md              # Operations: start/stop, backups, troubleshooting
