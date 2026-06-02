@@ -151,7 +151,7 @@ The LLM receives a structured prompt containing:
 - Recent conversation history (last N turns)
 - Retrieved ontology context
 - The user's current query
-- A list of all 16 intent types with descriptions
+- The list of registered intent types with descriptions (22+, from the YAML intent registry)
 
 The LLM returns a JSON object:
 
@@ -520,10 +520,11 @@ The final node always runs, regardless of which agents executed. It:
 After the pipeline completes:
 
 1. The assistant's response is appended to `state.messages`
-2. The full `ConversationState` is serialised and saved to Redis (`conv:{conversation_id}`, 1-hour TTL)
-3. If this is a new conversation, the title is auto-generated from the first query
-4. Generated files (plots, exports) are written to the `outputs/` volume and served via the file server
-5. The final response is returned to the frontend
+2. The full `ConversationState` is serialised and saved to Redis (`conversation:{conversation_id}`) — **count-bounded** to `CONVERSATION_MAX_MESSAGES`, with no time-expiry by default
+3. A deterministic one-line summary of the turn (plus forecast/analytics carry-forward) is written to the PostgreSQL `turn_memory` table for long-term recall — see [Conversation Intelligence](CONVERSATION_INTELLIGENCE.md)
+4. If this is a new conversation, the title is auto-generated from the first query
+5. Generated files (plots, exports) are written to the `outputs/` volume and served via the file server
+6. The final response is returned to the frontend
 
 ---
 

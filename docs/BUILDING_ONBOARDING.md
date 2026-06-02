@@ -558,10 +558,35 @@ Expected: A computed statistic. If this fails while step 3 works, check the code
 
 ## Multiple Buildings
 
-OntoSage can serve multiple buildings simultaneously. Each building:
-- Has its own GraphDB repository
-- Has its own database entry in `database_registry.yaml`
-- Can use a different database backend
+OntoSage v1 serves **one active building at a time**, selected by `BUILDING_ID`. The codebase is multi-tenant-ready — per-building registry caches, a `BuildingContextResolver`, per-request SPARQL context, and per-building Qdrant collections — which is the forward-compatible foundation for concurrent multi-building support in the upcoming **Onto-community** release. Each building:
+
+- Lives under its own `input/<building_id>/` directory (TTL, `building.yaml`, optional `capability.yaml` / `intents.yaml` / `personas/` / floor plans)
+- Has its own database entry in `config/database_registry.yaml` and may use a different database backend
+- Has its own GraphDB repository (or a named graph within one)
+
+### Switching the Active Building (Validated Swap)
+
+To switch the active building safely, use the swap CLI rather than editing `.env` by hand. It validates that every TTL's `@prefix bldg:` matches the building's `ontology_namespace` **before** anything changes, and the orchestrator's startup **TTL validator hard-fails the boot** on any mismatch — so you never get a silently-empty knowledge graph.
+
+```bash
+# 1. Drop the new building's files under input/<new_id>/
+#    Required: building.yaml + *.ttl   Optional: *.dwg, *.pdf, capability.yaml, intents.yaml, personas/
+
+# 2. Dry-run — validates consistency, writes nothing
+python scripts/swap_building.py --to <new_id> --dry-run
+
+# 3. Apply — updates .env, optionally archives the old input dir, flushes the response cache
+python scripts/swap_building.py --to <new_id> --archive
+
+# 4. Restart — the TTL validator runs first and halts boot on a prefix/namespace mismatch
+docker-compose restart orchestrator
+docker-compose logs -f orchestrator | grep ttl_validator
+```
+
+The swap exits non-zero if `input/<new_id>/` is missing, `building.yaml` lacks required keys (or its `building_id` ≠ the directory name), or any TTL prefix disagrees with `ontology_namespace`.
+
+!!! tip "Per-building overlays — no code changes"
+    Drop `intents.yaml` (custom intents) or `personas/*.yaml` (role priors) into `input/<building_id>/` to extend OntoSage for that building. They are picked up at startup via the per-building registry — see the [Developer Guide](DEVELOPER_GUIDE.md) and [Configuration](CONFIGURATION.md).
 
 ### Per-Building GraphDB Repositories
 

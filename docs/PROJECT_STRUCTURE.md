@@ -101,18 +101,18 @@ orchestrator/
 
 ### Key Files in Detail
 
-#### `orchestrator/workflow.py`
+#### `orchestrator/workflow/` (package)
 
-The heart of OntoSage. This file contains the entire LangGraph state machine:
+The heart of OntoSage — the LangGraph state machine. The former single `workflow.py` was split into a package (zero external-import change — `from orchestrator.workflow import WorkflowOrchestrator` still works):
 
-| Line range | What it does |
-|-----------|--------------|
-| 1–120 | Imports, `WorkflowOrchestrator` class, `__init__` |
-| 120–135 | `_build_graph()` — all `add_node()` calls |
-| 137–190 | `add_edge()` calls — pipeline structure |
-| 191–220 | `_safe_node()` — the exception-catching wrapper |
-| 843–1079 | `_response_node()` — full markdown response assembly |
-| 1079–1130 | `_route_from_dialogue()` — all 16 intent branches (incl. `capability` v3.1) |
+| Module | What it does |
+|--------|--------------|
+| `__init__.py` | Re-exports `WorkflowOrchestrator` |
+| `_orchestrator.py` | All node implementations + `_route_from_dialogue()` (registry-driven routing across the 22+ intents, incl. `capability` v3.1, the co-reference rewrite, and forecasting dispatch) |
+| `_graph.py` | `WorkflowGraphMixin._build_graph()` — auto-registers nodes from the YAML intent registry + `_safe_node()` wrapper |
+| `_routing.py` | `WorkflowRoutingMixin` — the downstream routing methods |
+
+Nodes auto-register from `orchestrator/intents/intent_definitions.yaml`, so adding an intent needs no graph edits (see the [Developer Guide](DEVELOPER_GUIDE.md#adding-a-new-intent-type)).
 
 #### `orchestrator/main.py`
 
@@ -293,7 +293,7 @@ docs/
 ├── BUILDING_ONBOARDING.md  # Connecting a new building ontology and database
 ├── CONFIGURATION.md        # Complete environment variable reference
 ├── GRAPHDB_SETUP.md        # Similarity index creation guide
-├── USER_GUIDE.md           # End-user guide with examples for all 16 intent types
+├── USER_GUIDE.md           # End-user guide with examples for all 22+ intent types
 ├── CAPABILITY_ROUTING.md   # NEW v3.1 — semantic vector routing for off-ontology queries
 ├── DEVELOPER_GUIDE.md      # Dev setup, adding agents, testing, CI
 ├── SECURITY.md             # Auth, RBAC, sandbox, secrets management
