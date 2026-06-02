@@ -470,8 +470,8 @@ The column name is the sensor UUID as stored in the ontology (`ref:hasTimeseries
 
 - **`floor_plans`** collection — room description vectors + DWG geometry payload for semantic spatial search
 - **`user_memory`** collection — per-user successful (query, intent, entities, answer) tuples for cross-session personalisation
-- **`capability_<bldg>`** collections *(v3.1)* — one per building; embeds keyword + content variants of every `CapabilityEntry`. SHA-256 fingerprint on every point ensures idempotent restarts.
-- **`intent_<bldg>_<intent>`** collections *(v3.1 opt-in)* — per-building per-intent descriptor vectors for the multi-intent semantic routing extension
+- **`capability_<bldg>`** collections *(v2.0)* — one per building; embeds keyword + content variants of every `CapabilityEntry`. SHA-256 fingerprint on every point ensures idempotent restarts.
+- **`intent_<bldg>_<intent>`** collections *(v2.0 opt-in)* — per-building per-intent descriptor vectors for the multi-intent semantic routing extension
 
 ### Collection schema
 
@@ -508,7 +508,7 @@ curl -s 'http://localhost:6333/collections/capability_bldg1/points/scroll?limit=
 
 The following services run inside the orchestrator process (not separate Docker containers) but are independent components with clear interfaces.
 
-### EmbeddingService *(v3.1)*
+### EmbeddingService *(v2.0)*
 
 **File:** `orchestrator/services/embedding_service.py`
 
@@ -525,7 +525,7 @@ The following services run inside the orchestrator process (not separate Docker 
 - Dimension auto-detection — first call probes the model to populate `dimension` property
 - Graceful failure: returns `EmbedResult(success=False, error=...)` instead of raising; upstream chooses behaviour
 
-### CapabilityIndexer *(v3.1)*
+### CapabilityIndexer *(v2.0)*
 
 **File:** `orchestrator/services/capability_indexer.py`
 
@@ -542,7 +542,7 @@ The following services run inside the orchestrator process (not separate Docker 
 - Store yaml_sha + entry_id + category + source on every point
 - Emit one `IndexResult` per building with status `indexed | skipped | degraded | disabled`
 
-### SemanticRouter *(v3.1)*
+### SemanticRouter *(v2.0)*
 
 **File:** `orchestrator/services/semantic_router.py`
 

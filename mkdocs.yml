@@ -1,4 +1,4 @@
-site_name: OntoSage 3.1
+site_name: OntoSage 2.0
 site_description: Agentic AI for Intelligent Buildings — with capability semantic routing
 site_url: https://suhasdevmane.github.io/OntoSage/
 repo_url: https://github.com/suhasdevmane/OntoSage
@@ -12,36 +12,71 @@ theme:
   language: en
   features:
     - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
+    - navigation.indexes
     - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
     - navigation.top
+    - navigation.footer
     - toc.follow
     - search.suggest
     - search.highlight
+    - search.share
     - content.code.copy
+    - content.code.annotate
     - content.tabs.link
+    - content.tooltips
     - content.action.edit
-    - header.autohide
   palette:
-    - scheme: default
+    # Auto (system preference)
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    # Light
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
       primary: indigo
       accent: blue
-    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    # Dark
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
       primary: indigo
       accent: blue
+      toggle:
+        icon: material/weather-night
+        name: Switch to system preference
+  font:
+    text: Inter
+    code: JetBrains Mono
   icon:
     repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
 
 plugins:
   - search
 
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
   - codehilite
   - footnotes
   - meta
+  - tables
   - toc:
       permalink: true
+      title: On this page
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.caret
+  - pymdownx.tilde
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -52,9 +87,24 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.tasklist
   - pymdownx.snippets
-  - pymdownx.emoji
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.arithmatex:
       generic: true
+
+copyright: >
+  Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/suhasdevmane/OntoSage
+      name: OntoSage on GitHub
+    - icon: fontawesome/solid/book
+      link: https://suhasdevmane.github.io/OntoSage/
+      name: Documentation
 
 extra_css:
   - https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css
@@ -73,7 +123,7 @@ nav:
   - Architecture: ARCHITECTURE.md
   - Workflow Deep Dive: WORKFLOW.md
   - Services: SERVICES.md
-  - Capability Routing (v3.1): CAPABILITY_ROUTING.md
+  - Capability Routing (v2.0): CAPABILITY_ROUTING.md
   - Conversation Intelligence: CONVERSATION_INTELLIGENCE.md
   - Forecasting: FORECASTING.md
   - Configuration: CONFIGURATION.md

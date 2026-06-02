@@ -296,7 +296,7 @@ INTENT_TYPES = [
 
 ---
 
-## Working with the Capability Routing Pipeline *(v3.1)*
+## Working with the Capability Routing Pipeline *(v2.0)*
 
 The capability semantic routing pipeline ships with four collaborating components. When extending or debugging them, follow these guidelines.
 

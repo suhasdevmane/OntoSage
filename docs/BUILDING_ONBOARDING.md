@@ -12,7 +12,7 @@ OntoSage is designed to adapt to *your* building — not the other way around. Y
 |---|---|---|
 | **Sensor data** | `.ttl` ontology + time-series database | "What's the CO₂ in zone 3.01 right now?", trends, anomalies, reports |
 | **Floor plans** | `.pdf` and/or `.dwg` drawings | "Show me floor 3", room areas, adjacency, block/MEP locations |
-| **Capability KB** *(v3.1)* | `capability.yaml` per building | "Fire procedures?", "Bike parking?", "Power outage behaviour?" — off-ontology questions |
+| **Capability KB** *(v2.0)* | `capability.yaml` per building | "Fire procedures?", "Bike parking?", "Power outage behaviour?" — off-ontology questions |
 
 The full process has four parts:
 

@@ -188,7 +188,7 @@ Ask to see a floor or query room geometry.
 
 **What you get:** A floor plan image (PDF render or DWG-rendered SVG) plus structured room data — area in m², adjacency lists, sensor block counts.
 
-### Capability Questions (v3.1) — Off-Ontology Q&A
+### Capability Questions (v2.0) — Off-Ontology Q&A
 
 Ask about building features, policies, amenities, fire safety, IT — anything that isn't a sensor reading or analytics question. Answered from the per-building **Capability KB** (Qdrant-backed semantic search) in **under 50 ms** when the system is confident.
 
