@@ -78,8 +78,8 @@ graph LR
 - Hosts the LangGraph agent state machine
 - Validates and routes all incoming requests
 - Enforces authentication (Argon2id sessions) and RBAC (6 roles, 20 permissions)
-- Coordinates the 14-intent pipeline across 9 specialised agents
-- Manages conversation state in Redis (1-hour TTL)
+- Coordinates the 22+ intent pipeline across the specialised agents
+- Manages conversation state in Redis (count-bounded, no time-expiry by default) plus long-term `turn_memory` in PostgreSQL
 - Provides OpenAI-compatible `/v1/chat/completions` endpoint for Open WebUI
 - Switches transparently between OpenAI and Ollama based on `MODEL_PROVIDER`
 
@@ -347,9 +347,9 @@ If the code generates a plot with `plt.savefig("output.png")`, the response incl
 
 ### Responsibilities
 
-- Stores conversation state (1-hour TTL per session)
-- Caches intent classification results (1-hour TTL)
-- Caches SPARQL generation results (1-hour TTL)
+- Stores conversation state (count-bounded to `CONVERSATION_MAX_MESSAGES`, no time-expiry by default)
+- Caches responses (`resp_cache:*`, 1-hour TTL) and embeddings (`cache:embed:*`, 24-hour TTL)
+- Backs the async job queue for long-running tasks
 - Stores authenticated session tokens (7-day TTL)
 
 ### Volume

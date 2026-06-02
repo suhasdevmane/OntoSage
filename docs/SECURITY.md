@@ -366,7 +366,8 @@ Refer to [OpenAI's data privacy policy](https://openai.com/policies/privacy-poli
 
 ### Conversation History
 
-- **Redis:** Conversation state is kept for 1 hour (configurable via `CONVERSATION_TTL`)
+- **Redis:** Recent conversation state is count-bounded to `CONVERSATION_MAX_MESSAGES` with no time-expiry by default (set `CONVERSATION_TTL` > 0 to enforce time-based expiry)
+- **PostgreSQL:** Per-turn summaries in `turn_memory` (no raw sensor arrays)
 - **MongoDB:** Full message history is persisted for audit and conversation continuity
 - **Retention policy:** Set your MongoDB TTL index according to your organisation's data retention requirements
 

@@ -425,7 +425,7 @@ Sensor data freshness depends on how frequently your building management system 
 Currently optimised for English. If your Ollama model supports your language (e.g., LLaMA 3.1 has multilingual support), you can try other languages, but accuracy may be lower.
 
 **Q: What happens to my conversation history?**
-Conversation state is stored in Redis with a 1-hour TTL — this means the AI remembers the context of your current conversation for up to 1 hour. Full message history is stored in MongoDB for audit purposes and retained according to your administrator's retention policy.
+Recent conversation state is held in Redis (bounded to the last ~20 messages, with no fixed time-expiry by default), so the assistant keeps the thread of your current conversation and resolves follow-up references. A concise per-turn summary is also kept in PostgreSQL (`turn_memory`) for long-term continuity, and full message history is stored in MongoDB for audit, retained per your administrator's policy. See [Conversation Intelligence](CONVERSATION_INTELLIGENCE.md).
 
 **Q: Can I export my conversation?**
 Not directly from the chat UI. Your administrator can export conversation logs from MongoDB.

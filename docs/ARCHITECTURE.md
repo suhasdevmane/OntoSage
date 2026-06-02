@@ -637,8 +637,8 @@ Redis is used for three distinct caching layers:
 
 | Layer | Key | TTL | Benefit |
 |---|---|---|---|
-| **Conversation state** | `conv:{conversation_id}` | 1 hour | Avoids re-loading state on every turn |
-| **Intent classification** | `intent:{hash(query)}` | 1 hour | Skips LLM call for repeated queries |
+| **Conversation state** | `conversation:{conversation_id}` | none (count-bounded) | Recent turns + carry-forward; trimmed to `CONVERSATION_MAX_MESSAGES`, no time-expiry by default |
+| **Response cache** | `resp_cache:*` | 1 hour | Skips repeat LLM calls for identical queries |
 | **SPARQL results** | `sparql:{hash(query+entities)}` | 1 hour | Skips GraphDB query for identical requests |
 | **Session tokens** | `session:{token}` | 7 days | Authentication state |
 
