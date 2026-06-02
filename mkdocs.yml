@@ -114,8 +114,9 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js
   - https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js
   - assets/katex-init.js
-  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
-  - assets/init-mermaid.js
+  # Mermaid is rendered natively by Material for MkDocs via the superfences
+  # custom fence below — it handles instant-navigation re-rendering and the
+  # light/dark palette automatically. (No manual mermaid.js script needed.)
 
 nav:
   - Overview: index.md
