@@ -87,7 +87,7 @@ graph TD
     subgraph "Data Layer"
         SQ -->|per-building adapter| MySQL[("MySQL :3306<br/>Sensor time-series")]
         SQ -->|per-building adapter| PG[("PostgreSQL :5433<br/>Users · RBAC · turn_memory · user_reports")]
-        Orch -->|conversation state (count-bounded)<br/>+ carry-forward + embed cache| Redis[("Redis :6379")]
+        Orch -->|conversation state + carry-forward<br/>+ embed cache| Redis[("Redis :6379")]
         Orch -->|per-turn summaries| PG
         Orch -->|chat history| Mongo[("MongoDB :27017")]
         AnA -->|execute code| CE["Code Executor :8002<br/>(Docker sandbox)"]
