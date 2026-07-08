@@ -236,4 +236,10 @@ class WorkflowGraphMixin:
 
         workflow.add_edge("response", END)
 
+        # Expose the ACTUAL registered node set so _route_from_dialogue's safety
+        # net checks reality instead of a hand-maintained duplicate — otherwise a
+        # newly-added intent (YAML + node_method, auto-registered above) would be
+        # silently rerouted to "response" whenever the two lists drift.
+        self._registered_nodes = frozenset(workflow.nodes.keys())
+
         return workflow.compile()

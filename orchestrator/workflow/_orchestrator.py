@@ -3333,7 +3333,13 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             # points to a node that isn't registered in _build_graph, fall
             # back to "response" so LangGraph doesn't crash with
             # "branch returned unknown node".
-            _REGISTERED_NODES = frozenset(
+            # Prefer the ACTUAL registered node set captured by _build_graph, so
+            # this safety net checks reality rather than a hand-maintained copy.
+            # Otherwise a newly-added intent (YAML + node_method, auto-registered by
+            # Phase 13B) would be silently rerouted to "response" whenever the two
+            # drift — quietly breaking the documented "2 steps to add an intent".
+            # The inline set is only a fallback for a router built without the graph.
+            _fallback_registered = frozenset(
                 {
                     "sparql",
                     "sql",
@@ -3361,9 +3367,11 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                     "automation_capability_check",
                     # T35 — personalised comfort preference management.
                     "preference_management",
+                    "locked_capability",
                 }
             )
-            if target not in _REGISTERED_NODES:
+            _registered_nodes = getattr(self, "_registered_nodes", None) or _fallback_registered
+            if target not in _registered_nodes:
                 logger.info(
                     f"[route] intent '{intent}' has route_target='{target}' "
                     "which is not a registered workflow node — falling back to response"
