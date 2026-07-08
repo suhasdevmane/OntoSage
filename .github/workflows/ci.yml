@@ -36,7 +36,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
       - name: Install lint tools
-        run: pip install flake8 black isort yamllint pyyaml rdflib
+        run: pip install -r requirements-dev.txt pyyaml rdflib
       - name: Black format check
         run: black --check --line-length 100 orchestrator/ shared/ scripts/ tests/
         continue-on-error: true
@@ -105,6 +105,7 @@ jobs:
             tests/test_routing_accuracy.py \
             tests/test_state_persistence.py \
             tests/test_swap_building.py \
+            tests/test_input_validators.py \
             tests/test_unregistered_intent_safety_net.py \
             tests/test_workflow_wiring.py \
             tests/test_survey_aligned_phases.py \
@@ -281,19 +282,23 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-      - run: pip install bandit
-      - name: Run bandit
+      - run: pip install bandit==1.8.0 pip-audit==2.7.3
+      - name: Run bandit (HIGH severity is BLOCKING)
         run: |
           bandit -r orchestrator/ shared/ \
             -ll --exclude orchestrator/tests \
             -f json -o bandit-report.json || true
           python -c "
-          import json
+          import json, sys
           r = json.load(open('bandit-report.json'))
           highs = [i for i in r.get('results', []) if i['issue_severity'] == 'HIGH']
-          print(f'HIGH severity issues: {len(highs)}')
-          for h in highs[:5]:
-              print(f'  {h[\"filename\"]}:{h[\"line_number\"]} — {h[\"issue_text\"]}')
+          meds = [i for i in r.get('results', []) if i['issue_severity'] == 'MEDIUM']
+          print(f'HIGH severity issues: {len(highs)} (blocking)')
+          print(f'MEDIUM severity issues: {len(meds)} (advisory)')
+          for h in highs[:10]:
+              print(f'  HIGH {h[\"filename\"]}:{h[\"line_number\"]} — {h[\"issue_text\"]}')
+          if highs:
+              sys.exit(1)
           "
       - uses: actions/upload-artifact@v4
         with:
@@ -301,6 +306,10 @@ jobs:
           path: bandit-report.json
           retention-days: 14
         continue-on-error: true
+      - name: Dependency CVE scan (pip-audit — advisory)
+        # Advisory for now (transitive CVEs are common); promote to blocking once
+        # the dependency tree is triaged. Pinned to match requirements-dev.txt.
+        run: pip-audit -r orchestrator/requirements.txt --strict || true
 
   # ── 9. CI Summary ───────────────────────────────────────────────────────
   ci-summary:
