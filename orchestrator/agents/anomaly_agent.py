@@ -270,7 +270,17 @@ Be concise and actionable."""
         if isinstance(sensor_data, list):
             return [r for r in sensor_data if isinstance(r, dict)]
         if isinstance(sensor_data, dict):
-            data = sensor_data.get("data") or sensor_data.get("results") or []
+            # Accept both the flat shape ({"data": [...]}) and the pipeline's
+            # sql_result shape ({"results": {"data": [...]}}). Previously a
+            # results-as-dict was treated as the record list and discarded, so
+            # the anomaly agent saw zero records despite SQL returning rows.
+            data = sensor_data.get("data")
+            if data is None:
+                results = sensor_data.get("results")
+                if isinstance(results, dict):
+                    data = results.get("data")
+                elif isinstance(results, list):
+                    data = results
             if isinstance(data, list):
                 return [r for r in data if isinstance(r, dict)]
         return []

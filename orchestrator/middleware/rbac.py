@@ -1,6 +1,19 @@
 """
-Phase 6.8 — RBAC & Multi-Tenancy Middleware
+Phase 6.8 — RBAC & Multi-Tenancy Middleware  [LARGELY SUPERSEDED — read banner]
 =============================================
+
+⚠️  DO NOT USE THE JWT/USER-STORE STACK BELOW FOR NEW CODE.  The live auth path
+    is session-based:
+      • session/token validation → orchestrator/auth_manager.py
+      • FastAPI permission gate   → require_permission() in orchestrator/main.py
+    Only ``UserContext`` and ``ROLE_PERMISSIONS`` from this module are imported by
+    the app. ``SimpleJWT`` / ``TokenManager`` / ``UserStore`` / ``RBACMiddleware``
+    / ``create_rbac_dependency`` / ``get_auth_manager`` / ``get_user_store`` are an
+    UNWIRED legacy stack kept only for the Phase-B activation tests. They carry
+    known defects (query-param instead of Authorization header; bare ``Exception``
+    → HTTP 500; unsalted SHA-256 passwords) and are slated for removal — do not
+    build on them.
+
 Role-Based Access Control (RBAC) for the OntoSage API layer.
 
 Features:
@@ -71,6 +84,7 @@ ALL_PERMISSIONS = {
     "building:delete",
     # Device control
     "device:control",
+    "control:write",   # T24: write setpoints via actuation gateway (admin + facility only)
     # System
     "system:admin",
     "system:health",
@@ -94,6 +108,7 @@ ROLE_PERMISSIONS: Dict[str, Set[str]] = {
         "building:read",
         "building:write",
         "device:control",
+        "control:write",  # T24: actuation gateway write access
         "system:health",
     },
     "analyst": {
@@ -282,15 +297,6 @@ class UserStore:
 
     def __init__(self):
         self._users: Dict[str, Dict] = {}
-        # Seed a default admin
-        self.add_user(
-            user_id="admin-001",
-            username="admin",
-            password="change-me-in-production",
-            role="admin",
-            tenant_id="default",
-            allowed_buildings=[],
-        )
 
     def add_user(
         self,

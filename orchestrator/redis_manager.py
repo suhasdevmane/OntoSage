@@ -75,9 +75,7 @@ class RedisManager:
             )
             logger.info(f"   ├─ User: {state.user_id}")
             ir_keys = (
-                list(state.intermediate_results.keys())
-                if state.intermediate_results
-                else "None"
+                list(state.intermediate_results.keys()) if state.intermediate_results else "None"
             )
             logger.info(f"   ├─ Intermediate results keys: {ir_keys}")
 
@@ -314,6 +312,18 @@ class RedisManager:
             logger.error(f"Failed to get cached result: {e}")
             return None
 
+    async def _ensure_client(self):
+        """Return the connected Redis client, connecting lazily if needed.
+
+        user_alert_store called this before it existed (every list/delete
+        silently returned empty); approval_store and user_preference_store
+        invented their own broken accessors. One canonical helper
+        (fix 2026-06-12).
+        """
+        if not self.client:
+            await self.connect()
+        return self.client
+
     async def get_cache(self, key: str) -> Optional[Any]:
         """
         Get value from cache
@@ -356,6 +366,17 @@ class RedisManager:
             return True
         except Exception as e:
             logger.error(f"Failed to set cache for key {key}: {e}")
+            return False
+
+    async def delete_cache(self, key: str) -> bool:
+        """Delete a cache key. Returns True on success, False on error."""
+        if not self.client:
+            await self.connect()
+        try:
+            await self.client.delete(key)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete cache key {key}: {e}")
             return False
 
     async def add_conversation_to_user(self, user_id: str, conversation_id: str, title: str):

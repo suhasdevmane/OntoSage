@@ -7,7 +7,7 @@ import sys
 sys.path.append("/app")
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -168,7 +168,12 @@ class AnalyticsAgent:
             # Step 1: Generate Python code
             logger.info("\n🤖 Step 1: Generating Python analytics code...")
             code = await self._generate_code(
-                user_query, data, sensor_metadata, data_filename, user_id=state.user_id
+                user_query,
+                data,
+                sensor_metadata,
+                data_filename,
+                user_id=state.user_id,
+                recipe_hints=state.intermediate_results.get("recipe_hints"),
             )
             logger.info(f"✅ Code generated ({len(code)} chars)")
 
@@ -214,6 +219,37 @@ class AnalyticsAgent:
                 ),
             }
 
+    @staticmethod
+    def _query_wants_chart(user_query: str, query_lower: str) -> bool:
+        """True when the user is asking for a chart/plot/graph (negation-aware).
+
+        Mirrors ``WorkflowOrchestrator._user_wants_visualization`` so that template
+        selection here and pipeline routing in the workflow agree on what counts
+        as a visualization request.
+        """
+        try:
+            from orchestrator.workflow import WorkflowOrchestrator as _WO
+
+            return _WO._user_wants_visualization(user_query)
+        except Exception:
+            _viz_pos = frozenset(
+                [
+                    "plot", "chart", "graph", "visualize", "visualise",
+                    "show trend", "show graph", "show chart", "show plot",
+                    "line chart", "bar chart", "time series", "histogram",
+                    "scatter plot", "heatmap", "generate chart", "draw chart",
+                ]
+            )
+            _viz_neg = (
+                "do not", "don't", "dont", "no chart", "no graph", "no plot",
+                "no visual", "without chart", "without graph", "without plot",
+                "skip chart", "skip graph", "just text", "text only",
+                "numbers only", "stats only", "data only", "no viz",
+            )
+            return any(w in query_lower for w in _viz_pos) and not any(
+                n in query_lower for n in _viz_neg
+            )
+
     def _get_template_code(
         self,
         user_query: str,
@@ -227,6 +263,14 @@ class AnalyticsAgent:
         import json
 
         query_lower = user_query.lower()
+
+        # Compute the chart intent ONCE, up front.  A visualization request must
+        # take priority over the stats-only templates (1-6) below — otherwise a
+        # query like "plot the AVERAGE temperature" is intercepted by the
+        # average template and returns text with no chart.  Templates 1-6 are
+        # therefore guarded with `not _wants_viz`, and the chart template (7a)
+        # fires whenever a chart is requested.
+        _wants_viz = self._query_wants_chart(user_query, query_lower)
 
         # Build sensor map for the code
         sensor_map_str = "{}"
@@ -290,7 +334,7 @@ if df.empty:
             return None
 
         # Template 1: Latest + Average (combined)
-        if any(w in query_lower for w in ["average", "mean", "avg"]) and any(
+        if not _wants_viz and any(w in query_lower for w in ["average", "mean", "avg"]) and any(
             w in query_lower for w in ["current", "latest", "now", "recent"]
         ):
             return setup_code + """
@@ -312,7 +356,7 @@ for uuid, avg_val in avg_results.items():
 """
 
         # Template 2: Average/Mean
-        if any(w in query_lower for w in ["average", "mean", "avg"]):
+        if not _wants_viz and any(w in query_lower for w in ["average", "mean", "avg"]):
             return setup_code + """
 # Calculate Average
 results = df.groupby('uuid')['value'].mean()
@@ -327,7 +371,7 @@ for uuid, val in results.items():
 """
 
         # Template 3: Maximum/Peak
-        if any(w in query_lower for w in ["maximum", "max", "peak", "highest"]):
+        if not _wants_viz and any(w in query_lower for w in ["maximum", "max", "peak", "highest"]):
             return setup_code + """
 # Calculate Maximum
 results = df.groupby('uuid')['value'].max()
@@ -342,7 +386,7 @@ for uuid, val in results.items():
 """
 
         # Template 4: Minimum/Lowest
-        if any(w in query_lower for w in ["minimum", "min", "lowest"]):
+        if not _wants_viz and any(w in query_lower for w in ["minimum", "min", "lowest"]):
             return setup_code + """
 # Calculate Minimum
 results = df.groupby('uuid')['value'].min()
@@ -357,7 +401,7 @@ for uuid, val in results.items():
 """
 
         # Template 5: Latest/Current
-        if any(w in query_lower for w in ["current", "latest", "now", "recent"]):
+        if not _wants_viz and any(w in query_lower for w in ["current", "latest", "now", "recent"]):
             return setup_code + """
 # Get Latest Values
 latest_indices = df.groupby('uuid')['timestamp'].idxmax()
@@ -375,7 +419,9 @@ for _, row in latest_df.iterrows():
 """
 
         # Template 6: Count
-        if any(w in query_lower for w in ["count", "how many readings", "number of readings"]):
+        if not _wants_viz and any(
+            w in query_lower for w in ["count", "how many readings", "number of readings"]
+        ):
             return setup_code + """
 # Count Readings
 results = df.groupby('uuid').size()
@@ -387,59 +433,9 @@ for uuid, count in results.items():
     print("-" * 20)
 """
 
-        # Template 7a/7b: negation-aware chart detection
-        # Reuse the same comprehensive vocabulary as WorkflowOrchestrator._user_wants_visualization
-        try:
-            from orchestrator.workflow import WorkflowOrchestrator as _WO
-
-            _wants_viz = _WO._user_wants_visualization(user_query)
-        except Exception:
-            # Fallback inline check if import unavailable
-            _viz_pos = frozenset(
-                [
-                    "plot",
-                    "chart",
-                    "graph",
-                    "visualize",
-                    "visualise",
-                    "show trend",
-                    "show graph",
-                    "show chart",
-                    "show plot",
-                    "line chart",
-                    "bar chart",
-                    "time series",
-                    "histogram",
-                    "scatter plot",
-                    "heatmap",
-                    "generate chart",
-                    "draw chart",
-                ]
-            )
-            _viz_neg = (
-                "do not",
-                "don't",
-                "dont",
-                "no chart",
-                "no graph",
-                "no plot",
-                "no visual",
-                "without chart",
-                "without graph",
-                "without plot",
-                "skip chart",
-                "skip graph",
-                "just text",
-                "text only",
-                "numbers only",
-                "stats only",
-                "data only",
-                "no viz",
-            )
-            _wants_viz = any(w in query_lower for w in _viz_pos) and not any(
-                n in query_lower for n in _viz_neg
-            )
-
+        # Template 7a: chart + stats.  `_wants_viz` was computed once at the top
+        # of this method and the stats-only templates above are guarded by it,
+        # so a visualization request always reaches this branch.
         if _wants_viz:
             return setup_code + """
 import matplotlib
@@ -523,6 +519,7 @@ else:
         sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
         data_filename: str = "current_data.json",
         user_id: str = "default_user",
+        recipe_hints: Optional[List[Dict[str, Any]]] = None,
     ) -> str:
         """Generate Python analytics code using LLM"""
 
@@ -553,6 +550,21 @@ else:
             for uuid, meta in sensor_metadata.items():
                 metadata_context += f"  - UUID: {uuid} → Label: {meta['label']}\n"
             metadata_context += "\nIMPORTANT: The 'uuid' column in the data contains these UUID values (e.g., '1e87a383-b1b9-41e2-8f8d-a4d295ebf26a'), NOT the human-readable labels. When filtering data, use the actual UUID values from the 'uuid' column, not the sensor names."
+
+        # T05: inject HBCO recipe thresholds when present
+        _recipe_hints = recipe_hints or []
+        if _recipe_hints:
+            metadata_context += "\n\nAnalytics Recipe Guidance (from HBCO):\n"
+            for _rh in _recipe_hints:
+                metadata_context += f"  - Concept: {_rh.get('concept_id')} | Recipe: {_rh.get('recipe_id')}\n"
+                metadata_context += f"    Description: {_rh.get('description')}\n"
+                _params = _rh.get("params") or {}
+                if _params:
+                    metadata_context += f"    Thresholds: {_params}\n"
+                _tmpl = _rh.get("answer_template", "")
+                if _tmpl:
+                    metadata_context += f"    Answer template: {_tmpl}\n"
+            metadata_context += "  Apply these thresholds when evaluating sensor values.\n"
 
         plot_filename = f"plot_{user_id}_{timestamp_str}.png"
 
@@ -809,6 +821,7 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
         plot_markdown = ""
         media = []
         image_url = None
+        inline_src = None  # data: URI used for the inline markdown (renders cross-origin)
 
         # PLOT_BASE64 — image data encoded directly in stdout by code-executor
         b64_match = re.search(r"PLOT_BASE64: ([A-Za-z0-9+/=]+)", output)
@@ -827,7 +840,12 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
                 )
                 output = output.replace(b64_match.group(0), "")
             else:
-                # Save PNG to /app/outputs/ so it's served via the orchestrator's /static/ mount
+                # Inline data URI is the reliable way to render in the chat UI —
+                # the file-server is a different origin (:8080) than Open WebUI,
+                # so a cross-origin <img> can be blocked by CSP.  We still save
+                # the file (for the media payload / external consumers).
+                inline_src = f"data:image/png;base64,{b64_data}"
+                # Save PNG to /app/outputs/ so it's also served via the file-server /static/ mount
                 plot_filename = f"plot_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.png"
                 plot_path = f"/app/outputs/{plot_filename}"
                 try:
@@ -838,8 +856,8 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
                     image_url = f"{static_base}/static/{plot_filename}"
                     logger.info(f"Saved plot to {plot_path}, serving at {image_url}")
                 except Exception as e:
-                    logger.warning(f"Could not save plot file: {e} — falling back to data URI")
-                    image_url = f"data:image/png;base64,{b64_data}"
+                    logger.warning(f"Could not save plot file: {e} — using inline data URI only")
+                    image_url = inline_src
                 output = output.replace(b64_match.group(0), "")
 
         # Legacy fallback: PLOT_GENERATED with filename
@@ -851,6 +869,8 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
             output = output.replace(plot_match.group(0), "")
 
         if image_url:
+            # Use the file-server URL (Open WebUI's markdown renderer does NOT
+            # display data: URIs — it prints them as raw text).
             plot_markdown = f"\n\n![Analysis Plot]({image_url})"
 
             # Remove the marker from output to clean it up for LLM

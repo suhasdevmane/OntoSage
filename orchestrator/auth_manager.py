@@ -162,6 +162,7 @@ class AuthManager:
         password: str,
         email: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        role: str = "readonly",
     ) -> Dict[str, Any]:
         """
         Register a new user
@@ -206,6 +207,7 @@ class AuthManager:
                 "password_hash": hashed_password,
                 "salt": salt,
                 "email": email or "",
+                "role": role,
                 "created_at": datetime.now().isoformat(),
                 "last_login": "",
                 "metadata": json.dumps(metadata or {}),
@@ -214,7 +216,7 @@ class AuthManager:
             if self.postgres:
                 # Store in Postgres
                 success = await self.postgres.create_user(
-                    username, hashed_password, salt, email, metadata
+                    username, hashed_password, salt, email, metadata, role=role
                 )
                 if not success:
                     raise ValueError("Failed to create user in database")
@@ -331,8 +333,9 @@ class AuthManager:
 
             stored_hash = get_value(user_data, "password_hash")
             salt = get_value(user_data, "salt")
+            role = get_value(user_data, "role") or "readonly"
 
-            logger.info(
+            logger.debug(
                 f"Login attempt - hash len: {len(stored_hash) if stored_hash else 0}, salt len: {len(salt) if salt else 0}"
             )
 
@@ -366,6 +369,7 @@ class AuthManager:
             # Store session data
             session_data = {
                 "username": username,
+                "role": role,
                 "created_at": datetime.now().isoformat(),
                 "last_activity": datetime.now().isoformat(),
             }
@@ -392,6 +396,7 @@ class AuthManager:
             return {
                 "success": True,
                 "username": username,
+                "role": role,
                 "session_token": session_token,
                 "expires_in": self.session_ttl,
                 "message": "Login successful",
@@ -437,6 +442,48 @@ class AuthManager:
 
         except Exception as e:
             logger.error(f"Session validation error: {e}")
+            return None
+
+    async def validate_session_context(
+        self, session_token: str
+    ) -> Optional[Dict[str, Any]]:
+        """Validate a session and return {username, role}, or None.
+
+        Mirrors validate_session() (updates last_activity, refreshes TTL) but
+        also surfaces the role stored at login so the RBAC layer can resolve
+        permissions. A session missing its role field fails CLOSED to
+        ``readonly`` (least privilege) — never to a privileged role. login_user
+        always writes a role, so a legitimate session never hits this fallback.
+        """
+        try:
+            session_data = await self.redis.client.hgetall(f"session:{session_token}")
+            if not session_data:
+                return None
+
+            def _get(key: str) -> Optional[str]:
+                val = session_data.get(key) or session_data.get(key.encode())
+                if isinstance(val, bytes):
+                    return val.decode("utf-8")
+                return val
+
+            username = _get("username")
+            if not username:
+                return None
+            role = _get("role") or "readonly"
+
+            # Update last activity + refresh expiration
+            await self.redis.client.hset(
+                f"session:{session_token}",
+                "last_activity",
+                datetime.now().isoformat(),
+            )
+            await self.redis.client.expire(
+                f"session:{session_token}", self.session_ttl
+            )
+            return {"username": username, "role": role}
+
+        except Exception as e:
+            logger.error(f"Session context validation error: {e}")
             return None
 
     async def logout_user(self, session_token: str) -> Dict[str, Any]:
@@ -489,8 +536,8 @@ class AuthManager:
             user_data = None
             if self.postgres:
                 user_data = await self.postgres.get_user(username)
-
-            if not user_data:
+            else:
+                # Redis-only path (no Postgres configured)
                 user_data = await self.redis.client.hgetall(f"user:{username}")
 
             if not user_data:
@@ -545,11 +592,15 @@ class AuthManager:
             Update result
         """
         try:
-            exists = await self.redis.client.exists(f"user:{username}")
-            if not exists:
-                return {"success": False, "error": "User not found"}
-
-            await self.redis.client.hset(f"user:{username}", "metadata", json.dumps(metadata))
+            if self.postgres:
+                updated = await self.postgres.update_user_metadata(username, metadata)
+                if not updated:
+                    return {"success": False, "error": "User not found"}
+            else:
+                exists = await self.redis.client.exists(f"user:{username}")
+                if not exists:
+                    return {"success": False, "error": "User not found"}
+                await self.redis.client.hset(f"user:{username}", "metadata", json.dumps(metadata))
 
             return {"success": True, "message": "Metadata updated"}
 
@@ -557,7 +608,7 @@ class AuthManager:
             logger.error(f"Update metadata error: {e}")
             return {"success": False, "error": "Update failed"}
 
-    async def list_all_users(self) -> list[str]:
+    async def list_all_users(self) -> list:
         """
         Get list of all registered usernames
 
@@ -565,8 +616,11 @@ class AuthManager:
             List of usernames
         """
         try:
+            if self.postgres:
+                rows = await self.postgres.list_users()
+                return [r["username"] for r in rows]
             usernames = await self.redis.client.smembers("users:all")
-            return [u.decode("utf-8") for u in usernames]
+            return [u.decode("utf-8") if isinstance(u, bytes) else u for u in usernames]
         except Exception as e:
             logger.error(f"List users error: {e}")
             return []
@@ -607,6 +661,10 @@ class AuthManager:
                             await self.redis.client.delete(key)
                     except:
                         pass
+
+            # Remove from Postgres when it is the authoritative store
+            if self.postgres:
+                await self.postgres.delete_user(username)
 
             logger.info(f"User deleted: {username}")
 

@@ -7,10 +7,11 @@ import json
 import os
 import re
 import sys
+import time
 
 sys.path.append("/app")
 
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional, Tuple
 from uuid import uuid4
 
 from langgraph.graph import END, StateGraph
@@ -23,21 +24,22 @@ from orchestrator.agents import (
     VisualizationAgent,
 )
 from orchestrator.agents.anomaly_agent import AnomalyDetectionAgent
-from orchestrator.agents.control_agent import ControlAgent
-from orchestrator.agents.maintenance_agent import MaintenanceAgent
-from orchestrator.agents.data_export_agent import DataExportAgent
 from orchestrator.agents.capability_agent import CapabilityAgent
-from orchestrator.agents.verifier_agent import VerifierAgent
+from orchestrator.agents.control_agent import ControlAgent
+from orchestrator.agents.data_export_agent import DataExportAgent
 
 # CAP-01: Document agent
 from orchestrator.agents.document_agent import DocumentAgent
+from orchestrator.agents.maintenance_agent import MaintenanceAgent
 from orchestrator.agents.planner_agent import PlannerAgent
 
 # Phase 4 agents
 from orchestrator.agents.report_agent import ReportAgent
+from orchestrator.agents.verifier_agent import VerifierAgent
 from orchestrator.llm_manager import TaskType, llm_manager
 
 # B.7: Deterministic analytics engine
+from orchestrator.services import provenance as _prov
 from orchestrator.services.analytics_engine import AnalysisRequest, AnalyticsEngine
 
 # CAP-03: Persona-aware post-processing
@@ -55,6 +57,7 @@ from shared.utils import get_logger
 # WIRE-A: i18n service (translate query in, response out)
 try:
     from orchestrator.services.i18n_service import I18nService
+
     _I18N_AVAILABLE = True
 except Exception:  # noqa: BLE001 — catches ImportError, SyntaxError, etc.
     _I18N_AVAILABLE = False
@@ -67,6 +70,259 @@ from orchestrator.workflow._graph import WorkflowGraphMixin
 from orchestrator.workflow._routing import WorkflowRoutingMixin
 
 logger = get_logger(__name__)
+
+
+# ── T34 what-if intent override ───────────────────────────────────────────────
+# Interventional what-ifs ("what would happen if we lowered heating 2 degrees?")
+# were LLM-classified as trend → forecast pipeline, bypassing the estimate-recipe
+# analytics path entirely (T34 known WARN, fixed 2026-06-12). Override to
+# analytics ONLY for hypothetical-intervention phrasing on data-pipeline intents;
+# never hijack control / alert / report-intake (routing-precedence rules).
+_WHATIF_INTERVENTION_RE = re.compile(
+    r"\b(what if|if we|if you|suppose we|were we to)\b.{0,60}"
+    r"\b(lower|raise|increase|decrease|reduce|change|adjust|double|halve|"
+    r"turn\w* (down|up|off|on)|set)\w*\b"
+)
+_WHATIF_OVERRIDABLE_INTENTS = frozenset(
+    {"trend", "forecast", "analytics", "sensor_data", "general", "compare", "recommend", "anomaly"}
+)
+
+# Metrics a bare anomaly query might name. When none is present ("are there any
+# unusual readings today?"), SPARQL RAG picks an arbitrary sensor type that often
+# has no time-series UUIDs and the pipeline dead-ends at "no data"; we default the
+# SPARQL target to temperature (an always-instrumented comfort metric) instead.
+_ANOMALY_METRIC_RE = re.compile(
+    r"\b(temperature|temp|co2|carbon dioxide|humidity|humid|pm2|pm10|pm1|voc|tvoc|"
+    r"illuminance|lux|gas|air quality|noise|sound|oxygen|formaldehyde|no2|methane)\b",
+    re.IGNORECASE,
+)
+
+
+def whatif_intent_override(query_lower: str, current_intent: str) -> Optional[str]:
+    """Return 'analytics' when an interventional what-if should override routing."""
+    if current_intent in _WHATIF_OVERRIDABLE_INTENTS and _WHATIF_INTERVENTION_RE.search(
+        query_lower
+    ):
+        return "analytics"
+    return None
+
+
+# ── General-knowledge answer-length control ───────────────────────────────────
+# The user controls answer length by phrasing ("briefly", "in detail",
+# "summarize") — auto-detected here — or by an explicit `answer_length` hint on
+# state.intermediate_results. Detected length maps to a prompt directive (the
+# fast model has a fixed max_tokens, so length is steered by instruction, which
+# is reliable across OpenAI and Ollama).
+_LENGTH_SHORT_KW = (
+    "in short",
+    "briefly",
+    "in brief",
+    "be brief",
+    "one line",
+    "one-line",
+    "one sentence",
+    "in a sentence",
+    "quick answer",
+    "short answer",
+    "tl;dr",
+    "tldr",
+    "concise",
+    "just the answer",
+    "in a nutshell",
+    "keep it short",
+)
+_LENGTH_LONG_KW = (
+    "in detail",
+    "in-depth",
+    "in depth",
+    "detailed",
+    "explain fully",
+    "comprehensive",
+    "elaborate",
+    "long answer",
+    "thorough",
+    "deep dive",
+    "full explanation",
+    "explain thoroughly",
+    "as much detail",
+    "everything about",
+)
+_LENGTH_SUMMARY_KW = (
+    "summarize",
+    "summarise",
+    "summary",
+    "in summary",
+    "overview",
+    "key points",
+    "main points",
+    "bullet points",
+    "high level",
+    "high-level",
+)
+_LENGTH_DIRECTIVES = {
+    "short": "Answer in 1-2 short sentences. Be direct — no preamble, no caveats.",
+    "summary": (
+        "Provide a concise summary: 3-5 sentences or a short bulleted list of the "
+        "key points. No filler."
+    ),
+    "long": (
+        "Provide a thorough, well-structured explanation with relevant detail, "
+        "examples, and context. Use short headings or bullet points where they aid "
+        "readability."
+    ),
+    "medium": "Provide a clear, helpful answer of about one short paragraph.",
+}
+
+
+def _detect_answer_length(query: str, explicit: Optional[str] = None) -> str:
+    """Pick answer length (short|summary|long|medium) from phrasing or explicit hint.
+
+    Precedence: explicit hint → short → long → summary → medium default.
+    """
+    if explicit and isinstance(explicit, str) and explicit.lower() in _LENGTH_DIRECTIVES:
+        return explicit.lower()
+    q = (query or "").lower()
+    if any(k in q for k in _LENGTH_SHORT_KW):
+        return "short"
+    if any(k in q for k in _LENGTH_LONG_KW):
+        return "long"
+    if any(k in q for k in _LENGTH_SUMMARY_KW):
+        return "summary"
+    return "medium"
+
+
+# ── Live-data need detection (general_knowledge node) ─────────────────────────
+# Heuristic gate: only questions that need CURRENT information (which the LLM
+# cannot know from its training cutoff) trigger a live fetch. Everything else
+# stays a pure-LLM answer. Weather is matched first (more specific) than the
+# generic "current/latest" web signals.
+_WEATHER_KW = (
+    "weather",
+    "forecast",
+    "raining",
+    "is it raining",
+    "going to rain",
+    "snowing",
+    "is it sunny",
+    "is it cloudy",
+    "how hot is it",
+    "how cold is it",
+    "how warm is it",
+    "temperature outside",
+    "humidity outside",
+    "wind speed",
+    "how's the weather",
+    "hows the weather",
+    "what's the weather",
+    "whats the weather",
+)
+_LIVE_WEB_KW = (
+    "latest",
+    "current",
+    "currently",
+    "right now",
+    "as of today",
+    "as of now",
+    "today's",
+    "todays",
+    "this week",
+    "this month",
+    "this year",
+    "recent",
+    "recently",
+    "news",
+    "who won",
+    "who is winning",
+    "score",
+    "results of",
+    "price of",
+    "stock price",
+    "share price",
+    "exchange rate",
+    "how much is",
+    "release date",
+    "newest",
+    "up to date",
+    "up-to-date",
+    "breaking",
+    "who is the current",
+    "what is the latest",
+)
+# Trailing time/qualifier words to strip off an extracted location.
+_LOC_TRAILING = (
+    "right now",
+    "now",
+    "today",
+    "tonight",
+    "tomorrow",
+    "currently",
+    "this week",
+    "this weekend",
+    "this morning",
+    "this evening",
+    "please",
+)
+
+
+def _extract_location(query: str) -> Optional[str]:
+    """Pull a place name out of a weather question, or None if none is present.
+
+    Matches a preposition (in/at/for/around/near) as a whole word — so "at" does
+    not match inside "what" — and takes the LAST such phrase as the location.
+    """
+    import re as _re
+
+    q = query.strip().rstrip("?.!")
+    matches = list(
+        _re.finditer(
+            r"\b(?:in|at|for|around|near)\s+([A-Za-z][A-Za-z .,'\-]*)",
+            q,
+            _re.IGNORECASE,
+        )
+    )
+    if not matches:
+        return None
+    loc = matches[-1].group(1).strip()
+    loc_l = loc.lower()
+    for t in _LOC_TRAILING:
+        if loc_l.endswith(t):
+            loc = loc[: len(loc) - len(t)].strip().rstrip(",")
+            loc_l = loc.lower()
+    return loc if len(loc) >= 2 else None
+
+
+def _detect_live_data_need(query: str) -> Optional[Tuple[str, str]]:
+    """Return ("weather", location) or ("web", query), else None.
+
+    Heuristic — intentionally conservative so static-knowledge questions don't
+    pay for a network round-trip. The answering node degrades to a plain LLM
+    answer whenever the fetch yields nothing.
+    """
+    if not query:
+        return None
+    q = query.lower()
+    if any(k in q for k in _WEATHER_KW):
+        return ("weather", _extract_location(query) or "")
+    if any(k in q for k in _LIVE_WEB_KW):
+        return ("web", query.strip())
+    return None
+
+
+def _live_data_need_from_hint(hint: Optional[Any], query: str) -> Optional[Tuple[str, str]]:
+    """Map the classifier's `live_data` hint to a (kind, arg) tuple, or None.
+
+    This is the PRIMARY (smart) signal — the dialogue LLM already saw the query
+    and conversation history. `_detect_live_data_need` is the keyword fallback.
+    """
+    if not isinstance(hint, dict):
+        return None
+    t = str(hint.get("type") or "").lower()
+    if t == "weather":
+        loc = (hint.get("location") or _extract_location(query) or "").strip()
+        return ("weather", loc)
+    if t == "web":
+        return ("web", (hint.get("query") or query or "").strip())
+    return None
 
 
 class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
@@ -194,6 +450,141 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
 
         return wrapper
 
+    # Short affirmations that, after a chart offer, mean "yes, draw the chart".
+    # Matched by EXACT equality (after lowercasing + trimming trailing punctuation)
+    # so a "yes" buried in a substantive sentence never triggers this path.
+    _CHART_AFFIRMATIONS = frozenset(
+        [
+            "yes",
+            "yes please",
+            "yeah",
+            "yep",
+            "yup",
+            "sure",
+            "ok",
+            "okay",
+            "ok please",
+            "yes ok",
+            "go ahead",
+            "please do",
+            "do it",
+            "please",
+            "y",
+            "absolutely",
+            "of course",
+            "sounds good",
+            "yes thanks",
+            "yes thank you",
+            "yes please do",
+            "plot it",
+            "plot it please",
+            "show it",
+            "show me",
+            "draw it",
+            "graph it",
+            "chart it",
+            "yes go ahead",
+            "go for it",
+            "that would be great",
+            "great",
+            "yes do it",
+            "do that",
+            "yes show me",
+        ]
+    )
+
+    # Phrases an assistant uses when it OFFERS (but did not yet produce) a chart.
+    _CHART_OFFER_MARKERS = (
+        "create a graph",
+        "create a chart",
+        "graph for you",
+        "chart for you",
+        "visual representation",
+        "see a graph",
+        "see a chart",
+        "i can plot",
+        "i can create",
+        "i can show",
+        "show you a graph",
+        "show you a chart",
+        "would you like a chart",
+        "would you like a graph",
+        "would you like me to",
+        "generate a chart",
+        "generate a graph",
+        "plot the graph",
+        "visualize",
+        "visualise",
+        "couldn't render the chart",
+        "could not render the chart",
+    )
+
+    def _affirmation_to_chart(self, state: ConversationState) -> Optional[str]:
+        """If the user just affirmed a chart the assistant offered, return the
+        chart request to run; otherwise ``None``.
+
+        Detection requires BOTH: (a) the current message is a short, exact-match
+        affirmation, and (b) the most recent assistant message offered a chart.
+        The returned query is derived from the most recent prior USER message so
+        the visualization node can re-fetch the series and plot it.
+        """
+        msgs = state.messages or []
+        if len(msgs) < 3:
+            return None
+        cur = (msgs[-1].content or "").strip().lower().rstrip("!. ")
+        if not cur or len(cur.split()) > 5 or cur not in self._CHART_AFFIRMATIONS:
+            return None
+
+        last_assistant = None
+        prev_user = None
+        for m in reversed(msgs[:-1]):
+            role = getattr(m, "role", "") or ""
+            if last_assistant is None and role == "assistant":
+                last_assistant = (m.content or "").lower()
+                continue
+            if last_assistant is not None and role == "user":
+                prev_user = (m.content or "").strip()
+                break
+
+        if not last_assistant or not prev_user:
+            return None
+        if not any(mark in last_assistant for mark in self._CHART_OFFER_MARKERS):
+            return None
+
+        # If the prior query was already a chart request, just re-run it (the
+        # visualization path now produces a chart reliably).  Otherwise wrap it
+        # into an explicit plot request so it routes to the visualization node.
+        if self._user_wants_visualization(prev_user):
+            return prev_user
+        return f"plot {prev_user} as a line chart"
+
+    def _spawn_background(self, coro) -> None:
+        """Run a coroutine fire-and-forget without blocking the request path.
+
+        Keeps a strong reference until completion so the task is not garbage-
+        collected mid-flight (a known asyncio footgun).
+        """
+        if not hasattr(self, "_bg_tasks"):
+            self._bg_tasks = set()
+        task = asyncio.ensure_future(coro)
+        self._bg_tasks.add(task)
+        task.add_done_callback(self._bg_tasks.discard)
+
+    async def _generate_title_bg(self, state: ConversationState) -> None:
+        """Background conversation-title generation (cosmetic; non-blocking)."""
+        try:
+            title = await self.dialogue_agent.context_manager.generate_title(
+                state.messages[0].content
+            )
+            state.title = title
+            logger.info(f"🏷️ Title generated (bg): {title}")
+            if self.redis_manager and state.user_id:
+                await self.redis_manager.add_conversation_to_user(
+                    state.user_id, state.conversation_id, title
+                )
+        except Exception as e:
+            logger.error(f"Failed to generate title (bg): {e}")
+
     async def _dialogue_node(self, state: ConversationState) -> ConversationState:
         """Process dialogue using LLM-based intent detection"""
         logger.info("Executing dialogue node with LLM-based intent detection")
@@ -216,34 +607,25 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             except Exception as _i18n_err:
                 logger.debug(f"i18n input translation skipped: {_i18n_err}")
 
-        # NEW: Auto-titling for new conversations
+        # Auto-titling for new conversations — fire-and-forget so the ~1s title
+        # LLM call does not block the user-facing response. The title is cosmetic
+        # (sidebar label) and is written to Redis asynchronously.
         if len(state.messages) == 1 and state.title == "New Conversation":
-            try:
-                logger.info("🏷️ Generating conversation title...")
-                title = await self.dialogue_agent.context_manager.generate_title(
-                    state.messages[0].content
-                )
-                state.title = title
-                logger.info(f"🏷️ Title generated: {title}")
-
-                # Update user's conversation list in Redis
-                if self.redis_manager and state.user_id:
-                    await self.redis_manager.add_conversation_to_user(
-                        state.user_id, state.conversation_id, title
-                    )
-            except Exception as e:
-                logger.error(f"Failed to generate title: {e}")
+            self._spawn_background(self._generate_title_bg(state))
 
         # B.3: Inject relevant user memories as context for the dialogue agent
         _fresh_session = state.intermediate_results.get("fresh_session", False)
         from orchestrator.services.agent_memory import CROSS_SESSION_MEMORY_ENABLED
 
-        if self.agent_memory and state.user_id and CROSS_SESSION_MEMORY_ENABLED and not _fresh_session:
+        if (
+            self.agent_memory
+            and state.user_id
+            and CROSS_SESSION_MEMORY_ENABLED
+            and not _fresh_session
+        ):
             try:
                 user_query = state.messages[-1].content if state.messages else ""
-                memory_context = await self.agent_memory.retrieve_context(
-                    state.user_id, user_query
-                )
+                memory_context = await self.agent_memory.retrieve_context(state.user_id, user_query)
                 if memory_context:
                     state.intermediate_results["memory_context"] = memory_context
             except Exception as _mem_err:
@@ -271,29 +653,59 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             # Clear the pending type regardless — don't keep re-asking
             state.intermediate_results.pop("pending_clarification_type", None)
 
-        # ── Co-reference resolution ───────────────────────────────────────────
-        # Rewrite context-dependent follow-ups ("and humidity there?") into
-        # self-contained queries BEFORE intent detection so entity extraction and
-        # the downstream SPARQL node (both read messages[-1].content) resolve
-        # references like "there"/"that" to the prior turn's entities.
+        # ── Affirmation-to-chart follow-up ────────────────────────────────────
+        # If the previous assistant turn OFFERED a chart ("I can create a graph
+        # for you" / the honesty-guard note) and the user simply affirms ("yes
+        # please", "sure", "go ahead"), rewrite that affirmation into the chart
+        # request the prior substantive query implied, so it flows through the
+        # visualization path instead of being treated as small-talk.
+        _affirm_fired = False
         try:
-            _standalone = await self.dialogue_agent.rewrite_to_standalone(state)
-            if _standalone:
+            _affirm_rewrite = self._affirmation_to_chart(state)
+            if _affirm_rewrite:
                 _orig = state.messages[-1].content
                 _meta = dict(state.messages[-1].metadata or {})
                 _meta["original_query"] = _orig
                 state.messages[-1] = Message(
                     role=state.messages[-1].role,
-                    content=_standalone,
+                    content=_affirm_rewrite,
                     metadata=_meta,
                 )
-                state.intermediate_results["coref_rewrite"] = {
+                state.intermediate_results["affirmation_followup"] = {
                     "original": _orig,
-                    "rewritten": _standalone,
+                    "rewritten": _affirm_rewrite,
                 }
-                logger.info(f"[coref] follow-up rewritten: {_orig!r} -> {_standalone!r}")
-        except Exception as _coref_err:
-            logger.debug(f"[coref] resolution skipped: {_coref_err}")
+                logger.info(
+                    f"[affirm] chart affirmation rewritten: {_orig!r} -> {_affirm_rewrite!r}"
+                )
+                _affirm_fired = True
+        except Exception as _aff_err:
+            logger.debug(f"[affirm] follow-up handling skipped: {_aff_err}")
+
+        # ── Co-reference resolution ───────────────────────────────────────────
+        # Rewrite context-dependent follow-ups ("and humidity there?") into
+        # self-contained queries BEFORE intent detection so entity extraction and
+        # the downstream SPARQL node (both read messages[-1].content) resolve
+        # references like "there"/"that" to the prior turn's entities.
+        if not _affirm_fired:
+            try:
+                _standalone = await self.dialogue_agent.rewrite_to_standalone(state)
+                if _standalone:
+                    _orig = state.messages[-1].content
+                    _meta = dict(state.messages[-1].metadata or {})
+                    _meta["original_query"] = _orig
+                    state.messages[-1] = Message(
+                        role=state.messages[-1].role,
+                        content=_standalone,
+                        metadata=_meta,
+                    )
+                    state.intermediate_results["coref_rewrite"] = {
+                        "original": _orig,
+                        "rewritten": _standalone,
+                    }
+                    logger.info(f"[coref] follow-up rewritten: {_orig!r} -> {_standalone!r}")
+            except Exception as _coref_err:
+                logger.debug(f"[coref] resolution skipped: {_coref_err}")
 
         # NEW: Get LLM-based intent detection result
         intent_result = await self.dialogue_agent.detect_intent(state)
@@ -352,9 +764,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
 
                 # If the prior turn already fetched sensor data, skip SPARQL+SQL
                 _prior_data = state.query_results
-                _has_prior_data = bool(
-                    isinstance(_prior_data, dict) and _prior_data.get("data")
-                )
+                _has_prior_data = bool(isinstance(_prior_data, dict) and _prior_data.get("data"))
                 if _has_prior_data:
                     state.intermediate_results["use_existing_query_results"] = True
                     logger.info(
@@ -386,6 +796,10 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         state.intermediate_results["analytics_required"] = analytics_required
         state.intermediate_results["start_date"] = start_date
         state.intermediate_results["end_date"] = end_date
+        # Reserved key per CLAUDE.md shared-state contract — analytics_agent and
+        # verifier_agent read it, but it was never stored (fix 2026-06-12: both
+        # always saw {} and lost the time-range context).
+        state.intermediate_results["time_range"] = time_range or {}
         state.intermediate_results["explanation"] = explanation
         # Phase 4.1 new fields
         state.intermediate_results["export_format"] = intent_result.get("export_format")
@@ -393,9 +807,142 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         state.intermediate_results["recommendation_domain"] = intent_result.get(
             "recommendation_domain"
         )
+        # Smart live-data routing hint from the classifier (general_knowledge node
+        # reads this first; falls back to a keyword heuristic if absent).
+        state.intermediate_results["live_data_hint"] = intent_result.get("live_data")
         # Phase 0 (cross-cutting): persist G1 six-tuple for every turn
         if "g1_taxonomy" in intent_result:
             state.intermediate_results["g1_taxonomy"] = intent_result["g1_taxonomy"]
+
+        # T05: HBCO lay-term resolution — attach concept matches for SPARQL + analytics.
+        # Non-fatal: failure only loses concept enrichment, never breaks routing.
+        try:
+            from orchestrator.services.concept_resolver import concept_resolver as _cr
+
+            _concept_query = state.messages[-1].content if state.messages else ""
+            _concepts = await _cr.resolve(_concept_query)
+            state.intermediate_results["concepts"] = [c.to_dict() for c in _concepts]
+            if _concepts:
+                logger.info(f"[dialogue] HBCO concepts: {[c.concept_id for c in _concepts]}")
+        except Exception as _cr_err:
+            logger.debug(f"[dialogue] concept resolution skipped: {_cr_err}")
+            state.intermediate_results.setdefault("concepts", [])
+
+        # T34: What-if / scenario estimation — detect phrasing and attach recipe hint.
+        # Keeps recipe selection in YAML (estimate kind); routing stays analytics.
+        import re as _re_whatif
+
+        _wq = (state.messages[-1].content if state.messages else "").lower()
+        _WHATIF_RE = _re_whatif.compile(
+            r"\b(what if|what would happen|what happens|if we (lower|raise|increase|decrease|reduce|"
+            r"turn (down|up)|change|adjust|double|halve)|how (much|would|many) .{0,30}"
+            r"(sav|reduc|lower|increas|decreas|would|save|chang))\b"
+        )
+        if _WHATIF_RE.search(_wq):
+            # Determine which estimate recipe applies based on keywords
+            if any(
+                w in _wq
+                for w in ("setpoint", "heating", "cooling", "temperature", "thermostat", "degree")
+            ):
+                _estimate_recipe = "hvac_setpoint_sensitivity"
+            elif any(
+                w in _wq for w in ("occupancy", "people", "persons", "occupant", "crowded", "busy")
+            ):
+                _estimate_recipe = "occupancy_impact_estimate"
+            else:
+                _estimate_recipe = "hvac_setpoint_sensitivity"  # default estimate
+            state.intermediate_results["whatif_recipe"] = _estimate_recipe
+            state.intermediate_results["is_whatif_query"] = True
+            logger.info(f"[dialogue] what-if query detected → recipe={_estimate_recipe}")
+            _wi_intent = state.intermediate_results.get("intent", "")
+            _wi_override = whatif_intent_override(_wq, _wi_intent)
+            if _wi_override:
+                state.intermediate_results["intent"] = _wi_override
+                logger.info(
+                    f"[dialogue] interventional what-if → intent override "
+                    f"{_wi_intent} → {_wi_override} (estimate recipe path)"
+                )
+
+        # T32: Benchmark detection — recognise peer/sector comparison questions.
+        _BENCHMARK_RE = _re_whatif.compile(
+            r"\b(benchmark|peer|similar buildings?|sector average|how does .{0,30} compare|"
+            r"industry standard|typical (university|office|building)|above average|below average|"
+            r"national average|good for a building|efficient compared)\b"
+        )
+        if _BENCHMARK_RE.search(_wq):
+            if any(w in _wq for w in ("energy", "electricity", "kwh", "consumption")):
+                _bench_recipe = "energy_intensity_benchmark"
+            elif any(w in _wq for w in ("co2", "air quality", "carbon dioxide", "ventilation")):
+                _bench_recipe = "co2_benchmark"
+            else:
+                _bench_recipe = "energy_intensity_benchmark"
+            state.intermediate_results["benchmark_recipe"] = _bench_recipe
+            state.intermediate_results["is_benchmark_query"] = True
+            logger.info(f"[dialogue] benchmark query detected → recipe={_bench_recipe}")
+
+        # T22: Automation-capability detection — "can the building automatically X when Y?"
+        # Archetype-B: honest capability answer from system state, not a hallucinated yes.
+        # Fires when the question asks ABOUT capability (not when creating a rule → alert intent).
+        # Overrides intent to automation_capability so _REGISTERED_NODES routes correctly.
+        _AUTOMATE_CAP_RE = _re_whatif.compile(
+            r"\b("
+            r"can (the building|it|the system|this building) (auto|automatically|detect|"
+            r"monitor|watch|track|respond|alert|notify|send|adjust|switch|learn|manage)|"
+            r"(will|would|could|does|should) (the building|it|the system) (auto|automatically|"
+            r"detect|monitor|watch|respond|alert|notify|adjust|manage)|"
+            r"is (it|the building|the system|there a way) "
+            r"(possible|able|capable|configured|set up|designed)? ?(to auto|to automatically)|"
+            r"(by itself|on its own|without (me|manual intervention|anyone))|"
+            r"set (it|the system) (to automatically|up to auto)"
+            r")\b"
+        )
+        _cur_intent = state.intermediate_results.get("intent", "")
+        if _AUTOMATE_CAP_RE.search(_wq) and _cur_intent not in ("alert",):
+            state.intermediate_results["is_automation_capability_query"] = True
+            state.intermediate_results["intent"] = "automation_capability"
+            logger.info(
+                "[dialogue] automation-capability query detected → intent=automation_capability"
+            )
+
+        # T35: Personalised preference management detection.
+        # Detects "remember I prefer...", "forget my preferences", "what are my preferences?"
+        # Handles conversationally; requires authenticated user (guests declined).
+        _PREF_STORE_RE = _re_whatif.compile(
+            r"\b(remember (that )?(i|my)|i (like|prefer|want|need) (it |the |a )?("
+            r"warmer|cooler|hotter|colder|quieter|brighter|darker|drier|more humid)|"
+            r"my (ideal|preferred|comfortable|perfect) (temperature|humidity|co2|noise|light|"
+            r"lux|brightness)|"
+            r"set my (temperature|comfort|preference|humidity|noise|light) (preference|setting)s?|"
+            r"i find .{0,30} (too (warm|cold|hot|cool|loud|bright|dark|humid|dry))|"
+            r"comfortable (for me|at|between|around))\b"
+        )
+        _PREF_FORGET_RE = _re_whatif.compile(
+            r"\b(forget (my|that|all|the) (preference|setting|temperature|comfort|"
+            r"humidity|noise|light|lux)|clear my preference|reset my setting)\b"
+        )
+        _PREF_LIST_RE = _re_whatif.compile(
+            r"\b(what are my (preference|setting|comfort|personalisation)s?|"
+            r"show my (preference|setting|personalisation)s?|"
+            r"list my (preference|setting)s?|"
+            r"do i have any preference|my personal setting)\b"
+        )
+        if _PREF_LIST_RE.search(_wq) or _PREF_FORGET_RE.search(_wq) or _PREF_STORE_RE.search(_wq):
+            state.intermediate_results["preference_management_detected"] = True
+            state.intermediate_results["preference_raw_query"] = (
+                state.messages[-1].content if state.messages else _wq
+            )
+            logger.info("[dialogue] preference management phrase detected")
+
+        # ── Re-sync after deterministic overrides (fix 2026-06-12) ─────────
+        # The T22 / T34 / benchmark overrides above write the corrected intent
+        # to intermediate_results["intent"], but the dispatch chain below (and
+        # therefore state.current_intent, which _route_from_dialogue reads)
+        # switched on the stale local variable — so overrides never reached
+        # live routing. Re-bind the local from the canonical value.
+        _post_override_intent = state.intermediate_results.get("intent", intent)
+        if _post_override_intent != intent:
+            intent = _post_override_intent
+            is_general = intent == "general"
 
         # ── Data-driven disambiguation (context-aware) ────────────────────
         # Check BEFORE routing: use the session context to avoid re-asking
@@ -405,9 +952,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         try:
             _disambig_svc = get_disambiguation_service()
             _clarify_msg, _ctx_updates, _pending_type = (
-                await _disambig_svc.check_and_clarify_with_context(
-                    _user_query_raw, _user_ctx
-                )
+                await _disambig_svc.check_and_clarify_with_context(_user_query_raw, _user_ctx)
             )
             if _ctx_updates:
                 _user_ctx = {**_user_ctx, **_ctx_updates}
@@ -415,9 +960,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             if _pending_type:
                 state.intermediate_results["pending_clarification_type"] = _pending_type
             if _clarify_msg:
-                logger.info(
-                    "[disambiguation] Ambiguous sensor ref — returning clarification"
-                )
+                logger.info("[disambiguation] Ambiguous sensor ref — returning clarification")
                 state.current_intent = "clarification"
                 state.needs_clarification = True
                 state.intermediate_results["dialogue_response"] = _clarify_msg
@@ -444,9 +987,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             if any(w in _uq for w in _spatial):
                 pass  # dialogue_response intentionally not set; SPARQL node will answer
             else:
-                discovery_response = self._handle_sensor_discovery(
-                    discovery_filter, entities
-                )
+                discovery_response = self._handle_sensor_discovery(discovery_filter, entities)
                 state.intermediate_results["dialogue_response"] = discovery_response
 
         elif intent in ("control",):
@@ -503,12 +1044,35 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             state.current_intent = intent
 
         elif is_general:
+            # Open-domain general-knowledge question. The dedicated
+            # _general_knowledge_node generates the answer (with length control
+            # and conversation context) — do NOT inject a canned reply here.
+            # Preserve any draft the classifier produced as a fallback hint only.
             state.current_intent = "general_knowledge"
-            state.intermediate_results["dialogue_response"] = direct_response
+            if direct_response:
+                state.intermediate_results["general_knowledge_draft"] = direct_response
 
         else:
-            # Unknown intent — return friendly error
-            if intent == "unknown" or not intent:
+            # Registry fallthrough (fix 2026-06-12): YAML-registered intents that
+            # this legacy chain doesn't name (alert, automation_capability,
+            # preference_management, per-building overlays like lab_booking) were
+            # falling into the sparql default — "list my alerts" ran the DATA
+            # pipeline and returned power sensors. If the intent registry knows
+            # the label, preserve it so _route_from_dialogue can dispatch it.
+            _registry_known = False
+            try:
+                from orchestrator.intents import get_intent_registry as _gir
+
+                _registry_known = (
+                    _gir(getattr(state, "building_id", None)).route_target_for(intent) is not None
+                )
+            except Exception:
+                _registry_known = False
+
+            if _registry_known:
+                state.current_intent = intent
+            elif intent == "unknown" or not intent:
+                # Unknown intent — return friendly error
                 state.current_intent = "unknown"
                 state.intermediate_results["dialogue_response"] = (
                     "I'm not sure I understood your question. Could you please rephrase or "
@@ -525,21 +1089,23 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # After single-intent classification, check whether the query is a
         # compound question spanning multiple intent domains.  If so, override
         # to "planner" so the enhanced PlannerAgent handles all sub-tasks.
-        _skip_decompose = frozenset({
-            "clarification", "greeting", "general_knowledge", "unknown",
-        })
-        if (
-            settings.MULTI_INTENT_ENABLED
-            and state.current_intent not in _skip_decompose
-        ):
+        _skip_decompose = frozenset(
+            {
+                "clarification",
+                "greeting",
+                "general_knowledge",
+                "unknown",
+            }
+        )
+        if settings.MULTI_INTENT_ENABLED and state.current_intent not in _skip_decompose:
             try:
-                from orchestrator.services.multi_intent_detector import MultiIntentDetector
+                from orchestrator.services.multi_intent_detector import (
+                    MultiIntentDetector,
+                )
 
                 _detector = MultiIntentDetector()
                 _user_q = state.messages[-1].content if state.messages else ""
-                _sub_intents = await _detector.detect(
-                    _user_q, state.current_intent, entities
-                )
+                _sub_intents = await _detector.detect(_user_q, state.current_intent, entities)
                 if _sub_intents and len(_sub_intents) > 1:
                     logger.info(
                         f"[multi-intent] Decomposed into {len(_sub_intents)} sub-intents: "
@@ -551,9 +1117,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                     }
                     state.current_intent = "planner"
             except Exception as _mid_err:
-                logger.warning(
-                    f"[multi-intent] Detection failed (non-fatal): {_mid_err}"
-                )
+                logger.warning(f"[multi-intent] Detection failed (non-fatal): {_mid_err}")
 
         logger.info(f"Final intent for routing: {state.current_intent}")
         return state
@@ -566,6 +1130,15 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         logger.info("Executing SPARQL/ontology query node")
 
         latest_message = state.messages[-1].content if state.messages else ""
+
+        # Bare anomaly queries ("are there any unusual readings today?") name no
+        # metric, so SPARQL RAG picks an arbitrary sensor type that often lacks
+        # time-series UUIDs → the pipeline dead-ends at "no data". Default the
+        # SPARQL target to temperature so UUIDs resolve and anomaly detection runs.
+        _sparql_query = latest_message
+        if state.current_intent == "anomaly" and not _ANOMALY_METRIC_RE.search(latest_message):
+            _sparql_query = f"{latest_message} temperature sensors"
+            logger.info("[anomaly] no metric named — defaulting SPARQL target to temperature")
 
         # UNIFIED AGENT APPROACH:
         # Use SPARQLAgent for everything (it now handles semantic fallback internally)
@@ -581,6 +1154,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # personas so SPARQL retrieval is biased toward every persona's domains.
         try:
             from shared.persona_registry import get_persona_registry as _get_preg
+
             _preg = _get_preg()
             _personas_list = list(getattr(state, "personas", []) or [])
             if _personas_list:
@@ -612,15 +1186,21 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # the process-global default.  Pair with reset in `finally` so the
         # ContextVar is unbound even on exceptions, preventing leak into the
         # next request on the same event loop.
-        from orchestrator.agents.sparql_agent import set_request_bctx, reset_request_bctx
+        from orchestrator.agents.sparql_agent import (
+            reset_request_bctx,
+            set_request_bctx,
+        )
+
         _bctx_token = set_request_bctx(getattr(state, "building_id", None))
         try:
-            result = await self.sparql_agent.generate_query(state, latest_message)
+            result = await self.sparql_agent.generate_query(state, _sparql_query)
         finally:
             reset_request_bctx(_bctx_token)
 
         state.intermediate_results["sparql_result"] = result
         state.query_results = result.get("results", {})
+        if result.get("success"):
+            _prov.record(state, "ontology")
 
         # Set analytics_required:
         # - SPARQL's explicit False overrides dialogue True when SPARQL has a valid formatted_response
@@ -628,9 +1208,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # - SPARQL True always elevates to True (it knows it needs UUIDs)
         sparql_analytics = result.get("analytics_required", False)
         dialogue_analytics = state.intermediate_results.get("analytics_required", False)
-        sparql_has_answer = result.get("success") and bool(
-            result.get("formatted_response")
-        )
+        sparql_has_answer = result.get("success") and bool(result.get("formatted_response"))
         # Check if any sensor UUIDs were returned — if yes, SQL is needed for time-series data
         # answer_semantically() returns results as a list; guard against AttributeError.
         _raw_results = result.get("results", {})
@@ -670,9 +1248,10 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             else:
                 # No prior data — give an intent-appropriate clarification rather than
                 # a compliance-specific template (which is confusing for trend/compare queries).
-                _entities_hint = ", ".join(
-                    state.intermediate_results.get("entities", [])[:3]
-                ) or "the requested sensor or zone"
+                _entities_hint = (
+                    ", ".join(state.intermediate_results.get("entities", [])[:3])
+                    or "the requested sensor or zone"
+                )
                 if _original_intent == "trend":
                     _fallback_msg = (
                         f"I couldn't retrieve trend data for {_entities_hint} directly. "
@@ -775,11 +1354,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         if state.analytics_required and sparql_result.get("success"):
             try:
                 # Handle standard SPARQL JSON results
-                bindings = (
-                    sparql_result.get("results", {})
-                    .get("results", {})
-                    .get("bindings", [])
-                )
+                bindings = sparql_result.get("results", {}).get("results", {}).get("bindings", [])
                 sensor_metadata = self._build_sensor_metadata_from_bindings(bindings)
                 for binding in bindings:
                     current_uuid = None
@@ -811,15 +1386,11 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 preferred_kind = self._infer_query_kind(latest_message)
                 if preferred_kind and sensor_metadata:
                     filtered = {
-                        u: m
-                        for u, m in sensor_metadata.items()
-                        if m.get("kind") == preferred_kind
+                        u: m for u, m in sensor_metadata.items() if m.get("kind") == preferred_kind
                     }
                     if filtered:
                         uuids = [u for u in uuids if u in filtered]
-                        storage_map = {
-                            u: s for u, s in storage_map.items() if u in uuids
-                        }
+                        storage_map = {u: s for u, s in storage_map.items() if u in uuids}
                         state.intermediate_results["sensor_metadata"] = filtered
                     else:
                         state.intermediate_results["sensor_metadata"] = sensor_metadata
@@ -830,9 +1401,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
 
         if uuids:
             logger.info("=" * 80)
-            logger.info(
-                f"🔍 Found {len(uuids)} UUIDs from SPARQL results, fetching data..."
-            )
+            logger.info(f"🔍 Found {len(uuids)} UUIDs from SPARQL results, fetching data...")
             logger.info("UUID → Storage Mapping:")
             for uuid in uuids:
                 storage = storage_map.get(uuid, "Unknown")
@@ -878,7 +1447,11 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 "analytics_required": True,
             }
         elif not _sparql_has_uuids and state.current_intent in (
-            "analytics", "compare", "trend", "anomaly", "compliance"
+            "analytics",
+            "compare",
+            "trend",
+            "anomaly",
+            "compliance",
         ):
             # SPARQL returned no sensor UUIDs for an analytics-type query.
             # Text-to-SQL fallback would generate incorrect or wide-open queries that
@@ -887,12 +1460,35 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             # clear explanation rather than attempting a doomed SQL generation.
             _q = latest_message.lower()
             _unavailable = {
-                "occupancy": {"occupancy", "people count", "head count", "how many people",
-                              "occupant", "occupants", "presence", "motion", "desk usage",
-                              "utilization", "occupied", "footfall"},
-                "energy": {"energy", "power", "electricity", "kilowatt", "kwh", "watt",
-                           "energy meter", "energy consumption", "power meter", "eui",
-                           "carbon footprint", "co2e", "energy cost"},
+                "occupancy": {
+                    "occupancy",
+                    "people count",
+                    "head count",
+                    "how many people",
+                    "occupant",
+                    "occupants",
+                    "presence",
+                    "motion",
+                    "desk usage",
+                    "utilization",
+                    "occupied",
+                    "footfall",
+                },
+                "energy": {
+                    "energy",
+                    "power",
+                    "electricity",
+                    "kilowatt",
+                    "kwh",
+                    "watt",
+                    "energy meter",
+                    "energy consumption",
+                    "power meter",
+                    "eui",
+                    "carbon footprint",
+                    "co2e",
+                    "energy cost",
+                },
             }
             _missing_type = None
             for stype, keywords in _unavailable.items():
@@ -957,7 +1553,8 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                     "success": False,
                     "query": "NO_UUIDS_NO_SQL",
                     "results": {"data": []},
-                    "formatted_response": sparql_result.get("formatted_response") or (
+                    "formatted_response": sparql_result.get("formatted_response")
+                    or (
                         "I wasn't able to find specific sensor data for your request. "
                         "Try asking about temperature, CO₂, humidity, or air quality — "
                         "those are the sensor types available in this building."
@@ -967,9 +1564,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 state.analytics_required = False
         else:
             # Fallback to standard SQL generation (text-to-SQL)
-            logger.info(
-                "No UUIDs found or not analytics flow, using standard Text-to-SQL"
-            )
+            logger.info("No UUIDs found or not analytics flow, using standard Text-to-SQL")
             result = await self.sql_agent.generate_and_execute(state, latest_message)
 
         state.intermediate_results["sql_result"] = result
@@ -979,6 +1574,8 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             state.query_results = result.get("results", {"data": []})
             row_count = len(result.get("results", {}).get("data", []))
             logger.info(f"SQL successful: {row_count} data records retrieved")
+            if row_count > 0:
+                _prov.record_sql_stores(state, storage_map)
 
             # Phase 3.1: Notify SmartCacheManager about new data for staleness tracking
             if self.smart_cache and uuids and row_count > 0:
@@ -1006,18 +1603,14 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             logger.info(
                 f"✅ Intent '{state.current_intent}' requires analytics: analytics_required=True"
             )
-        elif (
-            state.current_intent in _analytics_intents and not state.analytics_required
-        ):
+        elif state.current_intent in _analytics_intents and not state.analytics_required:
             # Semantic-RAG shortcut already set analytics_required=False — respect it
             logger.info(
                 f"ℹ️  Intent '{state.current_intent}' — analytics skipped (semantic RAG answered)"
             )
         else:
             state.analytics_required = False
-            logger.info(
-                f"ℹ️  Intent '{state.current_intent}' does not require analytics post-SQL"
-            )
+            logger.info(f"ℹ️  Intent '{state.current_intent}' does not require analytics post-SQL")
 
         return state
 
@@ -1029,18 +1622,18 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
 
         sparql_result = state.intermediate_results.get("sparql_result", {})
         sensor_metadata = state.intermediate_results.get("sensor_metadata", {})
-        recommendation_domain = state.intermediate_results.get(
-            "dialogue_result", {}
-        ).get("recommendation_domain", "general")
+        # "dialogue_result" is not a populated key — the dialogue node stores the
+        # domain directly under "recommendation_domain" (fix 2026-06-12: the old
+        # read always fell back to "general", so domain-specific recommendation
+        # prompts never fired).
+        recommendation_domain = state.intermediate_results.get("recommendation_domain") or "general"
 
         # Build a compact data summary (last 5 rows max)
         rows = (data.get("data", []) if isinstance(data, dict) else data) or []
         data_summary = ""
         if rows:
             sample = rows[-5:] if len(rows) >= 5 else rows
-            data_summary = "\n".join(
-                f"  {r}" for r in sample
-            )
+            data_summary = "\n".join(f"  {r}" for r in sample)
         sparql_summary = sparql_result.get("formatted_response", "")
 
         ontology_summary = ""
@@ -1050,10 +1643,23 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
 
         # Detect if this is an energy-specific recommendation when no energy data is available
         _q_lower = query.lower()
-        _energy_keywords = {"energy", "power", "electricity", "kWh", "kwh", "watt", "consumption", "eui", "carbon", "co2e"}
+        _energy_keywords = {
+            "energy",
+            "power",
+            "electricity",
+            "kWh",
+            "kwh",
+            "watt",
+            "consumption",
+            "eui",
+            "carbon",
+            "co2e",
+        }
         _is_energy_focused = any(kw in _q_lower for kw in _energy_keywords)
         _has_energy_data = rows and any(
-            any(kw in str(k).lower() for kw in ("power", "energy", "watt", "kwh")) for r in rows for k in r.keys()
+            any(kw in str(k).lower() for kw in ("power", "energy", "watt", "kwh"))
+            for r in rows
+            for k in r.keys()
         )
 
         # Context note about what sensors ARE available (for energy queries with no energy data)
@@ -1126,16 +1732,27 @@ Instructions:
         # keywords. Uses ForecastAgent (ARIMA, Holt-Winters, Linear Trend) instead
         # of ad-hoc LLM code generation for statistically valid predictions.
         from orchestrator.agents.forecast_agent import ForecastAgent as _ForecastAgent
-        from orchestrator.services.forecasting.horizon_parser import parse_horizon as _parse_horizon
+        from orchestrator.services.forecasting.horizon_parser import (
+            parse_horizon as _parse_horizon,
+        )
 
         _FORECAST_TRIGGER_KWS = (
-            "predict", "forecast", "projected", "projection",
-            "what will", "what would", "expected to be", "likely to be",
-            "tomorrow", "next week", "next month", "next hour", "in the next",
+            "predict",
+            "forecast",
+            "projected",
+            "projection",
+            "what will",
+            "what would",
+            "expected to be",
+            "likely to be",
+            "tomorrow",
+            "next week",
+            "next month",
+            "next hour",
+            "in the next",
         )
-        _is_forecast = (
-            state.current_intent == "trend"
-            and any(kw in latest_message.lower() for kw in _FORECAST_TRIGGER_KWS)
+        _is_forecast = state.current_intent == "trend" and any(
+            kw in latest_message.lower() for kw in _FORECAST_TRIGGER_KWS
         )
 
         if _is_forecast:
@@ -1171,11 +1788,7 @@ Instructions:
             sensor_metadata = {}
             sparql_result = state.intermediate_results.get("sparql_result", {})
             if sparql_result.get("success"):
-                bindings = (
-                    sparql_result.get("results", {})
-                    .get("results", {})
-                    .get("bindings", [])
-                )
+                bindings = sparql_result.get("results", {}).get("results", {}).get("bindings", [])
                 sensor_metadata = self._build_sensor_metadata_from_bindings(bindings)
 
         logger.info(f"📋 Extracted sensor metadata for {len(sensor_metadata)} sensors")
@@ -1202,9 +1815,7 @@ Instructions:
 
             # Save to shared volume path with unique filename per user/conversation
             # This ensures data isolation between users
-            safe_user_id = "".join(
-                c for c in state.user_id if c.isalnum() or c in ("-", "_")
-            )
+            safe_user_id = "".join(c for c in state.user_id if c.isalnum() or c in ("-", "_"))
             safe_conv_id = "".join(
                 c for c in state.conversation_id if c.isalnum() or c in ("-", "_")
             )
@@ -1242,12 +1853,143 @@ Instructions:
             }
             return state
 
+        # T05: inject HBCO recipe thresholds so the analytics LLM can apply them
+        try:
+            from orchestrator.services.recipe_registry import recipe_registry as _rr
+
+            _concepts = state.intermediate_results.get("concepts") or []
+            _recipe_hints: list = []
+            for _cm in _concepts:
+                _rid = _cm.get("recipe_id")
+                if _rid:
+                    _recipe = _rr.get(_rid)
+                    if _recipe:
+                        _recipe_hints.append(
+                            {
+                                "recipe_id": _rid,
+                                "concept_id": _cm.get("concept_id"),
+                                "description": _recipe.get("description", ""),
+                                "params": _recipe.get("params", {}),
+                                "answer_template": _recipe.get("answer_template", ""),
+                            }
+                        )
+            if _recipe_hints:
+                state.intermediate_results["recipe_hints"] = _recipe_hints
+                logger.info(
+                    f"[analytics_node] recipe hints injected: "
+                    f"{[h['recipe_id'] for h in _recipe_hints]}"
+                )
+        except Exception as _rh_err:
+            logger.debug(f"[analytics_node] recipe hint injection skipped: {_rh_err}")
+
+        # T34: What-if / estimate recipe — inject sensitivity factors for the analytics LLM.
+        _whatif_rid = state.intermediate_results.get("whatif_recipe")
+        if _whatif_rid:
+            try:
+                from orchestrator.services.recipe_registry import recipe_registry as _rr_wi
+
+                _wi_recipe = _rr_wi.get(_whatif_rid)
+                if _wi_recipe:
+                    existing = state.intermediate_results.get("recipe_hints") or []
+                    _wi_hint = {
+                        "recipe_id": _whatif_rid,
+                        "concept_id": "whatif_estimate",
+                        "description": _wi_recipe.get("description", ""),
+                        "params": _wi_recipe.get("params", {}),
+                        "answer_template": _wi_recipe.get("answer_template", ""),
+                    }
+                    state.intermediate_results["recipe_hints"] = existing + [_wi_hint]
+                    logger.info(f"[analytics_node] what-if recipe hint injected: {_whatif_rid}")
+            except Exception as _wi_err:
+                logger.debug(f"[analytics_node] what-if hint injection skipped: {_wi_err}")
+
+        # T32: Benchmark recipe — inject sector comparison params for the analytics LLM.
+        _bench_rid = state.intermediate_results.get("benchmark_recipe")
+        if _bench_rid:
+            try:
+                from orchestrator.services.recipe_registry import recipe_registry as _rr_bm
+
+                _bm_recipe = _rr_bm.get(_bench_rid)
+                if _bm_recipe:
+                    existing = state.intermediate_results.get("recipe_hints") or []
+                    _bm_hint = {
+                        "recipe_id": _bench_rid,
+                        "concept_id": "sector_benchmark",
+                        "description": _bm_recipe.get("description", ""),
+                        "params": _bm_recipe.get("params", {}),
+                        "answer_template": _bm_recipe.get("answer_template", ""),
+                    }
+                    state.intermediate_results["recipe_hints"] = existing + [_bm_hint]
+                    logger.info(f"[analytics_node] benchmark recipe hint injected: {_bench_rid}")
+            except Exception as _bm_err:
+                logger.debug(f"[analytics_node] benchmark hint injection skipped: {_bm_err}")
+
+        # T35: User preference overlay — inject personal comfort range if the user has one.
+        # Only for authenticated users; silently skipped if Redis unavailable.
+        _pref_user_id = state.intermediate_results.get("user_id", "")
+        _concepts_for_pref = state.intermediate_results.get("concepts", [])
+        if _pref_user_id and _concepts_for_pref:
+            try:
+                from orchestrator.services.user_preference_store import (
+                    CATEGORY_KEYWORDS,
+                    get_user_preference_store,
+                )
+
+                _pref_store = get_user_preference_store()
+                # Map HBCO concept to a preference category
+                _concept0 = _concepts_for_pref[0]
+                _concept_id = _concept0.get("concept_id", "")
+                _pref_category = None
+                for kw, cat in CATEGORY_KEYWORDS.items():
+                    if kw in _concept_id.replace("_", " "):
+                        _pref_category = cat
+                        break
+                if _pref_category:
+                    _user_pref = await _pref_store.get_preference(_pref_user_id, _pref_category)
+                    if _user_pref:
+                        _p_min = _user_pref.get("pref_min")
+                        _p_max = _user_pref.get("pref_max")
+                        _p_unit = _user_pref.get("unit", "")
+                        _rng = (
+                            f"{_p_min}–{_p_max} {_p_unit}"
+                            if _p_min and _p_max
+                            else f"≥{_p_min} {_p_unit}" if _p_min else f"≤{_p_max} {_p_unit}"
+                        )
+                        existing_hints = state.intermediate_results.get("recipe_hints") or []
+                        _pref_hint = {
+                            "recipe_id": "user_preference_overlay",
+                            "concept_id": _pref_category,
+                            "description": (
+                                f"USER PERSONAL PREFERENCE (overrides standard guideline): "
+                                f"This specific user prefers {_rng} for "
+                                f"{_user_pref.get('label', _pref_category)}. "
+                                f"Use this range when assessing comfort FOR THIS USER. "
+                                f"State which range was applied in your answer."
+                            ),
+                            "params": {
+                                "pref_min": _p_min,
+                                "pref_max": _p_max,
+                                "unit": _p_unit,
+                                "label": _user_pref.get("label", _pref_category),
+                            },
+                            "answer_template": "",
+                        }
+                        state.intermediate_results["recipe_hints"] = existing_hints + [_pref_hint]
+                        logger.info(
+                            f"[analytics_node] user preference overlay injected: "
+                            f"{_pref_category}={_rng}"
+                        )
+            except Exception as _pref_err:
+                logger.debug(f"[analytics_node] preference overlay skipped: {_pref_err}")
+
         # Fallback: LLM-generated Python code via analytics_agent
         result = await self.analytics_agent.analyze(
             state, latest_message, data, sensor_metadata, data_filename
         )
 
         state.intermediate_results["analytics_result"] = result
+        if isinstance(result, dict) and result.get("success"):
+            _prov.record(state, "analytics")
 
         # ── CAP-04 Auto-compliance check ──────────────────────────────────────
         # After data is fetched, build a scalar readings dict from the latest
@@ -1278,13 +2020,9 @@ Instructions:
 
                 if _auto_readings:
                     _auto_results = self._standards_engine.auto_check(_auto_readings)
-                    _compliance_block = self._standards_engine.format_for_llm(
-                        _auto_results
-                    )
+                    _compliance_block = self._standards_engine.format_for_llm(_auto_results)
                     if _compliance_block:
-                        state.intermediate_results["compliance_context"] = (
-                            _compliance_block
-                        )
+                        state.intermediate_results["compliance_context"] = _compliance_block
                         logger.info(
                             f"[standards] Auto-check generated compliance block "
                             f"({len(_auto_results)} standards checked)"
@@ -1324,9 +2062,7 @@ Instructions:
         ),
     ]
 
-    async def _try_deterministic_analytics(
-        self, intent: str, query: str, data
-    ) -> object:
+    async def _try_deterministic_analytics(self, intent: str, query: str, data) -> object:
         """
         Attempt to resolve the analytics request using a deterministic module.
         Returns an AnalysisResult if handled, or None to fall through to LLM.
@@ -1402,13 +2138,8 @@ Instructions:
                             "en15251",
                             "iso50001",
                         ):
-                            if (
-                                std_id.replace("_", "") in query_lower
-                                or std_id in query_lower
-                            ):
-                                std_check = self._standards_engine.check(
-                                    std_id, _readings
-                                )
+                            if std_id.replace("_", "") in query_lower or std_id in query_lower:
+                                std_check = self._standards_engine.check(std_id, _readings)
                                 if result.metrics is None:
                                     result.metrics = {}
                                 result.metrics[f"standards_{std_id}"] = std_check
@@ -1442,16 +2173,31 @@ Instructions:
         # ── Forecast chart fast path ──────────────────────────────────────────
         _forecast_result = state.intermediate_results.get("forecast_result") or {}
         _PREV_VIZ_KWS = (
-            "previous", "above", "that forecast", "those results",
-            "that prediction", "those predictions", "that result",
-            "the prediction", "the forecast", "show the graph", "plot it",
-            "graph it", "graph for the", "chart for the", "visualise it",
-            "visualize it", "chart of that", "plot of that", "for the above",
-            "from before", "last result", "previous result",
+            "previous",
+            "above",
+            "that forecast",
+            "those results",
+            "that prediction",
+            "those predictions",
+            "that result",
+            "the prediction",
+            "the forecast",
+            "show the graph",
+            "plot it",
+            "graph it",
+            "graph for the",
+            "chart for the",
+            "visualise it",
+            "visualize it",
+            "chart of that",
+            "plot of that",
+            "for the above",
+            "from before",
+            "last result",
+            "previous result",
         )
-        _is_prev_viz = (
-            _forecast_result.get("success")
-            and any(kw in latest_message.lower() for kw in _PREV_VIZ_KWS)
+        _is_prev_viz = _forecast_result.get("success") and any(
+            kw in latest_message.lower() for kw in _PREV_VIZ_KWS
         )
 
         if _is_prev_viz:
@@ -1464,6 +2210,25 @@ Instructions:
             return state
 
         # ── Normal visualization path ─────────────────────────────────────────
+        # Cold "plot X" requests route straight here with no upstream data. If
+        # there's nothing to chart yet, fetch the series via sparql -> sql first
+        # (otherwise the chart is empty and the turn fails with a generic error).
+        def _has_series(d) -> bool:
+            if not d:
+                return False
+            if isinstance(d, dict):
+                return bool(d.get("data"))
+            return bool(d)
+
+        if not _has_series(data):
+            logger.info("[viz_node] no prior data — fetching via sparql -> sql before charting")
+            try:
+                await self._sparql_node(state)
+                await self._sql_node(state)
+                data = state.query_results
+            except Exception as _viz_fetch_err:
+                logger.warning(f"[viz_node] data fetch for visualization failed: {_viz_fetch_err}")
+
         result = await self.viz_agent.create_visualization(state, latest_message, data)
         state.intermediate_results["viz_result"] = result
         return state
@@ -1482,25 +2247,27 @@ Instructions:
         import json as _json
 
         # Extract forecast data from the stored result
-        future_index  = forecast_result.get("future_index", [])
-        fc_values     = forecast_result.get("forecast", [])
-        lower_80      = forecast_result.get("lower_80", [])
-        upper_80      = forecast_result.get("upper_80", [])
-        lower_95      = forecast_result.get("lower_95", [])
-        upper_95      = forecast_result.get("upper_95", [])
-        sensor_label  = forecast_result.get("sensor_label", "Sensor")
-        model_name    = forecast_result.get("model", "Statistical Model")
-        unit          = forecast_result.get("unit", "")
-        horizon       = forecast_result.get("horizon", "forecast")
-        metrics       = forecast_result.get("metrics") or {}
-        rmse  = metrics.get("rmse", 0)
-        mae   = metrics.get("mae", 0)
-        mape  = metrics.get("mape", 0)
+        future_index = forecast_result.get("future_index", [])
+        fc_values = forecast_result.get("forecast", [])
+        lower_80 = forecast_result.get("lower_80", [])
+        upper_80 = forecast_result.get("upper_80", [])
+        lower_95 = forecast_result.get("lower_95", [])
+        upper_95 = forecast_result.get("upper_95", [])
+        sensor_label = forecast_result.get("sensor_label", "Sensor")
+        model_name = forecast_result.get("model", "Statistical Model")
+        unit = forecast_result.get("unit", "")
+        horizon = forecast_result.get("horizon", "forecast")
+        metrics = forecast_result.get("metrics") or {}
+        rmse = metrics.get("rmse", 0)
+        mae = metrics.get("mae", 0)
+        mape = metrics.get("mape", 0)
 
         if not future_index or not fc_values:
             logger.warning("[viz_node] forecast_result has no data — falling back to generic viz")
             latest_message = state.messages[-1].content if state.messages else ""
-            return await self.viz_agent.create_visualization(state, latest_message, state.query_results)
+            return await self.viz_agent.create_visualization(
+                state, latest_message, state.query_results
+            )
 
         # Inline data as Python literals so the sandbox has no import dependency
         code = f"""
@@ -1594,7 +2361,9 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         # Execute in the code executor sandbox
         try:
             import httpx as _httpx
+
             from shared.config import settings as _cfg
+
             executor_url = f"http://{_cfg.CODE_EXECUTOR_HOST}:{_cfg.CODE_EXECUTOR_PORT}"
             resp = await _httpx.AsyncClient(timeout=45).post(
                 f"{executor_url}/execute",
@@ -1603,23 +2372,29 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             exec_result = resp.json()
         except Exception as e:
             logger.error(f"[viz_node] Code executor call failed: {e}", exc_info=True)
-            return {"success": False, "error": str(e),
-                    "formatted_response": "Could not render the forecast chart — code executor unavailable."}
+            return {
+                "success": False,
+                "error": str(e),
+                "formatted_response": "Could not render the forecast chart — code executor unavailable.",
+            }
 
         # Parse output
         output = exec_result.get("output", "")
-        error  = exec_result.get("error", "")
+        error = exec_result.get("error", "")
 
         if error and "PLOT_BASE64" not in output:
             logger.warning(f"[viz_node] Forecast chart code error: {error[:200]}")
-            return {"success": False, "error": error,
-                    "formatted_response": f"Chart generation failed: {error[:200]}"}
+            return {
+                "success": False,
+                "error": error,
+                "formatted_response": f"Chart generation failed: {error[:200]}",
+            }
 
         # Extract base64 image
         media_payload = None
         for line in output.split("\n"):
             if line.startswith("PLOT_BASE64: "):
-                b64 = line[len("PLOT_BASE64: "):]
+                b64 = line[len("PLOT_BASE64: ") :]
                 media_payload = {"type": "image", "format": "png", "data": b64}
                 break
 
@@ -1640,6 +2415,199 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             "sensor": sensor_label,
             "model": model_name,
         }
+
+    async def _general_knowledge_node(self, state: ConversationState) -> ConversationState:
+        """Answer an open-domain general-knowledge question directly via the LLM.
+
+        Building-specific questions never reach here (they route through the data
+        pipeline). This node handles definitions, explanations, world facts, coding
+        help, and "what can you do" — anything the LLM can answer on its own.
+        Answer length is auto-detected from the user's phrasing (short / summary /
+        long), with a medium default, and the recent conversation is passed in so
+        follow-ups ("explain that further") stay coherent.
+        """
+        user_query = state.messages[-1].content if state.messages else ""
+        explicit_len = state.intermediate_results.get("answer_length")
+        length = _detect_answer_length(user_query, explicit_len)
+        directive = _LENGTH_DIRECTIVES[length]
+        logger.info(
+            f"[general_knowledge] answering open-domain query "
+            f"(length={length}): '{user_query[:80]}'"
+        )
+
+        # Recent conversation context (cheap, bounded) so co-referential
+        # follow-ups resolve. Summary + last few turns, oldest→newest.
+        history_lines = []
+        if state.summary:
+            history_lines.append(f"Summary of earlier conversation:\n{state.summary}")
+        for msg in state.messages[-6:-1]:  # exclude the current question
+            role = "User" if msg.role == "user" else "Assistant"
+            history_lines.append(f"{role}: {msg.content}")
+        history_block = "\n".join(history_lines).strip()
+
+        # ── Live-data augmentation ───────────────────────────────────────────
+        # If the question needs CURRENT info (weather, latest news/prices/etc.)
+        # the LLM can't know from its training cutoff, fetch it and have the LLM
+        # summarise it. Any miss (no location, no results, fetch error) silently
+        # falls back to a plain LLM answer.
+        live_context = ""
+        live_kind = None
+        if getattr(settings, "LIVE_DATA_ENABLED", False):
+            # Routing precedence:
+            #   1. Weather is deterministically detectable AND has a dedicated free
+            #      structured API (Open-Meteo) — the keyword detector wins so the
+            #      LLM can't mis-route "weather in X" to a generic web search.
+            #   2. Otherwise trust the classifier's LLM hint (it saw the full query
+            #      + history) for the fuzzier "does this need live web data" call.
+            #   3. Fall back to the keyword web heuristic when no hint was emitted.
+            heuristic = _detect_live_data_need(user_query)
+            if heuristic and heuristic[0] == "weather":
+                need, route_source = heuristic, "heuristic_weather"
+            else:
+                need = _live_data_need_from_hint(
+                    state.intermediate_results.get("live_data_hint"), user_query
+                )
+                route_source = "llm_hint"
+                if need is None:
+                    need, route_source = heuristic, "heuristic"
+            if need:
+                state.intermediate_results["live_data_route"] = route_source
+                kind, arg = need
+                try:
+                    from orchestrator.services.live_data_service import (
+                        get_live_data_service,
+                    )
+
+                    svc = get_live_data_service()
+                    if kind == "weather" and getattr(settings, "WEATHER_ENABLED", False) and arg:
+                        wx = await svc.get_weather(arg)
+                        if wx:
+                            live_context = (
+                                "=== Live weather data (use this; it is current) ===\n"
+                                + svc.format_weather(wx)
+                            )
+                            live_kind = "weather"
+                    elif kind == "web" and getattr(settings, "WEB_SEARCH_ENABLED", False):
+                        results = await svc.web_search(arg)
+                        if results:
+                            live_context = (
+                                "=== Live web search results (use these; they are current) ===\n"
+                                + svc.format_search_results(results)
+                            )
+                            live_kind = "web"
+                    if live_kind:
+                        logger.info(f"[general_knowledge] live-data augmentation: {live_kind}")
+                except Exception as _ld_err:  # noqa: BLE001
+                    logger.warning(f"[general_knowledge] live-data fetch skipped: {_ld_err}")
+        state.intermediate_results["general_knowledge_live"] = live_kind
+
+        bctx_name = getattr(settings, "BUILDING_NAME", None) or "the building"
+        _today = time.strftime("%Y-%m-%d")
+        system_message = (
+            "You are OntoSage, a helpful assistant. Your primary specialty is smart "
+            f"building management for {bctx_name}, but you can and should answer "
+            "general-knowledge questions directly and accurately when asked. "
+            "Answer the user's question on its merits. Do not redirect the user back "
+            "to building topics, and do not refuse simply because the question is not "
+            "about the building. If you genuinely do not know, say so briefly. "
+            f"Today's date is {_today}. "
+        )
+        if live_context:
+            system_message += (
+                "Live data is provided below the question — base your answer ONLY on "
+                "it for anything time-sensitive, and cite the source(s). "
+            )
+        system_message += f"LENGTH: {directive}"
+
+        prompt_parts = []
+        if history_block:
+            prompt_parts.append(f"=== Conversation so far ===\n{history_block}\n")
+        prompt_parts.append(f"=== Question ===\n{user_query}")
+        if live_context:
+            prompt_parts.append(f"\n{live_context}")
+        prompt = "\n".join(prompt_parts)
+
+        try:
+            answer = await llm_manager.generate(
+                prompt,
+                system_message=system_message,
+                task_type=TaskType.GENERAL,
+            )
+            answer = (answer or "").strip()
+            if not answer:
+                raise ValueError("empty LLM answer")
+            state.intermediate_results["dialogue_response"] = answer
+            state.intermediate_results["general_knowledge_answer"] = answer
+            state.intermediate_results["answer_length_used"] = length
+        except Exception as e:
+            logger.error(f"[general_knowledge] LLM call failed: {e}", exc_info=True)
+            # Fall back to any draft the classifier produced, else a graceful note.
+            fallback = state.intermediate_results.get("general_knowledge_draft")
+            state.intermediate_results["dialogue_response"] = fallback or (
+                "I wasn't able to generate an answer just now. Please try asking "
+                "again in a moment."
+            )
+            state.intermediate_results["error"] = f"general_knowledge: {e}"
+        return state
+
+    # Audience/voice hints for the P1.4 synthesis pass.
+    _SYNTH_PERSONA_VOICE = {
+        "general": "a general building occupant — clear, plain language",
+        "occupant": "a building occupant — clear, plain language",
+        "facility_manager": "a facility manager — operational, action-oriented",
+        "stakeholder": "a facility manager — operational, action-oriented",
+        "analyst": "a data analyst — precise and quantitative",
+        "executive": "an executive — concise, outcome-focused, minimal jargon",
+        "safety_officer": "a safety officer — compliance- and risk-focused",
+        "researcher": "a researcher — detailed and technical",
+        "student": "a student — approachable, lightly explanatory",
+    }
+
+    async def _synthesize_answer(self, state: ConversationState, draft: str) -> str:
+        """P1.4 — rewrite the deterministic draft into one unified, persona-aware
+        answer via a single grounded LLM pass.
+
+        Strictly grounded: the model may use ONLY facts present in the draft.
+        Falls back to the draft unchanged on any error (fully safe).
+        """
+        if not draft or not draft.strip():
+            return draft
+        persona = (getattr(state, "persona", "general") or "general").lower()
+        voice = self._SYNTH_PERSONA_VOICE.get(persona, self._SYNTH_PERSONA_VOICE["general"])
+        user_q = state.user_message or (state.messages[-1].content if state.messages else "")
+        system_message = (
+            "You are OntoSage, the assistant for a smart building. You rewrite a "
+            "draft answer into one clear, natural reply. You NEVER invent data."
+        )
+        prompt = (
+            "Rewrite the DRAFT below into a single, well-structured answer.\n\n"
+            "HARD RULES:\n"
+            "- Use ONLY the facts, numbers, sensor names, units, links, ticket IDs, "
+            "and notes that appear in the DRAFT. Do NOT add or guess any data.\n"
+            "- Preserve every numeric value and unit exactly as written.\n"
+            "- Preserve markdown links, download URLs, ticket IDs, and any lines "
+            "starting with '⚠️' or '*Note:' verbatim.\n"
+            "- Do NOT add a follow-up question or an 'you might also ask' section.\n"
+            "- Be concise; no preamble like 'Sure' or 'Here is'.\n"
+            f"- Audience/voice: {voice}.\n\n"
+            f"USER QUESTION: {user_q}\n\n"
+            f"DRAFT:\n{draft}\n\n"
+            "REWRITTEN ANSWER:"
+        )
+        try:
+            from orchestrator.llm_manager import TaskType, llm_manager
+
+            out = await llm_manager.generate(
+                prompt,
+                system_message=system_message,
+                temperature=0.3,
+                task_type=TaskType.GENERAL,
+            )
+            out = (out or "").strip()
+            return out or draft
+        except Exception as _se:
+            logger.debug(f"[synthesis] fallback to draft: {_se}")
+            return draft
 
     async def _response_node(self, state: ConversationState) -> ConversationState:
         """Format final response — with response-cache store after generation.
@@ -1672,6 +2640,10 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
 
         # Build response - Prioritize most downstream result
         media_payload = None
+        # P1.4 (targeted) — True only when the draft is a canned f-string template
+        # (document/export/control/maintenance). Prose paths (analytics/sparql/
+        # capability/etc.) are already LLM-generated, so synthesis is skipped there.
+        _template_draft = False
         if dialogue_response:
             final_response = dialogue_response
         elif viz_result.get("formatted_response") and viz_result.get("media"):
@@ -1680,20 +2652,18 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             media_payload = viz_result.get("media")
         # Phase 4 results (highest priority after viz)
         elif ctx.planner_result and (
-            ctx.planner_result.get("formatted_response")
-            or ctx.planner_result.get("formatted_text")
+            ctx.planner_result.get("formatted_response") or ctx.planner_result.get("formatted_text")
         ):
             pr = ctx.planner_result
             final_response = pr.get("formatted_response") or pr.get("formatted_text")
         elif ctx.floor_plan_result:
             final_response = ctx.floor_plan_result
         elif document_result.get("success"):
+            _template_draft = True
             filename = document_result.get("filename", "document")
             download_url = document_result.get("download_url")
             if download_url:
-                final_response = (
-                    f"Document ready — **{filename}**\n\nDownload: {download_url}"
-                )
+                final_response = f"Document ready — **{filename}**\n\nDownload: {download_url}"
             else:
                 final_response = f"Document generated — **{filename}**"
         elif ctx.report_result and ctx.report_result.get("formatted_text"):
@@ -1701,15 +2671,18 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         elif ctx.anomaly_result and ctx.anomaly_result.get("formatted_response"):
             final_response = ctx.anomaly_result["formatted_response"]
         elif ctx.export_result and ctx.export_result.get("success"):
+            _template_draft = True
             er = ctx.export_result
             final_response = (
                 f"✅ Export complete — **{er['filename']}** ({er['row_count']} rows, {er['size_bytes']} bytes).\n\n"
                 f"Preview (first 2000 chars):\n```\n{er['content'][:2000]}\n```"
             )
         elif ctx.control_result and ctx.control_result.get("message"):
+            _template_draft = True
             cr = ctx.control_result
             final_response = cr["message"]
         elif ctx.maintenance_result:
+            _template_draft = True
             mr = ctx.maintenance_result
             op = mr.get("operation", "UNKNOWN")
             ticket_id = mr.get("ticket_id")
@@ -1732,13 +2705,19 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                         f"- **Created:** {ticket_data.get('created_at', 'unknown')}"
                     )
                 else:
-                    final_response = f"Ticket **{ticket_id}** not found. Please check the ticket number."
+                    final_response = (
+                        f"Ticket **{ticket_id}** not found. Please check the ticket number."
+                    )
             elif op == "LIST":
                 tickets = mr.get("tickets", [])
                 if tickets:
-                    lines = [f"📋 Open maintenance tickets for **{mr.get('building_id', 'this building')}**:\n"]
+                    lines = [
+                        f"📋 Open maintenance tickets for **{mr.get('building_id', 'this building')}**:\n"
+                    ]
                     for t in tickets[:10]:
-                        lines.append(f"- **{t.get('ticket_id')}**: {t.get('description', '')[:60]} [{t.get('status')}]")
+                        lines.append(
+                            f"- **{t.get('ticket_id')}**: {t.get('description', '')[:60]} [{t.get('status')}]"
+                        )
                     final_response = "\n".join(lines)
                 else:
                     final_response = f"No open maintenance tickets for this building. ✅"
@@ -1762,8 +2741,23 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         elif sparql_result.get("formatted_response"):
             final_response = sparql_result["formatted_response"]
         else:
-            final_response = (
-                "I processed your request, but couldn't generate a response."
+            final_response = "I processed your request, but couldn't generate a response."
+
+        # ── Visualization honesty guard ───────────────────────────────────────
+        # If the user explicitly asked for a chart but no image was produced,
+        # say so plainly.  Previously the response node fell back to the analytics
+        # stats text silently (it requires viz_result.media to use the viz path),
+        # leaving users with a summary that *offered* a graph but never showed one.
+        _latest_msg = state.messages[-1].content if state.messages else ""
+        if (
+            self._user_wants_visualization(_latest_msg)
+            and not media_payload
+            and state.current_intent not in ("clarification", "greeting", "general_knowledge")
+        ):
+            final_response += (
+                "\n\n---\n*⚠️ I summarised the data above but couldn't render the "
+                "chart this time. Please try again, or rephrase the request as e.g. "
+                '"plot sensor 5.27 temperature for the last 24 hours as a line chart".*'
             )
 
         # ── CAP-04: Append auto-compliance block (if produced by analytics node)
@@ -1782,7 +2776,10 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         # NOTE: must use raw dict for `key not in` semantics — `ctx.X is None`
         # doesn't distinguish "key absent" from "key set to None".
         _fp_intent_ok = state.current_intent not in (
-            "floor_plan", "clarification", "greeting", "general_knowledge",
+            "floor_plan",
+            "clarification",
+            "greeting",
+            "general_knowledge",
         )
         if _fp_intent_ok and "floor_plan_result" not in state.intermediate_results:
             _fc = state.floor_context or {}
@@ -1790,7 +2787,9 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             _bid = _fc.get("building_id") or settings.BUILDING_ID
             if _zone and "floor-plans" not in final_response:
                 try:
-                    from orchestrator.services.floor_plan_service import floor_plan_service
+                    from orchestrator.services.floor_plan_service import (
+                        floor_plan_service,
+                    )
 
                     _fp_link = floor_plan_service.suggest_floor_plan_link(_zone, _bid)
                     if _fp_link:
@@ -1805,19 +2804,31 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             notice_text = "\n\n---\n*Note: " + " ".join(notices) + "*"
             final_response += notice_text
 
-        # Apply persona formatting
-        final_response = await self.dialogue_agent.format_response(
-            state, final_response, state.current_intent
-        )
+        # Phase 1.4 (targeted) — grounded synthesis ONLY rewrites canned-template
+        # drafts (export/maintenance/control/document) into natural prose. The
+        # already-LLM-generated prose paths keep the existing persona formatter,
+        # so synthesis adds no extra round-trip where it isn't needed. Falls back
+        # to the draft on any error.
+        _synthesis_on = getattr(settings, "RESPONSE_SYNTHESIS_ENABLED", False)
+        _did_synthesize = False
+        if _synthesis_on and _template_draft:
+            final_response = await self._synthesize_answer(state, final_response)
+            _did_synthesize = True
+        else:
+            # Persona formatting (first pass)
+            final_response = await self.dialogue_agent.format_response(
+                state, final_response, state.current_intent
+            )
 
         # Phase 7.2: Append proactive follow-up suggestions based on intent
         suggestions = self._get_follow_up_suggestions(state.current_intent)
         if suggestions:
             final_response += f"\n\n---\n**You might also ask:** {suggestions}"
 
-        # CAP-03: Persona-aware post-processing (reframes facts per persona)
+        # CAP-03: Persona-aware post-processing (second pass). Skipped when synthesis
+        # ran — synthesis already produced the persona-appropriate voice.
         persona = getattr(state, "persona", "general") or "general"
-        if persona and persona != "general":
+        if not _did_synthesize and persona and persona != "general":
             try:
                 from orchestrator.llm_manager import llm_manager as _llm
 
@@ -1834,12 +2845,24 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         _user_lang = state.intermediate_results.get("_user_lang", "en")
         if self._i18n and _user_lang and _user_lang != "en":
             try:
-                final_response = await self._i18n.from_english(
-                    final_response, _user_lang
-                )
+                final_response = await self._i18n.from_english(final_response, _user_lang)
                 logger.info(f"i18n: translated response to {_user_lang}")
             except Exception as _i18n_out_err:
                 logger.debug(f"i18n output translation skipped: {_i18n_out_err}")
+
+        # Provenance chips — name the data source(s) that produced this answer.
+        # No-op unless the datasource-toggles feature is on (guarded so existing
+        # behaviour and tests are unchanged when the flag is off).
+        if getattr(settings, "DATASOURCE_TOGGLES_ENABLED", False):
+            try:
+                _reg = getattr(self, "datasource_registry", None)
+                _stores = state.intermediate_results.get("_prov_stores", [])
+                _tags = _prov.build_tags(_stores, _reg)
+                if _tags:
+                    state.intermediate_results["sources"] = _prov.tags_to_dicts(_tags)
+                    final_response += _prov.render_chips(_tags)
+            except Exception as _pe:
+                logger.debug(f"provenance rendering skipped: {_pe}")
 
         # Add to messages
         state.messages.append(
@@ -1853,9 +2876,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         # B.2: Store in response cache (non-blocking, best-effort)
         if self.response_cache:
             try:
-                original_query = (
-                    state.messages[-2].content if len(state.messages) >= 2 else ""
-                )
+                original_query = state.messages[-2].content if len(state.messages) >= 2 else ""
                 if original_query:
                     await self.response_cache.put(
                         question=original_query,
@@ -1871,9 +2892,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         # Phase 5: Also store failures so the correction corpus grows.
         if self.agent_memory and state.user_id:
             try:
-                original_query = (
-                    state.messages[-2].content if len(state.messages) >= 2 else ""
-                )
+                original_query = state.messages[-2].content if len(state.messages) >= 2 else ""
                 entities = state.intermediate_results.get("entities", [])
                 _verification = state.intermediate_results.get("verification", {})
                 _is_grounded = _verification.get("grounded", True)
@@ -1890,9 +2909,8 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                     )
                 else:
                     # Phase 5 — capture failure for correction corpus
-                    error_info = (
-                        state.intermediate_results.get("error")
-                        or (f"degraded: {_degraded}" if _degraded else "ungrounded")
+                    error_info = state.intermediate_results.get("error") or (
+                        f"degraded: {_degraded}" if _degraded else "ungrounded"
                     )
                     await self.agent_memory.store_failure(
                         user_id=state.user_id,
@@ -1925,18 +2943,16 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             "degraded_services",
             "memory_context",
             "compliance_context",  # consumed above; clear after appending
-            "floor_plan_result",      # consumed above; clear after appending
+            "floor_plan_result",  # consumed above; clear after appending
             "floor_plan_structured",  # consumed by response node; clear after appending
-            "floor_context_hint",     # consumed by SPARQL agent; clear so it doesn't bleed across turns
+            "floor_context_hint",  # consumed by SPARQL agent; clear so it doesn't bleed across turns
         ]
         for key in _bulky_keys:
             state.intermediate_results.pop(key, None)
 
         return state
 
-    def _handle_sensor_discovery(
-        self, discovery_filter: str = None, entities: list = None
-    ) -> str:
+    def _handle_sensor_discovery(self, discovery_filter: str = None, entities: list = None) -> str:
         """
         Build a sensor discovery response from the cached sensor_map.
 
@@ -1988,8 +3004,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             # No match — show summary of available types
             type_counts = self._count_sensor_types(unique_sensors)
             type_summary = ", ".join(
-                f"**{t}** ({c})"
-                for t, c in sorted(type_counts.items(), key=lambda x: -x[1])[:10]
+                f"**{t}** ({c})" for t, c in sorted(type_counts.items(), key=lambda x: -x[1])[:10]
             )
             return (
                 f'I couldn\'t find sensors matching **"{filter_text}"**.\n\n'
@@ -2041,6 +3056,91 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             type_counts[sensor_type] = type_counts.get(sensor_type, 0) + 1
         return type_counts
 
+    def _check_locked_capability(self, state: ConversationState) -> Optional[str]:
+        """Return the id of a DISABLED data source whose keyword the query matches.
+
+        Conservative gate for the locked-capability UX: fires only when the
+        datasource-toggles feature is on, a registry + manager are available, and
+        a curated `match_keywords` phrase for a *disabled* source appears in the
+        query. Returns None otherwise (so normal routing proceeds unchanged).
+        """
+        if not getattr(settings, "DATASOURCE_TOGGLES_ENABLED", False):
+            return None
+        reg = getattr(self, "datasource_registry", None)
+        mgr = getattr(self, "datasource_manager", None)
+        if reg is None or mgr is None:
+            return None
+        query = (state.messages[-1].content if state.messages else "") or ""
+        ql = query.lower()
+        role = state.intermediate_results.get("user_role")
+        for spec in reg.list():
+            if not spec.match_keywords:
+                continue
+            if not any(kw in ql for kw in spec.match_keywords):
+                continue  # this question doesn't need this source
+            # The question needs this source. Two ways it can be gated:
+            if not mgr.is_enabled(spec.id):
+                state.intermediate_results["locked_reason"] = "disabled"
+                return spec.id  # globally off → "enable X to unlock"
+            # enabled, but does this user's ROLE have access?
+            try:
+                from orchestrator.services import admin_config
+
+                if not admin_config.is_source_allowed(role, spec.id):
+                    state.intermediate_results["locked_reason"] = "forbidden"
+                    state.intermediate_results["locked_role"] = role or "your role"
+                    return spec.id
+            except Exception as _ae:  # non-fatal: access check never blocks routing
+                logger.debug(f"[locked_capability] role-access check skipped: {_ae}")
+        return None
+
+    async def _locked_capability_node(self, state: ConversationState) -> ConversationState:
+        """Decline gracefully, naming the disabled source and what enabling unlocks."""
+        logger.info(
+            f"[locked_capability] node entered: intent={state.intermediate_results.get('intent')}"
+        )
+        # locked_source may be absent: routing-function state mutations are not
+        # persisted by LangGraph, so re-derive the source here as the node entry point.
+        source_id = state.intermediate_results.get("locked_source")
+        if not source_id:
+            source_id = self._check_locked_capability(state)
+            if source_id:
+                state.intermediate_results["locked_source"] = source_id
+        reg = getattr(self, "datasource_registry", None)
+        spec = reg.get(source_id) if (reg and source_id) else None
+        if spec is None:
+            state.intermediate_results["dialogue_response"] = (
+                "That question needs a data source that isn't available yet."
+            )
+            return state
+        reason = state.intermediate_results.get("locked_reason", "disabled")
+        if reason == "forbidden":
+            role = state.intermediate_results.get("locked_role", "your role")
+            state.intermediate_results["dialogue_response"] = (
+                f"🔒 This question needs the **{spec.provenance_system}**, but your role "
+                f"(**{role}**) doesn't have access to the **{spec.label}** data source.\n\n"
+                f"Ask an administrator to grant your role access in the admin console."
+            )
+            logger.info(f"[locked_capability] denied — role '{role}' lacks access to '{source_id}'")
+            return state
+        unlocks = (
+            "\n".join(f"- {tag.replace('_', ' ')}" for tag in spec.unlocks)
+            or "- additional question types"
+        )
+        note = (
+            "\n\n_This is simulated data, injected to demonstrate the capability._"
+            if spec.synthetic
+            else ""
+        )
+        state.intermediate_results["dialogue_response"] = (
+            f"🔒 This question needs the **{spec.provenance_system}**, which is currently "
+            f"switched **off**.\n\n"
+            f"Enable the **{spec.label}** data source in the configuration panel to unlock:\n"
+            f"{unlocks}{note}"
+        )
+        logger.info(f"[locked_capability] declined — source '{source_id}' disabled")
+        return state
+
     def _route_from_dialogue(self, state: ConversationState) -> str:
         """Route from dialogue node based on intent.
 
@@ -2064,6 +3164,21 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         original_intent = intent  # for the audit trail
         user_query = state.messages[-1].content if state.messages else ""
 
+        # ── Locked-capability gate (datasource-toggles) ─────────────────────
+        # If the query explicitly needs a DISABLED synthetic source, decline with
+        # an "enable X to unlock this" message instead of returning an empty/wrong
+        # answer. Conservative + flag-gated; no-op when the feature is off.
+        _locked_source = self._check_locked_capability(state)
+        if _locked_source:
+            state.intermediate_results["locked_source"] = _locked_source
+            state.intermediate_results["route_decision"] = {
+                "intent_from_dialogue": original_intent,
+                "final_node": "locked_capability",
+                "decision_source": "override",
+                "overrides_applied": [f"locked_capability:{_locked_source}"],
+            }
+            return "locked_capability"
+
         # Phase 13A — structured audit trail.  Updated incrementally as we
         # walk through overrides; flushed at end of routing.
         route_decision: Dict[str, Any] = {
@@ -2071,13 +3186,14 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             "intent_after_overrides": original_intent,
             "overrides_applied": [],
             "final_node": None,
-            "decision_source": "registry",   # 'registry' | 'override' | 'fallback'
+            "decision_source": "registry",  # 'registry' | 'override' | 'fallback'
         }
 
         # Lazy import to avoid circular load at module import time.
         # Phase 11A: pass per-request building_id so YAML overlays for the
         # active tenant apply (e.g. bldg2's lab_equipment intent).
         from orchestrator.intents import get_intent_registry
+
         _registry = get_intent_registry(getattr(state, "building_id", None))
 
         # The "non-floor-plan" exclusion set used by the floor-plan keyword
@@ -2089,19 +3205,41 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             _registry.in_group("data")
             | _registry.in_group("standalone")
             | frozenset({"sparql", "sql", "comparison"})  # pipeline stages + alias
-        ) - frozenset({"floor_plan"})  # floor_plan itself remains routable here
+        ) - frozenset(
+            {"floor_plan"}
+        )  # floor_plan itself remains routable here
 
         # ── Contextual override #1: floor_plan misroute for compare queries ──
         if intent == "floor_plan":
             _ql = user_query.lower()
-            _COMPARE_KW = frozenset({"compare", "comparison", " vs ", " versus ", "difference between"})
-            _DATA_KW = frozenset({
-                "temperature", "co2", "energy", "humidity", "sensor", "consumption",
-                "usage", "reading", "level", "analytics", "trend", "data",
-                "noise", "light", "occupancy", "carbon", "emission",
-            })
+            _COMPARE_KW = frozenset(
+                {"compare", "comparison", " vs ", " versus ", "difference between"}
+            )
+            _DATA_KW = frozenset(
+                {
+                    "temperature",
+                    "co2",
+                    "energy",
+                    "humidity",
+                    "sensor",
+                    "consumption",
+                    "usage",
+                    "reading",
+                    "level",
+                    "analytics",
+                    "trend",
+                    "data",
+                    "noise",
+                    "light",
+                    "occupancy",
+                    "carbon",
+                    "emission",
+                }
+            )
             if any(kw in _ql for kw in _COMPARE_KW) and any(kw in _ql for kw in _DATA_KW):
-                logger.info("[route] floor_plan → comparison override (compare+data keywords in query)")
+                logger.info(
+                    "[route] floor_plan → comparison override (compare+data keywords in query)"
+                )
                 intent = "comparison"
                 state.current_intent = "comparison"
                 route_decision["intent_after_overrides"] = "comparison"
@@ -2109,8 +3247,20 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                 route_decision["decision_source"] = "override"
 
         # ── Contextual override #2: floor_plan keyword detection ──
+        # Don't let a "floor N" mention steal an actuation command ("open the
+        # windows on floor 3") or a report ("the toilet on floor 3 is leaking").
+        _floor_plan_protected = (
+            "control",
+            "maintenance",
+            "complaint",
+            "safety_report",
+            "suggestion",
+            "feedback",
+        )
         if intent == "floor_plan" or (
-            floor_plan_service.is_floor_plan_query(user_query) and intent not in _data_intents
+            floor_plan_service.is_floor_plan_query(user_query)
+            and intent not in _data_intents
+            and intent not in _floor_plan_protected
         ):
             logger.info(f"[route] floor_plan query detected (intent={intent})")
             if intent != "floor_plan":
@@ -2126,9 +3276,19 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         if intent == "discovery":
             _ql = user_query.lower()
             spatial_words = [
-                "zone", "floor", "room", "space", "level", "area", "location",
-                "list zone", "list floor", "list room",
-                "how many zone", "how many floor", "how many room",
+                "zone",
+                "floor",
+                "room",
+                "space",
+                "level",
+                "area",
+                "location",
+                "list zone",
+                "list floor",
+                "list room",
+                "how many zone",
+                "how many floor",
+                "how many room",
             ]
             if any(w in _ql for w in spatial_words):
                 route_decision["overrides_applied"].append("discovery_spatial_words")
@@ -2140,9 +3300,15 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             state.intermediate_results["route_decision"] = route_decision
             return "response"
 
+        # Open-domain general-knowledge → dedicated answering node.
+        if intent == "general_knowledge":
+            route_decision["final_node"] = "general_knowledge"
+            state.intermediate_results["route_decision"] = route_decision
+            return "general_knowledge"
+
         # Direct-to-response group (no override needed beyond what the registry
         # already says: pipeline_group=meta → route_target=response).
-        if intent in ("greeting", "clarification", "unknown", "general_knowledge"):
+        if intent in ("greeting", "clarification", "unknown"):
             route_decision["final_node"] = "response"
             state.intermediate_results["route_decision"] = route_decision
             return "response"
@@ -2167,13 +3333,36 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             # points to a node that isn't registered in _build_graph, fall
             # back to "response" so LangGraph doesn't crash with
             # "branch returned unknown node".
-            _REGISTERED_NODES = frozenset({
-                "sparql", "sql", "analytics", "visualization", "planner",
-                "report", "anomaly", "export", "floor_plan", "spatial_query",
-                "control", "maintenance", "capability", "response",
-                # Phase 19 - unified report-intake category nodes.
-                "complaint", "feedback", "safety_report", "suggestion",
-            })
+            _REGISTERED_NODES = frozenset(
+                {
+                    "sparql",
+                    "sql",
+                    "analytics",
+                    "visualization",
+                    "planner",
+                    "report",
+                    "anomaly",
+                    "export",
+                    "floor_plan",
+                    "spatial_query",
+                    "control",
+                    "maintenance",
+                    "capability",
+                    "response",
+                    "general_knowledge",
+                    # Phase 19 - unified report-intake category nodes.
+                    "complaint",
+                    "feedback",
+                    "safety_report",
+                    "suggestion",
+                    # T21 — per-user alert management (create/list/delete).
+                    "alert_mgmt",
+                    # T22 — honest automation-capability answers.
+                    "automation_capability_check",
+                    # T35 — personalised comfort preference management.
+                    "preference_management",
+                }
+            )
             if target not in _REGISTERED_NODES:
                 logger.info(
                     f"[route] intent '{intent}' has route_target='{target}' "
@@ -2630,9 +3819,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         logger.info("Executing Phase 4 Anomaly Detection Node")
         latest_message = state.messages[-1].content if state.messages else ""
         sql_result = state.intermediate_results.get("sql_result")
-        result = await self.anomaly_agent.detect(
-            state, latest_message, sensor_data=sql_result
-        )
+        result = await self.anomaly_agent.detect(state, latest_message, sensor_data=sql_result)
         state.intermediate_results["anomaly_result"] = result
         return state
 
@@ -2645,9 +3832,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         # If SPARQL hasn't run yet (export intent bypasses sparql node), run it now
         if not state.intermediate_results.get("sparql_result"):
             logger.info("Export: running SPARQL agent to get sensor UUIDs")
-            sparql_result = await self.sparql_agent.generate_query(
-                state, latest_message
-            )
+            sparql_result = await self.sparql_agent.generate_query(state, latest_message)
             state.intermediate_results["sparql_result"] = sparql_result
             state.query_results = sparql_result.get("results", {})
 
@@ -2701,9 +3886,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             return "flow"
         return None
 
-    def _infer_sensor_kind(
-        self, label: Optional[str], sensor_uri: Optional[str]
-    ) -> Optional[str]:
+    def _infer_sensor_kind(self, label: Optional[str], sensor_uri: Optional[str]) -> Optional[str]:
         text = f"{label or ''} {sensor_uri or ''}".lower()
         if "temperature" in text or "temp" in text:
             return "temperature"
@@ -2748,9 +3931,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             return "m³/s"
         return ""
 
-    def _build_sensor_metadata_from_bindings(
-        self, bindings: list
-    ) -> Dict[str, Dict[str, str]]:
+    def _build_sensor_metadata_from_bindings(self, bindings: list) -> Dict[str, Dict[str, str]]:
         sensor_metadata: Dict[str, Dict[str, str]] = {}
         for binding in bindings:
             uuid_val = None
@@ -2759,11 +3940,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             unit_val = None
 
             for var in binding:
-                if (
-                    "uuid" in var.lower()
-                    or "id" in var.lower()
-                    or "timeseries" in var.lower()
-                ):
+                if "uuid" in var.lower() or "id" in var.lower() or "timeseries" in var.lower():
                     uuid_val = binding[var]["value"]
                 elif "label" in var.lower():
                     label_val = binding[var]["value"]
@@ -2809,9 +3986,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         from orchestrator.agents.floor_plan_agent import get_floor_plan_agent
 
         logger.info("[floor_plan] Executing Floor Plan Node (manifest-aware)")
-        user_query = state.user_message or (
-            state.messages[-1].content if state.messages else ""
-        )
+        user_query = state.user_message or (state.messages[-1].content if state.messages else "")
 
         try:
             agent = get_floor_plan_agent()
@@ -2849,9 +4024,9 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                     f"Constrain SPARQL/SQL queries to this zone."
                 )
                 if space.ontology_iri:
-                    state.intermediate_results["floor_context_hint"] += (
-                        f" Ontology IRI: {space.ontology_iri}"
-                    )
+                    state.intermediate_results[
+                        "floor_context_hint"
+                    ] += f" Ontology IRI: {space.ontology_iri}"
                 logger.info(
                     f"[floor_plan] Resolved: floor={result.floor}, "
                     f"zone={space.zone_id}, type={space.type}"
@@ -2964,6 +4139,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             from orchestrator.services.report_intake_service import (
                 get_report_intake_service,
             )
+
             service = get_report_intake_service(self.postgres_manager)
             category = service.category_for_intent(intent)
             action = service.classify_action(user_message or "")
@@ -2996,13 +4172,19 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             else:  # create
                 entities = state.intermediate_results.get("entities", []) or []
                 location = next(
-                    (e.get("value") for e in entities
-                     if isinstance(e, dict) and e.get("type") == "location"),
+                    (
+                        e.get("value")
+                        for e in entities
+                        if isinstance(e, dict) and e.get("type") == "location"
+                    ),
                     None,
                 )
                 device = next(
-                    (e.get("value") for e in entities
-                     if isinstance(e, dict) and e.get("type") in ("device", "equipment")),
+                    (
+                        e.get("value")
+                        for e in entities
+                        if isinstance(e, dict) and e.get("type") in ("device", "equipment")
+                    ),
                     None,
                 )
                 res = await service.create_report(
@@ -3018,7 +4200,9 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                 msg = res.get("message", "Your report has been received.")
 
             state.intermediate_results["report_intake_result"] = {
-                "category": category, "action": action, "persona": persona_label,
+                "category": category,
+                "action": action,
+                "persona": persona_label,
             }
             state.intermediate_results["dialogue_response"] = msg
         except Exception as e:
@@ -3036,7 +4220,9 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         node name keeps working."""
         return await self._report_intake_node(state)
 
-    async def _execute_maintenance_db(self, result: Dict[str, Any], state: ConversationState) -> None:
+    async def _execute_maintenance_db(
+        self, result: Dict[str, Any], state: ConversationState
+    ) -> None:
         """Persist maintenance ticket operation to PostgreSQL."""
         op = result.get("operation")
         try:
@@ -3067,7 +4253,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                         f"Location: {result.get('location')}\n"
                         f"Issue: {result.get('description')}\n"
                         f"Status: OPEN\n\n"
-                        f"Use \"Check ticket {ticket_id}\" to follow up."
+                        f'Use "Check ticket {ticket_id}" to follow up.'
                     )
                 elif op == "STATUS":
                     row = await conn.fetchrow(
@@ -3088,7 +4274,8 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                     rows = await conn.fetch(
                         "SELECT id, location, description, status FROM maintenance_tickets "
                         "WHERE building_id = $1 AND status = $2 LIMIT 10",
-                        result.get("building_id"), result.get("filter", "OPEN"),
+                        result.get("building_id"),
+                        result.get("filter", "OPEN"),
                     )
                     if rows:
                         lines = [f"📋 Open tickets ({len(rows)}):"]
@@ -3101,16 +4288,22 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                     await conn.execute(
                         "UPDATE maintenance_tickets SET assignee=$1, status='ASSIGNED', "
                         "updated_at=NOW() WHERE id=$2",
-                        result.get("assignee"), result.get("ticket_id"),
+                        result.get("assignee"),
+                        result.get("ticket_id"),
                     )
-                    result["message"] = f"✅ Ticket {result.get('ticket_id')} assigned to {result.get('assignee')}."
+                    result["message"] = (
+                        f"✅ Ticket {result.get('ticket_id')} assigned to {result.get('assignee')}."
+                    )
                 elif op in ("RESOLVE", "CLOSE"):
                     new_status = "RESOLVED" if op == "RESOLVE" else "CLOSED"
                     await conn.execute(
                         "UPDATE maintenance_tickets SET status=$1, updated_at=NOW() WHERE id=$2",
-                        new_status, result.get("ticket_id"),
+                        new_status,
+                        result.get("ticket_id"),
                     )
-                    result["message"] = f"✅ Ticket {result.get('ticket_id')} marked as {new_status}."
+                    result["message"] = (
+                        f"✅ Ticket {result.get('ticket_id')} marked as {new_status}."
+                    )
         except Exception as e:
             logger.warning(f"[maintenance_node] DB operation failed: {e}")
             if "message" not in result:
@@ -3119,24 +4312,44 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
     async def _capability_node(self, state: ConversationState) -> ConversationState:
         """Phase 0 — Answer CAPABILITY / off-ontology queries from the building KB."""
         logger.info(
-            f"[capability_node] intent={state.current_intent}, "
-            f"building={state.building_id}"
+            f"[capability_node] intent={state.current_intent}, " f"building={state.building_id}"
         )
+        # Fallback: when the semantic router did not pre-fetch capability matches
+        # (the LLM routed here, but the query scored just below the routing
+        # threshold), search the KB directly so the agent can ground an answer
+        # instead of dropping to the "no info" boundary.
+        if not state.intermediate_results.get("capability_matches"):
+            _router = getattr(self.dialogue_agent, "semantic_router", None)
+            if _router is not None:
+                try:
+                    _q = state.user_message or (
+                        state.messages[-1].content if state.messages else ""
+                    )
+                    _bid = state.building_id or settings.BUILDING_ID
+                    _min = float(os.environ.get("CAPABILITY_ANSWER_MIN_SCORE", "0.40"))
+                    _fb = await _router.search_capability_entries(_q, _bid, min_score=_min)
+                    if _fb:
+                        state.intermediate_results["capability_matches"] = _fb
+                        logger.info(
+                            f"[capability_node] KB fallback grounded {len(_fb)} match(es); "
+                            f"top={_fb[0].entry_id}@{_fb[0].score:.3f}"
+                        )
+                except Exception as _e:
+                    logger.warning(f"[capability_node] fallback search failed: {_e!r}")
         state = await self.capability_agent.answer(state)
         # Surface the KB response into the standard dialogue_response slot
         # so the response node picks it up consistently.
         result = state.intermediate_results.get("capability_result", {})
         if result.get("response"):
             state.intermediate_results["dialogue_response"] = result["response"]
+            _prov.record(state, "capability_kb")
         return state
 
     async def _document_node(self, state: ConversationState) -> ConversationState:
         """CAP-01 — Generate a formal document from current pipeline outputs."""
         logger.info("Executing Document Node")
 
-        report_type = (
-            state.intermediate_results.get("report_type") or "summary"
-        ).lower()
+        report_type = (state.intermediate_results.get("report_type") or "summary").lower()
         doc_type_map = {
             "summary": "summary",
             "anomaly": "anomaly_digest",
@@ -3144,9 +4357,9 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             "trend": "trend",
             "full": "full",
         }
-        document_type = state.intermediate_results.get(
-            "document_type"
-        ) or doc_type_map.get(report_type, "summary")
+        document_type = state.intermediate_results.get("document_type") or doc_type_map.get(
+            report_type, "summary"
+        )
         if state.current_intent == "compliance":
             document_type = "compliance_report"
 
@@ -3162,6 +4375,444 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         state.intermediate_results["document_result"] = result
         return state
 
+    async def _alert_mgmt_node(self, state: ConversationState) -> ConversationState:
+        """T21 — Create / list / delete per-user threshold alert rules conversationally."""
+        import re
+
+        logger.info(f"[alert_mgmt] intent={state.current_intent}")
+
+        # RBAC: guest users cannot manage alert rules
+        user_role = state.intermediate_results.get("user_role", "guest")
+        user_id = state.intermediate_results.get("user_id", "")
+        if not user_id or user_role in ("guest", "anonymous"):
+            state.intermediate_results["dialogue_response"] = (
+                "Alert management requires you to be logged in. "
+                "Please authenticate to create or manage personal alerts."
+            )
+            return state
+
+        building_id = state.building_id or "bldg1"
+        query = (state.messages[-1].content if state.messages else "").lower()
+
+        # Detect subcommand
+        if re.search(r"\b(list|show|view|what alerts|my alerts)\b", query):
+            subcommand = "list"
+        elif re.search(r"\b(delete|remove|cancel|stop|disable)\b", query):
+            subcommand = "delete"
+        else:
+            subcommand = "create"
+
+        try:
+            from orchestrator.services.user_alert_store import get_user_alert_store
+
+            store = get_user_alert_store()
+
+            if subcommand == "list":
+                rules = await store.list_alerts(user_id, building_id)
+                if not rules:
+                    response = "You have no active alert rules. Say 'alert me when CO2 exceeds 1000 ppm' to create one."
+                else:
+                    lines = [f"Your active alerts ({len(rules)}):"]
+                    for i, r in enumerate(rules, 1):
+                        t = r.get("trigger", {})
+                        concept = t.get("concept") or "sensor"
+                        op = t.get("op", ">")
+                        thresh = t.get("threshold", 0)
+                        # The auto-generated name already embeds "{concept} {op}
+                        # {threshold}" — don't append the condition twice.
+                        label = r.get("name") or f"{concept} {op} {thresh}"
+                        lines.append(
+                            f"  {i}. [{r.get('id')}] {label} "
+                            f"— {r.get('action', {}).get('severity', 'warning')}"
+                        )
+                    response = "\n".join(lines)
+
+            elif subcommand == "delete":
+                # Try to find a rule_id in the message (8-char hex)
+                id_match = re.search(r"\b([0-9a-f]{8})\b", query)
+                if id_match:
+                    rule_id = id_match.group(1)
+                    ok = await store.delete_alert(user_id, building_id, rule_id)
+                    response = (
+                        f"Alert {rule_id} deleted."
+                        if ok
+                        else f"Could not find alert {rule_id} — check 'list my alerts'."
+                    )
+                else:
+                    response = (
+                        "Please include the alert ID to delete it "
+                        "(e.g. 'delete alert abc12345'). "
+                        "Use 'list my alerts' to see your alert IDs."
+                    )
+
+            else:  # create
+                # Extract trigger parameters from entities + message
+                entities = state.intermediate_results.get("entities") or []
+                concepts = state.intermediate_results.get("concepts") or []
+
+                # Threshold extraction (e.g. "exceeds 1000", "above 28", "below 30%")
+                thresh_match = re.search(
+                    r"\b(above|below|exceeds?|greater than|less than|drops? below|over|under)\s+([\d.]+)",
+                    query,
+                )
+                threshold = float(thresh_match.group(2)) if thresh_match else 0.0
+                op_word = thresh_match.group(1) if thresh_match else "above"
+                op = "<" if any(w in op_word for w in ("below", "less", "drops", "under")) else ">"
+
+                # Duration (e.g. "for 10 minutes")
+                dur_match = re.search(r"for (\d+)\s*min", query)
+                duration_min = int(dur_match.group(1)) if dur_match else 0
+
+                # Concept / sensor class from HBCO resolution
+                concept_id = None
+                brick_class = None
+                if concepts:
+                    cm = concepts[0]
+                    concept_id = cm.get("concept_id")
+                    bc = cm.get("brick_classes") or []
+                    brick_class = bc[0] if bc else None
+
+                trigger: dict = {
+                    "op": op,
+                    "threshold": threshold,
+                    "duration_min": duration_min,
+                }
+                if concept_id:
+                    trigger["concept"] = concept_id
+                else:
+                    # Fallback: try to infer from keyword
+                    if "co2" in query or "carbon" in query:
+                        trigger["concept"] = "stuffy"
+                    elif "temp" in query or "warm" in query or "hot" in query:
+                        trigger["concept"] = "warmth"
+                    elif "humid" in query or "damp" in query:
+                        trigger["concept"] = "dampness"
+                    else:
+                        trigger["concept"] = "sensor"
+
+                action = {
+                    "type": "notify",
+                    "message": f"Alert condition triggered: {trigger.get('concept')} {op} {threshold}",
+                    "severity": "warning",
+                }
+
+                rule_id = await store.create_alert(user_id, building_id, trigger, action)
+                response = (
+                    f"Alert created (ID: **{rule_id}**). "
+                    f"I'll notify you when {trigger.get('concept')} {op} {threshold}"
+                    + (f" for {duration_min} minutes" if duration_min else "")
+                    + f". Use 'list my alerts' to manage your alerts."
+                )
+
+        except Exception as e:
+            logger.error(f"[alert_mgmt] error: {e}", exc_info=True)
+            response = "I couldn't manage your alert right now. Please try again."
+
+        state.intermediate_results["dialogue_response"] = response
+        return state
+
+    async def _preference_management_node(self, state: ConversationState) -> ConversationState:
+        """T35 — Store, list, or delete per-user comfort preferences conversationally."""
+        import re as _re_pref
+
+        logger.info(f"[preference_mgmt] intent={state.intermediate_results.get('intent')}")
+
+        user_role = state.intermediate_results.get("user_role", "guest")
+        user_id = state.intermediate_results.get("user_id", "")
+
+        if not user_id or user_role in ("guest", "anonymous"):
+            state.intermediate_results["dialogue_response"] = (
+                "Personalised preferences require you to be logged in. "
+                "Please sign in to save your comfort preferences."
+            )
+            return state
+
+        from orchestrator.services.user_preference_store import (
+            CATEGORY_KEYWORDS,
+            get_user_preference_store,
+        )
+
+        store = get_user_preference_store()
+        query = (state.messages[-1].content if state.messages else "").lower()
+
+        # ── Subcommand detection ──────────────────────────────────────────
+        _FORGET_RE = _re_pref.compile(
+            r"\b(forget|clear|reset|delete|remove) (my|all|the)? ?"
+            r"(preference|setting|temperature|humidity|noise|light|comfort|personalisation)s?\b"
+        )
+        _LIST_RE = _re_pref.compile(
+            r"\b(what are|show|list|display) (my|all)? ?(preference|setting|personalisation)s?\b"
+        )
+
+        try:
+            if _FORGET_RE.search(query):
+                # Identify category if specified, else delete all
+                category = None
+                for kw, cat in CATEGORY_KEYWORDS.items():
+                    if kw in query:
+                        category = cat
+                        break
+                if category:
+                    deleted = await store.delete_preference(user_id, category)
+                    response = (
+                        f"Done — I've forgotten your {category.replace('_', ' ')} preference."
+                        if deleted
+                        else f"You didn't have a {category.replace('_', ' ')} preference saved."
+                    )
+                else:
+                    count = await store.delete_all_preferences(user_id)
+                    response = (
+                        f"Done — I've cleared all {count} of your saved preferences."
+                        if count
+                        else "You don't have any saved preferences yet."
+                    )
+
+            elif _LIST_RE.search(query):
+                prefs = await store.list_preferences(user_id)
+                if not prefs:
+                    response = (
+                        "You don't have any saved preferences yet. "
+                        "Try: 'Remember I prefer temperatures between 22 and 24°C.'"
+                    )
+                else:
+                    lines = ["**Your saved comfort preferences:**"]
+                    for p in prefs:
+                        rng = ""
+                        if p.get("pref_min") is not None and p.get("pref_max") is not None:
+                            rng = f"{p['pref_min']}–{p['pref_max']} {p.get('unit', '')}"
+                        elif p.get("pref_min") is not None:
+                            rng = f"≥{p['pref_min']} {p.get('unit', '')}"
+                        elif p.get("pref_max") is not None:
+                            rng = f"≤{p['pref_max']} {p.get('unit', '')}"
+                        lines.append(f"- {p.get('label', p['category'])}: **{rng}**")
+                    response = "\n".join(lines)
+
+            else:
+                # Store preference — extract category + numeric range from query
+                category = None
+                for kw, cat in CATEGORY_KEYWORDS.items():
+                    if kw in query:
+                        category = cat
+                        break
+                if not category:
+                    category = "temperature_comfort"  # sensible default
+
+                # Extract numeric range (e.g. "22 and 24", "22-24", "around 23")
+                _NUM_RANGE_RE = _re_pref.compile(
+                    r"\b(\d{1,3}(?:\.\d)?)\s*(?:and|to|-|–)\s*(\d{1,3}(?:\.\d)?)\b"
+                )
+                _NUM_SINGLE_RE = _re_pref.compile(r"\baround\s+(\d{1,3}(?:\.\d)?)\b")
+                pref_min: Optional[float] = None
+                pref_max: Optional[float] = None
+                m_range = _NUM_RANGE_RE.search(query)
+                m_single = _NUM_SINGLE_RE.search(query)
+                if m_range:
+                    pref_min = float(m_range.group(1))
+                    pref_max = float(m_range.group(2))
+                elif m_single:
+                    v = float(m_single.group(1))
+                    pref_min = v - 1
+                    pref_max = v + 1
+
+                # Directional adjustments ("warmer", "cooler")
+                if not m_range and not m_single:
+                    if any(w in query for w in ("warmer", "hotter")):
+                        pref_min = 23.0
+                        pref_max = 26.0
+                    elif any(w in query for w in ("cooler", "colder")):
+                        pref_min = 19.0
+                        pref_max = 22.0
+                    elif "quieter" in query:
+                        category = "noise_comfort"
+                        pref_max = 45.0
+                    elif "brighter" in query:
+                        category = "illuminance_comfort"
+                        pref_min = 400.0
+                    elif "darker" in query:
+                        category = "illuminance_comfort"
+                        pref_max = 300.0
+
+                success = await store.set_preference(
+                    user_id, category, pref_min=pref_min, pref_max=pref_max, raw=query
+                )
+                if success:
+                    from orchestrator.services.user_preference_store import _CATEGORY_META
+
+                    meta = _CATEGORY_META.get(category, {"label": category, "unit": ""})
+                    rng_str = ""
+                    if pref_min is not None and pref_max is not None:
+                        rng_str = f"{pref_min}–{pref_max} {meta['unit']}"
+                    elif pref_min is not None:
+                        rng_str = f"≥{pref_min} {meta['unit']}"
+                    elif pref_max is not None:
+                        rng_str = f"≤{pref_max} {meta['unit']}"
+                    else:
+                        rng_str = "(direction noted)"
+                    response = (
+                        f"Saved! I'll use **{rng_str}** as your personal "
+                        f"{meta['label'].lower()} preference. "
+                        "This will override the standard guideline range whenever I assess "
+                        "comfort for you specifically."
+                    )
+                else:
+                    response = "I couldn't save your preference right now. Please try again."
+
+        except Exception as exc:
+            logger.error(f"[preference_mgmt] error: {exc}", exc_info=True)
+            response = "I couldn't manage your preferences right now. Please try again."
+
+        state.intermediate_results["dialogue_response"] = response
+        return state
+
+    async def _automation_capability_check_node(
+        self, state: ConversationState
+    ) -> ConversationState:
+        """T22 — Honest automation-capability answers (Archetype-B from master-table analysis).
+
+        For 'can the building automatically X when Y?' questions, answer truthfully from
+        system state: (a) does a sensor point exist for X, (b) is notify-able via rules engine,
+        (c) physical actuation requires a BMS driver (not yet configured for bldg1).
+        """
+        import re as _re_ac
+
+        logger.info(f"[automation_capability] intent={state.intermediate_results.get('intent')}")
+
+        query_text = (state.messages[-1].content if state.messages else "").lower()
+        entities = state.intermediate_results.get("entities", [])
+        concepts = state.intermediate_results.get("concepts", [])
+        building_id = state.intermediate_results.get("building_id", "bldg1")
+
+        # ── Identify what the user wants to monitor ──────────────────────
+        # Try concept resolver results first (HBCO lay-term → Brick class)
+        concept_label = None
+        brick_class = None
+        recipe_id = None
+        if concepts:
+            first = concepts[0]
+            concept_label = first.get("concept_id", "").replace("_", " ")
+            classes = first.get("brick_classes", [])
+            brick_class = classes[0] if classes else None
+            recipe_id = first.get("recipe_id")
+
+        # Fallback: extract noun from entities or keyword scan
+        if not concept_label:
+            for e in entities:
+                if e.get("type") in ("sensor_type", "metric", "concept", "parameter"):
+                    concept_label = e.get("value", "").lower()
+                    break
+
+        if not concept_label:
+            _KW_MAP = {
+                "co2": ("CO2 / air quality", "brick:CO2_Level_Sensor"),
+                "carbon dioxide": ("CO2 / air quality", "brick:CO2_Level_Sensor"),
+                "air quality": ("CO2 / air quality", "brick:CO2_Level_Sensor"),
+                "temperature": ("temperature", "brick:Temperature_Sensor"),
+                "warm": ("temperature", "brick:Temperature_Sensor"),
+                "hot": ("temperature", "brick:Temperature_Sensor"),
+                "humid": ("humidity", "brick:Relative_Humidity_Sensor"),
+                "humidity": ("humidity", "brick:Relative_Humidity_Sensor"),
+                "energy": ("energy use", "brick:Electrical_Energy_Sensor"),
+                "electricity": ("energy use", "brick:Electrical_Energy_Sensor"),
+                "occupancy": ("occupancy / busyness", "brick:Occupancy_Sensor"),
+                "busy": ("occupancy / busyness", "brick:Occupancy_Sensor"),
+                "leak": ("water / leak", "brick:Water_Flow_Sensor"),
+                "water": ("water / leak", "brick:Water_Flow_Sensor"),
+                "noise": ("noise level", "brick:Noise_Level_Sensor"),
+                "fault": ("equipment faults", None),
+            }
+            for kw, (label, cls) in _KW_MAP.items():
+                if kw in query_text:
+                    concept_label = label
+                    brick_class = cls
+                    break
+
+        if not concept_label:
+            concept_label = "the condition you mentioned"
+
+        # ── Determine monitoring capability ──────────────────────────────
+        # (a) Sensor point: available if brick_class maps to a known sensor type in this building.
+        _KNOWN_SENSOR_CLASSES = {
+            "brick:CO2_Level_Sensor",
+            "brick:Temperature_Sensor",
+            "brick:Relative_Humidity_Sensor",
+            "brick:Electrical_Energy_Sensor",
+            "brick:Occupancy_Sensor",
+            "brick:Outside_Air_Temperature_Sensor",
+        }
+        sensor_available = brick_class is not None and brick_class in _KNOWN_SENSOR_CLASSES
+
+        # (b) Notify: rules engine is always running (T20); user can create personal alert rules
+        # (T21) for any sensor that has a UUID in the building.
+        notify_available = True  # T20 rules engine is always active when orchestrator is up
+
+        # (c) Physical actuation: Phase G actuation driver not yet configured for this building.
+        # Building.yaml actuation block would need driver: bms|bacnet; currently only sim/none.
+        actuation_available = False
+
+        # ── Build the honest capability answer ───────────────────────────
+        monitoring_str = (
+            f"**{concept_label}**"
+            if concept_label != "the condition you mentioned"
+            else concept_label
+        )
+
+        if sensor_available and notify_available:
+            answer_parts = [
+                f"Yes — I can already watch {monitoring_str} and send you a personalised alert "
+                f"when it crosses a threshold you choose.",
+                "",
+                "**What I can do right now:**",
+                f"- Monitor {monitoring_str} continuously (sensors are live and streaming)",
+                "- Trigger a notification rule when a threshold is breached — say the word and "
+                "I'll set one up for you",
+                "- Log every breach for audit / historical review",
+                "",
+                "**What I cannot do yet (physical actuation):**",
+                "- Automatically change a physical system (e.g. open a valve, adjust a thermostat "
+                "setpoint) — that requires a BMS driver integration that is not yet configured for "
+                f"this building.",
+                "",
+                f"Want me to create an alert rule for {monitoring_str}? "
+                "Tell me the threshold (e.g. 'above 1000 ppm' / 'above 25 °C') and I'll set it up.",
+            ]
+        elif notify_available:
+            answer_parts = [
+                f"I don't have a dedicated sensor for {monitoring_str} wired up in this building yet, "
+                "but the monitoring framework is in place.",
+                "",
+                "**What's possible:**",
+                "- Once a sensor point is registered for that metric, the rules engine can watch it "
+                "and send you alerts automatically",
+                "- Notify-only automation is available today; physical actuation (valves, setpoints) "
+                "needs a BMS driver not yet configured here",
+                "",
+                "If you can confirm the sensor exists or share the data source, I can register it "
+                "and set up the alert rule.",
+            ]
+        else:
+            answer_parts = [
+                f"Automatic responses related to {monitoring_str} are not currently configured "
+                "for this building.",
+                "Contact your facility manager to discuss what automation extensions are available.",
+            ]
+
+        response = "\n".join(answer_parts)
+        logger.info(
+            f"[automation_capability] concept={concept_label!r} "
+            f"sensor_available={sensor_available} notify={notify_available} "
+            f"actuate={actuation_available}"
+        )
+
+        state.intermediate_results["automation_capability_result"] = {
+            "concept": concept_label,
+            "brick_class": brick_class,
+            "sensor_available": sensor_available,
+            "notify_available": notify_available,
+            "actuation_available": actuation_available,
+        }
+        state.intermediate_results["dialogue_response"] = response
+        return state
+
     async def execute(self, state: ConversationState) -> ConversationState:
         """
         Execute workflow for given state
@@ -3173,9 +4824,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             Updated conversation state with response
         """
         try:
-            logger.info(
-                f"Starting workflow execution for conversation {state.conversation_id}"
-            )
+            logger.info(f"Starting workflow execution for conversation {state.conversation_id}")
 
             # B.2: Check response cache before running the full pipeline
             if self.response_cache:
@@ -3211,9 +4860,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                     timeout=timeout_s,
                 )
             except asyncio.TimeoutError:
-                logger.error(
-                    f"Workflow timed out after {timeout_s}s for {state.conversation_id}"
-                )
+                logger.error(f"Workflow timed out after {timeout_s}s for {state.conversation_id}")
                 state.messages.append(
                     Message(
                         role="assistant",
@@ -3355,9 +5002,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             Intermediate states as they're processed
         """
         try:
-            logger.info(
-                f"Starting streaming workflow for conversation {state.conversation_id}"
-            )
+            logger.info(f"Starting streaming workflow for conversation {state.conversation_id}")
 
             async for step in self.graph.astream(state):
                 yield step

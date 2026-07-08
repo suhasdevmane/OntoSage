@@ -64,20 +64,24 @@ class WorkflowGraphMixin:
         workflow.add_node("dialogue", self._dialogue_node)
         workflow.add_node("sparql", self._safe_node(self._sparql_node, "sparql"))
         workflow.add_node("sql", self._safe_node(self._sql_node, "sql"))
-        workflow.add_node(
-            "analytics", self._safe_node(self._analytics_node, "analytics")
-        )
+        workflow.add_node("analytics", self._safe_node(self._analytics_node, "analytics"))
         workflow.add_node("response", self._response_node)
         # Downstream nodes invoked from the data pipeline, not from dialogue
         # routing — kept hardcoded because they are NOT primary intent targets.
         workflow.add_node("report", self._safe_node(self._report_node, "report"))
         workflow.add_node("anomaly", self._safe_node(self._anomaly_node, "anomaly"))
         workflow.add_node("document", self._safe_node(self._document_node, "document"))
+        # Locked-capability decline (datasource-toggles) — routed to from the
+        # locked-capability gate at the top of _route_from_dialogue.
+        workflow.add_node(
+            "locked_capability", self._safe_node(self._locked_capability_node, "locked_capability")
+        )
 
         # ── Registry-driven intent nodes (Phase 13B) ─────────────────────────
         # Every intent declaring `node_method:` gets its graph node registered
         # here automatically.  Iteration order = YAML order = stable.
         from orchestrator.intents import get_intent_registry
+
         _registry_for_graph = get_intent_registry()
         _registered_intent_nodes: List[str] = []
         for _intent_def in _registry_for_graph.with_node_method():
@@ -116,16 +120,19 @@ class WorkflowGraphMixin:
         # Phase 10G safety net inside `_route_from_dialogue` rewrites such
         # intents to "response" before they reach LangGraph.
         _shared_targets = {
-            "sparql", "sql", "analytics", "response",
+            "sparql",
+            "sql",
+            "analytics",
+            "response",
             # Downstream nodes that dialogue can route to in the (rare)
             # case the LLM picks a downstream label directly.
-            "anomaly", "report",
+            "anomaly",
+            "report",
+            # Locked-capability gate target (datasource-toggles).
+            "locked_capability",
         }
         _registered = frozenset(workflow.nodes.keys())
-        _all_targets = (
-            _shared_targets
-            | set(_registry_for_graph.route_targets())
-        ) & _registered
+        _all_targets = (_shared_targets | set(_registry_for_graph.route_targets())) & _registered
         _dialogue_route_map = {tgt: tgt for tgt in sorted(_all_targets)}
         _dialogue_route_map["end"] = END
         workflow.add_conditional_edges(
@@ -186,6 +193,47 @@ class WorkflowGraphMixin:
             if _report_node in workflow.nodes:
                 workflow.add_edge(_report_node, "response")
         workflow.add_edge("capability", "response")
+        workflow.add_edge("locked_capability", "response")
+        # Open-domain general-knowledge node (auto-registered from the `general`
+        # intent's node_method) terminates at response.
+        if "general_knowledge" in workflow.nodes:
+            workflow.add_edge("general_knowledge", "response")
+
+        # ── Auto-wire remaining registry nodes → response (fix 2026-06-12) ──
+        # Registry-registered intent nodes (alert_mgmt, preference_management,
+        # automation_capability_check, future YAML intents) had NO outgoing
+        # edge: they dangled to END, the response node never ran, and their
+        # dialogue_response was dropped — the user got an echo of their own
+        # message. Every intent node without an explicit edge above terminates
+        # at response, making the "edges are auto-generated" contract real.
+        _explicitly_wired = {
+            "dialogue",
+            "sparql",
+            "sql",
+            "analytics",
+            "response",
+            "planner",
+            "report",
+            "anomaly",
+            "export",
+            "visualization",
+            "document",
+            "floor_plan",
+            "spatial_query",
+            "control",
+            "maintenance",
+            "complaint",
+            "feedback",
+            "safety_report",
+            "suggestion",
+            "capability",
+            "general_knowledge",
+        }
+        for _node in _registered_intent_nodes:
+            if _node not in _explicitly_wired:
+                workflow.add_edge(_node, "response")
+                logger.debug(f"[graph_build] auto-wired edge {_node} -> response")
+
         workflow.add_edge("response", END)
 
         return workflow.compile()

@@ -25,12 +25,26 @@
 
 intents:
   - name: general
-    description: General knowledge / greetings / non-building questions.
+    description: |-
+      Open-domain general-knowledge questions the LLM can answer directly —
+      definitions, explanations, how-things-work, world facts, coding help, and
+      "what can you do". NOT for building-specific data (sensors, zones, energy,
+      occupancy) — those use the data pipeline. The dedicated general_knowledge
+      node generates the answer with user-controlled length (short/summary/long).
     examples:
-      - '"Hello"'
-      - '"What can you do?"'
+      - '"What is the capital of France?"'
+      - '"Explain how photosynthesis works."'
+      - '"Write a Python function to reverse a string."'
       - '"What is HVAC?"'
+      - '"What can you do?"'
+    # Group stays "meta" (not "standalone") so "general" is NOT added to the
+    # floor-plan override's _data_intents exclusion set — a query the LLM
+    # misclassifies as general ("show me the floor plan of floor 3") must still
+    # be stealable by the floor_plan keyword override. The explicit route_target
+    # + node_method below auto-wire the dedicated answering node regardless.
     pipeline_group: meta
+    route_target: general_knowledge
+    node_method: _general_knowledge_node
     cacheable: false
 
   - name: metadata
@@ -299,18 +313,59 @@ intents:
 
   - name: alert
     description: |-
-      Threshold-based alerting — user wants to set up or query an alert condition
-      for a sensor value exceeding a threshold. Trigger phrases include
-      "alert me if", "notify me when", "warn me if", "send alert when",
-      "trigger alert", "set alert", "if CO2 exceeds", "if temperature goes above".
-      Routes through SPARQL+SQL to identify relevant sensors then anomaly detection
-      to evaluate threshold conditions.
+      Threshold-based alert management — create, list, or delete personal sensor alerts.
+      Trigger phrases for CREATE: "alert me if", "notify me when", "warn me if",
+      "set an alert", "remind me when", "tell me if X exceeds/drops below".
+      Trigger phrases for LIST: "list my alerts", "show my alerts", "what alerts do I have".
+      Trigger phrases for DELETE: "delete alert", "remove alert", "cancel alert", "stop alerting me".
+      Use ONLY when the user is explicitly managing alert rules — NOT for viewing current sensor
+      values (use sensor_data or analytics for that).
     examples:
       - '"Alert me if CO2 exceeds 1000 ppm in any zone"'
-      - '"Notify me when temperature in zone 3 goes above 28 degrees"'
+      - '"Notify me when temperature in room 5.01 goes above 28 degrees"'
       - '"Set an alert for humidity below 30% on floor 2"'
-    pipeline_group: data
-    route_target: sparql
+      - '"List my alerts"'
+      - '"Delete alert abc12345"'
+    pipeline_group: standalone
+    route_target: alert_mgmt
+    node_method: _alert_mgmt_node
+
+  - name: preference_management
+    description: |-
+      User states, recalls, or deletes their personal comfort preferences — not a sensor query.
+      Trigger phrases for STORE: "remember I prefer", "I like it warmer", "my ideal temperature is",
+      "set my comfort preferences", "I find it too cold", "comfortable between X and Y".
+      Trigger phrases for LIST: "what are my preferences", "show my settings".
+      Trigger phrases for FORGET: "forget my temperature preference", "clear my preferences".
+      Requires authenticated user — guests are politely declined.
+      Distinct from sensor_data (which reads current values) and analytics (which computes them).
+    examples:
+      - '"Remember that I prefer temperatures between 22 and 24 degrees"'
+      - '"I like it warmer — set my comfort preference to 23°C"'
+      - '"What are my personal comfort preferences?"'
+      - '"Forget my temperature preference"'
+      - '"I find it too cold in here — my ideal is 22 to 24 degrees"'
+    pipeline_group: standalone
+    route_target: preference_management
+    node_method: _preference_management_node
+
+  - name: automation_capability
+    description: |-
+      Questions about whether the building CAN automatically perform an action or respond to a
+      condition — capability questions, not commands. These ask "can/could/will/would the building
+      automatically X when Y?" or "is there a way for it to auto-detect/notify/adjust...?".
+      Distinct from 'alert' (which creates a rule) and 'control' (which issues a command).
+      Answer TRUTHFULLY: monitoring + notify is available today via rules engine; physical
+      actuation needs a BMS driver (not yet configured). Offer to set up an alert rule.
+    examples:
+      - '"Can the building automatically alert me when CO2 gets too high?"'
+      - '"Will the HVAC adjust by itself if a room gets too warm?"'
+      - '"Is there a way for the system to detect a water leak automatically?"'
+      - '"Could the building automatically send me a message if there is a fault?"'
+      - '"Can it monitor energy use and notify me if it spikes?"'
+    pipeline_group: standalone
+    route_target: automation_capability_check
+    node_method: _automation_capability_check_node
 
   - name: greeting
     description: Friendly greeting; no information request.

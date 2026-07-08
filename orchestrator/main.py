@@ -8,56 +8,64 @@ sys.path.append("/app")
 
 import asyncio
 import collections
+import hashlib
+import hmac
 import json
 import os
+import signal
 import time
 import uuid as _uuid_mod
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from fastapi import (
     Cookie,
     Depends,
     FastAPI,
-    File,
     Header,
     HTTPException,
     Request,
-    UploadFile,
     WebSocket,
     WebSocketDisconnect,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from orchestrator.auth_manager import AuthManager
 from orchestrator.middleware.rbac import (
-    RBACMiddleware,
-    get_auth_manager,
-    get_user_store,
+    ROLE_PERMISSIONS,
+    UserContext,
 )
 from orchestrator.postgres_manager import PostgresManager
 from orchestrator.redis_manager import RedisManager
 from orchestrator.services.adapters.registry import adapter_registry
 from orchestrator.services.agent_memory import AgentMemoryService
+from orchestrator.services.alert_monitor import AlertMonitor
+from orchestrator.services.connection_manager import ConnectionManager
 from orchestrator.services.floor_plan_service import floor_plan_service
 from orchestrator.services.hybrid_retrieval import hybrid_retrieval
+from orchestrator.services.job_queue import JobQueue
+from orchestrator.services.job_queue import JobStatus as _JobStatus
 from orchestrator.services.multi_building_manager import get_building_manager
 from orchestrator.services.ontology_detector import OntologySchemaDetector
 from orchestrator.services.ontology_introspector import ontology_introspector
 from orchestrator.services.ontology_validator import ontology_validator
 from orchestrator.services.plugin_registry import PluginRegistry, get_plugin_registry
 from orchestrator.services.response_cache import ResponseCacheService
-from orchestrator.services.alert_monitor import AlertMonitor
-from orchestrator.services.connection_manager import ConnectionManager
 from orchestrator.services.sparql_validator import sparql_validator
-from orchestrator.services.job_queue import JobQueue, JobStatus as _JobStatus
 from orchestrator.workflow import WorkflowOrchestrator
-from shared.config import settings
-from shared.models import APIResponse, ChatRequest, ConversationState, Message
+from shared.config import settings, validate_config
+from shared.models import (
+    APIResponse,
+    ChatRequest,
+    ConversationState,
+    DataSourceSpec,
+    Message,
+)
 from shared.utils import generate_conversation_id, get_logger
 
 # All valid personas (must match shared/models.py ConversationState.persona Literal)
@@ -203,17 +211,11 @@ def _detect_persona(messages: list, explicit_persona: str) -> tuple:
         from the user message, so the caller can replace user_message with it.
     """
     # 1. Explicit non-general persona — pass straight through
-    if (
-        explicit_persona
-        and explicit_persona != "general"
-        and explicit_persona in VALID_PERSONAS
-    ):
+    if explicit_persona and explicit_persona != "general" and explicit_persona in VALID_PERSONAS:
         return explicit_persona, None
 
     # 2. System prompt scan (OpenWebUI system prompt is a {"role":"system"} message)
-    system_content = next(
-        (m.get("content", "") for m in messages if m.get("role") == "system"), ""
-    )
+    system_content = next((m.get("content", "") for m in messages if m.get("role") == "system"), "")
     if system_content:
         sys_lower = system_content.lower()
         for keywords, persona in _PERSONA_KEYWORD_MAP:
@@ -269,22 +271,33 @@ logger = get_logger(__name__)
 # Initialize components
 redis_manager: RedisManager = None
 postgres_manager: PostgresManager = None
+# Tracks which OpenWebUI-proxied usernames have already been registered in Postgres
+# so we don't issue an INSERT on every streaming/non-streaming turn.
+_pipeline_users_created: Set[str] = set()
 orchestrator: WorkflowOrchestrator = None
 auth_manager: AuthManager = None
 response_cache: ResponseCacheService = None
 ontology_detector: OntologySchemaDetector = None
 agent_memory: AgentMemoryService = None
-doc_ingestion = None  # DocumentIngestionService — lazy import to avoid load-time errors
 job_queue: Optional[JobQueue] = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle manager for startup/shutdown"""
-    global redis_manager, postgres_manager, orchestrator, auth_manager, response_cache, ontology_detector, agent_memory, doc_ingestion, job_queue
+    global redis_manager, postgres_manager, orchestrator, auth_manager, response_cache, ontology_detector, agent_memory, job_queue
 
     # Startup
     logger.info("Starting OntoSage 2.0 Orchestrator...")
+
+    # Validate configuration — hard-fail in production (STRICT_SECRETS=true),
+    # warn-only in local dev so a missing SECRET_KEY doesn't block the dev server.
+    try:
+        validate_config()
+    except ValueError as _cfg_err:
+        if settings.STRICT_SECRETS:
+            raise
+        logger.warning(f"[config] Non-fatal configuration issue (set STRICT_SECRETS=true for hard-fail): {_cfg_err}")
 
     # Initialize Redis
     redis_manager = RedisManager()
@@ -335,7 +348,8 @@ async def lifespan(app: FastAPI):
     # Create control_log table if not exists
     try:
         async with postgres_manager.pool.acquire() as _conn:
-            await _conn.execute("""
+            await _conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS control_log (
                     id           SERIAL PRIMARY KEY,
                     timestamp    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -348,7 +362,8 @@ async def lifespan(app: FastAPI):
                     role         VARCHAR(64),
                     session_id   VARCHAR(256)
                 )
-            """)
+            """
+            )
         logger.info("control_log table ready")
     except Exception as _e:
         logger.warning(f"control_log table creation skipped: {_e}")
@@ -356,7 +371,8 @@ async def lifespan(app: FastAPI):
     # Create maintenance_tickets table if not exists
     try:
         async with postgres_manager.pool.acquire() as _conn:
-            await _conn.execute("""
+            await _conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS maintenance_tickets (
                     id          VARCHAR(12)  PRIMARY KEY,
                     building_id VARCHAR(64)  NOT NULL,
@@ -370,7 +386,8 @@ async def lifespan(app: FastAPI):
                     updated_at  TIMESTAMPTZ  DEFAULT NOW(),
                     session_id  VARCHAR(256)
                 )
-            """)
+            """
+            )
         logger.info("maintenance_tickets table ready")
     except Exception as _e:
         logger.warning(f"maintenance_tickets table creation skipped: {_e}")
@@ -382,7 +399,8 @@ async def lifespan(app: FastAPI):
     # can see which kind of user raised each issue.
     try:
         async with postgres_manager.pool.acquire() as _conn:
-            await _conn.execute("""
+            await _conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS user_reports (
                     id           VARCHAR(16)  PRIMARY KEY,
                     building_id  VARCHAR(64)  NOT NULL,
@@ -402,7 +420,8 @@ async def lifespan(app: FastAPI):
                     updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
                     resolved_at  TIMESTAMPTZ
                 )
-            """)
+            """
+            )
             for _idx_sql in (
                 "CREATE INDEX IF NOT EXISTS idx_user_reports_status ON user_reports (status)",
                 "CREATE INDEX IF NOT EXISTS idx_user_reports_category ON user_reports (category)",
@@ -430,14 +449,16 @@ async def lifespan(app: FastAPI):
                 """
             )
             if not _is_table:
-                await _conn.execute("""
+                await _conn.execute(
+                    """
                     CREATE OR REPLACE VIEW maintenance_tickets AS
                     SELECT id, building_id, location, device, description,
                            status, reporter_id, assignee, created_at, updated_at,
                            session_id
                     FROM user_reports
                     WHERE category = 'maintenance'
-                """)
+                """
+                )
                 logger.info("maintenance_tickets compat VIEW created over user_reports")
             else:
                 logger.info(
@@ -452,7 +473,8 @@ async def lifespan(app: FastAPI):
     # live in scripts/sql/report_admin_views.sql.
     try:
         async with postgres_manager.pool.acquire() as _conn:
-            await _conn.execute("""
+            await _conn.execute(
+                """
                 CREATE OR REPLACE VIEW v_open_reports AS
                 SELECT id, created_at, building_id, category, priority, status,
                        persona, title, location, device, reporter_id, assignee
@@ -461,8 +483,10 @@ async def lifespan(app: FastAPI):
                 ORDER BY CASE priority WHEN 'URGENT' THEN 0 WHEN 'HIGH' THEN 1
                                        WHEN 'NORMAL' THEN 2 ELSE 3 END,
                          created_at DESC
-            """)
-            await _conn.execute("""
+            """
+            )
+            await _conn.execute(
+                """
                 CREATE OR REPLACE VIEW v_urgent_reports AS
                 SELECT id, created_at, building_id, category, priority, status,
                        persona, title, location, device, reporter_id
@@ -471,8 +495,10 @@ async def lifespan(app: FastAPI):
                   AND status IN ('OPEN', 'ACKNOWLEDGED')
                 ORDER BY CASE priority WHEN 'URGENT' THEN 0 ELSE 1 END,
                          created_at ASC
-            """)
-            await _conn.execute("""
+            """
+            )
+            await _conn.execute(
+                """
                 CREATE OR REPLACE VIEW v_reports_by_persona AS
                 SELECT COALESCE(persona, '(unknown)') AS persona, category,
                        COUNT(*) AS total,
@@ -483,15 +509,18 @@ async def lifespan(app: FastAPI):
                 FROM user_reports
                 GROUP BY COALESCE(persona, '(unknown)'), category
                 ORDER BY total DESC
-            """)
-            await _conn.execute("""
+            """
+            )
+            await _conn.execute(
+                """
                 CREATE OR REPLACE VIEW v_reports_by_category AS
                 SELECT category, status, priority, COUNT(*) AS total,
                        MAX(created_at) AS latest
                 FROM user_reports
                 GROUP BY category, status, priority
                 ORDER BY category, status
-            """)
+            """
+            )
         logger.info("user_reports admin triage views ready (Phase 19)")
     except Exception as _e:
         logger.warning(f"user_reports admin views skipped: {_e}")
@@ -499,6 +528,30 @@ async def lifespan(app: FastAPI):
     # Initialize authentication manager
     auth_manager = AuthManager(redis_manager, postgres_manager)
     logger.info("Auth manager initialized")
+
+    # Bootstrap admin from .env (safe-create only): create the ADMIN_USERNAME
+    # admin-role account if both creds are set and the user doesn't exist yet.
+    # Never overwrites an existing account. Enables sign-in to the :3001 console.
+    if settings.ADMIN_USERNAME and settings.ADMIN_PASSWORD:
+        try:
+            existing = await postgres_manager.get_user(settings.ADMIN_USERNAME)
+            if existing:
+                logger.info(
+                    f"[admin_bootstrap] '{settings.ADMIN_USERNAME}' already exists — "
+                    "leaving it unchanged"
+                )
+            else:
+                res = await auth_manager.register_user(
+                    settings.ADMIN_USERNAME, settings.ADMIN_PASSWORD, role="admin"
+                )
+                if res.get("success"):
+                    logger.info(f"[admin_bootstrap] created admin user '{settings.ADMIN_USERNAME}'")
+                else:
+                    logger.warning(f"[admin_bootstrap] could not create admin: {res.get('error')}")
+        except Exception as _abe:
+            logger.warning(f"[admin_bootstrap] skipped (non-fatal): {_abe}")
+    else:
+        logger.info("[admin_bootstrap] ADMIN_USERNAME/ADMIN_PASSWORD unset — no admin bootstrap")
 
     # Initialize workflow with redis_manager reference
     orchestrator = WorkflowOrchestrator(
@@ -552,9 +605,7 @@ async def lifespan(app: FastAPI):
                         }
                         for cls in ontology_introspector.sensor_classes
                     }
-                    _os.makedirs(
-                        _os.path.dirname(_sensor_map_path) or ".", exist_ok=True
-                    )
+                    _os.makedirs(_os.path.dirname(_sensor_map_path) or ".", exist_ok=True)
                     with open(_sensor_map_path, "w") as _f:
                         _json.dump(_sensor_map, _f, indent=2)
                     logger.info(
@@ -581,9 +632,7 @@ async def lifespan(app: FastAPI):
                     # Store on app state for downstream use
                     app.state.detected_ontology = detect_result
                 else:
-                    logger.warning(
-                        f"Ontology auto-detection inconclusive: {detect_result.notes}"
-                    )
+                    logger.warning(f"Ontology auto-detection inconclusive: {detect_result.notes}")
             except Exception as e:
                 logger.warning(f"Ontology detector failed (non-fatal): {e}")
         else:
@@ -619,19 +668,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Agent memory initialization failed (non-fatal): {e}")
 
-    # Phase 8.1: Initialize document ingestion service (user-uploaded doc RAG)
-    try:
-        from orchestrator.services.document_ingestion import DocumentIngestionService
-        from orchestrator.services.hybrid_retrieval import hybrid_retrieval as _hybrid_retrieval
-
-        doc_ingestion = DocumentIngestionService(qdrant_url=settings.QDRANT_URL)
-        await doc_ingestion.initialise()
-        # Wire into hybrid retrieval so sparql_agent can search user docs during RAG
-        _hybrid_retrieval._doc_service = doc_ingestion
-        logger.info("Document ingestion service initialized")
-    except Exception as e:
-        logger.warning(f"Document ingestion initialization failed (non-fatal): {e}")
-
     # Floor plan registry — runs DWG + PDF pipelines in parallel, merges results (idempotent)
     try:
         from orchestrator.services.floor_plan_registry import get_floor_plan_registry
@@ -643,8 +679,7 @@ async def lifespan(app: FastAPI):
         dwg_only = [m for m in manifests if m.data_sources == ["dwg"]]
         both = [m for m in manifests if "pdf" in m.data_sources and "dwg" in m.data_sources]
         skipped = sum(
-            1 for m in manifests
-            if not any(w for w in m.warnings if "unchanged" not in w.lower())
+            1 for m in manifests if not any(w for w in m.warnings if "unchanged" not in w.lower())
         )
 
         logger.info(
@@ -666,6 +701,7 @@ async def lifespan(app: FastAPI):
             await floor_plan_service.index_all()
         except Exception as e:
             logger.debug(f"Legacy floor plan index skipped: {e}")
+
     asyncio.create_task(_legacy_index())
 
     # File watcher — auto-reingest when PDFs are dropped into /app/input/
@@ -676,6 +712,68 @@ async def lifespan(app: FastAPI):
         logger.info("Floor plan file watcher started")
     except Exception as e:
         logger.warning(f"Floor plan file watcher failed to start (non-fatal): {e}")
+
+    # T12: Generic feed adapter framework — loads per-building feeds.yaml and polls
+    try:
+        from orchestrator.services.feeds.registry import FeedRegistry as _FeedRegistry
+
+        _feed_registry = _FeedRegistry(building_id=settings.BUILDING_ID)
+        _feed_count = _feed_registry.load()
+        if _feed_count > 0:
+            asyncio.create_task(_feed_registry.run_forever())
+            logger.info(f"[feeds] polling loop started for {_feed_count} feed(s)")
+            # T13: register feed points in GraphDB so SPARQL can discover them
+            asyncio.create_task(_feed_registry.register_in_graphdb())
+        else:
+            logger.info("[feeds] no feeds configured — polling loop idle")
+        app.state.feed_registry = _feed_registry
+    except Exception as e:
+        logger.warning(f"[feeds] feed registry failed to start (non-fatal): {e}")
+
+    # Toggleable synthetic data sources + provenance (flag-gated).
+    app.state.datasource_manager = None
+    if settings.DATASOURCE_TOGGLES_ENABLED:
+        try:
+            from orchestrator.services.datasource_manager import DataSourceManager
+            from orchestrator.services.datasource_registry import DataSourceRegistry
+
+            _ds_registry = DataSourceRegistry(settings.BUILDING_ID)
+            _ds_count = _ds_registry.load()
+            _ds_manager = DataSourceManager(settings.BUILDING_ID, _ds_registry)
+            # Re-assert enabled sources into GraphDB so state survives a repo reset.
+            for _sid in _ds_manager.enabled_ids():
+                asyncio.create_task(_ds_manager.enable(_sid))
+            app.state.datasource_registry = _ds_registry
+            app.state.datasource_manager = _ds_manager
+            # Give the workflow orchestrator the registry + manager so the
+            # response node can resolve provenance tags and the routing gate can
+            # decline questions that need a disabled source.
+            if orchestrator is not None:
+                orchestrator.datasource_registry = _ds_registry
+                orchestrator.datasource_manager = _ds_manager
+            logger.info(
+                f"[datasources] loaded {_ds_count} source(s); "
+                f"enabled={_ds_manager.enabled_ids()}"
+            )
+        except Exception as e:
+            logger.warning(f"[datasources] failed to start (non-fatal): {e}")
+    else:
+        logger.info("[datasources] DATASOURCE_TOGGLES_ENABLED=false — feature idle")
+
+    # T20: ECA rules engine — load + start polling loop
+    try:
+        from orchestrator.services.rules_engine import RulesEngine as _RulesEngine
+
+        _rules_engine = _RulesEngine(building_id=settings.BUILDING_ID)
+        _rule_count = _rules_engine.load()
+        if _rule_count > 0:
+            asyncio.create_task(_rules_engine.run_forever(interval_s=60))
+            logger.info(f"[rules_engine] polling loop started for {_rule_count} rule(s)")
+        else:
+            logger.info("[rules_engine] no rules configured — engine idle")
+        app.state.rules_engine = _rules_engine
+    except Exception as _re_err:
+        logger.warning(f"[rules_engine] failed to start (non-fatal): {_re_err}")
 
     # B.6: Initialize multi-building manager — discovers and loads all building configs
     try:
@@ -709,9 +807,7 @@ async def lifespan(app: FastAPI):
         # hard-failures — re-raise so the orchestrator process exits with a
         # clear, actionable error.  Other unexpected errors also propagate
         # because a TTL deployment bug is exactly the case we want loud.
-        logger.error(
-            f"[ttl_validator] startup HALTED — TTL validation failed:\n{_ttl_err}"
-        )
+        logger.error(f"[ttl_validator] startup HALTED — TTL validation failed:\n{_ttl_err}")
         raise
 
     # Phase 3 (2026-05-29): TTL auto-upload on startup.
@@ -739,12 +835,26 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"TTL auto-upload failed (non-fatal): {e}")
 
+    # Entity enrichment (Part D) — derive a Brick class + rdfs:label + relationships
+    # for any time-series point that lacks them (from its URI tokens), so arbitrary
+    # BMS/Haystack naming is queryable by class/label. Runs AFTER the TTL upload so
+    # all points are present; idempotent (overwrites urn:ontosage:enrichment) and
+    # non-fatal; a no-op when every point is already typed + labelled.
+    if settings.ENTITY_ENRICHMENT_ENABLED:
+        try:
+            from orchestrator.services.entity_enricher import run_entity_enrichment
+
+            await run_entity_enrichment()
+        except Exception as e:
+            logger.warning(f"Entity enrichment failed (non-fatal): {e}")
+
     # Capability semantic routing — embed KB into Qdrant per building (idempotent
     # via SHA-256 fingerprint).  Always runs, regardless of feature flag, so the
     # data is ready when the flag is flipped on.  Failure is non-fatal — orchestrator
     # boots, SemanticRouter returns source="fallback" at query time.
     try:
         from qdrant_client import AsyncQdrantClient
+
         from orchestrator.services.capability_indexer import CapabilityIndexer
         from orchestrator.services.embedding_service import EmbeddingService
         from orchestrator.services.semantic_router import SemanticRouter
@@ -754,6 +864,9 @@ async def lifespan(app: FastAPI):
             redis_manager=redis_manager,
             cache_ttl_seconds=settings.EMBEDDING_CACHE_TTL_SECONDS,
         )
+        # Pre-warm the local embedding model in the background so the first user
+        # query does not pay the ~5-7s cold-load (moves the cost to startup).
+        asyncio.get_event_loop().run_in_executor(None, _embedding_service.warm)
         capability_indexer = CapabilityIndexer(
             qdrant_client=_qdrant_async,
             embedding_service=_embedding_service,
@@ -779,8 +892,10 @@ async def lifespan(app: FastAPI):
         # intent_routing block in building.yaml and register any enabled extra
         # intents. Each one gets its own Qdrant collection prefix `intent_<name>_`.
         # Indexing of those collections happened inside index_all_buildings() above.
-        import yaml as _yaml_for_intents
         from pathlib import Path as _Path
+
+        import yaml as _yaml_for_intents
+
         _input_root_path = _Path("/app/input")
         _extra_intents_registered = set()
         if _input_root_path.exists():
@@ -813,11 +928,45 @@ async def lifespan(app: FastAPI):
         # Inject into orchestrator so dialogue_agent can use it
         if orchestrator and hasattr(orchestrator, "dialogue_agent"):
             orchestrator.dialogue_agent.semantic_router = semantic_router
-            logger.info(
-                "[capability_routing] SemanticRouter wired into dialogue_agent"
-            )
+            logger.info("[capability_routing] SemanticRouter wired into dialogue_agent")
     except Exception as e:
         logger.warning(f"Capability semantic routing init failed (non-fatal): {e}")
+
+    # T08: Document KB indexing (per-building documents/ folder -> Qdrant documents_<bldg>)
+    try:
+        from orchestrator.agents.capability_agent import init_document_search
+        from orchestrator.services.document_indexer import DocumentIndexer
+
+        # Reuse embedding service stored on app.state (set by capability indexer above)
+        _doc_embed_ref = getattr(app.state, "embedding_service", None)
+        if _doc_embed_ref is None:
+            from orchestrator.services.embedding_service import EmbeddingService
+
+            _doc_embed_ref = EmbeddingService(
+                redis_manager=redis_manager,
+                cache_ttl_seconds=settings.EMBEDDING_CACHE_TTL_SECONDS,
+            )
+        from qdrant_client import AsyncQdrantClient
+
+        _doc_qdrant_client_ref = AsyncQdrantClient(url=settings.QDRANT_URL)
+
+        doc_indexer = DocumentIndexer(
+            qdrant_client=_doc_qdrant_client_ref,
+            embedding_service=_doc_embed_ref,
+            input_root="/app/input",
+        )
+        doc_index_results = await doc_indexer.index_all_buildings()
+        for bldg, result in doc_index_results.items():
+            logger.info(
+                f"[document_indexer] {bldg}: status={result.status} "
+                f"docs={result.documents} chunks={result.chunks}"
+                + (f" reason={result.reason}" if result.reason else "")
+            )
+        # Wire into capability_agent so the document-search fallback is available
+        init_document_search(_doc_qdrant_client_ref, _doc_embed_ref)
+        app.state.doc_indexer = doc_indexer
+    except Exception as e:
+        logger.warning(f"Document KB indexing init failed (non-fatal): {e}")
 
     # P1: Initialize plugin registry — discovers plugins from plugins/ dir, env var, and entry_points
     try:
@@ -866,17 +1015,24 @@ os.makedirs("/app/outputs", exist_ok=True)
 app.mount("/static", StaticFiles(directory="/app/outputs"), name="static")
 
 # E.1: CORS — use CORS_ORIGINS env var; '*' for dev, explicit origins for production
-_cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()] or [
-    "*"
-]
+_cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()] or ["*"]
+# SECURITY: never combine a wildcard origin with credentials. Starlette would
+# otherwise reflect the caller's Origin back and attach
+# Access-Control-Allow-Credentials, letting ANY site issue credentialed
+# (cookie-bearing) cross-origin requests. Credentials are enabled only when an
+# explicit origin allowlist is configured (set CORS_ORIGINS in production).
+_cors_allow_all = "*" in _cors_origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    allow_credentials=True,
+    allow_credentials=not _cors_allow_all,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-logger.info(f"CORS origins: {_cors_origins}")
+logger.info(
+    f"CORS origins: {_cors_origins} "
+    f"(credentials={'off — wildcard' if _cors_allow_all else 'on'})"
+)
 
 # E.2: Request tracing — attach a trace_id to every request + contextvars for log propagation
 from orchestrator.services.logging_context import get_trace_id, set_trace_id
@@ -915,7 +1071,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._window = window
         self._counts: dict = {}  # ip → deque of timestamps
 
+    _EXEMPT_PATHS = {"/ping", "/health"}
+
     async def dispatch(self, request: Request, call_next):
+        if request.url.path in self._EXEMPT_PATHS:
+            return await call_next(request)
         client_ip = request.client.host if request.client else "unknown"
         now = time.monotonic()
         window_start = now - self._window
@@ -923,6 +1083,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Remove old timestamps outside current window
         while bucket and bucket[0] < window_start:
             bucket.popleft()
+        # Evict empty deques to prevent unbounded memory growth
+        if not bucket:
+            del self._counts[client_ip]
+            bucket = self._counts.setdefault(client_ip, collections.deque())
         if len(bucket) >= self._requests:
             return JSONResponse(
                 status_code=429,
@@ -935,10 +1099,63 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(RateLimitMiddleware)
 
-# B.1: RBAC middleware — enabled when RBAC_ENABLED=true in env
-if settings.RBAC_ENABLED:
-    app.add_middleware(RBACMiddleware, secret_key=settings.SECRET_KEY)
-    logger.info("RBAC middleware activated")
+
+# F2: Admin-action audit log. Records every MUTATING request to an admin-console
+# path (who / what / when / outcome) to Postgres. Registered LAST so it is the
+# OUTERMOST middleware — it therefore captures requests even when an inner
+# middleware (rate-limit / RBAC) rejects them. Best-effort: never breaks a request.
+_AUDIT_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
+
+
+def _should_audit_request(request: Request) -> bool:
+    """True for a mutating request to an admin-console path worth auditing."""
+    if request.method not in _AUDIT_METHODS:
+        return False
+    path = request.url.path
+    return path.startswith("/api/v1/admin/") or path.startswith("/api/v1/datasources")
+
+
+async def _record_audit(request: Request, status: int) -> None:
+    """Best-effort audit write; resolves the actor from the session token if present."""
+    if postgres_manager is None:
+        return
+    username: Optional[str] = None
+    role: Optional[str] = None
+    try:
+        token = _extract_session_token(
+            request.cookies.get("session_token"), request.headers.get("authorization")
+        )
+        if token:
+            ctx = await auth_manager.validate_session_context(token)
+            if ctx:
+                username = ctx.get("username")
+                role = ctx.get("role")
+    except Exception:
+        pass  # unauthenticated / bad token — still record the attempt (anonymous)
+    await postgres_manager.record_admin_action(
+        username=username,
+        role=role,
+        method=request.method,
+        path=request.url.path,
+        status=status,
+        trace_id=getattr(request.state, "trace_id", None),
+    )
+
+
+class AuditMiddleware(BaseHTTPMiddleware):
+    """Persists mutating admin-console actions to the audit log (best-effort)."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        try:
+            if _should_audit_request(request):
+                await _record_audit(request, response.status_code)
+        except Exception as e:  # audit must never break the request
+            logger.debug(f"[audit] skipped: {e}")
+        return response
+
+
+app.add_middleware(AuditMiddleware)
 
 
 @app.get("/", response_model=APIResponse)
@@ -1029,9 +1246,7 @@ async def health_check():
             r = await client.get(
                 f"http://{settings.RAG_SERVICE_HOST}:{settings.RAG_SERVICE_PORT}/health"
             )
-            checks["rag_service"] = {
-                "status": "ok" if r.status_code == 200 else "error"
-            }
+            checks["rag_service"] = {"status": "ok" if r.status_code == 200 else "error"}
     except Exception as e:
         checks["rag_service"] = {"status": "unreachable", "error": str(e)}
 
@@ -1041,9 +1256,7 @@ async def health_check():
             r = await client.get(
                 f"http://{settings.CODE_EXECUTOR_HOST}:{settings.CODE_EXECUTOR_PORT}/health"
             )
-            checks["code_executor"] = {
-                "status": "ok" if r.status_code == 200 else "error"
-            }
+            checks["code_executor"] = {"status": "ok" if r.status_code == 200 else "error"}
     except Exception as e:
         checks["code_executor"] = {"status": "unreachable", "error": str(e)}
 
@@ -1066,9 +1279,7 @@ async def health_check():
 
     # Overall status
     critical = ["redis", "mysql", "graphdb"]
-    critical_ok = all(
-        checks.get(k, {}).get("status") in ("ok", "connected") for k in critical
-    )
+    critical_ok = all(checks.get(k, {}).get("status") in ("ok", "connected") for k in critical)
     any_error = any(
         checks.get(k, {}).get("status") in ("error", "unreachable", "unavailable")
         for k in checks
@@ -1095,46 +1306,6 @@ async def health_check():
             "introspector_ready": ontology_introspector.is_ready(),
         },
     )
-
-
-@app.get("/conversations/{user_id}", response_model=APIResponse)
-async def get_conversations(user_id: str):
-    """Get list of conversations for a user"""
-    try:
-        conversations = []
-
-        # Try Postgres first
-        if postgres_manager and postgres_manager.pool:
-            conversations = await postgres_manager.get_user_conversations(user_id)
-
-        # Fallback to Redis if empty or not available
-        if not conversations and redis_manager:
-            conversations = await redis_manager.get_user_conversations(user_id)
-
-        return APIResponse(success=True, data={"conversations": conversations})
-    except Exception as e:
-        logger.error(f"Failed to get conversations: {e}")
-        return APIResponse(success=False, error=str(e))
-
-
-@app.get("/conversations/{conversation_id}/messages", response_model=APIResponse)
-async def get_conversation_messages(conversation_id: str):
-    """Get messages for a specific conversation"""
-    try:
-        messages = []
-
-        # Try Postgres first
-        if postgres_manager and postgres_manager.pool:
-            messages = await postgres_manager.get_conversation_messages(conversation_id)
-
-        # Fallback to Redis if empty or not available
-        if not messages and redis_manager:
-            messages = await redis_manager.get_messages(conversation_id)
-
-        return APIResponse(success=True, data={"messages": messages})
-    except Exception as e:
-        logger.error(f"Failed to get messages for {conversation_id}: {e}")
-        return APIResponse(success=False, error=str(e))
 
 
 # Authentication helper
@@ -1171,62 +1342,147 @@ async def get_current_user(
     return None
 
 
-# ==================== Authentication Endpoints ====================
+def _extract_session_token(
+    session_token: Optional[str], authorization: Optional[str]
+) -> Optional[str]:
+    """Pull the session token from a cookie or Authorization header."""
+    if session_token:
+        return session_token
+    if authorization and isinstance(authorization, str):
+        if authorization.startswith("Bearer "):
+            return authorization.replace("Bearer ", "").strip()
+        return authorization.strip()
+    return None
 
 
-@app.post("/api/v1/auth/login", response_model=APIResponse)
-async def rbac_login(request: Dict[str, Any]):
+async def get_user_context(
+    session_token: Optional[str] = Cookie(None, alias="session_token"),
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+) -> Optional[UserContext]:
+    """Resolve the session into a UserContext with role + permissions.
+
+    Bridges the session-based auth (Redis) onto the RBAC permission model.
+    Returns None when there is no valid session.
     """
-    B.1 — RBAC JWT login endpoint.
-    Issues a short-lived JWT token for role-based API access.
-
-    Request: {"username": "...", "password": "..."}
-    Response: {"token": "<jwt>", "role": "...", "permissions": [...]}
-    """
-    username = request.get("username", "").strip()
-    password = request.get("password", "")
-    if not username or not password:
-        return APIResponse(success=False, error="username and password required")
-
-    token_mgr = get_auth_manager(settings.SECRET_KEY)
-    user_store = get_user_store()
-    user = user_store.authenticate(username, password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    token = token_mgr.issue_token(user)
-    return APIResponse(
-        success=True,
-        data={
-            "token": token,
-            "role": user.role,
-            "permissions": sorted(user.all_permissions),
-            "user_id": user.user_id,
-        },
+    token = _extract_session_token(session_token, authorization)
+    if not token:
+        return None
+    ctx = await auth_manager.validate_session_context(token)
+    if not ctx:
+        return None
+    role = ctx.get("role") or "readonly"
+    return UserContext(
+        user_id=ctx["username"],
+        username=ctx["username"],
+        role=role,
+        tenant_id="default",
+        allowed_buildings=[],  # empty = all buildings (single-tenant default)
+        permissions=ROLE_PERMISSIONS.get(role, ROLE_PERMISSIONS["readonly"]),
     )
 
 
-@app.post("/auth/register", response_model=APIResponse)
-async def register_user(request: Dict[str, Any]):
-    """
-    Register a new user
+def require_permission(permission: str):
+    """FastAPI dependency factory enforcing a single RBAC permission.
 
-    Request:
-        {
-            "username": "user123",
-            "password": "password",
-            "email": "user@example.com" (optional)
-        }
+    Raises 401 when unauthenticated, 403 when the authenticated user's role
+    lacks `permission`. Drives off the session→UserContext bridge above.
+    """
+
+    async def _dependency(
+        user: Optional[UserContext] = Depends(get_user_context),
+    ) -> UserContext:
+        if user is None:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        if not user.has_permission(permission):
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    f"Permission '{permission}' required; role " f"'{user.role}' is not authorized"
+                ),
+            )
+        return user
+
+    return _dependency
+
+
+def _user_owns_conversation(user: UserContext, conversation_id: str) -> bool:
+    """Conversation IDs are suffixed with `:{username}`. Owners and users with
+    user:read (admin) may access; everyone else is denied."""
+    if user.has_permission("user:read"):
+        return True
+    return conversation_id.endswith(f":{user.username}")
+
+
+# ==================== Conversation History (auth + ownership enforced) =========
+
+
+@app.get("/conversations/{user_id}", response_model=APIResponse)
+async def get_conversations(
+    user_id: str,
+    user: UserContext = Depends(require_permission("metadata:read")),
+):
+    """Get list of conversations for a user (own only, unless user:read)."""
+    if user.username != user_id and not user.has_permission("user:read"):
+        raise HTTPException(status_code=403, detail="Cannot access another user's conversations")
+    try:
+        conversations = []
+        if postgres_manager and postgres_manager.pool:
+            conversations = await postgres_manager.get_user_conversations(user_id)
+        if not conversations and redis_manager:
+            conversations = await redis_manager.get_user_conversations(user_id)
+        return APIResponse(success=True, data={"conversations": conversations})
+    except Exception as e:
+        logger.error(f"Failed to get conversations: {e}")
+        return APIResponse(success=False, error=str(e))
+
+
+@app.get("/conversations/{conversation_id}/messages", response_model=APIResponse)
+async def get_conversation_messages(
+    conversation_id: str,
+    user: UserContext = Depends(require_permission("metadata:read")),
+):
+    """Get messages for a conversation (owner or admin only)."""
+    if not _user_owns_conversation(user, conversation_id):
+        raise HTTPException(status_code=403, detail="Cannot access this conversation")
+    try:
+        messages = []
+        if postgres_manager and postgres_manager.pool:
+            messages = await postgres_manager.get_conversation_messages(conversation_id)
+        if not messages and redis_manager:
+            messages = await redis_manager.get_messages(conversation_id)
+        return APIResponse(success=True, data={"messages": messages})
+    except Exception as e:
+        logger.error(f"Failed to get messages for {conversation_id}: {e}")
+        return APIResponse(success=False, error=str(e))
+
+
+# ==================== Authentication Endpoints ====================
+
+
+class LoginRequest(BaseModel):
+    """Validated body for login endpoints."""
+
+    username: str = Field(..., min_length=1, max_length=255)
+    password: str = Field(..., min_length=1, max_length=1024)
+
+
+class RegisterRequest(BaseModel):
+    """Validated body for /auth/register. Role is NOT accepted from the client —
+    new users receive the default role server-side to prevent privilege escalation."""
+
+    username: str = Field(..., min_length=3, max_length=255, pattern=r"^[a-zA-Z0-9_]+$")
+    password: str = Field(..., min_length=6, max_length=1024)
+    email: Optional[str] = Field(default=None, max_length=320)
+
+
+@app.post("/auth/register", response_model=APIResponse)
+async def register_user(body: RegisterRequest):
+    """
+    Register a new user. New accounts receive the server-side default role
+    (facility_manager) — the client cannot request a role.
     """
     try:
-        username = request.get("username")
-        password = request.get("password")
-        email = request.get("email")
-
-        if not username or not password:
-            return APIResponse(success=False, error="Username and password required")
-
-        result = await auth_manager.register_user(username, password, email)
+        result = await auth_manager.register_user(body.username, body.password, body.email)
 
         if not result["success"]:
             return APIResponse(success=False, error=result["error"])
@@ -1239,34 +1495,15 @@ async def register_user(request: Dict[str, Any]):
 
 
 @app.post("/auth/login", response_model=APIResponse)
-async def login_user(request: Dict[str, Any]):
+async def login_user(body: LoginRequest):
     """
-    Login user and create session
+    Login user and create session.
 
-    Request:
-        {
-            "username": "user123",
-            "password": "password"
-        }
-
-    Returns:
-        {
-            "success": true,
-            "data": {
-                "username": "user123",
-                "session_token": "...",
-                "expires_in": 604800
-            }
-        }
+    Request: {"username": "...", "password": "..."}
+    Returns a session_token (also set as an httponly cookie).
     """
     try:
-        username = request.get("username")
-        password = request.get("password")
-
-        if not username or not password:
-            return APIResponse(success=False, error="Username and password required")
-
-        result = await auth_manager.login_user(username, password)
+        result = await auth_manager.login_user(body.username, body.password)
 
         if not result["success"]:
             return APIResponse(success=False, error=result["error"])
@@ -1280,6 +1517,7 @@ async def login_user(request: Dict[str, Any]):
             max_age=result["expires_in"],
             httponly=True,
             samesite="lax",
+            secure=settings.COOKIE_SECURE,
         )
 
         return response
@@ -1349,9 +1587,7 @@ async def get_current_user_info(
 
 
 @app.get("/history/{username}", response_model=APIResponse)
-async def get_user_history(
-    username: str, current_user: Optional[str] = Depends(get_current_user)
-):
+async def get_user_history(username: str, current_user: Optional[str] = Depends(get_current_user)):
     """
     Get chat history for a specific user
 
@@ -1382,9 +1618,7 @@ async def get_user_history(
                             "message_count": len(messages),
                             "last_message": messages[-1] if messages else None,
                             "created_at": (
-                                conv["created_at"].isoformat()
-                                if conv["created_at"]
-                                else None
+                                conv["created_at"].isoformat() if conv["created_at"] else None
                             ),
                         }
                     )
@@ -1429,10 +1663,16 @@ async def get_user_history(
         return APIResponse(success=False, error="Failed to get history")
 
 
+class SaveHistoryRequest(BaseModel):
+    """Validated body for POST /history/{username}."""
+
+    messages: List[Dict[str, str]] = Field(default_factory=list, max_length=500)
+
+
 @app.post("/history/{username}", response_model=APIResponse)
 async def save_user_history(
     username: str,
-    request: Dict[str, Any],
+    request: SaveHistoryRequest,
     current_user: Optional[str] = Depends(get_current_user),
 ):
     """
@@ -1450,7 +1690,7 @@ async def save_user_history(
         if current_user != username:
             return APIResponse(success=False, error="Access denied")
 
-        messages = request.get("messages", [])
+        messages = request.messages
 
         # Generate conversation ID
         conv_id = generate_conversation_id()
@@ -1458,9 +1698,7 @@ async def save_user_history(
         # Save to Postgres if available
         if postgres_manager and postgres_manager.pool:
             # Create conversation first
-            await postgres_manager.create_conversation(
-                conv_id, username, title="Imported Chat"
-            )
+            await postgres_manager.create_conversation(conv_id, username, title="Imported Chat")
 
             for msg in messages:
                 await postgres_manager.save_message(
@@ -1605,9 +1843,7 @@ async def aggregate_health():
     status["ollama"] = ollama_info
     # Normalize Redis health: treat 'ok', 'no-pong', or 'connected' as acceptable
     redis_healthy = status.get("redis") in ["ok", "no-pong", "connected"]
-    status["status"] = (
-        "healthy" if redis_healthy and ollama_info.get("reachable") else "degraded"
-    )
+    status["status"] = "healthy" if redis_healthy and ollama_info.get("reachable") else "degraded"
     return APIResponse(success=True, data=status)
 
 
@@ -1644,7 +1880,8 @@ async def _run_workflow_as_job(
 
 @app.post("/chat", response_model=APIResponse)
 async def chat(
-    request: ChatRequest, current_user: Optional[str] = Depends(get_current_user)
+    request: ChatRequest,
+    user: UserContext = Depends(require_permission("sensor:read")),
 ):
     """
     Synchronous chat endpoint (requires authentication)
@@ -1653,11 +1890,7 @@ async def chat(
     Max message length: 10 000 chars. Null bytes / control chars stripped.
     """
     try:
-        # Validate authentication
-        if not current_user:
-            return APIResponse(success=False, error="Authentication required")
-
-        username = current_user
+        username = user.username
 
         # Sanitize all input fields
         req = request.sanitized()
@@ -1715,21 +1948,25 @@ async def chat(
                 state.persona = persona
                 state.personas = []
 
+        # RBAC context for workflow agents (fix 2026-06-12): control, alert and
+        # preference nodes read user_role/user_id from intermediate_results, but
+        # nothing ever wrote them — every authenticated user was treated as
+        # guest/readonly, so actuation approval, alert creation and preference
+        # storage were unconditionally declined on this endpoint.
+        state.intermediate_results["user_id"] = username
+        state.intermediate_results["user_role"] = user.role
+
         # Add user message
         from datetime import datetime
 
-        state.messages.append(
-            Message(role="user", content=user_message, timestamp=datetime.now())
-        )
+        state.messages.append(Message(role="user", content=user_message, timestamp=datetime.now()))
 
         # Save message
         await redis_manager.save_message(conversation_id, "user", user_message)
 
         # Save to Postgres if available
         if postgres_manager and postgres_manager.pool:
-            await postgres_manager.save_message(
-                conversation_id, "user", user_message, username
-            )
+            await postgres_manager.save_message(conversation_id, "user", user_message, username)
 
         # Execute workflow
         logger.info("=" * 100)
@@ -1761,9 +1998,7 @@ async def chat(
 
         if _is_report_query and job_queue is not None:
             _job_id = await job_queue.create_job(conversation_id, user_message, intent="report")
-            asyncio.create_task(
-                _run_workflow_as_job(_job_id, state, conversation_id, username)
-            )
+            asyncio.create_task(_run_workflow_as_job(_job_id, state, conversation_id, username))
             logger.info(f"[async-job] report offloaded job_id={_job_id}")
             return APIResponse(
                 success=True,
@@ -1815,9 +2050,7 @@ async def chat(
                         logger.info(f"   🔍 Sample row: {data[0]}")
 
             # Analytics Results
-            analytics_result = updated_state.intermediate_results.get(
-                "analytics_result", {}
-            )
+            analytics_result = updated_state.intermediate_results.get("analytics_result", {})
             if analytics_result:
                 logger.info("\n3️⃣ Analytics Agent Results:")
                 analytics_output = analytics_result.get("output")
@@ -1834,9 +2067,7 @@ async def chat(
 
         # Get assistant response
         assistant_entry = updated_state.messages[-1] if updated_state.messages else None
-        assistant_message = (
-            assistant_entry.content if assistant_entry else "No response generated"
-        )
+        assistant_message = assistant_entry.content if assistant_entry else "No response generated"
         assistant_metadata = assistant_entry.metadata if assistant_entry else None
         logger.info(f"✅ Assistant Response: {assistant_message[:200]}...")
 
@@ -1862,9 +2093,8 @@ async def chat(
                 "intent": updated_state.current_intent,
                 "username": username,
                 "analytics": analytics_flag,
-                "media": (
-                    assistant_metadata.get("media") if assistant_metadata else None
-                ),
+                "media": (assistant_metadata.get("media") if assistant_metadata else None),
+                "sources": updated_state.intermediate_results.get("sources", []),
             },
         )
 
@@ -1875,7 +2105,8 @@ async def chat(
 
 @app.post("/chat/stream")
 async def chat_stream(
-    request: ChatRequest, current_user: Optional[str] = Depends(get_current_user)
+    request: ChatRequest,
+    user: UserContext = Depends(require_permission("sensor:read")),
 ):
     """
     Streaming chat endpoint (Server-Sent Events).
@@ -1897,7 +2128,7 @@ async def chat_stream(
     }
 
     try:
-        username = current_user or "guest"
+        username = user.username
 
         req = request.sanitized()
         user_message = req.message
@@ -1936,6 +2167,10 @@ async def chat_stream(
                 # Propagate fresh_session flag into state so workflow skips memory injection
                 if fresh_session:
                     state.intermediate_results["fresh_session"] = True
+
+                # RBAC context for workflow agents (fix 2026-06-12, same as /chat)
+                state.intermediate_results["user_id"] = username
+                state.intermediate_results["user_role"] = user.role
 
                 # Add user message
                 from datetime import datetime
@@ -1983,11 +2218,11 @@ async def chat_stream(
                 full_response = (
                     assistant_entry.content
                     if assistant_entry
-                    else updated_state.intermediate_results.get("dialogue_response", "No response generated")
+                    else updated_state.intermediate_results.get(
+                        "dialogue_response", "No response generated"
+                    )
                 )
-                assistant_metadata = (
-                    assistant_entry.metadata if assistant_entry else None
-                )
+                assistant_metadata = assistant_entry.metadata if assistant_entry else None
 
                 # Save assistant message
                 await redis_manager.save_message(
@@ -2033,21 +2268,39 @@ async def chat_stream(
 # ─────────────────────────────────────────────────────────────────────────────
 
 _OAI_MODEL_ID = "ontosage"
-_OAI_AUTH_KEYS = {"sk-ontobot-pipeline"}  # set in docker-compose OPENAI_API_KEY
+# Bearer key(s) accepted on /v1/chat/completions. Sourced from settings
+# (PIPELINE_API_KEY env var) — never hardcode in source. Open WebUI sends this
+# as OPENAI_API_KEY. Multiple comma-separated keys are supported for rotation.
+#
+# The published default key is explicitly EXCLUDED so a stock deployment
+# (STRICT_SECRETS=false) can never authenticate /v1/* or the WS proxy with the
+# key that ships in the repo. Operators must set a real PIPELINE_API_KEY.
+_DEFAULT_PIPELINE_KEY = "sk-ontobot-pipeline"
+_OAI_AUTH_KEYS = {
+    k.strip()
+    for k in str(settings.PIPELINE_API_KEY).split(",")
+    if k.strip() and k.strip() != _DEFAULT_PIPELINE_KEY
+}
+if not _OAI_AUTH_KEYS:
+    logger.warning(
+        "No non-default PIPELINE_API_KEY configured — /v1/* (OpenAI-compatible) "
+        "and the WebSocket proxy will reject ALL keys. Set PIPELINE_API_KEY to a "
+        "strong secret to enable them."
+    )
 
 _OAI_NODE_LABELS: dict = {
-    "dialogue":      "🧠 Analyzing your question",
-    "sparql":        "📡 Querying building ontology",
-    "sql":           "📊 Fetching sensor data",
-    "analytics":     "🔬 Running analytics",
+    "dialogue": "🧠 Analyzing your question",
+    "sparql": "📡 Querying building ontology",
+    "sql": "📊 Fetching sensor data",
+    "analytics": "🔬 Running analytics",
     "visualization": "📈 Generating visualization",
-    "report":        "📋 Compiling report",
-    "anomaly":       "🔍 Checking for anomalies",
-    "export":        "💾 Preparing export",
-    "planner":       "🗺️ Planning multi-step task",
-    "recommend":     "💡 Generating recommendations",
-    "response":      "✍️ Composing response",
-    "floor_plan":    "🗺️ Resolving floor plan",  # ← added for OpenWebUI pipeline disclosure
+    "report": "📋 Compiling report",
+    "anomaly": "🔍 Checking for anomalies",
+    "export": "💾 Preparing export",
+    "planner": "🗺️ Planning multi-step task",
+    "recommend": "💡 Generating recommendations",
+    "response": "✍️ Composing response",
+    "floor_plan": "🗺️ Resolving floor plan",  # ← added for OpenWebUI pipeline disclosure
 }
 
 
@@ -2056,7 +2309,9 @@ def _oai_auth(authorization: Optional[str] = Header(None)) -> None:
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing Authorization header")
     token = authorization.removeprefix("Bearer ").strip()
-    if token not in _OAI_AUTH_KEYS:
+    # Constant-time comparison against each accepted key to avoid leaking key
+    # material via response-timing side channels.
+    if not token or not any(hmac.compare_digest(token, k) for k in _OAI_AUTH_KEYS):
         raise HTTPException(status_code=401, detail="Invalid API key")
 
 
@@ -2096,16 +2351,16 @@ async def _unused_oai_chat_completions(
 
     # Extract user text from the last user message (handles str and list content)
     user_message = ""
-    user_msg_obj = next(
-        (m for m in reversed(messages_raw) if m.get("role") == "user"), None
-    )
+    user_msg_obj = next((m for m in reversed(messages_raw) if m.get("role") == "user"), None)
     if user_msg_obj:
         raw_content = user_msg_obj.get("content", "")
         if isinstance(raw_content, str):
             user_message = raw_content
         elif isinstance(raw_content, list):
             user_message = " ".join(
-                p.get("text", "") for p in raw_content if isinstance(p, dict) and p.get("type") == "text"
+                p.get("text", "")
+                for p in raw_content
+                if isinstance(p, dict) and p.get("type") == "text"
             )
 
     if not user_message.strip():
@@ -2202,7 +2457,13 @@ async def _unused_oai_chat_completions(
                 "object": "chat.completion.chunk",
                 "created": created_ts,
                 "model": model,
-                "choices": [{"index": 0, "delta": {"content": f"\n\n❌ Error: {e}"}, "finish_reason": "stop"}],
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {"content": f"\n\n❌ Error: {e}"},
+                        "finish_reason": "stop",
+                    }
+                ],
             }
             yield f"data: {json.dumps(err_chunk)}\n\n"
             yield "data: [DONE]\n\n"
@@ -2223,23 +2484,78 @@ async def _unused_oai_chat_completions(
         (m for m in reversed(updated_state.messages) if m.role == "assistant"),
         None,
     )
-    full_response = (
-        assistant_entry.content if assistant_entry else "No response generated."
+    full_response = assistant_entry.content if assistant_entry else "No response generated."
+    return JSONResponse(
+        {
+            "id": completion_id,
+            "object": "chat.completion",
+            "created": created_ts,
+            "model": model,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": full_response},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+        }
     )
-    return JSONResponse({
-        "id": completion_id,
-        "object": "chat.completion",
-        "created": created_ts,
-        "model": model,
-        "choices": [
-            {
-                "index": 0,
-                "message": {"role": "assistant", "content": full_response},
-                "finish_reason": "stop",
+
+
+async def _authenticate_websocket(websocket: WebSocket) -> Optional[Dict[str, Any]]:
+    """Authenticate a /stream WebSocket handshake.
+
+    Accepts EITHER:
+      * the pipeline API key (PIPELINE_API_KEY) — "proxy" mode for a trusted
+        front-end (Open WebUI, a custom chatbot UI) that authenticates its own
+        users.  The user identity it forwards is treated as untrusted and is
+        capped at the readonly role (parity with the /v1 path).
+      * a valid user session token — "session" mode; the resolved username and
+        role drive conversation ownership and in-pipeline RBAC.
+
+    The token is read from the ``Authorization: Bearer <token>`` header
+    (non-browser clients) or the ``?token=<token>`` query parameter (browser
+    WebSocket clients cannot set custom headers).
+
+    Returns an auth dict, or None to reject the handshake.
+    """
+    token: Optional[str] = None
+    auth_header = websocket.headers.get("authorization")
+    if auth_header:
+        token = (
+            auth_header[7:].strip()
+            if auth_header.lower().startswith("bearer ")
+            else auth_header.strip()
+        )
+    if not token:
+        token = websocket.query_params.get("token")
+    if not token:
+        return None
+
+    # Pipeline key → trusted proxy mode (constant-time compare).
+    if any(hmac.compare_digest(token, k) for k in _OAI_AUTH_KEYS):
+        return {
+            "mode": "proxy",
+            "username": "stream-proxy-user",
+            "role": "readonly",
+            "is_admin": False,
+        }
+
+    # Otherwise, treat the token as a user session token.
+    if auth_manager is not None:
+        ctx = await auth_manager.validate_session_context(token)
+        if ctx and ctx.get("username"):
+            role = ctx.get("role") or "facility_manager"
+            perms = ROLE_PERMISSIONS.get(role, ROLE_PERMISSIONS["readonly"])
+            return {
+                "mode": "session",
+                "username": ctx["username"],
+                "role": role,
+                "is_admin": "user:read" in perms,
             }
-        ],
-        "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-    })
+
+    return None
 
 
 @app.websocket("/stream")
@@ -2261,6 +2577,16 @@ async def websocket_stream(websocket: WebSocket):
         {"type": "response", "data": "Final response"}
         {"type": "done"}
     """
+    # ── Authenticate the handshake BEFORE accepting ──────────────────────────
+    # An unauthenticated /stream would expose the full pipeline (incl. the
+    # code-executor) and allow reading/injecting any conversation by id (IDOR).
+    auth = await _authenticate_websocket(websocket)
+    if auth is None:
+        # 1008 = policy violation. Closing before accept() rejects the handshake.
+        await websocket.close(code=1008)
+        logger.warning("[/stream] rejected unauthenticated WebSocket handshake")
+        return
+
     await websocket.accept()
     connection_manager.register(websocket)
 
@@ -2272,14 +2598,29 @@ async def websocket_stream(websocket: WebSocket):
 
             user_message = request.get("message")
             if not user_message:
-                await websocket.send_json(
-                    {"type": "error", "data": "Message is required"}
-                )
+                await websocket.send_json({"type": "error", "data": "Message is required"})
                 continue
 
-            conversation_id = (
-                request.get("conversation_id") or generate_conversation_id()
-            )
+            # ── Scope the conversation id to the authenticated identity ───────
+            # Session users may only address conversations they own (suffixed
+            # ":{username}") unless they hold an admin (user:read) role; an
+            # unowned id is rejected rather than silently leaking another user's
+            # history. Proxy-mode (trusted front-end) callers manage their own
+            # namespacing.
+            requested_cid = request.get("conversation_id")
+            if auth["mode"] == "session":
+                _uname = auth["username"]
+                if requested_cid:
+                    if not (requested_cid.endswith(f":{_uname}") or auth["is_admin"]):
+                        await websocket.send_json(
+                            {"type": "error", "data": "You do not own this conversation."}
+                        )
+                        continue
+                    conversation_id = requested_cid
+                else:
+                    conversation_id = f"{generate_conversation_id()}:{_uname}"
+            else:  # proxy mode
+                conversation_id = requested_cid or generate_conversation_id()
             persona = request.get("persona", "general")
             language = request.get("language", "en")
             building = request.get("building", settings.BUILDING_ID)
@@ -2301,10 +2642,16 @@ async def websocket_stream(websocket: WebSocket):
                     },
                 )
 
+            # RBAC context for in-pipeline nodes (control/alert/preference),
+            # mirroring the /chat endpoint. Proxy-mode identity is untrusted →
+            # readonly, so privileged actions are declined unless a real user
+            # session authorizes them.
+            state.user_id = auth["username"]
+            state.intermediate_results["user_id"] = auth["username"]
+            state.intermediate_results["user_role"] = auth["role"]
+
             # Add user message
-            state.messages.append(
-                Message(role="user", content=user_message, timestamp=None)
-            )
+            state.messages.append(Message(role="user", content=user_message, timestamp=None))
 
             await redis_manager.save_message(conversation_id, "user", user_message)
 
@@ -2314,9 +2661,7 @@ async def websocket_stream(websocket: WebSocket):
                 last_step = step
                 # Send progress updates
                 if "dialogue" in step:
-                    await websocket.send_json(
-                        {"type": "progress", "data": "Analyzing intent..."}
-                    )
+                    await websocket.send_json({"type": "progress", "data": "Analyzing intent..."})
                 elif "sparql" in step:
                     await websocket.send_json(
                         {"type": "progress", "data": "Querying building ontology..."}
@@ -2349,14 +2694,10 @@ async def websocket_stream(websocket: WebSocket):
 
             # Get response
             assistant_message = (
-                final_state.messages[-1].content
-                if final_state.messages
-                else "No response"
+                final_state.messages[-1].content if final_state.messages else "No response"
             )
 
-            await redis_manager.save_message(
-                conversation_id, "assistant", assistant_message
-            )
+            await redis_manager.save_message(conversation_id, "assistant", assistant_message)
 
             # Send final response
             await websocket.send_json(
@@ -2365,6 +2706,7 @@ async def websocket_stream(websocket: WebSocket):
                     "data": assistant_message,
                     "conversation_id": conversation_id,
                     "intent": final_state.current_intent,
+                    "sources": final_state.intermediate_results.get("sources", []),
                 }
             )
 
@@ -2385,9 +2727,11 @@ async def websocket_stream(websocket: WebSocket):
 @app.get("/conversation/{conversation_id}", response_model=APIResponse)
 async def get_conversation(
     conversation_id: str,
-    current_user: Optional[str] = Depends(get_current_user),
+    user: UserContext = Depends(require_permission("metadata:read")),
 ):
     """Get conversation history"""
+    if not _user_owns_conversation(user, conversation_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         messages = await redis_manager.get_messages(conversation_id)
 
@@ -2408,9 +2752,11 @@ async def get_conversation(
 @app.delete("/conversation/{conversation_id}", response_model=APIResponse)
 async def delete_conversation(
     conversation_id: str,
-    current_user: Optional[str] = Depends(get_current_user),
+    user: UserContext = Depends(require_permission("metadata:read")),
 ):
     """Delete conversation"""
+    if not _user_owns_conversation(user, conversation_id):
+        raise HTTPException(status_code=403, detail="Access denied")
     try:
         # Delete state and messages
         await redis_manager.redis.delete(f"conversation:{conversation_id}")
@@ -2428,11 +2774,9 @@ async def delete_conversation(
 @app.get("/jobs/{job_id}", response_model=APIResponse)
 async def get_job_status(
     job_id: str,
-    current_user: Optional[str] = Depends(get_current_user),
+    user: UserContext = Depends(require_permission("report:read")),
 ):
     """Poll the status of a background job (created when a long-running report is queued)."""
-    if not current_user:
-        return APIResponse(success=False, error="Authentication required")
     if job_queue is None:
         return APIResponse(success=False, error="Job queue not initialised")
     job = await job_queue.get_job(job_id)
@@ -2444,27 +2788,39 @@ async def get_job_status(
     return APIResponse(success=True, data=job)
 
 
+class PreferencesRequest(BaseModel):
+    """Validated body for POST /preferences."""
+
+    conversation_id: str = Field(..., min_length=1, max_length=200)
+    persona: Optional[str] = Field(default=None, max_length=100)
+    language: Optional[str] = Field(default=None, max_length=10)
+    building: Optional[str] = Field(default=None, max_length=100)
+
+
 @app.post("/preferences", response_model=APIResponse)
-async def update_preferences(request: Dict[str, Any]):
-    """Update user preferences"""
+async def update_preferences(
+    body: PreferencesRequest,
+    user: UserContext = Depends(require_permission("metadata:read")),
+):
+    """Update user preferences (auth required; owner-scoped conversation)."""
     try:
-        conversation_id = request.get("conversation_id")
-        if not conversation_id:
-            return APIResponse(success=False, error="conversation_id required")
+        conversation_id = body.conversation_id
+        if not _user_owns_conversation(user, conversation_id):
+            raise HTTPException(status_code=403, detail="Cannot modify another user's preferences")
 
         preferences = {
-            "persona": request.get("persona"),
-            "language": request.get("language"),
-            "building": request.get("building"),
+            "persona": body.persona,
+            "language": body.language,
+            "building": body.building,
         }
-
-        # Remove None values
         preferences = {k: v for k, v in preferences.items() if v is not None}
 
         await redis_manager.save_user_preferences(conversation_id, preferences)
 
         return APIResponse(success=True, data={"preferences": preferences})
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Update preferences error: {e}")
         return APIResponse(success=False, error=str(e))
@@ -2473,9 +2829,21 @@ async def update_preferences(request: Dict[str, Any]):
 # ==================== Report Generation ====================
 
 
+class ReportRequest(BaseModel):
+    """Validated body for POST /api/v1/report."""
+
+    report_type: str = Field(default="summary", max_length=50)
+    output_format: str = Field(default="html", max_length=10)
+    persona: str = Field(default="general", max_length=100)
+    building_id: Optional[str] = Field(default=None, max_length=100)
+    title: Optional[str] = Field(default=None, max_length=300)
+    date_range: Dict[str, Any] = Field(default_factory=dict)
+
+
 @app.post("/api/v1/report")
 async def generate_report(
-    request: Dict[str, Any], current_user: Optional[str] = Depends(get_current_user)
+    body: ReportRequest,
+    user: UserContext = Depends(require_permission("report:read")),
 ):
     """
     Generate a building report as PDF, DOCX, or HTML.
@@ -2491,13 +2859,13 @@ async def generate_report(
         }
     """
     try:
-        username = current_user or "guest"
-        report_type = request.get("report_type", "summary")
-        output_format = request.get("output_format", "html")
-        persona = request.get("persona", "general")
-        building_id = request.get("building_id", settings.BUILDING_ID)
-        title = request.get("title")
-        date_range = request.get("date_range", {})
+        username = user.username
+        report_type = body.report_type
+        output_format = body.output_format
+        persona = body.persona
+        building_id = body.building_id or settings.BUILDING_ID
+        title = body.title
+        date_range = body.date_range
 
         from orchestrator.services.document_builder import DocumentBuilder
 
@@ -2516,9 +2884,7 @@ async def generate_report(
             try:
                 adapter = adapter_registry.get()
                 if adapter:
-                    recent_sql = (
-                        "SELECT * FROM sensor_data ORDER BY Datetime DESC LIMIT 50"
-                    )
+                    recent_sql = "SELECT * FROM sensor_data ORDER BY Datetime DESC LIMIT 50"
                     qr = await adapter.execute_query(recent_sql)
                     if qr.success and qr.data:
                         report_data["readings"] = qr.data[:20]
@@ -2538,9 +2904,7 @@ async def generate_report(
         )
 
         if not result.get("success"):
-            return APIResponse(
-                success=False, error=result.get("error", "Report generation failed")
-            )
+            return APIResponse(success=False, error=result.get("error", "Report generation failed"))
 
         # For binary formats, save to exports and return download path
         if output_format in ("pdf", "docx"):
@@ -2574,18 +2938,54 @@ async def generate_report(
 # ==================== OpenAI Compatibility Layer ====================
 
 
+async def _rehydrate_prior_messages(
+    conversation_id: str,
+    prior_messages: List["Message"],
+    max_history: int,
+) -> List["Message"]:
+    """Rehydrate conversation history from server state when the client sent none.
+
+    OpenWebUI echoes the full message array each turn, so `prior_messages`
+    (reconstructed from the request) already carries history and is returned
+    unchanged. But a custom chat UI, the /stream WebSocket, or a plain API
+    caller may send ONLY the current message — leaving `prior_messages` empty
+    and breaking follow-ups ("is that ok?", "humidity there?"). In that case we
+    load the persisted conversation state so co-reference still resolves.
+
+    Additive and side-effect-free: skipped whenever the client supplied
+    history; `save_state` later re-persists the merged list so it accumulates
+    across turns. Never raises — a memory miss degrades to no history.
+    """
+    if prior_messages:
+        return prior_messages
+    try:
+        _prev_state = await redis_manager.load_state(conversation_id)
+        if _prev_state and _prev_state.messages:
+            rehydrated = list(_prev_state.messages)[-max_history:]
+            logger.info(
+                f"[/v1/chat/completions] rehydrated {len(rehydrated)} prior "
+                "turn(s) from server memory (client sent no history)"
+            )
+            return rehydrated
+    except Exception as _re:
+        logger.debug(f"[/v1/chat/completions] server-memory rehydrate skipped: {_re}")
+    return prior_messages
+
+
 @app.post("/v1/chat/completions")
 async def openai_chat_completions(
-    request: Request, authorization: Optional[str] = Header(None, alias="Authorization")
+    request: Request,
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+    _: None = Depends(_oai_auth),
 ):
     """
     OpenAI-compatible endpoint for Open WebUI integration.
     Allows Open WebUI to use the OntoSage pipeline as a backend.
+
+    Requires a valid bearer key (PIPELINE_API_KEY) enforced via the
+    `_oai_auth` dependency — Open WebUI sends it as OPENAI_API_KEY.
     """
     try:
-        # Basic auth check (accept any token for now)
-        # username = "openwebui_user" # Moved below to support 'user' field
-
         data = await request.json()
         messages = data.get("messages", [])
         if not messages:
@@ -2596,9 +2996,7 @@ async def openai_chat_completions(
         username = data.get("user") or "openwebui_user"
 
         # Extract last user message
-        last_user_msg = next(
-            (m for m in reversed(messages) if m["role"] == "user"), None
-        )
+        last_user_msg = next((m for m in reversed(messages) if m["role"] == "user"), None)
         if not last_user_msg:
             raise HTTPException(status_code=400, detail="No user message found")
 
@@ -2611,23 +3009,23 @@ async def openai_chat_completions(
                 detail=f"Message too long (max {CHAT_MAX_MESSAGE_LENGTH} chars)",
             )
         if not user_message:
-            raise HTTPException(
-                status_code=400, detail="Message is empty after sanitization"
-            )
+            raise HTTPException(status_code=400, detail="Message is empty after sanitization")
 
         # Use X-Chat-Id header (sent by Open WebUI) for a stable, session-scoped
         # conversation_id so turn_memory and Redis intermediate_results (e.g.
         # forecast_result) persist across turns.  Without this, a new UUID was
         # generated every request, preventing cross-turn carry-forward.
-        chat_id_header = (
-            request.headers.get("X-Chat-Id") or request.headers.get("x-chat-id")
-        )
+        chat_id_header = request.headers.get("X-Chat-Id") or request.headers.get("x-chat-id")
         if chat_id_header:
             conversation_id = f"owui_{chat_id_header}:{username}"
         else:
-            # Stable fallback: hash of first user message content
+            # Stable fallback: SHA-256 of first user message content.
+            # Python's builtin hash() is salted per process (PYTHONHASHSEED),
+            # so the old abs(hash(...)) id changed on every orchestrator
+            # restart and silently severed conversation memory (P1.10 fix).
             first_content = messages[0].get("content", "") if messages else user_message
-            conversation_id = f"owui_{abs(hash(first_content))}:{username}"
+            _digest = hashlib.sha256(first_content.encode("utf-8")).hexdigest()[:16]
+            conversation_id = f"owui_{_digest}:{username}"
 
         # Auto-detect persona from system prompt or "As <role>:" prefix when
         # the client (e.g. OpenWebUI) does not send an explicit persona field.
@@ -2660,10 +3058,13 @@ async def openai_chat_completions(
             role = m.get("role", "user")
             content = m.get("content") or ""
             if role in ("user", "assistant") and content.strip():
-                prior_messages.append(
-                    Message(role=role, content=content, timestamp=datetime.now())
-                )
+                prior_messages.append(Message(role=role, content=content, timestamp=datetime.now()))
         prior_messages = prior_messages[-max_history:]
+
+        # Server-side history rehydration (robustness for minimal clients).
+        prior_messages = await _rehydrate_prior_messages(
+            conversation_id, prior_messages, max_history
+        )
 
         # Carry-forward (forecast/analytics artifacts from the previous turn) is
         # loaded below via TurnMemoryService once `state` exists; start empty here.
@@ -2676,20 +3077,23 @@ async def openai_chat_completions(
             user_id=username,
             intermediate_results={},
         )
+        # RBAC context for workflow agents (fix 2026-06-12): /v1 users are
+        # external identities pinned to least-privilege readonly (P0.7). The
+        # alert / preference nodes accept any authenticated (non-guest) user;
+        # control:write paths stay declined for readonly.
+        state.intermediate_results["user_id"] = username
+        state.intermediate_results["user_role"] = "readonly"
 
         logger.info(
             f"[persona-detect] explicit={explicit_persona!r} → resolved={req_persona!r}"
             + (" (prefix stripped)" if stripped_message else "")
         )
-        logger.info(
-            f"[/v1/chat/completions] loaded {len(prior_messages)} prior turns into state"
-        )
+        logger.info(f"[/v1/chat/completions] loaded {len(prior_messages)} prior turns into state")
 
         # Turn memory service — wraps the Postgres pool for per-turn summaries
         from orchestrator.services.turn_memory import TurnMemoryService as _TMS
-        _turn_memory = _TMS(
-            pool=postgres_manager.pool if postgres_manager else None
-        )
+
+        _turn_memory = _TMS(pool=postgres_manager.pool if postgres_manager else None)
 
         # Carry forward forecast/analytics artifacts from the previous turn.
         # Primary source: Postgres turn_memory (persistent across Redis restarts).
@@ -2702,13 +3106,11 @@ async def openai_chat_completions(
                 if _prev and _prev.intermediate_results:
                     _cf_keys = {"forecast_result", "analytics_result"}
                     carry_forward = {
-                        k: v for k, v in _prev.intermediate_results.items()
-                        if k in _cf_keys
+                        k: v for k, v in _prev.intermediate_results.items() if k in _cf_keys
                     }
             if carry_forward:
                 logger.info(
-                    "[/v1/chat/completions] carry-forward loaded: "
-                    f"{list(carry_forward.keys())}"
+                    "[/v1/chat/completions] carry-forward loaded: " f"{list(carry_forward.keys())}"
                 )
         except Exception as _ce:
             logger.debug(f"[/v1/chat/completions] carry-forward skipped: {_ce}")
@@ -2734,9 +3136,7 @@ async def openai_chat_completions(
             )
 
         # Add the current message to the history so the agent can see it
-        state.messages.append(
-            Message(role="user", content=user_message, timestamp=datetime.now())
-        )
+        state.messages.append(Message(role="user", content=user_message, timestamp=datetime.now()))
 
         stream = bool(data.get("stream"))
         show_status = bool(data.get("show_status", True))
@@ -2753,9 +3153,7 @@ async def openai_chat_completions(
                         "object": "chat.completion.chunk",
                         "created": created_ts,
                         "model": data.get("model", "ontobot-pipeline"),
-                        "choices": [
-                            {"index": 0, "delta": {}, "finish_reason": finish_reason}
-                        ],
+                        "choices": [{"index": 0, "delta": {}, "finish_reason": finish_reason}],
                     }
                     if role:
                         payload["choices"][0]["delta"]["role"] = role
@@ -2766,13 +3164,22 @@ async def openai_chat_completions(
                 # Initial role chunk
                 yield sse_chunk(role="assistant")
 
-                # Collect status steps; emit as a collapsible <details> block so
-                # they are visible during processing but do not pollute the final
-                # answer.  Open WebUI (and any markdown-capable UI) renders
-                # <details> as a collapsed toggle — the answer appears cleanly
-                # below it, matching the behaviour of ChatGPT / Claude.
-                status_steps = []
+                # Stream pipeline progress LIVE inside a collapsible <details>
+                # block as each node runs, so Open WebUI shows an updating panel
+                # during processing instead of a blank screen until the pipeline
+                # finishes.  The block is opened on the first step and closed
+                # before the answer streams — matching ChatGPT / Claude UX.
                 last_step = None
+                details_open = False
+                seen_status = set()
+                # Immediate first-byte acknowledgment: the first pipeline node
+                # (intent analysis) can take several seconds, so show activity
+                # within ~1s instead of a blank panel until it completes.
+                if show_status:
+                    yield sse_chunk(content="<details>\n<summary>Pipeline steps</summary>\n\n")
+                    yield sse_chunk(content="- Analyzing your question…\n")
+                    details_open = True
+                    seen_status.add("Analyzing intent")  # dialogue node won't re-add
                 async for step in orchestrator.stream_execute(state):
                     last_step = step
                     if not show_status:
@@ -2794,16 +3201,18 @@ async def openai_chat_completions(
                         status = "Generating document output"
                     elif "floor_plan" in step:
                         status = "🗺️ Resolving floor plan"
-                    if status:
-                        status_steps.append(status)
+                    if status and status not in seen_status:
+                        seen_status.add(status)
+                        if not details_open:
+                            yield sse_chunk(
+                                content="<details>\n<summary>Pipeline steps</summary>\n\n"
+                            )
+                            details_open = True
+                        yield sse_chunk(content=f"- {status}\n")
 
-                # Emit status steps as a single collapsed block (visible on
-                # expand, does not appear inline with the answer)
-                if show_status and status_steps:
-                    steps_md = "\n".join(f"- {s}" for s in status_steps)
-                    yield sse_chunk(
-                        content=f"<details>\n<summary>Pipeline steps</summary>\n\n{steps_md}\n\n</details>\n\n"
-                    )
+                # Close the live progress panel before the answer streams
+                if details_open:
+                    yield sse_chunk(content="\n</details>\n\n")
 
                 # Extract final state from last streamed step (avoid re-executing)
                 final_state = state
@@ -2829,12 +3238,15 @@ async def openai_chat_completions(
 
                 # Save to Postgres if available
                 if postgres_manager and postgres_manager.pool:
-                    await postgres_manager.create_user(
-                        username,
-                        "placeholder_hash",
-                        "placeholder_salt",
-                        metadata={"source": "open_webui"},
-                    )
+                    if username not in _pipeline_users_created:
+                        await postgres_manager.create_user(
+                            username,
+                            "placeholder_hash",
+                            "placeholder_salt",
+                            metadata={"source": "open_webui"},
+                            role="readonly",  # external identity — cannot log in, least-privilege
+                        )
+                        _pipeline_users_created.add(username)
                     await postgres_manager.save_message(
                         conversation_id, "user", user_message, username
                     )
@@ -2842,21 +3254,11 @@ async def openai_chat_completions(
                         conversation_id, "assistant", assistant_message, username
                     )
 
-                # Persist state to Redis hot-cache for carry-forward fallback
-                try:
-                    await redis_manager.save_state(final_state)
-                except Exception as _rse:
-                    logger.debug(
-                        f"[/v1/chat/completions] Redis save skipped: {_rse}"
-                    )
-
                 # Persist structured turn summary to Postgres for long-term memory
                 try:
                     await _turn_memory.save_turn(final_state)
                 except Exception as _tse:
-                    logger.debug(
-                        f"[/v1/chat/completions] turn_memory save skipped: {_tse}"
-                    )
+                    logger.debug(f"[/v1/chat/completions] turn_memory save skipped: {_tse}")
 
                 # Stream final response in chunks (helps UI show gradual output)
                 chunk_size = 200
@@ -2913,32 +3315,24 @@ async def openai_chat_completions(
             logger.debug(f"[/v1/chat/completions] Redis save skipped: {_rse}")
 
         if postgres_manager and postgres_manager.pool:
-            await postgres_manager.create_user(
-                username,
-                "placeholder_hash",
-                "placeholder_salt",
-                metadata={"source": "open_webui"},
-            )
-            await postgres_manager.save_message(
-                conversation_id, "user", user_message, username
-            )
+            if username not in _pipeline_users_created:
+                await postgres_manager.create_user(
+                    username,
+                    "placeholder_hash",
+                    "placeholder_salt",
+                    metadata={"source": "open_webui"},
+                    role="readonly",  # external identity — cannot log in, least-privilege
+                )
+                _pipeline_users_created.add(username)
+            await postgres_manager.save_message(conversation_id, "user", user_message, username)
             await postgres_manager.save_message(
                 conversation_id, "assistant", assistant_message, username
             )
 
         try:
-            await redis_manager.save_state(updated_state)
-        except Exception as _rse:
-            logger.debug(
-                f"[/v1/chat/completions] Redis save skipped: {_rse}"
-            )
-
-        try:
             await _turn_memory.save_turn(updated_state)
         except Exception as _tse:
-            logger.debug(
-                f"[/v1/chat/completions] turn_memory save skipped: {_tse}"
-            )
+            logger.debug(f"[/v1/chat/completions] turn_memory save skipped: {_tse}")
 
         return {
             "id": f"chatcmpl-{conversation_id}",
@@ -2986,14 +3380,16 @@ async def download_export(
 
     from fastapi.responses import FileResponse
 
-    # Sanitise: allow alphanum, dash, underscore, dot only
-    if not _re.match(r"^[\w\-. ]+$", filename):
+    # Sanitise: allow alphanum, dash, underscore, dot only (no spaces to block traversal)
+    if not _re.match(r"^[\w\-.]+$", filename):
         raise HTTPException(status_code=400, detail="Invalid filename")
     file_path = os.path.join(settings.EXPORTS_DIR, filename)
+    # Resolve symlinks/.. and confirm the result is still inside EXPORTS_DIR
+    exports_root = os.path.realpath(settings.EXPORTS_DIR)
+    if not os.path.realpath(file_path).startswith(exports_root + os.sep):
+        raise HTTPException(status_code=403, detail="Access denied")
     if not os.path.isfile(file_path):
-        raise HTTPException(
-            status_code=404, detail=f"Export file '{filename}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Export file '{filename}' not found")
     return FileResponse(
         path=file_path,
         filename=filename,
@@ -3013,9 +3409,11 @@ async def list_floor_plans(current_user: Optional[str] = Depends(get_current_use
             {
                 "floor": f,
                 "pdf_url": floor_plan_service.get_pdf_url(f),
-                "filename": floor_plan_service.get_pdf_path(f).name
-                if floor_plan_service.get_pdf_path(f)
-                else None,
+                "filename": (
+                    floor_plan_service.get_pdf_path(f).name
+                    if floor_plan_service.get_pdf_path(f)
+                    else None
+                ),
             }
             for f in floors
         ],
@@ -3024,7 +3422,10 @@ async def list_floor_plans(current_user: Optional[str] = Depends(get_current_use
 
 
 @app.get("/floor-plans/floor-{floor_num}.pdf")
-async def serve_floor_plan_pdf(floor_num: int):
+async def serve_floor_plan_pdf(
+    floor_num: int,
+    user: UserContext = Depends(require_permission("metadata:read")),
+):
     """Serve the floor plan PDF for a specific floor."""
     from fastapi.responses import FileResponse
 
@@ -3049,7 +3450,9 @@ async def serve_floor_plan_pdf(floor_num: int):
 
 
 @app.get("/api/v1/floor-plans", response_model=APIResponse)
-async def list_floor_plan_manifests():
+async def list_floor_plan_manifests(
+    user: UserContext = Depends(require_permission("metadata:read")),
+):
     """List all buildings + floors with their manifest status."""
     try:
         from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
@@ -3080,7 +3483,9 @@ async def list_floor_plan_manifests():
 
 
 @app.get("/api/v1/admin/capability-indexer/status", response_model=APIResponse)
-async def capability_indexer_status():
+async def capability_indexer_status(
+    user: UserContext = Depends(require_permission("system:health")),
+):
     """Per-building status of the capability KB indexer.
 
     Surfaces the IndexResult that the FastAPI lifespan recorded at startup.
@@ -3145,10 +3550,977 @@ async def capability_indexer_status():
         return APIResponse(success=False, error=str(e), data={})
 
 
+# ---------------------------------------------------------------------------
+# Admin — Ontology manager (named-graph CRUD + SPARQL browser) — Task 3
+# ---------------------------------------------------------------------------
+
+
+class TtlUpload(BaseModel):
+    ttl: str = Field(..., min_length=1, description="Turtle text to upload")
+    graph_uri: str = Field(
+        ...,
+        min_length=5,
+        description="Named graph URI — e.g. urn:ontosage:ttl:my_extension.ttl",
+    )
+    replace: bool = Field(
+        default=False,
+        description=(
+            "False (default) appends triples to the graph, preserving existing "
+            "ones. True replaces the ENTIRE graph (deletes existing triples)."
+        ),
+    )
+
+
+class SparqlBrowserQuery(BaseModel):
+    query: str = Field(..., min_length=5, description="A SPARQL SELECT or ASK query")
+    limit: int = Field(default=100, ge=1, le=500)
+
+
+class TtlValidate(BaseModel):
+    ttl: str = Field(..., min_length=1, description="Turtle text to validate (no network call)")
+
+
+class ReindexRequest(BaseModel):
+    targets: List[str] = Field(
+        default=["capability"], description="capability | documents | floor_plans"
+    )
+    building_id: Optional[str] = Field(default=None)
+
+
+@app.get("/api/v1/admin/ontology/graphs", response_model=APIResponse)
+async def list_ontology_graphs(
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """List all named graphs in GraphDB with their triple counts."""
+    from orchestrator.services.ontology_manager import list_named_graphs
+
+    graphs = await list_named_graphs()
+    return APIResponse(success=True, data={"graphs": graphs, "total": len(graphs)})
+
+
+@app.post("/api/v1/admin/ontology/validate", response_model=APIResponse)
+async def validate_ttl_endpoint(
+    body: TtlValidate,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Parse + validate Turtle text (no GraphDB write). Returns triple count + prefix list."""
+    from orchestrator.services.ontology_manager import validate_ttl_text
+
+    result = validate_ttl_text(body.ttl)
+    return APIResponse(success=result["ok"], error=result.get("error"), data=result)
+
+
+@app.post("/api/v1/admin/ontology/upload", response_model=APIResponse)
+async def upload_ontology_ttl(
+    body: TtlUpload,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Upload a Brick TTL into a named graph. Appends by default; set
+    ``replace=true`` to overwrite the whole graph (deletes existing triples)."""
+    from orchestrator.services.ontology_manager import upload_ttl
+
+    result = await upload_ttl(body.ttl, body.graph_uri, replace=body.replace)
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
+@app.delete("/api/v1/admin/ontology/graphs/{graph_id:path}", response_model=APIResponse)
+async def drop_ontology_graph(
+    graph_id: str,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Delete a named graph from GraphDB (all its triples are removed permanently)."""
+    from orchestrator.services.ontology_manager import drop_named_graph
+
+    ok = await drop_named_graph(graph_id)
+    return APIResponse(success=ok, data={"graph": graph_id, "dropped": ok})
+
+
+@app.post("/api/v1/admin/ontology/sparql", response_model=APIResponse)
+async def admin_sparql_browser(
+    body: SparqlBrowserQuery,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Execute a read-only SPARQL SELECT/ASK query (admin SPARQL browser)."""
+    from orchestrator.services.ontology_manager import run_sparql_select
+
+    result = await run_sparql_select(body.query, limit=body.limit)
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
+# ---------------------------------------------------------------------------
+# Admin — Qdrant re-index job queue
+# ---------------------------------------------------------------------------
+
+_reindex_service_instance: Optional[Any] = None
+
+
+def _get_reindex_service() -> Any:
+    global _reindex_service_instance
+    if _reindex_service_instance is None:
+        from orchestrator.services.reindex_service import ReindexService
+
+        _reindex_service_instance = ReindexService(
+            capability_indexer=getattr(app.state, "capability_indexer", None),
+            document_indexer=getattr(app.state, "document_indexer", None),
+        )
+    return _reindex_service_instance
+
+
+@app.post("/api/v1/admin/reindex", response_model=APIResponse)
+async def trigger_reindex(
+    body: ReindexRequest,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Trigger Qdrant KB re-indexing in the background. Returns a job_id for polling."""
+    svc = _get_reindex_service()
+    bid = body.building_id or settings.BUILDING_ID
+    valid = [t for t in body.targets if t in {"capability", "documents", "floor_plans"}]
+    if not valid:
+        return APIResponse(
+            success=False,
+            error="no valid targets (capability|documents|floor_plans)",
+            data={},
+        )
+    job_id = svc.start(valid, building_id=bid)
+    return APIResponse(
+        success=True, data={"job_id": job_id, "targets": valid, "building_id": bid}
+    )
+
+
+@app.get("/api/v1/admin/reindex/{job_id}", response_model=APIResponse)
+async def reindex_job_status(
+    job_id: str,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Poll re-index job status by job_id."""
+    svc = _get_reindex_service()
+    result = svc.status(job_id)
+    return APIResponse(success=result.get("found", False), data=result)
+
+
+@app.get("/api/v1/admin/reindex", response_model=APIResponse)
+async def list_reindex_jobs(
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """List all re-index jobs this session (newest first)."""
+    svc = _get_reindex_service()
+    return APIResponse(success=True, data={"jobs": svc.list_jobs()})
+
+
+@app.get("/api/v1/datasources", response_model=APIResponse)
+async def list_datasources():
+    """List toggleable synthetic data sources with their current enabled state.
+
+    Read-only, no auth (parity with the capability-indexer status endpoint) —
+    exposes only operational state, no secrets.
+    """
+    mgr = getattr(app.state, "datasource_manager", None)
+    if mgr is None:
+        return APIResponse(
+            success=True,
+            data={"enabled": settings.DATASOURCE_TOGGLES_ENABLED, "sources": []},
+        )
+    return APIResponse(
+        success=True,
+        data={"enabled": settings.DATASOURCE_TOGGLES_ENABLED, "sources": mgr.status()},
+    )
+
+
+@app.post("/api/v1/datasources", response_model=APIResponse)
+async def create_datasource(
+    body: DataSourceSpec,
+    user: UserContext = Depends(require_permission("config:write")),
+):
+    """Create a new synthetic data source from the GUI (persisted, starts disabled)."""
+    mgr = getattr(app.state, "datasource_manager", None)
+    if mgr is None:
+        return APIResponse(success=False, error="datasource toggles disabled", data={})
+    payload = body.model_dump() if hasattr(body, "model_dump") else body.dict()
+    result = mgr.create(payload)
+    return APIResponse(success=bool(result.get("ok")), data=result)
+
+
+@app.post("/api/v1/datasources/{source_id}/enable", response_model=APIResponse)
+async def enable_datasource(
+    source_id: str,
+    user: UserContext = Depends(require_permission("config:write")),
+):
+    """Enable a data source: load its Brick triples into its named graph."""
+    mgr = getattr(app.state, "datasource_manager", None)
+    if mgr is None:
+        return APIResponse(success=False, error="datasource toggles disabled", data={})
+    result = await mgr.enable(source_id)
+    await _flush_datasource_cache()
+    return APIResponse(success=bool(result.get("ok")), data=result)
+
+
+@app.post("/api/v1/datasources/{source_id}/disable", response_model=APIResponse)
+async def disable_datasource(
+    source_id: str,
+    user: UserContext = Depends(require_permission("config:write")),
+):
+    """Disable a data source: clear its named graph (gates its questions)."""
+    mgr = getattr(app.state, "datasource_manager", None)
+    if mgr is None:
+        return APIResponse(success=False, error="datasource toggles disabled", data={})
+    result = await mgr.disable(source_id)
+    await _flush_datasource_cache()
+    return APIResponse(success=bool(result.get("ok")), data=result)
+
+
+@app.get("/api/v1/datasources/{source_id}/preview", response_model=APIResponse)
+async def preview_datasource(source_id: str, limit: int = 48):
+    """Sample a source's synthetic series without writing to the DB. Read-only.
+
+    Intentionally unauthenticated (parity with list_datasources) — it exposes only
+    synthetic sample values, no secrets, and the SPA previews sources before sign-in.
+    The ``limit`` is clamped, though: uncapped it would let an anonymous caller drive
+    arbitrarily large synthetic generation (an unbounded-compute / DoS vector).
+    """
+    mgr = getattr(app.state, "datasource_manager", None)
+    if mgr is None:
+        return APIResponse(success=False, error="datasource toggles disabled", data={})
+    limit = max(1, min(int(limit), 500))
+    result = mgr.preview(source_id, limit=limit)
+    return APIResponse(success=bool(result.get("ok")), data=result)
+
+
+@app.post("/api/v1/datasources/{source_id}/regenerate", response_model=APIResponse)
+async def regenerate_datasource(
+    source_id: str,
+    user: UserContext = Depends(require_permission("config:write")),
+):
+    """Generate + load a source's synthetic readings into its narrow table."""
+    mgr = getattr(app.state, "datasource_manager", None)
+    if mgr is None:
+        return APIResponse(success=False, error="datasource toggles disabled", data={})
+    # generation is CPU/DB-bound and blocking — run off the event loop
+    result = await asyncio.get_event_loop().run_in_executor(None, mgr.regenerate, source_id)
+    await _flush_datasource_cache()
+    return APIResponse(success=bool(result.get("ok")), data=result)
+
+
+async def _flush_datasource_cache() -> None:
+    """Best-effort response-cache flush so a toggle takes effect immediately."""
+    try:
+        cache = getattr(app.state, "response_cache", None) or response_cache
+        if cache is not None and hasattr(cache, "invalidate"):
+            await cache.invalidate(building_id=settings.BUILDING_ID, flush_all=True)
+    except Exception as e:
+        logger.debug(f"[datasources] cache flush skipped: {e}")
+
+
+@app.post("/api/v1/datasources/reset-demo", response_model=APIResponse)
+async def reset_datasources_demo(
+    user: UserContext = Depends(require_permission("config:write")),
+):
+    """Reset to a clean demo baseline: disable every enabled source, flush cache once.
+
+    Deterministic, idempotent reset so a demo/QA run always starts from the same
+    clean slate (every synthetic source off). The presenter then enables what the
+    walkthrough needs. Mirrors the manual reset in scripts/test_datasource_capability_qa.py.
+    """
+    mgr = getattr(app.state, "datasource_manager", None)
+    if mgr is None:
+        return APIResponse(success=False, error="datasource toggles disabled", data={})
+    disabled: List[str] = []
+    for s in mgr.status():
+        if s.get("enabled"):
+            res = await mgr.disable(s["id"])
+            if res.get("ok"):
+                disabled.append(s["id"])
+    await _flush_datasource_cache()
+    return APIResponse(success=True, data={"disabled": disabled, "count": len(disabled)})
+
+
+# ── Admin console: .env + database credentials (system:admin, localhost panel) ──
+
+
+class EnvUpdate(BaseModel):
+    changes: Dict[str, str] = Field(
+        ..., description="KEY->value pairs to write to .env. MASK value = unchanged secret."
+    )
+
+
+class DatabaseCreate(BaseModel):
+    key: str = Field(..., min_length=1, description="Registry key (ref:storedAt bldg:<key>)")
+    type: str = Field(..., description="mysql | mysql_narrow | postgresql | timescaledb")
+    host: str = Field(...)
+    port: str = Field(default="3306")
+    user: str = Field(default="")
+    password: str = Field(default="")
+    database: str = Field(default="")
+    table: Optional[str] = Field(
+        default=None,
+        description="Narrow-table name (required for mysql_narrow; ignored for wide mysql)",
+    )
+
+
+@app.get("/api/v1/admin/env", response_model=APIResponse)
+async def get_env(user: UserContext = Depends(require_permission("system:admin"))):
+    """Read .env as editable rows (secret values masked)."""
+    from orchestrator.services import admin_config
+
+    return APIResponse(
+        success=True, data={"env": admin_config.read_env(), "mask": admin_config.MASK}
+    )
+
+
+@app.put("/api/v1/admin/env", response_model=APIResponse)
+async def put_env(body: EnvUpdate, user: UserContext = Depends(require_permission("system:admin"))):
+    """Write changed keys to .env (masked = unchanged). Requires an orchestrator restart."""
+    from orchestrator.services import admin_config
+
+    summary = admin_config.apply_env(dict(body.changes))
+    return APIResponse(
+        success=True,
+        data={**summary, "restart_required": True, "env_path": str(admin_config.env_path())},
+    )
+
+
+# ── Admin console: AI provider / model configuration ───────────────────────────
+
+
+class AIConfigTest(BaseModel):
+    provider: str = Field(..., description="local | cloud | openai")
+    base_url: Optional[str] = Field(
+        default=None, description="override Ollama base URL for the probe"
+    )
+    api_key: Optional[str] = Field(
+        default=None, description="override key for the probe (never stored or logged)"
+    )
+
+
+@app.get("/api/v1/admin/ai-config", response_model=APIResponse)
+async def get_ai_config(user: UserContext = Depends(require_permission("system:admin"))):
+    """Current AI provider/model/embedding config for the console.
+
+    Returns key *presence* (booleans) only — never the key values.
+    """
+    return APIResponse(
+        success=True,
+        data={
+            "model_provider": settings.MODEL_PROVIDER,
+            "embedding_provider": settings.EMBEDDING_PROVIDER,
+            "ollama_base_url": settings.OLLAMA_BASE_URL,
+            "ollama_model": settings.OLLAMA_MODEL,
+            "ollama_cloud_base_url": settings.OLLAMA_CLOUD_BASE_URL,
+            "ollama_cloud_model": settings.OLLAMA_CLOUD_MODEL,
+            "openai_model": settings.OPENAI_MODEL,
+            "openai_model_fast": settings.OPENAI_MODEL_FAST,
+            "openai_api_key_set": bool(settings.OPENAI_API_KEY),
+            "ollama_cloud_api_key_set": bool(settings.OLLAMA_CLOUD_API_KEY),
+            "providers": ["local", "cloud", "openai"],
+            "embedding_providers": ["local", "openai"],
+        },
+    )
+
+
+@app.post("/api/v1/admin/ai-config/test", response_model=APIResponse)
+async def test_ai_config(
+    body: AIConfigTest, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Probe a provider for reachability. For local/cloud Ollama it also returns the
+    installed model list (the GUI populates its model dropdown from it). Never echoes keys.
+    """
+    import httpx
+
+    provider = (body.provider or "").lower()
+    t0 = time.time()
+    try:
+        if provider in ("local", "cloud"):
+            default_base = (
+                settings.OLLAMA_BASE_URL if provider == "local" else settings.OLLAMA_CLOUD_BASE_URL
+            )
+            base = (body.base_url or default_base).rstrip("/")
+            headers: Dict[str, str] = {}
+            key = body.api_key or (settings.OLLAMA_CLOUD_API_KEY if provider == "cloud" else "")
+            if key:
+                headers["Authorization"] = f"Bearer {key}"
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                r = await client.get(f"{base}/api/tags", headers=headers)
+                r.raise_for_status()
+                tags = r.json() or {}
+            models = sorted(m.get("name", "") for m in tags.get("models", []) if m.get("name"))
+            return APIResponse(
+                success=True,
+                data={
+                    "ok": True,
+                    "provider": provider,
+                    "models": models,
+                    "latency_ms": round((time.time() - t0) * 1000, 1),
+                },
+            )
+        if provider == "openai":
+            key = body.api_key or settings.OPENAI_API_KEY
+            if not key:
+                return APIResponse(
+                    success=False, error="No OpenAI API key set or provided", data={"ok": False}
+                )
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                r = await client.get(
+                    "https://api.openai.com/v1/models",
+                    headers={"Authorization": f"Bearer {key}"},
+                )
+                r.raise_for_status()
+                payload = r.json() or {}
+            ids = sorted(m.get("id", "") for m in payload.get("data", []) if m.get("id"))
+            chat = [m for m in ids if m.startswith(("gpt-", "o1", "o3", "chatgpt"))]
+            return APIResponse(
+                success=True,
+                data={
+                    "ok": True,
+                    "provider": "openai",
+                    "models": chat or ids,
+                    "latency_ms": round((time.time() - t0) * 1000, 1),
+                },
+            )
+        return APIResponse(
+            success=False, error=f"unknown provider '{body.provider}'", data={"ok": False}
+        )
+    except Exception as e:  # provider unreachable / bad key — structured, non-fatal
+        return APIResponse(
+            success=False,
+            error=str(e)[:200],
+            data={
+                "ok": False,
+                "provider": provider,
+                "latency_ms": round((time.time() - t0) * 1000, 1),
+            },
+        )
+
+
+# ── Admin console: integrations (live feeds + notification channels) ───────────
+
+
+@app.get("/api/v1/admin/integrations", response_model=APIResponse)
+async def get_integrations(user: UserContext = Depends(require_permission("system:admin"))):
+    """Read-only view of live feeds (feeds.yaml) + notification channels (channels.yaml).
+
+    Read-only by design: those YAML files carry curated comments a ``safe_dump`` rewrite
+    would destroy, so editing stays in the files. This surfaces what's configured and
+    powers the per-channel test-send below.
+    """
+    building_id = settings.BUILDING_ID
+    feeds: List[Dict[str, Any]] = []
+    try:
+        from pathlib import Path
+
+        import yaml as _yaml
+
+        from shared.building_paths import resolve_building_file
+
+        rel = resolve_building_file(building_id, "feeds.yaml")
+        fp = Path(rel) if rel else None
+        if fp and fp.is_file():
+            doc = _yaml.safe_load(fp.read_text(encoding="utf-8")) or {}
+            for f in doc.get("feeds", []) or []:
+                feeds.append(
+                    {
+                        "id": f.get("id"),
+                        "type": f.get("type"),
+                        "url": f.get("url", ""),
+                        "interval_s": f.get("interval_s"),
+                        "brick_class": f.get("brick_class", ""),
+                        "storage": f.get("storage", ""),
+                        "enabled": bool(f.get("enabled", True)),
+                    }
+                )
+    except Exception as e:  # non-fatal: an unreadable feeds.yaml just yields an empty list
+        logger.debug(f"[integrations] feeds read skipped: {e}")
+
+    channels: List[Dict[str, Any]] = []
+    try:
+        from orchestrator.services.notification_service import get_notification_service
+
+        svc = get_notification_service(building_id)
+        for c in svc.channels:
+            channels.append(
+                {
+                    "id": c.get("id"),
+                    "type": c.get("type"),
+                    "enabled": bool(c.get("enabled", True)),
+                    "target": c.get("url") or c.get("to_addr") or "",
+                }
+            )
+        # The built-in 'log' channel is always active but not listed in channels.yaml.
+        if not any(c["type"] == "log" for c in channels):
+            channels.insert(
+                0, {"id": "log", "type": "log", "enabled": True, "target": "(server log)"}
+            )
+    except Exception as e:  # non-fatal
+        logger.debug(f"[integrations] channels read skipped: {e}")
+
+    return APIResponse(success=True, data={"feeds": feeds, "channels": channels})
+
+
+@app.post("/api/v1/admin/channels/{channel_id}/test", response_model=APIResponse)
+async def test_channel(
+    channel_id: str, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Send one test notification through a single channel (does not mutate config)."""
+    from orchestrator.services.notification_service import get_notification_service
+
+    svc = get_notification_service(settings.BUILDING_ID)
+    payload = {
+        "title": "OntoSage test notification",
+        "message": f"Test dispatch from the admin console at {datetime.utcnow().isoformat()}Z.",
+        "severity": "info",
+        "building_id": settings.BUILDING_ID,
+        "source": "admin_console_test",
+    }
+    ch = (
+        {"id": "log", "type": "log"}
+        if channel_id == "log"
+        else next((c for c in svc.channels if c.get("id") == channel_id), None)
+    )
+    if ch is None:
+        return APIResponse(success=False, error=f"unknown channel '{channel_id}'", data={})
+    try:
+        sent = await svc._send(ch, payload)
+        return APIResponse(
+            success=bool(sent),
+            data={"channel": channel_id, "type": ch.get("type"), "sent": bool(sent)},
+        )
+    except Exception as e:
+        return APIResponse(success=False, error=str(e)[:200], data={"channel": channel_id})
+
+
+@app.get("/api/v1/admin/audit", response_model=APIResponse)
+async def get_admin_audit(
+    limit: int = 100, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Recent mutating admin-console actions (newest first). Requires system:admin."""
+    if postgres_manager is None:
+        return APIResponse(success=True, data={"entries": []})
+    entries = await postgres_manager.get_admin_audit(limit=limit)
+    return APIResponse(success=True, data={"entries": entries})
+
+
+class ConfigRestore(BaseModel):
+    bundle: Dict[str, Any] = Field(..., description="A bundle produced by GET /config/backup")
+    dry_run: bool = Field(default=False, description="Validate only; write nothing")
+
+
+@app.get("/api/v1/admin/config/backup", response_model=APIResponse)
+async def backup_config_endpoint(user: UserContext = Depends(require_permission("system:admin"))):
+    """Portable bundle of console-managed config (data sources / DB registry / role
+    access / toggle-state). Excludes .env secrets. Requires system:admin."""
+    from orchestrator.services import admin_config
+
+    return APIResponse(success=True, data=admin_config.backup_config())
+
+
+@app.post("/api/v1/admin/config/restore", response_model=APIResponse)
+async def restore_config_endpoint(
+    body: ConfigRestore, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Validate + write a previously-downloaded config bundle (atomic — aborts if any
+    file is malformed). Registries reload at boot, so a restart fully applies it."""
+    from orchestrator.services import admin_config
+
+    try:
+        summary = admin_config.restore_config(body.bundle, dry_run=body.dry_run)
+    except ValueError as e:
+        return APIResponse(success=False, error=str(e), data={})
+    if not body.dry_run:
+        await _flush_datasource_cache()
+    return APIResponse(success=True, data={**summary, "restart_required": not body.dry_run})
+
+
+@app.get("/api/v1/admin/databases", response_model=APIResponse)
+async def get_databases(user: UserContext = Depends(require_permission("system:admin"))):
+    """List DB connections (curated + GUI overlay), passwords masked.
+
+    Each item is annotated ``active`` — whether this building actually initializes
+    it (building.yaml ``storage.databases``). The rest are dormant templates.
+    """
+    from orchestrator.services import admin_config
+
+    dbs = admin_config.read_databases()
+    active = admin_config.active_db_keys()
+    for d in dbs:
+        d["active"] = (active is None) or (d["key"] in active)
+    return APIResponse(success=True, data={"databases": dbs, "filtered": active is not None})
+
+
+@app.get("/api/v1/admin/databases/sensor-counts", response_model=APIResponse)
+async def get_db_sensor_counts(user: UserContext = Depends(require_permission("system:admin"))):
+    """Batch sensor-triple count per DB graph in ONE query (all connections at once).
+
+    Replaces the per-card probe the console used to fire once per connection — which
+    flooded the rate limiter when many databases were registered.
+    """
+    from orchestrator.services import db_ontology
+
+    counts = await db_ontology.graph_triple_counts()
+    return APIResponse(success=True, data={"counts": counts})
+
+
+@app.post("/api/v1/admin/databases", response_model=APIResponse)
+async def create_database(
+    body: DatabaseCreate,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Add a DB connection (overlay entry + .env creds), used per-UUID after restart."""
+    from orchestrator.services import admin_config
+
+    try:
+        result = admin_config.add_database(
+            body.key,
+            body.type,
+            body.host,
+            body.port,
+            body.user,
+            body.password,
+            body.database,
+            table=body.table,
+        )
+    except ValueError as e:
+        return APIResponse(success=False, error=str(e), data={})
+    return APIResponse(success=True, data=result)
+
+
+# Fixed ids seeded by config-panel/demo-db/demo_seed.sql — must stay in lock-step
+# with that file so the sensor registration references the exact rows in demo_readings.
+_DEMO_DB_UUID_TEMP = "aaaaaaaa-0000-4000-8000-000000000001"
+_DEMO_DB_UUID_HUMID = "aaaaaaaa-0000-4000-8000-000000000002"
+
+
+@app.get("/api/v1/admin/databases/demo-template", response_model=APIResponse)
+async def demo_database_template(user: UserContext = Depends(require_permission("system:admin"))):
+    """Prefill payload for the console's "Load demo database" button.
+
+    Returns the connection spec pointing at the profile-gated ``demo-mysql`` service
+    plus a ready-to-paste sensor CSV whose UUIDs match ``demo_readings``. Lets an admin
+    rehearse the full external-DB flow (connect → register → recreate → ask) in two
+    clicks. Requires ``docker compose --profile demo up -d demo-mysql`` to be running.
+    """
+    sensors_csv = (
+        "local,brick_class,location,uuid,unit,label\n"
+        f"Demo_Temperature_Sensor,brick:Temperature_Sensor,bldg:Floor5,{_DEMO_DB_UUID_TEMP},"
+        "unit:DEG_C,Demo Temperature Sensor\n"
+        f"Demo_Humidity_Sensor,brick:Humidity_Sensor,bldg:Floor5,{_DEMO_DB_UUID_HUMID},"
+        "unit:PERCENT,Demo Humidity Sensor\n"
+    )
+    return APIResponse(
+        success=True,
+        data={
+            "connection": {
+                "key": "demo_external",
+                "type": "mysql_narrow",
+                "table": "demo_readings",
+                "host": "demo-mysql",
+                "port": "3306",
+                "user": "demo",
+                "password": "demo",
+                "database": "demodb",
+            },
+            "sensors_csv": sensors_csv,
+            "note": (
+                "Start the demo DB first: `docker compose --profile demo up -d demo-mysql`. "
+                "Then: Add connection → Register sensors (CSV is prefilled) → recreate the "
+                "orchestrator → ask about demo temperature/humidity on floor 5."
+            ),
+        },
+    )
+
+
+# ── External-DB sensor metadata (make a connected DB queryable) ────────────────
+
+
+class SensorPoints(BaseModel):
+    points: List[Dict[str, Any]] = Field(
+        ..., description="[{local, brick_class, location, uuid, unit?, label?}, ...]"
+    )
+
+
+class SensorTtl(BaseModel):
+    ttl: str = Field(..., min_length=1, description="Brick Turtle with ref:storedAt bldg:<key>")
+
+
+@app.get("/api/v1/admin/databases/{db_key}/sensors", response_model=APIResponse)
+async def get_db_sensors(
+    db_key: str, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """How many sensor triples are registered for this DB's named graph."""
+    from orchestrator.services import db_ontology
+
+    count = await db_ontology.graph_triple_count(db_key)
+    return APIResponse(success=True, data={"db_key": db_key, "triples": count})
+
+
+@app.post("/api/v1/admin/databases/{db_key}/sensors", response_model=APIResponse)
+async def register_db_sensors(
+    db_key: str, body: SensorPoints, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Register sensor points (with real UUIDs) so this DB is discoverable via SPARQL."""
+    from orchestrator.services import db_ontology
+
+    result = await db_ontology.register_points(db_key, body.points)
+    if result.get("ok"):
+        await _flush_datasource_cache()
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
+@app.post("/api/v1/admin/databases/{db_key}/sensors/ttl", response_model=APIResponse)
+async def register_db_sensors_ttl(
+    db_key: str, body: SensorTtl, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Upload a Brick TTL of the DB's sensors (validated) into its named graph."""
+    from orchestrator.services import db_ontology
+
+    result = await db_ontology.register_ttl(db_key, body.ttl)
+    if result.get("ok"):
+        await _flush_datasource_cache()
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
+class SensorCsv(BaseModel):
+    csv: str = Field(
+        ..., min_length=1, description="CSV: local,brick_class,location,uuid[,unit,label]"
+    )
+
+
+@app.post("/api/v1/admin/databases/{db_key}/sensors/csv", response_model=APIResponse)
+async def register_db_sensors_csv(
+    db_key: str, body: SensorCsv, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Register sensors from a pasted/imported CSV (no hand-typing each point)."""
+    from orchestrator.services import admin_config, db_ontology
+
+    points, issues = admin_config.parse_sensor_csv(body.csv)
+    if not points:
+        return APIResponse(success=False, error="; ".join(issues) or "no valid rows", data={})
+    result = await db_ontology.register_points(db_key, points)
+    result["parse_warnings"] = issues
+    if result.get("ok"):
+        await _flush_datasource_cache()
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
+class ConnProbe(BaseModel):
+    key: Optional[str] = Field(
+        None, description="Existing connection key (creds resolved server-side)"
+    )
+    type: str = Field(default="mysql")
+    host: str = Field(default="")
+    port: str = Field(default="3306")
+    user: str = Field(default="")
+    password: str = Field(default="")
+    database: str = Field(default="")
+
+
+def _probe_creds(body: "ConnProbe") -> Dict[str, Any]:
+    """Resolve a probe body to real creds — from an existing key, or the raw fields."""
+    from orchestrator.services import admin_config
+
+    if body.key:
+        c = admin_config.resolve_connection(body.key)
+        if c is None:
+            raise ValueError(f"unknown connection '{body.key}'")
+        return c
+    return {
+        "type": body.type,
+        "host": body.host,
+        "port": body.port,
+        "user": body.user,
+        "password": body.password,
+        "database": body.database,
+    }
+
+
+@app.post("/api/v1/admin/databases/test", response_model=APIResponse)
+async def test_database(
+    body: ConnProbe, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Test a DB connection (by key or raw creds) — SELECT 1 + latency."""
+    from orchestrator.services import admin_config
+
+    try:
+        c = _probe_creds(body)
+    except ValueError as e:
+        return APIResponse(success=False, error=str(e), data={})
+    result = await admin_config.test_connection(
+        c["type"], c["host"], c["port"], c["user"], c["password"], c["database"]
+    )
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
+@app.post("/api/v1/admin/databases/introspect", response_model=APIResponse)
+async def introspect_database(
+    body: ConnProbe, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """List tables + columns of a connection (by key or raw creds)."""
+    from orchestrator.services import admin_config
+
+    try:
+        c = _probe_creds(body)
+    except ValueError as e:
+        return APIResponse(success=False, error=str(e), data={})
+    result = await admin_config.introspect(
+        c["type"], c["host"], c["port"], c["user"], c["password"], c["database"]
+    )
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
+@app.get("/api/v1/admin/databases/{db_key}/data", response_model=APIResponse)
+async def database_table_stats(
+    db_key: str, table: str, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Row count + distinct-sensor count + recent sample for a table in a connection."""
+    from orchestrator.services import admin_config
+
+    c = admin_config.resolve_connection(db_key)
+    if c is None:
+        return APIResponse(success=False, error=f"unknown connection '{db_key}'", data={})
+    result = await admin_config.table_stats(
+        c["type"], c["host"], c["port"], c["user"], c["password"], c["database"], table
+    )
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
+@app.delete("/api/v1/admin/databases/{db_key}", response_model=APIResponse)
+async def delete_database_conn(
+    db_key: str, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Delete a GUI-added connection (curated entries are protected)."""
+    from orchestrator.services import admin_config, db_ontology
+
+    try:
+        result = admin_config.delete_database(db_key)
+    except ValueError as e:
+        return APIResponse(success=False, error=str(e), data={})
+    # best-effort: clear the connection's sensor named graph too
+    try:
+        await db_ontology.clear_graph(db_key)
+    except Exception:
+        pass
+    return APIResponse(success=True, data=result)
+
+
+@app.post("/api/v1/admin/restart", response_model=APIResponse)
+async def restart_orchestrator(user: UserContext = Depends(require_permission("system:admin"))):
+    """Restart the orchestrator process — Docker's ``restart: unless-stopped`` policy
+    brings it back, reloading bind-mounted code and re-running startup.
+
+    NOTE: values baked from ``.env`` at container-create do NOT change on a plain
+    restart — use ``docker compose up -d orchestrator`` (recreate) to apply .env edits.
+    """
+
+    async def _terminate() -> None:
+        # brief delay so the HTTP 200 is delivered before the process exits
+        await asyncio.sleep(0.7)
+        logger.warning("[admin/restart] console-triggered restart — SIGTERM to self")
+        os.kill(os.getpid(), signal.SIGTERM)
+
+    asyncio.create_task(_terminate())
+    return APIResponse(success=True, data={"restarting": True})
+
+
+# ── Admin console: user management + role→data-source access ──────────────────
+
+_VALID_ROLES = {"admin", "facility_manager", "analyst", "operator", "occupant", "readonly"}
+
+
+class UserCreate(BaseModel):
+    username: str = Field(..., min_length=3)
+    password: str = Field(..., min_length=6)
+    role: str = Field(default="readonly")
+    email: Optional[str] = Field(default=None)
+
+
+class RoleUpdate(BaseModel):
+    role: str = Field(..., description="One of the 6 RBAC roles")
+
+
+class RoleAccessUpdate(BaseModel):
+    role: str = Field(...)
+    sources: Any = Field(..., description="'*' for all, or a list of data-source ids")
+
+
+@app.get("/api/v1/admin/users", response_model=APIResponse)
+async def list_users(user: UserContext = Depends(require_permission("user:read"))):
+    """List all accounts (no secrets) + the valid roles."""
+    users = await postgres_manager.list_users() if postgres_manager else []
+    return APIResponse(success=True, data={"users": users, "roles": sorted(_VALID_ROLES)})
+
+
+@app.post("/api/v1/admin/users", response_model=APIResponse)
+async def create_user_account(
+    body: UserCreate, user: UserContext = Depends(require_permission("user:write"))
+):
+    """Create a user with a specific role."""
+    if body.role not in _VALID_ROLES:
+        return APIResponse(success=False, error=f"invalid role '{body.role}'", data={})
+    res = await auth_manager.register_user(body.username, body.password, body.email, role=body.role)
+    return APIResponse(
+        success=bool(res.get("success")),
+        error=res.get("error"),
+        data={"username": body.username, "role": body.role},
+    )
+
+
+@app.put("/api/v1/admin/users/{username}/role", response_model=APIResponse)
+async def update_user_role(
+    username: str, body: RoleUpdate, user: UserContext = Depends(require_permission("user:write"))
+):
+    """Change a user's role."""
+    if body.role not in _VALID_ROLES:
+        return APIResponse(success=False, error=f"invalid role '{body.role}'", data={})
+    ok = await postgres_manager.update_user_role(username, body.role) if postgres_manager else False
+    return APIResponse(success=ok, data={"username": username, "role": body.role})
+
+
+@app.delete("/api/v1/admin/users/{username}", response_model=APIResponse)
+async def delete_user_account(
+    username: str, user: UserContext = Depends(require_permission("user:delete"))
+):
+    """Delete a user (cannot delete your own account)."""
+    if user and getattr(user, "username", None) == username:
+        return APIResponse(success=False, error="cannot delete your own account", data={})
+    ok = await postgres_manager.delete_user(username) if postgres_manager else False
+    return APIResponse(success=ok, data={"username": username})
+
+
+@app.get("/api/v1/admin/role-access", response_model=APIResponse)
+async def get_role_access(user: UserContext = Depends(require_permission("system:admin"))):
+    """Return the role→allowed-sources map + all source ids to build the matrix."""
+    from orchestrator.services import admin_config
+
+    reg = getattr(app.state, "datasource_registry", None)
+    sources = [s.id for s in reg.list()] if reg else []
+    return APIResponse(
+        success=True,
+        data={
+            "access": admin_config.read_role_access(),
+            "sources": sources,
+            "roles": sorted(_VALID_ROLES),
+        },
+    )
+
+
+@app.put("/api/v1/admin/role-access", response_model=APIResponse)
+async def put_role_access(
+    body: RoleAccessUpdate, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Set which data sources a role may use ('*' or a list). Applies immediately."""
+    from orchestrator.services import admin_config
+
+    if body.role not in _VALID_ROLES:
+        return APIResponse(success=False, error=f"invalid role '{body.role}'", data={})
+    try:
+        result = admin_config.set_role_access(body.role, body.sources)
+    except ValueError as e:
+        return APIResponse(success=False, error=str(e), data={})
+    return APIResponse(success=True, data=result)
+
+
 @app.get("/api/v1/floor-plans/{building_id}/{floor}/manifest", response_model=APIResponse)
 async def get_floor_plan_manifest(
     building_id: str,
     floor: int,
+    user: UserContext = Depends(require_permission("metadata:read")),
 ):
     """Return the full FloorPlanManifest JSON for a specific building floor."""
     try:
@@ -3174,6 +4546,7 @@ async def search_floor_plan_spaces(
     q: str,
     building: Optional[str] = None,
     floor: Optional[int] = None,
+    user: UserContext = Depends(require_permission("metadata:read")),
 ):
     """Cross-floor semantic space search (by label, type, or zone_id)."""
     building = building or settings.BUILDING_ID
@@ -3191,6 +4564,7 @@ async def search_floor_plan_spaces(
 @app.get("/api/v1/floor-plans/overview", response_model=APIResponse)
 async def get_floor_plan_overview(
     building: Optional[str] = None,
+    user: UserContext = Depends(require_permission("metadata:read")),
 ):
     """Building-level overview: per-floor space counts, types, and plan links."""
     building = building or settings.BUILDING_ID
@@ -3235,6 +4609,7 @@ async def get_floor_plan_overview(
 async def get_floor_plan_facilities(
     type: str,
     building: Optional[str] = None,
+    user: UserContext = Depends(require_permission("metadata:read")),
 ):
     """Facility locator — find all spaces of a given type across all floors."""
     building = building or settings.BUILDING_ID
@@ -3253,16 +4628,15 @@ async def get_floor_plan_facilities(
 async def reingest_floor_plans(
     building: Optional[str] = None,
     floor: Optional[int] = None,
-    current_user: Optional[str] = Depends(get_current_user),
+    user: UserContext = Depends(require_permission("config:write")),
 ):
     """DW6: Force regeneration of floor plan manifests (PDF + DWG via registry)."""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required for reingest")
     try:
         from pathlib import Path
-        from orchestrator.services.floor_plan_registry import get_floor_plan_registry
-        from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
+
         from orchestrator.services.dwg_pipeline import get_dwg_pipeline
+        from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
+        from orchestrator.services.floor_plan_registry import get_floor_plan_registry
 
         registry = get_floor_plan_registry()
         input_dir = Path("/app/input")
@@ -3310,7 +4684,9 @@ async def reingest_floor_plans(
                 }
                 if path.suffix.lower() == ".pdf":
                     results_map[key]["data_sources"].append("pdf")
-                    results_map[key]["spaces"] = max(results_map[key]["spaces"], len(manifest.spaces))
+                    results_map[key]["spaces"] = max(
+                        results_map[key]["spaces"], len(manifest.spaces)
+                    )
                     results_map[key]["warnings"] += len(manifest.warnings)
                 else:
                     results_map[key]["data_sources"].append("dwg")
@@ -3318,7 +4694,7 @@ async def reingest_floor_plans(
                 logger.warning(f"[reingest] {path.name} failed: {file_err}")
 
         # Run final merge pass for all affected floors
-        for (bid, fl) in list(results_map.keys()):
+        for bid, fl in list(results_map.keys()):
             try:
                 dwg_m = dwg_pipeline.load_manifest(bid, fl)
                 pdf_m = pdf_pipeline.load_manifest(bid, fl)
@@ -3412,17 +4788,34 @@ async def get_floor_plan_svg(
     from fastapi.responses import Response as FastAPIResponse
 
     _TYPE_COLOUR = {
-        "office": "#93c5fd", "lab": "#86efac", "meeting_room": "#fde68a",
-        "classroom": "#c4b5fd", "lecture": "#a5b4fc", "toilet": "#d1d5db",
-        "kitchen": "#fdba74", "server_room": "#f87171", "storage": "#d1fae5",
-        "staircase": "#e5e7eb", "lift": "#e5e7eb", "reception": "#fbcfe8",
-        "corridor": "#f3f4f6", "utility": "#fef9c3", "zone": "#bfdbfe",
+        "office": "#93c5fd",
+        "lab": "#86efac",
+        "meeting_room": "#fde68a",
+        "classroom": "#c4b5fd",
+        "lecture": "#a5b4fc",
+        "toilet": "#d1d5db",
+        "kitchen": "#fdba74",
+        "server_room": "#f87171",
+        "storage": "#d1fae5",
+        "staircase": "#e5e7eb",
+        "lift": "#e5e7eb",
+        "reception": "#fbcfe8",
+        "corridor": "#f3f4f6",
+        "utility": "#fef9c3",
+        "zone": "#bfdbfe",
         "unknown": "#f9fafb",
     }
     _BLOCK_SYMBOL = {
-        "door": "D", "window": "W", "fire_exit": "FE", "sensor": "S",
-        "hvac_diffuser": "H", "fire_alarm": "FA", "light_fixture": "L",
-        "power_outlet": "P", "equipment": "E", "unknown": "?",
+        "door": "D",
+        "window": "W",
+        "fire_exit": "FE",
+        "sensor": "S",
+        "hvac_diffuser": "H",
+        "fire_alarm": "FA",
+        "light_fixture": "L",
+        "power_outlet": "P",
+        "equipment": "E",
+        "unknown": "?",
     }
 
     try:
@@ -3439,7 +4832,7 @@ async def get_floor_plan_svg(
         parts = [
             f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {vw} {vh}" '
             f'width="{vw}" height="{vh}">',
-            f'<title>{manifest.building_name} — {manifest.floor_label}</title>',
+            f"<title>{manifest.building_name} — {manifest.floor_label}</title>",
             '<rect width="100%" height="100%" fill="#f8fafc" stroke="#e2e8f0"/>',
         ]
 
@@ -3459,7 +4852,7 @@ async def get_floor_plan_svg(
             parts.append(
                 f'<polygon points="{pts}" fill="{fill}" fill-opacity="0.6" '
                 f'stroke="#475569" stroke-width="1">'
-                f'<title>{s.label} ({s.zone_id})</title></polygon>'
+                f"<title>{s.label} ({s.zone_id})</title></polygon>"
             )
             # Label at centroid
             if show_labels and s.centroid:
@@ -3481,7 +4874,7 @@ async def get_floor_plan_svg(
                 parts.append(
                     f'<circle cx="{bx:.1f}" cy="{by:.1f}" r="5" '
                     f'fill="#1e40af" opacity="0.7">'
-                    f'<title>{b.block_name} ({b.type})</title></circle>'
+                    f"<title>{b.block_name} ({b.type})</title></circle>"
                 )
                 if show_labels:
                     parts.append(
@@ -3521,7 +4914,9 @@ async def get_floor_plan_svg(
 
 
 @app.get("/buildings", response_model=APIResponse)
-async def list_buildings():
+async def list_buildings(
+    user: UserContext = Depends(require_permission("building:read")),
+):
     """B.6: List all registered buildings and their configurations."""
     try:
         from orchestrator.services.multi_building_manager import get_building_manager
@@ -3531,80 +4926,6 @@ async def list_buildings():
     except Exception as e:
         logger.error(f"List buildings failed: {e}")
         return APIResponse(success=False, error=str(e), data={"buildings": []})
-
-
-# ── Phase 8.1: Document upload / management endpoints ────────────────────────
-
-
-@app.post("/api/v1/documents/upload", response_model=APIResponse)
-async def upload_document(
-    file: UploadFile = File(...),
-    current_user: Optional[str] = Depends(get_current_user),
-):
-    """
-    Phase 8.1: Upload and ingest a document (PDF, DOCX, TXT, CSV, XLSX, MD).
-
-    The document is chunked, embedded, and stored in Qdrant so future queries
-    can retrieve relevant passages alongside ontology data.
-    Requires authentication.  Max file size: 20 MB.
-    """
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-    if not doc_ingestion:
-        raise HTTPException(status_code=503, detail="Document storage service unavailable")
-
-    content = await file.read()
-    filename = file.filename or "upload"
-    result = await doc_ingestion.ingest(content, filename, user_id=current_user)
-
-    if result.get("error"):
-        raise HTTPException(status_code=400, detail=result["error"])
-
-    return APIResponse(
-        success=True,
-        data={
-            "doc_id": result["doc_id"],
-            "filename": result["filename"],
-            "chunks": result["chunks"],
-            "message": f"Document '{filename}' ingested successfully ({result['chunks']} chunks).",
-        },
-    )
-
-
-@app.get("/api/v1/documents", response_model=APIResponse)
-async def list_user_documents(current_user: Optional[str] = Depends(get_current_user)):
-    """
-    Phase 8.1: List all documents uploaded by the current user.
-    Requires authentication.
-    """
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-    if not doc_ingestion:
-        return APIResponse(success=True, data={"documents": [], "count": 0})
-
-    docs = await doc_ingestion.list_documents(user_id=current_user)
-    return APIResponse(success=True, data={"documents": docs, "count": len(docs)})
-
-
-@app.delete("/api/v1/documents/{doc_id}", response_model=APIResponse)
-async def delete_user_document(
-    doc_id: str,
-    current_user: Optional[str] = Depends(get_current_user),
-):
-    """
-    Phase 8.1: Delete a document (all chunks) owned by the current user.
-    Requires authentication.
-    """
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-    if not doc_ingestion:
-        raise HTTPException(status_code=503, detail="Document storage service unavailable")
-
-    ok = await doc_ingestion.delete_document(doc_id=doc_id, user_id=current_user)
-    if not ok:
-        raise HTTPException(status_code=404, detail=f"Document '{doc_id}' not found or already deleted")
-
-    return APIResponse(success=True, data={"deleted": doc_id})
 
 
 # ── E.9: Prometheus metrics endpoint ─────────────────────────────────────────
@@ -3634,4 +4955,6 @@ async def prometheus_metrics():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")
+    # nosec B104 — binds inside the container; host exposure is controlled by
+    # docker-compose port mapping (only 8000 is published to the host).
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")  # nosec B104
