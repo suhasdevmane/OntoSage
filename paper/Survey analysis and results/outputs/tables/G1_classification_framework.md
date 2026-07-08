@@ -31,8 +31,8 @@
 ## Validation
 
 - Phase B2 deterministic baseline classifies the full N=5,127 corpus.
-  Coverage of on-topic domains (excluding OTHER) is **76.0%**
-  (4495 of 5916 questions).
+  Coverage of on-topic domains (excluding OTHER) is **79.5%**
+  (5684 of 7151 questions).
 - Phase B3 inter-rater reliability gate is the substantive Kappa floor
   (target ≥ 0.70 per dimension). The IRR sample (`taxonomy/irr_samples.csv`)
   is ready; two independent coders annotate it before publication.

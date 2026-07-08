@@ -1,9 +1,9 @@
-role,n_users,n_topics_complete,kendalls_w
+persona,n_users,n_topics_complete,kendalls_w
 Guests,17,20,0.3246
 Student,14,20,0.4148
 Occupants,13,20,0.5076
+Health and Safety Officers,10,20,0.5325
+Sustainability and Energy Management Teams,9,20,0.6144
 IT,7,20,0.3053
 Building Owners,5,20,0.3788
 Facility Managers,5,20,0.306
-Health and Safety Officers,2,20,0.6534
-Sustainability and Energy Management Teams,1,20,

@@ -12,7 +12,7 @@
 | Questions per stage | S1: 1,502 / S2: 1,472 / S3: 1,146 / S4: 1,007 |
 | Topic rankings (Stage 5) | 50 users (all ranked 20/20 topics) |
 | Question rankings (Stage 5) | 412 rows across users/topics |
-| User roles represented | 10+ categories (Guests, Students, Facility Managers, IT, Owners, H&S, etc.) |
+| User personas represented | 10+ categories (Guests, Students, Facility Managers, IT, Owners, H&S, etc.) |
 | Avg questions per user | ~85 |
 
 ---
@@ -25,7 +25,7 @@ This analysis must answer the following research questions (RQs), each mapping t
 |----|----------|-------------|
 | **RQ1** | What types of natural language queries do building occupants generate for smart building interaction, and how can they be systematically categorised? | `questions_by_user.csv` |
 | **RQ2** | How does the elicitation method (open-ended vs. sensor-prompted vs. scenario-based vs. goal-oriented) affect the nature, diversity, and complexity of queries? | `questions_by_user.csv` (Stage column) |
-| **RQ3** | How does user role (e.g., facility manager vs. student vs. visitor) influence query focus and priority? | `questions_by_user.csv` (Roles column) + `topic_rankings.csv` |
+| **RQ3** | How does user persona (e.g., facility manager vs. student vs. visitor) influence query focus and priority? | `questions_by_user.csv` (Personas column) + `topic_rankings.csv` |
 | **RQ4** | Which smart building domains do users prioritise, and what is the consensus ranking? | `topic_rankings.csv` |
 | **RQ5** | Within prioritised domains, which sub-question types are most valued? | `question_rankings.csv` |
 | **RQ6** | Can the resulting corpus inform the design of a smart building NL query-answering framework? | Synthesis of RQ1-RQ5 |
@@ -44,10 +44,10 @@ This analysis must answer the following research questions (RQs), each mapping t
 - Report: missing values, duplicate entries, empty questions
 
 **Step A2 — Demographic Profiling**
-- Parse the Roles column (multi-role users have semicolon-separated values)
-- Create a primary role assignment (first listed role) and a full role set
-- Build a participant demographics table: user count, question count, completion rate per role
-- Output: `A2_demographics_table.csv`, `A2_role_distribution.png`
+- Parse the Personas column (multi-persona users have semicolon-separated values)
+- Create a primary persona assignment (first listed persona) and a full persona set
+- Build a participant demographics table: user count, question count, completion rate per persona
+- Output: `A2_demographics_table.csv`, `A2_persona_distribution.png`
 
 **Step A3 — Per-User Summary Statistics**
 - Questions per user (total, per stage)
@@ -133,23 +133,23 @@ Statistical tests:
 
 ---
 
-### Phase D: Role-Based Analysis (RQ3)
+### Phase D: Persona-Based Analysis (RQ3)
 
-**Step D1 — Role x Domain Cross-Tabulation**
-- Build a contingency table: rows = role categories, columns = Level-1 domains
-- Normalise by row (percentage of each role's questions per domain)
+**Step D1 — Persona x Domain Cross-Tabulation**
+- Build a contingency table: rows = persona categories, columns = Level-1 domains
+- Normalise by row (percentage of each persona's questions per domain)
 - Heatmap visualisation
-- Chi-squared test of independence (role vs. domain)
-- Output: `D1_role_domain_heatmap.png`, `D1_chi_squared_results.md`
+- Chi-squared test of independence (persona vs. domain)
+- Output: `D1_persona_domain_heatmap.png`, `D1_chi_squared_results.md`
 
-**Step D2 — Role x Topic Ranking Comparison**
-- From `topic_rankings.csv`: compute mean rank per topic, broken down by role
-- Use **Kendall's W** (coefficient of concordance) to measure agreement within roles
-- Use **Spearman rank correlation** to compare ranking patterns between roles
-- Output: `D2_rank_by_role.png`, `D2_concordance_table.csv`
+**Step D2 — Persona x Topic Ranking Comparison**
+- From `topic_rankings.csv`: compute mean rank per topic, broken down by persona
+- Use **Kendall's W** (coefficient of concordance) to measure agreement within personas
+- Use **Spearman rank correlation** to compare ranking patterns between personas
+- Output: `D2_rank_by_persona.png`, `D2_concordance_table.csv`
 
-**Step D3 — Role Personas**
-- Synthesise findings into 4-5 "user personas" based on role clusters
+**Step D3 — Persona Personas**
+- Synthesise findings into 4-5 "user personas" based on persona clusters
 - Each persona includes: typical query domains, preferred complexity, priority topics, representative sample questions
 - Output: `D3_user_personas.md`
 
@@ -189,7 +189,7 @@ Statistical tests:
 **Step F2 — Complexity Preference Patterns**
 - Map question levels to complexity dimensions
 - Are simpler (lookup) questions preferred, or do users want complex (analytical) queries?
-- Compare preference patterns across roles
+- Compare preference patterns across personas
 - Output: `F2_complexity_preference.png`
 
 ---
@@ -229,8 +229,8 @@ This phase synthesises all findings into a practical contribution.
 | Cross-stage comparison (continuous) | Kruskal-Wallis + Dunn's post-hoc | `scipy.stats`, `scikit-posthocs` | Compare question attributes across 4 stages |
 | Cross-stage comparison (categorical) | Chi-squared + Cramer's V | `scipy.stats` | Compare intent/domain distributions |
 | Topic ranking agreement | Kendall's W | `scipy.stats` | Measure inter-user consensus |
-| Role x domain independence | Chi-squared | `scipy.stats` | Test if role predicts domain focus |
-| Role ranking comparison | Spearman correlation | `scipy.stats` | Compare ranking patterns |
+| Persona x domain independence | Chi-squared | `scipy.stats` | Test if persona predicts domain focus |
+| Persona ranking comparison | Spearman correlation | `scipy.stats` | Compare ranking patterns |
 | Semantic similarity | Cosine similarity on embeddings | `sentence-transformers` | Detect novel vs. repeated questions |
 | Inter-rater reliability | Cohen's Kappa | `sklearn.metrics` | Validate human annotation |
 | Topic clustering | Hierarchical clustering | `scipy.cluster.hierarchy` | Group co-ranked topics |
@@ -243,14 +243,14 @@ This phase synthesises all findings into a practical contribution.
 
 | # | Figure | Type | Tool |
 |---|--------|------|------|
-| 1 | Participant demographics by role | Horizontal bar chart | matplotlib/seaborn |
+| 1 | Participant demographics by persona | Horizontal bar chart | matplotlib/seaborn |
 | 2 | Questions per user distribution | Histogram + box plot | matplotlib |
 | 3 | Domain distribution (Level 1) | Stacked bar or treemap | matplotlib/plotly |
 | 4 | Intent type by stage | Grouped bar chart | seaborn |
 | 5 | Stage comparison: diversity & complexity | Box plots (4 stages) | seaborn |
 | 6 | TF-IDF top terms per stage | Horizontal bar charts (4 panels) | matplotlib |
 | 7 | Novelty rate across stages | Line chart with CI bands | matplotlib |
-| 8 | Role x Domain heatmap | Annotated heatmap | seaborn |
+| 8 | Persona x Domain heatmap | Annotated heatmap | seaborn |
 | 9 | Topic priority (Borda scores) | Horizontal lollipop chart | matplotlib |
 | 10 | Topic dendrogram | Hierarchical dendrogram | scipy |
 | 11 | Priority vs. volume scatter | Scatter with labels | matplotlib |
@@ -271,7 +271,7 @@ Phase B (Taxonomy + Coding)  ~2 sessions   Claude API + manual review
     |
 Phase C (Stage Analysis)     ~1 session    Python + scipy + sentence-transformers
     |
-Phase D (Role Analysis)      ~1 session    Python + scipy
+Phase D (Persona Analysis)      ~1 session    Python + scipy
     |
 Phase E (Topic Rankings)     ~1 session    Python + scipy + numpy
     |
@@ -296,7 +296,7 @@ analysis and results/
         A_data_preparation.py
         B_corpus_classification.py
         C_stage_comparison.py
-        D_role_analysis.py
+        D_persona_analysis.py
         E_topic_rankings.py
         F_question_rankings.py
         G_framework_synthesis.py
@@ -328,7 +328,7 @@ Each analysis phase maps to a section of the paper:
 | **3.4 Analysis Approach** | This methodology document (statistical methods, taxonomy) |
 | **4.1 Corpus Overview** | Phase B: taxonomy, domain distribution, intent distribution |
 | **4.2 Stage Comparison** | Phase C: how elicitation method affects queries |
-| **4.3 Role-Based Differences** | Phase D: how user role influences queries |
+| **4.3 Persona-Based Differences** | Phase D: how user persona influences queries |
 | **4.4 Topic Prioritisation** | Phase E: aggregate rankings, topic clusters |
 | **4.5 Question Preferences** | Phase F: within-topic preference patterns |
 | **5. Framework Design** | Phase G: classification framework, capability matrix, architecture |

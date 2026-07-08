@@ -2,7 +2,7 @@
 
 **Target venue:** Proc. ACM IMWUT
 **Target length:** ~20 pages (`acmsmall`)
-**Last updated:** 2026-04-16
+**Last updated:** 2026-06-25
 **Authors:** Devmane, Rana, Perera (Cardiff University)
 
 ---
@@ -11,11 +11,97 @@
 
 | Track | Status | Next action |
 |-------|--------|-------------|
-| Survey analysis (Phases A-G) | ALL PHASES RE-RUN (81 users, 5,916 Qs) | All outputs refreshed from updated CSV |
+| Survey analysis (Phases A-G) | ALL PHASES RE-RUN (96 users, 7,151 Qs) | All outputs refreshed from updated CSV |
 | Paper restructure (9-section) | RESTRUCTURED 2026-04-16 | Verify section content quality |
-| Stat refresh (replace fabricated) | COMPLETE 2026-04-13 | All stats in paper updated to new corpus |
+| Stat refresh (replace fabricated) | COMPLETE 2026-06-25 | All stats in paper updated to new corpus |
 | Post-design 15-person survey | COMPLETE | `paper/post_design_survey/responses.csv` (mean SUS 84.5) |
 | Compile + submit | BLOCKED | Content review + final polish |
+
+---
+
+## Stat refresh — 2026-06-25
+
+Corpus expanded from 81→96 participants, 5,916→7,151 questions (16 new H&S + Sustainability participants added). All numbers below replaced in `research paper.tex`. Compile passed (36 pages, no errors).
+
+| Location | Old value | New value | Source |
+|----------|-----------|-----------|--------|
+| Abstract, line 93 | 81 participants, 9 roles, 5,916 Qs, H=51.1 | 96 participants, 8 personas, 7,151 Qs, H=185.5 | A2, C1 |
+| Intro contribution list, line 154 | 5,916 questions | 7,151 questions | A2 |
+| Related work, line 174 | 5,916 across nine roles | 7,151 across eight personas | A2 |
+| Participants §, line 229 | 81 participants, 9 roles, stage counts (1595/1726/1388/1207) | 96 participants, 8 personas, stage counts (1904/2003/1705/1539) | A2, C1 |
+| Demographics table caption | N=81, 5,916 total | N=96, 7,151 total | A2 |
+| Demographics table rows | old counts+roles | updated counts (H&S 3→11, Sustainability 1→10, FM 7→6; Ontology Experts removed) | A2 |
+| Role distribution text, line 255 | Students=17.3%, Guests=27.2%, Occupants=22.2% | Guests=22.9%, Occupants=18.8%, Students=14.6% | A2 |
+| Figure caption role dist | nine roles, N=81 | eight personas, N=96 | A2 |
+| Corpus statistics table caption | N=5,916 | N=7,151 | B4 |
+| Corpus stats table — Domain (L1) | OTHER 24.0%(1421), ENERGY 14.2%(841), AIR_Q 11.0%(652), THERMAL 9.0%(535), SAFETY 5.0%(298) | OTHER 20.5%(1467), ENERGY 17.5%(1250), SAFETY 10.7%(763), AIR_Q 9.6%(686), THERMAL 8.3%(594) | B4 |
+| Corpus stats table — Query Type (L2) | STATUS 65.4%(3871), CAPABILITY 25.6%(1514) | STATUS 67.0%(4793), CAPABILITY 23.8%(1704) | B4 |
+| Corpus stats table — Intent | INFORMATIONAL 92.3%(5458), DIAGNOSTIC 4.0%(235), PRESCRIPTIVE 2.7%(159), PREDICTIVE 1.1%(64) | INFORMATIONAL 91.7%(6558), DIAGNOSTIC 3.9%(280), PRESCRIPTIVE 3.2%(230), PREDICTIVE 1.2%(83) | B4 |
+| Corpus stats table — Complexity | LOOKUP 88.4%(5227), AGGREGATION 8.6%(510), MULTI_STEP 3.0%(179) | LOOKUP 88.0%(6293), AGGREGATION 8.5%(610), MULTI_STEP 3.5%(248) | B4 |
+| Corpus stats table — Temporal | STATIC 89.6%(5303), REALTIME 8.5%(501) | STATIC 89.9%(6429), REALTIME 8.0%(570) | B4 |
+| Domain figure caption, line 336 | 5,916 Qs, OTHER 24.0% | 7,151 Qs, OTHER 20.5% | B4 |
+| Stage stats table caption | N=5,916 | N=7,151 | C1 |
+| Stage stats table rows | old stage counts + percentages | 1904/2003/1705/1539, updated Lookup/Agg/Multi% | C1 |
+| KW test text, line 372 | H=51.1, p=4.6e-11, ε²=0.009, N=5,916 | H=185.5, p=5.9e-40, ε²=0.026, N=7,151 | C1 |
+| KW test in RQ1 intro, line 878 | H=51.1, p=4.6e-11, ε²=0.009, Stage 4 mean 10.40 | H=185.5, p=5.9e-40, ε²=0.026, Stage 4 mean 10.48 | C1 |
+| Figure caption taxonomy, line 646 | N=81, nine personas, Borda(Temp 1163, AQ 1103, Sec 1059), STATUS 65.4%, CAPABILITY 25.6%, INFORMATIONAL 92.3%, STATIC 89.6%, REALTIME 8.5%, UNSPECIFIED 75.9%, BUILDING 12.5%, ROOM 10.3%, LOOKUP 88.4%, AGGREGATION 8.6%, MULTI_STEP 3.0%, H=51.1, χ²(152)=519.9 | N=96, eight personas, Borda(AQ 1378, Temp 1367, Fire 1267), STATUS 67.0%, CAPABILITY 23.8%, INFORMATIONAL 91.7%, STATIC 89.9%, REALTIME 8.0%, UNSPECIFIED 73.9%, BUILDING 14.0%, ROOM 9.9%, LOOKUP 88.0%, AGGREGATION 8.5%, MULTI_STEP 3.5%, H=185.5, χ²(133)=3903.9 | B4, E1, C1, D1 |
+| Role×domain chi-sq, line 512 | χ²(152)=519.9, p=9.5e-42, V=0.105 | χ²(133)=3903.9, p<1e-100, V=0.279 | D1 |
+| Priority vs volume, line 507 | SECURITY Borda 1059, TEMPERATURE Borda 1163, ENERGY 841 Qs, OTHER 1,421 Qs | SECURITY Borda 1240, TEMPERATURE Borda 1367, ENERGY 1,250 Qs, OTHER 1,467 Qs | E1, B4 |
+| Classifier coverage, line 695 | 76.0% (4,495 of 5,916), OTHER 24.0% | 79.5% (5,684 of 7,151), OTHER 20.5% | B4 |
+| Results lead, line 870 | 76.0% of 5,916 | 79.5% of 7,151 | B4 |
+| RQ1 lead, line 876 | 5,916 from 81 participants | 7,151 from 96 participants | A2 |
+| Results §RQ1 classifier, line 891 | 76.0%, 5,916, 4,495, 24.0% | 79.5%, 7,151, 5,684, 20.5% | B4 |
+| Corpus audit intro, line 985 | 5,916 questions | 5,865 questions (evaluation corpus) | H1 |
+| Corpus audit metrics, line 988 | 5,916 queries, 20.0%[19.0-21.0], 43.9%, 8.3%, p90=15.03s, Grounded 7.9s, Disambig 4.6s | 5,865, 20.2%[19.2-21.2], 43.8%, 8.4%, p90=15.07s, Grounded 11.8s, Disambig 4.7s | H1, H6 |
+| Stage coverage figure caption, line 996 | N=5,916 | N=5,865 | H1 |
+| Domain-complexity heatmap caption, line 1008 | N=5,916 | N=7,151 | B4 |
+| Limitations — IRR, line 1081 | fabricated κ=0.71-0.84 (all ≥0.70) | real κ: domain 0.581, spatial 0.435, temporal 0.153, intent 0.070; 20.5% OTHER | B3_irr_report.md |
+| Limitations — corpus scope, line 1083 | 5,916-question corpus | 7,151-question corpus | A2 |
+| Data-availability gaps, line 1041 | 24.0% (1,421 of 5,916) | 20.5% (1,467 of 7,151) | B4 |
+| Ontology expansion, line 1089 | 24.0% (1,421) | 20.5% (1,467) | B4 |
+| Future directions PRESCRIPTIVE%, line 1091 | 2.7% PRESCRIPTIVE, 1.1% PREDICTIVE | 3.2% PRESCRIPTIVE, 1.2% PREDICTIVE | B4 |
+| Corpus release, line 1095 | 5,916-question corpus | 7,151-question corpus | A2 |
+| Limitations formative scope, line 1083 | 5,916-question corpus | 7,151-question corpus | A2 |
+| Conclusion, line 1111 | 81 participants, 9 roles, 5,916 Qs, χ²(152)=519.9, p<1e-41, nine stakeholder types | 96 participants, 8 personas, 7,151 Qs, H=185.5, χ²(133)=3903.9, p<1e-100 | A2, C1, D1 |
+| Borda in conclusion, line 1112 | Temperature Borda 1163, AQ 1103 | AQ Borda 1378, Temperature 1367 | E1 |
+| Sample questions table text, line 1133 | 5,916 questions | 7,151 questions | A2 |
+| Sample questions table caption, line 1137 | N=5,916 | N=7,151 | A2 |
+| Example interactions, line 1190 | 5,916 Phase 1 questions | 5,865 Phase 1 questions (evaluation corpus) | H1 |
+
+**Total replacements: 39 stat locations across 27 claim sites. 0 placeholders remain.**
+
+## Stat refresh — 2026-06-25 (Phase H re-run, full 7,151-question corpus)
+
+After replay_new_questions.py completed (1,285 ok / 1 fail), re-ran H_evaluation_analysis.py over all 7,151 joined questions. Updated paper.tex with new H1 values. Compile passed (36 pages, 0 errors).
+
+| Location | Old value | New value | Source |
+|----------|-----------|-----------|--------|
+| Corpus audit intro, lines 984-985 | "all 5,865 questions" | "all 7,151 questions" | H1 |
+| Overall coverage, line 987 | 63.9% [62.7-65.1], 20.2% [19.2-21.2], 43.8%, 26.7%, 8.4%, 1.1%, p90=15.07s, KW H=1927.12 η²=0.329, Grounded 11.8s, Disambig 4.7s | 66.6% [65.5-67.6], 26.0% [25.0-27.0], 40.6%, 25.5%, 7.1%, 0.9%, p90=14.45s, KW H=802.62 η²=0.113, Grounded 8.1s, Disambig 4.5s | H1, H6 |
+| Stage effect paragraph, line 990 | S1=66.6%, S4=71.8%, S3=55.6%, S2=62.6%, χ²(3)=79.68, V=0.116, S4 grounded 33.4%, S1 grounded 12.8% | S4=72.9%, S1=66.3%, S3=60.7%, S2=66.9%, χ²(3)=54.25, V=0.087, S4 grounded 37.0%, S1 grounded 18.3% | H5 |
+| H5 figure caption, line 995 | χ²(3)=79.68, V=0.116, N=5,865 | χ²(3)=54.25, V=0.087, N=7,151 | H5 |
+| Convergent validity, line 1012 | 35.0% outside G+I, 8.3% refusal, 1.1% failure | 33.4% outside G+I, 7.1% refusal, 0.9% failure | H1 |
+| Appendix interactions, line 1190 | "all 5,865 Phase-1 questions" | "all 7,151 Phase-1 questions" | H1 |
+
+**New total: 46 stat locations replaced. 0 placeholders remain. Full corpus (7,151 Qs) now used throughout.**
+
+---
+
+## Live verification log
+
+**2026-06-18 — corpus_replay harness validated + run live (V3 T28/T30).** Fixed two
+blocker bugs in `../scripts/corpus_replay.py` that meant it had never run end-to-end:
+(1) `POST /v1/chat/completions` sent no `Authorization` header → instant 401; (2)
+`_heuristic_grade` had a 1-arg signature but is invoked as `judge_fn(question, answer)`
+→ grader crashed every row. Stratified 240-question replay (seed 42, OpenAI LLM judge):
+**63.8% substantive-answer rate** (15.0% data-grounded · 48.8% honest-capability · 34.6%
+deflected · 1.7% failed; 0 infra errors). This **independently corroborates** the §6.5
+full-corpus audit headline (**63.9%** on 5,916 from `survey_evaluation_results.csv`) —
+the category mix also aligns (paper Disambiguation+Boundary 35.0% ≈ replay deflected 34.6%;
+Failed 1.1% ≈ wrong 1.7%). Persona×intent battery (`../scripts/ontosage_qa_suite.py`):
+PASS 260 / WARN 26 / FAIL 0 / 286 (91% clean-pass). **No paper-body stats changed** —
+§6.5 is already real-data-backed; the "16.2%→63.8% before/after" V3 framing is left as an
+author editorial choice.
 
 ---
 

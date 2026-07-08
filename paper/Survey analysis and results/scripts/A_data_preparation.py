@@ -6,7 +6,7 @@ cleans them, anonymises usernames to stable PIDs (P01..PNN), and writes:
   outputs/intermediate/username_to_pid.csv
   outputs/tables/A2_demographics_table.csv
   outputs/tables/A3_user_summary.csv
-  outputs/figures/A2_role_distribution.{png,pdf}
+  outputs/figures/A2_persona_distribution.{png,pdf}
 
 Reproducibility: np.random.seed(42). The script is idempotent — re-running
 it overwrites prior outputs deterministically.
@@ -52,7 +52,7 @@ def clean_questions(qbu: pd.DataFrame) -> pd.DataFrame:
     qbu["Stage"] = pd.to_numeric(qbu["Stage"], errors="coerce").astype("Int64")
     qbu = qbu.dropna(subset=["Stage"])
     qbu["Stage"] = qbu["Stage"].astype(int)
-    qbu["Roles"] = qbu["Roles"].fillna("Unknown").astype(str)
+    qbu["Personas"] = qbu["Personas"].fillna("Unknown").astype(str)
     return qbu
 
 
@@ -73,11 +73,11 @@ def assign_pids(qbu: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
 
 def build_demographics(qbu: pd.DataFrame) -> pd.DataFrame:
     qbu = qbu.copy()
-    qbu["PrimaryRole"] = (
-        qbu["Roles"].str.split(";|,|/").str[0].str.strip().replace("", "Unknown")
+    qbu["PrimaryPersona"] = (
+        qbu["Personas"].str.split(";|,|/").str[0].str.strip().replace("", "Unknown")
     )
     demog = (
-        qbu.groupby("PrimaryRole")
+        qbu.groupby("PrimaryPersona")
         .agg(users=("PID", "nunique"), questions=("Question", "count"))
         .reset_index()
         .sort_values("users", ascending=False)
@@ -86,25 +86,25 @@ def build_demographics(qbu: pd.DataFrame) -> pd.DataFrame:
     return demog
 
 
-def plot_role_distribution(demog: pd.DataFrame) -> None:
+def plot_persona_distribution(demog: pd.DataFrame) -> None:
     plt.figure(figsize=(8, 5))
-    sns.barplot(data=demog, y="PrimaryRole", x="users", color="steelblue")
+    sns.barplot(data=demog, y="PrimaryPersona", x="users", color="steelblue")
     plt.xlabel("Participants")
-    plt.ylabel("Primary role")
-    plt.title("OntoSage++ pre-design survey: participants by primary role")
+    plt.ylabel("Primary persona")
+    plt.title("OntoSage++ pre-design survey: participants by primary persona")
     plt.tight_layout()
-    plt.savefig(OUT / "figures" / "A2_role_distribution.png", dpi=300)
-    plt.savefig(OUT / "figures" / "A2_role_distribution.pdf")
+    plt.savefig(OUT / "figures" / "A2_persona_distribution.png", dpi=300)
+    plt.savefig(OUT / "figures" / "A2_persona_distribution.pdf")
     plt.close()
 
 
 def build_user_summary(qbu: pd.DataFrame) -> pd.DataFrame:
     qbu = qbu.copy()
-    qbu["PrimaryRole"] = (
-        qbu["Roles"].str.split(";|,|/").str[0].str.strip().replace("", "Unknown")
+    qbu["PrimaryPersona"] = (
+        qbu["Personas"].str.split(";|,|/").str[0].str.strip().replace("", "Unknown")
     )
     summary = (
-        qbu.groupby(["PID", "PrimaryRole"])
+        qbu.groupby(["PID", "PrimaryPersona"])
         .agg(
             total_q=("Question", "count"),
             s1_q=("Stage", lambda s: int((s == 1).sum())),
@@ -124,7 +124,7 @@ def append_summary_md(n_users: int, n_questions: int, demog: pd.DataFrame) -> No
     path = ROOT / "corpus" / "corpus_summary_stats.md"
     line = (
         f"- Phase A: {n_users} unique participants across "
-        f"{demog['PrimaryRole'].nunique()} primary roles, {n_questions} total questions.\n"
+        f"{demog['PrimaryPersona'].nunique()} primary personas, {n_questions} total questions.\n"
     )
     if path.exists():
         existing = path.read_text(encoding="utf-8")
@@ -151,7 +151,7 @@ def main() -> None:
 
     demog = build_demographics(qbu)
     demog.to_csv(OUT / "tables" / "A2_demographics_table.csv", index=False)
-    plot_role_distribution(demog)
+    plot_persona_distribution(demog)
 
     user_summary = build_user_summary(qbu)
     user_summary.to_csv(OUT / "tables" / "A3_user_summary.csv", index=False)
@@ -160,7 +160,7 @@ def main() -> None:
     n_questions = len(qbu)
     append_summary_md(n_users, n_questions, demog)
     print(f"Phase A done. {n_users} users, {n_questions} questions.")
-    print(f"  Roles: {demog['PrimaryRole'].nunique()}")
+    print(f"  Personas: {demog['PrimaryPersona'].nunique()}")
     print(f"  Stage counts: " + ", ".join(
         f"S{s}={int((qbu['Stage'] == s).sum())}" for s in sorted(qbu['Stage'].unique())
     ))

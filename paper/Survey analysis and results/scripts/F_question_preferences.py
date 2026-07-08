@@ -10,7 +10,7 @@ Outputs:
   outputs/tables/F1_question_preferences_by_topic.csv
   outputs/tables/F1_overall_level_preference.csv
   outputs/figures/F2_complexity_preference.{png,pdf}
-  outputs/tables/F2_complexity_preference_by_role.csv
+  outputs/tables/F2_complexity_preference_by_persona.csv
 """
 
 from __future__ import annotations
@@ -104,18 +104,18 @@ def overall_level_table(long_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def role_level_table(long_df: pd.DataFrame, user_pid: pd.DataFrame, user_summary: pd.DataFrame) -> pd.DataFrame:
+def persona_level_table(long_df: pd.DataFrame, user_pid: pd.DataFrame, user_summary: pd.DataFrame) -> pd.DataFrame:
     df = long_df.merge(user_pid, on="Username", how="left")
-    df = df.merge(user_summary[["PID", "PrimaryRole"]], on="PID", how="left")
+    df = df.merge(user_summary[["PID", "PrimaryPersona"]], on="PID", how="left")
     rows = []
-    for role, sub in df.groupby("PrimaryRole"):
+    for persona, sub in df.groupby("PrimaryPersona"):
         for level in (1, 2, 3, 4):
             lsub = sub[sub["Level"] == level]
             if lsub.empty:
                 continue
             rows.append(
                 {
-                    "PrimaryRole": role,
+                    "PrimaryPersona": persona,
                     "Level": level,
                     "n": len(lsub),
                     "mean_rank": round(float(lsub["Rank"].mean()), 3),
@@ -125,7 +125,7 @@ def role_level_table(long_df: pd.DataFrame, user_pid: pd.DataFrame, user_summary
     return pd.DataFrame(rows)
 
 
-def plot_complexity_preference(overall: pd.DataFrame, role_level: pd.DataFrame) -> None:
+def plot_complexity_preference(overall: pd.DataFrame, persona_level: pd.DataFrame) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
     sub = overall.melt(
@@ -148,13 +148,13 @@ def plot_complexity_preference(overall: pd.DataFrame, role_level: pd.DataFrame) 
     axes[0].set_ylabel("% of observations")
     axes[0].legend(title="Rank assigned", bbox_to_anchor=(1.0, 1.0))
 
-    rl = role_level.pivot(index="PrimaryRole", columns="Level", values="mean_rank")
+    rl = persona_level.pivot(index="PrimaryPersona", columns="Level", values="mean_rank")
     rl = rl.dropna(thresh=3).sort_index()
     sns.heatmap(rl, annot=True, fmt=".2f", cmap="RdYlBu_r", ax=axes[1],
                 cbar_kws={"label": "Mean rank (lower = preferred)"})
-    axes[1].set_title("Mean rank by role x level")
+    axes[1].set_title("Mean rank by persona x level")
     axes[1].set_xlabel("Question level")
-    axes[1].set_ylabel("Primary role")
+    axes[1].set_ylabel("Primary persona")
 
     plt.tight_layout()
     plt.savefig(OUT / "figures" / "F2_complexity_preference.png", dpi=300)
@@ -199,10 +199,10 @@ def main() -> None:
 
     user_pid = pd.read_csv(INTERMEDIATE / "username_to_pid.csv")
     user_summary = pd.read_csv(OUT / "tables" / "A3_user_summary.csv")
-    role_level = role_level_table(long_df, user_pid, user_summary)
-    role_level.to_csv(OUT / "tables" / "F2_complexity_preference_by_role.csv", index=False)
+    persona_level = persona_level_table(long_df, user_pid, user_summary)
+    persona_level.to_csv(OUT / "tables" / "F2_complexity_preference_by_persona.csv", index=False)
 
-    plot_complexity_preference(overall, role_level)
+    plot_complexity_preference(overall, persona_level)
     append_summary(overall)
 
     print("Phase F done.")

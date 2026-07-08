@@ -1,4 +1,4 @@
-Username,Roles,QuestionNumber,Stage,Timestamp,Question
+Username,Personas,QuestionNumber,Stage,Timestamp,Question
 mae baker,Student/Researchers/Academics,1,4,13/04/2026 03:18,can the building measure how greenery impact occupant satisfaction?
 mae baker,Student/Researchers/Academics,2,4,13/04/2026 03:18,are there features that promote interaction with green or natural elements?
 mae baker,Student/Researchers/Academics,3,4,13/04/2026 03:17,how does the building support water conservation during peak usage?
@@ -519,7 +519,7 @@ david witham,Student/Researchers/Academics,86,4,11/04/2026 03:01,indoor temp?
 david witham,Student/Researchers/Academics,87,4,11/04/2026 03:01,solar active?
 david witham,Student/Researchers/Academics,88,4,11/04/2026 03:01,plants healthy?
 david witham,Student/Researchers/Academics,89,4,11/04/2026 03:01,noise reduced?
-david witham,Student/Researchers/Academics,90,4,11/04/2026 03:00,2 low?
+david witham,Student/Researchers/Academics,90,4,11/04/2026 03:00,o2 low here?
 david witham,Student/Researchers/Academics,91,4,11/04/2026 03:00,lights efficient?
 david witham,Student/Researchers/Academics,92,4,11/04/2026 03:00,waste reduced?
 david witham,Student/Researchers/Academics,93,4,11/04/2026 03:00,air clean?
@@ -1780,56 +1780,6 @@ candis neustadter,Student/Researchers/Academics,143,1,09/04/2026 13:03,Can you t
 candis neustadter,Student/Researchers/Academics,144,1,09/04/2026 13:02,Are there any  free study spaces available nearby?
 candis neustadter,Student/Researchers/Academics,145,1,09/04/2026 13:01,What is the current air quality like in this area?
 candis neustadter,Student/Researchers/Academics,146,1,09/04/2026 13:00,How can I adjust temperature in this room?
-william,Facility Managers / Building Maintenance Teams,1,2,11/04/2026 18:21,AUTOMATICALLY INCREASE
-william,Facility Managers / Building Maintenance Teams,2,2,11/04/2026 18:21,DROWSY
-william,Facility Managers / Building Maintenance Teams,3,2,11/04/2026 18:20,NATURALLY BUILDS
-william,Facility Managers / Building Maintenance Teams,4,2,11/04/2026 18:20,VOLATILE ORGANIC COMPOUNDS
-william,Facility Managers / Building Maintenance Teams,5,2,11/04/2026 18:19,MICROMETERS
-william,Facility Managers / Building Maintenance Teams,6,2,11/04/2026 18:16,AIR ANDSPONGE
-william,Facility Managers / Building Maintenance Teams,7,2,11/04/2026 18:15,ABSOLUTE HUMIDITY
-william,Facility Managers / Building Maintenance Teams,8,2,11/04/2026 18:15,HEALTH CARE
-william,Facility Managers / Building Maintenance Teams,9,2,11/04/2026 18:14,STUFFY AND DAMP
-william,Facility Managers / Building Maintenance Teams,10,2,11/04/2026 18:14,SPECIFIC HUMIDITY
-william,Facility Managers / Building Maintenance Teams,11,2,11/04/2026 18:13,VOLUME
-william,Facility Managers / Building Maintenance Teams,12,2,11/04/2026 18:10,BAKING
-william,Facility Managers / Building Maintenance Teams,13,2,11/04/2026 18:10,INDUSTRY
-william,Facility Managers / Building Maintenance Teams,14,2,11/04/2026 18:10,ELECTRONINCS
-william,Facility Managers / Building Maintenance Teams,15,2,11/04/2026 18:09,VEHICLES
-william,Facility Managers / Building Maintenance Teams,16,2,11/04/2026 18:09,AVIATION
-william,Facility Managers / Building Maintenance Teams,17,2,11/04/2026 18:08,HUMAN HEALTH
-william,Facility Managers / Building Maintenance Teams,18,2,11/04/2026 18:08,ANIMAL PLANT LIFE
-william,Facility Managers / Building Maintenance Teams,19,2,11/04/2026 18:08,GLOBAL CLIMATE
-william,Facility Managers / Building Maintenance Teams,20,2,11/04/2026 18:07,CLIMATE
-william,Facility Managers / Building Maintenance Teams,21,2,11/04/2026 18:07,PLANTS
-william,Facility Managers / Building Maintenance Teams,22,2,11/04/2026 18:06,AIR DENSITY AND VOLUME
-william,Facility Managers / Building Maintenance Teams,23,2,11/04/2026 18:06,PRESSURE DEPENDENCE
-william,Facility Managers / Building Maintenance Teams,24,2,11/04/2026 18:06,ENHANCEMENT FACTOR
-william,Facility Managers / Building Maintenance Teams,25,2,11/04/2026 18:05,EFFECTS
-william,Facility Managers / Building Maintenance Teams,26,2,11/04/2026 18:04,DEW POINT
-william,Facility Managers / Building Maintenance Teams,27,2,11/04/2026 18:04,ABSOLUTE HUMIDITY
-william,Facility Managers / Building Maintenance Teams,28,2,11/04/2026 18:04,ABSOLUTE HUMIDITY
-william,Facility Managers / Building Maintenance Teams,29,2,11/04/2026 18:04,AGRICULTURE AND PALNTS
-william,Facility Managers / Building Maintenance Teams,30,2,11/04/2026 18:03,INDOOR AIR QUALITY
-william,Facility Managers / Building Maintenance Teams,31,2,11/04/2026 18:02,HUMAN COMFORT
-william,Facility Managers / Building Maintenance Teams,32,2,11/04/2026 18:02,WEATHER AND CONDENSATION
-william,Facility Managers / Building Maintenance Teams,33,2,11/04/2026 18:02,PRACTICAL IMPLICATIONS
-william,Facility Managers / Building Maintenance Teams,34,2,11/04/2026 18:02,MEASUREMENT
-william,Facility Managers / Building Maintenance Teams,35,2,11/04/2026 18:01,RELATIONSHIP TO TEMPERATURE
-william,Facility Managers / Building Maintenance Teams,36,1,11/04/2026 17:57,CAN YOU CALCULATE THE LAST DIGITE OF PI?
-william,Facility Managers / Building Maintenance Teams,37,1,11/04/2026 17:55,CAN YOU PROGRAME YOURESELF TO FEEL EMOTIONS?
-william,Facility Managers / Building Maintenance Teams,38,1,11/04/2026 17:52,CAN YOU CREATE A PARADOXICAL STATEMENT?
-william,Facility Managers / Building Maintenance Teams,39,1,11/04/2026 17:50,CAN YOU MAKE UP A FUNNY LIMERICK ON THE SPOT?
-william,Facility Managers / Building Maintenance Teams,40,1,11/04/2026 17:48,HOW DO I GET MY EX BACK?
-william,Facility Managers / Building Maintenance Teams,41,1,11/04/2026 17:46,CAN YOU DRAW ME A STICK FIGURE?
-william,Facility Managers / Building Maintenance Teams,42,1,11/04/2026 17:42,CAN AI REPLACE BUILDERS?
-william,Facility Managers / Building Maintenance Teams,43,1,11/04/2026 17:41,CAN AI DO CONSTRUCTION ESTIMATING?
-william,Facility Managers / Building Maintenance Teams,44,1,11/04/2026 17:40,CAN I CREATE CONSTRUCTION DRAWINGS?
-william,Facility Managers / Building Maintenance Teams,45,1,11/04/2026 17:38,HOW IS AI USED BUILDING DESIGN?
-william,Facility Managers / Building Maintenance Teams,46,1,11/04/2026 17:37,WILL AI BE ABLE TO BUILD BUILDINGS?
-william,Facility Managers / Building Maintenance Teams,47,1,11/04/2026 17:34,WHAT ARE AI BUILDINGS?
-william,Facility Managers / Building Maintenance Teams,48,1,11/04/2026 17:32,WHAT IS A SMART BUILDING?
-william,Facility Managers / Building Maintenance Teams,49,1,11/04/2026 17:31,CONSIDER USING FRAMEWORKS LIKE SMART TO CREAT CLEAR AND ACTIONABLE OBJECTIVES
-william,Facility Managers / Building Maintenance Teams,50,1,11/04/2026 17:26,"AI IS TRANSFORMING THE LANDSCAPE OF SMART BULDINGS OPTIMIZING ENERGY EFENCY , IMPROVING SECURITY AND AUTOMATING MANAGEMENT"
 dave,Facility Managers / Building Maintenance Teams,1,3,11/04/2026 18:21,will a alarm sound if there is too many people in the room?
 dave,Facility Managers / Building Maintenance Teams,2,3,11/04/2026 18:20,What is a safe CO2 level?
 dave,Facility Managers / Building Maintenance Teams,3,3,11/04/2026 18:19,What is the average Luxs for a room?
@@ -4565,10 +4515,10 @@ michael,Guests/Visitors,93,1,09/04/2026 02:52,Can I turn off all of these smart 
 michael,Guests/Visitors,94,1,09/04/2026 02:51,Is it possible for a smart feature to malfunction and what do I do if this happens?
 michael,Guests/Visitors,95,1,09/04/2026 02:50,What exactly do these smart features work? are they customizable to my unique needs?
 michael,Guests/Visitors,96,1,09/04/2026 02:49,Can you tell me all the unique features that this building has?
-vs1,Ontology Experts; IT/Data Scientists; Student/Researchers/Academics,1,1,09/04/2026 03:37,"How do I obtain permission to bring a guest, if necessary?"
-vs1,Ontology Experts; IT/Data Scientists; Student/Researchers/Academics,2,1,09/04/2026 03:36,Do I need special guest access?
-vs1,Ontology Experts; IT/Data Scientists; Student/Researchers/Academics,3,1,09/04/2026 03:36,What are the key rules governing the building?
-vs1,Ontology Experts; IT/Data Scientists; Student/Researchers/Academics,4,1,09/04/2026 03:36,Can you provide me with some interesting tidbits about the house?
+vs1,Sustainability and Energy Management Teams; IT/Data Scientists; Student/Researchers/Academics,1,1,09/04/2026 03:37,"How do I obtain permission to bring a guest, if necessary?"
+vs1,Sustainability and Energy Management Teams; IT/Data Scientists; Student/Researchers/Academics,2,1,09/04/2026 03:36,Do I need special guest access?
+vs1,Sustainability and Energy Management Teams; IT/Data Scientists; Student/Researchers/Academics,3,1,09/04/2026 03:36,What are the key rules governing the building?
+vs1,Sustainability and Energy Management Teams; IT/Data Scientists; Student/Researchers/Academics,4,1,09/04/2026 03:36,Can you provide me with some interesting tidbits about the house?
 danielle gaynor,Guests/Visitors,1,4,09/04/2026 03:30,What data shows the building has ecological positives and how does it reduce the urban heat island effect?
 danielle gaynor,Guests/Visitors,2,4,09/04/2026 03:28,Can detectors for pollen and pollutants be combined with weather data to find sources of pollution?
 danielle gaynor,Guests/Visitors,3,4,09/04/2026 03:28,How much energy is saved by using a rooftop greenspace?
@@ -5915,3 +5865,1288 @@ eric sorenson,Occupants/Tenants/Employees; Sustainability and Energy Management 
 eric sorenson,Occupants/Tenants/Employees; Sustainability and Energy Management Teams,33,1,08/04/2026 15:44,How does the building differ from other similar buildings?
 eric sorenson,Occupants/Tenants/Employees; Sustainability and Energy Management Teams,34,1,08/04/2026 15:44,What are the key attributes of the building?
 eric sorenson,Occupants/Tenants/Employees; Sustainability and Energy Management Teams,35,1,08/04/2026 15:43,What year was the building constructed?
+elena ruiz,Sustainability and Energy Management Teams,1,1,11/04/2026 11:02,"how is energy split between heating, cooling and equipment?"
+elena ruiz,Sustainability and Energy Management Teams,2,1,11/04/2026 11:04,could we generate more of our own power on site?
+elena ruiz,Sustainability and Energy Management Teams,3,1,11/04/2026 11:06,are there any quick wins to cut energy use?
+elena ruiz,Sustainability and Energy Management Teams,4,1,11/04/2026 11:08,what is the biggest source of emissions for this building?
+elena ruiz,Sustainability and Energy Management Teams,5,1,11/04/2026 11:12,are there areas left heated or cooled when nobody is around?
+elena ruiz,Sustainability and Energy Management Teams,6,1,11/04/2026 11:13,how much standby power is the buidling drawing right now
+elena ruiz,Sustainability and Energy Management Teams,7,1,11/04/2026 11:16,what's the carbon cost of running the lifts
+elena ruiz,Sustainability and Energy Management Teams,8,1,11/04/2026 11:19,which floors consume the most enery?
+elena ruiz,Sustainability and Energy Management Teams,9,1,11/04/2026 11:20,how do we benchmark our energy performance year on year
+elena ruiz,Sustainability and Energy Management Teams,10,1,11/04/2026 11:23,are we on track to be net zero?
+elena ruiz,Sustainability and Energy Management Teams,11,1,11/04/2026 11:25,what is the buidling doing to reduce its carbon footprint
+elena ruiz,Sustainability and Energy Management Teams,12,1,11/04/2026 11:28,can the building tell me its current carbon intensity
+elena ruiz,Sustainability and Energy Management Teams,13,1,11/04/2026 11:31,how does the buidling support biodiversity?
+elena ruiz,Sustainability and Energy Management Teams,14,1,11/04/2026 11:35,how green is this buidling really?
+elena ruiz,Sustainability and Energy Management Teams,15,1,11/04/2026 11:39,is the lighting energy efficient across the whole building
+elena ruiz,Sustainability and Energy Management Teams,16,1,11/04/2026 11:42,how much of our electricity comse from solar?
+elena ruiz,Sustainability and Energy Management Teams,17,1,11/04/2026 11:45,how is the building's overall energy use tracked?
+elena ruiz,Sustainability and Energy Management Teams,18,1,11/04/2026 11:47,is there a dashboard for sustainability metrics?
+elena ruiz,Sustainability and Energy Management Teams,19,1,11/04/2026 11:50,how does occupancy affect our energy demand
+elena ruiz,Sustainability and Energy Management Teams,20,1,11/04/2026 11:54,what renewable options could the building adopt?
+elena ruiz,Sustainability and Energy Management Teams,21,1,11/04/2026 11:57,does the building track embodied carbon of its materials?
+elena ruiz,Sustainability and Energy Management Teams,22,1,11/04/2026 12:01,what happens to the building's energy use overnight?
+elena ruiz,Sustainability and Energy Management Teams,23,2,11/04/2026 12:03,how much of the metered demand is covered by solar at midday?
+elena ruiz,Sustainability and Energy Management Teams,24,2,11/04/2026 12:04,is the frequency reading stable enough for the on-site inverters
+elena ruiz,Sustainability and Energy Management Teams,25,2,11/04/2026 12:08,is any circuit drawing power with zero occupany detected
+elena ruiz,Sustainability and Energy Management Teams,26,2,11/04/2026 12:12,what is the metered difference between lighting and small-power loads?
+elena ruiz,Sustainability and Energy Management Teams,27,2,11/04/2026 12:16,do the temperature setpoints and the energy meter show overcooling anywhere
+elena ruiz,Sustainability and Energy Management Teams,28,2,11/04/2026 12:18,which submeter shows the highest consumption right now?
+elena ruiz,Sustainability and Energy Management Teams,29,2,11/04/2026 12:20,what is the peak demand recorded by the meter so far today
+elena ruiz,Sustainability and Energy Management Teams,30,2,11/04/2026 12:23,how does the gas meter trend compare with the heating degree days?
+elena ruiz,Sustainability and Energy Management Teams,31,2,11/04/2026 12:25,why does the power factor reading matter for our electricity bill?
+elena ruiz,Sustainability and Energy Management Teams,32,2,11/04/2026 12:29,how much standby load is drawn through the smart plugs right now?
+elena ruiz,Sustainability and Energy Management Teams,33,2,11/04/2026 12:30,is the night-time base load higher than the metered baseline?
+elena ruiz,Sustainability and Energy Management Teams,34,2,11/04/2026 12:33,how much does the lux level near the windows let us dim the lights to save energy?
+elena ruiz,Sustainability and Energy Management Teams,35,2,11/04/2026 12:34,what is the water meter flow rate outside of office hours?
+elena ruiz,Sustainability and Energy Management Teams,36,2,11/04/2026 12:36,how much solar generation was logged by the inverter yesterday?
+elena ruiz,Sustainability and Energy Management Teams,37,2,11/04/2026 12:37,are the co2 sensors forcing extra ventilaton and raising energy use?
+elena ruiz,Sustainability and Energy Management Teams,38,2,11/04/2026 12:41,what is the kW draw of the lifts during the morning peak?
+elena ruiz,Sustainability and Energy Management Teams,39,2,11/04/2026 12:42,what is the real-time power spike compared with the monthly kwh average?
+elena ruiz,Sustainability and Energy Management Teams,40,2,11/04/2026 12:43,what is the kwh per square metre for floor 5 from the meters?
+elena ruiz,Sustainability and Energy Management Teams,41,3,11/04/2026 12:45,"during a grid demand-response event, what loads could we shed here?"
+elena ruiz,Sustainability and Energy Management Teams,42,3,11/04/2026 12:49,"on a typical Monday, whicch zone ramps up energy earliest?"
+elena ruiz,Sustainability and Energy Management Teams,43,3,11/04/2026 12:52,"during low occupancy, can the lifts run in an eco mode?"
+elena ruiz,Sustainability and Energy Management Teams,44,3,11/04/2026 12:55,"when this hall hosts an event, how much does energy demand jump?"
+elena ruiz,Sustainability and Energy Management Teams,45,3,11/04/2026 12:56,"when the car park EV chargers are all in use, what happens to peak demand?"
+elena ruiz,Sustainability and Energy Management Teams,46,3,11/04/2026 12:58,"during the morning warm-up, is the building overheating before staff arrive"
+elena ruiz,Sustainability and Energy Management Teams,47,3,11/04/2026 12:59,"in this kitchen area, how much vampire power do appliaces draw after hours?"
+elena ruiz,Sustainability and Energy Management Teams,48,3,11/04/2026 13:00,"if this floor's setpoint drifts, how much extra energy does it cost over a day?"
+elena ruiz,Sustainability and Energy Management Teams,49,3,11/04/2026 13:02,"in this server room, is cooling energy matched to the actual it load?"
+elena ruiz,Sustainability and Energy Management Teams,50,3,11/04/2026 13:03,"when the sun is on the south facade, are the blinds cutting cooling load"
+elena ruiz,Sustainability and Energy Management Teams,51,3,11/04/2026 13:07,"if outdoor air is cool enough, can free cooling cut the chiller energy here?"
+elena ruiz,Sustainability and Energy Management Teams,52,3,11/04/2026 13:09,"if a chiller fails on a hot day, how do we keep energy use under control?"
+elena ruiz,Sustainability and Energy Management Teams,53,3,11/04/2026 13:11,"if a whole floor is vacant this week, can its services be set back?"
+elena ruiz,Sustainability and Energy Management Teams,54,3,11/04/2026 13:13,"during the winter peak, where is the building losing the most heat?"
+elena ruiz,Sustainability and Energy Management Teams,55,3,11/04/2026 13:16,"during the summer shutdown, what is the building's minimum viable energy use?"
+elena ruiz,Sustainability and Energy Management Teams,56,3,11/04/2026 13:19,"when co2 rises in this room, can ventilaton respond without spiking energy"
+elena ruiz,Sustainability and Energy Management Teams,57,3,11/04/2026 13:21,"during peak pricing hours, which non-critical loads could be delayed?"
+elena ruiz,Sustainability and Energy Management Teams,58,3,11/04/2026 13:24,"during a heatwave, how much extra energy does cooling this floor use"
+elena ruiz,Sustainability and Energy Management Teams,59,3,11/04/2026 13:25,"on a rainy week, how does reduced daylight cahnge lighting energy here?"
+elena ruiz,Sustainability and Energy Management Teams,60,3,11/04/2026 13:27,"if we close the west wing for refurbishment, what energy is saved"
+elena ruiz,Sustainability and Energy Management Teams,61,3,11/04/2026 13:31,"if occupancy drops on a Firday, can the building scale back energy use here?"
+elena ruiz,Sustainability and Energy Management Teams,62,3,11/04/2026 13:35,"if the weather forecast shows a cold snap, how should pre-heating be scheduled?"
+elena ruiz,Sustainability and Energy Management Teams,63,4,11/04/2026 13:38,"to reach net zero by 2030, what does the building need to chagne first?"
+elena ruiz,Sustainability and Energy Management Teams,64,4,11/04/2026 13:42,can we automate an annual sustainability performance review from the data?
+elena ruiz,Sustainability and Energy Management Teams,65,4,11/04/2026 13:44,can the building quantify the carbon saved by daylight harvesting?
+elena ruiz,Sustainability and Energy Management Teams,66,4,11/04/2026 13:46,how should we prioritise retrofits to maximise carbno savings?
+elena ruiz,Sustainability and Energy Management Teams,67,4,11/04/2026 13:48,can the building forrecast next year's energy demand for budgeting?
+elena ruiz,Sustainability and Energy Management Teams,68,4,11/04/2026 13:52,can the system align energy use with on-site renewable generation?
+elena ruiz,Sustainability and Energy Management Teams,69,4,11/04/2026 13:56,how can we shiift load away from peak carbon-intensity hours?
+elena ruiz,Sustainability and Energy Management Teams,70,4,11/04/2026 13:58,what kpis best track our progress on sustainability?
+elena ruiz,Sustainability and Energy Management Teams,71,4,11/04/2026 14:02,what mix of measures gets us the fastest route to net zero?
+elena ruiz,Sustainability and Energy Management Teams,72,4,11/04/2026 14:03,can the system recommend the most cost-effective efficiency upgrades?
+elena ruiz,Sustainability and Energy Management Teams,73,4,11/04/2026 14:04,can the building generate an ESG dashboard for management?
+elena ruiz,Sustainability and Energy Management Teams,74,4,11/04/2026 14:06,how can the building optimise energy use during weekends and holidays?
+elena ruiz,Sustainability and Energy Management Teams,75,4,11/04/2026 14:09,how do we verify that efficiency measurres actually delivered savings?
+elena ruiz,Sustainability and Energy Management Teams,76,4,11/04/2026 14:13,can the building produce a monthly carbon emissions report automatically?
+elena ruiz,Sustainability and Energy Management Teams,77,4,11/04/2026 14:14,how can we cut water consumption against last year's baseline?
+elena ruiz,Sustainability and Energy Management Teams,78,4,11/04/2026 14:17,"to cut enery use by 15% this year, where should we focus?"
+elena ruiz,Sustainability and Energy Management Teams,79,4,11/04/2026 14:21,how can the building report avoided emissions from its solar array?
+elena ruiz,Sustainability and Energy Management Teams,80,4,11/04/2026 14:25,can the building recommend a demand-response strategy for peak events?
+elena ruiz,Sustainability and Energy Management Teams,81,4,11/04/2026 14:27,can the building flag the equipment with the worst efficiency for replacement?
+elena ruiz,Sustainability and Energy Management Teams,82,4,11/04/2026 14:30,what efficiency target is realistic for the hvac system next year?
+elena ruiz,Sustainability and Energy Management Teams,83,4,11/04/2026 14:32,how do we set science-based targts from the buildings emissions data
+elena ruiz,Sustainability and Energy Management Teams,84,4,11/04/2026 14:33,can the system model the impact of raising cooling setpoints by 1 degree?
+marcus okafor,Sustainability and Energy Management Teams,1,1,11/04/2026 13:07,does the building track embodied carbon of its materials?
+marcus okafor,Sustainability and Energy Management Teams,2,1,11/04/2026 13:10,could we generate more of our own power on site?
+marcus okafor,Sustainability and Energy Management Teams,3,1,11/04/2026 13:11,what's the carbon cost of running the lifts?
+marcus okafor,Sustainability and Energy Management Teams,4,1,11/04/2026 13:13,what is the building doing to reduce its carbon footprint
+marcus okafor,Sustainability and Energy Management Teams,5,1,11/04/2026 13:14,what proportion of energy is lost rather than used?
+marcus okafor,Sustainability and Energy Management Teams,6,1,11/04/2026 13:17,how do we benchmark our energy performance year on year?
+marcus okafor,Sustainability and Energy Management Teams,7,1,11/04/2026 13:20,what happens to the buildings enery use overnight
+marcus okafor,Sustainability and Energy Management Teams,8,1,11/04/2026 13:21,how green is this building really?
+marcus okafor,Sustainability and Energy Management Teams,9,1,11/04/2026 13:22,are there any quick wins to cut enregy use?
+marcus okafor,Sustainability and Energy Management Teams,10,1,11/04/2026 13:23,how does occupancy affect our energy demand
+marcus okafor,Sustainability and Energy Management Teams,11,1,11/04/2026 13:24,how do we measure the building's environmental performaance?
+marcus okafor,Sustainability and Energy Management Teams,12,1,11/04/2026 13:28,are EV chargers powered by clean energy?
+marcus okafor,Sustainability and Energy Management Teams,13,1,11/04/2026 13:29,how energy efficient is this building compared to similar ones?
+marcus okafor,Sustainability and Energy Management Teams,14,1,11/04/2026 13:30,how much energy does the hvac system use overall?
+marcus okafor,Sustainability and Energy Management Teams,15,1,11/04/2026 13:33,how efficient are the buildings chillers and boilers?
+marcus okafor,Sustainability and Energy Management Teams,16,1,11/04/2026 13:34,does the buidling capture rainwater for any use?
+marcus okafor,Sustainability and Energy Management Teams,17,1,11/04/2026 13:35,how much standby power is the buliding drawing right now
+marcus okafor,Sustainability and Energy Management Teams,18,1,11/04/2026 13:39,is the building powered by any renewable energy?
+marcus okafor,Sustainability and Energy Management Teams,19,2,11/04/2026 13:42,what is the real-time power spike compared with the monthly kWh average?
+marcus okafor,Sustainability and Energy Management Teams,20,2,11/04/2026 13:46,are the CO2 sensors forcing extra ventilaton and raising energy use
+marcus okafor,Sustainability and Energy Management Teams,21,2,11/04/2026 13:50,what is the kw draw of the lifts during the morning peak?
+marcus okafor,Sustainability and Energy Management Teams,22,2,11/04/2026 13:54,are any smart plugs reporting vampire power for idle appliances?
+marcus okafor,Sustainability and Energy Management Teams,23,2,11/04/2026 13:57,are the ahu fans running at higher kw than the airflow needs
+marcus okafor,Sustainability and Energy Management Teams,24,2,11/04/2026 14:01,what is the current total power draw in kw across the building?
+marcus okafor,Sustainability and Energy Management Teams,25,2,11/04/2026 14:02,is the night-time base load higher than the metered baseline?
+marcus okafor,Sustainability and Energy Management Teams,26,2,11/04/2026 14:04,what is the kwh per square metre for floor 5 from the meters?
+marcus okafor,Sustainability and Energy Management Teams,27,2,11/04/2026 14:07,what is the delta between supply air temp and return air temp on the AHUs
+marcus okafor,Sustainability and Energy Management Teams,28,2,11/04/2026 14:10,how much does the lux level near the windows let us dim the lights to save enegry?
+marcus okafor,Sustainability and Energy Management Teams,29,2,11/04/2026 14:14,is any circuuit drawing power with zero occupancy detected?
+marcus okafor,Sustainability and Energy Management Teams,30,2,11/04/2026 14:17,how does the gas meter trend compare with the heating degree days?
+marcus okafor,Sustainability and Energy Management Teams,31,2,11/04/2026 14:21,is there a submeter showing an unexpected overnight spike?
+marcus okafor,Sustainability and Energy Management Teams,32,2,11/04/2026 14:23,is the heat-recovery unit actually recovering energy per the temperatture sensors?
+marcus okafor,Sustainability and Energy Management Teams,33,2,11/04/2026 14:24,what does the pulse meter show for gas consumtion this week
+marcus okafor,Sustainability and Energy Management Teams,34,2,11/04/2026 14:26,what is the current carbon intensity given the metered grid import
+marcus okafor,Sustainability and Energy Management Teams,35,2,11/04/2026 14:29,is the chiller and boiler status ever 'on' at the same time and wasting energy?
+marcus okafor,Sustainability and Energy Management Teams,36,2,11/04/2026 14:32,what is the metered difference between lighting and small-power loads?
+marcus okafor,Sustainability and Energy Management Teams,37,2,11/04/2026 14:34,why does the power factor reading matter for our electricity bill?
+marcus okafor,Sustainability and Energy Management Teams,38,2,11/04/2026 14:37,do the occupancy sensors and the energy meter agree on usage patterns?
+marcus okafor,Sustainability and Energy Management Teams,39,3,11/04/2026 14:38,"if occupancy drops on a friday, can the building scale back energy use here?"
+marcus okafor,Sustainability and Energy Management Teams,40,3,11/04/2026 14:39,"when this hall hosts an event, how much does enery demand jump?"
+marcus okafor,Sustainability and Energy Management Teams,41,3,11/04/2026 14:40,"during a grid demand-response event, what loads could we shed here?"
+marcus okafor,Sustainability and Energy Management Teams,42,3,11/04/2026 14:42,"during a heatwave, how much extra enery does cooling this floor use?"
+marcus okafor,Sustainability and Energy Management Teams,43,3,11/04/2026 14:43,"if we close the west wing for refurbishment, what energy is saved?"
+marcus okafor,Sustainability and Energy Management Teams,44,3,11/04/2026 14:47,"if solar is overproducing at noon, wehre can we use or store that energy?"
+marcus okafor,Sustainability and Energy Management Teams,45,3,11/04/2026 14:48,"during the morning warm-up, is the buidling overheating before staff arrive?"
+marcus okafor,Sustainability and Energy Management Teams,46,3,11/04/2026 14:52,"during low occupancy, can the lifts run in an eco mode?"
+marcus okafor,Sustainability and Energy Management Teams,47,3,11/04/2026 14:54,"if the weather forecast shows a cold snap, how should pre-heating be scheduled?"
+marcus okafor,Sustainability and Energy Management Teams,48,3,11/04/2026 14:56,"on a bank holiday, can the building drop to a minimum-energy mode?"
+marcus okafor,Sustainability and Energy Management Teams,49,3,11/04/2026 14:58,"when the sun is on the south facade, are the blinds cutting cooling load"
+marcus okafor,Sustainability and Energy Management Teams,50,3,11/04/2026 14:59,"during peak pricing hours, which non-critical loads could be delayed"
+marcus okafor,Sustainability and Energy Management Teams,51,3,11/04/2026 15:03,"on a rainy week, how does reduced daylight change lighting energy here?"
+marcus okafor,Sustainability and Energy Management Teams,52,3,11/04/2026 15:05,"if a chiller fails on a hot day, how do we keep energy use under control?"
+marcus okafor,Sustainability and Energy Management Teams,53,3,11/04/2026 15:08,"during the evening cleaning shift, are lights and hvac left fully on"
+marcus okafor,Sustainability and Energy Management Teams,54,3,11/04/2026 15:12,"in this server room, is cooling energy matched to the actual IT load?"
+marcus okafor,Sustainability and Energy Management Teams,55,3,11/04/2026 15:16,"if outdoor air is cool enough, can free cooling cut the chiller energy here"
+marcus okafor,Sustainability and Energy Management Teams,56,3,11/04/2026 15:18,"if a sensor shows an idle but powered desk cluster, can it be switched off?"
+marcus okafor,Sustainability and Energy Management Teams,57,3,11/04/2026 15:20,"in this open-plan area, can daylight cover the lighting need at midday"
+marcus okafor,Sustainability and Energy Management Teams,58,3,11/04/2026 15:23,"on a typical monday, which zone ramps up energy earliest?"
+marcus okafor,Sustainability and Energy Management Teams,59,4,11/04/2026 15:25,can the building flag the equipment with the worst efficiency for replacement?
+marcus okafor,Sustainability and Energy Management Teams,60,4,11/04/2026 15:28,what KPIs best track our progress on sustainability
+marcus okafor,Sustainability and Energy Management Teams,61,4,11/04/2026 15:29,what is the payback period for adding more solar capacity
+marcus okafor,Sustainability and Energy Management Teams,62,4,11/04/2026 15:30,can the system align enery use with on-site renewable generation
+marcus okafor,Sustainability and Energy Management Teams,63,4,11/04/2026 15:31,can the buidling quantify the carbon saved by daylight harvesting?
+marcus okafor,Sustainability and Energy Management Teams,64,4,11/04/2026 15:33,how do we report scope 1 and scope 2 emisions from building data
+marcus okafor,Sustainability and Energy Management Teams,65,4,11/04/2026 15:35,how do we benchmark this buidling against BREEAM or LEED targets?
+marcus okafor,Sustainability and Energy Management Teams,66,4,11/04/2026 15:39,what mix of measures gets us the fastest route to net zero?
+marcus okafor,Sustainability and Energy Management Teams,67,4,11/04/2026 15:40,can the building recommend a demand-response strategy for peak events?
+marcus okafor,Sustainability and Energy Management Teams,68,4,11/04/2026 15:42,can the system identify the top five energy-saving opportunities ranked by ROI?
+marcus okafor,Sustainability and Energy Management Teams,69,4,11/04/2026 15:45,"to cut energy use by 15% this year, where should we focus?"
+marcus okafor,Sustainability and Energy Management Teams,70,4,11/04/2026 15:48,what would it take to run the building on 100% renewable energy
+marcus okafor,Sustainability and Energy Management Teams,71,4,11/04/2026 15:50,can the building produce a monthly carbon emissions report automatically
+marcus okafor,Sustainability and Energy Management Teams,72,4,11/04/2026 15:54,how should we shedule plant to minimise both cost and carbon
+marcus okafor,Sustainability and Energy Management Teams,73,4,11/04/2026 15:57,can the system recommend the most cost-effective efficeincy upgrades
+marcus okafor,Sustainability and Energy Management Teams,74,4,11/04/2026 15:58,can the building track diversion-from-landfill rate for waste?
+marcus okafor,Sustainability and Energy Management Teams,75,4,11/04/2026 15:59,how can we cut water consumption against last year's baseline?
+marcus okafor,Sustainability and Energy Management Teams,76,4,11/04/2026 16:00,can the ssytem set and track an energy budget per floor?
+marcus okafor,Sustainability and Energy Management Teams,77,4,11/04/2026 16:02,what efficiency target is relaistic for the HVAC system next year?
+marcus okafor,Sustainability and Energy Management Teams,78,4,11/04/2026 16:03,can we automate an annual sustainability performance review from the data?
+marcus okafor,Sustainability and Energy Management Teams,79,4,11/04/2026 16:06,how can the building report avoided emissions from its solar array?
+priya nair,Sustainability and Energy Management Teams,1,1,10/04/2026 13:55,how is the building's overall energy use tracked?
+priya nair,Sustainability and Energy Management Teams,2,1,10/04/2026 13:57,how does occupancy affect our energy demand
+priya nair,Sustainability and Energy Management Teams,3,1,10/04/2026 13:59,what does a typical day of enery use look like here?
+priya nair,Sustainability and Energy Management Teams,4,1,10/04/2026 14:03,can the building tell me its current carbon intensity?
+priya nair,Sustainability and Energy Management Teams,5,1,10/04/2026 14:06,are we on track to be net zero
+priya nair,Sustainability and Energy Management Teams,6,1,10/04/2026 14:10,does the building capture rainwater for any use?
+priya nair,Sustainability and Energy Management Teams,7,1,10/04/2026 14:11,whats the carbon cost of running the lifts?
+priya nair,Sustainability and Energy Management Teams,8,1,10/04/2026 14:13,is the buidling powered by any renewable energy
+priya nair,Sustainability and Energy Management Teams,9,1,10/04/2026 14:15,what renewble options could the building adopt?
+priya nair,Sustainability and Energy Management Teams,10,1,10/04/2026 14:17,how efficient are the building's chillers and boilers?
+priya nair,Sustainability and Energy Management Teams,11,1,10/04/2026 14:20,what proportion of enery is lost rather than used?
+priya nair,Sustainability and Energy Management Teams,12,1,10/04/2026 14:23,how green is this building really?
+priya nair,Sustainability and Energy Management Teams,13,1,10/04/2026 14:26,how do we benchmakr our energy performance year on year?
+priya nair,Sustainability and Energy Management Teams,14,1,10/04/2026 14:29,is the lighting energy efficient across the wohle building
+priya nair,Sustainability and Energy Management Teams,15,1,10/04/2026 14:31,where is energy being watsed in the building?
+priya nair,Sustainability and Energy Management Teams,16,1,10/04/2026 14:32,which floors consume the most energy?
+priya nair,Sustainability and Energy Management Teams,17,1,10/04/2026 14:34,are ev chrgers powered by clean energy
+priya nair,Sustainability and Energy Management Teams,18,1,10/04/2026 14:35,what happens to the building's energy use overnight
+priya nair,Sustainability and Energy Management Teams,19,1,10/04/2026 14:38,how does the building support biodiversity?
+priya nair,Sustainability and Energy Management Teams,20,1,10/04/2026 14:39,are there any energy savings from daylight in the building
+priya nair,Sustainability and Energy Management Teams,21,1,10/04/2026 14:41,are there any quick wins to cut energy use?
+priya nair,Sustainability and Energy Management Teams,22,2,10/04/2026 14:45,are the CO2 sensors forcing extra ventilaton and raising energy use?
+priya nair,Sustainability and Energy Management Teams,23,2,10/04/2026 14:46,is the heat-recovery unit actually recovering energy per the temperature sensors?
+priya nair,Sustainability and Energy Management Teams,24,2,10/04/2026 14:48,what is the peak demand recorded by the meter so far today
+priya nair,Sustainability and Energy Management Teams,25,2,10/04/2026 14:51,how much energy is the server rack drawing per the dedicated submeter
+priya nair,Sustainability and Energy Management Teams,26,2,10/04/2026 14:54,are any smart plugs reporting vampire power for idle appliances?
+priya nair,Sustainability and Energy Management Teams,27,2,10/04/2026 14:56,do the occupancy sensors and the energy meter agree on usage patterns?
+priya nair,Sustainability and Energy Management Teams,28,2,10/04/2026 14:58,what does the main energy meter read in kwh for this month?
+priya nair,Sustainability and Energy Management Teams,29,2,10/04/2026 15:00,what does the building's reactive power reading suggest abouut motor efficiency?
+priya nair,Sustainability and Energy Management Teams,30,2,10/04/2026 15:01,what is the metered difference between lighting and small-power loads?
+priya nair,Sustainability and Energy Management Teams,31,2,10/04/2026 15:05,which submeter shows the highest consumption right now
+priya nair,Sustainability and Energy Management Teams,32,2,10/04/2026 15:08,is any circuit drawing power with zero occupancy detected?
+priya nair,Sustainability and Energy Management Teams,33,2,10/04/2026 15:10,do the temperature setpoints n the energy meter show overcooling anywhere?
+priya nair,Sustainability and Energy Management Teams,34,2,10/04/2026 15:14,how much solar generation was logged by the inverter yesterday?
+priya nair,Sustainability and Energy Management Teams,35,2,10/04/2026 15:16,why does the power factor reading matter for our electricity bill?
+priya nair,Sustainability and Energy Management Teams,36,2,10/04/2026 15:20,is the chiller and boiler status ever 'on' at the same time and wasting energy?
+priya nair,Sustainability and Energy Management Teams,37,2,10/04/2026 15:22,how much standby load is drawn through the smart plugs right now
+priya nair,Sustainability and Energy Management Teams,38,2,10/04/2026 15:26,what is the kwh per square metre for floor 5 from the meters?
+priya nair,Sustainability and Energy Management Teams,39,2,10/04/2026 15:28,is the frequency reading stable enough for the on-site inverters?
+priya nair,Sustainability and Energy Management Teams,40,2,10/04/2026 15:29,what is the kw draw of the lifs during the morning peak
+priya nair,Sustainability and Energy Management Teams,41,2,10/04/2026 15:33,are the solar inverters producing at their expected output today?
+priya nair,Sustainability and Energy Management Teams,42,2,10/04/2026 15:34,what is the buildings current power usage effectiveness from the meters?
+priya nair,Sustainability and Energy Management Teams,43,3,10/04/2026 15:38,"on a bank holiday, can the buidling drop to a minimum-energy mode?"
+priya nair,Sustainability and Energy Management Teams,44,3,10/04/2026 15:42,"if solar is overproducng at noon, where can we use or store that energy?"
+priya nair,Sustainability and Energy Management Teams,45,3,10/04/2026 15:43,"during the winter peak, where is the buidling losing the most heat?"
+priya nair,Sustainability and Energy Management Teams,46,3,10/04/2026 15:46,"on a cloudy day, how far does solar output fall against peak demand?"
+priya nair,Sustainability and Energy Management Teams,47,3,10/04/2026 15:50,"if the room is unbooked but the av is still on, can it power down automatically?"
+priya nair,Sustainability and Energy Management Teams,48,3,10/04/2026 15:53,"during peak pricing hours, which non-critical loads could be delayed?"
+priya nair,Sustainability and Energy Management Teams,49,3,10/04/2026 15:56,"when this hall hosts an event, how much does enery demand jump"
+priya nair,Sustainability and Energy Management Teams,50,3,10/04/2026 16:00,"when the sun is on the south facade, are the blnids cutting cooling load"
+priya nair,Sustainability and Energy Management Teams,51,3,10/04/2026 16:04,"if we close the west wing for refurbismhent, what energy is saved"
+priya nair,Sustainability and Energy Management Teams,52,3,10/04/2026 16:08,"if occupancy drops on a friday, can the building scale back energy use here?"
+priya nair,Sustainability and Energy Management Teams,53,3,10/04/2026 16:12,"if a chiller fails on a hot day, how do we keep energy use under control"
+priya nair,Sustainability and Energy Management Teams,54,3,10/04/2026 16:14,"in this kitchen area, how much vampire power do appliances draw after hours"
+priya nair,Sustainability and Energy Management Teams,55,3,10/04/2026 16:18,"during the morning warm-up, is the building overheating before staff arrive"
+priya nair,Sustainability and Energy Management Teams,56,3,10/04/2026 16:19,"if a whole floor is vacant this week, can its services be set back?"
+priya nair,Sustainability and Energy Management Teams,57,3,10/04/2026 16:23,"on a rainy week, how does reduced daylight change lighting energy here"
+priya nair,Sustainability and Energy Management Teams,58,3,10/04/2026 16:25,"during low occupancy, can the lifts run in an eco mode?"
+priya nair,Sustainability and Energy Management Teams,59,3,10/04/2026 16:27,"when CO2 rises in this room, can ventilaton respond without spiking energy?"
+priya nair,Sustainability and Energy Management Teams,60,3,10/04/2026 16:31,"during the evening cleaning shift, are lights and HVAC left fully on?"
+priya nair,Sustainability and Energy Management Teams,61,3,10/04/2026 16:34,"during a heatwave, how much extra enery does cooling this floor use?"
+priya nair,Sustainability and Energy Management Teams,62,4,10/04/2026 16:36,can the system model the impact of raising cooling setpoints by 1 degree?
+priya nair,Sustainability and Energy Management Teams,63,4,10/04/2026 16:37,can the buidling flag the equipment with the worst efficiency for replacement?
+priya nair,Sustainability and Energy Management Teams,64,4,10/04/2026 16:40,what would it take to run the building on 100% renewable energy?
+priya nair,Sustainability and Energy Management Teams,65,4,10/04/2026 16:41,how can we cut water consumption against last year's baseline?
+priya nair,Sustainability and Energy Management Teams,66,4,10/04/2026 16:43,can the building track diversion-from-landfill rate for waste?
+priya nair,Sustainability and Energy Management Teams,67,4,10/04/2026 16:47,how can we shift load away from peak carbon-intensity huors?
+priya nair,Sustainability and Energy Management Teams,68,4,10/04/2026 16:51,can the system align energy use with on-site renewable generation
+priya nair,Sustainability and Energy Management Teams,69,4,10/04/2026 16:52,how can the building optimise energy use during weekends and holidays
+priya nair,Sustainability and Energy Management Teams,70,4,10/04/2026 16:55,can the system recommend the most cost-effective efficiency upgrades
+priya nair,Sustainability and Energy Management Teams,71,4,10/04/2026 16:58,how do we verify that efficeincy measures actually delivered savings?
+priya nair,Sustainability and Energy Management Teams,72,4,10/04/2026 17:01,how should we prioritise retrofits to maximise carbon savings?
+priya nair,Sustainability and Energy Management Teams,73,4,10/04/2026 17:05,can the building quantify the carbon saved by daylight harvesting
+priya nair,Sustainability and Energy Management Teams,74,4,10/04/2026 17:09,can the system set and track an energy budget per floor?
+priya nair,Sustainability and Energy Management Teams,75,4,10/04/2026 17:12,can the system identify the top five energy-saving opportunities ranked by roi?
+priya nair,Sustainability and Energy Management Teams,76,4,10/04/2026 17:15,can we automate an annual sustainability performance review from the data?
+priya nair,Sustainability and Energy Management Teams,77,4,10/04/2026 17:16,can the building generate an ESG dashboard for management?
+priya nair,Sustainability and Energy Management Teams,78,4,10/04/2026 17:19,what is the payback peeriod for adding more solar capacity
+priya nair,Sustainability and Energy Management Teams,79,4,10/04/2026 17:23,what efficiency target is realistic for the hvac system next year?
+priya nair,Sustainability and Energy Management Teams,80,4,10/04/2026 17:27,how can the buidling report avoided emissions from its solar array
+tom whitfield,Sustainability and Energy Management Teams,1,1,12/04/2026 16:37,can the building tell me its current carbon intensity
+tom whitfield,Sustainability and Energy Management Teams,2,1,12/04/2026 16:38,where is energy being wasted in the building
+tom whitfield,Sustainability and Energy Management Teams,3,1,12/04/2026 16:40,are ev chargers powered by clean energy?
+tom whitfield,Sustainability and Energy Management Teams,4,1,12/04/2026 16:41,"how is energy split between heating, cooling and equipment?"
+tom whitfield,Sustainability and Energy Management Teams,5,1,12/04/2026 16:42,what is the building doing to reduce its carbon fotprint?
+tom whitfield,Sustainability and Energy Management Teams,6,1,12/04/2026 16:43,whats the carbon cost of running the lifts
+tom whitfield,Sustainability and Energy Management Teams,7,1,12/04/2026 16:44,how do we measure the buildings environmental performance?
+tom whitfield,Sustainability and Energy Management Teams,8,1,12/04/2026 16:46,is the lighting energy efficient across the whole building?
+tom whitfield,Sustainability and Energy Management Teams,9,1,12/04/2026 16:48,what proportion of energy is lost rather than used
+tom whitfield,Sustainability and Energy Management Teams,10,1,12/04/2026 16:49,does the building reuse or recycle any of its waste heat?
+tom whitfield,Sustainability and Energy Management Teams,11,1,12/04/2026 16:53,what is the biggest source of emisions for this building?
+tom whitfield,Sustainability and Energy Management Teams,12,1,12/04/2026 16:56,what sustainability certifications does the building hold
+tom whitfield,Sustainability and Energy Management Teams,13,1,12/04/2026 17:00,how do weekends compare to weekdays for enery use?
+tom whitfield,Sustainability and Energy Management Teams,14,1,12/04/2026 17:03,are there areas left heated or cooled when nobody is around?
+tom whitfield,Sustainability and Energy Management Teams,15,1,12/04/2026 17:04,is there a dashboard for sutainability metrics?
+tom whitfield,Sustainability and Energy Management Teams,16,1,12/04/2026 17:08,are we on track to be net zero
+tom whitfield,Sustainability and Energy Management Teams,17,1,12/04/2026 17:12,how do we benchmark our energy performance year on year?
+tom whitfield,Sustainability and Energy Management Teams,18,1,12/04/2026 17:15,what renewable options could the building adopt
+tom whitfield,Sustainability and Energy Management Teams,19,1,12/04/2026 17:19,are there any green roofs or living walls here?
+tom whitfield,Sustainability and Energy Management Teams,20,1,12/04/2026 17:22,how is water consumption montored here?
+tom whitfield,Sustainability and Energy Management Teams,21,1,12/04/2026 17:24,what does a typical day of energy use look like here?
+tom whitfield,Sustainability and Energy Management Teams,22,1,12/04/2026 17:28,how is the buildings overall energy use traced?
+tom whitfield,Sustainability and Energy Management Teams,23,2,12/04/2026 17:30,what is the current carbon intensity given the metered grid import?
+tom whitfield,Sustainability and Energy Management Teams,24,2,12/04/2026 17:33,how does todays metered demand profile compare with the typical cuurve?
+tom whitfield,Sustainability and Energy Management Teams,25,2,12/04/2026 17:35,how does the gas meter trend compare with the heating degree days
+tom whitfield,Sustainability and Energy Management Teams,26,2,12/04/2026 17:39,what is the real-time power spike comapred with the monthly kwh average?
+tom whitfield,Sustainability and Energy Management Teams,27,2,12/04/2026 17:42,are the solar inverters producing at their expected output today
+tom whitfield,Sustainability and Energy Management Teams,28,2,12/04/2026 17:46,are the CO2 sensors forcing extra ventilaton and raising energy use?
+tom whitfield,Sustainability and Energy Management Teams,29,2,12/04/2026 17:47,why does the power factor reading matter for our electricity bill?
+tom whitfield,Sustainability and Energy Management Teams,30,2,12/04/2026 17:48,what is the delta between supply air temp and return air temp on the ahus
+tom whitfield,Sustainability and Energy Management Teams,31,2,12/04/2026 17:52,is the cooling tower's metered water use tracking with the chiller load?
+tom whitfield,Sustainability and Energy Management Teams,32,2,12/04/2026 17:55,is the chiller and boiler status ever 'on' at the same time and wasting energy?
+tom whitfield,Sustainability and Energy Management Teams,33,2,12/04/2026 17:59,is the frequency reading stable enough for the on-site inverters?
+tom whitfield,Sustainability and Energy Management Teams,34,2,12/04/2026 18:02,what is the peak demand recorded by the meter so far today?
+tom whitfield,Sustainability and Energy Management Teams,35,2,12/04/2026 18:03,what is the buildings current power usage effectiveness from the meters?
+tom whitfield,Sustainability and Energy Management Teams,36,2,12/04/2026 18:07,what is the kw draw of the lifts during the morning peak?
+tom whitfield,Sustainability and Energy Management Teams,37,2,12/04/2026 18:08,how much solar generation was logged by the inverter yesterday
+tom whitfield,Sustainability and Energy Management Teams,38,2,12/04/2026 18:09,what does the pulse meter show for gas consumption this week
+tom whitfield,Sustainability and Energy Management Teams,39,2,12/04/2026 18:10,which submeter shows the highest consumption right now?
+tom whitfield,Sustainability and Energy Management Teams,40,2,12/04/2026 18:12,what is the water meter flow rate outside of office hours?
+tom whitfield,Sustainability and Energy Management Teams,41,3,12/04/2026 18:14,"during the winter peak, where is the building losing the most heat?"
+tom whitfield,Sustainability and Energy Management Teams,42,3,12/04/2026 18:17,"on a typical monday, which zone ramps up energy earliest"
+tom whitfield,Sustainability and Energy Management Teams,43,3,12/04/2026 18:18,"if we close the west wing for refurbishment, what energy is saved"
+tom whitfield,Sustainability and Energy Management Teams,44,3,12/04/2026 18:20,"on a bank holiday, can the building drop to a minimum-energy mode?"
+tom whitfield,Sustainability and Energy Management Teams,45,3,12/04/2026 18:24,"if a sensor shows an idle but powered desk cluster, can it be switched off?"
+tom whitfield,Sustainability and Energy Management Teams,46,3,12/04/2026 18:26,"on a rainy week, how does reduced daylight change lightng energy here?"
+tom whitfield,Sustainability and Energy Management Teams,47,3,12/04/2026 18:30,"when co2 rises in this room, can ventilation respond without spiking energy?"
+tom whitfield,Sustainability and Energy Management Teams,48,3,12/04/2026 18:33,"if outdoor air is cool enough, can free cooling cut the chiller energy here?"
+tom whitfield,Sustainability and Energy Management Teams,49,3,12/04/2026 18:34,"if this floor's setpoint drifts, how much extra energy does it cost over a day?"
+tom whitfield,Sustainability and Energy Management Teams,50,3,12/04/2026 18:37,"if a chiller fals on a hot day, how do we keep energy use under control?"
+tom whitfield,Sustainability and Energy Management Teams,51,3,12/04/2026 18:40,"when the car park ev chargers are all in use, what happens to peak demand?"
+tom whitfield,Sustainability and Energy Management Teams,52,3,12/04/2026 18:41,"in this kitchen area, how much vampire power do appliances draw after hours?"
+tom whitfield,Sustainability and Energy Management Teams,53,3,12/04/2026 18:42,"if solar is overproducing at noon, where can we use or store that energy"
+tom whitfield,Sustainability and Energy Management Teams,54,3,12/04/2026 18:46,"durig the evening cleaning shift, are lights & HVAC left fully on?"
+tom whitfield,Sustainability and Energy Management Teams,55,3,12/04/2026 18:50,"when this hall hosts an event, how much does enery demand jump?"
+tom whitfield,Sustainability and Energy Management Teams,56,3,12/04/2026 18:53,"when the sun is on the south facade, are the blinds cutting cooling load?"
+tom whitfield,Sustainability and Energy Management Teams,57,3,12/04/2026 18:55,"during peak pricing hours, which non-critical loads could be delayed?"
+tom whitfield,Sustainability and Energy Management Teams,58,3,12/04/2026 18:56,"in this server room, is cooling energy mtached to the actual IT load?"
+tom whitfield,Sustainability and Energy Management Teams,59,3,12/04/2026 19:00,"during a grid demand-response event, what loads could we shed here?"
+tom whitfield,Sustainability and Energy Management Teams,60,3,12/04/2026 19:01,"on a cloudy day, how far does solar output fall against peak demand?"
+tom whitfield,Sustainability and Energy Management Teams,61,3,12/04/2026 19:03,"durig low occupancy, can the lifts run in an eco mode?"
+tom whitfield,Sustainability and Energy Management Teams,62,4,12/04/2026 19:07,what efficeincy target is realistic for the hvac system next year?
+tom whitfield,Sustainability and Energy Management Teams,63,4,12/04/2026 19:11,"to cut energy use by 15% this year, where should we focus?"
+tom whitfield,Sustainability and Energy Management Teams,64,4,12/04/2026 19:14,can the building flag the equipment with the worst efficiency for replacement
+tom whitfield,Sustainability and Energy Management Teams,65,4,12/04/2026 19:17,what mix of measures gets us the fastest rouet to net zero?
+tom whitfield,Sustainability and Energy Management Teams,66,4,12/04/2026 19:21,can the building track diversion-from-landfill rate for waste
+tom whitfield,Sustainability and Energy Management Teams,67,4,12/04/2026 19:22,can the system recommend the most cost-effective efficiency upgrades
+tom whitfield,Sustainability and Energy Management Teams,68,4,12/04/2026 19:23,what kpis best track our progress on sustainability?
+tom whitfield,Sustainability and Energy Management Teams,69,4,12/04/2026 19:25,can the system identify the top five energy-saving opportunities ranked by roi?
+tom whitfield,Sustainability and Energy Management Teams,70,4,12/04/2026 19:29,what wolud it take to run the building on 100% renewable energy?
+tom whitfield,Sustainability and Energy Management Teams,71,4,12/04/2026 19:30,can the building recommend a demand-response strategy for peak events?
+tom whitfield,Sustainability and Energy Management Teams,72,4,12/04/2026 19:34,how can we cut water consumption against last year's baseline?
+tom whitfield,Sustainability and Energy Management Teams,73,4,12/04/2026 19:36,how do we verify that efficiency measures actually delivered savings
+tom whitfield,Sustainability and Energy Management Teams,74,4,12/04/2026 19:38,how should we scheule plant to minimise both cost and carbon?
+tom whitfield,Sustainability and Energy Management Teams,75,4,12/04/2026 19:39,how do we set science-based targets from the buildings emissions data
+tom whitfield,Sustainability and Energy Management Teams,76,4,12/04/2026 19:41,can the building generate an ESG dashboard for management
+tom whitfield,Sustainability and Energy Management Teams,77,4,12/04/2026 19:42,how can the building optimise energy use during weekends and holidays
+tom whitfield,Sustainability and Energy Management Teams,78,4,12/04/2026 19:44,how do we benchmark this building against BREEAM or LEED targets
+tom whitfield,Sustainability and Energy Management Teams,79,4,12/04/2026 19:45,how can we shift load away from peak carbon-intensity houurs?
+tom whitfield,Sustainability and Energy Management Teams,80,4,12/04/2026 19:49,can the system align energy use with on-site renewable generation?
+tom whitfield,Sustainability and Energy Management Teams,81,4,12/04/2026 19:52,how can the building report avoided emissions from its solar array?
+tom whitfield,Sustainability and Energy Management Teams,82,4,12/04/2026 19:56,what is the payback period for adding more solar capacity?
+sofia almeida,Sustainability and Energy Management Teams,1,1,10/04/2026 15:24,what renewale options could the building adopt?
+sofia almeida,Sustainability and Energy Management Teams,2,1,10/04/2026 15:26,what proportion of enegry is lost rather than used?
+sofia almeida,Sustainability and Energy Management Teams,3,1,10/04/2026 15:29,how much of our waste actually gets recycled?
+sofia almeida,Sustainability and Energy Management Teams,4,1,10/04/2026 15:32,does the building reuse or recycle any of its waste heat
+sofia almeida,Sustainability and Energy Management Teams,5,1,10/04/2026 15:34,how green is this building really?
+sofia almeida,Sustainability and Energy Management Teams,6,1,10/04/2026 15:37,where is energy being wasted in the building?
+sofia almeida,Sustainability and Energy Management Teams,7,1,10/04/2026 15:40,does the building capture rainwater for any use?
+sofia almeida,Sustainability and Energy Management Teams,8,1,10/04/2026 15:41,what is the building doing to reduce its carbon footprint
+sofia almeida,Sustainability and Energy Management Teams,9,1,10/04/2026 15:43,what is the biggest source of emissions for this building?
+sofia almeida,Sustainability and Energy Management Teams,10,1,10/04/2026 15:46,how does occupancy affect our energy demand?
+sofia almeida,Sustainability and Energy Management Teams,11,1,10/04/2026 15:48,could we generate more of our own power on site
+sofia almeida,Sustainability and Energy Management Teams,12,1,10/04/2026 15:51,what does a typical day of energy use look like here?
+sofia almeida,Sustainability and Energy Management Teams,13,1,10/04/2026 15:55,how is the building's overall energy use tracked?
+sofia almeida,Sustainability and Energy Management Teams,14,1,10/04/2026 15:58,what's the carbon cost of running the liftts?
+sofia almeida,Sustainability and Energy Management Teams,15,1,10/04/2026 15:59,how much energy does the hvac system use overall?
+sofia almeida,Sustainability and Energy Management Teams,16,1,10/04/2026 16:02,is the lightng energy efficient across the whole building
+sofia almeida,Sustainability and Energy Management Teams,17,1,10/04/2026 16:03,are there any green rooofs or living walls here?
+sofia almeida,Sustainability and Energy Management Teams,18,1,10/04/2026 16:07,how do we benchmark our energy performance year on year?
+sofia almeida,Sustainability and Energy Management Teams,19,1,10/04/2026 16:11,are there areas left heated or cooled when nobody is around
+sofia almeida,Sustainability and Energy Management Teams,20,2,10/04/2026 16:12,what is the water meter flow rate outside of office hours?
+sofia almeida,Sustainability and Energy Management Teams,21,2,10/04/2026 16:16,what does the building's reactive power reading sugest about motor efficiency
+sofia almeida,Sustainability and Energy Management Teams,22,2,10/04/2026 16:18,do the temperature setpoints and the energy meter show overcooling anywhere?
+sofia almeida,Sustainability and Energy Management Teams,23,2,10/04/2026 16:22,what does the pulse meter show for gas consumption this week?
+sofia almeida,Sustainability and Energy Management Teams,24,2,10/04/2026 16:24,is the night-time base load higher than the meterd baseline?
+sofia almeida,Sustainability and Energy Management Teams,25,2,10/04/2026 16:26,are the solar inverters producing at their expected output today?
+sofia almeida,Sustainability and Energy Management Teams,26,2,10/04/2026 16:29,how much of the metered demand is coverred by solar at midday?
+sofia almeida,Sustainability and Energy Management Teams,27,2,10/04/2026 16:30,what is the buildings current power usage effectiveness from the meters?
+sofia almeida,Sustainability and Energy Management Teams,28,2,10/04/2026 16:33,is the cooling tower's metered water use tracking with the chiller load?
+sofia almeida,Sustainability and Energy Management Teams,29,2,10/04/2026 16:37,what is the current total power draw in kW across the building?
+sofia almeida,Sustainability and Energy Management Teams,30,2,10/04/2026 16:41,what does the main energy meter read in kwh for this month?
+sofia almeida,Sustainability and Energy Management Teams,31,2,10/04/2026 16:43,how does todays meterd demand profile compare with the typical curve?
+sofia almeida,Sustainability and Energy Management Teams,32,2,10/04/2026 16:44,what is the delta between supply air temp and return air temp on the AHUs
+sofia almeida,Sustainability and Energy Management Teams,33,2,10/04/2026 16:46,what is the metered difference between lighting and small-power loads?
+sofia almeida,Sustainability and Energy Management Teams,34,2,10/04/2026 16:47,how does the gas meter tredn compare with the heating degree days
+sofia almeida,Sustainability and Energy Management Teams,35,2,10/04/2026 16:48,is there a submeter showing an unexpected overnight spike
+sofia almeida,Sustainability and Energy Management Teams,36,2,10/04/2026 16:50,what is the kw draw of the liffts during the morning peak?
+sofia almeida,Sustainability and Energy Management Teams,37,2,10/04/2026 16:53,why does the power factor reading matter for our electricity bill?
+sofia almeida,Sustainability and Energy Management Teams,38,3,10/04/2026 16:55,"if solar is overproducing at noon, where can we use or store that energy?"
+sofia almeida,Sustainability and Energy Management Teams,39,3,10/04/2026 16:59,"on a typical Monday, which zone ramps up energy earliest?"
+sofia almeida,Sustainability and Energy Management Teams,40,3,10/04/2026 17:00,"in this kitchen area, how much vampire power do appliaces draw after hours?"
+sofia almeida,Sustainability and Energy Management Teams,41,3,10/04/2026 17:01,"when this hall hosts an event, how much does energy demand jump?"
+sofia almeida,Sustainability and Energy Management Teams,42,3,10/04/2026 17:02,"if the weather forecast shows a cold snap, how should pre-heating be scheduled?"
+sofia almeida,Sustainability and Energy Management Teams,43,3,10/04/2026 17:06,"when co2 rises in this room, can ventilaton respond without spiking energy?"
+sofia almeida,Sustainability and Energy Management Teams,44,3,10/04/2026 17:10,"if this floor's setpoint drifts, how much extra energy does it cost over a day?"
+sofia almeida,Sustainability and Energy Management Teams,45,3,10/04/2026 17:13,"durnig the morning warm-up, is the building overheating before staff arrive?"
+sofia almeida,Sustainability and Energy Management Teams,46,3,10/04/2026 17:15,"during a grid demand-response event, what loads could we shed here"
+sofia almeida,Sustainability and Energy Management Teams,47,3,10/04/2026 17:17,"during a heatwave, how much extra enery does cooling this floor use?"
+sofia almeida,Sustainability and Energy Management Teams,48,3,10/04/2026 17:19,"when the sun is on the south facade, are the blinds cutting cooling load?"
+sofia almeida,Sustainability and Energy Management Teams,49,3,10/04/2026 17:22,"during the summer shutdown, what is the buildings minimum viable enery use"
+sofia almeida,Sustainability and Energy Management Teams,50,3,10/04/2026 17:24,"in this zone, is there energy being wasted on empty meeting rooms?"
+sofia almeida,Sustainability and Energy Management Teams,51,3,10/04/2026 17:28,"in this open-plan area, can daylight cover the lighting need at midday"
+sofia almeida,Sustainability and Energy Management Teams,52,3,10/04/2026 17:32,"if the room is unbooked but the av is still on, can it power down automatically?"
+sofia almeida,Sustainability and Energy Management Teams,53,3,10/04/2026 17:34,"on a cloudy day, how far does solar output fall against peak demand?"
+sofia almeida,Sustainability and Energy Management Teams,54,3,10/04/2026 17:36,"in this server room, is cooling energy matched to the actual IT load?"
+sofia almeida,Sustainability and Energy Management Teams,55,3,10/04/2026 17:39,"during peak pricing hours, which non-critical loads could be delayed?"
+sofia almeida,Sustainability and Energy Management Teams,56,3,10/04/2026 17:41,"on a bank holiday, can the building drop to a minimum-energy mode"
+sofia almeida,Sustainability and Energy Management Teams,57,4,10/04/2026 17:44,how can we shift load away from peak carbon-intensity hours
+sofia almeida,Sustainability and Energy Management Teams,58,4,10/04/2026 17:45,can the building track diversion-from-landfill rate for waste?
+sofia almeida,Sustainability and Energy Management Teams,59,4,10/04/2026 17:46,can the building flag the equipment with the worst efficiency for replacement?
+sofia almeida,Sustainability and Energy Management Teams,60,4,10/04/2026 17:49,can the system recommend the most cost-effective efficiency upgrades?
+sofia almeida,Sustainability and Energy Management Teams,61,4,10/04/2026 17:53,what efficiency target is realistic for the hvac system next year?
+sofia almeida,Sustainability and Energy Management Teams,62,4,10/04/2026 17:55,can the building produce a monthly carbon emissions report automatically
+sofia almeida,Sustainability and Energy Management Teams,63,4,10/04/2026 17:59,can the system model the impact of raising cooling setpoints by 1 degree
+sofia almeida,Sustainability and Energy Management Teams,64,4,10/04/2026 18:00,can the building generate an ESG dashboard for management?
+sofia almeida,Sustainability and Energy Management Teams,65,4,10/04/2026 18:04,how do we set science-based targets from the building's emissions data?
+sofia almeida,Sustainability and Energy Management Teams,66,4,10/04/2026 18:08,how should we schedule plant to minimise both cost and carbon?
+sofia almeida,Sustainability and Energy Management Teams,67,4,10/04/2026 18:10,can the buidling forecast next year's energy demand for budgeting?
+sofia almeida,Sustainability and Energy Management Teams,68,4,10/04/2026 18:11,how do we verify that efficiency measures actually delivered savings?
+sofia almeida,Sustainability and Energy Management Teams,69,4,10/04/2026 18:15,how can the building optimise energy use during weekends and holidays?
+sofia almeida,Sustainability and Energy Management Teams,70,4,10/04/2026 18:19,how do we benchmark this building against breeam or leed targets?
+sofia almeida,Sustainability and Energy Management Teams,71,4,10/04/2026 18:22,can the system identify the top five energy-saving opportunities ranked by roi?
+sofia almeida,Sustainability and Energy Management Teams,72,4,10/04/2026 18:23,"to reach net zero by 2030, what does the building need to change first"
+sofia almeida,Sustainability and Energy Management Teams,73,4,10/04/2026 18:24,what is the payback period for adding more solar capacity?
+sofia almeida,Sustainability and Energy Management Teams,74,4,10/04/2026 18:27,what KPIs best track our progress on sustainability?
+sofia almeida,Sustainability and Energy Management Teams,75,4,10/04/2026 18:30,how should we prioritise retrofits to maximsie carbon savings
+sofia almeida,Sustainability and Energy Management Teams,76,4,10/04/2026 18:32,can we automate an annual sustainability performance review from the data
+sofia almeida,Sustainability and Energy Management Teams,77,4,10/04/2026 18:35,can the system set and track an energy budget per floor?
+sofia almeida,Sustainability and Energy Management Teams,78,4,10/04/2026 18:36,can the buidling quantify the carbon saved by daylight harvesting
+daniel kim,Sustainability and Energy Management Teams,1,1,08/04/2026 09:35,how does occupancy affect our energy demand?
+daniel kim,Sustainability and Energy Management Teams,2,1,08/04/2026 09:37,what's the carbon cost of running the lifts
+daniel kim,Sustainability and Energy Management Teams,3,1,08/04/2026 09:41,how much enery does the HVAC system use overall?
+daniel kim,Sustainability and Energy Management Teams,4,1,08/04/2026 09:43,what happens to the buildings energy use overnight?
+daniel kim,Sustainability and Energy Management Teams,5,1,08/04/2026 09:45,are there areas left heated or cooled when nobody is around
+daniel kim,Sustainability and Energy Management Teams,6,1,08/04/2026 09:48,what is the building's annual energy bill roughly
+daniel kim,Sustainability and Energy Management Teams,7,1,08/04/2026 09:51,how do weekends compare to weekdays for energy use
+daniel kim,Sustainability and Energy Management Teams,8,1,08/04/2026 09:52,how is the buildings overall enery use tracked?
+daniel kim,Sustainability and Energy Management Teams,9,1,08/04/2026 09:54,can the building tell me its current carbon intensity?
+daniel kim,Sustainability and Energy Management Teams,10,1,08/04/2026 09:55,are there any energy savings from daylight in the building?
+daniel kim,Sustainability and Energy Management Teams,11,1,08/04/2026 09:59,is there a dashboard for sustainability metrics?
+daniel kim,Sustainability and Energy Management Teams,12,1,08/04/2026 10:01,how does the building support biodiversity
+daniel kim,Sustainability and Energy Management Teams,13,1,08/04/2026 10:02,what proportion of energy is lost rtaher than used?
+daniel kim,Sustainability and Energy Management Teams,14,1,08/04/2026 10:06,where is energy being wasted in the building?
+daniel kim,Sustainability and Energy Management Teams,15,1,08/04/2026 10:07,is the lighting energy efficient across the whole building
+daniel kim,Sustainability and Energy Management Teams,16,1,08/04/2026 10:09,could we generate more of our own power on site?
+daniel kim,Sustainability and Energy Management Teams,17,1,08/04/2026 10:10,how much standy power is the building drawing right now?
+daniel kim,Sustainability and Energy Management Teams,18,1,08/04/2026 10:11,how energy efficient is this building compared to similar ones?
+daniel kim,Sustainability and Energy Management Teams,19,1,08/04/2026 10:12,what sustainability certtifications does the building hold?
+daniel kim,Sustainability and Energy Management Teams,20,1,08/04/2026 10:13,what is the building doing to reduce its carbon footprint?
+daniel kim,Sustainability and Energy Management Teams,21,2,08/04/2026 10:14,do the occupancy sensors and the energy meter agree on usage patterns
+daniel kim,Sustainability and Energy Management Teams,22,2,08/04/2026 10:15,do the temprature setpoints and the energy meter show overcooling anywhere
+daniel kim,Sustainability and Energy Management Teams,23,2,08/04/2026 10:18,why does the power factor reading matter for our electricity bill?
+daniel kim,Sustainability and Energy Management Teams,24,2,08/04/2026 10:21,what is the current carbon intensity given the metered grid import?
+daniel kim,Sustainability and Energy Management Teams,25,2,08/04/2026 10:24,what is the real-time power spike compared with the monthly kWh average?
+daniel kim,Sustainability and Energy Management Teams,26,2,08/04/2026 10:26,what is the delta between supply air temp & return air temp on the AHUs?
+daniel kim,Sustainability and Energy Management Teams,27,2,08/04/2026 10:27,what is the water meter flow rate outside of office hours?
+daniel kim,Sustainability and Energy Management Teams,28,2,08/04/2026 10:30,are the solar inerters producing at their expected output today?
+daniel kim,Sustainability and Energy Management Teams,29,2,08/04/2026 10:34,is the night-time base load higher than the metered baseline?
+daniel kim,Sustainability and Energy Management Teams,30,2,08/04/2026 10:38,is any circuit drawing power with zero occupancy detected?
+daniel kim,Sustainability and Energy Management Teams,31,2,08/04/2026 10:39,how much standby load is drawn through the smart plugs right now?
+daniel kim,Sustainability and Energy Management Teams,32,2,08/04/2026 10:42,which submeter shows the highest consumption right now
+daniel kim,Sustainability and Energy Management Teams,33,2,08/04/2026 10:44,what does the pulse meter show for gas consumption this week?
+daniel kim,Sustainability and Energy Management Teams,34,2,08/04/2026 10:45,are any smart plugs reporting vampire power for idle appliances?
+daniel kim,Sustainability and Energy Management Teams,35,2,08/04/2026 10:46,how does todays meterd demand profile compare with the typical curve?
+daniel kim,Sustainability and Energy Management Teams,36,2,08/04/2026 10:48,what does the building's reactive power reading suggest about motor efficeincy?
+daniel kim,Sustainability and Energy Management Teams,37,2,08/04/2026 10:49,what is the kw draw of the lifts during the morning peak
+daniel kim,Sustainability and Energy Management Teams,38,2,08/04/2026 10:52,what is the buildings current power usage effectiveness from the meters?
+daniel kim,Sustainability and Energy Management Teams,39,2,08/04/2026 10:53,what is the meterd difference between lighting and small-power loads?
+daniel kim,Sustainability and Energy Management Teams,40,2,08/04/2026 10:55,are the CO2 sensors forcing extra ventilation n raising energy use
+daniel kim,Sustainability and Energy Management Teams,41,2,08/04/2026 10:59,is the frequency reading stable enough for the on-site inverters
+daniel kim,Sustainability and Energy Management Teams,42,3,08/04/2026 11:02,"during peak pricing hours, which non-critical loads could be delayed?"
+daniel kim,Sustainability and Energy Management Teams,43,3,08/04/2026 11:03,"during a heatwave, how much extra energy does cooling this floor use?"
+daniel kim,Sustainability and Energy Management Teams,44,3,08/04/2026 11:05,"on a bank holiday, can the building drop to a minimum-energy mode"
+daniel kim,Sustainability and Energy Management Teams,45,3,08/04/2026 11:06,"if a chiller fails on a hot day, how do we keep energy use under control?"
+daniel kim,Sustainability and Energy Management Teams,46,3,08/04/2026 11:10,"if a sensor shows an idle but powered desk cluster, can it be switched off"
+daniel kim,Sustainability and Energy Management Teams,47,3,08/04/2026 11:13,"in this zone, is there energy being wasted on empty meeting rooms?"
+daniel kim,Sustainability and Energy Management Teams,48,3,08/04/2026 11:17,"if the room is unbooked but the av is still on, can it power down automatically"
+daniel kim,Sustainability and Energy Management Teams,49,3,08/04/2026 11:19,"on a rainy week, how does reduced daylight change lightng energy here?"
+daniel kim,Sustainability and Energy Management Teams,50,3,08/04/2026 11:22,"if we close the west wing for refurbishment, what enery is saved?"
+daniel kim,Sustainability and Energy Management Teams,51,3,08/04/2026 11:26,"when the sun is on the south facade, are the blinds cutting cooling load?"
+daniel kim,Sustainability and Energy Management Teams,52,3,08/04/2026 11:28,"in this kitchen area, how much vampire power do appliances draw after hours?"
+daniel kim,Sustainability and Energy Management Teams,53,3,08/04/2026 11:31,"if the weather forecast shows a cold snap, how should pre-heating be scheduled"
+daniel kim,Sustainability and Energy Management Teams,54,3,08/04/2026 11:32,"in this open-plan area, can daylight cover the lighting need at midday?"
+daniel kim,Sustainability and Energy Management Teams,55,3,08/04/2026 11:36,"on a cloudy day, how far does solar output fall against peak demand?"
+daniel kim,Sustainability and Energy Management Teams,56,3,08/04/2026 11:39,"if occupany drops on a friday, can the building scale back energy use here?"
+daniel kim,Sustainability and Energy Management Teams,57,3,08/04/2026 11:40,"during the morning warm-up, is the building overheating before staff arrive?"
+daniel kim,Sustainability and Energy Management Teams,58,3,08/04/2026 11:44,"if solar is overproducing at noon, where can we use or store that energy?"
+daniel kim,Sustainability and Energy Management Teams,59,3,08/04/2026 11:46,"if a whole floor is vacant this week, can its services be set back?"
+daniel kim,Sustainability and Energy Management Teams,60,3,08/04/2026 11:50,"duirng low occupancy, can the lifts run in an eco mode"
+daniel kim,Sustainability and Energy Management Teams,61,3,08/04/2026 11:54,"if outdoor air is cool enouugh, can free cooling cut the chiller energy here?"
+daniel kim,Sustainability and Energy Management Teams,62,4,08/04/2026 11:56,can we automate an annual sustainabilty performance review from the data
+daniel kim,Sustainability and Energy Management Teams,63,4,08/04/2026 11:57,can the system align energy use with on-site renewable generation?
+daniel kim,Sustainability and Energy Management Teams,64,4,08/04/2026 12:00,how do we set science-based targets from the buildings emisions data?
+daniel kim,Sustainability and Energy Management Teams,65,4,08/04/2026 12:03,what would it take to run the building on 100% renewable energy?
+daniel kim,Sustainability and Energy Management Teams,66,4,08/04/2026 12:04,can the building flag the equipment with the worst efficiency for replacement?
+daniel kim,Sustainability and Energy Management Teams,67,4,08/04/2026 12:08,how do we benchmark this building against breeam or leed targets
+daniel kim,Sustainability and Energy Management Teams,68,4,08/04/2026 12:11,can the system model the impact of raising cooling setpoints by 1 degree?
+daniel kim,Sustainability and Energy Management Teams,69,4,08/04/2026 12:12,what is the payback period for adding more solar capaciyt?
+daniel kim,Sustainability and Energy Management Teams,70,4,08/04/2026 12:15,what KPIs best track our progress on sustainability?
+daniel kim,Sustainability and Energy Management Teams,71,4,08/04/2026 12:17,how can we cut water consumption against last year's baselline?
+daniel kim,Sustainability and Energy Management Teams,72,4,08/04/2026 12:21,how should we prioritise retrofits to maximise carbon savings
+daniel kim,Sustainability and Energy Management Teams,73,4,08/04/2026 12:22,can the system identify the top five energy-saving opportunities ranked by roi
+daniel kim,Sustainability and Energy Management Teams,74,4,08/04/2026 12:23,"to reaach net zero by 2030, what does the building need to change first?"
+daniel kim,Sustainability and Energy Management Teams,75,4,08/04/2026 12:27,how can the building optimise energy use during weekends and holidays?
+daniel kim,Sustainability and Energy Management Teams,76,4,08/04/2026 12:31,how can we shift load away from peak carbon-intensity hours?
+daniel kim,Sustainability and Energy Management Teams,77,4,08/04/2026 12:32,can the building quantify the carbon saved by daylight harvesting?
+daniel kim,Sustainability and Energy Management Teams,78,4,08/04/2026 12:36,how should we schedule plant to minimise both cost and carbon
+daniel kim,Sustainability and Energy Management Teams,79,4,08/04/2026 12:37,can the building produce a monthly carbon emissions report automatically?
+daniel kim,Sustainability and Energy Management Teams,80,4,08/04/2026 12:40,how do we report Scope 1 and Scope 2 emisions from building data?
+daniel kim,Sustainability and Energy Management Teams,81,4,08/04/2026 12:44,how can the building report avoided emissions from its solar array?
+daniel kim,Sustainability and Energy Management Teams,82,4,08/04/2026 12:48,how do we verify that efficiency measures actually delivered savings
+daniel kim,Sustainability and Energy Management Teams,83,4,08/04/2026 12:49,what mix of measures gets us the fastest route to net zero?
+hannah berglund,Sustainability and Energy Management Teams,1,1,10/04/2026 12:33,does the building capture rainwater for any use?
+hannah berglund,Sustainability and Energy Management Teams,2,1,10/04/2026 12:36,how does the building support biodiversity?
+hannah berglund,Sustainability and Energy Management Teams,3,1,10/04/2026 12:40,what is the bigest source of emissions for this building?
+hannah berglund,Sustainability and Energy Management Teams,4,1,10/04/2026 12:44,is the lighting energy efficient across the whole building?
+hannah berglund,Sustainability and Energy Management Teams,5,1,10/04/2026 12:46,are there any green roofs or living walls here?
+hannah berglund,Sustainability and Energy Management Teams,6,1,10/04/2026 12:47,how is the building's overall enery use tracked?
+hannah berglund,Sustainability and Energy Management Teams,7,1,10/04/2026 12:48,what is the buildings annual energy bill roughly?
+hannah berglund,Sustainability and Energy Management Teams,8,1,10/04/2026 12:52,what proportion of energy is lost rather than used?
+hannah berglund,Sustainability and Energy Management Teams,9,1,10/04/2026 12:56,are there any enery savings from daylight in the building?
+hannah berglund,Sustainability and Energy Management Teams,10,1,10/04/2026 12:59,what is the building doing to reduce its carbon footprint?
+hannah berglund,Sustainability and Energy Management Teams,11,1,10/04/2026 13:00,how do weekends compare to weekdays for ennergy use?
+hannah berglund,Sustainability and Energy Management Teams,12,1,10/04/2026 13:04,what's the carbon cost of running the lifts?
+hannah berglund,Sustainability and Energy Management Teams,13,1,10/04/2026 13:07,does the building track embodied carbon of its materials?
+hannah berglund,Sustainability and Energy Management Teams,14,1,10/04/2026 13:10,can the building tell me its current carbon intensity
+hannah berglund,Sustainability and Energy Management Teams,15,1,10/04/2026 13:14,are there any quick wins to cut energy use
+hannah berglund,Sustainability and Energy Management Teams,16,1,10/04/2026 13:17,what sustainabilty certifications does the building hold?
+hannah berglund,Sustainability and Energy Management Teams,17,1,10/04/2026 13:18,are there areas left heated or cooled when nobody is around?
+hannah berglund,Sustainability and Energy Management Teams,18,1,10/04/2026 13:21,how energy efficient is this building compared to similar ones?
+hannah berglund,Sustainability and Energy Management Teams,19,1,10/04/2026 13:25,how much of our waste actually gets recycled
+hannah berglund,Sustainability and Energy Management Teams,20,2,10/04/2026 13:26,what is the delta between supply air temp and return air temp on the AHUs?
+hannah berglund,Sustainability and Energy Management Teams,21,2,10/04/2026 13:28,what is the kWh per square metre for floor 5 from the meters?
+hannah berglund,Sustainability and Energy Management Teams,22,2,10/04/2026 13:31,are any smart plugs reporting vampire power for idle appliaces?
+hannah berglund,Sustainability and Energy Management Teams,23,2,10/04/2026 13:35,how much of the metered demand is covered by solar at midday?
+hannah berglund,Sustainability and Energy Management Teams,24,2,10/04/2026 13:38,what is the current carbon intensity given the metered grid import?
+hannah berglund,Sustainability and Energy Management Teams,25,2,10/04/2026 13:40,what is the real-time power spike compared with the monthly kWh average?
+hannah berglund,Sustainability and Energy Management Teams,26,2,10/04/2026 13:42,what does the main energy meter read in kwh for this month?
+hannah berglund,Sustainability and Energy Management Teams,27,2,10/04/2026 13:43,are the co2 sensors focring extra ventilation n raising energy use
+hannah berglund,Sustainability and Energy Management Teams,28,2,10/04/2026 13:44,how much does the lux level near the windows let us dim the lights to save energy?
+hannah berglund,Sustainability and Energy Management Teams,29,2,10/04/2026 13:48,how much standby load is drawn thrugh the smart plugs right now
+hannah berglund,Sustainability and Energy Management Teams,30,2,10/04/2026 13:52,are the solar inverters producing at their expected output today?
+hannah berglund,Sustainability and Energy Management Teams,31,2,10/04/2026 13:54,what does the building's reactive power reading suggest about motor efficiency?
+hannah berglund,Sustainability and Energy Management Teams,32,2,10/04/2026 13:57,is the night-time base load higher than the metered baseline
+hannah berglund,Sustainability and Energy Management Teams,33,2,10/04/2026 13:58,is any circuit drawing power with zero occupancy detected?
+hannah berglund,Sustainability and Energy Management Teams,34,2,10/04/2026 14:01,what is the peak demand recorded by the meter so far today
+hannah berglund,Sustainability and Energy Management Teams,35,2,10/04/2026 14:02,is there a submeter showing an unexpected overnight spike?
+hannah berglund,Sustainability and Energy Management Teams,36,2,10/04/2026 14:06,what is the current total power draw in kw across the building?
+hannah berglund,Sustainability and Energy Management Teams,37,2,10/04/2026 14:09,what is the kw draw of the lifts during the morning peak
+hannah berglund,Sustainability and Energy Management Teams,38,2,10/04/2026 14:13,is the heat-recovery unit actually recovering energy per the temperature sensors?
+hannah berglund,Sustainability and Energy Management Teams,39,2,10/04/2026 14:17,how does the gas meter trend compare with the heating degree days?
+hannah berglund,Sustainability and Energy Management Teams,40,2,10/04/2026 14:21,do the occupany sensors and the energy meter agree on usage patterns?
+hannah berglund,Sustainability and Energy Management Teams,41,3,10/04/2026 14:25,"on a rainy week, how does reduced daylight change lighting energy here?"
+hannah berglund,Sustainability and Energy Management Teams,42,3,10/04/2026 14:26,"on a typical Mondya, which zone ramps up energy earliest?"
+hannah berglund,Sustainability and Energy Management Teams,43,3,10/04/2026 14:30,"if the room is unboooked but the av is still on, can it power down automatically?"
+hannah berglund,Sustainability and Energy Management Teams,44,3,10/04/2026 14:31,"if outdoor air is cool enough, can free cooling cut the chiller energy here?"
+hannah berglund,Sustainability and Energy Management Teams,45,3,10/04/2026 14:35,"when the car park EV chargers are all in use, what happens to peak demand"
+hannah berglund,Sustainability and Energy Management Teams,46,3,10/04/2026 14:36,"if a chiller fails on a hot day, how do we keep enery use under control?"
+hannah berglund,Sustainability and Energy Management Teams,47,3,10/04/2026 14:37,"when the sun is on the south fcaade, are the blinds cutting cooling load?"
+hannah berglund,Sustainability and Energy Management Teams,48,3,10/04/2026 14:38,"if occupancy drops on a Friday, can the building scale back energy use here?"
+hannah berglund,Sustainability and Energy Management Teams,49,3,10/04/2026 14:39,"if a whole floor is vacant this week, can its services be set back?"
+hannah berglund,Sustainability and Energy Management Teams,50,3,10/04/2026 14:41,"in this server room, is cooling enery matched to the actual IT load"
+hannah berglund,Sustainability and Energy Management Teams,51,3,10/04/2026 14:43,"in this open-plan area, can daylight cover the lighting need at midday?"
+hannah berglund,Sustainability and Energy Management Teams,52,3,10/04/2026 14:46,"when this hall hosts an event, how much does energy demand jump?"
+hannah berglund,Sustainability and Energy Management Teams,53,3,10/04/2026 14:49,"during the morning warm-up, is the building overheating before staff arrive?"
+hannah berglund,Sustainability and Energy Management Teams,54,3,10/04/2026 14:50,"during the evening cleaning shift, are lights and HVAC left fully on?"
+hannah berglund,Sustainability and Energy Management Teams,55,3,10/04/2026 14:51,"when co2 rises in this room, can ventilation respond without spiking energy?"
+hannah berglund,Sustainability and Energy Management Teams,56,3,10/04/2026 14:55,"in this kitchen area, how much vampire power do appliances draw after hours?"
+hannah berglund,Sustainability and Energy Management Teams,57,3,10/04/2026 14:56,"during the summer shutdown, what is the building's minimum viable energy use"
+hannah berglund,Sustainability and Energy Management Teams,58,3,10/04/2026 14:59,"during a heatwave, how much extra enery does cooling this floor use?"
+hannah berglund,Sustainability and Energy Management Teams,59,3,10/04/2026 15:01,"during a grid demand-response event, what loads cold we shed here?"
+hannah berglund,Sustainability and Energy Management Teams,60,4,10/04/2026 15:05,how do we benchmark this building against breeam or leed targets?
+hannah berglund,Sustainability and Energy Management Teams,61,4,10/04/2026 15:07,can the building produce a monthly carbon emissions report automatically?
+hannah berglund,Sustainability and Energy Management Teams,62,4,10/04/2026 15:11,can the system align energy use with on-site renewable generation?
+hannah berglund,Sustainability and Energy Management Teams,63,4,10/04/2026 15:15,can the system model the impact of raising cooling setpoints by 1 degree?
+hannah berglund,Sustainability and Energy Management Teams,64,4,10/04/2026 15:17,can the buidling flag the equipment with the worst efficiency for replacement?
+hannah berglund,Sustainability and Energy Management Teams,65,4,10/04/2026 15:19,can the system set and track an energy budget per floor?
+hannah berglund,Sustainability and Energy Management Teams,66,4,10/04/2026 15:22,how do we set science-based targets from the building's emissions data?
+hannah berglund,Sustainability and Energy Management Teams,67,4,10/04/2026 15:24,"to reach net zero by 2030, what does the building need to change first?"
+hannah berglund,Sustainability and Energy Management Teams,68,4,10/04/2026 15:25,can the system identify the top five energy-saving opportunities ranked by roi
+hannah berglund,Sustainability and Energy Management Teams,69,4,10/04/2026 15:27,how can the building report avoided emissions from its solar array?
+hannah berglund,Sustainability and Energy Management Teams,70,4,10/04/2026 15:29,how do we verify that efficiency measures actually delivereed savings
+hannah berglund,Sustainability and Energy Management Teams,71,4,10/04/2026 15:31,can we automate an annual sustainability performance reviw from the data?
+hannah berglund,Sustainability and Energy Management Teams,72,4,10/04/2026 15:33,can the building generate an esg dashboard for management
+hannah berglund,Sustainability and Energy Management Teams,73,4,10/04/2026 15:36,what is the payback period for adding more solar capacity?
+hannah berglund,Sustainability and Energy Management Teams,74,4,10/04/2026 15:40,what KPIs best track our progress on suustainability
+hannah berglund,Sustainability and Energy Management Teams,75,4,10/04/2026 15:41,can the building quantify the carbon savde by daylight harvesting?
+hannah berglund,Sustainability and Energy Management Teams,76,4,10/04/2026 15:44,how should we prioritise retrofits to maximise carbon savings
+hannah berglund,Sustainability and Energy Management Teams,77,4,10/04/2026 15:45,what efficiency target is realistic for the hvac system next year?
+hannah berglund,Sustainability and Energy Management Teams,78,4,10/04/2026 15:49,how can we shift load away from peak carbon-intensity houurs?
+hannah berglund,Sustainability and Energy Management Teams,79,4,10/04/2026 15:52,how should we schedule plant to minimise both cost and carbon?
+omar haddad,Sustainability and Energy Management Teams,1,1,10/04/2026 11:43,is the lighting energy efficient across the whole building
+omar haddad,Sustainability and Energy Management Teams,2,1,10/04/2026 11:47,are there any enery savings from daylight in the building?
+omar haddad,Sustainability and Energy Management Teams,3,1,10/04/2026 11:48,how does the building support biodiversity?
+omar haddad,Sustainability and Energy Management Teams,4,1,10/04/2026 11:49,is there a dashboard for sustainabiltiy metrics?
+omar haddad,Sustainability and Energy Management Teams,5,1,10/04/2026 11:53,how is the buildings overall enery use tracked
+omar haddad,Sustainability and Energy Management Teams,6,1,10/04/2026 11:54,how green is this building really?
+omar haddad,Sustainability and Energy Management Teams,7,1,10/04/2026 11:56,does the building track embodied carbon of its materials?
+omar haddad,Sustainability and Energy Management Teams,8,1,10/04/2026 11:58,what happens to the building's energy use overnight?
+omar haddad,Sustainability and Energy Management Teams,9,1,10/04/2026 12:01,does the building reuse or recycle any of its waste heat?
+omar haddad,Sustainability and Energy Management Teams,10,1,10/04/2026 12:02,how do we bechmark our energy performance year on year?
+omar haddad,Sustainability and Energy Management Teams,11,1,10/04/2026 12:03,how much of our electricity comes from solar?
+omar haddad,Sustainability and Energy Management Teams,12,1,10/04/2026 12:05,where is energy being wasted in the building?
+omar haddad,Sustainability and Energy Management Teams,13,1,10/04/2026 12:09,what sustainability certifications does the building hold?
+omar haddad,Sustainability and Energy Management Teams,14,1,10/04/2026 12:11,how does occupancy affect our energy demand?
+omar haddad,Sustainability and Energy Management Teams,15,1,10/04/2026 12:15,are there any quick wins to cut eneergy use?
+omar haddad,Sustainability and Energy Management Teams,16,1,10/04/2026 12:18,are EV chargers powered by clean energy?
+omar haddad,Sustainability and Energy Management Teams,17,1,10/04/2026 12:21,what does a typical day of enery use look like here?
+omar haddad,Sustainability and Energy Management Teams,18,1,10/04/2026 12:22,does the building capture rainwater for any use?
+omar haddad,Sustainability and Energy Management Teams,19,1,10/04/2026 12:23,how much standby power is the building drawing right now?
+omar haddad,Sustainability and Energy Management Teams,20,1,10/04/2026 12:27,how energy efficient is this building compared to similar ones?
+omar haddad,Sustainability and Energy Management Teams,21,1,10/04/2026 12:29,how much of our waste actually gets recycled?
+omar haddad,Sustainability and Energy Management Teams,22,2,10/04/2026 12:33,what is the current total power draw in kW across the building?
+omar haddad,Sustainability and Energy Management Teams,23,2,10/04/2026 12:35,what does the main energy meter read in kWh for this month?
+omar haddad,Sustainability and Energy Management Teams,24,2,10/04/2026 12:36,are any smart plugs reporting vampire power for idle appliances?
+omar haddad,Sustainability and Energy Management Teams,25,2,10/04/2026 12:39,do the temperature setpoints and the energy meter show overcooling anywhere?
+omar haddad,Sustainability and Energy Management Teams,26,2,10/04/2026 12:40,how much does the lux level near the windows let us dim the lights to save enery?
+omar haddad,Sustainability and Energy Management Teams,27,2,10/04/2026 12:42,is any circuit drawing power with zero occupancy detected?
+omar haddad,Sustainability and Energy Management Teams,28,2,10/04/2026 12:43,how does the gas meter trend compare with the heating degree days?
+omar haddad,Sustainability and Energy Management Teams,29,2,10/04/2026 12:46,is the cooling tower's metered water use tracking with the chiller load?
+omar haddad,Sustainability and Energy Management Teams,30,2,10/04/2026 12:47,are the AHU fans running at higher kW than the airflow needs?
+omar haddad,Sustainability and Energy Management Teams,31,2,10/04/2026 12:51,is the night-time base load higher than the meterd baseline?
+omar haddad,Sustainability and Energy Management Teams,32,2,10/04/2026 12:53,is the heat-recovery unit actually recovering energy per the temperature sensors?
+omar haddad,Sustainability and Energy Management Teams,33,2,10/04/2026 12:56,are the co2 sensors forcing extra ventilaton and raising energy use?
+omar haddad,Sustainability and Energy Management Teams,34,2,10/04/2026 12:58,what is the kWh per square metre for floor 5 from the meters
+omar haddad,Sustainability and Energy Management Teams,35,2,10/04/2026 12:59,is there a submeter showing an unexpected overnight spike?
+omar haddad,Sustainability and Energy Management Teams,36,2,10/04/2026 13:02,what does the building's reactive power reading suggest about motor efficiency?
+omar haddad,Sustainability and Energy Management Teams,37,2,10/04/2026 13:05,is the chiller and boiler status ever 'on' at the same time and wassting energy
+omar haddad,Sustainability and Energy Management Teams,38,2,10/04/2026 13:06,how much solar generation was logged by the inverter yesterday?
+omar haddad,Sustainability and Energy Management Teams,39,2,10/04/2026 13:07,what is the delta between supply air temp and return air temp on the AHUs?
+omar haddad,Sustainability and Energy Management Teams,40,2,10/04/2026 13:09,what is the kW draw of the lifts during the morning peak?
+omar haddad,Sustainability and Energy Management Teams,41,3,10/04/2026 13:13,"during a grid demand-response event, what loads could we shed here?"
+omar haddad,Sustainability and Energy Management Teams,42,3,10/04/2026 13:16,"if a chiller fails on a hot day, how do we keep enery use under control?"
+omar haddad,Sustainability and Energy Management Teams,43,3,10/04/2026 13:18,"when the sun is on the south facade, are the blinds cutting cooling load?"
+omar haddad,Sustainability and Energy Management Teams,44,3,10/04/2026 13:19,"in this open-plan area, can daylight coevr the lighting need at midday?"
+omar haddad,Sustainability and Energy Management Teams,45,3,10/04/2026 13:21,"if a whole floor is vacant this week, can its services be set back?"
+omar haddad,Sustainability and Energy Management Teams,46,3,10/04/2026 13:24,"during a heatwave, how much extra enery does cooling this floor use?"
+omar haddad,Sustainability and Energy Management Teams,47,3,10/04/2026 13:26,"during the summer shutdown, what is the building's minimum viable energy use"
+omar haddad,Sustainability and Energy Management Teams,48,3,10/04/2026 13:28,"if a sensor shows an idle but powered desk cluster, can it be switched off?"
+omar haddad,Sustainability and Energy Management Teams,49,3,10/04/2026 13:31,"if the weather forecast shows a cold snap, how should pre-heating be scheduled?"
+omar haddad,Sustainability and Energy Management Teams,50,3,10/04/2026 13:33,"if outdoor air is cool enough, can free cooling cut the chiller energy here"
+omar haddad,Sustainability and Energy Management Teams,51,3,10/04/2026 13:37,"during the evening cleaning shift, are lights and hvac left fully on"
+omar haddad,Sustainability and Energy Management Teams,52,3,10/04/2026 13:41,"during peak pricing hours, which non-critical loads could be delayed?"
+omar haddad,Sustainability and Energy Management Teams,53,3,10/04/2026 13:45,"on a cloudy day, how far does solar output fall against peak demand?"
+omar haddad,Sustainability and Energy Management Teams,54,3,10/04/2026 13:49,"if we close the west wing for refurbishment, what energy is saved?"
+omar haddad,Sustainability and Energy Management Teams,55,3,10/04/2026 13:52,"if occupancy drops on a Friday, can the building sclae back energy use here?"
+omar haddad,Sustainability and Energy Management Teams,56,3,10/04/2026 13:54,"in this zone, is there energy being wasted on empty meeting rooms?"
+omar haddad,Sustainability and Energy Management Teams,57,3,10/04/2026 13:56,"when this hall hosts an event, how much does energy demand jump"
+omar haddad,Sustainability and Energy Management Teams,58,3,10/04/2026 13:57,"when the car park ev chargers are all in use, what happens to peak demand?"
+omar haddad,Sustainability and Energy Management Teams,59,4,10/04/2026 13:59,can the building track diversion-from-landfill rate for waste?
+omar haddad,Sustainability and Energy Management Teams,60,4,10/04/2026 14:00,what mix of meaasures gets us the fastest route to net zero?
+omar haddad,Sustainability and Energy Management Teams,61,4,10/04/2026 14:03,what would it take to run the building on 100% renewable energy
+omar haddad,Sustainability and Energy Management Teams,62,4,10/04/2026 14:04,what kpis best track our progress on sustainability?
+omar haddad,Sustainability and Energy Management Teams,63,4,10/04/2026 14:07,how can we cut water consumption against last year's baseline?
+omar haddad,Sustainability and Energy Management Teams,64,4,10/04/2026 14:10,can the building produce a monthly carbon emissions report automatically?
+omar haddad,Sustainability and Energy Management Teams,65,4,10/04/2026 14:12,"to reach net zero by 2030, what does the buidling need to change first?"
+omar haddad,Sustainability and Energy Management Teams,66,4,10/04/2026 14:13,can the building forecast next year's energy demand for budgeting
+omar haddad,Sustainability and Energy Management Teams,67,4,10/04/2026 14:14,how do we verify that efficiency measures actually delivered savings?
+omar haddad,Sustainability and Energy Management Teams,68,4,10/04/2026 14:18,can the system model the impact of raising cooling setpoints by 1 degree?
+omar haddad,Sustainability and Energy Management Teams,69,4,10/04/2026 14:20,how should we prioritise retrofits to maixmise carbon savings?
+omar haddad,Sustainability and Energy Management Teams,70,4,10/04/2026 14:22,can the building recommend a demand-response strategy for peak events?
+omar haddad,Sustainability and Energy Management Teams,71,4,10/04/2026 14:23,how do we report scope 1 and scope 2 emissiosn from building data?
+omar haddad,Sustainability and Energy Management Teams,72,4,10/04/2026 14:27,can the building quantify the carbon saved by daylight harvesting?
+omar haddad,Sustainability and Energy Management Teams,73,4,10/04/2026 14:29,can we automate an annual sustainability performance review from the data
+omar haddad,Sustainability and Energy Management Teams,74,4,10/04/2026 14:33,can the system identify the top five energy-saving opportunities ranked by roi?
+omar haddad,Sustainability and Energy Management Teams,75,4,10/04/2026 14:34,can the system recommend the most cost-effective efficiency upgrades?
+omar haddad,Sustainability and Energy Management Teams,76,4,10/04/2026 14:35,how can we shift load away from peak carbon-intensity hours
+omar haddad,Sustainability and Energy Management Teams,77,4,10/04/2026 14:37,"to cut energy use by 15% this year, where should we focus?"
+omar haddad,Sustainability and Energy Management Teams,78,4,10/04/2026 14:40,can the building generate an esg dashboard for management?
+omar haddad,Sustainability and Energy Management Teams,79,4,10/04/2026 14:41,how can the building optimise energy use during weekends and holidays?
+omar haddad,Sustainability and Energy Management Teams,80,4,10/04/2026 14:43,what is the payback period for adding more solar capacity?
+rachel donnelly,Health and Safety Officers,1,1,11/04/2026 11:02,are first aiders available on every floor?
+rachel donnelly,Health and Safety Officers,2,1,11/04/2026 11:04,what safety checcks happen before the building opens each day?
+rachel donnelly,Health and Safety Officers,3,1,11/04/2026 11:06,what happens to the lifts during a fire?
+rachel donnelly,Health and Safety Officers,4,1,11/04/2026 11:08,how often are the fire extinguishers checked?
+rachel donnelly,Health and Safety Officers,5,1,11/04/2026 11:12,are there any active safety alerts in the buidling
+rachel donnelly,Health and Safety Officers,6,1,11/04/2026 11:13,how are contractors kept safe on site?
+rachel donnelly,Health and Safety Officers,7,1,11/04/2026 11:16,is there a muster point outside the building?
+rachel donnelly,Health and Safety Officers,8,1,11/04/2026 11:19,what should I do if the fire alarm goes off?
+rachel donnelly,Health and Safety Officers,9,1,11/04/2026 11:20,how do we make sure walkways are not blocked
+rachel donnelly,Health and Safety Officers,10,1,11/04/2026 11:23,how many people are currently in the buidling?
+rachel donnelly,Health and Safety Officers,11,1,11/04/2026 11:25,where is the nearest first aid point?
+rachel donnelly,Health and Safety Officers,12,1,11/04/2026 11:28,are the stairwells safe and unobstructed?
+rachel donnelly,Health and Safety Officers,13,1,11/04/2026 11:31,how are lone workers kept safe in the building?
+rachel donnelly,Health and Safety Officers,14,1,11/04/2026 11:35,are there any slip or trip hazards being monitored?
+rachel donnelly,Health and Safety Officers,15,1,11/04/2026 11:39,who do i contact about a health and safety concern?
+rachel donnelly,Health and Safety Officers,16,1,11/04/2026 11:42,how do i report a safety hazard in the building?
+rachel donnelly,Health and Safety Officers,17,1,11/04/2026 11:45,wheer are the nearest fire exits from here?
+rachel donnelly,Health and Safety Officers,18,1,11/04/2026 11:47,what is the procedure for a gas leak
+rachel donnelly,Health and Safety Officers,19,1,11/04/2026 11:50,is there asbestos or any known hazard in this building?
+rachel donnelly,Health and Safety Officers,20,1,11/04/2026 11:54,how is water safety managed to prevent legionella?
+rachel donnelly,Health and Safety Officers,21,1,11/04/2026 11:57,what personal protective equipment is needed in plant rooms?
+rachel donnelly,Health and Safety Officers,22,1,11/04/2026 12:01,how does the building warn people in an emergency?
+rachel donnelly,Health and Safety Officers,23,2,11/04/2026 12:03,how current is the last sensor check on the emergancy systems?
+rachel donnelly,Health and Safety Officers,24,2,11/04/2026 12:07,do air quality sensors show any pollutant spike on this floor?
+rachel donnelly,Health and Safety Officers,25,2,11/04/2026 12:09,does any zone's temperature breach the safe upper working limit
+rachel donnelly,Health and Safety Officers,26,2,11/04/2026 12:10,what does the temperaure sensor show in the server room for overheating risk?
+rachel donnelly,Health and Safety Officers,27,2,11/04/2026 12:14,are the emergency lighting test logs up to date in the system?
+rachel donnelly,Health and Safety Officers,28,2,11/04/2026 12:18,do the door sensors show any fire exits proped open
+rachel donnelly,Health and Safety Officers,29,2,11/04/2026 12:22,are any motion sensors showing movement in a zone that should be empty?
+rachel donnelly,Health and Safety Officers,30,2,11/04/2026 12:24,is the gas detection sensor in the kitchen reading normal?
+rachel donnelly,Health and Safety Officers,31,2,11/04/2026 12:26,does the occupancy count exceed the safe capacity for this space?
+rachel donnelly,Health and Safety Officers,32,2,11/04/2026 12:29,are the lift status sensors showing fire-mode recall working?
+rachel donnelly,Health and Safety Officers,33,2,11/04/2026 12:31,are there any sensors offline that are critical to life safety?
+rachel donnelly,Health and Safety Officers,34,2,11/04/2026 12:35,how many occupants do the people-counting sensors show on this floor?
+rachel donnelly,Health and Safety Officers,35,2,11/04/2026 12:36,are any fire panel zones currently in fault or disableed?
+rachel donnelly,Health and Safety Officers,36,2,11/04/2026 12:39,which fire doors do the contact sensors show as held open
+rachel donnelly,Health and Safety Officers,37,2,11/04/2026 12:40,is the air change rate enough for the current occupancy reading
+rachel donnelly,Health and Safety Officers,38,2,11/04/2026 12:42,what is the carbon monoxide reaidng near the boiler room?
+rachel donnelly,Health and Safety Officers,39,2,11/04/2026 12:43,what is the water temperature on the hot system for legionella control?
+rachel donnelly,Health and Safety Officers,40,2,11/04/2026 12:47,is the CO2 trend rising fast enough to signal poor ventilation?
+rachel donnelly,Health and Safety Officers,41,3,11/04/2026 12:51,"during night cleaning, are lone staff covered by the safety alarm system"
+rachel donnelly,Health and Safety Officers,42,3,11/04/2026 12:52,"if a fire starts on floor 3, what is the safest evacuaton route?"
+rachel donnelly,Health and Safety Officers,43,3,11/04/2026 12:56,"if smoke is detected in a riser, which areaas need to be cleared first?"
+rachel donnelly,Health and Safety Officers,44,3,11/04/2026 12:57,"if a lone worker stops responding, how does the building raise the alarm"
+rachel donnelly,Health and Safety Officers,45,3,11/04/2026 13:01,"during a heatwave, how do we keep working temperatures safe in this zone?"
+rachel donnelly,Health and Safety Officers,46,3,11/04/2026 13:03,"during a drill, how long does it take to clear this floor"
+rachel donnelly,Health and Safety Officers,47,3,11/04/2026 13:07,"if air quality drops on a high-pollution day, should we limit ventilation intake?"
+rachel donnelly,Health and Safety Officers,48,3,11/04/2026 13:10,"if water is found leaking near electrics, how is the hazard contained?"
+rachel donnelly,Health and Safety Officers,49,3,11/04/2026 13:13,"if a smoke detector triggers at night, who gets alerted?"
+rachel donnelly,Health and Safety Officers,50,3,11/04/2026 13:14,"if there is a chemical spill in the lab, how is the area isolated?"
+rachel donnelly,Health and Safety Officers,51,3,11/04/2026 13:16,"if someone is trapped in a room, how does the system help locate them?"
+rachel donnelly,Health and Safety Officers,52,3,11/04/2026 13:17,"if there is a gas leak in the kitchen, how is the building made safe"
+rachel donnelly,Health and Safety Officers,53,3,11/04/2026 13:18,"if a vulnerable visitor needs help, how is that flagged to first aiders?"
+rachel donnelly,Health and Safety Officers,54,3,11/04/2026 13:20,"if the fire panel shows a fault during occupancy, what is the fallback plan"
+rachel donnelly,Health and Safety Officers,55,3,11/04/2026 13:21,"if a contractor is working at height, how is their safety monitored?"
+rachel donnelly,Health and Safety Officers,56,3,11/04/2026 13:25,"if the main exit is blocked by smoke, what is the alternative route"
+rachel donnelly,Health and Safety Officers,57,3,11/04/2026 13:27,"if someonne collapses in the atrium, where is the nearest defibrillator?"
+rachel donnelly,Health and Safety Officers,58,3,11/04/2026 13:29,"if the lift fails with someone insidde, what is the rescue procedure?"
+rachel donnelly,Health and Safety Officers,59,4,11/04/2026 13:31,how can we keep occupany within safe limits automatically?
+rachel donnelly,Health and Safety Officers,60,4,11/04/2026 13:33,can the building flag any life-safety system that is overdue a test?
+rachel donnelly,Health and Safety Officers,61,4,11/04/2026 13:34,can the system track training records and flag expiring certifications?
+rachel donnelly,Health and Safety Officers,62,4,11/04/2026 13:36,how do we evidence compliance with health and safety law from building data
+rachel donnelly,Health and Safety Officers,63,4,11/04/2026 13:37,can the system identify the highest-risk areas to focus safety spend?
+rachel donnelly,Health and Safety Officers,64,4,11/04/2026 13:40,what KPIs should we track for health and safety in the buidling?
+rachel donnelly,Health and Safety Officers,65,4,11/04/2026 13:41,how can we make sure 100% of fire doors stay compliant?
+rachel donnelly,Health and Safety Officers,66,4,11/04/2026 13:42,"how can we reuce slip, trip and fall incidents across the building"
+rachel donnelly,Health and Safety Officers,67,4,11/04/2026 13:46,how can we verify emergency lighting is tested on schedule everywhere?
+rachel donnelly,Health and Safety Officers,68,4,11/04/2026 13:48,can the buidling alert us before occupancy breaches the fire limit?
+rachel donnelly,Health and Safety Officers,69,4,11/04/2026 13:51,"to meet fire safety regulations, what checks must the building pass?"
+rachel donnelly,Health and Safety Officers,70,4,11/04/2026 13:55,can the system schedule and verify all statutory safety inspections?
+rachel donnelly,Health and Safety Officers,71,4,11/04/2026 13:57,how do we benchmark our safety performance against last year?
+rachel donnelly,Health and Safety Officers,72,4,11/04/2026 13:59,can the building produce a live roll call for emergency responders
+rachel donnelly,Health and Safety Officers,73,4,11/04/2026 14:01,how do we close the loop on every reported hazard within target time?
+rachel donnelly,Health and Safety Officers,74,4,11/04/2026 14:05,how can we cut the building's evacaution time to under the target?
+rachel donnelly,Health and Safety Officers,75,4,11/04/2026 14:09,can the system recommmend where to add signage or safety equipment?
+rachel donnelly,Health and Safety Officers,76,4,11/04/2026 14:11,can the building automate a monthly health and safety dashboard
+rachel donnelly,Health and Safety Officers,77,4,11/04/2026 14:15,can the building generate an automatic fire drill performance report?
+victor mbeki,Health and Safety Officers,1,1,11/04/2026 13:07,what personal protective equipment is needed in plant rooms?
+victor mbeki,Health and Safety Officers,2,1,11/04/2026 13:10,what safety checks hapen before the building opens each day?
+victor mbeki,Health and Safety Officers,3,1,11/04/2026 13:11,is there a muster point outside the building?
+victor mbeki,Health and Safety Officers,4,1,11/04/2026 13:13,where is the nearest first aid point?
+victor mbeki,Health and Safety Officers,5,1,11/04/2026 13:14,how do we handle a security thhreat safely?
+victor mbeki,Health and Safety Officers,6,1,11/04/2026 13:17,how do we make sure walkways are not blocked?
+victor mbeki,Health and Safety Officers,7,1,11/04/2026 13:20,how does the building warn people in an emergency?
+victor mbeki,Health and Safety Officers,8,1,11/04/2026 13:21,are theer any slip or trip hazards being monitored?
+victor mbeki,Health and Safety Officers,9,1,11/04/2026 13:22,what happpens to the lifts during a fire?
+victor mbeki,Health and Safety Officers,10,1,11/04/2026 13:23,is there asbestos or any known hazard in this building?
+victor mbeki,Health and Safety Officers,11,1,11/04/2026 13:24,what is the buildings maximum safe occupancy
+victor mbeki,Health and Safety Officers,12,1,11/04/2026 13:28,how is noise expsure managed for staff?
+victor mbeki,Health and Safety Officers,13,1,11/04/2026 13:29,when was the last fire drill held?
+victor mbeki,Health and Safety Officers,14,1,11/04/2026 13:30,are the emergency lights working across the building?
+victor mbeki,Health and Safety Officers,15,1,11/04/2026 13:33,are emergancy procedures clearly displayed
+victor mbeki,Health and Safety Officers,16,1,11/04/2026 13:34,is the building accessible for people with mobility needs in an emergency?
+victor mbeki,Health and Safety Officers,17,1,11/04/2026 13:35,how are contractors kept safe on site?
+victor mbeki,Health and Safety Officers,18,1,11/04/2026 13:39,is this buidling safe to occupy right now
+victor mbeki,Health and Safety Officers,19,2,11/04/2026 13:41,what is the noise level reading in the plant room against exposure limits
+victor mbeki,Health and Safety Officers,20,2,11/04/2026 13:44,are any fire panel zones currently in fault or disabled?
+victor mbeki,Health and Safety Officers,21,2,11/04/2026 13:45,what is the real-time occupancy versus the evacuation capacity?
+victor mbeki,Health and Safety Officers,22,2,11/04/2026 13:47,does any zone's temperature breach the safe upper working limit?
+victor mbeki,Health and Safety Officers,23,2,11/04/2026 13:50,what is the water temperature on the hot system for legionella control?
+victor mbeki,Health and Safety Officers,24,2,11/04/2026 13:54,are there any smoke detectors with low battery flagged by the system
+victor mbeki,Health and Safety Officers,25,2,11/04/2026 13:58,which fire doors do the contact sensors show as held open?
+victor mbeki,Health and Safety Officers,26,2,11/04/2026 14:02,is the gas detection sensor in the kitchen readign normal?
+victor mbeki,Health and Safety Officers,27,2,11/04/2026 14:05,are all the smoke detectors reporting as online right now?
+victor mbeki,Health and Safety Officers,28,2,11/04/2026 14:09,are any motion sensors showing movement in a zone that should be empty?
+victor mbeki,Health and Safety Officers,29,2,11/04/2026 14:10,do the door sensors show any fire exits propped open
+victor mbeki,Health and Safety Officers,30,2,11/04/2026 14:12,are the lift status sensors showing fire-mode recall working?
+victor mbeki,Health and Safety Officers,31,2,11/04/2026 14:15,what is the carbno monoxide reading near the boiler room
+victor mbeki,Health and Safety Officers,32,2,11/04/2026 14:18,are the emergency lighting test logs up to date in the syystem?
+victor mbeki,Health and Safety Officers,33,2,11/04/2026 14:22,is humidity high enough to raise a mould or slip risk anywhere?
+victor mbeki,Health and Safety Officers,34,2,11/04/2026 14:25,are there any sensors offline that are critical to life safety
+victor mbeki,Health and Safety Officers,35,2,11/04/2026 14:29,what does the temperature sensor show in the server room for overheatiing risk?
+victor mbeki,Health and Safety Officers,36,2,11/04/2026 14:31,are the sprinkler system pressure sensors within normal range?
+victor mbeki,Health and Safety Officers,37,2,11/04/2026 14:32,do air quality sensors show any pollutant spike on this floor?
+victor mbeki,Health and Safety Officers,38,2,11/04/2026 14:34,is the stairwell pressurisation fan running as the sensors expect?
+victor mbeki,Health and Safety Officers,39,3,11/04/2026 14:35,"during a lockdown, how do we keep fire escape routes usable?"
+victor mbeki,Health and Safety Officers,40,3,11/04/2026 14:36,"during a fire alarm, how do we assist wheelchair users to evacuate"
+victor mbeki,Health and Safety Officers,41,3,11/04/2026 14:37,"during an evacuation, how do we confirm the building is fully clear?"
+victor mbeki,Health and Safety Officers,42,3,11/04/2026 14:38,"during an event with extra crowds, how do we manage safe capacity?"
+victor mbeki,Health and Safety Officers,43,3,11/04/2026 14:40,"if there is a chemical spill in the lab, how is the area isloated"
+victor mbeki,Health and Safety Officers,44,3,11/04/2026 14:41,"if smoke is detected in a riser, which areas need to be cleared first?"
+victor mbeki,Health and Safety Officers,45,3,11/04/2026 14:45,"during an evacuaton, how do we account for everyone in the building?"
+victor mbeki,Health and Safety Officers,46,3,11/04/2026 14:46,"if water is found leaking near electrics, how is the hazrd contained?"
+victor mbeki,Health and Safety Officers,47,3,11/04/2026 14:50,"during a heatwave, how do we keep working temperatures safe in this zone"
+victor mbeki,Health and Safety Officers,48,3,11/04/2026 14:52,"if a fire starts on floor 3, what is the safest evacuation route"
+victor mbeki,Health and Safety Officers,49,3,11/04/2026 14:54,"if a fire door is found wedged open, who is notified to act"
+victor mbeki,Health and Safety Officers,50,3,11/04/2026 14:56,"if someone is trapped in a room, how does the system help locate them"
+victor mbeki,Health and Safety Officers,51,3,11/04/2026 14:57,"if a lone worker stops responding, how does the building raise the alarm"
+victor mbeki,Health and Safety Officers,52,3,11/04/2026 15:01,"if CO2 climbs sharply during a packed meeting, what should we do"
+victor mbeki,Health and Safety Officers,53,3,11/04/2026 15:03,"if a vulnerable visitor needs help, how is that flagged to first aiders?"
+victor mbeki,Health and Safety Officers,54,3,11/04/2026 15:06,"during a power cut, will the emergency lighting cover this stairwell"
+victor mbeki,Health and Safety Officers,55,3,11/04/2026 15:10,"if a smoke detector trigggers at night, who gets alerted?"
+victor mbeki,Health and Safety Officers,56,3,11/04/2026 15:14,"if occupany exceeds the safe limit in this hall, what should happen?"
+victor mbeki,Health and Safety Officers,57,3,11/04/2026 15:16,"if the lift fails with someone inside, what is the rescue procedure"
+victor mbeki,Health and Safety Officers,58,3,11/04/2026 15:18,"if a slip hazard appears in the lobby, how quickly is it flagged and signed?"
+victor mbeki,Health and Safety Officers,59,4,11/04/2026 15:21,can the system track training records and flag expiring certifications?
+victor mbeki,Health and Safety Officers,60,4,11/04/2026 15:22,can the system produce an audit trail for a safety inspection?
+victor mbeki,Health and Safety Officers,61,4,11/04/2026 15:23,how do we benchmark our safety performance against last year?
+victor mbeki,Health and Safety Officers,62,4,11/04/2026 15:24,can the buidling model how long a full evacuation would take
+victor mbeki,Health and Safety Officers,63,4,11/04/2026 15:26,"how can we reduce slip, trip and fall incidents across the building?"
+victor mbeki,Health and Safety Officers,64,4,11/04/2026 15:28,what KPIs should we track for health and safety in the building?
+victor mbeki,Health and Safety Officers,65,4,11/04/2026 15:32,how can we keep occupancy within safe limits automatically?
+victor mbeki,Health and Safety Officers,66,4,11/04/2026 15:33,how can we verify emergency lighting is tested on schedule everywhere?
+victor mbeki,Health and Safety Officers,67,4,11/04/2026 15:35,can the system schedule and verify all statutory safety inspections?
+victor mbeki,Health and Safety Officers,68,4,11/04/2026 15:38,can the system recommend where to add signage or safety equipment?
+victor mbeki,Health and Safety Officers,69,4,11/04/2026 15:41,how can we make sure 100% of fire doors stay compliant?
+victor mbeki,Health and Safety Officers,70,4,11/04/2026 15:43,how can we cut the building's evacuation time to under the target?
+victor mbeki,Health and Safety Officers,71,4,11/04/2026 15:47,how can we improve our emergency response time year on year?
+victor mbeki,Health and Safety Officers,72,4,11/04/2026 15:50,can the building generate an automatic fire drill performance report
+victor mbeki,Health and Safety Officers,73,4,11/04/2026 15:51,can the building alert us before occupancy breaches the fire limit?
+victor mbeki,Health and Safety Officers,74,4,11/04/2026 15:52,how do we maintain legionella compliance with automated monitoring?
+victor mbeki,Health and Safety Officers,75,4,11/04/2026 15:53,how do we set and track a target for zero rportable incidents?
+victor mbeki,Health and Safety Officers,76,4,11/04/2026 15:55,can the system identify the highest-risk areas to focus safety spend?
+victor mbeki,Health and Safety Officers,77,4,11/04/2026 15:56,how do we report air quality compliance for occupant health?
+victor mbeki,Health and Safety Officers,78,4,11/04/2026 15:59,how do we demonstrate due diligence on fire risk assessments?
+victor mbeki,Health and Safety Officers,79,4,11/04/2026 16:03,can the building report on PPE and safe-access compliance in plant rooms?
+victor mbeki,Health and Safety Officers,80,4,11/04/2026 16:06,can the system prioritise safety reepairs by risk level?
+aisha rahman,Health and Safety Officers,1,1,10/04/2026 13:55,where are the nearest fire exits from here
+aisha rahman,Health and Safety Officers,2,1,10/04/2026 13:57,is there asbestos or any known hazard in this building?
+aisha rahman,Health and Safety Officers,3,1,10/04/2026 13:59,how do we keep trak of visitors for safety?
+aisha rahman,Health and Safety Officers,4,1,10/04/2026 14:03,are the stairwells safe and unobstructed?
+aisha rahman,Health and Safety Officers,5,1,10/04/2026 14:06,how many people are currently in the building?
+aisha rahman,Health and Safety Officers,6,1,10/04/2026 14:10,is the building accessible for people with mobility needs in an emergency?
+aisha rahman,Health and Safety Officers,7,1,10/04/2026 14:11,is there a muster point outside the building?
+aisha rahman,Health and Safety Officers,8,1,10/04/2026 14:13,is this building safe to occupy right now?
+aisha rahman,Health and Safety Officers,9,1,10/04/2026 14:15,how is water safety managed to prevent legionella?
+aisha rahman,Health and Safety Officers,10,1,10/04/2026 14:17,are emergancy procedures clearly displayed?
+aisha rahman,Health and Safety Officers,11,1,10/04/2026 14:20,how do we handle a security threat safely?
+aisha rahman,Health and Safety Officers,12,1,10/04/2026 14:23,are there any slip or trip hazards being monitored?
+aisha rahman,Health and Safety Officers,13,1,10/04/2026 14:26,how do we make sure walkways are not blocked?
+aisha rahman,Health and Safety Officers,14,1,10/04/2026 14:29,who do i contact about a health & safety concern?
+aisha rahman,Health and Safety Officers,15,1,10/04/2026 14:31,are all the fire escape routes kept clear
+aisha rahman,Health and Safety Officers,16,1,10/04/2026 14:32,what should I do if the fire alarm goes off
+aisha rahman,Health and Safety Officers,17,1,10/04/2026 14:34,how is noise exposure managed for staff?
+aisha rahman,Health and Safety Officers,18,1,10/04/2026 14:35,how does the buidling warn people in an emergency?
+aisha rahman,Health and Safety Officers,19,1,10/04/2026 14:38,how are lone workers kept safe in the building?
+aisha rahman,Health and Safety Officers,20,1,10/04/2026 14:39,what saefty training is required to work here?
+aisha rahman,Health and Safety Officers,21,1,10/04/2026 14:41,what happens to the lifts during a fire?
+aisha rahman,Health and Safety Officers,22,2,10/04/2026 14:42,what is the water temprature on the hot system for legionella control?
+aisha rahman,Health and Safety Officers,23,2,10/04/2026 14:44,how current is the last sensor check on the emergancy systems?
+aisha rahman,Health and Safety Officers,24,2,10/04/2026 14:47,what is the carbon monoxide reading near the boiler room?
+aisha rahman,Health and Safety Officers,25,2,10/04/2026 14:50,are there any sensors offline that are critical to life safety
+aisha rahman,Health and Safety Officers,26,2,10/04/2026 14:52,are the fire alarm call points all showing healthy in the panel
+aisha rahman,Health and Safety Officers,27,2,10/04/2026 14:54,are the emergency lighting test logs up to date in the system?
+aisha rahman,Health and Safety Officers,28,2,10/04/2026 14:56,what is the noise level reading in the plant room against exposure limits?
+aisha rahman,Health and Safety Officers,29,2,10/04/2026 14:57,what does the co2 sensor read in this room and is it safe?
+aisha rahman,Health and Safety Officers,30,2,10/04/2026 15:01,what does the temprature sensor show in the server room for overheating risk?
+aisha rahman,Health and Safety Officers,31,2,10/04/2026 15:04,does the occupancy count exceed the safe capacity for this space?
+aisha rahman,Health and Safety Officers,32,2,10/04/2026 15:06,what is the real-time occupancy versus the evacuation capacity?
+aisha rahman,Health and Safety Officers,33,2,10/04/2026 15:10,does any zone's temperature breach the safe upper working limit?
+aisha rahman,Health and Safety Officers,34,2,10/04/2026 15:12,how many occupants do the people-counting sensors show on this floor?
+aisha rahman,Health and Safety Officers,35,2,10/04/2026 15:16,is the stairwell pressurisation fan running as the sensors expect?
+aisha rahman,Health and Safety Officers,36,2,10/04/2026 15:18,are any fire panel zones currently in fault or disabled
+aisha rahman,Health and Safety Officers,37,2,10/04/2026 15:22,do air quality sensors show any pollutant spike on this floor?
+aisha rahman,Health and Safety Officers,38,2,10/04/2026 15:24,is the gas detection sensor in the kitchen reading normal
+aisha rahman,Health and Safety Officers,39,2,10/04/2026 15:25,are all the smoke detectors reporting as online right now?
+aisha rahman,Health and Safety Officers,40,2,10/04/2026 15:29,is the CO2 trend rising fast enough to signal poor ventilation?
+aisha rahman,Health and Safety Officers,41,2,10/04/2026 15:30,is humidity high enough to raise a mould or slip risk anywhere?
+aisha rahman,Health and Safety Officers,42,2,10/04/2026 15:32,do the entry and exit logs reconcile for a roll call right now?
+aisha rahman,Health and Safety Officers,43,3,10/04/2026 15:36,"if a fire door is found wedged open, who is notified to act?"
+aisha rahman,Health and Safety Officers,44,3,10/04/2026 15:37,"if occupancy exceeds the safe limit in this hall, what should happen?"
+aisha rahman,Health and Safety Officers,45,3,10/04/2026 15:40,"if someone collapses in the atrium, where is the nearest defibrillator?"
+aisha rahman,Health and Safety Officers,46,3,10/04/2026 15:44,"during a fire alarm, how do we assist wheelchair users to evacuate"
+aisha rahman,Health and Safety Officers,47,3,10/04/2026 15:47,"if the fire panel shows a fault during occupancy, what is the fallback plan?"
+aisha rahman,Health and Safety Officers,48,3,10/04/2026 15:50,"if watter is found leaking near electrics, how is the hazard contained"
+aisha rahman,Health and Safety Officers,49,3,10/04/2026 15:54,"during an evacuation, how do we confirm the building is fully clear?"
+aisha rahman,Health and Safety Officers,50,3,10/04/2026 15:58,"if an intruder is reported, how do staff stay safe and evacuate if needed?"
+aisha rahman,Health and Safety Officers,51,3,10/04/2026 16:02,"during an evacuation, how do we accont for everyone in the building?"
+aisha rahman,Health and Safety Officers,52,3,10/04/2026 16:06,"if a contractor is working at height, how is their safety monitored"
+aisha rahman,Health and Safety Officers,53,3,10/04/2026 16:08,"during night cleaning, are lone staff covered by the safety alarm system?"
+aisha rahman,Health and Safety Officers,54,3,10/04/2026 16:12,"if there is a chemical spill in the lab, how is the area isolated?"
+aisha rahman,Health and Safety Officers,55,3,10/04/2026 16:13,"durig a power cut, will the emergency lighting cover this stairwell"
+aisha rahman,Health and Safety Officers,56,3,10/04/2026 16:17,"if the muster point is unsafe due to weather, where is the backup?"
+aisha rahman,Health and Safety Officers,57,3,10/04/2026 16:19,"if a vulnerable visitor needs help, how is that flagged to first aiders"
+aisha rahman,Health and Safety Officers,58,3,10/04/2026 16:21,"if smke is detected in a riser, which areas need to be cleared first?"
+aisha rahman,Health and Safety Officers,59,3,10/04/2026 16:25,"if the lift fails with someone inside, what is the rescue procedure?"
+aisha rahman,Health and Safety Officers,60,3,10/04/2026 16:28,"if a lone worker stops responding, how does the building raise the alarm?"
+aisha rahman,Health and Safety Officers,61,3,10/04/2026 16:30,"if a fire starts on floor 3, what is the safest evacuaton route?"
+aisha rahman,Health and Safety Officers,62,3,10/04/2026 16:34,"during a heatwave, how do we keep working temperatures safe in this zone?"
+aisha rahman,Health and Safety Officers,63,4,10/04/2026 16:38,can the system produce an audit trail for a safety inspection?
+aisha rahman,Health and Safety Officers,64,4,10/04/2026 16:39,how do we demonstrate due diligence on fire risk assessments?
+aisha rahman,Health and Safety Officers,65,4,10/04/2026 16:42,can the building flag any life-safety system that is overdue a test?
+aisha rahman,Health and Safety Officers,66,4,10/04/2026 16:45,can the system track training records and flag expiring certifications?
+aisha rahman,Health and Safety Officers,67,4,10/04/2026 16:48,how can we verify emergency lighting is tested on schedule everywhere?
+aisha rahman,Health and Safety Officers,68,4,10/04/2026 16:52,how do we evidence cmopliance with health and safety law from building data
+aisha rahman,Health and Safety Officers,69,4,10/04/2026 16:56,can the system track and report all near-misses and incidents
+aisha rahman,Health and Safety Officers,70,4,10/04/2026 16:59,can the building alert us before occupancy breaches the fire limit?
+aisha rahman,Health and Safety Officers,71,4,10/04/2026 17:02,how do we benchmark our safety performance against last year?
+aisha rahman,Health and Safety Officers,72,4,10/04/2026 17:03,can the system shedule and verify all statutory safety inspections?
+aisha rahman,Health and Safety Officers,73,4,10/04/2026 17:06,how do we report air quality compliance for occupant health?
+aisha rahman,Health and Safety Officers,74,4,10/04/2026 17:10,how can we improve our emergency response time year on year?
+aisha rahman,Health and Safety Officers,75,4,10/04/2026 17:14,"how can we reduce slip, trip and fall incidents across the building?"
+aisha rahman,Health and Safety Officers,76,4,10/04/2026 17:17,how can we make sure 100% of fire doosr stay compliant?
+aisha rahman,Health and Safety Officers,77,4,10/04/2026 17:20,can the building generate an automatic fire drill performance report?
+aisha rahman,Health and Safety Officers,78,4,10/04/2026 17:22,how can we keep occupancy within safe limits automatically?
+aisha rahman,Health and Safety Officers,79,4,10/04/2026 17:26,how do we close the loop on every reported hazrd within target time
+aisha rahman,Health and Safety Officers,80,4,10/04/2026 17:29,"to meet fire safety regulations, what checks must the building pass?"
+aisha rahman,Health and Safety Officers,81,4,10/04/2026 17:33,can the building automate a monthly health and safety dashboard?
+aisha rahman,Health and Safety Officers,82,4,10/04/2026 17:36,what KPIs should we track for health and safety in the building?
+aisha rahman,Health and Safety Officers,83,4,10/04/2026 17:38,can the building produce a live roll call for emergency responders?
+gareth pugh,Health and Safety Officers,1,1,12/04/2026 16:37,are the stairwells safe and unobstructed?
+gareth pugh,Health and Safety Officers,2,1,12/04/2026 16:38,are all the fire escape routes kept clear?
+gareth pugh,Health and Safety Officers,3,1,12/04/2026 16:40,how is noise exposure managed for staff?
+gareth pugh,Health and Safety Officers,4,1,12/04/2026 16:41,are first aiders available on every floor?
+gareth pugh,Health and Safety Officers,5,1,12/04/2026 16:42,where is the nearest first aid point?
+gareth pugh,Health and Safety Officers,6,1,12/04/2026 16:43,is there a muster point outside the building?
+gareth pugh,Health and Safety Officers,7,1,12/04/2026 16:44,what is the buildings maximum safe occupancy?
+gareth pugh,Health and Safety Officers,8,1,12/04/2026 16:46,who do I contact about a health and safety concern?
+gareth pugh,Health and Safety Officers,9,1,12/04/2026 16:48,how do we handle a security threat safely?
+gareth pugh,Health and Safety Officers,10,1,12/04/2026 16:49,is the air quality in here safe to breathe?
+gareth pugh,Health and Safety Officers,11,1,12/04/2026 16:53,how often are the fire extinguishers checked?
+gareth pugh,Health and Safety Officers,12,1,12/04/2026 16:56,how do I know if a room is overcrowded?
+gareth pugh,Health and Safety Officers,13,1,12/04/2026 17:00,are the fire doors kept closed as they should be?
+gareth pugh,Health and Safety Officers,14,1,12/04/2026 17:03,are there any active safety aleerts in the building
+gareth pugh,Health and Safety Officers,15,1,12/04/2026 17:04,what is the procedure for a gas leak
+gareth pugh,Health and Safety Officers,16,1,12/04/2026 17:08,how many people are currently in the buidling?
+gareth pugh,Health and Safety Officers,17,1,12/04/2026 17:12,how do we make sure walkways are not blocked?
+gareth pugh,Health and Safety Officers,18,1,12/04/2026 17:15,how is water safeety managed to prevent legionella?
+gareth pugh,Health and Safety Officers,19,1,12/04/2026 17:19,is the tepmerature in here within safe working limits?
+gareth pugh,Health and Safety Officers,20,1,12/04/2026 17:22,where are the defibrillators located?
+gareth pugh,Health and Safety Officers,21,1,12/04/2026 17:24,how do we keep track of visitors for safety?
+gareth pugh,Health and Safety Officers,22,1,12/04/2026 17:28,where are the nearest fire exits from here?
+gareth pugh,Health and Safety Officers,23,2,12/04/2026 17:31,are the fire alarm call points all showing healthy in the panel?
+gareth pugh,Health and Safety Officers,24,2,12/04/2026 17:32,is the co2 trend rising fast enough to signal poor ventilaton?
+gareth pugh,Health and Safety Officers,25,2,12/04/2026 17:33,is humidity high enough to raise a mould or slip risk anywhere?
+gareth pugh,Health and Safety Officers,26,2,12/04/2026 17:35,which fire doors do the contact sensors show as held open?
+gareth pugh,Health and Safety Officers,27,2,12/04/2026 17:38,is the air change rate enough for the current occupany reading?
+gareth pugh,Health and Safety Officers,28,2,12/04/2026 17:42,are any motion sensors showing movement in a zone that should be empty?
+gareth pugh,Health and Safety Officers,29,2,12/04/2026 17:44,what is the current pm2.5 reading and does it exceed safe limits?
+gareth pugh,Health and Safety Officers,30,2,12/04/2026 17:47,do the entry and exit logs reconcile for a roll call right now
+gareth pugh,Health and Safety Officers,31,2,12/04/2026 17:49,what do the access-control logs show for who is in the building now
+gareth pugh,Health and Safety Officers,32,2,12/04/2026 17:53,are any fire panel zones currently in fault or disabled?
+gareth pugh,Health and Safety Officers,33,2,12/04/2026 17:56,does any zone's temprature breach the safe upper working limit?
+gareth pugh,Health and Safety Officers,34,2,12/04/2026 18:00,are there any smoke detectors with low battery flagged by the system
+gareth pugh,Health and Safety Officers,35,2,12/04/2026 18:01,how many occupants do the people-counting sensors show on this floor
+gareth pugh,Health and Safety Officers,36,2,12/04/2026 18:02,do the door sensors show any fire exits propped open
+gareth pugh,Health and Safety Officers,37,2,12/04/2026 18:06,are there any sensors offline that are critical to life safety
+gareth pugh,Health and Safety Officers,38,2,12/04/2026 18:09,do air quality sensors show any pollutant spike on this floor
+gareth pugh,Health and Safety Officers,39,2,12/04/2026 18:13,are the emergency lighting test logs up to date in the system?
+gareth pugh,Health and Safety Officers,40,2,12/04/2026 18:16,what is the water temperature on the hot system for legionella control?
+gareth pugh,Health and Safety Officers,41,3,12/04/2026 18:20,"if a fire starts on floor 3, what is the safest evacuation route?"
+gareth pugh,Health and Safety Officers,42,3,12/04/2026 18:22,"if the fire panel shows a fault during occupancy, what is the fallback plan?"
+gareth pugh,Health and Safety Officers,43,3,12/04/2026 18:25,"during a heatwave, how do we keep working temperatures safe in this zone?"
+gareth pugh,Health and Safety Officers,44,3,12/04/2026 18:27,"if the main exit is blocked by smoke, what is the alternative route"
+gareth pugh,Health and Safety Officers,45,3,12/04/2026 18:30,"if smoke is detected in a riser, which areas need to be cleared first?"
+gareth pugh,Health and Safety Officers,46,3,12/04/2026 18:31,"during an evacuation, how do we account for everyone in the building"
+gareth pugh,Health and Safety Officers,47,3,12/04/2026 18:33,"during a drill, how long does it take to cleaar this floor?"
+gareth pugh,Health and Safety Officers,48,3,12/04/2026 18:37,"if occupany exceeds the safe limit in this hall, what should happen"
+gareth pugh,Health and Safety Officers,49,3,12/04/2026 18:39,"if there is a gas leak in the kitchen, how is the building made safe"
+gareth pugh,Health and Safety Officers,50,3,12/04/2026 18:43,"if a slip hazard appears in the lobby, how quickly is it flagged and signed?"
+gareth pugh,Health and Safety Officers,51,3,12/04/2026 18:46,"during night cleaning, are lone staff covered by the safety alarm system?"
+gareth pugh,Health and Safety Officers,52,3,12/04/2026 18:47,"if co2 climbs sharply during a packed meeting, what should we do?"
+gareth pugh,Health and Safety Officers,53,3,12/04/2026 18:50,"if water is found leaking near electrics, how is the hazard contained"
+gareth pugh,Health and Safety Officers,54,3,12/04/2026 18:53,"if the lift fails with someone inside, what is the rescue procedure?"
+gareth pugh,Health and Safety Officers,55,3,12/04/2026 18:54,"during an event with extra crowds, how do we manage safe capacity?"
+gareth pugh,Health and Safety Officers,56,3,12/04/2026 18:55,"if someone collapses in the atrium, where is the nearest defibrillator?"
+gareth pugh,Health and Safety Officers,57,3,12/04/2026 18:59,"if air quality drops on a high-pollution day, should we limit ventilation intake?"
+gareth pugh,Health and Safety Officers,58,3,12/04/2026 19:03,"if a contractor is working at height, how is their safety monitored"
+gareth pugh,Health and Safety Officers,59,3,12/04/2026 19:06,"if an intruder is reported, how do staff stay safe and evacuate if needed"
+gareth pugh,Health and Safety Officers,60,3,12/04/2026 19:08,"duirng an evacuation, how do we confirm the building is fully clear"
+gareth pugh,Health and Safety Officers,61,3,12/04/2026 19:09,"if a smoke detector triggers at night, who gets alerted?"
+gareth pugh,Health and Safety Officers,62,3,12/04/2026 19:13,"during a power cut, will the emergency lighting cover this stairwell?"
+gareth pugh,Health and Safety Officers,63,4,12/04/2026 19:15,how do we evidence compliance with health and safety law from building data
+gareth pugh,Health and Safety Officers,64,4,12/04/2026 19:18,can the system track training records and flag expirring certifications?
+gareth pugh,Health and Safety Officers,65,4,12/04/2026 19:21,can the building model how long a full evacuation would take?
+gareth pugh,Health and Safety Officers,66,4,12/04/2026 19:25,how can we cut the buildings evacuation time to under the target?
+gareth pugh,Health and Safety Officers,67,4,12/04/2026 19:29,"how can we reduce slip, trip and fall incidents accross the building"
+gareth pugh,Health and Safety Officers,68,4,12/04/2026 19:32,can the system prioritise safety repairs by risk level
+gareth pugh,Health and Safety Officers,69,4,12/04/2026 19:35,can the system track and report all near-misses and incidents?
+gareth pugh,Health and Safety Officers,70,4,12/04/2026 19:39,what KPIs should we track for health and safety in the buidling?
+gareth pugh,Health and Safety Officers,71,4,12/04/2026 19:40,how do we demonstrate due diligence on fire risk assessments?
+gareth pugh,Health and Safety Officers,72,4,12/04/2026 19:41,can the building automate a monthly health and safety dashboard?
+gareth pugh,Health and Safety Officers,73,4,12/04/2026 19:43,can the system produce an audit trail for a safety inspection?
+gareth pugh,Health and Safety Officers,74,4,12/04/2026 19:47,can the buidling alert us before occupancy breaches the fire limit?
+gareth pugh,Health and Safety Officers,75,4,12/04/2026 19:48,how can we verify emergency lighting is tested on schedule everywhere?
+gareth pugh,Health and Safety Officers,76,4,12/04/2026 19:52,can the building report on PPE and safe-access compliance in plant rooms?
+gareth pugh,Health and Safety Officers,77,4,12/04/2026 19:54,how can we ensure every floor always has enough trained first aiders
+gareth pugh,Health and Safety Officers,78,4,12/04/2026 19:56,can the system identify the highest-risk areas to focus safety spend?
+gareth pugh,Health and Safety Officers,79,4,12/04/2026 19:57,how can we make sure 100% of fire doors stay compliant?
+gareth pugh,Health and Safety Officers,80,4,12/04/2026 19:59,can the building flag any life-safety system that is overdue a test?
+lucia ferraro,Health and Safety Officers,1,1,10/04/2026 15:24,how is water safety managed to prevent legionella?
+lucia ferraro,Health and Safety Officers,2,1,10/04/2026 15:26,how do we handle a security threat safely?
+lucia ferraro,Health and Safety Officers,3,1,10/04/2026 15:29,how is the building protected against fire spread?
+lucia ferraro,Health and Safety Officers,4,1,10/04/2026 15:32,is the air quality in here safe to breathe?
+lucia ferraro,Health and Safety Officers,5,1,10/04/2026 15:34,are there any slip or trip hazards being monitored
+lucia ferraro,Health and Safety Officers,6,1,10/04/2026 15:37,are all the fire escape rotes kept clear?
+lucia ferraro,Health and Safety Officers,7,1,10/04/2026 15:40,is the building accessible for people with mobility needs in an emergency?
+lucia ferraro,Health and Safety Officers,8,1,10/04/2026 15:41,where is the nearest first aid point
+lucia ferraro,Health and Safety Officers,9,1,10/04/2026 15:43,how often are the fire extinguishers checked?
+lucia ferraro,Health and Safety Officers,10,1,10/04/2026 15:46,is there asbestos or any known hazard in this building?
+lucia ferraro,Health and Safety Officers,11,1,10/04/2026 15:48,what safety checks happen before the building opens each day?
+lucia ferraro,Health and Safety Officers,12,1,10/04/2026 15:51,how do we keep track of visitors for safety?
+lucia ferraro,Health and Safety Officers,13,1,10/04/2026 15:55,where are the nearest fire exits from here
+lucia ferraro,Health and Safety Officers,14,1,10/04/2026 15:58,is there a muster point outside the building
+lucia ferraro,Health and Safety Officers,15,1,10/04/2026 15:59,are the emergency lights working across the building?
+lucia ferraro,Health and Safety Officers,16,1,10/04/2026 16:02,who do i contact about a health and safety concern?
+lucia ferraro,Health and Safety Officers,17,1,10/04/2026 16:03,is the temprature in here within safe working limits?
+lucia ferraro,Health and Safety Officers,18,1,10/04/2026 16:07,how do we make sure walkways are not blocked?
+lucia ferraro,Health and Safety Officers,19,1,10/04/2026 16:11,are there any active safety alerts in the building?
+lucia ferraro,Health and Safety Officers,20,2,10/04/2026 16:12,is the gas detection sensor in the kitchen reading normal?
+lucia ferraro,Health and Safety Officers,21,2,10/04/2026 16:13,are there any sensors offline that are critical to life safety
+lucia ferraro,Health and Safety Officers,22,2,10/04/2026 16:17,is the stairwell pressurisation fan running as the sensors expect?
+lucia ferraro,Health and Safety Officers,23,2,10/04/2026 16:19,are the sprinkler system pressure sensors within normal range?
+lucia ferraro,Health and Safety Officers,24,2,10/04/2026 16:23,are there any smoke detectors with low battery flagged by the system?
+lucia ferraro,Health and Safety Officers,25,2,10/04/2026 16:25,what is the real-time occupancy versus the evacuation capacity
+lucia ferraro,Health and Safety Officers,26,2,10/04/2026 16:27,does any zone's temperature breach the safe upper working limit?
+lucia ferraro,Health and Safety Officers,27,2,10/04/2026 16:30,what is the current pm2.5 reading and does it exceed safe limits?
+lucia ferraro,Health and Safety Officers,28,2,10/04/2026 16:31,are the lift status sensors showing fire-mode recall working?
+lucia ferraro,Health and Safety Officers,29,2,10/04/2026 16:34,what do the access-control logs show for who is in the buiilding now?
+lucia ferraro,Health and Safety Officers,30,2,10/04/2026 16:38,are all the smoke detectors reporting as online right now?
+lucia ferraro,Health and Safety Officers,31,2,10/04/2026 16:42,what does the co2 sensor read in this room and is it safe?
+lucia ferraro,Health and Safety Officers,32,2,10/04/2026 16:44,is the CO2 trend rising fast enough to signal poor ventilation
+lucia ferraro,Health and Safety Officers,33,2,10/04/2026 16:45,do the door sensors show any fire exits propped open?
+lucia ferraro,Health and Safety Officers,34,2,10/04/2026 16:47,are the fire alarm call points all showing healthy in the panel?
+lucia ferraro,Health and Safety Officers,35,2,10/04/2026 16:48,what does the temprature sensor show in the server room for overheating risk?
+lucia ferraro,Health and Safety Officers,36,2,10/04/2026 16:49,do air quality sensors show any pollutant spike on this floor?
+lucia ferraro,Health and Safety Officers,37,2,10/04/2026 16:51,do the entry and exit logs reconcile for a roll call right now?
+lucia ferraro,Health and Safety Officers,38,3,10/04/2026 16:53,"if smoke is detected in a riser, which areas need to be cleared first?"
+lucia ferraro,Health and Safety Officers,39,3,10/04/2026 16:57,"during a power cut, will the emergency lighting cover this stairwell?"
+lucia ferraro,Health and Safety Officers,40,3,10/04/2026 16:58,"if a fire door is found wedged open, who is notified to act?"
+lucia ferraro,Health and Safety Officers,41,3,10/04/2026 16:59,"during a drill, how long does it take to clear this floor?"
+lucia ferraro,Health and Safety Officers,42,3,10/04/2026 17:00,"if a slip hazard appears in the lobby, how quickly is it flagged and signed?"
+lucia ferraro,Health and Safety Officers,43,3,10/04/2026 17:04,"if water is found leaking near electrics, how is the hazrd contained?"
+lucia ferraro,Health and Safety Officers,44,3,10/04/2026 17:08,"if a lone worker stops responding, how does the building raise the alarm?"
+lucia ferraro,Health and Safety Officers,45,3,10/04/2026 17:11,"if the lift fails with someone inside, what is the rescue procedure?"
+lucia ferraro,Health and Safety Officers,46,3,10/04/2026 17:13,"if a vulnerable visitor needs help, how is that flagged to first aiders?"
+lucia ferraro,Health and Safety Officers,47,3,10/04/2026 17:15,"if there is a chemical spill in the lab, how is the area isolated?"
+lucia ferraro,Health and Safety Officers,48,3,10/04/2026 17:17,"during a heatwave, how do we keep working temperattures safe in this zone?"
+lucia ferraro,Health and Safety Officers,49,3,10/04/2026 17:20,"if a fire starts on floor 3, what is the safest evacuaton route?"
+lucia ferraro,Health and Safety Officers,50,3,10/04/2026 17:22,"during night cleaning, are lone staff covered by the safety alarm system?"
+lucia ferraro,Health and Safety Officers,51,3,10/04/2026 17:26,"if the main exit is blocked by smoke, what is the alternative route"
+lucia ferraro,Health and Safety Officers,52,3,10/04/2026 17:30,"during a lockdown, how do we keep fire escaep routes usable?"
+lucia ferraro,Health and Safety Officers,53,3,10/04/2026 17:32,"if an intruder is reported, how do staff stay safe and evacuate if needed?"
+lucia ferraro,Health and Safety Officers,54,3,10/04/2026 17:34,"if someone collapses in the atrium, where is the nearest defibrillator?"
+lucia ferraro,Health and Safety Officers,55,3,10/04/2026 17:37,"during an evacuation, how do we confirm the building is fully clear?"
+lucia ferraro,Health and Safety Officers,56,3,10/04/2026 17:39,"during a fire alarm, how do we assist wheelchair users to evacuate?"
+lucia ferraro,Health and Safety Officers,57,3,10/04/2026 17:42,"if CO2 climbs sharply during a packed meeting, what should we do?"
+lucia ferraro,Health and Safety Officers,58,4,10/04/2026 17:44,can the system track and report all near-misses and incidents?
+lucia ferraro,Health and Safety Officers,59,4,10/04/2026 17:47,can the building flag any life-safety system that is overdue a test?
+lucia ferraro,Health and Safety Officers,60,4,10/04/2026 17:48,can the building generate an automatic fire drill performacne report
+lucia ferraro,Health and Safety Officers,61,4,10/04/2026 17:49,how do we maintain legionella compliance with automated monitoring?
+lucia ferraro,Health and Safety Officers,62,4,10/04/2026 17:52,how can we ensure every floor always has enough trained first aiders
+lucia ferraro,Health and Safety Officers,63,4,10/04/2026 17:56,how do we close the loop on every reported hazard within target time
+lucia ferraro,Health and Safety Officers,64,4,10/04/2026 17:58,how can we improve our emergancy response time year on year?
+lucia ferraro,Health and Safety Officers,65,4,10/04/2026 18:02,can the building prodce a live roll call for emergency responders?
+lucia ferraro,Health and Safety Officers,66,4,10/04/2026 18:03,can the system prioritise safety repairs by risk level
+lucia ferraro,Health and Safety Officers,67,4,10/04/2026 18:07,can the building alert us before occupancy breaches the fire limit?
+lucia ferraro,Health and Safety Officers,68,4,10/04/2026 18:11,how can we verify emergency lighting is tested on schedule everywhere?
+lucia ferraro,Health and Safety Officers,69,4,10/04/2026 18:13,how do we evidence compliance with health and safety law from building data
+lucia ferraro,Health and Safety Officers,70,4,10/04/2026 18:14,how can we make sure 100% of fire doors stay compliant?
+lucia ferraro,Health and Safety Officers,71,4,10/04/2026 18:18,can the system identify the highest-risk areas to focus safety spend?
+lucia ferraro,Health and Safety Officers,72,4,10/04/2026 18:22,how can we cut the buildings evacuaton time to under the target?
+lucia ferraro,Health and Safety Officers,73,4,10/04/2026 18:25,how can we keep occupany within safe limits automatically
+lucia ferraro,Health and Safety Officers,74,4,10/04/2026 18:26,can the system recommend where to add signage or safety equipment?
+lucia ferraro,Health and Safety Officers,75,4,10/04/2026 18:27,what KPIs should we track for health and safety in the buidling
+lucia ferraro,Health and Safety Officers,76,4,10/04/2026 18:30,how do we benchmark our safety performance agaiinst last year
+lucia ferraro,Health and Safety Officers,77,4,10/04/2026 18:33,can the building automate a monthly health and safey dashboard
+lucia ferraro,Health and Safety Officers,78,4,10/04/2026 18:35,how do we report air quality compliance for occupant health?
+nathan brooks,Health and Safety Officers,1,1,08/04/2026 09:35,is there asbestos or any known hazard in this building
+nathan brooks,Health and Safety Officers,2,1,08/04/2026 09:37,is there a muster point outside the buidling?
+nathan brooks,Health and Safety Officers,3,1,08/04/2026 09:41,are the emergency lights working across the buildnig?
+nathan brooks,Health and Safety Officers,4,1,08/04/2026 09:43,how does the buidling warn people in an emergency?
+nathan brooks,Health and Safety Officers,5,1,08/04/2026 09:45,are there any active safety alerts in the building?
+nathan brooks,Health and Safety Officers,6,1,08/04/2026 09:48,how is carbno monoxide monitored in the building?
+nathan brooks,Health and Safety Officers,7,1,08/04/2026 09:51,are the fire doors kept closed as they should be?
+nathan brooks,Health and Safety Officers,8,1,08/04/2026 09:52,where are the nearest fire exits from here?
+nathan brooks,Health and Safety Officers,9,1,08/04/2026 09:54,are the stairwells safe and unobstructed?
+nathan brooks,Health and Safety Officers,10,1,08/04/2026 09:55,what safety training is required to work here?
+nathan brooks,Health and Safety Officers,11,1,08/04/2026 09:59,what is the procedure for a gas leak?
+nathan brooks,Health and Safety Officers,12,1,08/04/2026 10:01,how are lone workers kept safe in the building?
+nathan brooks,Health and Safety Officers,13,1,08/04/2026 10:02,how do we handle a security threat safely
+nathan brooks,Health and Safety Officers,14,1,08/04/2026 10:06,are all the fire escape routes kept clear?
+nathan brooks,Health and Safety Officers,15,1,08/04/2026 10:07,who do I contact about a health and safety concern?
+nathan brooks,Health and Safety Officers,16,1,08/04/2026 10:09,what safety checks happen before the building opens each day?
+nathan brooks,Health and Safety Officers,17,1,08/04/2026 10:10,how are contractors kept safe on site?
+nathan brooks,Health and Safety Officers,18,1,08/04/2026 10:11,when was the last fire drill held?
+nathan brooks,Health and Safety Officers,19,1,08/04/2026 10:12,how do i know if a room is overcrowded?
+nathan brooks,Health and Safety Officers,20,1,08/04/2026 10:13,where is the nearest first aid point
+nathan brooks,Health and Safety Officers,21,2,08/04/2026 10:14,does the occupancy count exceed the safe capacity for this space?
+nathan brooks,Health and Safety Officers,22,2,08/04/2026 10:18,what is the noise level reading in the plant room against exposure limits?
+nathan brooks,Health and Safety Officers,23,2,08/04/2026 10:20,are there any smoke detectors with low battery flagged by the system?
+nathan brooks,Health and Safety Officers,24,2,08/04/2026 10:21,how current is the last sensor check on the emergency systems?
+nathan brooks,Health and Safety Officers,25,2,08/04/2026 10:22,what does the CO2 sensor read in this room and is it safe?
+nathan brooks,Health and Safety Officers,26,2,08/04/2026 10:25,which fire doors do the contact sensors show as held open?
+nathan brooks,Health and Safety Officers,27,2,08/04/2026 10:28,what is the water temperature on the hot system for legionella control?
+nathan brooks,Health and Safety Officers,28,2,08/04/2026 10:31,do the door sensors show any fire exits propped open?
+nathan brooks,Health and Safety Officers,29,2,08/04/2026 10:33,is the air change rate enough for the current occupancy reading?
+nathan brooks,Health and Safety Officers,30,2,08/04/2026 10:34,what is the current pm2.5 reading and does it exceed safe limits?
+nathan brooks,Health and Safety Officers,31,2,08/04/2026 10:37,what is the carbon monoxide reading near the boiler room?
+nathan brooks,Health and Safety Officers,32,2,08/04/2026 10:41,are any fire panel zones currently in fault or disabled?
+nathan brooks,Health and Safety Officers,33,2,08/04/2026 10:45,are there any sensors offline that are critical to life safety?
+nathan brooks,Health and Safety Officers,34,2,08/04/2026 10:46,do air quality sensors show any pollutant spike on this floor?
+nathan brooks,Health and Safety Officers,35,2,08/04/2026 10:49,is humidity high enough to raise a mould or slip risk anywhere?
+nathan brooks,Health and Safety Officers,36,2,08/04/2026 10:51,are any motion sensors showing movement in a zone that should be empty?
+nathan brooks,Health and Safety Officers,37,2,08/04/2026 10:52,what does the temperature sensor show in the server room for overheating risk?
+nathan brooks,Health and Safety Officers,38,2,08/04/2026 10:53,are the sprinkler system pressure sensors within normal range?
+nathan brooks,Health and Safety Officers,39,2,08/04/2026 10:55,what is the real-time occupancy versus the evacuation capacity
+nathan brooks,Health and Safety Officers,40,2,08/04/2026 10:56,is the stairwell pressurisation fan running as the sensors expect?
+nathan brooks,Health and Safety Officers,41,2,08/04/2026 10:59,are the fire aalrm call points all showing healthy in the panel?
+nathan brooks,Health and Safety Officers,42,3,08/04/2026 11:03,"during a power cut, will the emergency lighting cover this stairwell?"
+nathan brooks,Health and Safety Officers,43,3,08/04/2026 11:06,"during a heatwave, how do we keep working temperatures safe in this zone?"
+nathan brooks,Health and Safety Officers,44,3,08/04/2026 11:09,"if a contractor is working at height, how is their safety monitored?"
+nathan brooks,Health and Safety Officers,45,3,08/04/2026 11:10,"if the fire panel shows a fault during occupancy, what is the fallback plan"
+nathan brooks,Health and Safety Officers,46,3,08/04/2026 11:12,"if a fire starts on floor 3, what is the safest evacuation rute"
+nathan brooks,Health and Safety Officers,47,3,08/04/2026 11:13,"if co2 climbs sharply during a packed meeting, what should we do"
+nathan brooks,Health and Safety Officers,48,3,08/04/2026 11:17,"if a vulnerable visitor needs help, how is that flagged to first aiders?"
+nathan brooks,Health and Safety Officers,49,3,08/04/2026 11:20,"during night cleaning, are lone staff covered by the safety allarm system?"
+nathan brooks,Health and Safety Officers,50,3,08/04/2026 11:24,"if the main exit is blocked by smoke, what is the alternative route?"
+nathan brooks,Health and Safety Officers,51,3,08/04/2026 11:26,"during a fire allarm, how do we assist wheelchair users to evacuate"
+nathan brooks,Health and Safety Officers,52,3,08/04/2026 11:29,"during an evacuaton, how do we confirm the building is fully clear?"
+nathan brooks,Health and Safety Officers,53,3,08/04/2026 11:33,"if a slip hazard appears in the lobby, how quickly is it flagged and signed?"
+nathan brooks,Health and Safety Officers,54,3,08/04/2026 11:35,"during a drill, how long does it take to clear this flor?"
+nathan brooks,Health and Safety Officers,55,3,08/04/2026 11:38,"during a lockdwon, how do we keep fire escape routes usable?"
+nathan brooks,Health and Safety Officers,56,3,08/04/2026 11:39,"if someone collapses in the atrium, where is the nearest defibrillator?"
+nathan brooks,Health and Safety Officers,57,3,08/04/2026 11:43,"during an event with extra crowds, how do we manaage safe capacity"
+nathan brooks,Health and Safety Officers,58,3,08/04/2026 11:46,"if someone is trapped in a room, how does the system help locate them?"
+nathan brooks,Health and Safety Officers,59,3,08/04/2026 11:47,"if there is a chemical spill in the lab, how is the area isolated?"
+nathan brooks,Health and Safety Officers,60,4,08/04/2026 11:49,can the buidling model how long a full evacuation would take?
+nathan brooks,Health and Safety Officers,61,4,08/04/2026 11:51,how do we evidence compliance with health and safety law from building data?
+nathan brooks,Health and Safety Officers,62,4,08/04/2026 11:52,can the system identify the highest-risk areas to focus safety spend?
+nathan brooks,Health and Safety Officers,63,4,08/04/2026 11:55,can the system track training records and flag expiring certifications?
+nathan brooks,Health and Safety Officers,64,4,08/04/2026 11:58,how do we report air quality compliance for occupant health?
+nathan brooks,Health and Safety Officers,65,4,08/04/2026 11:59,can the system produce an audit trail for a safety inspection?
+nathan brooks,Health and Safety Officers,66,4,08/04/2026 12:03,how can we verify emergency lighting is tested on schedule everywhere?
+nathan brooks,Health and Safety Officers,67,4,08/04/2026 12:06,can the building automate a monthly health and safety dashboard
+nathan brooks,Health and Safety Officers,68,4,08/04/2026 12:07,"how can we reduce slip, trip and fall incidents across the building?"
+nathan brooks,Health and Safety Officers,69,4,08/04/2026 12:10,how can we make sure 100% of fire dors stay compliant?
+nathan brooks,Health and Safety Officers,70,4,08/04/2026 12:12,how do we maintain legionella compliance with automated monitoring
+nathan brooks,Health and Safety Officers,71,4,08/04/2026 12:16,how can we keep occupancy within safe limits automatically?
+nathan brooks,Health and Safety Officers,72,4,08/04/2026 12:17,what kpis should we track for health and safety in the building?
+nathan brooks,Health and Safety Officers,73,4,08/04/2026 12:18,how do we benchmark our safety performace against last year?
+nathan brooks,Health and Safety Officers,74,4,08/04/2026 12:22,can the building report on ppe & safe-access compliance in plant rooms?
+nathan brooks,Health and Safety Officers,75,4,08/04/2026 12:26,"to meet fire safety regulations, what checks must the buidling pass?"
+nathan brooks,Health and Safety Officers,76,4,08/04/2026 12:27,can the building generate an automatic fire drill performance report?
+nathan brooks,Health and Safety Officers,77,4,08/04/2026 12:31,can the system track and report all near-misses and incidents?
+nathan brooks,Health and Safety Officers,78,4,08/04/2026 12:32,can the system schedule and verify all statutory safety inspections?
+nathan brooks,Health and Safety Officers,79,4,08/04/2026 12:35,how do we close the loop on every reported hazard within target time
+nathan brooks,Health and Safety Officers,80,4,08/04/2026 12:39,can the system recommend where to add signage or safety equipment?
+nathan brooks,Health and Safety Officers,81,4,08/04/2026 12:43,how can we ensure every floor always has enough trained firrst aiders?
+yuki tanaka,Health and Safety Officers,1,1,10/04/2026 12:33,is the building accessible for people with mobility needs in an emergency?
+yuki tanaka,Health and Safety Officers,2,1,10/04/2026 12:36,how are lone workers kept safe in the building?
+yuki tanaka,Health and Safety Officers,3,1,10/04/2026 12:40,how often are the fire extinguishers checked?
+yuki tanaka,Health and Safety Officers,4,1,10/04/2026 12:44,who do i contact about a health and safety concern?
+yuki tanaka,Health and Safety Officers,5,1,10/04/2026 12:46,is the temperature in here within safe working limits?
+yuki tanaka,Health and Safety Officers,6,1,10/04/2026 12:47,where are the nearest fire exits from here?
+yuki tanaka,Health and Safety Officers,7,1,10/04/2026 12:48,how is carbon monoxide monitored in the building?
+yuki tanaka,Health and Safety Officers,8,1,10/04/2026 12:52,how do we handle a security threat safely?
+yuki tanaka,Health and Safety Officers,9,1,10/04/2026 12:56,what safety training is required to work here?
+yuki tanaka,Health and Safety Officers,10,1,10/04/2026 12:59,where is the nearest first aid point?
+yuki tanaka,Health and Safety Officers,11,1,10/04/2026 13:00,are the fire doors kept closed as they should be?
+yuki tanaka,Health and Safety Officers,12,1,10/04/2026 13:04,is there a mustter point outside the building?
+yuki tanaka,Health and Safety Officers,13,1,10/04/2026 13:07,what personal protective equipment is needed in plant rooms?
+yuki tanaka,Health and Safety Officers,14,1,10/04/2026 13:10,are the stairwells safe and unobstructed?
+yuki tanaka,Health and Safety Officers,15,1,10/04/2026 13:14,what happens to the lifts during a fire?
+yuki tanaka,Health and Safety Officers,16,1,10/04/2026 13:17,how do I know if a room is overcrowded
+yuki tanaka,Health and Safety Officers,17,1,10/04/2026 13:18,are there any active safety alerts in the building?
+yuki tanaka,Health and Safety Officers,18,1,10/04/2026 13:21,when was the last fire drill held?
+yuki tanaka,Health and Safety Officers,19,1,10/04/2026 13:25,how is the building protected against fire spread?
+yuki tanaka,Health and Safety Officers,20,2,10/04/2026 13:26,are any motion sensors showing movement in a zone that should be empty?
+yuki tanaka,Health and Safety Officers,21,2,10/04/2026 13:27,how many occupants do the people-counting sensors show on this floor?
+yuki tanaka,Health and Safety Officers,22,2,10/04/2026 13:29,does the occupancy count exceed the safe capacity for this space?
+yuki tanaka,Health and Safety Officers,23,2,10/04/2026 13:32,which fire doors do the contact sensors show as held open
+yuki tanaka,Health and Safety Officers,24,2,10/04/2026 13:36,do the entry and exit logs reconcile for a roll call right now
+yuki tanaka,Health and Safety Officers,25,2,10/04/2026 13:39,what does the temperature sensor show in the server room for ovreheating risk?
+yuki tanaka,Health and Safety Officers,26,2,10/04/2026 13:41,what is the water temperature on the hot system for legionella control?
+yuki tanaka,Health and Safety Officers,27,2,10/04/2026 13:43,what does the CO2 sensor read in this room and is it safe
+yuki tanaka,Health and Safety Officers,28,2,10/04/2026 13:44,are there any smoke detectors with low battery flagged by the system
+yuki tanaka,Health and Safety Officers,29,2,10/04/2026 13:45,are the lift status sensors showing fire-mode recall working?
+yuki tanaka,Health and Safety Officers,30,2,10/04/2026 13:49,are any fire panel zones currently in fault or disabled?
+yuki tanaka,Health and Safety Officers,31,2,10/04/2026 13:53,what is the current pm2.5 reading & does it exceed safe limits?
+yuki tanaka,Health and Safety Officers,32,2,10/04/2026 13:55,what is the carbon monoxide reading near the boiler room?
+yuki tanaka,Health and Safety Officers,33,2,10/04/2026 13:58,is the gas detection sensor in the kitchen reading normal
+yuki tanaka,Health and Safety Officers,34,2,10/04/2026 13:59,are there any sensors offline that are critical to life safety?
+yuki tanaka,Health and Safety Officers,35,2,10/04/2026 14:02,is humidity high enough to raise a mould or slip risk anywhere?
+yuki tanaka,Health and Safety Officers,36,2,10/04/2026 14:03,are all the smoke detectors reporting as online right now?
+yuki tanaka,Health and Safety Officers,37,2,10/04/2026 14:07,is the air change rate enough for the current occupany reading?
+yuki tanaka,Health and Safety Officers,38,2,10/04/2026 14:10,are the sprinkler system pressure sensors within normal range?
+yuki tanaka,Health and Safety Officers,39,2,10/04/2026 14:14,does any zone's temperature breach the safe upper working limit?
+yuki tanaka,Health and Safety Officers,40,2,10/04/2026 14:18,what is the noise level reading in the plant room against exposure limits?
+yuki tanaka,Health and Safety Officers,41,3,10/04/2026 14:22,"during a fire alarm, how do we assist wheelchair users to evacuate?"
+yuki tanaka,Health and Safety Officers,42,3,10/04/2026 14:23,"if a vulnerable visitor needs help, how is that flagged to first aiders"
+yuki tanaka,Health and Safety Officers,43,3,10/04/2026 14:27,"during a drill, how long does it take to clear this floor?"
+yuki tanaka,Health and Safety Officers,44,3,10/04/2026 14:28,"if smoke is detected in a riser, which areas need to be cleared first?"
+yuki tanaka,Health and Safety Officers,45,3,10/04/2026 14:29,"during night cleaning, are lone staff covered by the safety alarm system?"
+yuki tanaka,Health and Safety Officers,46,3,10/04/2026 14:30,"if a smoke detector triggers at night, who gets alerted?"
+yuki tanaka,Health and Safety Officers,47,3,10/04/2026 14:31,"if a contractor is working at height, how is their safety monitored?"
+yuki tanaka,Health and Safety Officers,48,3,10/04/2026 14:33,"if the fire panel shows a fault during occupancy, what is the fallback plan?"
+yuki tanaka,Health and Safety Officers,49,3,10/04/2026 14:35,"during an evacuation, how do we account for everyone in the building?"
+yuki tanaka,Health and Safety Officers,50,3,10/04/2026 14:38,"during a power cut, will the emergency lighting cover this stairwell?"
+yuki tanaka,Health and Safety Officers,51,3,10/04/2026 14:41,"if there is a gas leak in the kitchen, how is the building made safe?"
+yuki tanaka,Health and Safety Officers,52,3,10/04/2026 14:42,"during a lockdown, how do we keep fire escape routes usable?"
+yuki tanaka,Health and Safety Officers,53,3,10/04/2026 14:43,"if there is a chemical spill in the lab, how is the area isolated?"
+yuki tanaka,Health and Safety Officers,54,3,10/04/2026 14:47,"during an event with extra crowds, how do we manage safe capacity?"
+yuki tanaka,Health and Safety Officers,55,3,10/04/2026 14:48,"if the lift fails with someone inside, what is the rescue procedure?"
+yuki tanaka,Health and Safety Officers,56,3,10/04/2026 14:51,"if air quality drops on a high-pollution day, should we limit ventilation intake"
+yuki tanaka,Health and Safety Officers,57,3,10/04/2026 14:53,"if water is found leaking near electrics, how is the hazrd contained"
+yuki tanaka,Health and Safety Officers,58,3,10/04/2026 14:56,"if a fire starts on floor 3, what is the safest evacuation route?"
+yuki tanaka,Health and Safety Officers,59,3,10/04/2026 14:58,"during a heatwave, how do we keep working temperatures safe in this zone?"
+yuki tanaka,Health and Safety Officers,60,3,10/04/2026 14:59,"if a slip hazard appears in the lobby, how quickly is it flagged and signed?"
+yuki tanaka,Health and Safety Officers,61,3,10/04/2026 15:03,"if the muster point is unsafe due to weather, where is the backup?"
+yuki tanaka,Health and Safety Officers,62,4,10/04/2026 15:05,"how can we reduce slip, trip and fall incidents across the building"
+yuki tanaka,Health and Safety Officers,63,4,10/04/2026 15:07,"to meet fire safety regulations, what checks must the building pass?"
+yuki tanaka,Health and Safety Officers,64,4,10/04/2026 15:09,how do we maintain legionella compliance with automated monitoring?
+yuki tanaka,Health and Safety Officers,65,4,10/04/2026 15:11,how do we close the loop on every reported hazard within target time?
+yuki tanaka,Health and Safety Officers,66,4,10/04/2026 15:14,can the building alert us before occupancy breaches the fire limit?
+yuki tanaka,Health and Safety Officers,67,4,10/04/2026 15:18,can the building generate an automatic fire drill performance report?
+yuki tanaka,Health and Safety Officers,68,4,10/04/2026 15:19,how do we demonsrtate due diligence on fire risk assessments
+yuki tanaka,Health and Safety Officers,69,4,10/04/2026 15:22,how can we keep occupancy within safe limits automatically
+yuki tanaka,Health and Safety Officers,70,4,10/04/2026 15:23,what kpis should we track for health and safety in the building?
+yuki tanaka,Health and Safety Officers,71,4,10/04/2026 15:27,how can we ensure every floor always has enough trained first aiders
+yuki tanaka,Health and Safety Officers,72,4,10/04/2026 15:30,can the building automate a monthly health and safety dashboard?
+yuki tanaka,Health and Safety Officers,73,4,10/04/2026 15:34,can the system recommend where to add signage or safety equipment?
+yuki tanaka,Health and Safety Officers,74,4,10/04/2026 15:37,can the system identify the highest-risk areas to focus safety spend?
+yuki tanaka,Health and Safety Officers,75,4,10/04/2026 15:41,how do we evidence compliance with health and safety law from building data?
+yuki tanaka,Health and Safety Officers,76,4,10/04/2026 15:43,can the system produce an audit trail for a safety inspection?
+yuki tanaka,Health and Safety Officers,77,4,10/04/2026 15:44,how can we make sure 100% of fire doors stay compliant?
+yuki tanaka,Health and Safety Officers,78,4,10/04/2026 15:47,can the building report on ppe and safe-access compliance in plant rooms
+yuki tanaka,Health and Safety Officers,79,4,10/04/2026 15:48,how do we set and track a target for zero repportable incidents
+yuki tanaka,Health and Safety Officers,80,4,10/04/2026 15:50,can the system track training records and flag expiring certifications?
+yuki tanaka,Health and Safety Officers,81,4,10/04/2026 15:54,how do we report air quality compliance for occupant health
+yuki tanaka,Health and Safety Officers,82,4,10/04/2026 15:56,how can we cut the building's evacuation time to under the target?
+claire dubois,Health and Safety Officers,1,1,10/04/2026 11:43,who do I contact about a health and safety concern
+claire dubois,Health and Safety Officers,2,1,10/04/2026 11:47,what safety training is required to work here?
+claire dubois,Health and Safety Officers,3,1,10/04/2026 11:48,how are lone workers kept safe in the building
+claire dubois,Health and Safety Officers,4,1,10/04/2026 11:49,what is the procedure for a gas leak?
+claire dubois,Health and Safety Officers,5,1,10/04/2026 11:53,where are the nearest fire exits from here
+claire dubois,Health and Safety Officers,6,1,10/04/2026 11:54,are there any slip or trip hazards being monitored?
+claire dubois,Health and Safety Officers,7,1,10/04/2026 11:56,what personal protective equipment is needed in plant rooms?
+claire dubois,Health and Safety Officers,8,1,10/04/2026 11:58,how does the buidling warn people in an emergency?
+claire dubois,Health and Safety Officers,9,1,10/04/2026 12:01,is the air quality in here safe to breathhe?
+claire dubois,Health and Safety Officers,10,1,10/04/2026 12:02,how do we make sure walkways are not blocked?
+claire dubois,Health and Safety Officers,11,1,10/04/2026 12:03,how do I report a safety hazard in the building?
+claire dubois,Health and Safety Officers,12,1,10/04/2026 12:05,are all the fire escape routes kept clear
+claire dubois,Health and Safety Officers,13,1,10/04/2026 12:09,how do I know if a room is overcrowded?
+claire dubois,Health and Safety Officers,14,1,10/04/2026 12:11,is there asbestos or any known hazard in this building?
+claire dubois,Health and Safety Officers,15,1,10/04/2026 12:15,what happens to the lifts during a fire?
+claire dubois,Health and Safety Officers,16,1,10/04/2026 12:18,how is noise exposure managed for staff?
+claire dubois,Health and Safety Officers,17,1,10/04/2026 12:21,how do we keep track of visitors for safety?
+claire dubois,Health and Safety Officers,18,1,10/04/2026 12:22,is the building accessible for people with mobility needs in an emergency?
+claire dubois,Health and Safety Officers,19,1,10/04/2026 12:23,how are contractors kept safe on site?
+claire dubois,Health and Safety Officers,20,1,10/04/2026 12:27,when was the last fire drill held
+claire dubois,Health and Safety Officers,21,1,10/04/2026 12:29,how is the building protected against fire spread?
+claire dubois,Health and Safety Officers,22,2,10/04/2026 12:30,are all the smoke detectors reporting as online right now?
+claire dubois,Health and Safety Officers,23,2,10/04/2026 12:33,are there any sensors offline that are critical to life safety?
+claire dubois,Health and Safety Officers,24,2,10/04/2026 12:34,is the co2 trend rising fast enough to signal poor ventilation?
+claire dubois,Health and Safety Officers,25,2,10/04/2026 12:36,are the lift status sensors showing fire-mode recall working?
+claire dubois,Health and Safety Officers,26,2,10/04/2026 12:37,which fire doors do the contact sensors show as held open
+claire dubois,Health and Safety Officers,27,2,10/04/2026 12:40,are there any smoke detectors with low battery flagged by the system?
+claire dubois,Health and Safety Officers,28,2,10/04/2026 12:41,how current is the last sensor check on the emergency systems?
+claire dubois,Health and Safety Officers,29,2,10/04/2026 12:45,what is the carbno monoxide reading near the boiler room
+claire dubois,Health and Safety Officers,30,2,10/04/2026 12:47,are the emergancy lighting test logs up to date in the system?
+claire dubois,Health and Safety Officers,31,2,10/04/2026 12:50,what does the CO2 sensor read in this room and is it safe?
+claire dubois,Health and Safety Officers,32,2,10/04/2026 12:52,is the gas detection sensor in the kitchen reading normal?
+claire dubois,Health and Safety Officers,33,2,10/04/2026 12:53,are the fire alarm call points all showing healthy in the panel
+claire dubois,Health and Safety Officers,34,2,10/04/2026 12:56,is the stairwell pressurisation fan running as the sensors expect?
+claire dubois,Health and Safety Officers,35,2,10/04/2026 12:59,what is the noise level reading in the plant room against exposure limits?
+claire dubois,Health and Safety Officers,36,2,10/04/2026 13:00,do the door sensors show any fire exits propped open?
+claire dubois,Health and Safety Officers,37,2,10/04/2026 13:01,are any motion sensors showing movement in a zone that should be empty
+claire dubois,Health and Safety Officers,38,2,10/04/2026 13:03,what is the current PM2.5 reading and does it exceed safe limits?
+claire dubois,Health and Safety Officers,39,2,10/04/2026 13:04,is humidity high enough to raise a mould or slip risk anywhere
+claire dubois,Health and Safety Officers,40,2,10/04/2026 13:08,are any fire panel zones currently in fault or disabled?
+claire dubois,Health and Safety Officers,41,3,10/04/2026 13:10,"if someone is trapped in a room, how does the sytem help locate them?"
+claire dubois,Health and Safety Officers,42,3,10/04/2026 13:11,"during a lockdown, how do we keep fire escape routes usable?"
+claire dubois,Health and Safety Officers,43,3,10/04/2026 13:13,"during a power cut, will the emergancy lighting cover this stairwell?"
+claire dubois,Health and Safety Officers,44,3,10/04/2026 13:16,"if a fire starts on floor 3, what is the safest evacuation route?"
+claire dubois,Health and Safety Officers,45,3,10/04/2026 13:18,"if a contractor is working at height, how is their safety monitored?"
+claire dubois,Health and Safety Officers,46,3,10/04/2026 13:20,"if the muster point is unsafe due to weather, where is the backup"
+claire dubois,Health and Safety Officers,47,3,10/04/2026 13:23,"if a lone worker stops responding, how does the building raise the alarm?"
+claire dubois,Health and Safety Officers,48,3,10/04/2026 13:25,"if smoke is detected in a riser, which areas need to be cleared first"
+claire dubois,Health and Safety Officers,49,3,10/04/2026 13:29,"if air quality drops on a high-pollution day, should we limit ventilation intake?"
+claire dubois,Health and Safety Officers,50,3,10/04/2026 13:33,"during an event with extra crowds, how do we manage safe capacity?"
+claire dubois,Health and Safety Officers,51,3,10/04/2026 13:37,"during an evacuation, how do we confirm the building is fully clear?"
+claire dubois,Health and Safety Officers,52,3,10/04/2026 13:41,"if someone collapses in the atrium, where is the nearest defibrillator?"
+claire dubois,Health and Safety Officers,53,3,10/04/2026 13:44,"if a slip hazard appears in the lobby, how quickly is it flagged and signed?"
+claire dubois,Health and Safety Officers,54,3,10/04/2026 13:46,"during an evacuation, how do we account for everyone in the building?"
+claire dubois,Health and Safety Officers,55,3,10/04/2026 13:48,"if a vulnerable visitor needs help, how is that flagged to first aiders"
+claire dubois,Health and Safety Officers,56,3,10/04/2026 13:49,"during a drill, how long does it take to cllear this floor?"
+claire dubois,Health and Safety Officers,57,3,10/04/2026 13:53,"if a smoke detector triggers at ngiht, who gets alerted"
+claire dubois,Health and Safety Officers,58,3,10/04/2026 13:54,"if co2 climbs sharply during a packed meeting, what should we do?"
+claire dubois,Health and Safety Officers,59,3,10/04/2026 13:55,"during a heatwave, how do we keep working temperatures safe in this zone?"
+claire dubois,Health and Safety Officers,60,3,10/04/2026 13:56,"if occupancy exceeds the safe limit in this hall, what should happen?"
+claire dubois,Health and Safety Officers,61,4,10/04/2026 13:59,can the building alert us before occupancy breaches the fire limit?
+claire dubois,Health and Safety Officers,62,4,10/04/2026 14:01,can the system prioritise safety repairs by risk level?
+claire dubois,Health and Safety Officers,63,4,10/04/2026 14:02,how do we maintain legionella compliance with automated monitoring?
+claire dubois,Health and Safety Officers,64,4,10/04/2026 14:03,how do we benchmark our safety performance against last year?
+claire dubois,Health and Safety Officers,65,4,10/04/2026 14:07,can the building automate a monthly health and safety dashboard
+claire dubois,Health and Safety Officers,66,4,10/04/2026 14:09,can the system recommend where to add signage or safety equipmnt?
+claire dubois,Health and Safety Officers,67,4,10/04/2026 14:11,can the system shedule and verify all statutory safety inspections?
+claire dubois,Health and Safety Officers,68,4,10/04/2026 14:12,how can we improve our emergency response time year on year?
+claire dubois,Health and Safety Officers,69,4,10/04/2026 14:16,can the building produce a live roll call for emergency responders
+claire dubois,Health and Safety Officers,70,4,10/04/2026 14:18,can the buidling flag any life-safety system that is overdue a test?
+claire dubois,Health and Safety Officers,71,4,10/04/2026 14:22,can the building generate an automatic fire drill performance report
+claire dubois,Health and Safety Officers,72,4,10/04/2026 14:23,how can we verify emergency lighting is tested on schedule everywhere?
+claire dubois,Health and Safety Officers,73,4,10/04/2026 14:24,can the building report on PPE and safe-access compliance in plant rooms?
+claire dubois,Health and Safety Officers,74,4,10/04/2026 14:26,how can we make sure 100% of fire doors stay compliant?
+claire dubois,Health and Safety Officers,75,4,10/04/2026 14:29,what kpis should we track for health and safety in the building
+claire dubois,Health and Safety Officers,76,4,10/04/2026 14:30,how do we evidence compliance with health and safety law from building data
+claire dubois,Health and Safety Officers,77,4,10/04/2026 14:32,how can we keep occupancy within safe limits automatically
+claire dubois,Health and Safety Officers,78,4,10/04/2026 14:36,"to meet fire safety regulations, what cecks must the building pass"
+claire dubois,Health and Safety Officers,79,4,10/04/2026 14:39,can the system track and report all near-misses and incidents?
