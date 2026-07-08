@@ -12,9 +12,7 @@ const endpointList = [
   
   // Infrastructure
   { name: 'Qdrant Vector DB', url: 'http://localhost:6333/health', category: 'Infrastructure' },
-  { name: 'Redis Memory Store', url: 'http://localhost:6379/', category: 'Infrastructure' },
-  { name: 'Jena Fuseki (SPARQL)', url: 'http://localhost:3030/$/ping', category: 'Infrastructure' },
-  { name: 'MySQL Database', url: 'http://localhost:3306/', category: 'Infrastructure' },
+  { name: 'GraphDB (SPARQL)', url: 'http://localhost:7200/rest/repositories', category: 'Infrastructure' },
   
   // AI Models
   { name: 'Ollama (Mistral)', url: 'http://localhost:11434/api/tags', category: 'AI Models' },
