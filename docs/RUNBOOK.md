@@ -549,7 +549,7 @@ docker logs ontosage-orchestrator 2>&1 | grep "\[semantic-route\]"
 |---|---|---|
 | `status=degraded reason=qdrant_unreachable` | Qdrant container down | `docker compose restart qdrant` |
 | `status=degraded reason=embedding_api_down` | OpenAI API key invalid or rate-limited | check `OPENAI_API_KEY`; or switch to `EMBEDDING_PROVIDER=local` |
-| `status=degraded reason=yaml_parse_error` | Malformed `capability.yaml` | validate with `python -c "import yaml; yaml.safe_load(open('input/bldg1/capability.yaml'))"` |
+| `status=degraded reason=yaml_parse_error` | Malformed `capability.yaml` | validate with `python -c "import yaml; yaml.safe_load(open('input/capability.yaml'))"` |
 | `[semantic-route] score=<low>` for clear KB queries | Thresholds too high for embedding model | re-tune `building.yaml::capability_routing.threshold` and `override_min` (see [Capability Routing § Threshold calibration](CAPABILITY_ROUTING.md#threshold-calibration)) |
 
 ### Capability Returns Wrong KB Entry

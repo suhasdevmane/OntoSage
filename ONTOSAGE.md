@@ -1,6 +1,10 @@
-# OntoSage — System Reference (post-Phase-22)
+# OntoSage — System Reference (V3 + P0 Security Hardening)
 
-**Comprehensive technical reference for the OntoSage agentic-AI framework for smart buildings.** This document covers the architecture, every Phase 11-22 improvement, the routing pipeline, the multi-tenant / multi-persona / multi-intent model, conversation memory, follow-up co-reference resolution, the forecasting pipeline, the operational surface (configuration, swap workflow, CI), the test coverage, and known issues — accurate as of 2026-06-01.
+**Comprehensive technical reference for the OntoSage agentic-AI framework for smart buildings.** This document covers the full architecture, every Phase 11-22 improvement plus V3 corpus-driven extensions and P0 security hardening, the routing pipeline, the multi-tenant / multi-persona / multi-intent model, conversation memory, follow-up co-reference resolution, the forecasting pipeline, the admin portal, the operational surface (configuration, swap workflow, CI), the test coverage, and known issues — accurate as of 2026-07-07.
+
+**Test suite**: 416 deterministic tests passing (Python 3.10/3.11/3.12). **Corpus coverage**: 63.8% of the 4,837 non-general-knowledge questions in the 5,604-question survey (vs. 16.2% baseline before V3) — corroborates paper §6.5.
+
+**For new AI sessions:** Read `CLAUDE.md` first (navigation index, debugging, current branch state), then this file for deep architecture. Do not commit or push without explicit user approval.
 
 Two-line summary: A user types a question in plain English. OntoSage resolves follow-up references against conversation memory, classifies the intent, blends the user's stacked personas, routes to the right pipeline (SPARQL → SQL → analytics / forecasting, or floor-plan, or capability KB, or one of the standalone agents), and returns a structured answer with full per-request audit trail — remembering the conversation across turns.
 
@@ -92,7 +96,7 @@ orchestrator/
 │   ├── building_context.py         # Phase 10/11A — BuildingContextResolver
 │   ├── building_registry.py        # Discovers input/<bldg>/building.yaml
 │   ├── ttl_validator.py            # Phase 12B — TTL prefix/namespace consistency check
-│   ├── ttl_uploader.py             # Phase 3 — idempotent TTL upload on startup
+│   ├── ttl_uploader.py             # Phase 3 — idempotent TTL upload on startup (discovers bldg1_*.ttl glob)
 │   ├── multi_intent_detector.py    # Phase 14 — compound-query decomposition
 │   ├── turn_memory.py              # Phase 21 — TurnMemoryService (Postgres per-turn summaries + carry-forward)
 │   ├── report_intake_service.py    # Phase 19 — fault/complaint/safety/feedback intake → user_reports table
@@ -102,13 +106,56 @@ orchestrator/
 │   ├── floor_plan_pipeline.py      # PDF → manifest
 │   ├── dwg_pipeline.py             # DWG → DXF → polygons
 │   ├── floor_plan_registry.py      # Merge PDF + DWG manifests
+│   ├── ontology_manager.py         # P0 — Admin CRUD for GraphDB: list/validate/upload/drop graphs, SPARQL select
+│   ├── reindex_service.py          # P0 — Async Qdrant reindex job queue: start/status/list_jobs/_run
+│   ├── sensor_ttl_generator.py     # P0 — Brick Turtle generator for sensor registration from CSV
 │   ├── forecasting/                # Phase 20 — preprocessor, horizon_parser, model_selector,
 │   │                               #   metrics, models/ (ARIMA, exp-smoothing, linear)
 │   ├── adapters/                   # Storage backend abstraction
+│   │   ├── registry.py             # Routes by ref:storedAt key → correct adapter
+│   │   ├── mysql_adapter.py        # Wide sensor_data table (original abacws sensors)
+│   │   └── mysql_narrow_adapter.py # P0 — per-modality (uuid, datetime, value) tables
+│   ├── feeds/                      # V3 — FeedAdapter ABC + csv_drop + rest_poll + registry
+│   ├── actuation/                  # V3 — ActuationDriver ABC + SimDriver + approval_store + registry
+│   ├── rules_engine.py             # V3 — ECA rule engine (standing rules, Redis duration windows)
+│   ├── concept_resolver.py         # V3 — HBCO lay-term → Brick class + recipe (Redis 24h cache)
+│   ├── recipe_registry.py          # V3 — config/recipes.yaml + per-building overlay loader
+│   ├── document_indexer.py         # V3 — indexes input/<bldg>/documents/ into Qdrant
+│   ├── goal_planner.py             # V3 — mandate decomposition + three-tier capability report
+│   ├── notification_service.py     # V3 — log/webhook/smtp dispatch from rules + conversation
+│   ├── user_alert_store.py         # V3 — per-user conversational alert rules (Redis, 90-day TTL)
+│   ├── user_preference_store.py    # V3 — per-user comfort preferences (Redis, 1-year TTL)
+│   ├── input_validators.py         # V3 — schema validators for all per-building optional files
 │   └── …
 ├── auth_manager.py                 # Argon2id + Redis sessions (see Known Issues §10)
-├── middleware/rbac.py              # 6 roles × 20 permissions
-└── main.py                         # FastAPI app + lifespan + endpoints
+├── middleware/rbac.py              # 6 roles × 20 permissions; require_permission() dependency
+└── main.py                         # FastAPI app + lifespan + 70+ endpoints incl. 8 P0 admin endpoints
+
+input/
+├── building.yaml                   # REQUIRED — building_id, ontology_namespace, storage.databases
+├── database_registry.yaml          # REQUIRED — all connection templates (53+ engines)
+├── bldg1_abacws_metadata.ttl       # Original Abacws building metadata
+├── bldg1_timeseries_extension.ttl  # P0 — 19 sensors across 7 modalities with TimeseriesReference triples
+├── bldg1_security_lighting_extension.ttl  # P0 — lighting systems, CCTV, alarm zones, 293 triples
+├── *.dwg, *.pdf                    # Floor plans (DWG for geometry; PDF for display)
+├── capability.yaml                 # Off-ontology KB (lifts, prayer room, contacts)
+├── intents.yaml                    # Per-building intent overlay
+├── personas/                       # Per-building persona YAML files
+├── feeds.yaml                      # V3 — live feed specs
+├── rules.yaml                      # V3 — ECA alert rules
+├── channels.yaml                   # V3 — notification dispatch
+├── benchmarks.csv                  # V3 — peer benchmark percentiles
+├── concepts.ttl                    # V3 — HBCO local vocab overlay
+└── documents/                      # V3 — policy/manual KB (indexed into Qdrant)
+
+data/mysql-init/
+├── init.sql                        # Legacy — creates abacws DB (deprecated; live system uses sensordb)
+└── create_narrow_timeseries_tables.sql  # P0 — 7 narrow (uuid, datetime, value) tables in sensordb
+
+frontend/src/
+├── pages/AdminPortal.js            # P0 — React admin portal (9 tabs)
+├── pages/Health.js                 # Updated — shows GraphDB, Qdrant, Ollama (removed stale entries)
+└── components/TopNav.js            # Updated — /admin link
 
 shared/
 ├── config.py                       # Settings (Pydantic v2); secrets masked via repr=False (Phase 21);
@@ -124,23 +171,32 @@ input/
 │   ├── intents.yaml                # (optional override of orchestrator/intents/intent_definitions.yaml)
 │   └── personas/                   # (optional override of shipped persona priors)
 ├── bldg1/                          # The ACTIVE building's data (one at a time)
-│   ├── building.yaml               # building_id, name, ontology_namespace, building_prefix, …
+│   ├── building.yaml               # building_id, name, ontology_namespace, actuation block
 │   ├── capability.yaml             # off-ontology KB (lifts, prayer room, fire, …)
 │   ├── intents.yaml                # per-building intent overlay
 │   ├── personas/                   # per-building persona overlay
+│   ├── feeds.yaml                  # V3 — external feed specs (csv_drop / rest_poll); absence = silently skipped
+│   ├── recipes.yaml                # V3 — analytic recipe overrides (optional; merged with config/recipes.yaml)
+│   ├── rules.yaml                  # V3 — ECA operator rules; absence = engine idle
+│   ├── channels.yaml               # V3 — notification dispatch channels (log / webhook / smtp)
+│   ├── benchmarks.csv              # V3 — peer/standard percentiles for this building segment
+│   ├── concepts.ttl                # V3 — per-building HBCO vocab overlay ("the fishbowl" → Room)
+│   ├── documents/                  # V3 — policy/manual docs indexed into Qdrant documents_<bldg>
 │   └── *.ttl, *.dwg, *.pdf
 └── bldg1_*.ttl                     # legacy root-level TTL layout (still supported)
 
 scripts/
-├── swap_building.py                # Phase 12C — safe building swap CLI
-├── onboard_building.py             # Legacy onboarding flow
+├── swap_building.py                # Phase 12C — safe building swap CLI; V3 validates all optional configs
+├── onboard_building.py             # Legacy onboarding + V3 --scaffold flag (copies input/_templates)
+├── corpus_replay.py                # V3 — stratified 240q replay (40/level); LLM-graded pass rate
 └── survey_live_test.py             # 95-query regression survey
 
-tests/                              # 251 deterministic tests; see §9
+tests/                              # 416 deterministic tests (P0); see §9 for CI + live suite breakdown
 ├── fixtures/buildings/bldg2/       # Phase 12A — fixture for multi-tenant tests
-└── …                               # 16 test files in CI
+├── test_admin_ontology_endpoints.py # P0 — 13 admin endpoint tests
+└── …                               # 17 test files in CI
 
-.github/workflows/ci.yml            # Phase 16C+ — runs all 16 deterministic test files (3.10/3.11/3.12)
+.github/workflows/ci.yml            # Phase 16C+ → P0 — runs full deterministic suite (3.10/3.11/3.12)
 ```
 
 ### 2.3 Storage layer
@@ -148,13 +204,21 @@ tests/                              # 251 deterministic tests; see §9
 | Store | Port | Purpose |
 |---|---|---|
 | **GraphDB** | 7200 | RDF ontology (Brick/BACnet TTL). Used by SPARQL agent. |
-| **MySQL** | 3306 | Time-series sensor readings, keyed by UUID. |
+| **MySQL** | 3306 | Time-series sensor readings, keyed by UUID. Wide `sensor_data` (UUID-per-column) for the original sensors; **narrow per-modality tables** `(uuid, datetime, value)` for energy/occupancy/water/noise/IAQ/light/equipment (`type: mysql_narrow` in `input/database_registry.yaml`). |
 | **PostgreSQL** | 5433 | User accounts + Argon2id hashes + RBAC; `turn_memory` (per-turn conversation summaries, Phase 21); `user_reports` (fault/complaint intake, Phase 19). |
 | **Redis** | 6379 | Conversation state (`conversation:<id>` — **no time-expiry by default**, count-bounded to `CONVERSATION_MAX_MESSAGES`; Phase 21), response cache (`resp_cache:*`), session salt (see §10). |
 | **Qdrant** | 6333 | `floor_plans` (room vectors + geometry payload), `capability_<bldg>` (KB embeddings), `user_memory`. |
 | **MongoDB** | 27017 | Full chat-history transcripts (OpenWebUI). |
 | **rag-service** | 8001 | Semantic fallback for empty SPARQL results. |
 | **code-executor** | 8002 | Sandboxed Python for analytics agent. |
+
+> **Canonical data rule.** `input/` holds metadata/config only. Sensor time-series **belong in a
+> database**, referenced from the ontology via
+> `ref:hasExternalReference → ref:TimeseriesReference (ref:hasTimeseriesId + ref:storedAt)`. Raw
+> CSV sensor readings in `input/` are deprecated. To add a source, declare the Brick point(s) in an
+> `input/*.ttl` (the startup loader ingests it idempotently into a per-file named graph), register
+> the narrow table in `input/database_registry.yaml`, and load readings keyed by UUID — one command:
+> `scripts/onboard_data_source.py`. Full guide: [docs/ADDING_A_DATA_SOURCE.md](docs/ADDING_A_DATA_SOURCE.md).
 
 ### 2.4 LLM / embedding provider
 
@@ -168,7 +232,42 @@ Embedding: `EMBEDDING_PROVIDER` independently selects `openai` (1536-d `text-emb
 
 ---
 
-## 3. The 22 Intents
+## 2.5 V3 — Corpus-Driven Capability Extensions (2026-06-11)
+
+V3 was derived from a 5,604-question corpus (corpus analysis in `paper/Survey analysis and results/`). It added seven new service layers, all config-driven so adding a new building = dropping files, no code edits.
+
+| Layer | Service | Per-building file | What it enables |
+|---|---|---|---|
+| **HBCO** | `concept_resolver.py` | `concepts.ttl` (overlay) | Lay terms → Brick class + recipe; 69 concepts mined from corpus |
+| **Recipes** | `recipe_registry.py` | `recipes.yaml` (overlay) | 38 analytic recipes (threshold/range/aggregate/trend/benchmark/estimate) |
+| **Live feeds** | `feeds/registry.py` | `feeds.yaml` | csv_drop + rest_poll adapters; auto-registers Brick points in GraphDB |
+| **Document KB** | `document_indexer.py` | `documents/` | Policy/manual KB indexed into Qdrant; cited in capability answers |
+| **ECA rules** | `rules_engine.py` | `rules.yaml` | Standing event-condition-action rules with Redis duration windows |
+| **Actuation** | `actuation/registry.py` | `building.yaml` actuation block | SimDriver (log-only) + approval workflow; `control:write` RBAC gate |
+| **Goal planner** | `goal_planner.py` | `config/goals.yaml` | Mandate decomposition → KPI questions → three-tier honest capability report |
+| **Notifications** | `notification_service.py` | `channels.yaml` | Rules + conversation dispatch through log / webhook / smtp |
+| **Validators** | `input_validators.py` | — | Schema-validates all optional files at swap/startup; bad optional = WARNING not crash |
+
+**Answerability improvement** (projected from corpus master table):
+
+| After phase | Fully answerable | % of non-GK |
+|---|---|---|
+| Baseline (Phase 22) | 786 | 16.2% |
+| B — metadata + doc KB | 822 | 17.0% |
+| C — live streams floors 0-4 | 904 | 18.7% |
+| D — external feeds (weather/calendar/tariff) | 978 | 20.2% |
+| E — sensor modality expansion (occupancy/energy/IAQ/noise/light/water) | 2,437 | **50.3%** |
+| G — guarded actuation + goal planner | 2,930 | **60.5%** |
+
+Run `python scripts/corpus_replay.py --sample 240` on the live stack to measure actual post-V3 numbers.
+
+**V3 new intents** (added to `intent_definitions.yaml`):
+`alert_mgmt`, `automation_capability`, `preference_management`, `wayfinding` (spatial sub-type),
+`report_intake` family extended, `planner` extended with goal-mandate detection.
+
+---
+
+## 3. The 29+ Intents
 
 All intents live in `orchestrator/intents/intent_definitions.yaml`. Each has `name`, `description`, `examples`, `pipeline_group` (`data` | `standalone` | `meta`), optional `route_target`, optional `node_method` (Phase 13B), optional `aliases`, optional `cacheable`.
 
@@ -200,6 +299,97 @@ All intents live in `orchestrator/intents/intent_definitions.yaml`. Each has `na
 The `route_target_for(intent_name)` resolver in `intents/registry.py:485` returns the explicit `route_target` if set, otherwise applies pipeline-group defaults (`data`→`sparql`, `standalone`→intent name, `meta`→`response`).
 
 **Forecasting (Phase 20):** the `trend` intent flows through `sparql → sql → analytics`. When the query also carries forecast/predict keywords (e.g. *"predict CO₂ for next week"*), the analytics stage hands the fetched series to the **`ForecastAgent`** (`agents/forecast_agent.py`), which preprocesses, auto-selects a model (ARIMA / exponential-smoothing / linear), parses the horizon, computes accuracy metrics (RMSE/R²), and writes `forecast_result` for visualization. See §5.6.
+
+---
+
+## 3.5 Stakeholder Question Guide — What data is needed?
+
+Every question is answerable when the right data is attached. This guide maps question types to the required data sources.
+
+### Questions answered from Brick TTL alone (SPARQL, no time-series)
+
+| Question example | Intent | Required |
+|---|---|---|
+| "How many sensors are on floor 3?" | `metadata` | Brick TTL in GraphDB |
+| "What types of equipment does the building have?" | `discovery` | Brick TTL |
+| "What zones does floor 2 have?" | `metadata` | Brick TTL |
+| "How many CCTV cameras are there?" | `metadata` | `bldg1_security_lighting_extension.ttl` |
+| "Is there motion sensing on floor 3?" | `discovery` | `bldg1_security_lighting_extension.ttl` |
+
+### Questions that need time-series data (TTL + MySQL)
+
+| Question example | Intent | TTL required | MySQL table |
+|---|---|---|---|
+| "Current temperature in zone 5.28?" | `sensor_data` | `bldg1_abacws_metadata.ttl` | `sensor_data` (wide) |
+| "Average humidity on floor 4 last week?" | `analytics` | Same | Same |
+| "CO2 trend for the past month" | `trend` | Brick TTL with UUID | `sensor_data` or `iaq_data` |
+| "Predict energy consumption next week" | `trend` + forecast | Timeseries TTL | `energy_data` |
+| "Any unusual temperature readings?" | `anomaly` | Brick TTL | `sensor_data` |
+| "Compare floor 3 vs floor 4 energy" | `compare` | Both floor sensors in TTL | `energy_data` |
+| "Plot occupancy over 30 days" | `visualization` | Occupancy TTL | `occupancy_data` |
+| "Export IAQ data as CSV" | `export` | IAQ TTL | `iaq_data` |
+| "How many people are on floor 3?" | `sensor_data` | Occupancy TTL | `occupancy_data` |
+| "Energy consumption today?" | `analytics` | Energy meter TTL | `energy_data` |
+| "Is CO2 in meeting rooms compliant?" | `compliance` | IAQ TTL + `rules.yaml` | `iaq_data` |
+| "Water usage this week?" | `analytics` | Water TTL | `water_data` |
+| "Is it too noisy for studying?" | `analytics` | Noise TTL | `noise_data` |
+| "Is the AHU operating normally?" | `analytics` | Equipment TTL | `equipment_data` |
+
+### Questions answered from floor plans (DWG/PDF)
+
+| Question example | Intent | Required |
+|---|---|---|
+| "Show me floor 3 layout" | `floor_plan` | PDF or DWG in `input/` |
+| "How many rooms on floor 2?" | `spatial_query` | DWG geometry |
+| "What is the total floor area?" | `spatial_query` | DWG geometry |
+| "Which rooms are adjacent to room 3.01?" | `spatial_query` | DWG polygon data |
+| "What is the area of floor 1?" | `spatial_query` | DWG — returns 3,008.5 m² for bldg1 |
+
+### Questions answered from the capability KB
+
+| Question example | Intent | Required |
+|---|---|---|
+| "Where is the lift?" | `capability` | `capability.yaml` or Brick TTL |
+| "Is there a prayer room?" | `capability` | `capability.yaml` |
+| "What are the fire evacuation procedures?" | `capability` | `documents/fire_safety.md` |
+| "Is the building wheelchair accessible?" | `capability` | `capability.yaml` or `documents/` |
+| "How do I book a meeting room?" | `capability` | `documents/` |
+
+### Questions that store a report (no data query — just writes to Postgres)
+
+| Question example | Intent | What happens |
+|---|---|---|
+| "The toilet is broken on floor 2" | `maintenance` | Stored in `user_reports` as HIGH priority, tracking ID returned |
+| "There is a gas smell near the lab" | `safety_report` | Stored as URGENT, triage views in pgAdmin |
+| "The canteen was too cold yesterday" | `complaint` | Stored as NORMAL priority |
+| "Suggestion: add more recycling bins" | `suggestion` | Stored with persona stamp |
+
+### Questions requiring external feeds (`feeds.yaml`)
+
+| Question example | Required feed |
+|---|---|
+| "What is the outside air temperature?" | `outside_weather_temp` (Open-Meteo rest_poll) |
+| "Is there a meeting room available now?" | Calendar feed |
+| "What is the current electricity tariff?" | Tariff feed |
+
+### What OntoSage will not do
+
+| Request | Why |
+|---|---|
+| "Turn off the lights on floor 3" | `control` intent declines — `actuation.driver=sim` (log-only); would require `driver=real` and `control:write` permission |
+| "Email the report to the team" | External action — not modelled |
+| "What is the capital of France?" | Out of scope — scope redirect returned |
+
+### By stakeholder
+
+| Stakeholder | Primary intents | Minimum data |
+|---|---|---|
+| **Facility Manager** | sensor_data, analytics, trend, anomaly, maintenance, floor_plan, recommend | Brick TTL + time-series + DWG files |
+| **Sustainability Officer** | analytics (energy), compare, trend, compliance, recommend | Energy/IAQ TTL + `energy_data` + `iaq_data` |
+| **Researcher** | metadata, discovery, analytics, export, trend | Brick TTL + relevant narrow tables |
+| **Safety Officer** | anomaly, compliance, capability (fire safety), report_intake | Brick TTL + `documents/fire_safety.md` + `rules.yaml` |
+| **General User / Student** | discovery, capability, floor_plan, spatial_query | Brick TTL + DWG/PDF files |
+| **Admin** | All of the above + Admin portal | Everything + `system:admin` role |
 
 ---
 
@@ -469,9 +659,314 @@ The swap CLI exits **2** on:
 
 ---
 
-## 7. Phase 11-22 changelog
+## 6.5 Admin Portal — Ontology Management, Reindexing & Health
 
-This section captures every architectural change since v1.0 (Phase 11 onwards). See `CLAUDE.md` for the operational quick-reference.
+The Admin Portal is a tab in the React frontend at **`http://localhost:3000/admin`**, backed by 8 FastAPI endpoints under `/api/v1/admin/`. All endpoints require the `system:admin` role — requests without a valid admin session token return HTTP 401.
+
+The admin account is created from `.env` at startup (safe-create, never overwrites):
+```bash
+ADMIN_USERNAME=admin@yourorg.com
+ADMIN_PASSWORD=<strong-password>
+```
+Or create manually: `docker exec ontosage-orchestrator python /app/orchestrator/create_admin.py <user> <pass>`.
+
+### How a sensor question gets answered — the two-half model
+
+Every time-series question goes through two phases:
+
+```
+NL question → SPARQL on GraphDB   (finds sensor + its UUID + which DB it's ref:storedAt)
+           → SQL routes by ref:storedAt → that DB's adapter → rows by UUID → answer
+```
+
+| Half | What | Where it lives |
+|---|---|---|
+| **Sensor metadata** | Brick triples: sensor class + `ref:hasTimeseriesId "<uuid>"` + `ref:storedAt bldg:<key>` | **GraphDB** — a TTL file loaded at startup via named graph |
+| **Time-series readings** | The numeric values, keyed by UUID | **MySQL** — narrow `(uuid, datetime, value)` table or wide `sensor_data` |
+
+**A database with rows but no TTL triples is invisible.** SPARQL cannot find sensors that aren't in the ontology. Both halves must be in place.
+
+### Admin Portal tabs
+
+#### Ontology tab — GraphDB management
+
+| Action | API endpoint | What it does |
+|---|---|---|
+| Browse named graphs | `GET /api/v1/admin/ontology/graphs` | Lists all named graphs + triple count each |
+| Validate TTL | `POST /api/v1/admin/ontology/validate` | Parses Turtle with rdflib; returns triple count or parse error |
+| Upload TTL | `POST /api/v1/admin/ontology/upload` | Pushes valid Turtle into a named graph — live, no restart |
+| Drop graph | `DELETE /api/v1/admin/ontology/graphs/{id}` | Removes named graph and all its triples |
+| SPARQL browser | `POST /api/v1/admin/ontology/sparql` | Runs a SELECT against the live ontology; rows returned as JSON |
+
+#### Knowledge Base tab — Qdrant reindexing
+
+| Action | API endpoint | What it does |
+|---|---|---|
+| Trigger reindex | `POST /api/v1/admin/reindex` | Queues a background job for `capability`, `documents`, or `floor_plans` |
+| List jobs | `GET /api/v1/admin/reindex` | Returns all jobs with `id`, `status`, `target`, `started_at` |
+| Job status | `GET /api/v1/admin/reindex/{job_id}` | Polls a specific job; `status` ∈ `{pending, running, done, error}` |
+
+### Registering a sensor via the Admin Portal (Upload TTL path)
+
+Paste this Brick Turtle into the Ontology tab → Upload TTL:
+
+```turtle
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+bldg:EnergyMeter_Floor3 a brick:Electrical_Meter ;
+    rdfs:label "Floor 3 Energy Meter"@en ;
+    brick:isPartOf bldg:Floor3 ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "550e8400-e29b-41d4-a716-446655440003" ;
+        ref:storedAt bldg:energy_narrow
+    ] .
+```
+
+The sensor is immediately queryable via SPARQL. Rows in `energy_data` with that UUID are immediately answerable.
+
+### Alternative — TTL file at startup (how bldg1's abacws sensors are wired)
+
+Drop a `bldg1_*.ttl` file into `input/`. `services/ttl_uploader.py` discovers all `bldg1_*.ttl` files via a glob pattern and uploads each idempotently into a named graph `urn:ontosage:ttl:<filename>` on startup. No admin portal needed; no restart needed if the file is already present before startup.
+
+**See also:** §6.7 (Narrow MySQL tables), §6.8 (TTL extensions for bldg1).
+
+### Connecting an external database
+
+1. Add the connection template to `input/database_registry.yaml` (or use one of the ~53 shipped templates for MySQL/Postgres/InfluxDB/TimescaleDB/etc.):
+   ```yaml
+   my_db:
+     type: mysql_narrow
+     table: my_sensor_table
+     host: "${MY_DB_HOST}"
+     port: 3306
+     database: sensordb
+     user: "${MY_DB_USER}"
+     password: "${MY_DB_PASSWORD}"
+   ```
+2. Add `my_db` to `input/building.yaml` → `storage.databases`.
+3. Recreate the orchestrator (`docker compose up -d orchestrator`) — `.env` is baked at container-create.
+4. Load rows into the table keyed by each sensor's UUID.
+5. Register the sensor via TTL file or Admin Portal Upload TTL.
+
+### When changes take effect
+
+| Change | Takes effect |
+|---|---|
+| Upload/drop graph via Admin Portal | Immediately (live GraphDB write) |
+| Reindex via Admin Portal | Background job; poll `/api/v1/admin/reindex/{job_id}` |
+| Add `.env` variable or database connection credentials | Recreate: `docker compose up -d orchestrator` |
+| Drop new TTL file into `input/` | Restart orchestrator |
+
+---
+
+## 6.6 P0 — Security Hardening
+
+The `security/p0-hardening` branch enforces authentication and authorization across all endpoints and adds the admin portal. Key changes:
+
+### RBAC enforcement
+
+Every data endpoint is protected by `require_permission(perm)`, which chains through the `get_user_context` dependency:
+
+```python
+@app.get("/api/v1/sensors")
+async def get_sensors(
+    request: Request,
+    user: UserContext = Depends(create_rbac_dependency(token_manager, "sensor:read")),
+):
+    ...
+```
+
+`get_user_context()` validates the `Authorization` header against Redis sessions and returns a `UserContext` (with `role`, `permissions`, `tenant_id`, `allowed_buildings`) or raises HTTP 401. Prior to P0, many endpoints accepted requests without any token.
+
+### STRICT_SECRETS boot guard
+
+`STRICT_SECRETS=true` in `.env` causes the orchestrator to refuse startup if any of these passwords still equal their default value:
+- `POSTGRES_USER_PASSWORD`
+- `MYSQL_PASSWORD`
+- `SECRET_KEY`
+- `GRAPHDB_PASSWORD`
+
+This prevents accidental production deployments with default credentials.
+
+### Auth chain (override in tests)
+
+The dependency chain: `require_permission(perm)` → `_dependency(user=Depends(get_user_context))` → `get_user_context()`. In tests, override `get_user_context` directly:
+
+```python
+from orchestrator.middleware.rbac import ROLE_PERMISSIONS, UserContext
+from orchestrator.main import app, get_user_context
+
+app.dependency_overrides[get_user_context] = lambda: UserContext(
+    user_id="testadmin",
+    username="testadmin",
+    role="admin",
+    tenant_id="default",
+    allowed_buildings=[],
+    permissions=ROLE_PERMISSIONS.get("admin", set()),
+)
+```
+
+### Roles and permissions
+
+The 6 RBAC roles are defined in `ROLE_PERMISSIONS` (`orchestrator/middleware/rbac.py`)
+and validated by `_VALID_ROLES` in `main.py`. They are **distinct from personas**
+(`sustainability_officer`, `researcher`, …), which bias intent classification only
+and grant no permissions.
+
+| Role | Key permissions |
+|---|---|
+| `admin` | `system:admin`, all data reads, `config:write`, `user:write` (all 21 permissions) |
+| `facility_manager` | All data reads, `config:read/write`, `building:read/write`, `device:control`, `control:write` |
+| `analyst` | All data reads (sensor/analytics/metadata/report/export/anomaly/trend/compliance/comparison), `building:read` |
+| `operator` | `sensor/analytics/metadata/anomaly/trend:read`, `building:read`, `device:control` |
+| `occupant` | `sensor:read`, `metadata:read`, `system:health` |
+| `readonly` | `metadata:read`, `system:health` |
+
+---
+
+## 6.7 Narrow MySQL Tables — Workstream B
+
+The original `sensor_data` table has one column per sensor UUID (wide format, ~1,000+ columns, hits InnoDB 1,017-column limit on the full building). The narrow format — **one row per reading: `(uuid, datetime, value)`** — avoids this limit and makes adding new sensors trivial.
+
+### 7 narrow tables in `sensordb`
+
+```sql
+-- data/mysql-init/create_narrow_timeseries_tables.sql
+CREATE TABLE IF NOT EXISTS energy_data (
+    uuid     CHAR(36)  NOT NULL,
+    datetime DATETIME  NOT NULL,
+    value    DOUBLE,
+    PRIMARY KEY (uuid, datetime),
+    INDEX idx_energy_uuid (uuid),
+    INDEX idx_energy_datetime (datetime)
+) ENGINE=InnoDB;
+```
+
+| Table | Content | Unit |
+|---|---|---|
+| `energy_data` | Electrical energy per floor | kWh |
+| `occupancy_data` | Occupancy count | persons |
+| `water_data` | Water flow | L/min |
+| `noise_data` | Ambient noise | dB |
+| `iaq_data` | PM2.5 and TVOC | µg/m³, ppb |
+| `light_data` | Illuminance | lux |
+| `equipment_data` | Vibration, AHU runtime | mm/s, h |
+
+### Registering a narrow table as a data source
+
+In `input/database_registry.yaml`:
+```yaml
+energy_narrow:
+  type: mysql_narrow          # routes to MySQLNarrowAdapter
+  table: energy_data
+  host: "${MYSQL_HOST}"
+  port: 3306
+  database: sensordb
+  user: "${MYSQL_USER}"
+  password: "${MYSQL_PASSWORD}"
+```
+
+Add `energy_narrow` to `input/building.yaml` → `storage.databases`.
+
+### MySQLNarrowAdapter
+
+`orchestrator/services/adapters/mysql_narrow_adapter.py` — scoped to one table per adapter instance. Builds:
+
+```sql
+SELECT datetime AS timestamp, uuid AS uuid, value AS value
+FROM energy_data
+WHERE uuid IN (%s, %s, ...)
+  AND datetime BETWEEN %s AND %s
+ORDER BY datetime
+```
+
+The `ref:storedAt bldg:energy_narrow` triple in the TTL tells the adapter registry to route that sensor's UUID queries to this adapter.
+
+### How sensor → UUID → table → answer works
+
+```
+SPARQL: ?sensor ref:hasTimeseriesId ?uuid ;
+               ref:storedAt ?db .
+
+Result: uuid="550e8400-...", db="energy_narrow"
+
+Adapter registry: routes "energy_narrow" → MySQLNarrowAdapter(table="energy_data")
+
+SQL: SELECT value FROM energy_data WHERE uuid="550e8400-..." AND datetime BETWEEN ...
+
+Answer: "Floor 3 energy consumption was 47.2 kWh between 09:00 and 17:00"
+```
+
+---
+
+## 6.8 TTL Extensions — Bldg1 Sensor Coverage
+
+Two extension TTL files expand bldg1's sensor coverage beyond the original abacws metadata:
+
+### `input/bldg1_timeseries_extension.ttl`
+
+19 new sensors across 7 modalities, each wired to a narrow table via `ref:storedAt`:
+
+| Modality | Sensor count | Table | What it enables |
+|---|---|---|---|
+| Energy meters | 6 (one per floor) | `energy_data` | "What is the energy consumption on floor 3?" |
+| Occupancy counters | 6 (one per floor) | `occupancy_data` | "How many people are on floor 4 right now?" |
+| Water meter | 1 (main supply) | `water_data` | "What is the water consumption today?" |
+| Noise sensor | 1 (floor 5) | `noise_data` | "Is it too noisy for studying on floor 5?" |
+| IAQ sensors | 2 (floor 3 — PM2.5 + TVOC) | `iaq_data` | "Is the air quality safe in the lab?" |
+| Illuminance sensor | 1 (floor 5) | `light_data` | "What is the lighting level in the reading room?" |
+| Equipment sensors | 2 (AHU-03 vibration + runtime) | `equipment_data` | "Is the AHU operating normally?" |
+
+UUID source: `input/bldg1_timeseries_extension_uuids.json` (stable deterministic UUIDs, referenced in TTL and used in the MySQL publisher).
+
+### `input/bldg1_security_lighting_extension.ttl`
+
+293 triples covering lighting systems and security infrastructure:
+
+| System | What's declared |
+|---|---|
+| Lighting systems | 6 `brick:Lighting_System` instances (one per floor), each with PIR detectors, luminance sensors, lighting command points, and luminaire instances |
+| Outdoor | Roof daylight sensor (`bldg:DaylightSensor_Roof`) |
+| CCTV | 8 cameras (`bldg:CCTV_Camera` class) with `bldg:coverageArea` triples (entrance, lobby, stairwells, roof) |
+| Alarm zones | 6 alarm zones with `bldg:IntrusionDetector` instances and a main `AlarmPanel_Main` |
+| Access control | `bldg:Turnstile_MainEntrance` + `bldg:Main_Entrance_Zone` |
+| Security system | `bldg:SecuritySystem_Abacws` with `bldg:cameraCount 8` |
+
+This file answers questions like: *"How many CCTV cameras does the building have?"*, *"Is there a motion sensor on floor 3?"*, *"What security zones exist?"*
+
+Both files are auto-discovered by `ttl_uploader.py` on startup (glob `bldg1_*.ttl`). No manual onboarding step required.
+
+---
+
+## 7. Phase 11-22 + V3 + P0 changelog
+
+This section captures every architectural change since v1.0. See `CLAUDE.md` for the operational quick-reference.
+
+### P0 — Security Hardening (2026-07-07, branch `security/p0-hardening`)
+
+| Sub | Change |
+|---|---|
+| P0-A | `require_permission()` dependency chain enforced on all data endpoints; all return 401 on missing/invalid token (was unauthenticated before P0) |
+| P0-B | 8 new admin endpoints under `/api/v1/admin/`: `list_named_graphs`, `validate_ttl`, `upload_ttl`, `drop_named_graph`, `sparql_select`, `reindex_trigger`, `reindex_list`, `reindex_status` |
+| P0-C | `orchestrator/services/ontology_manager.py` — admin CRUD for GraphDB (async, httpx-based) |
+| P0-D | `orchestrator/services/reindex_service.py` — background job queue for Qdrant reindexing; singleton `_reindex_service_instance` in `main.py` |
+| P0-E | `orchestrator/services/sensor_ttl_generator.py` — Brick Turtle generator for bulk sensor registration from CSV |
+| P0-F | `orchestrator/services/adapters/mysql_narrow_adapter.py` — `MySQLNarrowAdapter` scoped to one narrow `(uuid, datetime, value)` table |
+| P0-G | `data/mysql-init/create_narrow_timeseries_tables.sql` — DDL for 7 narrow modality tables in `sensordb` |
+| P0-H | `input/bldg1_timeseries_extension.ttl` — 19 sensors across 7 modalities with `ref:storedAt` to narrow tables |
+| P0-I | `input/bldg1_security_lighting_extension.ttl` — 293 triples: lighting systems, CCTV cameras, alarm zones |
+| P0-J | `frontend/src/pages/AdminPortal.js` — React admin portal (9 tabs: Ontology, KB Reindex, Health, Users, Buildings, Settings, …) |
+| P0-K | `frontend/src/components/TopNav.js` — `/admin` nav link added |
+| P0-L | `frontend/src/pages/Health.js` — updated to show GraphDB endpoint (removed stale Redis/Fuseki/MySQL entries) |
+| P0-M | `tests/test_admin_ontology_endpoints.py` — 13 unit tests; auth via `get_user_context` override pattern |
+| P0-N | `STRICT_SECRETS` validator refuses orchestrator startup when any password equals its default |
+
+**P0 test count:** 416 deterministic tests pass (vs. 251 pre-V3 / 121 V3 unit suite). 13 new admin endpoint tests added.
 
 ### Phase 11 — Multi-tenant intent + SPARQL bctx + `input/_defaults/`
 
@@ -598,6 +1093,25 @@ This section captures every architectural change since v1.0 (Phase 11 onwards). 
 
 **Phase 19-22 verified:** deterministic suite **251 pass / 3 skip / 0 fail** on Python 3.10/3.11/3.12; full `docker-compose up --build` boots healthy; co-reference fix confirmed end-to-end against the live stack.
 
+### V3 — Corpus-Driven Capability Completion (2026-06-11)
+
+Driven by 5,604-question corpus analysis. 37 implementation turns (T01–T37).
+
+| Turn group | What shipped |
+|---|---|
+| T01–T06 (Phase A) | HBCO TBox/ABox (949 triples, 69 concepts); recipe registry; concept resolver wired into dialogue+SPARQL+analytics |
+| T07–T09 (Phase B) | bldg1 metadata enrichment TTL (101 triples); document KB (Qdrant documents_bldg1); idempotent named-graph TTL uploader |
+| T10–T11 (Phase C) | 522 new floor 0-4 sensor points; full-building SPARQL verified |
+| T12–T15 (Phase D) | Feed adapter framework (csv_drop + rest_poll); auto-registration in GraphDB; weather feed (Open-Meteo); calendar/tariff |
+| T16–T19 (Phase E) | 17 new synthetic feeds: occupancy / energy / IAQ / noise / light / water / maintenance / equipment; 38 recipes; long-tail onboarding playbook |
+| T20–T22 (Phase F) | ECA rules engine (Redis duration windows); conversational alert creation; honest automation-capability answers |
+| T23–T25 (Phase G) | Actuation gateway (SimDriver + approval store); `control:write` RBAC; control intent upgraded to config-gated execute |
+| T26–T27 (Phase H) | Goal planner (4 goals, 11 KPIs); three-tier capability report |
+| T28–T30 (Phase I) | Corpus replay harness (240q stratified, LLM-graded); bldg2 portability proof; docs update |
+| T31–T37 (Phase J) | Wayfinding routes; benchmarking vs peers; notification service; what-if recipes; personalised preferences; maintenance/CMMS records; input validators + scaffolder |
+
+**V3 verified:** 121 unit tests pass, 2 skipped (offline); 32 validator tests pass; 68/68 routing tests pass. Live corpus replay requires running stack: `python scripts/corpus_replay.py --sample 240`.
+
 ---
 
 ## 8. Configuration surface
@@ -618,6 +1132,9 @@ This section captures every architectural change since v1.0 (Phase 11 onwards). 
 | `REPORT_INTAKE_ENABLED` | `true` | Phase 19 — user-report intake |
 | `STRICT_SECRETS` | `false` | Phase 21 — refuse boot if any password is still the default |
 | `TTL_VALIDATION_SHACL` | `false` | Phase 12B — needs brickschema |
+| `GOAL_PLANNER_ENABLED` | `false` | V3 — goal/mandate decomposition (T26-27) |
+| `MULTI_INTENT_ENABLED` | `true` | Phase 14 — compound-query decomposition |
+| `FEED_POLL_INTERVAL` | `60` | V3 — seconds between rest_poll feed polls |
 
 ### 8.2 `input/<bldg>/building.yaml` (per-building)
 
@@ -631,6 +1148,8 @@ This section captures every architectural change since v1.0 (Phase 11 onwards). 
 | `floor_plan_aliases` | no | Alt names for PDF/DWG slug → registry key |
 | `storage.databases` | no | List of database keys from `config/database_registry.yaml` |
 | `capability_routing` | no | Threshold tuning for semantic router |
+| `actuation.driver` | no | V3 — `sim` / `none`; controls whether control intent executes |
+| `actuation.points_writable` | no | V3 — list of Brick point URIs the driver may set |
 
 ### 8.3 `input/<bldg>/intents.yaml` (per-building overlay)
 
@@ -657,13 +1176,79 @@ capabilities:
     source: building_management_system
 ```
 
+### 8.6 `input/<bldg>/feeds.yaml` (V3 — external data feeds)
+
+```yaml
+feeds:
+  - id: outside_weather_temp
+    type: rest_poll          # or csv_drop
+    url: https://api.open-meteo.com/v1/forecast?…
+    interval_s: 300
+    brick_class: brick:Outside_Air_Temperature_Sensor
+    storage: mysql
+    field_map:
+      temperature_2m: value
+```
+
+All types: `rest_poll`, `csv_drop`. Absence of this file = feed framework idle. Feed points auto-register in GraphDB on boot (named graph per building). Secrets via env-var name only — never literal in YAML.
+
+### 8.7 `input/<bldg>/rules.yaml` (V3 — ECA operator rules)
+
+```yaml
+rules:
+  - id: co2_high_room501
+    trigger:
+      concept: co2_level       # OR sensor_uuid: <uuid>
+      op: ">"
+      threshold: 1000
+    action:
+      type: notify
+      message: "CO2 high in room 5.01"
+```
+
+Evaluated by `rules_engine.py` on a polling loop. Duration windows (`duration_min`) and cooldown (`cooldown_min`) tracked in Redis. Users may also create personal alert rules via conversation (`alert_mgmt` intent); those are stored separately in Redis and merged at evaluation time.
+
+### 8.8 `input/<bldg>/channels.yaml` (V3 — notification dispatch)
+
+```yaml
+channels:
+  - type: log          # always present as default
+  - type: webhook
+    url: https://hooks.example.com/ontosage
+    enabled: false     # set true to activate
+  - type: smtp
+    from: alerts@example.com
+    # SMTP_PASSWORD env var — never hardcode
+```
+
+### 8.9 `input/<bldg>/benchmarks.csv` (V3 — peer benchmarks)
+
+Columns: `metric`, `p25`, `p50`, `p75`, `unit`, `source`. Used by `energy_intensity_benchmark` and `co2_benchmark` recipes to compare this building's readings against a sector percentile.
+
+### 8.10 `input/<bldg>/concepts.ttl` (V3 — HBCO local vocabulary)
+
+```turtle
+@prefix hbco: <http://ontosage.org/hbco#> .
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+
+<http://bldg1.example.org#the_fishbowl_concept> a hbco:Concept ;
+    hbco:layTerm "the fishbowl"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Room .
+```
+
+Loaded alongside the building-independent `hbco_mappings.ttl`. Per-building terms extend, never override, the shared vocabulary.
+
+### 8.11 `input/<bldg>/documents/` (V3 — document KB)
+
+Markdown, PDF, or TXT files indexed into Qdrant collection `documents_<bldg>`. Retrieved by the capability agent when KB confidence is low; document name cited in the answer. Seed files for bldg1: `governance.md`, `fire_safety.md`, `hvac_operation.md`, `maintenance_log.md`.
+
 ---
 
 ## 9. Test coverage
 
-### 9.1 Deterministic suite (CI — Phase 16C, expanded Phase 21-22)
+### 9.1 Deterministic suite (CI — Phase 16C, expanded through P0)
 
-16 files, **251 tests pass, 3 skipped, 0 fail** (Python 3.10/3.11/3.12 matrix):
+**Current suite (P0 hardening): 416 pass, 0 fail** on Python 3.10/3.11/3.12 matrix.
 
 | File | Tests | Coverage |
 |---|---|---|
@@ -671,7 +1256,7 @@ capabilities:
 | `test_phase_a_fixes.py` | 44 | Persona + new intents routing (updated for Phase 14A) |
 | `test_survey_aligned_phases.py` | 64 | Capability KB + persona + G1 taxonomy + workflow wiring |
 | `test_workflow_wiring.py` | 4 | Behavioral wiring contracts (Phase 17-updated) |
-| `test_routing_accuracy.py` | 29 | All 20 intents + 5 override scenarios + 4 audit invariants |
+| `test_routing_accuracy.py` | 29 | All 20+ intents + 5 override scenarios + 4 audit invariants |
 | `test_intent_graph_autowire.py` | 5 | Every `node_method` resolves; every registry node in graph |
 | `test_unregistered_intent_safety_net.py` | 3 | YAML-added intent with no node → safe fallback |
 | `test_multi_tenant_fixture.py` | 5 | bldg2 fixture exercises per-building infra |
@@ -683,6 +1268,19 @@ capabilities:
 | `test_turn_memory.py` | 10 | Phase 21 — Redis count-eviction, no-TTL SET, Postgres `turn_memory` schema |
 | `test_conversation_memory_e2e.py` | — | Phase 21 — carry-forward round-trip, older-context format, no raw arrays stored |
 | `test_coreference_rewrite.py` | 16 | Phase 22 — follow-up heuristic gate + gated LLM rewrite (mocked) |
+| `test_admin_ontology_endpoints.py` | 13 | P0 — all 8 admin endpoints; auth via `get_user_context` override; mocked GraphDB/Qdrant |
+
+**Auth pattern used in admin tests** (override `get_user_context`, not `get_current_user`):
+```python
+from orchestrator.middleware.rbac import ROLE_PERMISSIONS, UserContext
+from orchestrator.main import app, get_user_context
+
+app.dependency_overrides[get_user_context] = lambda: UserContext(
+    user_id="testadmin", username="testadmin", role="admin",
+    tenant_id="default", allowed_buildings=[],
+    permissions=ROLE_PERMISSIONS.get("admin", set()),
+)
+```
 
 ### 9.2 Live e2e suite (NOT in CI — needs running stack)
 
@@ -693,9 +1291,17 @@ capabilities:
 
 These exercise the full stack and have LLM nondeterminism. Run manually before deploys.
 
-### 9.3 Live survey (`scripts/survey_live_test.py`)
+### 9.3 Live survey and corpus replay
 
-95-question battery covering 16 categories. **Phase 18 + libredwg baseline (2026-05-30):**
+**Corpus replay (2026-06-18):** 240 stratified questions, LLM-graded, live stack required:
+
+```
+corpus_replay pass rate: 63.8%   (vs 16.2% baseline before V3)
+```
+
+Run: `python scripts/corpus_replay.py --sample 240`
+
+**Live survey (`scripts/survey_live_test.py`):** 95-question battery covering 16 categories. **Phase 18 + libredwg baseline (2026-05-30):**
 
 ```
 RESULTS: 94/95 PASS  ·  1 WARN  ·  0 FAIL  ·  (99% clean pass)
@@ -797,18 +1403,12 @@ docker exec postgres-user-data psql -U ontobot -d ontobot \
 ### Run the deterministic test suite
 
 ```bash
-pytest tests/test_phase3_4_services.py tests/test_blended_persona.py \
-       tests/test_compound_query_e2e.py tests/test_intent_graph_autowire.py \
-       tests/test_multi_tenant_fixture.py tests/test_routing_accuracy.py \
-       tests/test_state_persistence.py tests/test_swap_building.py \
-       tests/test_unregistered_intent_safety_net.py tests/test_workflow_wiring.py \
-       tests/test_survey_aligned_phases.py tests/test_phase_a_fixes.py \
-       tests/services/test_ttl_validator.py \
-       tests/test_turn_memory.py tests/test_conversation_memory_e2e.py \
-       tests/test_coreference_rewrite.py
+pytest tests/ -m unit -q                        # fast offline suite — 416 tests ~20s
+pytest tests/test_routing_accuracy.py -v        # 29 canonical routing cases
+pytest tests/test_admin_ontology_endpoints.py   # 13 P0 admin endpoint tests
 ```
 
-(Or just rely on `.github/workflows/ci.yml` which runs the exact same list.)
+Or rely on `.github/workflows/ci.yml` — runs the full suite on Python 3.10/3.11/3.12.
 
 ### Run the live survey
 

@@ -97,7 +97,7 @@ stateDiagram-v2
 One file per building at `input/<building_id>/capability.yaml`. Validated by `shared.capability_schema.CapabilityKB` (Pydantic).
 
 ```yaml
-# input/bldg1/capability.yaml
+# input/capability.yaml
 building_info:
   id: bldg1
   name: Abacws Building
@@ -162,7 +162,7 @@ These are not enforced — you can add custom categories — but the persona pri
 Per-building tuning lives at `input/<building_id>/building.yaml` under `capability_routing:`. Defaults make sense for OpenAI `text-embedding-3-small`; local MiniLM benefits from re-tuning.
 
 ```yaml
-# input/bldg1/building.yaml
+# input/building.yaml
 capability_routing:
   enabled: true
   embedding_model: auto       # 'auto' follows EMBEDDING_PROVIDER (recommended)
@@ -248,7 +248,7 @@ Default thresholds in `shared/capability_schema.py` (`threshold=0.65`, `override
 | Provider | `threshold` | `override_min` | Notes |
 |---|---|---|---|
 | OpenAI `text-embedding-3-small` | 0.50 | 0.55 | Original calibration before local switch |
-| Local MiniLM (`all-MiniLM-L6-v2`) | **0.56** | **0.60** | Current default in `input/bldg1/building.yaml`; MiniLM produces tighter cosine ranges |
+| Local MiniLM (`all-MiniLM-L6-v2`) | **0.56** | **0.60** | Current default in `input/building.yaml`; MiniLM produces tighter cosine ranges |
 
 ### Calibration Script
 
