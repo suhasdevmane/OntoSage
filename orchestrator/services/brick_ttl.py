@@ -57,6 +57,31 @@ def _bnode_label(local: str) -> str:
     return f"_:ref_{safe}"
 
 
+def _escape_ttl_string(s: str) -> str:
+    """Escape a value for a Turtle double-quoted string literal (label / uuid).
+
+    An admin CSV can carry a quote in a label (``Room 5.01 "North"``); unescaped it
+    breaks out of the literal and either corrupts the graph or fails the upload.
+    """
+    return (
+        s.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\t", "\\t")
+    )
+
+
+def _safe_local_name(s: str) -> str:
+    """Sanitize a Turtle prefixed-name LOCAL part (the piece after ``bldg:``)."""
+    return "".join(c if (c.isalnum() or c in "_-.") else "_" for c in s)
+
+
+def _safe_prefixed_name(s: str) -> str:
+    """Sanitize a full prefixed name (``brick:X`` / ``bldg:Y``), keeping the colon."""
+    return "".join(c if (c.isalnum() or c in "_-.:") else "_" for c in s)
+
+
 def point_block(
     local: str,
     brick_class: str,
@@ -68,9 +93,9 @@ def point_block(
     label: Optional[str] = None,
 ) -> str:
     """One sensor's two triple blocks (individual + shared external-reference node)."""
-    bc = brick_class if ":" in brick_class else f"brick:{brick_class}"
-    loc = location if ":" in location else f"bldg:{location}"
-    stored = stored_at if ":" in stored_at else f"bldg:{stored_at}"
+    bc = _safe_prefixed_name(brick_class if ":" in brick_class else f"brick:{brick_class}")
+    loc = _safe_prefixed_name(location if ":" in location else f"bldg:{location}")
+    stored = _safe_prefixed_name(stored_at if ":" in stored_at else f"bldg:{stored_at}")
     lbl = label or local.replace("_", " ")
     genid = _bnode_label(local)
 
@@ -88,20 +113,20 @@ def point_block(
     seen: set = set()
     tlist = [t for t in types if not (t in seen or seen.add(t))]
     type_str = " ,\n        ".join(tlist)
-    unit_line = f"    brick:hasUnit {unit} ;\n" if (unit and ":" in unit) else ""
+    unit_line = f"    brick:hasUnit {_safe_prefixed_name(unit)} ;\n" if (unit and ":" in unit) else ""
 
     return (
-        f"bldg:{local} rdf:type {type_str} ;\n"
+        f"bldg:{_safe_local_name(local)} rdf:type {type_str} ;\n"
         f"    ashrae:hasExternalReference {genid} ;\n"
         f"{unit_line}"
         f"    brick:hasLocation {loc} ;\n"
         f"    ref:hasExternalReference {genid} ;\n"
-        f'    rdfs:label "{lbl}"@en .\n'
+        f'    rdfs:label "{_escape_ttl_string(lbl)}"@en .\n'
         f"\n"
         f"{genid} rdf:type ashrae:ExternalReference ,\n"
         f"        ref:ExternalReference ,\n"
         f"        ref:TimeseriesReference ;\n"
-        f'    ref:hasTimeseriesId "{uuid}" ;\n'
+        f'    ref:hasTimeseriesId "{_escape_ttl_string(uuid)}" ;\n'
         f"    ref:storedAt {stored} .\n"
     )
 
