@@ -121,7 +121,7 @@ services:
     environment:
       - OLLAMA_BASE_URL=http://ollama-deepseek-r1:11434
       - OPENAI_API_BASE_URL=http://ontosage-orchestrator:8000/v1
-      - OPENAI_API_KEY=sk-ontobot-pipeline
+      - OPENAI_API_KEY=${PIPELINE_API_KEY}
       # External access via Cloudflare Tunnel → talk2futurebuildings.systems
       - WEBUI_URL=https://talk2futurebuildings.systems
       - ENABLE_WEBSOCKET_SUPPORT=true
