@@ -22,9 +22,14 @@ import pytest
 # ─── Phase 0: CapabilityKB ────────────────────────────────────────────────────
 
 class TestCapabilitySchema:
+    def _capability_yaml(self) -> Path:
+        from shared.building_paths import resolve_building_file
+        p = resolve_building_file("bldg1", "capability.yaml")
+        return Path(__file__).resolve().parents[1] / p
+
     def test_from_yaml_loads_bldg1(self):
         from shared.capability_schema import CapabilityKB
-        yaml_path = Path(__file__).resolve().parents[1] / "input" / "bldg1" / "capability.yaml"
+        yaml_path = self._capability_yaml()
         kb = CapabilityKB.from_yaml(yaml_path)
         assert kb.building_info.id == "bldg1"
         assert kb.building_info.name == "Abacws Building"
@@ -32,7 +37,7 @@ class TestCapabilitySchema:
 
     def test_building_property_alias(self):
         from shared.capability_schema import CapabilityKB
-        yaml_path = Path(__file__).resolve().parents[1] / "input" / "bldg1" / "capability.yaml"
+        yaml_path = self._capability_yaml()
         kb = CapabilityKB.from_yaml(yaml_path)
         # .building is an alias for .building_info
         assert kb.building is kb.building_info
@@ -40,7 +45,7 @@ class TestCapabilitySchema:
     def test_fire_safety_entries_exist(self):
         """FIRE_SAFETY KB entries are present with the expected keywords."""
         from shared.capability_schema import CapabilityKB
-        yaml_path = Path(__file__).resolve().parents[1] / "input" / "bldg1" / "capability.yaml"
+        yaml_path = self._capability_yaml()
         kb = CapabilityKB.from_yaml(yaml_path)
         fire_entries = [e for e in kb.capabilities if e.category == "FIRE_SAFETY"]
         assert len(fire_entries) >= 1, "FIRE_SAFETY category missing from bldg1 KB"
@@ -58,7 +63,7 @@ class TestCapabilitySchema:
         overlap (indirect validation — the keywords aren't present in any entry).
         """
         from shared.capability_schema import CapabilityKB
-        yaml_path = Path(__file__).resolve().parents[1] / "input" / "bldg1" / "capability.yaml"
+        yaml_path = self._capability_yaml()
         kb = CapabilityKB.from_yaml(yaml_path)
         nonsense_words = {"xenon", "plasma", "reactor", "antimatter"}
         all_kws = {kw.lower() for e in kb.capabilities for kw in e.keywords}
@@ -69,7 +74,7 @@ class TestCapabilitySchema:
     def test_capabilities_list_is_bounded(self):
         """capabilities list is finite and contains at least 10 entries."""
         from shared.capability_schema import CapabilityKB
-        yaml_path = Path(__file__).resolve().parents[1] / "input" / "bldg1" / "capability.yaml"
+        yaml_path = self._capability_yaml()
         kb = CapabilityKB.from_yaml(yaml_path)
         assert len(kb.capabilities) >= 10
         # Slicing to top-2 works (mirrors max_results capping in SemanticRouter)
@@ -79,7 +84,7 @@ class TestCapabilitySchema:
     def test_hvac_entries_exist_with_correct_keywords(self):
         """HVAC KB entries are present with heating / zone keywords for the indexer."""
         from shared.capability_schema import CapabilityKB
-        yaml_path = Path(__file__).resolve().parents[1] / "input" / "bldg1" / "capability.yaml"
+        yaml_path = self._capability_yaml()
         kb = CapabilityKB.from_yaml(yaml_path)
         hvac_entries = [e for e in kb.capabilities if e.category == "HVAC"]
         assert hvac_entries, "HVAC category missing from bldg1 KB"
@@ -90,7 +95,7 @@ class TestCapabilitySchema:
 
     def test_building_info_key_not_picked_up_as_multi_building(self):
         from shared.capability_schema import CapabilityKB
-        yaml_path = Path(__file__).resolve().parents[1] / "input" / "bldg1" / "capability.yaml"
+        yaml_path = self._capability_yaml()
         import yaml
         with open(yaml_path) as f:
             raw = yaml.safe_load(f)
@@ -180,9 +185,14 @@ class TestCapabilityAgent:
 
     def test_missing_building_returns_no_kb_message(self):
         from orchestrator.agents.capability_agent import CapabilityAgent
+        from unittest.mock import patch
         agent = CapabilityAgent()
         state = _make_state("Fire exits?", building_id="bldg999")
-        result_state = asyncio.run(agent.answer(state))
+        # Force _load_kb to return None — simulates a building with no KB at all.
+        # The flat-layout fallback means the filesystem always finds input/capability.yaml,
+        # so we must mock to reach the no_kb code path.
+        with patch("orchestrator.agents.capability_agent._load_kb", return_value=None):
+            result_state = asyncio.run(agent.answer(state))
         cap = result_state.intermediate_results.get("capability_result", {})
         assert cap.get("success") is False
         assert cap.get("provenance") == "no_kb"

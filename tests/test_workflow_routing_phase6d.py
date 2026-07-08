@@ -131,7 +131,8 @@ def live_reg():
     # Meta group default
     ("greeting", "response"),
     ("clarification", "response"),
-    ("general", "response"),
+    # Meta group with explicit route_target → dedicated open-domain answering node
+    ("general", "general_knowledge"),
     # Standalone group default
     ("floor_plan", "floor_plan"),
     ("spatial_query", "spatial_query"),

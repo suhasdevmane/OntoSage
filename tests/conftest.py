@@ -12,6 +12,13 @@ import pytest
 # Ensure project root is in path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+# Tests must exercise a REAL pipeline key, never the published default — the app
+# now rejects "sk-ontobot-pipeline" so a stock deployment can't authenticate
+# /v1/*. Set BEFORE the project imports below pull in shared.config /
+# orchestrator.main so the Settings singleton and _OAI_AUTH_KEYS pick it up.
+# setdefault lets CI override with a real key.
+os.environ.setdefault("PIPELINE_API_KEY", "sk-test-pipeline-key-ci")
+
 from tests.fixtures.ontology_fixtures import (
     brick_fixture,
     mock_anomalous_readings,

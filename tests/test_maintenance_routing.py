@@ -28,11 +28,13 @@ NON_MAINTENANCE_QUERIES = [
 
 def _router_would_bypass(query: str) -> bool:
     from orchestrator.services.semantic_router import SemanticRouter
+
     return SemanticRouter.is_data_query(query)
 
 
 def _dialogue_would_override(query: str) -> bool:
     from orchestrator.agents.dialogue_agent import _MAINTENANCE_SCHEDULE_KWS
+
     q = query.lower()
     return any(kw in q for kw in _MAINTENANCE_SCHEDULE_KWS)
 
@@ -54,6 +56,7 @@ def test_non_maintenance_not_bypassed():
 def test_maintenance_schedule_kws_exported():
     """_MAINTENANCE_SCHEDULE_KWS should be defined at module level."""
     from orchestrator.agents.dialogue_agent import _MAINTENANCE_SCHEDULE_KWS
+
     assert len(_MAINTENANCE_SCHEDULE_KWS) >= 4
 
 
@@ -74,3 +77,71 @@ def test_false_positive_probe_meeting_not_maintenance():
     ]
     for q in probes:
         assert not _dialogue_would_override(q), f"False positive maintenance override for: {q!r}"
+
+
+# ── Room/floor locator + measurement keyword bypass (fix 2026-06-12) ──────────
+# "What is the latest CO2 in room 5.01?" was hijacked by a high-confidence
+# capability-KB override (OpenAI embedding score 0.684 > override_min 0.60,
+# thresholds calibrated for local MiniLM). Natural reading questions with a
+# room/floor locator + measurement word must bypass the KB router.
+
+_DATA_LOCATOR_QUERIES = [
+    "What is the latest CO2 in room 5.01?",
+    "what is the current temperature in room 3.02",
+    "humidity reading in rm 2.11 please",
+    "what is the latest co2 on floor 3?",
+    "energy usage for floor 5 today",
+]
+
+_NON_DATA_LOCATOR_QUERIES = [
+    # Locator but NO measurement word — must NOT bypass (wayfinding/capability)
+    "how do I get to room 5.01 from reception",
+    "is room 5.01 available this afternoon",
+    "who sits in room 3.02",
+    # Measurement word but NO locator — falls through to LLM classification
+    "is the building energy efficient?",
+]
+
+
+@pytest.mark.unit
+def test_room_floor_locator_with_measurement_bypasses_kb():
+    for q in _DATA_LOCATOR_QUERIES:
+        assert _router_would_bypass(q), f"data question not bypassed: {q!r}"
+
+
+@pytest.mark.unit
+def test_locator_without_measurement_does_not_bypass():
+    for q in _NON_DATA_LOCATOR_QUERIES:
+        assert not _router_would_bypass(q), f"non-data question wrongly bypassed: {q!r}"
+
+
+# ── Control-command guards: questions are not commands (fix 2026-06-12) ───────
+
+
+def _is_control(query: str) -> bool:
+    from orchestrator.services.semantic_router import SemanticRouter
+
+    return SemanticRouter.is_control_command(query)
+
+
+@pytest.mark.unit
+def test_capability_and_advice_questions_are_not_control_commands():
+    for q in [
+        "Can the building automatically close the blinds when it gets sunny?",
+        "Could the system detect a water leak by itself?",
+        "Should I open the windows in room 5.08 to improve air quality?",
+        "Would it help to turn down the heating overnight?",
+        "Do you recommend opening the windows now?",
+    ]:
+        assert not _is_control(q), f"question treated as command: {q!r}"
+
+
+@pytest.mark.unit
+def test_real_commands_still_detected():
+    for q in [
+        "Open the windows on floor 3.",
+        "Turn off the HVAC in Zone 5.28.",
+        "Can you please unlock the main door so everyone can get out",
+        "Make sure all the doors are locked tonight",
+    ]:
+        assert _is_control(q), f"command not detected: {q!r}"
