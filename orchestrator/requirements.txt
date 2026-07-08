@@ -1,16 +1,28 @@
 # Core dependencies
 fastapi==0.115.5
 uvicorn[standard]==0.32.1
-pydantic==2.10.3
-pydantic-settings==2.6.1
+# pydantic bumped in lock-step with langchain-core 0.3.86 (which requires a newer
+# pydantic than the old 2.10.3/2.6.1 pins allowed). This set is what the unit suite
+# actually validates.
+pydantic==2.12.5
+pydantic-settings==2.14.2
 python-dotenv==1.2.2
 PyYAML>=6.0.1
 
 # LangGraph and LangChain
+# The code targets the 0.3.x line (verified: full unit suite passes on it). CVE
+# patches are applied WITHIN 0.3.x below (langchain-core/community/text-splitters).
+# NOTE: langchain-ollama is capped <0.3 — the unbounded `>=0.2.0` pulled
+# langchain-ollama 1.x, which requires langchain-core 1.x and silently dragged the
+# whole 1.x stack into dev venvs (test/prod drift). The remaining ecosystem CVEs
+# (langgraph, langchain, langchain-openai, langsmith, langgraph-checkpoint) only
+# have fixes in 1.x — a breaking migration tracked separately; do NOT blind-bump.
 langgraph==0.2.55
-langchain==0.3.13
-langchain-ollama>=0.2.0
-langchain-community==0.3.13
+langchain==0.3.30
+langchain-core==0.3.86
+langchain-text-splitters==0.3.11
+langchain-ollama>=0.2.0,<0.3
+langchain-community==0.3.31
 langchain-openai==0.2.14
 
 # Redis
