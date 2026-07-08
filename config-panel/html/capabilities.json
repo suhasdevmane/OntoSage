@@ -1,0 +1,653 @@
+{
+  "_meta": {
+    "note": "Per-modality capability catalogue shown in the Data Sources 'Details' modal. Keyed by a source's `modality`. Purely presentational — extend freely. Questions are illustrative of what OntoSage can answer once the source is connected + its sensors are registered in GraphDB.",
+    "unit_note": "These are demonstrated capabilities of the capability ENVELOPE — some need the source enabled AND real/synthetic data loaded + sensors registered (ref:storedAt)."
+  },
+
+  "occupancy": {
+    "title": "Occupancy Sensing",
+    "summary": "Presence, headcount and utilisation per space over time. Turns 'is anyone there?' and 'how busy is it?' into data — unlocking desk/room finding, right-sizing space, demand-driven HVAC/cleaning, and safety headcounts.",
+    "groups": [
+      {
+        "stakeholder": "Occupants · Students · Staff (self-service)",
+        "capabilities": [
+          "Find a free desk / quiet room right now, filtered by area or floor",
+          "See which study spaces, labs or meeting rooms are currently busy vs empty",
+          "Discover the least-crowded times of day for a given space",
+          "Check whether a bookable space is actually occupied (ghost-booking detection)",
+          "Get suggested alternatives when a preferred space is full"
+        ],
+        "questions": [
+          "Where can I find a free desk on floor 5 right now?",
+          "Which study rooms are empty at the moment?",
+          "Is the library quiet zone busy right now?",
+          "What is the quietest time to use the 3rd-floor labs?",
+          "Are there any free meeting rooms near reception?",
+          "Is room 5.28 actually occupied or just booked?",
+          "Where is the least crowded space to work this afternoon?"
+        ]
+      },
+      {
+        "stakeholder": "Facility · Space Management",
+        "capabilities": [
+          "Measure real utilisation (%) per space, floor and building over any period",
+          "Identify chronically under-used or over-subscribed spaces",
+          "Quantify peak occupancy and peak times to size services",
+          "Compare booked vs actual occupancy to reclaim wasted bookings",
+          "Rank spaces by footfall to prioritise maintenance and refurbishment"
+        ],
+        "questions": [
+          "What was the average utilisation of the 4th floor last month?",
+          "Which rooms were used less than 20% of the time last term?",
+          "When does the building hit peak occupancy on weekdays?",
+          "How many desks are effectively unused across the building?",
+          "Which spaces are consistently over capacity at lunchtime?",
+          "What is the gap between booked hours and actual occupied hours for meeting rooms?"
+        ]
+      },
+      {
+        "stakeholder": "Workplace Strategy · HR · Estates Planning",
+        "capabilities": [
+          "Right-size the estate: evidence for consolidating or releasing floors",
+          "Model desk-sharing ratios from real attendance patterns",
+          "Understand day-of-week and hybrid-working attendance profiles",
+          "Support neighbourhood / activity-based-working design decisions"
+        ],
+        "questions": [
+          "What is the typical Monday vs Thursday attendance across the building?",
+          "What desk-sharing ratio would our real occupancy support?",
+          "Which floors could we consolidate without hitting capacity limits?",
+          "How has attendance trended over the last three months?"
+        ]
+      },
+      {
+        "stakeholder": "Energy · Sustainability",
+        "capabilities": [
+          "Drive demand-controlled ventilation, lighting and heating from real presence",
+          "Find spaces conditioned while empty (energy waste)",
+          "Correlate occupancy with energy use to target no-regret savings",
+          "Report energy intensity per occupied hour (not just per m²)"
+        ],
+        "questions": [
+          "Which zones are heated or cooled while unoccupied?",
+          "How much of our HVAC runtime happens in empty spaces?",
+          "What is the energy use per occupied hour on floor 3?",
+          "Where would occupancy-based setback save the most?"
+        ]
+      },
+      {
+        "stakeholder": "Cleaning · Housekeeping Services",
+        "capabilities": [
+          "Switch to demand-based cleaning: clean the spaces actually used",
+          "Prioritise high-footfall toilets, kitchens and touchpoints",
+          "Cut cleaning of untouched rooms to redirect effort"
+        ],
+        "questions": [
+          "Which washrooms had the highest footfall today?",
+          "Which meeting rooms were unused and can skip cleaning?",
+          "Where should we focus cleaning during exam week?"
+        ]
+      },
+      {
+        "stakeholder": "Health · Safety · Security",
+        "capabilities": [
+          "Live headcount per zone for evacuation and muster reconciliation",
+          "Detect out-of-hours presence in normally empty areas",
+          "Monitor crowding against capacity limits for safety compliance",
+          "Support lone-worker awareness in low-occupancy zones"
+        ],
+        "questions": [
+          "How many people are currently on floor 2?",
+          "Is anyone in the west wing after 22:00?",
+          "Are any spaces exceeding their safe capacity right now?",
+          "Which zones had unexpected weekend occupancy?"
+        ]
+      },
+      {
+        "stakeholder": "Finance · Real Estate",
+        "capabilities": [
+          "Cost-per-occupied-seat and cost-per-utilised-m² metrics",
+          "Business case for lease renewal / disposal from utilisation evidence",
+          "Chargeback of space to departments by actual usage"
+        ],
+        "questions": [
+          "What is our cost per occupied seat this quarter?",
+          "Which department's allocated space is most under-used?",
+          "Does utilisation justify renewing the annex lease?"
+        ]
+      },
+      {
+        "stakeholder": "Researchers · Data Science",
+        "capabilities": [
+          "Extract occupancy time-series for pattern-of-life modelling",
+          "Study behavioural response to interventions (nudges, layout changes)",
+          "Build occupancy-forecasting features for downstream models"
+        ],
+        "questions": [
+          "Show me the hourly occupancy profile of the atrium for the last 30 days",
+          "How did occupancy change after the desk-booking system launched?",
+          "Forecast occupancy for the reading room next week"
+        ]
+      }
+    ]
+  },
+
+  "energy": {
+    "title": "Energy Metering",
+    "summary": "Electrical (and by extension thermal) consumption per meter, floor and building over time — unlocking peak-demand management, cost attribution, waste-hunting, carbon reporting and demand-response.",
+    "groups": [
+      {
+        "stakeholder": "Energy Manager",
+        "capabilities": [
+          "Track kWh and kW demand by meter, floor and whole-building",
+          "Identify peak-demand periods and the loads driving them",
+          "Find baseload / overnight consumption that should be near-zero",
+          "Benchmark floors and buildings against each other and against targets",
+          "Spot consumption spikes and drifts that indicate faults or misuse"
+        ],
+        "questions": [
+          "When did we hit peak electrical demand last month and what drove it?",
+          "What is our overnight baseload and is it higher than it should be?",
+          "Which floor uses the most energy per m²?",
+          "Show me the daily energy profile of floor 5 for the last two weeks",
+          "Has any meter shown an unexplained step-change in consumption?",
+          "What are our peak hours of usage on weekdays?"
+        ]
+      },
+      {
+        "stakeholder": "Finance · Procurement",
+        "capabilities": [
+          "Estimate and attribute energy cost by area and time-of-use tariff",
+          "Model savings from load-shifting away from peak-price windows",
+          "Departmental energy chargeback from sub-metering",
+          "Forecast monthly spend from consumption trends"
+        ],
+        "questions": [
+          "What did energy cost us on floor 3 last month?",
+          "How much could we save by shifting load off the evening peak tariff?",
+          "Which department is the most energy-expensive per head?",
+          "What is our projected energy bill for next quarter?"
+        ]
+      },
+      {
+        "stakeholder": "Sustainability · ESG · Carbon Reporting",
+        "capabilities": [
+          "Convert consumption to Scope-2 CO2 using grid factors",
+          "Report energy intensity (kWh/m², kWh per occupied hour)",
+          "Track progress against net-zero / reduction targets",
+          "Evidence for BREEAM / LEED / SECR / ESOS reporting"
+        ],
+        "questions": [
+          "What were our Scope-2 carbon emissions last month?",
+          "How does our energy intensity compare to last year?",
+          "Are we on track for our 2030 reduction target?",
+          "What is the carbon footprint of floor 4?"
+        ]
+      },
+      {
+        "stakeholder": "Facility · Operations · Maintenance",
+        "capabilities": [
+          "Detect equipment left running out of hours",
+          "Flag abnormal consumption that signals a failing asset",
+          "Verify that scheduling / setback strategies actually reduce load",
+          "Correlate energy with occupancy and weather to explain variance"
+        ],
+        "questions": [
+          "Is any major plant running outside occupied hours?",
+          "Which meter's consumption pattern looks abnormal this week?",
+          "Did the new HVAC schedule actually cut consumption?",
+          "How much of last week's energy variance is explained by weather?"
+        ]
+      },
+      {
+        "stakeholder": "Occupants · Community",
+        "capabilities": [
+          "Public energy dashboards to raise awareness",
+          "Compare 'my floor' against building averages",
+          "Behaviour-change nudges tied to real consumption"
+        ],
+        "questions": [
+          "How does my floor's energy use compare to the rest of the building?",
+          "When is the building greenest to run high-energy tasks?",
+          "Did our switch-off campaign reduce evening energy use?"
+        ]
+      },
+      {
+        "stakeholder": "Grid · Demand Response",
+        "capabilities": [
+          "Quantify shiftable / curtailable load for demand-response events",
+          "Measure response and rebound during a curtailment window",
+          "Support participation in flexibility markets"
+        ],
+        "questions": [
+          "How much load could we curtail for one hour at 5pm?",
+          "What was our demand reduction during the last DR event?",
+          "Which loads rebounded after the curtailment ended?"
+        ]
+      }
+    ]
+  },
+
+  "noise": {
+    "title": "Acoustic / Noise Sensing",
+    "summary": "Sound levels (dB) per space over time — unlocking quiet-space finding, acoustic-comfort management, disturbance complaints resolution, and evidence for zoning and interventions. (No raw audio; levels only.)",
+    "groups": [
+      {
+        "stakeholder": "Occupants · Students · Staff",
+        "capabilities": [
+          "Find a genuinely quiet place to study or focus, now",
+          "Avoid spaces that are currently noisy or likely to get noisy",
+          "Choose a space by acoustic profile (silent / low-chatter / collaborative)"
+        ],
+        "questions": [
+          "Where is the quietest place to work on floor 4 right now?",
+          "Which study rooms are below library-quiet noise levels?",
+          "Is the atrium too loud to take a call right now?",
+          "Find me a quiet desk that usually stays quiet in the afternoon"
+        ]
+      },
+      {
+        "stakeholder": "Workplace · Space Management",
+        "capabilities": [
+          "Map acoustic hotspots to inform zoning (quiet vs collaboration)",
+          "Validate that quiet zones actually stay quiet",
+          "Evidence for acoustic interventions (baffles, partitions, carpet)",
+          "Balance open-plan noise against focus-work needs"
+        ],
+        "questions": [
+          "Which areas breach our quiet-zone target most often?",
+          "Do our designated quiet zones actually stay below target?",
+          "Where would acoustic treatment have the biggest impact?",
+          "What times of day is the open-plan area loudest?"
+        ]
+      },
+      {
+        "stakeholder": "Health · Wellbeing · HR",
+        "capabilities": [
+          "Monitor exposure against comfort / wellbeing thresholds",
+          "Correlate noise with complaints, productivity and wellbeing surveys",
+          "Support noise-sensitive and neurodivergent occupants"
+        ],
+        "questions": [
+          "How often do noise levels exceed the wellbeing comfort threshold?",
+          "Are complaints about noise concentrated in specific areas?",
+          "Which spaces are suitable for noise-sensitive occupants?"
+        ]
+      },
+      {
+        "stakeholder": "Facility · Estates",
+        "capabilities": [
+          "Detect disturbance events (events, works, equipment) by time and place",
+          "Provide objective evidence for noise complaints",
+          "Assess impact of nearby construction or plant"
+        ],
+        "questions": [
+          "Was there an unusual noise spike in the east wing yesterday afternoon?",
+          "Is the plant room noise breaching limits at the adjacent offices?",
+          "Give me evidence for the noise complaint from room 3.12"
+        ]
+      },
+      {
+        "stakeholder": "Researchers",
+        "capabilities": [
+          "Study acoustic pattern-of-life and its drivers",
+          "Relate noise to occupancy, activity and space design",
+          "Forecast noisy periods for proactive space guidance"
+        ],
+        "questions": [
+          "Show the noise profile of the cafe across a typical week",
+          "How does noise correlate with occupancy in the atrium?",
+          "Predict when the collaboration zone will get noisy tomorrow"
+        ]
+      }
+    ]
+  },
+
+  "iaq": {
+    "title": "Indoor Air Quality",
+    "summary": "CO2, particulates and related indices per space — unlocking ventilation assessment, health & wellbeing monitoring, stuffiness/comfort answers, and compliance evidence. (Note: the base ontology already carries rich air-quality sensors for bldg1.)",
+    "groups": [
+      {
+        "stakeholder": "Health · Wellbeing · Occupants",
+        "capabilities": [
+          "Answer 'is this room stuffy / is the air fresh?' objectively",
+          "Flag spaces with poor ventilation before they affect concentration",
+          "Guide occupants to well-ventilated spaces",
+          "Support infection-risk awareness via CO2 as a ventilation proxy"
+        ],
+        "questions": [
+          "Is meeting room 5.28 stuffy right now?",
+          "Which spaces have the freshest air on floor 3?",
+          "Where is CO2 highest in the building at the moment?",
+          "Is the air quality in the lecture theatre acceptable during classes?"
+        ]
+      },
+      {
+        "stakeholder": "Facility · HVAC · Ventilation",
+        "capabilities": [
+          "Assess whether ventilation matches occupancy (under/over-ventilation)",
+          "Drive demand-controlled ventilation from CO2",
+          "Detect ventilation faults (rising CO2 despite AHU running)",
+          "Balance fresh-air delivery against energy use"
+        ],
+        "questions": [
+          "Which zones are under-ventilated at peak occupancy?",
+          "Is any AHU failing to keep CO2 within target?",
+          "Where are we over-ventilating and wasting energy?",
+          "How quickly does CO2 recover after a room empties?"
+        ]
+      },
+      {
+        "stakeholder": "Compliance · Safety · ESG",
+        "capabilities": [
+          "Evidence against WELL / RESET / CIBSE air-quality guidance",
+          "Track exceedance frequency and duration for reporting",
+          "Support healthy-building certifications"
+        ],
+        "questions": [
+          "How often did CO2 exceed 1000 ppm in teaching spaces last term?",
+          "Are we compliant with our indoor air quality policy?",
+          "Which spaces would fail a WELL air-quality check?"
+        ]
+      },
+      {
+        "stakeholder": "Researchers",
+        "capabilities": [
+          "Relate IAQ to occupancy, ventilation and outdoor conditions",
+          "Model CO2 decay to estimate air-change rates",
+          "Study links between air quality and complaints or performance"
+        ],
+        "questions": [
+          "Estimate the air-change rate of room 4.10 from CO2 decay",
+          "How does CO2 track occupancy in the seminar rooms?",
+          "Do stuffiness complaints align with measured CO2?"
+        ]
+      }
+    ]
+  },
+
+  "light": {
+    "title": "Illuminance / Daylight",
+    "summary": "Light levels (lux) and daylight availability per space — unlocking visual-comfort answers, daylight harvesting, glare/over-lighting detection and energy savings. (Base ontology already has illuminance sensors for bldg1.)",
+    "groups": [
+      {
+        "stakeholder": "Occupants · Wellbeing",
+        "capabilities": [
+          "Find well-lit or naturally-lit spaces for reading / working",
+          "Avoid glare-prone or gloomy spaces at a given time",
+          "Support circadian / daylight-preference needs"
+        ],
+        "questions": [
+          "Where is the best natural light to read this morning?",
+          "Which desks get too much glare in the afternoon?",
+          "Is the study area bright enough for detailed work right now?"
+        ]
+      },
+      {
+        "stakeholder": "Facility · Lighting · Energy",
+        "capabilities": [
+          "Daylight harvesting: dim/turn off artificial light when daylight suffices",
+          "Detect over-lit spaces and lights left on in daylight",
+          "Verify lighting levels meet task standards (e.g. CIBSE lux targets)",
+          "Prioritise lighting upgrades by usage and level"
+        ],
+        "questions": [
+          "Which spaces are over-lit during daylight hours?",
+          "Where are lights on while daylight already meets the target?",
+          "Do the labs meet the recommended lux level for their tasks?",
+          "How much lighting energy could daylight harvesting save on the south side?"
+        ]
+      },
+      {
+        "stakeholder": "Space Planning · Design",
+        "capabilities": [
+          "Map daylight availability to place daylight-hungry activities well",
+          "Evidence for blind/shading strategies and layout",
+          "Identify chronically dark spaces needing intervention"
+        ],
+        "questions": [
+          "Which areas have the best daylight for collaborative work?",
+          "Where do we consistently need blinds to control glare?",
+          "Which rooms are too dark and need a lighting redesign?"
+        ]
+      },
+      {
+        "stakeholder": "Researchers",
+        "capabilities": [
+          "Study daylight patterns vs orientation, season and weather",
+          "Relate light exposure to occupancy and wellbeing",
+          "Model artificial-lighting demand from daylight availability"
+        ],
+        "questions": [
+          "Show the daily daylight profile of the south-facing offices",
+          "How does illuminance vary with the seasons on floor 5?",
+          "Predict artificial-lighting need for tomorrow given the forecast"
+        ]
+      }
+    ]
+  },
+
+  "equipment": {
+    "title": "Equipment Power",
+    "summary": "Per-asset electrical power (kW) for AHUs, pumps, chillers, lifts and lab/plug loads — unlocking predictive maintenance, load profiling, standby-waste detection and reliability answers.",
+    "groups": [
+      {
+        "stakeholder": "Maintenance · Engineering · Reliability",
+        "capabilities": [
+          "Profile each asset's normal running signature",
+          "Detect degradation / faults from rising power or abnormal cycling",
+          "Predictive maintenance: flag assets trending toward failure",
+          "Verify assets actually shut down when scheduled",
+          "Prioritise interventions by run-hours and abnormality"
+        ],
+        "questions": [
+          "Is any AHU drawing more power than its normal signature?",
+          "Which asset is cycling abnormally this week?",
+          "Which equipment is trending toward a fault?",
+          "Did the chiller actually stop during the setback period?",
+          "Rank plant items by run-hours this month"
+        ]
+      },
+      {
+        "stakeholder": "Energy · Sustainability",
+        "capabilities": [
+          "Break down building energy by equipment load",
+          "Find standby / parasitic loads that never switch off",
+          "Target the highest-consuming assets for efficiency upgrades"
+        ],
+        "questions": [
+          "What share of energy goes to HVAC plant vs lighting vs plug loads?",
+          "Which equipment has the highest standby consumption overnight?",
+          "Which asset would give the biggest saving if upgraded?"
+        ]
+      },
+      {
+        "stakeholder": "Finance · Asset Management",
+        "capabilities": [
+          "Estimate running cost per asset",
+          "Support repair-vs-replace and lifecycle decisions with real data",
+          "Quantify avoided downtime from predictive maintenance"
+        ],
+        "questions": [
+          "What does it cost to run lift 2 per month?",
+          "Should we replace the ageing pump given its rising energy use?",
+          "What downtime have we avoided through early fault detection?"
+        ]
+      },
+      {
+        "stakeholder": "Facility · Operations",
+        "capabilities": [
+          "Confirm plant responds correctly to BMS commands",
+          "Detect equipment left on out of hours",
+          "Correlate equipment load with occupancy and weather"
+        ],
+        "questions": [
+          "Is any plant running outside occupied hours?",
+          "Did the AHU ramp up as expected this morning?",
+          "How does equipment load track outdoor temperature?"
+        ]
+      },
+      {
+        "stakeholder": "Researchers",
+        "capabilities": [
+          "Non-intrusive load characterisation and disaggregation studies",
+          "Forecast equipment load and maintenance windows",
+          "Study control-strategy impact on plant behaviour"
+        ],
+        "questions": [
+          "Show the power signature of the chiller across a hot week",
+          "Forecast the AHU load profile for tomorrow",
+          "Did the optimised control strategy change the pump's duty cycle?"
+        ]
+      }
+    ]
+  },
+
+  "water": {
+    "title": "Water Metering",
+    "summary": "Water flow / consumption per meter and zone — unlocking leak detection, consumption reduction, cost attribution and hygiene-related answers (e.g. stagnation risk).",
+    "groups": [
+      {
+        "stakeholder": "Facility · Operations · Maintenance",
+        "capabilities": [
+          "Detect leaks from continuous overnight flow that never drops to zero",
+          "Locate abnormal consumption by zone",
+          "Verify shut-offs and isolation during works",
+          "Prioritise plumbing maintenance by flow anomalies"
+        ],
+        "questions": [
+          "Is there continuous water flow overnight that suggests a leak?",
+          "Which zone's water use spiked unexpectedly this week?",
+          "Did the isolation valve actually stop flow during the repair?",
+          "Where should we investigate for a possible leak?"
+        ]
+      },
+      {
+        "stakeholder": "Sustainability · ESG",
+        "capabilities": [
+          "Track total and per-capita water consumption vs targets",
+          "Evidence water reduction for BREEAM / ESG reporting",
+          "Benchmark water intensity across zones and buildings"
+        ],
+        "questions": [
+          "What is our per-person water consumption this term?",
+          "Are we meeting our water-reduction target?",
+          "Which zone has the highest water intensity?"
+        ]
+      },
+      {
+        "stakeholder": "Finance",
+        "capabilities": [
+          "Estimate and attribute water cost by zone",
+          "Quantify savings from leak fixes and efficiency measures",
+          "Forecast water spend"
+        ],
+        "questions": [
+          "How much did the overnight leak cost us before it was fixed?",
+          "What is the projected water bill this quarter?",
+          "Which zone is most water-expensive?"
+        ]
+      },
+      {
+        "stakeholder": "Health · Safety (Water Hygiene)",
+        "capabilities": [
+          "Flag low/zero-flow outlets at risk of stagnation (Legionella awareness)",
+          "Support flushing regimes with evidence of low usage",
+          "Monitor unusual usage patterns in rarely-used areas"
+        ],
+        "questions": [
+          "Which outlets have had near-zero flow and may need flushing?",
+          "Are any low-use zones at risk of water stagnation?",
+          "Show water usage in the rarely-used annex this month"
+        ]
+      },
+      {
+        "stakeholder": "Researchers",
+        "capabilities": [
+          "Model water demand patterns vs occupancy and time",
+          "Detect anomalies and forecast consumption",
+          "Study behaviour-change interventions"
+        ],
+        "questions": [
+          "Show the daily water demand profile of the sports block",
+          "How does water use track occupancy?",
+          "Forecast next week's water consumption"
+        ]
+      }
+    ]
+  },
+
+  "complaints": {
+    "title": "Student Complaint System",
+    "summary": "A curated corpus of complaints, feedback and reports (text + tags + location + time) — unlocking sentiment and trend analysis, hotspot detection, and the 'intention behind the question' (e.g. avoid spaces people complain about). Non-time-series text source.",
+    "groups": [
+      {
+        "stakeholder": "Facility · Helpdesk · Operations",
+        "capabilities": [
+          "Surface the most-reported issues by category, space and time",
+          "Detect recurring / unresolved problems and hotspots",
+          "Prioritise fixes by complaint volume and severity",
+          "Close the loop: link complaints to the sensor evidence (noise, IAQ, temperature)"
+        ],
+        "questions": [
+          "What are the top complaint categories this month?",
+          "Which spaces get the most complaints?",
+          "Are there recurring issues in the 3rd-floor toilets?",
+          "Do noise complaints match measured noise levels?"
+        ]
+      },
+      {
+        "stakeholder": "Management · Continuous Improvement",
+        "capabilities": [
+          "Track complaint trends and sentiment over time",
+          "Measure resolution rate and time-to-resolve",
+          "Evidence the impact of interventions on complaint volume"
+        ],
+        "questions": [
+          "Is complaint sentiment improving over the last term?",
+          "What is our average time to resolve a facilities complaint?",
+          "Did complaints drop after we upgraded the ventilation?"
+        ]
+      },
+      {
+        "stakeholder": "Wellbeing · Student Experience",
+        "capabilities": [
+          "Identify spaces associated with negative experience (too hot, too loud, too bright)",
+          "Feed 'avoid spaces people complain about' into space recommendations",
+          "Spot wellbeing themes emerging from free-text feedback"
+        ],
+        "questions": [
+          "Which study spaces do students complain about the most?",
+          "Recommend a quiet desk avoiding areas people complain are noisy",
+          "What wellbeing themes appear most in feedback this term?"
+        ]
+      },
+      {
+        "stakeholder": "Space Planning",
+        "capabilities": [
+          "Combine complaints with utilisation to target refurbishment",
+          "Understand why under-used spaces are avoided",
+          "Prioritise design fixes by complaint + usage evidence"
+        ],
+        "questions": [
+          "Which under-used spaces also attract the most complaints?",
+          "Why might students be avoiding the east reading room?",
+          "Where should we prioritise refurbishment based on feedback and usage?"
+        ]
+      },
+      {
+        "stakeholder": "Researchers",
+        "capabilities": [
+          "Text mining, sentiment and topic modelling on the corpus",
+          "Fuse text complaints with sensor time-series for richer answers",
+          "Study intention: infer what people want from how they complain"
+        ],
+        "questions": [
+          "Cluster this term's complaints into themes",
+          "Do complaints about stuffiness correlate with CO2 spikes?",
+          "What is the sentiment trend for the library over the year?"
+        ]
+      }
+    ]
+  }
+}
