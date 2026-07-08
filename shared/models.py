@@ -14,24 +14,16 @@ from pydantic import BaseModel, Field
 class Message(BaseModel):
     """Single message in a conversation"""
 
-    role: Literal["user", "assistant", "system"] = Field(
-        ..., description="Message sender role"
-    )
+    role: Literal["user", "assistant", "system"] = Field(..., description="Message sender role")
     content: str = Field(..., description="Message content")
-    timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Message timestamp"
-    )
-    metadata: Optional[Dict[str, Any]] = Field(
-        default=None, description="Additional metadata"
-    )
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Message timestamp")
+    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata")
 
 
 class ConversationHistory(BaseModel):
     """Conversation history container"""
 
-    messages: List[Message] = Field(
-        default_factory=list, description="List of messages"
-    )
+    messages: List[Message] = Field(default_factory=list, description="List of messages")
     conversation_id: str = Field(..., description="Unique conversation ID")
 
     def add_message(self, role: str, content: str, metadata: Optional[Dict] = None):
@@ -60,9 +52,7 @@ class RetrievalRequest(BaseModel):
         "docs",
     ] = Field(..., description="Collection to search in")
     top_k: int = Field(default=5, description="Number of results to return")
-    filters: Optional[Dict[str, Any]] = Field(
-        default=None, description="Metadata filters"
-    )
+    filters: Optional[Dict[str, Any]] = Field(default=None, description="Metadata filters")
 
 
 class RetrievalResult(BaseModel):
@@ -70,17 +60,13 @@ class RetrievalResult(BaseModel):
 
     text: str = Field(..., description="Retrieved text content")
     score: float = Field(..., description="Similarity score")
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict, description="Associated metadata"
-    )
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Associated metadata")
 
 
 class RetrievalResponse(BaseModel):
     """Response from RAG retrieval"""
 
-    results: List[RetrievalResult] = Field(
-        default_factory=list, description="Retrieved results"
-    )
+    results: List[RetrievalResult] = Field(default_factory=list, description="Retrieved results")
     query: str = Field(..., description="Original query")
     collection: str = Field(..., description="Collection searched")
 
@@ -144,21 +130,15 @@ class SPARQLQuery(BaseModel):
     """SPARQL query and metadata"""
 
     query: str = Field(..., description="SPARQL query string")
-    explanation: Optional[str] = Field(
-        default=None, description="Human-readable explanation"
-    )
-    generated_by: str = Field(
-        default="sparql_agent", description="Agent that generated query"
-    )
+    explanation: Optional[str] = Field(default=None, description="Human-readable explanation")
+    generated_by: str = Field(default="sparql_agent", description="Agent that generated query")
 
 
 class SPARQLResult(BaseModel):
     """SPARQL query execution result"""
 
     success: bool = Field(..., description="Whether query executed successfully")
-    data: Optional[List[Dict[str, Any]]] = Field(
-        default=None, description="Query results"
-    )
+    data: Optional[List[Dict[str, Any]]] = Field(default=None, description="Query results")
     error: Optional[str] = Field(default=None, description="Error message if failed")
     query: str = Field(..., description="Executed query")
 
@@ -170,21 +150,15 @@ class SQLQuery(BaseModel):
     """SQL query and metadata"""
 
     query: str = Field(..., description="SQL query string")
-    database: Literal["mysql", "timescale", "cassandra"] = Field(
-        ..., description="Target database"
-    )
-    explanation: Optional[str] = Field(
-        default=None, description="Human-readable explanation"
-    )
+    database: Literal["mysql", "timescale", "cassandra"] = Field(..., description="Target database")
+    explanation: Optional[str] = Field(default=None, description="Human-readable explanation")
 
 
 class SQLResult(BaseModel):
     """SQL query execution result"""
 
     success: bool = Field(..., description="Whether query executed successfully")
-    data: Optional[List[Dict[str, Any]]] = Field(
-        default=None, description="Query results"
-    )
+    data: Optional[List[Dict[str, Any]]] = Field(default=None, description="Query results")
     error: Optional[str] = Field(default=None, description="Error message if failed")
     query: str = Field(..., description="Executed query")
     row_count: int = Field(default=0, description="Number of rows returned")
@@ -228,9 +202,7 @@ class ConversationState(BaseModel):
     # User context
     conversation_id: str = Field(..., description="Unique conversation ID")
     user_id: str = Field(default="anonymous", description="User identifier")
-    title: Optional[str] = Field(
-        default="New Conversation", description="Conversation title"
-    )
+    title: Optional[str] = Field(default="New Conversation", description="Conversation title")
     summary: Optional[str] = Field(default=None, description="Conversation summary")
     building_id: str = Field(default="bldg1", description="Building context")
     # Phase 14A — persona is now `str` not `Literal[...]` so YAML-added
@@ -257,9 +229,7 @@ class ConversationState(BaseModel):
 
     # Current interaction
     user_message: str = Field(..., description="Current user input")
-    messages: List[Message] = Field(
-        default_factory=list, description="Conversation history"
-    )
+    messages: List[Message] = Field(default_factory=list, description="Conversation history")
     # current_intent is the authoritative routing field; intent is a read alias
     current_intent: Optional[str] = Field(
         default=None, description="Detected intent (used for routing)"
@@ -267,9 +237,7 @@ class ConversationState(BaseModel):
     intermediate_results: Dict[str, Any] = Field(
         default_factory=dict, description="Temporary results between agents"
     )
-    query_results: Any = Field(
-        default_factory=dict, description="Last query results (SPARQL/SQL)"
-    )
+    query_results: Any = Field(default_factory=dict, description="Last query results (SPARQL/SQL)")
 
     # ── Phase 7A — typed view over intermediate_results ───────────────────
     #
@@ -284,7 +252,9 @@ class ConversationState(BaseModel):
     def pipeline_ctx(self) -> Any:
         """Return a typed PipelineContext snapshot of intermediate_results."""
         from shared.pipeline_context import PipelineContext
+
         return PipelineContext.from_state(self)
+
     user_preferences: Dict[str, Any] = Field(
         default_factory=dict, description="User preferences/persona/language"
     )
@@ -299,12 +269,8 @@ class ConversationState(BaseModel):
     )
 
     # Intent understanding
-    needs_clarification: bool = Field(
-        default=False, description="Whether to ask for clarification"
-    )
-    clarification_question: Optional[str] = Field(
-        default=None, description="Question to ask user"
-    )
+    needs_clarification: bool = Field(default=False, description="Whether to ask for clarification")
+    clarification_question: Optional[str] = Field(default=None, description="Question to ask user")
 
     # RAG retrieval results
     ontology_context: List[RetrievalResult] = Field(
@@ -318,20 +284,14 @@ class ConversationState(BaseModel):
     )
 
     # Generated queries
-    sparql_query: Optional[SPARQLQuery] = Field(
-        default=None, description="Generated SPARQL query"
-    )
-    sql_query: Optional[SQLQuery] = Field(
-        default=None, description="Generated SQL query"
-    )
+    sparql_query: Optional[SPARQLQuery] = Field(default=None, description="Generated SPARQL query")
+    sql_query: Optional[SQLQuery] = Field(default=None, description="Generated SQL query")
 
     # Query results
     sparql_results: Optional[SPARQLResult] = Field(
         default=None, description="SPARQL execution results"
     )
-    sql_results: Optional[SQLResult] = Field(
-        default=None, description="SQL execution results"
-    )
+    sql_results: Optional[SQLResult] = Field(default=None, description="SQL execution results")
 
     # Analytics
     analytics_request: Optional[AnalyticsRequest] = Field(
@@ -350,15 +310,11 @@ class ConversationState(BaseModel):
     retry_count: int = Field(default=0, description="Number of retry attempts")
 
     # Final response
-    assistant_message: Optional[str] = Field(
-        default=None, description="Final assistant response"
-    )
+    assistant_message: Optional[str] = Field(default=None, description="Final assistant response")
 
     # Routing flags
     next_step: Optional[str] = Field(default=None, description="Next agent to invoke")
-    is_complete: bool = Field(
-        default=False, description="Whether conversation turn is complete"
-    )
+    is_complete: bool = Field(default=False, description="Whether conversation turn is complete")
 
     # Phase 4 — structured dialogue state (survey H: 26.7% disambiguation rate)
     dialogue_state: Optional[Dict[str, Any]] = Field(
@@ -372,6 +328,96 @@ class ConversationState(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+
+# ==================== Data Source / Provenance Models ====================
+#
+# Toggleable synthetic data sources (occupancy, energy, noise, …) and the
+# per-answer provenance tags they produce. See
+# tasks/IMPLEMENTATION_PLAN_DATASOURCE_TOGGLES_AND_PROVENANCE.md.
+
+
+class DataSourcePoint(BaseModel):
+    """A single sensor/device synthesized for a data source.
+
+    UUID is derived deterministically from (building_id, source_id, local) when
+    absent, so re-generation is idempotent and the TTL, MySQL rows, and provenance
+    all agree on the same identifier.
+    """
+
+    local: str = Field(..., description="Entity local name -> bldg:<local>")
+    brick_class: str = Field(..., description="Prefixed Brick class, e.g. brick:Occupancy_Sensor")
+    location: str = Field(..., description="Prefixed location entity, e.g. bldg:Room_5.01")
+    unit: Optional[str] = Field(default=None, description="Prefixed QUDT unit, e.g. unit:PERCENT")
+    label: Optional[str] = Field(default=None, description="Human-readable label")
+    uuid: Optional[str] = Field(default=None, description="Timeseries id (auto-derived if unset)")
+
+
+class DataSourceGenerator(BaseModel):
+    """Synthetic-data generator configuration for one data source."""
+
+    kind: str = Field(..., description="Generator plugin key, e.g. occupancy_profile")
+    window_days: int = Field(default=30, ge=1, description="Days of history to synthesize")
+    interval_minutes: int = Field(default=15, ge=1, description="Sampling interval in minutes")
+    params: Dict[str, Any] = Field(default_factory=dict, description="Plugin-specific parameters")
+    anomalies: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Optional labeled anomalies (ground truth): [{type, at, magnitude}, ...]",
+    )
+
+
+class DataSourceSpec(BaseModel):
+    """One toggleable data source: ontology triples + timeseries table + generator.
+
+    Enabling a source loads its Brick point triples into a dedicated GraphDB named
+    graph (the named graph IS the on/off switch) and makes its narrow MySQL table
+    (`ref:storedAt bldg:<ts_table>`) reachable, which unlocks the `unlocks`
+    capability tags.
+    """
+
+    id: str = Field(..., description="Stable key; used in URIs, table names, UUID derivation")
+    label: str = Field(..., description="Human-readable name")
+    modality: str = Field(..., description="occupancy | energy | noise | iaq | light | ...")
+    kind: str = Field(default="timeseries", description="timeseries | text_reports")
+    enabled: bool = Field(default=False, description="Manifest default state")
+    synthetic: bool = Field(default=True, description="Rendered on the provenance tag")
+    provenance_system: str = Field(..., description="Source-system label for provenance tags")
+    color: str = Field(default="#888888", description="Provenance chip color (hex)")
+    ts_table: Optional[str] = Field(
+        default=None, description="Narrow MySQL table == ref:storedAt key (timeseries kind)"
+    )
+    named_graph: Optional[str] = Field(
+        default=None, description="GraphDB named graph URI (defaults to urn:ontosage:ds:<id>)"
+    )
+    unlocks: List[str] = Field(
+        default_factory=list, description="Capability tags this source enables"
+    )
+    match_keywords: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Lowercase phrases that, when found in a query while this source is "
+            "DISABLED, trigger the locked-capability decline. Curated + conservative: "
+            "no keywords = never auto-locks (avoids false positives)."
+        ),
+    )
+    points: List[DataSourcePoint] = Field(default_factory=list, description="Devices to synthesize")
+    generator: Optional[DataSourceGenerator] = Field(default=None, description="Generator config")
+
+    def graph_uri(self) -> str:
+        """Named graph URI for this source (explicit override or derived default)."""
+        return self.named_graph or f"urn:ontosage:ds:{self.id}"
+
+
+class ProvenanceTag(BaseModel):
+    """A single provenance annotation on an answer — one per contributing source."""
+
+    source_id: str = Field(..., description="'occupancy' | 'ontology' | 'analytics' | ...")
+    label: str = Field(..., description="Display label, e.g. 'Occupancy Sensing System'")
+    color: str = Field(default="#888888", description="Chip color (hex)")
+    synthetic: bool = Field(default=False, description="True -> rendered as 'simulated'")
+    store: str = Field(
+        default="", description="Backing store, e.g. 'graphdb' | 'mysql:occupancy_data'"
+    )
 
 
 # ==================== Floor Plan Models ====================
@@ -536,65 +582,28 @@ class FloorPlanResult(BaseModel):
 # ==================== API Response Models ====================
 
 
-class ChatRequest(BaseModel):
-    """Request to /chat endpoint"""
-
-    message: str = Field(..., description="User message")
-    conversation_id: Optional[str] = Field(
-        default=None, description="Conversation ID (optional)"
-    )
-    user_id: str = Field(default="anonymous", description="User ID")
-    # Phase 14A — persona relaxed to `str`; YAML-added personas resolve via
-    # PersonaRegistry's alias map at request time.  `personas` (list) takes
-    # precedence when non-empty and blends priors across all entries.
-    persona: str = Field(default="general", description="User persona (legacy single-string)")
-    personas: List[str] = Field(
-        default_factory=list,
-        description=(
-            "Phase 14A — list of stacked personas to blend.  Empty list = "
-            "single-persona mode (uses `persona`).  Non-empty = registry "
-            "blends top_domains, complexity, and clarification thresholds."
-        ),
-    )
-    audio_data: Optional[str] = Field(
-        default=None, description="Base64 encoded audio (optional)"
-    )
-
-
 class ChatResponse(BaseModel):
     """Response from /chat endpoint"""
 
     conversation_id: str = Field(..., description="Conversation ID")
     message: str = Field(..., description="Assistant response")
-    sparql_query: Optional[str] = Field(
-        default=None, description="Generated SPARQL query"
-    )
+    sparql_query: Optional[str] = Field(default=None, description="Generated SPARQL query")
     sql_query: Optional[str] = Field(default=None, description="Generated SQL query")
-    visualization_url: Optional[str] = Field(
-        default=None, description="URL to visualization"
-    )
-    metadata: Optional[Dict[str, Any]] = Field(
-        default=None, description="Additional metadata"
-    )
+    visualization_url: Optional[str] = Field(default=None, description="URL to visualization")
+    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata")
 
 
 class HealthResponse(BaseModel):
     """Health check response"""
 
-    status: Literal["healthy", "unhealthy"] = Field(
-        ..., description="Service health status"
-    )
+    status: Literal["healthy", "unhealthy"] = Field(..., description="Service health status")
     service: str = Field(..., description="Service name")
     version: str = Field(default="2.0.0", description="Service version")
-    model_provider: Optional[str] = Field(
-        default=None, description="Current model provider"
-    )
+    model_provider: Optional[str] = Field(default=None, description="Current model provider")
     timestamp: datetime = Field(
         default_factory=datetime.utcnow, description="Health check timestamp"
     )
-    details: Optional[Dict[str, Any]] = Field(
-        default=None, description="Additional health details"
-    )
+    details: Optional[Dict[str, Any]] = Field(default=None, description="Additional health details")
 
 
 class APIResponse(BaseModel):
@@ -641,14 +650,18 @@ class ChatRequest(BaseModel):
         description="Session ID for conversation continuity",
     )
     persona: Optional[str] = Field(
-        default="general", description="Persona for response style"
+        default="general", description="Persona for response style (legacy single-string)"
     )
-    language: Optional[str] = Field(
-        default="en", max_length=10, description="Response language"
+    personas: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Phase 14A — list of stacked personas to blend.  Empty list = "
+            "single-persona mode (uses `persona`).  Non-empty = registry "
+            "blends top_domains, complexity, and clarification thresholds."
+        ),
     )
-    building: Optional[str] = Field(
-        default=None, max_length=100, description="Target building ID"
-    )
+    language: Optional[str] = Field(default="en", max_length=10, description="Response language")
+    building: Optional[str] = Field(default=None, max_length=100, description="Target building ID")
     fresh_session: bool = Field(
         default=False,
         description="When True, skip injecting prior cross-session memory context for this request",
