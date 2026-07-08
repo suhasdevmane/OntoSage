@@ -99,8 +99,10 @@ class GraphDBRetriever:
             # We want to match either the label OR the URI string (local name)
             filters = []
             for ident in identifiers:
-                # Escape single quotes
-                safe_ident = ident.replace("'", "\\'")
+                # Escape backslash FIRST, then single quotes — a lone trailing
+                # backslash would otherwise escape the closing quote and break out
+                # of the string literal (token internals aren't stripped upstream).
+                safe_ident = ident.replace("\\", "\\\\").replace("'", "\\'")
                 # Match label (contains) OR URI (contains)
                 # This ensures we find "Zone_Air_Humidity_Sensor_5.12" even if label is different
                 filters.append(f"(CONTAINS(LCASE(?label), '{safe_ident.lower()}') || CONTAINS(LCASE(STR(?entity)), '{safe_ident.lower()}'))")
