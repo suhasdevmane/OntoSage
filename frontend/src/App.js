@@ -9,6 +9,7 @@ import About from './pages/About';
 import Health from './pages/Health';
 import Settings from './pages/Settings';
 import SettingsTabs from './pages/SettingsTabs';
+import AdminPortal from './pages/AdminPortal';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(() => sessionStorage.getItem('currentUser'));
@@ -33,6 +34,7 @@ function App() {
   <Route path="/settings" element={<SettingsTabs />} />
   <Route path="/settings/train" element={<Settings />} />
         <Route path="/chat" element={<Home />} />
+        <Route path="/admin" element={<AdminPortal />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
   {/* Floating chat widget, visible on all pages only when logged in */}

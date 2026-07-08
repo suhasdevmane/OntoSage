@@ -52,6 +52,9 @@ export default function TopNav() {
             <li className="nav-item">
               <Link className="nav-link" to="/settings">Settings</Link>
             </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/admin">Admin</Link>
+            </li>
           </ul>
 
           <form className="form-inline my-2 my-lg-0 d-flex align-items-center ms-auto" onSubmit={(e) => e.preventDefault()}>
