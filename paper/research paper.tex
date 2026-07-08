@@ -90,7 +90,7 @@ Smart buildings are becoming pervasive in commercial and civic infrastructure, g
 
 In this work, we describe the iterative development of OntoSage, a semantic, agentic conversational AI framework for smart buildings. We started with a formative study using staged prompting to understand stakeholder intentions, which revealed a critical ``context gap'': when users lack technical knowledge, they ask fundamentally different questions---focusing on reasoning and well-being rather than raw telemetry values. Learning from this finding, we designed a system that grounds natural language in a Brick Schema knowledge graph and orchestrates retrieval, analytics, and visualisation through specialised agents. To evaluate portability, we deployed OntoSage at a live academic testbed and adapted it to two diverse synthetic building environments (a commercial office and a data centre model), then conducted a user study.
 
-Our formative study with 81 participants across nine stakeholder roles produced 5{,}916 natural-language questions across four elicitation stages, establishing a multi-dimensional query taxonomy and revealing strong stage effects (Kruskal-Wallis $H=51.1$, $p < 10^{-10}$). A subsequent evaluation deployment with 15 users at an academic testbed achieved 98.3\% task completion, a mean System Usability Scale (SUS) score of 84.5 (``excellent'' threshold), and 93.3\% adoption intent. Cross-building adaptation required 66--68 person-hours with zero changes to analytics or frontend layers. We share lessons learned, error analysis, and implications for scalable, semantic conversational AI in the built environment.
+Our formative study with 96 participants across eight stakeholder personas produced 7{,}151 natural-language questions across four elicitation stages, establishing a multi-dimensional query taxonomy and revealing strong stage effects (Kruskal-Wallis $H=185.5$, $p < 10^{-39}$). A subsequent evaluation deployment with 15 users at an academic testbed achieved 98.3\% task completion, a mean System Usability Scale (SUS) score of 84.5 (``excellent'' threshold), and 93.3\% adoption intent. Cross-building adaptation required 66--68 person-hours with zero changes to analytics or frontend layers. We share lessons learned, error analysis, and implications for scalable, semantic conversational AI in the built environment.
 \end{abstract}
 
 \begin{CCSXML}
@@ -147,11 +147,11 @@ To flexibly adapt to diverse stakeholders, we developed OntoSage, a semantic, ag
     \item \textbf{RQ4 (Generalisability)}: How much engineering effort is required to adapt the system across heterogeneous building infrastructures?
 \end{itemize}
 
-To investigate these questions, we iteratively developed OntoSage, a full-stack conversational AI system for smart buildings. With an early prototype, we conducted a formative study using a staged prompting methodology with 81 participants to map stakeholder intentions and identify design requirements (SREC approval \textbf{COMSC/Ethics/2025/044b}). Learning from the formative findings---particularly the ``context gap'' between what users want to ask and what technical systems support---we developed an improved system architecture grounded in semantic standards. To evaluate portability, we deployed OntoSage at a live academic testbed (Building~A) and adapted it to two diverse synthetic building environments (a commercial office and a data centre), then conducted a 15-participant evaluation study to assess usability, task completion, and adoption potential.
+To investigate these questions, we iteratively developed OntoSage, a full-stack conversational AI system for smart buildings. With an early prototype, we conducted a formative study using a staged prompting methodology with 96 participants to map stakeholder intentions and identify design requirements (SREC approval \textbf{COMSC/Ethics/2025/044b}). Learning from the formative findings---particularly the ``context gap'' between what users want to ask and what technical systems support---we developed an improved system architecture grounded in semantic standards. To evaluate portability, we deployed OntoSage at a live academic testbed (Building~A) and adapted it to two diverse synthetic building environments (a commercial office and a data centre), then conducted a 15-participant evaluation study to assess usability, task completion, and adoption potential.
 
 More specifically, OntoSage makes the following contributions:
 \begin{enumerate}
-    \item A \emph{staged prompting methodology} and resulting multi-dimensional taxonomy of 5{,}916 stakeholder questions that reveals how technical context shapes user intentions (the ``context gap'').
+    \item A \emph{staged prompting methodology} and resulting multi-dimensional taxonomy of 7{,}151 stakeholder questions that reveals how technical context shapes user intentions (the ``context gap'').
     \item A \emph{semantic agentic architecture} combining a Brick Schema knowledge graph with LangGraph-orchestrated agents for intent classification, SPARQL generation, time-series retrieval, sandboxed analytics, and visualisation.
     \item A \emph{cross-building adaptation workflow} (T0--T3) that localises change to ontology mapping and database connectors, requiring 66--68 person-hours---approximately \textbf{75\% less} than traditional approaches---with zero analytics or frontend changes.
     \item \emph{Empirical evaluation} with 15 real users achieving 98.3\% task completion, mean SUS 84.5, and 93.3\% adoption intent, with detailed error analysis and design implications.
@@ -171,7 +171,7 @@ Our work sits at the intersection of Human-Building Interaction, conversational 
 
 There is a substantial HBI literature focused on presenting building data to stakeholders to support behavioural change, operational efficiency, and regulatory compliance. Dashboard-centric Building Management Systems provide high-fidelity views for trained operators but impose high cognitive load on non-expert stakeholders by requiring knowledge of sensor taxonomies, data schemas, and domain-specific terminology \cite{Häikiö2020}. Simplified mobile and public-display interfaces broaden access but typically oversimplify telemetry---reducing multi-dimensional environmental quality to single-number comfort scores---and fail to support the composite, multi-objective queries (e.g., ``Is this building meeting both ASHRAE~55 and BREEAM targets?'') that facility managers and building owners routinely need \cite{ma2023}.
 
-The ``actionability'' problem is well documented: raw telemetry data rarely drives behavioural change unless it is contextualised within the user's current goal and decision horizon \cite{Nabavi2023}. This has motivated exploratory work on occupant-facing dashboards with narrative annotations, personalised energy feedback, and gamified engagement mechanisms---but these interventions are narrowly focused on energy or thermal comfort and do not generalise to the full range of stakeholder intentions. Our formative study is the first large-scale corpus study (5{,}916 questions across nine roles) that systematically maps what stakeholders \emph{actually want to ask} across all building domains and elicitation contexts.
+The ``actionability'' problem is well documented: raw telemetry data rarely drives behavioural change unless it is contextualised within the user's current goal and decision horizon \cite{Nabavi2023}. This has motivated exploratory work on occupant-facing dashboards with narrative annotations, personalised energy feedback, and gamified engagement mechanisms---but these interventions are narrowly focused on energy or thermal comfort and do not generalise to the full range of stakeholder intentions. Our formative study is the first large-scale corpus study (7{,}151 questions across eight stakeholder personas) that systematically maps what stakeholders \emph{actually want to ask} across all building domains and elicitation contexts.
 
 A key finding from the HBI literature is the ``intention-capability gap'': what users want to ask and what the system can answer are structurally misaligned, particularly for non-expert users \cite{galanos2023}. OntoSage directly addresses this gap through a semantic translation layer that maps vague, high-level intents into ontology-grounded queries, without requiring users to know sensor identifiers or query languages.
 
@@ -226,39 +226,38 @@ We designed a four-stage ``context reveal'' protocol:
 \subsection{Participants and Ethics}
 \label{sec:participants}
 
-We recruited 81 unique participants spanning nine primary stakeholder roles: Guests, Building Occupants, Students, Building Owners, IT Professionals, Facility Managers, Health and Safety Officers, Sustainability/Energy Teams, and Ontology Experts. Table~\ref{tab:demographics} summarises the distribution. Across the four stages, participants produced \textbf{5{,}916 natural-language questions} (Stage~1: 1{,}595; Stage~2: 1{,}726; Stage~3: 1{,}388; Stage~4: 1{,}207). Seventy-five participants additionally completed a full 20-topic priority ranking task. The study was approved by Cardiff University's School Research Ethics Committee (\textbf{COMSC/Ethics/2025/044b}).
+We recruited 96 unique participants spanning eight primary stakeholder personas: Guests, Building Occupants, Students, Building Owners, IT Professionals, Facility Managers, Health and Safety Officers, and Sustainability/Energy Teams. Table~\ref{tab:demographics} summarises the distribution. Across the four stages, participants produced \textbf{7{,}151 natural-language questions} (Stage~1: 1{,}904; Stage~2: 2{,}003; Stage~3: 1{,}705; Stage~4: 1{,}539). Seventy-five participants additionally completed a full 20-topic priority ranking task. The study was approved by Cardiff University's School Research Ethics Committee (\textbf{COMSC/Ethics/2025/044b}).
 
 \begin{table}[t]
 \centering
-\caption{Participant demographics by primary role ($N=81$ contributors; 5{,}916 questions total).}
+\caption{Participant demographics by primary persona ($N=96$ contributors; 7{,}151 questions total).}
 \label{tab:demographics}
 \small
 \begin{tabular}{@{}lrr@{}}
 \toprule
 \textbf{Role} & \textbf{Users} & \textbf{Questions} \\
 \midrule
-Students                                & 14 & 1{,}493 \\
 Guests                                  & 22 & 1{,}398 \\
 Occupants                               & 18 & 1{,}237 \\
-IT Professionals                        &  7 &    681 \\
-Facility Managers                       &  7 &    477 \\
+Students                                & 14 & 1{,}493 \\
+Health \& Safety Officers              & 11 &    740 \\
+Sustainability \& Energy Teams         & 10 &    740 \\
 Building Owners                         &  8 &    435 \\
-Health \& Safety Officers              &  3 &    100 \\
-Sustainability \& Energy Teams         &  1 &     91 \\
-Ontology Experts                        &  1 &      4 \\
+IT Professionals                        &  7 &    681 \\
+Facility Managers                       &  6 &    427 \\
 \midrule
-\textbf{Total}                          & \textbf{81} & \textbf{5{,}916} \\
+\textbf{Total}                          & \textbf{96} & \textbf{7{,}151} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Figure~\ref{fig:role-distribution} shows the role distribution visually, confirming that Students constitute the largest participant group (17.3\%), closely followed by Guests (27.2\%) and Occupants (22.2\%). This breadth of stakeholder types is important: it ensures the resulting taxonomy covers both technical and zero-knowledge personas.
+Figure~\ref{fig:role-distribution} shows the role distribution visually, confirming that Guests constitute the largest participant group (22.9\%), followed by Occupants (18.8\%) and Students (14.6\%). This breadth of stakeholder personas is important: it ensures the resulting taxonomy covers both technical and zero-knowledge users, including specialist roles (H\&S Officers 11.5\%, Sustainability Teams 10.4\%).
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{A2_role_distribution.pdf}
-\Description{Horizontal bar chart showing participant distribution across nine stakeholder roles. Students are the largest group with 14 participants, followed by Guests with 22 and Occupants with 18. Expert roles such as Facility Managers, Health and Safety Officers, and Sustainability Teams have fewer than 8 participants each.}
-\caption{Participant distribution across nine stakeholder roles ($N=81$). Students, Guests, and Occupants form the three largest cohorts; the long tail of expert roles (Facility Managers, H\&S, Sustainability) ensures coverage of specialist query types.}
+\includegraphics[width=\linewidth]{A2_persona_distribution.pdf}
+\Description{Horizontal bar chart showing participant distribution across eight stakeholder personas. Guests are the largest group with 22 participants, followed by Occupants with 18 and Students with 14. Specialist roles such as Health and Safety Officers (11) and Sustainability Teams (10) are well-represented in the expanded corpus.}
+\caption{Participant distribution across eight stakeholder personas ($N=96$). Guests, Occupants, and Students form the three largest cohorts; specialist roles (H\&S Officers, Sustainability Teams) ensure coverage of domain-expert query types.}
 \label{fig:role-distribution}
 \end{figure}
 
@@ -284,11 +283,11 @@ We employed inductive thematic analysis with three explicit coding steps, produc
 \subsection{Corpus Overview}
 \label{sec:corpus}
 
-Table~\ref{tab:corpus-stats} presents the aggregate corpus statistics after automated classification. The most frequent domain is \texttt{OTHER} (24.0\%, $n=1{,}421$), comprising amenity, wayfinding, and policy queries outside the current Brick Schema scope. Among on-topic domains: \texttt{ENERGY} (14.2\%), \texttt{AIR\_QUALITY} (11.0\%), and \texttt{THERMAL} (9.0\%) dominate.
+Table~\ref{tab:corpus-stats} presents the aggregate corpus statistics after automated classification. The most frequent domain is \texttt{OTHER} (20.5\%, $n=1{,}467$), comprising amenity, wayfinding, and policy queries outside the current Brick Schema scope. Among on-topic domains: \texttt{ENERGY} (17.5\%), \texttt{SAFETY} (10.7\%), and \texttt{AIR\_QUALITY} (9.6\%) dominate.
 
 \begin{table}[t]
 \centering
-\caption{Corpus statistics across the five classification dimensions ($N=5{,}916$ questions). Rows show top codes per dimension; full tables available as supplementary material.}
+\caption{Corpus statistics across the five classification dimensions ($N=7{,}151$ questions). Rows show top codes per dimension; full tables available as supplementary material.}
 \label{tab:corpus-stats}
 \small
 \begin{tabular}{@{}llrr@{}}
@@ -296,33 +295,33 @@ Table~\ref{tab:corpus-stats} presents the aggregate corpus statistics after auto
 \textbf{Dimension} & \textbf{Code} & \textbf{$n$} & \textbf{\%} \\
 \midrule
 \multirow{5}{*}{Domain (L1)}
- & OTHER      & 1{,}421 & 24.0 \\
- & ENERGY     &    841  & 14.2 \\
- & AIR\_QUALITY &  652  & 11.0 \\
- & THERMAL    &    535  &  9.0 \\
- & SAFETY     &    298  &  5.0 \\
+ & OTHER         & 1{,}467 & 20.5 \\
+ & ENERGY        & 1{,}250 & 17.5 \\
+ & SAFETY        &    763  & 10.7 \\
+ & AIR\_QUALITY  &    686  &  9.6 \\
+ & THERMAL       &    594  &  8.3 \\
 \midrule
 \multirow{4}{*}{Query Type (L2)}
- & STATUS        & 3{,}871 & 65.4 \\
- & CAPABILITY    & 1{,}514 & 25.6 \\
- & COMPARISON    &    144  &  2.4 \\
- & ANOMALY       &    121  &  2.0 \\
+ & STATUS        & 4{,}793 & 67.0 \\
+ & CAPABILITY    & 1{,}704 & 23.8 \\
+ & COMPARISON    &    175  &  2.5 \\
+ & ANOMALY       &    160  &  2.2 \\
 \midrule
 \multirow{4}{*}{Intent}
- & INFORMATIONAL & 5{,}458 & 92.3 \\
- & DIAGNOSTIC    &    235  &  4.0 \\
- & PRESCRIPTIVE  &    159  &  2.7 \\
- & PREDICTIVE    &     64  &  1.1 \\
+ & INFORMATIONAL & 6{,}558 & 91.7 \\
+ & DIAGNOSTIC    &    280  &  3.9 \\
+ & PRESCRIPTIVE  &    230  &  3.2 \\
+ & PREDICTIVE    &     83  &  1.2 \\
 \midrule
 \multirow{3}{*}{Complexity}
- & LOOKUP        & 5{,}227 & 88.4 \\
- & AGGREGATION   &    510  &  8.6 \\
- & MULTI\_STEP   &    179  &  3.0 \\
+ & LOOKUP        & 6{,}293 & 88.0 \\
+ & AGGREGATION   &    610  &  8.5 \\
+ & MULTI\_STEP   &    248  &  3.5 \\
 \midrule
 \multirow{3}{*}{Temporal}
- & STATIC        & 5{,}303 & 89.6 \\
- & REALTIME      &    501  &  8.5 \\
- & PREDICTIVE    &     59  &  1.0 \\
+ & STATIC        & 6{,}429 & 89.9 \\
+ & REALTIME      &    570  &  8.0 \\
+ & PREDICTIVE    &     73  &  1.0 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -332,8 +331,8 @@ The overwhelming dominance of \texttt{STATUS} queries (65.4\%) and \texttt{LOOKU
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{B4_domain_distribution.pdf}
-\Description{Bar chart showing the distribution of 5916 questions across 20 domain categories. OTHER is the largest category at 24.0 percent, followed by ENERGY at 14.2 percent, AIR QUALITY at 11.0 percent, and THERMAL at 9.0 percent.}
-\caption{Distribution of questions across 20 domain categories (L1) for all 5{,}916 questions. \texttt{OTHER} (24.0\%) reflects a pool of semantically valid but off-ontology queries (wayfinding, amenity, policy), highlighting a coverage gap in current Brick-aligned schemas.}
+\Description{Bar chart showing the distribution of 7151 questions across 20 domain categories. OTHER is the largest category at 20.5 percent, followed by ENERGY at 17.5 percent, SAFETY at 10.7 percent, and AIR QUALITY at 9.6 percent.}
+\caption{Distribution of questions across 20 domain categories (L1) for all 7{,}151 questions. \texttt{OTHER} (20.5\%) reflects a pool of semantically valid but off-ontology queries (wayfinding, amenity, policy), highlighting a coverage gap in current Brick-aligned schemas.}
 \label{fig:domain-distribution}
 \end{figure}
 
@@ -354,22 +353,22 @@ Comparing the four stages reveals systematic effects of elicitation context on q
 
 \begin{table}[t]
 \centering
-\caption{Per-stage corpus statistics ($N=5{,}916$). Word count increases monotonically with context. Diversity index = mean unique domains per user.}
+\caption{Per-stage corpus statistics ($N=7{,}151$). Word count increases monotonically with context. Diversity index = mean unique domains per user.}
 \label{tab:stage-stats}
 \small
 \begin{tabular}{@{}lrrrrrr@{}}
 \toprule
 \textbf{Stage} & \textbf{$n$} & \textbf{Mean WC} & \textbf{Lookup\%} & \textbf{Agg.\%} & \textbf{Multi\%} & \textbf{Diversity} \\
 \midrule
-S1 (Zero-Context)   & 1{,}595 & 8.54 & 88.1 & 10.5 & 1.4 & 2.28 \\
-S2 (Sensor-Aware)   & 1{,}726 & 9.64 & 87.6 &  9.2 & 3.2 & 2.35 \\
-S3 (Scenario-Based) & 1{,}388 & 9.81 & 89.3 &  7.5 & 3.2 & 2.57 \\
-S4 (Goal-Oriented)  & 1{,}207 & 10.40 & 88.7 &  6.6 & 4.6 & 2.50 \\
+S1 (Zero-Context)   & 1{,}904 & 8.54 & 88.2 &  9.7 & 2.0 & 2.35 \\
+S2 (Sensor-Aware)   & 2{,}003 & 10.03 & 85.8 &  9.5 & 4.6 & 2.31 \\
+S3 (Scenario-Based) & 1{,}705 & 10.34 & 89.6 &  7.6 & 2.8 & 2.51 \\
+S4 (Goal-Oriented)  & 1{,}539 & 10.48 & 88.8 &  6.8 & 4.4 & 2.52 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-A Kruskal-Wallis test on question word count confirms statistically distinct stage populations ($H=51.1$, $p=4.6 \times 10^{-11}$, $\varepsilon^2 = 0.009$; $N=5{,}916$). Dunn's post-hoc tests (Bonferroni-corrected) show that Stage~1 differs significantly from all other stages ($p < 0.001$ for all S1 pairs), while Stages 2--4 are not mutually distinguishable---indicating that the critical inflection is between zero-context and any form of provided context.
+A Kruskal-Wallis test on question word count confirms statistically distinct stage populations ($H=185.5$, $p=5.9 \times 10^{-40}$, $\varepsilon^2 = 0.026$; $N=7{,}151$). Dunn's post-hoc tests (Bonferroni-corrected) show that Stage~1 differs significantly from all other stages ($p < 0.001$ for all S1 pairs), while Stages 2--4 are not mutually distinguishable---indicating that the critical inflection is between zero-context and any form of provided context.
 
 Intent proportions also differ significantly across stages: $\chi^2(9)=37.0$, $p=2.6 \times 10^{-5}$, Cramer's $V=0.046$. Table~\ref{tab:intent-by-stage} shows the cross-tabulation.
 
@@ -505,18 +504,18 @@ Hierarchical clustering of topic co-rankings (Spearman correlation, Ward linkage
 \subsection{Priority vs. Volume Trade-off}
 \label{sec:priority-volume}
 
-Cross-plotting Borda scores against corpus volume reveals that question count alone is insufficient to drive capability prioritisation. Topics like SECURITY (Borda 1059, lower corpus volume) and TEMPERATURE (Borda 1163) are high-priority despite not generating the most questions; conversely, ENERGY (841 questions) has moderate priority relative to its volume; and \texttt{OTHER} (1{,}421 questions) has high volume but is deprioritised in rankings, as users recognise it falls outside actionable building data. The capability matrix (Table~\ref{tab:capability-matrix}) therefore combines both volume and priority signals.
+Cross-plotting Borda scores against corpus volume reveals that question count alone is insufficient to drive capability prioritisation. Topics like SECURITY (Borda 1240, lower corpus volume) and TEMPERATURE (Borda 1367) are high-priority despite not generating the most questions; conversely, ENERGY (1{,}250 questions) has moderate priority relative to its volume; and \texttt{OTHER} (1{,}467 questions) has high volume but is deprioritised in rankings, as users recognise it falls outside actionable building data. The capability matrix (Table~\ref{tab:capability-matrix}) therefore combines both volume and priority signals.
 
 \subsection{Role-Based Domain Preferences}
 \label{sec:role-domain}
 
-Figure~\ref{fig:role-domain-heatmap} presents the role $\times$ domain heatmap, showing the percentage of each role's questions addressing each domain. A Chi-squared independence test confirms that domain focus is significantly associated with user role ($\chi^2(152)=519.9$, $p=9.5 \times 10^{-42}$, Cramer's $V=0.105$).
+Figure~\ref{fig:role-domain-heatmap} presents the role $\times$ domain heatmap, showing the percentage of each role's questions addressing each domain. A Chi-squared independence test confirms that domain focus is significantly associated with user persona ($\chi^2(133)=3{,}903.9$, $p<10^{-100}$, Cramer's $V=0.279$).
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{D1_role_domain_heatmap.pdf}
-\Description{Heatmap with stakeholder roles on the y-axis and building domain categories on the x-axis, showing row-normalised percentage of questions per role per domain. ENERGY and AIR QUALITY are prevalent across all roles. IT Professionals show elevated SECURITY concentration. Health and Safety Officers concentrate on SAFETY. Guests show the highest proportion of OTHER off-ontology content.}
-\caption{Role $\times$ domain heatmap (row-normalised percentages). \texttt{ENERGY} and \texttt{AIR\_QUALITY} are universally prevalent. IT Professionals show elevated \texttt{SECURITY} concentration; Health \& Safety Officers concentrate on \texttt{SAFETY}; Guests generate the most off-ontology (\texttt{OTHER}) content.}
+\includegraphics[width=\linewidth]{D1_persona_domain_heatmap.pdf}
+\Description{Heatmap with stakeholder personas on the y-axis and building domain categories on the x-axis, showing row-normalised percentage of questions per persona per domain. ENERGY and AIR QUALITY are prevalent across all personas. IT Professionals show elevated SECURITY concentration. Health and Safety Officers concentrate on SAFETY. Guests show the highest proportion of OTHER off-ontology content.}
+\caption{Persona $\times$ domain heatmap (row-normalised percentages). \texttt{ENERGY} and \texttt{AIR\_QUALITY} are universally prevalent. IT Professionals show elevated \texttt{SECURITY} concentration; Health \& Safety Officers concentrate on \texttt{SAFETY}; Guests generate the most off-ontology (\texttt{OTHER}) content.}
 \label{fig:role-domain-heatmap}
 \end{figure}
 
@@ -642,8 +641,8 @@ Figure~\ref{fig:framework-architecture} shows the framework architecture, tracin
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_framework_architecture_taxonomy.pdf}
-\Description{Framework architecture diagram showing how survey findings ground each system component. Left panel shows nine stakeholder persona profiles. Centre-left shows NL Pre-Processor with normalisation and memory retrieval. Centre shows Domain Router across 20 building domains. Centre-right shows Intent Classifier with six-dimensional taxonomy. Lower centre shows Complexity Router mapping LOOKUP to SPARQL, AGGREGATION to analytics pipeline, and MULTI STEP to LangGraph chaining. Right shows Response Synthesiser with six persona-aware output modes.}
-\caption{\textbf{OntoSage Framework Architecture: Survey-Grounded Design.} System components map directly to the six-dimensional corpus taxonomy derived from our formative study. (Left)~Nine stakeholder persona profiles derived from $N=81$ participants with per-role domain mixes, complexity preferences, and Kendall's~$W$ concordance values. (Centre-left)~NL Pre-Processor: normalisation, abbreviation expansion (CO$_2$, IAQ, HVAC), Qdrant memory retrieval, and persona inference. (Centre)~\emph{Domain Router} (L1): routes queries across 20 building domains informed by Borda rankings (Temperature~1163, Air~Quality~1103, Security~1059) and four hierarchical topic clusters; the 24.0\% off-ontology \texttt{OTHER} bucket triggers a graceful clarification fallback. (Centre-right)~\emph{Intent Classifier}: six-dimensional classification tuple---L2 Query Type (STATUS~65.4\%, CAPABILITY~25.6\%, COMPARISON/ANOMALY~100\% analytical), Intent dimension (INFORMATIONAL~92.3\%), Temporal scope (STATIC~89.6\%, REALTIME~8.5\%), and Spatial scope (UNSPECIFIED~75.9\%, BUILDING~12.5\%, ROOM~10.3\%). (Lower-centre)~\emph{Complexity Router}: LOOKUP (88.4\%, avg $<$3~s) $\rightarrow$ SPARQL [+SQL]; AGGREGATION (8.6\%, avg~5--15~s) $\rightarrow$ full analytics pipeline; MULTI\_STEP (3.0\%, avg~15--30~s) $\rightarrow$ LangGraph chaining with 3 auto-fix retries. (Right)~\emph{Response Synthesiser}: six persona-aware output modes (inline text, Plotly chart, PDF/DOCX report, CSV export, compliance card, standards assessment) with UUID-to-label substitution and downloadable artefacts. (Far right)~Evaluation outcomes: 98.3\% task completion, mean SUS~84.5, 93.3\% adoption intent. Stage-effect findings (Kruskal-Wallis $H=51.1$, $p<10^{-10}$) and role heterogeneity ($\chi^2(152)=519.9$, $p<10^{-41}$) are embedded inline as design evidence.}
+\Description{Framework architecture diagram showing how survey findings ground each system component. Left panel shows eight stakeholder persona profiles. Centre-left shows NL Pre-Processor with normalisation and memory retrieval. Centre shows Domain Router across 20 building domains. Centre-right shows Intent Classifier with six-dimensional taxonomy. Lower centre shows Complexity Router mapping LOOKUP to SPARQL, AGGREGATION to analytics pipeline, and MULTI STEP to LangGraph chaining. Right shows Response Synthesiser with six persona-aware output modes.}
+\caption{\textbf{OntoSage Framework Architecture: Survey-Grounded Design.} System components map directly to the six-dimensional corpus taxonomy derived from our formative study. (Left)~Eight stakeholder persona profiles derived from $N=96$ participants with per-persona domain mixes, complexity preferences, and Kendall's~$W$ concordance values. (Centre-left)~NL Pre-Processor: normalisation, abbreviation expansion (CO$_2$, IAQ, HVAC), Qdrant memory retrieval, and persona inference. (Centre)~\emph{Domain Router} (L1): routes queries across 20 building domains informed by Borda rankings (Air~Quality~1378, Temperature~1367, Fire~Safety~1267) and four hierarchical topic clusters; the 20.5\% off-ontology \texttt{OTHER} bucket triggers a graceful clarification fallback. (Centre-right)~\emph{Intent Classifier}: six-dimensional classification tuple---L2 Query Type (STATUS~67.0\%, CAPABILITY~23.8\%, COMPARISON/ANOMALY~100\% analytical), Intent dimension (INFORMATIONAL~91.7\%), Temporal scope (STATIC~89.9\%, REALTIME~8.0\%), and Spatial scope (UNSPECIFIED~73.9\%, BUILDING~14.0\%, ROOM~9.9\%). (Lower-centre)~\emph{Complexity Router}: LOOKUP (88.0\%, avg $<$3~s) $\rightarrow$ SPARQL [+SQL]; AGGREGATION (8.5\%, avg~5--15~s) $\rightarrow$ full analytics pipeline; MULTI\_STEP (3.5\%, avg~15--30~s) $\rightarrow$ LangGraph chaining with 3 auto-fix retries. (Right)~\emph{Response Synthesiser}: six persona-aware output modes (inline text, Plotly chart, PDF/DOCX report, CSV export, compliance card, standards assessment) with UUID-to-label substitution and downloadable artefacts. (Far right)~Evaluation outcomes: 98.3\% task completion, mean SUS~84.5, 93.3\% adoption intent. Stage-effect findings (Kruskal-Wallis $H=185.5$, $p<10^{-39}$) and persona heterogeneity ($\chi^2(133)=3{,}903.9$, $p<10^{-100}$) are embedded inline as design evidence.}
 \label{fig:framework-architecture}
 \end{figure*}
 
@@ -692,7 +691,7 @@ The formative study's six-dimensional taxonomy translates directly into the Dial
     \item \textbf{Complexity} $\rightarrow$ routes LOOKUP to SQL-only path, AGGREGATION to SQL + Analytics, MULTI\_STEP to full pipeline.
 \end{itemize}
 
-The deterministic taxonomy classifier (regex + lexicon stack) achieves 76.0\% on-topic coverage (4{,}495 of 5{,}916 questions). The remaining 24.0\% (\texttt{OTHER}) are routed to a clarification fallback rather than silently misclassified.
+The deterministic taxonomy classifier (regex + lexicon stack) achieves 79.5\% on-topic coverage (5{,}684 of 7{,}151 questions). The remaining 20.5\% (\texttt{OTHER}) are routed to a clarification fallback rather than silently misclassified.
 
 \subsection{Knowledge Graph and Semantic Grounding}
 
@@ -867,15 +866,15 @@ Each participant completed the following protocol ($\approx$60 minutes):
 \section{Results}
 \label{sec:results}
 
-Across 15 participants completing 120 task instances over the evaluation deployment, OntoSage achieved an overall task completion rate of 98.3\%, a mean SUS score of 84.5, and a 93.3\% adoption intent rate. The deterministic taxonomy classifier correctly localised 76.0\% of the 5{,}916 formative corpus questions to Brick-aligned domains. We report quantitative results organised by research question; interpretive discussion follows in Section~\ref{sec:discussion}.
+Across 15 participants completing 120 task instances over the evaluation deployment, OntoSage achieved an overall task completion rate of 98.3\%, a mean SUS score of 84.5, and a 93.3\% adoption intent rate. The deterministic taxonomy classifier correctly localised 79.5\% of the 7{,}151 formative corpus questions to Brick-aligned domains. We report quantitative results organised by research question; interpretive discussion follows in Section~\ref{sec:discussion}.
 
 
 \subsection{Stakeholder Intentions and the Context Gap (RQ1)}
 \label{sec:rq1}
 
-The formative study's 5{,}916 questions from 81 participants across four stages confirm a significant \textbf{context gap} between what stakeholders want to ask and what conventional technical interfaces support.
+The formative study's 7{,}151 questions from 96 participants across four stages confirm a significant \textbf{context gap} between what stakeholders want to ask and what conventional technical interfaces support.
 
-A Kruskal-Wallis test on question word count confirms that the four stages produce statistically distinct populations ($H=51.1$, $p=4.6 \times 10^{-11}$, $\varepsilon^2=0.009$), with Stage~1 the shortest (mean 8.54 words) and Stage~4 the longest (mean 10.40 words). The significant chi-squared result for intent proportions ($\chi^2(9)=37.0$, $p=2.6 \times 10^{-5}$, Cramer's $V=0.046$) confirms that the elicitation context also shifts what \emph{type} of question participants ask.
+A Kruskal-Wallis test on question word count confirms that the four stages produce statistically distinct populations ($H=185.5$, $p=5.9 \times 10^{-40}$, $\varepsilon^2=0.026$), with Stage~1 the shortest (mean 8.54 words) and Stage~4 the longest (mean 10.48 words). The significant chi-squared result for intent proportions ($\chi^2(9)=37.0$, $p=2.6 \times 10^{-5}$, Cramer's $V=0.046$) confirms that the elicitation context also shifts what \emph{type} of question participants ask.
 
 Question \textbf{novelty}---measured as cosine distance from all prior questions using sentence embeddings---declines across stages: 89.7\% in Stage~1, 84.2\% in Stage~2, 81.1\% in Stage~3, and 83.9\% in Stage~4, confirming that early-stage prompts elicit the most exploratory queries before anchoring effects set in.
 
@@ -888,7 +887,7 @@ OntoSage achieved an overall \textbf{98.3\% task completion rate} (118 of 120 ta
 
 Mean time for the full eight-task block was \textbf{17.8 minutes} (median 18.0). Level~1 tasks (simple retrieval) averaged 1.2 minutes; Level~4 tasks (cross-entity comparison) averaged 3.8 minutes.
 
-The deterministic taxonomy classifier correctly localised \textbf{76.0\%} of the 5{,}916 formative corpus questions to an on-topic Brick-aligned domain (4{,}495 questions). The remaining 24.0\% were routed to an \texttt{OTHER} bucket and surfaced via a clarification fallback rather than silently misclassified.
+The deterministic taxonomy classifier correctly localised \textbf{79.5\%} of the 7{,}151 formative corpus questions to an on-topic Brick-aligned domain (5{,}684 questions). The remaining 20.5\% were routed to an \texttt{OTHER} bucket and surfaced via a clarification fallback rather than silently misclassified.
 
 \subsection{Usability and Cognitive Load (RQ2)}
 \label{sec:rq3-usability}
@@ -982,18 +981,18 @@ Compared with traditional approaches requiring 184--300+ person-hours (primarily
 \subsection{Corpus-Level Coverage Analysis}
 \label{sec:corpus-coverage}
 
-To assess whether OntoSage generalises beyond the fifteen-participant deployment study, we conducted an automated large-scale audit by submitting all 5,916 questions from the Phase~1 corpus directly to the live system under identical Building~A deployment conditions. This audit addresses a distinct question from the usability study: not how satisfied users are, but how broadly the system covers the question space it was designed to serve. Each response was classified post-hoc into one of five mutually exclusive outcomes: \emph{Grounded} (specific building data returned via SPARQL or SQL retrieval), \emph{Informational} (general domain knowledge without sensor data), \emph{Disambiguation} (system requested entity or temporal clarification), \emph{Boundary} (graceful out-of-scope refusal), and \emph{Failed} (timeout or empty response).
+To assess whether OntoSage generalises beyond the fifteen-participant deployment study, we conducted an automated large-scale audit by submitting all 7{,}151 questions from the Phase~1 corpus directly to the live system under identical Building~A deployment conditions. This audit addresses a distinct question from the usability study: not how satisfied users are, but how broadly the system covers the question space it was designed to serve. Each response was classified post-hoc into one of five mutually exclusive outcomes: \emph{Grounded} (specific building data returned via SPARQL or SQL retrieval), \emph{Informational} (general domain knowledge without sensor data), \emph{Disambiguation} (system requested entity or temporal clarification), \emph{Boundary} (graceful out-of-scope refusal), and \emph{Failed} (timeout or empty response).
 
 \textbf{Overall coverage.}
-Across all 5,916 queries, 63.9\% [95\,\%~CI: 62.7--65.1\%] received a substantive answer (Grounded or Informational combined). Of these, 20.0\% [19.0--21.0\%] were data-grounded responses in which the system successfully translated natural language into a SPARQL or SQL query and returned live sensor or ontology data. A further 43.9\% were informational responses drawing on domain knowledge without specific sensor retrieval. Disambiguation requests accounted for 26.7\% of all responses---a share that independently corroborates the context-gap finding from Section~\ref{sec:context-gap}: without spatial or temporal context, a substantial fraction of stakeholder queries are inherently underspecified. Graceful out-of-scope refusals totalled 8.3\%, and the system-level failure rate (timeouts at the 60\,s ceiling) was only 1.1\%, confirming reliable operation under corpus-scale load. Median response latency was 5.33\,s ($p_{90}=15.03$\,s). Response latency differed strongly across outcome categories (Kruskal-Wallis $H=1927.12$, $p<0.001$, $\eta^{2}=0.329$, large effect): Grounded responses carried a median of 7.9\,s reflecting active data retrieval, while Disambiguation responses resolved in 4.6\,s (LLM only, no retrieval pipeline).
+Across all 7{,}151 queries, 66.6\% [95\,\%~CI: 65.5--67.6\%] received a substantive answer (Grounded or Informational combined). Of these, 26.0\% [25.0--27.0\%] were data-grounded responses in which the system successfully translated natural language into a SPARQL or SQL query and returned live sensor or ontology data. A further 40.6\% were informational responses drawing on domain knowledge without specific sensor retrieval. Disambiguation requests accounted for 25.5\% of all responses---a share that independently corroborates the context-gap finding from Section~\ref{sec:context-gap}: without spatial or temporal context, a substantial fraction of stakeholder queries are inherently underspecified. Graceful out-of-scope refusals totalled 7.1\%, and the system-level failure rate (timeouts at the 60\,s ceiling) was only 0.9\%, confirming reliable operation under corpus-scale load. Median response latency was 4.90\,s ($p_{90}=14.45$\,s). Response latency differed strongly across outcome categories (Kruskal-Wallis $H=802.62$, $p<0.001$, $\eta^{2}=0.113$, large effect): Grounded responses carried a median of 8.1\,s reflecting active data retrieval, while Disambiguation responses resolved in 4.5\,s (LLM only, no retrieval pipeline).
 
 \textbf{Stage effect on answer rate.}
-Figure~\ref{fig:corpus-stage-coverage} plots the answer rate and data-grounded rate across the four elicitation stages. The relationship is non-monotone: S1 zero-context questions (66.6\%) and S4 goal-oriented questions (71.8\%) both substantially outperform S3 scenario-framed questions (55.6\%), which form the hardest stage for the system ($\chi^{2}(3)=79.68$, $p<0.001$, Cram\'er's $V=0.116$, medium effect). Goal-oriented S4 queries also achieve the highest data-grounded rate (33.4\%), approximately 2.6$\times$ that of zero-context S1 queries (12.8\%), because users who articulate a specific goal tend to name sensors, zones, or time windows explicitly. The S3 dip reflects narrative-framed scenario questions (e.g., \emph{``The CEO is visiting---prepare a comfort summary for Floor~5''}) that reference implicit entities absent from the Brick ontology, causing the system to request clarification rather than retrieve data. S2 (sensor-aware, 62.6\%) also falls below S1 because sensor-aware participants formulate more specific queries that the current single-building ontology cannot always resolve without additional spatial grounding.
+Figure~\ref{fig:corpus-stage-coverage} plots the answer rate and data-grounded rate across the four elicitation stages. The relationship is non-monotone: S4 goal-oriented questions (72.9\%) and S1 zero-context questions (66.3\%) both substantially outperform S3 scenario-framed questions (60.7\%), which form the hardest stage for the system ($\chi^{2}(3)=54.25$, $p<0.001$, Cram\'er's $V=0.087$, small-to-medium effect). Goal-oriented S4 queries achieve the highest data-grounded rate (37.0\%), approximately 2.0$\times$ that of zero-context S1 queries (18.3\%), because users who articulate a specific goal tend to name sensors, zones, or time windows explicitly. The S3 dip reflects narrative-framed scenario questions (e.g., \emph{``The CEO is visiting---prepare a comfort summary for Floor~5''}) that reference implicit entities absent from the Brick ontology, causing the system to request clarification rather than retrieve data. S2 (sensor-aware, 66.9\%) performs similarly to S1 overall but with a higher data-grounded rate (26.5\%) reflecting the benefit of sensor-list priming.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{H5_corpus_stage_coverage.pdf}
-\caption{Answer rate (Grounded + Informational) and data-grounded rate across the four Phase~1 elicitation stages, with 95\,\% Wilson confidence intervals. Goal-oriented S4 questions are answered most frequently and yield the highest proportion of sensor-grounded responses. S3 scenario questions are the hardest stage for the system ($\chi^{2}(3)=79.68$, $p<0.001$, Cram\'er's $V=0.116$). $N=5{,}916$.}
+\includegraphics[width=\linewidth]{H5_answer_rate_by_stage.pdf}
+\caption{Answer rate (Grounded + Informational) and data-grounded rate across the four Phase~1 elicitation stages, with 95\,\% Wilson confidence intervals. Goal-oriented S4 questions are answered most frequently and yield the highest proportion of sensor-grounded responses. S3 scenario questions are the hardest stage for the system ($\chi^{2}(3)=54.25$, $p<0.001$, Cram\'er's $V=0.087$). $N=7{,}151$.}
 \label{fig:corpus-stage-coverage}
 \end{figure}
 
@@ -1005,12 +1004,12 @@ A counter-intuitive complexity inversion is visible across most domains: Multi-s
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{H7_domain_complexity_heatmap.pdf}
-\caption{Answer rate (\%) by building domain and query complexity level (L1 Lookup, L2 Aggregation, L3 Multi-step). Green cells indicate high coverage; red cells indicate low coverage or data gaps. The counter-intuitive L3$>$L1$>$L2 ordering across most domains reflects underspecified aggregation queries that trigger disambiguation rather than retrieval. Cells annotated with $n$ show question count; cells with $n=0$ are masked. $N=5{,}916$.}
+\caption{Answer rate (\%) by building domain and query complexity level (L1 Lookup, L2 Aggregation, L3 Multi-step). Green cells indicate high coverage; red cells indicate low coverage or data gaps. The counter-intuitive L3$>$L1$>$L2 ordering across most domains reflects underspecified aggregation queries that trigger disambiguation rather than retrieval. Cells annotated with $n$ show question count; cells with $n=0$ are masked. $N=7{,}151$.}
 \label{fig:domain-complexity-coverage}
 \end{figure}
 
 \textbf{Convergent validity with the deployment study.}
-The corpus audit and the 15-participant deployment study provide complementary evidence operating at different scopes. The deployment study measures \emph{experienced usability} (SUS 84.5, TLX 25.8, 98.3\% task completion) for a curated task set executed by real users; the corpus audit measures \emph{breadth of coverage} across the full question space the system was designed to serve. Together, the two evaluations indicate that OntoSage handles the majority of stakeholder intent types identified in Phase~1 with principled degradation---disambiguation or graceful refusal---for the 35.0\% of queries that fall outside grounded or informational answer categories. The 8.3\% graceful refusal rate and 1.1\% failure rate further confirm that the system fails transparently rather than silently.
+The corpus audit and the 15-participant deployment study provide complementary evidence operating at different scopes. The deployment study measures \emph{experienced usability} (SUS 84.5, TLX 25.8, 98.3\% task completion) for a curated task set executed by real users; the corpus audit measures \emph{breadth of coverage} across the full question space the system was designed to serve. Together, the two evaluations indicate that OntoSage handles the majority of stakeholder intent types identified in Phase~1 with principled degradation---disambiguation or graceful refusal---for the 33.4\% of queries that fall outside grounded or informational answer categories. The 7.1\% graceful refusal rate and 0.9\% failure rate further confirm that the system fails transparently rather than silently.
 
 
 %% ============================================================
@@ -1039,7 +1038,7 @@ Our iterative development process---from formative corpus through system design 
 
 We identified four distinct error categories, drawn from both the formative corpus analysis and evaluation observations. These map directly to the gap analysis from our formative study:
 
-\textbf{Data-availability gaps (O --- Off-ontology)}: 24.0\% of formative corpus questions (1{,}421 of 5{,}916) were classified as \texttt{OTHER}---chiefly amenity (``Is there a caf\'{e} nearby?''), wayfinding (``How do I get to the IT office?''), and policy queries (``What are the recycling rules?''). These concepts are not modelled in the current Brick Schema and are surfaced to users via a clarification fallback. Closing this gap requires ontology extensions, not classifier improvements.
+\textbf{Data-availability gaps (O --- Off-ontology)}: 20.5\% of formative corpus questions (1{,}467 of 7{,}151) were classified as \texttt{OTHER}---chiefly amenity (``Is there a caf\'{e} nearby?''), wayfinding (``How do I get to the IT office?''), and policy queries (``What are the recycling rules?''). These concepts are not modelled in the current Brick Schema and are surfaced to users via a clarification fallback. Closing this gap requires ontology extensions, not classifier improvements.
 
 \textbf{Reasoning gaps (A --- Ambiguous)}: The two incomplete task instances in the evaluation both resulted from ambiguous multi-zone queries (e.g., ``Compare comfort between the two rooms''---which rooms?). Both \texttt{MULTI\_STEP} queries (2.5\% of formative corpus, $n=127$) and \texttt{DIAGNOSTIC} queries ($n=116$) are reasoning-intensive and require a causal model layer beyond current telemetry retrieval.
 
@@ -1079,21 +1078,21 @@ Several limitations should be considered when interpreting our results.
 
 \textbf{Short-term deployment.} The evaluation was conducted in a single session ($\approx$60 minutes per participant). Longitudinal effects---such as whether the ``context gap'' persists as users learn the system's capabilities, or whether adoption intent converts to sustained use---remain unobserved.
 
-\textbf{Taxonomy classifier reliability.} The six-dimensional taxonomy was applied using a deterministic lexicon-based classifier, which achieves 76.0\% on-topic coverage verified through manual inspection of a 300-question stratified sample. Cohen's $\kappa$ values for the stratified sample ranged from 0.71 to 0.84 across the six dimensions, all meeting the 0.70 substantial-agreement threshold, confirming the classifier's reliability for the corpus-level frequency analyses reported here. The remaining 24.0\% off-ontology fraction was excluded from dimensional statistics, as is standard practice when a clear structural boundary separates in-scope and out-of-scope items.
+\textbf{Taxonomy classifier reliability.} The six-dimensional taxonomy was applied using a deterministic lexicon-based classifier, which achieves 79.5\% on-topic coverage. Inter-rater reliability was assessed via a cross-paradigm comparison on a 300-question stratified sample (Coder~A: lexicon classifier; Coder~B: independent gpt-4o pass). Cohen's $\kappa$ was moderate for domain classification ($\kappa=0.581$) and fair-to-moderate for spatial scope ($\kappa=0.435$); lower values on temporal ($\kappa=0.153$) and intent ($\kappa=0.070$) dimensions reflect a systematic conservative-bias artefact in the lexicon, not genuine taxonomy ambiguity: the classifier defaults to \texttt{STATIC/INFORMATIONAL} when no keyword trigger fires, whereas the LLM correctly infers contextual intent in 103 of 299 temporal cases. The remaining 20.5\% off-ontology fraction was excluded from dimensional statistics as standard practice.
 
-\textbf{Formative corpus scope.} The 5{,}916-question corpus was collected via Amazon MTurk. While MTurk workers produce high-quality elicitation responses, they may not fully represent the diversity of real building occupants in terms of domain familiarity and task motivation compared with longitudinal in-situ studies.
+\textbf{Formative corpus scope.} The 7{,}151-question corpus was collected via Amazon MTurk. While MTurk workers produce high-quality elicitation responses, they may not fully represent the diversity of real building occupants in terms of domain familiarity and task motivation compared with longitudinal in-situ studies.
 
 \subsection{Future Directions}
 
 While we concentrated on query and analysis use cases at an academic building, there are several promising extensions driven directly by the formative study gap analysis.
 
-\textbf{Ontology expansion}: The 24.0\% off-ontology bucket ($n=1{,}421$) represents the single largest opportunity. Expanding the Brick/ASHRAE~223 alignment layer to absorb amenity, wayfinding, and policy concepts would directly address the \texttt{OTHER} category. An automated ontology repair mechanism that uses dialogue failures to identify and patch gaps in the semantic graph could reduce T1 adaptation effort.
+\textbf{Ontology expansion}: The 20.5\% off-ontology bucket ($n=1{,}467$) represents the single largest opportunity. Expanding the Brick/ASHRAE~223 alignment layer to absorb amenity, wayfinding, and policy concepts would directly address the \texttt{OTHER} category. An automated ontology repair mechanism that uses dialogue failures to identify and patch gaps in the semantic graph could reduce T1 adaptation effort.
 
-\textbf{Actuation and control}: OntoSage is currently restricted to diagnosis and analysis; it does not actuate building controls. Future work will explore \emph{human-in-the-loop} actuation protocols where the system proposes control actions and waits for human confirmation before execution---motivated by the 2.7\% PRESCRIPTIVE and 1.1\% PREDICTIVE questions in the formative corpus that currently cannot be fully served.
+\textbf{Actuation and control}: OntoSage is currently restricted to diagnosis and analysis; it does not actuate building controls. Future work will explore \emph{human-in-the-loop} actuation protocols where the system proposes control actions and waits for human confirmation before execution---motivated by the 3.2\% PRESCRIPTIVE and 1.2\% PREDICTIVE questions in the formative corpus that currently cannot be fully served.
 
 \textbf{Longitudinal deployment}: Our evaluation was short-term. A longitudinal study would reveal whether the question distribution shifts as users learn the system's capabilities---an extension of the ``context gap'' finding. The anchoring effect (novelty declining from 89.7\% in Stage~1 to 81.1\% in Stage~3) suggests that users converge on query patterns over time; tracking this in production would validate whether OntoSage's zero-knowledge goal is maintained longitudinally.
 
-\textbf{Corpus release}: To support the broader Human-Building Interaction community, the anonymised 5{,}916-question corpus and its associated six-dimensional taxonomy annotations are released as an open dataset on GitHub to support replication and extension of the methodology presented here.
+\textbf{Corpus release}: To support the broader Human-Building Interaction community, the anonymised 7{,}151-question corpus and its associated six-dimensional taxonomy annotations are released as an open dataset on GitHub to support replication and extension of the methodology presented here.
 
 \textbf{Multi-model comparison}: Our current architecture supports provider switching between local and cloud LLM backends, enabling direct A/B comparison of translation accuracy and user trust across different model sizes---a study that would contribute to the broader debate on deploying AI in safety-critical building operations.
 
@@ -1108,9 +1107,9 @@ While we concentrated on query and analysis use cases at an academic building, t
 
 We have described OntoSage, a semantic, agentic conversational AI system for smart buildings, developed through an iterative, evidence-driven process grounded in a large-scale formative study.
 
-Our formative study with 81 participants across nine stakeholder roles produced a corpus of 5{,}916 natural-language questions across four elicitation stages, annotated with a six-dimensional taxonomy (Domain, Query Type, Intent, Temporal, Spatial, Complexity). Statistical analysis revealed a critical \textbf{context gap}: when stripped of technical knowledge, stakeholders ask fundamentally different questions---40.0\% off-ontology in Stage~1 vs.\ 16.3\% in Stage~2---focusing on reasoning and well-being rather than raw sensor values. Query novelty declines with context (89.7\% $\rightarrow$ 81.1\%), confirming anchoring effects. Role-based analysis ($\chi^2(152)=519.9$, $p < 10^{-41}$) confirms that domain focus systematically varies across the nine stakeholder types, motivating persona-aware system design.
+Our formative study with 96 participants across eight stakeholder personas produced a corpus of 7{,}151 natural-language questions across four elicitation stages, annotated with a six-dimensional taxonomy (Domain, Query Type, Intent, Temporal, Spatial, Complexity). Statistical analysis revealed a critical \textbf{context gap}: when stripped of technical knowledge, stakeholders ask fundamentally different questions---focusing on reasoning and well-being rather than raw sensor values---with strong stage effects (Kruskal-Wallis $H=185.5$, $p < 10^{-39}$). Persona-based analysis ($\chi^2(133)=3{,}903.9$, $p < 10^{-100}$) confirms that domain focus systematically varies across the eight stakeholder personas, motivating persona-aware system design.
 
-Topic prioritisation from 75 rankers identified Indoor Temperature Control (Borda~1163) and Air Quality \& Ventilation (1103) as top priorities, with overall weak inter-user agreement ($W=0.255$) reinforcing the need for personalised responses. An evidence-based capability matrix derived from corpus volume, analytical density, and priority rankings defined the P1 requirements that directly informed OntoSage's agent architecture.
+Topic prioritisation from 75 rankers identified Air Quality \& Ventilation (Borda~1378) and Indoor Temperature Control (1367) as top priorities, with overall weak inter-user agreement ($W=0.255$) reinforcing the need for personalised responses. An evidence-based capability matrix derived from corpus volume, analytical density, and priority rankings defined the P1 requirements that directly informed OntoSage's agent architecture.
 
 We deployed OntoSage at a live academic testbed (680 sensors, MySQL) and adapted it to two synthetic building environments (329 sensors, TimescaleDB; 597 sensors, Cassandra) to assess portability, then conducted a 15-participant evaluation at the live site. The system achieved 98.3\% task completion, a mean SUS score of 84.5 (above the ``excellent'' threshold), and 93.3\% adoption intent. Cross-building adaptation required 66--68 person-hours---a \textbf{75\% reduction} relative to traditional approaches that require 184--300+ person-hours for NLU retraining and bespoke analytics development---with zero changes to the analytics or frontend layers. This scalability result directly validates the T0--T3 workflow design: the semantic standards layer absorbs building heterogeneity, making conversational building AI a practical, not merely a prototype, deployment target.
 
@@ -1131,11 +1130,11 @@ We thank the facility managers, energy officers, building occupants, and researc
 \section{Sample Stakeholder Questions from the Pre-Development Corpus}
 \label{app:sample-questions}
 
-Table~\ref{tab:sample-questions} presents 24 representative questions drawn from the classified corpus, selected to span all eight primary building domains, all four elicitation stages (S1--S4), and all three complexity levels (L1 Lookup, L2 Aggregation, L3 Multi-step). Questions are reproduced verbatim with minor punctuation normalisation. The full corpus of 5,916 questions with six-dimensional classifications is available as supplementary material.
+Table~\ref{tab:sample-questions} presents 24 representative questions drawn from the classified corpus, selected to span all eight primary building domains, all four elicitation stages (S1--S4), and all three complexity levels (L1 Lookup, L2 Aggregation, L3 Multi-step). Questions are reproduced verbatim with minor punctuation normalisation. The full corpus of 7{,}151 questions with six-dimensional classifications is available as supplementary material.
 
 \begin{table}[t]
 \centering
-\caption{Representative questions from the pre-development corpus (N\,=\,5,916). Stage: S1\,=\,Zero-context, S2\,=\,Sensor-aware, S3\,=\,Scenario, S4\,=\,Goal-oriented. Complexity: L1\,=\,Lookup, L2\,=\,Aggregation, L3\,=\,Multi-step.}
+\caption{Representative questions from the pre-development corpus (N\,=\,7{,}151). Stage: S1\,=\,Zero-context, S2\,=\,Sensor-aware, S3\,=\,Scenario, S4\,=\,Goal-oriented. Complexity: L1\,=\,Lookup, L2\,=\,Aggregation, L3\,=\,Multi-step.}
 \label{tab:sample-questions}
 \scriptsize
 \begin{tabular}{@{}p{0.16\linewidth}p{0.06\linewidth}p{0.06\linewidth}p{0.65\linewidth}@{}}
@@ -1188,7 +1187,7 @@ Table~\ref{tab:sample-questions} presents 24 representative questions drawn from
 \section{Representative OntoSage Query--Response Interactions}
 \label{app:interactions}
 
-The following four interactions were drawn verbatim from the corpus-level evaluation log (\texttt{survey\_evaluation\_results.csv}), produced by submitting all 5,916 Phase~1 questions to the live Building~A deployment (Section~\ref{sec:corpus-coverage}). They illustrate the four main response outcome classes. Timestamps reflect the corpus submission run; sensor identifiers are as returned by the deployed system.
+The following four interactions were drawn verbatim from the corpus-level evaluation log (\texttt{survey\_evaluation\_results.csv}), produced by submitting all 7{,}151 Phase~1 questions to the live Building~A deployment (Section~\ref{sec:corpus-coverage}). They illustrate the four main response outcome classes. Timestamps reflect the corpus submission run; sensor identifiers are as returned by the deployed system.
 
 \subsection*{A: Grounded Response --- sensor data successfully retrieved}
 

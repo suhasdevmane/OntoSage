@@ -105,7 +105,7 @@ STAGE_LABELS = {
     "4": "S4: Goal-oriented",
 }
 
-ROLE_MAP = {
+PERSONA_MAP = {
     "Student/Researchers/Academics":                     "Researcher",
     "Guests/Visitors":                                   "Guest/Visitor",
     "Occupants/Tenants/Employees":                       "Occupant",
@@ -281,10 +281,10 @@ def classify_outcome(row: dict) -> str:
     return "FAILED"
 
 
-def primary_role(roles_str: str) -> str:
-    """Extract first role from a semicolon-separated role string."""
-    first = roles_str.split(";")[0].strip()
-    return ROLE_MAP.get(first, first[:20])
+def primary_persona(personas_str: str) -> str:
+    """Extract first persona from a semicolon-separated persona string."""
+    first = personas_str.split(";")[0].strip()
+    return PERSONA_MAP.get(first, first[:20])
 
 
 # ---------------------------------------------------------------------------
@@ -311,7 +311,7 @@ def load_data() -> list:
             lat = None
         joined.append({
             "pid":        row["PID"],
-            "role":       primary_role(row["Roles"]),
+            "persona":       primary_persona(row["Personas"]),
             "stage":      row["Stage"],
             "question":   row["Question"],
             "domain":     row["domain_l1"],
@@ -928,22 +928,22 @@ def h8_domain_stage_heatmap(rows: list):
 
 
 # ---------------------------------------------------------------------------
-# H9 — Answer rate by role
+# H9 — Answer rate by persona
 # ---------------------------------------------------------------------------
 
-def h9_by_role(rows: list):
-    print("\n[H9] Answer rate by role...")
-    roles = sorted(set(r["role"] for r in rows))
+def h9_by_persona(rows: list):
+    print("\n[H9] Answer rate by persona...")
+    personas = sorted(set(r["persona"] for r in rows))
     table_rows = []
 
-    for role in roles:
-        sub = [r for r in rows if r["role"] == role]
+    for persona in personas:
+        sub = [r for r in rows if r["persona"] == persona]
         oc = outcome_counts(sub)
         ar, ar_lo, ar_hi = answer_rate(sub)
         dgr, _, _ = data_grounded_rate(sub)
         ls = latency_stats(sub)
         table_rows.append({
-            "Role":             role,
+            "Persona":             persona,
             "N":                len(sub),
             "GROUNDED_n":       oc["GROUNDED"],
             "INFORMATIONAL_n":  oc["INFORMATIONAL"],
@@ -958,14 +958,14 @@ def h9_by_role(rows: list):
         })
 
     table_rows.sort(key=lambda x: -x["Answer_rate_pct"])
-    write_csv("H9_answer_rate_by_role", table_rows,
-              ["Role","N","GROUNDED_n","INFORMATIONAL_n","DISAMBIGUATION_n",
+    write_csv("H9_answer_rate_by_persona", table_rows,
+              ["Persona","N","GROUNDED_n","INFORMATIONAL_n","DISAMBIGUATION_n",
                "BOUNDARY_n","FAILED_n","Answer_rate_pct","AR_CI_lo","AR_CI_hi",
                "Grounded_rate_pct","Latency_median_s"])
 
     # Figure: horizontal bar with CI whiskers
     fig, ax = plt.subplots(figsize=(DOUBLE_COL_W * 0.8, 3.5))
-    labels = [r["Role"] for r in table_rows]
+    labels = [r["Persona"] for r in table_rows]
     ars    = [r["Answer_rate_pct"] for r in table_rows]
     xerr_lo = [r["Answer_rate_pct"] - r["AR_CI_lo"] for r in table_rows]
     xerr_hi = [r["AR_CI_hi"] - r["Answer_rate_pct"] for r in table_rows]
@@ -980,9 +980,9 @@ def h9_by_role(rows: list):
     ax.axvline(80, linestyle="--", linewidth=0.6, color="#888888")
     for i, (ar_val, n_val) in enumerate(zip(ars, [r["N"] for r in table_rows])):
         ax.text(ar_val + xerr_hi[i] + 1.5, i, f"n={n_val}", va="center", fontsize=6.5)
-    ax.set_title("Answer rate by stakeholder role (95% CI)")
+    ax.set_title("Answer rate by stakeholder persona (95% CI)")
     fig.tight_layout()
-    savefig("H9_answer_rate_by_role", fig)
+    savefig("H9_answer_rate_by_persona", fig)
 
 
 # ---------------------------------------------------------------------------
@@ -1205,7 +1205,7 @@ def h13_summary(rows: list):
         "| H6_latency_by_outcome.csv | Latency statistics by outcome |",
         "| H7_domain_complexity_heatmap.csv | Domain × Complexity matrix |",
         "| H8_domain_stage_heatmap.csv | Domain × Stage matrix |",
-        "| H9_answer_rate_by_role.csv | Role-based answer rates |",
+        "| H9_answer_rate_by_persona.csv | Persona-based answer rates |",
         "| H10_statistical_tests.csv | All statistical tests with effect sizes |",
         "| H11_answer_rate_by_intent.csv | Intent-type answer rates |",
         "",
@@ -1219,7 +1219,7 @@ def h13_summary(rows: list):
         "| H6_latency_analysis | Box plot + CDF |",
         "| H7_domain_complexity_heatmap | Heatmap with annotations |",
         "| H8_domain_stage_heatmap | Heatmap with annotations |",
-        "| H9_answer_rate_by_role | Horizontal bar with CI |",
+        "| H9_answer_rate_by_persona | Horizontal bar with CI |",
         "| H12_coverage_bubble | Coverage scatter |",
     ]
     path = OUT_TABLES / "H_evaluation_summary.md"
@@ -1246,7 +1246,7 @@ def main():
     h6_results = h6_latency(rows)
     h7_domain_complexity_heatmap(rows)
     h8_domain_stage_heatmap(rows)
-    h9_by_role(rows)
+    h9_by_persona(rows)
     h10_statistical_tests(rows, h4_results, h5_results, h6_results)
     h11_by_intent(rows)
     h12_coverage_bubble(rows)

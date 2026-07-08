@@ -1,0 +1,18 @@
+# Development & CI tooling — pinned so local and CI runs are identical.
+# Install:  pip install -r requirements-dev.txt
+#
+# These are the gates referenced in CLAUDE.md:
+#   black --line-length 100 ...      (format)
+#   isort --profile black ...        (import order)
+#   flake8 ... --select=F821,F823    (BLOCKING real-bug gate)
+#   bandit -r orchestrator/ shared/ -ll   (security)
+#   pip-audit -r orchestrator/requirements.txt   (dependency CVEs)
+
+black==24.10.0
+isort==5.13.2
+flake8==7.3.0
+bandit==1.8.0
+pip-audit==2.7.3
+yamllint==1.35.1
+pytest==8.3.4
+pytest-asyncio==0.24.0

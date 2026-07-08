@@ -8,21 +8,21 @@ or research systems cannot serve fully — split into three categories.
 
 | Gap | Evidence | Implication |
 |-----|----------|-------------|
-| Off-ontology requests | 1421 questions (24.0%) classified as OTHER (Phase B2). | Brick / 223 schemas do not yet model amenity, wayfinding, or hospitality concepts that occupants and guests routinely ask about. |
-| Cross-system fusion | RECOMMENDATION (102) and ANOMALY (121) queries assume joined sensor + standards + occupancy data. | Storage adapter routing must federate at least three back-ends transparently. |
+| Off-ontology requests | 1467 questions (20.5%) classified as OTHER (Phase B2). | Brick / 223 schemas do not yet model amenity, wayfinding, or hospitality concepts that occupants and guests routinely ask about. |
+| Cross-system fusion | RECOMMENDATION (128) and ANOMALY (160) queries assume joined sensor + standards + occupancy data. | Storage adapter routing must federate at least three back-ends transparently. |
 
 ## 2. Reasoning gaps
 
 | Gap | Evidence | Implication |
 |-----|----------|-------------|
-| Multi-step reasoning | 179 MULTI_STEP questions (3.0%) require chained retrieval, computation, and synthesis. | Single-shot SPARQL or single-shot SQL is insufficient; an orchestrator with intermediate state is required (OntoSage++ uses LangGraph). |
-| Diagnostic causation | 117 DIAGNOSTIC queries ask "why" rather than "what". | Need a causal model layer (rule-based or ML) on top of telemetry. |
+| Multi-step reasoning | 248 MULTI_STEP questions (3.5%) require chained retrieval, computation, and synthesis. | Single-shot SPARQL or single-shot SQL is insufficient; an orchestrator with intermediate state is required (OntoSage++ uses LangGraph). |
+| Diagnostic causation | 123 DIAGNOSTIC queries ask "why" rather than "what". | Need a causal model layer (rule-based or ML) on top of telemetry. |
 
 ## 3. Integration gaps
 
 | Gap | Evidence | Implication |
 |-----|----------|-------------|
-| Persona-aware response | Phase D shows distinct domain mixes per role; Phase F shows distinct level preferences per role. | The response generator must consult a persona registry, not just template strings. |
+| Persona-aware response | Phase D shows distinct domain mixes per persona; Phase F shows distinct level preferences per persona. | The response generator must consult a persona registry, not just template strings. |
 | Standards-aware answers | RECOMMENDATION queries reference comfort, energy, and air-quality thresholds. | The system must surface ASHRAE / WELL / BREEAM thresholds inline, not buried in references. |
 | Live state vs. historical | Mix of INSTANT, RECENT, HISTORICAL_RANGE temporal labels. | Caching and freshness policies must vary by intent (status = sub-second; historical = minutes is fine). |
 

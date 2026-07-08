@@ -1,18 +1,18 @@
 # H-Phase: OntoSage Evaluation Summary
 
-**N** = 5,916 questions drawn from the pre-development survey corpus (81 participants, Phases A–G classified)
+**N** = 7,151 questions drawn from the pre-development survey corpus (81 participants, Phases A–G classified)
 
 ## Headline Metrics
 
 | Metric | Value | 95% CI |
 |--------|-------|--------|
-| Answer rate (Grounded + Informational) | 63.9% | [62.7–65.1%] |
-| Data-grounded rate | 20.0% | [19.0–21.0%] |
-| Disambiguation rate | 26.7% | — |
-| Graceful refusal rate | 8.3% | — |
-| Timeout/failure rate | 1.1% | — |
-| Median latency | 5.33 s | — |
-| P90 latency | 15.03 s | — |
+| Answer rate (Grounded + Informational) | 66.6% | [65.5–67.6%] |
+| Data-grounded rate | 26.0% | [25.0–27.0%] |
+| Disambiguation rate | 25.5% | — |
+| Graceful refusal rate | 7.1% | — |
+| Timeout/failure rate | 0.9% | — |
+| Median latency | 4.90 s | — |
+| P90 latency | 14.45 s | — |
 
 ## Outcome Definitions
 
@@ -34,7 +34,7 @@
 | H6_latency_by_outcome.csv | Latency statistics by outcome |
 | H7_domain_complexity_heatmap.csv | Domain × Complexity matrix |
 | H8_domain_stage_heatmap.csv | Domain × Stage matrix |
-| H9_answer_rate_by_role.csv | Role-based answer rates |
+| H9_answer_rate_by_persona.csv | Persona-based answer rates |
 | H10_statistical_tests.csv | All statistical tests with effect sizes |
 | H11_answer_rate_by_intent.csv | Intent-type answer rates |
 
@@ -48,5 +48,5 @@
 | H6_latency_analysis | Box plot + CDF |
 | H7_domain_complexity_heatmap | Heatmap with annotations |
 | H8_domain_stage_heatmap | Heatmap with annotations |
-| H9_answer_rate_by_role | Horizontal bar with CI |
+| H9_answer_rate_by_persona | Horizontal bar with CI |
 | H12_coverage_bubble | Coverage scatter |

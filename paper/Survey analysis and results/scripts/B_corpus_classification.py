@@ -334,7 +334,7 @@ def main() -> None:
     classified = qbu["Question"].apply(classify_row).apply(pd.Series)
     out = pd.concat(
         [
-            qbu[["PID", "Roles", "Stage", "Timestamp", "Question"]],
+            qbu[["PID", "Personas", "Stage", "Timestamp", "Question"]],
             classified,
         ],
         axis=1,

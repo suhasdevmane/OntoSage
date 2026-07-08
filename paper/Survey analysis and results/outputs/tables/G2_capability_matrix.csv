@@ -1,8 +1,8 @@
 query_type,corpus_volume,share_pct,analytical_share_pct,priority_tier
-STATUS,3871,65.43,8.68,P1 — must support at launch
-CAPABILITY,1514,25.59,1.65,P1 — must support at launch
-COMPARISON,144,2.43,100.0,P1 — must support at launch
-ANOMALY,121,2.05,100.0,P1 — must support at launch
-DIAGNOSTIC,117,1.98,5.13,"P3 — desirable, longer term"
-RECOMMENDATION,102,1.72,9.8,"P3 — desirable, longer term"
-HISTORICAL,47,0.79,100.0,P1 — must support at launch
+STATUS,4793,67.03,8.51,P1 — must support at launch
+CAPABILITY,1704,23.83,1.47,P1 — must support at launch
+COMPARISON,175,2.45,100.0,P1 — must support at launch
+ANOMALY,160,2.24,100.0,P1 — must support at launch
+RECOMMENDATION,128,1.79,12.5,"P3 — desirable, longer term"
+DIAGNOSTIC,123,1.72,4.88,"P3 — desirable, longer term"
+HISTORICAL,68,0.95,100.0,P1 — must support at launch

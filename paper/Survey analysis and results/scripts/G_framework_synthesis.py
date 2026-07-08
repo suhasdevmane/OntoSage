@@ -241,7 +241,7 @@ or research systems cannot serve fully — split into three categories.
 
 | Gap | Evidence | Implication |
 |-----|----------|-------------|
-| Persona-aware response | Phase D shows distinct domain mixes per role; Phase F shows distinct level preferences per role. | The response generator must consult a persona registry, not just template strings. |
+| Persona-aware response | Phase D shows distinct domain mixes per persona; Phase F shows distinct level preferences per persona. | The response generator must consult a persona registry, not just template strings. |
 | Standards-aware answers | RECOMMENDATION queries reference comfort, energy, and air-quality thresholds. | The system must surface ASHRAE / WELL / BREEAM thresholds inline, not buried in references. |
 | Live state vs. historical | Mix of INSTANT, RECENT, HISTORICAL_RANGE temporal labels. | Caching and freshness policies must vary by intent (status = sub-second; historical = minutes is fine). |
 
