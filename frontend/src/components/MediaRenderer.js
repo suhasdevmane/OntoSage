@@ -10,6 +10,19 @@ function ensureDownloadUrl(url) {
   return hasDownload ? url : `${url}${hasQuery ? '&' : '?'}download=1`;
 }
 
+// Only http(s)/blob or relative URLs are safe to open or link to. Blocks
+// javascript:/data: schemes that would be clickable XSS if a media URL ever
+// carried attacker-influenced content.
+function isSafeUrl(url) {
+  if (!url) return false;
+  try {
+    const u = new URL(url, window.location.origin);
+    return u.protocol === 'http:' || u.protocol === 'https:' || u.protocol === 'blob:';
+  } catch {
+    return false;
+  }
+}
+
 // Robust downloader: uses fetch+blob to trigger a download without navigating away
 async function downloadFile(url, filename = 'download') {
   try {
@@ -26,14 +39,14 @@ async function downloadFile(url, filename = 'download') {
     a.remove();
     setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   } catch (e) {
-    // Fallback: open in new tab
-    window.open(url, '_blank');
+    // Fallback: open in new tab (scheme-guarded via openFile)
+    openFile(url);
   }
 }
 
 // Open file in a new tab/window without forcing download
 function openFile(url) {
-  if (!url) return;
+  if (!isSafeUrl(url)) return;
   window.open(url, '_blank');
 }
 // Map common extensions to proper MIME types for <source type="...">
@@ -217,7 +230,7 @@ function MediaRenderer({ media }) {
     case 'link':
       return (
         <div style={containerStyle}>
-          <a href={media.url} target="_blank" rel="noopener noreferrer">
+          <a href={isSafeUrl(media.url) ? media.url : undefined} target="_blank" rel="noopener noreferrer">
             {media.url}
           </a>
           {renderActionButtons()}
