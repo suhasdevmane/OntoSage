@@ -23,6 +23,11 @@ logger = get_logger(__name__)
 
 _CARRY_FORWARD_KEYS = {"forecast_result", "analytics_result"}
 _SUMMARY_MAX_CHARS = 300
+# Per-conversation retention cap: keep only the newest N turns; older rows are
+# pruned on each save so a long-lived conversation can't grow the table without
+# bound. This is the Postgres ROW cap — distinct from CONVERSATION_MAX_MESSAGES
+# (the Redis working-context trim, ~20, which stays small to bound the LLM prompt).
+_MAX_TURNS_PER_CONVERSATION = 500
 
 
 class TurnMemoryService:
@@ -54,13 +59,32 @@ class TurnMemoryService:
                     turn_index,
                     state.user_message or "",
                     state.intermediate_results.get("intent", "general"),
-                    json.dumps(state.intermediate_results.get("entities") or []),
+                    json.dumps(state.intermediate_results.get("entities") or [], default=str),
                     self._extract_result_summary(state),
-                    json.dumps(self._extract_carry_forward(state)),
+                    # default=str coerces numpy/datetime/Decimal in the forecast/
+                    # analytics carry_forward so the whole turn-save can't fail on
+                    # them (the Redis save_state path already does this). Without it,
+                    # a forecast follow-up ("now plot that") silently loses its state.
+                    json.dumps(self._extract_carry_forward(state), default=str),
                 )
                 logger.info(
                     f"[turn_memory] saved turn {turn_index} "
                     f"for conv={state.conversation_id}"
+                )
+                # Retention: prune everything older than the newest N turns so a
+                # long conversation can't grow the table unbounded. turn_index is
+                # monotonic, so this keeps rows with turn_index > (MAX - N).
+                await conn.execute(
+                    """
+                    DELETE FROM turn_memory
+                    WHERE conversation_id = $1
+                      AND turn_index <= (
+                          SELECT MAX(turn_index) - $2
+                          FROM turn_memory WHERE conversation_id = $1
+                      )
+                    """,
+                    state.conversation_id,
+                    _MAX_TURNS_PER_CONVERSATION,
                 )
         except Exception as e:
             logger.warning(f"[turn_memory] save_turn failed (non-fatal): {e}")
@@ -89,11 +113,14 @@ class TurnMemoryService:
         return {}
 
     async def get_older_context(
-        self, conversation_id: str, skip_recent: int = 20
+        self, conversation_id: str, skip_recent: int = 20, max_older: int = 30
     ) -> str:
         """Return compact text block summarising turns older than skip_recent.
 
-        Returns "" when there are no older turns.
+        Capped at ``max_older`` turns (the most-recent among the older set) so a
+        long conversation can't inject an ever-growing block into every LLM prompt
+        — token blow-up / context-window overflow / an unbounded row scan. Returns
+        "" when there are no older turns.
         """
         if not self.pool:
             return ""
@@ -105,10 +132,11 @@ class TurnMemoryService:
                     FROM turn_memory
                     WHERE conversation_id = $1
                     ORDER BY turn_index DESC
-                    OFFSET $2
+                    OFFSET $2 LIMIT $3
                     """,
                     conversation_id,
                     skip_recent,
+                    max_older,
                 )
             if not rows:
                 return ""
@@ -125,6 +153,34 @@ class TurnMemoryService:
                 f"[turn_memory] get_older_context failed (non-fatal): {e}"
             )
         return ""
+
+    async def delete_conversation(self, conversation_id: str) -> int:
+        """Delete all turn_memory rows for a conversation (e.g. user clears a chat).
+        Returns the number of rows removed."""
+        return await self._delete_where("conversation_id", conversation_id)
+
+    async def delete_user_turns(self, user_id: str) -> int:
+        """Delete all turn_memory rows for a user — GDPR / right-to-be-forgotten
+        erasure. Call on account deletion so per-turn history never outlives the
+        account. Returns the number of rows removed."""
+        return await self._delete_where("user_id", user_id)
+
+    async def _delete_where(self, column: str, value: str) -> int:
+        """DELETE by a WHITELISTED column ('conversation_id' | 'user_id'); the
+        value is always parameterized. Returns the deleted row count (0 on error)."""
+        if not self.pool or column not in ("conversation_id", "user_id"):
+            return 0
+        try:
+            async with self.pool.acquire() as conn:
+                result = await conn.execute(
+                    f"DELETE FROM turn_memory WHERE {column} = $1", value
+                )
+            deleted = int(result.split()[-1]) if result else 0  # asyncpg -> "DELETE <n>"
+            logger.info(f"[turn_memory] deleted {deleted} rows where {column}={value!r}")
+            return deleted
+        except Exception as e:
+            logger.warning(f"[turn_memory] delete by {column} failed (non-fatal): {e}")
+            return 0
 
     def _extract_result_summary(self, state: ConversationState) -> str:
         """Build a deterministic 1-line summary — no LLM call, no raw arrays."""

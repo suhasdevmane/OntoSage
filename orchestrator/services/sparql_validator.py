@@ -167,8 +167,12 @@ class SPARQLValidator:
     # ------------------------------------------------------------------
 
     def _make_cache_key(self, query: str) -> str:
-        """Generate a deterministic cache key from a normalized SPARQL string."""
-        normalized = re.sub(r"\s+", " ", query.strip().lower())
+        """Generate a deterministic cache key from a whitespace-normalized SPARQL
+        string. Case is PRESERVED on purpose: SPARQL keywords are case-insensitive
+        but URIs and string literals are NOT, so lowercasing the whole query would
+        make two queries that differ only in a literal's case (e.g. "Room301" vs
+        "room301") collide — and serve one the other's cached results."""
+        normalized = re.sub(r"\s+", " ", query.strip())
         h = hashlib.sha256(normalized.encode()).hexdigest()[:16]
         return f"sparql_cache:{h}"
 
