@@ -379,7 +379,6 @@ export default function FloorPlanViewer({
           ))}
         </div>
       )}
-    </div>
 
     {/* ── T3 Side Panel ───────────────────────────────────────────────── */}
     {panelOpen && (
