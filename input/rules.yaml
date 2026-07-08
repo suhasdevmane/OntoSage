@@ -1,0 +1,51 @@
+# input/bldg1/rules.yaml — ECA rules for the Abacws building (T20)
+#
+# Each rule: id, name, enabled, trigger, action.
+# trigger.sensor_uuid: direct UUID from MySQL sensor_data column.
+# trigger.concept: HBCO concept (resolved to Brick class -> UUID at runtime).
+# trigger.duration_min: how many minutes the condition must be sustained before firing.
+# action.type: notify (Phase F) — future Phase G adds actuate.
+# Cooldown: rules re-fire at most once per 30 minutes per sensor.
+
+rules:
+
+  # ── Air quality rules (Floor 5 — live sensors) ────────────────────────────
+
+  - id: co2_high_room501
+    name: CO2 elevated in room 5.01
+    enabled: true
+    trigger:
+      sensor_uuid: "a66ca165-1e06-4901-a997-780fafc8581a"   # CO2_Level_Sensor_5.01
+      op: ">"
+      threshold: 1000.0
+      duration_min: 10
+    action:
+      type: notify
+      message: "CO2 is {value:.0f} ppm in room 5.01 (threshold {threshold:.0f} ppm sustained {duration_min} min). Consider ventilation."
+      severity: warning
+
+  - id: temp_high_room508
+    name: Temperature too high in room 5.08
+    enabled: true
+    trigger:
+      sensor_uuid: "41b35030-1ca2-4906-9c63-16af59d8c7ad"   # Air_Temperature_Sensor_5.08
+      op: ">"
+      threshold: 27.0
+      duration_min: 15
+    action:
+      type: notify
+      message: "Temperature is {value:.1f}°C in room 5.08 (above {threshold:.0f}°C for {duration_min} min). Check HVAC."
+      severity: warning
+
+  - id: humidity_damp_floor3
+    name: High humidity — possible damp — floor 3
+    enabled: true
+    trigger:
+      concept: "damp"
+      op: ">"
+      threshold: 65.0
+      duration_min: 30
+    action:
+      type: notify
+      message: "Humidity is {value:.0f}% on floor 3 (above {threshold:.0f}% for {duration_min} min). Investigate for damp or ventilation issues."
+      severity: warning

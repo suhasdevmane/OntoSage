@@ -1,0 +1,159 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix brick:  <https://brickschema.org/schema/Brick#> .
+@prefix rec:    <https://w3id.org/rec#> .
+@prefix hbco:   <http://ontosage.org/hbco#> .
+@prefix bldg:   <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Abacws metadata enrichment — T07
+# Source: capability.yaml + Abacws building documentation
+# Estimates marked with rdfs:comment "estimated"
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Floor-level metadata ──────────────────────────────────────────────────────
+
+bldg:Floor0 hbco:spaceFunction  "Ground floor: main entrance, atrium, café, reception"^^xsd:string ;
+            hbco:isQuietZone    false ;
+            rdfs:comment        "Atrium seating for informal use; café Abacws open 08:00–16:30 weekdays." .
+
+bldg:Floor1 hbco:spaceFunction  "Study floor: open-plan quiet study, showers, vending machine"^^xsd:string ;
+            hbco:isQuietZone    true ;
+            rdfs:comment        "Quiet study zone; shower facilities accessible from right-hand lift. Vending machine available." .
+
+bldg:Floor2 hbco:spaceFunction  "Study and research floor: quiet study area, kitchen/breakout, server room"^^xsd:string ;
+            hbco:isQuietZone    true ;
+            rdfs:comment        "Quiet study zone; server room on this floor. Kitchen/breakout area with microwave and filtered water." .
+
+bldg:Floor3 hbco:spaceFunction  "Collaboration floor: pods for group work, kitchen/breakout, vending machine"^^xsd:string ;
+            hbco:isQuietZone    false ;
+            rdfs:comment        "Collaborative pods for small group work. Not a designated quiet zone." .
+
+bldg:Floor4 hbco:spaceFunction  "Research labs and offices: labs, server room, kitchen/breakout"^^xsd:string ;
+            hbco:isQuietZone    false ;
+            rdfs:comment        "Server room on this floor. Bookable lab spaces via academic staff." .
+
+bldg:Floor5 hbco:spaceFunction  "Research labs and smart-sensor demonstration floor"^^xsd:string ;
+            hbco:isQuietZone    false ;
+            rdfs:comment        "Live sensor data connected (floor 5 only at launch). Research labs and PhD study spaces." .
+
+# ── Room capacity estimates ────────────────────────────────────────────────────
+# Estimates based on typical Cardiff University academic building room standards.
+# Values are approximate; authoritative data should be obtained from Estates.
+
+# Floor 5 rooms (main sensor-equipped research floor)
+bldg:Room5.01 hbco:roomCapacity  20 ;
+              hbco:spaceFunction "Seminar room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room5.02 hbco:roomCapacity  20 ;
+              hbco:spaceFunction "Seminar room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room5.03 hbco:roomCapacity  30 ;
+              hbco:spaceFunction "Lecture / seminar room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room5.04 hbco:roomCapacity  20 ;
+              hbco:spaceFunction "Seminar room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room5.05 hbco:roomCapacity  20 ;
+              hbco:spaceFunction "Seminar room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room5.06 hbco:roomCapacity  8 ;
+              hbco:spaceFunction "Meeting room / office"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room5.07 hbco:roomCapacity  8 ;
+              hbco:spaceFunction "Meeting room / office"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room5.08 hbco:roomCapacity  50 ;
+              hbco:spaceFunction "Large seminar / teaching room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room5.09 hbco:roomCapacity  20 ;
+              hbco:spaceFunction "Seminar room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room5.10 hbco:roomCapacity  20 ;
+              hbco:spaceFunction "Seminar room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+# Floor 4 rooms
+bldg:Room4.01 hbco:roomCapacity  20 ;
+              hbco:spaceFunction "Research lab / seminar room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room4.05 hbco:roomCapacity  30 ;
+              hbco:spaceFunction "Teaching lab"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+# Floor 3 rooms
+bldg:Room3.01 hbco:roomCapacity  25 ;
+              hbco:spaceFunction "Collaborative pod / group study room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room3.05 hbco:roomCapacity  30 ;
+              hbco:spaceFunction "Teaching room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+# Floor 2 rooms
+bldg:Room2.01 hbco:roomCapacity  25 ;
+              hbco:spaceFunction "Study room / seminar room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room2.05 hbco:roomCapacity  30 ;
+              hbco:spaceFunction "Teaching lab"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+# Floor 1 rooms
+bldg:Room1.04 hbco:roomCapacity  25 ;
+              hbco:spaceFunction "Study room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+bldg:Room1.06 hbco:roomCapacity  30 ;
+              hbco:spaceFunction "Teaching room"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+# Ground floor rooms
+bldg:Room0.01 hbco:roomCapacity  50 ;
+              hbco:spaceFunction "Atrium / reception area"^^xsd:string ;
+              rdfs:comment       "estimated" .
+
+# ── Fixed asset instances ──────────────────────────────────────────────────────
+
+bldg:MainLift rdf:type         owl:NamedIndividual ,
+                               brick:HVAC_Equipment ;
+              rdfs:label       "Main passenger lift"@en ;
+              hbco:spaceFunction "Passenger lift — serves all floors (G/0–5)"^^xsd:string ;
+              brick:hasLocation bldg:Floor0 ;
+              rdfs:comment      "Weight limit 1000 kg. Door clear width 90 cm. Internal 106 × 220 cm. Located left of main entrance (~25 m from entrance). Accessible features: Braille, tactile buttons, audible announcer, mirror. Source: cardiff_university_accessibility_page." .
+
+bldg:ShowerFacility rdf:type   owl:NamedIndividual ;
+                    rdfs:label "Shower facilities"@en ;
+                    hbco:spaceFunction "Shower facility (accessible + standard cubicles)"^^xsd:string ;
+                    brick:hasLocation bldg:Floor1 ;
+                    rdfs:comment "On Floor 1. Accessible and standard cubicles. Take right-hand lift then turn right on Floor 1. Level access throughout. Source: cardiff_university_accessibility_page." .
+
+bldg:GroundFloorCafe rdf:type  owl:NamedIndividual ;
+                     rdfs:label "Abacws Café"@en ;
+                     hbco:spaceFunction "Café — hot drinks, food, snacks"^^xsd:string ;
+                     brick:hasLocation bldg:Floor0 ;
+                     rdfs:comment "Open 08:00–16:30 weekdays. Ground floor. Source: estates_facilities." .
+
+bldg:ServerRoomFloor2 rdf:type owl:NamedIndividual ;
+                      rdfs:label "Server room (Floor 2)"@en ;
+                      hbco:spaceFunction "Server / data centre room"^^xsd:string ;
+                      brick:hasLocation bldg:Floor2 ;
+                      rdfs:comment "Restricted access. Source: it_services." .
+
+bldg:ServerRoomFloor4 rdf:type owl:NamedIndividual ;
+                      rdfs:label "Server room (Floor 4)"@en ;
+                      hbco:spaceFunction "Server / data centre room"^^xsd:string ;
+                      brick:hasLocation bldg:Floor4 ;
+                      rdfs:comment "Restricted access. Source: it_services." .

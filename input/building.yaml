@@ -9,6 +9,15 @@
 building_id: bldg1
 building_name: Abacws Building
 
+# Single source of truth for this building's RDF namespace (ABox instances).
+# Must end with '#'. Every *.ttl in this folder must declare BOTH
+#   @prefix bldg: <this URI> .
+#   @base        <this URI> .
+# swap_building.py and the startup TTL validator hard-fail on a mismatch.
+# Until 2026-06-13 this key was missing and the namespace came from the
+# hardcoded default in shared/config.py — swapping BACK to bldg1 would fail.
+ontology_namespace: "http://abacwsbuilding.cardiff.ac.uk/abacws#"
+
 # ── Capability semantic routing thresholds ────────────────────────────────────
 #
 # Calibrated 2026-05-22 against LOCAL sentence-transformers/all-MiniLM-L6-v2
@@ -71,6 +80,15 @@ capability_routing:
 storage:
   databases:
     - database1
+    # Narrow per-modality time-series tables (uuid, datetime, value), standardized
+    # out of input/data CSVs. Each is reached via ref:storedAt bldg:<table>.
+    - energy_data
+    - occupancy_data
+    - water_data
+    - noise_data
+    - iaq_data
+    - light_data
+    - equipment_data
 
 # ── Floor-plan aliases (Phase 4 — 2026-05-29) ────────────────────────────────
 #
@@ -84,3 +102,21 @@ storage:
 # omitted entirely.
 floor_plan_aliases:
   - abacws
+
+# ── Actuation gateway (Phase G — T23) ────────────────────────────────────────
+#
+# driver: sim   — log-only simulation (safe for demo; no physical write).
+# driver: none  — actuation disabled (building receives control:decline responses).
+#
+# points_writable: list of point URIs the sim driver will accept set_point() on.
+# These are SPARQL-addressable URIs matching triples in the ontology.
+# Real-world equivalents: VAV box setpoint, lighting scene setpoint, AHU SP.
+#
+# SAFETY CONTRACT: Only 'sim' is available in this deployment.  Physical
+# drivers (BACnet, Modbus) are Phase H+ and require additional safety sign-off.
+actuation:
+  driver: sim
+  points_writable:
+    - urn:bldg1:VAV-501-SP         # VAV box setpoint — room 5.01
+    - urn:bldg1:LIGHTING-3F-SP     # lighting scene setpoint — floor 3
+    - urn:bldg1:AHU-F5-SP          # AHU supply-air temperature setpoint — floor 5

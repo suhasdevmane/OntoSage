@@ -1,0 +1,29 @@
+# input/bldg1/channels.yaml — Notification channels for the Abacws building (T33)
+#
+# The 'log' channel is ALWAYS active — no need to list it here.
+# Add channels below; set enabled: false to deactivate without removing.
+#
+# STRICT_SECRETS: auth_header_env must name an env var (e.g. WEBHOOK_TOKEN_ABACWS),
+# never a literal token. Credentials are read at dispatch time from the environment.
+#
+# Available types: log | webhook | smtp (smtp is placeholder — Phase H)
+
+channels:
+
+  # ── Demo webhook (local httpbin or ngrok for testing) ─────────────────────
+  # Set DEMO_WEBHOOK_URL env var to a real endpoint; leave unset for local dev.
+  # The auth_header_env is optional — remove if the endpoint has no auth.
+  - id: demo_webhook
+    type: webhook
+    enabled: false
+    url: "${DEMO_WEBHOOK_URL:-http://127.0.0.1:9000/notify}"
+    auth_header_env: "DEMO_WEBHOOK_TOKEN"
+
+  # ── Email (SMTP placeholder — configure when smtp relay is available) ──────
+  # - id: facilities_email
+  #   type: smtp
+  #   enabled: false
+  #   smtp_host_env: "SMTP_HOST"
+  #   smtp_port: 587
+  #   from_addr_env: "SMTP_FROM"
+  #   to_addr: "facilities@example.ac.uk"
