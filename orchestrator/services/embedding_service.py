@@ -265,3 +265,15 @@ class EmbeddingService:
             logger.info(f"[embedding] loading local model: {self._model_name}")
             self._local_model = SentenceTransformer(self._model_name)
         return self._local_model
+
+    def warm(self) -> None:
+        """Eagerly load the local embedding model so the first user request does
+        not pay the ~5-7s cold-load. No-op for the OpenAI provider. Safe to call
+        from a startup background thread (model load is CPU-bound and sync)."""
+        if self._provider != "local":
+            return
+        try:
+            self._get_local_model()
+            logger.info("[embedding] local model warmed at startup")
+        except Exception as e:
+            logger.warning(f"[embedding] warm-up failed (non-fatal): {e}")

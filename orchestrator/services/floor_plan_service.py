@@ -394,7 +394,10 @@ class FloorPlanService:
                 points = []
                 for i, (chunk, emb) in enumerate(zip(chunks, embeddings)):
                     point_id = int(
-                        hashlib.md5(f"floor-{floor}-chunk-{i}".encode()).hexdigest(), 16
+                        hashlib.md5(  # non-security: deterministic Qdrant point ID
+                            f"floor-{floor}-chunk-{i}".encode(), usedforsecurity=False
+                        ).hexdigest(),
+                        16,
                     ) % (2**63)
                     points.append(
                         PointStruct(

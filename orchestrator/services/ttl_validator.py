@@ -1,6 +1,6 @@
 """TTL Validator — Phase 12B.
 
-Validates that TTL files dropped under `input/<BUILDING_ID>/` are internally
+Validates that TTL files for the active building are internally
 consistent with the building's declared identity in `building.yaml`.
 
 OntoSage v1 is single-building-at-a-time: one TTL prefix declaration must match
@@ -23,6 +23,9 @@ Two tiers, mirroring the user-approved 12B-3 design:
       (only checked when `brickschema` + `pyshacl` are installed)
     - TTL declares the right namespace but contains zero triples in it
       (probably the operator forgot to actually instance any sensors)
+    - TTL declares an `@base` that differs from ontology_namespace
+      (2026-06-13: relative IRIs in the file would resolve into a foreign
+      namespace; absent `@base` is fine — only prefixed names are affected)
 
 The validator is OFFLINE — it never touches GraphDB.  It only inspects the
 file contents and the building.yaml.  Wired into the FastAPI lifespan
@@ -48,9 +51,9 @@ logger = logging.getLogger(__name__)
 class TTLValidationIssue:
     """One validation finding."""
 
-    severity: str          # "HARD_FAIL" | "WARN"
-    ttl_path: str          # absolute or relative TTL location
-    message: str           # operator-readable explanation
+    severity: str  # "HARD_FAIL" | "WARN"
+    ttl_path: str  # absolute or relative TTL location
+    message: str  # operator-readable explanation
 
     def __str__(self) -> str:
         return f"[{self.severity}] {self.ttl_path}: {self.message}"
@@ -89,6 +92,31 @@ def _normalize_namespace(ns: str) -> str:
     return (ns or "").strip()
 
 
+# Subdirectories under input/ that hold NON-ontology assets and must never gate
+# startup TTL validation: the document KB, feed data drops, and persona config.
+# Underscore-prefixed directories (e.g. `_templates/`) are internal onboarding
+# scaffolding by convention. TTLs found in any of these are templates/examples,
+# not the active building's ontology. (2026-06-13 — fixes a restart crash-loop
+# where input/_templates/concepts_overlay.ttl hard-failed validation.)
+_NON_ONTOLOGY_SUBDIRS = frozenset({"documents", "data", "personas"})
+
+
+def _is_scaffolding_ttl(path: Path, input_root: Path) -> bool:
+    """True if `path` lives in a non-ontology subdir (scaffolding/data/docs).
+
+    Only directory components are inspected — a top-level `input/*.ttl` is
+    always treated as real building ontology.
+    """
+    try:
+        rel = path.relative_to(input_root)
+    except ValueError:
+        return False
+    for part in rel.parts[:-1]:  # directory components only (exclude filename)
+        if part.startswith("_") or part in _NON_ONTOLOGY_SUBDIRS:
+            return True
+    return False
+
+
 def _parse_ttl(path: Path):
     """Parse a TTL file and return (rdflib.Graph, error_message_or_None).
 
@@ -107,6 +135,31 @@ def _parse_ttl(path: Path):
         return g, None
     except Exception as e:
         return None, f"failed to parse {path.name}: {e}"
+
+
+_BASE_DECL_RE = None  # compiled lazily so `re` stays a function-local import
+
+
+def _base_declaration(path: Path) -> Optional[str]:
+    """Return the URI of the file's `@base` / `BASE` declaration, or None.
+
+    rdflib resolves relative IRIs during parse and does not retain the
+    declaration, so we read it from the raw text (Turtle allows both the
+    `@base <uri> .` and SPARQL-style `BASE <uri>` forms, case-insensitive).
+    Only the first declaration is considered — matching how parsers apply it.
+    """
+    global _BASE_DECL_RE
+    import re
+
+    if _BASE_DECL_RE is None:
+        _BASE_DECL_RE = re.compile(r"^\s*(?:@base|BASE)\s+<([^>]+)>", re.IGNORECASE | re.MULTILINE)
+    try:
+        # Declarations conventionally sit in the prologue; 16 KB is generous.
+        head = path.read_text(encoding="utf-8", errors="replace")[:16384]
+    except OSError:
+        return None
+    m = _BASE_DECL_RE.search(head)
+    return m.group(1) if m else None
 
 
 def _building_namespace_from_graph(graph, building_prefix: str) -> Optional[str]:
@@ -159,7 +212,8 @@ def _shacl_validate(path: Path) -> List[str]:
             return []
         # Trim huge SHACL reports to one-line summaries operators can scan.
         lines = [
-            ln.strip() for ln in str(report_txt).splitlines()
+            ln.strip()
+            for ln in str(report_txt).splitlines()
             if "Constraint Violation" in ln or "sh:resultMessage" in ln
         ]
         return lines[:10]  # cap to first 10 violations
@@ -197,19 +251,48 @@ def validate_building_ttls(
         declared_namespace=_normalize_namespace(declared_namespace),
     )
 
-    bldg_dir = input_root / building_id
-    if not bldg_dir.exists():
+    # Resolve the building directory using the same logic as resolve_building_dir():
+    # 1. NESTED  — input/<building_id>/  (staging / test fixtures)
+    # 2. FLAT    — input/               (active production layout, building.yaml declares id)
+    nested_dir = input_root / building_id
+    if nested_dir.is_dir():
+        bldg_dir = nested_dir
+    else:
+        # Check for flat layout: input/building.yaml declares this building_id
+        flat_yaml = input_root / "building.yaml"
+        if flat_yaml.is_file():
+            try:
+                import yaml as _yaml
+
+                declared = (_yaml.safe_load(flat_yaml.read_text(encoding="utf-8")) or {}).get(
+                    "building_id"
+                )
+                bldg_dir = input_root if declared == building_id else None
+            except Exception:
+                bldg_dir = None
+        else:
+            bldg_dir = None
+
+    if bldg_dir is None:
         # Building dir missing is a different concern (BuildingRegistry handles
         # it); not the TTL validator's job to scream about absent input/<bldg>/.
         return report
 
-    # Phase 12B convention: TTL files live either directly under input/<bldg>/
-    # OR at the input/ root prefixed with the building id (legacy layout
-    # from Phase 3, e.g. `input/bldg1_abacws_metadata.ttl`).
+    # TTL files live either directly under bldg_dir/ OR at the input/ root
+    # prefixed with the building id (legacy layout: `input/bldg1_*.ttl`).
     ttl_paths: List[Path] = []
     ttl_paths.extend(sorted(bldg_dir.glob("**/*.ttl")))
-    for legacy in sorted(input_root.glob(f"{building_id}_*.ttl")):
-        ttl_paths.append(legacy)
+    if bldg_dir != input_root:
+        # Only scan root-level legacy prefix when in nested layout to avoid
+        # double-counting flat-layout TTLs already found above.
+        for legacy in sorted(input_root.glob(f"{building_id}_*.ttl")):
+            if legacy not in ttl_paths:
+                ttl_paths.append(legacy)
+    # Exclude Brick schema files from bldg-specific validation.
+    ttl_paths = [p for p in ttl_paths if not p.name.startswith("Brick")]
+    # Exclude scaffolding / non-ontology subdirs (_templates/, documents/, data/,
+    # personas/) so a template or example TTL never gates startup. (2026-06-13)
+    ttl_paths = [p for p in ttl_paths if not _is_scaffolding_ttl(p, input_root)]
 
     report.ttl_files_checked = len(ttl_paths)
 
@@ -221,7 +304,7 @@ def validate_building_ttls(
                 severity="WARN",
                 ttl_path=str(bldg_dir),
                 message=(
-                    f"No *.ttl files found under {bldg_dir} or input/{building_id}_*.ttl. "
+                    f"No *.ttl files found under {bldg_dir}. "
                     "Sensor queries that need the ontology will return empty results."
                 ),
             )
@@ -270,6 +353,26 @@ def validate_building_ttls(
                 )
             )
             continue
+
+        # @base consistency (2026-06-13): when declared, it must match the
+        # building namespace — otherwise any relative IRI in the file resolves
+        # into a foreign namespace and silently vanishes from SPARQL results.
+        # Absent @base is fine: prefixed names don't use it.
+        base_uri = _base_declaration(ttl)
+        if base_uri is not None and _normalize_namespace(base_uri) != report.declared_namespace:
+            report.issues.append(
+                TTLValidationIssue(
+                    severity="WARN",
+                    ttl_path=str(ttl),
+                    message=(
+                        f"@base <{base_uri}> differs from ontology_namespace "
+                        f"<{report.declared_namespace}>. Relative IRIs in this file "
+                        f"resolve into the @base namespace and will be invisible to "
+                        f"SPARQL. Align @base with @prefix {building_prefix}: or "
+                        f"remove it."
+                    ),
+                )
+            )
 
         # Prefix-in-namespace triple count — warn if zero (operator probably
         # dropped a shape/schema file instead of an instance file).

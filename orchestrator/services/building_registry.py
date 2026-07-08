@@ -60,12 +60,25 @@ class BuildingRegistry:
         #   (b) aliases are known before the PDF slug discovery so the slug
         #       can be matched to a primary building_id.
         pre_scanned_aliases: set = set()
+        # Candidate building.yaml locations, in priority order:
+        #   1. FLAT layout — input/building.yaml (the active single-building
+        #      layout; bldg1's config + floor_plan_aliases live here after the
+        #      nested input/<id>/building.yaml was removed).
+        #   2. NESTED layout — input/<id>/building.yaml (staging / multi-building).
+        # Underscore-prefixed dirs (e.g. _templates/) are onboarding scaffolding
+        # and are skipped so their placeholder building.yaml never gates scan.
+        yaml_candidates = []
+        flat_yaml = self._pdf_dir / "building.yaml"
+        if flat_yaml.exists():
+            yaml_candidates.append(flat_yaml)
         for sub in sorted(self._pdf_dir.iterdir()):
-            if not sub.is_dir():
+            if not sub.is_dir() or sub.name.startswith("_"):
                 continue
             yaml_path = sub / "building.yaml"
-            if not yaml_path.exists():
-                continue
+            if yaml_path.exists():
+                yaml_candidates.append(yaml_path)
+
+        for yaml_path in yaml_candidates:
             try:
                 cfg = BuildingConfig.from_yaml(yaml_path)
                 if cfg.building_id not in self._configs:

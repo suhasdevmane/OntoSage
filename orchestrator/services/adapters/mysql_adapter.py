@@ -28,19 +28,14 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
-# SQL keywords that are forbidden for safety
-_FORBIDDEN_KEYWORDS = [
-    "DROP ",
-    "DELETE ",
-    "INSERT ",
-    "UPDATE ",
-    "ALTER ",
-    "TRUNCATE ",
-    "GRANT ",
-    "REVOKE ",
-    "CREATE ",
-    "REPLACE ",
-]
+import re as _re
+
+# SQL keywords that are forbidden for safety.
+# Word-boundary regex matches regardless of trailing whitespace/newline variant.
+_FORBIDDEN_KEYWORD_RE = _re.compile(
+    r"\b(DROP|DELETE|INSERT|UPDATE|ALTER|TRUNCATE|GRANT|REVOKE|CREATE|REPLACE)\b",
+    _re.IGNORECASE,
+)
 
 
 class MySQLAdapter(DatabaseAdapter):
@@ -74,6 +69,8 @@ class MySQLAdapter(DatabaseAdapter):
         self._pool: Optional[aiomysql.Pool] = None
         self._schema_cache: Optional[SchemaInfo] = None
         self._columns_cache: Optional[Set[str]] = None
+        self._schema_cache_ts: float = 0.0
+        self._columns_cache_ts: float = 0.0
 
     # ------------------------------------------------------------------
     # Pool helpers
@@ -114,9 +111,13 @@ class MySQLAdapter(DatabaseAdapter):
             await self._pool.wait_closed()
             logger.info("MySQLAdapter: pool closed")
 
+    _CACHE_TTL = 300  # seconds; re-discover schema after 5 minutes
+
     async def get_schema(self) -> SchemaInfo:
-        """Fetch table/column schema, with caching."""
-        if self._schema_cache:
+        """Fetch table/column schema, with TTL-bounded caching."""
+        import time as _time
+
+        if self._schema_cache and (_time.monotonic() - self._schema_cache_ts) < self._CACHE_TTL:
             return self._schema_cache
 
         tables = []
@@ -131,7 +132,8 @@ class MySQLAdapter(DatabaseAdapter):
                     rows = await cursor.fetchall()
                     for (table_name,) in rows:
                         tables.append(table_name)
-                        await cursor.execute(f"DESCRIBE {table_name}")
+                        safe_name = table_name.replace("`", "")
+                        await cursor.execute(f"DESCRIBE `{safe_name}`")
                         col_rows = await cursor.fetchall()
                         col_list = []
                         for col in col_rows:
@@ -152,17 +154,24 @@ class MySQLAdapter(DatabaseAdapter):
         except Exception as e:
             logger.error(f"MySQLAdapter.get_schema failed: {e}")
 
+        import time as _time
+
         self._schema_cache = SchemaInfo(
             tables=tables,
             columns=columns,
             timestamp_column=timestamp_col,
             adapter_type=AdapterType.MYSQL,
         )
+        self._schema_cache_ts = _time.monotonic()
         return self._schema_cache
 
     async def get_columns(self) -> Set[str]:
         """Return all column names across all tables (for UUID validation)."""
-        if self._columns_cache is not None:
+        import time as _time
+
+        if self._columns_cache is not None and (
+            _time.monotonic() - self._columns_cache_ts
+        ) < self._CACHE_TTL:
             return self._columns_cache
 
         cols: Set[str] = set()
@@ -173,7 +182,8 @@ class MySQLAdapter(DatabaseAdapter):
                     await cursor.execute("SHOW TABLES")
                     tables = await cursor.fetchall()
                     for (table_name,) in tables:
-                        await cursor.execute(f"DESCRIBE {table_name}")
+                        safe_name = table_name.replace("`", "")
+                        await cursor.execute(f"DESCRIBE `{safe_name}`")
                         col_rows = await cursor.fetchall()
                         for col in col_rows:
                             cols.add(col[0])
@@ -181,20 +191,18 @@ class MySQLAdapter(DatabaseAdapter):
             logger.error(f"MySQLAdapter.get_columns failed: {e}")
 
         self._columns_cache = cols
+        self._columns_cache_ts = _time.monotonic()
         return cols
 
     def validate_query(self, sql: str) -> bool:
         """Ensure query is SELECT-only and contains no dangerous keywords."""
-        sql_upper = sql.upper().strip()
-        if not (
-            sql_upper.startswith("SELECT")
-            or sql_upper.startswith("WITH")
-            or sql_upper.startswith("(")
-        ):
+        sql_stripped = sql.strip()
+        first_word = sql_stripped.split()[0].upper() if sql_stripped else ""
+        if first_word not in ("SELECT", "WITH", "("):
             raise ValueError("Only SELECT queries are allowed.")
-        for kw in _FORBIDDEN_KEYWORDS:
-            if kw in sql_upper:
-                raise ValueError(f"Forbidden keyword detected: {kw.strip()}")
+        match = _FORBIDDEN_KEYWORD_RE.search(sql_stripped)
+        if match:
+            raise ValueError(f"Forbidden keyword detected: {match.group(1)}")
         if sql.count(";") > 1 or (sql.count(";") == 1 and not sql.strip().endswith(";")):
             raise ValueError("Multiple SQL statements are not allowed.")
         return True
@@ -242,6 +250,53 @@ class MySQLAdapter(DatabaseAdapter):
             logger.error(f"MySQLAdapter.execute_query error: {e}")
             breaker.record_failure()
             return QueryResult.failure(str(e), query=sql)
+
+    async def write_records(self, records: List[Any]) -> int:
+        """Persist feed records (uuid, timestamp, value) into wide sensor_data.
+
+        Each record's ``uuid`` must be an existing column (skipped with a
+        warning otherwise — run the matching data/mysql-init/add_*.sql first).
+        Upserts on the Datetime primary key so multiple feeds writing the same
+        timestamp merge into one row.  Returns the number of records written.
+        """
+        if not records:
+            return 0
+
+        valid_cols = await self.get_columns()
+        written = 0
+        skipped_cols: Set[str] = set()
+        try:
+            pool = await self._ensure_pool()
+            async with pool.acquire() as conn:
+                async with conn.cursor() as cursor:
+                    for rec in records:
+                        uuid = getattr(rec, "uuid", None)
+                        ts = getattr(rec, "timestamp", None)
+                        value = getattr(rec, "value", None)
+                        if not uuid or ts is None or value is None:
+                            continue
+                        if uuid not in valid_cols:
+                            skipped_cols.add(uuid)
+                            continue
+                        await cursor.execute(
+                            f"INSERT INTO sensor_data (`Datetime`, `{uuid}`) "
+                            f"VALUES (%s, %s) "
+                            f"ON DUPLICATE KEY UPDATE `{uuid}` = VALUES(`{uuid}`)",
+                            (ts, value),
+                        )
+                        written += 1
+        except Exception as e:
+            logger.error(f"MySQLAdapter.write_records error: {e}", exc_info=True)
+            return written
+
+        for col in skipped_cols:
+            logger.warning(
+                f"MySQLAdapter.write_records: no column `{col}` in sensor_data — "
+                f"records skipped (apply the feed's ALTER TABLE migration)"
+            )
+        if written:
+            logger.info(f"MySQLAdapter.write_records: wrote {written} record(s)")
+        return written
 
     def get_dialect_hints(self) -> str:
         return (

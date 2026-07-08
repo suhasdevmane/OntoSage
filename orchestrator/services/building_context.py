@@ -27,11 +27,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
-from pathlib import Path
 from typing import Optional
 
 import yaml
 
+from shared.building_paths import resolve_building_file
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -46,11 +46,11 @@ class BuildingContext:
     legacy callers ignore new ones.
     """
 
-    building_id: str           # canonical id (e.g. "bldg1")
-    name: str                  # human-readable (e.g. "Abacws Building")
-    namespace: str             # SPARQL ABox namespace (must end in '#' or '/')
-    prefix: str                # short SPARQL prefix (e.g. "bldg")
-    timezone: str              # IANA tz name for time-range parsing
+    building_id: str  # canonical id (e.g. "bldg1")
+    name: str  # human-readable (e.g. "Abacws Building")
+    namespace: str  # SPARQL ABox namespace (must end in '#' or '/')
+    prefix: str  # short SPARQL prefix (e.g. "bldg")
+    timezone: str  # IANA tz name for time-range parsing
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -59,22 +59,23 @@ class BuildingContext:
 
 
 def _load_building_yaml(building_id: str) -> Optional[dict]:
-    """Try to read input/<building_id>/building.yaml.  Returns None if absent."""
-    for base in (Path("/app/input"), Path("input")):
-        p = base / building_id / "building.yaml"
-        if p.exists():
-            try:
-                with open(p, "r", encoding="utf-8") as fh:
-                    return yaml.safe_load(fh) or {}
-            except Exception as e:
-                logger.warning(f"[building_context] failed to load {p}: {e}")
-                return None
-    return None
+    """Read building.yaml for `building_id` (flat input/ or nested input/<id>/).
+    Returns None if absent."""
+    p = resolve_building_file(building_id, "building.yaml")
+    if p is None:
+        return None
+    try:
+        with open(p, "r", encoding="utf-8") as fh:
+            return yaml.safe_load(fh) or {}
+    except Exception as e:
+        logger.warning(f"[building_context] failed to load {p}: {e}")
+        return None
 
 
 def _settings_fallback() -> dict:
     """Read the active building's identity from settings as a fallback."""
     from shared.config import settings
+
     return {
         "building_id": settings.BUILDING_ID,
         "building_name": settings.BUILDING_NAME,

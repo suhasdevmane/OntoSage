@@ -179,10 +179,35 @@ class AdapterRegistry:
                     with open(path, "r", encoding="utf-8") as fh:
                         data = yaml.safe_load(fh)
                     logger.info(f"AdapterRegistry: loaded config from {path}")
+                    # Merge GUI-added connections from a sibling custom overlay so
+                    # the curated (heavily-documented) registry is never rewritten.
+                    self._merge_custom_databases(path, data, yaml)
                     return data
                 except Exception as e:
                     logger.error(f"AdapterRegistry: failed to parse {path}: {e}")
         return None
+
+    def _merge_custom_databases(self, primary: Path, data: Dict[str, Any], yaml_mod) -> None:
+        """Merge database_registry.custom.yaml (GUI-added) into the loaded config.
+
+        Curated entries win on a key clash. Non-fatal on any error.
+        """
+        try:
+            custom = primary.parent / "database_registry.custom.yaml"
+            if not custom.is_file() or not isinstance(data, dict):
+                return
+            overlay = yaml_mod.safe_load(custom.read_text(encoding="utf-8")) or {}
+            extra = overlay.get("databases", {})
+            if not isinstance(extra, dict):
+                return
+            dbs = data.setdefault("databases", {})
+            added = [k for k in extra if k not in dbs]
+            for k in added:
+                dbs[k] = extra[k]
+            if added:
+                logger.info(f"AdapterRegistry: merged {len(added)} custom DB(s): {added}")
+        except Exception as e:  # pragma: no cover - defensive
+            logger.warning(f"AdapterRegistry: custom DB overlay merge skipped: {e}")
 
     def _get_active_keys_for_current_building(self) -> Optional[set]:
         """Return the subset of database_registry keys this building actually uses.
@@ -195,26 +220,25 @@ class AdapterRegistry:
         behaviour rather than blocking startup.
         """
         try:
+            from shared.building_paths import resolve_building_file
             from shared.config import settings
             from shared.floor_plan_config import BuildingConfig
 
-            # Search for building.yaml in conventional locations.
-            for base in (Path("/app/input"), Path("input")):
-                yaml_path = base / settings.BUILDING_ID / "building.yaml"
-                if yaml_path.exists():
-                    cfg = BuildingConfig.from_yaml(yaml_path)
-                    if cfg.storage and cfg.storage.databases:
-                        active = set(cfg.storage.databases)
-                        logger.info(
-                            f"AdapterRegistry: building.yaml storage filter "
-                            f"active — using {sorted(active)}"
-                        )
-                        return active
-                    break
+            # building.yaml lives flat (input/building.yaml) or nested
+            # (input/<id>/building.yaml). Without the flat form the storage filter
+            # never activated → every configured adapter was probed at startup.
+            yaml_path = resolve_building_file(settings.BUILDING_ID, "building.yaml")
+            if yaml_path is not None:
+                cfg = BuildingConfig.from_yaml(yaml_path)
+                if cfg.storage and cfg.storage.databases:
+                    active = set(cfg.storage.databases)
+                    logger.info(
+                        f"AdapterRegistry: building.yaml storage filter "
+                        f"active — using {sorted(active)}"
+                    )
+                    return active
         except Exception as e:
-            logger.debug(
-                f"AdapterRegistry: no per-building storage filter — {e}"
-            )
+            logger.debug(f"AdapterRegistry: no per-building storage filter — {e}")
         return None
 
     async def _initialize_from_yaml(self, config: Dict[str, Any]) -> None:
@@ -261,6 +285,21 @@ class AdapterRegistry:
             from orchestrator.services.adapters.mysql_adapter import MySQLAdapter
 
             return MySQLAdapter(
+                host=cfg.get("host") or None,
+                port=int(cfg.get("port", 3306)) or None,
+                user=cfg.get("user") or None,
+                password=cfg.get("password") or None,
+                database=cfg.get("database") or None,
+            )
+
+        if db_type == "mysql_narrow":
+            # Narrow (uuid, datetime, value) per-modality table; one backend per table.
+            from orchestrator.services.adapters.mysql_narrow_adapter import (
+                MySQLNarrowAdapter,
+            )
+
+            return MySQLNarrowAdapter(
+                table=cfg["table"],
                 host=cfg.get("host") or None,
                 port=int(cfg.get("port", 3306)) or None,
                 user=cfg.get("user") or None,

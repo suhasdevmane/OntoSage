@@ -28,8 +28,15 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from shared.building_paths import resolve_building_file
 from shared.floor_plan_config import ABACWS_CONFIG, BuildingConfig
-from shared.models import Block, FloorPlanManifest, NormalisedPoint, RenderedImage, Space
+from shared.models import (
+    Block,
+    FloorPlanManifest,
+    NormalisedPoint,
+    RenderedImage,
+    Space,
+)
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -44,12 +51,12 @@ _DWG_PATTERN = re.compile(
 
 # Unit scale factors: DXF INSUNITS → metres
 _UNIT_TO_M: Dict[int, float] = {
-    1: 0.0254,   # inches
-    2: 0.3048,   # feet
-    4: 0.001,    # mm
-    5: 0.01,     # cm
-    6: 1.0,      # metres (default)
-    7: 1000.0,   # km
+    1: 0.0254,  # inches
+    2: 0.3048,  # feet
+    4: 0.001,  # mm
+    5: 0.01,  # cm
+    6: 1.0,  # metres (default)
+    7: 1000.0,  # km
 }
 
 # Block name → BlockType mapping (regex patterns)
@@ -168,6 +175,7 @@ class DWGPipeline:
         self._input_dir = input_dir or _DEFAULT_INPUT_DIR
         self._manifest_dir = manifest_dir or _DEFAULT_MANIFEST_DIR
         from shared.config import settings
+
         self._graphdb_url = graphdb_url or getattr(settings, "GRAPHDB_URL", "http://graphdb:7200")
 
     # ── Lifecycle ──────────────────────────────────────────────────────────────
@@ -184,9 +192,7 @@ class DWGPipeline:
                 if manifest:
                     results.append(manifest)
             except Exception as e:
-                logger.error(
-                    f"[dwg_pipeline] Failed to ingest {dwg_path.name}: {e}", exc_info=True
-                )
+                logger.error(f"[dwg_pipeline] Failed to ingest {dwg_path.name}: {e}", exc_info=True)
         return results
 
     async def ingest_file(self, dwg_path: Path) -> Optional[FloorPlanManifest]:
@@ -211,9 +217,7 @@ class DWGPipeline:
         sha = _sha256_file(dwg_path)
         if manifest_path.exists():
             try:
-                existing = FloorPlanManifest.model_validate_json(
-                    manifest_path.read_text("utf-8")
-                )
+                existing = FloorPlanManifest.model_validate_json(manifest_path.read_text("utf-8"))
                 if existing.source_dwg_sha256 == sha:
                     logger.info(f"[dwg_pipeline] {dwg_path.name} unchanged — skipping.")
                     return existing
@@ -221,9 +225,7 @@ class DWGPipeline:
                 pass
 
         # Step 3: convert DWG → DXF
-        dxf_path, convert_warnings = await _run_in_executor(
-            self._convert_to_dxf, dwg_path
-        )
+        dxf_path, convert_warnings = await _run_in_executor(self._convert_to_dxf, dwg_path)
         if dxf_path is None:
             logger.error(
                 f"[dwg_pipeline] DWG→DXF conversion failed for {dwg_path.name} — aborting."
@@ -257,9 +259,7 @@ class DWGPipeline:
         }
 
         # Build layer summary list
-        layer_summary = [
-            {"name": name, "role": role} for name, role in layers.items()
-        ]
+        layer_summary = [{"name": name, "role": role} for name, role in layers.items()]
 
         # Placeholder rendered_image (PDF pipeline will provide the real PNG)
         rendered_image = RenderedImage(
@@ -327,8 +327,8 @@ class DWGPipeline:
     # ── Config ────────────────────────────────────────────────────────────────
 
     def _load_config(self, building_id: str) -> BuildingConfig:
-        yaml_path = self._input_dir / building_id / "building.yaml"
-        if yaml_path.exists():
+        yaml_path = resolve_building_file(building_id, "building.yaml", self._input_dir)
+        if yaml_path is not None:
             try:
                 return BuildingConfig.from_yaml(yaml_path)
             except Exception as e:
@@ -339,6 +339,7 @@ class DWGPipeline:
         # this module loadable in isolation.
         try:
             from orchestrator.services.building_registry import get_building_registry
+
             cfg = get_building_registry().get(building_id)
             if cfg is not None:
                 return cfg
@@ -350,9 +351,7 @@ class DWGPipeline:
 
     # ── Step 3: DWG → DXF conversion ─────────────────────────────────────────
 
-    def _convert_to_dxf(
-        self, dwg_path: Path
-    ) -> Tuple[Optional[Path], List[str]]:
+    def _convert_to_dxf(self, dwg_path: Path) -> Tuple[Optional[Path], List[str]]:
         """Run dwg2dxf (libredwg-utils) to produce a DXF file in /tmp/."""
         warnings: List[str] = []
         dxf_path = Path(tempfile.gettempdir()) / f"{dwg_path.stem}_{_sha256_file(dwg_path)[:8]}.dxf"
@@ -370,9 +369,7 @@ class DWGPipeline:
             )
             if result.returncode != 0:
                 err = result.stderr.strip() or result.stdout.strip()
-                warnings.append(
-                    f"dwg2dxf conversion failed for {dwg_path.name}: {err}"
-                )
+                warnings.append(f"dwg2dxf conversion failed for {dwg_path.name}: {err}")
                 logger.error(f"[dwg_pipeline] dwg2dxf failed: {err}")
                 return None, warnings
             if not dxf_path.exists():
@@ -384,9 +381,7 @@ class DWGPipeline:
             )
             return dxf_path, warnings
         except FileNotFoundError:
-            warnings.append(
-                "dwg2dxf not found — install libredwg-utils in the Docker image"
-            )
+            warnings.append("dwg2dxf not found — install libredwg-utils in the Docker image")
             return None, warnings
         except subprocess.TimeoutExpired:
             warnings.append(f"dwg2dxf timed out converting {dwg_path.name}")
@@ -432,17 +427,13 @@ class DWGPipeline:
         # Determine unit scale
         insunits = doc.header.get("$INSUNITS", 6)
         scale_to_m = _UNIT_TO_M.get(insunits, 1.0)
-        units_str = {1: "in", 2: "ft", 4: "mm", 5: "cm", 6: "m", 7: "km"}.get(
-            insunits, "m"
-        )
+        units_str = {1: "in", 2: "ft", 4: "mm", 5: "cm", 6: "m", 7: "km"}.get(insunits, "m")
 
         # Classify layers
         layer_role_map = self._classify_layers(doc, cfg)
 
         # Extract room polygons
-        polygons_raw, poly_warnings = self._extract_polygons(
-            msp, layer_role_map, cfg, scale_to_m
-        )
+        polygons_raw, poly_warnings = self._extract_polygons(msp, layer_role_map, cfg, scale_to_m)
         warnings.extend(poly_warnings)
 
         # Extract text/label entities
@@ -478,8 +469,17 @@ class DWGPipeline:
         # Associate labels → polygons (point-in-polygon)
         zone_re = cfg.zone_id_regex()
         spaces = self._associate_labels(
-            polygons_raw, labels, building_id, floor, zone_re,
-            scale_to_m, min_x, min_y, width, height, cfg
+            polygons_raw,
+            labels,
+            building_id,
+            floor,
+            zone_re,
+            scale_to_m,
+            min_x,
+            min_y,
+            width,
+            height,
+            cfg,
         )
 
         # Compute adjacency
@@ -590,7 +590,7 @@ SELECT ?entity ?label ?uuid WHERE {{
                 return warnings
 
             bindings = resp.json().get("results", {}).get("bindings", [])
-            iri_map: Dict[str, str] = {}   # value → IRI
+            iri_map: Dict[str, str] = {}  # value → IRI
             uuid_map: Dict[str, str] = {}  # value → timeseries UUID
 
             for b in bindings:
@@ -634,9 +634,7 @@ SELECT ?entity ?label ?uuid WHERE {{
 
     # ── Layer classification ──────────────────────────────────────────────────
 
-    def _classify_layers(
-        self, doc: Any, cfg: BuildingConfig
-    ) -> Dict[str, str]:
+    def _classify_layers(self, doc: Any, cfg: BuildingConfig) -> Dict[str, str]:
         """Map layer names → semantic roles using AIA/NCS defaults + building overrides."""
         layer_map = cfg.merged_layer_map()
         result: Dict[str, str] = {}
@@ -687,7 +685,7 @@ SELECT ?entity ?label ?uuid WHERE {{
                 if not poly.is_valid:
                     poly = poly.buffer(0)
                 area_world = poly.area
-                area_m2 = area_world * (scale_to_m ** 2)
+                area_m2 = area_world * (scale_to_m**2)
             except Exception:
                 continue
 
@@ -721,9 +719,7 @@ SELECT ?entity ?label ?uuid WHERE {{
 
     # ── Label extraction ──────────────────────────────────────────────────────
 
-    def _extract_labels(
-        self, msp: Any
-    ) -> List[Tuple[str, float, float]]:
+    def _extract_labels(self, msp: Any) -> List[Tuple[str, float, float]]:
         """Return list of (text, world_x, world_y) from TEXT and MTEXT entities."""
         labels = []
         for entity in msp.query("TEXT MTEXT"):
@@ -796,7 +792,8 @@ SELECT ?entity ?label ?uuid WHERE {{
         Falls back to positional ID if no matching label is found.
         """
         try:
-            from shapely.geometry import Point, Polygon as ShapelyPoly
+            from shapely.geometry import Point
+            from shapely.geometry import Polygon as ShapelyPoly
         except ImportError:
             return []
 
@@ -809,7 +806,7 @@ SELECT ?entity ?label ?uuid WHERE {{
                     poly = poly.buffer(0)
 
                 area_world = poly.area
-                area_m2 = area_world * (scale_to_m ** 2)
+                area_m2 = area_world * (scale_to_m**2)
 
                 # Perimeter in metres
                 perimeter_m = poly.length * scale_to_m
