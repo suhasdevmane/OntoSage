@@ -290,7 +290,7 @@ deleted_backup_ext/
 
 sn-article.tex
 article/
-
+admin-portal-screenshots/
 volumes/
 outputs/
 graphify-out/
@@ -332,3 +332,13 @@ survey_test_output*.txt
 # Harness scheduled-task lock
 .claude/scheduled_tasks.lock
 .claude/*.lock
+
+# Per-run QA suite results (timestamped, local only)
+results/
+
+# ── Parked alternate-building inputs (single-building deployment: bldg1 active) ──
+# archive/buildings/ holds bldg2 (+ example) for the future swap/portability test.
+# input/bldg2/ stays ignored so a restored test copy is never committed by accident.
+/archive/
+/input/bldg2/
+bandit-report.json
