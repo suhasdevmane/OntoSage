@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OntoSage · Admin Console</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="logo">◆</span>
+          <div>
+            <div class="brand-name">OntoSage</div>
+            <div class="brand-sub">Admin Console</div>
+          </div>
+        </div>
+        <nav class="nav" id="nav">
+          <button class="nav-item active" data-tab="overview"><span>◈</span> Overview</button>
+          <button class="nav-item" data-tab="sources"><span>◧</span> Data Sources</button>
+          <button class="nav-item" data-tab="ask"><span>✦</span> Ask (test)</button>
+          <button class="nav-item" data-tab="ai"><span>⚛</span> AI &amp; Models</button>
+          <button class="nav-item" data-tab="integrations"><span>⇄</span> Integrations</button>
+          <button class="nav-item" data-tab="settings"><span>⚙</span> Settings (.env)</button>
+          <button class="nav-item" data-tab="databases"><span>⛁</span> Databases</button>
+          <button class="nav-item" data-tab="users"><span>◐</span> Users &amp; Access</button>
+          <button class="nav-item" data-tab="health"><span>♥</span> Health</button>
+          <button class="nav-item" data-tab="audit"><span>≡</span> Audit</button>
+          <button class="nav-item" data-tab="guide"><span>?</span> Guide</button>
+        </nav>
+        <div class="sidebar-foot">
+          <div class="who" id="who">read-only</div>
+          <button id="login-btn" class="btn ghost small">Sign in</button>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main class="main">
+        <header class="page-head">
+          <div>
+            <h1 id="page-title">Overview</h1>
+            <p class="page-sub" id="page-sub">System state at a glance.</p>
+          </div>
+          <div class="head-right">
+            <button id="help-btn" class="btn ghost small" title="How to use this console">? Help</button>
+            <span class="pill" id="feature-pill">checking…</span>
+          </div>
+        </header>
+
+        <!-- Contextual notification: only shown after a change that needs action. -->
+        <div class="apply-notice" id="apply-notice" hidden>
+          <span id="apply-notice-msg"></span>
+          <code>docker compose up -d orchestrator</code>
+          <button class="btn small" data-copy>Copy</button>
+          <button class="btn small" data-restart title="Restarts the service & reloads code (does not re-read .env)">↻ Restart service</button>
+          <span class="restart-status" id="apply-status"></span>
+          <button class="x" id="apply-close" title="Dismiss">✕</button>
+        </div>
+
+        <!-- Tab: Overview -->
+        <section class="tab" id="tab-overview">
+          <div class="overview-grid" id="overview-grid"><p class="hint">Loading…</p></div>
+          <div class="overview-cta">
+            <button class="btn small" data-goto="ask">Try a question →</button>
+            <button class="btn small ghost" data-goto="sources">Manage data sources</button>
+            <button class="btn small ghost" data-goto="ai">AI &amp; Models</button>
+            <button class="btn small ghost" data-goto="guide">How to use this console</button>
+          </div>
+        </section>
+
+        <!-- Tab: Data Sources -->
+        <section class="tab" id="tab-sources" hidden>
+          <div class="section-head">
+            <h2>Synthetic data sources</h2>
+            <div class="head-actions">
+              <button id="enable-all" class="btn small">Enable all</button>
+              <button id="reset-demo" class="btn small ghost" title="Disable every source + flush cache — a clean slate for a repeatable demo">Reset (clean slate)</button>
+              <button id="add-src" class="btn small">+ Add source</button>
+              <button id="refresh-src" class="btn ghost small">↻ Refresh</button>
+            </div>
+          </div>
+          <div class="split">
+            <div id="cards" class="cards"></div>
+            <aside class="legend">
+              <h3>Provenance legend</h3>
+              <p class="hint">Every answer is tagged with the systems that produced it.</p>
+              <ul id="legend-list"></ul>
+              <div class="legend-note"><span class="chip sim">simulated</span> = synthetic data
+                injected to demonstrate a capability current BMS access doesn't expose.</div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- Tab: Ask (query tester) -->
+        <section class="tab" id="tab-ask" hidden>
+          <div class="section-head">
+            <h2>Ask a question</h2>
+            <span class="hint">Runs the real pipeline — see the answer, which systems produced it, and how it routed.</span>
+          </div>
+          <div class="ask-box">
+            <input id="ask-input" placeholder="e.g. What is the noise level on floor 5?" />
+            <button class="btn primary" id="ask-send">Ask</button>
+          </div>
+          <div class="ask-suggestions" id="ask-suggestions"></div>
+          <div id="ask-result" class="ask-result"></div>
+        </section>
+
+        <!-- Tab: AI & Models -->
+        <section class="tab" id="tab-ai" hidden>
+          <div class="section-head">
+            <h2>AI &amp; Models</h2>
+            <button id="ai-refresh" class="btn ghost small">↻ Refresh</button>
+          </div>
+          <p class="hint big">Choose the LLM provider and model, and the embedding backend. Changes are
+            written to <code>.env</code> and apply after an orchestrator <b>recreate</b> — the provider is
+            validated and its clients are built at boot, so there is no live hot-swap. Requires
+            <code>system:admin</code>.</p>
+          <div id="ai-body" class="ai-body"><p class="hint">Sign in as admin to view.</p></div>
+        </section>
+
+        <!-- Tab: Integrations (feeds + notification channels) -->
+        <section class="tab" id="tab-integrations" hidden>
+          <p class="hint big">Live external data feeds and notification channels. These are configured in
+            <code>input/feeds.yaml</code> and <code>input/channels.yaml</code> (edited there to preserve
+            their inline docs); this view shows what's active and lets you <b>test-send</b> a channel.
+            Requires <code>system:admin</code>.</p>
+          <div class="section-head" style="margin-top:8px"><h2>Live data feeds</h2>
+            <button id="int-refresh" class="btn ghost small">↻ Refresh</button></div>
+          <div id="feeds-list" class="int-list"><p class="hint">Sign in as admin to view.</p></div>
+
+          <div class="section-head" style="margin-top:22px"><h2>Notification channels</h2></div>
+          <div id="channels-list" class="int-list"></div>
+        </section>
+
+        <!-- Tab: Settings (.env) -->
+        <section class="tab" id="tab-settings" hidden>
+          <div class="backup-card">
+            <div class="section-head"><h2>Config backup &amp; restore</h2></div>
+            <p class="hint big">Download a portable snapshot of console-managed config (data sources,
+              DB connections, role access, toggle-state). <b>Secrets (.env) are never included.</b>
+              Restore validates every file and writes it back; a recreate applies registry reloads.</p>
+            <div class="backup-actions">
+              <button id="backup-download" class="btn small primary">⭳ Download backup</button>
+              <input type="file" id="restore-file" accept="application/json,.json" hidden />
+              <button id="restore-pick" class="btn small">Restore from file…</button>
+              <span class="restart-status" id="restore-status"></span>
+            </div>
+          </div>
+
+          <div class="section-head">
+            <h2>Environment (.env)</h2>
+            <div class="head-actions">
+              <input id="env-filter" class="filter" placeholder="filter keys…" />
+              <button id="env-save" class="btn small primary">Save changes</button>
+            </div>
+          </div>
+          <p class="hint big">The root <code>.env</code> is the backend source of truth.
+            Secrets are masked (<code id="mask-hint">••••</code>) — leave them untouched to keep
+            the current value, or type a new one to overwrite. Env is read at boot, so saved
+            changes apply after an orchestrator restart. Requires <code>system:admin</code>.</p>
+          <div class="env-table" id="env-table"></div>
+          <div class="add-row">
+            <input id="new-env-key" placeholder="NEW_KEY" />
+            <input id="new-env-val" placeholder="value" />
+            <button class="btn small" id="add-env-row">+ Add credential</button>
+          </div>
+        </section>
+
+        <!-- Tab: Databases -->
+        <section class="tab" id="tab-databases" hidden>
+          <div class="section-head">
+            <h2>Database connections</h2>
+            <div class="head-actions">
+              <span class="hint" id="db-counts"></span>
+              <label class="toggle-inline"><input type="checkbox" id="db-active-only" /> Active only</label>
+              <button id="load-demo-db" class="btn small ghost" title="Prefill a connection to the profile-gated demo-mysql. Start it first: docker compose --profile demo up -d demo-mysql">Load demo database</button>
+              <button id="add-db" class="btn small">+ Add connection</button>
+            </div>
+          </div>
+          <p class="hint big">A sensor's UUID → <code>ref:storedAt bldg:&lt;key&gt;</code> selects the
+            connection used to fetch its time-series. Credentials are stored in <code>.env</code>;
+            the connection entry lives in <code>database_registry.custom.yaml</code> (your curated
+            registry is never rewritten). Applies after a restart.</p>
+          <div id="db-list" class="db-list"></div>
+        </section>
+
+        <!-- Tab: Users & Access -->
+        <section class="tab" id="tab-users" hidden>
+          <div class="section-head"><h2>User accounts</h2>
+            <button id="add-user" class="btn small">+ Add user</button></div>
+          <p class="hint big">Create accounts and assign a role. A user's role determines
+            their permissions and which data sources they may query (set below).</p>
+          <div id="users-list" class="users-list"></div>
+
+          <div class="section-head" style="margin-top:26px"><h2>Role → data-source access</h2>
+            <button id="save-access" class="btn small primary">Save access</button></div>
+          <p class="hint big">Tick the data sources each role may use when answering. A role
+            left fully unticked with the <b>All</b> box off is unrestricted by default
+            (access control is opt-in). Applies immediately — no restart needed.</p>
+          <div id="access-matrix" class="access-matrix"></div>
+        </section>
+
+        <!-- Tab: Health -->
+        <section class="tab" id="tab-health" hidden>
+          <div class="section-head"><h2>Orchestrator health</h2>
+            <div class="head-actions">
+              <label class="toggle-inline"><input type="checkbox" id="health-auto" /> Auto-refresh (5s)</label>
+              <button id="refresh-health" class="btn ghost small">↻ Refresh</button>
+            </div>
+          </div>
+          <div id="health-body" class="health-body"></div>
+          <div id="health-breakers" class="health-breakers"></div>
+        </section>
+
+        <!-- Tab: Audit -->
+        <section class="tab" id="tab-audit" hidden>
+          <div class="section-head"><h2>Admin action audit</h2>
+            <div class="head-actions">
+              <span class="hint">Mutating admin actions — who, what, when, outcome.</span>
+              <button id="refresh-audit" class="btn ghost small">↻ Refresh</button>
+            </div>
+          </div>
+          <div id="audit-body" class="audit-body"><p class="hint">Sign in as admin to view.</p></div>
+        </section>
+
+        <!-- Tab: Guide -->
+        <section class="tab" id="tab-guide" hidden>
+          <div class="guide">
+            <p class="hint big">This console controls what OntoSage can answer and how. Here is the mental
+              model and the common flows.</p>
+
+            <div class="guide-card">
+              <h3>The core idea — a data source has two halves</h3>
+              <p>OntoSage answers by (1) finding a sensor + its UUID + where it's stored in the
+                <b>ontology</b> (SPARQL against GraphDB), then (2) fetching that sensor's time-series from a
+                <b>database</b>. A question is only answerable when <em>both</em> halves exist — which is why
+                enabling a synthetic source writes Brick triples <em>and</em> database rows.</p>
+            </div>
+
+            <div class="guide-card">
+              <h3>Tabs at a glance</h3>
+              <ul class="guide-list">
+                <li><b>Overview</b> — system state: provider, enabled sources, health.</li>
+                <li><b>Data Sources</b> — toggle synthetic sources. Off = related questions are politely
+                  declined ("enable X to unlock"). <b>Regenerate</b> writes fresh synthetic data;
+                  <b>Reset (clean slate)</b> switches everything off for a repeatable demo.</li>
+                <li><b>Ask (test)</b> — ask a question and see the answer, the <b>provenance chips</b> (which
+                  systems produced it), and the routed intent. Use it to prove a toggle worked.</li>
+                <li><b>AI &amp; Models</b> — pick the LLM provider/model and embedding backend.</li>
+                <li><b>Settings (.env)</b> — raw backend environment (secrets masked).</li>
+                <li><b>Databases</b> — connect external databases and register their sensors.</li>
+                <li><b>Users &amp; Access</b> — accounts, roles, and which sources each role may query.</li>
+                <li><b>Health</b> — live status of every dependency.</li>
+              </ul>
+            </div>
+
+            <div class="guide-card">
+              <h3>Demo flow — unlock a capability in four steps</h3>
+              <ol class="guide-list">
+                <li>On <b>Ask</b>, ask "what is the noise level on floor 5?" — it's declined (source off).</li>
+                <li>On <b>Data Sources</b>, find <b>Acoustic / Noise Sensing</b>, click <b>Regenerate</b>,
+                  then toggle it <b>on</b>.</li>
+                <li>Back on <b>Ask</b>, ask again — now a real answer with an "Acoustic Sensing System"
+                  provenance chip.</li>
+                <li>Finish with <b>Reset (clean slate)</b> to switch everything off.</li>
+              </ol>
+            </div>
+
+            <div class="guide-card">
+              <h3>Connect an external database — two steps</h3>
+              <ol class="guide-list">
+                <li><b>Add connection</b> (Databases tab) — host + credentials, stored in <code>.env</code>.</li>
+                <li><b>Register sensors</b> — describe the DB's sensors (points form, CSV, or Brick TTL) so
+                  SPARQL can find them. Each sensor's real UUID + <code>ref:storedAt bldg:&lt;key&gt;</code>
+                  routes its queries to this DB. Applies immediately (cache flushed).</li>
+              </ol>
+            </div>
+
+            <div class="guide-card">
+              <h3>Switching the AI model</h3>
+              <p>On <b>AI &amp; Models</b>, pick a provider (OpenAI / local Ollama / Ollama Cloud) and a model.
+                For local Ollama, click <b>Fetch installed</b> to list models actually installed. Save writes
+                <code>.env</code>; then <b>recreate</b> the orchestrator to apply it (clients are built at
+                boot). Switching the <b>embedding</b> provider changes vector dimensions (384 ↔ 1536) and
+                invalidates the existing Qdrant index — you must re-index.</p>
+            </div>
+
+            <div class="guide-card">
+              <h3>Roles &amp; access</h3>
+              <p>On <b>Users &amp; Access</b>, each role can be limited to specific data sources. A role left
+                unconfigured is unrestricted (opt-in control). <code>admin</code> always has full access.
+                Changes apply immediately.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-backdrop" id="login-modal" hidden>
+      <div class="modal">
+        <h3>Sign in</h3>
+        <p class="hint">Admin actions (.env, databases) need a <code>system:admin</code> account.</p>
+        <label>Username <input id="u" autocomplete="username" /></label>
+        <label>Password <input id="p" type="password" autocomplete="current-password" /></label>
+        <div class="modal-actions">
+          <button class="btn ghost" data-close>Cancel</button>
+          <button class="btn primary" id="do-login">Sign in</button>
+        </div>
+        <p class="err" id="login-err" hidden></p>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="preview-modal" hidden>
+      <div class="modal wide">
+        <h3 id="preview-title">Preview</h3>
+        <div id="preview-body"></div>
+        <div class="modal-actions"><button class="btn ghost" data-close>Close</button></div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="details-modal" hidden>
+      <div class="modal xwide">
+        <h3 id="details-title">Capabilities</h3>
+        <p class="hint big" id="details-summary"></p>
+        <div class="details-unlocks" id="details-unlocks"></div>
+        <p class="hint">Connecting this source (and registering its sensors' UUIDs in GraphDB)
+          unlocks the capabilities below. Grouped by stakeholder — example questions are
+          illustrative of what OntoSage can answer.</p>
+        <div id="details-groups" class="details-groups"></div>
+        <div class="modal-actions"><button class="btn ghost" data-close>Close</button></div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="add-modal" hidden>
+      <div class="modal wide">
+        <h3>Add data source</h3>
+        <p class="hint">Creates a synthetic source (persisted to <code>datasources.custom.yaml</code>).
+          Starts disabled — regenerate, then toggle on. Each point gets a UUID + Brick triples.</p>
+        <div class="form-grid">
+          <label>ID <input id="f-id" placeholder="footfall" /></label>
+          <label>Label <input id="f-label" placeholder="Footfall Counting" /></label>
+          <label>Modality <input id="f-modality" placeholder="footfall" /></label>
+          <label>Kind
+            <select id="f-kind"><option value="timeseries">timeseries</option><option value="text_reports">text_reports</option></select>
+          </label>
+          <label>Narrow table <input id="f-table" placeholder="occupancy_data" /></label>
+          <label>Provenance system <input id="f-prov" placeholder="Footfall System" /></label>
+          <label>Colour <input id="f-color" type="color" value="#22c55e" /></label>
+          <label>Generator kind
+            <select id="f-gen">
+              <option>occupancy_profile</option><option>energy_load</option><option>noise_profile</option>
+              <option>iaq_profile</option><option>light_profile</option><option>equipment_profile</option><option>water_profile</option>
+            </select>
+          </label>
+          <label>Window (days) <input id="f-window" type="number" value="30" /></label>
+          <label>Interval (min) <input id="f-interval" type="number" value="15" /></label>
+          <label class="wide-field">Unlocks (comma) <input id="f-unlocks" placeholder="footfall_trends, entrance_load" /></label>
+          <label class="wide-field">Match keywords (comma) <input id="f-keywords" placeholder="footfall, how many entered" /></label>
+        </div>
+        <h4 class="pts-title">Points <button class="btn ghost small" id="add-point">+ point</button></h4>
+        <div id="points"></div>
+        <div class="modal-actions"><button class="btn ghost" data-close>Cancel</button>
+          <button class="btn primary" id="do-create">Create</button></div>
+        <p class="err" id="add-err" hidden></p>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="db-modal" hidden>
+      <div class="modal">
+        <h3>Add database connection</h3>
+        <p class="hint">Credentials are written to <code>.env</code>; the entry references them.
+          Used when a UUID routes to <code>bldg:&lt;key&gt;</code>.</p>
+        <div class="form-grid">
+          <label>Key <input id="db-key" placeholder="warehouse1" /></label>
+          <label>Type
+            <select id="db-type"><option>mysql</option><option>mysql_narrow</option><option>postgresql</option><option>timescaledb</option></select>
+          </label>
+          <label>Host <input id="db-host" placeholder="db.example.com" /></label>
+          <label>Port <input id="db-port" placeholder="3306" /></label>
+          <label>User <input id="db-user" /></label>
+          <label>Password <input id="db-pass" type="password" /></label>
+          <label>Database <input id="db-name" /></label>
+          <label>Narrow table <input id="db-table" placeholder="demo_readings (mysql_narrow only)" /></label>
+        </div>
+        <div class="modal-actions">
+          <span class="restart-status" id="db-test-status"></span>
+          <button class="btn ghost" data-close>Cancel</button>
+          <button class="btn" id="do-db-test">Test connection</button>
+          <button class="btn primary" id="do-db">Add connection</button>
+        </div>
+        <p class="err" id="db-err" hidden></p>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="sensors-modal" hidden>
+      <div class="modal wide">
+        <h3>Register sensors · <span id="sensors-dbkey"></span></h3>
+        <p class="hint">A connected database is inert until its sensors are described in the
+          ontology. Register them here — each becomes discoverable by SPARQL and its
+          <b>real UUID</b> routes queries to this DB (<code>ref:storedAt bldg:<span id="sensors-key2"></span></code>).</p>
+        <div class="mode-tabs">
+          <button class="mode-tab active" data-mode="points">Add points</button>
+          <button class="mode-tab" data-mode="csv">Import CSV</button>
+          <button class="mode-tab" data-mode="ttl">Upload TTL</button>
+        </div>
+        <div id="mode-points">
+          <h4 class="pts-title">Sensor points <button class="btn ghost small" id="add-sensor-point">+ point</button></h4>
+          <div id="sensor-points"></div>
+        </div>
+        <div id="mode-csv" hidden>
+          <p class="hint">Paste CSV — one sensor per row. Header:
+            <code>local,brick_class,location,uuid,unit,label</code> (unit/label optional).
+            UUIDs are the real ids in this database.</p>
+          <textarea id="csv-text" class="ttl-area" placeholder="local,brick_class,location,uuid,unit&#10;Warehouse_Temp_1,brick:Temperature_Sensor,bldg:Zone_A,7c28dec2-...,unit:DEG_C"></textarea>
+        </div>
+        <div id="mode-ttl" hidden>
+          <p class="hint">Paste a Brick Turtle document. Each sensor must carry
+            <code>ref:hasExternalReference → ref:TimeseriesReference</code> with
+            <code>ref:hasTimeseriesId</code> + <code>ref:storedAt bldg:&lt;key&gt;</code>.</p>
+          <textarea id="ttl-text" class="ttl-area" placeholder="@prefix bldg: &lt;...&gt; .&#10;bldg:Sensor_1 a brick:Temperature_Sensor ; ..."></textarea>
+        </div>
+        <div class="modal-actions"><button class="btn ghost" data-close>Cancel</button>
+          <button class="btn primary" id="do-sensors">Register</button></div>
+        <p class="err" id="sensors-err" hidden></p>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="user-modal" hidden>
+      <div class="modal">
+        <h3>Add user</h3>
+        <label>Username <input id="nu-name" autocomplete="off" /></label>
+        <label>Password <input id="nu-pass" type="password" autocomplete="new-password" /></label>
+        <label>Role
+          <select id="nu-role">
+            <option value="readonly">readonly</option>
+            <option value="occupant">occupant</option>
+            <option value="operator">operator</option>
+            <option value="analyst">analyst</option>
+            <option value="facility_manager">facility_manager</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
+        <label>Email (optional) <input id="nu-email" /></label>
+        <div class="modal-actions"><button class="btn ghost" data-close>Cancel</button>
+          <button class="btn primary" id="do-user">Create</button></div>
+        <p class="err" id="user-err" hidden></p>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+    <script src="app.js"></script>
+  </body>
+</html>
