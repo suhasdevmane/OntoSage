@@ -560,10 +560,14 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
         if not value or not isinstance(value, str):
             return None
         v = value.strip()
-        # Allow digits, space, T, Z, colon, dash, dot, plus
+        # Allow ISO date/time chars only: digits, space, T, Z, colon, dash, dot,
+        # plus. NB single backslashes in the class — the previous r"...\\s..." used
+        # DOUBLE backslashes, so it matched a literal backslash and the letter 's'
+        # (never whitespace). That both REJECTED space-separated "YYYY-MM-DD HH:MM:SS"
+        # values (silently dropping the time filter) AND let a backslash through.
         import re
 
-        if re.match(r"^[0-9T:\\-\\.Z\\+\\s]+$", v):
+        if re.match(r"^[0-9T:.Z+\s\-]+$", v):
             return v
         return None
 
@@ -619,24 +623,20 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
         ):
             raise ValueError("Only SELECT queries are allowed.")
 
-        # 2. Check for forbidden keywords (DML/DDL)
-        # Note: We check for keyword + space to avoid matching substrings like "UPDATE_TIME"
-        forbidden_keywords = [
-            "DROP ",
-            "DELETE ",
-            "INSERT ",
-            "UPDATE ",
-            "ALTER ",
-            "TRUNCATE ",
-            "GRANT ",
-            "REVOKE ",
-            "CREATE ",
-            "REPLACE ",
-        ]
+        # 2. Check for forbidden keywords (DML/DDL) using WORD BOUNDARIES.
+        # A substring check like "DELETE " (trailing space) is defeated by any other
+        # whitespace — "DELETE\nFROM" / "DELETE\tFROM" would slip through. \b also
+        # keeps the original intent of not flagging identifiers like "UPDATE_TIME"
+        # (no boundary before the '_').
+        import re
 
-        for keyword in forbidden_keywords:
-            if keyword in sql_upper:
-                raise ValueError(f"Forbidden keyword detected: {keyword.strip()}")
+        forbidden_re = re.compile(
+            r"\b(DROP|DELETE|INSERT|UPDATE|ALTER|TRUNCATE|GRANT|REVOKE|CREATE|REPLACE)\b",
+            re.IGNORECASE,
+        )
+        match = forbidden_re.search(sql)
+        if match:
+            raise ValueError(f"Forbidden keyword detected: {match.group(1).upper()}")
 
         # 3. Check for multiple statements (prevention of stacking queries)
         if ";" in sql:

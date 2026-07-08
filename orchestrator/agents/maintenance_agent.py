@@ -5,6 +5,7 @@ States: OPEN → ASSIGNED → IN_PROGRESS → RESOLVED → CLOSED
 All DB operations are async stubs that return a result dict.
 The actual DB writes are done by _maintenance_node in workflow.py using postgres_manager.
 """
+
 import re
 from typing import Any, Dict, Optional
 
@@ -15,17 +16,30 @@ logger = get_logger(__name__)
 
 # Operation detection patterns (order matters — more specific first)
 _OP_PATTERNS = [
-    ("ASSIGN",  re.compile(r"\bassign\b", re.I)),
+    ("ASSIGN", re.compile(r"\bassign\b", re.I)),
     ("RESOLVE", re.compile(r"\b(resolve|resolved|mark.*resolved)\b", re.I)),
-    ("CLOSE",   re.compile(r"\bclose\b", re.I)),
-    ("STATUS",  re.compile(r"\b(check|status|MT-\d{4})\b", re.I)),
-    ("LIST",    re.compile(r"\b(list|show|what).*(open|all|ticket)", re.I)),
-    ("CREATE",  re.compile(r"\b(broken|not working|fault|report|raise ticket|fix the|maintenance)\b", re.I)),
+    ("CLOSE", re.compile(r"\bclose\b", re.I)),
+    ("STATUS", re.compile(r"\b(check|status|MT-\d{4})\b", re.I)),
+    ("LIST", re.compile(r"\b(list|show|what).*(open|all|ticket)", re.I)),
+    (
+        "CREATE",
+        re.compile(r"\b(broken|not working|fault|report|raise ticket|fix the|maintenance)\b", re.I),
+    ),
 ]
 
-_ASSIGN_ROLES  = {"admin", "facility_manager"}
+_ASSIGN_ROLES = {"admin", "facility_manager"}
 _RESOLVE_ROLES = {"admin", "facility_manager", "operator"}
-_CLOSE_ROLES   = {"admin", "facility_manager"}
+_CLOSE_ROLES = {"admin", "facility_manager"}
+
+
+def _entity_value(entities: Any, etype: str, default: Optional[str] = None) -> Optional[str]:
+    """Extract an entity value by type, tolerating both dict and plain-string
+    entity shapes (the dialogue LLM emits either; crash fix 2026-06-12)."""
+    for e in entities or []:
+        if isinstance(e, dict) and e.get("type") == etype:
+            value = e.get("value")
+            return str(value) if value is not None else default
+    return default
 
 
 def _detect_operation(query: str) -> str:
@@ -83,12 +97,13 @@ class MaintenanceAgent:
     async def _create_ticket(self, state: ConversationState) -> Dict[str, Any]:
         """Extract location and description, return CREATE result dict."""
         entities = state.intermediate_results.get("entities", [])
-        location = next((e["value"] for e in entities if e.get("type") == "location"), "Unknown")
-        description = next(
-            (e["value"] for e in entities if e.get("type") == "fault_description"),
-            state.user_message,
+        location = _entity_value(entities, "location", "Unknown")
+        description = _entity_value(entities, "fault_description", state.user_message)
+        building_id = (
+            getattr(state, "building_id", None)
+            or state.intermediate_results.get("building_id")
+            or "unknown"
         )
-        building_id = state.intermediate_results.get("building_id", "unknown")
         user_id = state.intermediate_results.get("user_id", "unknown")
         return {
             "status": "created",
@@ -103,7 +118,7 @@ class MaintenanceAgent:
     async def _status_ticket(self, state: ConversationState) -> Dict[str, Any]:
         """Extract ticket ID from entities or query text."""
         entities = state.intermediate_results.get("entities", [])
-        ticket_id = next((e["value"] for e in entities if e.get("type") == "ticket_id"), None)
+        ticket_id = _entity_value(entities, "ticket_id")
         query = state.user_message or ""
         if not ticket_id:
             m = re.search(r"MT-\d{4}", query, re.I)
@@ -112,20 +127,29 @@ class MaintenanceAgent:
 
     async def _list_tickets(self, state: ConversationState) -> Dict[str, Any]:
         """Return LIST result for building's open tickets."""
-        building_id = state.intermediate_results.get("building_id", "unknown")
+        building_id = (
+            getattr(state, "building_id", None)
+            or state.intermediate_results.get("building_id")
+            or "unknown"
+        )
         return {"status": "list", "operation": "LIST", "building_id": building_id, "filter": "OPEN"}
 
     async def _assign_ticket(self, state: ConversationState) -> Dict[str, Any]:
         """Extract ticket ID and assignee from entities."""
         entities = state.intermediate_results.get("entities", [])
-        ticket_id = next((e["value"] for e in entities if e.get("type") == "ticket_id"), None)
-        assignee = next((e["value"] for e in entities if e.get("type") == "assignee"), None)
-        return {"status": "assigned", "operation": "ASSIGN", "ticket_id": ticket_id, "assignee": assignee}
+        ticket_id = _entity_value(entities, "ticket_id")
+        assignee = _entity_value(entities, "assignee")
+        return {
+            "status": "assigned",
+            "operation": "ASSIGN",
+            "ticket_id": ticket_id,
+            "assignee": assignee,
+        }
 
     async def _resolve_ticket(self, state: ConversationState) -> Dict[str, Any]:
         """Extract ticket ID from entities or query text."""
         entities = state.intermediate_results.get("entities", [])
-        ticket_id = next((e["value"] for e in entities if e.get("type") == "ticket_id"), None)
+        ticket_id = _entity_value(entities, "ticket_id")
         query = state.user_message or ""
         if not ticket_id:
             m = re.search(r"MT-\d{4}", query, re.I)
@@ -135,7 +159,7 @@ class MaintenanceAgent:
     async def _close_ticket(self, state: ConversationState) -> Dict[str, Any]:
         """Extract ticket ID from entities or query text."""
         entities = state.intermediate_results.get("entities", [])
-        ticket_id = next((e["value"] for e in entities if e.get("type") == "ticket_id"), None)
+        ticket_id = _entity_value(entities, "ticket_id")
         query = state.user_message or ""
         if not ticket_id:
             m = re.search(r"MT-\d{4}", query, re.I)

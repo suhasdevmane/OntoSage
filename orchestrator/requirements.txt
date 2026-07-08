@@ -19,6 +19,9 @@ redis==5.2.0
 # HTTP client
 httpx==0.28.1
 
+# Live web search (free, keyless DuckDuckGo backend for general_knowledge live-data)
+ddgs==9.14.4
+
 # Database
 aiomysql==0.2.0
 pymysql==1.1.1

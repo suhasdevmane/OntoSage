@@ -45,17 +45,24 @@ class VisualizationAgent:
             Dict with 'code', 'chart_type', 'image_path', 'description'
         """
         try:
-            # Step 1: Determine chart type
-            chart_type = await self._determine_chart_type(user_query, data)
-
-            # filename arg kept for prompt compat but plot is returned as base64 in stdout
-            filename = f"viz_{uuid.uuid4().hex[:8]}.png"
-
-            # Step 2: Generate visualization code
-            code = await self._generate_viz_code(user_query, data, chart_type, filename)
-
-            # Patch any LLM-generated code that still uses the old file-save pattern
-            code = self._patch_plot_to_base64(code, filename)
+            # Step 1+2: Prefer a DETERMINISTIC chart for standard sensor
+            # time-series.  LLM-generated matplotlib code is fragile — it
+            # sometimes omits the `PLOT_BASE64` marker, which left users with a
+            # text summary and no chart.  When the data is the recognised
+            # {'data':[{timestamp,uuid,value}]} shape we build the plotting code
+            # ourselves and skip the LLM entirely (guaranteed marker output).
+            det_code = self._build_timeseries_code(state, data)
+            if det_code is not None:
+                logger.info("[viz] using deterministic time-series chart template")
+                chart_type = "line_chart"
+                code = det_code
+            else:
+                chart_type = await self._determine_chart_type(user_query, data)
+                # filename arg kept for prompt compat but plot is returned as base64
+                filename = f"viz_{uuid.uuid4().hex[:8]}.png"
+                code = await self._generate_viz_code(user_query, data, chart_type, filename)
+                # Patch any LLM-generated code that still uses the old file-save pattern
+                code = self._patch_plot_to_base64(code, filename)
 
             # Step 3: Execute visualization code
             result = await self._execute_viz_code(code)
@@ -70,9 +77,15 @@ class VisualizationAgent:
             from datetime import datetime as _dt
 
             image_url = None
+            inline_src = None  # data: URI for inline markdown (renders cross-origin)
             output_text = result.get("stdout") or result.get("output") or ""
             b64_match = _re.search(r"PLOT_BASE64: ([A-Za-z0-9+/=]+)", output_text)
             if b64_match:
+                # Inline data URI is the reliable render path — the file-server is
+                # a different origin (:8080) than Open WebUI, so a cross-origin
+                # <img> can be blocked by CSP.  We still save the file for the
+                # media payload / external consumers.
+                inline_src = f"data:image/png;base64,{b64_match.group(1)}"
                 plot_filename = f"viz_{_dt.now().strftime('%Y%m%d_%H%M%S_%f')}.png"
                 plot_path = f"/app/outputs/{plot_filename}"
                 try:
@@ -84,14 +97,16 @@ class VisualizationAgent:
                     image_url = f"{_s.STATIC_BASE_URL.rstrip('/')}/static/{plot_filename}"
                     logger.info(f"Saved viz plot to {plot_path}, serving at {image_url}")
                 except Exception as _e:
-                    logger.warning(f"Could not save viz plot: {_e}")
-                    image_url = f"data:image/png;base64,{b64_match.group(1)}"
+                    logger.warning(f"Could not save viz plot: {_e} — using inline data URI only")
+                    image_url = inline_src
             else:
                 logger.warning(
                     "No PLOT_BASE64 in code-executor output — visualization may not render"
                 )
                 image_url = ""
 
+            # Use the file-server URL (Open WebUI's markdown renderer does NOT
+            # display data: URIs — it prints them as raw text).
             formatted_response = (
                 f"{description}\n\n![Visualization]({image_url})" if image_url else description
             )
@@ -109,6 +124,94 @@ class VisualizationAgent:
         except Exception as e:
             logger.error(f"Visualization error: {e}", exc_info=True)
             return {"success": False, "error": str(e), "code": None, "chart_type": None}
+
+    def _build_timeseries_code(
+        self, state: ConversationState, data: Optional[Dict[str, Any]]
+    ) -> Optional[str]:
+        """Deterministic matplotlib line-chart code for standard sensor data.
+
+        Returns ready-to-run code that ALWAYS prints a ``PLOT_BASE64`` marker, or
+        ``None`` if the data isn't the recognised
+        ``{'data': [{timestamp, uuid, value}, ...]}`` shape (so the caller can
+        fall back to LLM code generation).
+
+        The data and the uuid→label map are inlined as base64 so the code-executor
+        needs nothing prepended and there is no quoting/injection risk.
+        """
+        import base64 as _b64
+
+        records = None
+        if isinstance(data, dict):
+            records = data.get("data")
+        elif isinstance(data, list):
+            records = data
+        if not records or not isinstance(records, list):
+            return None
+        first = records[0]
+        if not isinstance(first, dict) or "value" not in first:
+            return None
+
+        # uuid → human-readable label from sensor metadata, if present
+        label_map: Dict[str, str] = {}
+        try:
+            meta = (state.intermediate_results or {}).get("sensor_metadata") or {}
+            label_map = {u: (m.get("label") or u) for u, m in meta.items()}
+        except Exception:
+            label_map = {}
+
+        data_b64 = _b64.b64encode(json.dumps({"data": records}, default=str).encode()).decode()
+        label_b64 = _b64.b64encode(json.dumps(label_map, default=str).encode()).decode()
+
+        return f'''
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import pandas as pd
+import base64, io as _io, json as _json
+
+_raw = _json.loads(base64.b64decode("{data_b64}").decode())
+_labels = _json.loads(base64.b64decode("{label_b64}").decode())
+
+df = pd.DataFrame(_raw.get("data", []))
+if "sensor_uuid" in df.columns and "uuid" not in df.columns:
+    df = df.rename(columns={{"sensor_uuid": "uuid"}})
+if "uuid" not in df.columns:
+    df["uuid"] = "sensor"
+df["value"] = pd.to_numeric(df["value"], errors="coerce")
+df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+df = df.dropna(subset=["value", "timestamp"]).sort_values("timestamp")
+
+try:
+    plt.style.use("seaborn-v0_8-darkgrid")
+except Exception:
+    pass
+
+fig, ax = plt.subplots(figsize=(12, 5))
+if df.empty:
+    ax.text(0.5, 0.5, "No data available to plot", ha="center", va="center", fontsize=13)
+    ax.set_axis_off()
+else:
+    colors = plt.cm.tab10.colors
+    for i, u in enumerate(df["uuid"].unique()[:8]):
+        sub = df[df["uuid"] == u]
+        ax.plot(sub["timestamp"], sub["value"], label=str(_labels.get(u, u)),
+                color=colors[i % len(colors)], linewidth=1.6, alpha=0.9)
+    ax.set_title("Sensor Readings Over Time", fontsize=14, fontweight="bold", pad=12)
+    ax.set_xlabel("Time", fontsize=11)
+    ax.set_ylabel("Value", fontsize=11)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d %H:%M"))
+    fig.autofmt_xdate(rotation=30)
+    if df["uuid"].nunique() > 1:
+        ax.legend(loc="upper left", fontsize=9)
+
+plt.tight_layout()
+_buf = _io.BytesIO()
+plt.savefig(_buf, format="png", bbox_inches="tight", dpi=120)
+plt.close(fig)
+_buf.seek(0)
+print("PLOT_BASE64: " + base64.b64encode(_buf.read()).decode("utf-8"))
+'''
 
     async def _determine_chart_type(
         self, user_query: str, data: Optional[Dict[str, Any]] = None

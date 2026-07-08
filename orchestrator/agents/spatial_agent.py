@@ -8,6 +8,7 @@ Answers quantitative geometry questions sourced from DWG manifests:
   Count/aggregate   "how many rooms on floor 3", "total area of floor 3"
   Block/MEP queries "how many sensors are on floor 3", "where are the fire exits"
   Type filter       "all meeting rooms on floor 4 larger than 20 m²"
+  Wayfinding        "how do I get to room 5.01 from the main entrance"
 
 All data comes from FloorPlanManifest spaces[] and blocks[].
 No LLM calls — pure manifest analysis with keyword-driven query parsing.
@@ -16,6 +17,7 @@ No LLM calls — pure manifest analysis with keyword-driven query parsing.
 from __future__ import annotations
 
 import re
+from collections import deque
 from typing import Any, Dict, List, Optional, Tuple
 
 from shared.models import Block, FloorPlanManifest, Space
@@ -53,6 +55,19 @@ _FLOOR_RE = re.compile(r"\bfloor\s*(\d+)\b|\blevel\s*(\d+)\b", re.IGNORECASE)
 _ZONE_RE = re.compile(r"\b(\d+)[.Z](\d{2,3})\b")
 _BLOCK_TYPE_RE = re.compile(
     r"\b(sensor|door|window|fire.?exit|hvac|diffuser|fire.?alarm|light|power.?outlet|equipment)\b",
+    re.IGNORECASE,
+)
+
+_WAYFINDING_RE = re.compile(
+    r"how\s+(?:do\s+I|can\s+I|would\s+I)\s+(?:get|reach|go)\s+to"
+    r"|how\s+to\s+(?:get|reach|find|go)\s+to"
+    r"|direction[s]?\s+(?:to|for)"
+    r"|route\s+to"
+    r"|navigate\s+to"
+    r"|find\s+my\s+way\s+to"
+    r"|guide\s+me\s+to"
+    r"|way\s+to\s+get\s+to"
+    r"|how\s+do\s+I\s+reach",
     re.IGNORECASE,
 )
 
@@ -117,12 +132,27 @@ class SpatialAgent:
         Never raises — errors produce a descriptive fallback string.
         """
         try:
-            manifests = self._load_manifests(building_id, floor)
+            # Resolve the target floor: caller-pinned (floor_context, which may
+            # arrive as a string) wins; otherwise infer it from the query when
+            # it names exactly one. Coerce to int for reliable matching.
+            target_floor: Optional[int] = None
+            if floor is not None:
+                try:
+                    target_floor = int(floor)
+                except (TypeError, ValueError):
+                    target_floor = None
+            if target_floor is None:
+                target_floor = self._infer_floor_from_query(query)
+
+            # Always load ALL manifests via the building-wide (alias-resolved)
+            # path, then narrow in-memory. The per-floor registry fast-path is
+            # type-sensitive (int vs str) and silently returned empty for valid
+            # floors; filtering here is robust and floor-type-agnostic.
+            manifests = self._load_manifests(building_id, None)
             if not manifests:
                 return (
                     f"No floor plan data is available for **{building_id}**"
-                    + (f" floor {floor}" if floor is not None else "")
-                    + ". Make sure the DWG files have been ingested."
+                    ". Make sure the DWG files have been ingested."
                 )
 
             has_geometry = any(
@@ -135,6 +165,14 @@ class SpatialAgent:
                     "Currently only PDF text extraction is active."
                 )
 
+            # Narrow to the target floor; fall back to the full set if that
+            # floor has no manifest loaded (better an all-floors answer than
+            # a false "no data").
+            if target_floor is not None and len(manifests) > 1:
+                scoped = [m for m in manifests if m.floor == target_floor]
+                if scoped:
+                    manifests = scoped
+
             return self._answer(query, manifests)
         except Exception as e:
             logger.error(f"[SpatialAgent] Error: {e}", exc_info=True)
@@ -144,6 +182,10 @@ class SpatialAgent:
 
     def _answer(self, query: str, manifests: List[FloorPlanManifest]) -> str:
         q = query.lower()
+
+        # Wayfinding takes priority (before adjacency — "get to X from Y" ≠ "next to X")
+        if _WAYFINDING_RE.search(q):
+            return self._answer_wayfinding(query, manifests)
 
         # Adjacency query takes priority (before area checks)
         if _ADJ_RE.search(q):
@@ -318,6 +360,169 @@ class SpatialAgent:
                     return s.zone_id
         return None
 
+    # ── Wayfinding ────────────────────────────────────────────────────────────
+
+    def _answer_wayfinding(
+        self, query: str, manifests: List[FloorPlanManifest]
+    ) -> str:
+        """BFS route guidance between two named spaces in the building."""
+        zone_to_space: Dict[str, Space] = {}
+        zone_to_floor: Dict[str, int] = {}
+        for m in manifests:
+            for s in m.spaces:
+                zone_to_space[s.zone_id] = s
+                zone_to_floor[s.zone_id] = m.floor
+
+        dest_zone = self._extract_waypoint(query, manifests, role="destination")
+        src_zone = self._extract_waypoint(query, manifests, role="source")
+
+        if dest_zone is None:
+            return (
+                "I couldn't identify the destination in your query. "
+                "Please specify a room number (e.g. `5.01`) or room name. "
+                "Example: *'how do I get to room 5.01 from reception'*"
+            )
+
+        dest_space = zone_to_space.get(dest_zone)
+        if dest_space is None:
+            return f"Destination zone `{dest_zone}` not found in the floor plan data."
+
+        if src_zone is None:
+            src_zone = self._find_default_start(zone_to_space)
+
+        if src_zone is None or src_zone not in zone_to_space:
+            dest_floor = zone_to_floor.get(dest_zone)
+            return (
+                f"**{dest_space.label}** is on floor {dest_floor} (zone `{dest_zone}`). "
+                "Please specify your starting point, e.g. *'from the main entrance'*, "
+                "for turn-by-turn route guidance."
+            )
+
+        if src_zone == dest_zone:
+            src_space = zone_to_space[src_zone]
+            return f"You are already at **{src_space.label}** (`{src_zone}`)."
+
+        path = self._bfs_route(src_zone, dest_zone, zone_to_space)
+        src_space = zone_to_space.get(src_zone)
+        src_floor = zone_to_floor.get(src_zone)
+        dest_floor = zone_to_floor.get(dest_zone)
+
+        if path is None:
+            # No connected path — offer lift/stair hint for cross-floor cases
+            if src_floor != dest_floor:
+                lifts = [
+                    zone_to_space[z].label
+                    for z, s in zone_to_space.items()
+                    if s.type in ("lift", "staircase")
+                ][:3]
+                hint = (
+                    " Use " + ", ".join(f"**{n}**" for n in lifts) + " to change floors, then"
+                    if lifts
+                    else " Look for a lift or staircase to reach floor " + str(dest_floor) + "."
+                )
+                return (
+                    f"**{dest_space.label}** (`{dest_zone}`) is on floor {dest_floor}. "
+                    f"{hint} follow the corridor signs. "
+                    "(Full route adjacency data requires DWG source files.)"
+                )
+            return (
+                f"I could not find a connected route from "
+                f"**{src_space.label if src_space else src_zone}** "
+                f"to **{dest_space.label}** — adjacency data may be incomplete. "
+                "(Full route data requires DWG source files.)"
+            )
+
+        lines = [
+            f"## Route to {dest_space.label} (`{dest_zone}`)",
+            "",
+            f"**From:** {src_space.label if src_space else src_zone} (floor {src_floor})  ",
+            f"**To:** {dest_space.label} (floor {dest_floor})  ",
+            f"**Steps:** {len(path) - 1}",
+            "",
+        ]
+        prev_floor = zone_to_floor.get(path[0])
+        for i, zid in enumerate(path):
+            space = zone_to_space.get(zid)
+            fl = zone_to_floor.get(zid)
+            label = space.label if space else zid
+            space_type = space.type if space else ""
+            floor_note = f" _(floor {prev_floor} → {fl})_" if fl != prev_floor else ""
+            prev_floor = fl
+
+            if i == 0:
+                lines.append(f"1. **Start at** {label} (`{zid}`, floor {fl})")
+            elif i == len(path) - 1:
+                lines.append(
+                    f"{i + 1}. **Arrive at** {label} (`{zid}`, floor {fl}){floor_note}"
+                )
+            else:
+                verb = "Take" if space_type in ("lift", "staircase") else "Continue through"
+                lines.append(
+                    f"{i + 1}. {verb} **{label}** (`{zid}`, floor {fl}){floor_note}"
+                )
+
+        lines.append("")
+        lines.append(
+            "_Route calculated from floor plan adjacency data. "
+            "For detailed directions, consult the posted floor plan maps._"
+        )
+        return "\n".join(lines)
+
+    def _bfs_route(
+        self, start: str, end: str, zone_to_space: Dict[str, Space]
+    ) -> Optional[List[str]]:
+        """BFS shortest path between zone IDs. Returns ordered zone ID list or None."""
+        if start not in zone_to_space or end not in zone_to_space:
+            return None
+        visited = {start}
+        queue: deque = deque([[start]])
+        while queue:
+            path = queue.popleft()
+            current = path[-1]
+            if current == end:
+                return path
+            space = zone_to_space.get(current)
+            if space is None:
+                continue
+            for neighbor in space.adjacent_spaces:
+                if neighbor not in visited and neighbor in zone_to_space:
+                    visited.add(neighbor)
+                    queue.append(path + [neighbor])
+        return None
+
+    def _extract_waypoint(
+        self,
+        query: str,
+        manifests: List[FloorPlanManifest],
+        role: str,  # "destination" | "source"
+    ) -> Optional[str]:
+        """Extract destination or source zone ID from a wayfinding query."""
+        from_match = re.search(r"\bfrom\b", query, re.IGNORECASE)
+
+        if role == "destination":
+            # Destination is everything BEFORE 'from' (if present), or the whole query
+            search_text = query[: from_match.start()] if from_match else query
+        else:
+            # Source is the clause AFTER 'from'
+            if not from_match:
+                return None
+            search_text = query[from_match.end() :]
+
+        zone_match = _ZONE_RE.search(search_text)
+        if zone_match:
+            return zone_match.group(0)
+        return self._find_zone_by_label(search_text, manifests)
+
+    def _find_default_start(self, zone_to_space: Dict[str, Space]) -> Optional[str]:
+        """Return the zone_id of the reception or entrance space, if one exists."""
+        for zid, s in zone_to_space.items():
+            if s.type == "reception":
+                return zid
+        for zid, s in zone_to_space.items():
+            if any(kw in s.label.lower() for kw in ("entrance", "lobby", "reception")):
+                return zid
+        return None
+
     # ── Block/MEP queries ─────────────────────────────────────────────────────
 
     def _answer_blocks(
@@ -436,6 +641,17 @@ class SpatialAgent:
             if keyword in q:
                 return stype
         return None
+
+    @staticmethod
+    def _infer_floor_from_query(query: str) -> Optional[int]:
+        """Return the floor number when EXACTLY one is named in the query.
+
+        Lets a count/area/list query scope to the floor the user asked about
+        even when the caller didn't pin floor_context. Multi-floor queries
+        (e.g. "floor 1 vs floor 5") return None so they stay building-wide.
+        """
+        floors = {int(g1 or g2) for g1, g2 in _FLOOR_RE.findall(query or "")}
+        return next(iter(floors)) if len(floors) == 1 else None
 
     def _candidate_building_ids(self, building_id: str) -> set:
         """Phase 4 — accept aliases when matching manifests on disk."""

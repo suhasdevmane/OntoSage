@@ -49,7 +49,8 @@ class WorkflowRoutingMixin:
         # Check if analytics is required (and we are coming from SPARQL)
         # Allow routing to SQL for any data-fetching intent
         _sql_intents = {
-            "sparql", "analytics", "compare", "trend", "recommend", "compliance", "visualization"
+            "sparql", "sensor_data", "analytics", "compare", "trend", "recommend",
+            "compliance", "visualization", "anomaly",
         }
         if state.analytics_required and state.current_intent in _sql_intents:
             logger.info("Routing SPARQL -> SQL for data fetching (analytics=True)")

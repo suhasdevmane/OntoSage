@@ -142,6 +142,7 @@ def set_request_bctx(building_id: Optional[str]) -> Optional[object]:
     """
     try:
         from orchestrator.services.building_context import resolve_building_context
+
         bctx = resolve_building_context(building_id) if building_id else None
     except Exception:
         bctx = None
@@ -190,9 +191,9 @@ Building Ontology Data:
 Instructions:
 1. Carefully read the building data above
 2. Answer concisely and accurately using what you find
-3. If the user asks for a sensor type that is NOT in the ontology (e.g. power meters, occupancy counters, VOC sensors), clearly state:
+3. If the user asks for a sensor type that is NOT in the ontology, clearly state:
    "This building does not have [sensor type] sensors." Then suggest what IS available.
-4. The Abacws building sensors include: temperature, CO₂, humidity, air quality (PM1, PM2.5, PM10, TVOC, NO₂), illuminance, gas sensors (MQ2, MQ3, MQ5, MQ9), oxygen — but NOT energy meters, power consumption sensors, or people counters.
+4. The Abacws building sensors include: temperature, CO₂, humidity, air quality (PM1, PM2.5, PM10, TVOC, NO₂), illuminance, gas sensors (MQ2, MQ3, MQ5, MQ9), oxygen, plus per-floor energy meters, occupancy counters, a water-main flow sensor, noise, lift vibration, and AHU run-time. Each carries a timeseries UUID + storedAt reference.
 5. If you find a label (rdfs:label) or definition, include it
 6. Format your answer clearly (use bold for key values, bullets for lists)
 7. Always be helpful — if data isn't available, suggest the closest relevant sensor type that IS available
@@ -200,7 +201,9 @@ Instructions:
 Your Answer:"""
 
         try:
-            response = await llm_manager.generate(reasoning_prompt, temperature=0.1, task_type=TaskType.SPARQL)
+            response = await llm_manager.generate(
+                reasoning_prompt, temperature=0.1, task_type=TaskType.SPARQL
+            )
             return {
                 "text": response.strip(),
                 "confidence": "high" if len(context_text) > 100 else "low",
@@ -263,8 +266,20 @@ Your Answer:"""
                 logger.info(f"Using entities extracted by DialogueAgent (filtered): {entities}")
             if not entities:
                 entities = self._extract_entities(user_query)
-            # Derive class target (reuse mapping logic)
-            class_target = self._infer_class(user_query.lower())
+            # T05: prefer HBCO concept brick class over static keyword map
+            class_target = None
+            _hbco_concepts = state.intermediate_results.get("concepts") or []
+            for _cm in _hbco_concepts:
+                _bc = _cm.get("brick_classes") or []
+                if _bc:
+                    class_target = _bc[0]
+                    logger.info(
+                        f"[sparql] class from HBCO concept "
+                        f"'{_cm.get('concept_id')}': {class_target}"
+                    )
+                    break
+            if not class_target:
+                class_target = self._infer_class(user_query.lower())
             instance_candidates = []
             if not entities and class_target:
                 # attempt instance discovery before LLM
@@ -285,9 +300,18 @@ Your Answer:"""
                 except Exception as e:
                     logger.warning(f"Instance candidate discovery failed: {e}")
 
+            # Portable floor-scoped resolution first: "compare temperature between
+            # floor 1 and floor 5" → resolve the metric's sensors per floor via the
+            # Brick spatial hierarchy (no building-specific label parsing). Falls
+            # through when the query names no floor + inferrable metric.
+            sparql_query = self._floor_scoped_sparql(user_query, class_target)
+            if sparql_query is not None:
+                logger.info("[sparql] using deterministic floor-scoped template (portable)")
+
             # Phase 3.1: Template-first routing (zero LLM for common patterns)
             # Expanded dynamically using OntologyIntrospector discovered classes
-            sparql_query = self._template_sparql(user_query, entities)
+            if sparql_query is None:
+                sparql_query = self._template_sparql(user_query, entities)
 
             used_template = sparql_query is not None
             # Default analytics decision for template queries
@@ -312,7 +336,11 @@ Your Answer:"""
                 # Phase 10E — pass building_id so the SPARQL prompt's prefix
                 # block uses this conversation's per-building namespace.
                 llm_result = await self._generate_sparql(
-                    user_query, context, instance_candidates, class_target, conversation_history,
+                    user_query,
+                    context,
+                    instance_candidates,
+                    class_target,
+                    conversation_history,
                     building_id=getattr(state, "building_id", None),
                 )
                 sparql_query = llm_result["sparql"]
@@ -353,20 +381,23 @@ Your Answer:"""
             # SPARQL repair targets the right ontology graph.
             _bctx_for_correction = None
             try:
-                from orchestrator.services.building_context import resolve_building_context
-                _bctx_for_correction = resolve_building_context(
-                    getattr(state, "building_id", None)
+                from orchestrator.services.building_context import (
+                    resolve_building_context,
                 )
+
+                _bctx_for_correction = resolve_building_context(getattr(state, "building_id", None))
             except Exception:
                 pass
             _ctx = {
                 "building_namespace": (
                     _bctx_for_correction.namespace
-                    if _bctx_for_correction else settings.BUILDING_NAMESPACE
+                    if _bctx_for_correction
+                    else settings.BUILDING_NAMESPACE
                 ),
                 "building_prefix": (
                     _bctx_for_correction.prefix
-                    if _bctx_for_correction else settings.BUILDING_PREFIX
+                    if _bctx_for_correction
+                    else settings.BUILDING_PREFIX
                 ),
                 "user_query": user_query,
                 "llm_call": None,
@@ -512,6 +543,7 @@ TRIPLES (Graph Structure):
         # falls back to settings when no building_id was supplied.
         try:
             from orchestrator.services.building_context import resolve_building_context
+
             _bctx = resolve_building_context(building_id)
             _bldg_prefix = _bctx.prefix
             _bldg_namespace = _bctx.namespace
@@ -818,6 +850,147 @@ Return ONLY the corrected SPARQL query."""
         logger.info(f"Repaired SPARQL query:\n{repaired}")
         return repaired
 
+    def _floor_scoped_sparql(self, user_query: str, class_target: Optional[str]) -> Optional[str]:
+        """Deterministic, building-portable floor-scoped sensor resolver.
+
+        For queries naming one or more floors plus an inferrable metric
+        ("compare temperature between floor 1 and floor 5", "average CO2 on
+        floor 3"), resolve that metric's sensors per floor through the Brick
+        spatial hierarchy: sensor → brick:hasLocation → (isPartOf|^hasPart)* →
+        brick:Floor. No building-specific label parsing, so it keeps working
+        after a building swap. Returns None when the query names no floor or no
+        metric class can be inferred (callers fall through to the normal path).
+        """
+        floors = re.findall(r"\b(?:floor|level)\s*(\d+)\b", user_query, re.IGNORECASE)
+        floors = sorted(set(floors), key=int)
+        if not floors:
+            return None
+        floor_in = ", ".join(f'"{f}"' for f in floors)
+        # Build the point SELECTOR with two naming-agnostic tiers:
+        #  1) Brick class (preferred) — from the keyword map or the HBCO concept.
+        #  2) rdfs:label text-match on the salient query terms — works for ANY URI
+        #     naming scheme (e.g. bldg:bldgx.ZONE.AHU01.RM123.Zone_Air_Temp) as long
+        #     as the point is labelled (every point carries rdfs:label).
+        # Either way resolution keys off class/label/location, never the URI string.
+        cls = self._infer_class(user_query.lower()) or class_target
+        if cls:
+            type_clause = f"?sensor a {cls} ."
+            label_clause = ""
+            logger.info(f"[sparql] floor-scoped resolve: class={cls} floors={floors}")
+        else:
+            terms = self._salient_terms(user_query)
+            if not terms:
+                return None
+            type_clause = ""
+            label_clause = (
+                "FILTER(" + " && ".join(f'CONTAINS(LCASE(STR(?label)), "{t}")' for t in terms) + ")"
+            )
+            logger.info(f"[sparql] floor-scoped resolve: label-match terms={terms} floors={floors}")
+        # ref: prefix is not in the standard block — declare it explicitly.
+        return (
+            self._prefix_block()
+            + "\nPREFIX ref: <https://brickschema.org/schema/Brick/ref#>"
+            + f"""
+SELECT DISTINCT ?sensor ?label ?floorNum ?uuid ?storage WHERE {{
+  ?sensor rdfs:label ?label ;
+          brick:hasLocation ?loc .
+  {type_clause}
+  {label_clause}
+  ?loc (brick:isPartOf|^brick:hasPart)* ?floor .
+  ?floor a brick:Floor .
+  BIND(REPLACE(STR(?floor), "^.*[Ff]loor", "") AS ?floorNum)
+  FILTER(?floorNum IN ({floor_in}))
+  ?sensor ref:hasExternalReference ?ref .
+  ?ref ref:hasTimeseriesId ?uuid .
+  OPTIONAL {{ ?ref ref:storedAt ?storage }}
+}} ORDER BY ?floorNum ?label LIMIT 100"""
+        )
+
+    # Stopwords stripped before label text-matching (keep domain nouns).
+    _SALIENT_STOP = frozenset(
+        {
+            "what",
+            "whats",
+            "is",
+            "are",
+            "the",
+            "on",
+            "in",
+            "at",
+            "of",
+            "for",
+            "to",
+            "me",
+            "my",
+            "show",
+            "give",
+            "tell",
+            "get",
+            "current",
+            "latest",
+            "reading",
+            "readings",
+            "value",
+            "values",
+            "level",
+            "levels",
+            "please",
+            "floor",
+            "number",
+            "right",
+            "now",
+            "today",
+            "this",
+            "much",
+            "many",
+            "how",
+            "there",
+            "do",
+            "does",
+            "and",
+            "or",
+            "status",
+            "data",
+            "sensor",
+            "sensors",
+            "you",
+            "have",
+            "any",
+            "all",
+            "with",
+            "from",
+            "about",
+            # comparison / aggregation / structure words — not metric nouns, so they
+            # must not become label-match terms ("compare floor 1 and floor 5").
+            "compare",
+            "comparison",
+            "between",
+            "versus",
+            "difference",
+            "vs",
+            "average",
+            "mean",
+            "trend",
+            "highest",
+            "lowest",
+            "maximum",
+            "minimum",
+        }
+    )
+
+    def _salient_terms(self, user_query: str, limit: int = 4) -> List[str]:
+        """Domain keywords for naming-agnostic rdfs:label matching.
+
+        Lowercases, strips punctuation (so 'run-time' -> 'run', 'time'), drops
+        stopwords and bare numbers, dedupes, and caps the count so the ANDed
+        label filter stays specific without over-constraining."""
+        raw = re.sub(r"[^a-z0-9]+", " ", user_query.lower())
+        out: List[str] = []
+        for t in raw.split():
+            if len(t) >= 3 and not t.isdigit() and t not in self._SALIENT_STOP and t not in out:
+                out.append(t)
+        return out[:limit]
+
     def _template_sparql(self, user_query: str, entities: List[str]) -> Optional[str]:
         """Return a direct SPARQL template for common sensor/location/entity queries with feature detection."""
         uq = user_query.lower()
@@ -826,12 +999,15 @@ Return ONLY the corrected SPARQL query."""
         # Special case: Building name query
         if ("building" in uq and "name" in uq) or "name of" in uq or "which building" in uq:
             # Query for building entity with rdfs:label
-            return self._prefix_block() + """
+            return (
+                self._prefix_block()
+                + """
 SELECT ?building ?label ?comment WHERE {
   ?building a brick:Building .
   OPTIONAL { ?building rdfs:label ?label . }
   OPTIONAL { ?building rdfs:comment ?comment . }
 } LIMIT 5"""
+            )
 
         # Entity-focused specialized queries
         if entities:
@@ -844,8 +1020,16 @@ SELECT ?building ?label ?comment WHERE {
             sensor_entities = [e for e in entities if e not in zone_entities]
 
             # Room/floor lookup for a zone: "what room is zone 5.14 in?"
-            _room_words = ["room", "which room", "which floor", "what floor", "which level"]
-            if zone_entities and any(w in uq for w in _room_words):
+            # Interrogative phrases only — a bare "room" substring would hijack
+            # measurement queries ("latest temperature reading in room 5.01")
+            # into this topology template, so SQL never receives a UUID.
+            _room_words = ["which room", "what room", "which floor", "what floor", "which level"]
+            _measurement_words = ("temperature", "humidity", "co2", "reading", "value", "sensor")
+            if (
+                zone_entities
+                and any(w in uq for w in _room_words)
+                and not any(m in uq for m in _measurement_words)
+            ):
                 patterns = []
                 for zone in zone_entities:
                     # Zone is part of a Room (brick:isPartOf)
@@ -904,7 +1088,8 @@ SELECT ?building ?label ?comment WHERE {
                     # to avoid LIMIT explosion from sensors with many external refs
                     patterns = []
                     for zone in zone_entities:
-                        patterns.append(f"""{{
+                        patterns.append(
+                            f"""{{
   ?sensor brick:hasLocation {zone} .
   ?sensor rdf:type ?type .
   FILTER(CONTAINS(STR(?type), 'Sensor') && !CONTAINS(STR(?type), '#Sensor') && STRSTARTS(STR(?type), 'https://brickschema'))
@@ -914,7 +1099,8 @@ SELECT ?building ?label ?comment WHERE {
     ?ref ref:hasTimeseriesId ?uuid .
     ?ref ref:storedAt ?storage .
   }}
-}}""")
+}}"""
+                        )
                     union_block = " UNION ".join(patterns)
                     return (
                         self._prefix_block()
@@ -950,12 +1136,14 @@ SELECT ?building ?label ?comment WHERE {
                 # Query for specific entity's label and definition
                 patterns = []
                 for ent in entities:
-                    patterns.append(f"""{{
+                    patterns.append(
+                        f"""{{
   {ent} rdfs:label ?label .
   OPTIONAL {{ {ent} rdfs:comment ?def . }}
   OPTIONAL {{ {ent} skos:definition ?def2 . }}
   BIND(COALESCE(?def, ?def2, "No definition available") AS ?definition)
-}}""")
+}}"""
+                    )
                 union_block = " \n UNION \n ".join(patterns)
                 return (
                     self._prefix_block() + f"\nSELECT ?label ?definition WHERE {{ {union_block} }}"
@@ -1019,7 +1207,9 @@ SELECT ?building ?label ?comment WHERE {
             )
             and not entities
         ):
-            return self._prefix_block() + f"""
+            return (
+                self._prefix_block()
+                + f"""
 SELECT ?sensor ?label ?type ?uuid ?storage WHERE {{
   ?sensor rdf:type {inferred_class_t0} .
   BIND({inferred_class_t0} AS ?type)
@@ -1028,6 +1218,7 @@ SELECT ?sensor ?label ?type ?uuid ?storage WHERE {{
   ?ref ref:storedAt ?storage .
   ?sensor ref:hasExternalReference ?ref .
 }} LIMIT 200"""
+            )
 
         # ── E.5: 5 additional template patterns ─────────────────────────────
         # T0.6: Zones (or sensors) on a specific floor ("what zones are on floor 5?")
@@ -1035,12 +1226,15 @@ SELECT ?sensor ?label ?type ?uuid ?storage WHERE {{
         _floor_num_m = re.search(r"\bfloor\s*(\d+)\b", uq)
         if _floor_num_m and any(w in uq for w in zone_words):
             floor_entity = f"bldg:Floor{_floor_num_m.group(1)}"
-            return self._prefix_block() + f"""
+            return (
+                self._prefix_block()
+                + f"""
 SELECT DISTINCT ?zone ?label WHERE {{
   {floor_entity} brick:hasPart ?zone .
   {{ ?zone a brick:HVAC_Zone . }} UNION {{ ?zone a brick:Zone . }}
   OPTIONAL {{ ?zone rdfs:label ?label . }}
 }} ORDER BY ?zone"""
+            )
 
         # T1: List all floors / storeys — only when not asking about zones or equipment on a floor
         _equip_words_t1 = [
@@ -1067,31 +1261,43 @@ SELECT DISTINCT ?zone ?label WHERE {{
             and _no_zones
             and _no_equip
         ):
-            return self._prefix_block() + """
+            return (
+                self._prefix_block()
+                + """
 SELECT (COUNT(DISTINCT ?floor) AS ?count) WHERE {
   { ?floor a brick:Floor . } UNION { ?floor a brick:Level . }
 }"""
+            )
         if any(w in uq for w in floor_words) and not entities and _no_zones and _no_equip:
-            return self._prefix_block() + """
+            return (
+                self._prefix_block()
+                + """
 SELECT ?floor ?label WHERE {
   { ?floor a brick:Floor . } UNION { ?floor a brick:Level . }
   OPTIONAL { ?floor rdfs:label ?label . }
 } ORDER BY ?label LIMIT 50"""
+            )
 
         # T2: List all zones / rooms / spaces
         # Zones in this ontology have no rdf:type — discoverable only via brick:hasLocation
         if any(w in uq for w in zone_words) and features["wants_count"] and not entities:
-            return self._prefix_block() + """
+            return (
+                self._prefix_block()
+                + """
 SELECT (COUNT(DISTINCT ?space) AS ?count) WHERE {
   { ?space a brick:Zone . } UNION { ?space a brick:Room . } UNION { ?space a brick:Space . }
   UNION { ?sensor brick:hasLocation ?space . FILTER(CONTAINS(STR(?space), "Zone")) }
 }"""
+            )
         if any(w in uq for w in zone_words) and not entities:
-            return self._prefix_block() + f"""
+            return (
+                self._prefix_block()
+                + f"""
 SELECT DISTINCT ?space (COUNT(?sensor) AS ?sensor_count) WHERE {{
   ?sensor brick:hasLocation ?space .
   FILTER(CONTAINS(STR(?space), "Zone") || CONTAINS(STR(?space), "Room") || CONTAINS(STR(?space), "Floor"))
 }} GROUP BY ?space ORDER BY ?space LIMIT 100"""
+            )
 
         # T3a: Direct sensor/entity lookup (entity itself is a sensor/point)
         sensor_entities = [e for e in entities if re.search(r"(Sensor|Point)", e)]
@@ -1161,7 +1367,9 @@ SELECT DISTINCT ?space (COUNT(?sensor) AS ?sensor_count) WHERE {{
                     )
                 # For generic 'hvac' keyword, query all HVAC-related types (AHU, VAV, etc.)
                 if kw == "hvac":
-                    return self._prefix_block() + """
+                    return (
+                        self._prefix_block()
+                        + """
 # HVAC Equipment listing
 SELECT ?equip ?label ?type WHERE {
   { ?equip a brick:Air_Handler_Unit . BIND("HVAC Air Handler Unit" AS ?type) }
@@ -1172,25 +1380,32 @@ SELECT ?equip ?label ?type WHERE {
   UNION { ?equip a brick:Pump . BIND("HVAC Pump" AS ?type) }
   OPTIONAL { ?equip rdfs:label ?label . }
 } ORDER BY ?type ?equip LIMIT 100"""
-                return self._prefix_block() + f"""
+                    )
+                return (
+                    self._prefix_block()
+                    + f"""
 SELECT ?equip ?label ?location WHERE {{
   ?equip a {equip_class} .
   OPTIONAL {{ ?equip rdfs:label ?label . }}
   OPTIONAL {{ ?equip brick:hasLocation ?location . }}
 }} LIMIT 50"""
+                )
 
         # T5: Building hierarchy / location tree
         hierarchy_words = ["hierarchy", "structure", "layout", "topology", "contains", "hasPart"]
         if any(w in uq for w in hierarchy_words) or (
             "building" in uq and any(w in uq for w in ["structure", "layout", "contains"])
         ):
-            return self._prefix_block() + """
+            return (
+                self._prefix_block()
+                + """
 SELECT ?parent ?parentLabel ?child ?childLabel WHERE {
   { ?parent brick:hasPart ?child . }
   UNION { ?parent brick:hasLocation ?child . FILTER(?parent != ?child) }
   OPTIONAL { ?parent rdfs:label ?parentLabel . }
   OPTIONAL { ?child rdfs:label ?childLabel . }
 } LIMIT 100"""
+            )
 
         # Phase 3.1: Use expanded class map (static + OntologyIntrospector discovered)
         class_map = self._get_extended_class_map()
@@ -1226,11 +1441,14 @@ SELECT ?parent ?parentLabel ?child ?childLabel WHERE {
             # "what types" / "list types" → DISTINCT type + count
             type_words = ["types", "type of", "kinds", "categories", "what type", "which type"]
             if any(w in uq for w in type_words):
-                return self._prefix_block() + """
+                return (
+                    self._prefix_block()
+                    + """
 SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
   ?sensor rdf:type ?type .
   FILTER(CONTAINS(STR(?type), 'Sensor') || CONTAINS(STR(?type), 'Point'))
 } GROUP BY ?type ORDER BY DESC(?count)"""
+                )
             return (
                 self._prefix_block()
                 + "\nSELECT ?sensor ?type ?location ?uuid ?storage ?unit WHERE {\n  ?sensor rdf:type ?type .\n  FILTER(CONTAINS(STR(?type), 'Sensor') || CONTAINS(STR(?type), 'Point'))\n  OPTIONAL { ?sensor brick:hasLocation ?location . }\n  OPTIONAL { ?sensor brick:hasUnit ?unit . }\n  OPTIONAL { ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }\n  OPTIONAL { ?sensor bldg:connstring ?uuid . }\n} LIMIT 50"
@@ -1262,26 +1480,44 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
             "stuffy": "brick:CO2_Level_Sensor",
             "stale air": "brick:CO2_Level_Sensor",
             "occupancy": "brick:Occupancy_Sensor",
+            "people counter": "brick:Occupancy_Sensor",
+            "footfall": "brick:Occupancy_Sensor",
             "pressure": "brick:Pressure_Sensor",
             "air quality": "brick:Air_Quality_Sensor",
             "motion": "brick:Occupancy_Sensor",
-            "light": "brick:Luminance_Sensor",
+            "light": "brick:Illuminance_Sensor",
+            "lighting": "brick:Illuminance_Sensor",
+            "lux": "brick:Illuminance_Sensor",
             "illuminance": "brick:Illuminance_Sensor",
-            "sound": "brick:Sound_Pressure_Level_Sensor",
-            "noise": "brick:Sound_Pressure_Level_Sensor",
             "voc": "brick:TVOC_Sensor",
             "tvoc": "brick:TVOC_Sensor",
+            "pm2.5": "brick:PM2.5_Level_Sensor",
+            "pm25": "brick:PM2.5_Level_Sensor",
+            "particulate": "brick:PM2.5_Level_Sensor",
+            # Modalities standardized out of input/data (energy, water, runtime).
+            "energy": "brick:Energy_Sensor",
+            "power": "brick:Energy_Sensor",
+            "electricity": "brick:Energy_Sensor",
+            "kwh": "brick:Energy_Sensor",
+            "water": "brick:Water_Flow_Sensor",
+            "water flow": "brick:Water_Flow_Sensor",
+            "runtime": "brick:Run_Time_Sensor",
+            "run time": "brick:Run_Time_Sensor",
         }
+        # Custom point classes use the active building prefix (Brick 1.4 has no
+        # native noise/vibration point class). Absent in other buildings → the
+        # query simply returns nothing and the caller falls through gracefully.
+        _pfx = _active_prefix()
+        static_map["noise"] = f"{_pfx}:Noise_Level_Sensor"
+        static_map["sound"] = f"{_pfx}:Noise_Level_Sensor"
+        static_map["acoustic"] = f"{_pfx}:Noise_Level_Sensor"
+        static_map["vibration"] = f"{_pfx}:Vibration_Sensor"
         if ontology_introspector.is_ready():
             # Phase 15A: per-request building prefix (falls back to settings).
             _bldg_pfx = _active_prefix()
             for local_name in ontology_introspector.sensor_classes:
                 keyword = local_name.replace("_Sensor", "").replace("_", " ").lower()
-                ns = (
-                    _bldg_pfx
-                    if local_name.startswith(_bldg_pfx)
-                    else "brick"
-                )
+                ns = _bldg_pfx if local_name.startswith(_bldg_pfx) else "brick"
                 if keyword not in static_map:
                     static_map[keyword] = f"{ns}:{local_name}"
         return static_map
@@ -1431,17 +1667,15 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
         """
         if building_id:
             try:
-                from orchestrator.services.building_context import resolve_building_context
-                bctx = resolve_building_context(building_id)
-                custom = (
-                    _STANDARD_PREFIXES
-                    + [f"PREFIX {bctx.prefix}: <{bctx.namespace}>"]
+                from orchestrator.services.building_context import (
+                    resolve_building_context,
                 )
+
+                bctx = resolve_building_context(building_id)
+                custom = _STANDARD_PREFIXES + [f"PREFIX {bctx.prefix}: <{bctx.namespace}>"]
                 return "\n".join(custom)
             except Exception as e:
-                logger.debug(
-                    f"[sparql] per-building prefix lookup failed for {building_id}: {e}"
-                )
+                logger.debug(f"[sparql] per-building prefix lookup failed for {building_id}: {e}")
         return "\n".join(EXTENDED_PREFIXES)
 
     def _extract_entities(self, user_query: str) -> List[str]:
@@ -1676,13 +1910,16 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
         token = brick_class.split(":", 1)[1].replace("_Sensor", "")
 
         # Pattern-based query (Phase 15A: per-request building namespace).
-        alt_query = self._prefix_block() + f"""
+        alt_query = (
+            self._prefix_block()
+            + f"""
 SELECT ?sensor ?location ?uuid WHERE {{
     ?sensor ?p ?o .
     FILTER(STRSTARTS(STR(?sensor), '{_active_namespace()}') && CONTAINS(STR(?sensor), '{token}_Sensor'))
     OPTIONAL {{ ?sensor brick:hasLocation ?location . }}
     OPTIONAL {{ ?sensor bldg:connstring ?uuid . }}
 }} LIMIT 50"""
+        )
 
         logger.info(f"Attempting pattern fallback for token: {token}")
 
