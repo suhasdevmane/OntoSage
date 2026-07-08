@@ -1,608 +1,333 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with this repository.
+Guidance for Claude Code working in this repo. Keep it lean — deep detail lives in
+[ONTOSAGE.md](./ONTOSAGE.md) and [docs/](./docs/). **Read the [Notes](#notes) at the bottom first — they govern how to work here.**
+
+---
+
+## New session orientation (read this first)
+
+**Current branch:** `security/p0-hardening` — active development. Changes not yet merged to `main`.
+
+**Three files every session must read** (in order):
+1. `CLAUDE.md` (this file) — navigation index, debugging, workflow rules
+2. `README.md` — architecture overview, stakeholder guide, data setup
+3. `ONTOSAGE.md` — complete technical reference (source layout, all phases, config)
+
+**Current state snapshot (2026-07-07):**
+- Test suite: **416 tests passing** (`pytest -m unit -q`)
+- Corpus coverage: **63.8%** pass rate on 240-question stratified replay
+- Admin portal: `/admin` React tab + 8 FastAPI endpoints under `/api/v1/admin/` — **complete, not committed**
+- Narrow MySQL tables: 7 `(uuid, datetime, value)` tables + `MySQLNarrowAdapter` — **complete, not committed**
+- TTL extensions: `bldg1_timeseries_extension.ttl` (19 sensors) + `bldg1_security_lighting_extension.ttl` (293 triples) — **complete, not committed**
+- RBAC enforcement: `require_permission()` on all data endpoints — **complete, not committed**
+- `STRICT_SECRETS=true` boot guard — **complete, not committed**
+- **Nothing committed** — all P0 work is staged/unstaged on `security/p0-hardening`; user reviews before any commit
+
+**To verify current state before starting work:**
+```bash
+pytest -m unit -q                                  # should show 416 pass, 0 fail
+git status                                         # shows what's modified vs committed
+git diff --stat HEAD                               # shows scope of uncommitted changes
+docker-compose logs --tail=20 orchestrator         # live system health
+```
+
+**Open issues / pending decisions:**
+- P0 changes need user review and explicit commit approval before any `git commit` or `git push`
+- `data/mysql-init/init.sql` creates `abacws` DB (legacy); live system uses `sensordb` — mismatch is inert (MySQL container is disabled; host MySQL used directly)
+- Maintenance agent "report broken light" → generic fallback (only remaining live survey WARN)
+
+---
 
 ## Commands
 
-### Running the full stack
 ```bash
-# Start all services (requires Docker)
-docker-compose up -d
+# Stack
+docker-compose up -d                                   # start all services
+docker-compose build orchestrator && docker-compose up -d orchestrator   # rebuild one
+docker-compose logs -f orchestrator                    # live logs
 
-# Rebuild one service after code changes
-docker-compose build orchestrator && docker-compose up -d orchestrator
+# Health
+curl http://localhost:8000/health   # orchestrator (8001 rag, 8002 code-executor)
 
-# View live logs
-docker-compose logs -f orchestrator
-docker-compose logs -f rag-service
-```
+# Tests
+pytest tests/ -v                                       # all (live e2e need the stack up)
+pytest -m unit            # fast / offline      pytest -m integration   # needs services
+pytest tests/test_routing_accuracy.py -v               # single file
+# CI deterministic suite = 416 tests on 3.10/3.11/3.12 (see .github/workflows/ci.yml)
 
-### Health checks
-```bash
-curl http://localhost:8000/health        # Orchestrator
-curl http://localhost:8001/health        # RAG Service
-curl http://localhost:8002/health        # Code Executor
-```
-
-### Testing
-```bash
-pytest tests/ -v                                              # all tests
-pytest tests/test_phase3_4_services.py -v                    # single file
-pytest tests/test_phase3_4_services.py::test_ontology_validator -v  # single test
-pytest tests/ --cov=orchestrator --cov-report=html           # with coverage
-pytest -m unit                                                # by marker
-pytest -m integration
-```
-
-### Linting
-```bash
-black --line-length 100 orchestrator/ shared/ scripts/ tests/   # format
-isort --profile black orchestrator/ tests/                      # imports
-flake8 orchestrator/ shared/ scripts/ \
-  --max-line-length 110 --extend-ignore=E203,E501,W503 \
-  --per-file-ignores="__init__.py:F401"
+# Lint (run before commit)
+black --line-length 100 orchestrator/ shared/ scripts/ tests/
+isort --profile black orchestrator/ tests/
+flake8 orchestrator/ shared/ scripts/ --select=F821,F823   # the only BLOCKING gate
 bandit -r orchestrator/ shared/ -ll --exclude orchestrator/tests
+
+# QA — the canonical end-to-end check (every persona × intent × flow)
+python scripts/ontosage_qa_suite.py            # full battery → scripts/outputs/qa_run_<ts>.{json,md}
+python scripts/ontosage_qa_suite.py --quick    # fast sample
+python scripts/ontosage_qa_suite.py --ids RI05,VZ01 --convos CONV5   # targeted re-test
 ```
 
-### Building onboarding CLI
+### Onboard / swap a building
 ```bash
-python scripts/onboard_building.py --building-id bldg2 --non-interactive
+python scripts/onboard_building.py --building-id bldg2 --non-interactive   # generate config
+# Swap the ACTIVE building (v1 serves one at a time):
+python scripts/swap_building.py --to bldg2 --dry-run    # validate (TTL @prefix bldg: ↔ ontology_namespace)
+python scripts/swap_building.py --to bldg2 --archive    # apply: update .env, archive old, flush resp_cache
+docker-compose restart orchestrator                     # TTL validator runs first; hard-fails on mismatch
 ```
+**Input layout — FLAT is canonical.** The active building's files sit directly under
+`input/`: `input/building.yaml` + `input/*.ttl` (required); `*.dwg`, `*.pdf`,
+`capability.yaml`, `intents.yaml`, `documents/`, `personas/` (optional). The nested form
+`input/<id>/…` is still supported as a *fallback* (staging / future multi-building). All
+per-building loaders resolve paths via `shared/building_paths.py`
+(`resolve_building_file`/`resolve_building_dir` — nested first, then flat), so don't hardcode
+either form. Swap exits non-zero if neither layout exists, `building.yaml` lacks required keys
+/ `building_id` ≠ declared id, or a TTL prefix disagrees with `ontology_namespace`.
 
-### Swapping the active building (Phase 12C — added 2026-05-29)
+> **Sensor data belongs in a database, not in `input/`.** `input/` holds metadata/config only.
+> Time-series readings live in a DB (MySQL/Postgres) and are referenced from the ontology via
+> `ref:hasExternalReference → ref:TimeseriesReference (ref:hasTimeseriesId + ref:storedAt)`.
+> Raw CSV sensor files in `input/` are deprecated — see
+> `tasks/IMPLEMENTATION_PLAN_FLAT_LAYOUT_AND_DATA_PIPELINE.md` (Workstream B).
 
-OntoSage v1 serves one building at a time.  To swap from `bldg1` to a new
-`bldg2`:
+**V3 per-building optional files** (validators in `services/input_validators.py`):
+`feeds.yaml` (live data sources), `recipes.yaml` (override/extend), `rules.yaml` (ECA alerts),
+`channels.yaml` (notification dispatch), `benchmarks.csv`, `concepts.ttl` (lay-term overlay),
+`documents/` (policy/manual KB). All optional — absent = feature silently skipped.
 
 ```bash
-# 1. Drop the new building's files under input/bldg2/
-#    Required: building.yaml, *.ttl (with @prefix bldg: matching the
-#    ontology_namespace declared in building.yaml).  Optional: *.dwg, *.pdf,
-#    capability.yaml, intents.yaml, personas/.
-
-# 2. Dry-run the swap to validate consistency without writing anything.
-python scripts/swap_building.py --to bldg2 --dry-run
-
-# 3. Apply the swap (updates .env, optionally archives the old input dir).
-python scripts/swap_building.py --to bldg2 --archive
-
-# 4. Restart the orchestrator.  The TTL validator runs first; mismatches
-#    hard-fail boot with a clear error.
-docker-compose restart orchestrator
-docker-compose logs -f orchestrator | grep ttl_validator
+# Corpus replay — measure answerable share (requires live stack)
+python scripts/corpus_replay.py                    # 240q stratified (40 per L1-L6)
+python scripts/corpus_replay.py --sample 60        # quick smoke test
+python scripts/corpus_replay.py --out-prefix <ts>  # resume a previous run
 ```
-
-The swap CLI fails (exit code 2) if:
-- `input/<new>/` does not exist
-- `building.yaml` is missing required keys or its `building_id` ≠ directory name
-- Any TTL declares a `@prefix bldg:` that does not match `ontology_namespace`
-
-OntoSage v2 (Onto-community) will support multiple buildings concurrently.
-The per-building infrastructure in code today (registry cache keyed by
-`building_id`, `BuildingContextResolver`, per-building Qdrant collections)
-is the forward-compatible foundation for that.
 
 ---
 
 ## Architecture
 
-OntoSage is an **agentic AI framework** for smart buildings. Users ask natural language questions; the system retrieves answers from a knowledge graph (ontology) and/or a time-series database, then synthesizes responses.
-
-### Hub-and-spoke agent orchestration
-
-`orchestrator/workflow.py` defines a **LangGraph state machine**. Every request flows through:
+`orchestrator/workflow/` is a **LangGraph** state machine (package: `_orchestrator.py` = nodes
++ `_route_from_dialogue`; `_graph.py` = `_build_graph`/`_safe_node`; `_routing.py` = downstream
+routes). Per request:
 
 ```
-WebSocket/HTTP → dialogue → [routing] → sparql / sql / analytics / planner
-                                      → report / anomaly / export / floor_plan
-                                      → spatial_query / document
-                                      ↓
-                                   visualization → response → END
+POST /chat (or /v1/chat/completions)
+  → [co-reference rewrite]  → dialogue (intent + entities)  → route
+  → sparql → sql → analytics/forecast → visualization        (data flows)
+  → capability / floor_plan / spatial / report_intake / control / planner  (standalone)
+  → response → [persist memory]
 ```
 
-1. **dialogue** (`agents/dialogue_agent.py`): LLM classifies intent into one of 16 types and extracts entities/time ranges → `state.intermediate_results`.
-2. **sparql** (`agents/sparql_agent.py`): Generates + executes SPARQL against GraphDB (port 7200). Falls back to semantic RAG via `rag-service` (port 8001). Returns UUIDs for downstream SQL.
-3. **sql** (`agents/sql_agent.py`): Fetches time-series data by UUID via storage adapters (MySQL for Building 1, PostgreSQL for others).
-4. **analytics** (`agents/analytics_agent.py`): LLM-generates Python code; executes in sandboxed `code-executor` (port 8002).
-5. **floor_plan** (`agents/floor_plan_agent.py`): Reads `FloorPlanManifest` JSON; returns PNG image + room list. No SPARQL/SQL.
-6. **spatial_query** (`agents/spatial_agent.py`): Pure manifest analysis — area, adjacency, block counts. No LLM calls.
-7. **visualization** (`agents/visualization_agent.py`): matplotlib/plotly → `/app/outputs/static/`.
-8. **response** node: Formats final markdown response.
+- **Nodes auto-register** from `orchestrator/intents/intent_definitions.yaml` (no graph edits to add an intent).
+- **dialogue** (`agents/dialogue_agent.py`): LLM classifies intent + extracts entities; runs the
+  co-reference rewrite and the capability semantic-router probe first.
+- **sparql** (`agents/sparql_agent.py`): SPARQL gen+exec on GraphDB (7200), RAG fallback (8001); returns UUIDs.
+- **sql** (`agents/sql_agent.py`): time-series by UUID via storage adapters (MySQL bldg1).
+- **analytics** (`agents/analytics_agent.py`): LLM Python → sandboxed `code-executor` (8002).
+- **forecast** (`agents/forecast_agent.py` + `services/forecasting/`): multi-model (ARIMA/ETS/linear), runs inside the `trend` pipeline.
+- **floor_plan / spatial** (`agents/floor_plan_agent.py`, `spatial_agent.py`): PDF/DWG manifests; no LLM for spatial.
+- **capability** (`agents/capability_agent.py`): off-ontology KB (Qdrant `capability_<bldg>`) + document KB (Qdrant `documents_<bldg>`).
+- **report_intake** (`services/report_intake_service.py`): fault/complaint/safety/feedback/suggestion → `user_reports`.
+- **sql adapters** (`services/adapters/`): `registry.py` routes by `ref:storedAt` key → `mysql_adapter.py` (wide `sensor_data` table) or `mysql_narrow_adapter.py` (narrow `(uuid, datetime, value)` per-modality tables — P0 addition).
 
-Routing is all conditional edges in `workflow.py:_build_graph` (line 132) and `_route_from_dialogue` (line 1521).
+**P0 additions** (all behind `system:admin` RBAC):
+- **Admin endpoints** (`main.py` — 8 new routes under `/api/v1/admin/`): ontology CRUD + Qdrant reindex job queue.
+- **Ontology manager** (`services/ontology_manager.py`): async GraphDB admin via httpx — list/validate/upload/drop named graphs + SELECT browser.
+- **Reindex service** (`services/reindex_service.py`): background job queue for re-embedding capability/documents/floor_plans into Qdrant. Singleton `_reindex_service_instance` in `main.py`.
+- **RBAC** (`middleware/rbac.py`): `require_permission(perm)` → `get_user_context` dependency chain; all data endpoints now return 401 without valid session.
+- **Admin React portal** (`frontend/src/pages/AdminPortal.js`): 9-tab UI at `/admin`; backed by the 8 admin endpoints above.
 
-### Floor Plan Pipeline (PDF + DWG)
+**V3 additions** (all config-driven, zero code for new buildings):
+- **HBCO concept resolver** (`services/concept_resolver.py`): lay-term → Brick class + recipe via `ontology/hbco_core.ttl` + `hbco_mappings.ttl`; per-building overlay `input/<id>/concepts.ttl`. Injected into dialogue + SPARQL + analytics.
+- **Feed framework** (`services/feeds/`): config-driven live data — `rest_poll`, `csv_drop` adapters; point auto-registration in GraphDB; `input/<id>/feeds.yaml`.
+- **ECA rules engine** (`services/rules_engine.py`): standing event-condition-action rules evaluated against telemetry; `input/<id>/rules.yaml`; notification dispatch via `services/notification_service.py` + `input/<id>/channels.yaml`.
+- **Actuation gateway** (`services/actuation/`): `ActuationDriver` ABC → `SimDriver` (log-only, Postgres `actuation_log`) → `ActuationRegistry`; `input/<id>/building.yaml` `actuation:` block.
+- **Goal planner** (`services/goal_planner.py`): mandate decomposition ('make eco-friendly') → KPI sub-queries; `config/goals.yaml`; `GOAL_PLANNER_ENABLED` flag (default false).
+- **Notification service** (`services/notification_service.py`): routes rule alerts and user requests to log/webhook/smtp channels from `input/<id>/channels.yaml`.
+- **Recipe registry** (`services/recipe_registry.py`): threshold/range/aggregate/benchmark/estimate recipes; `config/recipes.yaml` + per-building overlay.
+- **Document indexer** (`services/document_indexer.py`): SHA-idempotent ingestion of `input/<id>/documents/` into Qdrant `documents_<bldg>`.
 
-Two parallel pipelines auto-run on every startup and are orchestrated by `FloorPlanRegistry`:
+Full design, all phases, and the floor-plan PDF+DWG pipeline: **[ONTOSAGE.md](./ONTOSAGE.md)**.
 
-```
-/app/input/*.pdf  → FloorPlanPipeline  → text extraction, OCR fallback, zone ID regex
-/app/input/*.dwg  → DWGPipeline        → dwg2dxf → ezdxf → shapely polygons, area, adjacency
-                       ↓
-               FloorPlanRegistry._merge()   ← DWG wins geometry; PDF wins render/image
-                       ↓
-          floor_plans/abacws/floor_N.manifest.json
-                       ↓
-               Qdrant floor_plans collection  ← all spaces re-indexed with full payload
-```
+### Conversation memory & co-reference
+- **Memory** (`services/turn_memory.py`): Redis `conversation:<id>` holds recent state, **count-bounded**
+  to `CONVERSATION_MAX_MESSAGES` with **no time-expiry by default** (`CONVERSATION_TTL=0`). Postgres
+  `turn_memory` keeps per-turn summaries + **carry-forward** of `forecast_result`/`analytics_result`
+  (so "now plot that" works). Long-term context injected on `/v1/chat/completions`.
+- **Co-reference**: `dialogue_agent.rewrite_to_standalone()` rewrites follow-ups
+  ("…humidity *there*?") to self-contained queries before classification (`COREFERENCE_REWRITE_ENABLED`).
 
-- **Idempotent**: SHA-256 fingerprint per file — unchanged files skip reprocessing.
-- **Graceful degradation**: if `dwg2dxf` is absent (not in Debian Bookworm repos), the DWG pipeline logs a warning and produces PDF-only `schema_version="1.0"` manifests. Install via `libredwg-utils` from sid/trixie or build from source.
-- **File watcher**: `floor_plan_watcher.py` watches `/app/input/` at runtime — drop a new `.pdf` or `.dwg` and it auto-ingests within 3 seconds.
-- **Building config**: per-building YAML at `/app/input/<building_id>/building.yaml` overrides zone ID patterns, layer maps, DPI, etc. See `shared/floor_plan_config.py`.
+### Shared state
+All nodes read/write one `ConversationState` (`shared/models.py`); `intermediate_results: Dict` is the
+data bus. **Reserved keys — never overwrite another node's key:**
+`intent`, `entities`, `time_range` (dialogue) · `sparql_results`, `uuids` (sparql) · `sql_data` (sql)
+· `analytics_output` (analytics) · `visualization_path` (visualization) · `concepts` (concept_resolver)
+· `recipe_hints` (concept_resolver → analytics) · `control_result` (control) · `goal_plan` (planner)
+· `error` (_safe_node on failure).
 
-### How the system chooses TTL/SPARQL vs PDF/DWG data
-
-| User question type | Intent classified as | Data source |
-|--------------------|---------------------|-------------|
-| Sensor readings, temperature, CO2 | `sensor_data`, `analytics` | GraphDB TTL (ontology) + MySQL (time-series) |
-| What sensors exist, building discovery | `discovery` | GraphDB TTL only |
-| Show me floor 3 / where is room 3.01 | `floor_plan` | Manifest JSON + PNG |
-| Area, adjacency, room count, block query | `spatial_query` | Manifest JSON (geometry) |
-| Semantic room search (RAG fallback) | any SPARQL failure | Qdrant `floor_plans` vectors |
-
-The TTL/GraphDB knows *what sensors exist and how they relate*. The manifests know *what rooms look like and their geometry*. They are separate knowledge domains, never merged.
-
-### Shared state: ConversationState
-
-All agents read and write one `ConversationState` object (`shared/models.py:222`). Key field: `intermediate_results: Dict[str, Any]` — passes data between nodes (intent, entities, SPARQL results, SQL data, analytics output, etc.). Persisted in Redis with 1-hour TTL.
-
-### Storage layer
-
+### Storage
 | Store | Port | Purpose |
-|-------|------|---------|
-| **GraphDB** | 7200 | RDF ontology (Brick/BACnet TTL). Stores sensor types, zones, hierarchies. Used by SPARQL agent. |
-| **MySQL** | 3306 | Building 1 sensor time-series (temperature, CO2, humidity). Rows keyed by UUID that links to ontology. |
-| **PostgreSQL** | 5433 | User accounts, Argon2id password hashes, RBAC roles. No building data. |
-| **Redis** | 6379 | Three caches: conversation state (1hr), response cache (avoid repeat OpenAI calls), floor plan manifest hot-cache. |
-| **Qdrant** | 6333 | Two collections: `floor_plans` (room description vectors + DWG geometry payload for semantic search); `user_memory` (cross-session agent memory per user). |
-| **MongoDB** | 27017 | Full chat history transcripts per session (used by OpenWebUI). |
+|---|---|---|
+| GraphDB | 7200 | Brick/BACnet RDF ontology (SPARQL) |
+| MySQL | 3306 | Sensor time-series (UUID-keyed) |
+| PostgreSQL | 5433 | Users + RBAC + `turn_memory` + `user_reports` |
+| Redis | 6379 | Conversation state (count-bounded) + `resp_cache:*` (1h) + `cache:embed:*` (24h) + async job queue |
+| Qdrant | 6333 | `floor_plans`, `capability_<bldg>`, `user_memory` |
+| MongoDB | 27017 | Full chat transcripts (OpenWebUI) |
 
-### LLM / embedding provider
-
-`shared/config.py` is the single source of truth. Switch via `MODEL_PROVIDER` env var:
-- `openai` → OpenAI API (default: `gpt-4o-mini` for most; `o3-mini` for analytics)
-- `local` → Ollama at `http://ollama:11434` (default model: `deepseek-r1:32b`)
-- `cloud` → Ollama Cloud
-
-Copy `.env.local` (local GPU) or `.env.cloud` (OpenAI) to `.env` before starting.
-
-### Authentication
-
-`orchestrator/auth_manager.py`: Argon2id password hashing with transparent migration from legacy SHA-256. Sessions are 32-byte random tokens in Redis with 7-day TTL.
-
-RBAC (`orchestrator/middleware/rbac.py`): 6 roles (admin, facility_manager, analyst, operator, occupant, readonly) × 20 permissions. Use `require_permission()` FastAPI dependency to protect endpoints.
+### Providers & auth
+- `shared/config.py` is the single source of truth. `MODEL_PROVIDER` = `openai` / `local` (Ollama) / `cloud`;
+  `EMBEDDING_PROVIDER` = `openai` (1536-d) / `local` (MiniLM 384-d) — independent.
+- `STRICT_SECRETS=true` refuses startup on default passwords; secrets masked in `Settings` repr.
+- `auth_manager.py`: Argon2id + Redis sessions (7-day). RBAC (`middleware/rbac.py`): 6 roles × 20 perms;
+  protect endpoints with `require_permission()`.
 
 ---
 
 ## Quick Navigation Index
 
-Use these as the **first `Read` call** for any task — jump straight to the right function without scanning whole files.
+First `Read` target for a task — go straight to the symbol (line numbers drift; search the symbol).
 
-| Task | File | Line | Symbol |
-|------|------|------|--------|
-| Intent routing (all 16 branches) | `orchestrator/workflow.py` | 1521 | `_route_from_dialogue` |
-| Add/register a new graph node | `orchestrator/workflow.py` | 132 | `_build_graph` — `add_node()` block |
-| SPARQL generation + execution | `orchestrator/agents/sparql_agent.py` | 174 | `generate_query()` |
-| SPARQL context retrieval | `orchestrator/agents/sparql_agent.py` | 324 | `_retrieve_context()` |
-| SPARQL query builder | `orchestrator/agents/sparql_agent.py` | 400 | `_generate_sparql()` |
-| Floor plan manifest load/search | `orchestrator/services/floor_plan_pipeline.py` | 126 | `class FloorPlanPipeline` |
-| Floor plan Qdrant indexing | `orchestrator/services/floor_plan_pipeline.py` | 522 | `_embed_and_index()` |
-| Floor plan manifest enumeration | `orchestrator/services/floor_plan_pipeline.py` | 342 | `list_manifests()` |
-| DWG+PDF merge orchestrator | `orchestrator/services/floor_plan_registry.py` | 30 | `class FloorPlanRegistry` |
-| DWG+PDF merge logic | `orchestrator/services/floor_plan_registry.py` | 120 | `_merge()` |
-| Qdrant re-index after merge | `orchestrator/services/floor_plan_registry.py` | 272 | `_reindex_merged_spaces()` |
-| DWG ingestion pipeline | `orchestrator/services/dwg_pipeline.py` | 156 | `class DWGPipeline` |
-| DWG label→space association | `orchestrator/services/dwg_pipeline.py` | 768 | `_associate_labels()` |
-| DWG sensor→ontology linking | `orchestrator/services/dwg_pipeline.py` | 514 | `_link_sensor_blocks()` |
-| DWG adjacency computation | `orchestrator/services/dwg_pipeline.py` | 869 | `_compute_adjacency()` |
-| File watcher (PDF + DWG) | `orchestrator/services/floor_plan_watcher.py` | 26 | `watch_forever()` |
-| Spatial geometry queries | `orchestrator/agents/spatial_agent.py` | 101 | `class SpatialAgent` |
-| Spatial manifest loading | `orchestrator/agents/spatial_agent.py` | 440 | `_load_manifests()` |
-| Response formatting | `orchestrator/workflow.py` | 1194 | `_response_node()` |
-| Spatial query node | `orchestrator/workflow.py` | 2334 | `_spatial_query_node()` |
-| Dialogue intent classification | `orchestrator/agents/dialogue_agent.py` | — | `classify_intent()` — search for `INTENT_DEFINITIONS` |
-| SQL / time-series failure | `orchestrator/agents/sql_agent.py` | 1 | entry; then `services/adapters/registry.py` |
-| Storage adapter routing | `orchestrator/services/adapters/registry.py` | 1 | maps building_id → MySQL/PostgreSQL |
-| Analytics code execution | `orchestrator/agents/analytics_agent.py` | 1 | calls `code-executor` port 8002 |
-| Auth / session issues | `orchestrator/auth_manager.py` | 65 | `class AuthManager` |
-| RBAC role → permission map | `orchestrator/middleware/rbac.py` | 78 | `ROLE_PERMISSIONS` |
-| All env vars / service URLs | `shared/config.py` | 1 | `Settings` class |
-| ConversationState fields | `shared/models.py` | 222 | `class ConversationState` |
-| FloorPlanManifest schema | `shared/models.py` | 449 | `class FloorPlanManifest` |
-| Space / Block models | `shared/models.py` | 400 | `class Block`, `class Space` |
-| Per-building floor plan config | `shared/floor_plan_config.py` | 69 | `class BuildingConfig` |
-| RAG semantic fallback | `orchestrator/services/hybrid_retrieval.py` | 1 | `hybrid_retrieval()` |
-| Circuit breaker | `orchestrator/services/circuit_breaker.py` | 41 | `class CircuitBreaker` |
-| FastAPI startup / lifespan | `orchestrator/main.py` | 278 | `async def lifespan` |
-| Floor plan registry startup | `orchestrator/main.py` | 419 | floor plan registry block |
-| Health endpoint | `orchestrator/main.py` | 613 | `@app.get("/health")` |
-| OpenAI-compat chat endpoint | `orchestrator/main.py` | 2112 | `@app.post("/v1/chat/completions")` |
-| Floor plan REST endpoints | `orchestrator/main.py` | 2406 | `@app.get("/floor-plans/")` |
-| Docker service definitions | `docker-compose.yml` | 1 | all service blocks |
-| Capability KB answer node | `orchestrator/agents/capability_agent.py` | 60 | `CapabilityAgent.answer()` |
-| Capability semantic indexer | `orchestrator/services/capability_indexer.py` | 60 | `class CapabilityIndexer` |
-| Capability semantic router | `orchestrator/services/semantic_router.py` | 71 | `class SemanticRouter` |
-| Embedding service wrapper | `orchestrator/services/embedding_service.py` | 50 | `class EmbeddingService` |
-| Capability routing config | `shared/capability_schema.py` | 22 | `class CapabilityRoutingConfig` |
-
----
-
-## Multi-intent + multi-persona (Phase 14 — added 2026-05-29)
-
-OntoSage handles a single user turn that mixes **multiple intents** AND **multiple personas**.  Both features are on by default and degrade gracefully to single-intent / single-persona when not used.
-
-### Multi-intent — one turn, several sub-tasks
-
-A user can ask several distinct sub-tasks in one message; the system decomposes them, dispatches each to the right node, and aggregates the responses.
-
-Pipeline:
-
-```
-dialogue_agent → multi_intent_detector → planner → [sub-task pipeline] → response
-                       ↑ two-stage gate
-```
-
-Gates (both must pass before LLM decomposition):
-
-1. **Heuristic gate** (~1ms, no LLM call): query length ≥ `MULTI_INTENT_MIN_LENGTH` (default 80 chars) AND contains an explicit compound connective (`"and also"`, `"tell me"`, `"1."`, `"first/then/finally"`, etc.) AND keywords from ≥ 2 distinct intent-domain sets.
-2. **LLM decomposition**: returns 2–5 sub-intents validated against `VALID_INTENTS` (the registry).
-
-Feature flag: `settings.MULTI_INTENT_ENABLED` (default `True`).
-
-Example compound query that triggers decomposition:
-
-> *"Show me the floor 3 layout and also tell me how many rooms are there on that floor"*
-
-Decomposes to:
-
-```python
-[SubIntent(intent="floor_plan",    sub_query="floor 3 layout"),
- SubIntent(intent="spatial_query", sub_query="how many rooms on floor 3")]
-```
-
-`state.current_intent` is rewritten to `"planner"` and the enhanced PlannerAgent fans out each sub-intent.
-
-Tests: `tests/test_compound_query_e2e.py` (heuristic gate + LLM decomposition).
-
-### Multi-persona — blended priors across stacked roles
-
-A turn can declare multiple personas; the registry blends their priors:
-
-```jsonc
-POST /chat
-{
-  "message": "what should I look at this week?",
-  "session_id": "...",
-  "personas": ["facility_manager", "sustainability_officer"]   // Phase 14A
-}
-```
-
-Blending rules (see `shared.persona_registry.PersonaRegistry.get_blended_priors`):
-
-| Field | Blend rule |
+| Task | File · symbol |
 |---|---|
-| `top_domains`        | Rank-vote merge (1st = 8 pts, 2nd = 7, …); ties keep first-encountered persona's order |
-| `borda_topics`       | Same rank-voting |
-| `lookup_share`       | Arithmetic mean |
-| `default_complexity` | Max of `{SIMPLE < MODERATE < COMPLEX}` |
-| `clarification_threshold` | Min (more willing to clarify) |
-
-Backward-compat:
-
-* Old callers passing just `persona: "facility_manager"` work unchanged — the legacy single-string field still routes through `get_priors()`.
-* When `personas` (list) is present, it takes precedence; `state.persona` is back-filled with `personas[0]` for any code still reading the scalar.
-* `Literal[...]` constraint on `persona` was relaxed to `str` so YAML-added personas (`input/<bldg>/personas/*.yaml`, `input/_defaults/personas/*.yaml`) resolve without a code change.
-
-Diagnostics: the SPARQL node emits `state.intermediate_results["persona_blended"]` with `{personas, top_domains, complexity, clarification_threshold}` for every turn that used a non-empty persona list.
-
-Tests: `tests/test_blended_persona.py` (14 cases — single, blended, conflict, alias, unknown).
-
----
-
-## Adding a new intent (Phase 13B — added 2026-05-29)
-
-Adding a new pipeline intent no longer requires editing `workflow.py`.  Two
-steps end-to-end:
-
-1. **Append an entry to `orchestrator/intents/intent_definitions.yaml`** with
-   `node_method` pointing to the handler you'll add in step 2:
-
-   ```yaml
-   - name: my_new_intent
-     description: |-
-       Describe to the LLM what queries this intent handles.  Include trigger
-       phrases the user might say.
-     examples:
-       - '"trigger query example 1"'
-       - '"trigger query example 2"'
-     pipeline_group: standalone           # data | standalone | meta
-     route_target: my_new_intent          # graph node name (defaults to intent name)
-     node_method: _my_new_intent_node     # method on WorkflowOrchestrator
-   ```
-
-2. **Implement the node handler on `WorkflowOrchestrator`** in `workflow.py`:
-
-   ```python
-   async def _my_new_intent_node(self, state: ConversationState) -> ConversationState:
-       """One-line description."""
-       # ... agent logic ...
-       state.intermediate_results["my_new_intent_result"] = result
-       return state
-   ```
-
-That's it.  `_build_graph` reads the registry on every orchestrator startup and
-auto-registers the node + the conditional edge from `dialogue` to your node.
-
-Per-building intent overlays work the same way — drop the YAML entry into
-`input/<BUILDING_ID>/intents.yaml`.  The per-building registry cache
-(`get_intent_registry(building_id)`) picks it up.
-
-If your YAML-added intent has no `node_method` (or its method is missing), the
-Phase 10G runtime safety net routes the query to `response` with a polite
-message instead of crashing LangGraph.  The same safety filter at graph-build
-time keeps the build itself from failing.
-
-Diagnostics: every routing decision writes `state.intermediate_results["route_decision"]`:
-
-```python
-{
-    "intent_from_dialogue": "my_new_intent",
-    "intent_after_overrides": "my_new_intent",
-    "overrides_applied": [],          # list of override names if any fired
-    "final_node": "my_new_intent",
-    "decision_source": "registry",    # 'registry' | 'override' | 'fallback'
-}
-```
-
-Inspect via the conversation state or via `tests/test_routing_accuracy.py`
-(29 canonical routing cases, runs in ~3s).
+| Intent routing (all branches + overrides) | `workflow/_orchestrator.py` · `_route_from_dialogue` |
+| Register node / graph wiring | `workflow/_graph.py` · `_build_graph` |
+| Intent classification + entity extraction + overrides | `agents/dialogue_agent.py` · `detect_intent`, `_parse_llm_response` |
+| Co-reference rewrite | `agents/dialogue_agent.py` · `rewrite_to_standalone` |
+| Capability / control / report-intake detection | `services/semantic_router.py` · `is_*`, `report_intake_intent` |
+| SPARQL gen/exec + RAG fallback | `agents/sparql_agent.py` · `generate_query`, `_retrieve_context` |
+| SQL time-series | `agents/sql_agent.py`; adapter routing `services/adapters/registry.py` |
+| Analytics / forecast | `agents/analytics_agent.py`; `agents/forecast_agent.py` + `services/forecasting/` |
+| Visualization | `workflow/_orchestrator.py` · `_visualization_node` |
+| Floor plan / spatial | `services/floor_plan_registry.py`, `floor_plan_pipeline.py`, `dwg_pipeline.py`; `agents/spatial_agent.py` |
+| Conversation memory | `services/turn_memory.py`; `redis_manager.py` · `save_state`/`load_state` |
+| Capability KB | `services/capability_indexer.py`, `semantic_router.py`; `agents/capability_agent.py` |
+| Document KB (policy/manual) | `services/document_indexer.py`; `agents/capability_agent.py` · `_search_documents` |
+| Report intake | `services/report_intake_service.py` |
+| Response formatting | `workflow/_orchestrator.py` · `_response_node` |
+| Config / env vars | `shared/config.py` · `Settings` |
+| State / models | `shared/models.py` · `ConversationState`, `FloorPlanManifest`, `Space`, `Block` |
+| FastAPI app / endpoints / lifespan | `orchestrator/main.py` |
+| Services / ports | `docker-compose.yml` |
+| HBCO concept resolution | `services/concept_resolver.py` · `resolve`; `ontology/hbco_core.ttl`, `hbco_mappings.ttl` |
+| Feed framework (live data) | `services/feeds/registry.py` · `FeedRegistry`; `input/<id>/feeds.yaml` |
+| ECA rules engine | `services/rules_engine.py` · `RulesEngine`; `input/<id>/rules.yaml` |
+| Notification dispatch | `services/notification_service.py`; `input/<id>/channels.yaml` |
+| Actuation gateway | `services/actuation/registry.py` · `ActuationRegistry`; `sim_driver.py`; `approval_store.py` |
+| Recipe registry | `services/recipe_registry.py` · `RecipeRegistry`; `config/recipes.yaml` |
+| Goal planner | `services/goal_planner.py` · `GoalPlanner`; `config/goals.yaml` |
+| Input validators | `services/input_validators.py` · `validate_building_input` |
+| Per-building config validators | `scripts/swap_building.py` · `_check_optional_configs` |
+| **P0 — Admin portal endpoints** | `orchestrator/main.py` · `list_named_graphs`, `validate_ttl_endpoint`, `upload_ttl_endpoint`, `drop_named_graph_endpoint`, `sparql_browser`, `trigger_reindex`, `list_reindex_jobs`, `get_reindex_job` |
+| **P0 — GraphDB admin CRUD** | `services/ontology_manager.py` · `list_named_graphs`, `validate_ttl_text`, `upload_ttl`, `drop_named_graph`, `run_sparql_select` |
+| **P0 — Qdrant reindex jobs** | `services/reindex_service.py` · `ReindexService`, `start`, `status`, `list_jobs`, `_run` |
+| **P0 — Narrow MySQL adapter** | `services/adapters/mysql_narrow_adapter.py` · `MySQLNarrowAdapter`, `build_timeseries_query`, `get_columns` |
+| **P0 — Sensor TTL generator** | `services/sensor_ttl_generator.py` · `generate_timeseries_ttl`, `parse_sensor_csv` |
+| **P0 — RBAC auth dependency** | **`main.py`** · `get_user_context`, `require_permission` (the LIVE session→permission gate); `middleware/rbac.py` provides `UserContext` + `ROLE_PERMISSIONS` only — the rest of that module (`TokenManager`/`create_rbac_dependency`/`RBACMiddleware`) is unwired legacy, do not use |
+| **P0 — Admin React portal** | `frontend/src/pages/AdminPortal.js` (9 tabs: Ontology, KB Reindex, …) |
+| **P0 — Narrow table DDL** | `data/mysql-init/create_narrow_timeseries_tables.sql` (7 tables in `sensordb`) |
+| **P0 — TTL extensions** | `input/bldg1_timeseries_extension.ttl` (19 sensors) · `input/bldg1_security_lighting_extension.ttl` (293 triples) |
 
 ---
 
-## Capability semantic routing (added 2026-05-21)
+## Intents & routing
 
-The dialogue agent has a fast-path for capability queries (off-ontology building features, policies, amenities) that bypasses the LLM intent call when a high-confidence semantic match exists.
+Canonical list: `orchestrator/intents/intent_definitions.yaml` (per-building overlays:
+`input/<id>/intents.yaml`). 29+ intents grouped `data` (sparql→sql→…), `standalone`, `meta`.
+Families: sensor_data, analytics, metadata, discovery, report, anomaly, compare, export, recommend,
+trend/forecast, compliance, floor_plan, spatial_query, capability, control, alert, planner,
+report-intake (maintenance/complaint/safety_report/feedback/suggestion), general/greeting/clarification,
+automation_capability, preference_management, lab_booking (bldg1 overlay).
 
-**Pipeline:**
+**Routing precedence rules to preserve** (deterministic overrides in `dialogue_agent._parse_llm_response`
++ `_route_from_dialogue`):
+- Fault/suggestion/safety **statements** ("the toilet is leaking", "Suggestion: …") → report-intake, **beating** the capability KB router. Questions ("is the lift broken?") are NOT reports.
+- Comfort **questions** ("is it too warm?") → analytics, **not** complaint.
+- Actuation/external-action ("open the windows", "email it") → `control` → **decline**; never floor_plan/maintenance.
+- "show me floor N / where is room X" → floor_plan; "how many / area / adjacent" → spatial_query; data + floor N → data wins.
 
-1. At startup, `CapabilityIndexer` reads each `input/<bldg>/capability.yaml`, embeds every keyword + content snippet via `EmbeddingService` (OpenAI or local), and upserts into a Qdrant collection `capability_<bldg>`. SHA-256 fingerprint stored on every point — unchanged YAML on restart triggers zero embedding API calls (idempotent).
+### Add an intent (2 steps, no graph edits)
+1. Append to `orchestrator/intents/intent_definitions.yaml` (`pipeline_group`, optional `route_target`, `node_method`).
+2. Implement `async def _my_node(self, state) -> ConversationState` on `WorkflowOrchestrator` in `workflow/_orchestrator.py`.
 
-2. On every query, `dialogue_agent.detect_intent()` calls `SemanticRouter.classify(query, building_id)` BEFORE the LLM intent call.
-
-3. Decision rule (per-building tunable in `input/<bldg>/building.yaml`):
-   - `score >= override_min` (calibrated 0.55) → intent=capability, skip LLM call entirely
-   - `threshold <= score < override_min` (calibrated 0.50) → soft override after LLM (only if LLM picked a non-data intent)
-   - `score < threshold` → no signal, LLM intent classification proceeds normally
-
-4. `CapabilityAgent.answer()` reads pre-fetched matches from `state.intermediate_results["capability_matches"]` and formats the response — no second KB search.
-
-**Per-building config** (`input/<bldg>/building.yaml`):
-
-```yaml
-capability_routing:
-  enabled: true
-  threshold: 0.50       # soft override band lower bound
-  override_min: 0.55    # skip-LLM threshold
-  top_k: 5
-  embedding_model: auto # 'auto' follows EMBEDDING_PROVIDER
-```
-
-**Adding a new building's capability KB:** drop `capability.yaml` into `input/<bldg>/`, restart the orchestrator. Zero Python edits required. Failure (Qdrant down, embedding API down) is graceful — orchestrator boots, router returns `source="fallback"`, dialogue agent reverts to LLM-only intent.
-
-**Threshold calibration:** the defaults assume OpenAI `text-embedding-3-small` (1536-dim). If `EMBEDDING_PROVIDER` switches to local (sentence-transformers, 384-dim), `CapabilityIndexer` detects the dim mismatch on next startup and rebuilds the collection automatically, but score distributions differ between models — re-tune `threshold` / `override_min` per the calibration script in `scripts/capture_baseline.py`.
+Restart — edges + routing auto-wire. A YAML intent with no `node_method` safely falls through to
+`response`. Patterns to follow: `.claude/rules/agent-patterns.md`. SPARQL: `.claude/rules/sparql-patterns.md`.
 
 ---
 
-## Intent Types (canonical names from `orchestrator/intents/intent_definitions.yaml`)
+## TTL-first design principle
 
-The dialogue agent classifies every query into one of the intents registered in the YAML registry.
-**Always refer to the YAML for the authoritative list** — this table is a summary only.
+**Goal:** answer the 6,117 questions in `paper/Survey analysis and results/` using OntoSage with minimum additional files. The Brick/BACnet `.ttl` files are the **primary source of truth** for everything a building knows about itself.
 
-| Intent (YAML name) | Alias | Route | Description |
-|--------|-------|-------|-------------|
-| `sensor_data` | — | sparql → sql → response | Current or historical sensor readings |
-| `analytics` | — | sparql → sql → analytics → response | Statistical computation on a single dataset |
-| `metadata` | — | sparql → response | List entities, look up types, describe a thing |
-| `discovery` | — | sparql → response | Explore available sensors/zones/system capabilities |
-| `report` | — | planner → (sparql+sql+report) → response | Structured building report |
-| `anomaly` | — | sparql → sql → anomaly → response | Out-of-range / spike detection |
-| `compare` | `comparison` | sparql → sql → analytics → response | Compare zones/devices/time periods |
-| `export` | — | export → response | Download data as CSV/JSON/HTML |
-| `recommend` | — | sparql → sql → response | HVAC/energy/comfort recommendations |
-| `planner` | — | planner → response | Multi-step orchestrated tasks |
-| `trend` | `forecast` | sparql → sql → analytics → response | Temporal trends + future predictions |
-| `compliance` | — | sparql → sql → analytics → response | ASHRAE/WELL/BREEAM standards check |
-| `floor_plan` | — | floor_plan → response | Show floor map, locate a room, visual navigation |
-| `spatial_query` | — | spatial_query → response | Area, adjacency, room counts, block/MEP queries |
-| `control` | — | response | Not yet supported — informs user |
-| `maintenance` | — | report_intake → response | Fault reports, work orders, scheduled maintenance |
-| `complaint` | — | report_intake → response | Complaints about building conditions |
-| `feedback` | — | report_intake → response | General feedback or compliments |
-| `safety_report` | — | report_intake → response | Safety hazard reports |
-| `suggestion` | — | report_intake → response | Improvement suggestions |
-| `alert` | — | sparql → response | Threshold-based alerting setup |
-| `capability` | — | capability → response | KB queries: policies, amenities, contacts |
-| `visualization` | — | visualization → response | Direct chart/plot request |
-| `general` | `general_knowledge` | response | Greetings / non-building questions |
-| `greeting` | — | response | Friendly greeting |
-| `clarification` | — | response | Query too vague — asks follow-up |
+Rules to follow in every development decision:
 
-**Disambiguation rule**: "show me / where is / find [floor N layout]" → `floor_plan`. "how many / area / size / adjacent" → `spatial_query`. Data+floor N → NOT floor_plan (data route wins).
+1. **TTL before YAML.** If a fact about the building can be expressed as an RDF triple in the ontology, put it there — not in `capability.yaml`, `building.yaml`, or any other sidecar file. Sidecar YAML is for *operational config* (thresholds, auth, routing overrides) that doesn't belong in the ontology.
+2. **Extend the TTL, don't bypass it.** When OntoSage can't answer a survey question, the first fix is to add the missing triples (sensors, equipment, relationships, metadata) to the `.ttl` — not to add a hard-coded capability entry or a special-case code path.
+3. **SPARQL is the query path.** New question types should be answerable via SPARQL against GraphDB. Only fall back to the capability KB (Qdrant), SQL adapters, or analytics when the question requires live time-series data or computation that RDF cannot express.
+4. **Minimum additional files.** Each new capability should add at most one file: the enriched `.ttl`. New `feeds.yaml`, `rules.yaml`, `channels.yaml` entries are for live-data and alerting — not for answering static/structural questions.
+5. **`T5_new_capability_gaps.csv`** (`paper/Survey analysis and results/outputs/master table analysis/`) is the engineering backlog. Each row that says `requires_extension` maps to a missing TTL property or an unmapped sensor. Fix it there before adding code.
+
+This principle is grounded in the pre-design survey corpus (6,117 questions, 96 participants). The architecture coverage crosswalk (`tasks/architecture_coverage_crosswalk.csv`) shows which question clusters are already served by the existing TTL and which gaps remain.
 
 ---
 
-## Key Files
-
-| File | Role |
-|------|------|
-| `orchestrator/main.py` | FastAPI app, startup lifecycle, all endpoint registration |
-| `orchestrator/workflow.py` | LangGraph graph definition; all routing logic |
-| `orchestrator/agents/dialogue_agent.py` | Intent classification + entity extraction |
-| `orchestrator/agents/spatial_agent.py` | Geometry queries from manifests — no LLM |
-| `orchestrator/services/floor_plan_registry.py` | Merge orchestrator: DWG + PDF → merged manifest + Qdrant |
-| `orchestrator/services/floor_plan_pipeline.py` | PDF → text extraction → manifest → Qdrant |
-| `orchestrator/services/dwg_pipeline.py` | DWG → DXF → shapely geometry → manifest |
-| `orchestrator/services/floor_plan_watcher.py` | watchfiles background task for auto-ingest |
-| `shared/config.py` | All env vars and service URLs |
-| `shared/models.py` | `ConversationState`, `FloorPlanManifest`, `Space`, `Block` |
-| `shared/floor_plan_config.py` | Per-building YAML config, AIA/NCS layer map, zone ID patterns |
-| `orchestrator/auth_manager.py` | Auth, session management, Argon2id hashing |
-| `orchestrator/middleware/rbac.py` | Role definitions and permission enforcement |
-| `orchestrator/services/adapters/` | MySQL / PostgreSQL adapters + routing registry |
-| `orchestrator/Dockerfile` | Container build — tesseract-ocr included; libredwg-utils best-effort |
-| `docker-compose.yml` | All 12+ service definitions, networks, volumes |
-| `.env.example` | Documented template for all configuration variables |
+## Workflow rules
+1. **Plan first** for non-trivial work (3+ steps / architectural). Re-plan if it goes sideways.
+2. **Subagents** only when the user asks; one focused task each.
+3. **Self-improvement**: after any correction, capture the pattern in `tasks/lessons.md`.
+4. **Verify before done**: run tests/QA, check logs, prove it. "Would a staff engineer approve?"
+5. **Elegance, balanced**: ask for the cleaner way on non-trivial changes; don't over-engineer simple fixes.
+6. **Autonomous bug-fixing**: given a bug/log/failing test, fix it directly.
 
 ---
 
-## Workflow Orchestration Rules
-
-### 1. Plan Mode Default
-- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
-- Stop and re-plan immediately if something goes sideways — don't keep pushing
-- Write detailed specs upfront to reduce ambiguity
-
-### 2. Subagent Strategy
-- Use subagents to keep main context window clean
-- Offload research, exploration, and parallel analysis to subagents
-- One task per subagent for focused execution
-
-### 3. Self-Improvement Loop
-- After ANY correction: update `tasks/lessons.md` with the pattern
-- Write rules to prevent the same mistake; review at session start
-
-### 4. Verification Before Done
-- Never mark a task complete without proving it works
-- Ask: "Would a staff engineer approve this?"
-- Run tests, check logs, demonstrate correctness
-
-### 5. Demand Elegance (Balanced)
-- For non-trivial changes: ask "is there a more elegant way?"
-- Skip for simple obvious fixes — don't over-engineer
-
-### 6. Autonomous Bug Fixing
-- When given a bug report: fix it directly. No hand-holding needed.
-- Point at logs, errors, failing tests — then resolve them.
+## Debugging (common)
+- **Orchestrator won't start** → `docker-compose logs --tail=50 orchestrator`; usually an ImportError (a
+  module imported before it's defined, or a symbol missing from a package `__init__`).
+- **Wrong intent/node** → check the routing-precedence rules above; inspect `intermediate_results["route_decision"]`; run `tests/test_routing_accuracy.py`.
+- **SPARQL empty** → test GraphDB directly (`.claude/rules/sparql-patterns.md`); empty = ontology not loaded; results-but-empty = `sparql_agent._retrieve_context`.
+- **Floor plan empty / `area_m2=null`** → DWG pipeline off (`dwg2dxf`/libredwg missing → PDF-only); manifest `schema_version` should be "2.0"; reingest `POST /api/v1/floor-plans/reingest`.
+- **Capability routing not firing** → check `docker logs … | grep capability_indexer` for `status=indexed entries=N points=M`; degraded usually = embedding provider down.
+- **Stale answers after a code fix** → flush `resp_cache:*` in Redis (`redis-cli --scan --pattern "resp_cache:*" | xargs redis-cli del`) before re-testing. Real container name: `redis-memory-store` (not `ontosage-redis`).
+- **Feed not updating** → check `docker logs … | grep FeedRegistry` for `loaded=N`; missing feed = feeds.yaml absent or disabled flag.
+- **ECA rule not firing** → check Redis keys `rules:breach_start:*` and `rules:fired:*`; verify `sensor_uuid` matches a UUID in MySQL `sensor_data`.
+- **Concept not resolving** → SPARQL `SELECT ?c WHERE { ?c a hbco:Concept; hbco:layTerm "stuffy" }` against GraphDB; empty = hbco_mappings.ttl not uploaded.
+- **Actuation decline unexpected** → check `building.yaml` `actuation.driver` value and `points_writable` list; user must have `control:write` permission (admin/facility_manager only).
+- **Input validator fails on swap** → `python -c "from orchestrator.services.input_validators import validate_building_input, format_validation_report; from pathlib import Path; ok, r = validate_building_input('bldg2', Path('input')); print(format_validation_report(r))"` for full report.
+- **Admin endpoint returns 401** → the endpoint uses `require_permission()` which chains through `get_user_context`. In tests: override `get_user_context` (not `get_current_user`). In live: ensure the `Authorization` header contains a valid Redis session token from `/auth/login`. Check `docker logs … | grep "401"` to see which endpoint is rejecting.
+- **Admin portal upload TTL returns 500** → `services/ontology_manager.py` makes HTTP calls to GraphDB (port 7200). Verify GraphDB is healthy: `curl http://localhost:7200/rest/repositories`. Check `docker-compose logs --tail=30 orchestrator | grep ontology_manager`.
+- **Reindex job stuck in `pending`** → `_reindex_service_instance` singleton in `main.py` must be initialized. Check `docker logs … | grep ReindexService` for `started`. If `None`, the lifespan didn't call `reindex_service.start()`.
+- **Narrow table returns empty** → two-step check: (1) verify the sensor UUID exists in the TTL via SPARQL: `SELECT ?uuid WHERE { bldg:MySensor ref:hasTimeseriesId ?uuid }` — if empty, TTL not loaded; (2) verify rows exist in MySQL: `SELECT COUNT(*) FROM energy_data WHERE uuid='<uuid>'` in `sensordb`. If both exist but still empty, check `ref:storedAt` key in TTL matches the key in `database_registry.yaml`.
+- **TTL auto-upload not loading a new TTL** → `ttl_uploader.py` discovers files matching `bldg1_*.ttl` in `input/`. File must be named `bldg1_<anything>.ttl`. Check `docker logs … | grep ttl_uploader` for `Uploading` or `Already up to date (SHA match)`. If the SHA matches, delete the named graph via Admin portal first then restart.
+- **STRICT_SECRETS startup failure** → orchestrator refuses to boot if any password equals its default. Set real passwords in `.env`: `POSTGRES_USER_PASSWORD`, `MYSQL_PASSWORD`, `SECRET_KEY`, `GRAPHDB_PASSWORD`. Or set `STRICT_SECRETS=false` for local dev.
 
 ---
 
-## Common Debugging Patterns
+## Skills (`Skill` tool) & Sub-agents (`.claude/agents/`, only when asked)
 
-### Orchestrator won't start
-```bash
-docker-compose logs --tail=50 orchestrator   # look for ImportError or missing module
-# Common cause: orchestrator/__init__.py imports something not yet defined
-# Fix: check llm_manager.py for missing symbols (TaskType, etc.)
-```
-
-### Intent routed to wrong node
-```bash
-# 1. Check dialogue agent prompt — search for INTENT_DEFINITIONS in dialogue_agent.py
-# 2. Check _route_from_dialogue at workflow.py:1521 — verify elif branch exists
-# 3. Verify add_node() name exactly matches return value of _route_from_dialogue
-```
-
-### Floor plan not showing / manifest empty
-```bash
-# 1. Check /app/input/ has matching filenames: "Abacws floor N.pdf" / "Abacws floor N.dwg"
-# 2. Check SHA-256 cache: if file unchanged, manifest is reused from disk
-# 3. DWG pipeline: "dwg2dxf not found" warning → libredwg-utils not installed → PDF-only mode
-# 4. Reingest via API: POST /api/v1/floor-plans/reingest
-```
-
-### SPARQL returns empty
-```bash
-curl -s -X POST http://localhost:7200/repositories/ontosage/sparql \
-  -H "Content-Type: application/sparql-query" \
-  -H "Accept: application/sparql-results+json" \
-  -d "SELECT ?s WHERE { ?s a <https://brickschema.org/schema/Brick#Building> } LIMIT 5"
-# Empty → ontology not loaded → run onboard_building.py
-# Results exist but app returns empty → check _retrieve_context() in sparql_agent.py:324
-```
-
-### Qdrant floor_plans missing geometry
-```bash
-# Spaces show area_m2=null → DWG pipeline not running (libredwg-utils missing)
-# Check: manifest schema_version should be "2.0" for DWG-enriched floors
-curl http://localhost:8000/api/v1/floor-plans/abacws/3/manifest | python -m json.tool | grep schema_version
-```
-
-### Capability semantic routing not firing
-```bash
-# 1. Verify the per-building collection exists in Qdrant
-curl -s http://localhost:6333/collections | python -m json.tool | grep capability_
-
-# 2. If missing, check indexer logs at startup
-docker logs ontosage-orchestrator | grep capability_indexer
-# Look for: "status=indexed entries=N points=M" (success) vs "status=degraded"
-
-# 3. Most common degraded reason: embedding API down
-# Either install sentence-transformers (in requirements.txt — auto on next build),
-# OR switch EMBEDDING_PROVIDER=openai in .env (uses existing OPENAI_API_KEY)
-
-# 4. Inspect a stored point to verify yaml_sha (idempotency fingerprint)
-curl -s 'http://localhost:6333/collections/capability_bldg1/points/scroll?limit=1' \
-  | python -m json.tool | grep yaml_sha
-```
-
-### Capability returns wrong KB entry
-```bash
-# Lower threshold temporarily to see all candidates ranked
-# Edit input/<bldg>/building.yaml:
-#   capability_routing:
-#     threshold: 0.30      # see everything
-#     override_min: 0.50
-# Restart, send the query, check logs for "[semantic-route]" lines showing scores.
-# The router groups raw Qdrant points by entry_id with max-pool scoring.
-```
+| Task | Skill |  | Agent | When |
+|---|---|---|---|---|
+| Debug pipeline | `systematic-debugging` / `phase-gated-debugging` | | `ontology-agent` | SPARQL/TTL/GraphDB |
+| LangGraph changes | `langgraph` | | `pipeline-agent` | routing / intents / state |
+| RAG work | `rag-engineer` | | `infra-agent` | Docker / env / providers |
+| FastAPI endpoints | `fastapi-pro` | | `test-agent` | tests / coverage |
+| Docker | `docker-expert` | | `deploy-agent` | pre-deploy / auth hardening |
+| Qdrant | `vector-database-engineer` | | | |
+| Security review | `security-auditor` | | | |
 
 ---
-
-## Installed Skills Guide
-
-Skills at `~/.claude/skills/`. Invoke with the Skill tool.
-
-| Task | Skill |
-|------|-------|
-| Debug pipeline failure | `systematic-debugging` or `phase-gated-debugging` |
-| LangGraph workflow changes | `langgraph` |
-| RAG / rag-service work | `rag-engineer` |
-| FastAPI endpoint work | `fastapi-pro` |
-| Ollama / local model tuning | `local-llm-expert` |
-| LLM prompt / output tuning | `llm-app-patterns` |
-| Docker / container issues | `docker-expert` |
-| Qdrant vector index | `vector-database-engineer` |
-| Security review | `security-auditor` |
-| Writing / fixing tests | `systematic-debugging` then `testing-patterns` |
-| Agent orchestration design | `agent-orchestration-improve-agent` |
-
----
-
-## Sub-Agents
-
-Scoped sub-agents in `.claude/agents/`. Each reads only its domain files.
-
-| Agent | Invoke When |
-|-------|------------|
-| `ontology-agent` | SPARQL failures, TTL parsing, GraphDB issues, new building onboarding |
-| `pipeline-agent` | Routing bugs, adding intents/nodes, state not propagating between nodes |
-| `infra-agent` | Docker failures, port conflicts, env vars, MODEL_PROVIDER switching |
-| `test-agent` | Writing or fixing tests, coverage gaps, pytest markers |
-| `deploy-agent` | Pre-deployment review, auth hardening, production checklist |
 
 ## Notes:
 
-Never agree with me by default. Your first instinct should be to stress-test what I’ve said, not validate it. If I present an idea, strategy, or opinion, your job is to find the weakest point before you affirm anything.
-No glazing. Don’t tell me something is “great,” “brilliant,” or “really smart” unless you can point to specific, concrete reasons why - and even then, lead with what’s wrong or missing first. Compliments without substance are noise.
-Don’t echo my framing back to me. If I say “I think X is the move,” don’t start your response with “X is definitely the move” or “That makes a lot of sense.” Instead, start by asking yourself: what am I not seeing? What’s the counter-argument? What would someone who disagrees say, and are they right?
-When you do agree, earn it. Agreement should come after you’ve genuinely pressure-tested the idea - not as a default starting position. If you agree, say why in a way that adds something I didn’t already say.
+Never agree with me by default. Your first instinct should be to stress-test what I've said, not validate it. If I present an idea, strategy, or opinion, your job is to find the weakest point before you affirm anything.
+No glazing. Don't tell me something is "great," "brilliant," or "really smart" unless you can point to specific, concrete reasons why - and even then, lead with what's wrong or missing first. Compliments without substance are noise.
+Don't echo my framing back to me. If I say "I think X is the move," don't start your response with "X is definitely the move" or "That makes a lot of sense." Instead, start by asking yourself: what am I not seeing? What's the counter-argument? What would someone who disagrees say, and are they right?
+When you do agree, earn it. Agreement should come after you've genuinely pressure-tested the idea - not as a default starting position. If you agree, say why in a way that adds something I didn't already say.
 
 Be direct and concise. Skip the warm-up sentences.
-Don’t pad responses with filler affirmations. Get to the point. If the answer is “no” or “this won’t work,” say that in the first sentence.
-Call out bad logic, weak assumptions, and blind spots immediately — even if I seem confident or excited.
-Especially then. The more certain I sound, the more I need pushback.
-If you catch yourself about to start a response with
-“That’s a great point” or “You’re absolutely right” - stop and rewrite. Start with the most useful thing you can say instead
+Don't pad responses with filler affirmations. Get to the point. If the answer is "no" or "this won't work," say that in the first sentence.
+Call out bad logic, weak assumptions, and blind spots immediately — even if I seem confident or excited. Especially then. The more certain I sound, the more I need pushback.
+If you catch yourself about to start a response with "That's a great point" or "You're absolutely right" - stop and rewrite. Start with the most useful thing you can say instead.
 
-DO NOT PUSH CHANGES TO GIT UNTILL I SAY IT EXPLICITELY. Always wait for my approval before making any commits or pushing to the repository. I want to review and understand the changes before they are added to the codebase.
+**DO NOT PUSH OR COMMIT TO GIT UNTIL I SAY SO EXPLICITLY.** Always wait for my approval before making any commits or pushing to the repository. I want to review and understand the changes before they are added to the codebase.

@@ -26,18 +26,30 @@ return JSONResponse({
 
 ## RBAC Protection (required on every data endpoint)
 
+Use `require_permission(perm)` from `orchestrator/main.py`. It resolves the
+session token (cookie **or** `Authorization` header) via `get_user_context`,
+raises `401` when unauthenticated and `403` when the role lacks the permission,
+and injects a `UserContext`.
+
 ```python
-from orchestrator.middleware.rbac import create_rbac_dependency, UserContext
 from fastapi import Depends
+from orchestrator.main import require_permission
+from orchestrator.middleware.rbac import UserContext
 
 @app.get("/api/v1/sensors")
 async def get_sensors(
-    request: Request,
-    user: UserContext = Depends(create_rbac_dependency(token_manager, "sensor:read")),
+    user: UserContext = Depends(require_permission("sensor:read")),
 ):
-    # user.role, user.tenant_id, user.allowed_buildings are all available
+    # user.role, user.username, user.permissions are available
     ...
 ```
+
+> ⚠️ Do **not** use `create_rbac_dependency`, `RBACMiddleware`, `TokenManager`,
+> or `UserStore` from `middleware/rbac.py`. That is a superseded Phase-6.8
+> JWT/in-memory stack that is **not wired into the app** and has known defects
+> (reads a query param instead of the header; raises bare `Exception` → HTTP
+> 500; unsalted SHA-256 passwords). Only `UserContext` and `ROLE_PERMISSIONS`
+> from that module are live. Session auth lives in `auth_manager.py`.
 
 Available permissions:
 - **Data read:** `sensor:read`, `analytics:read`, `metadata:read`, `report:read`, `export:read`, `anomaly:read`, `trend:read`, `compliance:read`, `comparison:read`
