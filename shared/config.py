@@ -35,9 +35,7 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = Field(default="deepseek-r1:32b", description="Ollama model name")
 
     # Cloud (Ollama Cloud)
-    OLLAMA_CLOUD_API_KEY: str = Field(
-        default="", description="Ollama Cloud API key", repr=False
-    )
+    OLLAMA_CLOUD_API_KEY: str = Field(default="", description="Ollama Cloud API key", repr=False)
     OLLAMA_CLOUD_BASE_URL: str = Field(
         default="https://api.ollama.ai/v1", description="Ollama Cloud API endpoint"
     )
@@ -51,7 +49,10 @@ class Settings(BaseSettings):
         description="OpenAI API key (required if MODEL_PROVIDER=openai)",
         repr=False,
     )
-    OPENAI_MODEL: str = Field(default="o3-mini", description="OpenAI model for complex tasks (analytics, reports, compliance)")
+    OPENAI_MODEL: str = Field(
+        default="o3-mini",
+        description="OpenAI model for complex tasks (analytics, reports, compliance)",
+    )
     OPENAI_MODEL_FAST: str = Field(
         default="gpt-4o-mini",
         description="OpenAI model for fast tasks (intent classification, SPARQL gen, rewrites)",
@@ -162,9 +163,7 @@ class Settings(BaseSettings):
     MYSQL_HOST: str = Field(default="mysql", description="MySQL host (Building 1)")
     MYSQL_PORT: int = Field(default=3306, description="MySQL port")
     MYSQL_USER: str = Field(default="root", description="MySQL username")
-    MYSQL_PASSWORD: str = Field(
-        default="mysql", description="MySQL password", repr=False
-    )
+    MYSQL_PASSWORD: str = Field(default="mysql", description="MySQL password", repr=False)
     MYSQL_DATABASE: str = Field(default="sensordb", description="MySQL database name")
 
     RAG_SERVICE_URL: str = Field(default="http://rag-service:8001", description="RAG service URL")
@@ -271,16 +270,58 @@ class Settings(BaseSettings):
         default=True,
         description="Enable RBAC middleware. Enabled by default for production safety. Set False only for local dev.",
     )
+    ADMIN_USERNAME: str = Field(
+        default="",
+        description=(
+            "Bootstrap admin username. When both ADMIN_USERNAME and ADMIN_PASSWORD "
+            "are set, the orchestrator creates this admin-role user at startup if it "
+            "does not already exist (never overwrites an existing account). Empty = "
+            "no bootstrap. Used to sign in to the admin console at :3001."
+        ),
+    )
+    ADMIN_PASSWORD: str = Field(
+        default="",
+        description="Bootstrap admin password (>=6 chars). See ADMIN_USERNAME.",
+        repr=False,
+    )
+    PIPELINE_API_KEY: str = Field(
+        default="sk-ontobot-pipeline",
+        description=(
+            "Bearer key required on the OpenAI-compatible /v1/chat/completions "
+            "endpoint (sent by Open WebUI as OPENAI_API_KEY). Override via "
+            "PIPELINE_API_KEY env var; must be changed from the default in production."
+        ),
+        repr=False,
+    )
     STRICT_SECRETS: bool = Field(
-        default=False,
+        default=True,
         description=(
             "When True, refuses to start if any service password equals its "
-            "insecure default value. Set to True in all production deployments."
+            "insecure default value. Set to True in all production deployments. "
+            "Override with STRICT_SECRETS=false in .env for local development."
+        ),
+    )
+    COOKIE_SECURE: bool = Field(
+        default=True,
+        description=(
+            "Set the Secure flag on the session cookie. Must be False when the "
+            "stack runs over plain HTTP (local dev). Set COOKIE_SECURE=false in "
+            ".env for local development; leave True (default) for production HTTPS."
         ),
     )
     RESPONSE_CACHE_ENABLED: bool = Field(
         default=True,
         description="Enable Redis-backed response cache for identical/similar queries.",
+    )
+    RESPONSE_SYNTHESIS_ENABLED: bool = Field(
+        default=False,
+        description=(
+            "When True, the response node rewrites the deterministic draft into a "
+            "single unified, persona-aware answer via one grounded LLM pass "
+            "(replacing the separate persona-format + persona-adapter passes). "
+            "Strictly grounded in the draft's facts; falls back to the draft on "
+            "any error. Off by default — enable to A/B the synthesized voice."
+        ),
     )
     EMBEDDING_CACHE_TTL_SECONDS: int = Field(
         default=86400,
@@ -302,6 +343,26 @@ class Settings(BaseSettings):
     MULTI_INTENT_ENABLED: bool = Field(
         default=True,
         description="Enable multi-intent decomposition for compound queries",
+    )
+    GOAL_PLANNER_ENABLED: bool = Field(
+        default=False,
+        description=(
+            "T26 — Enable goal-mandate decomposition: open-ended goals "
+            "('make the building eco-friendly') are decomposed into measurable "
+            "KPI sub-queries routed through existing pipeline nodes. "
+            "Requires MULTI_INTENT_ENABLED=true."
+        ),
+    )
+    DATASOURCE_TOGGLES_ENABLED: bool = Field(
+        default=False,
+        description=(
+            "Toggleable synthetic data sources + answer provenance. When true, "
+            "the orchestrator loads input/datasources.yaml, exposes the "
+            "/api/v1/datasources admin API, gates disabled-source questions with "
+            "a locked-capability decline, and annotates answers with per-source "
+            "provenance tags. Default false until the feature ships (see "
+            "tasks/IMPLEMENTATION_PLAN_DATASOURCE_TOGGLES_AND_PROVENANCE.md)."
+        ),
     )
     MULTI_INTENT_MIN_LENGTH: int = Field(
         default=50,
@@ -354,7 +415,8 @@ class Settings(BaseSettings):
     )
 
     REQUEST_TIMEOUT_SECS: int = Field(
-        default=150, description="Max seconds for a single pipeline execution before timeout response"
+        default=150,
+        description="Max seconds for a single pipeline execution before timeout response",
     )
 
     # ==================== Conversation Settings ====================
@@ -380,6 +442,54 @@ class Settings(BaseSettings):
             "self-contained queries via a gated fast-LLM rewrite before intent/SPARQL. "
             "Set False to disable and fall back to per-turn-only understanding."
         ),
+    )
+
+    ENTITY_ENRICHMENT_ENABLED: bool = Field(
+        default=True,
+        description=(
+            "On startup, derive a Brick class + rdfs:label + relationships for any "
+            "time-series point that lacks them (from its URI tokens via "
+            "config/entity_enrichment.yaml), written to the idempotent GraphDB graph "
+            "urn:ontosage:enrichment. Makes arbitrary BMS/Haystack naming queryable by "
+            "class/label. Idempotent + non-fatal; a no-op when every point is already "
+            "typed + labelled (e.g. bldg1)."
+        ),
+    )
+
+    # ==================== Live-data augmentation (general_knowledge) ==========
+    # When a general-knowledge question needs CURRENT information the LLM cannot
+    # know from its training cutoff (weather, latest news/prices/versions), the
+    # general_knowledge node fetches live data and asks the LLM to summarise it.
+    LIVE_DATA_ENABLED: bool = Field(
+        default=True,
+        description="Master switch for live-data augmentation in the general_knowledge node.",
+    )
+    WEATHER_ENABLED: bool = Field(
+        default=True,
+        description="Answer live weather questions via Open-Meteo (free, no API key).",
+    )
+    WEB_SEARCH_ENABLED: bool = Field(
+        default=True,
+        description="Answer live/current questions via web search + LLM summary.",
+    )
+    WEB_SEARCH_PROVIDER: Literal["duckduckgo", "tavily", "none"] = Field(
+        default="duckduckgo",
+        description=(
+            "Web-search backend: 'duckduckgo' (free, keyless, needs the `ddgs` "
+            "package), 'tavily' (needs TAVILY_API_KEY; better for LLM summaries), "
+            "or 'none' to disable."
+        ),
+    )
+    WEB_SEARCH_MAX_RESULTS: int = Field(
+        default=5, description="Max search results fed to the summariser."
+    )
+    WEB_SEARCH_TIMEOUT_S: float = Field(
+        default=8.0, description="Timeout for a single live-data fetch (weather or search)."
+    )
+    TAVILY_API_KEY: Optional[str] = Field(
+        default=None,
+        description="API key for the Tavily search provider (optional).",
+        repr=False,
     )
 
     # ==================== RAG System Selection ====================
@@ -416,6 +526,11 @@ class Settings(BaseSettings):
             "GRAPHDB_PASSWORD": "Admin@GraphDB2024",
             "POSTGRES_USER_PASSWORD": "ontobot_secret",
             "MYSQL_PASSWORD": "mysql",
+            "PIPELINE_API_KEY": "sk-ontobot-pipeline",
+            # The JWT signing key must not be the default under STRICT_SECRETS —
+            # otherwise a default signing key is accepted whenever RBAC_ENABLED=false
+            # (the RBAC_ENABLED gate only hard-fails on the default when RBAC is on).
+            "SECRET_KEY": "change-me-in-production-use-32-random-bytes",
         }
         offenders = [
             name
@@ -509,35 +624,98 @@ def _load_building_yaml(s: "Settings") -> None:
         pass  # YAML errors are non-fatal — defaults/env vars remain
 
 
+_INPUT_SEARCH_ROOTS = (Path("/app/input"), Path("input"))
+
+
+def resolve_building_dir(building_id: str, input_root: Optional[Path] = None) -> Optional[Path]:
+    """Return the directory holding the active building's config files.
+
+    Single source of truth for per-building file resolution (2026-06-13).
+    Two layouts are supported, checked in this order:
+
+      1. NESTED — ``input/<building_id>/``
+         Used by staging (`onboard_building.py --scaffold`), the archive
+         replacement sets, and test fixtures.
+      2. FLAT — ``input/`` itself, when ``input/building.yaml`` declares this
+         ``building_id``. This is the production layout: OntoSage serves ONE
+         building at a time, so the active building's files live directly in
+         the input root next to the shared schema files.
+
+    Returns None when neither layout matches (callers treat that as
+    "feature absent" or fail loudly, as appropriate).
+    """
+    roots = [input_root] if input_root is not None else list(_INPUT_SEARCH_ROOTS)
+
+    for root in roots:
+        if root is None or not root.is_dir():
+            continue
+        nested = root / building_id
+        if nested.is_dir():
+            return nested
+
+    for root in roots:
+        if root is None or not root.is_dir():
+            continue
+        root_yaml = root / "building.yaml"
+        if not root_yaml.is_file():
+            continue
+        try:
+            import yaml as _yaml
+
+            with open(root_yaml, "r", encoding="utf-8") as fh:
+                declared = (_yaml.safe_load(fh) or {}).get("building_id")
+            if declared == building_id:
+                return root
+        except Exception:
+            continue
+    return None
+
+
+def resolve_building_file(
+    building_id: str, *relative: str, input_root: Optional[Path] = None
+) -> Optional[Path]:
+    """Return the path of a per-building file/dir if it exists, else None.
+
+    Example: ``resolve_building_file("bldg1", "feeds.yaml")`` finds
+    ``input/bldg1/feeds.yaml`` (nested) or ``input/feeds.yaml`` (flat).
+    """
+    d = resolve_building_dir(building_id, input_root=input_root)
+    if d is None:
+        return None
+    p = d.joinpath(*relative)
+    return p if p.exists() else None
+
+
 def _load_per_building_yaml(s: "Settings") -> None:
-    """Phase 9 — also read `input/<BUILDING_ID>/building.yaml` so that the
+    """Phase 9 — also read the active building's `building.yaml` so that the
     same file driving per-building floor plans / storage / aliases can also
     set BUILDING_NAME and BUILDING_NAMESPACE.
 
-    Field mapping in input/<bldg>/building.yaml (FLAT layout):
-      building_id:        → settings.BUILDING_ID
-      building_name:      → settings.BUILDING_NAME
-      ontology_namespace: → settings.BUILDING_NAMESPACE
+    Resolved via `resolve_building_dir()` — supports both the flat layout
+    (`input/building.yaml`, production) and the nested layout
+    (`input/<BUILDING_ID>/building.yaml`, staging/tests).
 
     Env vars always win over YAML; YAML always wins over hardcoded defaults.
     Non-fatal on any error.
     """
     try:
         import yaml as _yaml
-        for base in (Path("/app/input"), Path("input")):
-            yaml_path = base / s.BUILDING_ID / "building.yaml"
-            if not yaml_path.exists():
-                continue
-            with open(yaml_path, "r", encoding="utf-8") as fh:
-                data = _yaml.safe_load(fh) or {}
-            env = os.environ
-            if "BUILDING_NAME" not in env and data.get("building_name"):
-                s.BUILDING_NAME = data["building_name"]
-            if "BUILDING_NAMESPACE" not in env and data.get("ontology_namespace"):
-                # input/<bldg>/building.yaml uses `ontology_namespace`; keep
-                # the settings field name unchanged for compat.
-                s.BUILDING_NAMESPACE = data["ontology_namespace"]
-            break
+
+        bldg_dir = resolve_building_dir(s.BUILDING_ID)
+        if bldg_dir is None:
+            return
+        yaml_path = bldg_dir / "building.yaml"
+        if not yaml_path.exists():
+            return
+        with open(yaml_path, "r", encoding="utf-8") as fh:
+            data = _yaml.safe_load(fh) or {}
+        env = os.environ
+        if "BUILDING_NAME" not in env and data.get("building_name"):
+            s.BUILDING_NAME = data["building_name"]
+        if "BUILDING_NAMESPACE" not in env and data.get("ontology_namespace"):
+            # building.yaml uses `ontology_namespace`; keep the settings
+            # field name unchanged for compat.
+            s.BUILDING_NAMESPACE = data["ontology_namespace"]
     except Exception:
         pass
 
@@ -558,6 +736,7 @@ def _warn_if_building_id_default(s: Settings) -> None:
     is_legacy_default = s.BUILDING_ID in ("bldg1", "bldg2", "bldg3")
     if is_legacy_default and not env_set:
         import logging
+
         _log = logging.getLogger("shared.config")
         _log.warning(
             "BUILDING_ID is at legacy default '%s'. For production deployments "
