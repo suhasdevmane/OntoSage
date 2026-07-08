@@ -2,16 +2,17 @@
 """swap_building.py — Phase 12C, the canonical "switch this orchestrator to a
 new building" CLI for OntoSage v1.
 
-OntoSage v1 serves one building at a time.  Switching to a new building means:
+OntoSage v1 serves one building at a time.  The active building's files live
+directly in `input/` (flat layout) — no per-building subdirectory.
 
-  1. The new building's files (TTLs, DWGs, PDFs, building.yaml, capability.yaml,
-     intents.yaml, personas/) already exist under `input/<new_building_id>/`.
-  2. The `.env` file's `BUILDING_ID` is set to `<new_building_id>`.
-  3. The orchestrator is restarted.
+Switching to a new building means:
 
-Manual step 2 is easy to forget and a typo silently breaks SPARQL.  This script
-does the swap end-to-end, fails loudly on any inconsistency, and (optionally)
-archives the old building's input directory so you can roll back.
+  1. Stage the new building's files (TTLs, DWGs, PDFs, building.yaml,
+     capability.yaml, intents.yaml, personas/) under `input/<new_building_id>/`.
+  2. Run this script — it validates the staged files, archives the current
+     flat-layout building (if requested), copies the new files to `input/`,
+     and updates BUILDING_ID in `.env`.
+  3. Restart the orchestrator: `docker-compose restart orchestrator`.
 
 Examples
 --------
@@ -20,11 +21,11 @@ Dry-run (recommended first):
 
     python scripts/swap_building.py --to bldg2 --dry-run
 
-Live swap with the old `bldg1` archived to `input/_archive/bldg1_<ts>/`:
+Live swap, archiving the current flat-layout building to `input/_archive/bldg1_<ts>/`:
 
     python scripts/swap_building.py --to bldg2 --archive
 
-Swap and skip archiving (the old dir is left in place):
+Swap and skip archiving (current flat files are left in place, overwritten):
 
     python scripts/swap_building.py --to bldg2
 
@@ -88,22 +89,40 @@ def _section(title: str) -> None:
 def _check_input_dir_exists(new_bldg: str, input_root: Path) -> Tuple[bool, str]:
     target = input_root / new_bldg
     if target.is_dir():
-        return True, f"{target} exists"
+        return True, f"{target} exists (staged)"
+    # Also accept the active building already being in flat layout (swapping to itself is a no-op).
+    flat_yaml = input_root / "building.yaml"
+    if flat_yaml.is_file():
+        try:
+            import yaml as _yaml
+
+            declared = (_yaml.safe_load(flat_yaml.read_text(encoding="utf-8")) or {}).get(
+                "building_id"
+            )
+            if declared == new_bldg:
+                return True, f"{input_root}/ (flat layout, already active)"
+        except Exception:
+            pass
     return False, (
-        f"{target} does NOT exist. Drop the new building's files into "
-        f"`{target}/` before running this swap (building.yaml, TTLs, DWGs, "
-        "PDFs, capability.yaml, intents.yaml, personas/)."
+        f"{target} does NOT exist. Stage the new building's files into "
+        f"`{target}/` before running this swap (building.yaml, TTLs, "
+        "capability.yaml, intents.yaml, personas/)."
     )
 
 
 def _check_building_yaml(new_bldg: str, input_root: Path) -> Tuple[bool, dict, str]:
+    # Check staged nested dir first; fall back to flat layout (already active).
     yml = input_root / new_bldg / "building.yaml"
     if not yml.is_file():
-        return False, {}, (
-            f"building.yaml missing at {yml}. Every building requires a "
-            "building.yaml declaring building_id, building_name, and "
-            "ontology_namespace."
-        )
+        flat_yml = input_root / "building.yaml"
+        if flat_yml.is_file():
+            yml = flat_yml
+        else:
+            return False, {}, (
+                f"building.yaml missing at {input_root / new_bldg}/. "
+                "Every building requires a building.yaml declaring "
+                "building_id, building_name, and ontology_namespace."
+            )
 
     try:
         import yaml  # type: ignore
@@ -132,6 +151,42 @@ def _check_building_yaml(new_bldg: str, input_root: Path) -> Tuple[bool, dict, s
         )
 
     return True, data, f"{yml} declares ontology_namespace={data['ontology_namespace']!r}"
+
+
+def _check_optional_configs(
+    new_bldg: str, input_root: Path, *, dry_run: bool
+) -> Tuple[bool, str]:
+    """Run T37 validators on all optional per-building config files.
+
+    Failures are warnings, not errors — optional files are skipped at runtime
+    rather than blocking the orchestrator boot.
+    """
+    try:
+        from orchestrator.services.input_validators import (
+            format_validation_report,
+            validate_building_input,
+        )
+    except ImportError as exc:
+        return True, f"input_validators not importable — skipping ({exc})"
+
+    if dry_run:
+        return True, "would validate optional config files (feeds, recipes, rules, channels, …)"
+
+    all_ok, report = validate_building_input(new_bldg, input_root)
+    text = format_validation_report(report)
+    for line in text.splitlines()[1:]:  # skip the header line already printed above
+        if "FAIL" in line:
+            _err(line)
+        elif "OK" in line:
+            _ok(line.strip())
+        elif line.startswith("="):
+            pass
+        elif line.strip():
+            print(f"         {line.strip()}")
+
+    if not all_ok:
+        return False, "one or more optional config files have validation errors (see above)"
+    return True, "all optional config files valid"
 
 
 def _check_ttl_consistency(
@@ -251,20 +306,69 @@ def _archive_old_building(
     if not old_bldg or old_bldg == "":
         return True, "no previous BUILDING_ID found — nothing to archive"
 
-    old_dir = input_root / old_bldg
-    if not old_dir.is_dir():
-        return True, f"no old input dir {old_dir} — nothing to archive"
-
     archive_root = input_root / "_archive"
     ts = dt.datetime.now().strftime("%Y%m%dT%H%M%S")
-    dest = archive_root / f"{old_bldg}_{ts}"
 
-    if dry_run:
-        return True, f"would move {old_dir} -> {dest}"
+    # NESTED layout — old building files are in input/<old>/
+    old_dir = input_root / old_bldg
+    if old_dir.is_dir():
+        dest = archive_root / f"{old_bldg}_{ts}"
+        if dry_run:
+            return True, f"would move {old_dir} -> {dest}"
+        archive_root.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(old_dir), str(dest))
+        return True, f"moved {old_dir} -> {dest}"
 
-    archive_root.mkdir(parents=True, exist_ok=True)
-    shutil.move(str(old_dir), str(dest))
-    return True, f"moved {old_dir} -> {dest}"
+    # FLAT layout — old building files are in input/ itself.
+    # Archive building-specific files (those named <bldg>_*.ttl plus known
+    # config files) to input/_archive/<old>_<ts>/.  Shared files (Brick*,
+    # DWG/PDFs, _templates/, database_registry.yaml) are left in place.
+    flat_yaml = input_root / "building.yaml"
+    if flat_yaml.is_file():
+        try:
+            import yaml as _yaml
+
+            declared = (_yaml.safe_load(flat_yaml.read_text(encoding="utf-8")) or {}).get(
+                "building_id"
+            )
+        except Exception:
+            declared = None
+
+        if declared == old_bldg:
+            _BUILDING_CONFIG_FILES = {
+                "building.yaml", "capability.yaml", "channels.yaml",
+                "feeds.yaml", "rules.yaml", "intents.yaml", "equipment_linkage.ttl",
+            }
+            dest = archive_root / f"{old_bldg}_{ts}"
+            if dry_run:
+                return True, (
+                    f"would archive flat-layout building '{old_bldg}' files "
+                    f"from {input_root}/ -> {dest}/"
+                )
+            archive_root.mkdir(parents=True, exist_ok=True)
+            dest.mkdir(parents=True, exist_ok=True)
+            archived = []
+            # Move named config files
+            for fname in _BUILDING_CONFIG_FILES:
+                src = input_root / fname
+                if src.exists():
+                    shutil.move(str(src), str(dest / fname))
+                    archived.append(fname)
+            # Move <bldg>_*.ttl files
+            for ttl in sorted(input_root.glob(f"{old_bldg}_*.ttl")):
+                shutil.move(str(ttl), str(dest / ttl.name))
+                archived.append(ttl.name)
+            # Move data/, documents/ subdirs if present
+            for subdir in ("data", "documents"):
+                src_dir = input_root / subdir
+                if src_dir.is_dir():
+                    shutil.move(str(src_dir), str(dest / subdir))
+                    archived.append(f"{subdir}/")
+            return True, (
+                f"archived flat-layout '{old_bldg}' ({len(archived)} items) -> {dest}"
+            )
+
+    return True, f"no old input dir for '{old_bldg}' — nothing to archive"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -371,6 +475,11 @@ def main() -> int:
     (_ok if ok else _err)(msg)
     if not ok:
         return 2
+
+    _section("Validating optional config files")
+    ok, msg = _check_optional_configs(new_bldg, input_root, dry_run=args.dry_run)
+    (_ok if ok else _warn)(msg)
+    # Optional-file failures are warnings, not hard errors — boot continues.
 
     _section("Applying swap")
 

@@ -372,6 +372,47 @@ def run_non_interactive(args):
     print(json.dumps({"status": "ok", "config": out, "building_id": args.id}))
 
 
+def run_scaffold(building_id: str, input_root: Path) -> None:
+    """Copy input/_templates/ to input/<building_id>/ with BUILDING_ID substituted."""
+    templates_dir = input_root / "_templates"
+    target_dir = input_root / building_id
+
+    if not templates_dir.is_dir():
+        err(f"Templates directory not found: {templates_dir}")
+        err("Create input/_templates/ first (see docs/ADDING_A_DATA_SOURCE.md).")
+        sys.exit(1)
+
+    if target_dir.exists():
+        warn(f"Directory already exists: {target_dir}")
+        warn("Scaffold will only copy files that don't already exist (no overwrite).")
+    else:
+        target_dir.mkdir(parents=True)
+        ok(f"Created {target_dir}")
+
+    copied, skipped = 0, 0
+    for src in templates_dir.rglob("*"):
+        if not src.is_file():
+            continue
+        rel = src.relative_to(templates_dir)
+        dest = target_dir / rel
+        if dest.exists():
+            skipped += 1
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        content = src.read_text(encoding="utf-8", errors="replace")
+        # Substitute all template placeholders
+        content = content.replace("{BUILDING_ID}", building_id)
+        content = content.replace("{{BUILDING_ID}}", building_id)
+        dest.write_text(content, encoding="utf-8")
+        ok(f"  scaffolded: {rel}")
+        copied += 1
+
+    print()
+    info(f"Scaffold complete: {copied} files copied, {skipped} skipped (already exist).")
+    info(f"Edit {target_dir}/building.yaml to set building_name and ontology_namespace.")
+    info("Then run:  python scripts/swap_building.py --to " + building_id + " --dry-run")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="OntoSage Building Onboarding CLI",
@@ -383,7 +424,25 @@ if __name__ == "__main__":
         action="store_true",
         help="Run in non-interactive mode (requires --id, --name, etc.)",
     )
-    parser.add_argument("--id", help="Building ID")
+    parser.add_argument(
+        "--scaffold",
+        action="store_true",
+        help=(
+            "Copy input/_templates/ to input/<--building-id>/ with BUILDING_ID substituted. "
+            "Use this to bootstrap a new building's directory before onboarding."
+        ),
+    )
+    parser.add_argument(
+        "--building-id",
+        dest="building_id",
+        help="Building ID for --scaffold mode.",
+    )
+    parser.add_argument(
+        "--input-root",
+        default="input",
+        help="Path to the input/ root (default: input).",
+    )
+    parser.add_argument("--id", help="Building ID (non-interactive mode)")
     parser.add_argument("--name", help="Building name")
     parser.add_argument("--namespace", help="Ontology namespace URI")
     parser.add_argument("--prefix", default="bldg", help="SPARQL prefix")
@@ -396,7 +455,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.non_interactive:
+    if args.scaffold:
+        bid = args.building_id or args.id
+        if not bid:
+            parser.error("--building-id (or --id) is required with --scaffold")
+        run_scaffold(bid, Path(args.input_root).resolve())
+    elif args.non_interactive:
         for req in ("id", "name", "namespace"):
             if not getattr(args, req):
                 parser.error(f"--{req} is required in non-interactive mode")
