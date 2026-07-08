@@ -6,7 +6,8 @@ Covers:
   3. Schema vs per-building separation.
   4. Idempotency: unchanged TTLs skipped without network call.
   5. Failed uploads logged but non-fatal.
-  6. GraphDB POST contract (URL, content-type).
+  6. GraphDB PUT-to-named-graph contract (URL, context param, content-type).
+  7. Named-graph URI determinism (_graph_uri_for_path).
 """
 
 from __future__ import annotations
@@ -19,7 +20,6 @@ import httpx
 import pytest
 
 from orchestrator.services import ttl_uploader as uploader
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SHA / cache helpers
@@ -118,7 +118,10 @@ def test_discover_schema_ttls_at_top_level(tmp_path):
 
 def test_discover_no_input_dir():
     """When no input/ exists, discovery returns []."""
-    with patch.object(uploader, "_INPUT_SEARCH_PATHS", [Path("/nonexistent")]):
+    with (
+        patch.object(uploader, "_INPUT_SEARCH_PATHS", [Path("/nonexistent")]),
+        patch.object(uploader, "_ONTOLOGY_SEARCH_PATHS", [Path("/nonexistent")]),
+    ):
         assert uploader.discover_ttls("bldg1") == []
         assert uploader.discover_schema_ttls() == []
 
@@ -128,25 +131,42 @@ def test_discover_no_input_dir():
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+def test_graph_uri_for_path_deterministic(tmp_path):
+    """Same file always produces the same named-graph URI."""
+    p = tmp_path / "bldg1_metadata.ttl"
+    uri1 = uploader._graph_uri_for_path(p)
+    uri2 = uploader._graph_uri_for_path(p)
+    assert uri1 == uri2
+    assert uri1.startswith("urn:ontosage:ttl:")
+    assert "bldg1_metadata.ttl" in uri1
+
+
+def test_graph_uri_for_path_different_files(tmp_path):
+    """Different files produce different named-graph URIs."""
+    p1 = tmp_path / "file_a.ttl"
+    p2 = tmp_path / "file_b.ttl"
+    assert uploader._graph_uri_for_path(p1) != uploader._graph_uri_for_path(p2)
+
+
 @pytest.mark.asyncio
-async def test_upload_to_graphdb_success(tmp_path):
-    """A 204 response from GraphDB means success."""
+async def test_upload_to_graphdb_uses_put_with_named_graph(tmp_path):
+    """Upload uses PUT to a per-file named graph (prevents blank-node duplication)."""
     ttl = tmp_path / "x.ttl"
     ttl.write_text("@prefix : <http://x#> . :a :b :c .")
     mock_client = AsyncMock()
-    mock_client.post = AsyncMock(
-        return_value=httpx.Response(status_code=204, request=httpx.Request("POST", "http://x"))
+    mock_client.put = AsyncMock(
+        return_value=httpx.Response(status_code=204, request=httpx.Request("PUT", "http://x"))
     )
     ok = await uploader.upload_to_graphdb(
         ttl, repository="testrepo", graphdb_url="http://gdb:7200", client=mock_client
     )
     assert ok is True
-    assert mock_client.post.await_count == 1
-    url_called = mock_client.post.await_args.args[0]
-    assert url_called == "http://gdb:7200/repositories/testrepo/statements"
-    assert (
-        mock_client.post.await_args.kwargs["headers"]["Content-Type"] == "application/x-turtle"
-    )
+    assert mock_client.put.await_count == 1
+    # URL must contain the statements endpoint + context query param
+    url_called = mock_client.put.await_args.args[0]
+    assert "/repositories/testrepo/statements" in url_called
+    assert "context=" in url_called
+    assert mock_client.put.await_args.kwargs["headers"]["Content-Type"] == "application/x-turtle"
 
 
 @pytest.mark.asyncio
@@ -155,10 +175,11 @@ async def test_upload_to_graphdb_4xx_returns_false(tmp_path):
     ttl = tmp_path / "x.ttl"
     ttl.write_text("@prefix : <http://x#> . :a :b :c .")
     mock_client = AsyncMock()
-    mock_client.post = AsyncMock(
+    mock_client.put = AsyncMock(
         return_value=httpx.Response(
-            status_code=400, text="bad turtle",
-            request=httpx.Request("POST", "http://x"),
+            status_code=400,
+            text="bad turtle",
+            request=httpx.Request("PUT", "http://x"),
         )
     )
     ok = await uploader.upload_to_graphdb(ttl, client=mock_client)
@@ -171,7 +192,7 @@ async def test_upload_to_graphdb_network_error_returns_false(tmp_path):
     ttl = tmp_path / "x.ttl"
     ttl.write_text("@prefix : <http://x#> . :a :b :c .")
     mock_client = AsyncMock()
-    mock_client.post = AsyncMock(side_effect=httpx.ConnectError("refused"))
+    mock_client.put = AsyncMock(side_effect=httpx.ConnectError("refused"))
     ok = await uploader.upload_to_graphdb(ttl, client=mock_client)
     assert ok is False
 
@@ -250,6 +271,7 @@ async def test_empty_input_dir_returns_empty_summary(tmp_path):
     upload_mock = AsyncMock(return_value=True)
     with (
         patch.object(uploader, "_INPUT_SEARCH_PATHS", [tmp_path]),
+        patch.object(uploader, "_ONTOLOGY_SEARCH_PATHS", [tmp_path / "no_ontology"]),
         patch.object(uploader, "upload_to_graphdb", upload_mock),
     ):
         summary = await uploader.run_idempotent_uploads(["bldg1"])
@@ -266,6 +288,7 @@ async def test_schemas_included_when_flag_set(tmp_path):
     cache: dict = {}
     with (
         patch.object(uploader, "_INPUT_SEARCH_PATHS", [tmp_path]),
+        patch.object(uploader, "_ONTOLOGY_SEARCH_PATHS", [tmp_path / "no_ontology"]),
         patch.object(uploader, "upload_to_graphdb", upload_mock),
     ):
         summary = await uploader.run_idempotent_uploads(

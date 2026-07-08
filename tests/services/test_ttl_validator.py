@@ -149,9 +149,9 @@ def test_empty_namespace_warns(staged):
         input_root=tmp_path / "input",
     )
     assert report.ok
-    assert any("zero triples" in w.message for w in report.warnings), (
-        f"Expected zero-triples warning; got {report.warnings}"
-    )
+    assert any(
+        "zero triples" in w.message for w in report.warnings
+    ), f"Expected zero-triples warning; got {report.warnings}"
 
 
 def test_assert_or_die_raises_on_mismatch(staged):
@@ -240,3 +240,144 @@ def test_shacl_run_when_brickschema_available(staged):
         run_shacl=True,
     )
     assert report.ok, "SHACL findings are WARN, not HARD_FAIL"
+
+
+# ── @base consistency (2026-06-13) ─────────────────────────────────────────────
+
+BASE_MATCHING_TTL = """\
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix bldg:  <http://example.com/test-building#> .
+@base <http://example.com/test-building#> .
+
+bldg:Sensor_A a brick:Temperature_Sensor .
+"""
+
+BASE_MISMATCH_TTL = """\
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix bldg:  <http://example.com/test-building#> .
+@base <http://somewhere-else.example.org/other#> .
+
+bldg:Sensor_A a brick:Temperature_Sensor .
+"""
+
+BASE_SPARQL_STYLE_TTL = """\
+BASE <http://somewhere-else.example.org/other#>
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix bldg:  <http://example.com/test-building#> .
+
+bldg:Sensor_A a brick:Temperature_Sensor .
+"""
+
+
+def _run(tmp_path):
+    return validate_building_ttls(
+        building_id="bldg_test",
+        declared_namespace="http://example.com/test-building#",
+        building_prefix="bldg",
+        input_root=tmp_path / "input",
+    )
+
+
+def test_base_matching_namespace_no_warning(staged):
+    tmp_path, bldg = staged
+    (bldg / "base_ok.ttl").write_text(BASE_MATCHING_TTL, encoding="utf-8")
+    report = _run(tmp_path)
+    assert report.ok
+    assert report.warnings == []
+
+
+def test_base_mismatch_warns_but_does_not_fail(staged):
+    """A foreign @base is a WARN: relative IRIs would resolve into another
+    namespace, but prefixed-name-only files still work."""
+    tmp_path, bldg = staged
+    (bldg / "base_bad.ttl").write_text(BASE_MISMATCH_TTL, encoding="utf-8")
+    report = _run(tmp_path)
+    assert report.ok, "base mismatch must not hard-fail"
+    assert len(report.warnings) == 1
+    assert "@base" in report.warnings[0].message
+    assert "somewhere-else" in report.warnings[0].message
+
+
+def test_sparql_style_base_also_detected(staged):
+    tmp_path, bldg = staged
+    (bldg / "base_sparql.ttl").write_text(BASE_SPARQL_STYLE_TTL, encoding="utf-8")
+    report = _run(tmp_path)
+    assert report.ok
+    assert any("@base" in w.message for w in report.warnings)
+
+
+def test_absent_base_is_fine(staged):
+    """Files without @base (the common case) must not warn."""
+    tmp_path, bldg = staged
+    (bldg / "good.ttl").write_text(GOOD_TTL, encoding="utf-8")
+    report = _run(tmp_path)
+    assert report.ok
+    assert report.warnings == []
+
+
+# ── Scaffolding exclusion (2026-06-13 — restart crash-loop fix) ──────────────
+
+
+def test_templates_scaffolding_ttl_excluded_flat_layout(tmp_path):
+    """Flat layout: a bad TTL under input/_templates/ must NOT gate startup.
+
+    Reproduces the restart crash-loop where input/_templates/concepts_overlay.ttl
+    (missing @prefix bldg:) hard-failed validation of the active building and
+    crash-looped the orchestrator on every restart.
+    """
+    input_root = tmp_path / "input"
+    input_root.mkdir()
+    (input_root / "building.yaml").write_text("building_id: bldg_test\n", encoding="utf-8")
+    (input_root / "good.ttl").write_text(GOOD_TTL, encoding="utf-8")
+    templates = input_root / "_templates"
+    templates.mkdir()
+    (templates / "concepts_overlay.ttl").write_text(NO_PREFIX_TTL, encoding="utf-8")
+
+    report = validate_building_ttls(
+        building_id="bldg_test",
+        declared_namespace="http://example.com/test-building#",
+        building_prefix="bldg",
+        input_root=input_root,
+    )
+    assert report.ok, f"_templates TTL should be excluded; got {report.hard_failures}"
+    assert report.ttl_files_checked == 1  # only good.ttl, never the template
+
+
+def test_non_ontology_subdirs_excluded(staged):
+    """documents/, data/, personas/ and any underscore-prefixed dir hold
+    scaffolding/examples, not the building ontology — never validated."""
+    tmp_path, bldg = staged
+    (bldg / "good.ttl").write_text(GOOD_TTL, encoding="utf-8")
+    for sub in ("documents", "data", "personas", "_scratch"):
+        d = bldg / sub
+        d.mkdir()
+        (d / "example.ttl").write_text(NO_PREFIX_TTL, encoding="utf-8")
+
+    report = validate_building_ttls(
+        building_id="bldg_test",
+        declared_namespace="http://example.com/test-building#",
+        building_prefix="bldg",
+        input_root=tmp_path / "input",
+    )
+    assert report.ok, f"scaffolding subdir TTLs should be excluded; got {report.hard_failures}"
+    assert report.ttl_files_checked == 1
+
+
+def test_real_nested_ontology_still_validated(staged):
+    """A genuine bad ontology TTL in a NON-scaffolding nested dir must still
+    hard-fail (we only skip scaffolding, not all subdirectories)."""
+    tmp_path, bldg = staged
+    (bldg / "good.ttl").write_text(GOOD_TTL, encoding="utf-8")
+    nested = bldg / "ontology"
+    nested.mkdir()
+    (nested / "bad.ttl").write_text(MISMATCH_TTL, encoding="utf-8")
+
+    report = validate_building_ttls(
+        building_id="bldg_test",
+        declared_namespace="http://example.com/test-building#",
+        building_prefix="bldg",
+        input_root=tmp_path / "input",
+    )
+    assert not report.ok
+    assert report.ttl_files_checked == 2
+    assert "bad.ttl" in report.hard_failures[0].ttl_path

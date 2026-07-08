@@ -104,11 +104,11 @@ def test_env_var_still_wins_over_yaml(monkeypatch, tmp_path):
 
 
 def test_existing_bldg1_yaml_has_explicit_name_and_id():
-    """The shipped input/bldg1/building.yaml declares its identity explicitly."""
+    """The shipped input/building.yaml (flat layout) declares its identity explicitly."""
     import yaml
-    yaml_path = Path("input/bldg1/building.yaml")
+    yaml_path = Path("input/building.yaml")
     if not yaml_path.exists():
-        pytest.skip("input/bldg1/building.yaml not present")
+        pytest.skip("input/building.yaml not present")
     data = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
     assert data.get("building_id") == "bldg1"
     assert data.get("building_name") is not None

@@ -1,0 +1,322 @@
+# datasource_question_set.yaml
+# Curated question set for Admin Data-Source Console QA.
+#
+# Each entry proves the toggle invariant for one (question, source) pair:
+#   OFF  → response is a named locked-capability decline (never an empty/hallucinated answer)
+#   ON   → response is a substantive answer backed by the named provenance source
+#
+# Fields:
+#   id            : unique fixture ID
+#   source_id     : datasource that gates this question (matches input/datasources.yaml)
+#   question      : natural-language query sent to POST /chat
+#   persona       : typical asker role  (facility_manager | occupant | researcher | admin)
+#   when_off:
+#     behavior    : "locked_decline"  — pipeline must stop and name the source
+#     must_contain: substring(s) that prove the decline is NAMED (source label appears)
+#   when_on:
+#     behavior    : "substantive_answer"  — live data from MySQL via SPARQL UUID path
+#     must_contain: substring(s) that a real answer must contain (unit, value, label)
+#     provenance_label: label that must appear in data.sources[]
+#   notes         : optional design rationale / gotchas
+
+version: 1
+questions:
+
+  # ── NOISE / ACOUSTIC ────────────────────────────────────────────────────────
+
+  - id: NS01
+    source_id: noise
+    question: "What is the noise level on floor 5?"
+    persona: occupant
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Acoustic"
+        - "enable"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "dB"
+      provenance_label: "Acoustic Sensing System"
+    notes: >
+      Core noise gate. "noise level" is the first match_keyword.
+      Proves the SPARQL -> SQL -> analytics pipeline for Noise_Sensor_Floor5.
+
+  - id: NS02
+    source_id: noise
+    question: "Is there a quiet study space on floor 3?"
+    persona: occupant
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Acoustic"
+        - "enable"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "dB"
+      provenance_label: "Acoustic Sensing System"
+    notes: >
+      "quiet space" is in match_keywords. Floor 3 sensor (Noise_Sensor_Floor3)
+      is the relevant point. Tests that the floor-3 UUID path also resolves.
+
+  - id: NS03
+    source_id: noise
+    question: "How loud is it currently in the building?"
+    persona: facility_manager
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Acoustic"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "dB"
+      provenance_label: "Acoustic Sensing System"
+    notes: >
+      "how loud" keyword. Facility manager checking for noise complaints context.
+
+  # ── OCCUPANCY / DESK ────────────────────────────────────────────────────────
+
+  - id: OC01
+    source_id: occupancy
+    question: "Are there any free desks available right now?"
+    persona: occupant
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Occupancy"
+        - "enable"
+    when_on:
+      # NOTE: this phrasing routes to capability KB (KB has study-space entries),
+      # not to sensor data. Use OC02 for the sensor-data path. This entry documents
+      # the design gap: lock fires correctly, but KB answers when enabled (not sensors).
+      behavior: substantive_answer
+      must_contain:
+        - "floor"
+      provenance_label: "Capability Knowledge Base"
+    notes: >
+      "free desk" is in match_keywords so the gate fires correctly OFF.
+      ON: phrase routes to KB (study-space capability entries) rather than sensors.
+      This is a known routing tension: human-friendly phrasing != sensor query phrasing.
+
+  - id: OC02
+    source_id: occupancy
+    question: "What is the current occupancy on floor 3?"
+    persona: facility_manager
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Occupancy"
+        - "enable"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "count"
+      provenance_label: "Occupancy Sensing System"
+    notes: >
+      Sensor-data-phrased alternative to OC01. "occupancy" is in match_keywords so
+      the lock still fires. SPARQL finds Occupancy_Sensor_Floor3 -> SQL -> count value.
+      This is the canonical after-enable assertion for the occupancy source.
+
+  - id: OC03
+    source_id: occupancy
+    question: "How busy is floor 5 right now?"
+    persona: occupant
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Occupancy"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "count"
+      provenance_label: "Occupancy Sensing System"
+    notes: >
+      "how busy" keyword. Tests Occupancy_Sensor_Floor5 UUID path.
+
+  # ── ENERGY ──────────────────────────────────────────────────────────────────
+
+  - id: EN01
+    source_id: energy
+    question: "What is the energy consumption today?"
+    persona: facility_manager
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Energy"
+        - "enable"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "kWh"
+      provenance_label: "Energy Metering System"
+    notes: >
+      "energy consumption" is in match_keywords. Core energy gate.
+
+  - id: EN02
+    source_id: energy
+    question: "What are the peak hours for electricity usage in this building?"
+    persona: facility_manager
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Energy"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "kWh"
+      provenance_label: "Energy Metering System"
+    notes: >
+      "peak hours" + "electricity" both in match_keywords. Tests analytics path
+      (aggregate/trend over the day).
+
+  - id: EN03
+    source_id: energy
+    question: "How much power has the building used today?"
+    persona: researcher
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Energy"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "kWh"
+      provenance_label: "Energy Metering System"
+    notes: >
+      "power usage" keyword. Tests researcher persona on energy data.
+
+  # ── WATER ────────────────────────────────────────────────────────────────────
+
+  - id: WA01
+    source_id: water
+    question: "What is the water usage today?"
+    persona: facility_manager
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Water"
+        - "enable"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "L"
+      provenance_label: "Water Metering System"
+    notes: >
+      "water usage" keyword. Core water gate.
+
+  - id: WA02
+    source_id: water
+    question: "Is there a water leak detected in the building?"
+    persona: facility_manager
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Water"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "L"
+      provenance_label: "Water Metering System"
+    notes: >
+      "leak" keyword. High-priority FM query. Leak detection relies on anomaly
+      detection over the water flow rate time series.
+
+  # ── EQUIPMENT POWER ─────────────────────────────────────────────────────────
+
+  - id: EQ01
+    source_id: equipment
+    question: "What is the AHU load on floor 5?"
+    persona: facility_manager
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Equipment"
+        - "enable"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "W"
+      provenance_label: "Equipment Power System"
+    notes: >
+      "ahu load" keyword. Tests Equipment_Power_Sensor path.
+
+  - id: EQ02
+    source_id: equipment
+    question: "What is the current equipment power draw?"
+    persona: researcher
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Equipment"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "W"
+      provenance_label: "Equipment Power System"
+    notes: >
+      "equipment power" keyword. Researcher use-case for energy disaggregation.
+
+  # ── COMPLAINTS ───────────────────────────────────────────────────────────────
+
+  - id: CM01
+    source_id: complaints
+    question: "Have there been any student complaints recently?"
+    persona: facility_manager
+    when_off:
+      behavior: locked_decline
+      must_contain:
+        - "Student Complaint"
+        - "enable"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "complaint"
+      provenance_label: "Student Complaint System"
+    notes: >
+      "complaints" keyword. FM checking complaint volume.
+
+  # ── NOT LOCKED (base ontology already covers these) ─────────────────────────
+  # iaq and light have match_keywords: [] so questions must NEVER hit the lock gate,
+  # even when the synthetic source is disabled. These assert the negative: no lock.
+
+  - id: IAQ_NO_LOCK
+    source_id: iaq
+    question: "What is the CO2 level on floor 5?"
+    persona: occupant
+    when_off:
+      behavior: pass_through
+      must_contain: []
+      must_not_contain:
+        - "enable"
+        - "data source"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "ppm"
+      provenance_label: "Building Ontology"
+    notes: >
+      iaq has no match_keywords: the base ontology has 212 CO2_Sensor instances.
+      This question must NEVER be locked. The lock gate must not fire here.
+      Regression guard: if someone adds "co2" to iaq.match_keywords by mistake,
+      this assertion catches it.
+
+  - id: LIGHT_NO_LOCK
+    source_id: light
+    question: "What is the light level in floor 3?"
+    persona: occupant
+    when_off:
+      behavior: pass_through
+      must_contain: []
+      must_not_contain:
+        - "enable"
+        - "data source"
+    when_on:
+      behavior: substantive_answer
+      must_contain:
+        - "lux"
+      provenance_label: "Building Ontology"
+    notes: >
+      light has no match_keywords: the base ontology has 35 Illuminance_Sensor instances.
+      Regression guard against locking lighting questions.
