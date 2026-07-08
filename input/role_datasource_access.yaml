@@ -1,0 +1,16 @@
+roles:
+  analyst: '*'
+  facility_manager: '*'
+  occupant:
+  - energy
+  - noise
+  - iaq
+  - light
+  - equipment
+  - water
+  - complaints
+  operator: '*'
+  # readonly is the most-restricted (guest) role: no gated-datasource access.
+  # [] = explicitly blocked from all (source_id in [] is always False). Do NOT set
+  # '*' here — that would grant readonly more than occupant.
+  readonly: []

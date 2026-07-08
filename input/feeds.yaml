@@ -1,0 +1,64 @@
+# input/feeds.yaml — LIVE external data feeds for the Abacws building
+#
+# Feed framework: orchestrator/services/feeds/
+# rest_poll feeds register a Brick point in GraphDB and write telemetry rows to
+# the building's MySQL database via the adapter registry.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# STANDARD DATA PIPELINE (2026-06-20)
+# Per-floor energy/occupancy/water/noise/IAQ/light/equipment sensors are NO LONGER
+# csv_drop feeds. They are now first-class Brick points in the ontology with their
+# readings in NARROW per-modality MySQL tables, reached via
+#   ref:hasExternalReference -> ref:TimeseriesReference (ref:hasTimeseriesId + ref:storedAt)
+# See: scripts/generate_timeseries_extension.py  ->  input/bldg1_timeseries_extension.ttl
+#      scripts/load_timeseries_to_db.py           ->  narrow tables (input/database_registry.yaml)
+#      scripts/onboard_data_source.py             ->  the canonical "add a data source" tool
+# This file now holds ONLY genuinely live external feeds. Do NOT add csv_drop
+# sensor feeds here — raw CSV sensor readings in input/ are deprecated.
+# (energy_tariff is a rate schedule, not telemetry — handle via recipes, not a feed.)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# STRICT_SECRETS: auth_env names an env-var; never put literal tokens here.
+# Coordinates: Abacws Building, Cardiff (51.481, -3.179)
+
+feeds:
+
+  # ── Outdoor weather — Open-Meteo (keyless, free tier) ────────────────────
+  # Polls Cardiff current conditions every 5 minutes. BUILDING-DATA feeds for
+  # sensor-pipeline questions ("compare inside vs outside").
+
+  - id: outside_weather_temp
+    type: rest_poll
+    url: "https://api.open-meteo.com/v1/forecast?latitude=51.481&longitude=-3.179&current=temperature_2m&timezone=Europe%2FLondon"
+    interval_s: 300
+    field_map:
+      current.temperature_2m: value
+    brick_class: "brick:Outside_Air_Temperature_Sensor"
+    location: "bldg:BuildingExterior"
+    unit: degC
+    storage: "bldg:database1"
+    enabled: true
+
+  - id: outside_weather_humidity
+    type: rest_poll
+    url: "https://api.open-meteo.com/v1/forecast?latitude=51.481&longitude=-3.179&current=relative_humidity_2m&timezone=Europe%2FLondon"
+    interval_s: 300
+    field_map:
+      current.relative_humidity_2m: value
+    brick_class: "brick:Outside_Air_Humidity_Sensor"
+    location: "bldg:BuildingExterior"
+    unit: pct
+    storage: "bldg:database1"
+    enabled: true
+
+  - id: outside_weather_wind
+    type: rest_poll
+    url: "https://api.open-meteo.com/v1/forecast?latitude=51.481&longitude=-3.179&current=wind_speed_10m&timezone=Europe%2FLondon"
+    interval_s: 300
+    field_map:
+      current.wind_speed_10m: value
+    brick_class: "brick:Wind_Speed_Sensor"
+    location: "bldg:BuildingExterior"
+    unit: km/h
+    storage: "bldg:database1"
+    enabled: true

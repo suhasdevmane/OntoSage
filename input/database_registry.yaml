@@ -72,6 +72,68 @@ databases:
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
 
+  # ── Narrow per-modality time-series tables (uuid, datetime, value) ──────────
+  # Standardized out of input/data CSVs (scripts/generate_timeseries_extension.py
+  # + scripts/load_timeseries_to_db.py). Each table is its own storage backend,
+  # reached from the ontology via `ref:storedAt bldg:<table>`. Same MySQL instance
+  # as database1; `type: mysql_narrow` + `table:` scope the adapter to one table.
+  energy_data:
+    type: mysql_narrow
+    table: energy_data
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-sensordb}"
+  occupancy_data:
+    type: mysql_narrow
+    table: occupancy_data
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-sensordb}"
+  water_data:
+    type: mysql_narrow
+    table: water_data
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-sensordb}"
+  noise_data:
+    type: mysql_narrow
+    table: noise_data
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-sensordb}"
+  iaq_data:
+    type: mysql_narrow
+    table: iaq_data
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-sensordb}"
+  light_data:
+    type: mysql_narrow
+    table: light_data
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-sensordb}"
+  equipment_data:
+    type: mysql_narrow
+    table: equipment_data
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-sensordb}"
+
   # MariaDB (drop-in MySQL replacement)
   # TTL: ref:storedAt bldg:mariadb
   mariadb:

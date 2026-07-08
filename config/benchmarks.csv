@@ -1,0 +1,13 @@
+metric,segment,p25,p50,p75,unit,normalisation,source
+energy_intensity,university,95,140,200,kWh/m2/year,floor_area_m2,CIBSE TM46 (2008) Table 1 / REEB 2023 HE sector
+energy_intensity,office,120,170,240,kWh/m2/year,floor_area_m2,CIBSE TM46 (2008) Table 1
+heating_intensity,university,55,85,130,kWh/m2/year,floor_area_m2,CIBSE TM46 (2008) Table 1
+co2_average_occupied,university,600,750,950,ppm,none,CIBSE TM40 / BB101 (2018)
+co2_average_occupied,office,550,700,900,ppm,none,CIBSE TM40 (2019) Section 4.3
+temperature_average_occupied,university,19,21,23,degC,none,CIBSE Guide A (2006) Table 1.5
+temperature_average_occupied,office,19,21,23,degC,none,ASHRAE 55-2017 Table 5.2.1
+humidity_average,university,35,45,60,pct,none,ASHRAE 55-2017 Section 5.2
+occupancy_utilisation,university,30,45,65,pct,design_capacity,CIBSE Guide M (2014) space util benchmarks
+energy_per_student,university,350,500,720,kWh/student/year,student_count,HESA EMS (2022) sustainability returns
+carbon_intensity,university,15,25,45,kgCO2e/m2/year,floor_area_m2,UKGBC Net Zero Whole Life (2021) baseline
+water_intensity,university,0.4,0.6,1.0,m3/m2/year,floor_area_m2,CIBSE TM50 (2012)

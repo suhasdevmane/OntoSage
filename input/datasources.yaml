@@ -1,0 +1,310 @@
+# ============================================================================
+# OntoSage — Toggleable Synthetic Data Sources (bldg1)
+# ============================================================================
+# Each entry is a data source an operator can switch ON/OFF from the config
+# panel. Switching one ON:
+#   1. synthesizes readings into its narrow MySQL table (ref:storedAt bldg:<ts_table>)
+#   2. PUTs UUID-keyed Brick point triples into its own GraphDB named graph
+#      (urn:ontosage:ds:<id>) — the named graph IS the on/off switch
+#   3. unlocks the question classes listed under `unlocks`
+#
+# All sources are SYNTHETIC and disabled by default. UUIDs are auto-derived
+# deterministically from (building_id, source id, point local) when omitted.
+#
+# See tasks/IMPLEMENTATION_PLAN_DATASOURCE_TOGGLES_AND_PROVENANCE.md
+# ============================================================================
+version: 1
+datasources:
+
+  - id: occupancy
+    label: "Occupancy Sensing"
+    modality: occupancy
+    kind: timeseries
+    enabled: false
+    synthetic: true
+    provenance_system: "Occupancy Sensing System"
+    color: "#3B82F6"
+    ts_table: occupancy_data
+    unlocks:
+      - desk_availability
+      - occupancy_peak_hours
+      - space_utilisation
+    # NOTE: the base ontology has a handful of Occupancy_Sensor instances (~6)
+    # but no usable time-series for them, so locking desk/occupancy questions
+    # when this source is off is intended ("enable to get real occupancy data").
+    # If those base sensors gain usable data, empty this list to stop locking.
+    # (energy ~6 and water ~2 base instances are in the same situation.)
+    match_keywords:
+      - "free desk"
+      - "desk space"
+      - "available desk"
+      - "find a seat"
+      - "how busy"
+      - "occupancy"
+      - "how many people"
+      - "space utilisation"
+    points:
+      - local: Occupancy_Sensor_Floor5
+        brick_class: brick:Occupancy_Sensor
+        location: bldg:Floor5
+        unit: unit:PERCENT
+        label: "Occupancy — Floor 5"
+      - local: Occupancy_Sensor_Floor3
+        brick_class: brick:Occupancy_Sensor
+        location: bldg:Floor3
+        unit: unit:PERCENT
+        label: "Occupancy — Floor 3"
+    generator:
+      kind: occupancy_profile
+      window_days: 30
+      interval_minutes: 15
+      params:
+        weekday_peak: 0.85
+        weekend_peak: 0.15
+        opening_hour: 8
+        closing_hour: 20
+        noise: 0.08
+
+  - id: energy
+    label: "Energy Metering"
+    modality: energy
+    kind: timeseries
+    enabled: false
+    synthetic: true
+    provenance_system: "Energy Metering System"
+    color: "#F97316"
+    ts_table: energy_data
+    unlocks:
+      - energy_peak_hours
+      - energy_consumption
+      - energy_benchmarking
+    match_keywords:
+      - "energy consumption"
+      - "energy usage"
+      - "power usage"
+      - "peak hours"
+      - "peak demand"
+      - "electricity"
+      - "kwh"
+    points:
+      - local: Energy_Meter_Floor5
+        brick_class: brick:Energy_Sensor
+        location: bldg:Floor5
+        unit: unit:KiloW-HR
+        label: "Electrical Energy Meter — Floor 5"
+      - local: Energy_Meter_Floor3
+        brick_class: brick:Energy_Sensor
+        location: bldg:Floor3
+        unit: unit:KiloW-HR
+        label: "Electrical Energy Meter — Floor 3"
+    generator:
+      kind: energy_load
+      window_days: 30
+      interval_minutes: 15
+      params:
+        base_kwh: 4.0
+        peak_kwh: 22.0
+        opening_hour: 8
+        closing_hour: 20
+        noise: 0.1
+
+  - id: noise
+    label: "Acoustic / Noise Sensing"
+    modality: noise
+    kind: timeseries
+    enabled: false
+    synthetic: true
+    provenance_system: "Acoustic Sensing System"
+    color: "#A855F7"
+    ts_table: noise_data
+    unlocks:
+      - quiet_space_finding
+      - noise_levels
+    match_keywords:
+      - "noise level"
+      - "how noisy"
+      - "quiet space"
+      - "quiet desk"
+      - "sound level"
+      - "how loud"
+    points:
+      - local: Noise_Sensor_Floor5
+        brick_class: brick:Sound_Level_Sensor
+        location: bldg:Floor5
+        unit: unit:DEC
+        label: "Sound Level — Floor 5"
+      - local: Noise_Sensor_Floor3
+        brick_class: brick:Sound_Level_Sensor
+        location: bldg:Floor3
+        unit: unit:DEC
+        label: "Sound Level — Floor 3"
+    generator:
+      kind: noise_profile
+      window_days: 30
+      interval_minutes: 15
+      params:
+        quiet_db: 38.0
+        busy_db: 68.0
+        opening_hour: 8
+        closing_hour: 20
+        noise: 0.12
+
+  - id: iaq
+    label: "Indoor Air Quality"
+    modality: iaq
+    kind: timeseries
+    enabled: false
+    synthetic: true
+    provenance_system: "Indoor Air Quality System"
+    color: "#14B8A6"
+    ts_table: iaq_data
+    unlocks:
+      - air_quality
+      - ventilation_assessment
+    # NO match_keywords: the base abacws ontology already has rich air-quality
+    # coverage (Air_Quality_Sensor ×521, CO2_Sensor ×212), so IAQ questions must
+    # NOT be locked — the base pipeline answers them. This source only adds
+    # provenance/regeneration; it never gates a question.
+    match_keywords: []
+    points:
+      - local: CO2_Sensor_Floor5
+        brick_class: brick:CO2_Sensor
+        location: bldg:Floor5
+        unit: unit:PPM
+        label: "CO2 — Floor 5"
+      - local: CO2_Sensor_Floor3
+        brick_class: brick:CO2_Sensor
+        location: bldg:Floor3
+        unit: unit:PPM
+        label: "CO2 — Floor 3"
+    generator:
+      kind: iaq_profile
+      window_days: 30
+      interval_minutes: 15
+      params:
+        base_ppm: 420.0
+        peak_ppm: 1100.0
+        opening_hour: 8
+        closing_hour: 20
+        noise: 0.06
+
+  - id: light
+    label: "Illuminance / Daylight"
+    modality: light
+    kind: timeseries
+    enabled: false
+    synthetic: true
+    provenance_system: "Lighting Sensing System"
+    color: "#EAB308"
+    ts_table: light_data
+    unlocks:
+      - daylight_assessment
+      - lighting_levels
+    # NO match_keywords: the base ontology already has Illuminance_Sensor (×35),
+    # so lighting questions must NOT be locked. Provenance/regeneration only.
+    match_keywords: []
+    points:
+      - local: Illuminance_Sensor_Floor5
+        brick_class: brick:Illuminance_Sensor
+        location: bldg:Floor5
+        unit: unit:LUX
+        label: "Illuminance — Floor 5"
+    generator:
+      kind: light_profile
+      window_days: 30
+      interval_minutes: 15
+      params:
+        night_lux: 5.0
+        day_lux: 850.0
+        sunrise_hour: 7
+        sunset_hour: 18
+        noise: 0.15
+
+  - id: equipment
+    label: "Equipment Power"
+    modality: equipment
+    kind: timeseries
+    enabled: false
+    synthetic: true
+    provenance_system: "Equipment Monitoring System"
+    color: "#EF4444"
+    ts_table: equipment_data
+    unlocks:
+      - equipment_load
+      - equipment_health
+    match_keywords:
+      - "equipment power"
+      - "ahu load"
+      - "machine power"
+      - "equipment health"
+    points:
+      - local: Power_Sensor_AHU_Floor5
+        brick_class: brick:Electrical_Power_Sensor
+        location: bldg:Floor5
+        unit: unit:KiloW
+        label: "AHU Power — Floor 5"
+    generator:
+      kind: equipment_profile
+      window_days: 30
+      interval_minutes: 15
+      params:
+        idle_kw: 0.5
+        running_kw: 7.5
+        opening_hour: 7
+        closing_hour: 21
+        noise: 0.1
+
+  - id: water
+    label: "Water Metering"
+    modality: water
+    kind: timeseries
+    enabled: false
+    synthetic: true
+    provenance_system: "Water Metering System"
+    color: "#0EA5E9"
+    ts_table: water_data
+    unlocks:
+      - water_consumption
+      - leak_detection
+    match_keywords:
+      - "water consumption"
+      - "water usage"
+      - "water meter"
+      - "leak"
+    points:
+      - local: Water_Meter_Floor5
+        brick_class: brick:Water_Flow_Sensor
+        location: bldg:Floor5
+        unit: unit:M3
+        label: "Water Flow — Floor 5"
+    generator:
+      kind: water_profile
+      window_days: 30
+      interval_minutes: 15
+      params:
+        base_m3: 0.02
+        peak_m3: 0.35
+        opening_hour: 8
+        closing_hour: 20
+        noise: 0.2
+
+  # ── Non-timeseries source: synthetic student-complaint corpus ──────────────
+  # No ts_table; enabling loads a labeled complaint corpus into the report/
+  # document store. Reasoning over it is deferred to the fusion phase (Phase 7);
+  # here it registers a provenance label and unlocks trend/sentiment questions.
+  - id: complaints
+    label: "Student Complaint System"
+    modality: complaints
+    kind: text_reports
+    enabled: false
+    synthetic: true
+    provenance_system: "Student Complaint System"
+    color: "#DB2777"
+    unlocks:
+      - complaint_trends
+      - sentiment_by_space
+    match_keywords:
+      - "complaint"
+      - "complaints"
+      - "students complained"
+      - "people complained"

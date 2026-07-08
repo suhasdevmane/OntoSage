@@ -1,0 +1,55 @@
+# TEMPLATE: input/<building_id>/recipes.yaml
+# Per-building recipe overrides — merged on top of config/recipes.yaml.
+# Only add recipes specific to this building or overrides of global ones.
+# See docs/ADDING_A_DATA_SOURCE.md for the full playbook.
+
+recipes:
+
+  # ── Threshold template (single upper/lower limit) ─────────────────────────
+  my_threshold_recipe:
+    kind: threshold
+    description: >
+      Tell the LLM what this recipe is for and what trigger phrases apply.
+      Example: "Temperature in cold storage rooms against food-safety thresholds."
+      Trigger phrases: "fridge", "cold room", "chiller".
+    params:
+      safe_min: 2.0          # lower safe bound (null if no lower bound)
+      safe_max: 5.0          # upper safe bound
+      warn_max: 8.0          # warning level
+      unit: degC
+      source: "Cite the standard or guideline (e.g. FSA 2023)"
+    brick_class: brick:Temperature_Sensor
+    answer_template: >
+      {metric}: {value:.1f} {unit}.
+      Guideline: {safe_min}–{safe_max} {unit} (safe), >{warn_max} {unit} (alarm).
+      {verdict}.
+
+  # ── Range template (acceptable min–max band) ──────────────────────────────
+  my_range_recipe:
+    kind: range
+    description: >
+      Acceptable band for a comfort metric. E.g. "Relative humidity comfort range."
+    params:
+      good_min: 30.0
+      good_max: 60.0
+      unit: "%RH"
+      source: "ASHRAE 55-2023"
+    brick_class: brick:Relative_Humidity_Sensor
+    answer_template: >
+      Humidity: {value:.0f}%RH.
+      ASHRAE comfort band: 30–60%RH.
+      {verdict}.
+
+  # ── Aggregate template (sum/average over a window) ────────────────────────
+  my_aggregate_recipe:
+    kind: aggregate
+    description: >
+      Aggregate a metric over a time window. E.g. "Daily energy total by floor."
+    params:
+      window_h: 24
+      agg_fn: sum            # sum | mean | max | min
+      unit: kWh
+    brick_class: brick:Electrical_Energy_Sensor
+    answer_template: >
+      Total {metric} over last {window_h}h: {agg_value:.1f} {unit}.
+      {verdict}.

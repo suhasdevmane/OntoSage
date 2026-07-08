@@ -1,0 +1,51 @@
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix bacnet: <http://data.ashrae.org/bacnet/#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+
+# ── Equipment assets ─────────────────────────────────────────────────────────
+
+bldg:LIFT-01 a brick:Elevator ;
+    rdfs:label "Main Passenger Lift"^^xsd:string ;
+    brick:hasLocation bldg:Building ;
+    rdfs:comment "Single passenger lift serving all 6 floors. Last major service: 2026-04-15."^^xsd:string .
+
+bldg:AHU-F5 a brick:Air_Handler_Unit ;
+    rdfs:label "Air Handling Unit Floor 5"^^xsd:string ;
+    brick:hasLocation bldg:Floor5 ;
+    rdfs:comment "AHU serving teaching and lab spaces on floor 5. Rated 8,000 m³/h."^^xsd:string .
+
+bldg:AHU-F3 a brick:Air_Handler_Unit ;
+    rdfs:label "Air Handling Unit Floor 3"^^xsd:string ;
+    brick:hasLocation bldg:Floor3 ;
+    rdfs:comment "AHU serving open-plan offices and study spaces on floor 3."^^xsd:string .
+
+bldg:PUMP-CH1 a brick:Pump ;
+    rdfs:label "Chiller Pump 1"^^xsd:string ;
+    brick:hasLocation bldg:Building ;
+    rdfs:comment "Primary chiller circulation pump. Paired with PUMP-CH2 (standby)."^^xsd:string .
+
+# ── Equipment → sensor point linkage (T36 feed points) ──────────────────────
+# Feed UUIDs deterministic: MD5("bldg1:{feed_id}") formatted 8-4-4-4-12
+# (must match feeds/registry.py _derive_uuid() and the MySQL column names)
+
+bldg:feed_lift_vibration_floor0 a brick:Vibration_Sensor ;
+    rdfs:label "Lift Vibration Monitor"^^xsd:string ;
+    brick:isPointOf bldg:LIFT-01 ;
+    brick:hasLocation bldg:Floor0 ;
+    brick:hasExternalReference [
+        ref:hasTimeseriesId "76fa0eed-da96-2ea5-b9ec-447fa7ae3989"^^xsd:string ;
+        ref:storedAt bldg:database1
+    ] .
+
+bldg:feed_ahu_runtime_floor5 a brick:Run_Time_Sensor ;
+    rdfs:label "AHU-F5 Runtime Sensor"^^xsd:string ;
+    brick:isPointOf bldg:AHU-F5 ;
+    brick:hasLocation bldg:Floor5 ;
+    brick:hasExternalReference [
+        ref:hasTimeseriesId "0fa68f99-b446-5ea9-4813-96d9016cb6d9"^^xsd:string ;
+        ref:storedAt bldg:database1
+    ] .

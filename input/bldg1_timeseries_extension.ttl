@@ -1,0 +1,372 @@
+@prefix bldg:   <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix brick:  <https://brickschema.org/schema/Brick#> .
+@prefix ref:    <https://brickschema.org/schema/Brick/ref#> .
+@prefix ashrae: <http://data.ashrae.org/standard223#> .
+@prefix unit:   <http://qudt.org/vocab/unit/> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+# ── Custom point classes (Brick 1.4 has no native noise/vibration point class) ──
+bldg:Noise_Level_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Sensor ;
+    rdfs:label "Noise Level Sensor"@en .
+
+bldg:Vibration_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Sensor ;
+    rdfs:label "Vibration Sensor"@en .
+
+# ── Time-series sensor points (migrated from input/data CSVs) ──
+
+bldg:Energy_Meter_Floor0 a owl:NamedIndividual ,
+        brick:Energy_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Electrical Energy Meter — Floor 0"@en ;
+    brick:hasUnit unit:KiloW-HR ;
+    brick:hasLocation bldg:Floor0 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c5214bff-94d0-5960-a2f2-cc092e6a4b09" ;
+        ref:storedAt bldg:energy_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c5214bff-94d0-5960-a2f2-cc092e6a4b09" ;
+        ref:storedAt bldg:energy_data
+    ] .
+
+bldg:Energy_Meter_Floor1 a owl:NamedIndividual ,
+        brick:Energy_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Electrical Energy Meter — Floor 1"@en ;
+    brick:hasUnit unit:KiloW-HR ;
+    brick:hasLocation bldg:Floor1 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e095c596-9727-5a87-a19c-27385e6a6c03" ;
+        ref:storedAt bldg:energy_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e095c596-9727-5a87-a19c-27385e6a6c03" ;
+        ref:storedAt bldg:energy_data
+    ] .
+
+bldg:Energy_Meter_Floor2 a owl:NamedIndividual ,
+        brick:Energy_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Electrical Energy Meter — Floor 2"@en ;
+    brick:hasUnit unit:KiloW-HR ;
+    brick:hasLocation bldg:Floor2 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "13dd8500-5723-5015-8816-ef273f5795c6" ;
+        ref:storedAt bldg:energy_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "13dd8500-5723-5015-8816-ef273f5795c6" ;
+        ref:storedAt bldg:energy_data
+    ] .
+
+bldg:Energy_Meter_Floor3 a owl:NamedIndividual ,
+        brick:Energy_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Electrical Energy Meter — Floor 3"@en ;
+    brick:hasUnit unit:KiloW-HR ;
+    brick:hasLocation bldg:Floor3 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8cb461ec-63df-5976-9831-7e29b2b57d8f" ;
+        ref:storedAt bldg:energy_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8cb461ec-63df-5976-9831-7e29b2b57d8f" ;
+        ref:storedAt bldg:energy_data
+    ] .
+
+bldg:Energy_Meter_Floor4 a owl:NamedIndividual ,
+        brick:Energy_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Electrical Energy Meter — Floor 4"@en ;
+    brick:hasUnit unit:KiloW-HR ;
+    brick:hasLocation bldg:Floor4 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f72eafc6-67f4-5e9b-96d5-b88e2f4ce2ad" ;
+        ref:storedAt bldg:energy_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f72eafc6-67f4-5e9b-96d5-b88e2f4ce2ad" ;
+        ref:storedAt bldg:energy_data
+    ] .
+
+bldg:Energy_Meter_Floor5 a owl:NamedIndividual ,
+        brick:Energy_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Electrical Energy Meter — Floor 5"@en ;
+    brick:hasUnit unit:KiloW-HR ;
+    brick:hasLocation bldg:Floor5 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "beb5bf94-e16d-5733-a290-7cdbfff63216" ;
+        ref:storedAt bldg:energy_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "beb5bf94-e16d-5733-a290-7cdbfff63216" ;
+        ref:storedAt bldg:energy_data
+    ] .
+
+bldg:Occupancy_Sensor_Floor0 a owl:NamedIndividual ,
+        brick:Occupancy_Count_Sensor ,
+        brick:Occupancy_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Occupancy Count Sensor — Floor 0"@en ;
+    brick:hasUnit unit:NUM ;
+    brick:hasLocation bldg:Floor0 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7cdd0ea1-e374-53f2-9421-66e5537940b4" ;
+        ref:storedAt bldg:occupancy_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7cdd0ea1-e374-53f2-9421-66e5537940b4" ;
+        ref:storedAt bldg:occupancy_data
+    ] .
+
+bldg:Occupancy_Sensor_Floor1 a owl:NamedIndividual ,
+        brick:Occupancy_Count_Sensor ,
+        brick:Occupancy_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Occupancy Count Sensor — Floor 1"@en ;
+    brick:hasUnit unit:NUM ;
+    brick:hasLocation bldg:Floor1 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6fa2d9cb-821a-5c1c-a3b9-c5703513f6b6" ;
+        ref:storedAt bldg:occupancy_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6fa2d9cb-821a-5c1c-a3b9-c5703513f6b6" ;
+        ref:storedAt bldg:occupancy_data
+    ] .
+
+bldg:Occupancy_Sensor_Floor2 a owl:NamedIndividual ,
+        brick:Occupancy_Count_Sensor ,
+        brick:Occupancy_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Occupancy Count Sensor — Floor 2"@en ;
+    brick:hasUnit unit:NUM ;
+    brick:hasLocation bldg:Floor2 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2516793a-bf88-55b1-8cb3-201582fa4408" ;
+        ref:storedAt bldg:occupancy_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2516793a-bf88-55b1-8cb3-201582fa4408" ;
+        ref:storedAt bldg:occupancy_data
+    ] .
+
+bldg:Occupancy_Sensor_Floor3 a owl:NamedIndividual ,
+        brick:Occupancy_Count_Sensor ,
+        brick:Occupancy_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Occupancy Count Sensor — Floor 3"@en ;
+    brick:hasUnit unit:NUM ;
+    brick:hasLocation bldg:Floor3 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0f186c73-dbf7-512d-9695-53c096c8b6ac" ;
+        ref:storedAt bldg:occupancy_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0f186c73-dbf7-512d-9695-53c096c8b6ac" ;
+        ref:storedAt bldg:occupancy_data
+    ] .
+
+bldg:Occupancy_Sensor_Floor4 a owl:NamedIndividual ,
+        brick:Occupancy_Count_Sensor ,
+        brick:Occupancy_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Occupancy Count Sensor — Floor 4"@en ;
+    brick:hasUnit unit:NUM ;
+    brick:hasLocation bldg:Floor4 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b0174bb9-43e5-585f-9fc5-4ab966ba3f26" ;
+        ref:storedAt bldg:occupancy_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b0174bb9-43e5-585f-9fc5-4ab966ba3f26" ;
+        ref:storedAt bldg:occupancy_data
+    ] .
+
+bldg:Occupancy_Sensor_Floor5 a owl:NamedIndividual ,
+        brick:Occupancy_Count_Sensor ,
+        brick:Occupancy_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Occupancy Count Sensor — Floor 5"@en ;
+    brick:hasUnit unit:NUM ;
+    brick:hasLocation bldg:Floor5 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b6ce33ec-d646-53cf-b780-8ac02fa2bd87" ;
+        ref:storedAt bldg:occupancy_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b6ce33ec-d646-53cf-b780-8ac02fa2bd87" ;
+        ref:storedAt bldg:occupancy_data
+    ] .
+
+bldg:Water_Flow_Sensor_Main a owl:NamedIndividual ,
+        brick:Water_Flow_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Water Main Flow Sensor"@en ;
+    brick:hasUnit unit:L-PER-MIN ;
+    brick:hasLocation bldg:Abacws ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "17108c4d-3ed9-5d05-a7e6-60a77cf8cfdb" ;
+        ref:storedAt bldg:water_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "17108c4d-3ed9-5d05-a7e6-60a77cf8cfdb" ;
+        ref:storedAt bldg:water_data
+    ] .
+
+bldg:Noise_Sensor_Floor5 a owl:NamedIndividual ,
+        bldg:Noise_Level_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Noise Level Sensor — Floor 5"@en ;
+    brick:hasUnit unit:DeciB ;
+    brick:hasLocation bldg:Floor5 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8a59ce6c-79cb-5780-b805-8808a6345abe" ;
+        ref:storedAt bldg:noise_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8a59ce6c-79cb-5780-b805-8808a6345abe" ;
+        ref:storedAt bldg:noise_data
+    ] .
+
+bldg:PM25_Sensor_Floor3 a owl:NamedIndividual ,
+        brick:PM2.5_Level_Sensor ,
+        brick:PM2.5_Sensor ,
+        brick:Air_Quality_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "PM2.5 Level Sensor — Floor 3"@en ;
+    brick:hasUnit unit:MicroGM-PER-M3 ;
+    brick:hasLocation bldg:Floor3 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0cacf1d1-5f2c-5812-ad79-0baca7af4111" ;
+        ref:storedAt bldg:iaq_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0cacf1d1-5f2c-5812-ad79-0baca7af4111" ;
+        ref:storedAt bldg:iaq_data
+    ] .
+
+bldg:VOC_Sensor_Floor3 a owl:NamedIndividual ,
+        brick:TVOC_Level_Sensor ,
+        brick:TVOC_Sensor ,
+        brick:Air_Quality_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "TVOC Level Sensor — Floor 3"@en ;
+    brick:hasUnit unit:PPB ;
+    brick:hasLocation bldg:Floor3 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2fd66e3a-06ae-5fe5-86e7-7208e330c359" ;
+        ref:storedAt bldg:iaq_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2fd66e3a-06ae-5fe5-86e7-7208e330c359" ;
+        ref:storedAt bldg:iaq_data
+    ] .
+
+bldg:Illuminance_Sensor_Floor5 a owl:NamedIndividual ,
+        brick:Illuminance_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Illuminance Sensor — Floor 5"@en ;
+    brick:hasUnit unit:LUX ;
+    brick:hasLocation bldg:Floor5 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "415a4845-0dff-58d7-80ef-7da829f50914" ;
+        ref:storedAt bldg:light_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "415a4845-0dff-58d7-80ef-7da829f50914" ;
+        ref:storedAt bldg:light_data
+    ] .
+
+bldg:Vibration_Sensor_Floor0 a owl:NamedIndividual ,
+        bldg:Vibration_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "Lift Vibration Sensor — Floor 0"@en ;
+    brick:hasUnit unit:MilliM-PER-SEC ;
+    brick:hasLocation bldg:Floor0 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "926cc259-148c-5a4c-acf4-ace0bd465a05" ;
+        ref:storedAt bldg:equipment_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "926cc259-148c-5a4c-acf4-ace0bd465a05" ;
+        ref:storedAt bldg:equipment_data
+    ] .
+
+bldg:AHU_Runtime_Sensor_Floor5 a owl:NamedIndividual ,
+        brick:Run_Time_Sensor ,
+        brick:Sensor ,
+        brick:Point ;
+    rdfs:label "AHU Run Time Sensor — Floor 5"@en ;
+    brick:hasUnit unit:HR ;
+    brick:hasLocation bldg:Floor5 ;
+    ashrae:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0f720d07-0f9c-594d-9187-1a59fe957aa7" ;
+        ref:storedAt bldg:equipment_data
+    ] ;
+    ref:hasExternalReference [
+        a ashrae:ExternalReference , ref:ExternalReference , ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0f720d07-0f9c-594d-9187-1a59fe957aa7" ;
+        ref:storedAt bldg:equipment_data
+    ] .

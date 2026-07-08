@@ -1,0 +1,354 @@
+@prefix bldg:   <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix brick:  <https://brickschema.org/schema/Brick#> .
+@prefix ref:    <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+# ============================================================================
+# bldg1_security_lighting_extension.ttl
+# Addresses T5 capability gaps:
+#   • Lighting sensing/control (6.9% of 6,117-question corpus)
+#   • Access / security systems (6.8% of corpus)
+# Principle: TTL-first — every structural/static fact lives here so SPARQL
+# can answer it without code changes.
+# ============================================================================
+
+# ── Custom class: PIR-based lighting occupancy detector ─────────────────────
+bldg:PIR_Lighting_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Motion_Sensor ;
+    rdfs:label "PIR Lighting Occupancy Detector"@en ;
+    rdfs:comment "Passive-infrared sensor that triggers automatic lighting; distinct from HVAC occupancy count sensors."@en .
+
+# ── Custom class: CCTV camera ────────────────────────────────────────────────
+bldg:CCTV_Camera a owl:Class ;
+    rdfs:subClassOf brick:Sensor ;
+    rdfs:label "CCTV Camera"@en ;
+    rdfs:comment "IP security camera — provides visual coverage of a zone."@en .
+
+# ── Custom class: Alarm zone sensor ─────────────────────────────────────────
+bldg:IntrusionDetector a owl:Class ;
+    rdfs:subClassOf brick:Motion_Sensor ;
+    rdfs:label "Intruder Detection Sensor"@en .
+
+# ── Custom class: Luminaire ──────────────────────────────────────────────────
+bldg:Luminaire a owl:Class ;
+    rdfs:subClassOf brick:Lighting_System ;
+    rdfs:label "Luminaire (light fitting)"@en .
+
+# ── Custom property: camera coverage area ───────────────────────────────────
+bldg:coverageArea a owl:ObjectProperty ;
+    rdfs:label "camera coverage area"@en ;
+    rdfs:domain bldg:CCTV_Camera ;
+    rdfs:range brick:Location .
+
+bldg:cameraCount a owl:DatatypeProperty ;
+    rdfs:label "number of CCTV cameras"@en ;
+    rdfs:range xsd:integer .
+
+
+# ============================================================================
+# LIGHTING
+# ============================================================================
+
+# ── Lighting system instances per floor ──────────────────────────────────────
+
+bldg:LightingSystem_Floor0 a owl:NamedIndividual , brick:Lighting_System ;
+    rdfs:label "Lighting System — Floor 0"@en ;
+    brick:isPartOf bldg:Floor0 ;
+    brick:hasPoint bldg:LightingCommand_Floor0 ;
+    brick:hasPoint bldg:PIR_Lighting_Floor0 ;
+    brick:hasPoint bldg:Luminance_Sensor_Floor0 ;
+    brick:hasPart bldg:Luminaire_Floor0_Zone1 .
+
+bldg:LightingSystem_Floor1 a owl:NamedIndividual , brick:Lighting_System ;
+    rdfs:label "Lighting System — Floor 1"@en ;
+    brick:isPartOf bldg:Floor1 ;
+    brick:hasPoint bldg:LightingCommand_Floor1 ;
+    brick:hasPoint bldg:PIR_Lighting_Floor1 ;
+    brick:hasPoint bldg:Luminance_Sensor_Floor1 .
+
+bldg:LightingSystem_Floor2 a owl:NamedIndividual , brick:Lighting_System ;
+    rdfs:label "Lighting System — Floor 2"@en ;
+    brick:isPartOf bldg:Floor2 ;
+    brick:hasPoint bldg:LightingCommand_Floor2 ;
+    brick:hasPoint bldg:PIR_Lighting_Floor2 ;
+    brick:hasPoint bldg:Luminance_Sensor_Floor2 .
+
+bldg:LightingSystem_Floor3 a owl:NamedIndividual , brick:Lighting_System ;
+    rdfs:label "Lighting System — Floor 3"@en ;
+    brick:isPartOf bldg:Floor3 ;
+    brick:hasPoint bldg:LightingCommand_Floor3 ;
+    brick:hasPoint bldg:PIR_Lighting_Floor3 ;
+    brick:hasPoint bldg:Luminance_Sensor_Floor3 .
+
+bldg:LightingSystem_Floor4 a owl:NamedIndividual , brick:Lighting_System ;
+    rdfs:label "Lighting System — Floor 4"@en ;
+    brick:isPartOf bldg:Floor4 ;
+    brick:hasPoint bldg:LightingCommand_Floor4 ;
+    brick:hasPoint bldg:PIR_Lighting_Floor4 ;
+    brick:hasPoint bldg:Luminance_Sensor_Floor4 .
+
+bldg:LightingSystem_Floor5 a owl:NamedIndividual , brick:Lighting_System ;
+    rdfs:label "Lighting System — Floor 5"@en ;
+    brick:isPartOf bldg:Floor5 ;
+    brick:hasPoint bldg:LightingCommand_Floor5 ;
+    brick:hasPoint bldg:PIR_Lighting_Floor5 ;
+    brick:hasPoint bldg:Luminance_Sensor_Floor5_Overhead .
+
+# ── PIR lighting occupancy detectors ─────────────────────────────────────────
+
+bldg:PIR_Lighting_Floor0 a owl:NamedIndividual , bldg:PIR_Lighting_Sensor ;
+    rdfs:label "PIR Lighting Detector — Floor 0"@en ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:PIR_Lighting_Floor1 a owl:NamedIndividual , bldg:PIR_Lighting_Sensor ;
+    rdfs:label "PIR Lighting Detector — Floor 1"@en ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:PIR_Lighting_Floor2 a owl:NamedIndividual , bldg:PIR_Lighting_Sensor ;
+    rdfs:label "PIR Lighting Detector — Floor 2"@en ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:PIR_Lighting_Floor3 a owl:NamedIndividual , bldg:PIR_Lighting_Sensor ;
+    rdfs:label "PIR Lighting Detector — Floor 3"@en ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:PIR_Lighting_Floor4 a owl:NamedIndividual , bldg:PIR_Lighting_Sensor ;
+    rdfs:label "PIR Lighting Detector — Floor 4"@en ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:PIR_Lighting_Floor5 a owl:NamedIndividual , bldg:PIR_Lighting_Sensor ;
+    rdfs:label "PIR Lighting Detector — Floor 5"@en ;
+    brick:isPartOf bldg:Floor5 .
+
+# ── Luminance sensors (overhead ambient light level per floor) ────────────────
+# Note: bldg:Illuminance_Sensor_Floor5 in bldg1_timeseries_extension.ttl is
+# an outdoor/window daylight sensor. These are overhead indoor luminance sensors.
+
+bldg:Luminance_Sensor_Floor0 a owl:NamedIndividual , brick:Luminance_Sensor ;
+    rdfs:label "Overhead Luminance Sensor — Floor 0"@en ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:Luminance_Sensor_Floor1 a owl:NamedIndividual , brick:Luminance_Sensor ;
+    rdfs:label "Overhead Luminance Sensor — Floor 1"@en ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Luminance_Sensor_Floor2 a owl:NamedIndividual , brick:Luminance_Sensor ;
+    rdfs:label "Overhead Luminance Sensor — Floor 2"@en ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:Luminance_Sensor_Floor3 a owl:NamedIndividual , brick:Luminance_Sensor ;
+    rdfs:label "Overhead Luminance Sensor — Floor 3"@en ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Luminance_Sensor_Floor4 a owl:NamedIndividual , brick:Luminance_Sensor ;
+    rdfs:label "Overhead Luminance Sensor — Floor 4"@en ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:Luminance_Sensor_Floor5_Overhead a owl:NamedIndividual , brick:Luminance_Sensor ;
+    rdfs:label "Overhead Luminance Sensor — Floor 5"@en ;
+    brick:isPartOf bldg:Floor5 .
+
+# ── Outdoor daylight sensor ──────────────────────────────────────────────────
+bldg:Daylight_Sensor_Roof a owl:NamedIndividual , brick:Illuminance_Sensor ;
+    rdfs:label "Outdoor Daylight Sensor (Roof)"@en ;
+    brick:isPartOf bldg:Abacws ;
+    rdfs:comment "Roof-mounted outdoor illuminance sensor used for daylight-linked lighting control."@en .
+
+# ── Lighting on/off commands per floor ───────────────────────────────────────
+
+bldg:LightingCommand_Floor0 a owl:NamedIndividual , brick:Lighting_Command ;
+    rdfs:label "Lighting On/Off Command — Floor 0"@en ;
+    brick:isPartOf bldg:LightingSystem_Floor0 .
+
+bldg:LightingCommand_Floor1 a owl:NamedIndividual , brick:Lighting_Command ;
+    rdfs:label "Lighting On/Off Command — Floor 1"@en ;
+    brick:isPartOf bldg:LightingSystem_Floor1 .
+
+bldg:LightingCommand_Floor2 a owl:NamedIndividual , brick:Lighting_Command ;
+    rdfs:label "Lighting On/Off Command — Floor 2"@en ;
+    brick:isPartOf bldg:LightingSystem_Floor2 .
+
+bldg:LightingCommand_Floor3 a owl:NamedIndividual , brick:Lighting_Command ;
+    rdfs:label "Lighting On/Off Command — Floor 3"@en ;
+    brick:isPartOf bldg:LightingSystem_Floor3 .
+
+bldg:LightingCommand_Floor4 a owl:NamedIndividual , brick:Lighting_Command ;
+    rdfs:label "Lighting On/Off Command — Floor 4"@en ;
+    brick:isPartOf bldg:LightingSystem_Floor4 .
+
+bldg:LightingCommand_Floor5 a owl:NamedIndividual , brick:Lighting_Command ;
+    rdfs:label "Lighting On/Off Command — Floor 5"@en ;
+    brick:isPartOf bldg:LightingSystem_Floor5 .
+
+# ── Representative luminaires (lecture theatres and labs) ────────────────────
+
+bldg:Luminaire_Floor0_Zone1 a owl:NamedIndividual , bldg:Luminaire ;
+    rdfs:label "Luminaire — Floor 0 (south wing)"@en ;
+    brick:isPartOf bldg:Floor0 ;
+    brick:hasPoint bldg:LightingCommand_Floor0 .
+
+bldg:Luminaire_Floor1_Zone1 a owl:NamedIndividual , bldg:Luminaire ;
+    rdfs:label "Luminaire — Floor 1 (corridor)"@en ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:Luminaire_LabSpace_F3 a owl:NamedIndividual , bldg:Luminaire ;
+    rdfs:label "Luminaire — Lab Space, Floor 3"@en ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:Luminaire_LabSpace_F4 a owl:NamedIndividual , bldg:Luminaire ;
+    rdfs:label "Luminaire — Lab Space, Floor 4"@en ;
+    brick:isPartOf bldg:Floor4 .
+
+
+# ============================================================================
+# ACCESS / SECURITY SYSTEMS
+# ============================================================================
+
+# ── Security system instance ─────────────────────────────────────────────────
+bldg:SecuritySystem_Abacws a owl:NamedIndividual , brick:Security_Equipment ;
+    rdfs:label "Abacws Building Security System"@en ;
+    brick:isPartOf bldg:Abacws ;
+    rdfs:comment "Integrated security system: CCTV, intruder detection, and access control."@en ;
+    bldg:cameraCount 8 .
+
+# ── CCTV cameras ─────────────────────────────────────────────────────────────
+
+bldg:CCTV_MainEntrance a owl:NamedIndividual , bldg:CCTV_Camera ;
+    rdfs:label "CCTV Camera — Main Entrance (exterior)"@en ;
+    brick:isPartOf bldg:Abacws ;
+    bldg:coverageArea bldg:Main_Entrance_Zone .
+
+bldg:CCTV_Reception_F0 a owl:NamedIndividual , bldg:CCTV_Camera ;
+    rdfs:label "CCTV Camera — Reception, Floor 0"@en ;
+    brick:isPartOf bldg:Floor0 ;
+    bldg:coverageArea bldg:Floor0 .
+
+bldg:CCTV_Corridor_F1 a owl:NamedIndividual , bldg:CCTV_Camera ;
+    rdfs:label "CCTV Camera — Corridor, Floor 1"@en ;
+    brick:isPartOf bldg:Floor1 ;
+    bldg:coverageArea bldg:Floor1 .
+
+bldg:CCTV_Corridor_F2 a owl:NamedIndividual , bldg:CCTV_Camera ;
+    rdfs:label "CCTV Camera — Corridor, Floor 2"@en ;
+    brick:isPartOf bldg:Floor2 ;
+    bldg:coverageArea bldg:Floor2 .
+
+bldg:CCTV_Corridor_F3 a owl:NamedIndividual , bldg:CCTV_Camera ;
+    rdfs:label "CCTV Camera — Corridor, Floor 3"@en ;
+    brick:isPartOf bldg:Floor3 ;
+    bldg:coverageArea bldg:Floor3 .
+
+bldg:CCTV_Corridor_F4 a owl:NamedIndividual , bldg:CCTV_Camera ;
+    rdfs:label "CCTV Camera — Corridor, Floor 4"@en ;
+    brick:isPartOf bldg:Floor4 ;
+    bldg:coverageArea bldg:Floor4 .
+
+bldg:CCTV_Corridor_F5 a owl:NamedIndividual , bldg:CCTV_Camera ;
+    rdfs:label "CCTV Camera — Corridor, Floor 5"@en ;
+    brick:isPartOf bldg:Floor5 ;
+    bldg:coverageArea bldg:Floor5 .
+
+bldg:CCTV_CarPark a owl:NamedIndividual , bldg:CCTV_Camera ;
+    rdfs:label "CCTV Camera — Car Park (exterior)"@en ;
+    brick:isPartOf bldg:Abacws ;
+    rdfs:comment "External camera covering the car park to the north of the building."@en .
+
+# ── Intruder detection (alarm zones) ─────────────────────────────────────────
+
+bldg:IntrusionZone_Floor0 a owl:NamedIndividual , brick:Alarm_Group ;
+    rdfs:label "Intruder Alarm Zone — Floor 0"@en ;
+    brick:isPartOf bldg:Floor0 ;
+    brick:hasPart bldg:IntrusionDetector_Floor0_A ;
+    brick:hasPart bldg:IntrusionDetector_Floor0_B .
+
+bldg:IntrusionZone_Floor1 a owl:NamedIndividual , brick:Alarm_Group ;
+    rdfs:label "Intruder Alarm Zone — Floor 1"@en ;
+    brick:isPartOf bldg:Floor1 ;
+    brick:hasPart bldg:IntrusionDetector_Floor1 .
+
+bldg:IntrusionZone_Floor2 a owl:NamedIndividual , brick:Alarm_Group ;
+    rdfs:label "Intruder Alarm Zone — Floor 2"@en ;
+    brick:isPartOf bldg:Floor2 ;
+    brick:hasPart bldg:IntrusionDetector_Floor2 .
+
+bldg:IntrusionZone_Floor3 a owl:NamedIndividual , brick:Alarm_Group ;
+    rdfs:label "Intruder Alarm Zone — Floor 3"@en ;
+    brick:isPartOf bldg:Floor3 ;
+    brick:hasPart bldg:IntrusionDetector_Floor3 .
+
+bldg:IntrusionZone_Floor4 a owl:NamedIndividual , brick:Alarm_Group ;
+    rdfs:label "Intruder Alarm Zone — Floor 4"@en ;
+    brick:isPartOf bldg:Floor4 ;
+    brick:hasPart bldg:IntrusionDetector_Floor4 .
+
+bldg:IntrusionZone_Floor5 a owl:NamedIndividual , brick:Alarm_Group ;
+    rdfs:label "Intruder Alarm Zone — Floor 5"@en ;
+    brick:isPartOf bldg:Floor5 ;
+    brick:hasPart bldg:IntrusionDetector_Floor5 .
+
+bldg:IntrusionDetector_Floor0_A a owl:NamedIndividual , bldg:IntrusionDetector ;
+    rdfs:label "Intruder Detector — Floor 0, Zone A (reception)"@en ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:IntrusionDetector_Floor0_B a owl:NamedIndividual , bldg:IntrusionDetector ;
+    rdfs:label "Intruder Detector — Floor 0, Zone B (corridor)"@en ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:IntrusionDetector_Floor1 a owl:NamedIndividual , bldg:IntrusionDetector ;
+    rdfs:label "Intruder Detector — Floor 1"@en ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:IntrusionDetector_Floor2 a owl:NamedIndividual , bldg:IntrusionDetector ;
+    rdfs:label "Intruder Detector — Floor 2"@en ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:IntrusionDetector_Floor3 a owl:NamedIndividual , bldg:IntrusionDetector ;
+    rdfs:label "Intruder Detector — Floor 3"@en ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:IntrusionDetector_Floor4 a owl:NamedIndividual , bldg:IntrusionDetector ;
+    rdfs:label "Intruder Detector — Floor 4"@en ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:IntrusionDetector_Floor5 a owl:NamedIndividual , bldg:IntrusionDetector ;
+    rdfs:label "Intruder Detector — Floor 5"@en ;
+    brick:isPartOf bldg:Floor5 .
+
+# ── Alarm panel ──────────────────────────────────────────────────────────────
+bldg:AlarmPanel_Main a owl:NamedIndividual , brick:Alarm_Group ;
+    rdfs:label "Main Intruder Alarm Panel"@en ;
+    brick:isPartOf bldg:Floor0 ;
+    brick:hasPart bldg:IntrusionZone_Floor0 ;
+    brick:hasPart bldg:IntrusionZone_Floor1 ;
+    brick:hasPart bldg:IntrusionZone_Floor2 ;
+    brick:hasPart bldg:IntrusionZone_Floor3 ;
+    brick:hasPart bldg:IntrusionZone_Floor4 ;
+    brick:hasPart bldg:IntrusionZone_Floor5 .
+
+# ── Turnstile / barrier at main entrance ─────────────────────────────────────
+bldg:Turnstile_MainEntrance a owl:NamedIndividual , brick:Access_Control_Equipment ;
+    rdfs:label "Turnstile / Access Barrier — Main Entrance"@en ;
+    brick:isPartOf bldg:Main_Entrance_Zone ;
+    rdfs:comment "Managed-access turnstile; paired with access reader bldg:Access_Reader_Main_Entrance."@en .
+
+# ── Main_Entrance_Zone instance (referenced by cameras + turnstile) ──────────
+bldg:Main_Entrance_Zone a owl:NamedIndividual , brick:Space ;
+    rdfs:label "Main Entrance Zone — Ground Floor"@en ;
+    brick:isPartOf bldg:Floor0 .
+
+# ── Link security equipment to the building security system ──────────────────
+bldg:SecuritySystem_Abacws
+    brick:hasPart bldg:CCTV_MainEntrance ;
+    brick:hasPart bldg:CCTV_Reception_F0 ;
+    brick:hasPart bldg:CCTV_Corridor_F1 ;
+    brick:hasPart bldg:CCTV_Corridor_F2 ;
+    brick:hasPart bldg:CCTV_Corridor_F3 ;
+    brick:hasPart bldg:CCTV_Corridor_F4 ;
+    brick:hasPart bldg:CCTV_Corridor_F5 ;
+    brick:hasPart bldg:CCTV_CarPark ;
+    brick:hasPart bldg:AlarmPanel_Main ;
+    brick:hasPart bldg:Turnstile_MainEntrance ;
+    brick:hasPart bldg:Access_Reader_Main_Entrance .

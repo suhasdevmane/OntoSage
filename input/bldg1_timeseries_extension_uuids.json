@@ -1,0 +1,192 @@
+{
+  "Energy_Meter_Floor0": {
+    "uuid": "c5214bff-94d0-5960-a2f2-cc092e6a4b09",
+    "csv": "energy_meter_floor0",
+    "value_col": "kwh",
+    "table": "energy_data",
+    "brick_class": "brick:Energy_Sensor",
+    "unit": "unit:KiloW-HR",
+    "location": "bldg:Floor0",
+    "label": "Electrical Energy Meter \u2014 Floor 0"
+  },
+  "Energy_Meter_Floor1": {
+    "uuid": "e095c596-9727-5a87-a19c-27385e6a6c03",
+    "csv": "energy_meter_floor1",
+    "value_col": "kwh",
+    "table": "energy_data",
+    "brick_class": "brick:Energy_Sensor",
+    "unit": "unit:KiloW-HR",
+    "location": "bldg:Floor1",
+    "label": "Electrical Energy Meter \u2014 Floor 1"
+  },
+  "Energy_Meter_Floor2": {
+    "uuid": "13dd8500-5723-5015-8816-ef273f5795c6",
+    "csv": "energy_meter_floor2",
+    "value_col": "kwh",
+    "table": "energy_data",
+    "brick_class": "brick:Energy_Sensor",
+    "unit": "unit:KiloW-HR",
+    "location": "bldg:Floor2",
+    "label": "Electrical Energy Meter \u2014 Floor 2"
+  },
+  "Energy_Meter_Floor3": {
+    "uuid": "8cb461ec-63df-5976-9831-7e29b2b57d8f",
+    "csv": "energy_meter_floor3",
+    "value_col": "kwh",
+    "table": "energy_data",
+    "brick_class": "brick:Energy_Sensor",
+    "unit": "unit:KiloW-HR",
+    "location": "bldg:Floor3",
+    "label": "Electrical Energy Meter \u2014 Floor 3"
+  },
+  "Energy_Meter_Floor4": {
+    "uuid": "f72eafc6-67f4-5e9b-96d5-b88e2f4ce2ad",
+    "csv": "energy_meter_floor4",
+    "value_col": "kwh",
+    "table": "energy_data",
+    "brick_class": "brick:Energy_Sensor",
+    "unit": "unit:KiloW-HR",
+    "location": "bldg:Floor4",
+    "label": "Electrical Energy Meter \u2014 Floor 4"
+  },
+  "Energy_Meter_Floor5": {
+    "uuid": "beb5bf94-e16d-5733-a290-7cdbfff63216",
+    "csv": "energy_meter_floor5",
+    "value_col": "kwh",
+    "table": "energy_data",
+    "brick_class": "brick:Energy_Sensor",
+    "unit": "unit:KiloW-HR",
+    "location": "bldg:Floor5",
+    "label": "Electrical Energy Meter \u2014 Floor 5"
+  },
+  "Occupancy_Sensor_Floor0": {
+    "uuid": "7cdd0ea1-e374-53f2-9421-66e5537940b4",
+    "csv": "occupancy_floor0",
+    "value_col": "occupancy",
+    "table": "occupancy_data",
+    "brick_class": "brick:Occupancy_Count_Sensor",
+    "unit": "unit:NUM",
+    "location": "bldg:Floor0",
+    "label": "Occupancy Count Sensor \u2014 Floor 0"
+  },
+  "Occupancy_Sensor_Floor1": {
+    "uuid": "6fa2d9cb-821a-5c1c-a3b9-c5703513f6b6",
+    "csv": "occupancy_floor1",
+    "value_col": "occupancy",
+    "table": "occupancy_data",
+    "brick_class": "brick:Occupancy_Count_Sensor",
+    "unit": "unit:NUM",
+    "location": "bldg:Floor1",
+    "label": "Occupancy Count Sensor \u2014 Floor 1"
+  },
+  "Occupancy_Sensor_Floor2": {
+    "uuid": "2516793a-bf88-55b1-8cb3-201582fa4408",
+    "csv": "occupancy_floor2",
+    "value_col": "occupancy",
+    "table": "occupancy_data",
+    "brick_class": "brick:Occupancy_Count_Sensor",
+    "unit": "unit:NUM",
+    "location": "bldg:Floor2",
+    "label": "Occupancy Count Sensor \u2014 Floor 2"
+  },
+  "Occupancy_Sensor_Floor3": {
+    "uuid": "0f186c73-dbf7-512d-9695-53c096c8b6ac",
+    "csv": "occupancy_floor3",
+    "value_col": "occupancy",
+    "table": "occupancy_data",
+    "brick_class": "brick:Occupancy_Count_Sensor",
+    "unit": "unit:NUM",
+    "location": "bldg:Floor3",
+    "label": "Occupancy Count Sensor \u2014 Floor 3"
+  },
+  "Occupancy_Sensor_Floor4": {
+    "uuid": "b0174bb9-43e5-585f-9fc5-4ab966ba3f26",
+    "csv": "occupancy_floor4",
+    "value_col": "occupancy",
+    "table": "occupancy_data",
+    "brick_class": "brick:Occupancy_Count_Sensor",
+    "unit": "unit:NUM",
+    "location": "bldg:Floor4",
+    "label": "Occupancy Count Sensor \u2014 Floor 4"
+  },
+  "Occupancy_Sensor_Floor5": {
+    "uuid": "b6ce33ec-d646-53cf-b780-8ac02fa2bd87",
+    "csv": "occupancy_floor5",
+    "value_col": "occupancy",
+    "table": "occupancy_data",
+    "brick_class": "brick:Occupancy_Count_Sensor",
+    "unit": "unit:NUM",
+    "location": "bldg:Floor5",
+    "label": "Occupancy Count Sensor \u2014 Floor 5"
+  },
+  "Water_Flow_Sensor_Main": {
+    "uuid": "17108c4d-3ed9-5d05-a7e6-60a77cf8cfdb",
+    "csv": "water_main",
+    "value_col": "flow_lpm",
+    "table": "water_data",
+    "brick_class": "brick:Water_Flow_Sensor",
+    "unit": "unit:L-PER-MIN",
+    "location": "bldg:Abacws",
+    "label": "Water Main Flow Sensor"
+  },
+  "Noise_Sensor_Floor5": {
+    "uuid": "8a59ce6c-79cb-5780-b805-8808a6345abe",
+    "csv": "noise_floor5",
+    "value_col": "noise_db",
+    "table": "noise_data",
+    "brick_class": "bldg:Noise_Level_Sensor",
+    "unit": "unit:DeciB",
+    "location": "bldg:Floor5",
+    "label": "Noise Level Sensor \u2014 Floor 5"
+  },
+  "PM25_Sensor_Floor3": {
+    "uuid": "0cacf1d1-5f2c-5812-ad79-0baca7af4111",
+    "csv": "iaq_pm25_floor3",
+    "value_col": "pm25",
+    "table": "iaq_data",
+    "brick_class": "brick:PM2.5_Level_Sensor",
+    "unit": "unit:MicroGM-PER-M3",
+    "location": "bldg:Floor3",
+    "label": "PM2.5 Level Sensor \u2014 Floor 3"
+  },
+  "VOC_Sensor_Floor3": {
+    "uuid": "2fd66e3a-06ae-5fe5-86e7-7208e330c359",
+    "csv": "iaq_voc_floor3",
+    "value_col": "voc",
+    "table": "iaq_data",
+    "brick_class": "brick:TVOC_Level_Sensor",
+    "unit": "unit:PPB",
+    "location": "bldg:Floor3",
+    "label": "TVOC Level Sensor \u2014 Floor 3"
+  },
+  "Illuminance_Sensor_Floor5": {
+    "uuid": "415a4845-0dff-58d7-80ef-7da829f50914",
+    "csv": "light_floor5",
+    "value_col": "lux",
+    "table": "light_data",
+    "brick_class": "brick:Illuminance_Sensor",
+    "unit": "unit:LUX",
+    "location": "bldg:Floor5",
+    "label": "Illuminance Sensor \u2014 Floor 5"
+  },
+  "Vibration_Sensor_Floor0": {
+    "uuid": "926cc259-148c-5a4c-acf4-ace0bd465a05",
+    "csv": "lift_vibration_floor0",
+    "value_col": "vib_mm_s",
+    "table": "equipment_data",
+    "brick_class": "bldg:Vibration_Sensor",
+    "unit": "unit:MilliM-PER-SEC",
+    "location": "bldg:Floor0",
+    "label": "Lift Vibration Sensor \u2014 Floor 0"
+  },
+  "AHU_Runtime_Sensor_Floor5": {
+    "uuid": "0f720d07-0f9c-594d-9187-1a59fe957aa7",
+    "csv": "ahu_runtime_floor5",
+    "value_col": "runtime_h",
+    "table": "equipment_data",
+    "brick_class": "brick:Run_Time_Sensor",
+    "unit": "unit:HR",
+    "location": "bldg:Floor5",
+    "label": "AHU Run Time Sensor \u2014 Floor 5"
+  }
+}

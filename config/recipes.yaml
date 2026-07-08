@@ -1,0 +1,617 @@
+# config/recipes.yaml — Analytic recipe definitions for HBCO concept evaluation
+# Each recipe maps a concept's recipe_kind to evaluation logic + answer templating.
+# Per-building override: place input/<building_id>/recipes.yaml to add or override.
+# Keys under `params` are available to the analytics agent and response formatter.
+
+recipes:
+
+  # ── Threshold recipes ─────────────────────────────────────────────────────
+
+  co2_threshold:
+    kind: threshold
+    description: Evaluate CO2 ppm against ASHRAE/CIBSE comfort boundaries.
+    params:
+      co2_ppm_comfort_max: 800
+      co2_ppm_alert: 1000
+      co2_ppm_critical: 1500
+      unit: ppm
+    brick_class: brick:CO2_Level_Sensor
+    answer_template: >
+      CO2 is {value} ppm
+      ({below 800 → 'well within comfort range' | 800-1000 → 'slightly elevated' |
+       1000-1500 → 'elevated — consider ventilation' | above 1500 → 'critical'}).
+
+  temperature_threshold_warm:
+    kind: threshold
+    description: Detect rooms that are too warm per ASHRAE 55 upper bound.
+    params:
+      temp_c_warm: 26.0
+      temp_c_hot: 28.0
+      unit: degC
+    brick_class: brick:Air_Temperature_Sensor
+    answer_template: >
+      Temperature is {value}°C
+      ({below 26 → 'comfortable' | 26-28 → 'slightly warm' | above 28 → 'too hot'}).
+
+  temperature_threshold_cold:
+    kind: threshold
+    description: Detect rooms that are too cold per ASHRAE 55 lower bound.
+    params:
+      temp_c_cold: 19.0
+      temp_c_freezing: 16.0
+      unit: degC
+    brick_class: brick:Air_Temperature_Sensor
+    answer_template: >
+      Temperature is {value}°C
+      ({above 19 → 'comfortable' | 16-19 → 'cool' | below 16 → 'too cold'}).
+
+  humidity_threshold:
+    kind: threshold
+    description: Evaluate relative humidity against ASHRAE 55 comfort range.
+    params:
+      rh_low: 30
+      rh_high: 60
+      unit: pct
+    brick_class: brick:Zone_Air_Humidity_Sensor
+    answer_template: >
+      Humidity is {value}%
+      ({30-60 → 'in the comfortable range' | below 30 → 'dry' | above 60 → 'humid'}).
+
+  noise_threshold:
+    kind: threshold
+    description: Evaluate noise levels for occupant comfort.
+    params:
+      noise_db_acceptable: 45
+      noise_db_loud: 65
+      unit: dBA
+    brick_class: brick:Sound_Sensor
+    answer_template: >
+      Noise level is {value} dBA
+      ({below 45 → 'quiet' | 45-65 → 'moderate' | above 65 → 'loud'}).
+
+  voc_threshold:
+    kind: threshold
+    description: Evaluate Total VOC against IAQ guidelines.
+    params:
+      tvoc_ppb_low: 300
+      tvoc_ppb_alert: 500
+      unit: ppb
+    brick_class: brick:TVOC_Level_Sensor
+    answer_template: >
+      VOC is {value} ppb
+      ({below 300 → 'acceptable' | 300-500 → 'elevated' | above 500 → 'poor IAQ'}).
+
+  illuminance_threshold:
+    kind: threshold
+    description: Evaluate illuminance against task-lighting standards (EN 12464).
+    params:
+      lux_min_office: 300
+      lux_min_corridor: 100
+      lux_max_glare: 2000
+      unit: lux
+    brick_class: brick:Illuminance_Sensor
+    answer_template: >
+      Illuminance is {value} lux
+      ({300-2000 → 'good for office work' | below 300 → 'dim' | above 2000 → 'glare risk'}).
+
+  # ── Range recipes ──────────────────────────────────────────────────────────
+
+  thermal_comfort_range:
+    kind: range
+    description: Composite thermal comfort — temperature AND humidity in ASHRAE 55 ranges.
+    params:
+      temp_min_c: 18.0
+      temp_max_c: 27.0
+      rh_min_pct: 30
+      rh_max_pct: 60
+    brick_classes:
+      - brick:Air_Temperature_Sensor
+      - brick:Zone_Air_Humidity_Sensor
+    answer_template: >
+      Thermal comfort: temperature {temp_value}°C, humidity {rh_value}%.
+      ASHRAE 55 target: 18–27°C, 30–60% RH.
+
+  iaq_range:
+    kind: range
+    description: Indoor air quality composite — CO2 + VOC + temperature all in range.
+    params:
+      co2_ppm_max: 1000
+      tvoc_ppb_max: 500
+      temp_min_c: 18.0
+      temp_max_c: 27.0
+    brick_classes:
+      - brick:CO2_Level_Sensor
+      - brick:TVOC_Level_Sensor
+      - brick:Air_Temperature_Sensor
+    answer_template: >
+      IAQ: CO2 {co2_value} ppm, VOC {voc_value} ppb, Temp {temp_value}°C.
+
+  # ── Aggregate recipes ─────────────────────────────────────────────────────
+
+  temperature_average:
+    kind: aggregate
+    description: Average temperature across sensors in a space or floor.
+    params:
+      aggregation: mean
+      window_minutes: 30
+      unit: degC
+    brick_class: brick:Air_Temperature_Sensor
+    answer_template: "Average temperature over the last {window_minutes} minutes: {value}°C."
+
+  co2_average:
+    kind: aggregate
+    description: Average CO2 across a zone or floor.
+    params:
+      aggregation: mean
+      window_minutes: 30
+      unit: ppm
+    brick_class: brick:CO2_Level_Sensor
+    answer_template: "Average CO2 over the last {window_minutes} minutes: {value} ppm."
+
+  occupancy_aggregate:
+    kind: aggregate
+    description: Occupancy headcount or presence fraction for a space.
+    params:
+      aggregation: sum
+      unit: persons
+    brick_class: brick:Occupancy_Sensor
+    answer_template: "Estimated occupancy: {value} persons."
+
+  busyness_threshold:
+    kind: threshold
+    description: >
+      Classify a floor or space as quiet/moderate/busy/full based on current occupancy
+      vs. known capacity. Capacities: floor0=120, floor1=55, floor2=75,
+      floor3=65, floor4=55, floor5=195.
+    params:
+      quiet_pct: 25
+      moderate_pct: 50
+      busy_pct: 75
+      full_pct: 90
+      unit: persons
+    brick_class: brick:Occupancy_Sensor
+    answer_template: >
+      Current occupancy: {value} persons
+      ({below 25% capacity → 'quiet' |
+        25-50% → 'moderately occupied' |
+        50-75% → 'fairly busy' |
+        75-90% → 'busy' |
+        above 90% → 'near full capacity'}).
+
+  occupancy_quiet_time:
+    kind: aggregate
+    description: >
+      Identify the quietest time-of-day windows for a space by aggregating
+      hourly occupancy over the past week and finding the minimum-occupancy
+      hours during operating hours. Use for 'when is the library quietest?'
+      style questions.
+    params:
+      aggregation: mean
+      window_hours: 168
+      quiet_hour_count: 3
+      unit: persons
+    brick_class: brick:Occupancy_Sensor
+    answer_template: >
+      Based on the past week, the quietest times are typically
+      {quiet_hours} — average occupancy {value} persons during those hours.
+
+  energy_aggregate:
+    kind: aggregate
+    description: Total energy consumption over a period.
+    params:
+      aggregation: sum
+      window_hours: 24
+      unit: kWh
+    brick_class: brick:Energy_Sensor
+    answer_template: "Energy used in the last {window_hours} hours: {value} kWh."
+
+  energy_cost:
+    kind: correlate
+    description: >
+      Compute cost from energy (kWh) × tariff (£/kWh). Join energy_meter_floor<N> UUID
+      with energy_tariff UUID; multiply by time-of-day price band.
+      Source: energy_tariff feed (bldg1/data/energy_tariff.csv) — typical bands 0.08-0.235 £/kWh.
+    params:
+      tariff_uuid: "1acbd253-0f12-f875-38d3-427aed45127e"
+      default_tariff_gbp_per_kwh: 0.18
+      unit: GBP
+    brick_classes:
+      - brick:Electrical_Energy_Sensor
+    answer_template: >
+      Energy used: {kwh_value:.1f} kWh at £{tariff:.3f}/kWh = £{cost:.2f}.
+
+  energy_baseline_deviation:
+    kind: trend
+    description: >
+      Compare this period's energy against a same-weekday-same-hour baseline (rolling 4-week
+      average). Positive deviation = higher than normal; negative = lower than normal.
+      Used for "why is energy higher this week?" causal questions.
+    params:
+      baseline_window_weeks: 4
+      alert_pct_above: 20
+      unit: kWh
+    brick_class: brick:Electrical_Energy_Sensor
+    answer_template: >
+      Energy is {deviation:+.0f}% vs. the {baseline_window_weeks}-week baseline
+      ({above 20% → 'significantly higher — check HVAC or unusual occupancy' |
+        within 20% → 'within normal range' |
+        below -20% → 'lower than usual'}).
+
+  energy_floor_comparison:
+    kind: aggregate
+    description: >
+      Rank floors by energy consumption over a window. Enables "which floor uses the most
+      energy?" and "compare energy across floors."
+    params:
+      aggregation: sum
+      window_hours: 24
+      unit: kWh
+    brick_class: brick:Electrical_Energy_Sensor
+    answer_template: >
+      Floor energy comparison (last {window_hours}h):
+      {ranked_list — e.g. Floor 5: 12.1 kWh, Floor 0: 9.4 kWh, ...}.
+
+  # ── Trend recipes ──────────────────────────────────────────────────────────
+
+  temperature_trend:
+    kind: trend
+    description: Rising/falling temperature trend over recent window.
+    params:
+      window_minutes: 60
+      slope_threshold_degC_per_hour: 1.0
+      unit: degC
+    brick_class: brick:Air_Temperature_Sensor
+    answer_template: >
+      Temperature trend: {slope:+.1f}°C/hour over the last {window_minutes} minutes
+      ({positive → 'rising' | negative → 'falling' | near-zero → 'stable'}).
+
+  co2_trend:
+    kind: trend
+    description: Rising CO2 trend indicating accumulating occupancy or poor ventilation.
+    params:
+      window_minutes: 60
+      slope_threshold_ppm_per_hour: 50
+      unit: ppm
+    brick_class: brick:CO2_Level_Sensor
+    answer_template: >
+      CO2 trend: {slope:+.0f} ppm/hour over the last {window_minutes} minutes.
+
+  energy_trend:
+    kind: trend
+    description: Energy consumption trend vs. baseline or prior period.
+    params:
+      window_hours: 24
+      unit: kWh
+    brick_class: brick:Energy_Sensor
+    answer_template: "Energy trend vs. last week: {change_pct:+.0f}%."
+
+  # ── Correlation recipes ────────────────────────────────────────────────────
+
+  inside_outside_temperature:
+    kind: correlate
+    description: Compare indoor temperature against outdoor to assess HVAC effectiveness.
+    params:
+      lag_minutes: 0
+      unit: degC
+    brick_classes:
+      - brick:Air_Temperature_Sensor
+      - brick:Outside_Air_Temperature_Sensor
+    answer_template: >
+      Indoor: {indoor_value}°C vs. outdoor: {outdoor_value}°C
+      (delta {delta:+.1f}°C).
+
+  co2_occupancy_correlation:
+    kind: correlate
+    description: Correlation between occupancy and CO2 ppm to validate ventilation.
+    params:
+      window_minutes: 120
+    brick_classes:
+      - brick:CO2_Level_Sensor
+      - brick:Occupancy_Sensor
+    answer_template: >
+      CO2–occupancy correlation over {window_minutes} min: r = {r_value:.2f}.
+
+  # ── T14: Outdoor / window-guidance recipes ────────────────────────────────
+
+  outside_temperature:
+    kind: threshold
+    description: Current outdoor air temperature at the building exterior.
+    params:
+      unit: degC
+    brick_class: brick:Outside_Air_Temperature_Sensor
+    answer_template: "Outdoor temperature: {value}°C."
+
+  outside_humidity:
+    kind: threshold
+    description: Current outdoor relative humidity at the building exterior.
+    params:
+      unit: pct
+    brick_class: brick:Outside_Air_Humidity_Sensor
+    answer_template: "Outdoor humidity: {value}%."
+
+  energy_tariff_lookup:
+    kind: threshold
+    description: >
+      Look up current or upcoming electricity tariff band (price per kWh).
+      Off-peak (00:00-07:00, 22:00-00:00): ~£0.08/kWh; Standard: ~£0.17-0.18;
+      Peak (07:00-10:00, 16:00-19:00): ~£0.21-0.24/kWh.
+    params:
+      peak_gbp_per_kwh: 0.235
+      standard_gbp_per_kwh: 0.175
+      off_peak_gbp_per_kwh: 0.085
+      unit: GBP/kWh
+    brick_class: brick:Electrical_Energy_Sensor
+    answer_template: >
+      Current electricity price: £{value:.3f}/kWh ({above 0.20 → 'peak — expensive' |
+       0.10-0.20 → 'standard rate' | below 0.10 → 'off-peak — cheapest'}).
+
+  window_opening_guidance:
+    kind: correlate
+    description: >
+      Assess whether windows should be opened based on inside vs outside temperature
+      and current CO2 level. Recommends opening if outdoor temp is cooler and CO2 is
+      elevated; recommends against if outdoor temp is similar or hotter.
+    params:
+      temp_delta_threshold_degC: 3.0
+      co2_elevated_ppm: 900
+      outdoor_max_comfort_c: 26.0
+      unit: degC
+    brick_classes:
+      - brick:Air_Temperature_Sensor
+      - brick:Outside_Air_Temperature_Sensor
+      - brick:CO2_Level_Sensor
+    answer_template: >
+      Indoor: {indoor_temp}°C, Outdoor: {outdoor_temp}°C (delta {delta:+.1f}°C),
+      CO2: {co2_ppm} ppm.
+      {delta < -3 and co2_ppm > 900 → 'Opening windows is recommended — cooler outside and CO2 elevated.' |
+       delta < -3 → 'Outdoor air is cooler; opening windows could help ventilation.' |
+       outdoor_temp > 26 → 'Outdoor temperature is warm — keep windows closed.' |
+       'Indoor and outdoor temperatures are similar; windows optional.'}
+
+  # ── Benchmark recipes (T32: building vs. sector benchmarks) ──────────────
+  # Figures from CIBSE TM46 (2008), REEB 2023 HE sector, HESA EMS (2022).
+  # Per-building override: input/<building_id>/benchmarks.csv overrides config/benchmarks.csv.
+  # Normalisation: energy_intensity = total_kWh / floor_area_m2 (from bldg1_enrichment_metadata.ttl).
+
+  energy_intensity_benchmark:
+    kind: benchmark
+    description: >
+      Compare building energy intensity (kWh/m²/year) against CIBSE TM46 university
+      sector benchmarks. Normalise measured energy by the building's total floor area.
+      Data source: config/benchmarks.csv (row metric=energy_intensity segment=university).
+      Per-building override: input/<building_id>/benchmarks.csv.
+    params:
+      metric: energy_intensity
+      segment: university
+      normalisation: floor_area_m2
+      benchmarks_file: "config/benchmarks.csv"
+      unit: kWh/m2/year
+    brick_class: brick:Electrical_Energy_Sensor
+    answer_template: >
+      Building energy intensity: {actual:.0f} kWh/m²/year.
+      Sector benchmark (university): p25={p25} | p50={p50} | p75={p75} kWh/m²/year.
+      {actual < p25 → 'Well below median — efficient' |
+       actual < p50 → 'Below median — good' |
+       actual < p75 → 'Above median — room for improvement' |
+       'Above 75th percentile — significantly above typical university use'}.
+      Source: {source}.
+
+  co2_benchmark:
+    kind: benchmark
+    description: >
+      Compare average CO2 during occupied hours against CIBSE TM40 university benchmarks.
+      No normalisation needed — directly comparable ppm values.
+    params:
+      metric: co2_average_occupied
+      segment: university
+      normalisation: none
+      benchmarks_file: "config/benchmarks.csv"
+      unit: ppm
+    brick_class: brick:CO2_Level_Sensor
+    answer_template: >
+      Average CO2 (occupied hours): {actual:.0f} ppm.
+      University benchmark: p25={p25} | p50={p50} | p75={p75} ppm.
+      {actual < p25 → 'Excellent — well-ventilated' |
+       actual < p50 → 'Good — below median' |
+       actual < p75 → 'Above median — consider ventilation improvements' |
+       'Above 75th percentile — poor IAQ vs. peers'}.
+      Source: {source}.
+
+  # ── Estimate recipes (T34: What-if / scenario estimation) ────────────────
+  # First-order sensitivity estimates — NOT physics simulations.
+  # Every answer MUST state assumptions and uncertainty band.
+  # Source citations are embedded in answer_template per CIBSE / ASHRAE.
+
+  hvac_setpoint_sensitivity:
+    kind: estimate
+    description: >
+      Estimate the change in HVAC energy consumption for a given heating/cooling
+      setpoint adjustment. Uses the CIBSE Guide A rule-of-thumb: ~6-8% HVAC energy
+      per 1°C setpoint change (cooling) or ~10-12% per 1°C (heating in a well-
+      insulated building). Applied to the floor's measured baseline kWh from
+      energy_meter_floor feeds.
+      Trigger phrases: 'what if we lower the setpoint', 'what would happen if we
+      turned down heating by X degrees', 'how much would we save lowering temperature'.
+    params:
+      hvac_energy_pct_per_degC_cooling: 7.0
+      hvac_energy_pct_per_degC_heating: 11.0
+      uncertainty_band_pct: 30
+      source: "CIBSE Guide A Table 5.3 (building-specific range ±30%)"
+      unit: kWh
+    brick_class: brick:Electrical_Energy_Sensor
+    answer_template: >
+      Estimated impact of {delta_c:+.0f}°C setpoint change:
+      approx. {change_pct:+.0f}% HVAC energy change
+      ({baseline_kwh:.0f} kWh baseline → {new_kwh:.0f} kWh estimated).
+      Assumptions: {hvac_energy_pct_per_degC}%/°C sensitivity (CIBSE Guide A),
+      uncertainty band ±{uncertainty_band_pct}%.
+      This is a first-order estimate — actual savings depend on occupancy, fabric,
+      and HVAC control strategy.
+
+  occupancy_impact_estimate:
+    kind: estimate
+    description: >
+      Estimate how a change in occupancy count affects ventilation, CO2, and energy.
+      Rule of thumb: each additional person adds ~15 W sensible heat + ~19 L/s
+      required fresh air (CIBSE TM52 light activity). CO2 rise: ~20 ppm/person/hour
+      in a well-mixed 200 m² space at normal ventilation.
+      Trigger phrases: 'what if there were more people', 'what if occupancy doubled',
+      'how would energy change with fewer occupants'.
+    params:
+      sensible_heat_per_person_w: 15.0
+      ventilation_per_person_l_per_s: 19.0
+      co2_rise_per_person_ppm_per_hour: 20.0
+      uncertainty_band_pct: 40
+      source: "CIBSE TM52 / ASHRAE 62.1-2019"
+      unit: mixed
+    answer_template: >
+      Estimated impact of {delta_persons:+.0f} persons:
+      +{heat_kw:.1f} kW sensible heat, +{co2_change:.0f} ppm/hour CO2 rise,
+      +{vent_change:.0f} L/s ventilation required.
+      Assumptions: CIBSE TM52 light-activity metabolic rate,
+      uncertainty ±{uncertainty_band_pct}%.
+      Actual impact depends on space volume, current ventilation rate, and HVAC mode.
+
+  # ── T18: IAQ / Noise / Light / Water recipes ──────────────────────────────
+
+  pm25_air_quality:
+    kind: threshold
+    description: >
+      PM2.5 particulate air quality against WHO and CIBSE thresholds.
+      WHO 24-hour guideline: 15 μg/m³; UK NAQS annual mean: 10 μg/m³.
+      Answer with measured value, guideline comparison, and health context.
+      Trigger phrases: 'PM2.5', 'particulate', 'air quality', 'dust', 'pollution'.
+    params:
+      excellent_max: 10.0
+      good_max: 15.0
+      moderate_max: 25.0
+      unit: ug/m3
+      source: "WHO Air Quality Guidelines 2021; UK NAQS"
+    brick_class: brick:PM2.5_Level_Sensor
+    answer_template: >
+      PM2.5 level: {value:.1f} μg/m³.
+      WHO 24h guideline: 15 μg/m³ | Annual target: 10 μg/m³.
+      {verdict} — {health_note}.
+
+  voc_air_quality:
+    kind: threshold
+    description: >
+      TVOC / VOC air quality against WHO and WELL Building Standard thresholds.
+      Good: <250 ppb; Moderate: 250–500 ppb; Problematic: >500 ppb; Harmful: >2500 ppb.
+      Trigger phrases: 'VOC', 'TVOC', 'volatile organic', 'chemical smell', 'odour'.
+    params:
+      good_max: 250.0
+      moderate_max: 500.0
+      problematic_max: 2500.0
+      unit: ppb
+      source: "WELL v2 Feature V1 (2021); WHO 2010 Indoor Air Quality Guidelines"
+    brick_class: brick:TVOC_Sensor
+    answer_template: >
+      TVOC level: {value:.0f} ppb.
+      WELL threshold: <250 ppb (good), 250–500 (moderate), >500 (problematic).
+      {verdict}.
+
+  noise_comfort:
+    kind: threshold
+    description: >
+      Noise / acoustic comfort against CIBSE Guide A and BB93 thresholds.
+      Quiet study: <35 dB; Good office: <45 dB; Acceptable activity: <55 dB; Loud: >65 dB.
+      Trigger phrases: 'noise', 'loud', 'quiet', 'noisy', 'sound level', 'decibel', 'dB'.
+    params:
+      quiet_max: 35.0
+      good_max: 45.0
+      acceptable_max: 55.0
+      loud_threshold: 65.0
+      unit: dB
+      source: "CIBSE Guide A Table 1.5; BB93 Acoustics in Schools"
+    brick_class: brick:Noise_Level_Sensor
+    answer_template: >
+      Noise level: {value:.0f} dB.
+      CIBSE guidance: <35 dB (quiet study), <45 dB (good office), <55 dB (activity).
+      {verdict}.
+
+  illuminance_comfort:
+    kind: range
+    description: >
+      Illuminance / lighting levels against CIBSE LG 7 and SLL Code for Lighting norms.
+      Office task lighting: 300–750 lux; General circulation: 100–300 lux; Daylight: >750 lux.
+      Trigger phrases: 'light', 'lighting', 'bright', 'dark', 'lux', 'illuminance', 'visibility'.
+    params:
+      low_threshold: 200.0
+      good_min: 300.0
+      good_max: 750.0
+      bright_threshold: 1000.0
+      unit: lux
+      source: "CIBSE LG 7 (2022); SLL Code for Lighting (2022)"
+    brick_class: brick:Illuminance_Sensor
+    answer_template: >
+      Illuminance: {value:.0f} lux.
+      CIBSE task lighting target: 300–750 lux for office/teaching spaces.
+      {verdict}.
+
+  water_flow_leak:
+    kind: threshold
+    description: >
+      Water flow rate monitoring with night-time leak heuristic.
+      Normal daytime: 0.5–2.5 L/min; Night sustained >0.3 L/min suggests a possible leak.
+      Trigger phrases: 'water', 'leak', 'flow', 'plumbing', 'consumption', 'water use'.
+    params:
+      night_leak_threshold: 0.3
+      high_flow_threshold: 3.0
+      unit: L/min
+      source: "CIBSE TM50 (2012); BS EN ISO 24512 water audit heuristic"
+    brick_class: brick:Water_Flow_Sensor
+    answer_template: >
+      Water flow: {value:.2f} L/min.
+      Night-time baseline reference: <0.3 L/min; >0.3 L/min sustained at night
+      may indicate a leak.
+      {verdict}.
+
+  # ── T36: Equipment health / predictive maintenance recipes ─────────────────
+
+  lift_vibration_health:
+    kind: threshold
+    description: >
+      Lift / elevator vibration health against ISO 18738 and BS EN 81-1 maintenance thresholds.
+      Normal: <3.0 mm/s RMS; Elevated (monitor closely): 3.0–4.0 mm/s; Alarm: >4.0 mm/s.
+      Trend-based verdict: if 7-day mean rising >0.2 mm/s/day, recommend service inspection.
+      Trigger phrases: 'lift', 'elevator', 'vibration', 'LIFT-01', 'is the lift okay',
+      'lift condition', 'lift maintenance'.
+    params:
+      normal_max: 3.0
+      elevated_max: 4.0
+      alarm_threshold: 4.0
+      trend_warning_slope: 0.2
+      unit: mm/s
+      source: "ISO 18738-1:2012 (Lift ride quality); BS EN 81-1 maintenance annex"
+    brick_class: brick:Vibration_Sensor
+    answer_template: >
+      Lift vibration: {value:.2f} mm/s RMS.
+      ISO 18738 guideline: <3.0 mm/s (normal), 3.0–4.0 (elevated), >4.0 (alarm).
+      {verdict}.
+
+  ahu_runtime_health:
+    kind: aggregate
+    description: >
+      AHU cumulative runtime assessment for predictive filter and belt replacement scheduling.
+      Typical filter replacement interval: 2,500 hours run-time (CIBSE Guide M).
+      Typical belt check interval: 1,000 hours.
+      Runtime fraction >0.9 h/h sustained for >48h suggests possible stuck damper or
+      controls fault.
+      Trigger phrases: 'AHU', 'air handling unit', 'filter', 'runtime', 'AHU-F5 condition',
+      'when does AHU need service', 'equipment needs attention'.
+    params:
+      filter_interval_h: 2500
+      belt_interval_h: 1000
+      high_runtime_threshold: 0.9
+      high_runtime_window_h: 48
+      window_h: 168
+      agg_fn: sum
+      unit: h
+      source: "CIBSE Guide M: Maintenance Engineering and Management (2014)"
+    brick_class: brick:Run_Time_Sensor
+    answer_template: >
+      AHU-F5 total runtime this week: {agg_value:.1f} hours.
+      Filter replacement recommended at 2,500h cumulative runtime.
+      Belt check recommended at 1,000h.
+      {verdict}.

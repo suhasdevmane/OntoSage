@@ -1,0 +1,118 @@
+# config/goals.yaml — Goal → KPI decomposition taxonomy (T26).
+#
+# Each goal maps lay-language trigger terms to a list of KPIs.
+# Each KPI has an intent (routes to an existing pipeline node) and a
+# question_template used to generate the sub-query fed to that node.
+#
+# KPI question templates may use {building_id} as a placeholder.
+# The planner fans out one sub-query per KPI, aggregates results, and
+# presents a structured answer with real data per dimension.
+#
+# guard: GOAL_PLANNER_ENABLED=true must be set; default false.
+
+goals:
+
+  eco_friendly:
+    triggers:
+      - eco-friendly
+      - eco friendly
+      - environmentally friendly
+      - sustainable
+      - green building
+      - reduce carbon
+      - carbon footprint
+      - energy efficient
+      - save energy
+    display_name: "Eco-friendly / Energy efficiency"
+    kpis:
+      - id: energy_consumption
+        label: "Energy consumption"
+        intent: sensor_data
+        question_template: "What is the current energy consumption in the building?"
+      - id: peak_demand
+        label: "Peak demand"
+        intent: analytics
+        question_template: "What is the peak energy demand over the past 7 days?"
+      - id: co2_indoor
+        label: "Indoor CO2 levels"
+        intent: sensor_data
+        question_template: "What are the current CO2 levels across occupied floors?"
+      - id: hvac_runtime
+        label: "HVAC runtime efficiency"
+        intent: sensor_data
+        question_template: "How many hours has the AHU been running this week?"
+
+  comfort:
+    triggers:
+      - comfortable
+      - comfort
+      - improve comfort
+      - make it more comfortable
+      - occupant comfort
+      - thermal comfort
+      - improve conditions
+    display_name: "Occupant comfort"
+    kpis:
+      - id: temperature
+        label: "Temperature"
+        intent: sensor_data
+        question_template: "What is the current temperature across occupied floors?"
+      - id: humidity
+        label: "Humidity"
+        intent: sensor_data
+        question_template: "What is the current humidity level in the building?"
+      - id: co2_comfort
+        label: "CO2 / Air quality"
+        intent: sensor_data
+        question_template: "Are CO2 levels within comfortable range?"
+      - id: noise
+        label: "Noise levels"
+        intent: sensor_data
+        question_template: "What are the noise levels in study and office areas?"
+
+  safety:
+    triggers:
+      - safe
+      - safety
+      - improve safety
+      - building safety
+      - fire safety
+      - security
+    display_name: "Building safety"
+    kpis:
+      - id: temperature_anomaly
+        label: "Temperature anomalies"
+        intent: anomaly
+        question_template: "Are there any abnormal temperature readings in the building?"
+      - id: co2_safety
+        label: "CO2 safety levels"
+        intent: anomaly
+        question_template: "Are CO2 levels dangerously high anywhere in the building?"
+      - id: equipment_health
+        label: "Equipment health"
+        intent: sensor_data
+        question_template: "Is the lift vibration within safe operating limits?"
+
+  cost_reduction:
+    triggers:
+      - reduce costs
+      - cut costs
+      - save money
+      - cost efficient
+      - cheaper
+      - lower bills
+      - reduce spending
+    display_name: "Cost reduction"
+    kpis:
+      - id: energy_cost
+        label: "Energy consumption"
+        intent: analytics
+        question_template: "What is the energy usage trend over the past month?"
+      - id: peak_avoidance
+        label: "Peak demand avoidance"
+        intent: analytics
+        question_template: "When does peak energy demand occur in the building?"
+      - id: hvac_efficiency
+        label: "HVAC efficiency"
+        intent: trend
+        question_template: "Is HVAC runtime decreasing or increasing over the past 4 weeks?"
