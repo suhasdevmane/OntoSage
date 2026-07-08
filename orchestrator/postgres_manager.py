@@ -273,12 +273,25 @@ class PostgresManager:
             return False
 
     async def delete_user(self, username: str) -> bool:
-        """Delete a user. Returns True if a row was removed."""
+        """Delete a user and ALL their per-user data (turn_memory + conversations,
+        which cascades to messages) in one transaction — GDPR right-to-be-forgotten.
+
+        This also fixes a latent bug: ``conversations.user_id`` REFERENCES
+        ``users(username)`` with NO ``ON DELETE CASCADE``, so deleting a user who
+        ever had a conversation previously failed on the foreign key. Returns True
+        if the user row was removed.
+        """
         if not self.pool:
             return False
         try:
             async with self.pool.acquire() as conn:
-                result = await conn.execute("DELETE FROM users WHERE username = $1", username)
+                async with conn.transaction():
+                    # turn_memory has no FK cascade from users — purge it explicitly.
+                    await conn.execute("DELETE FROM turn_memory WHERE user_id = $1", username)
+                    # conversations block the users delete (FK, no cascade); removing
+                    # them cascades to messages via their own ON DELETE CASCADE.
+                    await conn.execute("DELETE FROM conversations WHERE user_id = $1", username)
+                    result = await conn.execute("DELETE FROM users WHERE username = $1", username)
             return result.endswith("1")
         except Exception as e:
             logger.error(f"Error deleting user: {e}")
