@@ -35,6 +35,7 @@ import hashlib
 import json
 import re
 from pathlib import Path
+from urllib.parse import quote
 from typing import Any, Dict, Iterable, List, Optional
 
 import httpx
@@ -51,6 +52,10 @@ logger = get_logger(__name__)
 
 # Where the orchestrator looks for input TTLs (mirrors floor plan layout).
 _INPUT_SEARCH_PATHS = [Path("/app/input"), Path("input")]
+
+# Additional directories scanned for building-independent ontology TTLs
+# (e.g. ontology/hbco_core.ttl).  These are treated as schema files.
+_ONTOLOGY_SEARCH_PATHS = [Path("/app/ontology"), Path("ontology")]
 
 # Where the SHA-256 cache lives.  Same volume as artifacts so it survives
 # container restarts.
@@ -166,16 +171,33 @@ def discover_ttls(building_id: str) -> List[Path]:
 
 
 def discover_schema_ttls() -> List[Path]:
-    """Return shared schema TTLs (Brick, REC, etc.) from the top of input/."""
+    """Return shared schema TTLs (Brick, REC, etc.) from input/ and ontology/."""
+    results: List[Path] = []
     input_dir = _resolve_input_dir()
-    if input_dir is None:
-        return []
-    return [p for p in sorted(input_dir.glob("*.ttl")) if _looks_like_schema(p.name)]
+    if input_dir is not None:
+        results.extend(p for p in sorted(input_dir.glob("*.ttl")) if _looks_like_schema(p.name))
+    # Include all TTLs under ontology/ directories (all are schema-level)
+    for onto_dir in _ONTOLOGY_SEARCH_PATHS:
+        if onto_dir.is_dir():
+            results.extend(sorted(onto_dir.glob("*.ttl")))
+            break
+    return results
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GraphDB upload
 # ─────────────────────────────────────────────────────────────────────────────
+
+
+def _graph_uri_for_path(ttl_path: Path) -> str:
+    """Deterministic named-graph URI for a TTL file.
+
+    Using the file name as the key means the same file always lands in the
+    same named graph, so a PUT replaces previous triples rather than appending
+    them.  This eliminates blank-node duplication on repeated uploads.
+    """
+    safe = ttl_path.name.replace(" ", "_")
+    return f"urn:ontosage:ttl:{safe}"
 
 
 async def upload_to_graphdb(
@@ -186,10 +208,20 @@ async def upload_to_graphdb(
     timeout: float = 120.0,
     client: Optional[httpx.AsyncClient] = None,
 ) -> bool:
-    """POST a TTL file to GraphDB.  Returns True on HTTP 200/204."""
+    """PUT a TTL file into a per-file named graph in GraphDB.
+
+    Using PUT with ``?context=<graph>`` instead of a bare POST replaces all
+    triples in the named graph atomically — preventing blank-node duplication
+    on repeated startups even when the SHA cache is cold (e.g. after a volume
+    reset).  Returns True on HTTP 200/204.
+    """
     repo = repository or settings.GRAPHDB_REPOSITORY
     base = (graphdb_url or settings.GRAPHDB_URL).rstrip("/")
-    url = f"{base}/repositories/{repo}/statements"
+    graph_uri = _graph_uri_for_path(ttl_path)
+    # Percent-encode the whole <graph> token: a literal '+' in a filename would
+    # otherwise be decoded as a space by GraphDB → "Invalid IRI value" (HTTP 500).
+    encoded_graph = quote(f"<{graph_uri}>", safe="")
+    url = f"{base}/repositories/{repo}/statements?context={encoded_graph}"
     ttl_bytes = ttl_path.read_bytes()
 
     owns_client = client is None
@@ -197,15 +229,13 @@ async def upload_to_graphdb(
         client = httpx.AsyncClient(timeout=timeout)
     try:
         try:
-            resp = await client.post(
+            resp = await client.put(
                 url,
                 content=ttl_bytes,
                 headers={"Content-Type": "application/x-turtle"},
             )
         except httpx.HTTPError as e:
-            logger.warning(
-                f"[ttl_uploader] {ttl_path.name}: HTTP error talking to GraphDB — {e}"
-            )
+            logger.warning(f"[ttl_uploader] {ttl_path.name}: HTTP error talking to GraphDB — {e}")
             return False
     finally:
         if owns_client:
@@ -294,9 +324,7 @@ async def run_idempotent_uploads(
             ok = await upload_to_graphdb(path, client=client)
             if ok:
                 cache[key] = sha
-                logger.info(
-                    f"[ttl_uploader] {path.name} uploaded (sha={sha[:12]}...)"
-                )
+                logger.info(f"[ttl_uploader] {path.name} uploaded (sha={sha[:12]}...)")
                 summary["uploaded"].append(key)
             else:
                 summary["failed"].append(key)

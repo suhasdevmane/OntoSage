@@ -25,14 +25,12 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, Optional
 
 import yaml
 
-from shared.capability_schema import (
-    CapabilityKB,
-    CapabilityRoutingConfig,
-)
+from shared.building_paths import resolve_building_file
+from shared.capability_schema import CapabilityKB, CapabilityRoutingConfig
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -96,16 +94,25 @@ class CapabilityIndexer:
             logger.warning(f"[capability_indexer] input_root not found: {self._input_root}")
             return results
 
-        for bldg_dir in sorted(self._input_root.iterdir()):
-            if not bldg_dir.is_dir():
-                continue
-            cap_yaml = bldg_dir / "capability.yaml"
-            if not cap_yaml.exists():
-                continue
-            building_id = bldg_dir.name
+        # Nested layout: input/<id>/capability.yaml
+        building_ids = [
+            d.name
+            for d in sorted(self._input_root.iterdir())
+            if d.is_dir() and (d / "capability.yaml").exists()
+        ]
+        # Flat layout: input/capability.yaml → index under the active building id.
+        from shared.config import settings as _settings
+
+        _active = _settings.BUILDING_ID
+        if _active not in building_ids and resolve_building_file(
+            _active, "capability.yaml", self._input_root
+        ):
+            building_ids.append(_active)
+
+        for building_id in building_ids:
             results[building_id] = await self.index_building(building_id)
             # Additionally index any opt-in extra intents (floor_plan, spatial_query, ...)
-            # defined in input/<bldg>/building.yaml under `intent_routing:`.
+            # defined in building.yaml under `intent_routing:`.
             # Failures here are non-fatal — they don't affect capability indexing.
             try:
                 await self.index_extra_intents(building_id)
@@ -119,15 +126,15 @@ class CapabilityIndexer:
     async def index_building(self, building_id: str) -> IndexResult:
         """Index a single building. Idempotent; safe to call repeatedly."""
         t0 = time.monotonic()
-        cap_yaml_path = self._input_root / building_id / "capability.yaml"
-        bldg_yaml_path = self._input_root / building_id / "building.yaml"
+        cap_yaml_path = resolve_building_file(building_id, "capability.yaml", self._input_root)
+        bldg_yaml_path = resolve_building_file(building_id, "building.yaml", self._input_root)
         collection_name = f"{self._collection_prefix}{building_id}"
 
-        if not cap_yaml_path.exists():
+        if cap_yaml_path is None:
             return IndexResult(
                 building_id=building_id,
                 status="degraded",
-                reason=f"capability.yaml not found at {cap_yaml_path}",
+                reason=f"capability.yaml not found for {building_id} (input/<id>/ or input/)",
                 duration_ms=(time.monotonic() - t0) * 1000,
             )
 
@@ -172,9 +179,7 @@ class CapabilityIndexer:
             )
 
         if not should_rebuild:
-            logger.info(
-                f"[capability_indexer] {building_id}: skipped — {existing_msg}"
-            )
+            logger.info(f"[capability_indexer] {building_id}: skipped — {existing_msg}")
             return IndexResult(
                 building_id=building_id,
                 status="skipped",
@@ -232,11 +237,12 @@ class CapabilityIndexer:
         Skips intents with enabled=false.
         """
         import yaml as _yaml
+
         from shared.capability_schema import IntentRouteConfig
 
-        bldg_yaml_path = self._input_root / building_id / "building.yaml"
+        bldg_yaml_path = resolve_building_file(building_id, "building.yaml", self._input_root)
         results: Dict[str, IndexResult] = {}
-        if not bldg_yaml_path.exists():
+        if bldg_yaml_path is None:
             return results
 
         try:
@@ -294,7 +300,8 @@ class CapabilityIndexer:
                 )
                 results[intent_name] = IndexResult(
                     building_id=f"{building_id}/{intent_name}",
-                    status="degraded", reason=f"Qdrant probe failed: {e}",
+                    status="degraded",
+                    reason=f"Qdrant probe failed: {e}",
                 )
                 continue
 
@@ -307,9 +314,7 @@ class CapabilityIndexer:
                     reason=msg,
                     duration_ms=(time.monotonic() - t0) * 1000,
                 )
-                logger.info(
-                    f"[capability_indexer] {building_id}/{intent_name}: skipped — {msg}"
-                )
+                logger.info(f"[capability_indexer] {building_id}/{intent_name}: skipped — {msg}")
                 continue
 
             # Build points: one per descriptor
@@ -317,32 +322,38 @@ class CapabilityIndexer:
                 vectors = await self._embedder.embed_batch(cfg.descriptors)
             except Exception as e:
                 logger.warning(
-                    f"[capability_indexer] {building_id}/{intent_name}: embedding "
-                    f"failed: {e}"
+                    f"[capability_indexer] {building_id}/{intent_name}: embedding " f"failed: {e}"
                 )
                 results[intent_name] = IndexResult(
                     building_id=f"{building_id}/{intent_name}",
-                    status="degraded", reason=f"embedding failed: {e}",
+                    status="degraded",
+                    reason=f"embedding failed: {e}",
                 )
                 continue
 
             from qdrant_client.models import PointStruct
+
             points = []
             for i, (descriptor, vec) in enumerate(zip(cfg.descriptors, vectors)):
-                pid = str(uuid.uuid5(
-                    _CAPABILITY_NAMESPACE,
-                    f"{building_id}:intent:{intent_name}:{i}:{descriptor}",
-                ))
-                points.append(PointStruct(
-                    id=pid, vector=vec,
-                    payload={
-                        "intent_name": intent_name,
-                        "descriptor_idx": i,
-                        "text": descriptor,
-                        "yaml_sha": block_sha,
-                        "building_id": building_id,
-                    },
-                ))
+                pid = str(
+                    uuid.uuid5(
+                        _CAPABILITY_NAMESPACE,
+                        f"{building_id}:intent:{intent_name}:{i}:{descriptor}",
+                    )
+                )
+                points.append(
+                    PointStruct(
+                        id=pid,
+                        vector=vec,
+                        payload={
+                            "intent_name": intent_name,
+                            "descriptor_idx": i,
+                            "text": descriptor,
+                            "yaml_sha": block_sha,
+                            "building_id": building_id,
+                        },
+                    )
+                )
 
             try:
                 await self._recreate_collection(collection_name)
@@ -354,7 +365,8 @@ class CapabilityIndexer:
                 )
                 results[intent_name] = IndexResult(
                     building_id=f"{building_id}/{intent_name}",
-                    status="degraded", reason=f"Qdrant write failed: {e}",
+                    status="degraded",
+                    reason=f"Qdrant write failed: {e}",
                 )
                 continue
 
@@ -377,9 +389,9 @@ class CapabilityIndexer:
 
     # ── internal: routing config loader ─────────────────────────────────────────
 
-    def _load_routing_config(self, bldg_yaml_path: Path) -> CapabilityRoutingConfig:
+    def _load_routing_config(self, bldg_yaml_path: Optional[Path]) -> CapabilityRoutingConfig:
         """Read capability_routing from building.yaml; defaults if absent."""
-        if not bldg_yaml_path.exists():
+        if bldg_yaml_path is None or not bldg_yaml_path.exists():
             return CapabilityRoutingConfig()
         try:
             with open(bldg_yaml_path, "r", encoding="utf-8") as fh:
@@ -453,9 +465,7 @@ class CapabilityIndexer:
 
     # ── internal: embedding (build points) ──────────────────────────────────────
 
-    async def _build_points(
-        self, building_id: str, kb: CapabilityKB, yaml_sha: str
-    ) -> List[Any]:
+    async def _build_points(self, building_id: str, kb: CapabilityKB, yaml_sha: str) -> List[Any]:
         """Per entry: one embedding per keyword + one for content[:500].
         All points for the same entry share entry_id in payload for group-by at query time.
         """
@@ -514,9 +524,7 @@ class CapabilityIndexer:
 
         await self._qdrant.create_collection(
             collection_name=collection_name,
-            vectors_config=VectorParams(
-                size=self._embedder.dimension, distance=Distance.COSINE
-            ),
+            vectors_config=VectorParams(size=self._embedder.dimension, distance=Distance.COSINE),
         )
 
     async def _upsert_points(self, collection_name: str, points: List[Any]) -> None:

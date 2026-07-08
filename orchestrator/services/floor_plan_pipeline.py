@@ -35,6 +35,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from shared.building_paths import resolve_building_file
 from shared.floor_plan_config import ABACWS_CONFIG, BuildingConfig
 from shared.models import (
     FloorPlanManifest,
@@ -99,6 +100,7 @@ def _prom_inc(counter, labels: dict, amount: float = 1.0) -> None:  # noqa: ANN0
             counter.labels(**labels).inc(amount)
         except Exception:  # pragma: no cover
             pass
+
 
 # Facility-type keyword map (used in rule-based classification, step 6)
 _FACILITY_KEYWORDS: Dict[str, List[str]] = {
@@ -211,7 +213,9 @@ class FloorPlanPipeline:
         image_info, render_warnings = await _run_in_executor(
             _render_pdf, pdf_path, self._manifest_dir, building_id, floor, cfg.default_dpi
         )
-        _prom_observe(_FP_INGESTION_DURATION, {**_labels, "step": "render"}, _time.monotonic() - _t3)
+        _prom_observe(
+            _FP_INGESTION_DURATION, {**_labels, "step": "render"}, _time.monotonic() - _t3
+        )
         warnings.extend(render_warnings)
         if image_info is None:
             logger.error(f"[pipeline] Render failed for {pdf_path.name} — aborting.")
@@ -220,10 +224,10 @@ class FloorPlanPipeline:
 
         # Step 4: extract text layer
         _t4 = _time.monotonic()
-        text_blocks, extract_warnings = await _run_in_executor(
-            _extract_text_blocks, pdf_path
+        text_blocks, extract_warnings = await _run_in_executor(_extract_text_blocks, pdf_path)
+        _prom_observe(
+            _FP_INGESTION_DURATION, {**_labels, "step": "extract"}, _time.monotonic() - _t4
         )
-        _prom_observe(_FP_INGESTION_DURATION, {**_labels, "step": "extract"}, _time.monotonic() - _t4)
         warnings.extend(extract_warnings)
 
         # Step 5: detect spaces (regex then LLM)
@@ -237,7 +241,9 @@ class FloorPlanPipeline:
             )
             raw_spaces.extend(llm_spaces)
             warnings.extend(llm_warnings)
-        _prom_observe(_FP_INGESTION_DURATION, {**_labels, "step": "detect_spaces"}, _time.monotonic() - _t5)
+        _prom_observe(
+            _FP_INGESTION_DURATION, {**_labels, "step": "detect_spaces"}, _time.monotonic() - _t5
+        )
 
         # Step 6: classify types
         raw_spaces = _classify_types(raw_spaces)
@@ -249,7 +255,9 @@ class FloorPlanPipeline:
         _t8 = _time.monotonic()
         link_warnings = await self._link_ontology(raw_spaces, building_id, floor)
         warnings.extend(link_warnings)
-        _prom_observe(_FP_INGESTION_DURATION, {**_labels, "step": "link_ontology"}, _time.monotonic() - _t8)
+        _prom_observe(
+            _FP_INGESTION_DURATION, {**_labels, "step": "link_ontology"}, _time.monotonic() - _t8
+        )
 
         # Build facilities map
         facilities: Dict[str, List[str]] = {}
@@ -258,11 +266,7 @@ class FloorPlanPipeline:
                 facilities.setdefault(space.type, []).append(space.zone_id)
 
         # Build ontology_links map
-        ontology_links = {
-            s.zone_id: s.ontology_iri
-            for s in raw_spaces
-            if s.ontology_iri
-        }
+        ontology_links = {s.zone_id: s.ontology_iri for s in raw_spaces if s.ontology_iri}
 
         # Step 3 metadata → RenderedImage model
         png_url = f"/floor-plans/renders/{building_id}/floor_{floor}.png"
@@ -302,14 +306,18 @@ class FloorPlanPipeline:
         # Step 9: embed + index into Qdrant
         _t9 = _time.monotonic()
         await self._embed_and_index(manifest)
-        _prom_observe(_FP_INGESTION_DURATION, {**_labels, "step": "embed_index"}, _time.monotonic() - _t9)
+        _prom_observe(
+            _FP_INGESTION_DURATION, {**_labels, "step": "embed_index"}, _time.monotonic() - _t9
+        )
 
         # Step 10: write manifest to disk + Redis
         await self._write_manifest(manifest)
 
         # Emit success metrics
         _prom_inc(_FP_INGESTION_TOTAL, {**_labels, "outcome": "success"})
-        _prom_observe(_FP_INGESTION_DURATION, {**_labels, "step": "total"}, _time.monotonic() - t_start)
+        _prom_observe(
+            _FP_INGESTION_DURATION, {**_labels, "step": "total"}, _time.monotonic() - t_start
+        )
         if warnings:
             _prom_inc(_FP_MANIFEST_WARNINGS, _labels, amount=len(warnings))
 
@@ -319,7 +327,6 @@ class FloorPlanPipeline:
             f"spaces={len(raw_spaces)} warnings={len(warnings)}"
         )
         return manifest
-
 
     # ── Manifest I/O ──────────────────────────────────────────────────────────
 
@@ -341,6 +348,7 @@ class FloorPlanPipeline:
         ordered: List[str] = []
         try:
             from orchestrator.services.building_registry import get_building_registry
+
             reg = get_building_registry()
             primary = reg.resolve_id(building_id) or building_id
             if primary not in seen:
@@ -362,6 +370,7 @@ class FloorPlanPipeline:
         """Translate a building ID through the BuildingRegistry alias map."""
         try:
             from orchestrator.services.building_registry import get_building_registry
+
             return get_building_registry().resolve_id(building_id) or building_id
         except Exception:
             return building_id
@@ -410,8 +419,8 @@ class FloorPlanPipeline:
     # ── Config ────────────────────────────────────────────────────────────────
 
     def _load_config(self, building_id: str) -> BuildingConfig:
-        yaml_path = self._pdf_dir / building_id / "building.yaml"
-        if yaml_path.exists():
+        yaml_path = resolve_building_file(building_id, "building.yaml", self._pdf_dir)
+        if yaml_path is not None:
             try:
                 return BuildingConfig.from_yaml(yaml_path)
             except Exception as e:
@@ -420,6 +429,7 @@ class FloorPlanPipeline:
         # aliases by a logical building return the logical config.
         try:
             from orchestrator.services.building_registry import get_building_registry
+
             cfg = get_building_registry().get(building_id)
             if cfg is not None:
                 return cfg
@@ -460,7 +470,7 @@ class FloorPlanPipeline:
             "For each label that appears to be a room or space name (NOT a zone number, NOT a "
             "page number, NOT a generic word like 'the' or 'of'), output a JSON object with:\n"
             '  {"label": "<original text>", "type": "<space type from: office/lab/meeting_room/'
-            'classroom/lecture/toilet/kitchen/server_room/storage/staircase/lift/reception/'
+            "classroom/lecture/toilet/kitchen/server_room/storage/staircase/lift/reception/"
             'corridor/utility/unknown>"}\n'
             "Return ONLY a JSON array. If nothing qualifies, return [].\n\n"
             "Labels:\n" + "\n".join(f"- {l}" for l in unique_lines)
@@ -500,7 +510,9 @@ class FloorPlanPipeline:
                         confidence=0.75,
                     )
                 )
-            logger.info(f"[pipeline] LLM extracted {len(spaces)} additional spaces on floor {floor}")
+            logger.info(
+                f"[pipeline] LLM extracted {len(spaces)} additional spaces on floor {floor}"
+            )
             return spaces, []
         except asyncio.TimeoutError:
             warnings.append("LLM space extraction timed out")
@@ -511,9 +523,7 @@ class FloorPlanPipeline:
 
     # ── Step 8 Ontology linking ────────────────────────────────────────────────
 
-    async def _link_ontology(
-        self, spaces: List[Space], building_id: str, floor: int
-    ) -> List[str]:
+    async def _link_ontology(self, spaces: List[Space], building_id: str, floor: int) -> List[str]:
         """Query GraphDB to populate ontology_iri on each space."""
         warnings: List[str] = []
         try:
@@ -587,7 +597,9 @@ class FloorPlanPipeline:
             # can match "large office" or "small meeting room" correctly.
             def _space_text(s: Space) -> str:
                 area_str = f"{s.area_m2:.0f}m2" if s.area_m2 else ""
-                adj_str = f"adjacent to {' '.join(s.adjacent_spaces[:3])}" if s.adjacent_spaces else ""
+                adj_str = (
+                    f"adjacent to {' '.join(s.adjacent_spaces[:3])}" if s.adjacent_spaces else ""
+                )
                 return f"{s.label} {s.type} floor {manifest.floor} {manifest.building_name} {area_str} {adj_str}".strip()
 
             texts = [_space_text(s) for s in manifest.spaces]
@@ -595,8 +607,9 @@ class FloorPlanPipeline:
             points = []
             for space, emb in zip(manifest.spaces, embeddings):
                 pid = int(
-                    hashlib.md5(
-                        f"{manifest.building_id}.{manifest.floor}.{space.zone_id}".encode()
+                    hashlib.md5(  # non-security: deterministic Qdrant point ID
+                        f"{manifest.building_id}.{manifest.floor}.{space.zone_id}".encode(),
+                        usedforsecurity=False,
                     ).hexdigest(),
                     16,
                 ) % (2**63)
@@ -618,7 +631,9 @@ class FloorPlanPipeline:
                             "sensor_uuids": space.sensor_uuids,
                             # Navigation
                             "pdf_url": manifest.pdf_url,
-                            "image_url": manifest.rendered_image.png_url if manifest.rendered_image else "",
+                            "image_url": (
+                                manifest.rendered_image.png_url if manifest.rendered_image else ""
+                            ),
                             "schema_version": manifest.schema_version,
                             "source": space.source,
                             # DWG geometry (populated when schema_version == "2.0")
@@ -663,12 +678,11 @@ class FloorPlanPipeline:
         if self._redis is not None:
             return self._redis
         try:
-            from shared.config import settings
             import redis.asyncio as aioredis
 
-            self._redis = aioredis.from_url(
-                f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}"
-            )
+            from shared.config import settings
+
+            self._redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}")
             return self._redis
         except Exception:
             return None
@@ -812,7 +826,9 @@ def _extract_text_blocks(
                         }
                     )
                 if blocks:
-                    logger.info(f"[pipeline] OCR recovered {len(blocks)} blocks from {pdf_path.name}")
+                    logger.info(
+                        f"[pipeline] OCR recovered {len(blocks)} blocks from {pdf_path.name}"
+                    )
                 else:
                     warnings.append(
                         f"{pdf_path.name}: OCR produced no text — install Tesseract for vector-text PDFs"
@@ -873,14 +889,14 @@ def _detect_spaces_regex(
         bbox_raw = block.get("bbox")
 
         centroid = (
-            NormalisedPoint(x=centroid_raw["x"], y=centroid_raw["y"])
-            if centroid_raw
-            else None
+            NormalisedPoint(x=centroid_raw["x"], y=centroid_raw["y"]) if centroid_raw else None
         )
         bbox = (
             NormalisedBBox(
-                x=bbox_raw["x"], y=bbox_raw["y"],
-                w=bbox_raw["w"], h=bbox_raw["h"],
+                x=bbox_raw["x"],
+                y=bbox_raw["y"],
+                w=bbox_raw["w"],
+                h=bbox_raw["h"],
             )
             if bbox_raw
             else None

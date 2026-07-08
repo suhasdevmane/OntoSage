@@ -60,7 +60,11 @@ FUZZY_ENABLED = os.environ.get("RESPONSE_CACHE_FUZZY", "false").lower() == "true
 MIN_SIMILARITY = float(os.environ.get("RESPONSE_CACHE_MIN_SIMILARITY", "0.85"))
 
 # Intents that are NOT safe to cache (dynamic per-request)
-NON_CACHEABLE_INTENTS = {"clarification", "discovery", "control"}
+# general_knowledge is non-cacheable: answer length is steered by the user's
+# phrasing (short/summary/long), so a cached answer could be served at the wrong
+# length (especially via fuzzy match). Fresh LLM calls keep length control
+# reliable — the credit cost is an accepted trade-off.
+NON_CACHEABLE_INTENTS = {"clarification", "discovery", "control", "general_knowledge"}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Query normalisation
