@@ -354,6 +354,44 @@ _SENSOR_METRIC_KWS = (
     "sensor",
     "reading",
 )
+# BUG-045: a COUNT of sensors/devices/equipment is metadata (a SPARQL COUNT on
+# the graph), never spatial_query (which reads DWG room geometry). These drive a
+# deterministic override that corrects the LLM when it maps "how many <sensors>"
+# to spatial_query/floor_plan.
+_COUNT_TRIGGER_KWS = (
+    "how many",
+    "how much",
+    "number of",
+    "count of",
+    "count the",
+    "total number",
+)
+_COUNTABLE_DEVICE_KWS = (
+    "sensor",
+    "sensors",
+    "device",
+    "devices",
+    "equipment",
+    "meter",
+    "meters",
+    "actuator",
+    "actuators",
+)
+# Room/space geometry words that KEEP a count on spatial_query — areas and
+# adjacency of rooms live in the DWG floor-plan manifests, not the RDF graph.
+_ROOM_GEOMETRY_KWS = (
+    "room",
+    "rooms",
+    "space",
+    "spaces",
+    "adjacent",
+    "adjacency",
+    "area",
+    "how big",
+    "square met",
+    "square feet",
+    "dimensions",
+)
 # Exported for testing — maintenance schedule pre-classifier
 _MAINTENANCE_SCHEDULE_KWS = (
     "maintenance schedule",
@@ -973,7 +1011,8 @@ Your task is to analyze the user's question and return a JSON response.
    === DISAMBIGUATION RULES (apply in this priority order) ===
    - If the user asks to see a floor plan, map, or layout → "floor_plan"
    - If the user asks where a room/zone/facility is located → "floor_plan"
-   - If the user asks for counts, areas, sizes, or adjacency data → "spatial_query"
+   - If the user asks for the AREA, SIZE, DIMENSIONS, or physical ADJACENCY of rooms/spaces/floors → "spatial_query" (floor-plan geometry). Examples: "area of floor 3", "which rooms are adjacent to 5.08", "how big is the atrium".
+   - BUT a COUNT of sensors, devices, equipment, meters, zones, or any Brick class is "metadata" (answered by a graph COUNT), NOT "spatial_query". Examples: "how many temperature sensors are there?" → "metadata"; "number of CO2 sensors" → "metadata".
    - If the user asks for a building overview or wants to know what's on each floor → "floor_plan"
    - If the user mentions navigation, directions, or finding a specific room/facility → "floor_plan"
    - If the query contains "recommend", "suggest", "improve", "optimize", "what should" → "recommend"
@@ -1277,6 +1316,30 @@ Return ONLY the JSON object.
                         "— floor plan navigation keyword detected"
                     )
                     normalized["intent"] = "floor_plan"
+                    normalized["analytics"] = False
+                    normalized["general"] = False
+
+                # BUG-045: a COUNT of sensors/devices/equipment is metadata
+                # (answered by a SPARQL COUNT on the graph), never spatial_query
+                # (which reads DWG room geometry). The LLM's disambiguation rule
+                # maps every "count" to spatial_query, so "how many temperature
+                # sensors are there?" wrongly reaches the floor-plan agent and
+                # returns a room count. Force these to "metadata" unless the query
+                # is really about room/space geometry (area/adjacency/size).
+                _is_count_q = any(kw in _q_lower for kw in _COUNT_TRIGGER_KWS)
+                _counts_devices = any(kw in _q_lower for kw in _COUNTABLE_DEVICE_KWS)
+                _is_room_geometry = any(kw in _q_lower for kw in _ROOM_GEOMETRY_KWS)
+                if (
+                    _is_count_q
+                    and _counts_devices
+                    and not _is_room_geometry
+                    and normalized.get("intent") in ("spatial_query", "floor_plan")
+                ):
+                    logger.info(
+                        f"[intent-override] Forcing 'metadata' (was '{normalized.get('intent')}') "
+                        "— sensor/equipment count belongs to a SPARQL COUNT, not spatial geometry"
+                    )
+                    normalized["intent"] = "metadata"
                     normalized["analytics"] = False
                     normalized["general"] = False
 
