@@ -1,8 +1,8 @@
 # OntoSage — System Reference (V3 + P0 Security Hardening)
 
-**Comprehensive technical reference for the OntoSage agentic-AI framework for smart buildings.** This document covers the full architecture, every Phase 11-22 improvement plus V3 corpus-driven extensions and P0 security hardening, the routing pipeline, the multi-tenant / multi-persona / multi-intent model, conversation memory, follow-up co-reference resolution, the forecasting pipeline, the admin portal, the operational surface (configuration, swap workflow, CI), the test coverage, and known issues — accurate as of 2026-07-07.
+**Comprehensive technical reference for the OntoSage agentic-AI framework for smart buildings.** This document covers the full architecture, every Phase 11-22 improvement plus V3 corpus-driven extensions and P0 security hardening, the routing pipeline, the multi-tenant / multi-persona / multi-intent model, conversation memory, follow-up co-reference resolution, the forecasting pipeline, the admin portal, the operational surface (configuration, swap workflow, CI), the test coverage, and known issues — accurate as of 2026-07-09.
 
-**Test suite**: 416 deterministic tests passing (Python 3.10/3.11/3.12). **Corpus coverage**: 63.8% of the 4,837 non-general-knowledge questions in the 5,604-question survey (vs. 16.2% baseline before V3) — corroborates paper §6.5.
+**Test suite**: 511 deterministic tests passing, 2 skipped (Python 3.10/3.11/3.12). **Corpus coverage**: 63.8% of the 4,837 non-general-knowledge questions in the 5,604-question survey (vs. 16.2% baseline before V3) — corroborates paper §6.5.
 
 **For new AI sessions:** Read `CLAUDE.md` first (navigation index, debugging, current branch state), then this file for deep architecture. Do not commit or push without explicit user approval.
 
@@ -191,10 +191,11 @@ scripts/
 ├── corpus_replay.py                # V3 — stratified 240q replay (40/level); LLM-graded pass rate
 └── survey_live_test.py             # 95-query regression survey
 
-tests/                              # 416 deterministic tests (P0); see §9 for CI + live suite breakdown
+tests/                              # 511 deterministic tests, 2 skipped; see §9 for CI + live suite breakdown
 ├── fixtures/buildings/bldg2/       # Phase 12A — fixture for multi-tenant tests
 ├── test_admin_ontology_endpoints.py # P0 — 13 admin endpoint tests
-└── …                               # 17 test files in CI
+├── test_auth_manager.py             # P0 round 2 — 7 tests (login lockout, delete_user cleanup, default role)
+└── …                               # 18 test files in CI
 
 .github/workflows/ci.yml            # Phase 16C+ → P0 — runs full deterministic suite (3.10/3.11/3.12)
 ```
@@ -661,7 +662,7 @@ The swap CLI exits **2** on:
 
 ## 6.5 Admin Portal — Ontology Management, Reindexing & Health
 
-The Admin Portal is a tab in the React frontend at **`http://localhost:3000/admin`**, backed by 8 FastAPI endpoints under `/api/v1/admin/`. All endpoints require the `system:admin` role — requests without a valid admin session token return HTTP 401.
+The running admin console is the **config-panel at `http://localhost:3001`** (localhost-only nginx that proxies `/api` + `/auth` to the orchestrator). Admin actions call FastAPI endpoints under `/api/v1/admin/`; all require the `system:admin` role — requests without a valid admin session token return HTTP 401. (Beyond the ontology/reindex endpoints below, the console also drives building-identity, schema-driven capability authoring, sensor registration, and the semantic-index status — see §6.10/§6.11.)
 
 The admin account is created from `.env` at startup (safe-create, never overwrites):
 ```bash
@@ -943,9 +944,212 @@ Both files are auto-discovered by `ttl_uploader.py` on startup (glob `bldg1_*.tt
 
 ---
 
+## 6.9 No-code onboarding — connect a data source, describe it as triples, ask
+
+**This is the core promise of OntoSage: to make a building answerable, an admin adds
+*data* and *triples* through the admin console (`:3001`) — never code.** A new deployment
+needs three things and nothing else: (1) a datasource holding the readings, (2) triples that
+say *what* is installed *where* and *which datasource* holds its data, and (3) the datasource's
+access configuration. After that, questions are answered automatically, forever.
+
+### The contract (why two halves are required)
+
+A question about a sensor is answerable only when **both** halves exist and are linked:
+
+| Half | What it is | Where it lives | Added via |
+|---|---|---|---|
+| **A — the thing** | The sensor/device as an RDF triple: its Brick class, its location, and a **timeseries UUID + a `ref:storedAt` datasource key** | GraphDB (the ontology) | Ontology / Databases tab (form · CSV · TTL) |
+| **B — the data** | The actual readings (rows keyed by that UUID) | A registered database (MySQL/Postgres/Timescale/Influx/… hosted **anywhere**) | Databases tab (connection + config) |
+
+The link between them is a single Brick-`ref:` idiom the admin never types by hand unless they
+want to — the console generates it:
+
+```turtle
+bldg:TempSensor_5_04 a brick:Air_Temperature_Sensor ;
+    brick:hasLocation bldg:Room_5.04 ;
+    ref:hasExternalReference [
+        ref:hasTimeseriesId "a8df8757-009a-4b9c-…" ;   # matches a row key in the DB
+        ref:storedAt        bldg:energy_data ] .         # key → database_registry entry
+```
+
+`ref:storedAt bldg:<key>` is the whole trick: the key (`energy_data`, `mariadb`, `database1`, …)
+maps to a connection in `input/database_registry.yaml` (+ the GUI overlay
+`database_registry.custom.yaml`). At query time `services/adapters/registry.py` reads that key
+off the SPARQL result and routes the fetch to the right backend — automatically, with the right
+adapter (`mysql` / `postgresql` / `timescaledb` / `influx` / …). **A new backend is a new
+registry entry, not a code change** (contract #9).
+
+### The end-to-end flow (all in `:3001`, zero code)
+
+```
+┌── 1. ADD THE DATASOURCE ────────────────────────────────────────────────┐
+│ Databases tab → “+ Add connection”                                       │
+│   type (mysql/postgres/timescale/… — 45 templates) · host · port ·       │
+│   user · password · database · table                                     │
+│   → written to database_registry.custom.yaml (+ .env creds).             │
+│   “Test” verifies reachability; “Introspect” lists its tables/columns.   │
+│   The DB can be hosted ANYWHERE reachable from the orchestrator network.  │
+└──────────────────────────────────────────────────────────────────────────┘
+                                   │  (key, e.g. "energy_data")
+                                   ▼
+┌── 2. DESCRIBE YOUR SENSORS AS TRIPLES ──────────────────────────────────┐
+│ Databases tab → that datasource card → “Register sensors” (3 modes):      │
+│   • Add points  — a row per sensor: Brick class · location · UUID · unit  │
+│   • Import CSV  — bulk: one line per sensor (class, location, uuid, …)     │
+│   • Upload TTL  — paste hand-authored Brick TTL                           │
+│   Any mode → services/sensor_ttl_generator.py emits the Brick + ref:      │
+│   triples above (ref:storedAt is auto-set to THIS datasource) and uploads │
+│   them to GraphDB. This is the admin telling OntoSage: “I have this        │
+│   sensor, at this location, and its data is in this datasource.”          │
+│ (Amenities / policies / maintenance topics are added the same way on the  │
+│  Ontology tab’s “Add capability” form — see §6.5 / OCBV, input/ontosage_  │
+│  schema.ttl. Those need no datasource; they answer straight from triples.)│
+└──────────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌── 3. ASK — grounded answer, no further setup ───────────────────────────┐
+│ Chat (:3000) or the Ask tab (:3001):                                      │
+│   “what’s the temperature in room 5.04?”                                   │
+│   dialogue → SPARQL finds the sensor by class+location → reads its UUID +  │
+│   ref:storedAt → AdapterRegistry routes to the datasource → SQL fetches    │
+│   the rows → analytics → a grounded, cited answer. Cached; reused forever. │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+**Onboarding a whole new building** is the same three steps at scale: drop its Brick TTL under
+`input/` (or upload it on the Ontology tab), register its datasource(s), point `BUILDING_ID` /
+`BUILDING_NAMESPACE` at it. No agent, adapter, or pipeline code changes — everything routes off
+the active building's namespace and the `ref:storedAt` keys (contracts #1, #3, #8, #9).
+
+### What’s guided today vs. where it can get smoother
+
+Working today (no code): add/test/introspect a datasource; register sensors by form, CSV, or
+TTL; the `ref:storedAt`→adapter routing; answer + cache. The main *friction* is that the sensor
+form takes **free-text** `brick:Class` and `bldg:Location` (it assumes Brick vocabulary) and a
+hand-entered UUID. Planned "right choices" to make it foolproof for a non-expert admin:
+
+1. **Dropdown-driven sensor form** — a Brick-class picker (Temperature/CO₂/Occupancy/… from the
+   loaded schema) and a location picker (existing `brick:Location`/rooms from the graph), so no
+   Brick strings are typed. Mirrors the amenity/knowledge form (WS-5).
+2. **Introspection-driven mapping** — use the existing `Introspect` endpoint to list the
+   datasource's real columns/UUIDs and let the admin map each to a Brick class + location, so
+   UUIDs are *selected from real data*, never typed.
+3. **“Verify answerability” check** — one click per sensor/datasource that runs the
+   resolve→fetch path and reports ✓ answerable / ✗ (declared-but-no-data), closing the loop
+   between the two halves immediately.
+4. **One “Connect a data source” wizard** chaining add-connection → register-sensors → verify,
+   plus a top-level “Connect data” CTA on Overview so the primary workflow is discoverable.
+5. **Linkage visibility** — “N sensors linked · M answerable” on each datasource card, and a
+   declared-vs-populated indicator on the Ontology tab (closes FIX-004 / CAVEAT-007 honestly).
+
+Endpoints backing the flow: `POST /api/v1/admin/databases` (+ `/test`, `/introspect`,
+`/{key}/sensors`, `/{key}/sensors/csv`, `/{key}/sensors/ttl`, `/{key}/data`) and the Ontology
+CRUD in §6.5. Generators: `services/sensor_ttl_generator.py`. Routing: `services/adapters/registry.py`.
+
+---
+
+## 6.10 OCBV — the Conversational Building Vocabulary (2026-07-17)
+
+Brick models the building's *technical fabric* for machines; it does not model what a human asks in
+plain language. **OCBV** (`input/ontosage_schema.ttl`, `owl:versionInfo "2.0.0"`, CC-BY-4.0) is the
+single, self-describing vocabulary that adds that conversational layer over Brick — the schema that
+makes a building *talkable-to*, and a standalone publication artifact.
+
+### Non-contradiction contract
+
+OCBV **extends** Brick and never redefines it. It declares only `ontosage:`
+(`http://ontosage.org/capabilities#`) and `hbco:` (`http://ontosage.org/hbco#`) terms; where it
+touches the physical building it references Brick classes as property ranges
+(`ontosage:locatedIn → brick:Location`, `hbco:mapsToBrickClass → a Brick sensor class`); and it aligns
+to Brick/REC/BOT/SOSA with SKOS mapping properties only (`skos:relatedMatch`/`closeMatch`, never
+`owl:equivalent*`), so loading it can never entail a contradictory Brick fact.
+
+### Modules (all in one file)
+
+| Module | Terms |
+|---|---|
+| **A — Capabilities** | `ontosage:Capability → Amenity` (PrayerRoom, Cafe, Lift, ToiletFacility, …) `+ KnowledgeTopic` (InformationTopic, Procedure, MaintenanceIssue); Brick-bridge object props (`locatedIn`, `aboutEquipment`, `servesFloor`); 13 datatype props (the guided-form fields) |
+| **B — Conversation concepts** | `hbco:Concept`, `hbco:mapsToBrickClass`, `hbco:layTerm`, `requiresRecipe`, `personaDepth` — lay word → Brick sensor ("stuffy" → CO₂). Consolidated here from the former `ontology/hbco_core.ttl` (now a stub); `hbco:` terms unchanged |
+| **C — Stakeholder roles** | `ontosage:StakeholderRole` (Occupant, FacilityManager, Researcher, SustainabilityOfficer, …) + `asksAbout`/`defaultPersonaDepth` — frames answers, **explicitly not RBAC** |
+| **D — Question-intent grammar** | `ontosage:QuestionIntent` (Locate, Quantify, Trend, Compare, Anomaly, Forecast, Comfort, Discover, Procedure, Report) + `intentPattern`/`answeredBy` |
+| **E — Report intake** | `ontosage:Report → FaultReport/Complaint/SafetyReport/Feedback/Suggestion` + status/priority/`concernsIssue` |
+| **F — Answer provenance** | `ontosage:SourceType` (GraphDB, TimeSeriesDB, Analytics, FloorPlan, CapabilityKB, ReportIntake) + `groundedIn`/`isSimulated` — the vocabulary behind honest, auditable answers |
+| **G — Competency Qs + example SPARQL** | `ontosage:competencyQuestion` + `ontosage:exampleSparql` annotations per class (paper + RAG) |
+| **H / I / J** | Brick/REC/BOT/SOSA alignment; SHACL shapes (Capability/Concept/Report); worked examples + changelog |
+
+Every term carries `rdfs:label` + `rdfs:comment` + `skos:definition` + `skos:example` so each is
+individually retrievable when the schema is chunked into a vector store.
+
+### The schema is the source of truth for authoring AND answering
+
+**It drives the console.** `capability_admin.get_capability_classes()` queries the OCBV subclasses in
+GraphDB → the "Add capability" **Type** dropdown; `get_capability_form_schema()` returns the datatype
+properties + their `rdfs:domain` → the form renders only the **fields whose domain applies to the
+selected type** (an Amenity shows `locationText`; a Procedure shows `steps`; a MaintenanceIssue shows
+`priority`). Add a class or property to `ontosage_schema.ttl` and it appears in the form after reload
+— no code change (falls back to a built-in list if GraphDB is unreachable). Endpoint:
+`GET /api/v1/admin/capabilities` → `{types, types_by_kind, form_fields, types_source}`.
+
+**It feeds the RAG/LLM.** The GraphDB similarity-index data query (`ontology_manager._SIM_DATA_QUERY`)
+now concatenates each term's `rdfs:comment` + `skos:definition`/`example` + `ontosage:layTerms` +
+`ontosage:competencyQuestion` into the indexed `documentText`. So a plain-English question —
+*"the toilet is leaking, who do I tell"* — matches `ontosage:MaintenanceIssue`, and the retriever's
+bounded-context step then hands that term's `ontosage:exampleSparql` to the LLM as a copy-adaptable
+query template. (Verified live: that query retrieves `ontosage:MaintenanceIssue` with its example
+SPARQL in context.)
+
+## 6.11 Sensor persistence, auto-reindex & building identity (2026-07-16/17)
+
+- **Sensors persist TTL-first.** Registering a DB's sensors (`db_ontology.register_points/ttl`) now
+  writes `input/db_<key>_sensors.ttl` (source of truth) via `input_ttl_store.persist_ttl_file` and
+  syncs its named graph — they survive a restart/volume reset (`ttl_uploader` reloads the file) and are
+  reindexed. Re-registering **upserts** (per-subject replace, so no duplicate triples / external-ref
+  nodes). Removing a connection trashes the file so the removal persists.
+- **Automatic, self-healing semantic reindex.** `services/similarity_reindex.py::SimilarityRebuildDebouncer`
+  is the single similarity-rebuild gateway: a burst of registrations collapses into one rebuild, and it
+  re-runs once if triples arrive mid-rebuild. Rebuild = **delete + create** (`ensure_similarity_index`
+  via `POST /rest/similarity`, the correct GraphDB 10.x path) — the in-place SPARQL `rebuildIndex`
+  trigger hangs the index on 10.7.4, whereas delete+create rebuilds the Lucene text index in ~10s and
+  **self-creates on a fresh volume**. Register / TTL-upload / startup all route through it.
+  `GET /api/v1/admin/reindex/similarity-status` (+ a console banner) reports `state`/`ready`/live
+  GraphDB status so an admin knows when new data is searchable.
+- **Building identity in the GUI.** `GET`/`PUT /api/v1/admin/building/config` read/write
+  `ontology_namespace` + `ontology_prefix` + `building_name` into `input/building.yaml` (validated;
+  comment-preserving line edit; `config.py` reads `ontology_prefix` → `BUILDING_PREFIX` at boot). The
+  per-building onboarding prerequisite, settable without hand-editing — applies after a restart.
+- **Building-agnostic retrieval (CAVEAT-044 fix).** `rag-service/graphdbRAG/graphdb_retriever.py` and
+  the SPARQL-agent prompts now build the `bldg:` prefix from `settings.BUILDING_PREFIX` +
+  `settings.BUILDING_NAMESPACE` instead of a hardcoded abacws literal — IRI shortening and generated
+  `PREFIX` declarations are correct for any building.
+- **Build provenance.** The orchestrator + rag Dockerfiles bake `ARG GIT_SHA`/`BUILD_TIME` →
+  `ENV BUILD_SHA`/`BUILD_TIME`; both `/health` responses report `build.{sha,time}`. Build with
+  `GIT_SHA=$(git rev-parse --short HEAD) BUILD_TIME=$(date -u +%FT%TZ) docker compose build`. NB use
+  `docker compose up -d <svc>` (recreate) — not `restart` — to run a freshly-built image.
+
+> **Console note.** The running admin console is the **config-panel at `http://localhost:3001`**
+> (localhost-only nginx, proxying `/api`+`/auth` to the orchestrator). The React admin portal under
+> `frontend/src/` is a dev alternative whose Docker service is off by default — earlier references to a
+> `http://localhost:3000/admin` React tab describe that non-default component; use the config-panel.
+
+---
+
 ## 7. Phase 11-22 + V3 + P0 changelog
 
 This section captures every architectural change since v1.0. See `CLAUDE.md` for the operational quick-reference.
+
+### OCBV + schema-driven console (2026-07-16/17) — see §6.10, §6.11
+
+| Change | Detail |
+|---|---|
+| **OCBV 2.0 vocabulary** | `input/ontosage_schema.ttl` consolidated + expanded: HBCO folded in; new stakeholder-role, question-intent, report-intake, answer-provenance modules; competency questions + example SPARQL; Brick/REC/BOT/SOSA alignment; SHACL shapes. `ontology/hbco_core.ttl` reduced to a stub |
+| **Schema-driven authoring** | `capability_admin.get_capability_classes()` + `get_capability_form_schema()` — the console's capability **Type dropdown and form fields** are derived from the OCBV subclasses + datatype-property domains |
+| **Schema RAG indexing** | `_SIM_DATA_QUERY` enriches `documentText` with comment/definition/example/lay-terms/competency-question → OCBV terms + their example SPARQL become retrievable for the LLM |
+| **Sensors persist TTL-first + upsert** | `db_ontology` → `input/db_<key>_sensors.ttl` + graph sync; re-register replaces (no dup ref nodes); connection removal trashes the file |
+| **Debounced, self-healing reindex** | `services/similarity_reindex.py` (single gateway) + `ensure_similarity_index` (delete+create via `POST /rest/similarity`); `GET /reindex/similarity-status` + console banner |
+| **Building-identity GUI** | `GET`/`PUT /api/v1/admin/building/config` write `ontology_namespace`/`ontology_prefix` to `building.yaml`; `config.py` reads `ontology_prefix` |
+| **Building-agnostic retrieval** | `graphdb_retriever` + SPARQL-agent prompts resolve the `bldg:` namespace from settings (CAVEAT-044) |
+| **Build provenance** | `GIT_SHA`/`BUILD_TIME` baked into images; `/health.build.{sha,time}` on orchestrator + rag |
+| **Reindex gateway fix** | `_get_reindex_service` reads `app.state.doc_indexer` + refreshes indexers each call (CAVEAT-042) |
 
 ### P0 — Security Hardening (2026-07-07, branch `security/p0-hardening`)
 
@@ -967,6 +1171,23 @@ This section captures every architectural change since v1.0. See `CLAUDE.md` for
 | P0-N | `STRICT_SECRETS` validator refuses orchestrator startup when any password equals its default |
 
 **P0 test count:** 416 deterministic tests pass (vs. 251 pre-V3 / 121 V3 unit suite). 13 new admin endpoint tests added.
+
+### P0 — Security Hardening, round 2 (2026-07-09)
+
+Findings from a full auth/RBAC/session/adapter audit (`tasks/PRODUCTION_READINESS_AUDIT.md`).
+
+| Sub | Change |
+|---|---|
+| P0-O | `auth_manager.register_user` default role `readonly` → `occupant` — `readonly` lacked `sensor:read` so a freshly self-registered user got 403 on `POST /chat` |
+| P0-P | `/api/files/{filename}` now requires `export:read` via `require_permission()` — was resolving `get_current_user` but never checking it, so any unauthenticated caller could download export files |
+| P0-Q | Per-account login lockout (`AuthManager._check_login_lockout` / `_register_failed_login`, Redis-backed) after `LOGIN_MAX_ATTEMPTS` (default 5) failures, `LOGIN_LOCKOUT_SECONDS` (default 900) window — independent of the global per-IP `RateLimitMiddleware`, which can't stop one username being brute-forced from many IPs |
+| P0-R | `RateLimitMiddleware` — honors `X-Forwarded-For` only from `TRUSTED_PROXY_CIDRS` (was always keying on the direct TCP peer, so every client behind one proxy shared a bucket); counts via Redis `INCR`/`EXPIRE` when connected so the limit holds across replicas, falls back to the original in-process deque otherwise |
+| P0-S | `AuthManager.delete_user` — replaced a blocking `KEYS conversation:*` + per-key `GET`/`json.loads` scan with the existing `user:{id}:conversations` tracked index plus a targeted `SCAN` on the `:{username}` suffix convention; also fixed a live `AttributeError` (`token.decode()` on an already-`str` session token). The admin `DELETE /api/v1/admin/users/{username}` endpoint now calls `auth_manager.delete_user()` instead of `postgres_manager.delete_user()` directly, so a deleted user's Redis sessions are revoked immediately instead of staying valid for up to 7 days |
+| P0-T | Password minimum length 6 → 12 (`auth_manager.register_user`, `RegisterRequest`, `UserCreate`) |
+| P0-U | `middleware/rbac.py` trimmed to `UserContext` + `ROLE_PERMISSIONS` only — deleted the unwired `SimpleJWT` / `TokenManager` / `UserStore` / `RBACMiddleware` / `create_rbac_dependency` stack (query-param auth instead of header, bare `Exception` → HTTP 500, unsalted SHA-256); its dedicated activation tests in `test_phase_b_activations.py` removed with it |
+| P0-V | `tests/test_auth_manager.py` — 7 new unit tests locking in P0-O/Q/S; `test_phase_cde_improvements.py`'s rate-limit test fixed to use a non-exempt route (it had been asserting against `/ping`, which `RateLimitMiddleware._EXEMPT_PATHS` deliberately excludes, so the 429 branch was never exercised) |
+
+**P0 round 2 test count:** 423 deterministic tests pass, 2 skipped (`pytest -m unit -q`), measured 2026-07-09. This round added 7 (`test_auth_manager.py`) and removed 5 (the deleted RBAC stack's activation tests in `test_phase_b_activations.py`); the gap versus round 1's stated 416 baseline wasn't independently reconciled beyond that ±2 net.
 
 ### Phase 11 — Multi-tenant intent + SPARQL bctx + `input/_defaults/`
 
@@ -1130,11 +1351,14 @@ Driven by 5,604-question corpus analysis. 37 implementation turns (T01–T37).
 | `CONVERSATION_TTL` | `0` | Phase 21 — Redis state TTL in seconds; `0` = no expiry (count-bounded) |
 | `CONVERSATION_MAX_MESSAGES` | `20` | Phase 21 — max messages kept in the Redis blob |
 | `REPORT_INTAKE_ENABLED` | `true` | Phase 19 — user-report intake |
-| `STRICT_SECRETS` | `false` | Phase 21 — refuse boot if any password is still the default |
+| `STRICT_SECRETS` | `true` | Phase 21 — refuse boot if any password is still the default; set `false` only for local dev |
 | `TTL_VALIDATION_SHACL` | `false` | Phase 12B — needs brickschema |
 | `GOAL_PLANNER_ENABLED` | `false` | V3 — goal/mandate decomposition (T26-27) |
 | `MULTI_INTENT_ENABLED` | `true` | Phase 14 — compound-query decomposition |
 | `FEED_POLL_INTERVAL` | `60` | V3 — seconds between rest_poll feed polls |
+| `TRUSTED_PROXY_CIDRS` | `""` | P0 — CIDRs of reverse proxies trusted to set `X-Forwarded-For` for per-IP rate limiting; empty = trust only the direct TCP peer |
+| `LOGIN_MAX_ATTEMPTS` | `5` | P0 — failed logins allowed for one username before a temporary lockout |
+| `LOGIN_LOCKOUT_SECONDS` | `900` | P0 — lockout duration after `LOGIN_MAX_ATTEMPTS` failures |
 
 ### 8.2 `input/<bldg>/building.yaml` (per-building)
 
@@ -1248,7 +1472,7 @@ Markdown, PDF, or TXT files indexed into Qdrant collection `documents_<bldg>`. R
 
 ### 9.1 Deterministic suite (CI — Phase 16C, expanded through P0)
 
-**Current suite (P0 hardening): 416 pass, 0 fail** on Python 3.10/3.11/3.12 matrix.
+**Current suite (P0 hardening round 2): 423 pass, 2 skip, 0 fail** on Python 3.10/3.11/3.12 matrix.
 
 | File | Tests | Coverage |
 |---|---|---|
@@ -1259,6 +1483,7 @@ Markdown, PDF, or TXT files indexed into Qdrant collection `documents_<bldg>`. R
 | `test_routing_accuracy.py` | 29 | All 20+ intents + 5 override scenarios + 4 audit invariants |
 | `test_intent_graph_autowire.py` | 5 | Every `node_method` resolves; every registry node in graph |
 | `test_unregistered_intent_safety_net.py` | 3 | YAML-added intent with no node → safe fallback |
+| `test_auth_manager.py` | 7 | P0 round 2 — default registration role, per-account login lockout, delete_user Redis cleanup |
 | `test_multi_tenant_fixture.py` | 5 | bldg2 fixture exercises per-building infra |
 | `test_blended_persona.py` | 14 | Persona blending semantics |
 | `test_compound_query_e2e.py` | 17 | Multi-intent heuristic + decomposition (incl. Phase 16A short-compound) |
@@ -1403,7 +1628,7 @@ docker exec postgres-user-data psql -U ontobot -d ontobot \
 ### Run the deterministic test suite
 
 ```bash
-pytest tests/ -m unit -q                        # fast offline suite — 416 tests ~20s
+pytest tests/ -m unit -q                        # fast offline suite — 511 tests (2 skip) ~1.5 min
 pytest tests/test_routing_accuracy.py -v        # 29 canonical routing cases
 pytest tests/test_admin_ontology_endpoints.py   # 13 P0 admin endpoint tests
 ```

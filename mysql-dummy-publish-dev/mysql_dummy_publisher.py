@@ -136,6 +136,57 @@ def publish_narrow(conn, verbose=False) -> int:
     return written
 
 
+# ── Extended narrow tables (bulk) ───────────────────────────────────────────
+# Sensors that don't fit database1's column-capped wide table live in companion
+# narrow tables (sensor_data_floors04 = 522 real floor 0-4 sensors,
+# sensor_data_synth = 106 synthetic). Values are typed per Brick class in the
+# manifest (lo/hi/dec), so a temperature reads 18-28, not 0-100.
+EXTENDED_SENSORS: List[Dict[str, object]] = []  # [{uuid, table, lo, hi, dec}]
+
+
+def load_extended_sensors(filepath="/app/input/bldg1_extended_narrow_uuids.json"):
+    global EXTENDED_SENSORS
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        EXTENDED_SENSORS = [
+            {
+                "uuid": e["uuid"],
+                "table": e["table"],
+                "lo": float(e.get("lo", 0)),
+                "hi": float(e.get("hi", 100)),
+                "dec": int(e.get("dec", 2)),
+            }
+            for e in data.values()
+        ]
+        print(f"[py-dummy] Loaded {len(EXTENDED_SENSORS)} extended narrow sensors from {filepath}")
+    except Exception as e:
+        print(f"[py-dummy] Extended sensors not loaded ({filepath}): {e}")
+
+
+def publish_extended(conn, verbose=False) -> int:
+    """Insert one fresh (uuid, NOW(), value) row per extended sensor into its narrow table."""
+    if not EXTENDED_SENSORS:
+        return 0
+    written = 0
+    with conn.cursor() as cur:
+        for s in EXTENDED_SENSORS:
+            try:
+                lo, hi, dec = s["lo"], s["hi"], s["dec"]
+                val = rand_int(int(lo), int(hi)) if dec == 0 else rand_float(lo, hi, dec)
+                cur.execute(
+                    f"INSERT INTO `{s['table']}` (`uuid`, `datetime`, `value`) "
+                    f"VALUES (%s, NOW(), %s) "
+                    f"ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)",
+                    (s["uuid"], val),
+                )
+                written += 1
+            except Exception as e:
+                if verbose:
+                    print(f"[py-dummy] extended insert {s['table']} failed: {e}", flush=True)
+    return written
+
+
 def get_realistic_value(sensor_name, uuid, enum_opts=None):
     """Generate realistic value based on sensor name and schema type."""
     name = sensor_name.lower()
@@ -478,6 +529,7 @@ def main() -> int:
     load_sensor_map()
     load_schema_map()
     load_narrow_sensors()
+    load_extended_sensors()
 
     try:
         ts_col, cols = load_columns(conn, cfg)
@@ -513,6 +565,8 @@ def main() -> int:
 
                 # Live-publish the narrow per-modality tables alongside the wide table.
                 publish_narrow(conn, verbose=verbose)
+                # Live-publish the extended narrow tables (floors 0-4 + synthetic sensors).
+                publish_extended(conn, verbose=verbose)
 
                 # Print debug sample every 5 minutes
                 print_debug_sample(cols)

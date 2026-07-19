@@ -8,7 +8,7 @@
 [![Brick Schema](https://img.shields.io/badge/Brick_Schema-1.3-orange.svg)](https://brickschema.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml/badge.svg)](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-416%20passing-brightgreen.svg)](#tests)
+[![Tests](https://img.shields.io/badge/tests-511%20passing-brightgreen.svg)](#tests)
 
 ---
 
@@ -29,10 +29,46 @@ Ask a follow-up — *"and what about humidity there?"* — and it remembers you 
 ```
 Corpus replay (240 stratified questions):   63.8% pass  (vs 16.2% baseline before V3)
 Live survey (95 questions, Phase 18):       94/95 PASS  ·  1 WARN  ·  0 FAIL  (99%)
-Deterministic unit suite:                   416 tests pass / 0 fail (Python 3.10/3.11/3.12)
+Deterministic unit suite:                   511 tests pass / 0 fail, 2 skipped (Python 3.10/3.11/3.12)
 ```
 
 Validates against the 5,604-question survey in `paper/Survey analysis and results/` — corroborates paper §6.5.
+
+---
+
+## Design principles
+
+OntoSage is **an agentic conversational layer over one smart building's own data** — *connect a
+building's data, then ask it anything in plain English.* Everything below is a deliberate design
+commitment, not an accident of implementation:
+
+1. **One building at a time.** A deployment serves a single active building; the multi-building
+   machinery (per-building registries, Qdrant collections, persona overlays) is in place as forward
+   compatibility, not a live multi-tenant mode.
+2. **TTL-first — the ontology is the source of truth.** If a fact can be an RDF triple, it lives in
+   the Brick/BACnet ontology, not a sidecar file or a code constant. Questions are answered via SPARQL
+   first; SQL, analytics, and the knowledge base handle only live time-series and things RDF can't express.
+3. **No hardcoding — building-agnostic core.** Core code carries no building-specific literals
+   (namespaces, zone ids, sensor counts, areas). Every figure in an answer is computed live from the
+   graph or the floor plans, so it can never drift stale — and the same code runs unchanged for any building.
+4. **Honest, grounded answers — never fabricate.** Every number traces to live data. If a referent
+   doesn't exist or the data isn't loaded, OntoSage says so plainly instead of inventing a plausible value.
+5. **Any stakeholder, any purpose.** One interface serves facility managers, occupants, researchers,
+   sustainability and safety officers, executives, visitors, students, and admins. Personas shape how an
+   answer is framed; they don't gate access.
+6. **Zero-knowledge to expert.** No SQL, SPARQL, or schema knowledge is required — lay terms resolve to
+   the right sensors — yet experts still get Brick classes, RDF types, and a live SPARQL browser.
+7. **Admin-controlled access (RBAC).** Every data and configuration endpoint is permission-gated;
+   ontology management is admin-only. Roles are separate from personas.
+8. **Connect data, get answers.** A question becomes answerable when the sensor is described in the
+   ontology *and* its readings are in a registered database. Onboarding a source is drop-in: add the
+   triples, register the database, load the rows — no code.
+9. **Multiple datasources, pluggable.** Time-series is routed by an ontology reference to the right
+   backend (MySQL today; Postgres/Timescale/InfluxDB ready). A new backend is a new adapter, nothing more.
+10. **Local or API models, independently.** Language and embedding models are each switchable between
+    OpenAI and local Ollama, so you can run fully offline for privacy or on the API for capability.
+11. **`docker-compose up -d` is all you need.** The entire stack boots with one command; all
+    configuration lives in `.env` and the `input/` folder.
 
 ---
 
@@ -204,13 +240,23 @@ curl -X POST http://localhost:8000/chat \
 ### 4. Open the web interfaces
 
 - **Chat UI**: `http://localhost:3000` (OpenWebUI — full conversation, multi-turn)
-- **Admin Portal**: `http://localhost:3000/admin` (ontology management, reindex, health — requires admin role)
+- **Admin Console**: `http://localhost:3001` (config-panel — building identity, capabilities, sensors, ontology, reindex, health; requires admin role)
 - **GraphDB SPARQL**: `http://localhost:7200`
 - **Qdrant dashboard**: `http://localhost:6333/dashboard`
 
 ---
 
 ## Adding data to your building
+
+> **No-code path (recommended):** you never have to write code — only add **data** and
+> **triples** through the admin console (`http://localhost:3001`). The whole flow is:
+> **(1)** *Databases* tab → **+ Add connection** (your DB, hosted anywhere) → **(2)** that
+> datasource → **Register sensors** (a guided form with Brick-class / location / UUID
+> suggestions, or bulk **CSV**/**TTL**) — this writes the Brick + `ref:storedAt` triples that
+> say *"I have this sensor, at this location, and its data is in this datasource"* →
+> **(3)** ask questions and get grounded answers, forever. New backend = new registry entry,
+> not code. Full walkthrough: **[ONTOSAGE.md §6.9](ONTOSAGE.md)**. The file-based steps below
+> are the equivalent if you prefer editing TTL by hand.
 
 ### Step 1 — Add Brick triples (metadata, sensors, spaces)
 
@@ -331,7 +377,9 @@ All per-building files live in `input/`. The active building's files sit directl
 input/
 ├── building.yaml           # REQUIRED — building_id, ontology_namespace, storage.databases
 ├── database_registry.yaml  # REQUIRED — connection templates for all data stores
-├── bldg1_*.ttl             # REQUIRED — Brick Schema ontology files; auto-uploaded at startup
+├── *.ttl                   # REQUIRED — Brick Schema ontology files; auto-uploaded at startup
+├── ontosage_schema.ttl     # The OCBV vocabulary — the "talk to the building" layer over Brick
+├── db_<key>_sensors.ttl    # Auto-written when you register a DB's sensors in the admin console
 ├── *.dwg, *.pdf            # Optional — floor plans (DWG for geometry, PDF for display)
 ├── capability.yaml         # Optional — off-ontology KB (lifts, prayer room, contacts)
 ├── intents.yaml            # Optional — per-building intent overlay
@@ -351,8 +399,8 @@ input/
 ```yaml
 building_id: bldg1
 building_name: Abacws Building
-ontology_namespace: "http://abacwsbuilding.cardiff.ac.uk/abacws#"
-building_prefix: bldg
+ontology_namespace: "http://abacwsbuilding.cardiff.ac.uk/abacws#"   # the URI the bldg: prefix binds to
+ontology_prefix: bldg                                               # SPARQL prefix label
 storage:
   databases:
     - database1       # the main MySQL adapter for original sensor_data table
@@ -360,41 +408,98 @@ storage:
     - occupancy_narrow
 ```
 
+> **`ontology_namespace` is the key per-building setting** — the `bldg:` prefix in every TTL is only a
+> label; the *namespace* it binds to is what makes triples belong to *this* building. Set it before
+> loading triples, and make sure every TTL's `@prefix bldg:` matches it (the startup validator hard-fails
+> on a mismatch). You can set/view it in the admin console (**Ontology → Building identity**) instead of
+> editing the file. It's read at boot, so a change applies after an orchestrator restart.
+
+---
+
+## Talking to the building — the OCBV vocabulary
+
+Brick describes a building's *technical fabric* (points, sensors, equipment, locations) for machines.
+It does **not** model what a human actually asks — *"where's the prayer room?", "is it stuffy on floor
+5?", "the toilet is leaking, who do I tell?"*. The **OntoSage Conversational Building Vocabulary
+(OCBV)** — `input/ontosage_schema.ttl`, CC-BY-4.0 — adds exactly that layer, and is what makes a
+building *talkable-to*.
+
+It **extends Brick without contradicting it** (own `ontosage:`/`hbco:` namespaces; references Brick
+classes as ranges; aligns to Brick/REC/BOT/SOSA with SKOS mappings only). Loading it alongside a Brick
+model adds conversational triples and invalidates nothing. Modules:
+
+| Module | What it models |
+|---|---|
+| **Capabilities** | Amenities (prayer room, café, lift…) + knowledge topics (info / how-to / maintenance route) |
+| **Conversation concepts** (HBCO) | Lay word → Brick sensor ("stuffy" → CO₂), so plain language resolves to live data |
+| **Stakeholder roles** | Who is asking (occupant, FM, researcher…) — frames the answer, **not** RBAC |
+| **Question-intent grammar** | The *kinds* of question (locate, quantify, trend, compare, anomaly, forecast, report) |
+| **Report intake + provenance** | Fault/complaint/safety/feedback records, and how an answer is grounded (SPARQL/DB/floor-plan) |
+| **Competency questions + example SPARQL** | Per-class annotations — for both the paper and LLM-assisted query generation |
+
+**The schema is the single source of truth for authoring *and* answering:**
+
+- **It drives the authoring UI.** The admin console's "Add capability" **Type** dropdown *and* its form
+  fields are generated live from the OCBV classes and datatype-property domains — add a class or
+  property to `ontosage_schema.ttl` and it appears in the form, no code change.
+- **It feeds the RAG/LLM.** The schema's natural-language text (comments, definitions, examples,
+  lay-terms, competency questions) is indexed into the semantic index, so a plain-English question
+  matches the right OCBV term — and the retriever then hands the term's **example SPARQL** to the LLM
+  as a copy-adaptable template.
+
+Stakeholders add instances via the guided form (or by dropping a `<bldg>_capabilities.ttl` file); no
+Turtle required. Full technical detail: [ONTOSAGE.md § 6.10](./ONTOSAGE.md).
+
 ---
 
 ## Admin Portal
 
-The Admin Portal is a tab in the React frontend at **`http://localhost:3000/admin`**, backed by 8 FastAPI endpoints under `/api/v1/admin/`. All require `system:admin` role.
+The running admin console is the **config-panel at `http://localhost:3001`** (localhost-only, served
+by nginx and proxying `/api` + `/auth` to the orchestrator over the internal network). All admin
+actions call FastAPI endpoints under `/api/v1/admin/` and require the `system:admin` role. *(A React
+admin portal also exists under `frontend/src/` for development, but its Docker service is off by
+default — the config-panel is the console to use.)*
 
-### Ontology Management
-
-| Action | What it does |
-|---|---|
-| **Browse graphs** | List all named graphs in GraphDB with triple counts |
-| **Validate TTL** | Parse Turtle text with rdflib; reports triple count or parse error |
-| **Upload TTL** | POST valid Turtle into a named graph — live, no restart needed |
-| **Drop graph** | Remove a named graph and all its triples from GraphDB |
-| **SPARQL Browser** | Run SELECT queries against the live ontology |
-
-### Knowledge Base Reindexing
+### Ontology & schema
 
 | Action | What it does |
 |---|---|
-| **Trigger reindex** | Queues a background job to re-embed `capability`, `documents`, or `floor_plans` into Qdrant |
-| **List jobs** | See all reindex jobs with status (`pending`, `running`, `done`, `error`) |
-| **Job status** | Poll individual job by ID |
+| **Building identity** | View/edit `ontology_namespace` + prefix + name (written to `building.yaml`); restart to apply |
+| **Add capability** | Guided form whose **Type dropdown + fields are generated from the OCBV schema**; writes a dual-typed instance to `input/<bldg>_capabilities.ttl` |
+| **Browse / drop graphs** | List named graphs with triple counts; drop a graph (file-backed graphs are trashed so the drop survives a restart) |
+| **Validate / Upload TTL** | Parse Turtle (rdflib); upload into a named graph — a `urn:ontosage:ttl:<file>` graph also persists to `input/<file>` so it survives a restart |
+| **SPARQL browser** | Run read-only SELECT/ASK against the live ontology |
 
-### Backend endpoints
+### Databases & sensors
+
+| Action | What it does |
+|---|---|
+| **Register sensors** | Points form / CSV / TTL → **written TTL-first to `input/db_<key>_sensors.ttl`** (source of truth) and synced to GraphDB, so they survive a restart and get reindexed. Re-registering upserts (no duplicates). |
+| **Test / introspect** | Probe an external DB connection and list its tables/columns |
+
+### Indexing
+
+| Action | What it does |
+|---|---|
+| **Semantic index (auto)** | Adding sensors or uploading TTL automatically triggers a **debounced** rebuild of the GraphDB similarity index (it self-heals/creates on a fresh volume). |
+| **Semantic-index status** | The console shows *rebuilding → up-to-date* so you know when new data is searchable; a **Rebuild now** button forces it. |
+| **KB reindex (Qdrant)** | Background job to re-embed `capability` / `documents` / `floor_plans` into Qdrant. |
+
+### Backend endpoints (selected)
 
 ```
+GET  /api/v1/admin/building/config              — read ontology namespace/prefix/name
+PUT  /api/v1/admin/building/config              — write them to building.yaml (restart to apply)
+GET  /api/v1/admin/capabilities                 — list capabilities + schema-derived types & form fields
+POST /api/v1/admin/capabilities                 — create a capability (guided, schema-validated)
+POST /api/v1/admin/databases/{key}/sensors[/csv|/ttl]  — register sensors (persist to input/ + reindex)
 GET  /api/v1/admin/ontology/graphs              — list named graphs
-POST /api/v1/admin/ontology/validate            — validate TTL text
-POST /api/v1/admin/ontology/upload              — upload TTL to GraphDB
+POST /api/v1/admin/ontology/validate|upload     — validate / upload TTL (file graphs persist to input/)
 DEL  /api/v1/admin/ontology/graphs/{id}         — drop a named graph
-POST /api/v1/admin/ontology/sparql              — run a SELECT query
-POST /api/v1/admin/reindex                      — trigger reindex job
-GET  /api/v1/admin/reindex                      — list all jobs
-GET  /api/v1/admin/reindex/{job_id}             — get job status
+POST /api/v1/admin/ontology/sparql              — run a SELECT/ASK query
+POST /api/v1/admin/reindex                      — trigger reindex (capability|documents|floor_plans|ontology_similarity)
+GET  /api/v1/admin/reindex/similarity-status    — semantic-index state (rebuilding | ready)
+GET  /api/v1/admin/reindex[/{job_id}]           — list / poll Qdrant reindex jobs
 ```
 
 ### Admin bootstrap
@@ -447,7 +552,7 @@ SECRET_KEY=<random-64-char> # JWT signing key
 
 ## Tests
 
-**416 deterministic tests** across 17 files, run in CI on Python 3.10/3.11/3.12:
+**511 deterministic tests** (2 skipped — optional `pmdarima` dep), run in CI on Python 3.10/3.11/3.12:
 
 ```bash
 pytest tests/ -m unit -q                       # fast offline suite (~20s)
@@ -470,6 +575,7 @@ Key test files:
 | `test_admin_ontology_endpoints.py` | 13 | Admin portal endpoints, auth enforcement |
 | `test_intent_graph_autowire.py` | 5 | Every `node_method` resolves + is registered |
 | `test_ttl_validator.py` | 10 | TTL parse, prefix/namespace, SHACL gating |
+| `test_auth_manager.py` | 7 | Default registration role, per-account login lockout, `delete_user` Redis cleanup |
 
 **Live tests (needs running stack):**
 ```bash
@@ -482,6 +588,19 @@ python scripts/ontosage_qa_suite.py --quick    # persona × intent QA battery
 
 ## What's new
 
+### Conversational vocabulary + schema-driven console (2026-07-17)
+
+| Change | Detail |
+|---|---|
+| **OCBV 2.0 schema** | `input/ontosage_schema.ttl` — the single, publication-ready (CC-BY-4.0) *Conversational Building Vocabulary* over Brick: capabilities, HBCO conversation concepts (folded in), stakeholder roles, question-intent grammar, report-intake, answer-provenance, competency questions + example SPARQL, Brick/REC/BOT/SOSA alignment, SHACL shapes |
+| **Schema-driven authoring** | The "Add capability" Type dropdown **and** form fields are generated live from the OCBV classes + datatype-property domains (`/api/v1/admin/capabilities` → `types`/`form_fields`), falling back to a built-in list if GraphDB is down |
+| **Schema indexed for RAG** | The similarity index's `documentText` now includes each term's comment/definition/example/lay-terms/competency-question, so a plain-English question matches the right OCBV term and the retriever hands its example SPARQL to the LLM |
+| **Sensors persist TTL-first** | GUI-registered sensors are written to `input/db_<key>_sensors.ttl` (source of truth) and synced to GraphDB — they survive a restart/volume reset. Re-registering upserts (no duplicate triples) |
+| **Automatic semantic reindex** | Adding sensors / uploading TTL / startup triggers a **debounced** similarity-index rebuild that **self-creates** on a fresh volume (delete+create; the in-place trigger hangs on GraphDB 10.7.4). A `similarity-status` endpoint + console banner show when new data is searchable |
+| **Building-identity GUI** | Set/view `ontology_namespace` + prefix in the console (written to `building.yaml`) instead of hand-editing — the per-building onboarding prerequisite |
+| **Building-agnostic retrieval fix** | `graphdb_retriever` + the SPARQL-agent prompts now resolve the `bldg:` namespace from `settings.BUILDING_NAMESPACE`/`BUILDING_PREFIX` (was a hardcoded abacws literal) — semantic retrieval now works for any building |
+| **Build provenance** | Each built image bakes `GIT_SHA`/`BUILD_TIME`; `/health` reports `build.sha`/`build.time` so an operator knows exactly which commit is running |
+
 ### P0 — Security Hardening (current branch: `security/p0-hardening`)
 
 | Change | Detail |
@@ -493,6 +612,13 @@ python scripts/ontosage_qa_suite.py --quick    # persona × intent QA battery
 | **mysql_narrow adapter** | `MySQLNarrowAdapter` scopes to one table, builds `WHERE uuid IN (...)` queries |
 | **TTL extensions** | `bldg1_timeseries_extension.ttl` (19 sensors, 7 modalities) + `bldg1_security_lighting_extension.ttl` (lighting systems, CCTV, alarm zones across 6 floors) |
 | **STRICT_SECRETS** | `STRICT_SECRETS=true` refuses orchestrator startup when any password still equals its default value |
+| **Self-registration default role** | `/auth/register` grants `occupant` (was `readonly`, which couldn't call `/chat`) |
+| **Export download auth** | `/api/files/{filename}` now requires `export:read` (was unauthenticated) |
+| **Per-account login lockout** | `LOGIN_MAX_ATTEMPTS` failed logins locks a username for `LOGIN_LOCKOUT_SECONDS`, independent of the per-IP rate limiter |
+| **Proxy-aware, replica-safe rate limiting** | `RateLimitMiddleware` only trusts `X-Forwarded-For` from `TRUSTED_PROXY_CIDRS`; counts via Redis when connected (falls back to in-process otherwise) |
+| **delete_user Redis cleanup** | Uses the tracked per-user conversation index + a targeted `SCAN` instead of a blocking `KEYS conversation:*` scan; the admin delete-user endpoint now revokes sessions too (previously left them valid up to 7 days) |
+| **Password minimum length** | Raised from 6 to 12 characters |
+| **Legacy RBAC stack removed** | `middleware/rbac.py` now exports only `UserContext` + `ROLE_PERMISSIONS`; the unwired, defective JWT/in-memory stack (`TokenManager`, `RBACMiddleware`, `UserStore`, `create_rbac_dependency`) is gone |
 
 ### V3 — Corpus-Driven Capability Completion (2026-06-11)
 

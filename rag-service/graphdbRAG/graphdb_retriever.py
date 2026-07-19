@@ -43,10 +43,13 @@ class GraphDBRetriever:
         self.sparql_endpoint = f"{self.graphdb_url}/repositories/{self.repository}"
         self.update_endpoint = f"{self.graphdb_url}/repositories/{self.repository}/statements"
         
-        # Standard prefixes used in the ontology
+        # Standard prefixes used in the ontology. The building prefix (label + namespace) is
+        # resolved from settings — driven by the active building's building.yaml (ontology_prefix /
+        # ontology_namespace) — so IRI shortening and generated PREFIX declarations are correct for
+        # ANY building, not just abacws. (Contract #3: no building literals in runtime code.)
         self.prefixes = {
             'brick': 'https://brickschema.org/schema/Brick#',
-            'bldg': 'http://abacwsbuilding.cardiff.ac.uk/abacws#',
+            (settings.BUILDING_PREFIX or 'bldg'): settings.BUILDING_NAMESPACE,
             'rec': 'https://w3id.org/rec#',
             'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',

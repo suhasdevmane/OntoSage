@@ -3,6 +3,7 @@ RAG Service - Main FastAPI Application
 Handles embeddings and retrieval for OntoSage 2.0
 Uses GraphDB for vector similarity and graph traversal.
 """
+import os
 import sys
 sys.path.append("/app")
 
@@ -75,6 +76,11 @@ async def health_check():
             "service": "rag-service",
             "version": "2.0.0",
             "backend": "graphdb",
+            # Build provenance — which commit/time this image was built from (baked as ENV at build).
+            "build": {
+                "sha": os.environ.get("BUILD_SHA", "unknown"),
+                "time": os.environ.get("BUILD_TIME", "unknown"),
+            },
             "details": {
                 "graphdb_url": settings.GRAPHDB_URL,
                 "repository": settings.GRAPHDB_REPOSITORY

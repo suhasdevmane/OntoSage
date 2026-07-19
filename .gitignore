@@ -333,6 +333,10 @@ survey_test_output*.txt
 .claude/scheduled_tasks.lock
 .claude/*.lock
 
+# Admin GUI <-> input/ TTL sync: cross-process write lock + reversible backups
+input/.ttl_write.lock
+input/.trash/
+
 # Per-run QA suite results (timestamped, local only)
 results/
 

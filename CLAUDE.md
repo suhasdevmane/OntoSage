@@ -14,28 +14,89 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 2. `README.md` — architecture overview, stakeholder guide, data setup
 3. `ONTOSAGE.md` — complete technical reference (source layout, all phases, config)
 
-**Current state snapshot (2026-07-07):**
-- Test suite: **416 tests passing** (`pytest -m unit -q`)
+**Current state snapshot (2026-07-09):**
+- Test suite: **423 tests passing, 2 skipped** (`pytest -m unit -q`; skips are missing optional `pmdarima` dep)
 - Corpus coverage: **63.8%** pass rate on 240-question stratified replay
 - Admin portal: `/admin` React tab + 8 FastAPI endpoints under `/api/v1/admin/` — **complete, not committed**
 - Narrow MySQL tables: 7 `(uuid, datetime, value)` tables + `MySQLNarrowAdapter` — **complete, not committed**
 - TTL extensions: `bldg1_timeseries_extension.ttl` (19 sensors) + `bldg1_security_lighting_extension.ttl` (293 triples) — **complete, not committed**
 - RBAC enforcement: `require_permission()` on all data endpoints — **complete, not committed**
 - `STRICT_SECRETS=true` boot guard — **complete, not committed**
+- P0 hardening round 2 (login lockout, proxy-aware rate limiting, `delete_user` Redis cleanup, `occupant` default role, 12-char passwords, dead RBAC stack removed) — **complete, not committed**; see `tasks/PRODUCTION_READINESS_AUDIT.md`
 - **Nothing committed** — all P0 work is staged/unstaged on `security/p0-hardening`; user reviews before any commit
 
 **To verify current state before starting work:**
 ```bash
-pytest -m unit -q                                  # should show 416 pass, 0 fail
+pytest -m unit -q                                  # should show 423 pass, 2 skip, 0 fail
 git status                                         # shows what's modified vs committed
 git diff --stat HEAD                               # shows scope of uncommitted changes
 docker-compose logs --tail=20 orchestrator         # live system health
 ```
 
 **Open issues / pending decisions:**
+- **Live fix/caveat log + backlog: [`tasks/FIX_TRACKER.csv`](./tasks/FIX_TRACKER.csv)** — read it at session start to see what's OPEN vs fixed; keep it updated (Workflow rule 7). FIX-001/002/003 done (verified live). **Next up: `TODO-010`** — unify capability routing to SPARQL-first (flag `CAPABILITIES_TTL_FIRST`); it unblocks removing `capability.yaml` (`TODO-012`). Design/why in [`tasks/GROUNDING_AND_HONESTY_FIXES_PLAN.md`](./tasks/GROUNDING_AND_HONESTY_FIXES_PLAN.md) + [`tasks/TTL_NATIVE_CAPABILITIES_PLAN.md`](./tasks/TTL_NATIVE_CAPABILITIES_PLAN.md). TODO-010→011→012 are sequenced; TODO-013/014 are independent.
 - P0 changes need user review and explicit commit approval before any `git commit` or `git push`
 - `data/mysql-init/init.sql` creates `abacws` DB (legacy); live system uses `sensordb` — mismatch is inert (MySQL container is disabled; host MySQL used directly)
-- Maintenance agent "report broken light" → generic fallback (only remaining live survey WARN)
+- Maintenance agent "report broken light" → generic fallback (tracked as KNOWN-008)
+
+---
+
+## Core design contract — what OntoSage IS (check every solution against this)
+
+OntoSage is an **agentic conversational layer over one smart building's own data** — *"connect a
+building's data, then ask it anything in plain English."* The points below are **non-negotiables**.
+When you propose or write a solution, verify it honors every one — a solution that violates any of
+these is wrong for this project even if it "works." Depth lives in `ONTOSAGE.md`.
+
+1. **One building at a time.** v1 serves a single active building (`BUILDING_ID`). Multi-building is
+   *forward-compat only* (registries keyed by `building_id`, per-building Qdrant collections + persona
+   overlays) — never assume multiple live buildings, and never break the single-building path.
+
+2. **TTL-first — the ontology is the source of truth.** If a fact can be an RDF triple, it belongs in
+   the Brick/BACnet TTL, not a sidecar YAML or a code constant. Answer via SPARQL on GraphDB first;
+   fall back to SQL / analytics / capability KB only for live time-series or computation RDF can't
+   express. To add a capability, **extend the TTL before adding code.** Depth: the *TTL-first design
+   principle* section below.
+
+3. **No hardcoding → building-agnostic.** Core code and `shared/` carry **zero** building literals
+   (namespaces, zone ids, sensor counts, areas, floor lists). Resolve everything from the active
+   building: `_active_namespace()` / `bctx`, `input/database_registry.yaml`, floor-plan manifests. Any
+   number in an answer is **computed live** (SPARQL `COUNT` / DWG geometry), never a frozen literal.
+   Litmus test: *would this run unchanged for `bldg2`?* If not, it's wrong.
+
+4. **Honest, grounded answers — never fabricate.** Every figure traces to live data (graph / DB / floor
+   plan). If a referent doesn't exist or the data isn't loaded, **say so** (referent-existence gate,
+   honest "no data") — never surface a plausible-but-wrong value. Grounding beats fluency.
+
+5. **Any stakeholder, any purpose.** One NL interface serves facility managers, occupants, researchers,
+   sustainability / safety officers, executives, visitors, students, admins. Personas bias
+   *classification + response framing* only (**not** permissions). Build intent-routed, persona-framed
+   features — never single-persona ones.
+
+6. **Zero-knowledge → expert coverage.** Users need no SQL / SPARQL / schema knowledge — lay terms
+   resolve via the HBCO concept resolver ("stuffy" → CO₂). The same system also serves experts (Brick
+   classes, RDF types, the admin SPARQL browser). A solution must span that range and degrade gracefully.
+
+7. **Admin-controlled access (RBAC).** Every data / config endpoint is gated by `require_permission()`;
+   ontology CRUD and reindex require `system:admin`. Personas ≠ RBAC roles. **Never** add an
+   unauthenticated data endpoint.
+
+8. **Connect-data → get-answers.** A question is answerable when (a) the sensor is a triple in GraphDB
+   **and** (b) its readings are rows in a registered DB, linked via `ref:hasTimeseriesId` +
+   `ref:storedAt`. Both halves are required. Onboarding a source = drop TTL + register the DB + load
+   rows — **no code change.**
+
+9. **Multiple datasources, pluggable.** Time-series routes by `ref:storedAt` → adapter registry → the
+   right backend (MySQL wide/narrow today; Postgres / Timescale / Influx templates ready). A new backend
+   is **a new adapter**, never edits to the agents.
+
+10. **Local or API models, independently.** `MODEL_PROVIDER` = `openai` / `local` (Ollama) / `cloud`;
+    `EMBEDDING_PROVIDER` is independent. Never hardcode a provider or model — go through `llm_manager`
+    + `shared/config.py`. Solutions must work under both local and API providers.
+
+11. **`docker-compose up -d` is all you need.** The whole stack boots with one command; config lives in
+    `.env` + `input/`. Don't add setup steps outside compose / `.env`, and don't assume host-installed
+    tools.
 
 ---
 
@@ -54,7 +115,7 @@ curl http://localhost:8000/health   # orchestrator (8001 rag, 8002 code-executor
 pytest tests/ -v                                       # all (live e2e need the stack up)
 pytest -m unit            # fast / offline      pytest -m integration   # needs services
 pytest tests/test_routing_accuracy.py -v               # single file
-# CI deterministic suite = 416 tests on 3.10/3.11/3.12 (see .github/workflows/ci.yml)
+# CI deterministic suite = 423 tests (2 skipped) on 3.10/3.11/3.12 (see .github/workflows/ci.yml)
 
 # Lint (run before commit)
 black --line-length 100 orchestrator/ shared/ scripts/ tests/
@@ -279,6 +340,13 @@ This principle is grounded in the pre-design survey corpus (6,117 questions, 96 
 4. **Verify before done**: run tests/QA, check logs, prove it. "Would a staff engineer approve?"
 5. **Elegance, balanced**: ask for the cleaner way on non-trivial changes; don't over-engineer simple fixes.
 6. **Autonomous bug-fixing**: given a bug/log/failing test, fix it directly.
+7. **Fix tracker — always keep current**: [`tasks/FIX_TRACKER.csv`](./tasks/FIX_TRACKER.csv) is the
+   living log of every bug/caveat/fix over time. **Whenever you fix a bug or resolve a caveat**,
+   update its row (`Status` → `FIXED`/`DEPLOYED`/`VERIFIED_LIVE`, fill `Date_Resolved` +
+   `Verification`). **Whenever you find a new bug/caveat**, add a row (next `FIX-`/`CAVEAT-` id,
+   `Status: OPEN`). Non-optional — it is the single source of truth for what has been fixed.
+   Design/why-notes for open items live in the matching plan (e.g.
+   [`tasks/GROUNDING_AND_HONESTY_FIXES_PLAN.md`](./tasks/GROUNDING_AND_HONESTY_FIXES_PLAN.md)).
 
 ---
 

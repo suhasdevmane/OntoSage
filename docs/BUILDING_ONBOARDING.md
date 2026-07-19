@@ -157,6 +157,31 @@ Step 6/6: Generating Config
   ✅ Config written to: config/bldg2_building_config.yaml
 ```
 
+> ### ⚑ Prerequisite: building identity (namespace + prefix)
+>
+> **The single most important per-building setting is the ontology namespace.** The `bldg:` prefix
+> you see in every TTL is only a *label*; the **namespace** it binds to (`ontology_namespace`) is
+> what makes triples belong to *this* building. It lives in `input/building.yaml`:
+>
+> ```yaml
+> building_id:        bldg2
+> building_name:      Science Tower
+> ontology_namespace: "http://example.com/bldg2#"   # must end with '#' or '/'
+> ontology_prefix:    bldg                           # the SPARQL prefix label (usually 'bldg')
+> ```
+>
+> Set this **before** loading any triples, and make sure every TTL's `@prefix bldg: <…>` matches
+> `ontology_namespace` exactly — the startup TTL validator **hard-fails the boot** on a mismatch, so
+> you can never get a silently-empty knowledge graph.
+>
+> **You do not have to hand-edit the file.** The **Admin Console** (config-panel at
+> `http://localhost:3001` → **Ontology** tab → **Building identity**) shows the current namespace,
+> prefix, and name and lets an admin edit them in the GUI — useful when you're standing up a new
+> building with an empty graph and want to set this prerequisite before adding triples. It writes
+> `input/building.yaml` and, like all boot-time config, **takes effect after an orchestrator
+> restart**. The same tab's **Semantic search index** panel shows when newly-added data has finished
+> indexing and is searchable.
+
 ### Non-Interactive Mode (CI/CD)
 
 For automated deployment pipelines:

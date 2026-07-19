@@ -22,6 +22,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY rag-service/graphdbRAG/ /app/
 
+# Build provenance — commit + build time, surfaced at /health so an operator can tell which code is
+# running. Declared late so changing them only re-runs the final layers. Defaults to "unknown".
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
+ENV BUILD_SHA=$GIT_SHA
+ENV BUILD_TIME=$BUILD_TIME
+
 # Create non-root user
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
