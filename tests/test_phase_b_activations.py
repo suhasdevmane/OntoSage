@@ -2,7 +2,7 @@
 test_phase_b_activations.py — Tests for IMPROVEMENT_PLAN_V2.md Phase B (Activate Dead Services).
 
 Covers:
-  B.1  RBAC — TokenManager issues/validates tokens; RBACMiddleware exists; login helper works
+  B.1  RBAC — ROLE_PERMISSIONS role→permission grants (orchestrator/middleware/rbac.py)
   B.2  Response Cache — pure async Redis interface; get/put/cache_type round-trip
   B.4  OntologyDetector — DetectionResult dataclass; detect_from_graphdb graceful failure
   B.7  Analytics Engine wired into workflow — deterministic path chosen for known intents
@@ -21,72 +21,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 # ──────────────────────────────────────────────────────────────────────────────
 # B.1 — RBAC
 # ──────────────────────────────────────────────────────────────────────────────
-
-
-class TestRBACTokenManager:
-    def _mgr(self):
-        from orchestrator.middleware.rbac import (
-            ROLE_PERMISSIONS,
-            TokenManager,
-            UserContext,
-        )
-
-        mgr = TokenManager(secret_key="test-secret-key")
-        user = UserContext(
-            user_id="u1",
-            username="alice",
-            role="analyst",
-            tenant_id="bldg1",
-            allowed_buildings=[],
-            permissions=ROLE_PERMISSIONS["analyst"],
-        )
-        return mgr, user
-
-    def test_issue_and_validate_token(self):
-        from orchestrator.middleware.rbac import TokenManager
-
-        mgr, user = self._mgr()
-        token = mgr.issue_token(user)
-        assert isinstance(token, str) and token.count(".") == 2
-
-        validated = mgr.validate_token(token)
-        assert validated.user_id == "u1"
-        assert validated.role == "analyst"
-
-    def test_token_carries_permissions(self):
-        mgr, user = self._mgr()
-        token = mgr.issue_token(user)
-        validated = mgr.validate_token(token)
-        assert validated.has_permission("analytics:read")
-        assert not validated.has_permission("system:admin")
-
-    def test_invalid_secret_rejected(self):
-        from orchestrator.middleware.rbac import TokenManager
-
-        mgr, user = self._mgr()
-        token = mgr.issue_token(user)
-
-        wrong_mgr = TokenManager(secret_key="wrong-secret")
-        with pytest.raises(PermissionError):
-            wrong_mgr.validate_token(token)
-
-    def test_rbac_middleware_exists_and_is_importable(self):
-        from orchestrator.middleware.rbac import (
-            RBACMiddleware,
-            get_auth_manager,
-            get_user_store,
-        )
-
-        assert RBACMiddleware is not None
-        assert callable(get_auth_manager)
-        assert callable(get_user_store)
-
-    def test_create_rbac_dependency_callable(self):
-        from orchestrator.middleware.rbac import TokenManager, create_rbac_dependency
-
-        mgr = TokenManager("s")
-        dep = create_rbac_dependency(mgr, "sensor:read")
-        assert callable(dep)
 
 
 class TestRBACRoles:

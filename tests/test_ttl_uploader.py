@@ -101,6 +101,24 @@ def test_discover_ttls_legacy_flat_layout(tmp_path):
     assert "Brick_v1.4.ttl" not in names  # schema is separate
 
 
+def test_discover_ttls_arbitrary_filename(tmp_path):
+    """A flat input/*.ttl with NO <bldg>_ prefix is still discovered (use-folder-as-is).
+
+    Regression guard for equipment_linkage.ttl, which the old name-pattern loader
+    silently skipped on a clean load.
+    """
+    _write_ttl(tmp_path / "equipment_linkage.ttl")
+    _write_ttl(tmp_path / "abacws.ttl")
+    _write_ttl(tmp_path / "bldg1_enhancements.ttl")
+    _write_ttl(tmp_path / "Brick_v1.4.ttl")  # schema — handled separately, excluded here
+    with patch.object(uploader, "_INPUT_SEARCH_PATHS", [tmp_path]):
+        names = sorted(p.name for p in uploader.discover_ttls("bldg1"))
+    assert "equipment_linkage.ttl" in names
+    assert "abacws.ttl" in names
+    assert "bldg1_enhancements.ttl" in names
+    assert "Brick_v1.4.ttl" not in names
+
+
 def test_discover_schema_ttls_at_top_level(tmp_path):
     """Schema files (Brick*, *_schema*) are discovered separately."""
     _write_ttl(tmp_path / "Brick_v1.4.ttl")

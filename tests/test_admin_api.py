@@ -131,7 +131,7 @@ async def test_list_users(monkeypatch):
 @pytest.mark.asyncio
 async def test_create_user_ok(monkeypatch):
     monkeypatch.setattr(m, "auth_manager", _Auth())
-    body = m.UserCreate(username="alice", password="secret1", role="analyst")
+    body = m.UserCreate(username="alice", password="secret123456", role="analyst")
     resp = await m.create_user_account(body=body, user=None)
     assert resp.success is True and resp.data["role"] == "analyst"
 
@@ -139,7 +139,7 @@ async def test_create_user_ok(monkeypatch):
 @pytest.mark.asyncio
 async def test_create_user_invalid_role(monkeypatch):
     monkeypatch.setattr(m, "auth_manager", _Auth())
-    body = m.UserCreate(username="alice", password="secret1", role="wizard")
+    body = m.UserCreate(username="alice", password="secret123456", role="wizard")
     resp = await m.create_user_account(body=body, user=None)
     assert resp.success is False and "invalid role" in resp.error
 

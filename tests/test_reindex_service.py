@@ -153,6 +153,28 @@ async def test_run_capability_indexer_missing():
 
 
 @pytest.mark.asyncio
+async def test_run_ontology_similarity_target(monkeypatch):
+    """The ontology_similarity target delegates to the debounced similarity gateway."""
+    from orchestrator.services import similarity_reindex
+
+    class _FakeDebouncer:
+        def request(self):
+            return {"state": "pending", "ready": False}
+
+    monkeypatch.setattr(similarity_reindex, "get_similarity_debouncer", lambda: _FakeDebouncer())
+
+    svc = make_service()  # no indexers needed for this target
+    job_id = svc.start(["ontology_similarity"], building_id="bldg1")
+
+    await asyncio.sleep(0)
+    await asyncio.sleep(0)
+
+    status = svc.status(job_id)
+    assert status["results"]["ontology_similarity"]["state"] == "pending"
+    assert status["status"] == "done"
+
+
+@pytest.mark.asyncio
 async def test_run_unknown_target():
     """Unknown target names go into results with skipped='unknown target'."""
     svc = make_service()
