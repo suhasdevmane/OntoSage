@@ -25,8 +25,9 @@ import hashlib
 import json
 import secrets
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Set, Tuple
 
+from shared.config import settings
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -76,6 +77,12 @@ class AuthManager:
         self.redis = redis_manager
         self.postgres = postgres_manager
         self.session_ttl = 86400 * 7  # 7 days
+        # Per-account login lockout (independent of the global per-IP rate
+        # limiter in main.py — that one is proxy-blind and would let an
+        # attacker who guesses one legitimate username brute-force its
+        # password from many source IPs).
+        self.login_max_attempts = settings.LOGIN_MAX_ATTEMPTS
+        self.login_lockout_seconds = settings.LOGIN_LOCKOUT_SECONDS
 
     def _hash_password(self, password: str, salt: Optional[str] = None) -> Tuple[str, str]:
         """
@@ -162,7 +169,7 @@ class AuthManager:
         password: str,
         email: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
-        role: str = "readonly",
+        role: str = "occupant",
     ) -> Dict[str, Any]:
         """
         Register a new user
@@ -184,8 +191,8 @@ class AuthManager:
             if not username or len(username) < 3:
                 raise ValueError("Username must be at least 3 characters")
 
-            if not password or len(password) < 6:
-                raise ValueError("Password must be at least 6 characters")
+            if not password or len(password) < 12:
+                raise ValueError("Password must be at least 12 characters")
 
             # Check if user exists
             if self.postgres:
@@ -240,6 +247,35 @@ class AuthManager:
         except Exception as e:
             logger.error(f"Registration error: {e}", exc_info=True)
             return {"success": False, "error": "Registration failed due to server error"}
+
+    async def _check_login_lockout(self, username: str) -> Tuple[bool, int]:
+        """Return (locked, retry_after_seconds) for *username*'s failed-login counter.
+
+        Independent of the global per-IP RateLimitMiddleware — that limiter is
+        keyed by source IP and is blind to an attacker who spreads a
+        password-guessing attack against one known username across many IPs
+        (or sits behind a shared NAT/proxy IP with legitimate users).
+        """
+        fail_key = f"login_fail:{username}"
+        raw = await self.redis.client.get(fail_key)
+        if not raw:
+            return False, 0
+        try:
+            count = int(raw)
+        except (TypeError, ValueError):
+            return False, 0
+        if count < self.login_max_attempts:
+            return False, 0
+        ttl = await self.redis.client.ttl(fail_key)
+        return True, ttl if ttl and ttl > 0 else self.login_lockout_seconds
+
+    async def _register_failed_login(self, username: str) -> None:
+        """Increment the failed-login counter, starting a fresh lockout window
+        on the first failure in that window."""
+        fail_key = f"login_fail:{username}"
+        attempts = await self.redis.client.incr(fail_key)
+        if attempts == 1:
+            await self.redis.client.expire(fail_key, self.login_lockout_seconds)
 
     async def login_user(self, username: str, password: str) -> Dict[str, Any]:
         """
@@ -311,6 +347,20 @@ class AuthManager:
                 logger.warning(f"Login attempt for non-existent user: {username}")
                 return {"success": False, "error": "Invalid username or password"}
 
+            locked, retry_after = await self._check_login_lockout(username)
+            if locked:
+                logger.warning(
+                    f"Login blocked for {username}: too many failed attempts "
+                    f"(retry in {retry_after}s)"
+                )
+                return {
+                    "success": False,
+                    "error": (
+                        f"Too many failed login attempts. Try again in "
+                        f"{retry_after} seconds."
+                    ),
+                }
+
             # Helper to get value from dict (handles bytes/string keys for Redis, string for Postgres)
             def get_value(data, key):
                 if (
@@ -341,7 +391,11 @@ class AuthManager:
 
             if not self._verify_password(password, stored_hash, salt):
                 logger.warning(f"Invalid password for user: {username}")
+                await self._register_failed_login(username)
                 return {"success": False, "error": "Invalid username or password"}
+
+            # Successful password check clears any accumulated failure count.
+            await self.redis.client.delete(f"login_fail:{username}")
 
             # Transparent hash migration: upgrade legacy SHA-256 → Argon2id
             if self._needs_rehash(stored_hash):
@@ -639,9 +693,11 @@ class AuthManager:
             # Get all user sessions
             session_tokens = await self.redis.client.smembers(f"user_sessions:{username}")
 
-            # Delete all sessions
+            # Delete all sessions (RedisManager connects with decode_responses=True,
+            # so tokens normally arrive as str already; guard bytes defensively
+            # in case a caller ever points this at a raw non-decoding client).
             for token in session_tokens:
-                token_str = token.decode("utf-8")
+                token_str = token.decode("utf-8") if isinstance(token, bytes) else token
                 await self.redis.client.delete(f"session:{token_str}")
 
             # Delete user data
@@ -649,20 +705,36 @@ class AuthManager:
             await self.redis.client.delete(f"user_sessions:{username}")
             await self.redis.client.srem("users:all", username)
 
-            # Delete user chat history
-            # Find all conversation IDs for this user
-            keys = await self.redis.client.keys(f"conversation:*")
-            for key in keys:
-                state_data = await self.redis.client.get(key)
-                if state_data:
-                    try:
-                        state = json.loads(state_data)
-                        if state.get("user_id") == username:
-                            await self.redis.client.delete(key)
-                    except:
-                        pass
+            # Delete user chat history. `KEYS conversation:*` blocks the Redis
+            # event loop for the duration of the scan (O(N) over the whole
+            # keyspace) and previously required a GET + json.loads per key just
+            # to check ownership. Two non-blocking, targeted lookups instead:
+            #   1. The tracked per-user index (`add_conversation_to_user`),
+            #      which covers every conversation created since that index
+            #      existed — O(1) SMEMBERS, no keyspace scan at all.
+            #   2. A SCAN (cursor-based, non-blocking) matched against the
+            #      `:{username}` suffix every conversation_id carries — catches
+            #      anything not yet in the index, filtered server-side by key
+            #      name so no value fetch/parse is needed.
+            conv_ids: Set[str] = set()
+            tracked = await self.redis.client.smembers(f"user:{username}:conversations")
+            for cid in tracked:
+                conv_ids.add(cid.decode("utf-8") if isinstance(cid, bytes) else cid)
 
-            # Remove from Postgres when it is the authoritative store
+            async for key in self.redis.client.scan_iter(
+                match=f"conversation:*:{username}", count=200
+            ):
+                key_str = key.decode("utf-8") if isinstance(key, bytes) else key
+                conv_ids.add(key_str[len("conversation:") :])
+
+            for cid in conv_ids:
+                await self.redis.client.delete(f"conversation:{cid}")
+                await self.redis.client.delete(f"conversation:{cid}:meta")
+                await self.redis.client.delete(f"messages:{cid}")
+            await self.redis.client.delete(f"user:{username}:conversations")
+
+            # Remove from Postgres when it is the authoritative store (this also
+            # cascades turn_memory + conversations/messages there).
             if self.postgres:
                 await self.postgres.delete_user(username)
 

@@ -267,8 +267,15 @@ def read_databases() -> List[Dict[str, Any]]:
                 {
                     "key": key,
                     "type": conn.get("type", "?"),
-                    "fields": _mask_conn({k: v for k, v in conn.items() if k != "type"}),
+                    "fields": _mask_conn(
+                        {k: v for k, v in conn.items() if k not in ("type", "nature", "note")}
+                    ),
                     "source": source,
+                    # Real vs synthetic DATA SOURCE (data-driven; absent => synthetic). Only the
+                    # original abacws dataset (database1) is real; every other table was generated
+                    # for the demo. `note` is a short human hint shown on the card.
+                    "nature": conn.get("nature", "synthetic"),
+                    "note": conn.get("note", ""),
                 }
             )
 
@@ -282,6 +289,108 @@ def _input_dir() -> Path:
         if p.exists():
             return p
     return Path("input")
+
+
+# ── Building identity (namespace / prefix) — the per-building ontology prereq ────
+# The `bldg:` prefix is only a label; the NAMESPACE it binds to is per-building and
+# lives in input/building.yaml (`ontology_namespace`). config.py reads it at boot.
+# The admin console edits it here as an alternative to hand-editing the file.
+
+_NCNAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.\-]*$")
+
+
+def building_yaml_path() -> Path:
+    """The active building's building.yaml (rw, under input/)."""
+    return _input_dir() / "building.yaml"
+
+
+def read_building_config() -> Dict[str, Any]:
+    """Current building identity — from building.yaml, falling back to live settings.
+
+    Returns ``{building_id, building_name, ontology_namespace, ontology_prefix, path, exists}``.
+    """
+    from shared.config import settings
+
+    p = building_yaml_path()
+    data: Dict[str, Any] = {}
+    if p.is_file():
+        try:
+            data = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        except Exception as e:  # pragma: no cover - defensive
+            logger.warning(f"[admin_config] could not parse {p}: {e}")
+            data = {}
+    return {
+        "building_id": data.get("building_id") or settings.BUILDING_ID,
+        "building_name": data.get("building_name") or settings.BUILDING_NAME,
+        "ontology_namespace": data.get("ontology_namespace") or settings.BUILDING_NAMESPACE,
+        "ontology_prefix": data.get("ontology_prefix") or settings.BUILDING_PREFIX,
+        "path": str(p),
+        "exists": p.is_file(),
+    }
+
+
+def _set_yaml_scalar(text: str, key: str, value: str) -> str:
+    """Set a TOP-LEVEL scalar ``key: value`` in YAML text, preserving comments/order.
+
+    Replaces the existing top-level line if present (line-based, so inline docs survive),
+    otherwise appends it. The replacement line is produced by ``yaml.safe_dump`` so the value is
+    quoted only when YAML actually requires it (URIs like ``http://x#`` stay unquoted). Only safe
+    for top-level scalar keys — which is exactly what the building identity fields are.
+    """
+    line = yaml.safe_dump({key: value}, default_flow_style=False, allow_unicode=True).strip()
+    pat = re.compile(rf"(?m)^{re.escape(key)}\s*:.*$")
+    if pat.search(text):
+        return pat.sub(lambda _m: line, text, count=1)  # lambda: no backref interpretation
+    sep = "" if text.endswith("\n") or text == "" else "\n"
+    return f"{text}{sep}{line}\n"
+
+
+def write_building_config(
+    ontology_namespace: str,
+    ontology_prefix: str = "bldg",
+    building_name: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Validate + persist the building identity into input/building.yaml (atomic, in place).
+
+    Namespace must be an absolute URI ending in ``#`` or ``/`` (Brick/BACnet ABox convention);
+    prefix must be a valid SPARQL prefix label. Takes effect after an orchestrator restart
+    (building.yaml is read at boot). Returns ``{ok, error, ...read_building_config()}``.
+    """
+    ns = (ontology_namespace or "").strip()
+    prefix = (ontology_prefix or "").strip()
+    if not (ns.startswith("http://") or ns.startswith("https://")):
+        return {"ok": False, "error": "namespace must be an absolute http(s) URI"}
+    if not ns.endswith("#") and not ns.endswith("/"):
+        return {"ok": False, "error": "namespace must end with '#' or '/'"}
+    if len(ns) > 300 or any(c in ns for c in (" ", "\n", "\t", "<", ">", '"')):
+        return {"ok": False, "error": "namespace contains invalid characters"}
+    if not _NCNAME_RE.match(prefix):
+        return {
+            "ok": False,
+            "error": "prefix must start with a letter (letters, digits, _ . - only)",
+        }
+
+    p = building_yaml_path()
+    try:
+        text = p.read_text(encoding="utf-8") if p.is_file() else ""
+        text = _set_yaml_scalar(text, "ontology_namespace", ns)
+        text = _set_yaml_scalar(text, "ontology_prefix", prefix)
+        if building_name is not None and building_name.strip():
+            text = _set_yaml_scalar(text, "building_name", building_name.strip())
+        # Validate the result still parses before committing.
+        yaml.safe_load(text)
+        tmp = p.with_suffix(p.suffix + ".tmp")
+        tmp.write_text(text, encoding="utf-8")
+        os.replace(str(tmp), str(p))
+    except Exception as e:
+        logger.error(f"[admin_config] write_building_config failed: {e}", exc_info=True)
+        return {"ok": False, "error": f"could not write building.yaml: {e}"}
+
+    logger.info(f"[admin_config] building identity saved: ns={ns!r} prefix={prefix!r}")
+    result = read_building_config()
+    result["ok"] = True
+    result["error"] = None
+    return result
 
 
 def role_access_path() -> Path:
@@ -428,6 +537,10 @@ def add_database(
 
     # 2) persist the credential values to .env
     apply_env(env_changes)
+    # 3) make the running process see them now (no restart): resolve_connection()
+    #    expands ${VAR} against os.environ, so keep it consistent with the .env we
+    #    just wrote. The caller still reloads the adapter pool for the query path.
+    os.environ.update({k: str(v) for k, v in env_changes.items()})
     logger.info(f"[admin_config] added database '{key}' ({db_type}) → {path.name} + .env")
     return {"ok": True, "key": key, "env_keys": list(env_changes.keys()), "restart_required": True}
 
@@ -495,6 +608,10 @@ def resolve_connection(key: str) -> Optional[Dict[str, Any]]:
         "user": resolve_env_value(conn.get("user", "")),
         "password": resolve_env_value(conn.get("password", "")),
         "database": resolve_env_value(conn.get("database", "")),
+        # Table hint (narrow adapters store the timeseries table here) — needed so
+        # UUID/answerability resolution targets the RIGHT table, not a guessed one.
+        "table": conn.get("table", ""),
+        "ts_table": conn.get("ts_table", ""),
     }
 
 
@@ -601,6 +718,52 @@ async def introspect(
         else:
             return {"ok": False, "error": f"unsupported type '{db_type}'"}
         return {"ok": True, "tables": tables}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+async def distinct_uuids(
+    db_type: str,
+    host: str,
+    port: str,
+    user: str,
+    password: str,
+    database: str,
+    table: str,
+    limit: int = 500,
+) -> Dict[str, Any]:
+    """Distinct timeseries UUIDs in a (narrow) table, so the guided sensor form can map real
+    ids from the datasource instead of hand-typed UUIDs. Returns {ok, uuids: [...], error?}."""
+    if not re.match(r"^[A-Za-z0-9_]+$", table or ""):
+        return {"ok": False, "error": "invalid table name"}
+    n = max(1, min(int(limit or 500), 5000))
+    try:
+        if db_type in _MYSQL_TYPES:
+            if _pymysql is None:
+                return {"ok": False, "error": "pymysql not installed"}
+
+            def _probe():
+                conn = _mysql_connect(host, port, user, password, database)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(f"SELECT DISTINCT `uuid` FROM `{table}` LIMIT {n}")
+                        return [r[0] for r in cur.fetchall()]
+                finally:
+                    conn.close()
+
+            uuids = await asyncio.get_event_loop().run_in_executor(None, _probe)
+        elif db_type in _PG_TYPES:
+            if _asyncpg is None:
+                return {"ok": False, "error": "asyncpg not installed"}
+            conn = await _pg_connect(host, port, user, password, database)
+            try:
+                rows = await conn.fetch(f'SELECT DISTINCT "uuid" FROM "{table}" LIMIT {n}')
+            finally:
+                await conn.close()
+            uuids = [r["uuid"] for r in rows]
+        else:
+            return {"ok": False, "error": f"unsupported type '{db_type}'"}
+        return {"ok": True, "uuids": [str(u) for u in uuids if u]}
     except Exception as e:
         return {"ok": False, "error": str(e)}
 

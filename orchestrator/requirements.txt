@@ -50,6 +50,9 @@ websockets==14.1
 # Ontology / SPARQL validation (Phase 3.4)
 rdflib>=7.0.0
 
+# Cross-process advisory lock serializing input/ TTL writes (admin GUI <-> file sync)
+filelock>=3.12.0
+
 # Phase 7.3 — Password security (Argon2id preferred, bcrypt fallback)
 argon2-cffi>=23.1.0
 bcrypt>=4.1.0

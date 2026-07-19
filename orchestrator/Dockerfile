@@ -101,12 +101,34 @@ COPY orchestrator/requirements.txt /app/orchestrator/
 # Install Python dependencies
 RUN pip install --no-cache-dir -r /app/orchestrator/requirements.txt
 
+# ── Bake the local embedding model into the image (self-contained, offline) ──
+# Done BEFORE copying app code so ordinary code changes don't bust the ~1.3 GB model layer.
+# bge-large-en-v1.5 is pre-downloaded so the first request pays no download cost and the
+# system needs no network at runtime. Cached under /app so the chown below covers it and
+# the non-root runtime user can read it. Build-arg lets you override the model.
+ENV HF_HOME=/app/.hf_cache
+ENV SENTENCE_TRANSFORMERS_HOME=/app/.hf_cache
+ARG EMBEDDING_MODEL_LOCAL=BAAI/bge-large-en-v1.5
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('${EMBEDDING_MODEL_LOCAL}')"
+# Model is now baked — run fully offline at runtime (no HuggingFace network calls).
+ENV HF_HUB_OFFLINE=1
+ENV TRANSFORMERS_OFFLINE=1
+
 # Copy orchestrator code
 COPY orchestrator/ /app/orchestrator/
 
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
+
+# Build provenance — the commit + build time this image was built from, surfaced at /health so an
+# operator can tell exactly which code is running (and whether it has drifted from the repo).
+# Declared late so changing them only re-runs the final layers, never the dependency install.
+# Defaults to "unknown" when not passed, so a plain `docker compose build` still works.
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
+ENV BUILD_SHA=$GIT_SHA
+ENV BUILD_TIME=$BUILD_TIME
 
 # Create non-root user
 RUN useradd -m -u 1000 ontosage && \

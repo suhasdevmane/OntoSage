@@ -159,7 +159,11 @@ def normalise_query(query: str) -> str:
     text = query.lower().strip()
     text = re.sub(r"[^\w\s.]", "", text)  # keep dots for sensor IDs
     text = re.sub(r"\s+", " ", text).strip()
-    tokens = [t for t in text.split() if t not in _STOP_WORDS and len(t) > 1]
+    # Keep single-DIGIT tokens: a bare floor/zone/room number ("floor 3", "zone 9") is a
+    # meaningful entity id. Dropping it (the old `len(t) > 1`) made "floor 3" and "floor 5"
+    # normalise to the SAME key, so the exact/fuzzy cache served one floor's answer for
+    # another — a wrong-entity answer (CAVEAT-035). Single-char *letters* are still dropped.
+    tokens = [t for t in text.split() if t not in _STOP_WORDS and (len(t) > 1 or t.isdigit())]
     return " ".join(sorted(tokens))
 
 
@@ -188,6 +192,17 @@ def trigram_similarity(a: str, b: str) -> float:
     intersection = ta & tb
     union = ta | tb
     return len(intersection) / len(union)
+
+
+def salient_ids(text: str) -> set:
+    """Numeric identifiers in a query (room/zone dotted ids, floor/room/sensor numbers).
+
+    Two questions that differ only in one of these name DIFFERENT entities with DIFFERENT
+    data — e.g. "temperature in room 5.04" vs "room 5.05" have >0.85 trigram similarity but
+    must NOT share a cached answer, or one room's reading is served for another (a wrong,
+    fabrication-adjacent answer). The fuzzy matcher requires these sets to be equal.
+    """
+    return set(re.findall(r"\d[\d.]*", text or ""))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -390,8 +405,14 @@ class ResponseCacheService:
 
         best_sim = 0.0
         best_hash = None
+        q_ids = salient_ids(normalised)
 
         for qhash, stored_norm in all_entries.items():
+            # Only fuzzy-match questions that name the SAME specific entity. Two questions
+            # differing only in a room/zone/floor id score >0.85 but refer to different
+            # entities — returning one's cached data for the other is a wrong answer.
+            if salient_ids(stored_norm) != q_ids:
+                continue
             sim = trigram_similarity(normalised, stored_norm)
             if sim > best_sim:
                 best_sim = sim

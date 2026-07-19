@@ -685,6 +685,9 @@ class DialogueAgent:
 
         if (
             self.semantic_router is not None
+            # ROADMAP-009 WS-4 phase 2: when TTL-first is on, the Qdrant capability-KB probe
+            # is replaced by the graph+document router below.
+            and not settings.CAPABILITIES_TTL_FIRST
             and user_query
             and user_query.strip()
             # Skip KB router entirely for queries that are live-data / SPARQL requests.
@@ -742,6 +745,68 @@ class DialogueAgent:
             except Exception as e:
                 # Never let semantic routing block intent detection
                 logger.warning(f"[semantic-route] check failed (non-fatal): {e}")
+
+        # ── ROADMAP-009 WS-4 (phase 2): TTL-first capability router ──────────────
+        # Replaces the Qdrant capability-KB probe when CAPABILITIES_TTL_FIRST. A query is a
+        # capability question if it matches an amenity TRIPLE (deterministic lay-terms) or,
+        # for prose, a strong capability DOCUMENT match. Either → route to capability (LLM
+        # skipped); the capability node answers from triples then documents. This is the
+        # graph-backed signal that lets the fuzzy KB router be retired.
+        if (
+            settings.CAPABILITIES_TTL_FIRST
+            and user_query
+            and user_query.strip()
+            and not _SR.is_data_query(user_query)
+            and not _SR.is_report_intake_query(user_query)
+            and not _SR.is_control_command(user_query)
+            # bge-large's higher scores make the document probe fire more, so honour the
+            # same floor-plan/spatial bypass the KB router uses — "show me floor 3 layout"
+            # must reach the floor_plan agent, not a floor-areas capability document.
+            and not _SR.is_floor_plan_query(user_query)
+            and not _SR.is_spatial_query(user_query)
+        ):
+            try:
+                from orchestrator.services.capability_graph_resolver import (
+                    get_capability_graph_resolver,
+                )
+
+                _facts = await get_capability_graph_resolver().resolve(user_query)
+                if _facts:
+                    logger.info(
+                        f"[ttl-route] capability via ontology triples: "
+                        f"{[f.label for f in _facts]} — skipping LLM intent call"
+                    )
+                    return {
+                        "intent": "capability",
+                        "general": False,
+                        "analytics": False,
+                        "sparql_query": "",
+                        "response": "",
+                    }
+                # Prose fallback: only a STRONG document-KB match routes to capability.
+                from orchestrator.agents.capability_agent import _search_documents
+
+                _bldg = state.building_id or settings.BUILDING_ID
+                _docs = await _search_documents(user_query, _bldg)
+                # Threshold calibrated on bge-large scores: real capability prose lands
+                # >=0.55 (wifi 0.55, GDPR 0.67, parking 0.64) while general questions land
+                # <=0.43 ("capital of France" 0.43). 0.50 sits in that gap so prose routes
+                # DETERMINISTICALLY via the probe instead of falling to LLM-variance, and
+                # general queries are still rejected. (0.55 sat exactly on wifi's score.)
+                if any(d.get("score", 0) >= 0.50 for d in _docs):
+                    logger.info(
+                        f"[ttl-route] capability via document KB ({len(_docs)} chunk(s)) "
+                        f"— skipping LLM intent call"
+                    )
+                    return {
+                        "intent": "capability",
+                        "general": False,
+                        "analytics": False,
+                        "sparql_query": "",
+                        "response": "",
+                    }
+            except Exception as e:
+                logger.warning(f"[ttl-route] check failed (non-fatal): {e}")
 
         # Retrieve ontology context from RAG service
         logger.info("🔍 Retrieving ontology context from GraphDB RAG...")

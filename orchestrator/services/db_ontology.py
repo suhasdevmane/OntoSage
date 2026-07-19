@@ -25,7 +25,6 @@ already lives there, so the metadata must match it.
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
-from urllib.parse import quote as _url_quote
 
 from shared.utils import get_logger
 
@@ -39,10 +38,36 @@ except ImportError:  # pragma: no cover
 _POINT_REQUIRED = ("local", "brick_class", "location", "uuid")
 
 
+def _safe_db_key(db_key: str) -> str:
+    """Filesystem/URI-safe form of a connection key (alnum / '_' / '-')."""
+    return "".join(c if (c.isalnum() or c in "_-") else "_" for c in db_key)
+
+
 def graph_uri_for_db(db_key: str) -> str:
-    """Named graph holding an external DB's sensor metadata."""
-    safe = "".join(c if (c.isalnum() or c in "_-") else "_" for c in db_key)
-    return f"urn:ontosage:db:{safe}"
+    """LEGACY named graph a DB's sensors used to live in (pre file-persistence).
+
+    Retained only so the migration path (:func:`clear_graph`, the backfill script) can find and
+    clean up graphs created before sensors were persisted to ``input/``. New registrations write
+    a file graph instead — see :func:`sensors_filename` / :func:`graph_uri_for_db_file`.
+    """
+    return f"urn:ontosage:db:{_safe_db_key(db_key)}"
+
+
+def sensors_filename(db_key: str) -> str:
+    """``input/`` filename backing a DB's sensor metadata (the source of truth).
+
+    The file sits directly under ``input/`` so ``ttl_uploader`` reloads it on every restart
+    (flat-layout, non-schema discovery) — no per-file wiring. The name deliberately avoids the
+    shared-schema tokens (brick/rec/s223/schema) so it is treated as building data, not schema.
+    """
+    return f"db_{_safe_db_key(db_key)}_sensors.ttl"
+
+
+def graph_uri_for_db_file(db_key: str) -> str:
+    """Named graph the sensors file syncs into — identical to ttl_uploader's file-graph URI."""
+    from orchestrator.services.input_ttl_store import graph_uri_for_filename
+
+    return graph_uri_for_filename(sensors_filename(db_key))
 
 
 def _resolve_settings(graphdb_url, repository, building_namespace):
@@ -114,34 +139,6 @@ def validate_ttl(ttl_text: str, db_key: str) -> List[str]:
 # ── GraphDB I/O ────────────────────────────────────────────────────────────────
 
 
-async def _put_named_graph(
-    graph_uri: str, ttl: str, graphdb_url: str, repository: str, client: Optional[Any] = None
-) -> bool:
-    if _httpx is None:
-        logger.warning("[db_ontology] httpx not installed — cannot reach GraphDB")
-        return False
-    base = (graphdb_url or "").rstrip("/")
-    endpoint = f"{base}/repositories/{repository}/rdf-graphs/service?graph={_url_quote(graph_uri, safe='')}"
-    owns = client is None
-    client = client or _httpx.AsyncClient(timeout=60.0)
-    try:
-        resp = await client.put(
-            endpoint, content=ttl.encode("utf-8"), headers={"Content-Type": "text/turtle"}
-        )
-        if resp.status_code in (200, 204):
-            return True
-        logger.warning(
-            f"[db_ontology] PUT <{graph_uri}> HTTP {resp.status_code}: {resp.text[:200]}"
-        )
-        return False
-    except Exception as e:  # pragma: no cover - network
-        logger.warning(f"[db_ontology] PUT <{graph_uri}> error: {e}")
-        return False
-    finally:
-        if owns:
-            await client.aclose()
-
-
 async def graph_triple_count(
     db_key: str,
     *,
@@ -149,11 +146,15 @@ async def graph_triple_count(
     repository: Optional[str] = None,
     client: Optional[Any] = None,
 ) -> int:
-    """Count triples currently registered for a DB's sensor graph (0 if none/unreachable)."""
+    """Count triples currently registered for a DB's sensor graph (0 if none/unreachable).
+
+    Reads the file graph (``urn:ontosage:ttl:db_<key>_sensors.ttl``) the sensors are now
+    persisted into — the same graph both the live sync and the restart uploader target.
+    """
     if _httpx is None:
         return 0
     url, repo, _ = _resolve_settings(graphdb_url, repository, None)
-    graph = graph_uri_for_db(db_key)
+    graph = graph_uri_for_db_file(db_key)
     q = f"SELECT (COUNT(*) AS ?n) WHERE {{ GRAPH <{graph}> {{ ?s ?p ?o }} }}"
     endpoint = f"{url.rstrip('/')}/repositories/{repo}"
     owns = client is None
@@ -192,10 +193,12 @@ async def graph_triple_counts(
     if _httpx is None:
         return {}
     url, repo, _ = _resolve_settings(graphdb_url, repository, None)
-    prefix = "urn:ontosage:db:"
+    # DB sensor files land in urn:ontosage:ttl:db_<key>_sensors.ttl — grab every such file graph.
+    prefix = "urn:ontosage:ttl:db_"
+    suffix = "_sensors.ttl"
     q = (
         "SELECT ?g (COUNT(*) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } "
-        f'FILTER(STRSTARTS(STR(?g), "{prefix}")) }} GROUP BY ?g'
+        f'FILTER(STRSTARTS(STR(?g), "{prefix}") && STRENDS(STR(?g), "{suffix}")) }} GROUP BY ?g'
     )
     endpoint = f"{url.rstrip('/')}/repositories/{repo}"
     owns = client is None
@@ -214,7 +217,10 @@ async def graph_triple_counts(
         out: Dict[str, int] = {}
         for b in resp.json()["results"]["bindings"]:
             g = b["g"]["value"]
-            key = g[len(prefix) :] if g.startswith(prefix) else g
+            if g.startswith(prefix) and g.endswith(suffix):
+                key = g[len(prefix) : -len(suffix)]
+            else:
+                key = g
             out[key] = int(b["n"]["value"])
         return out
     except Exception:  # pragma: no cover - network
@@ -236,20 +242,34 @@ async def register_points(
     building_namespace: Optional[str] = None,
     client: Optional[Any] = None,
 ) -> Dict[str, Any]:
-    """Generate + upload Brick triples for `points` into the DB's named graph."""
+    """Generate Brick triples for `points` and MERGE them into the DB's ``input/`` sensor file.
+
+    The file (source of truth) is written atomically + backed up, then its named graph is synced
+    to GraphDB, so the sensors survive a GraphDB volume reset and reload on restart. Uses an UPSERT
+    merge (``replace_subjects=True``): registering ADDS new sensors and keeps previously-registered
+    ones, but re-submitting an existing sensor REPLACES its triples (same uuid, no duplicate
+    external-ref nodes) rather than piling stale copies on top.
+    """
     issues = validate_points(points)
     if issues:
         return {"ok": False, "error": "; ".join(issues)}
-    url, repo, ns = _resolve_settings(graphdb_url, repository, building_namespace)
+    _url, _repo, ns = _resolve_settings(graphdb_url, repository, building_namespace)
     ttl = build_points_ttl(ns, db_key, points)
-    graph = graph_uri_for_db(db_key)
-    ok = await _put_named_graph(graph, ttl, url, repo, client=client)
+
+    from orchestrator.services.input_ttl_store import persist_ttl_file
+
+    res = await persist_ttl_file(
+        sensors_filename(db_key), ttl, merge=True, replace_subjects=True, client=client
+    )
+    ok = bool(res.get("ok"))
     return {
         "ok": ok,
         "db_key": db_key,
-        "graph": graph,
+        "graph": res.get("graph", graph_uri_for_db_file(db_key)),
+        "file": res.get("file"),
         "points": len(points),
-        "error": None if ok else "GraphDB upload failed",
+        "persisted": True,
+        "error": None if ok else "persist/graph-sync failed",
     }
 
 
@@ -260,25 +280,20 @@ async def clear_graph(
     repository: Optional[str] = None,
     client: Optional[Any] = None,
 ) -> bool:
-    """Delete the connection's sensor named graph (used when a connection is removed)."""
-    if _httpx is None:
-        return False
-    url, repo, _ = _resolve_settings(graphdb_url, repository, None)
-    graph = graph_uri_for_db(db_key)
-    endpoint = (
-        f"{url.rstrip('/')}/repositories/{repo}"
-        f"/rdf-graphs/service?graph={_url_quote(graph, safe='')}"
-    )
-    owns = client is None
-    client = client or _httpx.AsyncClient(timeout=30.0)
-    try:
-        resp = await client.delete(endpoint)
-        return resp.status_code in (200, 204, 404)
-    except Exception:  # pragma: no cover - network
-        return False
-    finally:
-        if owns:
-            await client.aclose()
+    """Remove a connection's sensors so the removal PERSISTS across restarts.
+
+    Moves the ``input/db_<key>_sensors.ttl`` file to ``input/.trash/`` and drops its file graph —
+    a graph-only delete would silently reappear when ``ttl_uploader`` reloads the file on the next
+    boot. Also drops the LEGACY ``urn:ontosage:db:<key>`` graph so connections registered before
+    the file-persistence migration are cleaned up too.
+    """
+    from orchestrator.services.input_ttl_store import trash_ttl_file
+    from orchestrator.services.ontology_manager import drop_named_graph
+
+    res = await trash_ttl_file(sensors_filename(db_key), client=client)
+    # Best-effort cleanup of the pre-migration graph; ignore its result for the return value.
+    await drop_named_graph(graph_uri_for_db(db_key), client=client)
+    return bool(res.get("ok"))
 
 
 async def register_ttl(
@@ -289,18 +304,29 @@ async def register_ttl(
     repository: Optional[str] = None,
     client: Optional[Any] = None,
 ) -> Dict[str, Any]:
-    """Validate + upload an admin-provided Brick TTL into the DB's named graph."""
+    """Validate + MERGE an admin-provided Brick TTL into the DB's ``input/`` sensor file.
+
+    Same durability + upsert semantics as :func:`register_points`: the file is the source of truth,
+    its graph is synced to GraphDB, and re-submitting a sensor replaces it (``replace_subjects``)
+    while other registered sensors are preserved.
+    """
     issues = validate_ttl(ttl_text, db_key)
     hard = [i for i in issues if not i.startswith("warning:")]
     if hard:
         return {"ok": False, "error": "; ".join(hard)}
-    url, repo, _ = _resolve_settings(graphdb_url, repository, None)
-    graph = graph_uri_for_db(db_key)
-    ok = await _put_named_graph(graph, ttl_text, url, repo, client=client)
+
+    from orchestrator.services.input_ttl_store import persist_ttl_file
+
+    res = await persist_ttl_file(
+        sensors_filename(db_key), ttl_text, merge=True, replace_subjects=True, client=client
+    )
+    ok = bool(res.get("ok"))
     return {
         "ok": ok,
         "db_key": db_key,
-        "graph": graph,
+        "graph": res.get("graph", graph_uri_for_db_file(db_key)),
+        "file": res.get("file"),
         "warnings": [i for i in issues if i.startswith("warning:")],
-        "error": None if ok else "GraphDB upload failed",
+        "persisted": True,
+        "error": None if ok else "persist/graph-sync failed",
     }

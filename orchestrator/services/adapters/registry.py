@@ -20,6 +20,7 @@ Usage:
     schema  = adapter_registry.get_schema_text("bldg:database1")
 """
 
+import asyncio
 import os
 import re
 import sys
@@ -103,6 +104,8 @@ class AdapterRegistry:
         # key → schema-discovery helper
         self._discoveries: Dict[str, DatabaseSchemaDiscovery] = {}
         self._initialized = False
+        self._reload_lock = asyncio.Lock()  # serialises reload() vs itself
+        self._custom_keys: set = set()  # GUI-added (custom-overlay) keys — always active
 
     # ------------------------------------------------------------------
     # Storage-key resolution
@@ -161,6 +164,23 @@ class AdapterRegistry:
         else:
             logger.warning("AdapterRegistry: no database adapters available.")
 
+    async def reload(self) -> None:
+        """Rebuild the adapter pool from the current registry + env — no process restart.
+
+        Lets a GUI-added connection become routable immediately: closes the existing
+        pools, clears the cache, and re-runs ``initialize()`` against the (just-updated)
+        ``database_registry.custom.yaml`` + ``os.environ``. Serialised by a lock; a query
+        landing in the brief rebuild window falls back to the default adapter (same
+        transient a restart would cause, but far shorter and without dropping the process).
+        """
+        async with self._reload_lock:
+            await self.close_all()
+            self._adapters = {}
+            self._discoveries = {}
+            self._initialized = False
+            await self.initialize()
+            logger.info("AdapterRegistry: reloaded — %s backend(s)", len(self._adapters))
+
     # ------------------------------------------------------------------
     # YAML-driven initialization
     # ------------------------------------------------------------------
@@ -192,6 +212,7 @@ class AdapterRegistry:
 
         Curated entries win on a key clash. Non-fatal on any error.
         """
+        self._custom_keys = set()  # recomputed each load so a deleted overlay clears it
         try:
             custom = primary.parent / "database_registry.custom.yaml"
             if not custom.is_file() or not isinstance(data, dict):
@@ -200,6 +221,10 @@ class AdapterRegistry:
             extra = overlay.get("databases", {})
             if not isinstance(extra, dict):
                 return
+            # GUI-added keys are an explicit admin opt-in — never filtered by the
+            # building.yaml storage filter (which only exists to skip unrelated
+            # *curated* backends at startup).
+            self._custom_keys = set(extra.keys())
             dbs = data.setdefault("databases", {})
             added = [k for k in extra if k not in dbs]
             for k in added:
@@ -256,6 +281,8 @@ class AdapterRegistry:
 
         active_keys = self._get_active_keys_for_current_building()
         if active_keys is not None:
+            # GUI-added connections are always active, regardless of the storage filter.
+            active_keys = active_keys | self._custom_keys
             skipped = [k for k in databases.keys() if k not in active_keys]
             if skipped:
                 logger.info(

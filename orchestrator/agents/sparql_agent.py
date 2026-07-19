@@ -669,7 +669,7 @@ Respond with JSON containing exactly TWO keys:
 
 {{
   "analytics": true,
-  "sparql": "PREFIX brick: <https://brickschema.org/schema/Brick#>\\nPREFIX bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#>\\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\\nPREFIX ref: <https://brickschema.org/schema/Brick/ref#>\\n\\nSELECT ?sensor ?location ?uuid ?storage WHERE {{\\n  BIND(bldg:CO2_Level_Sensor_5.08 AS ?sensor)\\n  OPTIONAL {{ ?sensor brick:hasLocation ?location . }}\\n  OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }}\\n}} LIMIT 50"
+  "sparql": "PREFIX brick: <https://brickschema.org/schema/Brick#>\\nPREFIX bldg: <{settings.BUILDING_NAMESPACE}>\\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\\nPREFIX ref: <https://brickschema.org/schema/Brick/ref#>\\n\\nSELECT ?sensor ?location ?uuid ?storage WHERE {{\\n  BIND(bldg:CO2_Level_Sensor_5.08 AS ?sensor)\\n  OPTIONAL {{ ?sensor brick:hasLocation ?location . }}\\n  OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }}\\n}} LIMIT 50"
 }}
 
 === STRICT REQUIREMENTS ===
@@ -1898,7 +1898,14 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
     async def _fallback_pattern_search(
         self, sparql: str, client: httpx.AsyncClient, auth: Optional[tuple] = None
     ) -> Optional[Dict[str, Any]]:
-        """Fallback pattern-based search when class-based query returns zero results"""
+        """Fallback pattern-based search when class-based query returns zero results.
+
+        Preserves an explicit location constraint from the original query. If the user
+        named a specific zone/room id (e.g. "5.28"), the fallback must keep it — dropping
+        it and returning class-matching sensors from anywhere causes another zone's data
+        to be attributed to the requested one. Location-free class queries ("show
+        temperature sensors") keep the broad building-wide behavior.
+        """
         # Extract class from query
         m = re.search(r"rdf:type\s+(brick:[A-Za-z0-9_]+_Sensor)", sparql)
         if not m:
@@ -1909,19 +1916,26 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
         brick_class = m.group(1)
         token = brick_class.split(":", 1)[1].replace("_Sensor", "")
 
+        # Preserve an explicit dotted location id (digits + '.' only — injection-safe).
+        loc_m = re.search(r"\d{1,2}\.\d{1,2}", sparql)
+        loc_filter = f" && CONTAINS(STR(?sensor), '{loc_m.group(0)}')" if loc_m else ""
+
         # Pattern-based query (Phase 15A: per-request building namespace).
         alt_query = (
             self._prefix_block()
             + f"""
 SELECT ?sensor ?location ?uuid WHERE {{
     ?sensor ?p ?o .
-    FILTER(STRSTARTS(STR(?sensor), '{_active_namespace()}') && CONTAINS(STR(?sensor), '{token}_Sensor'))
+    FILTER(STRSTARTS(STR(?sensor), '{_active_namespace()}') && CONTAINS(STR(?sensor), '{token}_Sensor'){loc_filter})
     OPTIONAL {{ ?sensor brick:hasLocation ?location . }}
     OPTIONAL {{ ?sensor bldg:connstring ?uuid . }}
 }} LIMIT 50"""
         )
 
-        logger.info(f"Attempting pattern fallback for token: {token}")
+        logger.info(
+            f"Attempting pattern fallback for token: {token}"
+            + (f" (location-constrained: {loc_m.group(0)})" if loc_m else "")
+        )
 
         try:
             # Try current endpoint (GraphDB)
@@ -2068,7 +2082,7 @@ Example 3 (Equipment List):
 ..."
 
 === IMPORTANT ===
-- Extract readable names from URIs (remove "http://abacwsbuilding.cardiff.ac.uk/abacws#")
+- Extract readable names from URIs (show only the local name after the last '#' or '/', never the full building-namespace URI)
 - Be conversational and helpful
 - Don't show raw URIs unless specifically asked
 - If results contain UUIDs, mention they're available for data queries
