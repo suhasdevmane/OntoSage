@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>OntoSage · Admin Console</title>
+    <!-- Type system (Space Grotesk + JetBrains Mono) is self-hosted via @font-face in
+         style.css (config-panel/html/fonts/) — no external requests, deterministic offline. -->
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -22,9 +24,11 @@
           <button class="nav-item" data-tab="sources"><span>◧</span> Data Sources</button>
           <button class="nav-item" data-tab="ask"><span>✦</span> Ask (test)</button>
           <button class="nav-item" data-tab="ai"><span>⚛</span> AI &amp; Models</button>
+          <button class="nav-item" data-tab="services"><span>◇</span> Services</button>
           <button class="nav-item" data-tab="integrations"><span>⇄</span> Integrations</button>
           <button class="nav-item" data-tab="settings"><span>⚙</span> Settings (.env)</button>
           <button class="nav-item" data-tab="databases"><span>⛁</span> Databases</button>
+          <button class="nav-item" data-tab="ontology"><span>◆</span> Ontology</button>
           <button class="nav-item" data-tab="users"><span>◐</span> Users &amp; Access</button>
           <button class="nav-item" data-tab="health"><span>♥</span> Health</button>
           <button class="nav-item" data-tab="audit"><span>≡</span> Audit</button>
@@ -44,6 +48,7 @@
             <p class="page-sub" id="page-sub">System state at a glance.</p>
           </div>
           <div class="head-right">
+            <button id="theme-btn" class="btn ghost small" title="Toggle light / dark theme">◐ Theme</button>
             <button id="help-btn" class="btn ghost small" title="How to use this console">? Help</button>
             <span class="pill" id="feature-pill">checking…</span>
           </div>
@@ -63,6 +68,7 @@
         <section class="tab" id="tab-overview">
           <div class="overview-grid" id="overview-grid"><p class="hint">Loading…</p></div>
           <div class="overview-cta">
+            <button class="btn small primary" data-wizard>Connect data →</button>
             <button class="btn small" data-goto="ask">Try a question →</button>
             <button class="btn small ghost" data-goto="sources">Manage data sources</button>
             <button class="btn small ghost" data-goto="ai">AI &amp; Models</button>
@@ -121,6 +127,18 @@
         </section>
 
         <!-- Tab: Integrations (feeds + notification channels) -->
+        <!-- Tab: Services — launcher for attached admin tools (GraphDB, Grafana, Adminer…) -->
+        <section class="tab" id="tab-services" hidden>
+          <p class="hint big">Attached tools for viewing and managing OntoSage's data, graph, and
+            dashboards. <b>Open</b> launches each service's own web UI in a new tab. Status is
+            probed live from inside the stack. <span class="src-badge sim">optional</span> tools
+            aren't running yet — enable them in <code>docker-compose.yml</code>. Requires
+            <code>system:admin</code>.</p>
+          <div class="section-head" style="margin-top:8px"><h2>Services</h2>
+            <button id="services-refresh" class="btn ghost small">↻ Refresh</button></div>
+          <div id="services-grid"><p class="hint">Sign in as admin to view.</p></div>
+        </section>
+
         <section class="tab" id="tab-integrations" hidden>
           <p class="hint big">Live external data feeds and notification channels. These are configured in
             <code>input/feeds.yaml</code> and <code>input/channels.yaml</code> (edited there to preserve
@@ -176,6 +194,7 @@
               <span class="hint" id="db-counts"></span>
               <label class="toggle-inline"><input type="checkbox" id="db-active-only" /> Active only</label>
               <button id="load-demo-db" class="btn small ghost" title="Prefill a connection to the profile-gated demo-mysql. Start it first: docker compose --profile demo up -d demo-mysql">Load demo database</button>
+              <button id="wiz-open" class="btn small ghost" title="Guided: connect → describe sensors → verify">Guided setup</button>
               <button id="add-db" class="btn small">+ Add connection</button>
             </div>
           </div>
@@ -183,6 +202,10 @@
             connection used to fetch its time-series. Credentials are stored in <code>.env</code>;
             the connection entry lives in <code>database_registry.custom.yaml</code> (your curated
             registry is never rewritten). Applies after a restart.</p>
+          <p class="legend-note"><span class="src-badge real">real</span> = the original abacws
+            dataset (<code>database1</code>) &nbsp; <span class="src-badge sim">synthetic</span> =
+            tables generated for this demo. <b>All time-series values are demo/simulated data</b> —
+            the badge reflects the origin of the data <em>source</em>, not that any readings are live.</p>
           <div id="db-list" class="db-list"></div>
         </section>
 
@@ -223,6 +246,100 @@
             </div>
           </div>
           <div id="audit-body" class="audit-body"><p class="hint">Sign in as admin to view.</p></div>
+        </section>
+
+        <!-- Tab: Ontology (capabilities + named graphs + TTL upload + SPARQL) -->
+        <section class="tab" id="tab-ontology" hidden>
+          <!-- Declared-vs-populated coverage: declaring sensors as triples isn't enough —
+               their data must connect. This shows how many are actually answerable. -->
+          <p class="hint" id="onto-coverage" style="margin:0 0 16px" hidden></p>
+
+          <!-- Building identity — the per-building ontology PREREQUISITE (namespace + prefix) -->
+          <div class="section-head">
+            <h2>Building identity</h2>
+            <div class="head-actions">
+              <span class="restart-status" id="bldg-status"></span>
+              <button id="bldg-save" class="btn small primary">Save</button>
+            </div>
+          </div>
+          <p class="hint big">The <code>bldg:</code> prefix in every TTL is only a <em>label</em> — the
+            <b>namespace</b> it binds to is what makes triples belong to <em>this</em> building, and it
+            lives in <code>input/building.yaml</code>. For a new building, set this <b>first</b>, before
+            loading triples; it must match the <code>@prefix</code> declared in your TTLs. Edited here as
+            an alternative to hand-editing the file — read at boot, so it <b>applies after a restart</b>.
+            Requires <code>system:admin</code>.</p>
+          <div class="form-grid" id="bldg-identity">
+            <label>Building ID <input id="bldg-id" disabled title="Set via BUILDING_ID / building.yaml" /></label>
+            <label>Name <input id="bldg-name" placeholder="Abacws Building" /></label>
+            <label class="wide-field">Ontology namespace <input id="bldg-ns"
+              placeholder="http://abacwsbuilding.cardiff.ac.uk/abacws#" /></label>
+            <label>Prefix <input id="bldg-prefix" placeholder="bldg" /></label>
+          </div>
+
+          <!-- Semantic search index status + manual rebuild -->
+          <div class="section-head" style="margin-top:26px">
+            <h2>Semantic search index</h2>
+            <div class="head-actions">
+              <button id="sim-rebuild" class="btn small">Rebuild now</button>
+              <button id="sim-refresh" class="btn ghost small">↻ Refresh</button>
+            </div>
+          </div>
+          <p class="hint big">Lets OntoSage find sensors by meaning (semantic RAG). It rebuilds
+            automatically when you add sensors or upload TTL (debounced) — watch here for when the
+            newly-added data becomes searchable. Exact name/type questions work immediately.</p>
+          <p class="hint" id="sim-state">Sign in as admin to view.</p>
+
+          <!-- Building capabilities (guided add) -->
+          <div class="section-head">
+            <h2>Building capabilities</h2>
+            <div class="head-actions">
+              <span class="hint" id="cap-count"></span>
+              <button id="add-cap" class="btn small">+ Add capability</button>
+              <button id="refresh-cap" class="btn ghost small">↻ Refresh</button>
+            </div>
+          </div>
+          <p class="hint big">Amenities and services answered live in plain English (prayer room, lift,
+            café, showers…). Added as <code>ontosage:Amenity</code> triples and saved to
+            <code>input/&lt;bldg&gt;_capabilities.ttl</code> (a backup goes to <code>input/.trash/</code>),
+            so they persist across restarts — no Turtle, no code. Requires <code>system:admin</code>.</p>
+          <div id="cap-list" class="db-list"></div>
+
+          <!-- Named graphs -->
+          <div class="section-head" style="margin-top:26px">
+            <h2>Named graphs</h2>
+            <button id="refresh-graphs" class="btn ghost small">↻ Refresh</button>
+          </div>
+          <p class="hint big">Every <code>input/*.ttl</code> loads into a named graph on startup. Dropping
+            a file graph (<code>urn:ontosage:ttl:&lt;file&gt;</code>) moves its <code>input/</code> file to
+            <code>.trash/</code> so the drop survives a restart.</p>
+          <div id="graph-list" class="db-list"></div>
+
+          <!-- Upload TTL + SPARQL browser -->
+          <div class="onto-split">
+            <div class="onto-col">
+              <div class="section-head" style="margin-top:26px"><h2>Upload TTL</h2></div>
+              <p class="hint">Paste Turtle. A <code>urn:ontosage:ttl:&lt;file&gt;</code> graph also persists
+                it to <code>input/&lt;file&gt;</code> (survives restart); other graphs are GraphDB-only.</p>
+              <label class="onto-lbl">Named graph
+                <input id="onto-graph" value="urn:ontosage:ttl:my_extension.ttl" />
+              </label>
+              <textarea id="onto-ttl" class="ttl-area" placeholder="@prefix bldg: <...> .&#10;bldg:MySensor a brick:Temperature_Sensor ; ..."></textarea>
+              <div class="onto-actions">
+                <button id="onto-validate" class="btn small ghost">Validate</button>
+                <button id="onto-upload" class="btn small primary">Upload</button>
+                <span class="restart-status" id="onto-upload-status"></span>
+              </div>
+            </div>
+            <div class="onto-col">
+              <div class="section-head" style="margin-top:26px"><h2>SPARQL browser</h2></div>
+              <p class="hint">Read-only SELECT / ASK against the live graph.</p>
+              <textarea id="onto-sparql" class="ttl-area" placeholder="SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 20"></textarea>
+              <div class="onto-actions">
+                <button id="onto-run" class="btn small primary">Run query</button>
+              </div>
+              <div id="onto-sparql-result" class="onto-result"></div>
+            </div>
+          </div>
         </section>
 
         <!-- Tab: Guide -->
@@ -398,6 +515,11 @@
     <div class="modal-backdrop" id="sensors-modal" hidden>
       <div class="modal wide">
         <h3>Register sensors · <span id="sensors-dbkey"></span></h3>
+        <!-- Suggestions for the guided form: Brick classes + locations from the graph, and
+             the REAL UUIDs already in this datasource. You can still type a custom value. -->
+        <datalist id="dl-classes"></datalist>
+        <datalist id="dl-locations"></datalist>
+        <datalist id="dl-uuids"></datalist>
         <p class="hint">A connected database is inert until its sensors are described in the
           ontology. Register them here — each becomes discoverable by SPARQL and its
           <b>real UUID</b> routes queries to this DB (<code>ref:storedAt bldg:<span id="sensors-key2"></span></code>).</p>
@@ -428,6 +550,87 @@
       </div>
     </div>
 
+    <!-- Guided one-flow onboarding: connect a database → describe its sensors as triples → verify.
+         Self-contained (no stacked sub-modals) so cancelling a step never closes the whole flow. -->
+    <div class="modal-backdrop" id="wiz-modal" hidden>
+      <div class="modal wide">
+        <h3>Connect a data source</h3>
+        <p class="hint">No code — three steps: connect a database, describe its sensors as triples,
+          then verify OntoSage can answer about them.</p>
+        <ol class="wiz-steps">
+          <li data-wstep="1" class="active"><b>1</b> Data source</li>
+          <li data-wstep="2"><b>2</b> Describe sensors</li>
+          <li data-wstep="3"><b>3</b> Verify</li>
+        </ol>
+
+        <!-- Step 1: pick an existing connection or add a new one -->
+        <div class="wiz-pane" id="wiz-p1">
+          <div class="wiz-choice">
+            <label class="radio"><input type="radio" name="wiz-src" value="existing" checked /> Use an existing connection</label>
+            <label class="radio"><input type="radio" name="wiz-src" value="new" /> Add a new connection</label>
+          </div>
+          <div id="wiz-existing">
+            <label>Connection <select id="wiz-key"></select></label>
+            <p class="hint" id="wiz-existing-empty" hidden>No connections yet — choose “Add a new connection”.</p>
+          </div>
+          <div id="wiz-new" hidden>
+            <div class="form-grid">
+              <label>Key <input id="wiz-nkey" placeholder="warehouse1" /></label>
+              <label>Type
+                <select id="wiz-ntype"><option>mysql_narrow</option><option>mysql</option><option>postgresql</option><option>timescaledb</option></select>
+              </label>
+              <label>Host <input id="wiz-nhost" placeholder="db.example.com" /></label>
+              <label>Port <input id="wiz-nport" placeholder="3306" /></label>
+              <label>User <input id="wiz-nuser" /></label>
+              <label>Password <input id="wiz-npass" type="password" /></label>
+              <label>Database <input id="wiz-ndb" /></label>
+              <label>Narrow table <input id="wiz-ntable" placeholder="demo_readings (mysql_narrow only)" /></label>
+            </div>
+            <p class="hint">Credentials are written to <code>.env</code>; a new connection needs an
+              orchestrator <b>recreate</b> before its data can be read (Step 3). Describing its
+              sensors (Step 2) writes triples and takes effect immediately.</p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn ghost" data-close>Cancel</button>
+            <button class="btn primary" id="wiz-next-1">Next →</button>
+          </div>
+          <p class="err" id="wiz-err-1" hidden></p>
+        </div>
+
+        <!-- Step 2: describe sensors as triples (guided points or CSV) -->
+        <div class="wiz-pane" id="wiz-p2" hidden>
+          <p class="hint">Describe the sensors in <b><span id="wiz-key2"></span></b>. Pick a Brick
+            class + location from the suggestions and a real UUID from the datasource — each becomes
+            a triple immediately (<code>ref:storedAt bldg:<span id="wiz-key3"></span></code>).</p>
+          <h4 class="pts-title">Sensor points <button class="btn ghost small" id="wiz-add-point">+ point</button></h4>
+          <div id="wiz-points"></div>
+          <details class="wiz-csv"><summary class="hint">…or paste CSV instead</summary>
+            <p class="hint">Header: <code>local,brick_class,location,uuid,unit,label</code> (unit/label optional).</p>
+            <textarea id="wiz-csv-text" class="ttl-area" placeholder="local,brick_class,location,uuid,unit&#10;Warehouse_Temp_1,brick:Temperature_Sensor,bldg:Zone_A,7c28dec2-...,unit:DEG_C"></textarea>
+          </details>
+          <div class="modal-actions">
+            <button class="btn ghost" id="wiz-back-2">← Back</button>
+            <button class="btn primary" id="wiz-next-2">Register &amp; verify →</button>
+          </div>
+          <p class="err" id="wiz-err-2" hidden></p>
+        </div>
+
+        <!-- Step 3: verify answerability -->
+        <div class="wiz-pane" id="wiz-p3" hidden>
+          <div id="wiz-verdict" class="wiz-verdict">Checking…</div>
+          <div id="wiz-restart" hidden>
+            <p class="hint">This connection's credentials aren't loaded yet. Recreate the
+              orchestrator to read its data, then verify again.</p>
+            <button class="btn small" data-restart>↻ Restart service</button>
+          </div>
+          <div class="modal-actions">
+            <button class="btn ghost" id="wiz-again">+ Add more sensors</button>
+            <button class="btn primary" data-close id="wiz-finish">Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal-backdrop" id="user-modal" hidden>
       <div class="modal">
         <h3>Add user</h3>
@@ -447,6 +650,28 @@
         <div class="modal-actions"><button class="btn ghost" data-close>Cancel</button>
           <button class="btn primary" id="do-user">Create</button></div>
         <p class="err" id="user-err" hidden></p>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="cap-modal" hidden>
+      <div class="modal wide">
+        <h3>Add capability</h3>
+        <p class="hint">Describe a building amenity in plain terms. Saved as
+          <code>ontosage:Amenity</code> triples in <code>input/&lt;bldg&gt;_capabilities.ttl</code>
+          and answerable immediately — no Turtle, no restart.</p>
+        <!-- Core fields (always shown). The rest are rendered dynamically from the OCBV schema
+             (input/ontosage_schema.ttl) for the selected Type — only the datatype properties whose
+             rdfs:domain applies to that type appear. Add a property to the schema → it shows here. -->
+        <div class="form-grid">
+          <label>Type <select id="cap-type"></select></label>
+          <label>ID <input id="cap-id" placeholder="PrayerRoom_104" /></label>
+          <label class="wide-field">Label <input id="cap-label" placeholder="Multi-faith prayer &amp; reflection room" /></label>
+        </div>
+        <p class="hint" style="margin:10px 0 4px">Fields for this type (from the OCBV schema):</p>
+        <div class="form-grid" id="cap-dynamic"></div>
+        <div class="modal-actions"><button class="btn ghost" data-close>Cancel</button>
+          <button class="btn primary" id="do-cap">Add capability</button></div>
+        <p class="err" id="cap-err" hidden></p>
       </div>
     </div>
 

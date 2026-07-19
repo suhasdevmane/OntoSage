@@ -95,9 +95,11 @@ const TAB_META = {
   sources: ["Data Sources", "Toggle synthetic sources to unlock question-answering capabilities."],
   ask: ["Ask (test)", "Ask a question against the live pipeline — see the answer, provenance, and routing."],
   ai: ["AI & Models", "Choose the LLM provider/model and the embedding backend."],
+  services: ["Services", "Open the attached tools — data browsers, graph, dashboards."],
   integrations: ["Integrations", "Live data feeds and notification channels."],
   settings: ["Settings (.env)", "Edit the backend environment. Secrets are masked; changes apply on restart."],
   databases: ["Databases", "Connections whose credentials are used per-question, routed by sensor UUID."],
+  ontology: ["Ontology", "Add building capabilities as triples, upload TTL, and browse the knowledge graph."],
   users: ["Users & Access", "Manage accounts and control which data sources each role may query."],
   health: ["Health", "Live orchestrator status and feature state."],
   audit: ["Audit", "Recent mutating admin actions — who did what, when, and the outcome."],
@@ -111,9 +113,11 @@ function switchTab(tab) {
   if (tab === "overview") loadOverview();
   if (tab === "ask" && !$("ask-suggestions").innerHTML) renderAskSuggestions();
   if (tab === "ai") loadAiConfig();
+  if (tab === "services") loadServices();
   if (tab === "integrations") loadIntegrations();
   if (tab === "settings") loadEnv();
   if (tab === "databases") loadDatabases();
+  if (tab === "ontology") loadOntology();
   if (tab === "users") { loadUsers(); loadRoleAccess(); }
   if (tab === "health") loadHealth();
   if (tab === "audit") loadAudit();
@@ -234,7 +238,37 @@ async function loadCatalog() {
   catch (_) { capCatalog = {}; }
   return capCatalog;
 }
-function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+// Short label for an embedding model URI/name, e.g. "BAAI/bge-large-en-v1.5" -> "bge-large-en-v1.5".
+const embModelShort = (m) => { const s = String(m || "").split("/").pop().trim(); return s || "local model"; };
+const embName = (d) => (d.embedding_provider === "openai" ? "OpenAI" : (d.embedding_model_local ? embModelShort(d.embedding_model_local) : "Local"));
+const embDim = (d) => (d.embedding_provider === "openai" ? d.embedding_dimension_openai : d.embedding_dimension_local);
+
+// ── Theme (light / dark) ─────────────────────────────────────────────────────
+// Default follows the OS (prefers-color-scheme); an explicit choice is stored in
+// localStorage and wins in both directions via <html data-theme>.
+function effectiveTheme() {
+  const set = document.documentElement.getAttribute("data-theme");
+  if (set === "light" || set === "dark") return set;
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+function syncThemeBtn() {
+  const b = document.getElementById("theme-btn");
+  if (b) b.textContent = effectiveTheme() === "light" ? "☾ Dark" : "☀ Light";
+}
+function applyTheme(t) {
+  if (t !== "light" && t !== "dark") return;
+  document.documentElement.setAttribute("data-theme", t);
+  try { localStorage.setItem("cp-theme", t); } catch (_) {}
+  syncThemeBtn();
+}
+function toggleTheme() { applyTheme(effectiveTheme() === "light" ? "dark" : "light"); }
+(function initTheme() {
+  let s = null;
+  try { s = localStorage.getItem("cp-theme"); } catch (_) {}
+  if (s === "light" || s === "dark") document.documentElement.setAttribute("data-theme", s);
+  syncThemeBtn();
+})();
 async function showDetails(sourceId) {
   const s = state.sources.find((x) => x.id === sourceId);
   if (!s) return;
@@ -391,13 +425,43 @@ async function addEnvRow() {
 // ── Databases tab ──────────────────────────────────────────────────────────────
 let dbCache = [];
 let dbActiveOnly = false;
+let dbAnswerability = {}; // key -> {declared, with_data, level}; cached so filter toggles don't re-probe
+let answerabilityData = null; // full batch result (counts + building-wide totals) for the coverage badge
 async function loadDatabases() {
   if (!state.token) { $("db-list").innerHTML = '<p class="hint">Sign in as admin to view connections.</p>'; return; }
   try {
     const { body } = await api("/api/v1/admin/databases");
     dbCache = body.data.databases || [];
     renderDbCards();
+    loadAnswerability(); // fill the ✓/◐/✗ per-card coverage (one batch request, active DBs only)
   } catch (e) { $("db-list").innerHTML = `<p class="err">${e.message}</p>`; }
+}
+// One batch request → answerability for every active datasource; cached + applied to the cards
+// and the Ontology coverage badge.
+async function loadAnswerability() {
+  try {
+    const { body } = await api("/api/v1/admin/databases/answerability");
+    answerabilityData = body.data || {};
+    dbAnswerability = answerabilityData.counts || {};
+    applyAnswerability();
+    renderOntoCoverage(answerabilityData);
+  } catch (_) { /* non-fatal — cards just show no coverage badge */ }
+}
+function applyAnswerability() {
+  Object.entries(dbAnswerability).forEach(([k, a]) => {
+    if (a) setStatus(`verify-${k}`, a.level || "warn", `${a.with_data}/${a.declared} answerable`);
+  });
+}
+// Building-wide declared-vs-populated coverage on the Ontology tab: declaring sensors as
+// triples isn't enough — their datasource must actually hold the data.
+function renderOntoCoverage(data) {
+  const el = $("onto-coverage");
+  if (!el) return;
+  const dec = data?.total_declared || 0, wd = data?.total_with_data || 0, ds = data?.datasources || 0;
+  if (!dec) { el.hidden = true; return; }
+  const level = wd === dec ? "ok" : wd === 0 ? "bad" : "warn";
+  el.hidden = false;
+  el.innerHTML = `<span class="dot ${level}"></span><b>Sensor data coverage:</b> ${wd} of ${dec} datasource-linked sensor(s) are answerable (their UUIDs have data) across ${ds} active datasource(s). Declaring a sensor as a triple isn't enough — its datasource must hold the readings; use a datasource's <b>Verify</b> to see which are missing data.`;
 }
 function renderDbCards() {
   const shown = dbActiveOnly ? dbCache.filter((d) => d.active) : dbCache;
@@ -409,14 +473,20 @@ function renderDbCards() {
     const actBadge = d.active
       ? '<span class="src-badge act" title="Initialized by this building (building.yaml storage.databases)">active</span>'
       : '<span class="src-badge dormant" title="Template — not initialized. Add its key to building.yaml storage.databases to activate.">dormant</span>';
+    // Real vs synthetic DATA SOURCE: only the original abacws dataset (database1) is real;
+    // every other table was generated for the demo. All timeseries values are demo data.
+    const natBadge = d.nature === "real"
+      ? `<span class="src-badge real" title="${esc(d.note || "Original abacws dataset")}">real</span>`
+      : `<span class="src-badge sim" title="${esc(d.note || "Generated demo data source")}">synthetic</span>`;
     return `<div class="db-card${d.active ? "" : " is-dormant"}">
-      <h4>${d.key} <span class="src-badge ${d.source}">${d.source}</span> ${actBadge}</h4>
+      <h4>${d.key} <span class="src-badge ${d.source}">${d.source}</span> ${natBadge} ${actBadge}</h4>
       <div class="kv"><span>type</span><span>${d.type}</span></div>${rows}
-      <div class="db-status"><span class="count" data-count-for="${d.key}">sensors: …</span><span class="probe" id="probe-${d.key}"></span></div>
+      <div class="db-status"><span class="count" data-count-for="${d.key}">sensors: …</span><span class="probe" id="probe-${d.key}"></span><span class="probe" id="verify-${d.key}"></span></div>
       <div class="db-actions">
         <button class="btn ghost small" data-test-db="${d.key}">Test</button>
         ${table ? `<button class="btn ghost small" data-data-db="${d.key}" data-table="${table}">Data</button>` : ""}
         <button class="btn ghost small" data-sensors="${d.key}">Register sensors</button>
+        <button class="btn ghost small" data-verify-db="${d.key}" title="Check this datasource is actually answerable: declared sensors (ref:storedAt) whose UUIDs have data">Verify</button>
         ${d.source === "custom" ? `<button class="btn small danger" data-del-db="${d.key}">Delete</button>` : ""}
       </div>
     </div>`;
@@ -434,6 +504,28 @@ function renderDbCards() {
       if (el) el.textContent = `sensors: ${counts[d.key] ?? 0} triples`;
     });
   })();
+  applyAnswerability(); // re-apply cached ✓/◐/✗ (a filter toggle rebuilds the cards)
+}
+// Verify a datasource is actually answerable end-to-end: are its sensors DECLARED in the
+// ontology (ref:storedAt), and do those UUIDs have real data? Shows a persistent ✓/◐/✗
+// verdict on the card and a toast with detail.
+async function verifyDatasource(key) {
+  setStatus(`verify-${key}`, "warn", "verifying…");
+  try {
+    const { body } = await api(`/api/v1/admin/databases/${encodeURIComponent(key)}/answerability`);
+    if (!body.success) {
+      setStatus(`verify-${key}`, "bad", "unreachable");
+      return toast(body.error || "verify failed", "err");
+    }
+    const d = body.data || {};
+    const dot = d.level === "ok" ? "ok" : d.level === "bad" ? "bad" : "warn";
+    setStatus(`verify-${key}`, dot, `${d.with_data}/${d.declared} answerable`);
+    dbAnswerability[key] = { declared: d.declared, with_data: d.with_data, level: d.level }; // persist across re-renders
+    toast(d.verdict || "checked", d.level === "ok" ? "ok" : d.level === "bad" ? "err" : "");
+  } catch (e) {
+    setStatus(`verify-${key}`, "bad", "error");
+    toast(e.message, "err");
+  }
 }
 async function testDatabase(key) {
   const el = document.getElementById(`probe-${key}`);
@@ -481,18 +573,18 @@ async function testNewConnection() {
 }
 
 let sensorsDbKey = null;
-function addSensorPointRow(p = {}) {
+function addSensorPointRow(p = {}, containerId = "sensor-points") {
   const row = document.createElement("div");
   row.className = "point-row";
   row.innerHTML = `
     <input placeholder="local name" value="${p.local || ""}" data-f="local" />
-    <input placeholder="brick:Class" value="${p.brick_class || ""}" data-f="brick_class" />
-    <input placeholder="bldg:Location" value="${p.location || ""}" data-f="location" />
-    <input placeholder="UUID (from DB)" value="${p.uuid || ""}" data-f="uuid" />
+    <input placeholder="brick:Class" list="dl-classes" autocomplete="off" value="${p.brick_class || ""}" data-f="brick_class" />
+    <input placeholder="bldg:Location" list="dl-locations" autocomplete="off" value="${p.location || ""}" data-f="location" />
+    <input placeholder="UUID (from DB)" list="dl-uuids" autocomplete="off" value="${p.uuid || ""}" data-f="uuid" />
     <input placeholder="unit:X" value="${p.unit || ""}" data-f="unit" />
     <button class="rm">✕</button>`;
   row.querySelector(".rm").addEventListener("click", () => row.remove());
-  $("sensor-points").appendChild(row);
+  $(containerId).appendChild(row);
 }
 function openSensors(dbKey) {
   sensorsDbKey = dbKey;
@@ -512,6 +604,145 @@ function openSensors(dbKey) {
     setSensorMode("points");
   }
   open("sensors-modal");
+  fillSensorSuggestions(dbKey);
+}
+// Populate the guided-form suggestions: Brick classes + locations from the graph, and the
+// REAL UUIDs already present in this datasource — so an admin selects instead of typing.
+// Non-fatal; free-text entry still works if a lookup is unavailable.
+async function fillSensorSuggestions(dbKey) {
+  const setOpts = (id, vals) => {
+    const el = $(id);
+    if (el) el.innerHTML = (vals || []).map((v) => `<option value="${esc(v)}"></option>`).join("");
+  };
+  try {
+    const { body } = await api("/api/v1/admin/onboarding/vocab");
+    setOpts("dl-classes", (body.data?.sensor_classes || []).map((c) => "brick:" + c));
+    setOpts("dl-locations", (body.data?.locations || []).map((l) => "bldg:" + l));
+  } catch (_) { /* graph vocab unavailable — free-text still works */ }
+  try {
+    const { body } = await api(`/api/v1/admin/databases/${encodeURIComponent(dbKey)}/uuids`);
+    setOpts("dl-uuids", body.data?.uuids || []);
+  } catch (_) { /* datasource unreachable — free-text still works */ }
+}
+
+// ── Guided "Connect a data source" wizard ───────────────────────────────────────
+// One self-contained flow: pick/add a connection → describe its sensors as triples →
+// verify OntoSage can answer. Reuses the same endpoints + datalists as the tabs; kept in
+// a single modal so cancelling a step never tears down the whole flow.
+let wizKey = null; // the datasource being onboarded this run
+let wizIsNew = false; // true when a brand-new connection was created this run
+let wizHotApplied = false; // true when the new connection was hot-applied (no restart needed)
+function openConnectWizard() {
+  if (!state.token) return toast("Sign in as admin first", "err");
+  wizKey = null;
+  wizIsNew = false;
+  wizHotApplied = false;
+  const keys = (dbCache || []).map((d) => d.key);
+  $("wiz-key").innerHTML = keys.map((k) => `<option>${esc(k)}</option>`).join("");
+  $("wiz-existing-empty").hidden = keys.length > 0;
+  const startMode = keys.length ? "existing" : "new";
+  const radio = document.querySelector(`input[name="wiz-src"][value="${startMode}"]`);
+  if (radio) radio.checked = true;
+  wizSyncSrc();
+  ["wiz-err-1", "wiz-err-2"].forEach((id) => { const e = $(id); if (e) e.hidden = true; });
+  wizGoto(1);
+  open("wiz-modal");
+}
+function wizSyncSrc() {
+  const mode = (document.querySelector('input[name="wiz-src"]:checked') || {}).value || "existing";
+  $("wiz-existing").hidden = mode !== "existing";
+  $("wiz-new").hidden = mode !== "new";
+}
+function wizGoto(step) {
+  [1, 2, 3].forEach((n) => { $(`wiz-p${n}`).hidden = n !== step; });
+  document.querySelectorAll("#wiz-modal .wiz-steps li").forEach((li) => {
+    const n = Number(li.dataset.wstep);
+    li.classList.toggle("active", n === step);
+    li.classList.toggle("done", n < step);
+  });
+}
+async function wizStep1Next() {
+  const mode = (document.querySelector('input[name="wiz-src"]:checked') || {}).value || "existing";
+  if (mode === "existing") {
+    wizKey = $("wiz-key").value;
+    wizIsNew = false;
+    if (!wizKey) return err("wiz-err-1", "Pick a connection or add a new one.");
+  } else {
+    const spec = {
+      key: $("wiz-nkey").value.trim(), type: $("wiz-ntype").value, host: $("wiz-nhost").value.trim(),
+      port: $("wiz-nport").value.trim() || "3306", user: $("wiz-nuser").value.trim(),
+      password: $("wiz-npass").value, database: $("wiz-ndb").value.trim(),
+      table: $("wiz-ntable").value.trim(),
+    };
+    if (!spec.key || !spec.host) return err("wiz-err-1", "Key and Host are required.");
+    if (spec.type === "mysql_narrow" && !spec.table) return err("wiz-err-1", "mysql_narrow needs a Narrow table.");
+    try {
+      const { body } = await api("/api/v1/admin/databases", { method: "POST", body: JSON.stringify(spec) });
+      if (!body.success) return err("wiz-err-1", body.error || "failed");
+      wizKey = spec.key;
+      wizIsNew = true;
+      wizHotApplied = !!(body.data && body.data.hot_applied); // false → reload failed, restart needed
+      loadDatabases();
+    } catch (e) { return err("wiz-err-1", e.message); }
+  }
+  $("wiz-key2").textContent = wizKey;
+  $("wiz-key3").textContent = wizKey;
+  $("wiz-points").innerHTML = "";
+  addSensorPointRow({}, "wiz-points");
+  if ($("wiz-csv-text")) $("wiz-csv-text").value = "";
+  fillSensorSuggestions(wizKey);
+  wizGoto(2);
+}
+async function wizStep2Next() {
+  const base = `/api/v1/admin/databases/${encodeURIComponent(wizKey)}`;
+  const csv = ($("wiz-csv-text").value || "").trim();
+  try {
+    let resp;
+    if (csv) {
+      resp = await api(`${base}/sensors/csv`, { method: "POST", body: JSON.stringify({ csv }) });
+    } else {
+      const points = [...document.querySelectorAll("#wiz-points .point-row")].map((row) => {
+        const pt = {};
+        row.querySelectorAll("input").forEach((i) => { if (i.value.trim()) pt[i.dataset.f] = i.value.trim(); });
+        return pt;
+      }).filter((pt) => pt.local);
+      if (!points.length) return err("wiz-err-2", "Add at least one sensor (local name required), or paste CSV.");
+      resp = await api(`${base}/sensors`, { method: "POST", body: JSON.stringify({ points }) });
+    }
+    const body = resp.body;
+    if (!body.success) return err("wiz-err-2", body.error || "failed");
+    if ((body.data?.warnings || []).length) toast(body.data.warnings[0], "err");
+    loadDatabases();
+    wizGoto(3);
+    wizVerify();
+  } catch (e) { err("wiz-err-2", e.message); }
+}
+async function wizVerify() {
+  const v = $("wiz-verdict");
+  v.className = "wiz-verdict";
+  v.textContent = "Checking…";
+  $("wiz-restart").hidden = true;
+  try {
+    const { body } = await api(`/api/v1/admin/databases/${encodeURIComponent(wizKey)}/answerability`);
+    if (!body.success) {
+      v.classList.add("bad");
+      v.textContent = body.error || "Could not verify.";
+      if (wizIsNew && !wizHotApplied) $("wiz-restart").hidden = false;
+      return;
+    }
+    const d = body.data || {};
+    v.classList.add(d.level === "ok" ? "ok" : d.level === "bad" ? "bad" : "warn");
+    v.innerHTML = `<b>${esc(d.verdict || "checked")}</b>` +
+      `<div class="hint">${d.with_data}/${d.declared} declared sensors return data.</div>`;
+    dbAnswerability[wizKey] = { declared: d.declared, with_data: d.with_data, level: d.level };
+    // Only surface the restart shortcut if the hot-reload actually failed; a hot-applied
+    // connection with no data is a data/UUID problem a restart won't fix.
+    if (wizIsNew && !wizHotApplied && (d.with_data || 0) === 0) $("wiz-restart").hidden = false;
+  } catch (e) {
+    v.classList.add("bad");
+    v.textContent = e.message;
+    if (wizIsNew && !wizHotApplied) $("wiz-restart").hidden = false;
+  }
 }
 
 // ── "Load demo database" — prefill a connection to the profile-gated demo-mysql ─
@@ -586,7 +817,18 @@ async function createDatabase() {
   if (spec.type === "mysql_narrow" && !spec.table) return err("db-err", "mysql_narrow needs a Narrow table.");
   try {
     const { body } = await api("/api/v1/admin/databases", { method: "POST", body: JSON.stringify(spec) });
-    if (body.success) { closeModals(); toast(`Added ${spec.key}`, "ok"); showRecreateNotice(`Connection '${spec.key}' added — register its sensors, then recreate to apply its credentials.`); loadDatabases(); }
+    if (body.success) {
+      closeModals();
+      toast(`Added ${spec.key}`, "ok");
+      // Add now hot-applies (adapter pool reloaded live). Only fall back to the
+      // recreate prompt if the server reported the hot-apply failed.
+      if (body.data && body.data.hot_applied === false) {
+        showRecreateNotice(`Connection '${spec.key}' added but not applied live — recreate to load its credentials, then register its sensors.`);
+      } else {
+        toast(`'${spec.key}' is live — register its sensors to make it answerable`, "ok");
+      }
+      loadDatabases();
+    }
     else err("db-err", body.error || "failed");
   } catch (e) { err("db-err", e.message); }
 }
@@ -741,7 +983,7 @@ async function loadOverview() {
       const model = d.model_provider === "openai" ? d.openai_model : d.model_provider === "cloud" ? d.ollama_cloud_model : d.ollama_model;
       const provLabel = d.model_provider === "local" ? "Local Ollama" : d.model_provider === "cloud" ? "Ollama Cloud" : "OpenAI";
       tiles.push(ovTile("LLM provider", provLabel, model || "", "⚛"));
-      tiles.push(ovTile("Embeddings", d.embedding_provider === "openai" ? "OpenAI" : "Local MiniLM", d.embedding_provider === "openai" ? "1536-d" : "384-d", "▦"));
+      tiles.push(ovTile("Embeddings", embName(d), embDim(d) ? `${embDim(d)}-d` : "local", "▦"));
     } catch (_) {}
     try {
       const { body } = await api("/api/v1/admin/users");
@@ -802,8 +1044,15 @@ function renderAiConfig() {
   const provLabel = (p) => (p === "local" ? "Local Ollama" : p === "cloud" ? "Ollama Cloud" : "OpenAI");
   const providerRadios = (c.providers || []).map((p) =>
     `<label class="radio"><input type="radio" name="ai-provider" value="${p}" ${p === c.model_provider ? "checked" : ""}/> ${provLabel(p)}</label>`).join("");
+  const embLabel = (p) => {
+    if (p === "openai") return `OpenAI${c.embedding_dimension_openai ? ` (${c.embedding_dimension_openai}-d)` : ""}`;
+    const name = c.embedding_model_local ? ` — ${esc(embModelShort(c.embedding_model_local))}` : "";
+    return `Local${name}${c.embedding_dimension_local ? ` (${c.embedding_dimension_local}-d)` : ""}`;
+  };
   const embRadios = (c.embedding_providers || []).map((p) =>
-    `<label class="radio"><input type="radio" name="ai-emb" value="${p}" ${p === c.embedding_provider ? "checked" : ""}/> ${p === "openai" ? "OpenAI (1536-d)" : "Local MiniLM (384-d)"}</label>`).join("");
+    `<label class="radio"><input type="radio" name="ai-emb" value="${p}" ${p === c.embedding_provider ? "checked" : ""}/> ${embLabel(p)}</label>`).join("");
+  const dimSwap = c.embedding_dimension_local && c.embedding_dimension_openai
+    ? ` (${c.embedding_dimension_local} ↔ ${c.embedding_dimension_openai})` : "";
   $("ai-body").innerHTML = `
     <div class="ai-card">
       <h3>LLM provider</h3>
@@ -817,7 +1066,7 @@ function renderAiConfig() {
     <div class="ai-card">
       <h3>Embedding backend</h3>
       <div class="ai-radios">${embRadios}</div>
-      <p class="warn-inline">⚠ Switching the embedding provider changes vector dimensions (384 ↔ 1536) and
+      <p class="warn-inline">⚠ Switching the embedding provider changes vector dimensions${dimSwap} and
         <b>invalidates the existing Qdrant index</b>. Re-index after changing this.</p>
     </div>
     <div class="ai-save">
@@ -908,6 +1157,57 @@ async function saveAiConfig() {
 }
 
 // ── Integrations tab (feeds + notification channels) ─────────────────────────
+// ── Services launcher: cards that open each attached tool's web UI ──────────────
+// Open URL is built from the viewer's own hostname so links work via localhost OR a
+// remote IP. Status (online/offline/optional) is probed server-side.
+function serviceOpenUrl(s) {
+  const proto = location.protocol === "https:" ? "https:" : "http:";
+  return `${proto}//${location.hostname}:${s.port}${s.path || "/"}`;
+}
+async function loadServices() {
+  const grid = $("services-grid");
+  if (!state.token) { grid.innerHTML = '<p class="hint">Sign in as admin to view.</p>'; return; }
+  grid.innerHTML = '<p class="hint">Probing services…</p>';
+  try {
+    const { body } = await api("/api/v1/admin/services");
+    if (!body.success) { grid.innerHTML = `<p class="hint">${esc(body.error || "failed")}</p>`; return; }
+    renderServiceCards(body.data?.services || []);
+  } catch (e) { grid.innerHTML = `<p class="hint">${esc(e.message)}</p>`; }
+}
+function renderServiceCards(services) {
+  const grid = $("services-grid");
+  if (!services.length) { grid.innerHTML = '<p class="hint">No services configured.</p>'; return; }
+  // group by category, preserving catalog order
+  const cats = [];
+  const byCat = {};
+  services.forEach((s) => {
+    const c = s.category || "Other";
+    if (!byCat[c]) { byCat[c] = []; cats.push(c); }
+    byCat[c].push(s);
+  });
+  grid.innerHTML = cats.map((c) => `
+    <h3 class="svc-cat">${esc(c)}</h3>
+    <div class="svc-grid">${byCat[c].map(serviceCard).join("")}</div>`).join("");
+}
+function serviceCard(s) {
+  const dot = s.status === "online" ? "ok" : s.status === "optional" ? "warn" : "bad";
+  const statusText = s.status === "online" ? "online" : s.status === "optional" ? "optional" : "offline";
+  const url = serviceOpenUrl(s);
+  const openable = s.status === "online";
+  const openBtn = openable
+    ? `<a class="btn small primary" href="${esc(url)}" target="_blank" rel="noopener">Open ↗</a>`
+    : `<button class="btn small" disabled title="${esc(s.note || "Service is not running")}">Open ↗</button>`;
+  return `<div class="svc-card${openable ? "" : " svc-off"}">
+    <div class="svc-icon">${s.icon || "◇"}</div>
+    <div class="svc-body">
+      <div class="svc-name">${esc(s.name)} <span class="dot ${dot}"></span><span class="svc-status">${statusText}</span></div>
+      <div class="svc-desc">${esc(s.desc || "")}</div>
+      ${s.status === "optional" && s.note ? `<div class="svc-note">${esc(s.note)}</div>` : ""}
+      <div class="svc-actions">${openBtn}<span class="svc-url">:${s.port}${esc(s.path || "/")}</span></div>
+    </div>
+  </div>`;
+}
+
 async function loadIntegrations() {
   if (!state.token) {
     $("feeds-list").innerHTML = '<p class="hint">Sign in as admin to view.</p>';
@@ -1003,9 +1303,227 @@ function logout() {
   localStorage.removeItem("ds_token"); localStorage.removeItem("ds_user");
   setAuthUI(); loadSources(); loadOverview();
 }
+// Open the admin sign-in modal (optionally with a message) and focus the username field.
+function promptLogin(msg) {
+  if (msg) { $("login-err").textContent = msg; $("login-err").hidden = false; }
+  else { $("login-err").hidden = true; }
+  open("login-modal");
+  setTimeout(() => $("u") && $("u").focus(), 60);
+}
+// On load / bfcache restore: prompt admin sign-in if there is no session, or if the stored
+// token has expired (sessions are server-side and can lapse or be revoked between visits, so
+// a persisted ds_token can look "signed in" while every API call 401s).
+async function ensureAdminSession() {
+  if (!state.token) { promptLogin(); return; }
+  try {
+    const res = await fetch("/api/v1/admin/capabilities", { headers: authHeaders() });
+    if (res.status === 401 || res.status === 403) {
+      state.token = null; state.user = null;
+      localStorage.removeItem("ds_token"); localStorage.removeItem("ds_user");
+      setAuthUI();
+      promptLogin("Your admin session has expired — please sign in again.");
+    }
+  } catch (_) { /* network hiccup — leave the session as-is */ }
+}
 
 // ── Modals + events ────────────────────────────────────────────────────────────
 function open(id) { $(id).hidden = false; }
+// ── Ontology tab (capabilities + named graphs + TTL upload + SPARQL) ─────────────
+let capTypes = ["Facility"];
+const localName = (uri) => { const s = String(uri || ""); const i = Math.max(s.lastIndexOf("#"), s.lastIndexOf("/")); return i >= 0 ? s.slice(i + 1) : s; };
+const localOk = (s) => /^[A-Za-z][A-Za-z0-9_.-]{0,63}$/.test(s || "");
+
+function loadOntology() {
+  loadBuildingConfig();
+  loadSimStatus();
+  loadCapabilities();
+  loadGraphs();
+  if (answerabilityData) renderOntoCoverage(answerabilityData);
+  else if (state.token) loadAnswerability();
+}
+
+// ── Building identity (ontology namespace / prefix) ────────────────────────────
+async function loadBuildingConfig() {
+  if (!state.token) { setStatus("bldg-status", "", ""); return; }
+  try {
+    const { body } = await api("/api/v1/admin/building/config");
+    const d = body.data || {};
+    if ($("bldg-id")) $("bldg-id").value = d.building_id || "";
+    if ($("bldg-name")) $("bldg-name").value = d.building_name || "";
+    if ($("bldg-ns")) $("bldg-ns").value = d.ontology_namespace || "";
+    if ($("bldg-prefix")) $("bldg-prefix").value = d.ontology_prefix || "bldg";
+  } catch (e) { setStatus("bldg-status", "bad", e.message); }
+}
+
+async function saveBuildingConfig() {
+  if (!state.token) return toast("Sign in as admin first", "err");
+  const ns = $("bldg-ns").value.trim();
+  const prefix = $("bldg-prefix").value.trim() || "bldg";
+  const name = $("bldg-name").value.trim();
+  if (!ns) return toast("Ontology namespace is required", "err");
+  setStatus("bldg-status", "warn", "saving…");
+  try {
+    const { body } = await api("/api/v1/admin/building/config", {
+      method: "PUT",
+      body: JSON.stringify({ ontology_namespace: ns, ontology_prefix: prefix, building_name: name }),
+    });
+    if (body.success) {
+      setStatus("bldg-status", "ok", "saved ✓");
+      showRecreateNotice("Building namespace/prefix saved to building.yaml — restart the orchestrator to apply it.");
+    } else {
+      setStatus("bldg-status", "bad", body.error || "save failed");
+      toast(body.error || "Save failed", "err");
+    }
+  } catch (e) { setStatus("bldg-status", "bad", e.message); toast(e.message, "err"); }
+}
+
+// ── Semantic search index status ───────────────────────────────────────────────
+async function loadSimStatus() {
+  if (!state.token) { $("sim-state").innerHTML = "Sign in as admin to view."; return; }
+  try {
+    const { body } = await api("/api/v1/admin/reindex/similarity-status");
+    const d = body.data || {};
+    const busy = !d.ready || d.graphdb_building || d.state === "pending" || d.state === "rebuilding";
+    const gs = d.graphdb_status ? ` · GraphDB: ${esc(d.graphdb_status)}` : "";
+    const dot = busy ? '<span class="dot warn"></span>' : '<span class="dot ok"></span>';
+    $("sim-state").innerHTML = busy
+      ? `${dot}Rebuilding — newly-added sensors/triples will be searchable shortly${gs}.`
+      : `${dot}Up to date — ask OntoSage your questions${gs}.`;
+    if ($("sim-rebuild")) $("sim-rebuild").disabled = busy;
+    if (busy) { clearTimeout(loadSimStatus._t); loadSimStatus._t = setTimeout(loadSimStatus, 3000); }
+  } catch (e) { $("sim-state").innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+}
+
+async function rebuildSim() {
+  if (!state.token) return toast("Sign in as admin first", "err");
+  try {
+    await api("/api/v1/admin/reindex", { method: "POST", body: JSON.stringify({ targets: ["ontology_similarity"] }) });
+    toast("Rebuild started", "ok"); loadSimStatus();
+  } catch (e) { toast(e.message, "err"); }
+}
+
+async function loadCapabilities() {
+  if (!state.token) { $("cap-list").innerHTML = '<p class="hint">Sign in as admin to view capabilities.</p>'; return; }
+  try {
+    const { body } = await api("/api/v1/admin/capabilities");
+    const rows = body.data?.amenities || [];
+    if (body.data?.types?.length) capTypes = body.data.types;
+    $("cap-count").textContent = `${rows.length} capabilit${rows.length === 1 ? "y" : "ies"}`;
+    $("cap-list").innerHTML = rows.map((a) => {
+      const loc = a.loc ? ` · ${esc(a.loc)}` : "";
+      return `<div class="db-card">
+        <h4>${esc(a.label || "(no label)")}</h4>
+        <div class="kv"><span>id</span><span>${esc(localName(a.a))}</span></div>
+        ${a.loc ? `<div class="kv"><span>location</span><span>${esc(a.loc)}</span></div>` : ""}
+        <div class="db-actions"><button class="btn small danger" data-del-cap="${esc(localName(a.a))}">Delete</button></div>
+      </div>`;
+    }).join("") || '<p class="hint">No capabilities yet. Click “+ Add capability”.</p>';
+  } catch (e) { $("cap-list").innerHTML = `<p class="err">${e.message}</p>`; }
+}
+
+function openCapModal() {
+  if (!state.token) return toast("Sign in as admin first", "err");
+  $("cap-err").hidden = true;
+  $("cap-type").innerHTML = capTypes.map((t) => `<option>${esc(t)}</option>`).join("");
+  ["id", "label", "location", "floor", "category", "lay", "note", "answer", "url", "email", "phone", "reportto", "steps"].forEach((f) => { if ($("cap-" + f)) $("cap-" + f).value = ""; });
+  open("cap-modal");
+}
+
+async function createCapability() {
+  const payload = {
+    id: $("cap-id").value.trim(), type: $("cap-type").value, label: $("cap-label").value.trim(),
+    location: $("cap-location").value.trim(), floor: $("cap-floor").value.trim(),
+    category: $("cap-category").value.trim(), lay_terms: $("cap-lay").value.trim(),
+    note: $("cap-note").value.trim(),
+    answer_text: $("cap-answer").value.trim(), info_url: $("cap-url").value.trim(),
+    contact_email: $("cap-email").value.trim(), contact_phone: $("cap-phone").value.trim(),
+    report_to: $("cap-reportto").value.trim(), steps: $("cap-steps").value.trim(),
+  };
+  if (!payload.id || !localOk(payload.id)) return err("cap-err", "ID must be a simple local name (letters, digits, _ . -), starting with a letter.");
+  if (!payload.label) return err("cap-err", "Label is required.");
+  try {
+    const { body } = await api("/api/v1/admin/capabilities", { method: "POST", body: JSON.stringify(payload) });
+    if (!body.success) return err("cap-err", body.error || "Failed to add capability.");
+    closeModals(); toast(`Added capability: ${localName(body.data?.subject)}`, "ok"); loadCapabilities();
+  } catch (e) { err("cap-err", e.message); }
+}
+
+async function deleteCapability(name) {
+  if (!confirm(`Delete capability "${name}"?\n\nRemoved from the building's capability TTL (a backup is saved to input/.trash/ first) and re-synced, so the deletion persists across restarts.`)) return;
+  try {
+    const { body } = await api(`/api/v1/admin/capabilities/${encodeURIComponent(name)}`, { method: "DELETE" });
+    toast(body.success ? `Deleted: ${name}` : (body.error || "Delete failed"), body.success ? "ok" : "err");
+    loadCapabilities();
+  } catch (e) { toast(e.message, "err"); }
+}
+
+async function loadGraphs() {
+  if (!state.token) { $("graph-list").innerHTML = '<p class="hint">Sign in as admin to view named graphs.</p>'; return; }
+  try {
+    const { body } = await api("/api/v1/admin/ontology/graphs");
+    const graphs = body.data?.graphs || {};
+    const entries = Object.entries(graphs).sort((a, b) => b[1] - a[1]);
+    $("graph-list").innerHTML = entries.map(([g, n]) => {
+      const isFile = g.startsWith("urn:ontosage:ttl:");
+      return `<div class="db-card">
+        <h4 class="onto-guri">${esc(g)}</h4>
+        <div class="kv"><span>triples</span><span>${Number(n).toLocaleString()}</span>${isFile ? '<span class="src-badge custom" title="Backed by an input/ file">file</span>' : ""}</div>
+        <div class="db-actions"><button class="btn small danger" data-drop-graph="${esc(g)}">Drop</button></div>
+      </div>`;
+    }).join("") || '<p class="hint">No named graphs found (GraphDB empty or unreachable).</p>';
+  } catch (e) { $("graph-list").innerHTML = `<p class="err">${e.message}</p>`; }
+}
+
+async function dropGraph(uri) {
+  const isFile = uri.startsWith("urn:ontosage:ttl:");
+  const extra = isFile ? "\n\nIts input/ file is moved to input/.trash/ (reversible) so the drop survives a restart." : "\n\nThis removes the triples from GraphDB only.";
+  if (!confirm(`Drop named graph:\n${uri}${extra}`)) return;
+  try {
+    const { body } = await api(`/api/v1/admin/ontology/graphs/${encodeURIComponent(uri)}`, { method: "DELETE" });
+    toast(body.data?.dropped ? `Dropped: ${uri}` : (body.error || "Drop failed"), body.data?.dropped ? "ok" : "err");
+    loadGraphs();
+  } catch (e) { toast(e.message, "err"); }
+}
+
+async function validateOntoTtl() {
+  const ttl = $("onto-ttl").value.trim();
+  if (!ttl) return toast("Paste some Turtle first", "err");
+  try {
+    const { body } = await api("/api/v1/admin/ontology/validate", { method: "POST", body: JSON.stringify({ ttl }) });
+    if (body.success) toast(`Valid — ${body.data?.triple_count} triples, ${Object.keys(body.data?.prefixes || {}).length} prefixes`, "ok");
+    else toast(body.error || body.data?.error || "Invalid Turtle", "err");
+  } catch (e) { toast(e.message, "err"); }
+}
+
+async function uploadOntoTtl() {
+  if (!state.token) return toast("Sign in as admin first", "err");
+  const ttl = $("onto-ttl").value.trim(); const graph_uri = $("onto-graph").value.trim();
+  if (!ttl || !graph_uri) return toast("Named graph and Turtle are both required", "err");
+  setStatus("onto-upload-status", "warn", "uploading…");
+  try {
+    const { body } = await api("/api/v1/admin/ontology/upload", { method: "POST", body: JSON.stringify({ ttl, graph_uri }) });
+    if (body.success) {
+      const persisted = body.data?.persisted ? ` · saved to ${localName(body.data?.file || "")}` : " · GraphDB only";
+      setStatus("onto-upload-status", "ok", "uploaded ✓"); toast(`Uploaded${persisted}`, "ok"); loadGraphs();
+    } else { setStatus("onto-upload-status", "bad", "failed"); toast(body.error || "Upload failed", "err"); }
+  } catch (e) { setStatus("onto-upload-status", "bad", "failed"); toast(e.message, "err"); }
+}
+
+async function runSparql() {
+  const query = $("onto-sparql").value.trim();
+  if (!query) return toast("Enter a SELECT/ASK query", "err");
+  $("onto-sparql-result").innerHTML = '<p class="hint">Running…</p>';
+  try {
+    const { body } = await api("/api/v1/admin/ontology/sparql", { method: "POST", body: JSON.stringify({ query, limit: 100 }) });
+    if (!body.success) { $("onto-sparql-result").innerHTML = `<p class="err">${esc(body.error || "query failed")}</p>`; return; }
+    const cols = body.data?.columns || []; const rows = body.data?.rows || [];
+    const head = cols.map((c) => `<th>${esc(c)}</th>`).join("");
+    const trs = rows.map((r) => `<tr>${cols.map((c) => `<td>${esc(r[c] ?? "")}</td>`).join("")}</tr>`).join("");
+    $("onto-sparql-result").innerHTML = `<table class="onto-table"><thead><tr>${head}</tr></thead><tbody>${trs}</tbody></table><p class="hint">${body.data?.count} rows</p>`;
+  } catch (e) { $("onto-sparql-result").innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+}
+function setStatus(id, kind, text) { const el = $(id); if (el) el.innerHTML = kind ? `<span class="dot ${kind}"></span>${text}` : ""; }
+
 function closeModals() { document.querySelectorAll(".modal-backdrop").forEach((m) => (m.hidden = true)); }
 function err(id, msg) { $(id).textContent = msg; $(id).hidden = false; }
 
@@ -1018,11 +1536,15 @@ document.addEventListener("click", (e) => {
   if (t.dataset.details) showDetails(t.dataset.details);
   if (t.dataset.delUser) deleteUser(t.dataset.delUser);
   if (t.dataset.sensors) openSensors(t.dataset.sensors);
+  if (t.dataset.verifyDb) verifyDatasource(t.dataset.verifyDb);
   if (t.dataset.testDb) testDatabase(t.dataset.testDb);
   if (t.dataset.dataDb) showDataPreview(t.dataset.dataDb, t.dataset.table);
   if (t.dataset.delDb) deleteDatabaseConn(t.dataset.delDb);
+  if (t.dataset.delCap) deleteCapability(t.dataset.delCap);
+  if (t.dataset.dropGraph) dropGraph(t.dataset.dropGraph);
   if (t.classList.contains("mode-tab")) setSensorMode(t.dataset.mode);
   if (t.dataset.goto) switchTab(t.dataset.goto);
+  if (t.dataset.wizard !== undefined) openConnectWizard();
   if (t.dataset.askQ) askQuestion(t.dataset.askQ);
   if (t.id === "ai-test" || t.id === "ai-fetch-models") testAiProvider();
   if (t.id === "ai-save") saveAiConfig();
@@ -1051,6 +1573,7 @@ $("ask-send").addEventListener("click", () => askQuestion());
 $("ask-input").addEventListener("keydown", (e) => { if (e.key === "Enter") askQuestion(); });
 $("ai-refresh").addEventListener("click", loadAiConfig);
 $("int-refresh").addEventListener("click", loadIntegrations);
+$("services-refresh").addEventListener("click", loadServices);
 $("refresh-audit").addEventListener("click", loadAudit);
 $("add-src").addEventListener("click", () => { if (!state.token) return toast("Sign in first", "err"); $("add-err").hidden = true; $("points").innerHTML = ""; addPointRow(); open("add-modal"); });
 $("add-point").addEventListener("click", () => addPointRow());
@@ -1066,8 +1589,19 @@ $("load-demo-db").addEventListener("click", loadDemoDatabase);
 $("do-db").addEventListener("click", createDatabase);
 $("do-db-test").addEventListener("click", testNewConnection);
 $("db-active-only").addEventListener("change", (e) => { dbActiveOnly = e.target.checked; renderDbCards(); });
+$("add-cap").addEventListener("click", openCapModal);
+$("do-cap").addEventListener("click", createCapability);
+$("refresh-cap").addEventListener("click", loadCapabilities);
+$("refresh-graphs").addEventListener("click", loadGraphs);
+$("onto-validate").addEventListener("click", validateOntoTtl);
+$("onto-upload").addEventListener("click", uploadOntoTtl);
+$("onto-run").addEventListener("click", runSparql);
+$("bldg-save").addEventListener("click", saveBuildingConfig);
+$("sim-rebuild").addEventListener("click", rebuildSim);
+$("sim-refresh").addEventListener("click", loadSimStatus);
 $("refresh-health").addEventListener("click", loadHealth);
 $("health-auto").addEventListener("change", (e) => toggleHealthAuto(e.target.checked));
+$("theme-btn").addEventListener("click", toggleTheme);
 $("help-btn").addEventListener("click", () => switchTab("guide"));
 $("add-user").addEventListener("click", () => {
   if (!state.token) return toast("Sign in first", "err");
@@ -1079,6 +1613,21 @@ $("do-user").addEventListener("click", createUser);
 $("save-access").addEventListener("click", saveRoleAccess);
 $("add-sensor-point").addEventListener("click", () => addSensorPointRow());
 $("do-sensors").addEventListener("click", submitSensors);
+// Guided "Connect a data source" wizard
+$("wiz-open").addEventListener("click", openConnectWizard);
+$("wiz-next-1").addEventListener("click", wizStep1Next);
+$("wiz-back-2").addEventListener("click", () => wizGoto(1));
+$("wiz-next-2").addEventListener("click", wizStep2Next);
+$("wiz-add-point").addEventListener("click", () => addSensorPointRow({}, "wiz-points"));
+$("wiz-again").addEventListener("click", () => {
+  $("wiz-points").innerHTML = "";
+  addSensorPointRow({}, "wiz-points");
+  if ($("wiz-csv-text")) $("wiz-csv-text").value = "";
+  $("wiz-err-2").hidden = true;
+  wizGoto(2);
+});
+$("wiz-finish").addEventListener("click", () => loadDatabases());
+document.querySelectorAll('input[name="wiz-src"]').forEach((r) => r.addEventListener("change", wizSyncSrc));
 $("apply-close").addEventListener("click", hideNotice);
 // apply-notice buttons (delegated): Copy the recreate command / Restart service
 document.addEventListener("click", (e) => {
@@ -1087,7 +1636,12 @@ document.addEventListener("click", (e) => {
   if (t.dataset && t.dataset.restart !== undefined) restartOrchestrator();
 });
 
+closeModals(); // clear any stale / bfcache-restored open modal on first paint
 setAuthUI();
 loadSources();
 renderAskSuggestions();
 loadOverview();
+ensureAdminSession(); // validate the stored session; prompt admin sign-in if absent/expired
+// A page restored from the back/forward cache keeps its old DOM (a modal may be open) and a
+// possibly-expired token — re-sync on show so an operator never lands on a stale modal.
+window.addEventListener("pageshow", (e) => { if (e.persisted) { closeModals(); ensureAdminSession(); } });

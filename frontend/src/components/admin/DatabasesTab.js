@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-// CSV format: local_id,brick_class,location,uuid[,unit,label]  (BACnet → manual TTL in OntologyTab)
-const CSV_HELP = `# Required: local_id,brick_class,location,uuid  Optional: unit,label
+// CSV format: local,brick_class,location,uuid[,unit,label]  (BACnet → manual TTL in OntologyTab)
+// NB the header column is `local` (not `local_id`) — that is what the backend parser requires.
+const CSV_HELP = `# Required: local,brick_class,location,uuid  Optional: unit,label
 # BACnet sensors: use OntologyTab → manual TTL upload (BACnetReference pattern)
 # uuid must match the actual row identifier in the target database.
-local_id,brick_class,location,uuid,unit,label
+local,brick_class,location,uuid,unit,label
 Zone5_Temp,brick:Temperature_Sensor,bldg:Floor5,8f541ba4-c437-43ba-ba1d-5c946583fe54,unit:DEG_C,Zone 5 Temperature
 Zone5_CO2,brick:CO2_Sensor,bldg:Floor5,38b5fa0e-407e-4a23-8800-6ec4f6d60785,unit:PPM,Zone 5 CO2`;
 
@@ -19,6 +20,7 @@ export default function DatabasesTab({ api, headers }) {
   const [selectedDb, setSelectedDb] = useState('');
   const [csvText, setCsvText] = useState(CSV_HELP);
   const [csvResult, setCsvResult] = useState(null);
+  const [sim, setSim] = useState(null); // similarity-index status snapshot
 
   const loadDbs = useCallback(async () => {
     setLoading(true);
@@ -34,7 +36,34 @@ export default function DatabasesTab({ api, headers }) {
     }
   }, [api, headers]);
 
-  useEffect(() => { loadDbs(); }, [loadDbs]);
+  const loadSim = useCallback(async () => {
+    try {
+      const r = await fetch(`${api}/api/v1/admin/reindex/similarity-status`, { headers });
+      const d = await r.json();
+      if (d.success) setSim(d.data);
+      return d.data;
+    } catch (e) { return null; }
+  }, [api, headers]);
+
+  // Poll the similarity-index status until the rebuild settles (ready), so we can tell the
+  // admin exactly when their newly-added data is searchable in OntoSage.
+  const pollSim = useCallback(async () => {
+    for (let i = 0; i < 90; i++) { // up to ~3 min
+      const s = await loadSim();
+      if (s && s.ready && !s.graphdb_building) return;
+      await new Promise(res => setTimeout(res, 2000));
+    }
+  }, [loadSim]);
+
+  const rebuildNow = useCallback(async () => {
+    await fetch(`${api}/api/v1/admin/reindex`, {
+      method: 'POST', headers, body: JSON.stringify({ targets: ['ontology_similarity'] })
+    });
+    loadSim();
+    pollSim();
+  }, [api, headers, loadSim, pollSim]);
+
+  useEffect(() => { loadDbs(); loadSim(); }, [loadDbs, loadSim]);
 
   const handleTest = async () => {
     setTestResult(null);
@@ -77,7 +106,11 @@ export default function DatabasesTab({ api, headers }) {
     });
     const d = await r.json();
     setCsvResult(d);
-    if (d.success) loadDbs();
+    if (d.success) {
+      loadDbs();
+      if (d.data?.similarity) setSim(d.data.similarity);
+      pollSim(); // watch the debounced rebuild until the new sensors are searchable
+    }
   };
 
   const f = (k) => (e) => setForm(prev => ({ ...prev, [k]: e.target.value }));
@@ -113,6 +146,29 @@ export default function DatabasesTab({ api, headers }) {
         </table>
         <button className="btn btn-sm btn-outline-secondary" onClick={loadDbs} disabled={loading}>Refresh</button>
       </div>
+
+      {/* Semantic-index status — tells the admin when newly-added data is searchable in OntoSage. */}
+      {(() => {
+        const busy = sim && (!sim.ready || sim.graphdb_building || sim.state === 'pending' || sim.state === 'rebuilding');
+        const cls = !sim ? 'secondary' : busy ? 'info' : 'success';
+        const gs = sim?.graphdb_status ? ` (GraphDB: ${sim.graphdb_status})` : '';
+        return (
+          <div className={`alert py-2 d-flex align-items-center justify-content-between alert-${cls} mb-4`} style={{fontSize:13}}>
+            <span>
+              {busy && <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />}
+              <strong>Semantic search index:&nbsp;</strong>
+              {!sim ? 'checking…'
+                : busy
+                  ? `rebuilding — new sensors/triples will be answerable in a moment${gs}. Exact name/type questions already work.`
+                  : `up to date — ask OntoSage your questions${gs}.`}
+            </span>
+            <span className="d-flex gap-2">
+              <button className="btn btn-xs btn-outline-secondary py-0 px-2" style={{fontSize:12}} onClick={loadSim}>Refresh</button>
+              <button className="btn btn-xs btn-outline-primary py-0 px-2" style={{fontSize:12}} onClick={rebuildNow} disabled={busy}>Rebuild now</button>
+            </span>
+          </div>
+        );
+      })()}
 
       <div className="row g-4">
         <div className="col-12 col-lg-6">
@@ -164,11 +220,14 @@ export default function DatabasesTab({ api, headers }) {
 
         <div className="col-12 col-lg-6">
           <div className="card">
-            <div className="card-header"><strong>Register Sensors (CSV to GraphDB Triples)</strong></div>
+            <div className="card-header"><strong>Register Sensors (saved to input/ + GraphDB)</strong></div>
             <div className="card-body">
               <p className="small text-muted mb-2">
-                After adding a DB, register its sensors so SPARQL can find them.
-                Each row becomes Brick triples in GraphDB. UUIDs must match real rows in the DB.
+                After adding a DB, register its sensors so SPARQL can find them. Each row becomes
+                Brick triples written to <code>input/db_&lt;key&gt;_sensors.ttl</code> (the source of
+                truth) and synced to GraphDB — so they survive a restart and get reindexed for RAG.
+                Re-registering <strong>adds new sensors and updates existing ones in place</strong>
+                (same sensor = replaced, no duplicates). UUIDs must match real rows in the DB.
               </p>
               <div className="mb-2">
                 <label className="form-label small mb-0">Target connection</label>
@@ -178,17 +237,17 @@ export default function DatabasesTab({ api, headers }) {
                   {dbs.map(db => <option key={db.key} value={db.key}>{db.key}</option>)}
                 </select>
               </div>
-              <label className="form-label small mb-0">CSV — required: local_id,brick_class,location,uuid — optional: unit,label</label>
+              <label className="form-label small mb-0">CSV — required: local,brick_class,location,uuid — optional: unit,label</label>
               <textarea className="form-control font-monospace mb-2" rows={8} value={csvText}
                 onChange={e => setCsvText(e.target.value)} style={{fontSize:11}} />
               <button className="btn btn-sm btn-primary" disabled={!selectedDb || !csvText}
                 onClick={handleRegisterCsv}>
-                Register Sensors in GraphDB
+                Register Sensors
               </button>
               {csvResult && (
                 <div className={`alert py-1 mt-2 alert-${csvResult.success ? 'success' : 'danger'}`} style={{fontSize:12}}>
                   {csvResult.success
-                    ? `Registered ${csvResult.data?.points} sensors for '${selectedDb}'`
+                    ? `Registered ${csvResult.data?.points} sensors for '${selectedDb}' → saved to input/ + GraphDB. Watch the semantic-index status above for when they're searchable.`
                     : `Error: ${csvResult.error}`}
                   {csvResult.data?.parse_warnings?.length > 0 && (
                     <div className="mt-1 text-warning">Warnings: {csvResult.data.parse_warnings.join('; ')}</div>

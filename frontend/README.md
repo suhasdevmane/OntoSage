@@ -1,3 +1,15 @@
+> ⚠️ **NOT THE PRODUCTION ADMIN UI — do not use or extend.**
+> This React app is **not served by any compose service** (its `frontend:` block is commented
+> out in `docker-compose.yml` — "used only for testing, not for production"). The production
+> admin console is the vanilla-JS **config-panel** at **http://127.0.0.1:3001**, and the end-user
+> chat UI is **OpenWebUI** (:3000).
+>
+> In particular, `src/components/admin/CapabilitiesTab.js` and the admin `AdminPortal.js` here are a
+> **superseded duplicate** of the config-panel **Ontology** tab (capability add/delete, named-graph
+> list/drop, TTL upload, SPARQL browser). The config-panel version is the single source of truth
+> (see FIX_TRACKER `INFRA-020`). Don't add features here — add them to `config-panel/html/`.
+> This directory is kept only as a historical/testing reference and may be removed later.
+
 # Rasa Frontend (React)
 
 Chat UI for the OntoBot stack. Connects to the Rasa server and renders rich responses, links, and media served by the file server. For full platform architecture, deployment instructions, analytics payload formats, and NL→SPARQL details, see the root `README.md`.
