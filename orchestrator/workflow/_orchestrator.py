@@ -87,6 +87,23 @@ _WHATIF_OVERRIDABLE_INTENTS = frozenset(
     {"trend", "forecast", "analytics", "sensor_data", "general", "compare", "recommend", "anomaly"}
 )
 
+# Intents that genuinely need a LIVE datasource — the only ones the datasource-toggle gate
+# (_check_locked_capability) may intercept. Informational / how-to / report / capability
+# questions that merely mention a disabled-source keyword must pass through (CAVEAT-017 fix).
+_LIVE_DATA_INTENTS = frozenset(
+    {
+        "sensor_data",
+        "analytics",
+        "trend",
+        "forecast",
+        "anomaly",
+        "compare",
+        "comparison",
+        "visualization",
+        "compliance",
+    }
+)
+
 # Metrics a bare anomaly query might name. When none is present ("are there any
 # unusual readings today?"), SPARQL RAG picks an arbitrary sensor type that often
 # has no time-series UUIDs and the pipeline dead-ends at "no data"; we default the
@@ -1193,6 +1210,44 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
 
         _bctx_token = set_request_bctx(getattr(state, "building_id", None))
         try:
+            # ── Referent existence gate ──────────────────────────────────────────
+            # Before the SPARQL/SQL fallback cascade can attribute another sensor's
+            # readings to a nonexistent zone (e.g. "temperature in Zone 99.99"),
+            # verify the named referent actually exists in THIS building's ontology.
+            # Not found → honest clarification with real nearby zones. Fails open on
+            # any SPARQL error, so a legitimate query is never blocked.
+            if settings.REFERENT_VALIDATION_ENABLED:
+                from orchestrator.agents.sparql_agent import _active_namespace
+                from orchestrator.services.referent_resolver import (
+                    GATED_INTENTS,
+                    NOT_FOUND,
+                    ReferentResolver,
+                )
+
+                _gate_intent = state.current_intent or state.intermediate_results.get("intent", "")
+                if _gate_intent in GATED_INTENTS:
+                    _resolution = await ReferentResolver(self.sparql_agent._execute_query).resolve(
+                        query=latest_message,
+                        entities=state.intermediate_results.get("entities", []),
+                        namespace=_active_namespace(),
+                        building_name=getattr(settings, "BUILDING_NAME", "this building"),
+                    )
+                    if _resolution.status == NOT_FOUND:
+                        logger.info(
+                            f"[referent_gate] '{_resolution.referent}' not found in ontology "
+                            "— returning clarification instead of fabricated data"
+                        )
+                        state.intermediate_results["sparql_result"] = {
+                            "success": True,
+                            "analytics_required": False,
+                            "formatted_response": _resolution.message,
+                            "referent_not_found": _resolution.referent,
+                        }
+                        state.query_results = {}
+                        state.analytics_required = False
+                        state.intermediate_results["referent_resolution"] = "not_found"
+                        return state
+
             result = await self.sparql_agent.generate_query(state, _sparql_query)
         finally:
             reset_request_bctx(_bctx_token)
@@ -1886,7 +1941,9 @@ Instructions:
         _whatif_rid = state.intermediate_results.get("whatif_recipe")
         if _whatif_rid:
             try:
-                from orchestrator.services.recipe_registry import recipe_registry as _rr_wi
+                from orchestrator.services.recipe_registry import (
+                    recipe_registry as _rr_wi,
+                )
 
                 _wi_recipe = _rr_wi.get(_whatif_rid)
                 if _wi_recipe:
@@ -1907,7 +1964,9 @@ Instructions:
         _bench_rid = state.intermediate_results.get("benchmark_recipe")
         if _bench_rid:
             try:
-                from orchestrator.services.recipe_registry import recipe_registry as _rr_bm
+                from orchestrator.services.recipe_registry import (
+                    recipe_registry as _rr_bm,
+                )
 
                 _bm_recipe = _rr_bm.get(_bench_rid)
                 if _bm_recipe:
@@ -3070,6 +3129,15 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         mgr = getattr(self, "datasource_manager", None)
         if reg is None or mgr is None:
             return None
+        # Only gate genuine LIVE-DATA requests. An informational / how-to / report question
+        # that merely mentions a disabled-source keyword ("how do I make a complaint", "what
+        # are the occupancy limits", "the toilet is leaking") must pass through to normal
+        # routing (documents / graph triples / report_intake) — the "enable X" toggle message
+        # is only for "I want the live X data / metric / trend", not for policy/how-to/report
+        # phrasings. Without this, the gate intercepts and mis-answers them (CAVEAT-017).
+        _intent = state.current_intent or state.intermediate_results.get("intent")
+        if _intent not in _LIVE_DATA_INTENTS:
+            return None
         query = (state.messages[-1].content if state.messages else "") or ""
         ql = query.lower()
         role = state.intermediate_results.get("user_role")
@@ -3188,6 +3256,32 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             "final_node": None,
             "decision_source": "registry",  # 'registry' | 'override' | 'fallback'
         }
+
+        # ── Contextual override #0: building-wide inventory-count / size ──────────
+        # "how many sensors are there?" / "total floor area" must be answered from a
+        # live SPARQL COUNT + DWG area — NOT the sensor_data pipeline (which fetches one
+        # reading → "1 sensor") and not frozen KB prose. Route to the capability node,
+        # whose BuildingMetrics grounding computes the figure from the graph. This is a
+        # deterministic override because the LLM misclassifies these across
+        # sensor_data / discovery / capability (FIX-003).
+        try:
+            from orchestrator.services.building_metrics import (
+                is_inventory_count_question,
+            )
+
+            if is_inventory_count_question(user_query):
+                logger.info(
+                    "[route] inventory-count question → capability (live metrics grounding)"
+                )
+                state.current_intent = "capability"
+                route_decision["intent_after_overrides"] = "capability"
+                route_decision["overrides_applied"].append("inventory_count_to_metrics")
+                route_decision["decision_source"] = "override"
+                route_decision["final_node"] = "capability"
+                state.intermediate_results["route_decision"] = route_decision
+                return "capability"
+        except Exception as e:  # never let routing crash on the override
+            logger.debug(f"[route] inventory-count override skipped: {e}")
 
         # Lazy import to avoid circular load at module import time.
         # Phase 11A: pass per-request building_id so YAML overlays for the
@@ -4644,7 +4738,9 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                     user_id, category, pref_min=pref_min, pref_max=pref_max, raw=query
                 )
                 if success:
-                    from orchestrator.services.user_preference_store import _CATEGORY_META
+                    from orchestrator.services.user_preference_store import (
+                        _CATEGORY_META,
+                    )
 
                     meta = _CATEGORY_META.get(category, {"label": category, "unit": ""})
                     rng_str = ""

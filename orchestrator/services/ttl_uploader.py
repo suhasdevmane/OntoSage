@@ -33,7 +33,6 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-import re
 from pathlib import Path
 from urllib.parse import quote
 from typing import Any, Dict, Iterable, List, Optional
@@ -144,11 +143,19 @@ def _looks_like_schema(name: str) -> bool:
 def discover_ttls(building_id: str) -> List[Path]:
     """Return TTL files belonging to a building.
 
-    Search rules (both honoured to support new + legacy layouts):
-      - `input/<building_id>/*.ttl`        (new layout)
-      - `input/<building_id>_*.ttl`         (legacy flat layout)
-    Shared schema TTLs (`Brick*.ttl`, `*_schema.ttl`, etc.) at the top of
-    `input/` are returned separately via `discover_schema_ttls()`.
+    Search rules:
+      - New/nested layout: **every** ``input/<building_id>/*.ttl``.
+      - Flat layout (canonical, one active building): **every** top-level
+        ``input/*.ttl`` that is not a shared schema — regardless of filename.
+
+    The flat rule is deliberately name-agnostic: the documented invariant is
+    that the active building's files sit directly under ``input/`` (see
+    CLAUDE.md), so any TTL an operator drops there is loaded — you do NOT have
+    to prefix it ``<building_id>_``. This makes "use the input folder as-is,
+    all TTL files considered" true even for arbitrarily-named files (e.g.
+    ``equipment_linkage.ttl``). Shared schema TTLs (``Brick*.ttl``,
+    ``*_schema.ttl``, REC / s223) are handled once by
+    :func:`discover_schema_ttls` and excluded here to avoid a double-add.
     """
     input_dir = _resolve_input_dir()
     if input_dir is None:
@@ -156,15 +163,20 @@ def discover_ttls(building_id: str) -> List[Path]:
         return []
 
     results: List[Path] = []
-    # New layout: input/<bldg>/*.ttl
+    # New layout: input/<bldg>/*.ttl — load all TTLs in the building's own dir.
     bldg_dir = input_dir / building_id
     if bldg_dir.is_dir():
         results.extend(sorted(bldg_dir.glob("*.ttl")))
 
-    # Legacy flat layout: input/<bldg>_*.ttl
-    pattern = re.compile(rf"^{re.escape(building_id)}_.*\.ttl$", re.IGNORECASE)
+    # Flat layout: load every top-level input/*.ttl that is not a shared schema.
+    # NB single-building invariant (CLAUDE.md contract #1): v1 serves ONE active building,
+    # which owns every flat input/*.ttl regardless of filename (FIX-019). The building_id
+    # arg is therefore not a filename filter here — do NOT add one, or arbitrarily-named
+    # building TTLs (e.g. equipment_linkage.ttl) get silently skipped on a clean load again.
+    # A SECOND building's TTLs must NOT be staged in the flat root (they would cross-load
+    # into the single repo); use the nested layout input/<other_id>/*.ttl for that.
     for path in sorted(input_dir.glob("*.ttl")):
-        if pattern.match(path.name) and not _looks_like_schema(path.name):
+        if not _looks_like_schema(path.name):
             results.append(path)
 
     return results

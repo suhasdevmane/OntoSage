@@ -288,8 +288,12 @@ def validate_building_ttls(
         for legacy in sorted(input_root.glob(f"{building_id}_*.ttl")):
             if legacy not in ttl_paths:
                 ttl_paths.append(legacy)
-    # Exclude Brick schema files from bldg-specific validation.
-    ttl_paths = [p for p in ttl_paths if not p.name.startswith("Brick")]
+    # Exclude shared schema / vocabulary files from bldg-specific validation: a building-
+    # AGNOSTIC TBox (Brick, REC, s223, *_schema.ttl — e.g. the OntoSage OCBV schema
+    # input/ontosage_schema.ttl) legitimately has no `@prefix bldg:` and must not gate
+    # startup. Mirrors ttl_uploader's schema-token convention.
+    _schema_tokens = ("brick", "rec", "s223", "schema")
+    ttl_paths = [p for p in ttl_paths if not any(t in p.name.lower() for t in _schema_tokens)]
     # Exclude scaffolding / non-ontology subdirs (_templates/, documents/, data/,
     # personas/) so a template or example TTL never gates startup. (2026-06-13)
     ttl_paths = [p for p in ttl_paths if not _is_scaffolding_ttl(p, input_root)]

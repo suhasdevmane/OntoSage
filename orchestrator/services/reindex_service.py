@@ -6,7 +6,11 @@ sensors.  start() returns immediately with a job_id; the actual work runs as
 an asyncio background task.  Callers poll status(job_id) until finished_at is
 set and status is "done" or "error".
 
-Supported targets: 'capability' | 'documents' | 'floor_plans'
+Supported targets: 'capability' | 'documents' | 'floor_plans' | 'ontology_similarity'
+
+'ontology_similarity' rebuilds the GraphDB similarity index (NOT a Qdrant collection) that the
+sensor RAG retriever queries — the reindex that surfaces newly-registered sensors in semantic
+search. It needs no indexer instance, so it works even in a bare ReindexService.
 """
 
 from __future__ import annotations
@@ -43,6 +47,20 @@ class ReindexService:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
+
+    def set_indexers(
+        self,
+        capability_indexer: Optional[Any] = None,
+        document_indexer: Optional[Any] = None,
+    ) -> None:
+        """Refresh the indexer references (called by the single reindex gateway each request).
+
+        Resolving indexers late — rather than binding them once at construction — lets one shared
+        service be created early in startup (before the indexers exist) yet still run capability /
+        document reindexes correctly once they are attached to app.state.
+        """
+        self._capability_indexer = capability_indexer
+        self._document_indexer = document_indexer
 
     def start(self, targets: List[str], *, building_id: str = "bldg1") -> str:
         """Queue a re-index job and return the job_id (8-char UUID prefix) immediately."""
@@ -168,5 +186,14 @@ class ReindexService:
 
         if target == "floor_plans":
             return {"skipped": "not implemented"}
+
+        if target == "ontology_similarity":
+            # Route through the debounced similarity gateway (the one similarity-rebuild path) so a
+            # burst of jobs still collapses into a single eventual, status-tracked rebuild.
+            from orchestrator.services.similarity_reindex import (
+                get_similarity_debouncer,
+            )
+
+            return get_similarity_debouncer().request()
 
         return {"skipped": "unknown target"}

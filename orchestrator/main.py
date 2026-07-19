@@ -10,6 +10,7 @@ import asyncio
 import collections
 import hashlib
 import hmac
+import ipaddress
 import json
 import os
 import signal
@@ -36,10 +37,7 @@ from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from orchestrator.auth_manager import AuthManager
-from orchestrator.middleware.rbac import (
-    ROLE_PERMISSIONS,
-    UserContext,
-)
+from orchestrator.middleware.rbac import ROLE_PERMISSIONS, UserContext
 from orchestrator.postgres_manager import PostgresManager
 from orchestrator.redis_manager import RedisManager
 from orchestrator.services.adapters.registry import adapter_registry
@@ -297,7 +295,9 @@ async def lifespan(app: FastAPI):
     except ValueError as _cfg_err:
         if settings.STRICT_SECRETS:
             raise
-        logger.warning(f"[config] Non-fatal configuration issue (set STRICT_SECRETS=true for hard-fail): {_cfg_err}")
+        logger.warning(
+            f"[config] Non-fatal configuration issue (set STRICT_SECRETS=true for hard-fail): {_cfg_err}"
+        )
 
     # Initialize Redis
     redis_manager = RedisManager()
@@ -835,6 +835,64 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"TTL auto-upload failed (non-fatal): {e}")
 
+    # Rebuild the GraphDB similarity index on startup so freshly-loaded TTLs (including any
+    # GUI-registered sensors persisted to input/) become retrievable via semantic RAG — the index
+    # does NOT auto-update on triple changes. Routed through the SAME debounced gateway that
+    # registration and manual TTL upload use, so there is one similarity-rebuild path.
+    try:
+        from orchestrator.services.similarity_reindex import get_similarity_debouncer
+
+        get_similarity_debouncer().request()
+        logger.info("[reindex] startup similarity-index rebuild requested (debounced)")
+    except Exception as e:  # pragma: no cover - defensive, non-fatal
+        logger.warning(f"[reindex] startup similarity rebuild request failed (non-fatal): {e}")
+
+    # LLM preflight (local Ollama): warn LOUDLY-but-non-fatally if the model server is
+    # unreachable, and warm the model in the background so the first real request doesn't
+    # time out and trip the circuit breaker (observed on a cold start with a large model).
+    if settings.MODEL_PROVIDER == "local":
+
+        async def _preflight_ollama() -> None:
+            import httpx
+
+            base = settings.OLLAMA_BASE_URL.rstrip("/")
+            model = settings.OLLAMA_MODEL
+            try:
+                async with httpx.AsyncClient(timeout=8.0) as _c:
+                    r = await _c.get(f"{base}/api/tags")
+                tags = (
+                    [m.get("name", "") for m in r.json().get("models", [])]
+                    if r.status_code == 200
+                    else []
+                )
+                if not tags:
+                    logger.warning(
+                        f"[llm-preflight] Ollama at {base} returned no models. "
+                        f"Start it: `ollama serve`, then `ollama pull {model}`."
+                    )
+                    return
+                if not any(t == model or t.startswith(model.split(":")[0]) for t in tags):
+                    logger.warning(
+                        f"[llm-preflight] Ollama is up but '{model}' is not pulled "
+                        f"(available: {tags}). Run `ollama pull {model}`."
+                    )
+                    return
+                logger.info(f"[llm-preflight] Ollama reachable; warming '{model}' in background…")
+                async with httpx.AsyncClient(timeout=180.0) as _c:
+                    await _c.post(
+                        f"{base}/api/generate",
+                        json={"model": model, "prompt": "OK", "stream": False},
+                    )
+                logger.info(f"[llm-preflight] '{model}' is warm.")
+            except Exception as _pe:
+                logger.warning(
+                    f"[llm-preflight] Local LLM unreachable at {base} ({_pe}). Start Ollama on "
+                    f"the host: `ollama serve` (+ `ollama pull {model}`). LLM-dependent answers "
+                    f"will fail until it is up."
+                )
+
+        asyncio.create_task(_preflight_ollama())
+
     # Entity enrichment (Part D) — derive a Brick class + rdfs:label + relationships
     # for any time-series point that lacks them (from its URI tokens), so arbitrary
     # BMS/Haystack naming is queryable by class/label. Runs AFTER the TTL upload so
@@ -1052,13 +1110,35 @@ class TracingMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(TracingMiddleware)
 
-# E.3: Per-IP rate limiting — simple token-bucket in memory
+# E.3: Per-IP rate limiting
 _RATE_LIMIT_REQUESTS = int(os.environ.get("RATE_LIMIT_REQUESTS", "60"))  # per window
 _RATE_LIMIT_WINDOW_S = int(os.environ.get("RATE_LIMIT_WINDOW_S", "60"))  # seconds
 
+# CIDRs of reverse proxies/load balancers trusted to set X-Forwarded-For.
+# Empty (default) = never trust XFF; rate-limit on the direct TCP peer only.
+# Without this, a deployment behind a proxy rate-limits ALL clients together
+# under the proxy's one IP (or, with a spoofed header and no allow-list, lets
+# an attacker pick any bucket) — see PRODUCTION_READINESS_AUDIT.md #3.
+_TRUSTED_PROXY_NETS: List[Any] = []
+for _cidr in settings.TRUSTED_PROXY_CIDRS.split(","):
+    _cidr = _cidr.strip()
+    if not _cidr:
+        continue
+    try:
+        _TRUSTED_PROXY_NETS.append(ipaddress.ip_network(_cidr, strict=False))
+    except ValueError:
+        logger.warning(f"Ignoring invalid TRUSTED_PROXY_CIDRS entry: {_cidr!r}")
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Simple in-process per-IP rate limiter (token bucket, not distributed)."""
+    """Per-IP rate limiter.
+
+    Uses Redis INCR/EXPIRE (fixed window) when the Redis client is connected,
+    so the limit is shared correctly across multiple orchestrator replicas.
+    Falls back to an in-process token bucket when Redis isn't available yet
+    (e.g. before the lifespan startup hook runs, or in unit tests) so rate
+    limiting degrades gracefully rather than failing open or crashing.
+    """
 
     def __init__(
         self,
@@ -1069,31 +1149,82 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._requests = requests
         self._window = window
-        self._counts: dict = {}  # ip → deque of timestamps
+        self._counts: dict = {}  # in-memory fallback: ip -> deque of timestamps
 
     _EXEMPT_PATHS = {"/ping", "/health"}
 
-    async def dispatch(self, request: Request, call_next):
-        if request.url.path in self._EXEMPT_PATHS:
-            return await call_next(request)
-        client_ip = request.client.host if request.client else "unknown"
+    @staticmethod
+    def _client_ip(request: Request) -> str:
+        """Resolve the client IP, honoring X-Forwarded-For only when the
+        direct peer is a configured trusted proxy."""
+        direct = request.client.host if request.client else "unknown"
+        if not _TRUSTED_PROXY_NETS or direct == "unknown":
+            return direct
+        try:
+            direct_addr = ipaddress.ip_address(direct)
+        except ValueError:
+            return direct
+        if not any(direct_addr in net for net in _TRUSTED_PROXY_NETS):
+            return direct
+        xff = request.headers.get("x-forwarded-for")
+        if not xff:
+            return direct
+        # Left-most entry is the original client in the de-facto XFF convention.
+        return xff.split(",")[0].strip() or direct
+
+    def _allow_memory(self, client_ip: str) -> bool:
         now = time.monotonic()
         window_start = now - self._window
         bucket = self._counts.setdefault(client_ip, collections.deque())
-        # Remove old timestamps outside current window
         while bucket and bucket[0] < window_start:
             bucket.popleft()
-        # Evict empty deques to prevent unbounded memory growth
         if not bucket:
             del self._counts[client_ip]
             bucket = self._counts.setdefault(client_ip, collections.deque())
         if len(bucket) >= self._requests:
+            return False
+        bucket.append(now)
+        return True
+
+    # Atomic fixed-window counter: INCR then EXPIRE-if-new in ONE round trip. Doing it in
+    # two calls risks the process dying between them, leaving a key with no TTL that 429s
+    # that IP forever. The TTL<0 guard also re-arms any key that somehow lost its expiry
+    # (e.g. left over from the old two-call path) so no bucket can get permanently stuck.
+    _RATE_LUA = (
+        "local c = redis.call('INCR', KEYS[1]) "
+        "if c == 1 or redis.call('TTL', KEYS[1]) < 0 then "
+        "redis.call('EXPIRE', KEYS[1], ARGV[1]) end "
+        "return c"
+    )
+
+    async def _allow_redis(self, client_ip: str) -> bool:
+        """Fixed-window counter shared across replicas via an atomic Redis Lua script."""
+        key = f"ratelimit:{client_ip}"
+        count = await redis_manager.client.eval(self._RATE_LUA, 1, key, self._window)
+        return int(count) <= self._requests
+
+    async def dispatch(self, request: Request, call_next):
+        if request.url.path in self._EXEMPT_PATHS:
+            return await call_next(request)
+        client_ip = self._client_ip(request)
+        use_redis = redis_manager is not None and redis_manager.client is not None
+        try:
+            allowed = (
+                await self._allow_redis(client_ip) if use_redis else self._allow_memory(client_ip)
+            )
+        except Exception as e:
+            # A Redis hiccup must not block all traffic — degrade to the
+            # in-memory bucket for this request instead of 500ing every call.
+            logger.warning(
+                f"[RateLimitMiddleware] Redis backend failed, using in-memory fallback: {e}"
+            )
+            allowed = self._allow_memory(client_ip)
+        if not allowed:
             return JSONResponse(
                 status_code=429,
                 content={"error": "Too many requests. Please wait before retrying."},
                 headers={"Retry-After": str(self._window)},
             )
-        bucket.append(now)
         return await call_next(request)
 
 
@@ -1295,6 +1426,13 @@ async def health_check():
 
     duration_ms = round((time.time() - start) * 1000, 1)
 
+    # Self-heal a stale ontology_valid=false: the startup check may have run before GraphDB
+    # accepted connections on a cold `docker-compose up`. Re-validate here (cooldown-bounded).
+    try:
+        ontology_ok = (await ontology_validator.revalidate_if_needed()).ok
+    except Exception:
+        ontology_ok = ontology_validator.last_result.ok
+
     return APIResponse(
         success=overall != "unhealthy",
         data={
@@ -1302,8 +1440,14 @@ async def health_check():
             "duration_ms": duration_ms,
             "services": checks,
             "building": settings.BUILDING_NAME,
-            "ontology_valid": ontology_validator.last_result.ok,
+            "ontology_valid": ontology_ok,
             "introspector_ready": ontology_introspector.is_ready(),
+            # Build provenance — which commit/time this image was built from (baked as ENV at build).
+            # "unknown" means the image was built without GIT_SHA passed.
+            "build": {
+                "sha": os.environ.get("BUILD_SHA", "unknown"),
+                "time": os.environ.get("BUILD_TIME", "unknown"),
+            },
         },
     )
 
@@ -1471,7 +1615,7 @@ class RegisterRequest(BaseModel):
     new users receive the default role server-side to prevent privilege escalation."""
 
     username: str = Field(..., min_length=3, max_length=255, pattern=r"^[a-zA-Z0-9_]+$")
-    password: str = Field(..., min_length=6, max_length=1024)
+    password: str = Field(..., min_length=12, max_length=1024)
     email: Optional[str] = Field(default=None, max_length=320)
 
 
@@ -1479,7 +1623,9 @@ class RegisterRequest(BaseModel):
 async def register_user(body: RegisterRequest):
     """
     Register a new user. New accounts receive the server-side default role
-    (facility_manager) — the client cannot request a role.
+    (occupant — can chat and read sensor/metadata, no config/admin access) —
+    the client cannot request a role. Use POST /api/v1/admin/users (system:admin)
+    to create accounts with an elevated role.
     """
     try:
         result = await auth_manager.register_user(body.username, body.password, body.email)
@@ -1714,6 +1860,9 @@ async def save_user_history(
                 await redis_manager.save_message(
                     conv_id, msg.get("sender", "user"), msg.get("text", "")
                 )
+            # Track this conversation under the user's set so delete_user()
+            # can find it without a full KEYS/SCAN of the conversation space.
+            await redis_manager.add_conversation_to_user(username, conv_id, "Imported Chat")
 
         return APIResponse(
             success=True,
@@ -3373,7 +3522,7 @@ async def openai_models():
 @app.get("/api/files/{filename}")
 async def download_export(
     filename: str,
-    current_user: Optional[str] = Depends(get_current_user),
+    user: UserContext = Depends(require_permission("export:read")),
 ):
     """D.2: Download a previously generated export file (CSV, JSON, HTML, Markdown)."""
     import re as _re
@@ -3587,6 +3736,41 @@ class ReindexRequest(BaseModel):
     building_id: Optional[str] = Field(default=None)
 
 
+class CapabilityCreate(BaseModel):
+    """Guided capability-amenity form. Fields become a dual-typed ontosage:Amenity
+    instance on the active building's namespace (no hand-written Turtle)."""
+
+    id: str = Field(
+        ...,
+        min_length=1,
+        max_length=64,
+        description="Local name for the amenity, e.g. 'PrayerRoom_104' (letters/digits/_.-)",
+    )
+    type: str = Field(
+        ..., description="Amenity class, e.g. PrayerRoom / Cafe / Lift (from the whitelist)"
+    )
+    label: str = Field(..., min_length=1, max_length=200, description="Human-readable name")
+    location: str = Field(default="", max_length=300, description="Free-text location")
+    floor: str = Field(default="", max_length=60, description="Floor label, e.g. '1' or 'Ground'")
+    category: str = Field(default="", max_length=100, description="Capability category")
+    lay_terms: str = Field(
+        default="", max_length=300, description="Comma-separated lay terms, e.g. 'coffee, cafe'"
+    )
+    note: str = Field(default="", max_length=1000, description="Optional free-text note")
+    # Knowledge-topic fields (used when type is a Procedure / InformationTopic / MaintenanceIssue).
+    answer_text: str = Field(default="", max_length=1000, description="Canonical one-line answer")
+    info_url: str = Field(default="", max_length=500, description="URL for more information")
+    contact_email: str = Field(default="", max_length=200, description="Contact email")
+    contact_phone: str = Field(default="", max_length=100, description="Contact phone")
+    report_to: str = Field(default="", max_length=300, description="Where/whom to report to")
+    steps: str = Field(
+        default="", max_length=1000, description="How-to steps (semicolon-separated)"
+    )
+    opening_hours: str = Field(default="", max_length=200, description="Opening hours (free text)")
+    priority: str = Field(default="", max_length=40, description="Default priority for an issue")
+    building_id: Optional[str] = Field(default=None)
+
+
 @app.get("/api/v1/admin/ontology/graphs", response_model=APIResponse)
 async def list_ontology_graphs(
     user: UserContext = Depends(require_permission("system:admin")),
@@ -3616,10 +3800,42 @@ async def upload_ontology_ttl(
     user: UserContext = Depends(require_permission("system:admin")),
 ):
     """Upload a Brick TTL into a named graph. Appends by default; set
-    ``replace=true`` to overwrite the whole graph (deletes existing triples)."""
-    from orchestrator.services.ontology_manager import upload_ttl
+    ``replace=true`` to overwrite the whole graph (deletes existing triples).
+
+    When the target graph is a file graph (``urn:ontosage:ttl:<file>``) the TTL is also
+    persisted to ``input/<file>`` (the source of truth) so it survives a GraphDB volume
+    reset and reloads on restart. Non-file graphs (e.g. ``urn:ontosage:custom:*``) are
+    written to GraphDB only and flagged as not-persisted in the response."""
+    from orchestrator.services.input_ttl_store import (
+        filename_from_graph_uri,
+        persist_ttl_file,
+    )
+    from orchestrator.services.ontology_manager import upload_ttl, validate_ttl_text
+
+    filename = filename_from_graph_uri(body.graph_uri)
+    if filename:
+        # File graph: validate first, then write the file + sync its graph.
+        v = validate_ttl_text(body.ttl)
+        if not v["ok"]:
+            return APIResponse(success=False, error=v.get("error"), data=v)
+        result = await persist_ttl_file(filename, body.ttl, merge=not body.replace)
+        result["persisted"] = True
+        if result.get("ok"):
+            _enqueue_similarity_rebuild(result)  # new triples → refresh semantic RAG index
+        return APIResponse(
+            success=bool(result.get("ok")),
+            error=None if result.get("ok") else "graph sync failed",
+            data=result,
+        )
 
     result = await upload_ttl(body.ttl, body.graph_uri, replace=body.replace)
+    result["persisted"] = False
+    result["note"] = (
+        "Written to GraphDB only. Use a 'urn:ontosage:ttl:<filename>' graph to also "
+        "persist it to input/ (survives volume reset + restart)."
+    )
+    if result.get("ok"):
+        _enqueue_similarity_rebuild(result)  # new triples → refresh semantic RAG index
     return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
 
 
@@ -3628,8 +3844,26 @@ async def drop_ontology_graph(
     graph_id: str,
     user: UserContext = Depends(require_permission("system:admin")),
 ):
-    """Delete a named graph from GraphDB (all its triples are removed permanently)."""
+    """Delete a named graph from GraphDB. For a file graph (``urn:ontosage:ttl:<file>``)
+    the backing ``input/<file>`` is MOVED to input/.trash/ (reversible) so the drop stays
+    applied after restart; otherwise only the GraphDB triples are removed."""
+    from orchestrator.services.input_ttl_store import (
+        filename_from_graph_uri,
+        trash_ttl_file,
+    )
     from orchestrator.services.ontology_manager import drop_named_graph
+
+    filename = filename_from_graph_uri(graph_id)
+    if filename:
+        result = await trash_ttl_file(filename)
+        return APIResponse(
+            success=bool(result.get("dropped")),
+            data={
+                "graph": graph_id,
+                "dropped": result.get("dropped"),
+                "trashed_to": result.get("trashed_to"),
+            },
+        )
 
     ok = await drop_named_graph(graph_id)
     return APIResponse(success=ok, data={"graph": graph_id, "dropped": ok})
@@ -3648,6 +3882,93 @@ async def admin_sparql_browser(
 
 
 # ---------------------------------------------------------------------------
+# Admin — Guided capability authoring (TODO-014)
+#
+# CRUD over ontosage:Amenity instances so an admin adds a building capability
+# ("there is a prayer room on floor 1") as live triples, without hand-writing
+# Turtle or touching capability.yaml. Writes persist to input/<bldg>_capabilities.ttl
+# (source of truth) and re-sync its graph, so the CapabilityGraphResolver answers them
+# immediately AND they survive a restart / GraphDB volume reset.
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/v1/admin/capabilities", response_model=APIResponse)
+async def list_capabilities(
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """List every ontosage:Amenity instance (file-loaded + GUI-authored). The ``types`` list that
+    drives the guided dropdown is DERIVED FROM THE OCBV SCHEMA in GraphDB (subclasses of
+    ontosage:Amenity / ontosage:KnowledgeTopic), so a class added to input/ontosage_schema.ttl
+    appears in the dropdown with no code change (falls back to the built-in list if GraphDB is down).
+    """
+    from orchestrator.services.capability_admin import (
+        get_capability_classes,
+        get_capability_form_schema,
+        list_amenities,
+    )
+
+    rows = await list_amenities()
+    classes = await get_capability_classes()
+    form_fields = await get_capability_form_schema()
+    return APIResponse(
+        success=True,
+        data={
+            "amenities": rows,
+            "total": len(rows),
+            "types": classes["all"],
+            "types_by_kind": {"amenity": classes["amenity"], "knowledge": classes["knowledge"]},
+            "types_source": classes["source"],
+            # Schema-derived form fields (label/help/domain per ontosage: datatype property) — the
+            # console renders only those whose domain applies to the selected type.
+            "form_fields": form_fields,
+        },
+    )
+
+
+@app.post("/api/v1/admin/capabilities", response_model=APIResponse)
+async def create_capability(
+    body: CapabilityCreate,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Create a capability amenity from guided form fields (built into Turtle, validated,
+    persisted to input/<bldg>_capabilities.ttl + its graph re-synced). Flushes the response
+    cache so the new capability is answerable on the next question."""
+    from orchestrator.services.capability_admin import create_amenity
+
+    bid = body.building_id or settings.BUILDING_ID
+    fields = body.model_dump(exclude={"building_id"})
+    result = await create_amenity(bid, fields)
+    if result.get("ok"):
+        await _flush_datasource_cache()
+    return APIResponse(
+        success=bool(result.get("ok")),
+        error=result.get("error"),
+        data={
+            "subject": result.get("subject"),
+            "ttl": result.get("ttl"),
+            "file": result.get("file"),
+        },
+    )
+
+
+@app.delete("/api/v1/admin/capabilities/{local_name}", response_model=APIResponse)
+async def delete_capability(
+    local_name: str,
+    building_id: Optional[str] = None,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Delete an amenity by local name. GUI-authored amenities are removed permanently;
+    file-loaded ones reload on the next restart (edit the TTL to remove those)."""
+    from orchestrator.services.capability_admin import delete_amenity
+
+    bid = building_id or settings.BUILDING_ID
+    result = await delete_amenity(bid, local_name)
+    if result.get("ok"):
+        await _flush_datasource_cache()
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
+# ---------------------------------------------------------------------------
 # Admin — Qdrant re-index job queue
 # ---------------------------------------------------------------------------
 
@@ -3655,15 +3976,38 @@ _reindex_service_instance: Optional[Any] = None
 
 
 def _get_reindex_service() -> Any:
+    """Single indexing gateway. Creates the shared ReindexService once, then refreshes its indexer
+    references from app.state on every call — so it works whether called early in startup (before
+    the indexers exist) or at request time. NB the document indexer lives on ``app.state.doc_indexer``
+    (not ``document_indexer``); reading the right attribute is what makes the 'documents' reindex
+    target actually run instead of silently no-op'ing (CAVEAT-042)."""
     global _reindex_service_instance
     if _reindex_service_instance is None:
         from orchestrator.services.reindex_service import ReindexService
 
-        _reindex_service_instance = ReindexService(
-            capability_indexer=getattr(app.state, "capability_indexer", None),
-            document_indexer=getattr(app.state, "document_indexer", None),
-        )
+        _reindex_service_instance = ReindexService()
+    _reindex_service_instance.set_indexers(
+        capability_indexer=getattr(app.state, "capability_indexer", None),
+        document_indexer=getattr(app.state, "doc_indexer", None),
+    )
     return _reindex_service_instance
+
+
+def _enqueue_similarity_rebuild(result: dict) -> None:
+    """Request a DEBOUNCED GraphDB similarity-index rebuild so newly-added triples become
+    retrievable via semantic RAG, and stash the current rebuild status on ``result`` for the GUI.
+
+    The debouncer collapses a burst of registrations into one eventual rebuild (and re-runs once if
+    triples arrive mid-rebuild), so rapid edits don't queue many minutes-long full-graph rebuilds.
+    Persistence (input/ + GraphDB) is already durable at this point; this only refreshes the
+    fuzzy/semantic entity index. Non-fatal — a failed request never fails the registration.
+    """
+    try:
+        from orchestrator.services.similarity_reindex import get_similarity_debouncer
+
+        result["similarity"] = get_similarity_debouncer().request()
+    except Exception as e:  # pragma: no cover - defensive
+        logger.warning(f"[reindex] similarity rebuild request failed: {e}")
 
 
 @app.post("/api/v1/admin/reindex", response_model=APIResponse)
@@ -3671,20 +4015,53 @@ async def trigger_reindex(
     body: ReindexRequest,
     user: UserContext = Depends(require_permission("system:admin")),
 ):
-    """Trigger Qdrant KB re-indexing in the background. Returns a job_id for polling."""
-    svc = _get_reindex_service()
+    """Trigger re-indexing. Qdrant targets run as a background job (poll by job_id); the
+    ``ontology_similarity`` target goes through the debounced similarity gateway (poll
+    ``/api/v1/admin/reindex/similarity-status``)."""
     bid = body.building_id or settings.BUILDING_ID
-    valid = [t for t in body.targets if t in {"capability", "documents", "floor_plans"}]
+    valid = [
+        t
+        for t in body.targets
+        if t in {"capability", "documents", "floor_plans", "ontology_similarity"}
+    ]
     if not valid:
         return APIResponse(
             success=False,
-            error="no valid targets (capability|documents|floor_plans)",
+            error="no valid targets (capability|documents|floor_plans|ontology_similarity)",
             data={},
         )
-    job_id = svc.start(valid, building_id=bid)
-    return APIResponse(
-        success=True, data={"job_id": job_id, "targets": valid, "building_id": bid}
-    )
+    data: Dict[str, Any] = {"building_id": bid}
+    if "ontology_similarity" in valid:
+        from orchestrator.services.similarity_reindex import get_similarity_debouncer
+
+        data["similarity"] = get_similarity_debouncer().request()
+    qdrant_targets = [t for t in valid if t != "ontology_similarity"]
+    if qdrant_targets:
+        data["job_id"] = _get_reindex_service().start(qdrant_targets, building_id=bid)
+        data["targets"] = qdrant_targets
+    return APIResponse(success=True, data=data)
+
+
+@app.get("/api/v1/admin/reindex/similarity-status", response_model=APIResponse)
+async def similarity_reindex_status(
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Current state of the debounced similarity-index rebuild + a live GraphDB status read.
+
+    Lets the admin console tell the user, honestly, when just-added data is searchable:
+    ``ready`` (idle, index built) vs ``pending``/``rebuilding`` (wait a moment)."""
+    from orchestrator.services.ontology_manager import get_similarity_index_status
+    from orchestrator.services.similarity_reindex import get_similarity_debouncer
+
+    data = get_similarity_debouncer().status()
+    live = await get_similarity_index_status()
+    if live.get("ok"):
+        data["graphdb_status"] = live.get("status")
+        data["graphdb_building"] = live.get("building")
+        # If GraphDB itself still reports a build in progress, we are not truly ready yet.
+        if live.get("building"):
+            data["ready"] = False
+    return APIResponse(success=True, data=data)
 
 
 @app.get("/api/v1/admin/reindex/{job_id}", response_model=APIResponse)
@@ -3878,6 +4255,50 @@ async def put_env(body: EnvUpdate, user: UserContext = Depends(require_permissio
     )
 
 
+# ── Admin console: building identity (ontology namespace / prefix) ─────────────
+# The per-building PREREQUISITE: the `bldg:` prefix is only a label; the namespace it binds to is
+# per-building and lives in input/building.yaml. Editable here so onboarding a new building needs
+# no hand-editing. Read at boot → takes effect after an orchestrator restart.
+
+
+class BuildingConfigUpdate(BaseModel):
+    ontology_namespace: str = Field(
+        ...,
+        min_length=1,
+        max_length=300,
+        description="Absolute ABox URI for building instances; must end with '#' or '/'",
+    )
+    ontology_prefix: str = Field(
+        default="bldg",
+        min_length=1,
+        max_length=64,
+        description="Short SPARQL prefix label the namespace binds to (e.g. 'bldg')",
+    )
+    building_name: Optional[str] = Field(default=None, max_length=200)
+
+
+@app.get("/api/v1/admin/building/config", response_model=APIResponse)
+async def get_building_config(user: UserContext = Depends(require_permission("system:admin"))):
+    """Current building identity (id, name, ontology namespace, prefix) from building.yaml."""
+    from orchestrator.services import admin_config
+
+    return APIResponse(success=True, data=admin_config.read_building_config())
+
+
+@app.put("/api/v1/admin/building/config", response_model=APIResponse)
+async def put_building_config(
+    body: BuildingConfigUpdate, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Validate + persist the ontology namespace/prefix (+ name) to building.yaml. Restart to apply."""
+    from orchestrator.services import admin_config
+
+    result = admin_config.write_building_config(
+        body.ontology_namespace, body.ontology_prefix, body.building_name
+    )
+    result["restart_required"] = bool(result.get("ok"))
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
 # ── Admin console: AI provider / model configuration ───────────────────────────
 
 
@@ -3912,6 +4333,12 @@ async def get_ai_config(user: UserContext = Depends(require_permission("system:a
             "ollama_cloud_api_key_set": bool(settings.OLLAMA_CLOUD_API_KEY),
             "providers": ["local", "cloud", "openai"],
             "embedding_providers": ["local", "openai"],
+            # Actual embedding model + dimension per provider, so the console shows the
+            # live values (e.g. bge-large-en-v1.5 @ 1024-d) instead of hardcoded labels.
+            "embedding_model_local": settings.EMBEDDING_MODEL_LOCAL,
+            "embedding_dimension_local": settings.EMBEDDING_DIMENSION_LOCAL,
+            "embedding_model_openai": settings.EMBEDDING_MODEL_OPENAI,
+            "embedding_dimension_openai": settings.EMBEDDING_DIMENSION_OPENAI,
         },
     )
 
@@ -4162,7 +4589,13 @@ async def create_database(
     body: DatabaseCreate,
     user: UserContext = Depends(require_permission("system:admin")),
 ):
-    """Add a DB connection (overlay entry + .env creds), used per-UUID after restart."""
+    """Add a DB connection (overlay entry + .env creds) and hot-apply it — no restart.
+
+    ``add_database`` writes the overlay entry + .env values and injects the creds into
+    ``os.environ`` (so ``resolve_connection`` resolves the new key immediately). We then
+    reload the adapter pool so the query path routes to the new backend right away. If
+    the reload fails, the connection is still persisted and a restart will pick it up.
+    """
     from orchestrator.services import admin_config
 
     try:
@@ -4178,6 +4611,13 @@ async def create_database(
         )
     except ValueError as e:
         return APIResponse(success=False, error=str(e), data={})
+    try:
+        await adapter_registry.reload()
+        result["restart_required"] = False
+        result["hot_applied"] = True
+    except Exception as e:  # persisted; a restart will still pick it up
+        logger.warning(f"[create_database] adapter reload failed (restart needed): {e}")
+        result["hot_applied"] = False
     return APIResponse(success=True, data=result)
 
 
@@ -4260,6 +4700,7 @@ async def register_db_sensors(
     result = await db_ontology.register_points(db_key, body.points)
     if result.get("ok"):
         await _flush_datasource_cache()
+        _enqueue_similarity_rebuild(result)
     return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
 
 
@@ -4273,6 +4714,7 @@ async def register_db_sensors_ttl(
     result = await db_ontology.register_ttl(db_key, body.ttl)
     if result.get("ok"):
         await _flush_datasource_cache()
+        _enqueue_similarity_rebuild(result)
     return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
 
 
@@ -4296,6 +4738,7 @@ async def register_db_sensors_csv(
     result["parse_warnings"] = issues
     if result.get("ok"):
         await _flush_datasource_cache()
+        _enqueue_similarity_rebuild(result)
     return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
 
 
@@ -4380,6 +4823,269 @@ async def database_table_stats(
     return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
 
 
+# UUID *shape* (8-4-4-4-12), alphanumeric — matches real hex UUIDs AND the
+# synthetic ontology ids like ``00000000-ac01-0000-0000-000000000001``. Specific
+# enough that ordinary columns (``Datetime``, ``value``) never match.
+_UUID_RE = _re.compile(
+    r"^[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}$"
+)
+
+
+async def _resolve_datasource_uuids(db_key: str, table: Optional[str] = None) -> Dict[str, Any]:
+    """Distinct timeseries UUIDs present in a connection, for BOTH table shapes:
+
+    * **narrow** ``(uuid, datetime, value)`` — the UUIDs are values in a ``uuid`` column
+      (``SELECT DISTINCT uuid``);
+    * **wide** (e.g. ``sensor_data``) — each sensor is its own **column** named by its UUID,
+      so the UUIDs are the uuid-shaped column names.
+
+    Discovers the right table/shape by introspection when the configured name doesn't
+    resolve. Returns ``{ok, uuids, table?, wide?, error?}``.
+    """
+    from orchestrator.services import admin_config
+
+    c = admin_config.resolve_connection(db_key)
+    if c is None:
+        return {"ok": False, "error": f"unknown connection '{db_key}'"}
+    creds = (c["type"], c["host"], c["port"], c["user"], c["password"], c["database"])
+    tbl = table or c.get("table") or c.get("ts_table") or db_key
+    # 1) narrow shape on the configured/guessed table (high limit so large datasources
+    #    aren't undercounted by the default 500 cap — answerability needs the full set)
+    result = await admin_config.distinct_uuids(*creds, tbl, limit=5000)
+    if result.get("ok") and result.get("uuids"):
+        return result
+    # 2) introspect and pick the table with the most UUIDs — narrow (uuid column) OR
+    #    wide (uuid-shaped column names). Auto-detects without a `table` in the registry.
+    intro = await admin_config.introspect(*creds)
+    best: Dict[str, Any] = {"ok": False}
+    for t in intro.get("tables", []) if intro.get("ok") else []:
+        names = [(col.get("name") or "") for col in t.get("columns", [])]
+        if any(nm.lower() == "uuid" for nm in names):
+            r2 = await admin_config.distinct_uuids(*creds, t["name"])
+            cand = {**r2, "table": t["name"]} if r2.get("ok") else {"ok": False}
+        else:
+            uuid_cols = [nm for nm in names if _UUID_RE.match(nm)]
+            cand = (
+                {"ok": True, "uuids": uuid_cols, "table": t["name"], "wide": True}
+                if uuid_cols
+                else {"ok": False}
+            )
+        if cand.get("ok") and len(cand.get("uuids", [])) > len(best.get("uuids", [])):
+            best = cand
+    return best if best.get("ok") else result
+
+
+async def _declared_uuids_for_datasource(db_key: str) -> set:
+    """UUIDs the ontology declares as stored in this datasource (via ref:storedAt)."""
+    from orchestrator.services.ontology_manager import run_sparql_select
+
+    q = (
+        "PREFIX ref:<https://brickschema.org/schema/Brick/ref#> "
+        "SELECT DISTINCT ?uuid WHERE { ?r ref:hasTimeseriesId ?uuid ; ref:storedAt ?db . "
+        f'FILTER(REPLACE(STR(?db), "^.*[#/]", "") = "{db_key}") }}'
+    )
+    res = await run_sparql_select(q, limit=5000)
+    if not res.get("ok"):
+        return set()
+    return {r.get("uuid") for r in res.get("rows", []) if r.get("uuid")}
+
+
+@app.get("/api/v1/admin/databases/{db_key}/uuids", response_model=APIResponse)
+async def database_distinct_uuids(
+    db_key: str,
+    table: Optional[str] = None,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Distinct timeseries UUIDs already in a connection's table — so the guided sensor form
+    maps sensors to REAL ids from the datasource (introspection-driven), not hand-typed UUIDs."""
+    result = await _resolve_datasource_uuids(db_key, table)
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
+async def _answerability_for(db_key: str) -> Dict[str, Any]:
+    """One datasource's {declared, with_data, level} (declared UUIDs vs UUIDs with data)."""
+    declared = await _declared_uuids_for_datasource(db_key)
+    dec = len(declared)
+    try:
+        ures = await asyncio.wait_for(_resolve_datasource_uuids(db_key), timeout=12)
+    except Exception:
+        ures = {"ok": False}
+    have = set(ures.get("uuids", [])) if ures.get("ok") else set()
+    ans = len(declared & have)
+    if not dec:
+        level = "warn"  # nothing declared for this datasource yet
+    elif ans == dec:
+        level = "ok"
+    elif ans == 0:
+        level = "bad"
+    else:
+        level = "warn"
+    return {"declared": dec, "with_data": ans, "no_data": len(declared - have), "level": level}
+
+
+@app.get("/api/v1/admin/databases/answerability", response_model=APIResponse)
+async def databases_answerability_batch(
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Answerability for every ACTIVE datasource in ONE request (computed concurrently, so the
+    Databases tab shows ✓/◐/✗ per card without firing N probes), plus building-wide totals for
+    the declared-vs-populated coverage badge."""
+    from orchestrator.services import admin_config
+
+    dbs = admin_config.read_databases()
+    active = admin_config.active_db_keys()
+    keys = [d["key"] for d in dbs if (active is None) or (d["key"] in active)]
+
+    async def _one(k: str):
+        try:
+            return k, await _answerability_for(k)
+        except Exception as e:
+            logger.debug(f"[answerability-batch] {k}: {e}")
+            return k, {"declared": 0, "with_data": 0, "no_data": 0, "level": "warn"}
+
+    pairs = await asyncio.gather(*[_one(k) for k in keys]) if keys else []
+    counts = {k: v for k, v in pairs}
+    return APIResponse(
+        success=True,
+        data={
+            "counts": counts,
+            "datasources": len(keys),
+            "total_declared": sum(v["declared"] for v in counts.values()),
+            "total_with_data": sum(v["with_data"] for v in counts.values()),
+        },
+    )
+
+
+@app.get("/api/v1/admin/databases/{db_key}/answerability", response_model=APIResponse)
+async def database_answerability(
+    db_key: str, user: UserContext = Depends(require_permission("system:admin"))
+):
+    """Verify a datasource is actually answerable: does the ontology DECLARE sensors stored
+    here (ref:storedAt), and do those UUIDs have real rows in the datasource? Closes the loop
+    between the two halves — triples vs. data — so an admin sees ✓ answerable / ✗ declared-but-
+    no-data at a glance (FIX-004 / CAVEAT-007 made visible)."""
+    if not db_key or not all(ch.isalnum() or ch in "._-" for ch in db_key):
+        return APIResponse(success=False, error="invalid connection key", data={})
+
+    declared = await _declared_uuids_for_datasource(db_key)
+    ures = await _resolve_datasource_uuids(db_key)
+    if not ures.get("ok"):
+        return APIResponse(
+            success=False,
+            error=ures.get("error"),
+            data={"declared": len(declared), "reachable": False},
+        )
+    have = set(ures.get("uuids", []))
+    answerable = declared & have
+    no_data = declared - have
+
+    if not declared:
+        verdict, level = (
+            "No sensors are declared for this datasource yet — use “Register sensors” to "
+            "describe them, then they become answerable.",
+            "warn",
+        )
+    elif not answerable:
+        verdict, level = (
+            f"{len(declared)} sensor(s) declared, but none of their UUIDs have data in the "
+            "datasource yet.",
+            "bad",
+        )
+    elif no_data:
+        verdict, level = (
+            f"{len(answerable)} of {len(declared)} declared sensor(s) are answerable; "
+            f"{len(no_data)} declared UUID(s) have no data yet.",
+            "warn",
+        )
+    else:
+        verdict, level = f"All {len(declared)} declared sensor(s) are answerable.", "ok"
+
+    return APIResponse(
+        success=True,
+        data={
+            "declared": len(declared),
+            "with_data": len(answerable),
+            "no_data": len(no_data),
+            "orphan_data": len(have - declared),
+            "verdict": verdict,
+            "level": level,
+            "no_data_sample": list(no_data)[:5],
+            "table": ures.get("table"),
+        },
+    )
+
+
+# Common Brick sensor/point classes offered as suggestions even on a fresh building with no
+# sensors yet; merged with the classes actually present in the active building's graph.
+_COMMON_SENSOR_CLASSES = [
+    "Air_Temperature_Sensor",
+    "Temperature_Sensor",
+    "CO2_Sensor",
+    "CO2_Level_Sensor",
+    "Humidity_Sensor",
+    "Relative_Humidity_Sensor",
+    "Occupancy_Sensor",
+    "Occupancy_Count_Sensor",
+    "Illuminance_Sensor",
+    "Luminance_Sensor",
+    "Noise_Sensor",
+    "Sound_Level_Sensor",
+    "PM2.5_Sensor",
+    "PM10_Sensor",
+    "TVOC_Sensor",
+    "Air_Quality_Sensor",
+    "Energy_Sensor",
+    "Power_Sensor",
+    "Water_Flow_Sensor",
+    "Motion_Sensor",
+    "Contact_Sensor",
+    "Setpoint",
+]
+
+
+@app.get("/api/v1/admin/onboarding/vocab", response_model=APIResponse)
+async def onboarding_vocab(user: UserContext = Depends(require_permission("system:admin"))):
+    """Vocabulary for the guided sensor form: Brick sensor classes + brick:Location instances
+    present in the active building's graph (merged with a common-class baseline), so an admin
+    picks from suggestions instead of typing Brick strings / location URIs."""
+    from orchestrator.services.ontology_manager import run_sparql_select
+
+    def _locals(rows, key):
+        out = []
+        for r in rows:
+            v = (r.get(key) or "").rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+            if v:
+                out.append(v)
+        return out
+
+    classes = set(_COMMON_SENSOR_CLASSES)
+    locations: List[str] = []
+    try:
+        cls_res = await run_sparql_select(
+            "PREFIX brick:<https://brickschema.org/schema/Brick#> "
+            "PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> "
+            "SELECT DISTINCT ?c WHERE { ?s a ?c . ?c rdfs:subClassOf* brick:Point "
+            "FILTER(STRSTARTS(STR(?c), STR(brick:))) }",
+            limit=400,
+        )
+        if cls_res.get("ok"):
+            classes.update(_locals(cls_res.get("rows", []), "c"))
+        loc_res = await run_sparql_select(
+            "PREFIX brick:<https://brickschema.org/schema/Brick#> "
+            "PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> "
+            "SELECT DISTINCT ?l WHERE { ?l a ?t . ?t rdfs:subClassOf* brick:Location }",
+            limit=1000,
+        )
+        if loc_res.get("ok"):
+            locations = sorted(set(_locals(loc_res.get("rows", []), "l")))
+    except Exception as e:
+        logger.debug(f"[onboarding_vocab] graph vocab unavailable: {e}")
+    return APIResponse(
+        success=True,
+        data={"sensor_classes": sorted(classes), "locations": locations},
+    )
+
+
 @app.delete("/api/v1/admin/databases/{db_key}", response_model=APIResponse)
 async def delete_database_conn(
     db_key: str, user: UserContext = Depends(require_permission("system:admin"))
@@ -4396,7 +5102,28 @@ async def delete_database_conn(
         await db_ontology.clear_graph(db_key)
     except Exception:
         pass
+    # Drop the now-removed backend from the live pool so a deleted connection stops
+    # serving immediately (mirror of create_database's hot-apply — no restart needed).
+    try:
+        await adapter_registry.reload()
+    except Exception as e:
+        logger.warning(f"[delete_database] adapter reload failed (restart to drop): {e}")
     return APIResponse(success=True, data=result)
+
+
+@app.get("/api/v1/admin/services", response_model=APIResponse)
+async def list_services(user: UserContext = Depends(require_permission("system:admin"))):
+    """Attached-tool launcher: the catalog of admin-facing service UIs (GraphDB, Grafana,
+    Adminer, …) with a LIVE online/offline/optional status probed from inside the network.
+    The console renders one 'Open' card per service."""
+    from orchestrator.services.service_catalog import probe_services
+
+    try:
+        services = await probe_services()
+    except Exception as e:
+        logger.error(f"[services] probe failed: {e}", exc_info=True)
+        return APIResponse(success=False, error=str(e), data={"services": []})
+    return APIResponse(success=True, data={"services": services})
 
 
 @app.post("/api/v1/admin/restart", response_model=APIResponse)
@@ -4425,7 +5152,7 @@ _VALID_ROLES = {"admin", "facility_manager", "analyst", "operator", "occupant", 
 
 class UserCreate(BaseModel):
     username: str = Field(..., min_length=3)
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=12)
     role: str = Field(default="readonly")
     email: Optional[str] = Field(default=None)
 
@@ -4476,11 +5203,20 @@ async def update_user_role(
 async def delete_user_account(
     username: str, user: UserContext = Depends(require_permission("user:delete"))
 ):
-    """Delete a user (cannot delete your own account)."""
+    """Delete a user (cannot delete your own account).
+
+    Goes through AuthManager.delete_user rather than calling
+    postgres_manager.delete_user directly — the Postgres row is only half the
+    account; without this, a deleted user's existing Redis session tokens
+    stayed valid for up to 7 days (the session TTL) after "deletion".
+    AuthManager.delete_user revokes those sessions and the user's cached
+    conversation state, then delegates to postgres_manager.delete_user for the
+    durable (turn_memory + conversations) cascade.
+    """
     if user and getattr(user, "username", None) == username:
         return APIResponse(success=False, error="cannot delete your own account", data={})
-    ok = await postgres_manager.delete_user(username) if postgres_manager else False
-    return APIResponse(success=ok, data={"username": username})
+    result = await auth_manager.delete_user(username) if auth_manager else {"success": False}
+    return APIResponse(success=result.get("success", False), data={"username": username})
 
 
 @app.get("/api/v1/admin/role-access", response_model=APIResponse)

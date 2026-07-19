@@ -47,9 +47,26 @@ class OntologyValidator:
 
     def __init__(self) -> None:
         self._last_result: ValidationResult = ValidationResult(ok=False)
+        self._last_attempt: float = 0.0
+
+    async def revalidate_if_needed(self, cooldown: float = 30.0) -> ValidationResult:
+        """Re-run validation if the last result was NOT ok and the cooldown elapsed.
+
+        The startup check (lifespan) can run before GraphDB accepts connections on a cold
+        `docker-compose up`, caching a false negative that never self-heals. Calling this from
+        /health lets the flag correct itself once GraphDB is ready, without hammering it.
+        """
+        import time as _t
+
+        if not self._last_result.ok and (_t.monotonic() - self._last_attempt) >= cooldown:
+            return await self.validate()
+        return self._last_result
 
     async def validate(self) -> ValidationResult:
         """Run all validation checks and cache the result."""
+        import time as _t
+
+        self._last_attempt = _t.monotonic()
         errors = []
         details: Dict[str, Any] = {
             "graphdb_host": settings.GRAPHDB_HOST,

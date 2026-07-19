@@ -12,7 +12,8 @@ Architecture:
   3. The floor_plan_node in workflow.py uses this service
 
 Qdrant collection : floor_plans
-Vector size       : 3072  (text-embedding-3-large)
+Vector size       : settings.embedding_dimension (provider-dependent — 3072 for
+                     OpenAI text-embedding-3-large, 384 for local MiniLM)
 """
 
 from __future__ import annotations
@@ -30,7 +31,6 @@ logger = get_logger(__name__)
 
 # ── Constants ────────────────────────────────────────────────────────────────
 COLLECTION_NAME = "floor_plans"
-VECTOR_SIZE = 3072  # text-embedding-3-large
 CHUNK_SIZE = 400  # words per chunk for Qdrant indexing
 CHUNK_OVERLAP = 40
 
@@ -278,6 +278,7 @@ class FloorPlanService:
         try:
             from qdrant_client import AsyncQdrantClient, models
 
+            embed_dim = settings.embedding_dimension
             client = AsyncQdrantClient(url=settings.QDRANT_URL)
             existing = await client.get_collections()
             names = {c.name for c in existing.collections}
@@ -285,13 +286,33 @@ class FloorPlanService:
                 await client.create_collection(
                     collection_name=COLLECTION_NAME,
                     vectors_config=models.VectorParams(
-                        size=VECTOR_SIZE,
+                        size=embed_dim,
                         distance=models.Distance.COSINE,
                     ),
                 )
                 logger.info(
                     f"[FloorPlanService] Created Qdrant collection: {COLLECTION_NAME}"
                 )
+            else:
+                # A prior run under a different EMBEDDING_PROVIDER may have sized
+                # this collection differently (e.g. 3072 for OpenAI vs. 384 for
+                # local MiniLM) — recreate rather than silently upserting
+                # mismatched-dimension vectors, which Qdrant would reject.
+                info = await client.get_collection(COLLECTION_NAME)
+                existing_size = info.config.params.vectors.size
+                if existing_size != embed_dim:
+                    logger.warning(
+                        f"[FloorPlanService] '{COLLECTION_NAME}' collection has dim "
+                        f"{existing_size}, expected {embed_dim} (EMBEDDING_PROVIDER "
+                        "changed) — recreating"
+                    )
+                    await client.delete_collection(COLLECTION_NAME)
+                    await client.create_collection(
+                        collection_name=COLLECTION_NAME,
+                        vectors_config=models.VectorParams(
+                            size=embed_dim, distance=models.Distance.COSINE
+                        ),
+                    )
             self._qdrant_client = client
             return client
         except Exception as e:
@@ -299,28 +320,27 @@ class FloorPlanService:
             return None
 
     async def _embed(self, texts: List[str]) -> List[List[float]]:
-        """Embed texts with OpenAI text-embedding-3-large (fallback: hash-based)."""
+        """Embed via the configured provider (settings.EMBEDDING_PROVIDER — local
+        sentence-transformers or OpenAI), falling back to a deterministic
+        pseudo-embedding if the provider call fails."""
         try:
-            from openai import AsyncOpenAI
+            if self._embed_client is None:
+                from orchestrator.services.embedding_service import EmbeddingService
 
-            client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-            response = await client.embeddings.create(
-                model="text-embedding-3-large",
-                input=texts,
-            )
-            return [item.embedding for item in response.data]
+                self._embed_client = EmbeddingService()
+            return await self._embed_client.embed_batch(texts)
         except Exception as e:
             logger.warning(
-                f"[FloorPlanService] OpenAI embed failed ({e}), using hash fallback"
+                f"[FloorPlanService] Embedding failed ({e}), using hash fallback"
             )
             import struct
 
+            dim = settings.embedding_dimension
             result = []
             for text in texts:
                 h = hashlib.sha256(text.encode()).digest()
-                # Repeat hash bytes to fill 3072 floats
-                raw = (h * ((VECTOR_SIZE * 4 // len(h)) + 1))[: VECTOR_SIZE * 4]
-                floats = list(struct.unpack(f"{VECTOR_SIZE}f", raw))
+                raw = (h * ((dim * 4 // len(h)) + 1))[: dim * 4]
+                floats = list(struct.unpack(f"{dim}f", raw))
                 # Normalise to [-1, 1]
                 max_v = max(abs(v) for v in floats) or 1.0
                 result.append([v / max_v for v in floats])

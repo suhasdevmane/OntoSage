@@ -135,6 +135,7 @@ class AgentMemoryService:
         self._client = None
         self._fallback_store: Dict[str, List[MemoryEntry]] = {}  # user_id → memories
         self._ready = False
+        self._embedder = None  # lazy EmbeddingService — respects EMBEDDING_PROVIDER
 
     async def initialise(self):
         """Connect to Qdrant and ensure collection exists."""
@@ -278,14 +279,19 @@ class AgentMemoryService:
     # ─────────────────────────────────────────────────────────────────────────
 
     async def _embed(self, text: str) -> List[float]:
-        """Generate embedding via OpenAI or fallback to simple hash-based vector."""
+        """Generate an embedding via the configured provider (settings.EMBEDDING_PROVIDER —
+        local sentence-transformers or OpenAI), falling back to a deterministic
+        pseudo-embedding if the provider call fails."""
         try:
-            import openai
+            if self._embedder is None:
+                from orchestrator.services.embedding_service import EmbeddingService
 
-            response = await openai.AsyncOpenAI().embeddings.create(model=EMBED_MODEL, input=text)
-            return response.data[0].embedding
+                self._embedder = EmbeddingService()
+            return await self._embedder.embed(text)
         except Exception:
-            # Fallback: deterministic pseudo-embedding (for dev/CI)
+            # Fallback: deterministic pseudo-embedding (for dev/CI, or a genuinely
+            # unavailable embedding backend) — not semantically meaningful, just
+            # keeps memory writes/reads from crashing.
             import hashlib
             import math
 

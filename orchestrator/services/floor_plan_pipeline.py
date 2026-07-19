@@ -150,6 +150,7 @@ class FloorPlanPipeline:
         self._llm_extract_enabled = llm_extract_enabled
         self._redis = None
         self._qdrant_client = None
+        self._embedder = None  # lazy EmbeddingService — respects EMBEDDING_PROVIDER
         self._pdf_pattern = re.compile(
             r"^(?P<building>.+?)\s+floor\s+(?P<floor>\d+)\.pdf$",
             re.IGNORECASE,
@@ -450,8 +451,6 @@ class FloorPlanPipeline:
     ) -> Tuple[List[Space], List[str]]:
         """Use LLM to extract space labels not captured by regex."""
         warnings: List[str] = []
-        if not self._openai_key:
-            return [], ["LLM extraction skipped: no OpenAI API key"]
 
         # Collect text lines not already matched as zone IDs
         lines = [
@@ -476,19 +475,13 @@ class FloorPlanPipeline:
             "Labels:\n" + "\n".join(f"- {l}" for l in unique_lines)
         )
         try:
-            from openai import AsyncOpenAI
+            from orchestrator.llm_manager import llm_manager
 
-            client = AsyncOpenAI(api_key=self._openai_key)
-            resp = await asyncio.wait_for(
-                client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0,
-                    max_tokens=1200,
-                ),
+            raw_json = await asyncio.wait_for(
+                llm_manager.generate(prompt, temperature=0),
                 timeout=20,
             )
-            raw_json = resp.choices[0].message.content.strip()
+            raw_json = raw_json.strip()
             # Strip markdown code fences if present
             raw_json = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw_json, flags=re.DOTALL).strip()
             items = json.loads(raw_json)
@@ -660,17 +653,19 @@ class FloorPlanPipeline:
     # ── Embedding helpers ──────────────────────────────────────────────────────
 
     async def _batch_embed(self, texts: List[str]) -> List[List[float]]:
-        try:
-            from openai import AsyncOpenAI
+        """Embed via the configured provider (settings.EMBEDDING_PROVIDER — local
+        sentence-transformers or OpenAI), falling back to a deterministic
+        pseudo-embedding if the provider call fails."""
+        from shared.config import settings
 
-            client = AsyncOpenAI(api_key=self._openai_key)
-            resp = await client.embeddings.create(
-                model="text-embedding-3-large",
-                input=[t[:512] for t in texts],
-            )
-            return [item.embedding for item in resp.data]
+        try:
+            if self._embedder is None:
+                from orchestrator.services.embedding_service import EmbeddingService
+
+                self._embedder = EmbeddingService()
+            return await self._embedder.embed_batch([t[:512] for t in texts])
         except Exception:
-            return [_hash_embed(t) for t in texts]
+            return [_hash_embed(t, size=settings.embedding_dimension) for t in texts]
 
     # ── Redis / Qdrant helpers ─────────────────────────────────────────────────
 
@@ -693,14 +688,36 @@ class FloorPlanPipeline:
         try:
             from qdrant_client import AsyncQdrantClient, models
 
+            from shared.config import settings
+
+            embed_dim = settings.embedding_dimension
             client = AsyncQdrantClient(url=self._qdrant_url)
             existing = await client.get_collections()
             names = {c.name for c in existing.collections}
             if "floor_plans" not in names:
                 await client.create_collection(
                     collection_name="floor_plans",
-                    vectors_config=models.VectorParams(size=3072, distance=models.Distance.COSINE),
+                    vectors_config=models.VectorParams(size=embed_dim, distance=models.Distance.COSINE),
                 )
+            else:
+                # A prior run under a different EMBEDDING_PROVIDER may have sized
+                # this collection differently (e.g. 3072 for OpenAI vs. 384 for
+                # local MiniLM) — recreate rather than silently upserting
+                # mismatched-dimension vectors, which Qdrant would reject.
+                info = await client.get_collection("floor_plans")
+                existing_size = info.config.params.vectors.size
+                if existing_size != embed_dim:
+                    logger.warning(
+                        f"[pipeline] 'floor_plans' collection has dim {existing_size}, "
+                        f"expected {embed_dim} (EMBEDDING_PROVIDER changed) — recreating"
+                    )
+                    await client.delete_collection("floor_plans")
+                    await client.create_collection(
+                        collection_name="floor_plans",
+                        vectors_config=models.VectorParams(
+                            size=embed_dim, distance=models.Distance.COSINE
+                        ),
+                    )
             self._qdrant_client = client
             return client
         except Exception as e:

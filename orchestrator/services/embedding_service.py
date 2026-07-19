@@ -33,10 +33,12 @@ logger = get_logger(__name__)
 
 # Per-provider maximum input length (characters, conservative).
 # OpenAI text-embedding-3-small accepts ~8191 tokens (~32000 chars).
-# Local sentence-transformers (MiniLM-L6-v2) max_seq_length is 256 tokens (~1024 chars).
+# Local sentence-transformers: bge-large-en-v1.5 max_seq_length is 512 tokens (~2048 chars);
+# the model truncates internally, so 2048 lets a full ~500-token doc chunk be embedded
+# (MiniLM's old 256-token/1024-char limit dropped half of each chunk).
 _PROVIDER_MAX_CHARS = {
     "openai": 30000,
-    "local": 1024,
+    "local": 2048,
 }
 
 _RETRY_BACKOFF_SECONDS = (1.0, 2.0, 4.0)
