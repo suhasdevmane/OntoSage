@@ -31,8 +31,15 @@ class Settings(BaseSettings):
 
     # ==================== LLM Configuration ====================
     # Local (Ollama)
-    OLLAMA_BASE_URL: str = Field(default="http://ollama:11434", description="Ollama API endpoint")
-    OLLAMA_MODEL: str = Field(default="deepseek-r1:32b", description="Ollama model name")
+    OLLAMA_BASE_URL: str = Field(
+        default="http://localhost:11434",
+        description=(
+            "Ollama API endpoint. Inside Docker Compose this is overridden to "
+            "http://host.docker.internal:11434 to reach a native (host-installed) "
+            "Ollama; this default covers running the orchestrator outside Docker."
+        ),
+    )
+    OLLAMA_MODEL: str = Field(default="gemma4:26b", description="Ollama model name")
 
     # Cloud (Ollama Cloud)
     OLLAMA_CLOUD_API_KEY: str = Field(default="", description="Ollama Cloud API key", repr=False)
@@ -65,13 +72,16 @@ class Settings(BaseSettings):
         description="Choose 'local' for sentence-transformers or 'openai' for OpenAI embeddings",
     )
 
-    # Local embeddings
+    # Local embeddings — bge-large-en-v1.5: near-OpenAI retrieval quality (MTEB retrieval
+    # ~54), fully offline/free/private. 1024-d, ~1.3GB, 512-token window. Baked into the
+    # orchestrator image (see orchestrator/Dockerfile). Swap MODEL + DIMENSION together and
+    # rebuild all vector collections when changing this (384/1024/1536 cannot mix).
     EMBEDDING_MODEL_LOCAL: str = Field(
-        default="sentence-transformers/all-MiniLM-L6-v2",
-        description="HuggingFace model for local embeddings (384 dims)",
+        default="BAAI/bge-large-en-v1.5",
+        description="HuggingFace model for local embeddings (1024 dims)",
     )
     EMBEDDING_DIMENSION_LOCAL: int = Field(
-        default=384, description="Embedding dimensions for local model"
+        default=1024, description="Embedding dimensions for the local model"
     )
 
     # OpenAI embeddings
@@ -413,6 +423,24 @@ class Settings(BaseSettings):
         default="*",
         description="Comma-separated allowed CORS origins. Use '*' for development, explicit URLs for production.",
     )
+    TRUSTED_PROXY_CIDRS: str = Field(
+        default="",
+        description=(
+            "Comma-separated CIDR blocks (e.g. '10.0.0.0/8,172.16.0.0/12') of reverse "
+            "proxies/load balancers allowed to set X-Forwarded-For for per-IP rate "
+            "limiting. Empty (default) = trust only the direct TCP peer address; set "
+            "this when the orchestrator sits behind a proxy, otherwise every client is rate-"
+            "limited together under the proxy's IP."
+        ),
+    )
+    LOGIN_MAX_ATTEMPTS: int = Field(
+        default=5,
+        description="Failed login attempts allowed for one username before a temporary lockout.",
+    )
+    LOGIN_LOCKOUT_SECONDS: int = Field(
+        default=900,
+        description="Lockout duration (seconds) after LOGIN_MAX_ATTEMPTS failed logins for one username.",
+    )
 
     REQUEST_TIMEOUT_SECS: int = Field(
         default=150,
@@ -441,6 +469,33 @@ class Settings(BaseSettings):
             "Resolve context-dependent follow-ups (e.g. 'and humidity there?') into "
             "self-contained queries via a gated fast-LLM rewrite before intent/SPARQL. "
             "Set False to disable and fall back to per-turn-only understanding."
+        ),
+    )
+
+    REFERENT_VALIDATION_ENABLED: bool = Field(
+        default=True,
+        description=(
+            "Before answering a data query that names a specific zone/room/sensor, "
+            "verify the referent exists in the building ontology. When it does not, "
+            "return an honest clarification (with real nearby zones) instead of letting "
+            "the SPARQL/SQL fallback cascade attribute another sensor's data to the "
+            "nonexistent referent. Fails open (proceeds) if GraphDB is unreachable. "
+            "Building-agnostic — validates against the active building's namespace."
+        ),
+    )
+
+    CAPABILITIES_TTL_FIRST: bool = Field(
+        default=False,
+        description=(
+            "TTL-first capability answering + routing (ROADMAP-009 WS-4). When true: the LLM "
+            "dialogue router uses a graph-backed signal (amenity triples via CapabilityGraphResolver "
+            "+ a strong document match) instead of the Qdrant capability-KB probe; and the capability "
+            "node answers graph -> documents -> capability.yaml KB (safety net for local-embedding "
+            "retrieval gaps) -> honest 'no info'. Measured 0 regressions on a 16-question capability "
+            "set (bldg1, local MiniLM). Default false = legacy KB routing+answering. Enable per "
+            "deployment via .env; flip the default once validated on the full capability corpus. "
+            "capability.yaml is retained as the safety net until embeddings (OpenAI) make "
+            "document-only prose retrieval reliable enough to remove it."
         ),
     )
 
@@ -543,6 +598,35 @@ class Settings(BaseSettings):
                 f"insecure defaults — set them via environment variables before "
                 f"starting: {', '.join(offenders)}"
             )
+        return self
+
+    @model_validator(mode="after")
+    def _fallback_to_local_without_openai_key(self) -> "Settings":
+        """Auto-switch openai-selected providers to local Ollama when no key is set.
+
+        Without this, MODEL_PROVIDER=openai (or EMBEDDING_PROVIDER=openai) with a
+        blank OPENAI_API_KEY reaches ChatOpenAI/the embedding client construction
+        and fails there — a confusing crash far from the actual misconfiguration.
+        Falling back here means removing the key (e.g. to stop spending credits)
+        just works: the system keeps running on the local Ollama model instead.
+        """
+        if self.OPENAI_API_KEY:
+            return self
+        import logging as _logging
+
+        _logger = _logging.getLogger("shared.config")
+        if self.MODEL_PROVIDER == "openai":
+            _logger.warning(
+                "MODEL_PROVIDER=openai but OPENAI_API_KEY is empty — falling back "
+                f"to MODEL_PROVIDER=local (OLLAMA_MODEL={self.OLLAMA_MODEL})."
+            )
+            self.MODEL_PROVIDER = "local"
+        if self.EMBEDDING_PROVIDER == "openai":
+            _logger.warning(
+                "EMBEDDING_PROVIDER=openai but OPENAI_API_KEY is empty — falling "
+                f"back to EMBEDDING_PROVIDER=local ({self.EMBEDDING_MODEL_LOCAL})."
+            )
+            self.EMBEDDING_PROVIDER = "local"
         return self
 
     # ── Backward-compat property for BLDG1_ABOX_FILE → BUILDING_ABOX_FILE ─────
@@ -716,6 +800,9 @@ def _load_per_building_yaml(s: "Settings") -> None:
             # building.yaml uses `ontology_namespace`; keep the settings
             # field name unchanged for compat.
             s.BUILDING_NAMESPACE = data["ontology_namespace"]
+        if "BUILDING_PREFIX" not in env and data.get("ontology_prefix"):
+            # The short SPARQL prefix label (e.g. 'bldg') the namespace binds to.
+            s.BUILDING_PREFIX = data["ontology_prefix"]
     except Exception:
         pass
 

@@ -44,12 +44,13 @@ async def get_sensors(
     ...
 ```
 
-> ⚠️ Do **not** use `create_rbac_dependency`, `RBACMiddleware`, `TokenManager`,
-> or `UserStore` from `middleware/rbac.py`. That is a superseded Phase-6.8
-> JWT/in-memory stack that is **not wired into the app** and has known defects
-> (reads a query param instead of the header; raises bare `Exception` → HTTP
-> 500; unsalted SHA-256 passwords). Only `UserContext` and `ROLE_PERMISSIONS`
-> from that module are live. Session auth lives in `auth_manager.py`.
+> ⚠️ `middleware/rbac.py` only exports `UserContext` and `ROLE_PERMISSIONS`.
+> A JWT/in-memory stack (`create_rbac_dependency`, `RBACMiddleware`,
+> `TokenManager`, `UserStore`) used to live there — it was never wired into
+> the app and had known defects (reads a query param instead of the header;
+> raises bare `Exception` → HTTP 500; unsalted SHA-256 passwords) — and has
+> been removed. Session auth lives in `auth_manager.py`; always gate endpoints
+> with `require_permission()` as shown above.
 
 Available permissions:
 - **Data read:** `sensor:read`, `analytics:read`, `metadata:read`, `report:read`, `export:read`, `anomaly:read`, `trend:read`, `compliance:read`, `comparison:read`
@@ -78,7 +79,7 @@ class ChatRequest(BaseModel):
 async def chat(
     request: Request,
     body: ChatRequest,
-    user: UserContext = Depends(create_rbac_dependency(token_manager, "sensor:read")),
+    user: UserContext = Depends(require_permission("sensor:read")),
 ):
     ...
 ```
