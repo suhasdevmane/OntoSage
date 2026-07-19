@@ -1,0 +1,161 @@
+# bldg1 knowledge topics — TTL-first, GUI + file managed (WS-2).
+# Informational / procedural / maintenance topics answered live by the
+# CapabilityGraphResolver from triples (not the datasource-toggle gate, not frozen prose).
+# Facts sourced from input/documents/cap_*.md (real Cardiff Estates/IT/Security contacts) —
+# nothing fabricated. Each instance is dual-typed (<Kind>, ontosage:KnowledgeTopic) so a
+# `?t a ontosage:KnowledgeTopic` query resolves without inference. Building-agnostic vocab;
+# these instances are Abacws-specific and live per-building.
+
+@prefix bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# ── Procedures (how-to) ───────────────────────────────────────────────────────
+bldg:Topic_MakeComplaint a ontosage:Procedure, ontosage:KnowledgeTopic ;
+    rdfs:label "Making a complaint"@en ;
+    ontosage:capabilityCategory "PROCEDURE" ;
+    ontosage:layTerms "complaint, complain, how do i make a complaint, how do i complain, raise a complaint, feedback, raise an issue, unhappy with" ;
+    ontosage:answerText "Complaints about the building or its services go to the Building Manager via the Facilities helpdesk. Describe the space, floor, and the issue." ;
+    ontosage:contactEmail "estates@cardiff.ac.uk" ;
+    ontosage:contactPhone "029 2087 6026" ;
+    ontosage:reportTo "Facilities (FM) helpdesk / Building Manager" ;
+    ontosage:steps "Note the room/zone, floor and the specific issue; Email estates@cardiff.ac.uk or call 029 2087 6026 (or use the MyUniHub app); For IT issues use the IT Service Desk, for security use Security Services instead" .
+
+bldg:Topic_ReportFault a ontosage:Procedure, ontosage:KnowledgeTopic ;
+    rdfs:label "Reporting a fault or maintenance issue"@en ;
+    ontosage:capabilityCategory "PROCEDURE" ;
+    ontosage:layTerms "report a fault, report an issue, report a problem, maintenance request, something is broken, report broken, log a ticket, how do i report" ;
+    ontosage:answerText "Report facilities/maintenance faults (broken fixtures, heating, cleaning) to the Cardiff Estates FM helpdesk." ;
+    ontosage:contactEmail "estates@cardiff.ac.uk" ;
+    ontosage:contactPhone "029 2087 6026" ;
+    ontosage:reportTo "Estates FM helpdesk (estates@cardiff.ac.uk / 029 2087 6026), or the MyUniHub app" .
+
+bldg:Topic_LostProperty a ontosage:Procedure, ontosage:KnowledgeTopic ;
+    rdfs:label "Lost property"@en ;
+    ontosage:capabilityCategory "PROCEDURE" ;
+    ontosage:layTerms "lost property, lost and found, found item, lost item, missing item, i lost my, left behind, report lost" ;
+    ontosage:answerText "Lost property is handled at the ground-floor reception desk during staffed hours; if reception is unattended, email Estates with a description, date and location." ;
+    ontosage:contactEmail "estates@cardiff.ac.uk" ;
+    ontosage:reportTo "Ground-floor reception desk (or estates@cardiff.ac.uk)" .
+
+bldg:Topic_BookRoom a ontosage:Procedure, ontosage:KnowledgeTopic ;
+    rdfs:label "Booking a room"@en ;
+    ontosage:capabilityCategory "PROCEDURE" ;
+    ontosage:layTerms "book a room, room booking, reserve a room, how do i book, booking system, reserve a space" ;
+    ontosage:answerText "Rooms are booked through the Cardiff University staff intranet room-booking system; teaching spaces are scheduled by the Timetabling Office." ;
+    ontosage:contactEmail "estates@cardiff.ac.uk" ;
+    ontosage:reportTo "Staff intranet room-booking system / Timetabling Office" .
+
+# ── Informational topics (policy, hours, contacts) ────────────────────────────
+bldg:Topic_ReceptionHours a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Reception opening hours"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "reception hours, opening times, opening hours, when is reception open, what time does it open, when does reception close, front desk hours, is reception open" ;
+    ontosage:answerText "Abacws Reception (Ground Floor, main entrance) is open Monday-Friday 09:00-16:30; closed weekends. Card-holder building access is 07:00-22:00 weekdays, 08:00-18:00 weekends." ;
+    ontosage:reportTo "Out-of-hours: Cardiff University Security (029 2087 4444, 24/7)" .
+
+bldg:Topic_BuildingHours a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Building access hours"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "building hours, access hours, when can i access the building, when is the building open, out of hours access, card access hours" ;
+    ontosage:answerText "Card-holders can access Abacws 07:00-22:00 on weekdays and 08:00-18:00 at weekends; reception is staffed Mon-Fri 09:00-16:30 only." .
+
+bldg:Topic_Wifi a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "WiFi and network access"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "wifi, wi-fi, wireless, internet, network access, eduroam, connect to wifi, wifi password" ;
+    ontosage:answerText "The building uses Cardiff University WiFi (eduroam for staff/students; a guest network for visitors). WiFi problems go to the IT Service Desk." ;
+    ontosage:infoUrl "https://itservicedesk.cardiff.ac.uk" ;
+    ontosage:contactPhone "029 2251 1111" ;
+    ontosage:reportTo "IT Service Desk" .
+
+bldg:Topic_ITSupport a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "IT support"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "it support, it help, it service desk, printer problem, computer issue, printing not working, cant print, it helpdesk" ;
+    ontosage:answerText "IT issues (WiFi, printers, computers) are handled by the Cardiff University IT Service Desk." ;
+    ontosage:infoUrl "https://itservicedesk.cardiff.ac.uk" ;
+    ontosage:contactPhone "029 2251 1111" ;
+    ontosage:reportTo "IT Service Desk" .
+
+bldg:Topic_BuildingManagement a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Building management and contacts"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "building manager, who manages the building, facilities manager, estates, building management, who is responsible, management team, building contact" ;
+    ontosage:answerText "Abacws is managed by Cardiff University Estates and Facilities Management; the School of Computer Science admin is on Floor 2." ;
+    ontosage:contactEmail "estates@cardiff.ac.uk" ;
+    ontosage:contactPhone "029 2087 6026" ;
+    ontosage:reportTo "Estates and Facilities Management" .
+
+bldg:Topic_EmergencyContacts a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Emergency contacts"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "emergency, who to call, emergency contact, first aid, medical emergency, ambulance, urgent help, emergency number, defibrillator, aed" ;
+    ontosage:answerText "Emergency services: 999. Cardiff University Security (24/7): 029 2087 4444 (internal x74444). First aiders are on each floor; AED units are on the Ground Floor and Floor 3. Out-of-hours building emergencies: Estates 029 2087 5555." ;
+    ontosage:contactPhone "029 2087 4444" ;
+    ontosage:reportTo "999 (emergency) / Security 029 2087 4444" .
+
+bldg:Topic_Security a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Security services"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "security, security services, campus security, security desk, report a security concern, suspicious, theft" ;
+    ontosage:answerText "Cardiff University Security Services operate 24/7 for the building." ;
+    ontosage:contactEmail "security@cardiff.ac.uk" ;
+    ontosage:contactPhone "029 2087 4444" ;
+    ontosage:reportTo "Security Services (24/7)" .
+
+# ── Maintenance issues (fault → who to report to) ─────────────────────────────
+bldg:Issue_WaterLeak a ontosage:MaintenanceIssue, ontosage:KnowledgeTopic ;
+    rdfs:label "Water leak / leakage"@en ;
+    ontosage:capabilityCategory "MAINTENANCE" ;
+    ontosage:layTerms "leak, leaking, leakage, water leak, water on the floor, flooding, dripping, burst pipe, water damage" ;
+    ontosage:answerText "Report water leaks to Cardiff Estates immediately so they can isolate the supply and dispatch maintenance; for a major leak out-of-hours use the Estates emergency line." ;
+    ontosage:contactEmail "estates@cardiff.ac.uk" ;
+    ontosage:contactPhone "029 2087 6026" ;
+    ontosage:reportTo "Estates FM helpdesk (estates@cardiff.ac.uk / 029 2087 6026); out-of-hours emergency 029 2087 5555" .
+
+bldg:Issue_BrokenLight a ontosage:MaintenanceIssue, ontosage:KnowledgeTopic ;
+    rdfs:label "Broken or faulty light"@en ;
+    ontosage:capabilityCategory "MAINTENANCE" ;
+    ontosage:layTerms "broken light, light not working, flickering light, lighting fault, bulb out, no light, light broken, lights off" ;
+    ontosage:answerText "Report broken or flickering lights to Cardiff Estates with the room/zone and floor." ;
+    ontosage:contactEmail "estates@cardiff.ac.uk" ;
+    ontosage:contactPhone "029 2087 6026" ;
+    ontosage:reportTo "Estates FM helpdesk (estates@cardiff.ac.uk / 029 2087 6026)" .
+
+bldg:Issue_BrokenLift a ontosage:MaintenanceIssue, ontosage:KnowledgeTopic ;
+    rdfs:label "Lift out of order"@en ;
+    ontosage:capabilityCategory "MAINTENANCE" ;
+    ontosage:layTerms "lift broken, lift not working, elevator broken, lift out of order, lift stuck, elevator not working, is the lift broken" ;
+    ontosage:answerText "Report a broken or out-of-order lift to Cardiff Estates; if anyone is trapped in the lift call Security immediately." ;
+    ontosage:contactEmail "estates@cardiff.ac.uk" ;
+    ontosage:contactPhone "029 2087 6026" ;
+    ontosage:reportTo "Estates FM helpdesk; if trapped, Security 029 2087 4444" ;
+    ontosage:relatedTopic bldg:Lift_Main .
+
+bldg:Issue_HeatingCold a ontosage:MaintenanceIssue, ontosage:KnowledgeTopic ;
+    rdfs:label "Heating fault / room too cold"@en ;
+    ontosage:capabilityCategory "MAINTENANCE" ;
+    ontosage:layTerms "no heating, heating not working, heating broken, radiator not working, no hot water, heating fault" ;
+    ontosage:answerText "Heating faults are zone-controlled by the building HVAC. Report them to Estates with the room/zone; occupants cannot adjust thermostats directly." ;
+    ontosage:contactEmail "estates@cardiff.ac.uk" ;
+    ontosage:contactPhone "029 2087 6026" ;
+    ontosage:reportTo "Estates FM helpdesk (estates@cardiff.ac.uk / 029 2087 6026)" .
+
+bldg:Issue_BlockedToilet a ontosage:MaintenanceIssue, ontosage:KnowledgeTopic ;
+    rdfs:label "Blocked or broken toilet"@en ;
+    ontosage:capabilityCategory "MAINTENANCE" ;
+    ontosage:layTerms "blocked toilet, toilet not flushing, toilet broken, toilet blocked, toilet leaking, broken toilet, blocked drain" ;
+    ontosage:answerText "Report a blocked or broken toilet to Cardiff Estates/cleaning with the floor and washroom location." ;
+    ontosage:contactEmail "estates@cardiff.ac.uk" ;
+    ontosage:contactPhone "029 2087 6026" ;
+    ontosage:reportTo "Estates FM helpdesk (estates@cardiff.ac.uk / 029 2087 6026)" .
+
+bldg:Issue_AccessDoor a ontosage:MaintenanceIssue, ontosage:KnowledgeTopic ;
+    rdfs:label "Broken door / access control fault"@en ;
+    ontosage:capabilityCategory "MAINTENANCE" ;
+    ontosage:layTerms "broken door, door not working, door wont open, access card not working, card reader broken, cant get in, door fault, lock broken" ;
+    ontosage:answerText "Report broken doors or access-card/reader faults to Estates; for an urgent access problem out-of-hours contact Security." ;
+    ontosage:contactEmail "estates@cardiff.ac.uk" ;
+    ontosage:contactPhone "029 2087 6026" ;
+    ontosage:reportTo "Estates FM helpdesk; out-of-hours access issues Security 029 2087 4444" .

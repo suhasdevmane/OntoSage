@@ -89,6 +89,10 @@ storage:
     - iaq_data
     - light_data
     - equipment_data
+    # Companion narrow tables for sensors that don't fit database1's column-capped
+    # wide table: 522 real floor 0-4 sensors + 106 synthetic enhancement sensors.
+    - database1_floors04
+    - database1_synth
 
 # ── Floor-plan aliases (Phase 4 — 2026-05-29) ────────────────────────────────
 #

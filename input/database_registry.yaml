@@ -71,6 +71,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: real          # the original abacws dataset — the only REAL data source
+    note: "Original abacws dataset · demo timeseries"
 
   # ── Narrow per-modality time-series tables (uuid, datetime, value) ──────────
   # Standardized out of input/data CSVs (scripts/generate_timeseries_extension.py
@@ -133,6 +135,33 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+
+  # Floors 0-4 sensors (522 real abacws sensors) — demo timeseries in a narrow table.
+  # TTL: ref:storedAt bldg:database1_floors04 (re-pointed from database1, which is
+  # column-capped and cannot hold these as wide columns).
+  database1_floors04:
+    type: mysql_narrow
+    table: sensor_data_floors04
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic     # generated demo table (holds 522 real floor 0-4 sensors' readings)
+    note: "522 floor 0-4 sensors · generated demo table"
+
+  # Synthetic enhancement sensors (106 placeholder UUIDs) — demo timeseries.
+  # TTL: ref:storedAt bldg:database1_synth
+  database1_synth:
+    type: mysql_narrow
+    table: sensor_data_synth
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic     # synthetic placeholder sensors + demo timeseries
+    note: "106 synthetic sensors · demo timeseries"
 
   # MariaDB (drop-in MySQL replacement)
   # TTL: ref:storedAt bldg:mariadb

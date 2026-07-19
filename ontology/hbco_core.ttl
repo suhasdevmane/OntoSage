@@ -1,144 +1,18 @@
-@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix owl:    <http://www.w3.org/2002/07/owl#> .
-@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
-@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
-@prefix sh:     <http://www.w3.org/ns/shacl#> .
-@prefix dcterms:<http://purl.org/dc/terms/> .
-@prefix brick:  <https://brickschema.org/schema/Brick#> .
-@prefix hbco:   <http://ontosage.org/hbco#> .
+# HBCO core TBox — CONSOLIDATED into the OntoSage Conversational Building Vocabulary (OCBV).
+#
+# As of OCBV 2.0.0 the canonical, publication-ready definitions of the hbco: conversation concepts
+# (hbco:Concept, hbco:CompositeConcept, hbco:mapsToBrickClass, hbco:layTerm, …) and their SHACL
+# shape live in ONE file:
+#     input/ontosage_schema.ttl   (Module B + Module I)
+# so the whole "talk to the building" layer is a single document. The hbco: namespace and every
+# term are unchanged — this consolidation is non-breaking.
+#
+# This file is intentionally kept (as a valid, near-empty stub) so tooling that globs ontology/*.ttl
+# still finds it, without duplicating the TBox (which would risk drift between two copies).
+# Per-building lay-term instances live in ontology/hbco_mappings.ttl and input/<bldg>_concepts.ttl
+# and resolve against the terms defined in input/ontosage_schema.ttl.
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Ontology declaration
-# ─────────────────────────────────────────────────────────────────────────────
+@prefix hbco:    <http://ontosage.org/hbco#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 
-hbco:Ontology rdf:type owl:Ontology ;
-    rdfs:label "Human-Building Conversation Ontology (HBCO) — Core TBox"@en ;
-    rdfs:comment "Building-independent vocabulary linking lay language to Brick Schema concepts. Seeded from 5,604-question corpus analysis (T01)."@en ;
-    dcterms:creator "OntoSage project" ;
-    dcterms:version "0.1.0" ;
-    owl:imports <https://brickschema.org/schema/1.4/Brick> .
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Classes
-# ─────────────────────────────────────────────────────────────────────────────
-
-hbco:Concept rdf:type owl:Class ;
-    rdfs:label "HBCO Concept"@en ;
-    rdfs:comment "A building-condition or environment concept that occupants express in natural language (e.g. 'stuffy', 'too warm', 'noisy'). Each concept maps to one or more Brick sensor classes."@en ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-hbco:CompositeConcept rdf:type owl:Class ;
-    rdfs:subClassOf hbco:Concept ;
-    rdfs:label "Composite HBCO Concept"@en ;
-    rdfs:comment "A concept whose measurement requires combining multiple atomic concepts (e.g. 'thermal comfort' = temperature + humidity)."@en ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Object properties
-# ─────────────────────────────────────────────────────────────────────────────
-
-hbco:mapsToBrickClass rdf:type owl:ObjectProperty ;
-    rdfs:label "maps to Brick class"@en ;
-    rdfs:comment "Links an hbco:Concept to the Brick sensor/point class whose readings satisfy the concept."@en ;
-    rdfs:domain hbco:Concept ;
-    rdfs:range owl:Class ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-hbco:componentOf rdf:type owl:ObjectProperty ;
-    rdfs:label "component of"@en ;
-    rdfs:comment "Links an atomic hbco:Concept to the hbco:CompositeConcept it contributes to."@en ;
-    rdfs:domain hbco:Concept ;
-    rdfs:range hbco:CompositeConcept ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Datatype properties
-# ─────────────────────────────────────────────────────────────────────────────
-
-hbco:layTerm rdf:type owl:DatatypeProperty ;
-    rdfs:subPropertyOf skos:altLabel ;
-    rdfs:label "lay term"@en ;
-    rdfs:comment "A natural-language phrase an occupant uses to express this concept. Multiple values per concept are allowed."@en ;
-    rdfs:domain hbco:Concept ;
-    rdfs:range xsd:string ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-hbco:requiresRecipe rdf:type owl:DatatypeProperty ;
-    rdfs:label "requires recipe"@en ;
-    rdfs:comment "Identifier of the analytics recipe (threshold, range, aggregate, correlation) needed to evaluate this concept."@en ;
-    rdfs:domain hbco:Concept ;
-    rdfs:range xsd:string ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-hbco:defaultUnit rdf:type owl:DatatypeProperty ;
-    rdfs:label "default unit"@en ;
-    rdfs:comment "QUDT unit symbol or plain string (e.g. 'degC', 'ppm', 'lux') for the primary measurement of this concept."@en ;
-    rdfs:domain hbco:Concept ;
-    rdfs:range xsd:string ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-hbco:personaDepth rdf:type owl:DatatypeProperty ;
-    rdfs:label "persona depth"@en ;
-    rdfs:comment "Integer 0-4 indicating the level of technical detail appropriate when explaining this concept to a building occupant (0=lay, 4=expert)."@en ;
-    rdfs:domain hbco:Concept ;
-    rdfs:range xsd:integer ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-hbco:conceptId rdf:type owl:DatatypeProperty ;
-    rdfs:label "concept ID"@en ;
-    rdfs:comment "Machine-readable slug matching the concept_id in concept_terms_raw.csv."@en ;
-    rdfs:domain hbco:Concept ;
-    rdfs:range xsd:string ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-hbco:confidence rdf:type owl:DatatypeProperty ;
-    rdfs:label "confidence"@en ;
-    rdfs:comment "Curator confidence in this concept mapping: high | medium | low."@en ;
-    rdfs:domain hbco:Concept ;
-    rdfs:range xsd:string ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-hbco:roomCapacity rdf:type owl:DatatypeProperty ;
-    rdfs:label "room capacity"@en ;
-    rdfs:comment "Estimated or certified occupant capacity of a room or space (persons)."@en ;
-    rdfs:range xsd:integer ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-hbco:isQuietZone rdf:type owl:DatatypeProperty ;
-    rdfs:label "is quiet zone"@en ;
-    rdfs:comment "True if this floor or space is designated as a quiet study area."@en ;
-    rdfs:range xsd:boolean ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-hbco:spaceFunction rdf:type owl:DatatypeProperty ;
-    rdfs:label "space function"@en ;
-    rdfs:comment "Brief descriptor of the primary function of this space (e.g. seminar room, lab, office, corridor, atrium)."@en ;
-    rdfs:range xsd:string ;
-    rdfs:isDefinedBy hbco:Ontology .
-
-# ─────────────────────────────────────────────────────────────────────────────
-# SHACL sanity shapes — validated before upload
-# ─────────────────────────────────────────────────────────────────────────────
-
-hbco:ConceptShape rdf:type sh:NodeShape ;
-    sh:targetClass hbco:Concept ;
-    rdfs:label "Concept shape"@en ;
-    sh:property [
-        sh:path hbco:layTerm ;
-        sh:minCount 1 ;
-        sh:datatype xsd:string ;
-        sh:message "Every hbco:Concept must have at least one hbco:layTerm."@en ;
-    ] ;
-    sh:property [
-        sh:path hbco:requiresRecipe ;
-        sh:maxCount 1 ;
-        sh:datatype xsd:string ;
-        sh:message "hbco:requiresRecipe must be a single xsd:string if present."@en ;
-    ] ;
-    sh:property [
-        sh:path hbco:personaDepth ;
-        sh:maxCount 1 ;
-        sh:datatype xsd:integer ;
-        sh:message "hbco:personaDepth must be a single integer if present."@en ;
-    ] .
+hbco:Concept rdfs:isDefinedBy <http://ontosage.org/ontology> .
