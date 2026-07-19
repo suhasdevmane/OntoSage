@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TopNav from '../components/TopNav';
 import OntologyTab from '../components/admin/OntologyTab';
+import CapabilitiesTab from '../components/admin/CapabilitiesTab';
 import DatabasesTab from '../components/admin/DatabasesTab';
 import UsersTab from '../components/admin/UsersTab';
 import DataSourcesTab from '../components/admin/DataSourcesTab';
@@ -23,6 +24,7 @@ function useAdminToken() {
 
 const TABS = [
   { id: 'ontology', label: 'Ontology' },
+  { id: 'capabilities', label: 'Capabilities' },
   { id: 'databases', label: 'Databases' },
   { id: 'datasources', label: 'Data Sources' },
   { id: 'index', label: 'Index Status' },
@@ -74,6 +76,7 @@ export default function AdminPortal() {
         </ul>
         <div className="tab-content border border-top-0 p-3 bg-white rounded-bottom">
           {tab === 'ontology' && <OntologyTab {...props} />}
+          {tab === 'capabilities' && <CapabilitiesTab {...props} />}
           {tab === 'databases' && <DatabasesTab {...props} />}
           {tab === 'datasources' && <DataSourcesTab {...props} />}
           {tab === 'index' && <IndexStatusTab {...props} />}
