@@ -1,0 +1,6 @@
+# Abacws Building — Data Sensors Coverage
+
+The building is instrumented with an IoT monitoring network (the live sensor/point count is computed from the ontology on request) for air temperature, CO2 (indoor air quality), relative humidity, occupancy/presence (PIR), and electricity sub-metering. IMPORTANT — current live coverage: only FLOOR 5 is connected to OntoSage with live streaming sensor data. The Ground floor and Floors 1, 2, 3 and 4 are fully represented in the ontology and floor plans (rooms, zones, geometry) but do NOT yet stream live sensor readings into the system. For live environmental readings (temperature, CO2, humidity), query Floor 5 zones, e.g. "temperature in zone 5.28". The ontology is based on the Brick Schema with ASHRAE 223 and BACnet extensions. Sensor rollout to the remaining floors is planned but not yet live.
+
+
+Related: what sensors, sensor coverage, monitored, measured, tracked, what is measured, sensor types, building data, what data, information collected, instruments, iot sensors, active sensors, online sensors, how many sensors, sensor count, sensors installed, sensor network, environmental monitoring, smart sensors, what is monitored, parameters measured, sensor parameters, telemetry, what readings, available sensors, connected sensors, live sensors.

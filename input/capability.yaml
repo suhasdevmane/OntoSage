@@ -11,13 +11,13 @@ building_info:
   year_built: 2021
   floors: 6
   floor_range: "Ground (0) to Floor 5"
-  total_area_m2: ~14000
+  total_area_m2: "computed live from floor-plan geometry — ask 'what is the total floor area?'"
   cost_gbp: "£39m"
   architect: "Stride Treglown with Adjaye Associates"
   contractor: ISG
   occupancy_type: Mixed-use academic (computer science, mathematics, data innovation, research labs)
   smart_building: true
-  sensor_count: "~680 designed; ~1,200 points streaming (Floor 5 hardware + Floors 0-4 simulated)"
+  sensor_count: "computed live from the ontology — ask 'how many sensors are there?'"
   live_data_floors: "All floors 0-5 (Floor 5 from live hardware; Ground and Floors 1-4 simulated streams pending hardware connection)"
   reception_hours: "Monday–Friday 09:00–16:30; Saturday–Sunday Closed"
   description: >
@@ -25,8 +25,9 @@ building_info:
     It houses the School of Computer Science and Informatics and the School of Mathematics,
     together with the Data Innovation Research Institute. Designed by Stride Treglown with
     Adjaye Associates (cost £39m), it sits on Senghennydd Road adjacent to Cathays railway
-    station. The building was designed with a comprehensive IoT sensor network of ~680
-    sensor points for temperature, CO2, and humidity. Floor 5 streams live hardware
+    station. The building is instrumented with a comprehensive IoT sensor network for
+    temperature, CO2, and humidity (live sensor and point counts are computed from the
+    ontology on request). Floor 5 streams live hardware
     data; the Ground floor and Floors 1-4 are fully modelled in the ontology and floor
     plans and stream simulated readings until their hardware is connected. Additional
     modalities (occupancy, energy, air quality, noise, light, water) stream via the
@@ -282,8 +283,8 @@ capabilities:
                what is monitored, parameters measured, sensor parameters, telemetry,
                what readings, available sensors, connected sensors, live sensors]
     content: >
-      The building was designed with an IoT monitoring network of approximately 680
-      sensor points for air temperature, CO2 (indoor air quality), relative humidity,
+      The building is instrumented with an IoT monitoring network (the live sensor/point
+      count is computed from the ontology on request) for air temperature, CO2 (indoor air quality), relative humidity,
       occupancy/presence (PIR), and electricity sub-metering. IMPORTANT — current live
       coverage: only FLOOR 5 is connected to OntoSage with live streaming sensor data.
       The Ground floor and Floors 1, 2, 3 and 4 are fully represented in the ontology and
@@ -329,8 +330,9 @@ capabilities:
       and mapped space counts from the architectural (DWG) floor plans are: Ground floor —
       15 spaces, ~2,766 m²; Floor 1 — 34 spaces, ~3,009 m²; Floor 2 — 34 spaces, ~3,618 m²;
       Floor 3 — 34 spaces, ~3,618 m²; Floor 4 — 41 spaces, ~3,744 m² (the largest floor by
-      both area and number of rooms); Floor 5 — 34 spaces, ~3,616 m². The combined mapped
-      floor area is approximately 20,370 m². You can ask for a specific floor's area,
+      both area and number of rooms); Floor 5 — 34 spaces, ~3,616 m². For the exact
+      building-total or any specific floor's area, the spatial query agent computes it live
+      from the floor-plan geometry. You can ask for a specific floor's area,
       adjacency, or room count and the spatial query agent will answer from the floor-plan
       geometry.
     source: architectural_floor_plans

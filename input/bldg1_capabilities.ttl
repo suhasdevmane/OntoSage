@@ -1,0 +1,117 @@
+# bldg1 capability facts — TTL-first source of truth (GUI + file managed).
+# Each amenity is a dual-typed ontosage:Amenity instance answered live by the
+# CapabilityGraphResolver. Edit here or via the admin console Capabilities tab;
+# both stay consistent (this file is auto-loaded on restart by ttl_uploader).
+
+@prefix bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+bldg:AccessibilitySummary a ontosage:Amenity ;
+    rdfs:label "Accessibility"@en ;
+    ontosage:capabilityCategory "ACCESSIBILITY" ;
+    ontosage:layTerms "wheelchair, wheelchair access, accessible, accessibility, disability, disabled, step-free, hearing loop, induction loop, ramp, accessible parking, blue badge, refuge area" ;
+    ontosage:locationText "Building-wide" ;
+    ontosage:note "Step-free access at all entrances; lifts to all floors; accessible toilets on every floor; hearing induction loops at reception and lecture spaces; accessible parking on Senghennydd Road (blue badge required); refuge areas at stairwell landings. Disability queries: disability@cardiff.ac.uk." .
+
+bldg:BikeStorage_Outdoor a ontosage:Amenity,
+        ontosage:BikeStorage ;
+    rdfs:label "Covered bicycle racks"@en ;
+    ontosage:capabilityCategory "AMENITIES" ;
+    ontosage:layTerms "bicycle, bike, cycling, cycle, bike rack, bike storage, park my bike, where to park bike, cycle parking" ;
+    ontosage:locationText "Outside, to the rear and on the west side of the building; secure storage in the basement" ;
+    ontosage:note "Covered racks need a valid Cardiff University card. On-street cycle parking on Senghennydd Road." .
+
+bldg:Cafe_Ground a ontosage:Amenity,
+        ontosage:Cafe ;
+    rdfs:label "Abacws Café"@en ;
+    ontosage:capabilityCategory "AMENITIES" ;
+    ontosage:layTerms "cafe, café, coffee, canteen, food, refreshment, lunch, snacks, somewhere to eat, get a coffee" ;
+    ontosage:locationText "Ground floor" ;
+    ontosage:note "Open 08:00–16:30 weekdays; hot drinks, food, snacks. Vending machines on Floors 1 and 3." ;
+    ontosage:onFloor "0" .
+
+bldg:CybersecurityLab a ontosage:Amenity,
+        ontosage:Facility ;
+    rdfs:label "Cybersecurity Lab"@en ;
+    ontosage:capabilityCategory "FACILITY" ;
+    ontosage:layTerms "cybersecurity lab, cyber security lab, security lab, cyber lab, labs, key facilities, what facilities" ;
+    ontosage:locationText "Abacws building" ;
+    ontosage:note "Dedicated cybersecurity teaching and research facility." .
+
+bldg:Lift_Main a ontosage:Amenity,
+        ontosage:Lift ;
+    rdfs:label "Main passenger lift"@en ;
+    ontosage:capabilityCategory "ACCESSIBILITY" ;
+    ontosage:layTerms "lift, elevator, main lift, passenger lift, accessible lift, where is the lift, nearest lift" ;
+    ontosage:locationText "Left of the front entrance (~25 m); serves floors G, 1, 2, 3, 4, 5" ;
+    ontosage:note "Weight limit 1000 kg; door width 90 cm; Braille + tactile buttons; audible announcer; mirror. No staff activation needed." .
+
+bldg:Makerspace a ontosage:Amenity,
+        ontosage:Facility ;
+    rdfs:label "Makerspace & IT Workshop"@en ;
+    ontosage:capabilityCategory "FACILITY" ;
+    ontosage:layTerms "makerspace, maker space, it workshop, hardware lab, project space, prototyping, labs, key facilities, what facilities, what labs" ;
+    ontosage:locationText "Abacws building" ;
+    ontosage:note "Practical hardware/software project space." .
+
+bldg:NursingRoom_F2 a ontosage:Amenity,
+        ontosage:NursingRoom ;
+    rdfs:label "Nursing / feeding room"@en ;
+    ontosage:capabilityCategory "AMENITIES" ;
+    ontosage:layTerms "nursing room, feeding room, baby, mother, breastfeeding, parents room, baby changing" ;
+    ontosage:locationText "Floor 2" ;
+    ontosage:note "For parents. Baby-changing facilities are on the Ground floor." ;
+    ontosage:onFloor "2" .
+
+bldg:PrayerRoom_104 a ontosage:Amenity,
+        ontosage:PrayerRoom ;
+    rdfs:label "Multi-faith prayer & reflection room"@en ;
+    ontosage:capabilityCategory "AMENITIES" ;
+    ontosage:layTerms "prayer room, quiet room, reflection, meditation, faith, worship, religious, chaplain, where can i pray, place to pray" ;
+    ontosage:locationText "Floor 1, room 1.04" ;
+    ontosage:note "Multi-faith, available to all." ;
+    ontosage:onFloor "1" .
+
+bldg:Reception a ontosage:Amenity,
+        ontosage:Service ;
+    rdfs:label "Reception"@en ;
+    ontosage:capabilityCategory "SERVICE" ;
+    ontosage:layTerms "reception, front desk, reception desk, opening hours, reception hours, when is it open, what time does it open, when does reception close, sign in" ;
+    ontosage:locationText "Ground floor, main entrance" ;
+    ontosage:note "Open Mon–Fri 09:00–16:30; weekends closed. Building access 07:00–22:00 weekdays and 08:00–18:00 weekends for card-holders. Out-of-hours: Security 029 2087 4444 (24/7)." ;
+    ontosage:onFloor "0" .
+
+bldg:ShowerFacility_F1 a ontosage:Amenity,
+        ontosage:ShowerFacility ;
+    rdfs:label "Shower facilities"@en ;
+    ontosage:capabilityCategory "AMENITIES" ;
+    ontosage:layTerms "shower, shower room, showers, where is the shower, shower facilities, accessible shower" ;
+    ontosage:locationText "Floor 1 (accessible and standard cubicles)" ;
+    ontosage:note "Level access throughout; card-reader entry. Take the right-hand lift, turn right on Floor 1." ;
+    ontosage:onFloor "1" .
+
+bldg:StudyArea_F1F2 a ontosage:Amenity,
+        ontosage:StudyArea ;
+    rdfs:label "Open-plan study areas"@en ;
+    ontosage:capabilityCategory "AMENITIES" ;
+    ontosage:layTerms "study, quiet study, workspace, desk, quiet area, place to work, hot desk, pod, somewhere to study, take a call" ;
+    ontosage:locationText "Floors 1 and 2; collaborative 'pods' on Floor 3" ;
+    ontosage:note "Bookable meeting rooms via the Staff Intranet or Microsoft Teams; ground-floor atrium has informal seating." .
+
+bldg:Toilets_AllFloors a ontosage:Amenity,
+        ontosage:ToiletFacility ;
+    rdfs:label "Toilets"@en ;
+    ontosage:capabilityCategory "AMENITIES" ;
+    ontosage:layTerms "toilet, toilets, bathroom, wc, restroom, loo, ladies, gents, accessible toilet, disabled toilet, gender neutral toilet, baby changing, where are the toilets" ;
+    ontosage:locationText "Every floor (Ground–5)" ;
+    ontosage:note "Accessible toilets on every floor; baby-changing on the Ground floor; gender-neutral (shared) facilities on Ground and Floor 1; female/male facilities on Floors 2–5; showers on Floor 1." .
+
+bldg:TradingRoom a ontosage:Amenity,
+        ontosage:Facility ;
+    rdfs:label "Simulated Trading Room"@en ;
+    ontosage:capabilityCategory "FACILITY" ;
+    ontosage:layTerms "trading room, simulated trading room, financial mathematics lab, finance lab, labs, key facilities, what facilities" ;
+    ontosage:locationText "Abacws building" ;
+    ontosage:note "For financial mathematics and data-analytics teaching." .
+

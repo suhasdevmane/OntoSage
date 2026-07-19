@@ -90,7 +90,7 @@ bldg:Access_Reader_Main_Entrance
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Access_Reader_F1_Entrance
@@ -100,7 +100,7 @@ bldg:Access_Reader_F1_Entrance
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Access_Reader_F2_Entrance
@@ -110,7 +110,7 @@ bldg:Access_Reader_F2_Entrance
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Access_Reader_F3_Entrance
@@ -120,7 +120,7 @@ bldg:Access_Reader_F3_Entrance
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac01-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Access_Reader_F4_Entrance
@@ -130,7 +130,7 @@ bldg:Access_Reader_F4_Entrance
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac01-0000-0000-000000000005" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Access_Reader_F5_Entrance
@@ -140,7 +140,7 @@ bldg:Access_Reader_F5_Entrance
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac01-0000-0000-000000000006" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Entry_Count_Sensor_Main
@@ -150,7 +150,7 @@ bldg:Entry_Count_Sensor_Main
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac02-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Entry_Count_Sensor_F1
@@ -160,7 +160,7 @@ bldg:Entry_Count_Sensor_F1
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac02-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Entry_Count_Sensor_F2
@@ -170,7 +170,7 @@ bldg:Entry_Count_Sensor_F2
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac02-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Entry_Count_Sensor_F3
@@ -180,7 +180,7 @@ bldg:Entry_Count_Sensor_F3
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac02-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Entry_Count_Sensor_F4
@@ -190,7 +190,7 @@ bldg:Entry_Count_Sensor_F4
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac02-0000-0000-000000000005" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Entry_Count_Sensor_F5
@@ -200,7 +200,7 @@ bldg:Entry_Count_Sensor_F5
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac02-0000-0000-000000000006" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Door_Sensor_Main_Entrance
@@ -210,7 +210,7 @@ bldg:Door_Sensor_Main_Entrance
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac03-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Door_Sensor_Server_F2
@@ -220,7 +220,7 @@ bldg:Door_Sensor_Server_F2
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac03-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Door_Sensor_Server_F4
@@ -230,7 +230,7 @@ bldg:Door_Sensor_Server_F4
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac03-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Door_Sensor_Server_F5
@@ -240,7 +240,7 @@ bldg:Door_Sensor_Server_F5
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ac03-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 
@@ -285,7 +285,7 @@ bldg:Occupancy_Sensor_Conf_1_25
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Occupancy_Sensor_Conf_1_26
@@ -295,7 +295,7 @@ bldg:Occupancy_Sensor_Conf_1_26
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Occupancy_Sensor_Conf_2_15
@@ -305,7 +305,7 @@ bldg:Occupancy_Sensor_Conf_2_15
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Occupancy_Sensor_Conf_3_13
@@ -315,7 +315,7 @@ bldg:Occupancy_Sensor_Conf_3_13
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Occupancy_Sensor_Conf_3_26
@@ -325,7 +325,7 @@ bldg:Occupancy_Sensor_Conf_3_26
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000005" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Occupancy_Sensor_Conf_4_13
@@ -335,7 +335,7 @@ bldg:Occupancy_Sensor_Conf_4_13
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000006" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Occupancy_Sensor_Conf_5_15
@@ -345,7 +345,7 @@ bldg:Occupancy_Sensor_Conf_5_15
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000007" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Occupancy_Sensor_Conf_5_16
@@ -355,7 +355,7 @@ bldg:Occupancy_Sensor_Conf_5_16
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000008" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Occupancy_Sensor_Lab_3_01
@@ -365,7 +365,7 @@ bldg:Occupancy_Sensor_Lab_3_01
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-oc02-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Occupancy_Sensor_Lab_4_01
@@ -375,7 +375,7 @@ bldg:Occupancy_Sensor_Lab_4_01
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-oc02-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Occupancy_Sensor_Lab_5_01
@@ -385,7 +385,7 @@ bldg:Occupancy_Sensor_Lab_5_01
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-oc02-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:CO2_Sensor_Lab_3_01
@@ -395,7 +395,7 @@ bldg:CO2_Sensor_Lab_3_01
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-co2a-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:CO2_Sensor_Lab_4_01
@@ -405,7 +405,7 @@ bldg:CO2_Sensor_Lab_4_01
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-co2a-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:CO2_Sensor_Conf_3_13
@@ -415,7 +415,7 @@ bldg:CO2_Sensor_Conf_3_13
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-co2a-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:CO2_Sensor_Conf_5_15
@@ -425,7 +425,7 @@ bldg:CO2_Sensor_Conf_5_15
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-co2a-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 
@@ -441,7 +441,7 @@ bldg:HVAC_Meter_F0
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:HVAC_Meter_F1
@@ -452,7 +452,7 @@ bldg:HVAC_Meter_F1
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:HVAC_Meter_F2
@@ -463,7 +463,7 @@ bldg:HVAC_Meter_F2
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:HVAC_Meter_F3
@@ -474,7 +474,7 @@ bldg:HVAC_Meter_F3
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em01-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:HVAC_Meter_F4
@@ -485,7 +485,7 @@ bldg:HVAC_Meter_F4
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em01-0000-0000-000000000005" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:HVAC_Meter_F5
@@ -496,7 +496,7 @@ bldg:HVAC_Meter_F5
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em01-0000-0000-000000000006" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Lighting_Meter_F0
@@ -506,7 +506,7 @@ bldg:Lighting_Meter_F0
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em02-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Lighting_Meter_F1
@@ -516,7 +516,7 @@ bldg:Lighting_Meter_F1
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em02-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Lighting_Meter_F2
@@ -526,7 +526,7 @@ bldg:Lighting_Meter_F2
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em02-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Lighting_Meter_F3
@@ -536,7 +536,7 @@ bldg:Lighting_Meter_F3
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em02-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Lighting_Meter_F4
@@ -546,7 +546,7 @@ bldg:Lighting_Meter_F4
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em02-0000-0000-000000000005" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Lighting_Meter_F5
@@ -556,7 +556,7 @@ bldg:Lighting_Meter_F5
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em02-0000-0000-000000000006" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:PlugLoad_Meter_F0
@@ -566,7 +566,7 @@ bldg:PlugLoad_Meter_F0
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em03-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:PlugLoad_Meter_F1
@@ -576,7 +576,7 @@ bldg:PlugLoad_Meter_F1
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em03-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:PlugLoad_Meter_F2
@@ -586,7 +586,7 @@ bldg:PlugLoad_Meter_F2
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em03-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:PlugLoad_Meter_F3
@@ -596,7 +596,7 @@ bldg:PlugLoad_Meter_F3
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em03-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:PlugLoad_Meter_F4
@@ -606,7 +606,7 @@ bldg:PlugLoad_Meter_F4
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em03-0000-0000-000000000005" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:PlugLoad_Meter_F5
@@ -616,7 +616,7 @@ bldg:PlugLoad_Meter_F5
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em03-0000-0000-000000000006" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 
@@ -628,7 +628,7 @@ bldg:Building_Water_Meter
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-wm01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Water_Flow_Sensor_Main
@@ -638,7 +638,7 @@ bldg:Water_Flow_Sensor_Main
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-wm01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Water_Flow_Sensor_HotWater
@@ -648,7 +648,7 @@ bldg:Water_Flow_Sensor_HotWater
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-wm01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Leak_Detector_PlantRoom_F0
@@ -658,7 +658,7 @@ bldg:Leak_Detector_PlantRoom_F0
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-wm02-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Leak_Detector_Rooftop
@@ -668,7 +668,7 @@ bldg:Leak_Detector_Rooftop
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-wm02-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Water_Usage_Sensor_Main
@@ -678,7 +678,7 @@ bldg:Water_Usage_Sensor_Main
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-wm01-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 
@@ -693,7 +693,7 @@ bldg:Lift_1_Power_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-lp01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Lift_2_Power_Sensor
@@ -703,7 +703,7 @@ bldg:Lift_2_Power_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-lp01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Lift_1_Status_Sensor
@@ -713,7 +713,7 @@ bldg:Lift_1_Status_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-lp01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 
@@ -728,7 +728,7 @@ bldg:EV_Charger_1_Power_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ev01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:EV_Charger_2_Power_Sensor
@@ -738,7 +738,7 @@ bldg:EV_Charger_2_Power_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ev01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:EV_Charger_3_Power_Sensor
@@ -748,7 +748,7 @@ bldg:EV_Charger_3_Power_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ev01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:EV_Charger_4_Power_Sensor
@@ -758,7 +758,7 @@ bldg:EV_Charger_4_Power_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ev01-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:EV_Charger_5_Power_Sensor
@@ -768,7 +768,7 @@ bldg:EV_Charger_5_Power_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ev01-0000-0000-000000000005" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:EV_Charger_6_Power_Sensor
@@ -778,7 +778,7 @@ bldg:EV_Charger_6_Power_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ev01-0000-0000-000000000006" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:EV_Charger_1_State_Sensor
@@ -788,7 +788,7 @@ bldg:EV_Charger_1_State_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ev02-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:EV_Charger_2_State_Sensor
@@ -798,7 +798,7 @@ bldg:EV_Charger_2_State_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ev02-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:NO2_Sensor_Parking
@@ -810,7 +810,7 @@ bldg:NO2_Sensor_Parking
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-ev03-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Exhaust_Fan_Parking
@@ -872,7 +872,7 @@ bldg:FireExit_Door_Sensor_F0
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-fe01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:FireExit_Door_Sensor_F1
@@ -882,7 +882,7 @@ bldg:FireExit_Door_Sensor_F1
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-fe01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:FireExit_Door_Sensor_F2
@@ -892,7 +892,7 @@ bldg:FireExit_Door_Sensor_F2
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-fe01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:FireExit_Door_Sensor_F3
@@ -902,7 +902,7 @@ bldg:FireExit_Door_Sensor_F3
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-fe01-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:FireExit_Door_Sensor_F4
@@ -912,7 +912,7 @@ bldg:FireExit_Door_Sensor_F4
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-fe01-0000-0000-000000000005" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:FireExit_Door_Sensor_F5
@@ -922,7 +922,7 @@ bldg:FireExit_Door_Sensor_F5
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-fe01-0000-0000-000000000006" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Smoke_Detector_F3_Lab
@@ -933,7 +933,7 @@ bldg:Smoke_Detector_F3_Lab
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-fe02-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Smoke_Detector_F5_Lab
@@ -944,7 +944,7 @@ bldg:Smoke_Detector_F5_Lab
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-fe02-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 
@@ -975,7 +975,7 @@ bldg:Vibration_Sensor_Pump_HW_1
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-vb01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Vibration_Sensor_Pump_HW_2
@@ -986,7 +986,7 @@ bldg:Vibration_Sensor_Pump_HW_2
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-vb01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Vibration_Sensor_Pump_Chilled_1
@@ -997,7 +997,7 @@ bldg:Vibration_Sensor_Pump_Chilled_1
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-vb01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 
@@ -1012,7 +1012,7 @@ bldg:PV_Array_1_Power_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-pv01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:PV_Array_2_Power_Sensor
@@ -1022,7 +1022,7 @@ bldg:PV_Array_2_Power_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-pv01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Solar_Irradiance_Sensor_Roof
@@ -1032,7 +1032,7 @@ bldg:Solar_Irradiance_Sensor_Roof
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-pv01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:PV_Energy_Meter
@@ -1042,7 +1042,7 @@ bldg:PV_Energy_Meter
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-pv01-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 
@@ -1115,7 +1115,7 @@ bldg:RH_Sensor_F0
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-rh01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:RH_Sensor_F1
@@ -1125,7 +1125,7 @@ bldg:RH_Sensor_F1
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-rh01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:RH_Sensor_F2
@@ -1135,7 +1135,7 @@ bldg:RH_Sensor_F2
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-rh01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:RH_Sensor_F3
@@ -1145,7 +1145,7 @@ bldg:RH_Sensor_F3
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-rh01-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:RH_Sensor_F4
@@ -1155,7 +1155,7 @@ bldg:RH_Sensor_F4
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-rh01-0000-0000-000000000005" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:RH_Sensor_F5
@@ -1165,7 +1165,7 @@ bldg:RH_Sensor_F5
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-rh01-0000-0000-000000000006" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 
@@ -1180,7 +1180,7 @@ bldg:Booking_Status_Room1_25
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-bk01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Booking_Status_Room1_26
@@ -1190,7 +1190,7 @@ bldg:Booking_Status_Room1_26
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-bk01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Booking_Status_Room3_13
@@ -1200,7 +1200,7 @@ bldg:Booking_Status_Room3_13
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-bk01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Booking_Status_Room3_26
@@ -1210,7 +1210,7 @@ bldg:Booking_Status_Room3_26
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-bk01-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Booking_Status_Room5_15
@@ -1220,7 +1220,7 @@ bldg:Booking_Status_Room5_15
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-bk01-0000-0000-000000000005" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Booking_Status_Room5_16
@@ -1230,7 +1230,7 @@ bldg:Booking_Status_Room5_16
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-bk01-0000-0000-000000000006" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 
@@ -1252,7 +1252,7 @@ bldg:WasteBin_Fill_F0_Reception
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-wb01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:WasteBin_Recycle_F2_Kitchen
@@ -1269,7 +1269,7 @@ bldg:WasteBin_Fill_F2_Kitchen
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-wb01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:WasteBin_General_F3_Common
@@ -1286,7 +1286,7 @@ bldg:WasteBin_Fill_F3_Common
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-wb01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:WasteBin_Recycle_F3_Kitchen
@@ -1303,7 +1303,7 @@ bldg:WasteBin_Fill_F3_Kitchen
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-wb01-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:WasteBin_General_F5_Break
@@ -1320,7 +1320,7 @@ bldg:WasteBin_Fill_F5_Break
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-wb01-0000-0000-000000000005" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 
@@ -1342,7 +1342,7 @@ bldg:CCT_Command_F3_Lab
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-lt01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Luminaire_F3_Office_3_07
@@ -1358,7 +1358,7 @@ bldg:CCT_Command_F3_Office
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-lt01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Luminaire_F5_Lab_5_01
@@ -1374,7 +1374,7 @@ bldg:CCT_Command_F5_Lab
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-lt01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:CCT_Sensor_F5_Lab
@@ -1384,7 +1384,7 @@ bldg:CCT_Sensor_F5_Lab
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-lt01-0000-0000-000000000004" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 
@@ -1408,7 +1408,7 @@ bldg:GreenRoof_SoilMoisture_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-gr01-0000-0000-000000000001" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:GreenRoof_Rainfall_Sensor
@@ -1418,7 +1418,7 @@ bldg:GreenRoof_Rainfall_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-gr01-0000-0000-000000000002" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:GreenRoof_Ambient_Temp_Sensor
@@ -1428,7 +1428,7 @@ bldg:GreenRoof_Ambient_Temp_Sensor
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-gr01-0000-0000-000000000003" ;
-        ref:storedAt bldg:database1
+        ref:storedAt bldg:database1_synth
     ] .
 
 bldg:Indoor_Plants_F3_Common
