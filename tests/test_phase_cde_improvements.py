@@ -426,8 +426,11 @@ class TestRateLimiting:
 
         tiny_app = FastAPI()
 
-        @tiny_app.get("/ping")
-        async def ping():
+        # NOT "/ping" — RateLimitMiddleware._EXEMPT_PATHS deliberately excludes
+        # /ping and /health (Docker health checks must never be throttled), so
+        # a rate-limit test needs an ordinary route to observe blocking.
+        @tiny_app.get("/probe")
+        async def probe():
             return {"ok": True}
 
         tiny_app.add_middleware(RateLimitMiddleware, requests=3, window=60)
@@ -435,10 +438,10 @@ class TestRateLimiting:
         transport = ASGITransport(app=tiny_app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             for _ in range(3):
-                r = await client.get("/ping")
+                r = await client.get("/probe")
                 assert r.status_code == 200
             # 4th request must be blocked
-            r = await client.get("/ping")
+            r = await client.get("/probe")
             assert r.status_code == 429
             assert "retry-after" in r.headers or "Retry-After" in r.headers
 

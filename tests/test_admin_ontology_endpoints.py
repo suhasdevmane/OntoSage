@@ -176,17 +176,38 @@ async def test_validate_ttl_invalid():
 # ---------------------------------------------------------------------------
 
 
-async def test_upload_ttl_endpoint():
-    """POST /api/v1/admin/ontology/upload uploads TTL and returns success=True."""
+async def test_upload_ttl_custom_graph_graphdb_only():
+    """Upload to a NON-file graph writes GraphDB only (persisted=False)."""
     mock_result = {
         "ok": True,
         "triple_count": 3,
-        "graph": "urn:ontosage:ttl:test.ttl",
+        "graph": "urn:ontosage:custom:test",
         "error": None,
     }
     with patch(
         "orchestrator.services.ontology_manager.upload_ttl",
         new=AsyncMock(return_value=mock_result),
+    ):
+        resp = await _post(
+            "/api/v1/admin/ontology/upload",
+            {
+                "ttl": "@prefix ex: <http://example.org/> . ex:a ex:b ex:c .",
+                "graph_uri": "urn:ontosage:custom:test",
+            },
+        )
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["success"] is True
+    assert body["data"]["persisted"] is False
+
+
+async def test_upload_ttl_file_graph_persists_to_input():
+    """Upload to a file graph (urn:ontosage:ttl:<file>) persists to input/ (persisted=True)."""
+    persisted = {"ok": True, "file": "/app/input/test.ttl", "graph": "urn:ontosage:ttl:test.ttl"}
+    with patch(
+        "orchestrator.services.input_ttl_store.persist_ttl_file",
+        new=AsyncMock(return_value=persisted),
     ):
         resp = await _post(
             "/api/v1/admin/ontology/upload",
@@ -199,6 +220,8 @@ async def test_upload_ttl_endpoint():
     assert resp.status_code == 200
     body = resp.json()
     assert body["success"] is True
+    assert body["data"]["persisted"] is True
+    assert body["data"]["file"].endswith("test.ttl")
 
 
 # ---------------------------------------------------------------------------

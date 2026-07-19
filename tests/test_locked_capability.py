@@ -60,12 +60,16 @@ def _reg(tmp_path: Path) -> DataSourceRegistry:
     return r
 
 
-def _state(query: str) -> ConversationState:
-    return ConversationState(
+def _state(query: str, intent: str = "sensor_data") -> ConversationState:
+    # The gate now only fires for genuine live-data intents (CAVEAT-017 fix), so these
+    # data-question tests carry a data intent; pass intent=... to exercise other cases.
+    st = ConversationState(
         conversation_id="t",
         user_message=query,
         messages=[Message(role="user", content=query)],
     )
+    st.current_intent = intent
+    return st
 
 
 def _fake_self(reg, mgr):
@@ -101,6 +105,16 @@ def test_gate_silent_without_keyword(tmp_path, monkeypatch):
     fs = _fake_self(_reg(tmp_path), _Mgr(enabled=[]))
     src = WorkflowOrchestrator._check_locked_capability(fs, _state("what is the room temperature?"))
     assert src is None
+
+
+def test_gate_silent_for_non_data_intent(tmp_path, monkeypatch):
+    # CAVEAT-017 fix: a disabled-source keyword inside an informational / how-to / report
+    # question (non-data intent) must NOT be intercepted — it passes through to the graph /
+    # documents / report_intake, not the "enable X" decline.
+    monkeypatch.setattr(settings, "DATASOURCE_TOGGLES_ENABLED", True)
+    fs = _fake_self(_reg(tmp_path), _Mgr(enabled=[]))
+    st = _state("how do I report an occupancy complaint?", intent="capability")
+    assert WorkflowOrchestrator._check_locked_capability(fs, st) is None
 
 
 def test_gate_silent_without_registry(monkeypatch):
