@@ -517,6 +517,26 @@ hbco:draft rdf:type hbco:Concept ,
     hbco:componentOf hbco:thermal_comfort ;
     hbco:confidence "medium"^^xsd:string .
 
+# Outdoor wind — distinct from hbco:draft (indoor airflow). Maps to the
+# building's exterior Wind_Speed_Sensor (fed by outside_weather_wind).
+hbco:outdoor_wind rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "outdoor_wind"^^xsd:string ;
+    skos:prefLabel "wind"@en ;
+    hbco:layTerm "wind"^^xsd:string ;
+    hbco:layTerm "windy"^^xsd:string ;
+    hbco:layTerm "is it windy"^^xsd:string ;
+    hbco:layTerm "windy outside"^^xsd:string ;
+    hbco:layTerm "strong wind"^^xsd:string ;
+    hbco:layTerm "wind strong"^^xsd:string ;
+    hbco:layTerm "how windy"^^xsd:string ;
+    hbco:layTerm "how strong is the wind"^^xsd:string ;
+    hbco:layTerm "wind speed"^^xsd:string ;
+    hbco:layTerm "gusty"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Wind_Speed_Sensor ;
+    hbco:requiresRecipe "threshold"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
 hbco:fire_safety rdf:type hbco:CompositeConcept ,
                owl:NamedIndividual ;
     hbco:conceptId "fire_safety"^^xsd:string ;

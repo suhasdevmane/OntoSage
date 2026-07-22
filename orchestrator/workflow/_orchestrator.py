@@ -845,6 +845,34 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             logger.debug(f"[dialogue] concept resolution skipped: {_cr_err}")
             state.intermediate_results.setdefault("concepts", [])
 
+        # TODO-050: concept-aware grounding override. When a lay-term resolves to a
+        # building SENSOR class (e.g. "wind" -> Wind_Speed_Sensor via the exterior
+        # weather feed) but the LLM asked for an external location/building/city, the
+        # clarification is spurious — the location IS this building. Route to
+        # sensor_data instead of deflecting. Tightly guarded (sensor concept AND a
+        # location-style clarification) so genuine "which room?" clarifications stand.
+        if intent in ("clarification", "general"):
+            _resolved = state.intermediate_results.get("concepts", []) or []
+            _has_sensor = any(
+                str(bc).endswith("_Sensor")
+                for c in _resolved
+                for bc in (c.get("brick_classes", []) if isinstance(c, dict) else [])
+            )
+            _loc_clarify = any(
+                w in (clarification_question or "").lower()
+                for w in ("location", "building", "city", "region", "which city", "where are you")
+            )
+            if _has_sensor and _loc_clarify:
+                logger.info(
+                    "[intent-override] concept %s maps to a building sensor — routing "
+                    "'%s' -> 'sensor_data' (location is this building)",
+                    [c.get("concept_id") for c in _resolved if isinstance(c, dict)],
+                    intent,
+                )
+                intent = "sensor_data"
+                state.intermediate_results["intent"] = "sensor_data"
+                clarification_question = ""
+
         # T34: What-if / scenario estimation — detect phrasing and attach recipe hint.
         # Keeps recipe selection in YAML (estimate kind); routing stays analytics.
         import re as _re_whatif
