@@ -77,11 +77,35 @@ _MASTER_TABLE = (
 )
 _OUTPUT_DIR = _SCRIPT_DIR / "outputs" / "replay"
 
+def _env_or_dotenv(key: str, default: str = "") -> str:
+    """Return an env var if set, else read it from the repo-root .env.
+
+    RBAC now enforces auth on /v1/chat/completions, so the harness must present a
+    valid PIPELINE_API_KEY. Reading .env here means the run works out of the box
+    (``python scripts/corpus_replay.py``) with no manual ``export`` — matching how
+    the orchestrator itself loads the key.
+    """
+    v = os.environ.get(key)
+    if v:
+        return v
+    try:
+        env_path = _SCRIPT_DIR.parent / ".env"
+        if env_path.exists():
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                s = line.strip()
+                if s and not s.startswith("#") and s.split("=", 1)[0].strip() == key:
+                    return s.split("=", 1)[1].strip().strip('"').strip("'")
+    except Exception:
+        pass
+    return default
+
+
 BASE_URL = os.environ.get("ONTOSAGE_BASE", "http://127.0.0.1:8000")
 REPLAY_USER = os.environ.get("ONTOSAGE_REPLAY_USER", "replaytest")
 REPLAY_PASS = os.environ.get("ONTOSAGE_REPLAY_PASS", "replaytestpass99")
 # /v1/chat/completions (Open WebUI path) authenticates with the pipeline key.
-PIPELINE_API_KEY = os.environ.get("PIPELINE_API_KEY", "sk-ontobot-pipeline")
+# Auto-loaded from .env (RBAC-enforced) so runs don't silently 401 without an export.
+PIPELINE_API_KEY = _env_or_dotenv("PIPELINE_API_KEY", "sk-ontobot-pipeline")
 
 REQUEST_TIMEOUT = 120  # seconds per question
 REQUEST_DELAY = 0.8    # polite gap between requests
