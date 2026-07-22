@@ -1,6 +1,6 @@
 # OntoSage 3.0: Production-Grade Agentic AI Docker Compose Configuration
 # 10 Agents | 14 Intents | Phase 7 services (Response Cache, Agent Memory, WebSocket, i18n)
-# Default MODEL_PROVIDER: local (Ollama, e.g. gemma4:26b) — set OPENAI_API_KEY + MODEL_PROVIDER=openai to use OpenAI instead
+# Default MODEL_PROVIDER: local (Ollama, default model gpt-oss:20b) — set OPENAI_API_KEY + MODEL_PROVIDER=openai to use OpenAI instead
 # Local volumes + Host MySQL on port 3306
 # Usage: docker-compose up -d
 
@@ -204,7 +204,7 @@ services:
       # │ Set in .env: MODEL_PROVIDER=openai and OPENAI_API_KEY=sk-...     │
       # └─────────────────────────────────────────────────────────────────┘
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434} # native host Ollama (default port)
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-gemma4:26b}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-gpt-oss:20b}
       - OLLAMA_NUM_PARALLEL=1
       - OLLAMA_NUM_CTX=4096
       - OLLAMA_KEEP_ALIVE=24h

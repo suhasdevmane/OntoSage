@@ -39,7 +39,14 @@ class Settings(BaseSettings):
             "Ollama; this default covers running the orchestrator outside Docker."
         ),
     )
-    OLLAMA_MODEL: str = Field(default="gemma4:26b", description="Ollama model name")
+    OLLAMA_MODEL: str = Field(
+        default="gpt-oss:20b",
+        description=(
+            "Ollama model name. Default gpt-oss:20b — fully fits a 16GB GPU (100% "
+            "on-GPU, fast); larger models (gemma4:26b/31b) spill to CPU on 16GB and "
+            "run much slower. Admin-overridable via OLLAMA_MODEL / the AI & Models tab."
+        ),
+    )
 
     # Cloud (Ollama Cloud)
     OLLAMA_CLOUD_API_KEY: str = Field(default="", description="Ollama Cloud API key", repr=False)
