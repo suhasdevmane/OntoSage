@@ -251,6 +251,30 @@ hbco:noisy rdf:type hbco:Concept ,
     hbco:componentOf hbco:acoustic_comfort ;
     hbco:confidence "high"^^xsd:string .
 
+# Finding somewhere quiet to work — inverse intent of hbco:noisy, same Noise/Sound
+# level sensors, but the user wants the LOWEST noise area. Resolving this to the
+# noise sensors lets the pipeline rank/suggest the quietest zones (or ask which zone).
+hbco:quiet_space rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "quiet_space"^^xsd:string ;
+    skos:prefLabel "quiet space"@en ;
+    hbco:layTerm "quiet"^^xsd:string ;
+    hbco:layTerm "quiet spot"^^xsd:string ;
+    hbco:layTerm "quiet place"^^xsd:string ;
+    hbco:layTerm "quiet area"^^xsd:string ;
+    hbco:layTerm "quiet room"^^xsd:string ;
+    hbco:layTerm "quiet zone"^^xsd:string ;
+    hbco:layTerm "somewhere quiet"^^xsd:string ;
+    hbco:layTerm "quiet place to work"^^xsd:string ;
+    hbco:layTerm "quiet spot to work"^^xsd:string ;
+    hbco:layTerm "peaceful"^^xsd:string ;
+    hbco:layTerm "low noise"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Noise_Level_Sensor ;
+    hbco:mapsToBrickClass brick:Sound_Level_Sensor ;
+    hbco:requiresRecipe "threshold"^^xsd:string ;
+    hbco:componentOf hbco:acoustic_comfort ;
+    hbco:confidence "high"^^xsd:string .
+
 hbco:quiet_zone rdf:type hbco:Concept ,
                owl:NamedIndividual ;
     hbco:conceptId "quiet_zone"^^xsd:string ;
