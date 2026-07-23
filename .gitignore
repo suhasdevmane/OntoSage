@@ -346,3 +346,10 @@ results/
 /archive/
 /input/bldg2/
 bandit-report.json
+
+# Redundant generated ontology serializations (keep only the canonical .ttl per building)
+bldg2/trial/dataset/*_protege.ttl
+bldg2/trial/dataset/*_rdf.rdf
+bldg3/trial/dataset/*_protege.ttl
+bldg3/trial/dataset/*_rdf.rdf
+bldg3/trial/dataset/_sanitized_*.ttl
