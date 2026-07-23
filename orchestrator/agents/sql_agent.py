@@ -87,11 +87,10 @@ class SQLAgent:
                 "results": {"data": []},
                 "formatted_response": (
                     "I wasn't able to query the time-series database for this request. "
-                    "This may be because the sensor type you're asking about (e.g. energy meters, "
-                    "occupancy counters) isn't monitored in this building. "
-                    "The Abacws building actively monitors: temperature, CO₂, humidity, "
-                    "air quality (PM1/PM2.5/PM10/TVOC/NO₂), illuminance, and gas sensors. "
-                    "Try asking about one of these sensor types instead."
+                    "This may be because the sensor type you're asking about isn't monitored "
+                    "in this building, or its readings aren't loaded yet. "
+                    'Ask "what sensors are available?" to see the sensor types this building '
+                    "actually monitors."
                 ),
                 "analytics_required": False,
             }

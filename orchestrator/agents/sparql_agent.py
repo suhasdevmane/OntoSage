@@ -193,7 +193,7 @@ Instructions:
 2. Answer concisely and accurately using what you find
 3. If the user asks for a sensor type that is NOT in the ontology, clearly state:
    "This building does not have [sensor type] sensors." Then suggest what IS available.
-4. The Abacws building sensors include: temperature, CO₂, humidity, air quality (PM1, PM2.5, PM10, TVOC, NO₂), illuminance, gas sensors (MQ2, MQ3, MQ5, MQ9), oxygen, plus per-floor energy meters, occupancy counters, a water-main flow sensor, noise, lift vibration, and AHU run-time. Each carries a timeseries UUID + storedAt reference.
+4. Only claim a sensor or sensor type exists if it appears in the Building Ontology Data above — never assume sensors that are not shown there (this system serves any building, so the available sensors are whatever the data above lists). Real sensors carry a timeseries UUID + a storedAt reference.
 5. If you find a label (rdfs:label) or definition, include it
 6. Format your answer clearly (use bold for key values, bullets for lists)
 7. Always be helpful — if data isn't available, suggest the closest relevant sensor type that IS available
