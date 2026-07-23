@@ -260,8 +260,7 @@ class CapabilityAgent:
                 "response": (
                     f"I don't have that specific information on record for "
                     f"**{kb.building.name}**. For building-specific queries please "
-                    f"contact facility management at estates@cardiff.ac.uk or call "
-                    f"the estates helpdesk (029 2087 6026)."
+                    f"contact your building's facilities / estates management team."
                 ),
                 "provenance": "kb_no_match",
                 "building_name": kb.building.name,
