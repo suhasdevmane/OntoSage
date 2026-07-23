@@ -353,3 +353,16 @@ bldg2/trial/dataset/*_rdf.rdf
 bldg3/trial/dataset/*_protege.ttl
 bldg3/trial/dataset/*_rdf.rdf
 bldg3/trial/dataset/_sanitized_*.ttl
+
+# Parked per-building working copies (bldg1 is already tracked via input/)
+bldg1/
+
+# input2/ = staging replacement set for bldg2. Commit only its unique config
+# (building.yaml). Agnostic files are copies of input/; bldg2.ttl lives in bldg2/.
+input2/Brick*.ttl
+input2/ontosage_schema.ttl
+input2/database_registry.yaml
+input2/bldg2.ttl
+input2/README.md
+input2/_templates/
+input2/personas/
