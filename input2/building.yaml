@@ -1,0 +1,33 @@
+# ── Building identity: bldg2 (BuildSys reference building) ───────────────────
+# The ontology_namespace below MUST match the `@prefix bldg:` declared in
+# bldg2.ttl exactly — the startup TTL validator hard-fails the boot on a
+# mismatch, so a silently-empty knowledge graph is impossible.
+building_id: bldg2
+building_name: "BuildSys Building (bldg2)"
+ontology_namespace: "http://buildsys.org/ontologies/bldg2#"
+ontology_prefix: bldg          # bldg2.ttl uses the standard `bldg:` label
+
+# Off-ontology capability KB routing (defaults are fine for most buildings).
+capability_routing:
+  enabled: true
+  embedding_model: auto        # follows EMBEDDING_PROVIDER (openai | local)
+  threshold: 0.56
+  override_min: 0.60
+  top_k: 5
+  fallback_on_qdrant_failure: skip
+
+# Which database_registry.yaml keys this building uses. bldg2.ttl routes every
+# sensor to `ref:storedAt bldg:database1`, which is env-driven
+# (${MYSQL_DATABASE}) — point it at bldg2_sensordb in .env2.
+storage:
+  databases:
+    - database1
+
+# No floor plans provided yet → spatial/floor queries will honestly report that
+# there is no floor plan for this building (watch the building_registry residual).
+floor_plan_aliases: []
+
+# Read-only building — no actuation.
+actuation:
+  driver: none
+  points_writable: []
