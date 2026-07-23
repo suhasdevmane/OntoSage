@@ -176,11 +176,28 @@ class BuildingRegistry:
         return self._configs.get(primary) if primary else None
 
     def get_or_default(self, building_id: Optional[str]) -> BuildingConfig:
-        """Return config for building_id, falling back to Abacws default."""
+        """Return config for building_id (alias-aware).
+
+        Fallback order is building-agnostic: the requested id → the ACTIVE building
+        (settings.BUILDING_ID) → any registered building → the shipped sample config
+        (only if the registry is completely empty). Never silently returns Abacws
+        geometry for a different active building.
+        """
         primary = self.resolve_id(building_id)
         if primary:
             return self._configs[primary]
-        return ABACWS_CONFIG
+        # Fall back to the active building, not a hardcoded one.
+        try:
+            from shared.config import settings
+
+            active = self.resolve_id(settings.BUILDING_ID)
+            if active:
+                return self._configs[active]
+        except Exception:
+            pass
+        if self._configs:
+            return next(iter(self._configs.values()))
+        return ABACWS_CONFIG  # absolute last resort: registry empty
 
     def building_ids(self) -> List[str]:
         return sorted(self._configs.keys())

@@ -231,8 +231,12 @@ class Settings(BaseSettings):
         default="Abacws Building", description="Human-readable building name"
     )
     BUILDING_NAMESPACE: str = Field(
-        default="http://abacwsbuilding.cardiff.ac.uk/abacws#",
-        description="Base URI for building ontology instances (ABox namespace). Must end with '#'.",
+        default="http://example.org/building#",
+        description=(
+            "Base URI for building ontology instances (ABox namespace). Must end with "
+            "'#'. Neutral placeholder — set the real per-building value in "
+            "input/building.yaml (ontology_namespace) so nothing is building-specific in code."
+        ),
     )
     BUILDING_PREFIX: str = Field(
         default="bldg", description="Short SPARQL prefix for BUILDING_NAMESPACE (e.g. 'bldg')"
