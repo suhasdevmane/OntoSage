@@ -146,6 +146,19 @@ route to that DB. Credentials are stored in `.env`.
 - **Ontology tab → Semantic search index** — shows when newly-added data has finished indexing. It
   **rebuilds automatically** (debounced) after edits; exact name/type questions work instantly.
 
+### 9A. (Optional) Add documents & floor plans — no host-side file drop
+The **Ontology tab** now uploads these directly from the browser (each writes into the active
+building's `input/` and re-indexes automatically — no restart, no editing files on the host):
+- **Documents** — a `.md` / `.txt` / `.pdf` policy, manual, or contact sheet → the document KB
+  (Qdrant `documents_<bldg>`), answering off-ontology questions ("what's the wifi policy?"). Saved to
+  `input/documents/`. `POST /api/v1/admin/documents/upload`.
+- **Floor plans** — a PDF or DWG per floor → spatial / floor queries and geometry. Stored as
+  `<label> floor <N>.<ext>` (label defaults to the active building id) and ingested into the manifest
+  registry. `POST /api/v1/admin/floor-plans/upload`.
+
+This closes the last host-side gap: **the entire onboarding — identity, TTL, sensors/DB, documents,
+floor plans — is now doable from the Admin Console for any building.**
+
 Then jump to [§9 Verify](#9-verify--the-two-half-test).
 
 ---

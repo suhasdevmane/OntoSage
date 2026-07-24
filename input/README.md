@@ -32,11 +32,15 @@ To onboard a **new building**, keep the 🟢 shared files and replace the 🔵 o
 | `<your>.ttl` | Your Brick model — sensors typed + linked to the DB (see [the two-half rule](#the-two-half-rule)). **One canonical TTL** (don't drop multiple serializations of the same ontology). |
 
 ### 🟡 Per-building — optional (drop-in; absent = feature silently skipped)
-Admins can **drop these into `input/` any time** — the loader picks them up on the next restart:
+Admins can **drop these into `input/` any time** — the loader picks them up on the next restart. Two of
+them can also be **uploaded live from the Admin Console → Ontology tab** (no host-side file drop, no
+restart): **Documents** and **Floor plans**.
 
-- **`*.dwg` / `*.pdf`** — floor plans → spatial/floor queries and geometry.
+- **`*.dwg` / `*.pdf`** — floor plans → spatial/floor queries and geometry. *(GUI: Ontology ▸ Floor
+  plans — `POST /api/v1/admin/floor-plans/upload`.)*
 - **`documents/*.md` (or `.pdf` / `.txt`)** — policies, manuals, contacts → the document KB (answers
-  off-ontology questions like "what's the wifi policy?").
+  off-ontology questions like "what's the wifi policy?"). *(GUI: Ontology ▸ Documents —
+  `POST /api/v1/admin/documents/upload`.)*
 - **`personas/*.yaml`** — per-building persona overrides.
 - **`<bldg>_capabilities.ttl`** — amenities / procedures as OCBV triples (or author them in the Admin
   Console → Ontology → *Add capability*).

@@ -24,9 +24,12 @@ from fastapi import (
     Cookie,
     Depends,
     FastAPI,
+    File,
+    Form,
     Header,
     HTTPException,
     Request,
+    UploadFile,
     WebSocket,
     WebSocketDisconnect,
 )
@@ -4082,6 +4085,187 @@ async def list_reindex_jobs(
     """List all re-index jobs this session (newest first)."""
     svc = _get_reindex_service()
     return APIResponse(success=True, data={"jobs": svc.list_jobs()})
+
+
+# ── Knowledge-file uploads: documents + floor plans (building-agnostic) ──────────
+# These close the pure-GUI onboarding gap: an admin can add a building's policy/manual
+# documents and floor-plan PDFs/DWGs from the Admin Console, with no host-side file
+# editing. Files land in the ACTIVE building's mounted input/ (writable) and are
+# re-indexed. Zero building literals — everything resolves from settings.BUILDING_ID.
+_INPUT_ROOT = "/app/input"
+_DOC_EXTS = frozenset({".md", ".txt", ".pdf"})
+_FLOORPLAN_EXTS = frozenset({".pdf", ".dwg"})
+_MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB guard
+
+
+def _safe_upload_name(filename: Optional[str], allowed: frozenset) -> str:
+    """Sanitize an uploaded filename to a safe bare basename; raise ValueError on a bad
+    extension or path-traversal attempt."""
+    base = os.path.basename((filename or "").replace("\\", "/")).strip()
+    if not base or base.startswith("."):
+        raise ValueError("invalid filename")
+    ext = os.path.splitext(base)[1].lower()
+    if ext not in allowed:
+        raise ValueError(f"unsupported extension '{ext}' (allowed: {', '.join(sorted(allowed))})")
+    safe = _re.sub(r"[^A-Za-z0-9 ._-]", "_", base)
+    return safe
+
+
+@app.post("/api/v1/admin/documents/upload", response_model=APIResponse)
+async def upload_document(
+    file: UploadFile = File(...),
+    user: UserContext = Depends(require_permission("config:write")),
+):
+    """Upload a policy/manual document (.md/.txt/.pdf) into the ACTIVE building's
+    input/documents/ and re-index the document KB (Qdrant ``documents_<bldg>``).
+    Building-agnostic: writes to the active BUILDING_ID's documents folder."""
+    from pathlib import Path
+
+    try:
+        safe = _safe_upload_name(file.filename, _DOC_EXTS)
+    except ValueError as e:
+        return APIResponse(success=False, error=str(e), data={})
+    content = await file.read()
+    if not content:
+        return APIResponse(success=False, error="empty file", data={})
+    if len(content) > _MAX_UPLOAD_BYTES:
+        return APIResponse(success=False, error="file too large (max 25 MB)", data={})
+    docs_dir = Path(_INPUT_ROOT) / "documents"
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    (docs_dir / safe).write_bytes(content)
+    bid = settings.BUILDING_ID
+    job_id = _get_reindex_service().start(["documents"], building_id=bid)
+    logger.info(f"[documents] uploaded {safe} ({len(content)} B) → reindex job={job_id}")
+    return APIResponse(
+        success=True,
+        data={
+            "filename": safe,
+            "bytes": len(content),
+            "building_id": bid,
+            "reindex_job_id": job_id,
+        },
+    )
+
+
+@app.get("/api/v1/admin/documents", response_model=APIResponse)
+async def list_documents(
+    user: UserContext = Depends(require_permission("config:read")),
+):
+    """List documents currently in the active building's input/documents/."""
+    from pathlib import Path
+
+    docs_dir = Path(_INPUT_ROOT) / "documents"
+    items = []
+    if docs_dir.is_dir():
+        for p in sorted(docs_dir.iterdir()):
+            if p.is_file() and p.suffix.lower() in _DOC_EXTS:
+                items.append(
+                    {"filename": p.name, "bytes": p.stat().st_size, "ext": p.suffix.lower()}
+                )
+    return APIResponse(
+        success=True,
+        data={"building_id": settings.BUILDING_ID, "documents": items, "count": len(items)},
+    )
+
+
+@app.delete("/api/v1/admin/documents/{name}", response_model=APIResponse)
+async def delete_document(
+    name: str,
+    user: UserContext = Depends(require_permission("config:write")),
+):
+    """Delete a document from input/documents/ and re-index the document KB."""
+    from pathlib import Path
+
+    base = os.path.basename(name.replace("\\", "/"))
+    if base != name or not base or base.startswith("."):
+        return APIResponse(success=False, error="invalid filename", data={})
+    dest = Path(_INPUT_ROOT) / "documents" / base
+    if not dest.is_file():
+        return APIResponse(success=False, error=f"not found: {base}", data={})
+    dest.unlink()
+    job_id = _get_reindex_service().start(["documents"], building_id=settings.BUILDING_ID)
+    logger.info(f"[documents] deleted {base} → reindex job={job_id}")
+    return APIResponse(success=True, data={"deleted": base, "reindex_job_id": job_id})
+
+
+@app.post("/api/v1/admin/floor-plans/upload", response_model=APIResponse)
+async def upload_floor_plan(
+    floor: int = Form(...),
+    file: UploadFile = File(...),
+    label: Optional[str] = Form(None),
+    user: UserContext = Depends(require_permission("config:write")),
+):
+    """Upload a floor-plan PDF/DWG for a floor and ingest it into the manifest registry.
+    Stored as '<label> floor <N>.<ext>' in the active building's input/ (label defaults
+    to BUILDING_ID, matching the reingest naming convention). Building-agnostic."""
+    from pathlib import Path
+
+    from orchestrator.services.dwg_pipeline import get_dwg_pipeline
+    from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
+
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in _FLOORPLAN_EXTS:
+        return APIResponse(
+            success=False, error=f"unsupported extension '{ext}' (allowed: .pdf, .dwg)", data={}
+        )
+    if floor < 0:
+        return APIResponse(success=False, error="floor must be >= 0", data={})
+    content = await file.read()
+    if not content:
+        return APIResponse(success=False, error="empty file", data={})
+    if len(content) > _MAX_UPLOAD_BYTES:
+        return APIResponse(success=False, error="file too large (max 25 MB)", data={})
+    lbl = _re.sub(r"[^A-Za-z0-9 _-]", "_", (label or settings.BUILDING_ID).strip()) or "building"
+    fname = f"{lbl} floor {floor}{ext}"
+    dest = Path(_INPUT_ROOT) / fname
+    dest.write_bytes(content)
+    try:
+        if ext == ".pdf":
+            manifest = await get_floor_plan_pipeline().ingest_file(dest)
+        else:
+            manifest = await get_dwg_pipeline().ingest_file(dest)
+    except Exception as e:  # stored, but ingest failed → report honestly, keep the file
+        logger.error(f"[floor-plans] ingest failed for {fname}: {e}", exc_info=True)
+        return APIResponse(
+            success=False,
+            error=f"stored but ingest failed: {e}",
+            data={"filename": fname, "bytes": len(content)},
+        )
+    summary = (
+        {
+            "building_id": manifest.building_id,
+            "floor": manifest.floor,
+            "spaces": len(manifest.spaces),
+            "source": ext.lstrip("."),
+        }
+        if manifest
+        else {}
+    )
+    logger.info(f"[floor-plans] uploaded {fname} ({len(content)} B) → manifest {summary}")
+    return APIResponse(
+        success=True, data={"filename": fname, "bytes": len(content), "manifest": summary}
+    )
+
+
+@app.get("/api/v1/admin/floor-plans/files", response_model=APIResponse)
+async def list_floor_plan_files(
+    user: UserContext = Depends(require_permission("config:read")),
+):
+    """List floor-plan PDF/DWG files currently present in the active building's input/."""
+    from pathlib import Path
+
+    items = []
+    root = Path(_INPUT_ROOT)
+    if root.is_dir():
+        for p in sorted(root.glob("*")):
+            if p.is_file() and p.suffix.lower() in _FLOORPLAN_EXTS:
+                items.append(
+                    {"filename": p.name, "bytes": p.stat().st_size, "ext": p.suffix.lower()}
+                )
+    return APIResponse(
+        success=True,
+        data={"building_id": settings.BUILDING_ID, "floor_plans": items, "count": len(items)},
+    )
 
 
 @app.get("/api/v1/datasources", response_model=APIResponse)
