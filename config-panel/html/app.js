@@ -1338,6 +1338,8 @@ function loadOntology() {
   loadSimStatus();
   loadCapabilities();
   loadGraphs();
+  loadDocuments();
+  loadFloorPlanFiles();
   if (answerabilityData) renderOntoCoverage(answerabilityData);
   else if (state.token) loadAnswerability();
 }
@@ -1522,6 +1524,84 @@ async function runSparql() {
     $("onto-sparql-result").innerHTML = `<table class="onto-table"><thead><tr>${head}</tr></thead><tbody>${trs}</tbody></table><p class="hint">${body.data?.count} rows</p>`;
   } catch (e) { $("onto-sparql-result").innerHTML = `<p class="err">${esc(e.message)}</p>`; }
 }
+// ── Knowledge files: document + floor-plan uploads (pure-GUI onboarding) ─────────
+async function apiUpload(path, formData) {
+  // multipart POST — no JSON Content-Type so the browser sets the boundary
+  const res = await fetch(path, { method: "POST", headers: { ...authHeaders() }, body: formData });
+  let body = {};
+  try { body = await res.json(); } catch (_) {}
+  if (res.status === 401 || res.status === 403)
+    throw new Error("Not authorised — sign in with an admin account.");
+  return { status: res.status, body };
+}
+
+async function loadDocuments() {
+  const box = $("doc-list"); if (!box) return;
+  try {
+    const { body } = await api("/api/v1/admin/documents");
+    const items = body.data?.documents || [];
+    box.innerHTML = items.length
+      ? items.map((d) => `<div class="db-row"><span>📄 ${esc(d.filename)}</span><span class="hint">${(d.bytes / 1024).toFixed(1)} KB</span><button class="btn tiny ghost" data-del-doc="${esc(d.filename)}">Delete</button></div>`).join("")
+      : '<p class="hint">No documents yet — upload a .md / .txt / .pdf policy or manual.</p>';
+  } catch (e) { box.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+}
+
+async function uploadDocument() {
+  if (!state.token) return toast("Sign in as admin first", "err");
+  const f = $("doc-file").files[0];
+  if (!f) return toast("Choose a .md / .txt / .pdf file first", "err");
+  setStatus("doc-upload-status", "warn", "uploading…");
+  const fd = new FormData(); fd.append("file", f);
+  try {
+    const { body } = await apiUpload("/api/v1/admin/documents/upload", fd);
+    if (body.success) {
+      setStatus("doc-upload-status", "ok", "uploaded ✓");
+      toast(`Uploaded ${body.data?.filename} · reindexing document KB`, "ok");
+      $("doc-file").value = ""; loadDocuments();
+    } else { setStatus("doc-upload-status", "bad", "failed"); toast(body.error || "Upload failed", "err"); }
+  } catch (e) { setStatus("doc-upload-status", "bad", "failed"); toast(e.message, "err"); }
+}
+
+async function deleteDocument(name) {
+  if (!confirm(`Delete document "${name}"?`)) return;
+  try {
+    const { body } = await api(`/api/v1/admin/documents/${encodeURIComponent(name)}`, { method: "DELETE" });
+    if (body.success) { toast(`Deleted ${name}`, "ok"); loadDocuments(); }
+    else toast(body.error || "Delete failed", "err");
+  } catch (e) { toast(e.message, "err"); }
+}
+
+async function loadFloorPlanFiles() {
+  const box = $("fp-list"); if (!box) return;
+  try {
+    const { body } = await api("/api/v1/admin/floor-plans/files");
+    const items = body.data?.floor_plans || [];
+    box.innerHTML = items.length
+      ? items.map((d) => `<div class="db-row"><span>🗺️ ${esc(d.filename)}</span><span class="hint">${(d.bytes / 1024).toFixed(1)} KB</span></div>`).join("")
+      : '<p class="hint">No floor plans yet — upload a PDF or DWG per floor.</p>';
+  } catch (e) { box.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+}
+
+async function uploadFloorPlan() {
+  if (!state.token) return toast("Sign in as admin first", "err");
+  const f = $("fp-file").files[0];
+  const floor = $("fp-floor").value.trim();
+  if (!f) return toast("Choose a PDF / DWG file first", "err");
+  if (floor === "") return toast("Enter the floor number", "err");
+  setStatus("fp-upload-status", "warn", "uploading…");
+  const fd = new FormData(); fd.append("file", f); fd.append("floor", floor);
+  const label = $("fp-label").value.trim(); if (label) fd.append("label", label);
+  try {
+    const { body } = await apiUpload("/api/v1/admin/floor-plans/upload", fd);
+    if (body.success) {
+      const m = body.data?.manifest || {};
+      setStatus("fp-upload-status", "ok", "ingested ✓");
+      toast(`Uploaded ${body.data?.filename}${m.spaces ? ` · ${m.spaces} spaces` : ""}`, "ok");
+      $("fp-file").value = ""; loadFloorPlanFiles();
+    } else { setStatus("fp-upload-status", "bad", "failed"); toast(body.error || "Upload failed", "err"); }
+  } catch (e) { setStatus("fp-upload-status", "bad", "failed"); toast(e.message, "err"); }
+}
+
 function setStatus(id, kind, text) { const el = $(id); if (el) el.innerHTML = kind ? `<span class="dot ${kind}"></span>${text}` : ""; }
 
 function closeModals() { document.querySelectorAll(".modal-backdrop").forEach((m) => (m.hidden = true)); }
@@ -1541,6 +1621,7 @@ document.addEventListener("click", (e) => {
   if (t.dataset.dataDb) showDataPreview(t.dataset.dataDb, t.dataset.table);
   if (t.dataset.delDb) deleteDatabaseConn(t.dataset.delDb);
   if (t.dataset.delCap) deleteCapability(t.dataset.delCap);
+  if (t.dataset.delDoc) deleteDocument(t.dataset.delDoc);
   if (t.dataset.dropGraph) dropGraph(t.dataset.dropGraph);
   if (t.classList.contains("mode-tab")) setSensorMode(t.dataset.mode);
   if (t.dataset.goto) switchTab(t.dataset.goto);
@@ -1596,6 +1677,8 @@ $("refresh-graphs").addEventListener("click", loadGraphs);
 $("onto-validate").addEventListener("click", validateOntoTtl);
 $("onto-upload").addEventListener("click", uploadOntoTtl);
 $("onto-run").addEventListener("click", runSparql);
+$("doc-upload")?.addEventListener("click", uploadDocument);
+$("fp-upload")?.addEventListener("click", uploadFloorPlan);
 $("bldg-save").addEventListener("click", saveBuildingConfig);
 $("sim-rebuild").addEventListener("click", rebuildSim);
 $("sim-refresh").addEventListener("click", loadSimStatus);

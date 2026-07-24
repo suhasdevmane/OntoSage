@@ -340,6 +340,39 @@
               <div id="onto-sparql-result" class="onto-result"></div>
             </div>
           </div>
+
+          <!-- Knowledge files: documents + floor plans (pure-GUI onboarding) -->
+          <div class="onto-split">
+            <div class="onto-col">
+              <div class="section-head" style="margin-top:26px"><h2>Documents</h2></div>
+              <p class="hint">Policies, manuals, contacts (<code>.md</code> / <code>.txt</code> / <code>.pdf</code>)
+                → the document KB, which answers off-ontology questions ("what's the wifi policy?").
+                Saved to <code>input/documents/</code> and re-indexed automatically.</p>
+              <input id="doc-file" type="file" accept=".md,.txt,.pdf" />
+              <div class="onto-actions">
+                <button id="doc-upload" class="btn small primary">Upload document</button>
+                <span class="restart-status" id="doc-upload-status"></span>
+              </div>
+              <div id="doc-list" class="db-list" style="margin-top:12px"></div>
+            </div>
+            <div class="onto-col">
+              <div class="section-head" style="margin-top:26px"><h2>Floor plans</h2></div>
+              <p class="hint">A PDF or DWG per floor → spatial / floor queries and geometry. Stored as
+                <code>&lt;label&gt; floor &lt;N&gt;.&lt;ext&gt;</code> and ingested into the manifest registry.</p>
+              <label class="onto-lbl">Floor number
+                <input id="fp-floor" type="number" min="0" value="0" />
+              </label>
+              <label class="onto-lbl">Label <span class="hint">(optional — defaults to the active building id)</span>
+                <input id="fp-label" placeholder="leave blank for BUILDING_ID" />
+              </label>
+              <input id="fp-file" type="file" accept=".pdf,.dwg" />
+              <div class="onto-actions">
+                <button id="fp-upload" class="btn small primary">Upload floor plan</button>
+                <span class="restart-status" id="fp-upload-status"></span>
+              </div>
+              <div id="fp-list" class="db-list" style="margin-top:12px"></div>
+            </div>
+          </div>
         </section>
 
         <!-- Tab: Guide -->

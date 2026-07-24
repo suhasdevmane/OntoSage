@@ -210,7 +210,7 @@ bldg1/processed_mortardata_sites__ttl
 !/development/pgadmin/servers.json
 bldg1/01small ontology creation-9july.ipynb
 # Note: .ipynb_checkpoints remain ignored globally by **/.ipynb_checkpoints/
-/suhasdevmane.github.io/
+# suhasdevmane.github.io/ is now a git submodule (the OntoSage v2 docs site) — tracked, not ignored.
 !/development/graphDB/
 !/development/pgadmin/
 # Ignore large/local datasets at repo root
@@ -366,3 +366,13 @@ input2/bldg2.ttl
 input2/README.md
 input2/_templates/
 input2/personas/
+
+# Raw building-generation workspaces (notebooks, scripts, all TTL variants) — local only
+bldg2_source/
+bldg3_source/
+# Large agnostic files duplicated into each building folder (they live once in input/)
+bldg2/Brick*.ttl
+bldg3/Brick*.ttl
+.env1
+.env2
+.env3

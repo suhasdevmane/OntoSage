@@ -105,6 +105,47 @@ Every turn: co-reference rewrite before classification; conversation persisted t
 
 ---
 
+### Flow — onboard a building end-to-end from the browser
+
+**Fresh clone → pure-GUI onboarding. No host-side file editing, no code.** Every step is a tab in
+the Admin Console (`http://localhost:3001`); each one writes into the **active building's `input/`
+folder**, which OntoSage re-reads live.
+
+```
+  git clone … && docker compose up -d
+        │
+        ▼
+  open  http://localhost:3001   (Admin Console — sign in as admin)
+        │
+        ▼
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │ 1  Ontology ▸ Building identity   namespace / prefix / building name  │
+  │ 2  Ontology ▸ Upload TTL          Brick model — sensors + links       │
+  │ 3  Databases ▸ Register sensors   ref:hasTimeseriesId + ref:storedAt   │
+  │ 4  Ontology ▸ Documents           policies / manuals (.md/.txt/.pdf)   │
+  │ 4  Ontology ▸ Floor plans         PDF / DWG per floor                  │
+  └──────────────────────────────────────────────────────────────────────┘
+        │
+        ▼
+  5  Ask ▸ type a question   →   grounded answers, forever
+
+  Every step writes into the ACTIVE building's  input/  folder (live reload).
+  One building at a time — input/ is always the active building.
+```
+
+| Step | Admin Console tab | What it writes | Backing endpoint |
+|---|---|---|---|
+| 1. Building identity | **Ontology ▸ Building** | `input/building.yaml` (namespace, prefix, storage keys) | `PUT /api/v1/admin/building/config` |
+| 2. Upload TTL | **Ontology ▸ Upload TTL** | `input/<file>.ttl` + GraphDB named graph | `POST /api/v1/admin/ontology/upload` |
+| 3. Register sensors / DB | **Databases** | Brick + `ref:storedAt` triples; DB connection | `POST /api/v1/admin/databases/*` |
+| 4. Documents | **Ontology ▸ Documents** | `input/documents/*` → document KB (Qdrant `documents_<bldg>`) | `POST /api/v1/admin/documents/upload` |
+| 4. Floor plans | **Ontology ▸ Floor plans** | `input/<label> floor <N>.<ext>` → spatial manifests | `POST /api/v1/admin/floor-plans/upload` |
+| 5. Ask | **Ask** | — (queries all of the above) | `POST /chat` |
+
+> **Switching vs building.** `input/` is always the *active* building. To **build a new** building,
+> do steps 1–5 in the browser. To **switch to a pre-built** building, swap `input/`'s contents (and
+> `.env` / `docker-compose.yml`) — see [BUILDING_ONBOARDING.md](docs/BUILDING_ONBOARDING.md).
+
 ## Which questions can be answered — Stakeholder Guide
 
 The core principle: **a question is answerable when the Brick TTL describes the sensor AND the time-series data is in the database.** Without triples in GraphDB, SPARQL finds nothing. Without rows in MySQL, analytics returns empty.
