@@ -1,117 +1,261 @@
-# bldg1 capability facts — TTL-first source of truth (GUI + file managed).
-# Each amenity is a dual-typed ontosage:Amenity instance answered live by the
-# CapabilityGraphResolver. Edit here or via the admin console Capabilities tab;
-# both stay consistent (this file is auto-loaded on restart by ttl_uploader).
+# bldg1 capabilities — GENERATED from capability.yaml by
+# scripts/migrate_capability_yaml_to_ttl.py (TODO-012). Do not hand-edit; either
+# re-run the migration or author via the admin Capabilities GUI / OCBV TBox.
+# Each entry is a dual-typed ontosage:Amenity / ontosage:KnowledgeTopic instance,
+# answered live by the CapabilityGraphResolver (lay-term match on ontosage:layTerms).
 
-@prefix bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix bldg:     <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
 @prefix ontosage: <http://ontosage.org/capabilities#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 
-bldg:AccessibilitySummary a ontosage:Amenity ;
+bldg:Cap_hvac_zoning a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Hvac Zoning"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "hvac, heating, cooling, air conditioning, ventilation, zone, thermal control, temperature control, climate control, thermostat" ;
+    ontosage:answerText "The building has a zone-based HVAC system with independent climate control per zone. Zones are mapped to BACnet IDs. Occupants cannot directly adjust HVAC settings; facility management controls setpoints. The system adjusts automatically based on occupancy schedules and sensor feedback. Contact facility management for comfort complaints or temperature adjustments.\n" ;
+    ontosage:note "building_management_system" .
+
+bldg:Cap_fire_safety a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Fire Safety"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "fire, fire alarm, evacuation, emergency exit, fire escape, smoke detector, sprinkler, fire safety, assembly point, muster point, fire warden, extinguisher, fire drill, fire door, fire exit, fire suppression" ;
+    ontosage:answerText "Fire safety features include: (1) Automatic smoke and heat detectors on every floor; (2) Manual call points (red break-glass units) at every stairwell and exit; (3) Wet pipe sprinkler system throughout; (4) Fire doors on all stairwells and corridors; (5) Emergency lighting with battery backup; (6) Public address system for evacuation instructions. Assembly point: the open area on Senghennydd Road directly outside the main entrance. Fire wardens are designated per floor. The building undergoes annual fire drills. Do not use lifts during evacuation.\n" ;
+    ontosage:note "fire_safety_management_plan" .
+
+bldg:Cap_emergency_evacuation a ontosage:Procedure, ontosage:KnowledgeTopic ;
+    rdfs:label "Emergency Evacuation"@en ;
+    ontosage:capabilityCategory "PROCEDURE" ;
+    ontosage:layTerms "evacuate, evacuation, emergency, assembly point, muster, escape route, emergency exit, disabled evacuation, PEEP, refuge" ;
+    ontosage:answerText "Evacuation procedure: (1) On alarm activation, leave the building via the nearest marked fire exit; (2) Do not use the lifts; (3) Proceed to the assembly point on Senghennydd Road; (4) Report to the floor fire warden for roll call. Refuge areas (for persons unable to use stairs) are located at each stairwell landing; press the refuge intercom to alert security. Personal Emergency Evacuation Plans (PEEPs) are coordinated by Building Management for permanent occupants with mobility needs.\n" ;
+    ontosage:note "fire_safety_management_plan" .
+
+bldg:Cap_power_resilience a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Power Resilience"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "power outage, power cut, backup power, generator, ups, electricity failure, power failure, can the building operate, emergency power" ;
+    ontosage:answerText "The building has an uninterruptible power supply (UPS) for critical systems: emergency lighting, fire alarm panels, server rooms, and security systems. A diesel standby generator provides emergency power for server rooms and critical lab equipment within ~30 seconds of a mains failure. General lighting, heating, and non-critical office equipment will lose power in an outage. The building can maintain basic safety functions (alarms, emergency lighting, security) during a power outage but normal operations (teaching, lab work) will be suspended.\n" ;
+    ontosage:note "estates_engineering" .
+
+bldg:Cap_access_control a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Access Control"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "access control, entry, card access, key fob, door lock, security, who can enter, authorised access, after hours, swipe card, smart card, door, unlock, badge, building access" ;
+    ontosage:answerText "Access to Abacws uses a proximity card (swipe card / fob) system. All external doors and internal secure areas require a valid Cardiff University card or visitor pass. General academic areas (open-plan offices, study spaces) are accessible to all card holders during standard hours (07:00–22:00 weekdays, 08:00–18:00 weekends). Labs, server rooms, and restricted areas require specific access grants — request via IT Service Desk. After-hours access is available to staff and registered postgraduate students. Visitors must sign in at reception and be escorted. Security is staffed 24/7 at the main reception.\n" ;
+    ontosage:note "security_management" .
+
+bldg:Cap_cctv_surveillance a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Cctv Surveillance"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "cctv, camera, surveillance, security camera, monitored, recording, watching" ;
+    ontosage:answerText "CCTV cameras are installed throughout the building's public areas, corridors, entrances, and car parks. Cameras operate 24/7 and footage is retained for 30 days. The system is monitored by Cardiff University Security Services. CCTV signage is displayed at all camera locations in compliance with GDPR requirements. For CCTV requests (e.g. incident investigation), contact Security Services or submit a Subject Access Request through the university's data protection office.\n" ;
+    ontosage:note "security_management" .
+
+bldg:Cap_smart_controls a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Smart Controls"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "smart device, iot, iot sensor, internet of things, control, smart, automate, can i control, adjust, controllable, voice control, app control, building app, smart switch, building system, building systems, automated mode, automation, bms, building management system, automated control, smart building system, what systems are running, systems in automated mode" ;
+    ontosage:answerText "Building systems currently running in automated mode: (1) HVAC — zone-based climate control with automatic setpoint adjustment based on occupancy schedules and sensor feedback; (2) Lighting — presence-detection and daylight harvesting across all open-plan areas, switching off automatically when unoccupied; (3) Ventilation — CO2-driven demand-controlled ventilation adjusts fresh air supply automatically; (4) Security — access control, CCTV, and door locks operate on automated schedules. The building uses a BMS (Building Management System) for centralised monitoring and control. Occupants cannot directly adjust automated settings; facility management staff control setpoints via the BMS. For lighting or HVAC control requests, contact facility management (estates@cardiff.ac.uk).\n" ;
+    ontosage:note "building_management_system" .
+
+bldg:Cap_lighting a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Lighting"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "lighting, light, lux, brightness, dim, bright, lights, led, natural light, daylight, blinds, shading, artificial light" ;
+    ontosage:answerText "The building uses LED lighting throughout with daylight harvesting and occupancy-based presence detection. Lights automatically adjust to maintain target lux levels and switch off in unoccupied areas. Ceiling-mounted PIR presence sensors control individual zones. External shading (automated blinds) on south-facing facades reduces solar gain. Manual override switches are available in some office areas. Lighting faults should be reported to facilities management.\n" ;
+    ontosage:note "building_management_system" .
+
+bldg:Cap_wifi_it a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Wifi It"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "wifi, wireless, internet, network, it, broadband, eduroam, connectivity, it support, printer, it service desk, it helpdesk, computer" ;
+    ontosage:answerText "Wifi coverage is provided by Cardiff University's 'eduroam' network throughout the building. Guests can use 'CU_Guest' wifi (registration required). Wired ethernet ports are available in offices, labs, and some study areas. IT support is provided by the Cardiff University IT Service Desk (itservicedesk.cardiff.ac.uk, 029 2251 1111). Printer/MFD devices are on every floor (PaperCut system). Server rooms are located on Floor 2 and Floor 4.\n" ;
+    ontosage:note "it_services" .
+
+bldg:Cap_accessibility a ontosage:Amenity, ontosage:Amenity ;
     rdfs:label "Accessibility"@en ;
-    ontosage:capabilityCategory "ACCESSIBILITY" ;
-    ontosage:layTerms "wheelchair, wheelchair access, accessible, accessibility, disability, disabled, step-free, hearing loop, induction loop, ramp, accessible parking, blue badge, refuge area" ;
-    ontosage:locationText "Building-wide" ;
-    ontosage:note "Step-free access at all entrances; lifts to all floors; accessible toilets on every floor; hearing induction loops at reception and lecture spaces; accessible parking on Senghennydd Road (blue badge required); refuge areas at stairwell landings. Disability queries: disability@cardiff.ac.uk." .
+    ontosage:capabilityCategory "Accessibility" ;
+    ontosage:layTerms "wheelchair, lift, elevator, accessible, disability, disabled, step-free, hearing loop, induction loop, ramp, accessible toilet, accessible parking" ;
+    ontosage:answerText "The building is fully accessible: (1) Step-free access at the main entrance and all secondary entrances; (2) Passenger lifts on the main atrium serve all floors; (3) Accessible toilets on every floor; (4) Hearing induction loops at reception and main lecture spaces; (5) Accessible parking bays on Senghennydd Road (blue badge required); (6) Refuge areas at each stairwell landing for evacuation assistance. For disability-related queries, contact the Disability and Dyslexia Service (disability@cardiff.ac.uk).\n" ;
+    ontosage:note "estates_accessibility_audit" .
 
-bldg:BikeStorage_Outdoor a ontosage:Amenity,
-        ontosage:BikeStorage ;
-    rdfs:label "Covered bicycle racks"@en ;
-    ontosage:capabilityCategory "AMENITIES" ;
-    ontosage:layTerms "bicycle, bike, cycling, cycle, bike rack, bike storage, park my bike, where to park bike, cycle parking" ;
-    ontosage:locationText "Outside, to the rear and on the west side of the building; secure storage in the basement" ;
-    ontosage:note "Covered racks need a valid Cardiff University card. On-street cycle parking on Senghennydd Road." .
+bldg:Cap_catering_amenities a ontosage:Amenity, ontosage:Amenity ;
+    rdfs:label "Catering Amenities"@en ;
+    ontosage:capabilityCategory "Amenities" ;
+    ontosage:layTerms "cafe, canteen, food, coffee, vending machine, eating, lunch, refreshment, kitchen, water, drinking water, toilet, bathroom, WC, locker, shower, bike storage, parking" ;
+    ontosage:answerText "Abacws amenities include: (1) Ground-floor café (Abacws Café) open 08:00–16:30 weekdays, serving hot drinks, food, and snacks; (2) Vending machines on Floor 1 and Floor 3; (3) Kitchen/breakout areas on Floors 2, 3, and 4 with microwaves and filtered water; (4) Toilets on every floor, with accessible and gender-neutral facilities; (5) Shower facilities on Floor 1; (6) Secure bike storage in the basement; (7) Limited car parking available on Senghennydd Road.\n" ;
+    ontosage:note "estates_facilities" .
 
-bldg:Cafe_Ground a ontosage:Amenity,
-        ontosage:Cafe ;
-    rdfs:label "Abacws Café"@en ;
-    ontosage:capabilityCategory "AMENITIES" ;
-    ontosage:layTerms "cafe, café, coffee, canteen, food, refreshment, lunch, snacks, somewhere to eat, get a coffee" ;
-    ontosage:locationText "Ground floor" ;
-    ontosage:note "Open 08:00–16:30 weekdays; hot drinks, food, snacks. Vending machines on Floors 1 and 3." ;
-    ontosage:onFloor "0" .
+bldg:Cap_quiet_study a ontosage:Amenity, ontosage:Amenity ;
+    rdfs:label "Quiet Study"@en ;
+    ontosage:capabilityCategory "Amenities" ;
+    ontosage:layTerms "study, quiet, library, workspace, desk, book a room, meeting room, collaboration space, quiet area, hot desk, pod" ;
+    ontosage:answerText "Study and workspace options: (1) Open-plan study areas on Floors 1 and 2 — general quiet working; (2) Collaborative 'pods' on Floor 3 for small group work; (3) Bookable meeting rooms (Book via the Staff Intranet or Microsoft Teams room booking); (4) Lab spaces booked via academic staff; (5) The ground floor atrium has informal seating. Noise levels in study areas should be kept to a minimum.\n" ;
+    ontosage:note "estates_facilities" .
 
-bldg:CybersecurityLab a ontosage:Amenity,
-        ontosage:Facility ;
-    rdfs:label "Cybersecurity Lab"@en ;
-    ontosage:capabilityCategory "FACILITY" ;
-    ontosage:layTerms "cybersecurity lab, cyber security lab, security lab, cyber lab, labs, key facilities, what facilities" ;
-    ontosage:locationText "Abacws building" ;
-    ontosage:note "Dedicated cybersecurity teaching and research facility." .
+bldg:Cap_complaints_feedback a ontosage:Procedure, ontosage:KnowledgeTopic ;
+    rdfs:label "Complaints Feedback"@en ;
+    ontosage:capabilityCategory "PROCEDURE" ;
+    ontosage:layTerms "complaint, complain, feedback, report issue, report problem, fault, broken, not working, raise issue, contact, who to contact, report, maintenance request" ;
+    ontosage:answerText "To report a building issue, fault, or complaint: (1) Facilities/maintenance issues (broken fixtures, heating, cleaning): report via Cardiff University's FM helpdesk at estates@cardiff.ac.uk or phone the estates helpdesk (029 2087 6026); (2) IT issues (wifi, printers, computers): IT Service Desk (itservicedesk.cardiff.ac.uk); (3) Security concerns: Security Services (security@cardiff.ac.uk, 029 2087 4444); (4) Complaints about the building or services: contact the Building Manager via estates@cardiff.ac.uk. All issues can also be reported via the Cardiff University MyUniHub app.\n" ;
+    ontosage:note "estates_management" .
 
-bldg:Lift_Main a ontosage:Amenity,
-        ontosage:Lift ;
-    rdfs:label "Main passenger lift"@en ;
-    ontosage:capabilityCategory "ACCESSIBILITY" ;
-    ontosage:layTerms "lift, elevator, main lift, passenger lift, accessible lift, where is the lift, nearest lift" ;
-    ontosage:locationText "Left of the front entrance (~25 m); serves floors G, 1, 2, 3, 4, 5" ;
-    ontosage:note "Weight limit 1000 kg; door width 90 cm; Braille + tactile buttons; audible announcer; mirror. No staff activation needed." .
+bldg:Cap_sustainability a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Sustainability"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "sustainability, green, environment, carbon, recycling, energy efficiency, solar, renewable, breeam, epc, environmental, eco, waste, bins, green building" ;
+    ontosage:answerText "Abacws was designed to BREEAM 'Excellent' specification. Sustainability features: (1) High-performance building fabric with triple-glazed facades; (2) Mechanical heat recovery ventilation; (3) LED lighting with daylight harvesting throughout; (4) Electric vehicle charging points in the car park; (5) Green roof on the second-floor terrace; (6) Rainwater harvesting for toilet flushing; (7) Building energy performance is monitored in real-time. Recycling facilities (general waste, paper, glass, cans) are available on every floor.\n" ;
+    ontosage:note "sustainability_report" .
 
-bldg:Makerspace a ontosage:Amenity,
-        ontosage:Facility ;
-    rdfs:label "Makerspace & IT Workshop"@en ;
-    ontosage:capabilityCategory "FACILITY" ;
-    ontosage:layTerms "makerspace, maker space, it workshop, hardware lab, project space, prototyping, labs, key facilities, what facilities, what labs" ;
-    ontosage:locationText "Abacws building" ;
-    ontosage:note "Practical hardware/software project space." .
+bldg:Cap_emergency_contacts a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Emergency Contacts"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "emergency, contact, who to call, phone number, first aid, medical, ambulance, police, help, urgent, accident, incident" ;
+    ontosage:answerText "Emergency contacts for Abacws: (1) Emergency services: 999; (2) Cardiff University Security (24/7): 029 2087 4444 or internal x74444; (3) First aid: trained first aiders are on each floor (names posted on floor notice boards), or call Security; (4) Estates emergency helpdesk (out-of-hours building issues): 029 2087 5555; (5) Health & Safety: safety@cardiff.ac.uk. First aid kits are located at each floor reception point and in labs. AED (defibrillator) units are on the Ground Floor and Floor 3.\n" ;
+    ontosage:note "health_and_safety" .
 
-bldg:NursingRoom_F2 a ontosage:Amenity,
-        ontosage:NursingRoom ;
-    rdfs:label "Nursing / feeding room"@en ;
-    ontosage:capabilityCategory "AMENITIES" ;
-    ontosage:layTerms "nursing room, feeding room, baby, mother, breastfeeding, parents room, baby changing" ;
-    ontosage:locationText "Floor 2" ;
-    ontosage:note "For parents. Baby-changing facilities are on the Ground floor." ;
-    ontosage:onFloor "2" .
+bldg:Cap_bookings_reservations a ontosage:Procedure, ontosage:KnowledgeTopic ;
+    rdfs:label "Bookings Reservations"@en ;
+    ontosage:capabilityCategory "PROCEDURE" ;
+    ontosage:layTerms "book, booking, reserve, reservation, schedule, timetable, meeting room, room booking, lab booking, how to book, who can book" ;
+    ontosage:answerText "Room and space bookings: (1) Meeting rooms: staff book via the Staff Intranet room booking system or through Microsoft Outlook/Teams; (2) Teaching spaces: allocated by Timetabling; (3) Labs: booked through academic supervisors; (4) External event hire: contact Cardiff University Conference Services; (5) Informal spaces (atrium, pods) are first-come-first-served and cannot be reserved. Check Cardiff University's online room booking portal for availability.\n" ;
+    ontosage:note "timetabling_and_facilities" .
 
-bldg:PrayerRoom_104 a ontosage:Amenity,
-        ontosage:PrayerRoom ;
-    rdfs:label "Multi-faith prayer & reflection room"@en ;
-    ontosage:capabilityCategory "AMENITIES" ;
-    ontosage:layTerms "prayer room, quiet room, reflection, meditation, faith, worship, religious, chaplain, where can i pray, place to pray" ;
-    ontosage:locationText "Floor 1, room 1.04" ;
-    ontosage:note "Multi-faith, available to all." ;
-    ontosage:onFloor "1" .
+bldg:Cap_working_hours a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Working Hours"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "opening hours, open, close, when does it open, what time, hours, is it open, 24 hours, weekend, holiday, bank holiday, out of hours" ;
+    ontosage:answerText "Standard building hours: Monday–Friday 07:00–22:00; Saturday–Sunday 08:00–18:00. The building may open earlier or close later during exam periods. Out-of-hours access (after standard hours) is available to authorised staff and registered postgraduate students with appropriate card access. The building is generally closed on bank holidays except for security-monitored access. Check the Cardiff University website for holiday opening schedules.\n" ;
+    ontosage:note "estates_management" .
 
-bldg:Reception a ontosage:Amenity,
-        ontosage:Service ;
-    rdfs:label "Reception"@en ;
-    ontosage:capabilityCategory "SERVICE" ;
-    ontosage:layTerms "reception, front desk, reception desk, opening hours, reception hours, when is it open, what time does it open, when does reception close, sign in" ;
-    ontosage:locationText "Ground floor, main entrance" ;
-    ontosage:note "Open Mon–Fri 09:00–16:30; weekends closed. Building access 07:00–22:00 weekdays and 08:00–18:00 weekends for card-holders. Out-of-hours: Security 029 2087 4444 (24/7)." ;
-    ontosage:onFloor "0" .
+bldg:Cap_data_sensors_coverage a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Data Sensors Coverage"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "what sensors, sensor coverage, monitored, measured, tracked, what is measured, sensor types, building data, what data, information collected, instruments, iot sensors, active sensors, online sensors, how many sensors, sensor count, sensors installed, sensor network, environmental monitoring, smart sensors, what is monitored, parameters measured, sensor parameters, telemetry, what readings, available sensors, connected sensors, live sensors" ;
+    ontosage:answerText "The building is instrumented with an IoT monitoring network (the live sensor/point count is computed from the ontology on request) for air temperature, CO2 (indoor air quality), relative humidity, occupancy/presence (PIR), and electricity sub-metering. IMPORTANT — current live coverage: only FLOOR 5 is connected to OntoSage with live streaming sensor data. The Ground floor and Floors 1, 2, 3 and 4 are fully represented in the ontology and floor plans (rooms, zones, geometry) but do NOT yet stream live sensor readings into the system. For live environmental readings (temperature, CO2, humidity), query Floor 5 zones, e.g. \"temperature in zone 5.28\". The ontology is based on the Brick Schema with ASHRAE 223 and BACnet extensions. Sensor rollout to the remaining floors is planned but not yet live.\n" ;
+    ontosage:note "building_management_system" .
 
-bldg:ShowerFacility_F1 a ontosage:Amenity,
-        ontosage:ShowerFacility ;
-    rdfs:label "Shower facilities"@en ;
-    ontosage:capabilityCategory "AMENITIES" ;
-    ontosage:layTerms "shower, shower room, showers, where is the shower, shower facilities, accessible shower" ;
-    ontosage:locationText "Floor 1 (accessible and standard cubicles)" ;
-    ontosage:note "Level access throughout; card-reader entry. Take the right-hand lift, turn right on Floor 1." ;
-    ontosage:onFloor "1" .
+bldg:Cap_sensor_floor_availability a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Sensor Floor Availability"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "which floors have sensors, sensors on floor, floor sensors, sensor floor, is there data for floor, data for ground floor, data for floor 1, floor 2 data, floor 3 data, floor 4 data, floor 5 sensors, ground floor sensors, no sensors, no data for floor, which floor is monitored, instrumented floor, live data floor, do other floors have sensors, only floor 5, floor five sensors, sensors installed where, can i get temperature on floor, is this floor monitored, why no data, temperature on ground floor, co2 on floor 2, humidity on floor 3, which floors are monitored, sensor availability, data availability by floor" ;
+    ontosage:answerText "Live sensor data is currently available for FLOOR 5 ONLY. Floor 5 is the only floor connected to OntoSage with streaming environmental telemetry — air temperature, CO2, and relative humidity, by zone. The Ground floor and Floors 1, 2, 3 and 4 do NOT currently have sensors connected to the system, so no live temperature, CO2, or humidity readings are available for those floors yet. Those floors ARE fully mapped in the building's floor plans and ontology (you can still ask about their rooms, areas, adjacency, amenities, fire safety, access, etc.), but they do not stream sensor data at this time. If you ask for a live reading on the Ground floor or Floors 1-4, the system cannot return a measured value and will tell you data is unavailable for that floor. Sensor rollout to the remaining floors is planned but not yet live.\n" ;
+    ontosage:note "building_management_system" .
 
-bldg:StudyArea_F1F2 a ontosage:Amenity,
-        ontosage:StudyArea ;
-    rdfs:label "Open-plan study areas"@en ;
-    ontosage:capabilityCategory "AMENITIES" ;
-    ontosage:layTerms "study, quiet study, workspace, desk, quiet area, place to work, hot desk, pod, somewhere to study, take a call" ;
-    ontosage:locationText "Floors 1 and 2; collaborative 'pods' on Floor 3" ;
-    ontosage:note "Bookable meeting rooms via the Staff Intranet or Microsoft Teams; ground-floor atrium has informal seating." .
+bldg:Cap_floor_areas_and_layout a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Floor Areas And Layout"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "floor area, area of floor, how big is floor, floor size, square metres, square meters, total area, building area, how many rooms, rooms per floor, spaces per floor, room count, floor layout, floor plan area, size of building, how large, net floor area, floor plate, biggest floor, largest floor, how many spaces, area per floor, gross area, total floor area" ;
+    ontosage:answerText "Abacws has six floor plates (Ground to Floor 5). Approximate net internal floor areas and mapped space counts from the architectural (DWG) floor plans are: Ground floor — 15 spaces, ~2,766 m²; Floor 1 — 34 spaces, ~3,009 m²; Floor 2 — 34 spaces, ~3,618 m²; Floor 3 — 34 spaces, ~3,618 m²; Floor 4 — 41 spaces, ~3,744 m² (the largest floor by both area and number of rooms); Floor 5 — 34 spaces, ~3,616 m². For the exact building-total or any specific floor's area, the spatial query agent computes it live from the floor-plan geometry. You can ask for a specific floor's area, adjacency, or room count and the spatial query agent will answer from the floor-plan geometry.\n" ;
+    ontosage:note "architectural_floor_plans" .
 
-bldg:Toilets_AllFloors a ontosage:Amenity,
-        ontosage:ToiletFacility ;
-    rdfs:label "Toilets"@en ;
-    ontosage:capabilityCategory "AMENITIES" ;
-    ontosage:layTerms "toilet, toilets, bathroom, wc, restroom, loo, ladies, gents, accessible toilet, disabled toilet, gender neutral toilet, baby changing, where are the toilets" ;
-    ontosage:locationText "Every floor (Ground–5)" ;
-    ontosage:note "Accessible toilets on every floor; baby-changing on the Ground floor; gender-neutral (shared) facilities on Ground and Floor 1; female/male facilities on Floors 2–5; showers on Floor 1." .
+bldg:Cap_occupancy_policies a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Occupancy Policies"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "capacity, maximum occupancy, how many people, capacity limit, overcrowding, headcount, occupancy limit, room capacity, fire capacity" ;
+    ontosage:answerText "Occupancy limits are set per room and displayed on the door. The building's maximum permitted occupancy is determined by fire safety regulations and is managed by building management. Overcrowding should be reported to Security. Real-time occupancy monitoring is limited — the building has presence sensors in some areas but not a full head-count system. For fire safety purposes, the building fire roll-call system is managed by floor wardens.\n" ;
+    ontosage:note "health_and_safety" .
 
-bldg:TradingRoom a ontosage:Amenity,
-        ontosage:Facility ;
-    rdfs:label "Simulated Trading Room"@en ;
-    ontosage:capabilityCategory "FACILITY" ;
-    ontosage:layTerms "trading room, simulated trading room, financial mathematics lab, finance lab, labs, key facilities, what facilities" ;
-    ontosage:locationText "Abacws building" ;
-    ontosage:note "For financial mathematics and data-analytics teaching." .
+bldg:Cap_transport_parking a ontosage:Amenity, ontosage:Amenity ;
+    rdfs:label "Transport Parking"@en ;
+    ontosage:capabilityCategory "Amenities" ;
+    ontosage:layTerms "parking, car park, transport, bus, train, cycle, cycling, arrive, get here, directions, how to get, travel, commute, public transport, tram, uber, taxi, disabled parking, blue badge, motorcycle, scooter, ev charging, electric vehicle, train station, cardiff central" ;
+    ontosage:answerText "Getting to Abacws (Senghennydd Road, Cardiff CF24 4AG): (1) By train: Cardiff Central station is ~15 min walk or 5 min taxi; (2) By bus: Routes 8, 9, 26, 27 stop on Cathays Terrace (2 min walk). Frequent service from Cardiff city centre; (3) By bike: secure bike storage in the basement (swipe card access); on-street cycle parking on Senghennydd Road; (4) By car: limited on-street pay-and-display parking nearby; Cardiff University has a car park on Corbett Road (permit required for staff). Electric vehicle charging points are available in the car park area. Disabled parking bays (blue badge) are on Senghennydd Road directly outside the entrance.\n" ;
+    ontosage:note "estates_facilities" .
 
+bldg:Cap_printing_scanning a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Printing Scanning"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "print, printer, printing, scan, scanning, copy, photocopier, mfd, multi-function, papercut, print credit, how to print, printing cost, a3, colour print, where is the printer, print room" ;
+    ontosage:answerText "Printing and scanning is available via Multi-Function Devices (MFDs) on every floor. The system uses Cardiff University's PaperCut print management. To print: (1) Send a document to the 'Secure Print' queue from any university computer; (2) Swipe your university card at any MFD to release your print job. Colour and A3 printing available on all floors. Scanning is free — scan to email or USB. Print credit can be topped up online at print.cardiff.ac.uk. For issues contact the IT Service Desk (itservicedesk.cardiff.ac.uk, 029 2251 1111).\n" ;
+    ontosage:note "it_services" .
+
+bldg:Cap_wellbeing_facilities a ontosage:Amenity, ontosage:Amenity ;
+    rdfs:label "Wellbeing Facilities"@en ;
+    ontosage:capabilityCategory "Amenities" ;
+    ontosage:layTerms "prayer room, quiet room, reflection, meditation, wellbeing, nursing, baby, mother, prayer, faith, religious, gender neutral, changing room, mental health, welfare, chaplain, counselling" ;
+    ontosage:answerText "Wellbeing facilities in Abacws: (1) A multi-faith prayer and reflection room is located on Floor 1 (room 1.04) — available to all; (2) Gender-neutral toilet facilities are available on every floor; (3) A nursing/feeding room for parents is on Floor 2; (4) Welfare and mental health support is available through Cardiff University Student Services (studentconnect.cardiff.ac.uk) and the Staff Wellbeing team. The building has a calm, quiet breakout area on Floor 4 for focused work or informal welfare conversations.\n" ;
+    ontosage:note "estates_facilities" .
+
+bldg:Cap_data_privacy_gdpr a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Data Privacy Gdpr"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "gdpr, data privacy, personal data, who sees my data, data protection, smart building privacy, sensor privacy, location tracking, data collected, consent, privacy policy, information governance, data subject, right to know, occupant data, monitoring, surveillance, track my location, track your location, does the building track, building track, are sensors tracking, am i tracked, do sensors track, track people, sensors track, are you tracking, privacy sensors, sensor monitoring, location data, tracked by sensors, being tracked" ;
+    ontosage:answerText "Your privacy is protected. The Abacws smart building does NOT track individual people or personal movements. Environmental sensors (temperature, CO2, humidity, PIR presence) collect zone-level aggregated data only — no personal identifiers are recorded or linked to individuals. GDPR compliance: (1) Data is collected solely for building management (energy optimisation, comfort, maintenance); (2) All sensor data is anonymised at the point of collection; (3) No data is shared with third parties without consent; (4) Retention periods follow Cardiff University's data schedule. CCTV cameras operate separately under Cardiff University's CCTV policy (footage retained 30 days, access restricted to Security Services and authorised investigators). For a full privacy notice, Subject Access Request, or to contact the Data Protection Officer: dataprotection@cardiff.ac.uk or visit the Cardiff University data protection pages online.\n" ;
+    ontosage:note "data_protection_office" .
+
+bldg:Cap_building_management_contact a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Building Management Contact"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "building manager, who manages, facilities manager, estate manager, contact, who is responsible, building management, facilities management, estates, property management, building contact, key holder, management team" ;
+    ontosage:answerText "Abacws Building is managed by Cardiff University Estates and Facilities Management. Key contacts: (1) Facilities helpdesk (general building issues, cleaning, maintenance): estates@cardiff.ac.uk or 029 2087 6026; (2) IT Service Desk: itservicedesk.cardiff.ac.uk or 029 2251 1111; (3) Security Services (24/7): security@cardiff.ac.uk or 029 2087 4444; (4) Room bookings: Staff Intranet room booking system; (5) Health & Safety: safety@cardiff.ac.uk. The School of Computer Science and Informatics administration is on Floor 2. For research lab access, contact your academic supervisor or the school administrator.\n" ;
+    ontosage:note "estates_management" .
+
+bldg:Cap_visitor_guest_policy a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Visitor Guest Policy"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "visitor, guest, external, invite, sign in, reception, visitor badge, visitor pass, external collaborator, external visitor, host visitor, can guests come, can i bring, can someone visit, meeting a visitor" ;
+    ontosage:answerText "Visitor policy for Abacws: (1) All external visitors must sign in at the main reception (Ground Floor) and will be issued a visitor badge; (2) Visitors must be escorted by a Cardiff University member of staff or student at all times; (3) Visitor wifi: use 'CU_Guest' network (self-registration at the portal); (4) For large groups or events, notify Building Management in advance; (5) Contractors and suppliers must check in with Security and complete a building induction. Visitors are not permitted in server rooms, labs, or other restricted areas unless specifically authorised by the area owner.\n" ;
+    ontosage:note "security_management" .
+
+bldg:Cap_temperature_comfort_complaints a ontosage:Procedure, ontosage:KnowledgeTopic ;
+    rdfs:label "Temperature Comfort Complaints"@en ;
+    ontosage:capabilityCategory "PROCEDURE" ;
+    ontosage:layTerms "too hot, too cold, uncomfortable, freezing, stuffy, overheating, draft, draughty, temperature complaint, not comfortable, cold room, hot room, thermal comfort, feels warm, feels cold, temperature adjustment" ;
+    ontosage:answerText "If you find the temperature uncomfortable in Abacws: (1) The building HVAC is zone-controlled — occupants cannot directly adjust thermostats; (2) Report comfort complaints to the Facilities helpdesk (estates@cardiff.ac.uk or extension 76026) describing the specific zone or room number, floor, and whether it is too hot or too cold; (3) Facility management can investigate and adjust zone setpoints; (4) Sensor data is available via OntoSage to check whether the measured temperature is within the ASHRAE comfort range (20–24°C). Persistent issues should be escalated to the Building Manager.\n" ;
+    ontosage:note "building_management_system" .
+
+bldg:Cap_schools_and_key_facilities a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Schools And Key Facilities"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "school of computer science, school of mathematics, mathematics department, computer science department, what is abacws, what schools, which department, makerspace, trading room, cybersecurity lab, simulation lab, student project, computer lab, lecture theatre, seminar room, industrial partner, research lab, what facilities, what rooms, it workshop, collaborative workspace, abacws features, who is in the building, what is taught here, financial mathematics" ;
+    ontosage:answerText "Abacws houses two Cardiff University schools: (1) School of Computer Science and Informatics; (2) School of Mathematics (including financial mathematics and statistics). Key named facilities: (1) Makerspace and IT Workshop — practical hardware/software project space; (2) Simulated Trading Room — for financial mathematics and data analytics teaching; (3) Cybersecurity Lab — dedicated teaching and research facility; (4) Computer labs — designed for group work, classes, and individual study; (5) Flexible lecture theatres and seminar rooms with innovative layouts to encourage interaction; (6) Dedicated student project work spaces; (7) Spaces open to industrial partners for student engagement. The ground-floor atrium has informal seating and is open to visitors. Industrial partner zones allow real-world project collaboration.\n" ;
+    ontosage:note "cardiff_university_abacws_page" .
+
+bldg:Cap_reception_and_hours a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Reception And Hours"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "reception, opening times, open hours, what time does it open, when is it open, reception hours, is reception open, front desk, reception desk, sign in, monday hours, friday hours, weekend hours, opening hours, what hours, when does reception close" ;
+    ontosage:answerText "Abacws Reception (Ground Floor, main entrance) is open: Monday–Friday 09:00–16:30; Saturday and Sunday — Closed. The building itself has broader access hours (07:00–22:00 weekdays, 08:00–18:00 weekends) for card-holders — reception staffing and visitor sign-in are only available during the hours above. Out-of-hours queries should be directed to Cardiff University Security Services (029 2087 4444, 24/7).\n" ;
+    ontosage:note "cardiff_university_abacws_page" .
+
+bldg:Cap_bicycle_parking_detail a ontosage:Amenity, ontosage:Amenity ;
+    rdfs:label "Bicycle Parking Detail"@en ;
+    ontosage:capabilityCategory "Amenities" ;
+    ontosage:layTerms "bicycle, bike, cycling, cycle, bike rack, bicycle storage, bike lock, where to park bike, covered cycle, cycle parking, bike shelter, rear entrance, west entrance, cycle rack location" ;
+    ontosage:answerText "Covered bicycle racks are located at two points outside the building: (1) to the rear of the building; (2) on the west side of the building. Access to the covered racks requires a valid Cardiff University staff or student card. On-street cycle parking is also available on Senghennydd Road. There are no indoor bicycle storage facilities within the building itself. Repair tools or pumps are not on-site; the nearest cycle repair service is on City Road.\n" ;
+    ontosage:note "cardiff_university_accessibility_page" .
+
+bldg:Cap_lift_accessibility_detail a ontosage:Amenity, ontosage:Amenity ;
+    rdfs:label "Lift Accessibility Detail"@en ;
+    ontosage:capabilityCategory "Accessibility" ;
+    ontosage:layTerms "lift dimensions, lift size, lift weight limit, lift capacity, lift features, braille lift, tactile buttons, lift mirror, lift announcer, lift indicator, left lift, main lift, lift door width, lift lobby, how big is the lift, can wheelchair fit in lift, lift access all floors" ;
+    ontosage:answerText "Main passenger lift (located left from the front entrance, approximately 25m from the entrance): serves floors G, 1, 2, 3, 4 and 5. Key specifications: weight limit 1000 kg; door clear width 90 cm; internal dimensions 106 cm × 220 cm; automatic double doors to lift lobby on all floors; 150 cm × 150 cm clear manoeuvring space in front of the lift. Accessible features: Braille markings on controls; tactile (raised) button markings; audible floor announcer; visual floor indicator; mirror inside for reversing out; external controls 90–110 cm from floor; internal controls 90–120 cm from floor; high visual contrast between controls and wall. No hearing loop inside the lift. No staff activation needed. Signs indicating the lift are visible from the entrance.\n" ;
+    ontosage:note "cardiff_university_accessibility_page" .
+
+bldg:Cap_shower_facilities_detail a ontosage:Amenity, ontosage:Amenity ;
+    rdfs:label "Shower Facilities Detail"@en ;
+    ontosage:capabilityCategory "Amenities" ;
+    ontosage:layTerms "shower, shower room, shower location, shower accessibility, shower facilities, accessible shower, standard shower, where is the shower, shower floor, shower door width, shower card reader, level access shower" ;
+    ontosage:answerText "Shower facilities are located on Floor 1. There are both accessible and standard shower cubicles. To reach them from the main entrance: take the right-hand lift, then turn right from the lift on Floor 1. Access details: (1) Level access throughout — no steps; (2) The door to the shower cubicle lobby is a single, heavy door, push to open (opens away from you), width 87 cm; (3) Card reader entry height 115 cm; exit button height 115 cm; (4) Individual cubicle door is single, light, push to open, width 57 cm. For accessibility support or if you require a PEEP (Personal Emergency Evacuation Plan), contact Building Management or the Disability and Dyslexia Service (disability@cardiff.ac.uk).\n" ;
+    ontosage:note "cardiff_university_accessibility_page" .
+
+bldg:Cap_toilet_facilities_by_floor a ontosage:Amenity, ontosage:Amenity ;
+    rdfs:label "Toilet Facilities By Floor"@en ;
+    ontosage:capabilityCategory "Amenities" ;
+    ontosage:layTerms "toilet location, toilets by floor, where are toilets, accessible toilet floor, female toilet, male toilet, gender neutral toilet, which floor toilet, baby changing, baby change facility, changing table, accessible wc, disabled toilet, bathroom location, wc location, ladies toilet, mens toilet" ;
+    ontosage:answerText "Toilet and changing facilities by floor: Ground floor — shared (gender-neutral) standard toilets; accessible toilet with baby changing facilities; Floor 1 — shared (gender-neutral) standard toilets; accessible toilet; accessible shower; standard shower; Floor 2 — female standard toilets; male standard toilets; accessible toilet; Floor 3 — female standard toilets; male standard toilets; accessible toilet; Floor 4 — female standard toilets; male standard toilets; accessible toilet; Floor 5 — female standard toilets; male standard toilets; accessible toilet. Summary: accessible toilets are on every floor (Ground–5); baby changing is on the Ground floor only; showers (accessible and standard) are on Floor 1 only; gender-neutral (shared) facilities are on Ground and Floor 1.\n" ;
+    ontosage:note "cardiff_university_accessibility_page" .
+
+bldg:Cap_lost_property a ontosage:Procedure, ontosage:KnowledgeTopic ;
+    rdfs:label "Lost Property"@en ;
+    ontosage:capabilityCategory "PROCEDURE" ;
+    ontosage:layTerms "lost property, lost and found, found item, lost item, missing item, report lost, left behind, lost my, find my" ;
+    ontosage:answerText "Lost property for the Abacws Building is handled at the ground-floor reception desk. Hand in or report any found or lost items there during staffed hours. For items lost across Cardiff University more widely, contact the central Security & Estates helpdesk. If reception is unattended, email estates at estates@cardiff.ac.uk with a description, date, and location.\n" ;
+    ontosage:note "building_management_system" .
+
+bldg:Cap_smoking_policy a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "Smoking Policy"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "smoking, smoke, vape, vaping, e-cigarette, cigarette, smoking policy, where can i smoke, smoking area" ;
+    ontosage:answerText "The Abacws Building is a no-smoking and no-vaping building, in line with Cardiff University's smoke-free policy. Smoking and the use of e-cigarettes / vapes are not permitted anywhere inside the building or at the entrances. Designated smoking areas are located away from building entrances outdoors; please use those and dispose of cigarette ends in the bins provided.\n" ;
+    ontosage:note "cardiff_university_policy" .

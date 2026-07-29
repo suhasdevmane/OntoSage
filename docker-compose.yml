@@ -1,3 +1,6 @@
+# bldg1 (Abacws) stack — modernized to per-building state ./volumes/${BUILDING_ID}/*
+# (guarded: compose refuses to start if BUILDING_ID is unset). Active building comes
+# from .env; input mount ./input. Keeps bldg1's own data-publisher (mysql-dummy-publish-dev).
 # OntoSage 3.0: Production-Grade Agentic AI Docker Compose Configuration
 # 10 Agents | 14 Intents | Phase 7 services (Response Cache, Agent Memory, WebSocket, i18n)
 # Default MODEL_PROVIDER: local (Ollama, default model gpt-oss:20b) — set OPENAI_API_KEY + MODEL_PROVIDER=openai to use OpenAI instead
@@ -10,40 +13,11 @@ networks:
   executor-internal:
     driver: bridge
     internal: true # no gateway to host/internet — isolates the code-executor RCE surface
-  ontobot-network:
-    external: true # Connect to existing MySQL network with sensor data
 
 volumes:
-  # External volume - reuse existing MySQL data with sensor UUIDs
-  mysql-data:
-    external: true
-    name: ontobot_mysql-data
 
-  # ── Internal named volumes (all history preserved across restarts) ──────
-  redis-data:
-    # Session cache, response cache, QA pair cache
-    driver: local
-  qdrant-data:
-    # Vector DB for agent memory (Phase 7.4)
-    driver: local
-  graphdb-data:
-    # Ontology + similarity index
-    driver: local
-  mongo-data:
-    # Chat history
-    driver: local
-  postgres-user-data:
-    # User accounts, passwords, RBAC roles
-    driver: local
-  pgadmin-data:
-    # pgAdmin UI settings
-    driver: local
-  artifacts-data:
-    # Generated plots, reports, exports
-    driver: local
-  open-webui-data:
-    # Open WebUI conversation history
-    driver: local
+  # All building state is bind-mounted per building at ./volumes/<BUILDING_ID>/* —
+  # the only named volume is the shared embedding-model cache below.
   huggingface-cache:
     # Local embedding model cache (MiniLM) — persists across orchestrator restarts
     driver: local
@@ -56,7 +30,7 @@ services:
   #   ports:
   #     - "11435:11434"  # Host port changed to avoid conflict
   #   volumes:
-  #     - ./volumes/ollama:/root/.ollama  # Local persistent storage
+  #     - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/ollama:/root/.ollama  # Local persistent storage
   #   environment:
   #     - OLLAMA_HOST=0.0.0.0
   #     - OLLAMA_NUM_GPU=1
@@ -117,7 +91,7 @@ services:
     ports:
       - "3000:8080"
     volumes:
-      - ./volumes/open-webui:/app/backend/data
+      - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/open-webui:/app/backend/data
     environment:
       - OLLAMA_BASE_URL=http://ollama-deepseek-r1:11434
       - OPENAI_API_BASE_URL=http://ontosage-orchestrator:8000/v1
@@ -150,8 +124,8 @@ services:
       - ./shared:/app/shared # Mount shared module for hot-reloading
       - ./.env:/app/.env # rw: admin console edits root .env (takes effect on restart)
       - ./input:/app/input # rw: GUI-created data sources persist to input/datasources.custom.yaml
-      - ./volumes/floor-plans:/app/floor_plans # Writable — pipeline writes manifests + PNGs here
-      - ./volumes/artifacts:/app/volumes/artifacts # rw: datasource toggle-state + ttl-upload cache
+      - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/floor-plans:/app/floor_plans # Writable — pipeline writes manifests + PNGs here
+      - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/artifacts:/app/volumes/artifacts # rw: datasource toggle-state + ttl-upload cache
       - ./outputs:/app/outputs # Mount shared outputs (data, plots, query results)
       - ./orchestrator/agents/.env:/app/agents/.env:ro # Mount OpenAI credentials
       - ./data:/app/data:ro # Mount sensor map and other data files
@@ -206,8 +180,8 @@ services:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434} # native host Ollama (default port)
       - OLLAMA_MODEL=${OLLAMA_MODEL:-gpt-oss:20b}
       - OLLAMA_NUM_PARALLEL=1
-      - OLLAMA_NUM_CTX=4096
-      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_NUM_CTX=${OLLAMA_NUM_CTX:-8192}
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-30m}
       - OLLAMA_GPU_LAYERS=-1
       # ┌─ MODE C: Cloud Ollama (API) ───────────────────────────────────────┐
       # │ To activate: set MODEL_PROVIDER=cloud in .env                   │
@@ -253,7 +227,7 @@ services:
       # ── Phase improvements: new settings ────────────────────────────────
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
       - EXPORTS_DIR=/app/outputs/exports
-      - SENSOR_MAP_PATH=/app/data/sensor_map.json
+      - SENSOR_MAP_PATH=/app/input/.sensor_map.cache.json # per-building cache, auto-regenerated from the live graph on boot
       - OUTPUT_DATA_DIR=/app/outputs/data
       - QUERY_RESULTS_DIR=/app/outputs/query_results
       - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-60}
@@ -299,7 +273,7 @@ services:
       - "127.0.0.1:6333:6333" # HTTP API (localhost-only; internal service)
       - "127.0.0.1:6334:6334" # gRPC (localhost-only; internal service)
     volumes:
-      - ./volumes/qdrant:/qdrant/storage # Persistent storage - all vector data preserved
+      - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/qdrant:/qdrant/storage # Persistent storage - all vector data preserved
     environment:
       - QDRANT__SERVICE__HTTP_PORT=6333
       - QDRANT__SERVICE__GRPC_PORT=6334
@@ -326,7 +300,7 @@ services:
     ports:
       - "127.0.0.1:6379:6379" # localhost-only; internal cache/session store
     volumes:
-      - ./volumes/redis:/data
+      - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/redis:/data
     command: >
       redis-server --appendonly yes --appendfsync everysec --save 900 1 --save
       300 10 --save 60 10000 --maxmemory 2gb --maxmemory-policy allkeys-lru --hz
@@ -485,7 +459,7 @@ services:
     #     - WHISPER_LANG=en           # default language
     #     # - LOCAL_ONLY=1            # uncomment to disable remote fallback if image adds one
     #   volumes:
-    #     - ./volumes/whisper:/config
+    #     - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/whisper:/config
     #   ports:
     #     - "8003:10300"             # map internal API port 10300 to expected 8003
     #   networks:
@@ -512,7 +486,7 @@ services:
     #   ports:
     #     - "3030:3030"
     #   volumes:
-    #     - ./volumes/fuseki:/fuseki  # Local persistent storage
+    #     - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/fuseki:/fuseki  # Local persistent storage
     #     - ./data/bldg1:/staging:ro  # Read-only mount for TTL files (9184 triples)
     #   environment:
     #     - ADMIN_PASSWORD=${FUSEKI_ADMIN_PASSWORD:-Admin@12345}
@@ -537,7 +511,7 @@ services:
       - "127.0.0.1:7200:7200"
       - "127.0.0.1:7300:7300" # gRPC port
     volumes:
-      - ./volumes/graphdb:/opt/graphdb/home
+      - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/graphdb:/opt/graphdb/home
       - ./input:/opt/graphdb/import:ro
     environment:
       - GDB_HEAP_SIZE=4g
@@ -573,7 +547,6 @@ services:
   #     - MYSQL_PASSWORD=${MYSQL_PASSWORD:-thingsboard}
   #   networks:
   #     - ontobot-agentic
-  #     - ontobot-network
   #   healthcheck:
   #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
   #     interval: 30s
@@ -656,7 +629,7 @@ services:
     ports:
       - "127.0.0.1:5433:5432" # localhost-only; 5433 on host to avoid conflict with ThingsBoard
     volumes:
-      - ./volumes/postgres-user-data:/var/lib/postgresql/data
+      - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/postgres-user-data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=${POSTGRES_USER_DB:-ontobot}
       - POSTGRES_USER=${POSTGRES_USER_USER:-ontobot}
@@ -679,14 +652,13 @@ services:
   #   ports:
   #     - "5432:5432"
   #   volumes:
-  #     - ./volumes/postgres:/var/lib/postgresql/data  # Local persistent storage
+  #     - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/postgres:/var/lib/postgresql/data  # Local persistent storage
   #   environment:
   #     - POSTGRES_DB=${POSTGRES_DB:-thingsboard}
   #     - POSTGRES_USER=${POSTGRES_USER:-thingsboard}
   #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-thingsboard}
   #   networks:
   #     - ontobot-agentic
-  #     - ontobot-network  # Connect to existing network
   #   healthcheck:
   #     test: ["CMD-SHELL", "pg_isready -U thingsboard"]
   #     interval: 30s
@@ -710,12 +682,11 @@ services:
   #   volumes:
   #     - ./bldg1/servers.json:/pgadmin4/servers.json:ro
   #     - ./bldg1/.pgpass:/pgpass:ro
-  #     - ./volumes/pgadmin:/var/lib/pgadmin
+  #     - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/pgadmin:/var/lib/pgadmin
   #   # depends_on:
   #   #   - postgres
   #   networks:
   #     - ontobot-agentic
-  #     - ontobot-network  # Connect to existing network
   #   healthcheck:
   #     test: ["CMD-SHELL", "ps aux | grep -v grep | grep gunicorn || exit 1"]
   #     interval: 30s
@@ -732,12 +703,11 @@ services:
     ports:
       - "127.0.0.1:27017:27017" # localhost-only; chat-history store
     volumes:
-      - ./volumes/mongo:/data/db
+      - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/mongo:/data/db
     environment:
       - MONGO_INITDB_DATABASE=chatbot
     networks:
       - ontobot-agentic
-      - ontobot-network # Connect to existing network for cross-stack access
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 30s
@@ -793,7 +763,6 @@ services:
   #     #   condition: service_healthy
   #   networks:
   #     - ontobot-agentic
-  #     - ontobot-network
   #   healthcheck:
   #     test: ["CMD", "sh", "-lc", "wget -qO- http://localhost:5000/health | grep -q 'ok'"]
   #     interval: 30s
@@ -828,7 +797,6 @@ services:
   #     #   condition: service_healthy
   #   networks:
   #     - ontobot-agentic
-  #     - ontobot-network
   #   healthcheck:
   #     test: ["CMD", "sh", "-lc", "wget -qO- http://localhost/health | grep -q 'ok'"]
   #     interval: 30s
@@ -854,14 +822,13 @@ services:
   #     - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-thingsboard}
   #     - DATABASE_TS_TYPE=sql
   #   volumes:
-  #     - ./volumes/thingsboard-data:/data
-  #     - ./volumes/thingsboard-logs:/var/log/thingsboard
+  #     - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/thingsboard-data:/data
+  #     - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/thingsboard-logs:/var/log/thingsboard
   #   # depends_on:
   #   #   postgres:
   #   #     condition: service_healthy
   #   networks:
   #     - ontobot-agentic
-  #     - ontobot-network
   #   healthcheck:
   #     test: ["CMD", "curl", "-f", "http://localhost:9090/login"]
   #     interval: 30s
@@ -877,10 +844,10 @@ services:
     ports:
       - "127.0.0.1:8080:80" # localhost-only; artifact file-server (exposed publicly via Cloudflare tunnel if needed)
     volumes:
-      - ./volumes/artifacts:/usr/share/nginx/html # Artifacts root
+      - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/artifacts:/usr/share/nginx/html # Artifacts root
       - ./config/nginx-file-server.conf:/etc/nginx/conf.d/default.conf:ro # Custom config (non-nested aliases)
       - ./input:/srv/floor-plan-pdfs:ro # PDFs at /floor-plans/<name>
-      - ./volumes/floor-plans:/srv/floor-plan-renders:ro # PNGs at /floor-plans/renders/<building>/
+      - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/floor-plans:/srv/floor-plan-renders:ro # PNGs at /floor-plans/renders/<building>/
       - ./outputs:/srv/static:ro # Analytics/viz plots at /static/<filename>
     networks:
       - ontobot-agentic

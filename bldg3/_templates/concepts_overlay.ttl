@@ -1,0 +1,36 @@
+# TEMPLATE: input/<building_id>/concepts.ttl
+# Per-building HBCO concept overlays — local lay-terms not in the global ontology.
+# Loaded by TTL uploader on restart; merged into GraphDB named graph for this building.
+# See docs/ADDING_A_DATA_SOURCE.md for the full playbook.
+#
+# Steps:
+#  1. Add your concept instance below.
+#  2. Reference the recipe id you defined in recipes.yaml (hbco:requiresRecipe).
+#  3. Restart → concept resolver picks it up automatically.
+
+@prefix hbco: <http://ontosage.org/hbco#> .
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# ── Example: fridge / cold-storage temperature ────────────────────────────
+# Uncomment and edit to add your concept.
+
+# hbco:fridge_temperature a hbco:Concept ;
+#     skos:prefLabel "fridge temperature"@en ;
+#     hbco:layTerm "fridge"^^xsd:string ;
+#     hbco:layTerm "refrigerator"^^xsd:string ;
+#     hbco:layTerm "cold storage"^^xsd:string ;
+#     hbco:layTerm "chiller"^^xsd:string ;
+#     hbco:mapsToBrickClass brick:Temperature_Sensor ;
+#     hbco:requiresRecipe "fridge_temp_threshold" ;
+#     rdfs:comment "Mapped for this building's specific cold-storage monitoring need."^^xsd:string .
+
+# ── Add your concept here ─────────────────────────────────────────────────
+# hbco:my_concept a hbco:Concept ;
+#     skos:prefLabel "my concept label"@en ;
+#     hbco:layTerm "lay term 1"^^xsd:string ;
+#     hbco:layTerm "lay term 2"^^xsd:string ;
+#     hbco:mapsToBrickClass brick:MyBrickClass ;
+#     hbco:requiresRecipe "my_recipe_id" .

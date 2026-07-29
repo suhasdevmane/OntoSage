@@ -1276,6 +1276,22 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                         state.intermediate_results["referent_resolution"] = "not_found"
                         return state
 
+                # Sensor-TYPE existence gate (BUG-063): honest "no such sensors" for a
+                # sensor type the building lacks, instead of fabricating a count/answer
+                # (e.g. "how many parking-space occupancy sensors"). Fails open.
+                _type_decline = await self._absent_sensor_type_message(latest_message)
+                if _type_decline:
+                    logger.info("[sensor_type_gate] declining absent sensor type honestly")
+                    state.intermediate_results["sparql_result"] = {
+                        "success": True,
+                        "analytics_required": False,
+                        "formatted_response": _type_decline,
+                    }
+                    state.query_results = {}
+                    state.analytics_required = False
+                    state.intermediate_results["referent_resolution"] = "type_not_found"
+                    return state
+
             result = await self.sparql_agent.generate_query(state, _sparql_query)
         finally:
             reset_request_bctx(_bctx_token)
@@ -3143,6 +3159,118 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             type_counts[sensor_type] = type_counts.get(sensor_type, 0) + 1
         return type_counts
 
+    async def _absent_sensor_type_message(self, query: str) -> Optional[str]:
+        """Honest "no such sensors" when a count/list query names a sensor TYPE whose head
+        term appears in NO sensor class or label of the ACTIVE building. Building-agnostic
+        (checks the live graph); returns None (proceed normally) unless confident the type
+        is absent, so legitimate types are never blocked."""
+        if not getattr(settings, "REFERENT_VALIDATION_ENABLED", True):
+            return None
+        import re as _re
+
+        ql = (query or "").lower()
+        if not any(w in ql for w in ("how many", "number of", "count of", "are there", "list ")):
+            return None
+        if "sensor" not in ql:
+            return None
+        before = ql.split("sensor")[0]
+        stop = {
+            "how",
+            "what",
+            "does",
+            "do",
+            "did",
+            "have",
+            "has",
+            "there",
+            "are",
+            "is",
+            "was",
+            "give",
+            "show",
+            "tell",
+            "the",
+            "me",
+            "us",
+            "you",
+            "can",
+            "could",
+            "would",
+            "list",
+            "count",
+            "many",
+            "number",
+            "of",
+            "all",
+            "any",
+            "some",
+            "other",
+            "much",
+            "most",
+            "type",
+            "types",
+            "kind",
+            "kinds",
+            "level",
+            "installed",
+            "node",
+            "space",
+            "spaces",
+            "indoor",
+            "outdoor",
+            "internal",
+            "external",
+            "main",
+            "primary",
+            "secondary",
+            "total",
+            "live",
+            "current",
+            "real",
+            "new",
+            "old",
+            "room",
+            "zone",
+            "floor",
+            "area",
+            "building",
+            "this",
+            "that",
+            "its",
+            "in",
+            "on",
+            "for",
+            "with",
+        }
+        words = [w for w in _re.split(r"[^a-z0-9]+", before) if len(w) > 2 and w not in stop]
+        if not words:
+            return None
+        lead = words[0]
+        try:
+            q = (
+                "PREFIX brick:<https://brickschema.org/schema/Brick#> "
+                "PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> "
+                "SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE { "
+                "?s a ?c . ?c rdfs:subClassOf* brick:Sensor . "
+                "OPTIONAL { ?s rdfs:label ?l } "
+                f'FILTER(CONTAINS(LCASE(STR(?c)), "{lead}") || CONTAINS(LCASE(STR(?l)), "{lead}")) }}'
+            )
+            res = await self.sparql_agent._execute_query(q)
+            bindings = res.get("results", {}).get("bindings", [])
+            n = int(bindings[0]["n"]["value"]) if bindings else 0
+        except Exception as e:  # graph down / malformed → fail OPEN
+            logger.warning(f"[sensor_type_gate] existence check failed, proceeding: {e}")
+            return None
+        if n > 0:
+            return None  # the type is present → answer normally
+        readable = " ".join(words)
+        return (
+            f"This building doesn't have any **{readable} sensors**. I only report what its "
+            "ontology actually contains. Ask about a sensor type it has — e.g. temperature, "
+            "humidity, CO₂, air quality, water flow, or pressure — or ask "
+            '*"what types of sensors does this building have?"*'
+        )
+
     def _check_locked_capability(self, state: ConversationState) -> Optional[str]:
         """Return the id of a DISABLED data source whose keyword the query matches.
 
@@ -4440,39 +4568,22 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                 result["message"] = f"Operation completed but could not update database: {e}"
 
     async def _capability_node(self, state: ConversationState) -> ConversationState:
-        """Phase 0 — Answer CAPABILITY / off-ontology queries from the building KB."""
+        """Answer CAPABILITY / off-ontology queries from the building's own data.
+
+        TTL-first single chain (TODO-012): the CapabilityAgent resolves metrics →
+        ontology triples (ontosage:Amenity / KnowledgeTopic) → uploaded documents →
+        honest "no info". There is no capability.yaml / Qdrant capability-KB fallback.
+        """
         logger.info(
             f"[capability_node] intent={state.current_intent}, " f"building={state.building_id}"
         )
-        # Fallback: when the semantic router did not pre-fetch capability matches
-        # (the LLM routed here, but the query scored just below the routing
-        # threshold), search the KB directly so the agent can ground an answer
-        # instead of dropping to the "no info" boundary.
-        if not state.intermediate_results.get("capability_matches"):
-            _router = getattr(self.dialogue_agent, "semantic_router", None)
-            if _router is not None:
-                try:
-                    _q = state.user_message or (
-                        state.messages[-1].content if state.messages else ""
-                    )
-                    _bid = state.building_id or settings.BUILDING_ID
-                    _min = float(os.environ.get("CAPABILITY_ANSWER_MIN_SCORE", "0.40"))
-                    _fb = await _router.search_capability_entries(_q, _bid, min_score=_min)
-                    if _fb:
-                        state.intermediate_results["capability_matches"] = _fb
-                        logger.info(
-                            f"[capability_node] KB fallback grounded {len(_fb)} match(es); "
-                            f"top={_fb[0].entry_id}@{_fb[0].score:.3f}"
-                        )
-                except Exception as _e:
-                    logger.warning(f"[capability_node] fallback search failed: {_e!r}")
         state = await self.capability_agent.answer(state)
-        # Surface the KB response into the standard dialogue_response slot
-        # so the response node picks it up consistently.
+        # Surface the response into the standard dialogue_response slot so the
+        # response node picks it up consistently; record the ACTUAL source.
         result = state.intermediate_results.get("capability_result", {})
         if result.get("response"):
             state.intermediate_results["dialogue_response"] = result["response"]
-            _prov.record(state, "capability_kb")
+            _prov.record(state, result.get("provenance") or "capability")
         return state
 
     async def _document_node(self, state: ConversationState) -> ConversationState:

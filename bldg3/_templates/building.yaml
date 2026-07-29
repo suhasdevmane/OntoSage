@@ -1,0 +1,56 @@
+# TEMPLATE: input/<building_id>/building.yaml — the building's identity card.
+# Scaffolded by `python scripts/onboard_building.py --building-id <id> --scaffold`
+# ({BUILDING_ID} is substituted automatically). This is the ONLY required
+# config file besides at least one *.ttl topology file.
+
+# Must equal the directory name (swap_building.py hard-fails otherwise).
+building_id: {BUILDING_ID}
+building_name: {BUILDING_ID} Building          # human-readable — EDIT ME
+
+# ── THE NAMESPACE CONTRACT (see input/README.md) ─────────────────────────────
+# Single source of truth for this building's RDF namespace. Rules:
+#   * must end with '#'
+#   * unique per building — NEVER reuse another building's URI
+#   * use the institution's domain if it has one, e.g.
+#       "http://abacwsbuilding.cardiff.ac.uk/abacws#"
+#     otherwise keep the ontosage.org fallback below
+#   * EVERY *.ttl in this folder must declare
+#       @prefix bldg: <this exact URI> .
+#     and, if it uses @base, the same URI again. The startup TTL validator
+#     and `swap_building.py --dry-run` enforce this.
+ontology_namespace: "http://ontosage.org/buildings/{BUILDING_ID}#"
+
+# The prefix LABEL is standardized as `bldg` for every building — do not
+# change it; SPARQL templates, recipes and the HBCO resolver depend on it.
+building_prefix: bldg
+
+# IANA timezone for timestamps in answers.
+building_timezone: "Europe/London"
+
+# ── Storage adapter binding ───────────────────────────────────────────────────
+# Keys resolved against input/database_registry.yaml. TTL external references
+# point at them as `ref:storedAt bldg:<key>`.
+storage:
+  databases:
+    - database1
+
+# ── Capability semantic routing ──────────────────────────────────────────────
+# Thresholds are EMBEDDING-PROVIDER-SPECIFIC (see the re-calibration contract
+# in input/bldg1/building.yaml). These defaults were calibrated for the local
+# MiniLM model; re-tune after switching EMBEDDING_PROVIDER.
+capability_routing:
+  enabled: true
+  embedding_model: auto
+  threshold: 0.56
+  override_min: 0.60
+  top_k: 5
+  fallback_on_qdrant_failure: skip
+
+# ── Actuation gateway ────────────────────────────────────────────────────────
+# driver: none — control questions get an honest decline (safe default).
+# driver: sim  — log-only simulation; commands queue for approval, SimDriver
+#                writes an audit row, nothing physical moves.
+# Physical drivers are out of scope without a safety review.
+actuation:
+  driver: none
+  points_writable: []

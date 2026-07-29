@@ -418,7 +418,10 @@ class Settings(BaseSettings):
     )
 
     SENSOR_MAP_PATH: str = Field(
-        default="data/sensor_map.json", description="Path to sensor map cache JSON file"
+        default="input/.sensor_map.cache.json",
+        description="Per-building sensor-map cache. Lives in the ACTIVE building's input/ "
+        "(writable + inherently per-building) and is auto-rebuilt from the live graph on "
+        "boot when missing or when it doesn't match the active building's namespace.",
     )
     OUTPUT_DATA_DIR: str = Field(
         default="outputs/data", description="Directory for analytics data output files"
@@ -496,17 +499,16 @@ class Settings(BaseSettings):
     )
 
     CAPABILITIES_TTL_FIRST: bool = Field(
-        default=False,
+        default=True,
         description=(
-            "TTL-first capability answering + routing (ROADMAP-009 WS-4). When true: the LLM "
-            "dialogue router uses a graph-backed signal (amenity triples via CapabilityGraphResolver "
-            "+ a strong document match) instead of the Qdrant capability-KB probe; and the capability "
-            "node answers graph -> documents -> capability.yaml KB (safety net for local-embedding "
-            "retrieval gaps) -> honest 'no info'. Measured 0 regressions on a 16-question capability "
-            "set (bldg1, local MiniLM). Default false = legacy KB routing+answering. Enable per "
-            "deployment via .env; flip the default once validated on the full capability corpus. "
-            "capability.yaml is retained as the safety net until embeddings (OpenAI) make "
-            "document-only prose retrieval reliable enough to remove it."
+            "TTL-first capability answering + routing (ROADMAP-009 WS-4 / TODO-012). "
+            "Capabilities are ontosage:Amenity + ontosage:KnowledgeTopic TRIPLES (authored via the "
+            "admin Capabilities GUI or the OCBV TBox), answered by the CapabilityGraphResolver; "
+            "genuinely-uploaded manuals live in the document KB. The capability node answers "
+            "metrics -> graph triples -> uploaded documents -> honest 'no info'. capability.yaml is "
+            "removed (TODO-012) — this flag is now vestigial and always-on; kept only until the last "
+            "legacy references are deleted. Do NOT set false: there is no longer a Qdrant capability-KB "
+            "path behind it."
         ),
     )
 

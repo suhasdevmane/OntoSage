@@ -155,12 +155,11 @@ def test_fact_render_knowledge_topic():
 
 async def test_capability_agent_answers_from_triples(monkeypatch):
     import orchestrator.agents.capability_agent as cap
+    import orchestrator.services.building_context as bctx
     import orchestrator.services.capability_graph_resolver as cgr
     from shared.models import ConversationState, Message
 
-    monkeypatch.setattr(
-        cap, "_load_kb", lambda _b: SimpleNamespace(building=SimpleNamespace(name="Abacws"))
-    )
+    monkeypatch.setattr(bctx, "resolve_building_context", lambda _b: SimpleNamespace(name="Abacws"))
 
     class _FakeResolver:
         async def resolve(self, _q):
@@ -225,13 +224,12 @@ async def test_new_facility_service_amenities_match():
 
 
 def _cap_setup(monkeypatch, resolver_facts, docs):
-    """Wire up the capability agent with a stub KB, resolver, and document search."""
+    """Wire up the capability agent with a stub resolver + document search (TODO-012: no KB)."""
     import orchestrator.agents.capability_agent as cap
+    import orchestrator.services.building_context as bctx
     import orchestrator.services.capability_graph_resolver as cgr
 
-    monkeypatch.setattr(
-        cap, "_load_kb", lambda _b: SimpleNamespace(building=SimpleNamespace(name="Abacws"))
-    )
+    monkeypatch.setattr(bctx, "resolve_building_context", lambda _b: SimpleNamespace(name="Abacws"))
 
     class _Resolver:
         async def resolve(self, _q):
@@ -246,10 +244,9 @@ def _cap_setup(monkeypatch, resolver_facts, docs):
 
 
 def _cap_state(msg="how do I connect to the wifi?"):
-    from shared.capability_schema import CapabilityEntry
     from shared.models import ConversationState, Message
 
-    s = ConversationState(
+    return ConversationState(
         conversation_id="c",
         user_id="u",
         user_message=msg,
@@ -257,40 +254,31 @@ def _cap_state(msg="how do I connect to the wifi?"):
         current_intent="capability",
         messages=[Message(role="user", content=msg)],
     )
-    s.intermediate_results["capability_matches"] = [
-        SimpleNamespace(
-            entry=CapabilityEntry(id="e", category="IT", content="prose", source="x", keywords=[])
-        )
-    ]
-    return s
 
 
-async def test_ttl_first_kb_is_safety_net_when_docs_miss(monkeypatch):
-    # Option 1: flag ON, amenity graph miss + document miss (the wifi @0.248 case) →
-    # fall back to the capability.yaml KB rather than a bare "no info".
+async def test_no_source_gives_honest_boundary(monkeypatch):
+    # TODO-012: capability.yaml + its Qdrant KB safety net are GONE. Triples miss +
+    # documents miss → an honest boundary, never a fabricated answer.
     import orchestrator.agents.capability_agent as cap
-    from shared.config import settings
 
     _cap_setup(monkeypatch, resolver_facts=[], docs=[])
-    monkeypatch.setattr(settings, "CAPABILITIES_TTL_FIRST", True)
     res = (await cap.CapabilityAgent().answer(_cap_state())).intermediate_results[
         "capability_result"
     ]
-    assert res["provenance"] == "capability_kb"  # KB safety net caught the retrieval gap
+    assert res["provenance"] == "no_match"
+    assert "don't have that specific information" in res["response"].lower()
 
 
-async def test_ttl_first_prefers_documents_over_kb(monkeypatch):
-    # Option 1: flag ON, a document hit is present → documents win, KB is dropped.
+async def test_documents_answer_when_triples_miss(monkeypatch):
+    # Triples miss, an uploaded manual matches → answered from documents.
     import orchestrator.agents.capability_agent as cap
-    from shared.config import settings
 
     _cap_setup(
         monkeypatch,
         resolver_facts=[],
-        docs=[{"doc_name": "cap_data_privacy_gdpr", "text": "GDPR doc", "score": 0.5}],
+        docs=[{"doc_name": "gdpr_policy", "text": "GDPR doc", "score": 0.5}],
     )
-    monkeypatch.setattr(settings, "CAPABILITIES_TTL_FIRST", True)
     res = (await cap.CapabilityAgent().answer(_cap_state())).intermediate_results[
         "capability_result"
     ]
-    assert res["provenance"] == "document_kb"  # documents preferred over the KB
+    assert res["provenance"] == "document_kb"

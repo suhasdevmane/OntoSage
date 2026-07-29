@@ -1,0 +1,36 @@
+# Caretaker persona — Phase 5 example.
+#
+# Demonstrates that a brand-new persona can be added without touching any
+# Python code.  Loaded by shared.persona_loader at startup and merged on
+# top of the hardcoded defaults in shared.persona_registry.
+#
+# To test:  pass `"persona": "caretaker"` (or any alias below) on a /chat
+# request and the registry will return the priors declared here.
+
+name: caretaker
+description: >
+  Building caretaker / janitorial staff.  Mostly looks up maintenance
+  information, fault reporting workflow, and room-level operational data.
+
+aliases:
+  - janitor
+  - cleaner
+  - maintenance worker
+
+top_domains:
+  - ACCESS_SECURITY
+  - FIRE_SAFETY
+  - INFORMATIONAL
+  - THERMAL
+
+# Mostly lookup queries — practical day-to-day questions, not analysis.
+lookup_share: 0.90
+
+default_complexity: SIMPLE
+clarification_threshold: 0.3   # caretakers want direct, actionable answers
+
+borda_topics:
+  - Maintenance
+  - Fire Safety
+  - Lighting
+  - Temperature

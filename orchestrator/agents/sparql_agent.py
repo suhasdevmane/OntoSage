@@ -874,7 +874,12 @@ Return ONLY the corrected SPARQL query."""
         # Either way resolution keys off class/label/location, never the URI string.
         cls = self._infer_class(user_query.lower()) or class_target
         if cls:
-            type_clause = f"?sensor a {cls} ."
+            # TBOX rollup, not exact type: sensors are typed as SUBCLASSES of the
+            # inferred class (bldg1 -> Air_Temperature_Sensor, bldg2 -> Zone_Air/
+            # Water_Temperature_Sensor, …). An exact `?sensor a Temperature_Sensor`
+            # would match none of them. rdf:type/rdfs:subClassOf* keeps it
+            # building-agnostic — it resolves whatever subclass the building uses.
+            type_clause = f"?sensor rdf:type/rdfs:subClassOf* {cls} ."
             label_clause = ""
             logger.info(f"[sparql] floor-scoped resolve: class={cls} floors={floors}")
         else:
@@ -1299,6 +1304,38 @@ SELECT DISTINCT ?space (COUNT(?sensor) AS ?sensor_count) WHERE {{
 }} GROUP BY ?space ORDER BY ?space LIMIT 100"""
             )
 
+        # T2b: GENERIC sensor count — "how many sensors does this building have?" (no
+        # specific type). TBOX COUNT of every brick:Sensor (subclasses included via
+        # rdf:type/rdfs:subClassOf*), so it works on ANY building. A named TYPE goes to
+        # the class-map count below (temperature → 136); rooms/floors/zones/equipment are
+        # handled by their own templates above.
+        _sensor_kws = ("sensor", "sensors", "device", "devices", "point", "points")
+        if (
+            features["wants_count"]
+            and any(w in uq for w in _sensor_kws)
+            and _no_zones
+            and _no_equip
+            and not any(w in uq for w in floor_words)
+            and not any(k in uq for k in self._get_extended_class_map())
+        ):
+            return (
+                self._prefix_block()
+                + "\nSELECT (COUNT(DISTINCT ?s) AS ?count) WHERE "
+                + "{ ?s rdf:type/rdfs:subClassOf* brick:Sensor . }"
+            )
+
+        # T2c: Building identity — "what building is this?" → name via brick:Building label.
+        if any(w in uq for w in ("what building", "which building", "building name")) or (
+            "building" in uq and any(w in uq for w in ("name", "called", "which", "what is this"))
+        ):
+            return (
+                self._prefix_block()
+                + """
+SELECT ?building ?label WHERE {
+  ?building a brick:Building . OPTIONAL { ?building rdfs:label ?label . }
+} LIMIT 1"""
+            )
+
         # T3a: Direct sensor/entity lookup (entity itself is a sensor/point)
         sensor_entities = [e for e in entities if re.search(r"(Sensor|Point)", e)]
         if sensor_entities:
@@ -1416,9 +1453,12 @@ SELECT ?parent ?parentLabel ?child ?childLabel WHERE {
                 target_class = v
                 break
         if features["wants_count"] and target_class:
+            # Roll up subclasses so "how many temperature sensors" counts every
+            # Brick subclass of the target (air/water/zone/…), not just the exact type.
             return (
                 self._prefix_block()
-                + f"\nSELECT (COUNT(?sensor) AS ?count) WHERE {{ ?sensor rdf:type {target_class} . }}"
+                + f"\nSELECT (COUNT(DISTINCT ?sensor) AS ?count) WHERE "
+                + f"{{ ?sensor rdf:type/rdfs:subClassOf* {target_class} . }}"
             )
         if features["wants_definition"] and target_class:
             return (
@@ -1462,7 +1502,9 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
         """
         static_map = {
             "air temperature": "brick:Air_Temperature_Sensor",
-            "temperature": "brick:Air_Temperature_Sensor",
+            # generic "temperature" → the BROAD class so counts roll up every
+            # subclass (air/water/zone/…), not just Air_Temperature_Sensor.
+            "temperature": "brick:Temperature_Sensor",
             # Thermal-comfort synonyms → temperature sensor
             "too warm": "brick:Air_Temperature_Sensor",
             "too hot": "brick:Air_Temperature_Sensor",

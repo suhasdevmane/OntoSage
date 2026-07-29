@@ -19,203 +19,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-# ─── Phase 0: CapabilityKB ────────────────────────────────────────────────────
-
-class TestCapabilitySchema:
-    def _capability_yaml(self) -> Path:
-        from shared.building_paths import resolve_building_file
-        p = resolve_building_file("bldg1", "capability.yaml")
-        return Path(__file__).resolve().parents[1] / p
-
-    def test_from_yaml_loads_bldg1(self):
-        from shared.capability_schema import CapabilityKB
-        yaml_path = self._capability_yaml()
-        kb = CapabilityKB.from_yaml(yaml_path)
-        assert kb.building_info.id == "bldg1"
-        assert kb.building_info.name == "Abacws Building"
-        assert len(kb.capabilities) >= 10
-
-    def test_building_property_alias(self):
-        from shared.capability_schema import CapabilityKB
-        yaml_path = self._capability_yaml()
-        kb = CapabilityKB.from_yaml(yaml_path)
-        # .building is an alias for .building_info
-        assert kb.building is kb.building_info
-
-    def test_fire_safety_entries_exist(self):
-        """FIRE_SAFETY KB entries are present with the expected keywords."""
-        from shared.capability_schema import CapabilityKB
-        yaml_path = self._capability_yaml()
-        kb = CapabilityKB.from_yaml(yaml_path)
-        fire_entries = [e for e in kb.capabilities if e.category == "FIRE_SAFETY"]
-        assert len(fire_entries) >= 1, "FIRE_SAFETY category missing from bldg1 KB"
-        all_kws = {kw.lower() for e in fire_entries for kw in e.keywords}
-        assert any(k in all_kws for k in ("fire", "evacuation", "fire alarm")), (
-            "FIRE_SAFETY entry must have fire/evacuation keywords for SemanticRouter to surface it"
-        )
-
-    def test_nonsense_query_has_no_matching_keywords(self):
-        """KB keywords must not overlap with completely unrelated terms.
-
-        Phase-3: CapabilityKB.search() was removed; SemanticRouter (Qdrant) now
-        handles matching.  This test validates that the KB keyword lists are specific
-        enough that 'xenon plasma reactor antimatter' won't create spurious vector
-        overlap (indirect validation — the keywords aren't present in any entry).
-        """
-        from shared.capability_schema import CapabilityKB
-        yaml_path = self._capability_yaml()
-        kb = CapabilityKB.from_yaml(yaml_path)
-        nonsense_words = {"xenon", "plasma", "reactor", "antimatter"}
-        all_kws = {kw.lower() for e in kb.capabilities for kw in e.keywords}
-        assert not (nonsense_words & all_kws), (
-            f"Unexpected keyword overlap with nonsense: {nonsense_words & all_kws}"
-        )
-
-    def test_capabilities_list_is_bounded(self):
-        """capabilities list is finite and contains at least 10 entries."""
-        from shared.capability_schema import CapabilityKB
-        yaml_path = self._capability_yaml()
-        kb = CapabilityKB.from_yaml(yaml_path)
-        assert len(kb.capabilities) >= 10
-        # Slicing to top-2 works (mirrors max_results capping in SemanticRouter)
-        top2 = kb.capabilities[:2]
-        assert len(top2) <= 2
-
-    def test_hvac_entries_exist_with_correct_keywords(self):
-        """HVAC KB entries are present with heating / zone keywords for the indexer."""
-        from shared.capability_schema import CapabilityKB
-        yaml_path = self._capability_yaml()
-        kb = CapabilityKB.from_yaml(yaml_path)
-        hvac_entries = [e for e in kb.capabilities if e.category == "HVAC"]
-        assert hvac_entries, "HVAC category missing from bldg1 KB"
-        all_kws = {kw.lower() for e in hvac_entries for kw in e.keywords}
-        assert any(k in all_kws for k in ("heating", "zone", "thermostat")), (
-            "HVAC entry must have heating/zone/thermostat keywords"
-        )
-
-    def test_building_info_key_not_picked_up_as_multi_building(self):
-        from shared.capability_schema import CapabilityKB
-        yaml_path = self._capability_yaml()
-        import yaml
-        with open(yaml_path) as f:
-            raw = yaml.safe_load(f)
-        # Must NOT have a bare 'building:' key (would be picked up by multi_building_manager)
-        assert "building" not in raw, "YAML must use 'building_info:', not 'building:'"
-        assert "building_info" in raw
-
-
-# ─── Phase 0: CapabilityAgent ─────────────────────────────────────────────────
-
-def _make_state(query: str, building_id: str = "bldg1") -> Any:
-    """Build a minimal ConversationState for capability testing."""
-    from shared.models import ConversationState, Message
-    state = ConversationState(
-        conversation_id="test-session",
-        user_message=query,
-        building_id=building_id,
-    )
-    state.messages.append(Message(role="user", content=query))
-    state.current_intent = "capability"
-    return state
-
-
-class TestCapabilityAgent:
-    def test_answers_fire_safety_query(self):
-        from orchestrator.agents.capability_agent import CapabilityAgent, _load_kb
-        from types import SimpleNamespace
-        agent = CapabilityAgent()
-        state = _make_state("What are the fire safety features?")
-        # Phase-3: CapabilityAgent reads pre-fetched matches from state.
-        # Populate them as SemanticRouter would during a real request.
-        kb = _load_kb("bldg1")
-        assert kb is not None, "bldg1 capability KB must be loadable in test env"
-        fire_entries = [e for e in kb.capabilities if e.category == "FIRE_SAFETY"]
-        assert fire_entries, "FIRE_SAFETY entries missing from capability.yaml"
-        state.intermediate_results["capability_matches"] = [
-            SimpleNamespace(entry=e) for e in fire_entries[:2]
-        ]
-        result_state = asyncio.run(agent.answer(state))
-        cap = result_state.intermediate_results.get("capability_result", {})
-        assert cap.get("success") is True
-        assert "FIRE_SAFETY" in cap.get("matched_categories", [])
-        assert "fire" in cap["response"].lower() or "sprinkler" in cap["response"].lower()
-
-    def test_answers_power_outage_query(self):
-        from orchestrator.agents.capability_agent import CapabilityAgent, _load_kb
-        from types import SimpleNamespace
-        agent = CapabilityAgent()
-        state = _make_state("What happens during a power outage?")
-        # Phase-3: populate pre-fetched matches as SemanticRouter would.
-        kb = _load_kb("bldg1")
-        assert kb is not None, "bldg1 capability KB must be loadable in test env"
-        power_entries = [e for e in kb.capabilities if e.category == "POWER"]
-        assert power_entries, "POWER entries missing from capability.yaml"
-        state.intermediate_results["capability_matches"] = [
-            SimpleNamespace(entry=e) for e in power_entries[:2]
-        ]
-        result_state = asyncio.run(agent.answer(state))
-        cap = result_state.intermediate_results.get("capability_result", {})
-        assert cap.get("success") is True
-        assert "POWER" in cap.get("matched_categories", [])
-
-    def test_no_match_returns_explicit_boundary(self):
-        from orchestrator.agents.capability_agent import CapabilityAgent, _KB_CACHE
-        from shared.capability_schema import CapabilityKB, BuildingInfo
-        from shared.models import ConversationState, Message
-        # Build an empty KB and inject it into the cache
-        empty_kb = CapabilityKB(
-            building_info=BuildingInfo(id="bldg_test", name="Test Building"),
-            capabilities=[],
-        )
-        _KB_CACHE["bldg_test"] = empty_kb
-        agent = CapabilityAgent()
-        state = ConversationState(
-            conversation_id="nomatch-test",
-            user_message="anything at all",
-            building_id="bldg_test",
-        )
-        state.messages.append(Message(role="user", content="anything at all"))
-        state.current_intent = "capability"
-        result_state = asyncio.run(agent.answer(state))
-        cap = result_state.intermediate_results.get("capability_result", {})
-        assert cap.get("success") is True
-        assert cap.get("provenance") == "kb_no_match"
-        # Cleanup cache to avoid affecting other tests
-        _KB_CACHE.pop("bldg_test", None)
-
-    def test_missing_building_returns_no_kb_message(self):
-        from orchestrator.agents.capability_agent import CapabilityAgent
-        from unittest.mock import patch
-        agent = CapabilityAgent()
-        state = _make_state("Fire exits?", building_id="bldg999")
-        # Force _load_kb to return None — simulates a building with no KB at all.
-        # The flat-layout fallback means the filesystem always finds input/capability.yaml,
-        # so we must mock to reach the no_kb code path.
-        with patch("orchestrator.agents.capability_agent._load_kb", return_value=None):
-            result_state = asyncio.run(agent.answer(state))
-        cap = result_state.intermediate_results.get("capability_result", {})
-        assert cap.get("success") is False
-        assert cap.get("provenance") == "no_kb"
-
-    def test_response_includes_provenance_source(self):
-        from orchestrator.agents.capability_agent import CapabilityAgent, _load_kb
-        from types import SimpleNamespace
-        agent = CapabilityAgent()
-        state = _make_state("How does access control work?")
-        # Phase-3: populate pre-fetched matches (SECURITY/access_control entry).
-        kb = _load_kb("bldg1")
-        assert kb is not None
-        security_entries = [e for e in kb.capabilities if e.category == "SECURITY"]
-        assert security_entries, "SECURITY entries missing from capability.yaml"
-        state.intermediate_results["capability_matches"] = [
-            SimpleNamespace(entry=e) for e in security_entries[:1]
-        ]
-        result_state = asyncio.run(agent.answer(state))
-        cap = result_state.intermediate_results.get("capability_result", {})
-        assert cap.get("provenance") == "capability_kb"
-
-
 # ─── Phase 1: VerifierAgent ───────────────────────────────────────────────────
+
 
 def _make_verify_state(
     intent: str = "sensor_data",
@@ -226,6 +31,7 @@ def _make_verify_state(
     time_range: Optional[Dict] = None,
 ) -> Any:
     from shared.models import ConversationState, Message
+
     state = ConversationState(
         conversation_id="verify-test",
         user_message="test query",
@@ -254,6 +60,7 @@ def _make_verify_state(
 class TestVerifierAgent:
     def test_grounded_from_capability_kb(self):
         from orchestrator.agents.verifier_agent import VerifierAgent
+
         agent = VerifierAgent()
         state = _make_verify_state(intent="capability", capability_success=True)
         result = asyncio.run(agent.verify(state))
@@ -264,6 +71,7 @@ class TestVerifierAgent:
 
     def test_grounded_from_sql(self):
         from orchestrator.agents.verifier_agent import VerifierAgent
+
         agent = VerifierAgent()
         state = _make_verify_state(intent="sensor_data", sql_rows=5)
         result = asyncio.run(agent.verify(state))
@@ -273,6 +81,7 @@ class TestVerifierAgent:
 
     def test_grounded_from_sparql_only(self):
         from orchestrator.agents.verifier_agent import VerifierAgent
+
         agent = VerifierAgent()
         binding = [{"sensor": {"value": "uuid-123"}}]
         state = _make_verify_state(intent="discovery", sparql_bindings=binding)
@@ -283,6 +92,7 @@ class TestVerifierAgent:
 
     def test_ungrounded_when_no_data(self):
         from orchestrator.agents.verifier_agent import VerifierAgent
+
         agent = VerifierAgent()
         state = _make_verify_state(intent="sensor_data")
         result = asyncio.run(agent.verify(state))
@@ -293,6 +103,7 @@ class TestVerifierAgent:
 
     def test_time_window_populated_from_time_range(self):
         from orchestrator.agents.verifier_agent import VerifierAgent
+
         agent = VerifierAgent()
         state = _make_verify_state(
             intent="sensor_data",
@@ -306,6 +117,7 @@ class TestVerifierAgent:
 
     def test_analytics_grounded_at_correct_confidence(self):
         from orchestrator.agents.verifier_agent import VerifierAgent
+
         agent = VerifierAgent()
         state = _make_verify_state(intent="analytics", analytics_success=True)
         result = asyncio.run(agent.verify(state))
@@ -317,6 +129,7 @@ class TestVerifierAgent:
     def test_verifier_does_not_raise_on_empty_state(self):
         from orchestrator.agents.verifier_agent import VerifierAgent
         from shared.models import ConversationState
+
         agent = VerifierAgent()
         state = ConversationState(
             conversation_id="empty",
@@ -330,15 +143,21 @@ class TestVerifierAgent:
 
 # ─── Phase 2: SelfCorrectionPolicy ───────────────────────────────────────────
 
+
 class TestSelfCorrectionPolicy:
     def test_importable(self):
-        from orchestrator.services.self_correction_policy import SelfCorrectionPolicy, MAX_ATTEMPTS
+        from orchestrator.services.self_correction_policy import (
+            MAX_ATTEMPTS,
+            SelfCorrectionPolicy,
+        )
+
         p = SelfCorrectionPolicy()
         assert MAX_ATTEMPTS >= 1
 
     def test_repair_succeeds_on_first_attempt(self):
         from orchestrator.services.self_correction_policy import SelfCorrectionPolicy
         from shared.models import ConversationState
+
         p = SelfCorrectionPolicy()
         state = ConversationState(conversation_id="s1", user_message="test", building_id="bldg1")
         call_count = {"n": 0}
@@ -354,15 +173,14 @@ class TestSelfCorrectionPolicy:
         def error(s):
             return s.intermediate_results.get("error_detail", "")
 
-        result = asyncio.run(
-            p.repair("test_node", state, attempt, success, error, "test_strategy")
-        )
+        result = asyncio.run(p.repair("test_node", state, attempt, success, error, "test_strategy"))
         assert call_count["n"] == 1
         assert result.intermediate_results["test"] == "fixed"
 
     def test_repair_retries_on_failure(self):
         from orchestrator.services.self_correction_policy import SelfCorrectionPolicy
         from shared.models import ConversationState
+
         p = SelfCorrectionPolicy()
         state = ConversationState(conversation_id="s2", user_message="test", building_id="bldg1")
         call_count = {"n": 0}
@@ -379,14 +197,13 @@ class TestSelfCorrectionPolicy:
         def error(s):
             return "still broken"
 
-        result = asyncio.run(
-            p.repair("test_node", state, attempt, success, error, "test_strategy")
-        )
+        result = asyncio.run(p.repair("test_node", state, attempt, success, error, "test_strategy"))
         assert call_count["n"] == 2
 
     def test_correction_trace_emitted(self):
         from orchestrator.services.self_correction_policy import SelfCorrectionPolicy
         from shared.models import ConversationState
+
         p = SelfCorrectionPolicy()
         state = ConversationState(conversation_id="s3", user_message="test", building_id="bldg1")
 
@@ -400,21 +217,30 @@ class TestSelfCorrectionPolicy:
         def error(s):
             return ""
 
-        result = asyncio.run(
-            p.repair("trace_node", state, attempt, success, error, "trace_strat")
-        )
+        result = asyncio.run(p.repair("trace_node", state, attempt, success, error, "trace_strat"))
         assert "correction_trace" in result.intermediate_results
 
 
 # ─── Phase 3: PersonaRegistry ────────────────────────────────────────────────
 
+
 class TestPersonaRegistry:
     def test_get_priors_all_known_personas(self):
         from shared.persona_registry import get_persona_registry
+
         reg = get_persona_registry()
-        for persona in ["occupant", "facility_manager", "researcher", "it_admin",
-                         "safety_officer", "student", "executive",
-                         "sustainability_officer", "visitor", "general"]:
+        for persona in [
+            "occupant",
+            "facility_manager",
+            "researcher",
+            "it_admin",
+            "safety_officer",
+            "student",
+            "executive",
+            "sustainability_officer",
+            "visitor",
+            "general",
+        ]:
             p = reg.get_priors(persona)
             assert p.name is not None
             assert len(p.top_domains) >= 1
@@ -423,24 +249,28 @@ class TestPersonaRegistry:
 
     def test_unknown_persona_falls_back_to_general(self):
         from shared.persona_registry import get_persona_registry
+
         reg = get_persona_registry()
         p = reg.get_priors("some_unknown_role_xyz")
         assert p.name == "general"
 
     def test_alias_energy_manager_maps_to_sustainability(self):
         from shared.persona_registry import get_persona_registry
+
         reg = get_persona_registry()
         p = reg.get_priors("energy_manager")
         assert p.name == "sustainability_officer"
 
     def test_alias_facilities_maps_to_facility_manager(self):
         from shared.persona_registry import get_persona_registry
+
         reg = get_persona_registry()
         p = reg.get_priors("facilities")
         assert p.name == "facility_manager"
 
     def test_domain_score_boosts_top_domain(self):
         from shared.persona_registry import get_persona_registry
+
         reg = get_persona_registry()
         # Occupant's top domain is THERMAL — should score higher than ENERGY
         thermal_score = reg.domain_score("occupant", "THERMAL")
@@ -449,12 +279,14 @@ class TestPersonaRegistry:
 
     def test_domain_score_no_boost_for_unrelated_domain(self):
         from shared.persona_registry import get_persona_registry
+
         reg = get_persona_registry()
         base = reg.domain_score("occupant", "XENON_DOMAIN", base_score=1.0)
         assert base == 1.0  # no boost for unknown domain
 
     def test_should_clarify_student_low_threshold(self):
         from shared.persona_registry import get_persona_registry
+
         reg = get_persona_registry()
         # Student has low clarification_threshold (0.25) — only clarify on high ambiguity
         assert reg.should_clarify("student", 0.1) is False
@@ -462,6 +294,7 @@ class TestPersonaRegistry:
 
     def test_should_clarify_researcher_higher_threshold(self):
         from shared.persona_registry import get_persona_registry
+
         reg = get_persona_registry()
         # Researcher threshold is 0.6 — should clarify at 0.7 but not 0.5
         assert reg.should_clarify("researcher", 0.5) is False
@@ -469,12 +302,14 @@ class TestPersonaRegistry:
 
     def test_safety_officer_top_domain_is_fire_safety(self):
         from shared.persona_registry import get_persona_registry
+
         reg = get_persona_registry()
         p = reg.get_priors("safety_officer")
         assert p.top_domains[0] == "FIRE_SAFETY"
 
     def test_none_persona_returns_general(self):
         from shared.persona_registry import get_persona_registry
+
         reg = get_persona_registry()
         p = reg.get_priors(None)
         assert p.name == "general"
@@ -482,15 +317,18 @@ class TestPersonaRegistry:
 
 # ─── Phase 4: dialogue_state in ConversationState ─────────────────────────────
 
+
 class TestDialogueState:
     def test_dialogue_state_field_exists(self):
         from shared.models import ConversationState
+
         state = ConversationState(conversation_id="d1", user_message="test", building_id="bldg1")
         assert hasattr(state, "dialogue_state")
         assert state.dialogue_state is None
 
     def test_dialogue_state_can_be_set(self):
         from shared.models import ConversationState
+
         state = ConversationState(conversation_id="d2", user_message="test", building_id="bldg1")
         state.dialogue_state = {
             "pending_candidates": ["Zone 5.28", "Zone 5.12"],
@@ -500,6 +338,7 @@ class TestDialogueState:
 
     def test_dialogue_state_persists_through_dict_serialization(self):
         from shared.models import ConversationState
+
         state = ConversationState(conversation_id="d3", user_message="test", building_id="bldg1")
         state.dialogue_state = {"key": "value"}
         d = state.model_dump()
@@ -508,20 +347,25 @@ class TestDialogueState:
 
 # ─── Phase 5: agent_memory store_failure / store_correction ──────────────────
 
+
 class TestAgentMemoryPhase5:
     def test_store_failure_importable(self):
         from orchestrator.services.agent_memory import AgentMemoryService
+
         mem = AgentMemoryService.__new__(AgentMemoryService)
         assert hasattr(mem, "store_failure")
 
     def test_store_correction_importable(self):
         from orchestrator.services.agent_memory import AgentMemoryService
+
         mem = AgentMemoryService.__new__(AgentMemoryService)
         assert hasattr(mem, "store_correction")
 
     def test_store_failure_method_signature(self):
         import inspect
+
         from orchestrator.services.agent_memory import AgentMemoryService
+
         sig = inspect.signature(AgentMemoryService.store_failure)
         params = list(sig.parameters)
         assert "user_id" in params
@@ -531,7 +375,9 @@ class TestAgentMemoryPhase5:
 
     def test_store_correction_method_signature(self):
         import inspect
+
         from orchestrator.services.agent_memory import AgentMemoryService
+
         sig = inspect.signature(AgentMemoryService.store_correction)
         params = list(sig.parameters)
         assert "user_id" in params
@@ -542,10 +388,17 @@ class TestAgentMemoryPhase5:
 
 # ─── G1 six-tuple: _derive_g1_taxonomy ───────────────────────────────────────
 
+
 class TestG1Taxonomy:
-    def _derive(self, query: str, intent: str = "sensor_data",
-                entities: Optional[List] = None, time_range: Optional[Dict] = None):
+    def _derive(
+        self,
+        query: str,
+        intent: str = "sensor_data",
+        entities: Optional[List] = None,
+        time_range: Optional[Dict] = None,
+    ):
         from orchestrator.agents.dialogue_agent import _derive_g1_taxonomy
+
         return _derive_g1_taxonomy(query, intent, entities or [], time_range or {})
 
     def test_thermal_domain_for_temperature_query(self):
@@ -588,12 +441,14 @@ class TestG1Taxonomy:
 
 # ─── Workflow wiring ──────────────────────────────────────────────────────────
 
+
 class TestCapabilityWorkflowWiring:
     def test_capability_node_registered(self):
         """Phase 13B: capability node is now auto-registered from the
         intent registry rather than hardcoded in workflow.py.  Verify the
         BUILT graph contains it, not the source-string."""
         from orchestrator.workflow import WorkflowOrchestrator
+
         inst = WorkflowOrchestrator.__new__(WorkflowOrchestrator)
         g = inst._build_graph()
         assert "capability" in g.nodes
@@ -622,12 +477,10 @@ class TestCapabilityWorkflowWiring:
         content = Path("orchestrator/agents/dialogue_agent.py").read_text(encoding="utf-8")
         # Phase-3: legacy _CAPABILITY_KW keyword list was removed; capability intent
         # override is now driven by SemanticRouter (Qdrant vector search).
-        assert "semantic_router" in content, (
-            "dialogue_agent must reference semantic_router for capability override"
-        )
-        assert '"capability"' in content, (
-            "dialogue_agent must still emit intent='capability'"
-        )
+        assert (
+            "semantic_router" in content
+        ), "dialogue_agent must reference semantic_router for capability override"
+        assert '"capability"' in content, "dialogue_agent must still emit intent='capability'"
 
     def test_g1_taxonomy_emitted_in_dialogue_agent(self):
         content = Path("orchestrator/agents/dialogue_agent.py").read_text(encoding="utf-8")

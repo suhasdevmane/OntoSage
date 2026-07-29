@@ -34,7 +34,7 @@ docker-compose logs --tail=20 orchestrator         # live system health
 ```
 
 **Open issues / pending decisions:**
-- **Live fix/caveat log + backlog: [`tasks/FIX_TRACKER.csv`](./tasks/FIX_TRACKER.csv)** — read it at session start to see what's OPEN vs fixed; keep it updated (Workflow rule 7). FIX-001/002/003 done (verified live). **Next up: `TODO-010`** — unify capability routing to SPARQL-first (flag `CAPABILITIES_TTL_FIRST`); it unblocks removing `capability.yaml` (`TODO-012`). Design/why in [`tasks/GROUNDING_AND_HONESTY_FIXES_PLAN.md`](./tasks/GROUNDING_AND_HONESTY_FIXES_PLAN.md) + [`tasks/TTL_NATIVE_CAPABILITIES_PLAN.md`](./tasks/TTL_NATIVE_CAPABILITIES_PLAN.md). TODO-010→011→012 are sequenced; TODO-013/014 are independent.
+- **Live fix/caveat log + backlog: [`tasks/FIX_TRACKER.csv`](./tasks/FIX_TRACKER.csv)** — read it at session start to see what's OPEN vs fixed; keep it updated (Workflow rule 7). FIX-001/002/003 done (verified live). **TODO-010→011→012 DONE (2026-07-28):** `capability.yaml` is **removed** — capabilities are now `ontosage:Amenity` / `ontosage:KnowledgeTopic` **triples** (authored via the admin Capabilities GUI `POST /api/v1/admin/capabilities` or the OCBV TBox `input/ontosage_schema.ttl`), answered by the `CapabilityGraphResolver`. Routing is a single TTL-first path (the Qdrant capability-KB probe is gone). Migration: `scripts/migrate_capability_yaml_to_ttl.py`. **Remaining: `TODO-081`** — excise the now-dead capability-KB infra (`capability_indexer`, `semantic_router.classify`, `shared/capability_schema.py`); it no-ops harmlessly today. Design/why in [`tasks/TODO_012_CAPABILITY_YAML_REMOVAL_STEP.md`](./tasks/TODO_012_CAPABILITY_YAML_REMOVAL_STEP.md) + [`tasks/TTL_NATIVE_CAPABILITIES_PLAN.md`](./tasks/TTL_NATIVE_CAPABILITIES_PLAN.md).
 - P0 changes need user review and explicit commit approval before any `git commit` or `git push`
 - `data/mysql-init/init.sql` creates `abacws` DB (legacy); live system uses `sensordb` — mismatch is inert (MySQL container is disabled; host MySQL used directly)
 - Maintenance agent "report broken light" → generic fallback (tracked as KNOWN-008)
@@ -138,8 +138,9 @@ python scripts/swap_building.py --to bldg2 --archive    # apply: update .env, ar
 docker-compose restart orchestrator                     # TTL validator runs first; hard-fails on mismatch
 ```
 **Input layout — FLAT is canonical.** The active building's files sit directly under
-`input/`: `input/building.yaml` + `input/*.ttl` (required); `*.dwg`, `*.pdf`,
-`capability.yaml`, `intents.yaml`, `documents/`, `personas/` (optional). The nested form
+`input/`: `input/building.yaml` + `input/*.ttl` (required — incl. `<id>_capabilities.ttl`
+for `ontosage:Amenity`/`KnowledgeTopic` triples); `*.dwg`, `*.pdf`,
+`intents.yaml`, `documents/` (uploaded manuals), `personas/` (optional). The nested form
 `input/<id>/…` is still supported as a *fallback* (staging / future multi-building). All
 per-building loaders resolve paths via `shared/building_paths.py`
 (`resolve_building_file`/`resolve_building_dir` — nested first, then flat), so don't hardcode
@@ -188,7 +189,7 @@ POST /chat (or /v1/chat/completions)
 - **analytics** (`agents/analytics_agent.py`): LLM Python → sandboxed `code-executor` (8002).
 - **forecast** (`agents/forecast_agent.py` + `services/forecasting/`): multi-model (ARIMA/ETS/linear), runs inside the `trend` pipeline.
 - **floor_plan / spatial** (`agents/floor_plan_agent.py`, `spatial_agent.py`): PDF/DWG manifests; no LLM for spatial.
-- **capability** (`agents/capability_agent.py`): off-ontology KB (Qdrant `capability_<bldg>`) + document KB (Qdrant `documents_<bldg>`).
+- **capability** (`agents/capability_agent.py`): single TTL-first chain — live metrics → ontology capability **triples** (`ontosage:Amenity`/`KnowledgeTopic` via `CapabilityGraphResolver`) → uploaded documents (Qdrant `documents_<bldg>`) → honest "no info". No `capability.yaml` / Qdrant capability-KB (removed, TODO-012).
 - **report_intake** (`services/report_intake_service.py`): fault/complaint/safety/feedback/suggestion → `user_reports`.
 - **sql adapters** (`services/adapters/`): `registry.py` routes by `ref:storedAt` key → `mysql_adapter.py` (wide `sensor_data` table) or `mysql_narrow_adapter.py` (narrow `(uuid, datetime, value)` per-modality tables — P0 addition).
 
@@ -263,7 +264,7 @@ First `Read` target for a task — go straight to the symbol (line numbers drift
 | Visualization | `workflow/_orchestrator.py` · `_visualization_node` |
 | Floor plan / spatial | `services/floor_plan_registry.py`, `floor_plan_pipeline.py`, `dwg_pipeline.py`; `agents/spatial_agent.py` |
 | Conversation memory | `services/turn_memory.py`; `redis_manager.py` · `save_state`/`load_state` |
-| Capability KB | `services/capability_indexer.py`, `semantic_router.py`; `agents/capability_agent.py` |
+| Capability triples (Amenity/KnowledgeTopic) | `services/capability_graph_resolver.py`; `agents/capability_agent.py`; author via `services/capability_admin.py` (`POST /api/v1/admin/capabilities`) / OCBV `input/ontosage_schema.ttl` |
 | Document KB (policy/manual) | `services/document_indexer.py`; `agents/capability_agent.py` · `_search_documents` |
 | Report intake | `services/report_intake_service.py` |
 | Response formatting | `workflow/_orchestrator.py` · `_response_node` |
@@ -323,7 +324,7 @@ Restart — edges + routing auto-wire. A YAML intent with no `node_method` safel
 
 Rules to follow in every development decision:
 
-1. **TTL before YAML.** If a fact about the building can be expressed as an RDF triple in the ontology, put it there — not in `capability.yaml`, `building.yaml`, or any other sidecar file. Sidecar YAML is for *operational config* (thresholds, auth, routing overrides) that doesn't belong in the ontology.
+1. **TTL before YAML.** If a fact about the building can be expressed as an RDF triple in the ontology, put it there — not in a sidecar file. Sidecar YAML is for *operational config* (thresholds, auth, routing overrides) that doesn't belong in the ontology. (Capabilities followed this to completion: `capability.yaml` was removed (TODO-012) and replaced by `ontosage:Amenity`/`KnowledgeTopic` triples authored via the admin Capabilities GUI or the OCBV TBox.)
 2. **Extend the TTL, don't bypass it.** When OntoSage can't answer a survey question, the first fix is to add the missing triples (sensors, equipment, relationships, metadata) to the `.ttl` — not to add a hard-coded capability entry or a special-case code path.
 3. **SPARQL is the query path.** New question types should be answerable via SPARQL against GraphDB. Only fall back to the capability KB (Qdrant), SQL adapters, or analytics when the question requires live time-series data or computation that RDF cannot express.
 4. **Minimum additional files.** Each new capability should add at most one file: the enriched `.ttl`. New `feeds.yaml`, `rules.yaml`, `channels.yaml` entries are for live-data and alerting — not for answering static/structural questions.
@@ -356,7 +357,7 @@ This principle is grounded in the pre-design survey corpus (6,117 questions, 96 
 - **Wrong intent/node** → check the routing-precedence rules above; inspect `intermediate_results["route_decision"]`; run `tests/test_routing_accuracy.py`.
 - **SPARQL empty** → test GraphDB directly (`.claude/rules/sparql-patterns.md`); empty = ontology not loaded; results-but-empty = `sparql_agent._retrieve_context`.
 - **Floor plan empty / `area_m2=null`** → DWG pipeline off (`dwg2dxf`/libredwg missing → PDF-only); manifest `schema_version` should be "2.0"; reingest `POST /api/v1/floor-plans/reingest`.
-- **Capability routing not firing** → check `docker logs … | grep capability_indexer` for `status=indexed entries=N points=M`; degraded usually = embedding provider down.
+- **Capability not answering** → capabilities are triples now. SPARQL GraphDB: `SELECT ?a ?lay WHERE { { ?a a ontosage:Amenity } UNION { ?a a ontosage:KnowledgeTopic } ; ontosage:layTerms ?lay }` — empty = `<id>_capabilities.ttl` not loaded (check `ttl_uploader`). Match miss = the query's lay-term isn't in any `ontosage:layTerms`; add it via the admin Capabilities GUI. Prose manual not surfacing = document score below the 0.50 (local) honesty floor in `capability_agent._search_documents`.
 - **Stale answers after a code fix** → flush `resp_cache:*` in Redis (`redis-cli --scan --pattern "resp_cache:*" | xargs redis-cli del`) before re-testing. Real container name: `redis-memory-store` (not `ontosage-redis`).
 - **Feed not updating** → check `docker logs … | grep FeedRegistry` for `loaded=N`; missing feed = feeds.yaml absent or disabled flag.
 - **ECA rule not firing** → check Redis keys `rules:breach_start:*` and `rules:fired:*`; verify `sensor_uuid` matches a UUID in MySQL `sensor_data`.

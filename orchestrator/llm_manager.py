@@ -106,12 +106,19 @@ class LLMManager:
         try:
             from langchain_ollama import OllamaLLM
 
+            # keep_alive keeps the model resident so it doesn't cold-reload (~16s) between
+            # requests; num_ctx sets the context window. Both env-driven (building-agnostic).
+            _keep_alive = os.environ.get("OLLAMA_KEEP_ALIVE", "30m")
+            _num_ctx = int(os.environ.get("OLLAMA_NUM_CTX", "8192"))
             self.client = OllamaLLM(
                 base_url=self.config["base_url"],
                 model=self.config["model"],
                 temperature=self.config["temperature"],
+                keep_alive=_keep_alive,
+                num_ctx=_num_ctx,
             )
             self.client_fast = self.client  # same model
+            logger.info(f"Ollama options: keep_alive={_keep_alive} num_ctx={_num_ctx}")
             logger.info(
                 f"Initialized Ollama LLM: {self.config['model']} at {self.config['base_url']}"
             )

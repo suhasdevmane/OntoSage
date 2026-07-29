@@ -267,8 +267,18 @@ def _bind_prefixes(g: Graph, building_id: str) -> None:
 def _serialize_graph(path: Path, g: Graph, building_id: str, *, with_header: bool) -> None:
     """Atomically serialize ``g`` to ``path`` (with the capabilities header when owned)."""
     body = g.serialize(format="turtle")
-    content = (_capabilities_header(building_id) + body) if with_header else body
-    _atomic_write(path, content)
+    header = _capabilities_header(building_id) if with_header else ""
+    # An EMPTY capabilities graph (last amenity deleted) serializes to no @prefix lines,
+    # but the startup TTL validator hard-fails a *.ttl that lacks @prefix bldg: — which
+    # crash-loops the orchestrator. Ensure the prefix block is present when the body omits
+    # it (only the empty case; a non-empty body already declares them). Building-agnostic.
+    if with_header and "@prefix bldg:" not in body:
+        header += (
+            f"@prefix bldg:     <{_building_namespace(building_id)}> .\n"
+            f"@prefix ontosage: <{_ONTO_NS}> .\n"
+            "@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .\n\n"
+        )
+    _atomic_write(path, header + body)
 
 
 def _write_capabilities(path: Path, g: Graph, building_id: str) -> None:

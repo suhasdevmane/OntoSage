@@ -178,15 +178,19 @@ The core principle: **a question is answerable when the Brick TTL describes the 
 | "Is the CO2 in meeting rooms within limits?" | `compliance` | IAQ TTL + `rules.yaml` | `iaq_data` |
 | "What should I check this week?" | `recommend` | Multiple sensor TTLs | multiple tables |
 
-### Questions answered from the capability KB (no time-series needed)
+### Questions answered from capability triples (no time-series needed)
 
-| Question | Intent | Required |
+Capabilities are **`ontosage:Amenity` / `ontosage:KnowledgeTopic` triples** in the building's
+ontology (authored via the admin Capabilities GUI or the OCBV TBox — see
+[ONTOSAGE.md §8.5](./ONTOSAGE.md)). Genuinely-uploaded manuals stay in the document KB.
+
+| Question | Intent | Answered from |
 |---|---|---|
-| "Where is the lift?" | `capability` | `capability.yaml` or Brick TTL |
-| "Is there a prayer room?" | `capability` | `capability.yaml` |
-| "What are the fire evacuation procedures?" | `capability` | `documents/fire_safety.md` in document KB |
-| "Is the building wheelchair accessible?" | `capability` | `capability.yaml` or `documents/` |
-| "How do I book a meeting room?" | `capability` | `documents/` |
+| "Where is the lift?" | `capability` | `ontosage:Amenity` triple (`<id>_capabilities.ttl`) |
+| "Is there a prayer room?" | `capability` | `ontosage:Amenity` triple |
+| "What is the wifi / GDPR policy?" | `capability` | `ontosage:KnowledgeTopic` triple (`answerText`) |
+| "Is the building wheelchair accessible?" | `capability` | `ontosage:Amenity` triple |
+| "What are the fire evacuation procedures?" | `capability` | uploaded `documents/fire_safety.md` (long-form manual) |
 
 ### Questions that store a report (no data needed — just saves to Postgres)
 
@@ -335,7 +339,7 @@ bldg:Room301 a brick:Room ;
     brick:area "45.2"^^xsd:double .
 ```
 
-**Rule**: If a fact can be expressed as an RDF triple, it goes in the TTL — not in `capability.yaml` or any sidecar file. Sidecar YAML is for operational config only.
+**Rule**: If a fact can be expressed as an RDF triple, it goes in the TTL — not in a sidecar file. Sidecar YAML is for operational config only. (Capabilities followed this to completion: the old `capability.yaml` was removed and its content lives as `ontosage:Amenity` / `ontosage:KnowledgeTopic` triples.)
 
 ### Step 2 — Connect time-series data (narrow MySQL tables)
 
@@ -422,7 +426,9 @@ input/
 ├── ontosage_schema.ttl     # The OCBV vocabulary — the "talk to the building" layer over Brick
 ├── db_<key>_sensors.ttl    # Auto-written when you register a DB's sensors in the admin console
 ├── *.dwg, *.pdf            # Optional — floor plans (DWG for geometry, PDF for display)
-├── capability.yaml         # Optional — off-ontology KB (lifts, prayer room, contacts)
+├── <id>_capabilities.ttl   # Capability TRIPLES — ontosage:Amenity / KnowledgeTopic
+│                           #   (amenities, policies, how-tos, faults). GUI- or TBox-authored.
+├── documents/              # Optional — uploaded long-form manuals (semantic doc KB)
 ├── intents.yaml            # Optional — per-building intent overlay
 ├── personas/               # Optional — per-building persona YAML files
 │   └── facility_manager.yaml
@@ -738,7 +744,7 @@ Exit code 2 on: missing building dir, missing/invalid `building.yaml`, or `@pref
 | **[CLAUDE.md](./CLAUDE.md)** | AI assistants / contributors | **Read first.** Navigation index (file:symbol), current branch state, debugging patterns, workflow rules, open issues |
 | **README.md** (this file) | New users | Quickstart, stakeholder question guide, data setup, admin portal, RBAC |
 | **[ONTOSAGE.md](./ONTOSAGE.md)** | Operators + contributors | Complete technical reference — all architecture, phases, config surface, tests, known issues |
-| **[docs/CAPABILITY_ROUTING.md](./docs/CAPABILITY_ROUTING.md)** | Contributors | Semantic router threshold tuning + capability KB design |
+| **[docs/CAPABILITY_ROUTING.md](./docs/CAPABILITY_ROUTING.md)** | Contributors | Capability routing (TTL-first single path) + document-KB thresholds |
 | **[docs/RUNBOOK.md](./docs/RUNBOOK.md)** | Operators | Incident runbook — what to do when things break |
 | **[.claude/rules/](./.claude/rules/)** | Contributors | Style + agent + API + SPARQL patterns |
 

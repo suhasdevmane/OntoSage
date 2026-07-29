@@ -1,0 +1,6 @@
+# Binary / byte-exact assets — never apply end-of-line conversion.
+# PDFs are xref-offset-sensitive (EOL rewriting corrupts them); CAD files
+# must round-trip byte-identical across clones.
+*.pdf -text
+*.dwg -text
+*.dxf -text

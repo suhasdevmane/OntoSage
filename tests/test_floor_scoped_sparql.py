@@ -19,8 +19,10 @@ _agent = SPARQLAgent()
 def test_builds_query_for_metric_plus_floors():
     q = _agent._floor_scoped_sparql("Compare the temperature between floor 1 and floor 5.", None)
     assert q is not None
-    # Portable building blocks: indoor temp class, floor hierarchy, UUID link.
-    assert "brick:Air_Temperature_Sensor" in q
+    # Portable building blocks: broad temp class via TBOX rollup (matches whatever
+    # subclass the building types its sensors as), floor hierarchy, UUID link.
+    assert "brick:Temperature_Sensor" in q
+    assert "rdfs:subClassOf*" in q
     assert "brick:Floor" in q
     assert "brick:hasLocation" in q
     assert "ref:hasTimeseriesId" in q
@@ -59,11 +61,14 @@ def test_salient_terms():
 
 
 def test_prefers_indoor_over_outside_class_target():
-    # An HBCO class_target pointing at the weather feed must not win — the
-    # indoor keyword class (Air_Temperature_Sensor) is used so floors resolve.
-    q = _agent._floor_scoped_sparql("temperature on floor 3", "brick:Outside_Air_Temperature_Sensor")
+    # An HBCO class_target pointing at the weather feed must not win — the keyword
+    # class (Temperature_Sensor) inferred from "temperature" is used instead, so
+    # the outside-only target never reaches the query string.
+    q = _agent._floor_scoped_sparql(
+        "temperature on floor 3", "brick:Outside_Air_Temperature_Sensor"
+    )
     assert q is not None
-    assert "brick:Air_Temperature_Sensor" in q
+    assert "brick:Temperature_Sensor" in q
     assert "Outside_Air_Temperature_Sensor" not in q
     assert '"3"' in q
 
