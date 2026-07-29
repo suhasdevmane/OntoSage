@@ -1,0 +1,129 @@
+# bldg3 capability facts — TTL-first source of truth (GUI + file managed).
+# Each amenity is a dual-typed ontosage:Amenity instance answered live by the
+# CapabilityGraphResolver. Edit here or via the admin console Capabilities tab;
+# both stay consistent (this file is auto-loaded on restart by ttl_uploader).
+
+@prefix bldg: <http://buildsys.org/ontologies/bldg3#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+bldg:Cap_accessibility a ontosage:InformationTopic,
+        ontosage:KnowledgeTopic ;
+    rdfs:label "Accessibility"@en ;
+    ontosage:answerText "The building has step-free access throughout, lifts to all floors, accessible toilets on each floor, and hearing loops at reception." ;
+    ontosage:capabilityCategory "ACCESSIBILITY" ;
+    ontosage:layTerms "accessible, accessibility, wheelchair, disability, disabled, step-free, hearing loop, blue badge, ramp" .
+
+bldg:Cap_bike a ontosage:Amenity,
+        ontosage:BikeStorage ;
+    rdfs:label "Cycle storage"@en ;
+    ontosage:layTerms "bike, bicycle, cycle, bike rack, bike storage, park my bike, cycle parking" ;
+    ontosage:locationText "north entrance" ;
+    ontosage:note "Covered, secure cycle racks are at the north entrance, with showers nearby." .
+
+bldg:Cap_emergency a ontosage:InformationTopic,
+        ontosage:KnowledgeTopic ;
+    rdfs:label "Emergency contacts"@en ;
+    ontosage:answerText "In an emergency call 999. Campus security is on ext 3333, and first aid is available at reception." ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:contactPhone "999 / security ext 3333" ;
+    ontosage:layTerms "emergency, emergency contact, security, first aid, who do i call, urgent help, incident" .
+
+bldg:Cap_firesafety a ontosage:KnowledgeTopic,
+        ontosage:Procedure ;
+    rdfs:label "Fire safety and evacuation"@en ;
+    ontosage:answerText "On hearing the alarm, leave immediately by the nearest fire exit and assemble at the north car park." ;
+    ontosage:capabilityCategory "SAFETY" ;
+    ontosage:layTerms "fire, fire alarm, evacuation, evacuate, fire exit, fire escape, assembly point, what to do in a fire, emergency exit" ;
+    ontosage:reportTo "Building fire wardens" ;
+    ontosage:steps "Stop what you are doing; Leave by the nearest fire exit (do NOT use the lifts); Assemble at the north car park; Wait for the all-clear from a fire warden" .
+
+bldg:Cap_hours a ontosage:InformationTopic,
+        ontosage:KnowledgeTopic ;
+    rdfs:label "Opening hours"@en ;
+    ontosage:answerText "The building is open Monday-Friday 07:00-21:00; at weekends it is open 09:00-17:00 with staff/student card access." ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "opening hours, when is it open, building hours, access hours, what time does it open, is it open" .
+
+bldg:Cap_iotlab a ontosage:Amenity,
+        ontosage:Facility ;
+    rdfs:label "IoT Systems Lab"@en ;
+    ontosage:layTerms "iot lab, systems lab, iot systems lab, labs, key facilities, what facilities, research lab" ;
+    ontosage:locationText "Third floor" ;
+    ontosage:note "The BuildSys IoT Systems Lab hosts the building's sensor and controls research." .
+
+bldg:Cap_itsupport a ontosage:InformationTopic,
+        ontosage:KnowledgeTopic ;
+    rdfs:label "IT support"@en ;
+    ontosage:answerText "IT support is available via the service desk." ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:contactEmail "ithelp@buildsys.example" ;
+    ontosage:contactPhone "ext 4000" ;
+    ontosage:layTerms "it support, it help, computer help, help desk, wifi problem, login problem, it problem" .
+
+bldg:Cap_lift a ontosage:Amenity,
+        ontosage:Lift ;
+    rdfs:label "Passenger lifts"@en ;
+    ontosage:layTerms "lift, lifts, elevator, where is the lift, nearest lift, accessible lift" ;
+    ontosage:locationText "central core" ;
+    ontosage:note "Two passenger lifts in the central core serve Ground to Third floor." .
+
+bldg:Cap_nursing a ontosage:Amenity,
+        ontosage:NursingRoom ;
+    rdfs:label "Nursing / feeding room"@en ;
+    ontosage:layTerms "nursing room, feeding room, baby, breastfeeding, parents room, baby changing" ;
+    ontosage:locationText "First floor" .
+
+bldg:Cap_prayer a ontosage:Amenity,
+        ontosage:PrayerRoom ;
+    rdfs:label "Prayer & reflection room"@en ;
+    ontosage:layTerms "prayer room, quiet room, reflection, meditation, faith, worship, where can i pray, place to pray" ;
+    ontosage:locationText "First floor, room 1.14" ;
+    ontosage:note "A multi-faith prayer and reflection room, open to all." .
+
+bldg:Cap_reception a ontosage:Amenity,
+        ontosage:Service ;
+    rdfs:label "Reception"@en ;
+    ontosage:layTerms "reception, front desk, sign in, help desk, when does reception close, reception hours" ;
+    ontosage:locationText "Ground floor atrium" ;
+    ontosage:note "The main reception is in the Ground floor atrium." ;
+    ontosage:openingHours "Mon-Fri 08:00-18:00" .
+
+bldg:Cap_reportfault a ontosage:KnowledgeTopic,
+        ontosage:Procedure ;
+    rdfs:label "Reporting a fault"@en ;
+    ontosage:answerText "Report building faults to the Estates helpdesk with the room number and a short description." ;
+    ontosage:capabilityCategory "PROCEDURE" ;
+    ontosage:contactEmail "estates@buildsys.example" ;
+    ontosage:layTerms "report a fault, report a problem, something is broken, broken, maintenance, faulty, log a fault, who do i tell" ;
+    ontosage:reportTo "Estates helpdesk" .
+
+bldg:Cap_showers a ontosage:Amenity,
+        ontosage:ShowerFacility ;
+    rdfs:label "Shower facilities"@en ;
+    ontosage:layTerms "shower, showers, shower room, changing room, where is the shower" ;
+    ontosage:locationText "Ground floor, next to the bike store" ;
+    ontosage:note "Shower and changing facilities are on the Ground floor for cyclists and runners." .
+
+bldg:Cap_study a ontosage:Amenity,
+        ontosage:StudyArea ;
+    rdfs:label "Study & collaboration areas"@en ;
+    ontosage:layTerms "study, quiet study, workspace, desk, hot desk, place to work, somewhere to study, collaboration space" ;
+    ontosage:locationText "Third floor" ;
+    ontosage:note "Open study and collaboration areas with power and monitors are on the Third floor." .
+
+bldg:Cap_sustainability a ontosage:InformationTopic,
+        ontosage:KnowledgeTopic ;
+    rdfs:label "Sustainability"@en ;
+    ontosage:answerText "The building targets BREEAM Excellent, with LED lighting, rainwater harvesting, and live energy and air-quality monitoring across all floors." ;
+    ontosage:capabilityCategory "SUSTAINABILITY" ;
+    ontosage:layTerms "sustainability, sustainable, energy, carbon, green, environment, breeam, eco" .
+
+bldg:Cap_toilets a ontosage:Amenity,
+        ontosage:ToiletFacility ;
+    rdfs:label "Toilets"@en ;
+    ontosage:capabilityCategory "AMENITIES" ;
+    ontosage:layTerms "toilet, toilets, bathroom, wc, restroom, loo, accessible toilet, gender neutral toilet, where are the toilets" ;
+    ontosage:locationText "near the central core on every floor" ;
+    ontosage:note "Toilets including accessible and gender-neutral facilities are on every floor." .
+

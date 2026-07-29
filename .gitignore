@@ -62,61 +62,8 @@ Abacws/mongo/
 /development/examples/**
 .development
 /development/cassandradb/
-!/bldg2/
-!/bldg3/
-/bldg2/**
-/bldg3/**
-!/bldg2/README.md
-!/bldg3/README.md
-!/bldg2/servers.json
-!/bldg3/servers.json
-!/bldg1/servers.json
-!/bldg2/trial/
-!/bldg2/trial/dataset/
-!/bldg2/trial/dataset/*.ttl
-!/bldg2/trial/dataset/*used.py
-!/bldg3/trial/
-!/bldg3/trial/dataset/
-!/bldg3/trial/dataset/*.ttl
-!/bldg3/trial/dataset/*used.py
-!/bldg1/trial/
-!/bldg1/trial/dataset/
-!/bldg1/trial/dataset/*.ttl
-!/bldg2/trial/dataset/sensor_uuids.txt
-!/bldg2/trial/dataset/sensor_list.txt
-!/bldg2/trial/dataset/bldg2_timeseries.ttl
-!/bldg2/trial/dataset/bldg2_new_devices_from_sensor_types.ttl
-bldg2/trial/dataset/bldg2_timeseries - Copy.ttl
-!/bldg2/trial/dataset/sensors_list.txt
-!/bldg2/trial/dataset/01_generate_sensors_files.py
-!/bldg2/trial/dataset/02_build_bldg2_timeseries.py
-!/bldg2/trial/dataset/03_generate_devices_ttl.py
-!/bldg2/trial/dataset/bldg2_rdf.rdf
-!/bldg1/trial/dataset/updated_combined_output_with_entity.rar
-bldg1/01small ontology creation-9july.ipynb
-bldg1/abacws-building-9july.ttl
-bldg1/abacws-building-v7.ttl
-bldg1/abacws-v5.ttl
-bldg1/Mortardata-demo.ipynb
-bldg1/small-abacws-building-9july.ttl
-bldg1/*.ttl
-bldg2/trial/dataset/bldg2_main.ttl
-!/bldg2/trial/dataset/ingest_wide_csv_to_timescale.py
-!/bldg2/trial/dataset/list_sensors.py
-!/bldg2/trial/dataset/write_sensor_uuids.py
-!/bldg2/trial/dataset/uuids.txt
-!/bldg3/trial/dataset/03_create_devices_from_sensor_uuid_to_tb.py
-!/bldg3/trial/dataset/03_sync_tb_devices_from_sensor_uuids.py
-!/bldg3/trial/dataset/04_generate_synthetic_data.py
-!/bldg3/trial/dataset/06_publish_csv_to_thingsboard.py
-!/bldg3/trial/dataset/07_generate_and_publish_to_thingsboard.py
-!/bldg3/trial/dataset/08_build_wide_header_from_sensor_uuids.py
-!/bldg3/trial/dataset/09_export_name_uuid_mapping.py
-!/bldg3/trial/dataset/10_report_duplicates.py
-!/bldg3/trial/dataset/bldg3_rdf.rdf
-!/bldg3/trial/dataset/catalog-v001.xml
-!/bldg3/trial/dataset/create_devices_from_csv.py
-!/bldg3/trial/dataset/write_sensor_uuids.py
+# Per-building input sets (bldg1/, bldg2/, bldg3/ + the active input/) are FULLY
+# tracked — see the "Multi-building layout" section near the bottom of this file.
 ./rasa-bldg1/actions/actions_bldg2.py
 !/rasa-bldg2/shared_data/pinned_model.txt
 !/rasa-bldg3/shared_data/pinned_model.txt
@@ -354,25 +301,27 @@ bldg3/trial/dataset/*_protege.ttl
 bldg3/trial/dataset/*_rdf.rdf
 bldg3/trial/dataset/_sanitized_*.ttl
 
-# Parked per-building working copies (bldg1 is already tracked via input/)
-bldg1/
-
-# input2/ = staging replacement set for bldg2. Commit only its unique config
-# (building.yaml). Agnostic files are copies of input/; bldg2.ttl lives in bldg2/.
-input2/Brick*.ttl
-input2/ontosage_schema.ttl
-input2/database_registry.yaml
-input2/bldg2.ttl
-input2/README.md
-input2/_templates/
-input2/personas/
+# ── Multi-building layout (swap-by-rename; ONE building active at a time) ──────
+# bldg1/, bldg2/, bldg3/ are parked per-building input sets; the ACTIVE building's
+# set is renamed to input/. ALL building folders are fully tracked (Brick schema
+# copies are identical, so git stores one blob) — each folder must be complete and
+# self-contained so any building can be activated from a fresh clone.
+# Per-building env deltas live in <folder>/env.building (no secrets there).
+# Only runtime-generated junk inside them is ignored:
+input/renders/
+bldg*/renders/
+bldg*/.trash/
+bldg*/.ttl_write.lock
 
 # Raw building-generation workspaces (notebooks, scripts, all TTL variants) — local only
 bldg2_source/
 bldg3_source/
-# Large agnostic files duplicated into each building folder (they live once in input/)
-bldg2/Brick*.ttl
-bldg3/Brick*.ttl
+# Real env files carry secrets (API keys, DB passwords) — NEVER track any of them.
+# Building identity deltas are tracked instead as <folder>/env.building.
 .env1
 .env2
 .env3
+
+# Auto-generated per-building sensor-map cache (rebuilt from the live graph on boot)
+input/.sensor_map.cache.json
+bldg*/.sensor_map.cache.json

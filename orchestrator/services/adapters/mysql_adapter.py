@@ -84,6 +84,14 @@ class MySQLAdapter(DatabaseAdapter):
                 minsize=self._POOL_MIN,
                 maxsize=self._POOL_MAX,
                 autocommit=True,
+                # OntoSage stores time-series as naive UTC (the ingestion pipeline /
+                # dummy-data generator both write UTC). Pin every session to UTC so
+                # NOW() / CURDATE() / DATE_SUB(NOW(), INTERVAL N HOUR) in generated
+                # window filters compare against the SAME clock the data is stamped in.
+                # Without this, a server in a +N offset (e.g. BST) makes "last 1 hour"
+                # start AFTER the newest UTC row and silently return no readings.
+                # Building-agnostic: keyed on the UTC storage convention, not any building.
+                init_command="SET time_zone='+00:00'",
             )
             logger.info(f"MySQLAdapter: pool created (min={self._POOL_MIN}, max={self._POOL_MAX})")
         return self._pool
@@ -169,9 +177,10 @@ class MySQLAdapter(DatabaseAdapter):
         """Return all column names across all tables (for UUID validation)."""
         import time as _time
 
-        if self._columns_cache is not None and (
-            _time.monotonic() - self._columns_cache_ts
-        ) < self._CACHE_TTL:
+        if (
+            self._columns_cache is not None
+            and (_time.monotonic() - self._columns_cache_ts) < self._CACHE_TTL
+        ):
             return self._columns_cache
 
         cols: Set[str] = set()
@@ -197,8 +206,14 @@ class MySQLAdapter(DatabaseAdapter):
     def validate_query(self, sql: str) -> bool:
         """Ensure query is SELECT-only and contains no dangerous keywords."""
         sql_stripped = sql.strip()
-        first_word = sql_stripped.split()[0].upper() if sql_stripped else ""
-        if first_word not in ("SELECT", "WITH", "("):
+        # A parenthesized leading subquery — e.g. "(SELECT ...) UNION ALL (SELECT ...)",
+        # the shape generated for multi-UUID wide-table fetches — is valid read-only SQL.
+        # Strip any leading '(' / whitespace before identifying the first keyword so
+        # "(SELECT" is not mistaken for a non-SELECT statement (the whitespace split
+        # otherwise yields the token "(SELECT", which failed the allow-list).
+        probe = sql_stripped.lstrip("( \t\r\n")
+        first_word = probe.split()[0].upper() if probe else ""
+        if first_word not in ("SELECT", "WITH"):
             raise ValueError("Only SELECT queries are allowed.")
         match = _FORBIDDEN_KEYWORD_RE.search(sql_stripped)
         if match:

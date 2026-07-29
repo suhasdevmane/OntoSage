@@ -1,0 +1,32 @@
+# ── Building identity: bldg3 (BuildSys portability building) ─────────────────
+# The ontology_namespace below MUST match the `@prefix bldg:` declared in
+# bldg3.ttl exactly — the startup TTL validator hard-fails the boot on a
+# mismatch, so a silently-empty knowledge graph is impossible.
+building_id: bldg3
+building_name: "BuildSys Building (bldg3)"
+ontology_namespace: "http://buildsys.org/ontologies/bldg3#"
+ontology_prefix: bldg          # bldg3.ttl uses the standard `bldg:` label
+
+# Off-ontology capability KB routing (defaults are fine for most buildings).
+capability_routing:
+  enabled: true
+  embedding_model: auto        # follows EMBEDDING_PROVIDER (openai | local)
+  threshold: 0.56
+  override_min: 0.60
+  top_k: 5
+  fallback_on_qdrant_failure: skip
+
+# Which database_registry.yaml keys this building uses. Every sensor in bldg3.ttl
+# routes to `ref:storedAt bldg:database1` (baked in during onboarding), which is
+# env-driven (${MYSQL_DATABASE}) — point it at bldg3_sensordb in .env.
+storage:
+  databases:
+    - database1
+
+# Floor plans are generated from the graph (4 floors) during onboarding.
+floor_plan_aliases: []
+
+# Read-only building — no actuation.
+actuation:
+  driver: none
+  points_writable: []

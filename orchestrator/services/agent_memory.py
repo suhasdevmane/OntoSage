@@ -148,9 +148,17 @@ class AgentMemoryService:
 
             self._client = AsyncQdrantClient(url=self._url)
 
-            # Determine the actual embedding dimension from the embed model name.
-            # Use the known-dims lookup first; fall back to settings.embedding_dimension.
-            embed_dim = _EMBED_MODEL_DIMS.get(EMBED_MODEL, settings.embedding_dimension)
+            # Size the collection from the ACTIVE embedder's real dimension — the same
+            # embedder that produces the vectors we upsert (it respects EMBEDDING_PROVIDER).
+            # This is building-agnostic and always consistent. The old AGENT_MEMORY_EMBED_MODEL
+            # / _EMBED_MODEL_DIMS lookup could size the collection for a DIFFERENT provider
+            # (e.g. OpenAI text-embedding-3-large = 3072) than the one actually in use (local
+            # bge-large = 1024), which Qdrant then rejects ("expected dim 3072, got 1024").
+            if self._embedder is None:
+                from orchestrator.services.embedding_service import EmbeddingService
+
+                self._embedder = EmbeddingService()
+            embed_dim = getattr(self._embedder, "dimension", None) or settings.embedding_dimension
 
             collections = await self._client.get_collections()
             names = [c.name for c in collections.collections]

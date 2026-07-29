@@ -1,0 +1,34 @@
+# TEMPLATE: input/<building_id>/feeds.yaml
+# Copy to input/<your_building_id>/feeds.yaml and fill in the blanks.
+# See docs/ADDING_A_DATA_SOURCE.md for the full playbook.
+#
+# STRICT_SECRETS: auth_env names an env-var; NEVER put literal API keys here.
+
+feeds:
+
+  # ── CSV drop template ─────────────────────────────────────────────────────
+  - id: my_sensor_feed                # unique snake_case id, no spaces
+    type: csv_drop
+    path: "<building_id>/data/my_data.csv"   # relative to input/
+    interval_s: 300                   # seconds between ingest cycles
+    field_map:
+      my_csv_column: value            # maps CSV column name → internal "value"
+    brick_class: "brick:Temperature_Sensor"  # see table in ADDING_A_DATA_SOURCE.md
+    location: "bldg:Floor3"          # bldg:Floor0…5 | bldg:Building | bldg:BuildingExterior
+    unit: degC                        # informational label only
+    storage: "bldg:database1"        # keep as-is for standard deployments
+    enabled: true
+
+  # ── REST API poll template ────────────────────────────────────────────────
+  - id: my_api_feed
+    type: rest_poll
+    url: "https://api.example.com/sensor/latest"
+    auth_env: MY_API_KEY_ENV_VAR      # name of env-var holding the Bearer token
+    interval_s: 60
+    field_map:
+      data.current_value: value       # dot-path into the JSON response
+    brick_class: "brick:CO2_Level_Sensor"
+    location: "bldg:Floor5"
+    unit: ppm
+    storage: "bldg:database1"
+    enabled: false                    # set true when env-var is configured

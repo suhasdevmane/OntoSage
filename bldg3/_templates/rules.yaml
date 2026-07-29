@@ -1,0 +1,49 @@
+# TEMPLATE: input/<building_id>/rules.yaml
+# Operator-managed ECA (Event-Condition-Action) rules evaluated by the rules engine.
+# These are STATIC rules — for user-created personal alerts, see the conversation UI (T21).
+# See docs/ADDING_A_DATA_SOURCE.md for the full playbook.
+#
+# Schema (enforced by orchestrator/services/input_validators.py):
+#   trigger.sensor_uuid  — direct UUID = a real MySQL sensor_data column name
+#   trigger.concept      — OR an HBCO lay-term (resolved to a UUID at runtime);
+#                          one of the two is REQUIRED
+#   trigger.op           — one of  >  <  >=  <=  ==  !=
+#   trigger.threshold    — REQUIRED numeric threshold
+#   trigger.duration_min — breach must persist this many minutes before firing
+#   action.type          — notify (actuation comes via the approval workflow, not rules)
+#
+# Cooldown: rules re-fire at most once per 30 minutes per sensor.
+
+rules:
+
+  # ── Concept-triggered threshold alert ────────────────────────────────────
+  # The HBCO concept resolver turns the lay-term into a Brick class and then
+  # a sensor UUID at runtime — no hardcoded IDs needed.
+  - id: my_co2_alert                 # unique snake_case id
+    name: CO2 elevated
+    enabled: false                   # ← enable after verifying the concept resolves
+    trigger:
+      concept: "stuffy"              # HBCO lay-term (see ontology/hbco_mappings.ttl)
+      op: ">"
+      threshold: 1000.0
+      duration_min: 5
+    action:
+      type: notify
+      severity: warning
+      message: "CO2 is {value:.0f} ppm (threshold {threshold:.0f} ppm sustained {duration_min} min). Consider ventilation."
+
+  # ── Direct-UUID threshold alert ──────────────────────────────────────────
+  # sensor_uuid MUST be a real column in the building's MySQL sensor_data
+  # table (check input/<building_id>/ onboarding artifacts or sensor_uuids.json).
+  - id: my_equipment_alert
+    name: Equipment metric high
+    enabled: false                   # ← enable after replacing the placeholder UUID
+    trigger:
+      sensor_uuid: "00000000-0000-0000-0000-000000000000"   # REPLACE ME
+      op: ">"
+      threshold: 75.0
+      duration_min: 10
+    action:
+      type: notify
+      severity: critical
+      message: "Equipment metric is {value:.1f} (above {threshold:.1f} for {duration_min} min)."

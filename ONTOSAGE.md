@@ -6,7 +6,7 @@
 
 **For new AI sessions:** Read `CLAUDE.md` first (navigation index, debugging, current branch state), then this file for deep architecture. Do not commit or push without explicit user approval.
 
-Two-line summary: A user types a question in plain English. OntoSage resolves follow-up references against conversation memory, classifies the intent, blends the user's stacked personas, routes to the right pipeline (SPARQL → SQL → analytics / forecasting, or floor-plan, or capability KB, or one of the standalone agents), and returns a structured answer with full per-request audit trail — remembering the conversation across turns.
+Two-line summary: A user types a question in plain English. OntoSage resolves follow-up references against conversation memory, classifies the intent, blends the user's stacked personas, routes to the right pipeline (SPARQL → SQL → analytics / forecasting, or floor-plan, or capability triples, or one of the standalone agents), and returns a structured answer with full per-request audit trail — remembering the conversation across turns.
 
 ---
 
@@ -101,8 +101,9 @@ orchestrator/
 │   ├── turn_memory.py              # Phase 21 — TurnMemoryService (Postgres per-turn summaries + carry-forward)
 │   ├── report_intake_service.py    # Phase 19 — fault/complaint/safety/feedback intake → user_reports table
 │   ├── job_queue.py                # Async job queue (Redis-backed) for long-running tasks (GET /jobs/{id})
-│   ├── semantic_router.py          # Capability KB semantic routing
-│   ├── capability_indexer.py       # Embeds capability.yaml into Qdrant
+│   ├── semantic_router.py          # is_data_query/report/control/spatial routing helpers
+│   ├── capability_graph_resolver.py # Answers capability questions from ontosage: triples
+│   ├── capability_admin.py         # GUI/API authoring of capability triples (OCBV)
 │   ├── floor_plan_pipeline.py      # PDF → manifest
 │   ├── dwg_pipeline.py             # DWG → DXF → polygons
 │   ├── floor_plan_registry.py      # Merge PDF + DWG manifests
@@ -138,7 +139,7 @@ input/
 ├── bldg1_timeseries_extension.ttl  # P0 — 19 sensors across 7 modalities with TimeseriesReference triples
 ├── bldg1_security_lighting_extension.ttl  # P0 — lighting systems, CCTV, alarm zones, 293 triples
 ├── *.dwg, *.pdf                    # Floor plans (DWG for geometry; PDF for display)
-├── capability.yaml                 # Off-ontology KB (lifts, prayer room, contacts)
+├── <id>_capabilities.ttl           # Capability TRIPLES (ontosage:Amenity/KnowledgeTopic)
 ├── intents.yaml                    # Per-building intent overlay
 ├── personas/                       # Per-building persona YAML files
 ├── feeds.yaml                      # V3 — live feed specs
@@ -172,7 +173,7 @@ input/
 │   └── personas/                   # (optional override of shipped persona priors)
 ├── bldg1/                          # The ACTIVE building's data (one at a time)
 │   ├── building.yaml               # building_id, name, ontology_namespace, actuation block
-│   ├── capability.yaml             # off-ontology KB (lifts, prayer room, fire, …)
+│   ├── <id>_capabilities.ttl       # capability TRIPLES (amenities, policies, how-tos)
 │   ├── intents.yaml                # per-building intent overlay
 │   ├── personas/                   # per-building persona overlay
 │   ├── feeds.yaml                  # V3 — external feed specs (csv_drop / rest_poll); absence = silently skipped
@@ -208,7 +209,7 @@ tests/                              # 511 deterministic tests, 2 skipped; see §
 | **MySQL** | 3306 | Time-series sensor readings, keyed by UUID. Wide `sensor_data` (UUID-per-column) for the original sensors; **narrow per-modality tables** `(uuid, datetime, value)` for energy/occupancy/water/noise/IAQ/light/equipment (`type: mysql_narrow` in `input/database_registry.yaml`). |
 | **PostgreSQL** | 5433 | User accounts + Argon2id hashes + RBAC; `turn_memory` (per-turn conversation summaries, Phase 21); `user_reports` (fault/complaint intake, Phase 19). |
 | **Redis** | 6379 | Conversation state (`conversation:<id>` — **no time-expiry by default**, count-bounded to `CONVERSATION_MAX_MESSAGES`; Phase 21), response cache (`resp_cache:*`), session salt (see §10). |
-| **Qdrant** | 6333 | `floor_plans` (room vectors + geometry payload), `capability_<bldg>` (KB embeddings), `user_memory`. |
+| **Qdrant** | 6333 | `floor_plans` (room vectors + geometry payload), `documents_<bldg>` (uploaded-manual chunks), `user_memory`. (Capabilities are ontology triples, not vectors.) |
 | **MongoDB** | 27017 | Full chat-history transcripts (OpenWebUI). |
 | **rag-service** | 8001 | Semantic fallback for empty SPARQL results. |
 | **code-executor** | 8002 | Sandboxed Python for analytics agent. |
@@ -346,15 +347,15 @@ Every question is answerable when the right data is attached. This guide maps qu
 | "Which rooms are adjacent to room 3.01?" | `spatial_query` | DWG polygon data |
 | "What is the area of floor 1?" | `spatial_query` | DWG — returns 3,008.5 m² for bldg1 |
 
-### Questions answered from the capability KB
+### Questions answered from capability triples (see §8.5)
 
-| Question example | Intent | Required |
+| Question example | Intent | Answered from |
 |---|---|---|
-| "Where is the lift?" | `capability` | `capability.yaml` or Brick TTL |
-| "Is there a prayer room?" | `capability` | `capability.yaml` |
-| "What are the fire evacuation procedures?" | `capability` | `documents/fire_safety.md` |
-| "Is the building wheelchair accessible?" | `capability` | `capability.yaml` or `documents/` |
-| "How do I book a meeting room?" | `capability` | `documents/` |
+| "Where is the lift?" | `capability` | `ontosage:Amenity` triple |
+| "Is there a prayer room?" | `capability` | `ontosage:Amenity` triple |
+| "What is the wifi / GDPR policy?" | `capability` | `ontosage:KnowledgeTopic` triple (`answerText`) |
+| "Is the building wheelchair accessible?" | `capability` | `ontosage:Amenity` triple |
+| "What are the fire evacuation procedures?" | `capability` | uploaded `documents/fire_safety.md` (long-form) |
 
 ### Questions that store a report (no data query — just writes to Postgres)
 
@@ -472,7 +473,7 @@ v1 serves one building at a time via `BUILDING_ID`. The code is already multi-te
 |---|---|---|
 | `IntentRegistry` keyed by `building_id` via `lru_cache` | `intents/registry.py:509` | 11A |
 | `BuildingContextResolver.resolve(building_id)` | `services/building_context.py` | 10A/11A |
-| Per-building Qdrant collection (`capability_<bldg>`) | `services/capability_indexer.py` | 5/14 |
+| Per-building capability triples (`ontosage:Amenity`/`KnowledgeTopic`) | `services/capability_graph_resolver.py`, `capability_admin.py` | — |
 | Per-building persona overlays (`input/<bldg>/personas/`) | `shared/persona_loader.py` | 5/11C |
 | Per-request SPARQL ContextVar | `agents/sparql_agent.py` | 15A |
 | Storage adapter filter (`storage.databases` in `building.yaml`) | `services/adapters/registry.py` | 2 |
@@ -640,7 +641,7 @@ No code changes needed.
 ```bash
 # 1. Drop new building's files under input/<new_id>/
 #    Required: building.yaml, *.ttl (@prefix bldg: must match ontology_namespace)
-#    Optional: *.dwg, *.pdf, capability.yaml, intents.yaml, personas/
+#    Optional: *.dwg, *.pdf, <id>_capabilities.ttl, documents/, intents.yaml, personas/
 
 # 2. Dry-run the swap
 python scripts/swap_building.py --to bldg2 --dry-run
@@ -1383,22 +1384,48 @@ Same schema as the shipped `intent_definitions.yaml`. Entries with the same `nam
 
 Same schema as `PersonaPriors` dataclass. Loaded by `PersonaRegistry` at startup; `Literal[...]` constraint dropped in Phase 14A so any name resolves.
 
-### 8.5 `input/<bldg>/capability.yaml`
+### 8.5 Capability triples — `input/<id>_capabilities.ttl` (OCBV, replaces `capability.yaml`)
 
-```yaml
-building_info:
-  id: bldg1
-  name: Abacws Building
-  …
+`capability.yaml` was **removed** (TODO-012). Capabilities are now first-class **triples** in
+the building's ontology, typed with the OCBV vocabulary (`input/ontosage_schema.ttl`):
 
-capabilities:
-  - id: lift_locations
-    category: ACCESSIBILITY
-    keywords: [lift, elevator, accessible]
-    content: >
-      Main passenger lift is located left of reception …
-    source: building_management_system
+- **`ontosage:Amenity`** (+ subclasses `PrayerRoom`, `Cafe`, `Lift`, `ShowerFacility`,
+  `ToiletFacility`, `NursingRoom`, `StudyArea`, `BikeStorage`, `Facility`, `Service`) — a
+  physical facility a stakeholder can locate and use.
+- **`ontosage:KnowledgeTopic`** (+ subclasses `InformationTopic`, `Procedure`,
+  `MaintenanceIssue`) — a non-physical fact/policy/how-to/fault route, answered from
+  `ontosage:answerText` (+ `steps`, contacts).
+
+Key datatype properties: **`ontosage:layTerms`** (comma-separated plain-language phrasings —
+the field the resolver matches questions against; the single most important field),
+`answerText`, `capabilityCategory`, `locationText`, `onFloor`, `note`, `steps`,
+`contactEmail`/`contactPhone`, `reportTo`, `infoUrl`. Object properties bridge to Brick:
+`locatedIn` (→`brick:Location`), `servesFloor` (→`brick:Floor`), `aboutEquipment`.
+
+```turtle
+bldg:Cap_lift a ontosage:Lift, ontosage:Amenity ;
+    rdfs:label "Main passenger lift"@en ;
+    ontosage:layTerms "lift, elevator, where is the lift, nearest lift, accessible lift" ;
+    ontosage:locationText "Left of reception" ;
+    ontosage:capabilityCategory "ACCESSIBILITY" .
+
+bldg:Cap_wifi a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
+    rdfs:label "WiFi and network access"@en ;
+    ontosage:layTerms "wifi, wi-fi, internet, eduroam, guest network, connect to wifi" ;
+    ontosage:answerText "Guests use the guest SSID (captive portal); staff use eduroam." .
 ```
+
+**Authoring** (no hand-written Turtle needed): the admin Capabilities tab / `POST
+/api/v1/admin/capabilities` (`services/capability_admin.py`) turns guided form fields into a
+dual-typed instance on the building's namespace, validated against the OCBV schema, persisted
+to `input/<id>_capabilities.ttl`, and re-synced into GraphDB — the response cache is flushed so
+the new capability answers on the next question. Answered live by
+`services/capability_graph_resolver.py`. Migration of a legacy `capability.yaml`:
+`scripts/migrate_capability_yaml_to_ttl.py` (`keywords → layTerms`, `content → answerText`).
+
+> **Long-form manuals stay as documents.** `answerText` is a *one-line canonical answer* by
+> design — genuine multi-page manuals (governance, maintenance procedures) belong in
+> `input/<bldg>/documents/` (the semantic document KB), not crammed into a single triple.
 
 ### 8.6 `input/<bldg>/feeds.yaml` (V3 — external data feeds)
 
@@ -1571,7 +1598,7 @@ After all Phase 11-18 work completed, the system was started and exercised as a 
 | Query | Path exercised | Result |
 |---|---|---|
 | "What is the current temperature in zone 5.28?" | SPARQL + SQL via Phase 15A ContextVar | Returned the right sensor + UUID |
-| "Where is the prayer room?" | Capability KB via Phase 13B auto-wire | Returned location from `bldg1/capability.yaml` |
+| "Where is the prayer room?" | `capability` → CapabilityGraphResolver | Returned location from the `ontosage:Amenity` triple in `bldg1_capabilities.ttl` |
 | "show me floor 3" | Floor plan via Phase 13B auto-wire | Returned PDF link + space list |
 | "tell me something" | Phase 10G safety net | Polite SCOPE redirect |
 | "what is the capital of France?" | Per-building SCOPE rule | Polite SCOPE redirect |

@@ -1,0 +1,29 @@
+# Auditor persona — Phase 5 example #2.
+#
+# Independent compliance auditor.  Mostly verifies ASHRAE/WELL/BREEAM
+# numbers and exports evidence packages.  No Python code was changed
+# to add this persona — only this YAML file.
+
+name: auditor
+description: Independent compliance auditor verifying standards conformance.
+
+aliases:
+  - inspector
+  - compliance officer
+
+top_domains:
+  - THERMAL
+  - AIR_QUALITY
+  - ENERGY
+  - FIRE_SAFETY
+
+lookup_share: 0.45     # auditors do a lot of analytical work
+default_complexity: COMPLEX
+clarification_threshold: 0.6
+
+borda_topics:
+  - Compliance
+  - Temperature
+  - Air Quality
+  - Energy
+  - Fire Safety

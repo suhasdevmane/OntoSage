@@ -1,6 +1,0 @@
-# Abacws Building — Schools And Key Facilities
-
-Abacws houses two Cardiff University schools: (1) School of Computer Science and Informatics; (2) School of Mathematics (including financial mathematics and statistics). Key named facilities: (1) Makerspace and IT Workshop — practical hardware/software project space; (2) Simulated Trading Room — for financial mathematics and data analytics teaching; (3) Cybersecurity Lab — dedicated teaching and research facility; (4) Computer labs — designed for group work, classes, and individual study; (5) Flexible lecture theatres and seminar rooms with innovative layouts to encourage interaction; (6) Dedicated student project work spaces; (7) Spaces open to industrial partners for student engagement. The ground-floor atrium has informal seating and is open to visitors. Industrial partner zones allow real-world project collaboration.
-
-
-Related: school of computer science, school of mathematics, mathematics department, computer science department, what is abacws, what schools, which department, makerspace, trading room, cybersecurity lab, simulation lab, student project, computer lab, lecture theatre, seminar room, industrial partner, research lab, what facilities, what rooms, it workshop, collaborative workspace, abacws features, who is in the building, what is taught here, financial mathematics.

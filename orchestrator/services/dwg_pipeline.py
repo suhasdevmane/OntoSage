@@ -45,7 +45,7 @@ _DEFAULT_INPUT_DIR = Path("/app/input")
 _DEFAULT_MANIFEST_DIR = Path("/app/floor_plans")
 
 _DWG_PATTERN = re.compile(
-    r"^(?P<building>.+?)\s+floor\s+(?P<floor>\d+)\.dwg$",
+    r"^(?P<building>.+?)\s+floor\s+(?P<floor>\d+)\.(?:dwg|dxf)$",
     re.IGNORECASE,
 )
 
@@ -186,7 +186,10 @@ class DWGPipeline:
             logger.warning(f"[dwg_pipeline] Input dir not found: {self._input_dir}")
             return []
         results: List[FloorPlanManifest] = []
-        for dwg_path in sorted(self._input_dir.glob("*.dwg")):
+        # Accept .dwg (converted via dwg2dxf) and .dxf (the CAD interchange format, read
+        # directly — also lets tool-exported/synthetic plans skip a lossy DWG round-trip).
+        _cad_files = sorted([*self._input_dir.glob("*.dwg"), *self._input_dir.glob("*.dxf")])
+        for dwg_path in _cad_files:
             try:
                 manifest = await self.ingest_file(dwg_path)
                 if manifest:
@@ -224,8 +227,11 @@ class DWGPipeline:
             except Exception:
                 pass
 
-        # Step 3: convert DWG → DXF
-        dxf_path, convert_warnings = await _run_in_executor(self._convert_to_dxf, dwg_path)
+        # Step 3: obtain a DXF. A .dxf is read directly; a .dwg is converted via dwg2dxf.
+        if dwg_path.suffix.lower() == ".dxf":
+            dxf_path, convert_warnings = dwg_path, []
+        else:
+            dxf_path, convert_warnings = await _run_in_executor(self._convert_to_dxf, dwg_path)
         if dxf_path is None:
             logger.error(
                 f"[dwg_pipeline] DWG→DXF conversion failed for {dwg_path.name} — aborting."

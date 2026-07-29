@@ -583,40 +583,91 @@ async def lifespan(app: FastAPI):
         if val_result.ok:
             await ontology_introspector.initialize()
 
-            # C.3: Auto-generate sensor_map.json if file is missing or stale
+            # C.3: Build the per-building sensor map from the LIVE graph. Regenerate
+            # when the cache is missing/empty OR does not match the ACTIVE building
+            # (no cached sensor URI belongs to its namespace) — this prevents another
+            # building's cached catalogue from leaking in (portability). Building-agnostic:
+            # accepts both ref: and ASHRAE-223 external-reference predicates; keyed off
+            # the timeseries link (which defines a sensor), so no type-path explosion.
             try:
                 import json as _json
                 import os as _os
 
                 _sensor_map_path = settings.SENSOR_MAP_PATH
+                _ns = settings.BUILDING_NAMESPACE or ""
                 _needs_regen = not _os.path.exists(_sensor_map_path)
-                if not _needs_regen and ontology_introspector.entity_types:
-                    # Regen if cached entity count differs significantly from discovered
+                if not _needs_regen:
                     try:
                         with open(_sensor_map_path) as _f:
                             _cached = _json.load(_f)
-                        _needs_regen = len(_cached) == 0
+                        _match = bool(_ns) and any(
+                            isinstance(v, dict) and _ns in v.get("uri", "")
+                            for v in _cached.values()
+                        )
+                        # stale if empty, or the active building isn't represented
+                        _needs_regen = (len(_cached) == 0) or (bool(_ns) and not _match)
                     except Exception:
                         _needs_regen = True
-                if _needs_regen and ontology_introspector.sensor_classes:
-                    _sensor_map = {
-                        cls.split("#")[-1].split("/")[-1]: {
-                            "uri": cls,
-                            "label": cls.split("#")[-1].split("/")[-1],
-                            "uuid": "",
-                            "storage": "",
-                        }
-                        for cls in ontology_introspector.sensor_classes
-                    }
-                    _os.makedirs(_os.path.dirname(_sensor_map_path) or ".", exist_ok=True)
-                    with open(_sensor_map_path, "w") as _f:
-                        _json.dump(_sensor_map, _f, indent=2)
-                    logger.info(
-                        f"C.3: Auto-generated {_sensor_map_path} with {len(_sensor_map)} sensor class entries"
+                if _needs_regen:
+                    import httpx as _httpx
+
+                    _ep = (
+                        f"http://{settings.GRAPHDB_HOST}:{settings.GRAPHDB_PORT}"
+                        f"/repositories/{settings.GRAPHDB_REPOSITORY}"
                     )
-                    # Reload into running orchestrator
-                    if orchestrator:
-                        orchestrator.sensor_map = _sensor_map
+                    _q = (
+                        "PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> "
+                        "PREFIX ashrae:<http://data.ashrae.org/standard223#> "
+                        "PREFIX ref:<https://brickschema.org/schema/Brick/ref#> "
+                        "SELECT DISTINCT ?sensor ?label ?uuid ?storage WHERE { "
+                        "{ ?sensor ref:hasExternalReference ?e } "
+                        "UNION { ?sensor ashrae:hasExternalReference ?e } "
+                        "?e ref:hasTimeseriesId ?uuid ; ref:storedAt ?storage . "
+                        "OPTIONAL { ?sensor rdfs:label ?label } }"
+                    )
+                    _auth = (
+                        (settings.GRAPHDB_USER, settings.GRAPHDB_PASSWORD)
+                        if settings.GRAPHDB_USER
+                        else None
+                    )
+                    async with _httpx.AsyncClient(timeout=90.0) as _c:
+                        _resp = await _c.post(
+                            _ep,
+                            auth=_auth,
+                            data={"query": _q},
+                            headers={"Accept": "application/sparql-results+json"},
+                        )
+                        _resp.raise_for_status()
+                        _rows = _resp.json()["results"]["bindings"]
+                    _sensor_map = {}
+                    for _b in _rows:
+                        _uri = _b["sensor"]["value"]
+                        _ln = _uri.split("#")[-1].split("/")[-1]
+                        _uuid = _b["uuid"]["value"]
+                        _st = _b["storage"]["value"].split("#")[-1].split("/")[-1]
+                        _lab = _b.get("label", {}).get("value", _ln)
+                        _entry = {"uri": _uri, "uuid": _uuid, "storage": _st, "label": _lab}
+                        _sensor_map[_ln] = _entry
+                        _sensor_map[_lab] = _entry
+                        _sensor_map[_uri] = _entry
+                    if _sensor_map:
+                        # reload the RUNNING orchestrator first (fixes it even if the
+                        # cache path is read-only); then try to persist for next boot.
+                        if orchestrator:
+                            orchestrator.sensor_map = _sensor_map
+                        try:
+                            _os.makedirs(_os.path.dirname(_sensor_map_path) or ".", exist_ok=True)
+                            with open(_sensor_map_path, "w") as _f:
+                                _json.dump(_sensor_map, _f, indent=2)
+                        except OSError as _we:
+                            logger.warning(
+                                f"Sensor map cache path not writable ({_we}); using in-memory only"
+                            )
+                        _n = len({v["uri"] for v in _sensor_map.values()})
+                        logger.info(
+                            f"Sensor map: built {_n} sensors from the live graph for "
+                            f"{settings.BUILDING_ID}"
+                        )
             except Exception as _e:
                 logger.warning(f"Sensor map auto-generation failed (non-fatal): {_e}")
 
@@ -4094,7 +4145,7 @@ async def list_reindex_jobs(
 # re-indexed. Zero building literals — everything resolves from settings.BUILDING_ID.
 _INPUT_ROOT = "/app/input"
 _DOC_EXTS = frozenset({".md", ".txt", ".pdf"})
-_FLOORPLAN_EXTS = frozenset({".pdf", ".dwg"})
+_FLOORPLAN_EXTS = frozenset({".pdf", ".dwg", ".dxf"})
 _MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB guard
 
 
@@ -4206,7 +4257,7 @@ async def upload_floor_plan(
     ext = os.path.splitext(file.filename or "")[1].lower()
     if ext not in _FLOORPLAN_EXTS:
         return APIResponse(
-            success=False, error=f"unsupported extension '{ext}' (allowed: .pdf, .dwg)", data={}
+            success=False, error=f"unsupported extension '{ext}' (allowed: .pdf, .dwg, .dxf)", data={}
         )
     if floor < 0:
         return APIResponse(success=False, error="floor must be >= 0", data={})
@@ -5561,13 +5612,13 @@ async def reingest_floor_plans(
         registry = get_floor_plan_registry()
         input_dir = Path("/app/input")
         _file_re = _re.compile(
-            r"^(?P<bldg>.+?)\s+floor\s+(?P<fl>\d+)\.(?:pdf|dwg)$", _re.IGNORECASE
+            r"^(?P<bldg>.+?)\s+floor\s+(?P<fl>\d+)\.(?:pdf|dwg|dxf)$", _re.IGNORECASE
         )
 
-        # Collect files to reingest
+        # Collect files to reingest (.dxf routes to the DWG pipeline like .dwg)
         files_to_ingest = []
         for path in sorted(input_dir.glob("*")):
-            if path.suffix.lower() not in {".pdf", ".dwg"}:
+            if path.suffix.lower() not in {".pdf", ".dwg", ".dxf"}:
                 continue
             m = _file_re.match(path.name)
             if not m:

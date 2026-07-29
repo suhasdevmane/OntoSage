@@ -15,20 +15,24 @@ logger = get_logger("sensor_mapper")
 
 GRAPHDB_QUERY_ENDPOINT = f"http://{settings.GRAPHDB_HOST}:{settings.GRAPHDB_PORT}/repositories/{settings.GRAPHDB_REPOSITORY}"
 
+# Building-agnostic: accept BOTH the Brick ref: and ASHRAE-223 predicates for the
+# external-reference link (different building exports use different ones), and carry no
+# building-specific prefix. Any building whose sensors are typed + linked resolves here.
 QUERY_ALL_SENSORS = """
 PREFIX brick: <https://brickschema.org/schema/Brick#>
-PREFIX bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX ashrae: <http://data.ashrae.org/standard223#>
 PREFIX ref: <https://brickschema.org/schema/Brick/ref#>
 
-SELECT ?sensor ?label ?uuid ?storage WHERE {
-    ?sensor rdf:type/rdfs:subClassOf* brick:Sensor .
-    OPTIONAL { ?sensor rdfs:label ?label . }
-    ?sensor ashrae:hasExternalReference ?extRef .
+SELECT DISTINCT ?sensor ?label ?uuid ?storage WHERE {
+    # a time-series-linked point IS a sensor by definition — avoids the
+    # rdf:type/subClassOf* path exploding under inference.
+    { ?sensor ref:hasExternalReference ?extRef }
+    UNION { ?sensor ashrae:hasExternalReference ?extRef }
     ?extRef ref:hasTimeseriesId ?uuid ;
             ref:storedAt ?storage .
+    OPTIONAL { ?sensor rdfs:label ?label . }
 }
 """
 
@@ -56,11 +60,11 @@ async def fetch_sensor_map():
 
             for b in bindings:
                 sensor_uri = b["sensor"]["value"]
-                # Extract local name (e.g. Air_Temperature_Sensor_5.04)
-                local_name = sensor_uri.split("#")[-1]
+                # Extract local name (handles both '#' and '/' URI schemes)
+                local_name = sensor_uri.split("#")[-1].split("/")[-1]
 
                 uuid = b["uuid"]["value"]
-                storage = b["storage"]["value"]
+                storage = b["storage"]["value"].split("#")[-1].split("/")[-1]
                 label = b.get("label", {}).get("value", local_name)
 
                 entry = {"uri": sensor_uri, "uuid": uuid, "storage": storage, "label": label}
@@ -72,12 +76,13 @@ async def fetch_sensor_map():
                 # Map by URI
                 sensor_map[sensor_uri] = entry
 
-            # Save to file
-            os.makedirs("data", exist_ok=True)
-            with open("data/sensor_map.json", "w", encoding="utf-8") as f:
+            # Save to the configured path (per-deployment; NOT a hardcoded building file)
+            out_path = settings.SENSOR_MAP_PATH
+            os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+            with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(sensor_map, f, indent=2)
 
-            logger.info(f"Saved {len(sensor_map)} keys to data/sensor_map.json")
+            logger.info(f"Saved {len(sensor_map)} keys ({len(bindings)} sensors) to {out_path}")
             return True
 
         except Exception as e:

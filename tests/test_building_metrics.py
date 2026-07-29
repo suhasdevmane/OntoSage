@@ -139,12 +139,13 @@ def test_is_inventory_count_question_routing_detector():
 
 async def test_capability_answer_grounds_metrics_live(monkeypatch):
     import orchestrator.agents.capability_agent as cap
+    import orchestrator.services.building_context as bctx
     import orchestrator.services.building_metrics as bmmod
     from shared.models import ConversationState, Message
 
-    # Stub the KB (only .building.name is used on the metrics path).
+    # Display name resolves from building config (TODO-012: no capability.yaml / KB).
     monkeypatch.setattr(
-        cap, "_load_kb", lambda _bid: SimpleNamespace(building=SimpleNamespace(name="Abacws"))
+        bctx, "resolve_building_context", lambda _bid: SimpleNamespace(name="Abacws")
     )
 
     class _FakeBM:

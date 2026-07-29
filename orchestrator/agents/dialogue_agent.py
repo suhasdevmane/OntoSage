@@ -392,6 +392,33 @@ _ROOM_GEOMETRY_KWS = (
     "square feet",
     "dimensions",
 )
+# Building-STRUCTURE counts answered by a SPARQL COUNT on TBOX types (brick:Floor,
+# brick:Storey, brick:HVAC_Zone) — building-agnostic, never a floor-plan geometry read.
+# ("rooms" stays with the DWG geometry via _ROOM_GEOMETRY_KWS.)
+_STRUCTURE_COUNT_KWS = (
+    "floor",
+    "floors",
+    "storey",
+    "storeys",
+    "story",
+    "stories",
+    "zone",
+    "zones",
+    "level",
+    "levels",
+)
+# Whole-building identity questions (name / description) → metadata (brick:Building label).
+_BUILDING_INFO_KWS = (
+    "what building",
+    "which building",
+    "building name",
+    "name of the building",
+    "name of this building",
+    "about this building",
+    "about the building",
+    "tell me about this building",
+    "what is this building",
+)
 # Exported for testing — maintenance schedule pre-classifier
 _MAINTENANCE_SCHEDULE_KWS = (
     "maintenance schedule",
@@ -668,93 +695,19 @@ class DialogueAgent:
         logger.info(f"📥 User Query: {user_query}")
         logger.info(f"📜 Conversation History: {len(state.messages)} messages total")
 
-        # ── Capability semantic-first routing (Phase 1 migration) ──
-        # Flag-gated. When the flag is OFF, this block is a no-op and the legacy
-        # keyword-based override (further down) handles capability routing as today.
-        #
-        # When ON: query Qdrant for a high-confidence capability match BEFORE the
-        # LLM intent call.  A score >= override_min lets us skip the LLM entirely
-        # (saves ~200ms).  A score in [threshold, override_min) is recorded on
-        # state for the post-LLM soft-override step.  Below threshold → no signal.
-        #
-        # Failures (Qdrant down, embedding API down) return source="fallback" and
-        # the LLM intent classification proceeds normally — non-fatal by design.
+        # ── Capability routing — TTL-first, SINGLE path (TODO-012) ──────────────
+        # Capabilities are ontosage:Amenity / ontosage:KnowledgeTopic TRIPLES, authored via the
+        # admin Capabilities GUI or the OCBV TBox. A query routes to the capability intent when it
+        # matches an amenity/topic triple by lay-term (deterministic), or a genuinely-uploaded
+        # manual scores strongly in the document KB. The legacy Qdrant capability-KB probe,
+        # the medium-band soft override, and capability.yaml have all been removed — there is no
+        # second path. `_SR` is still used below for the report/control/floor-plan/spatial bypasses.
         from orchestrator.services.semantic_router import (
             SemanticRouter as _SR,  # local import avoids cycle
         )
 
         if (
-            self.semantic_router is not None
-            # ROADMAP-009 WS-4 phase 2: when TTL-first is on, the Qdrant capability-KB probe
-            # is replaced by the graph+document router below.
-            and not settings.CAPABILITIES_TTL_FIRST
-            and user_query
-            and user_query.strip()
-            # Skip KB router entirely for queries that are live-data / SPARQL requests.
-            # is_data_query() is a zero-cost keyword check — no embedding call.
-            and not _SR.is_data_query(user_query)
-            # Skip KB router for fault/complaint/suggestion REPORTS — otherwise the
-            # KB steals "the toilet is leaking" / "Suggestion: add bike racks".
-            and not _SR.is_report_intake_query(user_query)
-            # Skip KB router for actuation COMMANDS ("ensure every door is unlocked",
-            # "open the windows") — these must reach the control intent (which
-            # declines), not be hard-overridden to a capability KB "no record" reply.
-            and not _SR.is_control_command(user_query)
-        ):
-            try:
-                bldg_id = state.building_id or settings.BUILDING_ID
-                semantic_result = await self.semantic_router.classify(user_query, bldg_id)
-                state.intermediate_results["_semantic_route"] = {
-                    "score": semantic_result.score,
-                    "source": semantic_result.source,
-                    "match_count": len(semantic_result.matches),
-                }
-                if semantic_result.intent == "capability":
-                    state.intermediate_results["capability_matches"] = semantic_result.matches
-                    state.intermediate_results["semantic_route_score"] = semantic_result.score
-                    logger.info(
-                        f"[semantic-route] HIGH-CONFIDENCE capability hit "
-                        f"(score={semantic_result.score:.3f}, top={semantic_result.matches[0].entry_id if semantic_result.matches else '?'}) "
-                        f"— skipping LLM intent call"
-                    )
-                    return {
-                        "intent": "capability",
-                        "general": False,
-                        "analytics": False,
-                        "sparql_query": "",
-                        "response": "",
-                    }
-                elif semantic_result.intent:
-                    # Multi-intent extension: any other registered intent (floor_plan,
-                    # spatial_query, ...) that crossed override_min. No pre-fetched
-                    # data — the downstream node (floor_plan node, spatial_query node)
-                    # owns its own data path.
-                    state.intermediate_results["semantic_route_score"] = semantic_result.score
-                    state.intermediate_results["semantic_route_intent"] = semantic_result.intent
-                    logger.info(
-                        f"[semantic-route] HIGH-CONFIDENCE {semantic_result.intent} hit "
-                        f"(score={semantic_result.score:.3f}) — skipping LLM intent call"
-                    )
-                    return {
-                        "intent": semantic_result.intent,
-                        "general": False,
-                        "analytics": False,
-                        "sparql_query": "",
-                        "response": "",
-                    }
-            except Exception as e:
-                # Never let semantic routing block intent detection
-                logger.warning(f"[semantic-route] check failed (non-fatal): {e}")
-
-        # ── ROADMAP-009 WS-4 (phase 2): TTL-first capability router ──────────────
-        # Replaces the Qdrant capability-KB probe when CAPABILITIES_TTL_FIRST. A query is a
-        # capability question if it matches an amenity TRIPLE (deterministic lay-terms) or,
-        # for prose, a strong capability DOCUMENT match. Either → route to capability (LLM
-        # skipped); the capability node answers from triples then documents. This is the
-        # graph-backed signal that lets the fuzzy KB router be retired.
-        if (
-            settings.CAPABILITIES_TTL_FIRST
-            and user_query
+            user_query
             and user_query.strip()
             and not _SR.is_data_query(user_query)
             and not _SR.is_report_intake_query(user_query)
@@ -878,57 +831,37 @@ class DialogueAgent:
             from orchestrator.services.semantic_router import SemanticRouter as _SRouter
 
             _di = result.get("intent")
-            if _di in {
-                "metadata",
-                "general",
-                "capability",
-                "general_knowledge",
-            } and _SRouter.is_data_query(user_query):
+            # A COUNT/inventory or building-identity question ("how many sensors",
+            # "how many floors", "what building is this") is METADATA — answered by a
+            # SPARQL COUNT / rdfs:label on TBOX types (brick:Sensor/Floor/Building), not a
+            # per-sensor reading. is_data_query() sees the "sensor" noun + measurable and
+            # mislabels it a reading, so guard the override: never demote a countable /
+            # structure / building-identity question to sensor_data. Building-agnostic —
+            # keyed on TBOX-count phrasing, no building literals.
+            _uq_l = user_query.lower()
+            _is_countable_meta = (
+                any(kw in _uq_l for kw in _COUNT_TRIGGER_KWS)
+                and any(kw in _uq_l for kw in (*_COUNTABLE_DEVICE_KWS, *_STRUCTURE_COUNT_KWS))
+                and not any(kw in _uq_l for kw in _ROOM_GEOMETRY_KWS)
+            ) or any(kw in _uq_l for kw in _BUILDING_INFO_KWS)
+            if (
+                _di
+                in {
+                    "metadata",
+                    "general",
+                    "capability",
+                    "general_knowledge",
+                }
+                and _SRouter.is_data_query(user_query)
+                and not _is_countable_meta
+            ):
                 logger.info(f"[dialogue] data-query override: intent '{_di}' → 'sensor_data'")
                 result["intent"] = "sensor_data"
                 result["general"] = False
 
-            # ── Capability semantic SOFT override (medium-band) ────────────────
-            # Flag-gated. Runs AFTER _parse_llm_response so the keyword override
-            # has had a chance to fire first. Only kicks in when:
-            #   - Flag enabled AND semantic router available
-            #   - LLM picked a NON-data intent AND keyword override did NOT already
-            #     route to capability
-            #   - Semantic score is in [threshold, override_min) — the medium band
-            # High-band overrides already short-circuited before the LLM call.
-            if self.semantic_router is not None and result.get("intent") != "capability":
-                _sem_meta = state.intermediate_results.get("_semantic_route") or {}
-                _sem_score = float(_sem_meta.get("score") or 0.0)
-                _llm_intent = result.get("intent")
-                # Only pure non-data intents get the soft KB override.
-                # "discovery" and "metadata" are SPARQL intents — they must NOT
-                # be overridden to capability even with a medium-band KB score.
-                _NON_DATA_INTENTS = {
-                    "general",
-                    "clarification",
-                    "unknown",
-                    "general_knowledge",
-                }
-                if (
-                    _sem_score > 0.0
-                    and _sem_meta.get("match_count", 0) > 0
-                    and _llm_intent in _NON_DATA_INTENTS
-                ):
-                    try:
-                        _bldg_id = state.building_id or settings.BUILDING_ID
-                        _sem = await self.semantic_router.classify(user_query, _bldg_id)
-                        if _sem.matches:
-                            state.intermediate_results["capability_matches"] = _sem.matches
-                            state.intermediate_results["semantic_route_score"] = _sem.score
-                            logger.info(
-                                f"[semantic-route] SOFT override (was '{_llm_intent}', "
-                                f"score={_sem.score:.3f}) → capability"
-                            )
-                            result["intent"] = "capability"
-                            result["analytics"] = False
-                            result["general"] = False
-                    except Exception as _sem_e:
-                        logger.debug(f"[semantic-route] soft override skipped: {_sem_e}")
+            # (Legacy medium-band capability SOFT override removed — TODO-012. Capability
+            # routing is now the deterministic TTL-first probe above; there is no Qdrant
+            # capability-KB fallback to soft-override from.)
 
             # Cache result
             await redis_manager.set_cache(cache_key, result, ttl=3600)
@@ -1394,15 +1327,29 @@ Return ONLY the JSON object.
                 _is_count_q = any(kw in _q_lower for kw in _COUNT_TRIGGER_KWS)
                 _counts_devices = any(kw in _q_lower for kw in _COUNTABLE_DEVICE_KWS)
                 _is_room_geometry = any(kw in _q_lower for kw in _ROOM_GEOMETRY_KWS)
-                if (
-                    _is_count_q
-                    and _counts_devices
-                    and not _is_room_geometry
-                    and normalized.get("intent") in ("spatial_query", "floor_plan")
+                _counts_structure = any(kw in _q_lower for kw in _STRUCTURE_COUNT_KWS)
+                _is_building_info = any(kw in _q_lower for kw in _BUILDING_INFO_KWS)
+                # A device count (sensor/equipment/meter), a building-STRUCTURE count
+                # (floor/zone), or a whole-building identity question is METADATA — answered
+                # by a SPARQL COUNT / rdfs:label on TBOX types (brick:Sensor/Floor/Building),
+                # never a per-sensor reading, capability KB, or DWG geometry. Force it
+                # regardless of the LLM's guess. Room geometry (area/adjacency) stays spatial;
+                # discovery LISTING is left alone.
+                _metadata_countable = (
+                    _is_count_q and (_counts_devices or _counts_structure) and not _is_room_geometry
+                ) or _is_building_info
+                if _metadata_countable and normalized.get("intent") in (
+                    "spatial_query",
+                    "floor_plan",
+                    "sensor_data",
+                    "general",
+                    "general_knowledge",
+                    "capability",
                 ):
                     logger.info(
                         f"[intent-override] Forcing 'metadata' (was '{normalized.get('intent')}') "
-                        "— sensor/equipment count belongs to a SPARQL COUNT, not spatial geometry"
+                        "— sensor/structure count or building identity is a SPARQL COUNT/label on "
+                        "TBOX types, not a reading / capability / geometry"
                     )
                     normalized["intent"] = "metadata"
                     normalized["analytics"] = False

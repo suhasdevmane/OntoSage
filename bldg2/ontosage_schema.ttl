@@ -1,0 +1,846 @@
+####################################################################################################
+#  OntoSage Conversational Building Vocabulary (OCBV)
+#  A stakeholder-facing conversational extension layer over the Brick Schema.
+#  ------------------------------------------------------------------------------------------------
+#  Version : 2.0.0        Date: 2026-07-17        Licence: CC-BY-4.0
+#  Term namespaces : http://ontosage.org/capabilities#  (prefix: ontosage)   — capabilities, roles,
+#                                                          intents, reports, provenance
+#                    http://ontosage.org/hbco#           (prefix: hbco)       — human⇄building
+#                                                          conversation concepts (lay-term ⇄ sensor)
+#  Ontology IRI    : http://ontosage.org/ontology
+#
+#  WHAT THIS IS
+#  ------------------------------------------------------------------------------------------------
+#  Brick Schema models the *technical* fabric of a smart building — points, sensors, equipment,
+#  locations, and their relationships — for machines and BMS integrators. It does NOT model the
+#  things a human occupant, visitor, facilities manager, or researcher actually asks about in
+#  plain language: "where is the prayer room?", "is it too stuffy on floor 5?", "how do I make a
+#  complaint?", "the toilet is leaking — who do I tell?".
+#
+#  OCBV adds exactly that layer: the vocabulary a building needs to be *talked to*. A building is
+#  modelled with Brick (the ontology of record) PLUS a thin OCBV overlay, and OntoSage then answers
+#  stakeholder questions by SPARQL over the combined graph — grounded, auditable, building-agnostic.
+#  Every fact is an RDF triple, so answers trace to data instead of frozen prose or a keyword table.
+#
+#  MODULE INDEX  (this single file is the whole conversational layer — "one schema, load once")
+#  ------------------------------------------------------------------------------------------------
+#    Module A — Capabilities        : amenities + knowledge topics a stakeholder can ask about.
+#    Module B — Conversation concepts: lay-term ⇄ Brick-sensor concepts ("stuffy" → CO₂) (hbco:).
+#    Module C — Stakeholder roles    : who is asking (occupant, FM, researcher …) — framing, NOT RBAC.
+#    Module D — Question-intent grammar : the *kinds* of question (locate, quantify, trend …).
+#    Module E — Report intake        : fault / complaint / safety / feedback / suggestion.
+#    Module F — Answer provenance     : how an answer is grounded (SPARQL / DB / floor-plan).
+#    Module G — Competency questions + example SPARQL, per class (RAG + paper).
+#    Module H — Standards alignment   : Brick / REC / BOT / SOSA / QUDT positioning.
+#    Module I — Controlled vocabularies + SHACL validation shapes.
+#    Module J — Worked examples (self-teaching for humans and for RAG).
+#
+#  RELATIONSHIP TO BRICK (non-contradiction guarantee)
+#  ------------------------------------------------------------------------------------------------
+#  OCBV *extends* Brick and never *contradicts* it:
+#    • It declares only terms in the `ontosage:` and `hbco:` namespaces. It never re-declares,
+#      re-defines, or changes the semantics of any `brick:` (or REC / BOT / SOSA / QUDT) term.
+#    • Where an OCBV term relates to the physical building it REFERENCES Brick as the range —
+#      `ontosage:locatedIn` → `brick:Location`, `ontosage:aboutEquipment` → `brick:Equipment`,
+#      `hbco:mapsToBrickClass` → a Brick sensor class. Alignments to external standards use SKOS
+#      mapping properties (relatedMatch / closeMatch) — never owl:equivalent* — so loading OCBV can
+#      never entail a contradictory Brick fact.
+#    • Loading OCBV alongside a Brick model only ADDS conversational triples; it invalidates nothing.
+#
+#  HOW STAKEHOLDERS USE IT (no Turtle required)
+#  ------------------------------------------------------------------------------------------------
+#  1. Model the building with Brick as usual (points, sensors, equipment, locations).
+#  2. Add OCBV instances — drop a `<bldg>_capabilities.ttl` / `<bldg>_knowledge.ttl` file into the
+#     input folder, OR use the admin console's guided form. The form's "Type" dropdown is exactly
+#     the class list in Module A; each field is one datatype property below. No code change.
+#  3. Ask in plain English. OntoSage matches the question (via `ontosage:layTerms` / `hbco:layTerm`)
+#     and renders a grounded answer (location / contact / steps / a live sensor reading).
+#
+#  DESIGN NOTES FOR RAG / LLM RETRIEVAL
+#  ------------------------------------------------------------------------------------------------
+#  This file is deliberately verbose and self-describing: every class and property carries an
+#  `rdfs:label`, `rdfs:comment`, `skos:definition`, and `skos:example`. Chunked into a vector store,
+#  each term is individually retrievable and self-explanatory for LLM-assisted authoring and QA.
+#
+#  CITATION
+#  ------------------------------------------------------------------------------------------------
+#  If you use OCBV in academic work, please cite the OntoSage paper (see the project README).
+####################################################################################################
+
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix hbco:     <http://ontosage.org/hbco#> .
+@prefix brick:    <https://brickschema.org/schema/Brick#> .
+@prefix rec:      <https://w3id.org/rec#> .
+@prefix bot:      <https://w3id.org/bot#> .
+@prefix sosa:     <http://www.w3.org/ns/sosa/> .
+@prefix qudt:     <http://qudt.org/schema/qudt/> .
+@prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix dcterms:  <http://purl.org/dc/terms/> .
+@prefix vann:     <http://purl.org/vocab/vann/> .
+
+
+####################################################################################################
+#  Ontology header
+####################################################################################################
+
+<http://ontosage.org/ontology> a owl:Ontology ;
+    rdfs:label "OntoSage Conversational Building Vocabulary (OCBV)"@en ;
+    dcterms:title "OntoSage Conversational Building Vocabulary (OCBV)"@en ;
+    dcterms:description """A stakeholder-facing conversational extension of the Brick Schema. OCBV
+        adds the vocabulary a building needs to answer natural-language questions from occupants,
+        visitors, facilities managers, researchers, and other stakeholders: physical amenities and
+        services, informational facts, how-to procedures, maintenance-issue reporting routes, the
+        lay-language ⇄ sensor concepts occupants use ("stuffy" → CO₂), the stakeholder roles who ask,
+        the kinds of question they ask, and the provenance that grounds each answer. Everything is
+        expressed as SPARQL-queryable RDF that extends Brick without contradicting it — OCBV terms
+        live in their own namespaces and reference Brick entities rather than redefining them."""@en ;
+    dcterms:creator "OntoSage" ;
+    dcterms:created "2026-07-15"^^xsd:date ;
+    dcterms:modified "2026-07-17"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "2.0.0" ;
+    vann:preferredNamespacePrefix "ontosage" ;
+    vann:preferredNamespaceUri "http://ontosage.org/capabilities#" ;
+    rdfs:seeAlso <https://brickschema.org/schema/Brick> ,
+                 <https://w3id.org/rec> ,
+                 <https://w3id.org/bot> ,
+                 <http://www.w3.org/ns/sosa/> ;
+    rdfs:comment """OCBV is additive to Brick. It declares only ontosage: and hbco: terms and never
+        alters the meaning of any brick: term; where it touches the physical building it references
+        Brick classes as property ranges and aligns to external standards with SKOS mapping
+        properties only. Load it alongside a Brick model to make that building answerable in plain
+        language. v2.0.0 consolidates the former OCBV capability schema and the HBCO conversation
+        ontology into this single file and adds stakeholder-role and standards-alignment modules."""@en .
+
+
+####################################################################################################
+#  MODULE A — CAPABILITIES
+#
+#     ontosage:Capability                     (abstract top — anything a stakeholder can ask about)
+#       ├── ontosage:Amenity                  (a PHYSICAL facility with a location)
+#       │     ├── PrayerRoom  Cafe  BikeStorage  ShowerFacility  ToiletFacility
+#       │     └── NursingRoom StudyArea Lift Facility Service
+#       └── ontosage:KnowledgeTopic           (a NON-physical topic: policy / how-to / fault route)
+#             ├── InformationTopic            (a fact: hours, contact, policy)
+#             ├── Procedure                   (a how-to: complaint, booking, lost property)
+#             └── MaintenanceIssue            (a fault + who to report it to)
+#
+#     The admin console "Type" dropdown is generated from these classes.
+####################################################################################################
+
+ontosage:Capability a owl:Class ;
+    rdfs:label "Capability"@en ;
+    rdfs:comment "Abstract superclass of everything a building stakeholder can ask OntoSage about that Brick does not already model — a physical amenity or a knowledge topic."@en ;
+    skos:definition "Anything a stakeholder can ask a building about via OntoSage."@en .
+
+# ── A.1 Physical amenities ─────────────────────────────────────────────────────────────────────
+ontosage:Amenity a owl:Class ;
+    rdfs:subClassOf ontosage:Capability ;
+    rdfs:label "Amenity"@en ;
+    rdfs:comment "A physical facility or service a stakeholder can locate and use (prayer room, café, lift, showers, …). Distinct from a brick:Point/brick:Equipment: it is described for humans, and MAY be tied to a brick:Location via ontosage:locatedIn."@en ;
+    skos:definition "A physical building facility or service with a human-readable location and features."@en ;
+    skos:example "A multi-faith prayer room on Floor 1; the main passenger lift; the ground-floor café." .
+
+ontosage:PrayerRoom     rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Prayer / reflection room"@en ; rdfs:comment "A quiet multi-faith prayer or reflection space."@en ; skos:example "\"where can I pray?\" -> the Floor 1 prayer room." .
+ontosage:Cafe           rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Café / catering"@en ; rdfs:comment "A café, canteen, or catering outlet."@en ; skos:example "\"where can I get a coffee?\"" .
+ontosage:BikeStorage    rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Bicycle storage"@en ; rdfs:comment "Cycle racks or secure bicycle storage."@en ; skos:example "\"where do I park my bike?\"" .
+ontosage:ShowerFacility rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Shower facility"@en ; rdfs:comment "Shower / changing facilities (e.g. for cyclists)."@en ; skos:example "\"are there showers?\"" .
+ontosage:ToiletFacility rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Toilet facility"@en ; rdfs:comment "Washrooms / accessible toilets."@en ; skos:example "\"where are the toilets?\"" .
+ontosage:NursingRoom    rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Nursing / feeding room"@en ; rdfs:comment "A private nursing / baby-feeding room."@en ; skos:example "\"is there a nursing room?\"" .
+ontosage:StudyArea      rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Study / workspace area"@en ; rdfs:comment "Open study areas, collaboration pods, quiet workspaces."@en ; skos:example "\"where can I study?\"" .
+ontosage:Lift           rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Passenger lift / elevator"@en ; rdfs:comment "A passenger lift; useful for accessibility questions."@en ; skos:example "\"where is the nearest lift?\"" .
+ontosage:Facility       rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Named facility"@en ; rdfs:comment "A named lab, workshop, or teaching space (makerspace, trading room, cyber lab)."@en ; skos:example "\"where is the makerspace?\"" .
+ontosage:Service        rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Building service"@en ; rdfs:comment "A staffed service point (reception, help desk, security desk)."@en ; skos:example "\"where is reception?\"" .
+
+# ── A.2 Knowledge topics (non-physical) ────────────────────────────────────────────────────────
+ontosage:KnowledgeTopic a owl:Class ;
+    rdfs:subClassOf ontosage:Capability ;
+    rdfs:label "Knowledge topic"@en ;
+    rdfs:comment "A non-physical capability: an informational fact, a how-to procedure, or a maintenance-issue reporting route. Answered from its ontosage:answerText plus contacts/steps — this is what lets policy/how-to/report questions be answered from triples instead of frozen prose."@en ;
+    skos:definition "An informational, procedural, or maintenance topic a stakeholder can ask about."@en .
+
+ontosage:InformationTopic rdfs:subClassOf ontosage:KnowledgeTopic ; a owl:Class ;
+    rdfs:label "Informational topic"@en ;
+    rdfs:comment "A factual/policy topic: opening hours, contacts, WiFi, GDPR, accessibility, transport."@en ;
+    skos:example "\"what are the reception hours?\" -> the reception-hours information topic." .
+ontosage:Procedure rdfs:subClassOf ontosage:KnowledgeTopic ; a owl:Class ;
+    rdfs:label "Procedure (how-to)"@en ;
+    rdfs:comment "A step-by-step process a stakeholder follows: making a complaint, booking a room, reporting lost property."@en ;
+    skos:example "\"how do I make a complaint?\" -> the complaint procedure (with steps + contact)." .
+ontosage:MaintenanceIssue rdfs:subClassOf ontosage:KnowledgeTopic ; a owl:Class ;
+    rdfs:label "Maintenance / fault issue"@en ;
+    rdfs:comment "A fault type and who to report it to: leak, broken light, broken lift, heating fault. MAY reference the brick:Equipment it concerns via ontosage:aboutEquipment."@en ;
+    skos:example "\"there is a water leak\" -> the leak maintenance issue (report route = Estates)." .
+
+# ── A.3 Object properties (the Brick alignment surface) ─────────────────────────────────────────
+ontosage:locatedIn a owl:ObjectProperty ;
+    rdfs:label "located in"@en ;
+    rdfs:comment "Ties a capability to the Brick location (floor / room / zone) it sits in, so spatial questions can join OCBV facts to the Brick model. RANGE IS A brick:Location — this is the primary OCBV↔Brick bridge."@en ;
+    rdfs:domain ontosage:Capability ;
+    rdfs:range brick:Location ;
+    skos:example "bldg:PrayerRoom_104 ontosage:locatedIn bldg:Room_1.04 ." .
+
+ontosage:aboutEquipment a owl:ObjectProperty ;
+    rdfs:label "about equipment"@en ;
+    rdfs:comment "Links a maintenance issue (or capability) to the Brick equipment it concerns, so a fault report can be tied to the real asset."@en ;
+    rdfs:domain ontosage:Capability ;
+    rdfs:range brick:Equipment ;
+    skos:example "bldg:Issue_BrokenLift ontosage:aboutEquipment bldg:Lift_1 ." .
+
+ontosage:servesFloor a owl:ObjectProperty ;
+    rdfs:label "serves floor"@en ;
+    rdfs:comment "A brick:Floor a capability serves (e.g. the floors a lift reaches)."@en ;
+    rdfs:domain ontosage:Capability ;
+    rdfs:range brick:Floor ;
+    skos:example "bldg:Lift_Main ontosage:servesFloor bldg:Floor_3 ." .
+
+ontosage:relatedTopic a owl:ObjectProperty ;
+    rdfs:label "related topic"@en ;
+    rdfs:comment "Links a capability to a related capability/topic (e.g. a broken-lift issue relates to the lift amenity)."@en ;
+    rdfs:domain ontosage:Capability ;
+    rdfs:range ontosage:Capability ;
+    skos:example "bldg:Issue_BrokenLift ontosage:relatedTopic bldg:Lift_Main ." .
+
+# ── A.4 Datatype properties (each is a field in the admin console "Add capability" form) ────────
+ontosage:layTerms a owl:DatatypeProperty ;
+    rdfs:label "lay-term keywords"@en ;
+    rdfs:comment "Comma-separated plain-language phrasings a stakeholder might use, INCLUDING full questions. OntoSage matches a question to this capability on these phrases (multi-word phrases and distinctive single words). The single most important field for retrieval quality."@en ;
+    rdfs:domain ontosage:Capability ; rdfs:range xsd:string ;
+    skos:example "\"prayer room, quiet room, where can i pray, faith room\"" .
+
+ontosage:locationText a owl:DatatypeProperty ;
+    rdfs:label "human-readable location"@en ;
+    rdfs:comment "Free-text location for an amenity, as a person would describe it."@en ;
+    rdfs:domain ontosage:Amenity ; rdfs:range xsd:string ;
+    skos:example "\"Floor 1, room 1.04\" or \"Left of the main entrance, ~25 m\"" .
+
+ontosage:onFloor a owl:DatatypeProperty ;
+    rdfs:label "floor identifier"@en ;
+    rdfs:comment "A floor label for an amenity (free text; use ontosage:locatedIn/servesFloor to link the actual brick:Floor)."@en ;
+    rdfs:domain ontosage:Amenity ; rdfs:range xsd:string ;
+    skos:example "\"1\" or \"Ground\"" .
+
+ontosage:capabilityCategory a owl:DatatypeProperty ;
+    rdfs:label "capability category"@en ;
+    rdfs:comment "A coarse category tag for grouping/filtering. Suggested values: AMENITIES, ACCESSIBILITY, INFORMATION, PROCEDURE, MAINTENANCE, SAFETY, SUSTAINABILITY."@en ;
+    rdfs:domain ontosage:Capability ; rdfs:range xsd:string ;
+    skos:example "\"MAINTENANCE\"" .
+
+ontosage:note a owl:DatatypeProperty ;
+    rdfs:label "additional detail"@en ;
+    rdfs:comment "Any extra free-text detail (features, caveats, opening notes)."@en ;
+    rdfs:domain ontosage:Capability ; rdfs:range xsd:string ;
+    skos:example "\"Multi-faith, open to all; wudu facilities adjacent.\"" .
+
+ontosage:answerText a owl:DatatypeProperty ;
+    rdfs:label "canonical answer"@en ;
+    rdfs:comment "The one-line canonical answer for a KnowledgeTopic — what OntoSage says when a stakeholder asks about it."@en ;
+    rdfs:domain ontosage:KnowledgeTopic ; rdfs:range xsd:string ;
+    skos:example "\"Complaints go to the Building Manager via the Facilities helpdesk.\"" .
+
+ontosage:infoUrl a owl:DatatypeProperty ;
+    rdfs:label "information URL"@en ;
+    rdfs:comment "A URL where a stakeholder can find more information."@en ;
+    rdfs:domain ontosage:KnowledgeTopic ; rdfs:range xsd:anyURI ;
+    skos:example "\"https://itservicedesk.example.ac.uk\"" .
+
+ontosage:contactEmail a owl:DatatypeProperty ;
+    rdfs:label "contact email"@en ;
+    rdfs:comment "The email to contact about this topic."@en ;
+    rdfs:domain ontosage:KnowledgeTopic ; rdfs:range xsd:string ;
+    skos:example "\"estates@example.ac.uk\"" .
+
+ontosage:contactPhone a owl:DatatypeProperty ;
+    rdfs:label "contact phone"@en ;
+    rdfs:comment "The phone number to contact about this topic."@en ;
+    rdfs:domain ontosage:KnowledgeTopic ; rdfs:range xsd:string ;
+    skos:example "\"029 2087 6026\"" .
+
+ontosage:reportTo a owl:DatatypeProperty ;
+    rdfs:label "report to"@en ;
+    rdfs:comment "Where or to whom a maintenance issue / procedure should be reported."@en ;
+    rdfs:domain ontosage:KnowledgeTopic ; rdfs:range xsd:string ;
+    skos:example "\"Estates FM helpdesk (estates@example.ac.uk / 029 2087 6026); out-of-hours 029 2087 5555\"" .
+
+ontosage:steps a owl:DatatypeProperty ;
+    rdfs:label "how-to steps"@en ;
+    rdfs:comment "Ordered steps for a Procedure, separated by semicolons; OntoSage renders them as a numbered list."@en ;
+    rdfs:domain ontosage:Procedure ; rdfs:range xsd:string ;
+    skos:example "\"Note the room and floor; Email the helpdesk or call; Use the app for urgent issues\"" .
+
+ontosage:priority a owl:DatatypeProperty ;
+    rdfs:label "default priority"@en ;
+    rdfs:comment "Suggested default priority for a maintenance issue. Values: LOW, MEDIUM, HIGH, URGENT."@en ;
+    rdfs:domain ontosage:MaintenanceIssue ; rdfs:range xsd:string ;
+    skos:example "\"URGENT\"  (e.g. a water leak or anyone trapped in a lift)" .
+
+ontosage:openingHours a owl:DatatypeProperty ;
+    rdfs:label "opening hours"@en ;
+    rdfs:comment "Free-text opening hours for an amenity or service."@en ;
+    rdfs:domain ontosage:Capability ; rdfs:range xsd:string ;
+    skos:example "\"Mon-Fri 09:00-16:30; closed weekends\"" .
+
+
+####################################################################################################
+#  MODULE B — HUMAN ⇄ BUILDING CONVERSATION CONCEPTS  (HBCO, prefix hbco:)
+#
+#  The sensor-question half of "talk to the building". Where Module A answers "where / how / who",
+#  Module B answers "how does it FEEL / what is it DOING" — the lay language occupants use for the
+#  building's environment ("stuffy", "too warm", "noisy", "dark") mapped to the Brick sensor classes
+#  whose live readings satisfy the concept. Seeded from OntoSage's pre-design question corpus.
+#  Consolidated here from the former ontology/hbco_core.ttl (kept as a stub) — same hbco: terms,
+#  non-breaking. Per-building lay-term instances live in hbco_mappings.ttl / input/<bldg>_concepts.ttl.
+####################################################################################################
+
+hbco:Concept a owl:Class ;
+    rdfs:label "HBCO Concept"@en ;
+    rdfs:comment "A building-condition or environment concept that occupants express in natural language (e.g. 'stuffy', 'too warm', 'noisy'). Each concept maps to one or more Brick sensor classes whose readings satisfy it — the bridge from lay language to live data."@en ;
+    skos:definition "An environment/comfort concept an occupant expresses in lay language, mapped to Brick sensor classes."@en ;
+    skos:example "hbco:Concept_Stuffy hbco:layTerm \"stuffy\" ; hbco:mapsToBrickClass brick:CO2_Sensor ." ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+hbco:CompositeConcept a owl:Class ;
+    rdfs:subClassOf hbco:Concept ;
+    rdfs:label "Composite HBCO Concept"@en ;
+    rdfs:comment "A concept whose measurement requires combining multiple atomic concepts (e.g. 'thermal comfort' = temperature + humidity)."@en ;
+    skos:example "hbco:Concept_ThermalComfort a hbco:CompositeConcept ." ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+hbco:mapsToBrickClass a owl:ObjectProperty ;
+    rdfs:label "maps to Brick class"@en ;
+    rdfs:comment "Links an hbco:Concept to the Brick sensor/point class whose readings satisfy the concept. This is the HBCO↔Brick bridge — the reason a lay word like 'stuffy' can resolve to live CO₂ data."@en ;
+    rdfs:domain hbco:Concept ;
+    rdfs:range owl:Class ;
+    skos:example "hbco:Concept_Stuffy hbco:mapsToBrickClass brick:CO2_Sensor ." ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+hbco:componentOf a owl:ObjectProperty ;
+    rdfs:label "component of"@en ;
+    rdfs:comment "Links an atomic hbco:Concept to the hbco:CompositeConcept it contributes to."@en ;
+    rdfs:domain hbco:Concept ;
+    rdfs:range hbco:CompositeConcept ;
+    skos:example "hbco:Concept_Temperature hbco:componentOf hbco:Concept_ThermalComfort ." ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+hbco:layTerm a owl:DatatypeProperty ;
+    rdfs:subPropertyOf skos:altLabel ;
+    rdfs:label "lay term"@en ;
+    rdfs:comment "A natural-language phrase an occupant uses to express this concept. Multiple values per concept are allowed. The HBCO analogue of ontosage:layTerms for environment concepts."@en ;
+    rdfs:domain hbco:Concept ;
+    rdfs:range xsd:string ;
+    skos:example "hbco:Concept_Stuffy hbco:layTerm \"stuffy\", \"airless\", \"needs fresh air\" ." ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+hbco:requiresRecipe a owl:DatatypeProperty ;
+    rdfs:label "requires recipe"@en ;
+    rdfs:comment "Identifier of the analytics recipe (threshold, range, aggregate, correlation) needed to evaluate this concept from raw readings."@en ;
+    rdfs:domain hbco:Concept ;
+    rdfs:range xsd:string ;
+    skos:example "\"threshold_gt_1000_ppm\"" ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+hbco:defaultUnit a owl:DatatypeProperty ;
+    rdfs:label "default unit"@en ;
+    rdfs:comment "QUDT unit symbol or plain string (e.g. 'degC', 'ppm', 'lux') for the primary measurement of this concept."@en ;
+    rdfs:domain hbco:Concept ;
+    rdfs:range xsd:string ;
+    skos:example "\"ppm\"" ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+hbco:personaDepth a owl:DatatypeProperty ;
+    rdfs:label "persona depth"@en ;
+    rdfs:comment "Integer 0-4 indicating the level of technical detail appropriate when explaining this concept to a stakeholder (0=lay occupant, 4=expert). Aligns with the stakeholder roles in Module C."@en ;
+    rdfs:domain hbco:Concept ;
+    rdfs:range xsd:integer ;
+    skos:example "0  (explain 'stuffy' to an occupant in plain terms, not as a CO₂ ppm figure)" ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+hbco:conceptId a owl:DatatypeProperty ;
+    rdfs:label "concept ID"@en ;
+    rdfs:comment "Machine-readable slug for the concept (matches the concept_id in the seed corpus)."@en ;
+    rdfs:domain hbco:Concept ;
+    rdfs:range xsd:string ;
+    skos:example "\"stuffy\"" ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+hbco:confidence a owl:DatatypeProperty ;
+    rdfs:label "confidence"@en ;
+    rdfs:comment "Curator confidence in this concept mapping: high | medium | low."@en ;
+    rdfs:domain hbco:Concept ;
+    rdfs:range xsd:string ;
+    skos:example "\"high\"" ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+hbco:roomCapacity a owl:DatatypeProperty ;
+    rdfs:label "room capacity"@en ;
+    rdfs:comment "Estimated or certified occupant capacity of a room or space (persons)."@en ;
+    rdfs:range xsd:integer ;
+    skos:example "40" ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+hbco:isQuietZone a owl:DatatypeProperty ;
+    rdfs:label "is quiet zone"@en ;
+    rdfs:comment "True if this floor or space is designated as a quiet study area."@en ;
+    rdfs:range xsd:boolean ;
+    skos:example "true" ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+hbco:spaceFunction a owl:DatatypeProperty ;
+    rdfs:label "space function"@en ;
+    rdfs:comment "Brief descriptor of the primary function of this space (e.g. seminar room, lab, office, corridor, atrium)."@en ;
+    rdfs:range xsd:string ;
+    skos:example "\"seminar room\"" ;
+    rdfs:isDefinedBy <http://ontosage.org/ontology> .
+
+# Bridge between the two lay-term properties, so a retriever/reasoner sees them as siblings.
+ontosage:layTerms skos:related hbco:layTerm .
+
+
+####################################################################################################
+#  MODULE C — STAKEHOLDER ROLES
+#
+#  WHO is asking. A role frames HOW an answer is phrased and WHICH capability categories are most
+#  relevant — it does NOT grant or restrict data access. Access control (RBAC) is a separate,
+#  security concern handled by OntoSage's auth layer; a role here is a conversational persona only.
+#  Modelled so a paper / an LLM can reason about audience without conflating it with permissions.
+####################################################################################################
+
+ontosage:StakeholderRole a owl:Class ;
+    rdfs:label "Stakeholder role"@en ;
+    rdfs:comment "A conversational persona OntoSage serves. Roles bias answer framing (depth, tone) and the capability categories surfaced first — they are NOT RBAC permissions. One natural-language interface serves every role."@en ;
+    skos:definition "A category of building stakeholder, used only to frame and prioritise answers (not for access control)."@en ;
+    skos:example "An Occupant asking 'is it stuffy?' gets a plain answer; a FacilityManager gets the CO₂ figure + trend." .
+
+ontosage:asksAbout a owl:ObjectProperty ;
+    rdfs:label "typically asks about"@en ;
+    rdfs:comment "Associates a stakeholder role with a capability category it most commonly asks about, so answers and suggestions can be prioritised for the audience. Advisory only — any role may ask anything."@en ;
+    rdfs:domain ontosage:StakeholderRole ;
+    rdfs:range skos:Concept ;
+    skos:example "ontosage:Role_SustainabilityOfficer ontosage:asksAbout ontosage:cat_SUSTAINABILITY ." .
+
+ontosage:defaultPersonaDepth a owl:DatatypeProperty ;
+    rdfs:label "default persona depth"@en ;
+    rdfs:comment "Default technical depth (0=lay .. 4=expert) for answers to this role; mirrors hbco:personaDepth so environment explanations match the audience."@en ;
+    rdfs:domain ontosage:StakeholderRole ; rdfs:range xsd:integer ;
+    skos:example "ontosage:Role_Occupant ontosage:defaultPersonaDepth 0 ." .
+
+ontosage:Role_Occupant a ontosage:StakeholderRole ; rdfs:label "Occupant"@en ;
+    rdfs:comment "A day-to-day building user (staff, student, resident). Asks about comfort, amenities, wayfinding, and how-to procedures in plain language."@en ;
+    ontosage:defaultPersonaDepth 0 ;
+    ontosage:asksAbout ontosage:cat_AMENITIES , ontosage:cat_INFORMATION , ontosage:cat_PROCEDURE .
+ontosage:Role_Visitor a ontosage:StakeholderRole ; rdfs:label "Visitor"@en ;
+    rdfs:comment "A guest with no prior knowledge of the building. Asks wayfinding, amenity, and access questions."@en ;
+    ontosage:defaultPersonaDepth 0 ;
+    ontosage:asksAbout ontosage:cat_AMENITIES , ontosage:cat_ACCESSIBILITY , ontosage:cat_INFORMATION .
+ontosage:Role_FacilityManager a ontosage:StakeholderRole ; rdfs:label "Facility manager"@en ;
+    rdfs:comment "Operates the building. Asks about sensor readings, trends, anomalies, maintenance, and equipment — wants figures and evidence, not just plain answers."@en ;
+    ontosage:defaultPersonaDepth 3 ;
+    ontosage:asksAbout ontosage:cat_MAINTENANCE , ontosage:cat_SAFETY , ontosage:cat_SUSTAINABILITY .
+ontosage:Role_Researcher a ontosage:StakeholderRole ; rdfs:label "Researcher"@en ;
+    rdfs:comment "A researcher/analyst querying the building's data and ontology. Comfortable with Brick classes, SPARQL, and raw figures."@en ;
+    ontosage:defaultPersonaDepth 4 ;
+    ontosage:asksAbout ontosage:cat_INFORMATION , ontosage:cat_SUSTAINABILITY .
+ontosage:Role_SustainabilityOfficer a ontosage:StakeholderRole ; rdfs:label "Sustainability officer"@en ;
+    rdfs:comment "Focuses on energy, carbon, and efficiency. Asks about consumption, trends, and comparisons."@en ;
+    ontosage:defaultPersonaDepth 3 ;
+    ontosage:asksAbout ontosage:cat_SUSTAINABILITY .
+ontosage:Role_SafetyOfficer a ontosage:StakeholderRole ; rdfs:label "Safety officer"@en ;
+    rdfs:comment "Responsible for health, safety, and compliance. Asks about air quality, occupancy limits, alarms, and incident reporting."@en ;
+    ontosage:defaultPersonaDepth 3 ;
+    ontosage:asksAbout ontosage:cat_SAFETY , ontosage:cat_MAINTENANCE .
+ontosage:Role_Executive a ontosage:StakeholderRole ; rdfs:label "Executive"@en ;
+    rdfs:comment "A decision-maker wanting summarised, high-level answers (KPIs, headline figures) rather than raw readings."@en ;
+    ontosage:defaultPersonaDepth 2 ;
+    ontosage:asksAbout ontosage:cat_SUSTAINABILITY , ontosage:cat_INFORMATION .
+ontosage:Role_Student a ontosage:StakeholderRole ; rdfs:label "Student"@en ;
+    rdfs:comment "A learner using the building; asks about study spaces, amenities, timetables, and how-to procedures."@en ;
+    ontosage:defaultPersonaDepth 0 ;
+    ontosage:asksAbout ontosage:cat_AMENITIES , ontosage:cat_INFORMATION , ontosage:cat_PROCEDURE .
+ontosage:Role_Admin a ontosage:StakeholderRole ; rdfs:label "Administrator"@en ;
+    rdfs:comment "Configures OntoSage and authors the ontology. Uses the admin console and the browsers; the only role that adds/edits triples."@en ;
+    ontosage:defaultPersonaDepth 4 ;
+    ontosage:asksAbout ontosage:cat_INFORMATION , ontosage:cat_MAINTENANCE .
+
+
+####################################################################################################
+#  MODULE D — QUESTION-INTENT GRAMMAR
+#
+#  The *kinds* of question a stakeholder asks — the grammar of talking to a building. Where Modules
+#  A/B model WHAT the building knows, Module D models the SHAPE of the ask, so OntoSage (and an LLM
+#  reading this schema) can classify a question and pick the right answering strategy: look up a
+#  fact, compute an aggregate, trend a series, compare, detect an anomaly, forecast, or file a
+#  report. Each intent declares example phrasings and the answering strategy it typically uses.
+####################################################################################################
+
+ontosage:QuestionIntent a owl:Class ;
+    rdfs:label "Question intent"@en ;
+    rdfs:comment "A kind of question a stakeholder can ask, independent of the specific building. Classifying an utterance to an intent selects the answering strategy (fact lookup vs computation vs time-series vs report)."@en ;
+    skos:definition "The shape/kind of a stakeholder question (locate, quantify, trend, compare, …)."@en ;
+    skos:example "\"how many CO₂ sensors are there?\" -> ontosage:Intent_Quantify." .
+
+ontosage:intentPattern a owl:DatatypeProperty ;
+    rdfs:label "intent phrasings"@en ;
+    rdfs:comment "Comma-separated example phrasings / trigger cues for an intent — the lay grammar OntoSage matches to classify a question into this intent."@en ;
+    rdfs:domain ontosage:QuestionIntent ; rdfs:range xsd:string ;
+    skos:example "\"how many, count, number of, total\"" .
+
+ontosage:answeredBy a owl:ObjectProperty ;
+    rdfs:label "answered by source type"@en ;
+    rdfs:comment "The provenance/source type (Module F) an intent is typically answered from — e.g. a Quantify intent is answered by a SPARQL COUNT over the graph, a Trend intent by the time-series DB plus analytics."@en ;
+    rdfs:domain ontosage:QuestionIntent ; rdfs:range ontosage:SourceType ;
+    skos:example "ontosage:Intent_Trend ontosage:answeredBy ontosage:Src_TimeSeriesDB , ontosage:Src_Analytics ." .
+
+ontosage:Intent_Locate a ontosage:QuestionIntent ; rdfs:label "Locate / wayfinding"@en ;
+    rdfs:comment "Find where something is (amenity, room, sensor, equipment)."@en ;
+    ontosage:intentPattern "where is, where can i find, how do i get to, nearest, location of" ;
+    ontosage:answeredBy ontosage:Src_GraphDB , ontosage:Src_FloorPlan .
+ontosage:Intent_Quantify a ontosage:QuestionIntent ; rdfs:label "Quantify / current value"@en ;
+    rdfs:comment "Ask for a count or a current reading — 'how many', 'what is the level right now'."@en ;
+    ontosage:intentPattern "how many, count, number of, what is the, current, right now, level of" ;
+    ontosage:answeredBy ontosage:Src_GraphDB , ontosage:Src_TimeSeriesDB .
+ontosage:Intent_Trend a ontosage:QuestionIntent ; rdfs:label "Trend / history"@en ;
+    rdfs:comment "Ask how a value has changed over a period — 'trend', 'over the last week', 'average yesterday'."@en ;
+    ontosage:intentPattern "trend, over time, history, average, last week, yesterday, past month, plot" ;
+    ontosage:answeredBy ontosage:Src_TimeSeriesDB , ontosage:Src_Analytics .
+ontosage:Intent_Compare a ontosage:QuestionIntent ; rdfs:label "Compare"@en ;
+    rdfs:comment "Compare two or more things — floors, zones, periods."@en ;
+    ontosage:intentPattern "compare, versus, vs, difference between, which is higher, warmer than" ;
+    ontosage:answeredBy ontosage:Src_TimeSeriesDB , ontosage:Src_Analytics .
+ontosage:Intent_Anomaly a ontosage:QuestionIntent ; rdfs:label "Anomaly / status"@en ;
+    rdfs:comment "Ask whether something is abnormal or OK — 'is anything wrong?', 'any alarms?'."@en ;
+    ontosage:intentPattern "anomaly, abnormal, unusual, is anything wrong, alarms, out of range, faults" ;
+    ontosage:answeredBy ontosage:Src_Analytics , ontosage:Src_TimeSeriesDB .
+ontosage:Intent_Forecast a ontosage:QuestionIntent ; rdfs:label "Forecast / predict"@en ;
+    rdfs:comment "Ask for a projection of a value — 'what will the temperature be tomorrow?'."@en ;
+    ontosage:intentPattern "forecast, predict, will it, expected, tomorrow, next week, projection" ;
+    ontosage:answeredBy ontosage:Src_Analytics .
+ontosage:Intent_Comfort a ontosage:QuestionIntent ; rdfs:label "Comfort / environment"@en ;
+    rdfs:comment "Ask about how the space feels using lay language — resolved via Module B concepts ('is it stuffy / too warm / noisy?')."@en ;
+    ontosage:intentPattern "too warm, too cold, stuffy, noisy, dark, is it comfortable, air quality" ;
+    ontosage:answeredBy ontosage:Src_TimeSeriesDB , ontosage:Src_Analytics .
+ontosage:Intent_Discover a ontosage:QuestionIntent ; rdfs:label "Discover / metadata"@en ;
+    rdfs:comment "Explore what the building has — 'what sensors are on floor 3?', 'list the equipment'."@en ;
+    ontosage:intentPattern "what sensors, list, show me all, what equipment, what can you tell me about" ;
+    ontosage:answeredBy ontosage:Src_GraphDB .
+ontosage:Intent_ProcedureAsk a ontosage:QuestionIntent ; rdfs:label "Procedure / how-to"@en ;
+    rdfs:comment "Ask how to do something — answered from a Module A ontosage:Procedure."@en ;
+    ontosage:intentPattern "how do i, how to, what is the process for, steps to, procedure for" ;
+    ontosage:answeredBy ontosage:Src_CapabilityKB , ontosage:Src_GraphDB .
+ontosage:Intent_Report a ontosage:QuestionIntent ; rdfs:label "Report / statement"@en ;
+    rdfs:comment "STATE a problem rather than ask a question — 'the toilet is leaking', 'the lift is broken'. Files a Module E report; distinct from asking whether something is broken."@en ;
+    ontosage:intentPattern "is leaking, is broken, doesn't work, i want to report, there is a problem with" ;
+    ontosage:answeredBy ontosage:Src_ReportIntake .
+
+
+####################################################################################################
+#  MODULE E — REPORT INTAKE
+#
+#  When a stakeholder STATES a problem (not a question), OntoSage files a report. This module models
+#  the report as data — its kind, subject, priority, and who filed it — so an operator can triage it
+#  and it can be tied back to the Module A maintenance issue and the Brick asset it concerns.
+####################################################################################################
+
+ontosage:Report a owl:Class ;
+    rdfs:label "Report"@en ;
+    rdfs:comment "A stakeholder-submitted statement about the building requiring action or acknowledgement: a fault, complaint, safety concern, feedback, or suggestion. Created from a Module D Intent_Report utterance."@en ;
+    skos:definition "A submitted fault/complaint/safety/feedback/suggestion record."@en ;
+    skos:example "\"the toilet on floor 2 is leaking\" -> an ontosage:FaultReport." .
+
+ontosage:FaultReport a owl:Class ; rdfs:subClassOf ontosage:Report ; rdfs:label "Fault report"@en ;
+    rdfs:comment "A reported equipment/facility fault (leak, broken light, broken lift). Typically ties to a Module A ontosage:MaintenanceIssue and, via ontosage:aboutEquipment, to the brick:Equipment."@en ;
+    skos:example "\"the lift is stuck\"." .
+ontosage:Complaint a owl:Class ; rdfs:subClassOf ontosage:Report ; rdfs:label "Complaint"@en ;
+    rdfs:comment "A dissatisfaction report (noise, cleanliness, temperature, service)."@en ;
+    skos:example "\"it's freezing in room 3.01 again\"." .
+ontosage:SafetyReport a owl:Class ; rdfs:subClassOf ontosage:Report ; rdfs:label "Safety report"@en ;
+    rdfs:comment "A health/safety concern or hazard (blocked exit, spill, trip hazard) — usually high priority."@en ;
+    skos:example "\"the fire exit on floor 1 is blocked\"." .
+ontosage:Feedback a owl:Class ; rdfs:subClassOf ontosage:Report ; rdfs:label "Feedback"@en ;
+    rdfs:comment "General feedback about the building or OntoSage itself."@en ;
+    skos:example "\"the new signage is really helpful\"." .
+ontosage:Suggestion a owl:Class ; rdfs:subClassOf ontosage:Report ; rdfs:label "Suggestion"@en ;
+    rdfs:comment "A proposed improvement (add a water fountain, extend café hours)."@en ;
+    skos:example "\"you should add more bike racks\"." .
+
+ontosage:reportSubjectText a owl:DatatypeProperty ; rdfs:label "report subject"@en ;
+    rdfs:comment "The stakeholder's own words describing what they are reporting."@en ;
+    rdfs:domain ontosage:Report ; rdfs:range xsd:string ;
+    skos:example "\"water dripping from the ceiling near the lift\"" .
+ontosage:reportStatus a owl:DatatypeProperty ; rdfs:label "report status"@en ;
+    rdfs:comment "Triage state of a report. Values: NEW, ACKNOWLEDGED, IN_PROGRESS, RESOLVED, CLOSED."@en ;
+    rdfs:domain ontosage:Report ; rdfs:range xsd:string ;
+    skos:example "\"NEW\"" .
+ontosage:reportPriority a owl:DatatypeProperty ; rdfs:label "report priority"@en ;
+    rdfs:comment "Triage priority. Values: LOW, MEDIUM, HIGH, URGENT (mirrors ontosage:priority on the related maintenance issue)."@en ;
+    rdfs:domain ontosage:Report ; rdfs:range xsd:string ;
+    skos:example "\"URGENT\"" .
+ontosage:reportedByRole a owl:ObjectProperty ; rdfs:label "reported by role"@en ;
+    rdfs:comment "The stakeholder role that filed the report (Module C). Advisory context, not identity."@en ;
+    rdfs:domain ontosage:Report ; rdfs:range ontosage:StakeholderRole ;
+    skos:example "bldg:Report_042 ontosage:reportedByRole ontosage:Role_Occupant ." .
+ontosage:concernsIssue a owl:ObjectProperty ; rdfs:label "concerns issue"@en ;
+    rdfs:comment "Links a report to the Module A ontosage:MaintenanceIssue it is an instance of, so its report route / priority are inherited."@en ;
+    rdfs:domain ontosage:Report ; rdfs:range ontosage:MaintenanceIssue ;
+    skos:example "bldg:Report_042 ontosage:concernsIssue bldg:Issue_WaterLeak ." .
+
+
+####################################################################################################
+#  MODULE F — ANSWER PROVENANCE / GROUNDING
+#
+#  OntoSage's core promise is HONEST, grounded answers — every figure traces to live data, and if a
+#  referent doesn't exist or the data isn't loaded, it says so rather than fabricating. This module
+#  gives that promise a vocabulary: the source TYPES an answer can be grounded in, and the properties
+#  that tag an answer with its provenance (which sources produced it, and whether any data is
+#  simulated). This is what lets a response carry auditable "provenance chips".
+####################################################################################################
+
+ontosage:SourceType a owl:Class ;
+    rdfs:label "Answer source type"@en ;
+    rdfs:comment "A kind of system an OntoSage answer can be grounded in. An answer records which source type(s) produced it, so it is auditable and never a plausible-but-unsourced guess."@en ;
+    skos:definition "A category of grounding source for an answer (graph, time-series DB, floor plan, analytics, …)."@en ;
+    skos:example "A trend answer is grounded in Src_TimeSeriesDB + Src_Analytics." .
+
+ontosage:Src_GraphDB       a ontosage:SourceType ; rdfs:label "Knowledge graph (SPARQL/GraphDB)"@en ; rdfs:comment "Structural/metadata facts answered by SPARQL over the Brick + OCBV graph."@en .
+ontosage:Src_TimeSeriesDB  a ontosage:SourceType ; rdfs:label "Time-series database"@en ; rdfs:comment "Live sensor readings fetched by UUID from the registered time-series store."@en .
+ontosage:Src_Analytics     a ontosage:SourceType ; rdfs:label "Analytics / forecast engine"@en ; rdfs:comment "Computed results — aggregates, anomalies, forecasts — over sensor data."@en .
+ontosage:Src_FloorPlan     a ontosage:SourceType ; rdfs:label "Floor plan (PDF/DWG)"@en ; rdfs:comment "Spatial geometry answers from floor-plan manifests (areas, adjacency, block locations)."@en .
+ontosage:Src_CapabilityKB  a ontosage:SourceType ; rdfs:label "Capability / document KB"@en ; rdfs:comment "Off-ontology amenity/procedure/policy facts (Module A) and document retrieval."@en .
+ontosage:Src_ReportIntake  a ontosage:SourceType ; rdfs:label "Report intake"@en ; rdfs:comment "The report-filing path (Module E) — used when the utterance states a problem."@en .
+
+ontosage:groundedIn a owl:ObjectProperty ;
+    rdfs:label "grounded in"@en ;
+    rdfs:comment "Records a source type that produced (part of) an answer. An answer with no ontosage:groundedIn is not grounded and must not assert figures — the honest 'no data' path applies instead."@en ;
+    rdfs:range ontosage:SourceType ;
+    skos:example "an answer about last week's CO₂ trend ontosage:groundedIn ontosage:Src_TimeSeriesDB , ontosage:Src_Analytics ." .
+
+ontosage:isSimulated a owl:DatatypeProperty ;
+    rdfs:label "is simulated data"@en ;
+    rdfs:comment "True when the underlying readings are synthetic/simulated (injected to demonstrate a capability the live BMS doesn't expose) rather than real. Surfaced so an answer never implies simulated figures are live."@en ;
+    rdfs:range xsd:boolean ;
+    skos:example "true" .
+
+
+####################################################################################################
+#  MODULE G — COMPETENCY QUESTIONS + EXAMPLE SPARQL
+#
+#  A schema is only useful if it answers real questions. This module records, as machine-readable
+#  annotations, the competency questions each part of OCBV is designed to answer and an example
+#  SPARQL query that answers them over a Brick + OCBV graph. This is doubly valuable: it documents
+#  the schema's purpose for the paper, and — chunked into the vector store — it teaches the LLM the
+#  exact query shape to generate for a given kind of question (grounded, copy-adaptable retrieval).
+####################################################################################################
+
+ontosage:competencyQuestion a owl:AnnotationProperty ;
+    rdfs:label "competency question"@en ;
+    rdfs:comment "A natural-language question the annotated term is designed to help answer. Used to document and evaluate schema coverage, and as a retrieval anchor for LLM query generation."@en .
+
+ontosage:exampleSparql a owl:AnnotationProperty ;
+    rdfs:label "example SPARQL"@en ;
+    rdfs:comment "A worked SPARQL query answering a competency question for the annotated term, over a combined Brick + OCBV graph (prefixes bldg:, brick:, ontosage:, hbco:)."@en .
+
+# ── Amenity: locate a facility a stakeholder asks for ──────────────────────────────────────────
+ontosage:Amenity
+    ontosage:competencyQuestion "Where is the prayer room / café / nearest lift?" ;
+    ontosage:competencyQuestion "What amenities are on floor 1?" ;
+    ontosage:exampleSparql """
+        # \"where can I pray?\" — match lay terms, return the human location.
+        SELECT ?amenity ?label ?where WHERE {
+          ?amenity a ontosage:Amenity ;
+                   ontosage:layTerms ?lt ;
+                   rdfs:label ?label .
+          OPTIONAL { ?amenity ontosage:locationText ?where }
+          FILTER(CONTAINS(LCASE(?lt), \"pray\"))
+        } LIMIT 5""" .
+
+# ── hbco:Concept: resolve a lay word to live sensor data ───────────────────────────────────────
+hbco:Concept
+    ontosage:competencyQuestion "Is it stuffy / too warm / too noisy in here?" ;
+    ontosage:exampleSparql """
+        # \"is it stuffy?\" — resolve the lay concept to its Brick sensor class,
+        # then find those sensors + UUIDs to fetch live readings from the time-series DB.
+        SELECT ?sensor ?uuid WHERE {
+          ?concept a hbco:Concept ; hbco:layTerm ?term ; hbco:mapsToBrickClass ?cls .
+          FILTER(CONTAINS(LCASE(?term), \"stuffy\"))
+          ?sensor a ?cls ; brick:hasExternalReference ?ref .
+          ?ref brick:hasTimeseriesId ?uuid .
+        } LIMIT 25""" .
+
+# ── QuestionIntent: classify the ask and pick the strategy ─────────────────────────────────────
+ontosage:QuestionIntent
+    ontosage:competencyQuestion "What kind of question is this, and how should it be answered?" ;
+    ontosage:exampleSparql """
+        # Given cue words, find the matching intent and its answering source types.
+        SELECT ?intent ?label (GROUP_CONCAT(?src; separator=\", \") AS ?sources) WHERE {
+          ?intent a ontosage:QuestionIntent ; rdfs:label ?label ; ontosage:intentPattern ?pat .
+          OPTIONAL { ?intent ontosage:answeredBy ?s . ?s rdfs:label ?src }
+          FILTER(CONTAINS(LCASE(?pat), \"how many\"))
+        } GROUP BY ?intent ?label""" .
+
+# ── MaintenanceIssue / Report: route a stated problem ──────────────────────────────────────────
+ontosage:MaintenanceIssue
+    ontosage:competencyQuestion "The toilet is leaking — who do I tell, and how urgent is it?" ;
+    ontosage:exampleSparql """
+        # Match a stated fault to its issue and return the report route + priority.
+        SELECT ?issue ?reportTo ?priority WHERE {
+          ?issue a ontosage:MaintenanceIssue ; ontosage:layTerms ?lt .
+          OPTIONAL { ?issue ontosage:reportTo ?reportTo }
+          OPTIONAL { ?issue ontosage:priority ?priority }
+          FILTER(CONTAINS(LCASE(?lt), \"leak\"))
+        } LIMIT 1""" .
+
+# ── StakeholderRole: frame the answer for the audience ─────────────────────────────────────────
+ontosage:StakeholderRole
+    ontosage:competencyQuestion "For this role, how deep should the answer be and what do they care about?" ;
+    ontosage:exampleSparql """
+        SELECT ?role ?depth (GROUP_CONCAT(?cat; separator=\", \") AS ?cats) WHERE {
+          ?role a ontosage:StakeholderRole ; ontosage:defaultPersonaDepth ?depth .
+          OPTIONAL { ?role ontosage:asksAbout ?c . ?c skos:prefLabel ?cat }
+        } GROUP BY ?role ?depth""" .
+
+
+####################################################################################################
+#  MODULE H — STANDARDS ALIGNMENT  (positioning; SKOS mapping properties only, never owl:equivalent*)
+#
+#  OCBV coexists with the established building-ontology stack. These are non-entailing alignments:
+#  they help a reader / an LLM place OCBV terms, without importing external axioms that could
+#  contradict a loaded Brick model. (Instances still use Brick classes directly as property ranges.)
+####################################################################################################
+
+ontosage:locatedIn   skos:relatedMatch bot:containsElement , rec:isLocationOf .
+ontosage:servesFloor skos:relatedMatch bot:hasStorey .
+hbco:mapsToBrickClass skos:relatedMatch sosa:observes .
+hbco:Concept          skos:closeMatch  sosa:ObservableProperty .
+<http://ontosage.org/ontology> dcterms:conformsTo
+    <https://brickschema.org/schema/Brick> , <https://w3id.org/rec> , <https://w3id.org/bot> ,
+    <http://www.w3.org/ns/sosa/> .
+
+
+####################################################################################################
+#  MODULE I — CONTROLLED VOCABULARIES  (suggested capabilityCategory values, as SKOS concepts)
+#     These double as the values a role ontosage:asksAbout, and as the admin console category picker.
+####################################################################################################
+
+ontosage:CategoryScheme a skos:ConceptScheme ; rdfs:label "OCBV capability categories"@en .
+ontosage:cat_AMENITIES      a skos:Concept ; skos:inScheme ontosage:CategoryScheme ; skos:prefLabel "AMENITIES"@en .
+ontosage:cat_ACCESSIBILITY  a skos:Concept ; skos:inScheme ontosage:CategoryScheme ; skos:prefLabel "ACCESSIBILITY"@en .
+ontosage:cat_INFORMATION    a skos:Concept ; skos:inScheme ontosage:CategoryScheme ; skos:prefLabel "INFORMATION"@en .
+ontosage:cat_PROCEDURE      a skos:Concept ; skos:inScheme ontosage:CategoryScheme ; skos:prefLabel "PROCEDURE"@en .
+ontosage:cat_MAINTENANCE    a skos:Concept ; skos:inScheme ontosage:CategoryScheme ; skos:prefLabel "MAINTENANCE"@en .
+ontosage:cat_SAFETY         a skos:Concept ; skos:inScheme ontosage:CategoryScheme ; skos:prefLabel "SAFETY"@en .
+ontosage:cat_SUSTAINABILITY a skos:Concept ; skos:inScheme ontosage:CategoryScheme ; skos:prefLabel "SUSTAINABILITY"@en .
+
+# ── I.2 SHACL validation shapes (checked before upload; consolidated from the former hbco_core) ──
+ontosage:CapabilityShape a sh:NodeShape ;
+    sh:targetClass ontosage:Capability ;
+    rdfs:label "Capability shape"@en ;
+    sh:property [
+        sh:path ontosage:layTerms ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "Every ontosage:Capability should carry at least one ontosage:layTerms value — it is how a stakeholder question is matched to it."@en ;
+    ] .
+
+hbco:ConceptShape a sh:NodeShape ;
+    sh:targetClass hbco:Concept ;
+    rdfs:label "Concept shape"@en ;
+    sh:property [
+        sh:path hbco:layTerm ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "Every hbco:Concept must have at least one hbco:layTerm."@en ;
+    ] ;
+    sh:property [
+        sh:path hbco:requiresRecipe ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "hbco:requiresRecipe must be a single xsd:string if present."@en ;
+    ] ;
+    sh:property [
+        sh:path hbco:personaDepth ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:message "hbco:personaDepth must be a single integer if present."@en ;
+    ] .
+
+ontosage:ReportShape a sh:NodeShape ;
+    sh:targetClass ontosage:Report ;
+    rdfs:label "Report shape"@en ;
+    sh:property [
+        sh:path ontosage:reportSubjectText ;
+        sh:minCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "Every ontosage:Report must record what is being reported (ontosage:reportSubjectText)."@en ;
+    ] .
+
+
+####################################################################################################
+#  MODULE J — WORKED EXAMPLES  (documentation only — per-building instances live in
+#     <bldg>_capabilities.ttl / <bldg>_knowledge.ttl / hbco_mappings.ttl. Shown here so the schema
+#     is self-teaching for humans and for RAG.)
+#  ------------------------------------------------------------------------------------------------
+#  # An AMENITY (physical, with a Brick location link):
+#  bldg:PrayerRoom_104 a ontosage:PrayerRoom, ontosage:Amenity ;
+#      rdfs:label "Multi-faith prayer & reflection room" ;
+#      ontosage:layTerms "prayer room, quiet room, where can i pray, faith room" ;
+#      ontosage:locationText "Floor 1, room 1.04" ;
+#      ontosage:onFloor "1" ;
+#      ontosage:locatedIn bldg:Room_1.04 ;          # <- Brick alignment
+#      ontosage:capabilityCategory "AMENITIES" ;
+#      ontosage:note "Multi-faith, open to all." .
+#
+#  # A PROCEDURE (how-to):
+#  bldg:Topic_MakeComplaint a ontosage:Procedure, ontosage:KnowledgeTopic ;
+#      rdfs:label "Making a complaint" ;
+#      ontosage:layTerms "complaint, complain, how do i make a complaint, feedback, raise an issue" ;
+#      ontosage:answerText "Complaints go to the Building Manager via the Facilities helpdesk." ;
+#      ontosage:contactEmail "estates@example.ac.uk" ;
+#      ontosage:contactPhone "029 2087 6026" ;
+#      ontosage:reportTo "Facilities helpdesk / Building Manager" ;
+#      ontosage:steps "Note the room, floor and issue; Email or call the helpdesk; Use the app for urgent issues" ;
+#      ontosage:capabilityCategory "PROCEDURE" .
+#
+#  # A MAINTENANCE ISSUE (fault -> who to tell, tied to Brick equipment):
+#  bldg:Issue_WaterLeak a ontosage:MaintenanceIssue, ontosage:KnowledgeTopic ;
+#      rdfs:label "Water leak / leakage" ;
+#      ontosage:layTerms "leak, leaking, leakage, water on the floor, flooding, dripping" ;
+#      ontosage:answerText "Report water leaks to Estates immediately so they can isolate the supply." ;
+#      ontosage:reportTo "Estates FM helpdesk (estates@example.ac.uk / 029 2087 6026); out-of-hours 029 2087 5555" ;
+#      ontosage:priority "URGENT" ;
+#      ontosage:capabilityCategory "MAINTENANCE" .
+#
+#  # AN ENVIRONMENT CONCEPT (lay word -> Brick sensor class, evaluated from live data):
+#  hbco:Concept_Stuffy a hbco:Concept ;
+#      hbco:conceptId "stuffy" ;
+#      hbco:layTerm "stuffy", "airless", "needs fresh air", "hard to breathe" ;
+#      hbco:mapsToBrickClass brick:CO2_Sensor ;
+#      hbco:requiresRecipe "threshold_gt_1000_ppm" ;
+#      hbco:defaultUnit "ppm" ;
+#      hbco:personaDepth 0 ;
+#      hbco:confidence "high" .
+####################################################################################################
+
+####################################################################################################
+#  CHANGELOG
+#  ------------------------------------------------------------------------------------------------
+#  2.0.0 (2026-07-17)  Consolidated release. Single-file "conversational layer" over Brick.
+#      + Folded the HBCO conversation ontology (Module B) into this file (hbco: terms unchanged;
+#        ontology/hbco_core.ttl is now a stub pointing here — non-breaking).
+#      + Module C  Stakeholder roles (framing personas, explicitly NOT RBAC).
+#      + Module D  Question-intent grammar (locate / quantify / trend / compare / anomaly /
+#        forecast / comfort / discover / procedure / report).
+#      + Module E  Report intake (fault / complaint / safety / feedback / suggestion).
+#      + Module F  Answer provenance / grounding (source types + groundedIn + isSimulated) —
+#        the vocabulary behind OntoSage's honest, auditable answers.
+#      + Module G  Competency questions + example SPARQL per class (RAG + evaluation).
+#      + Module H  Explicit Brick / REC / BOT / SOSA alignment (SKOS mapping only, non-entailing).
+#      + Module I  Added SHACL shapes for Capability and Report (Concept shape moved from hbco_core).
+#      = Module A  Capabilities: unchanged from 1.0.0 (fully backward-compatible; all v1 instances
+#        keep resolving).
+#  1.0.0 (2026-07-15)  Initial OCBV — capabilities (amenities + knowledge topics) over Brick.
+####################################################################################################
+
