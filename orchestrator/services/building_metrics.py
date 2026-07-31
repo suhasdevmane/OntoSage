@@ -77,6 +77,12 @@ class BuildingMetricsSnapshot:
     sensor_types: List[Tuple[str, int]] = field(default_factory=list)  # (class, count)
     total_area_m2: Optional[float] = None
     per_floor_area: List[Tuple[int, float, int]] = field(default_factory=list)
+    # CAVEAT-007: declared-in-ontology vs actually-streaming are different facts.
+    # reporting_sensors = DISTINCT declared sensors with at least one stored reading
+    # inside the last `reporting_window_h` hours, checked live against every
+    # registered time-series backend of the ACTIVE building. None = check unavailable.
+    reporting_sensors: Optional[int] = None
+    reporting_window_h: int = 24
     generated_at: float = 0.0
 
     def has_counts(self) -> bool:
@@ -93,9 +99,11 @@ class BuildingMetrics:
         self,
         sparql_exec: Optional[SparqlExec] = None,
         area_provider: Optional[AreaProvider] = None,
+        reporting_provider: Optional[Callable[[int], Awaitable[Optional[int]]]] = None,
     ):
         self._exec = sparql_exec or _default_sparql_exec
         self._areas = area_provider or _default_area_provider
+        self._reporting = reporting_provider or _default_reporting_provider
         self._cache: dict[str, BuildingMetricsSnapshot] = {}
 
     async def snapshot(
@@ -145,6 +153,11 @@ class BuildingMetrics:
                 snap.total_area_m2 = round(sum(a for _, a, _ in floors), 1)
         except Exception as e:
             logger.warning(f"[building_metrics] area provider failed: {e}")
+
+        try:
+            snap.reporting_sensors = await self._reporting(snap.reporting_window_h)
+        except Exception as e:
+            logger.warning(f"[building_metrics] reporting-coverage check failed: {e}")
 
         self._cache[building_id] = snap
         return snap
@@ -228,6 +241,70 @@ def _default_area_provider(building_id: str) -> List[Tuple[int, float, int]]:
     return out
 
 
+async def _default_reporting_provider(window_hours: int = 24) -> Optional[int]:
+    """DISTINCT declared sensors with a stored reading in the last ``window_hours``.
+
+    Building-agnostic: the declared uuid→storage mapping comes from the ACTIVE
+    building's sensor-map cache (``settings.SENSOR_MAP_PATH``), and each storage
+    key resolves through the adapter registry — the same config-driven routing the
+    SQL pipeline uses. Never raises; returns ``None`` when the check can't run.
+    """
+    import json
+    from pathlib import Path
+
+    from shared.config import settings
+
+    try:
+        smap = json.loads(Path(settings.SENSOR_MAP_PATH).read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+    declared: dict[str, set] = {}  # storage key -> declared uuids
+    for v in smap.values():
+        if isinstance(v, dict) and v.get("uuid") and v.get("storage"):
+            declared.setdefault(str(v["storage"]), set()).add(str(v["uuid"]))
+    if not declared:
+        return None
+
+    try:
+        from orchestrator.services.adapters.registry import adapter_registry
+    except Exception:
+        return None
+    if not adapter_registry.is_available:
+        return None
+
+    reporting: set = set()
+    for storage_key, uuids in declared.items():
+        try:
+            adapter = adapter_registry.get(storage_key)
+            if adapter is None or not hasattr(adapter, "execute_query"):
+                continue
+            table = getattr(adapter, "table", None)
+            if table:  # narrow (uuid, datetime, value) table — direct DISTINCT
+                sql = (
+                    f"SELECT DISTINCT `uuid` FROM `{table}` "
+                    f"WHERE `datetime` >= NOW() - INTERVAL {int(window_hours)} HOUR"
+                )
+                res = await adapter.execute_query(sql)
+                if res.success:
+                    reporting |= {str(r.get("uuid")) for r in res.data} & uuids
+            else:  # wide table — uuids are COLUMNS; sample recent rows
+                sql = (
+                    "SELECT * FROM `sensor_data` "
+                    f"WHERE `datetime` >= NOW() - INTERVAL {int(window_hours)} HOUR "
+                    "ORDER BY `datetime` DESC LIMIT 25"
+                )
+                res = await adapter.execute_query(sql)
+                if res.success:
+                    seen: set = set()
+                    for row in res.data:
+                        seen |= {k for k, val in row.items() if val is not None}
+                    reporting |= seen & uuids
+        except Exception as e:
+            logger.warning(f"[building_metrics] reporting check failed for '{storage_key}': {e}")
+    return len(reporting)
+
+
 def _resolve_namespace(building_id: str) -> str:
     """Active building's ontology namespace; falls back to the process-global default."""
     try:
@@ -256,7 +333,15 @@ def render_metrics_block(snap: BuildingMetricsSnapshot, building_name: str) -> s
     if snap.total_points is not None:
         lines.append(f"- Instrumented points in the ontology: **{snap.total_points:,}**")
     if snap.total_sensors is not None:
-        lines.append(f"- Sensors: **{snap.total_sensors:,}**")
+        # CAVEAT-007: never present the ontology count as operational reality —
+        # say what is DECLARED and, when known, how many actually reported data.
+        sensors_line = f"- Sensors declared in the building model: **{snap.total_sensors:,}**"
+        lines.append(sensors_line)
+        if snap.reporting_sensors is not None:
+            lines.append(
+                f"- Sensors that reported data in the last {snap.reporting_window_h} h: "
+                f"**{snap.reporting_sensors:,}** (live check across the registered databases)"
+            )
     if snap.zone_count is not None:
         lines.append(f"- Zones / locations: **{snap.zone_count:,}**")
     if snap.floor_count is not None:

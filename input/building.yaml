@@ -1,126 +1,33 @@
-# Per-building config for the Abacws building (bldg1).
-# Read by orchestrator services (SemanticRouter, CapabilityIndexer, etc.)
-#
-# When this file is absent, defaults from shared/capability_schema.py apply.
+# ── Building identity: bldg2 (BuildSys reference building) ───────────────────
+# The ontology_namespace below MUST match the `@prefix bldg:` declared in
+# bldg2.ttl exactly — the startup TTL validator hard-fails the boot on a
+# mismatch, so a silently-empty knowledge graph is impossible.
+building_id: bldg2
+building_name: "BuildSys Building (bldg2)"
+ontology_namespace: "http://buildsys.org/ontologies/bldg2#"
+ontology_prefix: bldg          # bldg2.ttl uses the standard `bldg:` label
 
-# Logical building ID — matches settings.BUILDING_ID / env var BUILDING_ID.
-# The floor plan PDF filenames slugify to "abacws", which is declared in
-# `floor_plan_aliases` below so both keys resolve to the same data.
-building_id: bldg1
-building_name: Abacws Building
-
-# Single source of truth for this building's RDF namespace (ABox instances).
-# Must end with '#'. Every *.ttl in this folder must declare BOTH
-#   @prefix bldg: <this URI> .
-#   @base        <this URI> .
-# swap_building.py and the startup TTL validator hard-fail on a mismatch.
-# Until 2026-06-13 this key was missing and the namespace came from the
-# hardcoded default in shared/config.py — swapping BACK to bldg1 would fail.
-ontology_namespace: "http://abacwsbuilding.cardiff.ac.uk/abacws#"
-
-# ── Capability semantic routing thresholds ────────────────────────────────────
-#
-# Calibrated 2026-05-22 against LOCAL sentence-transformers/all-MiniLM-L6-v2
-# (384-dim) on bldg1.
-#
-# Observed score distribution across 11 representative queries:
-#   - Capability queries (lift, shower, baby change, fire, etc.): 0.629 - 0.810
-#   - Non-capability queries:
-#       - Off-domain ("airspeed of swallow"):       0.318
-#       - Sensor data (CO2, temp on floor 3):       0.441 - 0.479
-#       - Analytics ("compare CO2 floors 1 vs 3"):  0.367
-#       - Floor plan ("show me floor 3"):           0.558  ← closest false-positive risk
-#
-# Gap: 0.071 (floor_plan max = 0.558  ↔  baby_changing min = 0.629)
-# (vs OpenAI text-embedding-3-small: gap was 0.16; local model has a tighter band.)
-#
-# Settings:
-#   threshold    = 0.56  — must sit ABOVE 0.558 (the highest non-capability score)
-#                          to prevent floor_plan queries from triggering a soft
-#                          semantic override.
-#   override_min = 0.60  — must sit BELOW 0.629 (the lowest capability score) so
-#                          baby_changing paraphrases still trigger high-confidence
-#                          skip-LLM.
-#
-# Tighter than the OpenAI tuning because the score distribution is narrower.
-#
-# History:
-#   2026-05-21: First calibration against OpenAI text-embedding-3-small.
-#               threshold=0.50, override_min=0.55.
-#   2026-05-22: Switched provider to local; re-calibrated.
-#               threshold=0.56, override_min=0.60.
-#
-# RE-CALIBRATION CONTRACT:
-# If you change EMBEDDING_PROVIDER or EMBEDDING_MODEL_*, the CapabilityIndexer
-# detects the dim mismatch and rebuilds the Qdrant collection automatically on
-# next startup, but cosine similarity distributions differ between models so
-# these thresholds MUST be re-tuned. Use:
-#   1. scripts/capture_baseline.py for a snapshot
-#   2. The 11-query calibration batch (see commit history of this file)
-#   3. Update threshold/override_min and restart
+# Off-ontology capability KB routing (defaults are fine for most buildings).
 capability_routing:
   enabled: true
-  embedding_model: auto   # follows EMBEDDING_PROVIDER (openai | local)
+  embedding_model: auto        # follows EMBEDDING_PROVIDER (openai | local)
   threshold: 0.56
   override_min: 0.60
   top_k: 5
   fallback_on_qdrant_failure: skip
 
-# ── Storage adapter binding (Phase 2 — 2026-05-29) ───────────────────────────
-#
-# Only initialise the database adapters this building actually uses.  Each key
-# below is resolved against config/database_registry.yaml.
-#
-# Omit this block entirely (or leave the `databases:` list empty) to fall back
-# to the legacy behaviour of initialising every available adapter — useful
-# during development, noisy in production.
-#
-# bldg1 (Abacws) uses the primary MySQL backend for all sensor data.  TTL
-# references appear as `ref:storedAt bldg:database1`.
+# Which database_registry.yaml keys this building uses. bldg2.ttl routes every
+# sensor to `ref:storedAt bldg:database1`, which is env-driven
+# (${MYSQL_DATABASE}) — point it at bldg2_sensordb in .env2.
 storage:
   databases:
-    - database1
-    # Narrow per-modality time-series tables (uuid, datetime, value), standardized
-    # out of input/data CSVs. Each is reached via ref:storedAt bldg:<table>.
-    - energy_data
-    - occupancy_data
-    - water_data
-    - noise_data
-    - iaq_data
-    - light_data
-    - equipment_data
-    # Companion narrow tables for sensors that don't fit database1's column-capped
-    # wide table: 522 real floor 0-4 sensors + 106 synthetic enhancement sensors.
-    - database1_floors04
-    - database1_synth
+    - database2
 
-# ── Floor-plan aliases (Phase 4 — 2026-05-29) ────────────────────────────────
-#
-# Legacy floor-plan PDFs were named "Abacws floor N.pdf" and the registry
-# slugged the building as "abacws", which differed from the logical
-# BUILDING_ID "bldg1".  By declaring "abacws" as an alias here, the system
-# treats both IDs as referring to this building — lookups under either
-# "bldg1" or "abacws" succeed.
-#
-# When a new building is onboarded with consistent IDs, this block can be
-# omitted entirely.
-floor_plan_aliases:
-  - abacws
+# No floor plans provided yet → spatial/floor queries will honestly report that
+# there is no floor plan for this building (watch the building_registry residual).
+floor_plan_aliases: []
 
-# ── Actuation gateway (Phase G — T23) ────────────────────────────────────────
-#
-# driver: sim   — log-only simulation (safe for demo; no physical write).
-# driver: none  — actuation disabled (building receives control:decline responses).
-#
-# points_writable: list of point URIs the sim driver will accept set_point() on.
-# These are SPARQL-addressable URIs matching triples in the ontology.
-# Real-world equivalents: VAV box setpoint, lighting scene setpoint, AHU SP.
-#
-# SAFETY CONTRACT: Only 'sim' is available in this deployment.  Physical
-# drivers (BACnet, Modbus) are Phase H+ and require additional safety sign-off.
+# Read-only building — no actuation.
 actuation:
-  driver: sim
-  points_writable:
-    - urn:bldg1:VAV-501-SP         # VAV box setpoint — room 5.01
-    - urn:bldg1:LIGHTING-3F-SP     # lighting scene setpoint — floor 3
-    - urn:bldg1:AHU-F5-SP          # AHU supply-air temperature setpoint — floor 5
+  driver: none
+  points_writable: []

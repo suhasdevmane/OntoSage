@@ -4914,7 +4914,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
 
         For 'can the building automatically X when Y?' questions, answer truthfully from
         system state: (a) does a sensor point exist for X, (b) is notify-able via rules engine,
-        (c) physical actuation requires a BMS driver (not yet configured for bldg1).
+        (c) physical actuation requires a BMS driver (per the active building's actuation config).
         """
         import re as _re_ac
 
@@ -4923,25 +4923,32 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         query_text = (state.messages[-1].content if state.messages else "").lower()
         entities = state.intermediate_results.get("entities", [])
         concepts = state.intermediate_results.get("concepts", [])
-        building_id = state.intermediate_results.get("building_id", "bldg1")
+        building_id = state.intermediate_results.get("building_id") or settings.BUILDING_ID
 
         # ── Identify what the user wants to monitor ──────────────────────
         # Try concept resolver results first (HBCO lay-term → Brick class)
         concept_label = None
         brick_class = None
         recipe_id = None
-        if concepts:
+        if concepts and isinstance(concepts[0], dict):
             first = concepts[0]
             concept_label = first.get("concept_id", "").replace("_", " ")
             classes = first.get("brick_classes", [])
             brick_class = classes[0] if classes else None
             recipe_id = first.get("recipe_id")
 
-        # Fallback: extract noun from entities or keyword scan
+        # Fallback: extract noun from entities or keyword scan. The LLM emits
+        # entities as plain STRINGS ('Outdoor_Air_Intake'); only dict-shaped
+        # entities carry a type — strings fall through to the keyword scan.
         if not concept_label:
             for e in entities:
-                if e.get("type") in ("sensor_type", "metric", "concept", "parameter"):
-                    concept_label = e.get("value", "").lower()
+                if isinstance(e, dict) and e.get("type") in (
+                    "sensor_type",
+                    "metric",
+                    "concept",
+                    "parameter",
+                ):
+                    concept_label = str(e.get("value", "")).lower()
                     break
 
         if not concept_label:

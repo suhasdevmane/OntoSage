@@ -139,7 +139,35 @@ class OntologyValidator:
             return False
 
     async def _count_building_entities(self) -> int:
-        """Count distinct subjects in the building namespace."""
+        """Count distinct subjects in the building namespace.
+
+        Existence is probed with a LIMIT-1 query first: on a cold-started GraphDB a
+        full COUNT over a large repo (16M+ triples with inference) can outlive any
+        sane timeout (BUG-100), and validation only needs to know entities EXIST.
+        Returns 1 when entities exist but the full count timed out.
+        """
+        auth = (settings.GRAPHDB_USER, settings.GRAPHDB_PASSWORD) if settings.GRAPHDB_USER else None
+        probe = f"""
+SELECT ?s WHERE {{
+  ?s ?p ?o .
+  FILTER(STRSTARTS(STR(?s), '{settings.BUILDING_NAMESPACE}'))
+}} LIMIT 1
+"""
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(
+                    GRAPHDB_QUERY_ENDPOINT,
+                    auth=auth,
+                    data={"query": probe},
+                    headers={"Accept": "application/sparql-results+json"},
+                )
+                resp.raise_for_status()
+                if not resp.json().get("results", {}).get("bindings", []):
+                    return 0
+        except Exception as e:
+            logger.error(f"OntologyValidator existence probe failed: {e}")
+            return 0
+
         query = f"""
 SELECT (COUNT(DISTINCT ?s) AS ?cnt) WHERE {{
   ?s ?p ?o .
@@ -147,12 +175,7 @@ SELECT (COUNT(DISTINCT ?s) AS ?cnt) WHERE {{
 }}
 """
         try:
-            auth = (
-                (settings.GRAPHDB_USER, settings.GRAPHDB_PASSWORD)
-                if settings.GRAPHDB_USER
-                else None
-            )
-            async with httpx.AsyncClient(timeout=20.0) as client:
+            async with httpx.AsyncClient(timeout=60.0) as client:
                 resp = await client.post(
                     GRAPHDB_QUERY_ENDPOINT,
                     auth=auth,
@@ -165,8 +188,10 @@ SELECT (COUNT(DISTINCT ?s) AS ?cnt) WHERE {{
                 if bindings:
                     return int(bindings[0].get("cnt", {}).get("value", 0))
         except Exception as e:
-            logger.error(f"OntologyValidator entity count failed: {e}")
-        return 0
+            logger.warning(
+                f"OntologyValidator full count slow/failed ({e}); entities exist — proceeding"
+            )
+        return 1
 
 
 # Module-level singleton
