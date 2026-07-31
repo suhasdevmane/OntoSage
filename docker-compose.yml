@@ -1,6 +1,7 @@
-# bldg1 (Abacws) stack — modernized to per-building state ./volumes/${BUILDING_ID}/*
-# (guarded: compose refuses to start if BUILDING_ID is unset). Active building comes
-# from .env; input mount ./input. Keeps bldg1's own data-publisher (mysql-dummy-publish-dev).
+# Building-agnostic compose (bldg2/bldg3 generation) — the ACTIVE building comes from .env.
+# env_file: .env · input mount: ./input · per-building state: ./volumes/<BUILDING_ID>/*
+# (guarded: compose refuses to start if BUILDING_ID is unset, protecting bldg1's bare ./volumes/*).
+# ONE building at a time. Swap = rename input/<->bldgN/ + .env<->.envN + compose file. No core code changes.
 # OntoSage 3.0: Production-Grade Agentic AI Docker Compose Configuration
 # 10 Agents | 14 Intents | Phase 7 services (Response Cache, Agent Memory, WebSocket, i18n)
 # Default MODEL_PROVIDER: local (Ollama, default model gpt-oss:20b) — set OPENAI_API_KEY + MODEL_PROVIDER=openai to use OpenAI instead
@@ -180,8 +181,11 @@ services:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434} # native host Ollama (default port)
       - OLLAMA_MODEL=${OLLAMA_MODEL:-gpt-oss:20b}
       - OLLAMA_NUM_PARALLEL=1
-      - OLLAMA_NUM_CTX=${OLLAMA_NUM_CTX:-8192}
-      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-30m}
+      # Context window — env-tunable. 32k comfortably holds RAG prompts. gpt-oss:20b supports
+      # up to 128k (OLLAMA_NUM_CTX=131072) if the GPU has KV-cache headroom; larger ctx costs
+      # VRAM and can spill to CPU on a 16 GB card, so raise only if you see truncation.
+      - OLLAMA_NUM_CTX=${OLLAMA_NUM_CTX:-32768}
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-24h}
       - OLLAMA_GPU_LAYERS=-1
       # ┌─ MODE C: Cloud Ollama (API) ───────────────────────────────────────┐
       # │ To activate: set MODEL_PROVIDER=cloud in .env                   │
@@ -227,7 +231,10 @@ services:
       # ── Phase improvements: new settings ────────────────────────────────
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
       - EXPORTS_DIR=/app/outputs/exports
-      - SENSOR_MAP_PATH=/app/input/.sensor_map.cache.json # per-building cache, auto-regenerated from the live graph on boot
+      # Per-building sensor-map cache in the ACTIVE building's writable input/ (auto-rebuilt
+      # from the live graph on boot when missing / building-mismatched). NOT the shared ro
+      # data/ file — that leaked one building's catalogue into another.
+      - SENSOR_MAP_PATH=/app/input/.sensor_map.cache.json
       - OUTPUT_DATA_DIR=/app/outputs/data
       - QUERY_RESULTS_DIR=/app/outputs/query_results
       - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-60}
@@ -555,34 +562,46 @@ services:
   #     start_period: 30s
   #   restart: unless-stopped
 
-  # ====================== Dummy Data Publisher ======================
-  # NOTE: This service publishes dummy sensor data to MySQL.
-  # With host MySQL mode, it connects via host.docker.internal:3306.
-  # To re-enable mysql container mode: uncomment mysql service and restore depends_on below.
+  # ================= Synthetic Data Publisher (building-agnostic) =================
+  # Keeps the ACTIVE building's wide sensor_data table LIVE: appends a fresh synthetic
+  # reading for every graph sensor every PUBLISH_INTERVAL s, and RE-SCANS the graph every
+  # PUBLISH_REFRESH_EVERY ticks so sensors added later (admin GUI, spatial/topology
+  # backfill, a new TTL) automatically get a column + data — NO restart needed.
+  # Self-bootstrapping: creates sensor_data if absent WITHOUT dropping existing history.
+  #
+  # Its own container, INDEPENDENT of the orchestrator: it SURVIVES
+  # `docker compose restart orchestrator` and auto-restarts (restart: unless-stopped).
+  # The uuid set comes from the active GraphDB; the DB from env — zero building literals.
+  #
+  # ⚠️  Fabricates data — DEMO / portability buildings ONLY. For a real building with real
+  #     telemetry, remove this service (or stop it) so live data is never overwritten.
   data-publisher:
     build:
-      context: ./mysql-dummy-publish-dev
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: orchestrator/Dockerfile
     container_name: data-publisher
+    env_file:
+      - .env
     environment:
-      - MYSQL_HOST=host.docker.internal # ← host MySQL (was: mysql-bldg1)
-      # - MYSQL_HOST=mysql-bldg1         # ← uncomment for containerised MySQL
+      - GRAPHDB_QUERY_URL=http://graphdb:7200/repositories/${GRAPHDB_REPOSITORY:-bldg}
+      - MYSQL_HOST=host.docker.internal
       - MYSQL_PORT=3306
-      - MYSQL_USER=${MYSQL_USER:-root}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-mysql}
-      - MYSQL_DB=${MYSQL_DATABASE:-sensordb}
-      - MYSQL_TABLE=sensor_data
-      - PUBLISH_INTERVAL=30
+      - MYSQL_USER=${MYSQL_USER:-ontosage} # app user — granted SELECT on new columns
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-mysql} # root — for CREATE/ALTER/GRANT DDL
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-${BUILDING_ID:-bldg1}_sensordb}
+      - PUBLISH_INTERVAL=${PUBLISH_INTERVAL:-60}
+      - PUBLISH_REFRESH_EVERY=${PUBLISH_REFRESH_EVERY:-10}
     volumes:
-      # Read-only: the publisher reads input/bldg1_timeseries_extension_uuids.json
-      # to also publish live rows into the narrow per-modality tables.
-      - ./input:/app/input:ro
-    # depends_on:          # ← uncomment if using mysql container
-    #   mysql:
-    #     condition: service_healthy
+      - ./scripts:/app/scripts:ro
+    command: python /app/scripts/generate_dummy_timeseries.py --publish
+    # Not an HTTP server — disable the image's curl-based healthcheck (would false-fail).
+    healthcheck:
+      disable: true
     networks:
       - ontobot-agentic
     restart: unless-stopped
+    depends_on:
+      - graphdb
 
   # ============ Demo external DB (admin-console connect-flow rehearsal) ==========
   # A throwaway MySQL an admin connects to via the Databases tab to practise the
@@ -1062,7 +1081,7 @@ services:
 # - Whisper accuracy low: Increase WHISPER_MODEL (e.g., base, small-int8, medium) & WHISPER_BEAM>1
 # - Whisper latency high: Use smaller quantized model (tiny-int8) and keep beam=1
 # - Whisper language auto-detect issues: Set WHISPER_LANG explicitly (e.g., en, fr)
-# - Persistent cache cleared: Remove ./volumes/whisper to force re-download of model
+# - Persistent cache cleared: Remove ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/whisper to force re-download of model
 # - Fuseki dataset not created: Use scripts/load-fuseki.ps1 or create manually via UI
 # - MySQL connection refused: Check if mysqlserver container exists: docker ps -a
 # - Out of memory: DeepSeek-R1:32b needs 20GB VRAM + 16GB RAM, reduce GPU layers if needed

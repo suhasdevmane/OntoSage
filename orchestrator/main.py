@@ -574,127 +574,141 @@ async def lifespan(app: FastAPI):
     except Exception as _e:
         logger.warning(f"AlertMonitor not started: {_e}")
 
-    # Phase 1: Validate ontology and introspect building schema at startup
-    try:
-        logger.info(f"Building: {settings.BUILDING_NAME} ({settings.BUILDING_ID})")
-        logger.info(f"Namespace: {settings.BUILDING_NAMESPACE}")
-        logger.info(f"Timezone: {settings.BUILDING_TIMEZONE}")
-        val_result = await ontology_validator.validate()
-        if val_result.ok:
-            await ontology_introspector.initialize()
+    # Phase 1: Validate ontology and introspect building schema at startup.
+    # Wrapped in a callable so Phase 3 (startup TTL ingestion) can re-run it on a
+    # cold boot where the graph loads AFTER this first attempt (BUG-100) — a
+    # building swap must not require a manual orchestrator restart.
+    _phase1_state = {"inited": False}
 
-            # C.3: Build the per-building sensor map from the LIVE graph. Regenerate
-            # when the cache is missing/empty OR does not match the ACTIVE building
-            # (no cached sensor URI belongs to its namespace) — this prevents another
-            # building's cached catalogue from leaking in (portability). Building-agnostic:
-            # accepts both ref: and ASHRAE-223 external-reference predicates; keyed off
-            # the timeseries link (which defines a sensor), so no type-path explosion.
-            try:
-                import json as _json
-                import os as _os
+    async def _ontology_phase1(force_sensor_map: bool = False) -> None:
+        """Validate ontology; on success introspect, build sensor map, detect schemas."""
+        try:
+            logger.info(f"Building: {settings.BUILDING_NAME} ({settings.BUILDING_ID})")
+            logger.info(f"Namespace: {settings.BUILDING_NAMESPACE}")
+            logger.info(f"Timezone: {settings.BUILDING_TIMEZONE}")
+            val_result = await ontology_validator.validate()
+            if val_result.ok:
+                _phase1_state["inited"] = True
+                await ontology_introspector.initialize()
 
-                _sensor_map_path = settings.SENSOR_MAP_PATH
-                _ns = settings.BUILDING_NAMESPACE or ""
-                _needs_regen = not _os.path.exists(_sensor_map_path)
-                if not _needs_regen:
-                    try:
-                        with open(_sensor_map_path) as _f:
-                            _cached = _json.load(_f)
-                        _match = bool(_ns) and any(
-                            isinstance(v, dict) and _ns in v.get("uri", "")
-                            for v in _cached.values()
-                        )
-                        # stale if empty, or the active building isn't represented
-                        _needs_regen = (len(_cached) == 0) or (bool(_ns) and not _match)
-                    except Exception:
-                        _needs_regen = True
-                if _needs_regen:
-                    import httpx as _httpx
+                # C.3: Build the per-building sensor map from the LIVE graph. Regenerate
+                # when the cache is missing/empty OR does not match the ACTIVE building
+                # (no cached sensor URI belongs to its namespace) — this prevents another
+                # building's cached catalogue from leaking in (portability). Building-agnostic:
+                # accepts both ref: and ASHRAE-223 external-reference predicates; keyed off
+                # the timeseries link (which defines a sensor), so no type-path explosion.
+                try:
+                    import json as _json
+                    import os as _os
 
-                    _ep = (
-                        f"http://{settings.GRAPHDB_HOST}:{settings.GRAPHDB_PORT}"
-                        f"/repositories/{settings.GRAPHDB_REPOSITORY}"
-                    )
-                    _q = (
-                        "PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> "
-                        "PREFIX ashrae:<http://data.ashrae.org/standard223#> "
-                        "PREFIX ref:<https://brickschema.org/schema/Brick/ref#> "
-                        "SELECT DISTINCT ?sensor ?label ?uuid ?storage WHERE { "
-                        "{ ?sensor ref:hasExternalReference ?e } "
-                        "UNION { ?sensor ashrae:hasExternalReference ?e } "
-                        "?e ref:hasTimeseriesId ?uuid ; ref:storedAt ?storage . "
-                        "OPTIONAL { ?sensor rdfs:label ?label } }"
-                    )
-                    _auth = (
-                        (settings.GRAPHDB_USER, settings.GRAPHDB_PASSWORD)
-                        if settings.GRAPHDB_USER
-                        else None
-                    )
-                    async with _httpx.AsyncClient(timeout=90.0) as _c:
-                        _resp = await _c.post(
-                            _ep,
-                            auth=_auth,
-                            data={"query": _q},
-                            headers={"Accept": "application/sparql-results+json"},
-                        )
-                        _resp.raise_for_status()
-                        _rows = _resp.json()["results"]["bindings"]
-                    _sensor_map = {}
-                    for _b in _rows:
-                        _uri = _b["sensor"]["value"]
-                        _ln = _uri.split("#")[-1].split("/")[-1]
-                        _uuid = _b["uuid"]["value"]
-                        _st = _b["storage"]["value"].split("#")[-1].split("/")[-1]
-                        _lab = _b.get("label", {}).get("value", _ln)
-                        _entry = {"uri": _uri, "uuid": _uuid, "storage": _st, "label": _lab}
-                        _sensor_map[_ln] = _entry
-                        _sensor_map[_lab] = _entry
-                        _sensor_map[_uri] = _entry
-                    if _sensor_map:
-                        # reload the RUNNING orchestrator first (fixes it even if the
-                        # cache path is read-only); then try to persist for next boot.
-                        if orchestrator:
-                            orchestrator.sensor_map = _sensor_map
+                    _sensor_map_path = settings.SENSOR_MAP_PATH
+                    _ns = settings.BUILDING_NAMESPACE or ""
+                    _needs_regen = force_sensor_map or not _os.path.exists(_sensor_map_path)
+                    if not _needs_regen:
                         try:
-                            _os.makedirs(_os.path.dirname(_sensor_map_path) or ".", exist_ok=True)
-                            with open(_sensor_map_path, "w") as _f:
-                                _json.dump(_sensor_map, _f, indent=2)
-                        except OSError as _we:
-                            logger.warning(
-                                f"Sensor map cache path not writable ({_we}); using in-memory only"
+                            with open(_sensor_map_path) as _f:
+                                _cached = _json.load(_f)
+                            _match = bool(_ns) and any(
+                                isinstance(v, dict) and _ns in v.get("uri", "")
+                                for v in _cached.values()
                             )
-                        _n = len({v["uri"] for v in _sensor_map.values()})
-                        logger.info(
-                            f"Sensor map: built {_n} sensors from the live graph for "
-                            f"{settings.BUILDING_ID}"
-                        )
-            except Exception as _e:
-                logger.warning(f"Sensor map auto-generation failed (non-fatal): {_e}")
+                            # stale if empty, or the active building isn't represented
+                            _needs_regen = (len(_cached) == 0) or (bool(_ns) and not _match)
+                        except Exception:
+                            _needs_regen = True
+                    if _needs_regen:
+                        import httpx as _httpx
 
-            # B.4: Auto-detect ontology schema from live GraphDB after validation
-            try:
-                ontology_detector = OntologySchemaDetector()
-                graphdb_url = f"http://{settings.GRAPHDB_HOST}:{settings.GRAPHDB_PORT}"
-                detect_result = await ontology_detector.detect_from_graphdb(
-                    graphdb_url, settings.GRAPHDB_REPOSITORY
-                )
-                if detect_result.detected:
-                    logger.info(
-                        f"Ontology schemas detected: {detect_result.schemas} "
-                        f"(confidence={detect_result.confidence:.0%})"
+                        _ep = (
+                            f"http://{settings.GRAPHDB_HOST}:{settings.GRAPHDB_PORT}"
+                            f"/repositories/{settings.GRAPHDB_REPOSITORY}"
+                        )
+                        _q = (
+                            "PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> "
+                            "PREFIX ashrae:<http://data.ashrae.org/standard223#> "
+                            "PREFIX ref:<https://brickschema.org/schema/Brick/ref#> "
+                            "SELECT DISTINCT ?sensor ?label ?uuid ?storage WHERE { "
+                            "{ ?sensor ref:hasExternalReference ?e } "
+                            "UNION { ?sensor ashrae:hasExternalReference ?e } "
+                            "?e ref:hasTimeseriesId ?uuid ; ref:storedAt ?storage . "
+                            "OPTIONAL { ?sensor rdfs:label ?label } }"
+                        )
+                        _auth = (
+                            (settings.GRAPHDB_USER, settings.GRAPHDB_PASSWORD)
+                            if settings.GRAPHDB_USER
+                            else None
+                        )
+                        async with _httpx.AsyncClient(timeout=90.0) as _c:
+                            _resp = await _c.post(
+                                _ep,
+                                auth=_auth,
+                                data={"query": _q},
+                                headers={"Accept": "application/sparql-results+json"},
+                            )
+                            _resp.raise_for_status()
+                            _rows = _resp.json()["results"]["bindings"]
+                        _sensor_map = {}
+                        for _b in _rows:
+                            _uri = _b["sensor"]["value"]
+                            _ln = _uri.split("#")[-1].split("/")[-1]
+                            _uuid = _b["uuid"]["value"]
+                            _st = _b["storage"]["value"].split("#")[-1].split("/")[-1]
+                            _lab = _b.get("label", {}).get("value", _ln)
+                            _entry = {"uri": _uri, "uuid": _uuid, "storage": _st, "label": _lab}
+                            _sensor_map[_ln] = _entry
+                            _sensor_map[_lab] = _entry
+                            _sensor_map[_uri] = _entry
+                        if _sensor_map:
+                            # reload the RUNNING orchestrator first (fixes it even if the
+                            # cache path is read-only); then try to persist for next boot.
+                            if orchestrator:
+                                orchestrator.sensor_map = _sensor_map
+                            try:
+                                _os.makedirs(
+                                    _os.path.dirname(_sensor_map_path) or ".", exist_ok=True
+                                )
+                                with open(_sensor_map_path, "w") as _f:
+                                    _json.dump(_sensor_map, _f, indent=2)
+                            except OSError as _we:
+                                logger.warning(
+                                    f"Sensor map cache path not writable ({_we}); using in-memory only"
+                                )
+                            _n = len({v["uri"] for v in _sensor_map.values()})
+                            logger.info(
+                                f"Sensor map: built {_n} sensors from the live graph for "
+                                f"{settings.BUILDING_ID}"
+                            )
+                except Exception as _e:
+                    logger.warning(f"Sensor map auto-generation failed (non-fatal): {_e}")
+
+                # B.4: Auto-detect ontology schema from live GraphDB after validation
+                try:
+                    ontology_detector = OntologySchemaDetector()
+                    graphdb_url = f"http://{settings.GRAPHDB_HOST}:{settings.GRAPHDB_PORT}"
+                    detect_result = await ontology_detector.detect_from_graphdb(
+                        graphdb_url, settings.GRAPHDB_REPOSITORY
                     )
-                    # Store on app state for downstream use
-                    app.state.detected_ontology = detect_result
-                else:
-                    logger.warning(f"Ontology auto-detection inconclusive: {detect_result.notes}")
-            except Exception as e:
-                logger.warning(f"Ontology detector failed (non-fatal): {e}")
-        else:
-            logger.warning(
-                f"Ontology validation failed: {val_result.errors}. Introspector skipped."
-            )
-    except Exception as e:
-        logger.warning(f"Ontology startup check failed (non-fatal): {e}")
+                    if detect_result.detected:
+                        logger.info(
+                            f"Ontology schemas detected: {detect_result.schemas} "
+                            f"(confidence={detect_result.confidence:.0%})"
+                        )
+                        # Store on app state for downstream use
+                        app.state.detected_ontology = detect_result
+                    else:
+                        logger.warning(
+                            f"Ontology auto-detection inconclusive: {detect_result.notes}"
+                        )
+                except Exception as e:
+                    logger.warning(f"Ontology detector failed (non-fatal): {e}")
+            else:
+                logger.warning(
+                    f"Ontology validation failed: {val_result.errors}. Introspector skipped."
+                )
+        except Exception as e:
+            logger.warning(f"Ontology startup check failed (non-fatal): {e}")
+
+    await _ontology_phase1()
 
     # Phase 2: Initialize database adapter registry (storage-aware routing)
     try:
@@ -874,20 +888,42 @@ async def lifespan(app: FastAPI):
 
         # Use the registered building IDs from the manager if available, else
         # fall back to the active BUILDING_ID from settings.
-        _bldg_ids: list = []
-        try:
-            _bldg_ids = list(getattr(building_manager, "_configs", {}).keys())
-        except Exception:
-            pass
-        if not _bldg_ids:
-            _bldg_ids = [settings.BUILDING_ID]
+        # BUG-105: upload ONLY the ACTIVE building's TTLs. The registry may also know
+        # parked/alias buildings, and uploading their files is how bldg3's ontology
+        # ended up inside bldg2's repository (cross-building contamination, found and
+        # cleaned 2026-07-30). v1 serves ONE building (core contract #1) — the active
+        # id IS the whole list.
+        _bldg_ids = [settings.BUILDING_ID]
         summary = await run_idempotent_uploads(building_ids=_bldg_ids)
         logger.info(
             f"[ttl_uploader] startup ingestion: uploaded={len(summary['uploaded'])} "
             f"skipped={len(summary['skipped'])} failed={len(summary['failed'])}"
         )
+        # BUG-100: on a cold boot after a building swap, Phase 1 ran before this
+        # ingestion loaded the graph (validation failed, init skipped). Re-run it now
+        # that TTLs are in — forcing a sensor-map rebuild when new TTLs actually
+        # landed. Nothing uploaded + already initialised → no-op (no restart needed).
+        if (not _phase1_state["inited"]) or summary["uploaded"]:
+            await _ontology_phase1(force_sensor_map=bool(summary["uploaded"]))
     except Exception as e:
         logger.warning(f"TTL auto-upload failed (non-fatal): {e}")
+
+    # BUG-100 backstop: a warm GraphDB volume can take minutes to load its repository,
+    # outlasting both Phase 1 and the post-ingestion retry above. If ontology init is
+    # still pending, keep retrying in the background — a building swap must never
+    # require a manual orchestrator restart.
+    if not _phase1_state["inited"]:
+
+        async def _phase1_retry() -> None:
+            for _delay in (10, 20, 40, 60, 120, 180):
+                await asyncio.sleep(_delay)
+                await _ontology_phase1()
+                if _phase1_state["inited"]:
+                    logger.info("Ontology init recovered after GraphDB warm-up (BUG-100)")
+                    return
+            logger.warning("Ontology init still failing after ~4min of retries — check GraphDB")
+
+        app.state.phase1_retry_task = asyncio.create_task(_phase1_retry())
 
     # Rebuild the GraphDB similarity index on startup so freshly-loaded TTLs (including any
     # GUI-registered sensors persisted to input/) become retrievable via semantic RAG — the index
@@ -4257,7 +4293,9 @@ async def upload_floor_plan(
     ext = os.path.splitext(file.filename or "")[1].lower()
     if ext not in _FLOORPLAN_EXTS:
         return APIResponse(
-            success=False, error=f"unsupported extension '{ext}' (allowed: .pdf, .dwg, .dxf)", data={}
+            success=False,
+            error=f"unsupported extension '{ext}' (allowed: .pdf, .dwg, .dxf)",
+            data={},
         )
     if floor < 0:
         return APIResponse(success=False, error="floor must be >= 0", data={})

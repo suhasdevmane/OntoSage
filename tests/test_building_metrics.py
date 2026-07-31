@@ -169,3 +169,55 @@ async def test_capability_answer_grounds_metrics_live(monkeypatch):
     assert res["provenance"] == "live_metrics"
     assert "1,332" in res["response"]  # the live count, not the old frozen "~680" prose
     assert "computed live" in res["response"].lower()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CAVEAT-007 — declared vs recently-reporting sensors
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_snapshot_includes_reporting_coverage():
+    async def _exec(q):
+        return {"results": {"bindings": [{"n": {"value": "100"}}]}}
+
+    async def _reporting(window_h):
+        assert window_h == 24
+        return 42
+
+    bm = BuildingMetrics(
+        sparql_exec=_exec, area_provider=lambda _b: [], reporting_provider=_reporting
+    )
+    snap = await bm.snapshot("anybldg")
+    assert snap.reporting_sensors == 42
+    assert snap.reporting_window_h == 24
+
+
+@pytest.mark.asyncio
+async def test_reporting_provider_failure_is_non_fatal():
+    async def _exec(q):
+        return {"results": {"bindings": [{"n": {"value": "7"}}]}}
+
+    async def _boom(window_h):
+        raise RuntimeError("db down")
+
+    bm = BuildingMetrics(sparql_exec=_exec, area_provider=lambda _b: [], reporting_provider=_boom)
+    snap = await bm.snapshot("anybldg")
+    assert snap.reporting_sensors is None  # degraded, never raised
+    assert snap.total_sensors == 7
+
+
+def test_render_block_distinguishes_declared_vs_reporting():
+    snap = BuildingMetricsSnapshot(total_sensors=1334, reporting_sensors=628, reporting_window_h=24)
+    text = render_metrics_block(snap, "Any Building")
+    assert "declared in the building model" in text
+    assert "1,334" in text
+    assert "reported data in the last 24 h" in text
+    assert "628" in text
+
+
+def test_render_block_omits_reporting_when_unknown():
+    snap = BuildingMetricsSnapshot(total_sensors=300, reporting_sensors=None)
+    text = render_metrics_block(snap, "Any Building")
+    assert "declared in the building model" in text
+    assert "reported data in the last" not in text

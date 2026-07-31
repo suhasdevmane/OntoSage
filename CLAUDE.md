@@ -7,27 +7,37 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 
 ## New session orientation (read this first)
 
-**Current branch:** `security/p0-hardening` — active development. Changes not yet merged to `main`.
+**Current branch:** `main` — all P0 + multi-building work committed and pushed (through
+`1f263a4`, 2026-07-29). **Never commit or push without the user's explicit approval.**
 
 **Three files every session must read** (in order):
 1. `CLAUDE.md` (this file) — navigation index, debugging, workflow rules
 2. `README.md` — architecture overview, stakeholder guide, data setup
 3. `ONTOSAGE.md` — complete technical reference (source layout, all phases, config)
 
-**Current state snapshot (2026-07-09):**
-- Test suite: **423 tests passing, 2 skipped** (`pytest -m unit -q`; skips are missing optional `pmdarima` dep)
-- Corpus coverage: **63.8%** pass rate on 240-question stratified replay
-- Admin portal: `/admin` React tab + 8 FastAPI endpoints under `/api/v1/admin/` — **complete, not committed**
-- Narrow MySQL tables: 7 `(uuid, datetime, value)` tables + `MySQLNarrowAdapter` — **complete, not committed**
-- TTL extensions: `bldg1_timeseries_extension.ttl` (19 sensors) + `bldg1_security_lighting_extension.ttl` (293 triples) — **complete, not committed**
-- RBAC enforcement: `require_permission()` on all data endpoints — **complete, not committed**
-- `STRICT_SECRETS=true` boot guard — **complete, not committed**
-- P0 hardening round 2 (login lockout, proxy-aware rate limiting, `delete_user` Redis cleanup, `occupant` default role, 12-char passwords, dead RBAC stack removed) — **complete, not committed**; see `tasks/PRODUCTION_READINESS_AUDIT.md`
-- **Nothing committed** — all P0 work is staged/unstaged on `security/p0-hardening`; user reviews before any commit
+**Current state snapshot (2026-07-30):**
+- Test suite: **523 tests passing, 4 skipped** (`pytest -m unit -q`; skips are optional deps)
+- Corpus coverage: **63.8%** (bldg1) / **70.4%** (bldg2, 2026-07-30) on the 240-question
+  stratified replay — portability proven above the ≥60% target on both buildings
+- **Three buildings, all tracked in git, swap-by-rename, ONE active at a time:**
+  the active building's files are `input/` + `.env` + `docker-compose.yml`; parked
+  buildings live as `bldgN/` + `.envN` (gitignored — identity delta tracked as
+  `<folder>/env.building`) + `docker-compose.bldgN.yml`. Per-building state:
+  `./volumes/<BUILDING_ID>/*` (guarded — compose refuses to start if `BUILDING_ID`
+  unset). **bldg2 is currently active** (stack DOWN at last commit; `docker compose up -d`
+  resumes it — or follow the "Run building N" procedure below to switch).
+- **Swap procedure:** `docker compose down` the OLD building FIRST (its project name,
+  e.g. `docker compose -p ontosage_bldg2 down`), then rename `input/`↔`bldgN/`,
+  `.env`↔`.envN`, `docker-compose.yml`↔`docker-compose.bldgN.yml`, then `up -d`.
+  Cold boots self-heal: ontology init retries after TTL ingestion + a ~7-min
+  background backstop for slow GraphDB warm-up (BUG-100, fixed 2026-07-30).
+- Admin portal (`/admin`, 8 endpoints), narrow MySQL tables + adapter, TTL
+  extensions, RBAC (`require_permission()` on all data endpoints),
+  `STRICT_SECRETS` boot guard, P0 hardening rounds 1+2 — all **committed on main**.
 
 **To verify current state before starting work:**
 ```bash
-pytest -m unit -q                                  # should show 423 pass, 2 skip, 0 fail
+pytest -m unit -q                                  # should show 523 pass, 4 skip, 0 fail
 git status                                         # shows what's modified vs committed
 git diff --stat HEAD                               # shows scope of uncommitted changes
 docker-compose logs --tail=20 orchestrator         # live system health
@@ -35,9 +45,25 @@ docker-compose logs --tail=20 orchestrator         # live system health
 
 **Open issues / pending decisions:**
 - **Live fix/caveat log + backlog: [`tasks/FIX_TRACKER.csv`](./tasks/FIX_TRACKER.csv)** — read it at session start to see what's OPEN vs fixed; keep it updated (Workflow rule 7). FIX-001/002/003 done (verified live). **TODO-010→011→012 DONE (2026-07-28):** `capability.yaml` is **removed** — capabilities are now `ontosage:Amenity` / `ontosage:KnowledgeTopic` **triples** (authored via the admin Capabilities GUI `POST /api/v1/admin/capabilities` or the OCBV TBox `input/ontosage_schema.ttl`), answered by the `CapabilityGraphResolver`. Routing is a single TTL-first path (the Qdrant capability-KB probe is gone). Migration: `scripts/migrate_capability_yaml_to_ttl.py`. **Remaining: `TODO-081`** — excise the now-dead capability-KB infra (`capability_indexer`, `semantic_router.classify`, `shared/capability_schema.py`); it no-ops harmlessly today. Design/why in [`tasks/TODO_012_CAPABILITY_YAML_REMOVAL_STEP.md`](./tasks/TODO_012_CAPABILITY_YAML_REMOVAL_STEP.md) + [`tasks/TTL_NATIVE_CAPABILITIES_PLAN.md`](./tasks/TTL_NATIVE_CAPABILITIES_PLAN.md).
-- P0 changes need user review and explicit commit approval before any `git commit` or `git push`
+- ALL changes need user review and explicit commit approval before any `git commit` or `git push`
+- **11 OPEN tracker items as of 2026-07-30** (audited against the mission: everything left
+  either improves NL answering or protects building-agnosticism). DONE this round:
+  TODO-070 (bldg2 replay **70.4%**), TODO-050 (routing contract), CAVEAT-007
+  (declared-vs-reporting counts), BUG-102 (automation node crash), TODO-071 (honesty
+  sweep harness: `scripts/honesty_sweep.py` — found BUG-103/104/105), BUG-105
+  (cross-building contamination cleaned; uploader now active-building-only). Do-next:
+  **BUG-103 (fabrication via ungated floor/space/equipment referents — P1 honesty)** →
+  BUG-104 (service-history question files a ticket) → TODO-072 (GUI-only onboarding) →
+  TODO-067/069 (clean-boot, embedding-switch) → papercuts (CAVEAT-005/006/053,
+  TODO-054, KNOWN-008) → CAVEAT-094 + TODO-081 (hygiene)
+- **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
+  (13 parse-stage + 1 post-stage ordered rules, tests in `tests/test_routing_contract.py`).
+  Add/change a routing rule THERE — never as a new inline override in `dialogue_agent`.
 - `data/mysql-init/init.sql` creates `abacws` DB (legacy); live system uses `sensordb` — mismatch is inert (MySQL container is disabled; host MySQL used directly)
 - Maintenance agent "report broken light" → generic fallback (tracked as KNOWN-008)
+- bldg1 provenance is CORRECT as-is (NOTE-101): the dummy publisher writes only the
+  synthetic-labeled narrow tables (`sensor_data_floors04`/`sensor_data_synth`); the real
+  abacws wide `sensor_data` is pristine — do not "fix" `database1 nature: real`
 
 ---
 
@@ -137,6 +163,35 @@ python scripts/swap_building.py --to bldg2 --dry-run    # validate (TTL @prefix 
 python scripts/swap_building.py --to bldg2 --archive    # apply: update .env, archive old, flush resp_cache
 docker-compose restart orchestrator                     # TTL validator runs first; hard-fails on mismatch
 ```
+
+### "Run building N" — the swap-by-rename procedure Claude executes on request
+
+When the user says **"run building 1" / "run bldg2" / "switch to bldg3"** (any phrasing),
+perform this EXACT sequence — never skip the down step, never guess identities:
+
+1. **Identify the current active building** (if any): `grep BUILDING_ID input/env.building`.
+   If `input/` doesn't exist, all buildings are parked — skip to step 3.
+2. **Down the running stack FIRST** — renaming while up breaks the bind mounts
+   (`/app/input` goes empty, CAVEAT-088/verified 2026-07-30):
+   `docker compose -p ontosage_<oldN> down`. If the canonical `.env` is already gone,
+   the BUILDING_ID guard blocks interpolation — pass the env explicitly:
+   `docker compose --env-file .env<oldN> -p ontosage_<oldN> -f docker-compose.bldg<oldN>.yml down`
+3. **Park the old active set** (names must match its OWN identity, read from
+   `input/env.building` — never assume): `input/`→`bldg<oldN>/`, `.env`→`.env<oldN>`,
+   `docker-compose.yml`→`docker-compose.bldg<oldN>.yml`
+4. **Activate the target**: `bldg<N>/`→`input/`, `.env<N>`→`.env`,
+   `docker-compose.bldg<N>.yml`→`docker-compose.yml`
+5. **Sanity before boot** (all three must agree on bldg<N>): `.env BUILDING_ID` ==
+   `input/building.yaml building_id` == `input/env.building BUILDING_ID`, and
+   `.env COMPOSE_PROJECT_NAME` == `ontosage_bldg<N>`.
+6. `docker compose up -d`, then poll `http://127.0.0.1:8000/health` until 200.
+   Cold GraphDB warm-up can take minutes — ontology init self-heals (retry after TTL
+   ingestion + ~7-min backstop, BUG-100). Then verify isolation: GraphDB triple count
+   in the building's own namespace > 0 and other buildings' namespaces == 0;
+   `data-publisher` env `MYSQL_DATABASE` matches the building's DB.
+7. **Flush the response cache** before any testing:
+   `docker exec redis-memory-store sh -c 'redis-cli --scan --pattern "resp_cache:*" | xargs -r redis-cli DEL'`
+
 **Input layout — FLAT is canonical.** The active building's files sit directly under
 `input/`: `input/building.yaml` + `input/*.ttl` (required — incl. `<id>_capabilities.ttl`
 for `ontosage:Amenity`/`KnowledgeTopic` triples); `*.dwg`, `*.pdf`,

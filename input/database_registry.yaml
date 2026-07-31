@@ -62,17 +62,17 @@ databases:
   #    Wire protocol compatible: MySQL, MariaDB, TiDB, SingleStore, TDengine
   # ══════════════════════════════════════════════════════════════════════════
 
-  # Primary MySQL instance (Building 1 default — always active)
-  # TTL: ref:storedAt bldg:database1
+  # Primary MySQL instance (unused by bldg2's TTL — its live source is database2 below)
+  # TTL: ref:storedAt bldg:database1 (bldg1 convention; kept for template parity)
   database1:
     type: mysql
     host: "${MYSQL_HOST:-mysql}"
     port: "${MYSQL_PORT:-3306}"
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
-    database: "${MYSQL_DATABASE:-sensordb}"
-    nature: real          # the original abacws dataset — the only REAL data source
-    note: "Original abacws dataset · demo timeseries"
+    database: "${MYSQL_DATABASE:-bldg2_sensordb}"
+    nature: synthetic     # bldg2 is a portability/demo building — rows are fabricated
+    note: "bldg2 synthetic time-series (resolves to the same MySQL DB as database2)"
 
   # ── Narrow per-modality time-series tables (uuid, datetime, value) ──────────
   # Standardized out of input/data CSVs (scripts/generate_timeseries_extension.py
@@ -263,14 +263,18 @@ databases:
   # ══════════════════════════════════════════════════════════════════════════
 
   # Primary PostgreSQL instance (Building 2)
-  # TTL: ref:storedAt bldg:database2
+  # TTL: ref:storedAt bldg:database2 — bldg2's OWN MySQL DB (wide sensor_data table).
+  # Env-driven so it resolves to MYSQL_DATABASE (bldg2_sensordb); mirrors database1's shape.
+  # All 378 bldg2 sensors route here (single key ⇒ wide table, uuid columns + datetime).
   database2:
-    type: postgresql
-    host: "${PG_HOST:-postgres}"
-    port: "${PG_PORT:-5432}"
-    user: "${PG_USER:-ontosage}"
-    password: "${PG_PASSWORD:-ontosage}"
-    database: "${PG_DATABASE:-bldg2}"
+    type: mysql
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-bldg2_sensordb}"
+    nature: synthetic
+    note: "bldg2 synthetic time-series (wide sensor_data)"
 
   # CockroachDB — distributed, PostgreSQL-compatible
   # TTL: ref:storedAt bldg:cockroachdb

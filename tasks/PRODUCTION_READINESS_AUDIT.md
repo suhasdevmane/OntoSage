@@ -1,3 +1,7 @@
+> **HISTORICAL DOCUMENT (2026-07-30):** the P0 blockers below are all FIXED and live on `main`
+> (download-export auth, 12-char passwords, occupant default role, RBAC enforcement).
+> The live source of truth for open issues is [`tasks/FIX_TRACKER.csv`](./FIX_TRACKER.csv).
+
 # Production Readiness Audit — TODO Plan
 
 **Date:** 2026-07-09 · **Branch:** `security/p0-hardening` · **Auditor:** senior review pass
