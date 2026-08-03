@@ -19,6 +19,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 # setdefault lets CI override with a real key.
 os.environ.setdefault("PIPELINE_API_KEY", "sk-test-pipeline-key-ci")
 
+# STRICT_SECRETS is a DEPLOYMENT guard (refuse to boot on default passwords), not a
+# test concern: with no local .env — a fresh clone, CI, or the repo's canonical
+# "no building active" state — it made `Settings()` raise at import time, so the
+# whole suite failed to COLLECT. setdefault keeps any explicit override (a real
+# deployment or a test that exercises the guard itself sets it deliberately).
+os.environ.setdefault("STRICT_SECRETS", "false")
+
 from tests.fixtures.ontology_fixtures import (
     brick_fixture,
     mock_anomalous_readings,
@@ -28,6 +35,7 @@ from tests.fixtures.ontology_fixtures import (
     rec_fixture,
     s223_fixture,
 )
+
 # Live-chat fixtures for the capability-semantic-routing regression battery.
 # Imports `chat_client` and `fresh_session_id` fixtures.
 from tests.fixtures.live_chat_client import chat_client, fresh_session_id  # noqa: F401

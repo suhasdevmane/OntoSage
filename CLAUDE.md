@@ -24,8 +24,10 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
   buildings live as `bldgN/` + `.envN` (gitignored — identity delta tracked as
   `<folder>/env.building`) + `docker-compose.bldgN.yml`. Per-building state:
   `./volumes/<BUILDING_ID>/*` (guarded — compose refuses to start if `BUILDING_ID`
-  unset). **bldg2 is currently active** (stack DOWN at last commit; `docker compose up -d`
-  resumes it — or follow the "Run building N" procedure below to switch).
+  unset). **Committed state = NO building active** (Workflow rule 8): a fresh clone has
+  `input/`, `.env` and `docker-compose.yml` ABSENT. Activate one by rename before
+  `docker compose up -d` — see "Run building N" below. Tests and code must never
+  require an active building (`pytest -m unit -q` passes in the parked state).
 - **Swap procedure:** `docker compose down` the OLD building FIRST (its project name,
   e.g. `docker compose -p ontosage_bldg2 down`), then rename `input/`↔`bldgN/`,
   `.env`↔`.envN`, `docker-compose.yml`↔`docker-compose.bldgN.yml`, then `up -d`.
@@ -403,6 +405,21 @@ This principle is grounded in the pre-design survey corpus (6,117 questions, 96 
    `Status: OPEN`). Non-optional — it is the single source of truth for what has been fixed.
    Design/why-notes for open items live in the matching plan (e.g.
    [`tasks/GROUNDING_AND_HONESTY_FIXES_PLAN.md`](./tasks/GROUNDING_AND_HONESTY_FIXES_PLAN.md)).
+8. **PARK ALL BUILDINGS BEFORE EVERY COMMIT/PUSH** (non-negotiable). The repo's canonical
+   committed state has **NO active building**: `input/`, `.env` and `docker-compose.yml` must
+   NOT exist — only `bldg1|bldg2|bldg3/` + `.env1|.env2|.env3` (gitignored) +
+   `docker-compose.bldg{1,2,3}.yml`. When the user says *"commit"* / *"push"*, do this FIRST:
+   1. `docker compose ls` — if a stack runs, `docker compose -p ontosage_<N> down`
+      (never rename while up: bind mounts break, CAVEAT-088).
+   2. Read the active id from `input/env.building`, then park it by ITS OWN identity:
+      `input/`→`bldg<N>/`, `.env`→`.env<N>`, `docker-compose.yml`→`docker-compose.bldg<N>.yml`.
+   3. Verify: `ls -d input .env docker-compose.yml` all absent; all three parked sets present.
+   4. Run `pytest -m unit -q` **in the parked state** (it must pass there — that is what a
+      fresh clone and CI see), then commit + push.
+   5. Tell the user which building was parked, so they can say *"run bldg\<N\>"* to resume.
+   Rationale: the committed tree is then identical no matter who was testing what, a fresh
+   clone has all three buildings intact and none half-active, and no `.env` (secrets) can
+   ever ride along. Tests and code must therefore never require an active building.
 
 ---
 
