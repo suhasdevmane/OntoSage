@@ -52,7 +52,9 @@ def test_app_calls_admin_api():
     # external-DB sensor registration (TTL + points)
     assert "/sensors" in js and "submitSensors" in js and "openSensors" in js
     # restart button + live status
-    assert "/api/v1/admin/restart" in js and "restartOrchestrator" in js and "pollHealthUntilUp" in js
+    assert (
+        "/api/v1/admin/restart" in js and "restartOrchestrator" in js and "pollHealthUntilUp" in js
+    )
 
 
 def test_contextual_apply_notice():
@@ -108,7 +110,20 @@ def test_panel_has_all_tabs():
 
 
 def test_compose_registers_config_panel():
-    compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
-    assert "config-panel:" in compose
-    assert "3001:80" in compose
-    assert "./config-panel/html:/usr/share/nginx/html" in compose
+    """Every building's compose must register the panel identically.
+
+    The repo's canonical state has NO active building (no docker-compose.yml —
+    it only exists while a building is activated by rename), so resolve the
+    active file when present and otherwise check every parked variant.
+    """
+    candidates = [ROOT / "docker-compose.yml"]
+    candidates += sorted(ROOT.glob("docker-compose.bldg*.yml"))
+    composes = [p for p in candidates if p.exists()]
+    assert composes, "no docker-compose file found (active or parked)"
+    for path in composes:
+        compose = path.read_text(encoding="utf-8")
+        assert "config-panel:" in compose, f"{path.name} missing config-panel service"
+        assert "3001:80" in compose, f"{path.name} missing panel port mapping"
+        assert (
+            "./config-panel/html:/usr/share/nginx/html" in compose
+        ), f"{path.name} missing panel html mount"
