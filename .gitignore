@@ -81,6 +81,13 @@ brick assets/
 ..env.*
 .env
 .env*
+# …but TEMPLATES must ship: they carry placeholders only, never real credentials.
+# Users copy `.envN.example` → `.env` and fill in their own secrets. Without these
+# negations the `.env*` rule above silently swallows them and they never reach GitHub.
+!.env.example
+!.env1.example
+!.env2.example
+!.env3.example
 gitpat.txt
 my_password.txt
 **/id_rsa

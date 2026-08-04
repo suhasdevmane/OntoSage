@@ -312,7 +312,8 @@ The capability semantic routing pipeline ships with four collaborating component
 ### Adding a new building's capability KB (zero code changes)
 
 ```bash
-# 1. Author input/<new_bldg>/capability.yaml (see CAPABILITY_ROUTING.md for schema)
+# 1. Author input/<id>_capabilities.ttl (ontosage:Amenity / KnowledgeTopic triples),
+#    or add them via Admin ▸ Capabilities — capability.yaml was removed (TODO-012)
 # 2. (Optional) tune in input/<new_bldg>/building.yaml::capability_routing
 # 3. Restart orchestrator
 docker compose restart orchestrator

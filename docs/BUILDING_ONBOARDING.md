@@ -11,6 +11,49 @@ the CLI — both are covered.
 
 ---
 
+## 0. Your building goes where the fixtures are
+
+The repo ships three buildings — `bldg1` (Cardiff University's Abacws), `bldg2` and `bldg3`. **They
+are test fixtures**, included so a fresh clone demonstrates a working system and so portability is
+provable on more than one model. They are not a required part of the product, and nothing in the
+core code knows they exist.
+
+**Your building uses the same three slots.** A building is a trio:
+
+```
+<data folder>            + <env file>  + <compose file>
+input/                     .env          docker-compose.yml     ← the ACTIVE building
+```
+
+So bringing your own building is: activate a slot (its folder becomes `input/`), replace the
+fixture's data with yours, set the identity in `.env`, and restart. **No code changes, ever** — if
+you find yourself editing Python to onboard a building, something is wrong and it's worth raising as
+an issue.
+
+### Choose a fresh `BUILDING_ID` — the one decision that bites
+
+Per-building state (GraphDB, Qdrant, Redis, Postgres, Mongo) lives in `volumes/<BUILDING_ID>/`.
+
+* **New id** → brand-new empty stores, a genuinely clean start. **Recommended.**
+* **Reused id (e.g. keeping `bldg1`)** → you inherit that fixture's populated GraphDB. Your triples
+  are *added alongside* Abacws's, so counts, floor lists and "what's in this building" answers mix
+  two buildings. If you deliberately reuse an id, wipe its state first:
+
+```bash
+docker compose down
+rm -rf volumes/bldg1          # or the id you are reusing
+```
+
+### Does `docker-compose.yml` need editing?
+
+Usually **no** — it is building-agnostic and reads everything from `.env`. Edit it only for
+infrastructure reasons: changing published ports, pointing at a containerised database instead of
+`host.docker.internal`, enabling the GPU Ollama profile, or removing the demo `data-publisher`
+service (which fabricates readings and should be **deleted or stopped for a real building with real
+telemetry**).
+
+---
+
 ## 1. The mental model (read this first)
 
 OntoSage answers from **your building's own data**. A question is answerable when **both halves** exist:
@@ -39,8 +82,9 @@ Two facts that make everything else simpler:
 
 | Need | Notes |
 |---|---|
-| Docker stack running | `docker compose up -d` (see the [Quick start](../README.md)) |
-| Real secrets in `.env` | `STRICT_SECRETS=true` refuses to boot on defaults — set `SECRET_KEY`, `GRAPHDB_PASSWORD`, `MYSQL_PASSWORD`, `POSTGRES_USER_PASSWORD` |
+| A building activated | `mv bldg1 input && mv docker-compose.bldg1.yml docker-compose.yml && cp .env1.example .env` — a fresh clone ships every building parked, so nothing runs until you do this ([Quick start](../README.md#1-activate-a-building)) |
+| Docker stack running | `docker compose up -d` after activation |
+| Real secrets in `.env` | The `.envN.example` templates ship every credential as a `CHANGE-ME` placeholder; `STRICT_SECRETS=true` refuses to boot until you replace `SECRET_KEY`, `GRAPHDB_PASSWORD`, `MYSQL_PASSWORD`, `POSTGRES_USER_PASSWORD`, `ADMIN_PASSWORD` |
 | An **admin account** | Set `ADMIN_USERNAME` / `ADMIN_PASSWORD` (12+ chars) in `.env`, or create one via `POST /api/v1/admin/users`. Needed for the console and admin APIs. |
 | Your building's **ontology** | A Turtle (`.ttl`) Brick/BACnet (or REC/223/Haystack/custom) model — see [§4](#4-prepare-your-ontology-ttl) |
 | Your **time-series DB** details | Host, port, credentials, table — for *live* readings (optional if you only want structural Q&A) |
@@ -71,6 +115,31 @@ feature — nothing breaks.
 >
 > The nested form `input/<building_id>/…` is still supported as a fallback (staging / future
 > multi-building), but **flat is the canonical layout** — put files directly in `input/`.
+
+### Replacing a fixture's files with your own
+
+When you take over a fixture slot, three files are **shared schema, not building data** — deleting
+them breaks the vocabulary the system reasons with:
+
+| Keep (ships with OntoSage) | Replace (belongs to the building) |
+|---|---|
+| `Brick_v1.4.ttl` — the Brick ontology | `<your_id>.ttl` — your model |
+| `Brick+extensions.ttl` — Brick extensions | `building.yaml`, `env.building` |
+| `ontosage_schema.ttl` — OCBV vocabulary | `database_registry.yaml` |
+| | `<your_id>_capabilities.ttl`, `documents/`, floor plans, `personas/` |
+
+A quick way to clear a slot while keeping the schema:
+
+```bash
+cd input
+# remove the fixture's building data, keep the shared vocabulary
+rm -f bldg1_*.ttl equipment_linkage.ttl "Abacws floor"*.pdf "Abacws floor"*.dwg
+rm -rf documents personas
+# then drop in your own model + config
+```
+
+Names are up to you — the TTL auto-uploader picks up **any** `*.ttl` in `input/`, and floor plans
+are matched by the `<label> floor <N>.<ext>` pattern.
 
 ---
 

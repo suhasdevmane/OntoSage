@@ -1,0 +1,485 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  OntoSage — environment template for bldg1 (Abacws Building)
+#
+#  HOW TO USE
+#    1. cp .env1.example .env          (Windows: Copy-Item .env1.example .env)
+#    2. Fill in every CHANGE-ME value below — STRICT_SECRETS=true refuses to boot
+
+# ── Secrets the STRICT_SECRETS guard enforces ────────────────────────────────
+# These two are absent from the demo env files (they fall back to insecure
+# built-in defaults), so the template states them explicitly: you cannot fill in
+# what you cannot see. The stack refuses to boot until both hold real values.
+SECRET_KEY=CHANGE-ME-random-64-hex-chars
+POSTGRES_USER_PASSWORD=CHANGE-ME-postgres-user-password
+
+#       while any password is still a placeholder or a shipped default.
+#    3. Activate this building's data + compose file, then `docker compose up -d`:
+#         mv bldg1 input
+#         mv docker-compose.bldg1.yml docker-compose.yml
+#
+#  This template contains NO real credentials. Your filled-in `.env` is gitignored
+#  and must never be committed.
+#
+#  Running YOUR OWN building instead of this demo? Change the identity block below
+#  (especially BUILDING_ID — a new id gets a fresh, empty database) and see
+#  README ▸ "Use OntoSage with YOUR building".
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║                OntoSage 2.0 Environment Configuration                      ║
+# ║                                                                            ║
+# ║  QUICK START:                                                             ║
+# ║  1. For FREE local models:  Copy .env.local to .env                       ║
+# ║  2. For PAID cloud models:  Copy .env.cloud to .env and add OpenAI key   ║
+# ║  3. Run: ./startup.ps1                                                    ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+
+
+# ==================== 🎯 MODEL PROVIDER SELECTION ====================
+# Core decision: Where do models run?
+#
+# LOCAL OPTION (default — no API costs):
+#   - MODEL_PROVIDER=local
+#   - EMBEDDING_PROVIDER=local
+#   - STT_PROVIDER=local
+#   - ✅ FREE (no API costs)
+#   - ✅ Privacy (data stays local)
+#   - ✅ No rate limits
+#   - ⚠️ Slower inference
+#   - ⚠️ Requires 8GB+ RAM
+#   - Uses: Ollama (OLLAMA_MODEL below), sentence-transformers, faster-whisper
+#   - NOTE: MODEL_PROVIDER also auto-falls-back to 'local' whenever
+#     MODEL_PROVIDER=openai is set but OPENAI_API_KEY is blank.
+#
+# CLOUD OPTION (Recommended for production):
+#   - MODEL_PROVIDER=cloud
+#   - EMBEDDING_PROVIDER=openai
+#   - STT_PROVIDER=openai
+#   - ✅ Fast inference
+#   - ✅ State-of-the-art models
+#   - ⚠️ Costs money (~$0.01 per 1K tokens)
+#   - ⚠️ Requires internet
+#   - ⚠️ Needs OpenAI API key
+#   - Uses: GPT-4, ada-002, Whisper API
+
+MODEL_PROVIDER=local
+EMBEDDING_PROVIDER=local
+STT_PROVIDER=local
+
+
+# ==================== ☁️ OPENAI CONFIGURATION ====================
+# Required only if MODEL_PROVIDER=cloud, EMBEDDING_PROVIDER=openai, or STT_PROVIDER=openai
+#
+# Get your API key from: https://platform.openai.com/api-keys
+# Pricing: https://openai.com/pricing
+#
+# SECURITY WARNING:
+# - Never commit .env with real API keys to Git
+# - Rotate keys if exposed
+# - Monitor usage: https://platform.openai.com/usage
+
+# Your OpenAI API key (starts with sk-...)
+OPENAI_API_KEY=
+# LLM Model for conversations, SPARQL generation, analytics
+# Options:
+#   - o3-mini (reasoning model, high intelligence, cost-effective)
+#   - gpt-4o (best overall, multimodal)
+#   - gpt-4o-mini (fast, cheap)
+OPENAI_MODEL=gpt-5.4
+OPENAI_MODEL_FAST=gpt-4o-mini
+
+# Temperature: Controls randomness (0.0 = deterministic, 1.0 = creative)
+# For ontology queries: 0.0-0.2 recommended (precise)
+# For conversations: 0.5-0.7 (natural)
+OPENAI_TEMPERATURE=0.1
+# Retry backoff for OpenAI (seconds) to avoid 429 thrashing
+OPENAI_RETRY_DELAY_S=20
+
+# Embedding model for RAG (Retrieval-Augmented Generation)
+# Options:
+#   - text-embedding-3-small (recommended, 1536 dims, $0.00002/1K tokens)
+#   - text-embedding-3-large (best quality, 3072 dims, $0.00013/1K tokens)
+#   - text-embedding-ada-002 (legacy, 1536 dims, $0.0001/1K tokens)
+EMBEDDING_MODEL_OPENAI=text-embedding-3-small
+EMBEDDING_DIMENSION_OPENAI=1536
+
+# Agent memory uses text-embedding-3-large for higher quality episodic + preference search
+AGENT_MEMORY_EMBED_MODEL=text-embedding-3-large
+
+# Whisper STT (Speech-to-Text)
+# Fixed model: whisper-1 ($0.006/minute)
+# Max file size: 25MB
+# Supports: mp3, mp4, mpeg, mpga, m4a, wav, webm
+
+
+# ==================== 🖥️ LOCAL MODEL CONFIGURATION ====================
+# Used only if MODEL_PROVIDER=cloud, EMBEDDING_PROVIDER=local, or STT_PROVIDER=local
+
+# Ollama (Local LLM)
+# Ollama runs NATIVELY on the host (not in Docker) — reached from inside the
+# orchestrator container via Docker Desktop's host.docker.internal at Ollama's
+# default port 11434. Verify from the host: curl http://localhost:11434/api/tags
+OLLAMA_BASE_URL=http://host.docker.internal:11434
+
+# Model to use — must already be pulled (`ollama pull <name>` on the host, or
+# `ollama list` to see what's installed).
+OLLAMA_MODEL=gpt-oss:20b
+
+# Local Embeddings (sentence-transformers)
+# Model is downloaded on first use (~90MB)
+# Options:
+#   - sentence-transformers/all-MiniLM-L6-v2 (384 dims, fast, good quality)
+#   - sentence-transformers/all-mpnet-base-v2 (768 dims, slower, better quality)
+#   - sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 (384 dims, multilingual)
+EMBEDDING_MODEL_LOCAL=BAAI/bge-large-en-v1.5
+EMBEDDING_DIMENSION_LOCAL=1024
+
+# Local Whisper (faster-whisper)
+# Model size affects accuracy vs speed (download size shown)
+# Options:
+#   - tiny (39MB, fast, low accuracy)
+#   - base (74MB, balanced, recommended)
+#   - small (244MB, good accuracy)
+#   - medium (769MB, better accuracy)
+#   - large (2.9GB, best accuracy, slow)
+WHISPER_MODEL_LOCAL=base
+
+
+# ==================== 🔗 SERVICE URLS ====================
+# Internal Docker network URLs (do not change unless modifying docker-compose.yml)
+
+# Qdrant Vector Database (semantic search)
+# Stores ontology embeddings, query history
+# Dashboard: http://localhost:6333/dashboard
+QDRANT_URL=http://qdrant:6333
+
+# Redis (conversation state, caching)
+# Stores conversation history, SPARQL cache, user preferences
+# TTL: CONVERSATION_TTL seconds (0 = no expiry, count-based eviction via CONVERSATION_MAX_MESSAGES)
+REDIS_URL=redis://redis:6379/0
+
+# RAG Service (Retrieval-Augmented Generation)
+# Provides ontology context for SPARQL generation
+# Health check: http://localhost:8001/health
+RAG_SERVICE_URL=http://rag-service:8001
+
+# Code Executor (Sandboxed Python execution)
+# Runs analytics code in isolated environment
+# Security: SAFE_BUILTINS only, no os/sys/subprocess
+CODE_EXECUTOR_URL=http://code-executor:8002
+CODE_EXECUTOR_TIMEOUT=30              # Max execution time (seconds)
+CODE_EXECUTOR_MEMORY_LIMIT=1g         # RAM limit per execution
+CODE_EXECUTOR_CPU_LIMIT=1.0           # CPU cores (1.0 = 1 full core)
+
+# Whisper STT (Speech-to-Text)
+# Converts audio to text for voice queries
+WHISPER_STT_URL=http://whisper-stt:8003
+
+
+# ==================== 🏢 BUILDING 1 CONFIGURATION ====================
+# Building metadata and data source endpoints
+
+# Building identifier (used in logs, responses)
+BUILDING_ID=bldg1
+BUILDING_NAME=Abacws Building
+
+# Fuseki SPARQL Endpoint - DEPRECATED (replaced by GraphDB)
+# Triple store for Brick ontology (Building 1 sensors, locations, equipment)
+# Query UI: http://localhost:3030/#/dataset/abacws/query
+# Dataset contains:
+#   - ~500 triples (sensors, spaces, equipment, relationships)
+#   - Brick Schema classes (hasLocation, feeds, isPointOf, etc.)
+# FUSEKI_URL=http://fuseki:3030/abacws
+
+# GraphDB SPARQL Endpoint (replaces Fuseki + Qdrant)
+# RDF triple store with built-in vector similarity search
+# Query UI: http://localhost:7200/sparql
+# Repository: bldg
+# Contains:
+#   - bldg1_expanded_protege.ttl (TBox + ABox combined with reasoning)
+#   - 92,802 triples (680 sensors, spaces, equipment, relationships + inferred)
+#   - RDFS reasoning enabled
+#   - Vector index for entity retrieval
+GRAPHDB_URL=http://graphdb:7200
+GRAPHDB_REPOSITORY=bldg
+GRAPHDB_USER=admin
+GRAPHDB_PASSWORD=CHANGE-ME-graphdb-password
+GRAPHDB_SIMILARITY_INDEX=bldg_index
+GRAPHDB_USE_SIMILARITY=true
+
+# ==================== 🔍 RAG SYSTEM SELECTION ====================
+# Choose which RAG approach to use for ontology context retrieval
+# Options:
+#   - graphdbRAG: GraphDB similarity indexing (RECOMMENDED - currently active)
+#   - GraphRAG: Microsoft GraphRAG with entity-relationship extraction
+#   - RAG_system: Traditional vector-based RAG
+#   - RAG_system_advance: Advanced RAG with hybrid retrieval
+RAG_SYSTEM=graphdbRAG
+
+# MySQL Database (Time-series sensor data)
+# Contains:
+#   - sensors table: 21 sensors (7 temp, 5 humidity, 3 CO2, 3 occupancy, 3 energy)
+#   - sensor_data: ~14K records (7 days, 15-minute intervals)
+#   - sensor_hourly_aggregates: Pre-computed hourly stats
+# PhpMyAdmin (optional): http://localhost:8080
+MYSQL_HOST=host.docker.internal
+MYSQL_PORT=3306
+MYSQL_USER=ontosage
+MYSQL_PASSWORD=CHANGE-ME-mysql-password
+MYSQL_DATABASE=sensordb
+# Local host MySQL root password (not used by compose; for admin access only)
+MYSQL_ROOT_PASSWORD=CHANGE-ME-mysql-root-password
+
+# PostgreSQL Database (ThingsBoard)
+# Contains:
+#   - ThingsBoard device registry, telemetry, and time-series data
+#   - Used for IoT device management and sensor data storage
+# Access via pgAdmin: http://localhost:5050
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_USER=thingsboard
+POSTGRES_PASSWORD=CHANGE-ME-postgres-password
+POSTGRES_DB=thingsboard
+
+# pgAdmin (PostgreSQL Web UI)
+# Web interface for managing PostgreSQL databases
+# Access: http://localhost:5050
+# Login with credentials below
+PGADMIN_DEFAULT_EMAIL=pgadmin@example.com
+PGADMIN_DEFAULT_PASSWORD=CHANGE-ME-pgadmin-default-password
+
+
+# ==================== 🏗️ ABACWS API & VISUALISER CONFIGURATION ====================
+# Building management API with support for multiple database backends
+
+# API Key for authentication
+API_KEY=CHANGE-ME-api-key
+
+# Database Engine Selection
+# Options: mysql, postgres, mongo, disabled
+API_DB_ENGINE=mysql
+
+# Abacws API PostgreSQL Connection (when API_DB_ENGINE=postgres)
+API_PGHOST=postgres
+API_PGPORT=5432
+API_PGUSER=thingsboard
+API_PGPASSWORD=CHANGE-ME-api-pgpassword
+API_PGDATABASE=thingsboard
+
+# Abacws API MySQL Connection (when API_DB_ENGINE=mysql)
+API_MYSQL_HOST=mysql-bldg1
+API_MYSQL_PORT=3306  # Internal Docker network port (external: 3307)
+API_MYSQL_USER=root
+API_MYSQL_PASSWORD=CHANGE-ME-api-mysql-password
+API_MYSQL_DATABASE=sensordb
+
+# Abacws Visualiser Debug Mode
+# Set to '1' to enable verbose 3D loader logging in browser console
+ABACWS_DEBUG=0
+
+
+# ==================== 🌐 THINGSBOARD IOT PLATFORM CONFIGURATION ====================
+# ThingsBoard for sensor management and IoT device connectivity
+
+# ThingsBoard PostgreSQL Database
+# Uses the same Postgres container as other services
+PG_THINGSBOARD_DB=thingsboard
+PG_THINGSBOARD_USER=thingsboard
+PG_THINGSBOARD_PASSWORD=CHANGE-ME-pg-thingsboard-password
+
+# ThingsBoard Access
+# Web UI: http://localhost:8082
+# Default credentials: tenant@thingsboard.org / tenant
+# MQTT Port: 1883
+# HTTP Port: 8081
+
+
+# ==================== 💬 CONVERSATION SETTINGS ====================
+
+# Conversation state TTL (seconds)
+# How long Redis keeps conversation state before time-based expiry
+# 0 = no expiry; bounded instead by CONVERSATION_MAX_MESSAGES (count-based eviction)
+# Set to e.g. 3600 (1h) or 86400 (24h) to re-enable time-based expiry
+CONVERSATION_TTL=0
+
+# Max verbatim messages kept per conversation in the Redis blob (count-based eviction)
+CONVERSATION_MAX_MESSAGES=20
+
+# Max prior turns injected into LLM context from Redis
+# 20 = 10 user + 10 assistant messages
+MAX_CONVERSATION_HISTORY=20
+
+# Max retry attempts for failed operations
+# Applies to:
+#   - SPARQL query errors (auto-repair)
+#   - Code execution errors (auto-fix)
+#   - LLM API failures (retry with backoff)
+MAX_RETRY_ATTEMPTS=3
+
+
+# ==================== 📊 QDRANT COLLECTION CONFIGURATION ====================
+# Vector database collections (created by scripts/init_qdrant.py)
+
+# Collection names
+QDRANT_ONTOLOGY_COLLECTION=ontology   # Brick Schema triples
+QDRANT_QUERIES_COLLECTION=queries     # Historical SPARQL queries
+QDRANT_ANALYTICS_COLLECTION=analytics # Analytics code snippets
+QDRANT_DOCS_COLLECTION=documentation  # System docs, help text
+
+# Vector similarity threshold (0.0-1.0)
+# Higher = stricter matching (fewer, more relevant results)
+# Lower = looser matching (more results, less relevant)
+# 0.7 = good balance
+SIMILARITY_THRESHOLD=0.7
+
+# Max results returned per RAG query
+# More results = more context for LLM but slower inference
+RAG_TOP_K=5
+
+
+# ==================== 🔐 SECURITY SETTINGS ====================
+# ---- LOCAL DEV ONLY — remove both lines for production deployments ----
+STRICT_SECRETS=true    # refuse to boot while any secret below is a placeholder
+COOKIE_SECURE=false
+# -----------------------------------------------------------------------
+
+# Code Executor Sandbox
+# Forbidden imports (security): os, sys, subprocess, socket, requests, urllib
+# Allowed imports: pandas, numpy, matplotlib, plotly, datetime, math, statistics
+# All code runs in isolated environment with resource limits
+
+# File upload limits (Whisper STT)
+MAX_UPLOAD_SIZE_MB=25                 # OpenAI Whisper limit
+ALLOWED_AUDIO_FORMATS=wav,mp3,m4a,ogg,webm
+
+
+# ==================== 📝 LOGGING ====================
+
+# Log level controls verbosity
+# Options:
+#   - DEBUG: Everything (function calls, variables, SQL queries)
+#   - INFO: Important events (requests, responses, errors)
+#   - WARNING: Potential issues (retries, timeouts)
+#   - ERROR: Failures only
+# Production: INFO, Development: DEBUG
+LOG_LEVEL=INFO
+
+# Log format (Python logging)
+# %(asctime)s - %(name)s - %(levelname)s - %(message)s
+LOG_FORMAT=%(asctime)s - %(name)s - %(levelname)s - %(message)s
+
+
+# ==================== 🎨 FRONTEND CONFIGURATION ====================
+
+# React app proxies /api/* to orchestrator
+# Set via REACT_APP_API_URL in frontend/.env
+# Default: http://localhost:8000 (local development)
+# Production: Update to public orchestrator URL
+
+
+# ==================== 📈 MONITORING (OPTIONAL) ====================
+# Enable with: docker-compose --profile monitoring up -d
+
+# Prometheus (metrics)
+# Scrapes: orchestrator, rag-service, code-executor, whisper-stt, redis, qdrant, mysql
+# UI: http://localhost:9090
+
+# Grafana (dashboards)
+# UI: http://localhost:3001
+# Login: admin/admin
+# Dashboards: OntoSage Overview (service health, latency, throughput)
+
+
+# ==================== 🛠️ DEVELOPMENT SETTINGS ====================
+
+# Hot reload (for development)
+# Set to 'true' to enable auto-restart on code changes
+# Requires mounting code as volumes in docker-compose.yml
+# DEV_MODE=false
+
+# Skip model downloads (if already cached)
+# SKIP_MODEL_DOWNLOAD=false
+
+# Use mock LLM responses (for testing without LLM)
+# MOCK_LLM=false
+
+
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║  TROUBLESHOOTING                                                          ║
+# ║                                                                            ║
+# ║  • Services not starting?                                                 ║
+# ║    → Run: docker-compose logs <service_name>                             ║
+# ║    → Check: Docker has 8GB+ RAM allocated (Docker Desktop settings)      ║
+# ║                                                                            ║
+# ║  • Ollama model not found?                                                ║
+# ║    → Run on the HOST (not in Docker): ollama pull gemma4:26b             ║
+# ║    → Verify: curl http://localhost:11434/api/tags                       ║
+# ║                                                                            ║
+# ║  • OpenAI API errors?                                                     ║
+# ║    → Verify: OPENAI_API_KEY is valid                                     ║
+# ║    → Check: https://platform.openai.com/usage for rate limits           ║
+# ║                                                                            ║
+# ║  • Qdrant collections not found?                                          ║
+# ║    → Run: docker-compose exec orchestrator python -m scripts.init_qdrant ║
+# ║                                                                            ║
+# ║  • No ontology data?                                                      ║
+# ║    → Run: docker-compose exec rag-service python -m scripts.ingest_ontology ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+
+
+# ==================== 🌩️ CLOUD OLLAMA CONFIGURATION ====================
+# Cloud Ollama API (alternative to local Ollama)
+# Set MODEL_PROVIDER=cloud to use this instead of local model
+OLLAMA_CLOUD_API_KEY=
+OLLAMA_CLOUD_BASE_URL=https://api.ollama.ai/v1
+OLLAMA_CLOUD_MODEL=gpt-oss:120b-cloud
+
+
+
+# ==================== 🌦️ LIVE-DATA AUGMENTATION (general knowledge) ====================
+LIVE_DATA_ENABLED=true
+WEATHER_ENABLED=true
+WEB_SEARCH_ENABLED=true
+# Default DuckDuckGo (free, keyless). Set to 'tavily' to use the Tavily key below.
+WEB_SEARCH_PROVIDER=duckduckgo
+TAVILY_API_KEY=
+WEB_SEARCH_MAX_RESULTS=5
+WEB_SEARCH_TIMEOUT_S=8.0
+
+
+
+DATASOURCE_TOGGLES_ENABLED=true
+
+# Admin console bootstrap (http://127.0.0.1:3001). Created at orchestrator
+# startup if it doesn't already exist (safe-create; never overwrites).
+ADMIN_USERNAME=admin@ontosage
+ADMIN_PASSWORD=CHANGE-ME-strong-admin-password-12-chars-min
+
+# ── Added via admin console ──
+DEMO_EXTERNAL_HOST=demo-mysql
+DEMO_EXTERNAL_PORT=3306
+DEMO_EXTERNAL_USER=demo
+DEMO_EXTERNAL_PASSWORD=CHANGE-ME-demo-external-password
+DEMO_EXTERNAL_DATABASE=demodb
+
+
+PIPELINE_API_KEY=CHANGE-ME-your-own-pipeline-key
+# ROADMAP-009 WS-4 measurement toggle
+CAPABILITIES_TTL_FIRST=true
+
+# ── Added via admin console ──
+WIZTEST_HOST=host.docker.internal
+WIZTEST_PORT=3306
+WIZTEST_USER=ontosage
+WIZTEST_PASSWORD=CHANGE-ME-wiztest-password
+WIZTEST_DATABASE=sensordb
+COMPOSE_PROJECT_NAME=ontosage_bldg1
+
+# ── Identity mirror of input/env.building (building.yaml wins if they differ) ──
+BUILDING_NAMESPACE=http://abacwsbuilding.cardiff.ac.uk/abacws#
+BUILDING_PREFIX=bldg
+BUILDING_TIMEZONE=Europe/London
+# ── LLM tuning (parity with the bldg2/bldg3 era; compose defaults match) ──
+OLLAMA_KEEP_ALIVE=30m
+OLLAMA_NUM_CTX=8192
+LLM_TIMEOUT_S=180

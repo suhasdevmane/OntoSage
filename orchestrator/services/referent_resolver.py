@@ -58,6 +58,11 @@ GATED_INTENTS = frozenset(
         "anomaly",
         "compliance",
         "visualization",
+        # BUG-103: counts and listings scoped to a named referent are equally fabricable
+        # ("how many sensors are on floor 42?" → three real sensors from other floors).
+        # A query with no named referent still returns NO_REFERENT and passes through.
+        "metadata",
+        "discovery",
     }
 )
 
@@ -66,6 +71,78 @@ RESOLVED = "resolved"
 NOT_FOUND = "not_found"
 NO_REFERENT = "no_referent"
 SKIPPED = "skipped"  # existence check could not run (e.g. GraphDB down) — fail open
+
+# ── Typed referents (BUG-103) ────────────────────────────────────────────────────
+# The original gate only knew dotted zone/room ids, so "floor 42", "the west wing",
+# "the swimming pool", "EV chargers" and "methane concentration" walked straight past
+# it into the SQL/analytics cascade and came back wearing another sensor's numbers.
+# Each kind below is detected by ENGLISH STRUCTURE (never a building's vocabulary) and
+# validated against the ACTIVE building's own graph — so a new building works unchanged.
+KIND_LOCATION = "location"
+KIND_FLOOR = "floor"
+KIND_SPACE = "space"
+KIND_EQUIPMENT = "equipment"
+KIND_MEASURAND = "measurand"
+
+# "floor 42" / "42nd floor" — the storey number is the referent.
+_FLOOR_RE = re.compile(
+    r"\bfloor\s+(\d{1,3})\b|\b(\d{1,3})\s*(?:st|nd|rd|th)\s+floor\b", re.IGNORECASE
+)
+# "<modifier> <space-head>" — e.g. west wing, rooftop garden, server room, swimming pool.
+# The HEAD nouns are generic English building-space words, not any building's names.
+_SPACE_HEADS = (
+    "wing",
+    "garden",
+    "pool",
+    "lobby",
+    "atrium",
+    "parking",
+    "garage",
+    "greenhouse",
+    "courtyard",
+    "terrace",
+    "canteen",
+    "cafeteria",
+    "gym",
+    "auditorium",
+    "warehouse",
+    "basement",
+    "rooftop",
+)
+_SPACE_RE = re.compile(
+    r"\b(?:the\s+)?([a-z][a-z-]{2,19})\s+(" + "|".join(_SPACE_HEADS) + r")\b", re.IGNORECASE
+)
+# Plant / assets. Generic equipment nouns; an optional trailing number is kept.
+_EQUIPMENT_HEADS = (
+    "chiller",
+    "boiler",
+    "elevator",
+    "escalator",
+    "charger",
+    "compressor",
+    "generator",
+    "turbine",
+    "heat pump",
+    "solar panel",
+    "water tank",
+)
+_EQUIPMENT_RE = re.compile(
+    r"\b(" + "|".join(_EQUIPMENT_HEADS) + r")s?\b(?:\s*#?\s*(\d{1,3}))?", re.IGNORECASE
+)
+# "<quantity> concentration|level(s)" — the measured quantity is the referent.
+_MEASURAND_RE = re.compile(r"\b([a-z][a-z0-9]{1,19})\s+(?:concentration|levels?)\b", re.IGNORECASE)
+# Multi-word referent phrases reaching a SPARQL literal — letters/digits/space/.-_ only.
+_SAFE_PHRASE_RE = re.compile(r"^[A-Za-z0-9 ._-]{1,40}$")
+
+
+@dataclass
+class TypedReferent:
+    """A named thing the question is *about*, plus what kind of thing it is."""
+
+    kind: str
+    token: str  # pipe-separated terms that must ALL appear on one entity
+    phrase: str  # what to echo back to the user
+    head: str  # the kind-defining term ("floor", "wing", "chiller") — drives suggestions
 
 
 @dataclass
@@ -106,6 +183,57 @@ def detect_referent(query: str, entities: Optional[List[str]] = None) -> Optiona
     return None
 
 
+def detect_typed_referent(query: str) -> Optional[TypedReferent]:
+    """Detect a floor / named space / equipment / measurand referent, or ``None``.
+
+    Structural English patterns only — nothing here knows any building's vocabulary,
+    so the same detection serves every building. Precision-first: an unmatched query
+    returns ``None`` and flows through the pipeline exactly as before.
+    """
+    q = query or ""
+
+    m = _FLOOR_RE.search(q)
+    if m:
+        num = m.group(1) or m.group(2)
+        if num and _SAFE_TOKEN_RE.match(num):
+            return TypedReferent(
+                kind=KIND_FLOOR, token=f"floor|{num}", phrase=f"floor {num}", head="floor"
+            )
+
+    m = _SPACE_RE.search(q)
+    if m:
+        modifier, head = m.group(1).lower(), m.group(2).lower()
+        phrase = f"{modifier} {head}"
+        if _SAFE_PHRASE_RE.match(phrase):
+            return TypedReferent(
+                kind=KIND_SPACE, token=f"{modifier}|{head}", phrase=phrase, head=head
+            )
+
+    m = _EQUIPMENT_RE.search(q)
+    if m:
+        head, num = m.group(1).lower(), m.group(2)
+        phrase = f"{head} {num}" if num else head
+        if _SAFE_PHRASE_RE.match(phrase):
+            token = f"{head}|{num}" if num else head
+            return TypedReferent(kind=KIND_EQUIPMENT, token=token, phrase=phrase, head=head)
+
+    m = _MEASURAND_RE.search(q)
+    if m:
+        quantity = m.group(1).lower()
+        if quantity not in _STOP_QUANTITIES and _SAFE_TOKEN_RE.match(quantity):
+            return TypedReferent(
+                kind=KIND_MEASURAND, token=quantity, phrase=quantity, head=quantity
+            )
+
+    return None
+
+
+# Words that precede "level/concentration" without naming a measured quantity.
+_STOP_QUANTITIES = frozenset(
+    {"the", "a", "an", "this", "that", "high", "low", "current", "same", "acceptable", "normal"}
+)
+
+
 class ReferentResolver:
     """Validate a named referent against a building's ontology namespace."""
 
@@ -126,6 +254,11 @@ class ReferentResolver:
         """
         token = detect_referent(query, entities)
         if not token:
+            # No dotted/worded location — try the typed referents (BUG-103): a floor,
+            # a named space, a piece of equipment, or a measured quantity.
+            typed = detect_typed_referent(query)
+            if typed:
+                return await self._resolve_typed(typed, namespace, building_name)
             return ReferentResolution(status=NO_REFERENT)
 
         try:
@@ -150,6 +283,139 @@ class ReferentResolver:
             suggestions=suggestions,
             message=self._clarification(token, suggestions, building_name),
         )
+
+    # ------------------------------------------------- typed referents (BUG-103)
+
+    async def _resolve_typed(
+        self, typed: TypedReferent, namespace: str, building_name: str
+    ) -> ReferentResolution:
+        """Validate a floor / space / equipment / measurand against the live graph."""
+        terms = typed.token.split("|")
+        try:
+            exists = await self._exists_terms(terms, namespace)
+            # A compound referent ("west wing", "chiller 7") may fail only on the
+            # modifier. If even the HEAD noun is unknown to this building, the answer
+            # is a confident "we have nothing like that"; otherwise we can suggest the
+            # real ones of that kind.
+            head_exists = exists or await self._exists_terms([typed.head], namespace)
+        except Exception as e:  # fail OPEN — never block on a degraded GraphDB
+            logger.warning(f"[referent_resolver] typed existence check failed, proceeding: {e}")
+            return ReferentResolution(status=SKIPPED, referent=typed.phrase)
+
+        if exists:
+            return ReferentResolution(status=RESOLVED, referent=typed.phrase)
+
+        suggestions: List[str] = []
+        if head_exists:
+            try:
+                suggestions = await self._suggest_terms([typed.head], namespace)
+            except Exception as e:
+                logger.warning(f"[referent_resolver] typed suggestion lookup failed: {e}")
+
+        return ReferentResolution(
+            status=NOT_FOUND,
+            referent=typed.phrase,
+            suggestions=suggestions,
+            message=self._typed_clarification(typed, suggestions, building_name),
+        )
+
+    async def _exists_terms(self, terms: List[str], namespace: str) -> bool:
+        """True if ONE subject in ``namespace`` matches every term.
+
+        A term may match the subject's URI, its ``rdfs:label``, or its class URI — so
+        "chiller" resolves whether the building names the instance ``Chiller_01`` or
+        types a generically-named instance as ``brick:Chiller``. Building-agnostic:
+        only the active namespace and the terms from the user's own question are used.
+        """
+        clauses = []
+        for t in terms:
+            t = t.lower().strip()
+            if not t:
+                continue
+            clauses.append(
+                f'(CONTAINS(LCASE(STR(?s)), "{t}") '
+                f'|| CONTAINS(LCASE(COALESCE(STR(?l), "")), "{t}") '
+                f'|| CONTAINS(LCASE(COALESCE(STR(?t), "")), "{t}"))'
+            )
+        if not clauses:
+            return True
+        q = (
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+            "SELECT ?s WHERE {\n"
+            "  ?s ?p ?o .\n"
+            "  OPTIONAL { ?s rdfs:label ?l }\n"
+            "  OPTIONAL { ?s a ?t }\n"
+            f'  FILTER(STRSTARTS(STR(?s), "{namespace}"))\n'
+            f"  FILTER({' && '.join(clauses)})\n"
+            "} LIMIT 1"
+        )
+        return len(_bindings(await self._exec(q))) > 0
+
+    async def _suggest_terms(self, terms: List[str], namespace: str) -> List[str]:
+        """Up to 5 real entity names of the same kind (e.g. the floors that DO exist)."""
+        t = (terms[0] if terms else "").lower()
+        if not t:
+            return []
+        q = (
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+            "SELECT DISTINCT ?s WHERE {\n"
+            "  ?s ?p ?o .\n"
+            "  OPTIONAL { ?s rdfs:label ?l }\n"
+            f'  FILTER(STRSTARTS(STR(?s), "{namespace}"))\n'
+            f'  FILTER(CONTAINS(LCASE(STR(?s)), "{t}") '
+            f'|| CONTAINS(LCASE(COALESCE(STR(?l), "")), "{t}"))\n'
+            "} LIMIT 60"
+        )
+        names: set[str] = set()
+        for b in _bindings(await self._exec(q)):
+            uri = b.get("s", {}).get("value", "")
+            local = uri.split("#")[-1].split("/")[-1]
+            if local:
+                names.add(local.replace("_", " "))
+        return sorted(names)[:5]
+
+    @staticmethod
+    def _typed_clarification(
+        typed: TypedReferent, suggestions: List[str], building_name: str
+    ) -> str:
+        """Honest refusal + how to make the question answerable (connect-data contract)."""
+        from orchestrator.services.grounding_guard import (
+            SUBJECT_EQUIPMENT,
+            SUBJECT_SENSOR,
+            SUBJECT_SPACE,
+            enablement_hint,
+        )
+
+        kind_word = {
+            KIND_FLOOR: "floor",
+            KIND_SPACE: "space",
+            KIND_EQUIPMENT: "equipment",
+            KIND_MEASURAND: "measurement",
+        }.get(typed.kind, "referent")
+
+        if typed.kind == KIND_MEASURAND:
+            head = (
+                f"**{building_name}** has no sensor measuring **{typed.phrase}**, "
+                f"so I can’t report a {typed.phrase} value — I won’t substitute a "
+                f"different measurement."
+            )
+            subject_kind = SUBJECT_SENSOR
+        else:
+            head = (
+                f"I couldn’t find **{typed.phrase}** in **{building_name}**’s model, "
+                f"so I can’t return data for it — the readings I have belong to other "
+                f"{kind_word}s and attributing them to {typed.phrase} would be wrong."
+            )
+            subject_kind = {
+                KIND_EQUIPMENT: SUBJECT_EQUIPMENT,
+                KIND_SPACE: SUBJECT_SPACE,
+                KIND_FLOOR: SUBJECT_SPACE,
+            }.get(typed.kind, SUBJECT_SPACE)
+
+        if suggestions:
+            head += f"\n\nWhat this building does have: **{', '.join(suggestions)}**."
+
+        return head + enablement_hint(subject_kind, typed.phrase)
 
     # ------------------------------------------------------------------ helpers
 
