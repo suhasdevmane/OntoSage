@@ -53,9 +53,11 @@ docker-compose logs --tail=20 orchestrator         # live system health
   TODO-070 (bldg2 replay **70.4%**), TODO-050 (routing contract), CAVEAT-007
   (declared-vs-reporting counts), BUG-102 (automation node crash), TODO-071 (honesty
   sweep harness: `scripts/honesty_sweep.py` — found BUG-103/104/105), BUG-105
-  (cross-building contamination cleaned; uploader now active-building-only). Do-next:
-  **BUG-103 (fabrication via ungated floor/space/equipment referents — P1 honesty)** →
-  BUG-104 (service-history question files a ticket) → TODO-072 (GUI-only onboarding) →
+  (cross-building contamination cleaned; uploader now active-building-only), **BUG-103**
+  (fabrication gate: typed referents + grounding guard — bldg1 honesty 4/18 → 12/18).
+  Do-next:
+  BUG-104 (service-history question files a ticket; overlaps CAVEAT-108) →
+  TODO-072 (GUI-only onboarding) →
   TODO-067/069 (clean-boot, embedding-switch) → papercuts (CAVEAT-005/006/053,
   TODO-054, KNOWN-008) → CAVEAT-094 + TODO-081 (hygiene)
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
@@ -323,6 +325,8 @@ First `Read` target for a task — go straight to the symbol (line numbers drift
 | Conversation memory | `services/turn_memory.py`; `redis_manager.py` · `save_state`/`load_state` |
 | Capability triples (Amenity/KnowledgeTopic) | `services/capability_graph_resolver.py`; `agents/capability_agent.py`; author via `services/capability_admin.py` (`POST /api/v1/admin/capabilities`) / OCBV `input/ontosage_schema.ttl` |
 | Document KB (policy/manual) | `services/document_indexer.py`; `agents/capability_agent.py` · `_search_documents` |
+| Grounding guard (no unrelated content as answers) | `services/grounding_guard.py` · `is_on_topic`, `filter_on_topic`, `enablement_hint` |
+| Referent existence gate (zones/floors/spaces/equipment/measurands) | `services/referent_resolver.py` · `detect_typed_referent`, `ReferentResolver.resolve` |
 | Report intake | `services/report_intake_service.py` |
 | Response formatting | `workflow/_orchestrator.py` · `_response_node` |
 | Config / env vars | `shared/config.py` · `Settings` |

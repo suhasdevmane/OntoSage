@@ -45,16 +45,19 @@ def _restore(monkeypatch, cfg) -> None:
 
 @pytest.mark.unit
 def test_strict_secrets_is_secure_by_default(monkeypatch):
-    """Unset STRICT_SECRETS must default to True — secure by default."""
+    """Unset STRICT_SECRETS must default to True — secure by default.
+
+    ``_env_file=None`` makes this independent of whether a local ``.env`` happens to
+    exist: a developer running with a building activated (``.env`` present, usually
+    carrying STRICT_SECRETS=false) must get the same result as CI and a fresh clone.
+    """
     monkeypatch.delenv("STRICT_SECRETS", raising=False)
     for key, value in _CUSTOM.items():
         monkeypatch.setenv(key, value)
     import shared.config as cfg
 
-    importlib.reload(cfg)
-    s = cfg.Settings()
+    s = cfg.Settings(_env_file=None)
     assert s.STRICT_SECRETS is True
-    _restore(monkeypatch, cfg)
 
 
 @pytest.mark.unit
@@ -125,4 +128,20 @@ def test_strict_secrets_passes_with_all_custom_passwords(monkeypatch):
     importlib.reload(cfg)
     s = cfg.Settings()
     assert s.STRICT_SECRETS is True
+    _restore(monkeypatch, cfg)
+
+
+@pytest.mark.unit
+def test_strict_secrets_rejects_unfilled_changeme_placeholders(monkeypatch):
+    """An unfilled template is as insecure as a shipped default.
+
+    The `.envN.example` files ship every credential as a CHANGE-ME placeholder; a
+    deployment must not be able to run with the literal password
+    "CHANGE-ME-mysql-password" while STRICT_SECRETS reports all-clear.
+    """
+    _apply(monkeypatch, "true", MYSQL_PASSWORD="CHANGE-ME-mysql-password")
+    import shared.config as cfg
+
+    with pytest.raises((ValueError, ValidationError), match="(?i)change-me|placeholder"):
+        cfg.Settings(_env_file=None)
     _restore(monkeypatch, cfg)

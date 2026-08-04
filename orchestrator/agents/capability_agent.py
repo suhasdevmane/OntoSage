@@ -153,6 +153,18 @@ class CapabilityAgent:
             )
 
             _facts = await get_capability_graph_resolver().resolve(state.user_message or "")
+            # BUG-103: lay-term matching can land on a loosely-related amenity — a
+            # question about a swimming pool or a water tank's pH was answered with
+            # "Catering Amenities". An amenity may only answer if it actually mentions
+            # what was asked about (its label or its rendered text).
+            if _facts:
+                from orchestrator.services.grounding_guard import filter_on_topic as _on_topic
+
+                _rendered = [
+                    {"text": f.render(), "doc_name": getattr(f, "label", "")} for f in _facts
+                ]
+                _keep = {id(r) for r in _on_topic(state.user_message or "", _rendered)}
+                _facts = [f for f, r in zip(_facts, _rendered) if id(r) in _keep]
             if _facts:
                 _parts = [f"Here is what I found for **{building_name}**:\n"]
                 _parts.extend(f.render() for f in _facts)
@@ -174,6 +186,22 @@ class CapabilityAgent:
         # Genuinely-uploaded manuals / policy PDFs, semantically retrieved. This is NOT a
         # capability.yaml fallback — it is a distinct source for long-form uploaded content.
         doc_hits = await _search_documents(state.user_message or "", building_id)
+        # BUG-103: vector similarity alone is not grounding. The cosine floor above was
+        # calibrated for one embedding model; under another (bge-large) generic building
+        # prose clears it for ANY question, so an HVAC table was surfaced under "Here is
+        # what I found…" for a question about pH. Require the passage to actually mention
+        # what was asked about — model-agnostic and building-agnostic.
+        if doc_hits:
+            from orchestrator.services.grounding_guard import filter_on_topic
+
+            _concept_vocab = [
+                str(c.get("concept_id", "")).replace("_", " ")
+                for c in (state.intermediate_results.get("concepts") or [])
+                if isinstance(c, dict)
+            ]
+            doc_hits = filter_on_topic(
+                state.user_message or "", doc_hits, extra_vocab=_concept_vocab
+            )
         if doc_hits:
             seen_docs: set = set()
             parts: List[str] = [f"Here is what I found in **{building_name}** documentation:\n"]
@@ -198,12 +226,27 @@ class CapabilityAgent:
             return state
 
         # ── 4. Honest boundary — every source missed ─────────────────────────
+        # BUG-103: a refusal must also say how to MAKE it answerable (connect-data →
+        # get-answers), otherwise the user is left at a dead end with no next step.
+        from orchestrator.services.grounding_guard import (
+            SUBJECT_DOCUMENT,
+            SUBJECT_SENSOR,
+            enablement_hint,
+        )
+
+        _q = (state.user_message or "").lower()
+        _kind = (
+            SUBJECT_DOCUMENT
+            if any(w in _q for w in ("policy", "manual", "procedure", "document", "guide", "say"))
+            else SUBJECT_SENSOR
+        )
         state.intermediate_results["capability_result"] = {
             "success": True,
             "response": (
                 f"I don't have that specific information on record for **{building_name}**. "
                 f"For building-specific queries please contact your building's facilities / "
                 f"estates management team."
+                f"{enablement_hint(_kind)}"
             ),
             "provenance": "no_match",
             "building_name": building_name,

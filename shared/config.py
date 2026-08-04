@@ -605,11 +605,26 @@ class Settings(BaseSettings):
             for name, default in _DEFAULT_PASSWORDS.items()
             if getattr(self, name, None) == default
         ]
-        if offenders:
+        # An UNFILLED TEMPLATE is exactly as insecure as a shipped default. The
+        # `.envN.example` files carry every credential as a CHANGE-ME placeholder;
+        # without this check a deployment could run with the literal password
+        # "CHANGE-ME-mysql-password" while STRICT_SECRETS reported all-clear.
+        placeholders = [
+            name
+            for name in _DEFAULT_PASSWORDS
+            if str(getattr(self, name, "") or "").upper().startswith("CHANGE-ME")
+        ]
+        if offenders or placeholders:
+            parts = []
+            if offenders:
+                parts.append(f"equal their insecure defaults: {', '.join(offenders)}")
+            if placeholders:
+                parts.append(
+                    f"are still unfilled CHANGE-ME placeholders: {', '.join(placeholders)}"
+                )
             raise ValueError(
-                f"STRICT_SECRETS=true but the following passwords equal their "
-                f"insecure defaults — set them via environment variables before "
-                f"starting: {', '.join(offenders)}"
+                "STRICT_SECRETS=true but the following secrets " + "; ".join(parts) + ". "
+                "Set real values in .env before starting."
             )
         return self
 

@@ -8,7 +8,7 @@
 [![Brick Schema](https://img.shields.io/badge/Brick_Schema-1.3-orange.svg)](https://brickschema.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml/badge.svg)](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-511%20passing-brightgreen.svg)](#tests)
+[![Tests](https://img.shields.io/badge/tests-582%20passing-brightgreen.svg)](#tests)
 
 ---
 
@@ -24,15 +24,19 @@ Ask a follow-up — *"and what about humidity there?"* — and it remembers you 
 
 ---
 
-## Corpus coverage (2026-06-18, live measurement)
+## Measured coverage
 
 ```
-Corpus replay (240 stratified questions):   63.8% pass  (vs 16.2% baseline before V3)
-Live survey (95 questions, Phase 18):       94/95 PASS  ·  1 WARN  ·  0 FAIL  (99%)
-Deterministic unit suite:                   511 tests pass / 0 fail, 2 skipped (Python 3.10/3.11/3.12)
+Corpus replay, 240 stratified questions
+    bldg1 (Abacws, real building)         63.8% pass   (vs 16.2% baseline before V3)
+    bldg2 (portability building)          70.4% pass   — same code, zero changes
+Live survey (95 questions, Phase 18):     94/95 PASS · 1 WARN · 0 FAIL  (99%)
+Deterministic unit suite:                 582 pass / 0 fail, 8 skipped (Python 3.10/3.11/3.12)
 ```
 
-Validates against the 5,604-question survey in `paper/Survey analysis and results/` — corroborates paper §6.5.
+Validates against the 5,604-question survey in `paper/Survey analysis and results/` — corroborates
+paper §6.5. The bldg2 run is the portability evidence: a second building with a different namespace,
+size and sensor mix scored **above** the first with no code changes — only its own data and config.
 
 ---
 
@@ -42,17 +46,20 @@ OntoSage is **an agentic conversational layer over one smart building's own data
 building's data, then ask it anything in plain English.* Everything below is a deliberate design
 commitment, not an accident of implementation:
 
-1. **One building at a time.** A deployment serves a single active building; the multi-building
-   machinery (per-building registries, Qdrant collections, persona overlays) is in place as forward
-   compatibility, not a live multi-tenant mode.
+1. **One building at a time.** A deployment serves a single active building. Several buildings can
+   live side by side in the repo, each with its own data folder, env file and compose file; exactly
+   one is *activated* at a time by renaming its trio to `input/`, `.env` and `docker-compose.yml`,
+   and each keeps isolated state under `volumes/<building_id>/`.
 2. **TTL-first — the ontology is the source of truth.** If a fact can be an RDF triple, it lives in
    the Brick/BACnet ontology, not a sidecar file or a code constant. Questions are answered via SPARQL
    first; SQL, analytics, and the knowledge base handle only live time-series and things RDF can't express.
 3. **No hardcoding — building-agnostic core.** Core code carries no building-specific literals
    (namespaces, zone ids, sensor counts, areas). Every figure in an answer is computed live from the
    graph or the floor plans, so it can never drift stale — and the same code runs unchanged for any building.
-4. **Honest, grounded answers — never fabricate.** Every number traces to live data. If a referent
-   doesn't exist or the data isn't loaded, OntoSage says so plainly instead of inventing a plausible value.
+4. **Honest, grounded answers — never fabricate.** Every number traces to live data. Ask about a floor,
+   wing, amenity, asset or measurement this building does not have and OntoSage says so plainly — it will
+   not quietly answer with another sensor's readings, and it will not present an unrelated document as
+   the answer. Each refusal also tells you **what to add** to make the question answerable.
 5. **Any stakeholder, any purpose.** One interface serves facility managers, occupants, researchers,
    sustainability and safety officers, executives, visitors, students, and admins. Personas shape how an
    answer is framed; they don't gate access.
@@ -67,8 +74,9 @@ commitment, not an accident of implementation:
    backend (MySQL today; Postgres/Timescale/InfluxDB ready). A new backend is a new adapter, nothing more.
 10. **Local or API models, independently.** Language and embedding models are each switchable between
     OpenAI and local Ollama, so you can run fully offline for privacy or on the API for capability.
-11. **`docker-compose up -d` is all you need.** The entire stack boots with one command; all
-    configuration lives in `.env` and the `input/` folder.
+11. **One command to run it.** Activate a building once (a couple of renames — no build steps, no
+    generators) and the entire stack boots with `docker compose up -d`; all configuration lives in
+    `.env` and the `input/` folder.
 
 ---
 
@@ -112,7 +120,7 @@ the Admin Console (`http://localhost:3001`); each one writes into the **active b
 folder**, which OntoSage re-reads live.
 
 ```
-  git clone … && docker compose up -d
+  git clone …  →  activate a building (rename bldg1/ → input/)  →  docker compose up -d
         │
         ▼
   open  http://localhost:3001   (Admin Console — sign in as admin)
@@ -217,6 +225,16 @@ ontology (authored via the admin Capabilities GUI or the OCBV TBox — see
 | "Turn off the lights on floor 3" | `control` intent always declines in v1 (SimDriver only) | Polite decline, logs attempt |
 | "Email the report to the team" | External action, not modelled | Declined |
 | "What is the capital of France?" | Out of scope | Scope redirect |
+| "What's the temperature in Zone 99.99?" | The zone is not in this building's model | Names real zones instead — never another zone's reading |
+| "How many sensors are on floor 42?" | The floor does not exist | Lists the floors that do exist |
+| "Show me the swimming pool temperature" | No such space or sensor | Says so, and explains how to add it |
+| "Plot the methane concentration" | Nothing measures methane here | Refuses rather than substituting another metric |
+
+**Refusals are actionable.** Every "I don't have that" ends with the concrete next step —
+upload a TTL describing the entity, give its sensors `ref:hasTimeseriesId` + `ref:storedAt`,
+register the database, or add an `ontosage:Amenity` — all config and data, never code.
+This is the honesty guarantee in practice: a plausible-sounding wrong number is worse than
+no number, because you cannot tell it apart from a right one.
 
 ---
 
@@ -235,15 +253,75 @@ ontology (authored via the admin Capabilities GUI or the OCBV TBox — see
 
 ## Quick start
 
-### 1. Configure and start
+### 1. Activate a building
+
+*Takes about a minute — do this before anything else.*
+
+OntoSage runs **one building at a time**, and "activating" one is simply *naming*: the active
+building is whichever folder is called `input/`, with `.env` and `docker-compose.yml` beside it.
+A fresh clone ships all three demo buildings **parked**, so you pick one — nothing is generated,
+nothing is built, you are just renaming files:
+
+```
+  A FRESH CLONE HAS                          YOU MAKE IT LOOK LIKE
+  ─────────────────────────                  ──────────────────────────────
+  bldg1/                     ──rename──►     input/               ← active building's data
+  docker-compose.bldg1.yml   ──rename──►     docker-compose.yml   ← its services
+  .env1.example              ──copy────►     .env                 ← its settings + secrets
+
+  bldg2/ , bldg3/ and their files stay parked, untouched.
+```
+
+**Linux / macOS**
 
 ```bash
-cp .env.example .env                          # set OPENAI_API_KEY (or MODEL_PROVIDER=local)
-docker-compose up -d                          # all services start; wait ~90s
+mv bldg1 input                                  # 1. building data (TTLs, floor plans, docs)
+mv docker-compose.bldg1.yml docker-compose.yml  # 2. its compose file
+cp .env1.example .env                           # 3. its settings — already has bldg1's identity
+```
+
+**Windows (PowerShell)**
+
+```powershell
+Move-Item bldg1 input
+Move-Item docker-compose.bldg1.yml docker-compose.yml
+Copy-Item .env1.example .env
+```
+
+Each building ships a matching template — `.env1.example`, `.env2.example`, `.env3.example` —
+already carrying that building's identity (`BUILDING_ID`, namespace, database, compose project),
+so activating `bldg2` is the same three lines with `2` substituted.
+
+**Now open `.env` and replace every `CHANGE-ME` value.** They are placeholders, and
+`STRICT_SECRETS=true` deliberately refuses to boot while any of them remains:
+
+```bash
+SECRET_KEY=CHANGE-ME-random-64-hex-chars     →  a real random string
+GRAPHDB_PASSWORD=CHANGE-ME-…                 →  your GraphDB password
+MYSQL_PASSWORD=CHANGE-ME-…                   →  your MySQL password
+POSTGRES_USER_PASSWORD=CHANGE-ME-…           →  your Postgres password
+ADMIN_PASSWORD=CHANGE-ME-…                   →  12+ characters
+OPENAI_API_KEY=                              →  your key, or leave blank for local Ollama
+```
+
+The real `.env` you create is gitignored and never committed — only the `*.example`
+templates ship.
+
+> **`bldg1`, `bldg2`, `bldg3` are demo fixtures** so you can see a working system in minutes.
+> Running *your own* building works the same way — activate a slot, then replace its contents:
+> see [Use OntoSage with YOUR building](#use-ontosage-with-your-building).
+
+### 2. Start the stack
+
+```bash
+docker compose up -d                          # all services start; wait ~90s
 curl http://localhost:8000/health             # should show all services healthy
 ```
 
-### 2. Register and authenticate
+First boot warms GraphDB, which can take a few minutes on a large ontology; ontology
+initialisation retries itself, so no manual restart is needed.
+
+### 3. Register and authenticate
 
 ```bash
 curl -X POST http://localhost:8000/auth/register \
@@ -256,7 +334,7 @@ TOKEN=$(curl -s -X POST http://localhost:8000/auth/login \
   | python -c "import sys,json; print(json.load(sys.stdin)['data']['session_token'])")
 ```
 
-### 3. Ask questions
+### 4. Ask questions
 
 ```bash
 # Structural query — answered from Brick TTL alone
@@ -282,12 +360,162 @@ curl -X POST http://localhost:8000/chat \
        "session_id":"demo3"}'
 ```
 
-### 4. Open the web interfaces
+### 5. Open the web interfaces
 
 - **Chat UI**: `http://localhost:3000` (OpenWebUI — full conversation, multi-turn)
 - **Admin Console**: `http://localhost:3001` (config-panel — building identity, capabilities, sensors, ontology, reindex, health; requires admin role)
 - **GraphDB SPARQL**: `http://localhost:7200`
 - **Qdrant dashboard**: `http://localhost:6333/dashboard`
+
+---
+
+## Use OntoSage with YOUR building
+
+> **`bldg1`, `bldg2` and `bldg3` are test fixtures, not the product.** They exist so you can see a
+> working system immediately and so portability is provable. Your building goes in exactly the same
+> three slots — same folder, same env file, same compose file, **no code changes**.
+
+### The idea in one line
+
+Activate a slot, replace its contents with your building's ontology and config, point the sensors at
+your database, restart. That's the whole process.
+
+### Step 1 — Activate a slot and give it your identity
+
+Activate any building (`bldg1` is the conventional choice) so the slots exist, then **change the
+identity to your own**. Use a **new `BUILDING_ID`** — this is the single most important choice on
+this page:
+
+```bash
+mv bldg1 input                                  # take over the slot
+mv docker-compose.bldg1.yml docker-compose.yml
+cp .env1.example .env                           # then change the identity block below
+```
+
+Per-building state lives in `volumes/<BUILDING_ID>/`. A **new id gets a brand-new, empty GraphDB,
+Qdrant, Redis and Postgres automatically** — a genuinely fresh start. Keep the id `bldg1` and you
+inherit Abacws's 320k triples, and your building's entities will be *added alongside* them, mixing
+two buildings in one graph. If you must reuse an id, delete its state first:
+`docker compose down && rm -rf volumes/bldg1`.
+
+Set the identity block in **`.env`** (and mirror it in `input/env.building`, which travels with the
+folder):
+
+```bash
+BUILDING_ID=riverside_hq                              # your id — drives volumes/<id>/ and log lines
+BUILDING_NAME=Riverside HQ                            # shown in answers
+BUILDING_NAMESPACE=http://example.org/riverside#      # MUST equal @prefix bldg: in your TTL
+BUILDING_PREFIX=bldg
+BUILDING_TIMEZONE=Europe/London                       # used for "today" / "yesterday"
+MYSQL_DATABASE=riverside_sensordb                     # your time-series database
+COMPOSE_PROJECT_NAME=ontosage_riverside               # keeps containers/volumes namespaced
+```
+
+Also set real secrets — `STRICT_SECRETS=true` refuses to boot while any password is still a default:
+`MYSQL_PASSWORD`, `POSTGRES_USER_PASSWORD`, `GRAPHDB_PASSWORD`, `SECRET_KEY`, `PIPELINE_API_KEY`,
+plus `OPENAI_API_KEY` (or `MODEL_PROVIDER=local` with `OLLAMA_MODEL`).
+
+### Step 2 — Replace the building data in `input/`
+
+Delete the fixture's building files and drop in yours. **Keep the three shared schema files** —
+they are OntoSage's vocabulary, not building data:
+
+| Keep as-is (shared schema) | Replace with yours (building data) |
+|---|---|
+| `Brick_v1.4.ttl` — Brick ontology | `<your_id>.ttl` — your Brick model (sensors, spaces, equipment) |
+| `Brick+extensions.ttl` — Brick extensions | `building.yaml` — `building_id`, `building_name`, `ontology_namespace` |
+| `ontosage_schema.ttl` — OCBV vocabulary | `env.building` — identity mirror of the block above |
+| | `database_registry.yaml` — your database connections |
+| | `<your_id>_capabilities.ttl` — amenities / knowledge topics *(optional)* |
+| | `<label> floor <N>.pdf` / `.dwg` — floor plans *(optional)* |
+| | `documents/` — manuals, policies *(optional)* · `personas/` *(optional)* |
+
+Your TTL must satisfy three rules — each one caused a real onboarding failure here:
+
+```turtle
+@prefix bldg: <http://example.org/riverside#> .   # 1. MUST equal ontology_namespace
+@base        <http://example.org/riverside#> .   # 2. REQUIRED — without it GraphDB
+                                                 #    rejects the whole file if any
+                                                 #    IRI is relative
+bldg:Room_204_Temp a brick:Air_Temperature_Sensor ;
+    rdfs:label "Room 204 Temperature" ;
+    brick:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8f3c…-uuid" ;       # 3. the column/uuid in YOUR database
+        ref:storedAt        bldg:database1 ] .   #    an IRI, NOT a string — a quoted
+                                                 #    literal silently breaks the join
+```
+
+### Step 3 — Connect your data source
+
+The **two-halves rule** governs everything: a question is answerable when the sensor is a **triple in
+the graph** *and* its readings are **rows in a registered database**. One half alone answers nothing.
+
+Register the database under the key your TTL's `ref:storedAt` points to, in
+`input/database_registry.yaml`:
+
+```yaml
+databases:
+  database1:                                    # ← matches ref:storedAt bldg:database1
+    type: mysql                                 # mysql | mysql_narrow | postgresql |
+                                                # timescaledb | influxdb | mongodb | sqlite | …
+    host: "${MYSQL_HOST:-host.docker.internal}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER}"
+    password: "${MYSQL_PASSWORD}"
+    database: "${MYSQL_DATABASE}"
+    nature: real                                # real | synthetic — shown as provenance
+    note: "Riverside BMS historian"
+```
+
+Two supported table shapes: **wide** (`type: mysql`, one column per sensor uuid — note MySQL's
+~1017-column limit) and **narrow** (`type: mysql_narrow` with `table:`, rows of
+`(uuid, datetime, value)` — preferred for large estates). Add as many databases as you like; each
+`ref:storedAt` key routes to its own backend, so one building can span MySQL, Postgres and InfluxDB
+at once.
+
+### Step 4 — Build and start
+
+```bash
+docker compose down                       # if anything is running
+docker compose build orchestrator         # only needed after a code change or first build
+docker compose up -d
+curl http://localhost:8000/health         # wait for "healthy"
+```
+
+Your TTLs are ingested automatically on boot (re-uploaded only when their content changes), the
+sensor map is built from the live graph, and the floor-plan pipeline indexes any PDFs/DWGs. Cold
+GraphDB warm-up can take minutes on a large ontology; ontology initialisation retries on its own.
+
+### Step 5 — Verify both halves
+
+```bash
+# Half 1 — ontology loaded? (structural; answered by SPARQL alone)
+"How many temperature sensors are in this building?"
+
+# Half 2 — readings connected? (needs the timeseries link + rows)
+"What is the current temperature in Room 204?"
+```
+
+The count answer also reports **declared vs reporting** sensors — "1,318 declared, 683 reported in
+the last 24 h" — which is the fastest way to see how much of your model is actually wired to data.
+If a sensor exists in the graph but returns nothing, its `ref:hasTimeseriesId` or `ref:storedAt` is
+wrong, or the rows aren't there.
+
+### Onboarding pitfalls we hit for real
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Orchestrator refuses to boot, complains about namespace | `@prefix bldg:` ≠ `ontology_namespace` | Make them byte-identical (trailing `#` included) |
+| GraphDB rejects the whole TTL ("malformed") | Relative IRIs with no `@base` | Add `@base` matching your namespace |
+| Structural questions work, live values never do | `ref:hasTimeseriesId` present but `ref:storedAt` missing, or refs written as **strings** instead of IRIs | Both required; `ref:storedAt` must be an IRI matching a registry key |
+| Answers mention a building you didn't load | Reused a `BUILDING_ID` whose `volumes/<id>/` still holds the old graph | Use a new id, or delete that state directory |
+| "UUIDs missing / no readings" right after seeding | Adapter caches table columns for 5 minutes | Seed before boot, or restart the orchestrator |
+| Wide table refuses more sensors | MySQL's ~1017-column limit | Switch those sensors to a narrow `(uuid, datetime, value)` table |
+
+> **Prefer clicking to editing?** Everything above can be done from the Admin Console at
+> `http://localhost:3001` — building identity, TTL upload, database registration, sensor mapping,
+> documents and floor plans — with no host-side file editing. See [Admin Portal](#admin-portal).
 
 ---
 
@@ -599,7 +827,10 @@ SECRET_KEY=<random-64-char> # JWT signing key
 
 ## Tests
 
-**511 deterministic tests** (2 skipped — optional `pmdarima` dep), run in CI on Python 3.10/3.11/3.12:
+**582 deterministic tests pass, 8 skipped**, run in CI on Python 3.10/3.11/3.12.
+Skips are optional dependencies and fixtures that need an *active* building — with one activated the
+same suite reports 586 passed / 4 skipped.
+The suite runs from a clean checkout with **no active building and no `.env`** — that is exactly what CI sees:
 
 ```bash
 pytest tests/ -m unit -q                       # fast offline suite (~20s)
@@ -621,6 +852,10 @@ Key test files:
 | `test_turn_memory.py` | 10 | Redis count-eviction, Postgres `turn_memory` schema |
 | `test_admin_ontology_endpoints.py` | 13 | Admin portal endpoints, auth enforcement |
 | `test_intent_graph_autowire.py` | 5 | Every `node_method` resolves + is registered |
+| `test_routing_contract.py` | 32 | Every question-shape → intent rule, its precedence order, and a scan proving no building literals |
+| `test_grounding_guard.py` | 25 | Refusing unrelated passages; floor/space/equipment/measurand existence gate; enablement guidance |
+| `test_referent_resolver.py` | 12 | Named zone/room existence gate + fail-open behaviour |
+| `test_building_metrics.py` | 11 | Live counts incl. declared-vs-reporting sensor split |
 | `test_ttl_validator.py` | 10 | TTL parse, prefix/namespace, SHACL gating |
 | `test_auth_manager.py` | 7 | Default registration role, per-account login lockout, `delete_user` Redis cleanup |
 
@@ -724,16 +959,47 @@ Restart. Routing, graph wiring, and conditional edges auto-wire.
 
 ---
 
-## Swap to a different building
+## Switching buildings
 
-```bash
-# 1. Drop files under input/<new_id>/ (building.yaml + *.ttl required)
-python scripts/swap_building.py --to bldg2 --dry-run    # validate
-python scripts/swap_building.py --to bldg2 --archive    # apply
-docker-compose restart orchestrator                       # TTL validator runs first
+Each building is a trio of files: a data folder, an env file, and a compose file. Exactly one
+building is *active* at a time, and activation is just naming: the active trio is `input/`,
+`.env` and `docker-compose.yml`. Everything else stays parked.
+
+```
+bldg1/  .env1  docker-compose.bldg1.yml     ← parked
+bldg2/  .env2  docker-compose.bldg2.yml     ← parked
+input/  .env   docker-compose.yml           ← ACTIVE (this was bldg3/, .env3, …)
 ```
 
-Exit code 2 on: missing building dir, missing/invalid `building.yaml`, or `@prefix bldg:` ≠ `ontology_namespace`.
+The folders and compose files are in git; the `.env*` files are **not** — they hold secrets, so
+each machine keeps its own. On a fresh clone you create `.env` from `.env.example` plus the
+building's `env.building` block (see [Quick start](#1-activate-a-building));
+after that first setup, parking a building keeps its `.envN` around for next time.
+
+To switch, **stop the running stack first** — renaming underneath a live container breaks its
+mounts — then swap the names:
+
+```bash
+docker compose down                                    # stop the current building
+mv input bldg3 && mv .env .env3                        # park it under its OWN id
+mv docker-compose.yml docker-compose.bldg3.yml
+mv bldg1 input && mv .env1 .env                        # activate the next one
+mv docker-compose.bldg1.yml docker-compose.yml
+docker compose up -d
+```
+
+Before booting, the three identity sources must agree: `BUILDING_ID` in `.env`, `building_id`
+in `input/building.yaml`, and the `@prefix bldg:` in the TTL matching `ontology_namespace`.
+Each building's copy is recorded in `<folder>/env.building`, and the orchestrator hard-fails
+on a mismatch rather than answering from the wrong graph.
+
+**State stays isolated per building** under `volumes/<building_id>/` — GraphDB, Qdrant, Redis,
+Postgres and Mongo each get their own directory, so switching back finds everything intact.
+Compose refuses to start if `BUILDING_ID` is unset, so a missing env can never mount one
+building's data into another's stack.
+
+`scripts/swap_building.py --to <id> --dry-run` performs the same identity validation
+non-destructively (exit code 2 on a mismatch) if you prefer a scripted check.
 
 ---
 
@@ -757,6 +1023,8 @@ Exit code 2 on: missing building dir, missing/invalid `building.yaml`, or `@pref
 | Issue | Status |
 |---|---|
 | Maintenance agent "report broken light" | Open — returns generic fallback; workaround: be specific ("report broken light in room 3.01") |
+| Service-history questions | Open — "when was X last serviced?" may file a maintenance ticket instead of answering |
+| Related-but-partial answers | Open — a topical document may be returned without stating which specific fact (a date, a reading) is not held |
 | MySQL host mode | MySQL runs on the Docker host (`host.docker.internal:3306`, database `sensordb`); the Docker MySQL service in `docker-compose.yml` is commented out |
 | FLUSHDB wipes sessions | `redis-cli FLUSHDB` removes session tokens; users must log in again. Safe flush: target only `resp_cache:*` keys |
 
@@ -764,4 +1032,4 @@ Exit code 2 on: missing building dir, missing/invalid `building.yaml`, or `@pref
 
 ## License
 
-MIT. Developed against Cardiff University's Abacws building (`bldg1`), with `bldg2` as a multi-tenant fixture. Brick Schema is BSD-licensed.
+MIT. Developed against Cardiff University's Abacws building (`bldg1`), with `bldg2` and `bldg3` as portability fixtures. Brick Schema is BSD-licensed.

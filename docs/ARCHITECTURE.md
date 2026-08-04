@@ -107,7 +107,7 @@ graph LR
     LG --> OLL
 ```
 
-> **Capability routing pipeline (v2.0)** sits in front of the LLM intent classifier. At startup, `CapabilityIndexer` embeds the per-building `capability.yaml` into Qdrant. On every query, `SemanticRouter` probes that collection — if `score ≥ override_min`, the dialogue node skips the LLM intent call entirely and routes straight to `CapabilityAgent`. See [Capability Routing](CAPABILITY_ROUTING.md) for the full pipeline.
+> **Capability routing (current, TTL-first).** The Qdrant capability-KB and `capability.yaml` were removed (TODO-012). Capabilities are `ontosage:Amenity` / `ontosage:KnowledgeTopic` **triples**; on every query `CapabilityGraphResolver` matches them deterministically by lay term and, on a hit, routes straight to `CapabilityAgent` without an LLM intent call. Uploaded documents are a second, separate source. Both are filtered by `services/grounding_guard.py`, which requires a passage to actually mention what was asked before it may be shown (BUG-103).
 
 ---
 
@@ -277,7 +277,7 @@ Pipeline:
 
 1. Reads `state.intermediate_results["capability_matches"]` — pre-fetched by SemanticRouter inside the dialogue node (no second KB search)
 2. Formats matched `CapabilityEntry` objects into a grounded response, citing source (e.g. `fire_safety_management_plan`)
-3. Records provenance: `capability_kb` (hit), `kb_no_match` (router fired but no entries above threshold), or `no_kb` (building has no `capability.yaml`)
+3. Records provenance: `capability_graph` (amenity/topic triple hit), `document_kb` (uploaded manual), or `no_match` (honest boundary — plus guidance on what to add to make it answerable)
 4. On a miss, returns an **explicit boundary message** with facility-management contact — never hallucinated answers
 
 For the full pipeline (indexer, router, threshold bands, calibration, multi-intent extension), see [Capability Routing](CAPABILITY_ROUTING.md).

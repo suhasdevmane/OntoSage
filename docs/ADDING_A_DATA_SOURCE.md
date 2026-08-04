@@ -22,7 +22,8 @@ A document, policy, or FAQ?
 │  └─ YES → input/documents/ (drop a .md/.txt/.pdf, restart; no other steps).
 │
 A static building fact or equipment capability?
-│  └─ YES → input/capability.yaml (add an entry, restart).
+│  └─ YES → an ontosage:Amenity / KnowledgeTopic TRIPLE
+│           (Admin ▸ Capabilities, or input/<id>_capabilities.ttl).
 │
 A rate schedule / tariff / one-off event?
    └─ config/recipes.yaml (rates) or input/documents/ (events) — NOT a fake sensor.

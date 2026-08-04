@@ -2,7 +2,7 @@
 
 **Comprehensive technical reference for the OntoSage agentic-AI framework for smart buildings.** This document covers the full architecture, every Phase 11-22 improvement plus V3 corpus-driven extensions and P0 security hardening, the routing pipeline, the multi-tenant / multi-persona / multi-intent model, conversation memory, follow-up co-reference resolution, the forecasting pipeline, the admin portal, the operational surface (configuration, swap workflow, CI), the test coverage, and known issues — accurate as of 2026-07-09.
 
-**Test suite**: 511 deterministic tests passing, 2 skipped (Python 3.10/3.11/3.12). **Corpus coverage**: 63.8% of the 4,837 non-general-knowledge questions in the 5,604-question survey (vs. 16.2% baseline before V3) — corroborates paper §6.5.
+**Test suite**: 582 deterministic tests passing, 8 skipped (Python 3.10/3.11/3.12); the suite runs from a clean checkout with no active building and no `.env` — the skips are optional deps plus fixtures that need an activated building. **Corpus coverage**: 63.8% (bldg1) and 70.4% (bldg2) of the 240-question stratified replay drawn from the 5,604-question survey (vs. 16.2% baseline before V3) — corroborates paper §6.5, and the bldg2 figure is the portability evidence (same code, different building).
 
 **For new AI sessions:** Read `CLAUDE.md` first (navigation index, debugging, current branch state), then this file for deep architecture. Do not commit or push without explicit user approval.
 
@@ -192,7 +192,7 @@ scripts/
 ├── corpus_replay.py                # V3 — stratified 240q replay (40/level); LLM-graded pass rate
 └── survey_live_test.py             # 95-query regression survey
 
-tests/                              # 511 deterministic tests, 2 skipped; see §9 for CI + live suite breakdown
+tests/                              # 582 deterministic tests, 8 skipped (parked state); see §9
 ├── fixtures/buildings/bldg2/       # Phase 12A — fixture for multi-tenant tests
 ├── test_admin_ontology_endpoints.py # P0 — 13 admin endpoint tests
 ├── test_auth_manager.py             # P0 round 2 — 7 tests (login lockout, delete_user cleanup, default role)
@@ -397,10 +397,33 @@ Every question is answerable when the right data is attached. This guide maps qu
 
 ## 4. The routing pipeline
 
+### 4.0 The routing contract (TODO-050)
+
+Deterministic intent corrections used to live as a dozen inline overrides accreted one
+bug-fix at a time inside `dialogue_agent`. They now live in **one ordered, tested,
+building-agnostic contract**: `orchestrator/services/routing_contract.py`.
+
+* **13 parse-stage rules + 1 post-stage rule.** Each maps a *question shape* (count words,
+  comparison words, modal-automation phrasing, report statements…) to the intent the
+  pipeline can actually ground, and only overrides *from* the intents it names — a
+  confident, correct classification is never stomped.
+* **Order is the contract.** Earlier rules win, later rules see the rewritten intent, and
+  `tests/test_routing_contract.py` pins the exact sequence so a reordering must be
+  deliberate.
+* **Building-agnostic by test.** The rules key on English phrasing only; a test scans the
+  module source and fails if any building name, namespace or zone id ever appears.
+* **Audited.** Every applied rule is logged and recorded in `routing_rules_applied`.
+
+Add or change a routing rule **there** — never as a new inline override in the dialogue
+agent.
+
 ### 4.1 Decision flow
 
 ```
 LLM dialogue_agent classifies intent
+            │
+            ▼
+routing_contract.apply_contract(stage="parse" | "post")
             │
             ▼
 _route_from_dialogue (workflow/_orchestrator.py)
@@ -449,6 +472,48 @@ Every routing decision writes a structured record to `state.intermediate_results
 ```
 
 Inspect via the saved Redis state or via `tests/test_routing_accuracy.py` (29 canonical cases that pin the contract).
+
+### 4.2b Grounding: what stops a fabricated answer (BUG-103)
+
+A conversational layer over a building will always be *asked* about things the building does
+not have. Two independent paths used to answer those questions with real-but-unrelated
+content, phrased as if it were the answer. Both are now gated, building-agnostically.
+
+**1. Named referents — `services/referent_resolver.py`.** Before the SPARQL→SQL→analytics
+cascade can attribute some other sensor's readings to a thing the user named, the referent is
+validated against the *active* building's graph:
+
+| Referent kind | Example | How it is validated |
+|---|---|---|
+| zone / room / sensor id | "Zone 99.99" | dotted id or `zone\|room\|space <id>` present in the namespace |
+| floor | "floor 42" | an entity matching `floor` + that number |
+| named space / amenity | "the west wing", "swimming pool" | modifier + generic space head noun, both on one entity |
+| equipment | "chiller 7", "EV chargers" | equipment noun (+ number) in a URI, label, or class |
+| measurand | "methane concentration" | any sensor class or label measuring that quantity |
+
+Detection uses **English structure only** — never a building's vocabulary — and validation
+runs against that building's own triples, so a new building works unchanged. The gate is
+precision-first (an unnamed or broad query passes straight through) and **fails open**: if
+GraphDB is unreachable the query proceeds exactly as it did before the gate existed.
+
+**2. Retrieved passages — `services/grounding_guard.py`.** Vector similarity alone is not
+grounding. A cosine floor calibrated for one embedding model lets generic building prose clear
+it for *any* question under another model, which is how an HVAC CO₂ table came to "answer" a
+question about pH. The guard requires a retrieved passage to actually *mention* what was asked
+about — matched on the passage text **or** the document name, and on **distinctive** terms
+(question terms minus vocabulary every building question shares, like *temperature*, *floor*,
+*water*). It is applied to both capability sources: uploaded documents and ontology
+`Amenity`/`KnowledgeTopic` triples. Being lexical, it needs no per-model tuning.
+
+**3. Refusals are actionable.** Every honest "I don't have that" ends with the concrete step
+that would make the question answerable — upload a TTL describing the entity, give its sensors
+`ref:hasTimeseriesId` + `ref:storedAt`, register the database, or add an `ontosage:Amenity` —
+which is the connect-data → get-answers contract expressed in the answer itself.
+
+**Measuring it.** `scripts/honesty_sweep.py` fires a battery of absent-referent questions at a
+live stack and grades every answer, per building. On bldg1 it moved honest answers from 4/18 to
+12/18 with **zero** fabricated measurements remaining, while wifi, lift-location, live zone
+readings and building metrics all continued to answer normally.
 
 ### 4.3 Smart Python ↔ Agent split
 
@@ -768,7 +833,7 @@ Drop a `bldg1_*.ttl` file into `input/`. `services/ttl_uploader.py` discovers al
 
 ## 6.6 P0 — Security Hardening
 
-The `security/p0-hardening` branch enforces authentication and authorization across all endpoints and adds the admin portal. Key changes:
+The P0 hardening work (merged to `main`) enforces authentication and authorization across all endpoints and adds the admin portal. Key changes:
 
 ### RBAC enforcement
 
@@ -1499,7 +1564,7 @@ Markdown, PDF, or TXT files indexed into Qdrant collection `documents_<bldg>`. R
 
 ### 9.1 Deterministic suite (CI — Phase 16C, expanded through P0)
 
-**Current suite (P0 hardening round 2): 423 pass, 2 skip, 0 fail** on Python 3.10/3.11/3.12 matrix.
+**Current suite: 582 pass, 8 skip, 0 fail** on the Python 3.10/3.11/3.12 matrix (2026-08-04), measured in the canonical no-building-active state.
 
 | File | Tests | Coverage |
 |---|---|---|
@@ -1655,7 +1720,7 @@ docker exec postgres-user-data psql -U ontobot -d ontobot \
 ### Run the deterministic test suite
 
 ```bash
-pytest tests/ -m unit -q                        # fast offline suite — 511 tests (2 skip) ~1.5 min
+pytest tests/ -m unit -q                        # fast offline suite — 582 pass (8 skip) ~2 min
 pytest tests/test_routing_accuracy.py -v        # 29 canonical routing cases
 pytest tests/test_admin_ontology_endpoints.py   # 13 P0 admin endpoint tests
 ```

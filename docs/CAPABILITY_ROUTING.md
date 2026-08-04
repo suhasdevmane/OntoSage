@@ -1,5 +1,18 @@
 # Capability Semantic Routing
 
+> ⚠️ **SUPERSEDED (2026-07-28, TODO-012).** The Qdrant capability-KB and its
+> `capability.yaml` source were **removed**. Capabilities are now first-class
+> **triples** — `ontosage:Amenity` / `ontosage:KnowledgeTopic` in
+> `input/<id>_capabilities.ttl`, authored via **Admin ▸ Capabilities** and resolved
+> deterministically by `services/capability_graph_resolver.py`. Uploaded documents
+> remain a separate source, and since BUG-103 both are filtered by
+> `services/grounding_guard.py`, which requires a passage to actually mention what was
+> asked before it may be presented as an answer.
+>
+> This document is kept for the **design rationale** (the off-ontology problem and the
+> corpus evidence behind it), which still holds. Treat the scoring bands, thresholds and
+> `capability.yaml` schema below as historical.
+
 > **Added in v2.0 (May 2026).** Replaces the legacy `_CAPABILITY_KW` keyword-matching path with semantic vector routing. Reduces median latency for off-ontology questions from ~700 ms (LLM intent + KB search) to **&lt;50 ms warm** / &lt;150 ms cold, and eliminates an entire class of misclassification errors where the LLM picked `sparql` or `discovery` for questions that had no ontological answer.
 
 ---
@@ -336,7 +349,7 @@ Spec: `docs/superpowers/specs/2026-05-22-multi-intent-semantic-routing.md`.
 # 1. Create the building input directory if it doesn't exist
 mkdir -p input/<new_bldg>/
 
-# 2. Author capability.yaml (see schema above)
+# 2. Author capability TRIPLES (Admin > Capabilities) - capability.yaml is removed
 $EDITOR input/<new_bldg>/capability.yaml
 
 # 3. Optional: tune routing in building.yaml (defaults are usually fine)

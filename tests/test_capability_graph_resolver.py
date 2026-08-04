@@ -271,14 +271,50 @@ async def test_no_source_gives_honest_boundary(monkeypatch):
 
 async def test_documents_answer_when_triples_miss(monkeypatch):
     # Triples miss, an uploaded manual matches → answered from documents.
+    # The chunk must be a REALISTIC match for the question: since BUG-103 the node
+    # refuses to present a passage that is topically unrelated to what was asked.
     import orchestrator.agents.capability_agent as cap
 
     _cap_setup(
         monkeypatch,
         resolver_facts=[],
-        docs=[{"doc_name": "gdpr_policy", "text": "GDPR doc", "score": 0.5}],
+        docs=[
+            {
+                "doc_name": "wifi_policy",
+                "text": "Connect to the Guest-WiFi network; no password is required.",
+                "score": 0.5,
+            }
+        ],
     )
     res = (await cap.CapabilityAgent().answer(_cap_state())).intermediate_results[
         "capability_result"
     ]
     assert res["provenance"] == "document_kb"
+
+
+async def test_off_topic_document_is_not_presented_as_an_answer(monkeypatch):
+    """BUG-103: a real-but-unrelated chunk must NOT be dressed up as the answer.
+
+    Vector similarity alone let an HVAC CO2 table 'answer' a question about pH — real
+    text, wrong question. Neither the passage nor the document name mentions what was
+    asked, so the node must fall through to the honest boundary instead.
+    """
+    import orchestrator.agents.capability_agent as cap
+
+    _cap_setup(
+        monkeypatch,
+        resolver_facts=[],
+        docs=[
+            {
+                "doc_name": "hvac_operation",
+                "text": "CO2 < 800 ppm (occupied); > 1000 ppm triggers damper opening.",
+                "score": 0.62,
+            }
+        ],
+    )
+    state = _cap_state("What is the pH level of the water tank?")
+    res = (await cap.CapabilityAgent().answer(state)).intermediate_results["capability_result"]
+    assert res["provenance"] == "no_match"
+    assert "800 ppm" not in res["response"]
+    # …and the refusal must tell the user how to make it answerable.
+    assert "no code changes" in res["response"].lower()
