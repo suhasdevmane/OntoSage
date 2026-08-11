@@ -158,6 +158,13 @@ ontosage:Lift           rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:la
 ontosage:Facility       rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Named facility"@en ; rdfs:comment "A named lab, workshop, or teaching space (makerspace, trading room, cyber lab)."@en ; skos:example "\"where is the makerspace?\"" .
 ontosage:Service        rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Building service"@en ; rdfs:comment "A staffed service point (reception, help desk, security desk)."@en ; skos:example "\"where is reception?\"" .
 
+# Three amenity kinds the survey corpus asked for by name and no subclass covered.
+# Universal to buildings rather than particular to any one, so they belong in the
+# shared vocabulary rather than in a building's own file.
+ontosage:VendingMachine rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Vending machine"@en ; rdfs:comment "Vending for snacks or drinks. Asked for constantly by occupants and visitors, and answerable only if the building says so — nothing in the sensor model implies it."@en ; skos:example "\"is there a vending machine in here?\"" .
+ontosage:DrinkingWater  rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Drinking water"@en ; rdfs:comment "Drinking fountain, water cooler or bottle-filling point."@en ; skos:example "\"water available?\" / \"where can I fill my bottle?\"" .
+ontosage:FirstAidPoint  rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "First aid / defibrillator"@en ; rdfs:comment "First-aid point or defibrillator (AED). Where the building models AED devices as equipment, the amenity should name their locations so the question is answered from the building's own graph."@en ; skos:example "\"where is the nearest defibrillator?\"" .
+
 # ── A.2 Knowledge topics (non-physical) ────────────────────────────────────────────────────────
 ontosage:KnowledgeTopic a owl:Class ;
     rdfs:subClassOf ontosage:Capability ;
@@ -308,6 +315,81 @@ ontosage:policyOwner a owl:DatatypeProperty ;
     rdfs:comment "The team accountable for this policy, so an answer can say who to take it up with rather than leaving the user to guess."@en ;
     rdfs:domain ontosage:KnowledgeTopic ; rdfs:range xsd:string ;
     skos:example "\"IT Services\"" .
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Module A2 — the building's OWN description
+#
+#  Measured against the survey corpus, the largest class of unanswered questions
+#  was not about sensors at all. It was about the building AS AN ENTITY:
+#
+#      "how old is this building?"   "who built it?"     "what type of building
+#      is this?"   "how big is it?"  "what is it for?"   "where is it?"
+#
+#  These are the first things anyone asks a building, and every one of them
+#  deflected — not because the pipeline could not route them, but because no
+#  instance carried the facts. Brick already defines the quantitative ones
+#  (brick:yearBuilt, grossArea, netArea, buildingPrimaryFunction,
+#  operationalStage) and those are used AS-IS rather than duplicated here; the
+#  terms below cover only what Brick has no predicate for.
+#
+#  Every one is optional. A building that declares none of them still answers
+#  everything else, and is told honestly that it does not hold these facts.
+# ─────────────────────────────────────────────────────────────────────────────
+
+ontosage:BuildingDescription a owl:Class ;
+    rdfs:label "Building description"@en ;
+    rdfs:comment "Marker for the descriptive, non-sensor facts a building states about itself. Not a container: the properties below attach directly to the brick:Building instance, so the building remains a single node and Brick's own predicates keep their meaning."@en ;
+    skos:definition "The set of self-descriptive assertions carried by a brick:Building instance."@en ;
+    skos:example "\"how old is this building?\" answered from brick:yearBuilt on the Building node." .
+
+ontosage:buildingOwner a owl:DatatypeProperty ;
+    rdfs:label "owner"@en ;
+    rdfs:comment "The organisation that owns the building. Distinct from the operator: an owner may lease the building to whoever runs it day to day, and 'who owns this?' and 'who runs this?' are different questions with different answers."@en ;
+    rdfs:domain brick:Building ; rdfs:range xsd:string ;
+    skos:example "\"Cardiff University\"" .
+
+ontosage:buildingOperator a owl:DatatypeProperty ;
+    rdfs:label "operator"@en ;
+    rdfs:comment "The organisation or team responsible for running the building day to day — usually who an occupant actually needs when something is wrong."@en ;
+    rdfs:domain brick:Building ; rdfs:range xsd:string ;
+    skos:example "\"Estates & Campus Services\"" .
+
+ontosage:buildingArchitect a owl:DatatypeProperty ;
+    rdfs:label "architect or builder"@en ;
+    rdfs:comment "Who designed or constructed the building. Asked more often than expected — by visitors, students and anyone curious about the building itself rather than its systems."@en ;
+    rdfs:domain brick:Building ; rdfs:range xsd:string ;
+    skos:example "\"Hoare Lea (services), Willmott Dixon (construction)\"" .
+
+ontosage:buildingAddress a owl:DatatypeProperty ;
+    rdfs:label "address"@en ;
+    rdfs:comment "Street address as a person would write it. Brick carries coordinates for geometry; this carries the form a human asks for and can act on."@en ;
+    rdfs:domain brick:Building ; rdfs:range xsd:string ;
+    skos:example "\"Abacws, Senghennydd Road, Cardiff CF24 4AG\"" .
+
+ontosage:buildingPurpose a owl:DatatypeProperty ;
+    rdfs:label "purpose"@en ;
+    rdfs:comment "One or two sentences on what the building is FOR, in plain language. brick:buildingPrimaryFunction gives a controlled classification ('Education'); this gives the sentence a person actually wanted."@en ;
+    rdfs:domain brick:Building ; rdfs:range xsd:string ;
+    skos:example "\"Teaching and research building for computer science and mathematics, with lecture theatres, labs and academic offices.\"" .
+
+ontosage:buildingOccupancyType a owl:DatatypeProperty ;
+    rdfs:label "occupancy type"@en ;
+    rdfs:comment "Who uses the building — staff, students, public, residents, tenants. Answers 'is this a residence?', 'is this commercial?', 'can the public come in?' without inferring it from the sensor mix."@en ;
+    rdfs:domain brick:Building ; rdfs:range xsd:string ;
+    skos:example "\"Staff and students; public access to the ground floor during opening hours\"" .
+
+ontosage:buildingAccessPolicy a owl:DatatypeProperty ;
+    rdfs:label "access policy"@en ;
+    rdfs:comment "Whether and how outsiders may enter — the honest answer to 'are visitors allowed?' and 'is check-in staffed or automated?', which otherwise get guessed."@en ;
+    rdfs:domain brick:Building ; rdfs:range xsd:string ;
+    skos:example "\"Visitors welcome during staffed reception hours; sign in at the ground-floor desk.\"" .
+
+ontosage:buildingStoreys a owl:DatatypeProperty ;
+    rdfs:label "number of storeys"@en ;
+    rdfs:comment "Declared storey count. Usually the live count of brick:Floor instances is the better answer and is preferred; this exists for buildings whose declared storeys differ from the floors modelled in the graph (a basement or plant deck that carries no sensors)."@en ;
+    rdfs:domain brick:Building ; rdfs:range xsd:integer ;
+    skos:example "\"5\"^^xsd:integer" .
 
 
 ####################################################################################################

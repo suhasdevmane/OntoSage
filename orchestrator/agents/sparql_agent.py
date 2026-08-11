@@ -1445,7 +1445,12 @@ SELECT ?building ?label WHERE {
         # Only trigger for bldg: instance entities (not class references like brick:Sensor)
         # Phase 15A: per-request building prefix.
         location_entities = [e for e in entities if e.startswith(f"{_active_prefix()}:")]
-        if location_entities and re.search(r"\\b(in|on|at|within)\\b", uq):
+        # BUG-115: this was written r"\\b(...)\\b" inside a RAW string, so the
+        # pattern looked for a literal backslash followed by "b" and could never
+        # match — the whole location-scoped branch below was unreachable, and
+        # "sensors in Room X" fell through to a broader query that ignored the
+        # location. In a raw string \b is already the word boundary.
+        if location_entities and re.search(r"\b(in|on|at|within)\b", uq):
             patterns = []
             for ent in location_entities:
                 patterns.append(

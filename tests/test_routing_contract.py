@@ -250,6 +250,10 @@ def test_precedence_order_is_pinned():
         "maintenance_schedule",
         "report_intake_statement",
         "self_description",
+        # Sits directly after self_description: both intercept a question the
+        # open-domain answerer would answer confidently and unfalsifiably — one
+        # about the assistant, one about the building as an entity.
+        "building_profile_question",
         "history_question_not_report",
         "comfort_question_not_report",
         "standing_alert_request",

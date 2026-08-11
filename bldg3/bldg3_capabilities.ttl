@@ -146,3 +146,57 @@ bldg:Pol_wifi a ontosage:Policy ,
     ontosage:policyOwner "IT Services" ;
     ontosage:contactEmail "ithelp@buildsys.example" ;
     ontosage:contactPhone "extension 4000" .
+
+# ── Amenities the survey corpus asked for and no building declared ───────────
+# "is there a vending machine in here?", "water available?", "does the building
+# have a green roof?" all deflected for want of a triple. Synthetic fixture
+# values, consistent with this building's declared provenance.
+bldg:Cap_vending a ontosage:Amenity,
+        ontosage:VendingMachine ;
+    rdfs:label "Vending machines"@en ;
+    ontosage:layTerms "vending, vending machine, snacks, snack machine, chocolate, crisps, drinks machine, coffee machine, buy a drink" ;
+    ontosage:locationText "ground-floor lobby and the level 2 break area" ;
+    ontosage:capabilityCategory "AMENITIES" ;
+    ontosage:answerText "Vending machines for snacks and cold drinks are in the ground-floor lobby and the level 2 break area, both card-payment only." .
+
+bldg:Cap_drinking_water a ontosage:Amenity,
+        ontosage:DrinkingWater ;
+    rdfs:label "Drinking water"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, fill my bottle, tap water, hydration" ;
+    ontosage:locationText "one bottle-filling station per floor, beside the lifts" ;
+    ontosage:capabilityCategory "AMENITIES" ;
+    ontosage:answerText "Yes — there is a filtered bottle-filling station on every floor, next to the lifts." .
+
+bldg:Cap_first_aid a ontosage:Amenity,
+        ontosage:FirstAidPoint ;
+    rdfs:label "Defibrillator (AED) and first aid"@en ;
+    ontosage:layTerms "defibrillator, aed, first aid, emergency medical, heart attack, cardiac, first aider, medical emergency" ;
+    ontosage:locationText "reception and each floor's lift lobby" ;
+    ontosage:capabilityCategory "EMERGENCY" ;
+    ontosage:answerText "A defibrillator is held at reception, with first-aid kits in every floor's lift lobby. In a medical emergency call the emergency services first, then reception." .
+
+bldg:Cap_green_features a ontosage:InformationTopic,
+        ontosage:KnowledgeTopic ;
+    rdfs:label "Green and sustainability features"@en ;
+    ontosage:layTerms "green roof, solar, solar panels, pv, rainwater, recycling, sustainable, eco, environmental features, energy efficient, biodiversity" ;
+    ontosage:capabilityCategory "SUSTAINABILITY" ;
+    ontosage:answerText "The building has a partial green roof over the plant deck, roof-mounted solar PV, rainwater harvesting for WC flushing, and segregated recycling on every floor. Energy use is metered and can be queried directly." .
+
+# Present in the sibling fixture but missing here — a gap that made the two
+# buildings differ for no modelled reason.
+bldg:Cap_cafe a ontosage:Amenity,
+        ontosage:Cafe ;
+    rdfs:label "Cafe"@en ;
+    ontosage:layTerms "cafe, coffee, food, lunch, canteen, eat, hungry, refreshments, where can i get coffee" ;
+    ontosage:locationText "ground floor, next to reception" ;
+    ontosage:openingHours "Mon-Fri 08:00-15:30; closed weekends" ;
+    ontosage:capabilityCategory "AMENITIES" ;
+    ontosage:answerText "The ground-floor cafe next to reception serves hot drinks and lunch, Monday to Friday 08:00-15:30." .
+
+bldg:Cap_parking a ontosage:Amenity,
+        ontosage:Facility ;
+    rdfs:label "Car parking"@en ;
+    ontosage:layTerms "parking, car park, park my car, blue badge parking, ev charging, electric car, disabled parking" ;
+    ontosage:locationText "rear car park" ;
+    ontosage:capabilityCategory "AMENITIES" ;
+    ontosage:answerText "Permit-holder parking is at the rear, including accessible bays near the main entrance and two EV charging points." .

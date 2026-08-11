@@ -1,0 +1,42 @@
+# =============================================================================
+#  BuildSys Building (bldg2) — the building's own description
+#
+#  The largest class of unanswered question in the survey corpus was about the
+#  building AS AN ENTITY — its age, type, size, owner, purpose, access — not
+#  about its sensors. Those questions deflected because no instance carried the
+#  facts. Brick's predicates are used where they exist; OCBV covers the rest.
+#
+#  PROVENANCE: this building is a declared SYNTHETIC portability fixture (see
+#  building.yaml `provenance.nature: synthetic`). Every value below is invented
+#  to exercise the pipeline, and is labelled as such rather than presented as a
+#  real site. Nothing here describes a building that exists.
+# =============================================================================
+
+@prefix brick:    <https://brickschema.org/schema/Brick#> .
+@prefix bldg:     <http://buildsys.org/ontologies/bldg2#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+
+bldg:bldg2 a brick:Building ;
+    rdfs:label "BuildSys Building (bldg2)" ;
+
+    # ── Brick's own vocabulary ───────────────────────────────────────────────
+    brick:buildingPrimaryFunction "Office" ;
+    brick:yearBuilt "2015"^^xsd:integer ;
+    brick:grossArea "18400"^^xsd:decimal ;
+    brick:netArea "15100"^^xsd:decimal ;
+    brick:operationalStage "In use" ;
+
+    # ── OCBV terms ───────────────────────────────────────────────────────────
+    ontosage:buildingStoreys "6"^^xsd:integer ;
+    ontosage:buildingOwner "BuildSys Holdings (synthetic fixture — not a real organisation)" ;
+    ontosage:buildingOperator "BuildSys Facilities Management (synthetic)" ;
+    ontosage:buildingArchitect "Synthetic fixture — no real architect" ;
+    ontosage:buildingAddress "1 Test Way, Synthetic District (not a real address)" ;
+    ontosage:buildingPurpose
+        "A commercial office building used to exercise OntoSage's portability: open-plan office floors, meeting rooms, a ground-floor reception and a staff cafe. It is a synthetic fixture — the building, its sensors and every reading are generated." ;
+    ontosage:buildingOccupancyType
+        "Office tenants and their staff; not residential. Synthetic fixture." ;
+    ontosage:buildingAccessPolicy
+        "Staffed reception on the ground floor during business hours; visitors sign in and are escorted. Synthetic fixture." .

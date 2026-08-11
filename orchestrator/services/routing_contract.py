@@ -472,6 +472,26 @@ SERVICE_HISTORY_RE = re.compile(
 )
 
 
+def _r_building_profile(c: _Ctx) -> Optional[str]:
+    """A question about the BUILDING AS AN ENTITY is not open-domain knowledge.
+
+    "How old is this building?", "who built it?", "what type of building is
+    this?" — the largest class of unanswered question in the survey corpus, and
+    the shape an open-domain answerer handles worst: a plausible year is trivial
+    to generate and impossible for the reader to falsify. Routed to capability,
+    these are answered from the building's own triples or honestly declined.
+
+    Narrow by construction: the detector ignores anything asking about the
+    building's CONTENTS or live state ("how many sensors", "temperature right
+    now"), so the metrics and sensor paths keep their questions.
+    """
+    if c.intent not in ("general", "general_knowledge", "clarification", "greeting", "metadata"):
+        return None
+    from orchestrator.services.building_profile import detect_facet
+
+    return "capability" if detect_facet(c.query) else None
+
+
 def _r_self_description(c: _Ctx) -> Optional[str]:
     """A question about the ASSISTANT is not open-domain general knowledge.
 
@@ -644,6 +664,11 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "self_description",
         "a question about the ASSISTANT → self_description, never open-domain",
         _r_self_description,
+    ),
+    Rule(
+        "building_profile_question",
+        "'how old / who built / what type is this building' → capability, never open-domain",
+        _r_building_profile,
     ),
     Rule(
         "history_question_not_report",

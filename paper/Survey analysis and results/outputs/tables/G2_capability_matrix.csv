@@ -1,8 +1,0 @@
-query_type,corpus_volume,share_pct,analytical_share_pct,priority_tier
-STATUS,4793,67.03,8.51,P1 — must support at launch
-CAPABILITY,1704,23.83,1.47,P1 — must support at launch
-COMPARISON,175,2.45,100.0,P1 — must support at launch
-ANOMALY,160,2.24,100.0,P1 — must support at launch
-RECOMMENDATION,128,1.79,12.5,"P3 — desirable, longer term"
-DIAGNOSTIC,123,1.72,4.88,"P3 — desirable, longer term"
-HISTORICAL,68,0.95,100.0,P1 — must support at launch

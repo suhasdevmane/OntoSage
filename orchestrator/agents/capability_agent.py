@@ -213,6 +213,46 @@ class CapabilityAgent:
             logger.warning(f"[capability] referent gate skipped (nothing named, failing open): {e}")
             return None
 
+    @staticmethod
+    async def _building_profile_answer(
+        building_id: str, building_name: str, state: ConversationState
+    ) -> Optional[Dict[str, Any]]:
+        """Answer a question about the building itself, or None to carry on.
+
+        Kept separate from the metrics responder because the two answer
+        different questions: metrics say how MANY things the building has,
+        this says what the building IS.
+        """
+        query = state.user_message or ""
+        try:
+            from orchestrator.services import building_profile as bp
+
+            facet = bp.detect_facet(query)
+            if facet is None:
+                return None
+
+            from orchestrator.agents.sparql_agent import SPARQLAgent, _active_namespace
+
+            profile = await bp.resolve(_active_namespace(), SPARQLAgent()._execute_query)
+            text = bp.render(profile, facet, building_name)
+            if text is None:
+                # The building states nothing about itself. Decline, and say what
+                # to add — the same contract the sensor path keeps.
+                text = bp.enablement_hint(building_name)
+                provenance = "building_profile_absent"
+            else:
+                provenance = "building_profile"
+            logger.info(f"[capability] building-profile question (facet={facet}) answered")
+            return {
+                "success": True,
+                "response": text,
+                "provenance": provenance,
+                "building_name": building_name,
+            }
+        except Exception as e:  # never block the rest of the chain
+            logger.warning(f"[capability] building-profile check skipped: {e}")
+            return None
+
     async def answer(self, state: ConversationState) -> ConversationState:
         """Node function — called by the LangGraph workflow capability node.
 
@@ -239,6 +279,19 @@ class CapabilityAgent:
         # a place but asks about existence, not a reading, and amenities are answered
         # from triples that the spatial resolver would not find.
         from orchestrator.services.plausibility import measurand_of
+
+        # ── 0. The building's own description ────────────────────────────────
+        # "How old is this building?", "who built it?", "what type of building is
+        # this?" are about the building AS AN ENTITY, not its sensors — the
+        # largest class of unanswered question in the survey corpus. This runs
+        # FIRST because those questions must never reach the open-domain
+        # answerer, which will supply a confident, plausible, unfalsifiable year.
+        # Building-agnostic: it reports whatever the active building's own node
+        # asserts, and declines what it does not.
+        _profile_answer = await self._building_profile_answer(building_id, building_name, state)
+        if _profile_answer:
+            state.intermediate_results["capability_result"] = _profile_answer
+            return state
 
         if measurand_of(state.user_message or "") or _is_metrics_question(state.user_message or ""):
             _decline = await self._absent_referent_decline(state, building_id, building_name)

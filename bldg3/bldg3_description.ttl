@@ -1,0 +1,46 @@
+# =============================================================================
+#  BuildSys Building (bldg3) — the building's own description
+#
+#  The largest class of unanswered question in the survey corpus was about the
+#  building AS AN ENTITY — its age, type, size, owner, purpose, access — not
+#  about its sensors. Those questions deflected because no instance carried the
+#  facts. Brick's predicates are used where they exist; OCBV covers the rest.
+#
+#  PROVENANCE: this building is a declared SYNTHETIC portability fixture (see
+#  building.yaml `provenance.nature: synthetic`). Every value below is invented
+#  to exercise the pipeline, and is labelled as such rather than presented as a
+#  real site. Nothing here describes a building that exists.
+#
+#  This fixture deliberately differs from bldg2 — a different function, age and
+#  size — so that a swap between them visibly changes the answers while the
+#  questions and the code stay identical.
+# =============================================================================
+
+@prefix brick:    <https://brickschema.org/schema/Brick#> .
+@prefix bldg:     <http://buildsys.org/ontologies/bldg3#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+
+bldg:bldg3 a brick:Building ;
+    rdfs:label "BuildSys Building (bldg3)" ;
+
+    # ── Brick's own vocabulary ───────────────────────────────────────────────
+    brick:buildingPrimaryFunction "Laboratory" ;
+    brick:yearBuilt "2003"^^xsd:integer ;
+    brick:grossArea "9600"^^xsd:decimal ;
+    brick:netArea "7850"^^xsd:decimal ;
+    brick:operationalStage "In use" ;
+
+    # ── OCBV terms ───────────────────────────────────────────────────────────
+    ontosage:buildingStoreys "4"^^xsd:integer ;
+    ontosage:buildingOwner "BuildSys Research Trust (synthetic fixture — not a real organisation)" ;
+    ontosage:buildingOperator "BuildSys Estates (synthetic)" ;
+    ontosage:buildingArchitect "Synthetic fixture — no real architect" ;
+    ontosage:buildingAddress "4 Fixture Road, Synthetic District (not a real address)" ;
+    ontosage:buildingPurpose
+        "A research and laboratory building used to exercise OntoSage's portability, including a server room, wet and dry labs, plant rooms and shared write-up space. It is a synthetic fixture — the building, its sensors and every reading are generated." ;
+    ontosage:buildingOccupancyType
+        "Researchers and technical staff; restricted laboratory areas. Not residential. Synthetic fixture." ;
+    ontosage:buildingAccessPolicy
+        "Card access throughout; laboratory areas restricted to inducted staff. Visitors must be signed in and escorted. Synthetic fixture." .

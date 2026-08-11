@@ -77,6 +77,7 @@ _MASTER_TABLE = (
 )
 _OUTPUT_DIR = _SCRIPT_DIR / "outputs" / "replay"
 
+
 def _env_or_dotenv(key: str, default: str = "") -> str:
     """Return an env var if set, else read it from the repo-root .env.
 
@@ -108,7 +109,7 @@ REPLAY_PASS = os.environ.get("ONTOSAGE_REPLAY_PASS", "replaytestpass99")
 PIPELINE_API_KEY = _env_or_dotenv("PIPELINE_API_KEY", "sk-ontobot-pipeline")
 
 REQUEST_TIMEOUT = 120  # seconds per question
-REQUEST_DELAY = 0.8    # polite gap between requests
+REQUEST_DELAY = 0.8  # polite gap between requests
 
 # LLM judge — uses the same MODEL_PROVIDER env the system uses.
 # Falls back to rule-based heuristics when no API key is set.
@@ -187,7 +188,9 @@ def _flush_resp_cache() -> None:
             deleted = result.stdout.strip()
             _safe_print(f"[cache] Flushed resp_cache — deleted keys: {deleted or '0'}")
         else:
-            _safe_print(f"[cache] WARNING: flush exited {result.returncode}: {result.stderr.strip()[:120]}")
+            _safe_print(
+                f"[cache] WARNING: flush exited {result.returncode}: {result.stderr.strip()[:120]}"
+            )
     except FileNotFoundError:
         _safe_print("[cache] WARNING: docker not found — cache not flushed (run manually)")
     except subprocess.TimeoutExpired:
@@ -219,7 +222,11 @@ def _authenticate(base_url: str) -> str:
                 requests.post(
                     f"{base_url}/auth/register",
                     headers={"Content-Type": "application/json"},
-                    json={"username": REPLAY_USER, "password": REPLAY_PASS, "email": "replay@test.local"},
+                    json={
+                        "username": REPLAY_USER,
+                        "password": REPLAY_PASS,
+                        "email": "replay@test.local",
+                    },
                     timeout=15,
                 )
             except Exception:
@@ -317,10 +324,7 @@ def _judge_with_llm(question: str, answer: str) -> str:
                 {"role": "system", "content": _JUDGE_SYSTEM_PROMPT},
                 {
                     "role": "user",
-                    "content": (
-                        f"Question: {question}\n\n"
-                        f"System answer:\n{answer[:1500]}"
-                    ),
+                    "content": (f"Question: {question}\n\n" f"System answer:\n{answer[:1500]}"),
                 },
             ],
             temperature=0,
@@ -373,11 +377,18 @@ def _heuristic_grade(question: str, answer: str) -> str:
     has_numbers = bool(re.search(r"\b\d+\.?\d*\s*(%|°|ppm|kwh|kw|lux|db|m2|m3|°c|l/|kg)", low))
     has_data_markers = bool(
         re.search(r"\b\d{2,}\b", low)
-        and any(w in low for w in ["temperature", "co2", "humidity", "energy", "floor", "room", "sensor"])
+        and any(
+            w in low
+            for w in ["temperature", "co2", "humidity", "energy", "floor", "room", "sensor"]
+        )
     )
 
     # Generic deflection
-    if any(s in low for s in _DECLINE_STRINGS) and not has_capability_phrase and not has_data_markers:
+    if (
+        any(s in low for s in _DECLINE_STRINGS)
+        and not has_capability_phrase
+        and not has_data_markers
+    ):
         return "deflected"
 
     if has_capability_phrase and not has_numbers:
@@ -533,9 +544,7 @@ def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) 
         entry = by_level[lv]
         rate = 100 * entry["pass"] / entry["total"] if entry["total"] else 0
         name = _LEVEL_NAMES.get(lv, lv)
-        md_lines.append(
-            f"| L{lv} | {name} | {entry['total']} | {entry['pass']} | {rate:.1f}% |"
-        )
+        md_lines.append(f"| L{lv} | {name} | {entry['total']} | {entry['pass']} | {rate:.1f}% |")
 
     md_lines += [
         "",
@@ -575,12 +584,12 @@ def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) 
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(
-        description="Corpus replay harness — T28 V3 evaluation"
-    )
+    p = argparse.ArgumentParser(description="Corpus replay harness — T28 V3 evaluation")
     p.add_argument(
-        "--sample", type=int, default=240,
-        help="Total questions to replay (must be divisible by 6; default 240)"
+        "--sample",
+        type=int,
+        default=240,
+        help="Total questions to replay (must be divisible by 6; default 240)",
     )
     p.add_argument("--seed", type=int, default=42, help="Random seed for stratified sample")
     p.add_argument("--base-url", default=BASE_URL, help=f"OntoSage base URL (default {BASE_URL})")
@@ -589,7 +598,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--out-prefix",
         default=None,
         help="Resume an existing run by prefix (e.g. replay_20260611_120000); "
-             "skips already-graded qids",
+        "skips already-graded qids",
     )
     p.add_argument(
         "--no-flush-cache",
@@ -615,8 +624,7 @@ def main() -> int:
     per_level = args.sample // 6
     if per_level * 6 != args.sample:
         _safe_print(
-            f"[error] --sample must be divisible by 6 (6 latent levels); "
-            f"got {args.sample}"
+            f"[error] --sample must be divisible by 6 (6 latent levels); " f"got {args.sample}"
         )
         return 1
 
@@ -631,6 +639,13 @@ def main() -> int:
     master_path = Path(args.master_table)
     if not master_path.is_file():
         _safe_print(f"[error] Master table not found: {master_path}")
+        # paper/ holds survey responses and an unpublished writeup, so it is no
+        # longer tracked in git — a fresh clone will not have it. Point the flag
+        # at your own copy rather than expecting it to be checked out.
+        _safe_print(
+            "[error] The paper/ corpus is not part of the repository. "
+            "Pass --master-table /path/to/complexity_master_table.csv to use your own copy."
+        )
         return 1
 
     all_rows = _load_master_table(master_path)
@@ -663,9 +678,7 @@ def main() -> int:
     first_write = not checkpoint_path.exists()
     completed_rows: List[Dict[str, Any]] = list(done.values())
 
-    _safe_print(
-        f"\n[run] Replaying {len(pending)} questions against {args.base_url} ..."
-    )
+    _safe_print(f"\n[run] Replaying {len(pending)} questions against {args.base_url} ...")
 
     for i, q_row in enumerate(pending, 1):
         qid = q_row["qid"]
@@ -706,9 +719,7 @@ def main() -> int:
         completed_rows.append(row)
 
         icon = "[PASS]" if is_pass else "[FAIL]"
-        _safe_print(
-            f"         {icon} grade={grade} elapsed={elapsed}s"
-        )
+        _safe_print(f"         {icon} grade={grade} elapsed={elapsed}s")
 
     # ── Final report ──────────────────────────────────────────────────────────
     if completed_rows:
