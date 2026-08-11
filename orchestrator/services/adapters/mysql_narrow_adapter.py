@@ -138,9 +138,16 @@ class MySQLNarrowAdapter(MySQLAdapter):
 
     @staticmethod
     def _sanitize_dt(dt: Optional[str]) -> Optional[str]:
+        """Accept only a full calendar date (optionally with a time), else None.
+
+        A character-class filter is too permissive: the remains of a relative
+        phrase ("-24 hours" → "-2400") can satisfy it and then be spliced into
+        the WHERE clause as a bogus bound. Anything not an unambiguous
+        timestamp is treated as absent so the default window applies.
+        """
         if not dt:
             return None
-        s = str(dt)
-        if re.match(r"^[0-9 :T.\-+]{4,32}$", s):
-            return s.replace("T", " ")[:19]
+        s = str(dt).strip().replace("T", " ")
+        if re.match(r"^\d{4}-\d{2}-\d{2}([ ]\d{2}:\d{2}(:\d{2})?)?$", s):
+            return s[:19]
         return None

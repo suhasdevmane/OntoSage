@@ -315,6 +315,15 @@ class AuthManager:
                         async with self.postgres.pool.acquire() as _probe:
                             await _probe.fetchval("SELECT 1")
                         user_data = await self.postgres.get_user(username)
+                        # Accept an email address as the identifier too. The chat UI
+                        # signs people in by email while accounts are keyed by
+                        # username, so the same credentials must work either way —
+                        # otherwise a user's own CSV row logs into one portal and is
+                        # rejected by the other.
+                        if not user_data and "@" in username:
+                            user_data = await self.postgres.get_user_by_email(username)
+                            if user_data:
+                                username = user_data.get("username", username)
                     except Exception as _pg_err:
                         logger.error(
                             f"Login Postgres probe failed for {username}: "
@@ -356,8 +365,7 @@ class AuthManager:
                 return {
                     "success": False,
                     "error": (
-                        f"Too many failed login attempts. Try again in "
-                        f"{retry_after} seconds."
+                        f"Too many failed login attempts. Try again in " f"{retry_after} seconds."
                     ),
                 }
 
@@ -498,9 +506,7 @@ class AuthManager:
             logger.error(f"Session validation error: {e}")
             return None
 
-    async def validate_session_context(
-        self, session_token: str
-    ) -> Optional[Dict[str, Any]]:
+    async def validate_session_context(self, session_token: str) -> Optional[Dict[str, Any]]:
         """Validate a session and return {username, role}, or None.
 
         Mirrors validate_session() (updates last_activity, refreshes TTL) but
@@ -531,9 +537,7 @@ class AuthManager:
                 "last_activity",
                 datetime.now().isoformat(),
             )
-            await self.redis.client.expire(
-                f"session:{session_token}", self.session_ttl
-            )
+            await self.redis.client.expire(f"session:{session_token}", self.session_ttl)
             return {"username": username, "role": role}
 
         except Exception as e:
@@ -633,6 +637,60 @@ class AuthManager:
         except Exception as e:
             logger.error(f"Get user info error: {e}")
             return None
+
+    async def set_password(self, username: str, new_password: str) -> Dict[str, Any]:
+        """Admin password reset: re-hash, persist, and revoke that user's sessions.
+
+        Stored passwords are Argon2id hashes and cannot be read back — an admin can
+        SET a new password but never view the existing one. That is the point of a
+        one-way hash: a database dump does not hand over anyone's credentials.
+
+        Revoking live sessions is part of the reset, not an extra. Without it a
+        password change would not lock out whoever is already signed in with the old
+        one — which is precisely the case (a shared or compromised password) that
+        motivates most resets.
+        """
+        try:
+            # Same floor register_user enforces — a reset must not become a way to
+            # set a weaker password than account creation allows.
+            if len(new_password or "") < 12:
+                return {"success": False, "error": "Password must be at least 12 characters"}
+
+            existing = await self.get_user_info(username)
+            if not existing:
+                return {"success": False, "error": f"user '{username}' not found"}
+
+            new_hash, new_salt = self._hash_password(new_password)
+            if self.postgres:
+                updated = await self.postgres.update_password(username, new_hash, new_salt)
+                if not updated:
+                    return {"success": False, "error": "password update failed"}
+            else:
+                await self.redis.client.hset(
+                    f"user:{username}",
+                    mapping={"password_hash": new_hash, "salt": new_salt},
+                )
+
+            # Invalidate every live session for this user + clear any lockout counter.
+            revoked = 0
+            try:
+                tokens = await self.redis.client.smembers(f"user_sessions:{username}")
+                for token in tokens:
+                    t = token.decode("utf-8") if isinstance(token, bytes) else token
+                    await self.redis.client.delete(f"session:{t}")
+                    revoked += 1
+                await self.redis.client.delete(f"user_sessions:{username}")
+                await self.redis.client.delete(f"login_fail:{username}")
+            except Exception as e:
+                logger.warning(f"[set_password] session revocation partial for {username}: {e}")
+
+            logger.info(
+                f"[set_password] password reset for '{username}'; {revoked} session(s) revoked"
+            )
+            return {"success": True, "username": username, "sessions_revoked": revoked}
+        except Exception as e:
+            logger.error(f"[set_password] failed for '{username}': {e}", exc_info=True)
+            return {"success": False, "error": str(e)}
 
     async def update_user_metadata(self, username: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """

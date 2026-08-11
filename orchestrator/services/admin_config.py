@@ -271,9 +271,10 @@ def read_databases() -> List[Dict[str, Any]]:
                         {k: v for k, v in conn.items() if k not in ("type", "nature", "note")}
                     ),
                     "source": source,
-                    # Real vs synthetic DATA SOURCE (data-driven; absent => synthetic). Only the
-                    # original abacws dataset (database1) is real; every other table was generated
-                    # for the demo. `note` is a short human hint shown on the card.
+                    # Real vs synthetic DATA SOURCE. Each building declares this per
+                    # connection via `nature:` in its own database_registry.yaml;
+                    # absent => synthetic, so a source is never claimed to be real
+                    # unless the building says so. `note` is the human hint on the card.
                     "nature": conn.get("nature", "synthetic"),
                     "note": conn.get("note", ""),
                 }
@@ -324,6 +325,11 @@ def read_building_config() -> Dict[str, Any]:
         "building_name": data.get("building_name") or settings.BUILDING_NAME,
         "ontology_namespace": data.get("ontology_namespace") or settings.BUILDING_NAMESPACE,
         "ontology_prefix": data.get("ontology_prefix") or settings.BUILDING_PREFIX,
+        # Building-level data provenance (real | synthetic | mixed) — a statement about
+        # the whole building including its ontology and sensors, which per-connection
+        # `nature:` in database_registry.yaml cannot express. Absent → unstated, and
+        # callers must not guess on the building's behalf.
+        "provenance": data.get("provenance") or {},
         "path": str(p),
         "exists": p.is_file(),
     }

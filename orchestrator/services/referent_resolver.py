@@ -108,10 +108,22 @@ _SPACE_HEADS = (
     "warehouse",
     "basement",
     "rooftop",
+    "helipad",
+    "cellar",
+    "mezzanine",
+    "boilerhouse",
+    "plantroom",
+    "loadingbay",
 )
 _SPACE_RE = re.compile(
     r"\b(?:the\s+)?([a-z][a-z-]{2,19})\s+(" + "|".join(_SPACE_HEADS) + r")\b", re.IGNORECASE
 )
+# The same heads standing alone behind a determiner: "in the gym", "on the rooftop".
+# Without this a bare space noun was invisible to the gate, so "how many sensors are
+# on the helipad?" was answered with the whole building's figures. A determiner is
+# required so an incidental mention ("pool of data") cannot trip it, and the heads
+# are generic English building words — no building's own vocabulary appears here.
+_BARE_SPACE_RE = re.compile(r"\b(?:the|a|an)\s+(" + "|".join(_SPACE_HEADS) + r")\b", re.IGNORECASE)
 # Plant / assets. Generic equipment nouns; an optional trailing number is kept.
 _EQUIPMENT_HEADS = (
     "chiller",
@@ -131,6 +143,16 @@ _EQUIPMENT_RE = re.compile(
 )
 # "<quantity> concentration|level(s)" — the measured quantity is the referent.
 _MEASURAND_RE = re.compile(r"\b([a-z][a-z0-9]{1,19})\s+(?:concentration|levels?)\b", re.IGNORECASE)
+# "Building 47" / "Block C" / "Tower 2" — a SPECIFICALLY NAMED other building. A
+# question that names one is asking about a site this instance is not connected to,
+# so it must be validated (and will not be found). Requires an identifier after the
+# word, so "this building" / "the building" / "our building" — which mean the
+# connected one — never match. Building-agnostic: it names no site, only the shape
+# "<building-word> <id>".
+_OTHER_BUILDING_RE = re.compile(
+    r"\b(building|block|tower|annex|annexe)\s+([A-Za-z]?\d+[A-Za-z]?|[A-Z])\b",
+    re.IGNORECASE,
+)
 # Multi-word referent phrases reaching a SPARQL literal — letters/digits/space/.-_ only.
 _SAFE_PHRASE_RE = re.compile(r"^[A-Za-z0-9 ._-]{1,40}$")
 
@@ -192,6 +214,18 @@ def detect_typed_referent(query: str) -> Optional[TypedReferent]:
     """
     q = query or ""
 
+    # A specifically-named OTHER building is checked first: "air quality in Building
+    # 47" names both a measurand and a place, and the place is what makes it
+    # unanswerable — this instance is connected to one building, not 47.
+    m = _OTHER_BUILDING_RE.search(q)
+    if m:
+        head, ident = m.group(1).lower(), m.group(2)
+        phrase = f"{head} {ident}"
+        if _SAFE_PHRASE_RE.match(phrase):
+            return TypedReferent(
+                kind=KIND_LOCATION, token=f"{head}|{ident}", phrase=phrase, head=head
+            )
+
     m = _FLOOR_RE.search(q)
     if m:
         num = m.group(1) or m.group(2)
@@ -203,11 +237,19 @@ def detect_typed_referent(query: str) -> Optional[TypedReferent]:
     m = _SPACE_RE.search(q)
     if m:
         modifier, head = m.group(1).lower(), m.group(2).lower()
-        phrase = f"{modifier} {head}"
-        if _SAFE_PHRASE_RE.match(phrase):
-            return TypedReferent(
-                kind=KIND_SPACE, token=f"{modifier}|{head}", phrase=phrase, head=head
-            )
+        # A determiner is not a modifier. "in the gym" matched here with
+        # modifier="the", giving the token "the|gym" — which demands an entity
+        # whose name contains BOTH words, so a gym the building really has would
+        # be reported missing. Treat it as the bare space it is.
+        if modifier in ("the", "a", "an"):
+            if _SAFE_TOKEN_RE.match(head):
+                return TypedReferent(kind=KIND_SPACE, token=head, phrase=head, head=head)
+        else:
+            phrase = f"{modifier} {head}"
+            if _SAFE_PHRASE_RE.match(phrase):
+                return TypedReferent(
+                    kind=KIND_SPACE, token=f"{modifier}|{head}", phrase=phrase, head=head
+                )
 
     m = _EQUIPMENT_RE.search(q)
     if m:
@@ -216,6 +258,14 @@ def detect_typed_referent(query: str) -> Optional[TypedReferent]:
         if _SAFE_PHRASE_RE.match(phrase):
             token = f"{head}|{num}" if num else head
             return TypedReferent(kind=KIND_EQUIPMENT, token=token, phrase=phrase, head=head)
+
+    # Checked after the modified forms so "the swimming pool" is still reported as
+    # "swimming pool" rather than the bare "pool".
+    m = _BARE_SPACE_RE.search(q)
+    if m:
+        head = m.group(1).lower()
+        if _SAFE_TOKEN_RE.match(head):
+            return TypedReferent(kind=KIND_SPACE, token=head, phrase=head, head=head)
 
     m = _MEASURAND_RE.search(q)
     if m:
@@ -286,10 +336,41 @@ class ReferentResolver:
 
     # ------------------------------------------------- typed referents (BUG-103)
 
+    # Words that introduce a whole other BUILDING, not a space within this one.
+    _BUILDING_FAMILY = frozenset({"building", "block", "tower", "annex", "annexe"})
+
+    def _resolve_other_building(
+        self, typed: TypedReferent, namespace: str, building_name: str
+    ) -> ReferentResolution:
+        """Resolve "Building 47" against THIS building's identity, not the graph.
+
+        A substring scan cannot answer this: entities are routinely labelled with the
+        building's own name ("<Site> Building — Room X"), so "building" matches almost
+        everything and a numeric identifier matches some URL or id — a false "exists".
+        The design contract is one building at a time, so a reference to a
+        specifically-named OTHER building resolves only if its identifier is part of
+        THIS building's own name or namespace id; otherwise it is a different site and
+        the honest answer is "not here". Compared against whatever this building calls
+        itself, so it stays building-agnostic.
+        """
+        ident = typed.token.split("|", 1)[-1].lower()
+        haystack = f"{building_name} {namespace}".lower()
+        # Whole-token match so "3" does not hit "2003"/"w3.org" and "c" does not hit
+        # every word — the identifier must stand on its own.
+        if re.search(rf"(?<![a-z0-9]){re.escape(ident)}(?![a-z0-9])", haystack):
+            return ReferentResolution(status=RESOLVED, referent=typed.phrase)
+        return ReferentResolution(
+            status=NOT_FOUND,
+            referent=typed.phrase,
+            message=self._clarification(typed.phrase, [], building_name),
+        )
+
     async def _resolve_typed(
         self, typed: TypedReferent, namespace: str, building_name: str
     ) -> ReferentResolution:
         """Validate a floor / space / equipment / measurand against the live graph."""
+        if typed.head in self._BUILDING_FAMILY:
+            return self._resolve_other_building(typed, namespace, building_name)
         terms = typed.token.split("|")
         try:
             exists = await self._exists_terms(terms, namespace)
@@ -322,31 +403,43 @@ class ReferentResolver:
     async def _exists_terms(self, terms: List[str], namespace: str) -> bool:
         """True if ONE subject in ``namespace`` matches every term.
 
-        A term may match the subject's URI, its ``rdfs:label``, or its class URI — so
-        "chiller" resolves whether the building names the instance ``Chiller_01`` or
-        types a generically-named instance as ``brick:Chiller``. Building-agnostic:
-        only the active namespace and the terms from the user's own question are used.
+        A term may match the subject's local name, its ``rdfs:label``, or its class
+        LOCAL name — so "chiller" resolves whether the building names the instance
+        ``Chiller_01`` or types a generically-named instance as ``brick:Chiller``.
+
+        Every term must co-occur in the SAME field. Scattering them was a bug: a
+        multi-word referent could match because one field (e.g. an entity's label,
+        which often carries the site's own name) held one term while an unrelated
+        field (a schema type URI) held another — two fields, one false positive.
+        Requiring a single field to hold all terms is what "this thing exists"
+        actually means. Building-agnostic: only the active namespace and the user's
+        own words are used, and both subject and type are reduced to their local
+        names so the namespace host can never supply a term.
         """
-        clauses = []
-        for t in terms:
-            t = t.lower().strip()
-            if not t:
-                continue
-            clauses.append(
-                f'(CONTAINS(LCASE(STR(?s)), "{t}") '
-                f'|| CONTAINS(LCASE(COALESCE(STR(?l), "")), "{t}") '
-                f'|| CONTAINS(LCASE(COALESCE(STR(?t), "")), "{t}"))'
-            )
-        if not clauses:
+        cleaned = [t.lower().strip() for t in terms if t and t.strip()]
+        if not cleaned:
             return True
+
+        def _field_holds_all(field: str) -> str:
+            return "(" + " && ".join(f'CONTAINS({field}, "{t}")' for t in cleaned) + ")"
+
+        # Anchor on ``?s a ?cls`` rather than ``?s ?p ?o``: every entity carries a
+        # type, so this visits each entity ONCE instead of once per triple — the
+        # difference between scanning ~155k triples and ~thousands of entities, which
+        # is what made the check slow enough to time out under load (BUG-136). The
+        # type is also had for free from the same pattern.
         q = (
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
             "SELECT ?s WHERE {\n"
-            "  ?s ?p ?o .\n"
+            "  ?s a ?cls .\n"
             "  OPTIONAL { ?s rdfs:label ?l }\n"
-            "  OPTIONAL { ?s a ?t }\n"
             f'  FILTER(STRSTARTS(STR(?s), "{namespace}"))\n'
-            f"  FILTER({' && '.join(clauses)})\n"
+            f"  BIND(LCASE(SUBSTR(STR(?s), {len(namespace) + 1})) AS ?local)\n"
+            '  BIND(LCASE(REPLACE(STR(?cls), "^.*[#/]", "")) AS ?clslocal)\n'
+            '  BIND(LCASE(COALESCE(STR(?l), "")) AS ?lbl)\n'
+            f"  FILTER({_field_holds_all('?local')} "
+            f"|| {_field_holds_all('?lbl')} "
+            f"|| {_field_holds_all('?clslocal')})\n"
             "} LIMIT 1"
         )
         return len(_bindings(await self._exec(q))) > 0
@@ -359,10 +452,13 @@ class ReferentResolver:
         q = (
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
             "SELECT DISTINCT ?s WHERE {\n"
-            "  ?s ?p ?o .\n"
+            "  ?s a ?cls .\n"  # anchor on typed entities — fast, same reason as _exists_terms
             "  OPTIONAL { ?s rdfs:label ?l }\n"
             f'  FILTER(STRSTARTS(STR(?s), "{namespace}"))\n'
-            f'  FILTER(CONTAINS(LCASE(STR(?s)), "{t}") '
+            # Local name, not full URI — a term that lives in the namespace itself
+            # would otherwise match every subject.
+            f"  BIND(LCASE(SUBSTR(STR(?s), {len(namespace) + 1})) AS ?local)\n"
+            f'  FILTER(CONTAINS(?local, "{t}") '
             f'|| CONTAINS(LCASE(COALESCE(STR(?l), "")), "{t}"))\n'
             "} LIMIT 60"
         )

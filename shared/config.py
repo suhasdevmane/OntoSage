@@ -18,6 +18,54 @@ except ImportError:
     _YAML_AVAILABLE = False
 
 
+# Cosine floor a retrieved chunk must clear, keyed on the MODEL — the floor is a
+# property of a model's score distribution, not of the provider. The previous code
+# branched on provider and applied 0.50 to anything "local": a value calibrated for
+# MiniLM at 384 dimensions, while bge-large at 1024 was the model actually loaded. A
+# floor tuned for a model that is not running is worse than no floor, because it
+# looks deliberate.
+MODEL_SCORE_FLOORS = {
+    "bge-large": 0.45,
+    "bge-base": 0.45,
+    "all-minilm": 0.50,
+    "minilm": 0.50,
+    "text-embedding-3-small": 0.35,
+    "text-embedding-3-large": 0.35,
+    "text-embedding-ada-002": 0.35,
+}
+# An unrecognised model under-filters rather than over-filters: showing a weak chunk
+# is recoverable, silently hiding the right one is not.
+_DEFAULT_SCORE_FLOOR = 0.30
+
+# The width each embedding model actually produces. A model's dimension is a fact
+# ABOUT THE MODEL, not a separate thing to configure — but EMBEDDING_MODEL_* and
+# EMBEDDING_DIMENSION_* are independent settings, so changing one and forgetting the
+# other silently builds every collection at the wrong width. Vectors of different
+# widths cannot be compared, so the failure surfaces later as empty search results
+# rather than an error. This map lets the model settle the question.
+MODEL_DIMENSIONS = {
+    "bge-large": 1024,
+    "bge-base": 768,
+    "bge-small": 384,
+    "all-minilm-l6": 384,
+    "all-minilm-l12": 384,
+    "minilm": 384,
+    "all-mpnet-base": 768,
+    "text-embedding-3-small": 1536,
+    "text-embedding-3-large": 3072,
+    "text-embedding-ada-002": 1536,
+}
+
+
+def dimension_for_model(model_name: str) -> Optional[int]:
+    """The width ``model_name`` produces, or None when it is not a known model."""
+    name = (model_name or "").lower()
+    for token, dim in MODEL_DIMENSIONS.items():
+        if token in name:
+            return dim
+    return None
+
+
 class Settings(BaseSettings):
     """
     Central configuration for all OntoSage services
@@ -99,14 +147,55 @@ class Settings(BaseSettings):
         default=1536, description="Embedding dimensions for OpenAI"
     )
 
+    # Cosine floor a retrieved document chunk must clear to be shown. Set it to
+    # override the per-model default below.
+    DOCUMENT_SCORE_FLOOR: Optional[float] = Field(
+        default=None,
+        description="Cosine floor for document retrieval; unset = derive from the embedding model",
+    )
+
+    @property
+    def document_score_floor(self) -> float:
+        """The cosine floor for document retrieval, derived from the loaded model."""
+        if self.DOCUMENT_SCORE_FLOOR is not None:
+            return float(self.DOCUMENT_SCORE_FLOOR)
+        model = (self.embedding_model or "").lower()
+        for token, floor in MODEL_SCORE_FLOORS.items():
+            if token in model:
+                return floor
+        return _DEFAULT_SCORE_FLOOR
+
     @property
     def embedding_dimension(self) -> int:
-        """Get current embedding dimension based on provider"""
-        return (
+        """The width the CURRENT MODEL produces.
+
+        The model decides, not the separate EMBEDDING_DIMENSION_* setting. Those two
+        can be edited independently, and changing the model while leaving the
+        dimension behind builds every collection at a width the model never emits —
+        a failure that shows up later as empty search results rather than an error.
+        The configured value is kept only as the fallback for a model this build has
+        not seen, and a disagreement is logged so it can be corrected.
+        """
+        configured = (
             self.EMBEDDING_DIMENSION_OPENAI
             if self.EMBEDDING_PROVIDER == "openai"
             else self.EMBEDDING_DIMENSION_LOCAL
         )
+        known = dimension_for_model(self.embedding_model)
+        if known is None:
+            return configured
+        if known != configured:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "EMBEDDING_DIMENSION is %s but %s produces %s — using %s. "
+                "Update the setting to match the model, or the two will keep drifting.",
+                configured,
+                self.embedding_model,
+                known,
+                known,
+            )
+        return known
 
     @property
     def embedding_model(self) -> str:
@@ -313,6 +402,20 @@ class Settings(BaseSettings):
             "PIPELINE_API_KEY env var; must be changed from the default in production."
         ),
         repr=False,
+    )
+    TRUST_FORWARDED_USER: bool = Field(
+        default=False,
+        description=(
+            "Trust X-OpenWebUI-User-* headers on /v1/* to identify the end user, so their "
+            "OntoSage role drives RBAC instead of the shared pipeline key's least-privilege "
+            "default. ONLY enable when the caller (Open WebUI) is the sole holder of "
+            "PIPELINE_API_KEY on a trusted network: anyone with that key could otherwise "
+            "impersonate any user by setting the header. Off by default."
+        ),
+    )
+    FORWARDED_USER_HEADER: str = Field(
+        default="X-OpenWebUI-User-Email",
+        description="Header carrying the end user's identity when TRUST_FORWARDED_USER is on.",
     )
     STRICT_SECRETS: bool = Field(
         default=True,

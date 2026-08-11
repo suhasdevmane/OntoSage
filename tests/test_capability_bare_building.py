@@ -53,9 +53,11 @@ def _state(message: str) -> ConversationState:
 class _FakeFact:
     """Minimal stand-in for a CapabilityGraphResolver fact (has .render() + .label)."""
 
-    def __init__(self, label: str, text: str) -> None:
+    def __init__(self, label: str, text: str, document_ref: str = "") -> None:
         self.label = label
         self._text = text
+        # A topic MAY name the document that sets it out in full; most do not.
+        self.document_ref = document_ref
 
     def render(self) -> str:
         return self._text
@@ -95,7 +97,7 @@ def _bare_building(
     monkeypatch.setattr(cgr, "get_capability_graph_resolver", lambda: _FakeResolver())
 
     # 5. Document KB — miss by default (no policy/manual chunks).
-    async def _fake_docs(_q, _bid, top_k: int = 3):
+    async def _fake_docs(_q, _bid, top_k: int = 3, only_document: str = ""):
         return docs or []
 
     monkeypatch.setattr(cap, "_search_documents", _fake_docs)
@@ -174,3 +176,53 @@ async def test_uploaded_document_source_is_not_preempted(monkeypatch):
     assert res["provenance"] == "document_kb"
     assert res["provenance"] != "no_match"
     assert "north car park" in res["response"]
+
+
+# ── a topic that NAMES its document (ontosage:documentRef) ───────────────────
+
+
+async def test_declared_document_is_read_instead_of_being_searched_for(monkeypatch):
+    """When the ontology names the governing document, detail comes from THAT file.
+
+    Otherwise the document is chosen by cosine score against a floor calibrated on
+    one corpus and one embedding model — so changing either silently changes which
+    document answers which question. The triple settles relevance; similarity is
+    left only to order chunks inside a document already known to be right.
+    """
+    _bare_building(
+        monkeypatch,
+        facts=[_FakeFact("WiFi and network access", "Guests use Guest-WiFi.", "wifi_policy.md")],
+    )
+    seen = {}
+
+    async def _scoped_docs(_q, _bid, top_k: int = 3, only_document: str = ""):
+        seen["only_document"] = only_document
+        return [{"doc_name": "wifi_policy", "text": "Full policy: eduroam covers all floors."}]
+
+    monkeypatch.setattr(cap, "_search_documents", _scoped_docs)
+
+    out = await cap.CapabilityAgent().answer(_state("how do I connect to the wifi?"))
+    res = out.intermediate_results["capability_result"]
+
+    assert seen["only_document"] == "wifi_policy.md", "retrieval must be scoped to the named file"
+    assert "eduroam covers all floors" in res["response"], "the document detail must be included"
+    assert "wifi_policy.md" in res["response"], "the answer must say which document it quoted"
+    assert res["provenance"] == "capability_graph"
+
+
+async def test_a_topic_without_a_document_still_answers_from_triples_alone(monkeypatch):
+    """Most topics name no document — the answer must not depend on one existing."""
+    _bare_building(monkeypatch, facts=[_FakeFact("lift", "There is 1 passenger lift.")])
+    called = {"n": 0}
+
+    async def _never(_q, _bid, top_k: int = 3, only_document: str = ""):
+        called["n"] += 1
+        return []
+
+    monkeypatch.setattr(cap, "_search_documents", _never)
+
+    out = await cap.CapabilityAgent().answer(_state("is there a lift?"))
+    res = out.intermediate_results["capability_result"]
+    assert res["provenance"] == "capability_graph"
+    assert "passenger lift" in res["response"]
+    assert called["n"] == 0, "no document was declared, so none should be fetched"

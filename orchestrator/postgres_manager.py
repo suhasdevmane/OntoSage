@@ -256,6 +256,48 @@ class PostgresManager:
             logger.error(f"Error updating user role: {e}")
             return False
 
+    async def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Look a user up by email address (case-insensitive).
+
+        Sign-in must accept whichever identifier a person actually has. The chat UI
+        identifies people by email while OntoSage accounts are keyed by username, so
+        without this the same credentials work in one portal and fail in the other.
+        """
+        if not self.pool or not email:
+            return None
+        try:
+            async with self.pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    "SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1", email
+                )
+                return dict(row) if row else None
+        except Exception as e:
+            logger.error(f"Error getting user by email: {e}")
+            return None
+
+    async def update_password(self, username: str, password_hash: str, salt: str) -> bool:
+        """Replace a user's stored password hash + salt. True if a row was updated.
+
+        Two callers depend on this: the admin password reset, and AuthManager's
+        transparent legacy-hash upgrade on login. The latter has been calling this
+        method since before it existed — the AttributeError was swallowed by its
+        non-blocking try/except, so SHA-256 hashes silently never migrated.
+        """
+        if not self.pool:
+            return False
+        try:
+            async with self.pool.acquire() as conn:
+                result = await conn.execute(
+                    "UPDATE users SET password_hash = $1, salt = $2 WHERE username = $3",
+                    password_hash,
+                    salt,
+                    username,
+                )
+            return result.endswith("1")
+        except Exception as e:
+            logger.error(f"Error updating password: {e}")
+            return False
+
     async def update_user_metadata(self, username: str, metadata: Dict[str, Any]) -> bool:
         """Merge-update the metadata JSON column for a user. Returns True if a row was updated."""
         if not self.pool:

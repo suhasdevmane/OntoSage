@@ -69,9 +69,33 @@ def _chunk_text(text: str, chunk_words: int = _CHUNK_WORDS) -> List[str]:
 
 
 def _read_document(path: Path) -> Optional[str]:
-    """Read a document file; returns None on error."""
+    """Read a document file, tolerating the encoding it was actually saved in.
+
+    Insisting on UTF-8 loses whole documents silently: a file saved from a Windows
+    editor carries cp1252 bytes (an em-dash is 0x97), so the read raised, the
+    warning scrolled past, and the document was never indexed — while the ontology
+    still named it as the source for a topic. The question then had a document that
+    did not exist as far as retrieval was concerned. Falling back keeps the content;
+    the replacement pass is last-resort so a stray byte costs one character, not the
+    entire file.
+    """
+    # utf-8-sig first: plain utf-8 does NOT fail on a byte-order mark, it decodes it
+    # into a leading ﻿ that then rides along into the first chunk. utf-8-sig
+    # reads BOM and non-BOM files alike, so trying it first costs nothing.
+    for encoding in ("utf-8-sig", "cp1252", "latin-1"):
+        try:
+            text = path.read_text(encoding=encoding)
+            if encoding != "utf-8-sig":
+                logger.info(f"[document_indexer] {path.name}: decoded as {encoding}")
+            return text
+        except UnicodeDecodeError:
+            continue
+        except Exception as e:
+            logger.warning(f"[document_indexer] could not read {path.name}: {e}")
+            return None
     try:
-        return path.read_text(encoding="utf-8")
+        logger.warning(f"[document_indexer] {path.name}: undecodable bytes replaced")
+        return path.read_text(encoding="utf-8", errors="replace")
     except Exception as e:
         logger.warning(f"[document_indexer] could not read {path.name}: {e}")
         return None
@@ -109,6 +133,14 @@ class DocumentIndexer:
         # Nested layout: input/<id>/documents/
         for bldg_dir in sorted(self._input_root.iterdir()):
             if not bldg_dir.is_dir():
+                continue
+            # A directory is only a building if a person named it one. Hidden and
+            # bookkeeping directories are not: input/.trash holds documents the
+            # admin console DELETED, and scanning it created a phantom building
+            # whose 24 removed files were embedded into a documents_.trash
+            # collection — deleted content, kept and searchable.
+            if bldg_dir.name.startswith(".") or bldg_dir.name.startswith("_"):
+                logger.debug(f"[document_indexer] skipping non-building directory {bldg_dir.name}")
                 continue
             docs_dir = bldg_dir / "documents"
             if not docs_dir.is_dir():
@@ -151,6 +183,11 @@ class DocumentIndexer:
                 reason="documents/ dir exists but contains no .md/.txt files",
                 duration_ms=(time.monotonic() - t0) * 1000,
             )
+
+        # Check the stored vector width BEFORE reading the SHA cache: the cache
+        # lives in the collection, so a stale-width collection would otherwise
+        # report every file as unchanged and never rebuild.
+        await self._ensure_dimension(collection_name)
 
         # ── Load existing SHA map from Qdrant ────────────────────────────────
         existing_shas = await self._load_existing_shas(collection_name)
@@ -296,6 +333,39 @@ class DocumentIndexer:
         result = await self._qdrant.get_collections()
         return [c.name for c in result.collections]
 
+    async def _ensure_dimension(self, collection_name: str) -> bool:
+        """Drop the collection when it was built by a different embedding model.
+
+        Vectors of different widths cannot be compared, so a collection written at
+        384 dimensions is unusable the moment a 1024-dimension model loads. Nothing
+        detected that: the SHA cache lives IN the collection, so unchanged documents
+        skipped re-indexing, the collection kept its old width, and every search
+        failed on a dimension mismatch — silently, since search failures return [].
+        Dropping it here forces a rebuild at the new width on the next pass.
+
+        Returns True when the collection was dropped.
+        """
+        try:
+            if collection_name not in await self._list_collection_names():
+                return False
+            info = await self._qdrant.get_collection(collection_name)
+            params = info.config.params.vectors
+            current = getattr(params, "size", None)
+            wanted = self._embedder.dimension
+            if current is None or current == wanted:
+                return False
+            logger.warning(
+                f"[document_indexer] {collection_name} was built at {current} dimensions but the "
+                f"embedding model now produces {wanted} — dropping it so it rebuilds. Every "
+                f"search against it would otherwise fail on the mismatch."
+            )
+            await self._qdrant.delete_collection(collection_name)
+            return True
+        except Exception as e:
+            # Never block indexing on the check itself.
+            logger.warning(f"[document_indexer] dimension check skipped for {collection_name}: {e}")
+            return False
+
     async def _recreate_collection(self, collection_name: str) -> None:
         from qdrant_client.models import Distance, VectorParams
 
@@ -351,11 +421,29 @@ async def search_documents(
     building_id: str,
     top_k: int = 3,
     score_threshold: float = 0.35,
+    only_document: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    """Search documents collection for a query.  Returns list of {text, doc_name, score}."""
+    """Search documents collection for a query.  Returns list of {text, doc_name, score}.
+
+    ``only_document`` restricts the search to one file, for when the ontology has
+    already named the governing document (``ontosage:documentRef``). That turns
+    retrieval from a guess into a lookup: similarity then only ORDERS chunks within
+    a document known to be the right one, instead of deciding which document is
+    relevant — a decision it makes against a floor calibrated on one corpus and one
+    embedding model. The score threshold is dropped for a scoped search for the
+    same reason: the question of relevance was already settled by the triple.
+    """
     collection_name = f"{_COLLECTION_PREFIX}{building_id}"
     try:
         vec = await embedding_service.embed(query)
+        _filter = None
+        if only_document:
+            from qdrant_client.models import FieldCondition, Filter, MatchValue
+
+            _filter = Filter(
+                must=[FieldCondition(key="doc_filename", match=MatchValue(value=only_document))]
+            )
+            score_threshold = None
         # Newer Qdrant client uses query_points; older uses search.
         if hasattr(qdrant_client, "query_points"):
             _res = await qdrant_client.query_points(
@@ -364,6 +452,7 @@ async def search_documents(
                 limit=top_k,
                 score_threshold=score_threshold,
                 with_payload=True,
+                query_filter=_filter,
             )
             results = _res.points if hasattr(_res, "points") else _res
         else:
@@ -373,6 +462,7 @@ async def search_documents(
                 limit=top_k,
                 score_threshold=score_threshold,
                 with_payload=True,
+                query_filter=_filter,
             )
         return [
             {

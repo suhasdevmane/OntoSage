@@ -125,15 +125,23 @@ NS = "http://example.org/anybuilding#"
 
 
 def _graph(uris):
-    """Stub SPARQL exec: matches when every CONTAINS term appears in a known URI."""
+    """Stub SPARQL exec: matches when every term appears in a known URI's LOCAL name.
+
+    Mirrors the real query, which compares against ?local (URI minus namespace) so a
+    term that sits in the namespace itself cannot match every subject — the fix for
+    "Building 47" resolving against the abacwsbuilding.cardiff.ac.uk namespace.
+    """
 
     async def _exec(q: str) -> dict:
         import re as _re
 
-        terms = [t.lower() for t in _re.findall(r'CONTAINS\(LCASE\(STR\(\?s\)\), "([^"]+)"\)', q)]
+        terms = [t.lower() for t in _re.findall(r'CONTAINS\(\?local, "([^"]+)"\)', q)]
         if not terms:
             return {"results": {"bindings": []}}
-        hits = [u for u in uris if all(t in u.lower() for t in terms)]
+        # Compare against the local name only, matching the SUBSTR in the real query.
+        # Existence needs ALL terms on one subject; suggestion needs ANY (one term).
+        combine = all if "SELECT ?s WHERE" in q else any
+        hits = [u for u in uris if combine(t in u.rsplit("#", 1)[-1].lower() for t in terms)]
         return {"results": {"bindings": [{"s": {"value": u}} for u in hits]}}
 
     return _exec
@@ -199,3 +207,98 @@ def test_count_and_listing_intents_are_gated():
     """'how many sensors on floor 42' is a COUNT — it must be gated too (BUG-103)."""
     assert "metadata" in rr.GATED_INTENTS
     assert "discovery" in rr.GATED_INTENTS
+
+
+# ── inflection: a question and its document rarely inflect the same way ──────
+
+
+def test_a_past_tense_question_matches_a_present_tense_document():
+    """ "when was it last SERVICED" against a log saying "SERVICING activity …
+    SERVICE dates" shared no term at all, so the passage was judged off-topic and
+    the answer became "I don't have that information" while the document said it."""
+    passage = (
+        "Maintenance and servicing activity for building equipment is recorded in the "
+        "maintenance log, which covers service dates and work carried out."
+    )
+    assert gg.is_on_topic("When was equipment last serviced?", passage) is True
+
+
+@pytest.mark.parametrize(
+    "a,b",
+    [
+        ("serviced", "servicing"),
+        ("service", "serviced"),
+        ("booked", "booking"),
+        ("sensors", "sensor"),
+    ],
+)
+def test_inflections_of_one_word_share_a_stem(a, b):
+    assert gg._singular(a) == gg._singular(b)
+
+
+@pytest.mark.parametrize("word", ["fire", "water", "use", "zone", "lift"])
+def test_short_words_are_not_collapsed_by_stemming(word):
+    """Over-stemming would make unrelated short words collide and let any passage
+    answer any question — the opposite failure."""
+    assert gg._singular(word) == word
+
+
+def test_stemming_does_not_make_an_unrelated_passage_on_topic():
+    passage = (
+        "Maintenance and servicing activity for building equipment is recorded in the "
+        "maintenance log, which covers service dates and work carried out."
+    )
+    assert gg.is_on_topic("what is the pH of the water tank?", passage) is False
+
+
+# ── does the passage contain the KIND of fact asked for? (CAVEAT-108) ────────
+
+
+def test_a_date_question_answered_without_a_date_is_flagged():
+    """ "when was chiller 7 last serviced?" returns HVAC prose that genuinely
+    discusses chillers and contains no date. Printed plainly it reads as the
+    answer; naming what is missing makes it an honest partial one."""
+    passage = "Chillers are maintained under the HVAC operations plan by the estates team."
+    caveat = gg.missing_fact_caveat("When was chiller 7 last serviced?", passage)
+    assert caveat is not None
+    assert "date" in caveat.lower()
+
+
+@pytest.mark.parametrize(
+    "passage",
+    [
+        "Chiller 7 was last serviced on 2026-03-14 by the estates team.",
+        "Last service: 14 March 2026.",
+        "Serviced Mar 2026 under contract.",
+    ],
+)
+def test_a_date_question_answered_with_a_date_is_not_flagged(passage):
+    assert gg.missing_fact_caveat("When was chiller 7 last serviced?", passage) is None
+
+
+def test_a_quantity_question_answered_without_a_number_is_flagged():
+    passage = "Sensors are distributed across the building according to the coverage plan."
+    caveat = gg.missing_fact_caveat("How many sensors are on floor 2?", passage)
+    assert caveat is not None
+    assert "figure" in caveat.lower()
+
+
+def test_a_quantity_question_answered_with_a_number_is_not_flagged():
+    assert (
+        gg.missing_fact_caveat("How many sensors are on floor 2?", "There are 12 sensors.") is None
+    )
+
+
+@pytest.mark.parametrize(
+    "query",
+    ["What is the wifi policy?", "Where is the prayer room?", "Is there a cafe?"],
+)
+def test_a_question_asking_for_no_particular_fact_kind_is_silent(query):
+    """A caveat on every answer would be noise that teaches users to ignore it."""
+    assert gg.missing_fact_caveat(query, "The prayer room is on floor 1.") is None
+
+
+@pytest.mark.parametrize("blank", ["", "   "])
+def test_blank_input_is_silent(blank):
+    assert gg.missing_fact_caveat(blank, "some passage") is None
+    assert gg.missing_fact_caveat("when was it serviced?", blank) is None

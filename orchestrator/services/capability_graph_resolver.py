@@ -44,6 +44,12 @@ class CapabilityFact:
     phone: str = ""
     report_to: str = ""
     steps: str = ""
+    # File name of the document that sets this topic out in full, as declared by
+    # the building via ontosage:documentRef. Carried so the caller can scope
+    # retrieval to THAT document instead of searching the whole corpus by score.
+    document_ref: str = ""
+    effective_date: str = ""
+    owner: str = ""
 
     def render(self) -> str:
         head = f"**{self.label}**"
@@ -77,6 +83,15 @@ class CapabilityFact:
                 body.append(
                     "Steps: " + " ".join(f"({i + 1}) {s}." for i, s in enumerate(step_list))
                 )
+        # Naming the governing document and its date lets the reader see WHICH
+        # version this answer is quoting, and where to go for the full text.
+        provenance = []
+        if self.owner:
+            provenance.append(f"Owner: {self.owner}")
+        if self.effective_date:
+            provenance.append(f"In force since {self.effective_date}")
+        if provenance:
+            body.append(" · ".join(provenance))
         return f"{head}. " + " ".join(body)
 
 
@@ -93,6 +108,9 @@ class _Amenity:
     phone: str = ""
     report_to: str = ""
     steps: str = ""
+    document_ref: str = ""
+    effective_date: str = ""
+    owner: str = ""
 
 
 class CapabilityGraphResolver:
@@ -132,6 +150,9 @@ class CapabilityGraphResolver:
                 phone=am.phone,
                 report_to=am.report_to,
                 steps=am.steps,
+                document_ref=am.document_ref,
+                effective_date=am.effective_date,
+                owner=am.owner,
             )
             for _, am in scored[:3]
         ]
@@ -143,7 +164,8 @@ class CapabilityGraphResolver:
         # in one pass — both are lay-term-matched and rendered by CapabilityFact.
         q = (
             f"{_ONTO}{_RDFS}"
-            "SELECT ?a ?label ?loc ?note ?cat ?lay ?answer ?url ?email ?phone ?report ?steps WHERE { "
+            "SELECT ?a ?label ?loc ?note ?cat ?lay ?answer ?url ?email ?phone ?report ?steps "
+            "?docref ?effective ?owner WHERE { "
             "{ ?a a ontosage:Amenity } UNION { ?a a ontosage:KnowledgeTopic } "
             "OPTIONAL { ?a rdfs:label ?label } "
             "OPTIONAL { ?a ontosage:locationText ?loc } "
@@ -155,7 +177,10 @@ class CapabilityGraphResolver:
             "OPTIONAL { ?a ontosage:contactEmail ?email } "
             "OPTIONAL { ?a ontosage:contactPhone ?phone } "
             "OPTIONAL { ?a ontosage:reportTo ?report } "
-            "OPTIONAL { ?a ontosage:steps ?steps } }"
+            "OPTIONAL { ?a ontosage:steps ?steps } "
+            "OPTIONAL { ?a ontosage:documentRef ?docref } "
+            "OPTIONAL { ?a ontosage:effectiveDate ?effective } "
+            "OPTIONAL { ?a ontosage:policyOwner ?owner } }"
         )
         data = await self._exec(q)
         out: List[_Amenity] = []
@@ -178,6 +203,9 @@ class CapabilityGraphResolver:
                     phone=_v("phone"),
                     report_to=_v("report"),
                     steps=_v("steps"),
+                    document_ref=_v("docref"),
+                    effective_date=_v("effective")[:10],
+                    owner=_v("owner"),
                 )
             )
         self._cache = out

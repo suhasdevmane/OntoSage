@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 
 class TaskType(Enum):
     """Task type hint — routes to fast (gpt-4o-mini) or complex (gpt-5.4) model."""
+
     INTENT = "intent"
     GENERAL = "general"
     DISAMBIGUATION = "disambiguation"
@@ -26,8 +27,13 @@ class TaskType(Enum):
 
 
 # Task types that use the lightweight fast model.
-_FAST_TASK_TYPES = {TaskType.INTENT, TaskType.GENERAL, TaskType.DISAMBIGUATION,
-                    TaskType.REWRITE, TaskType.SPARQL}
+_FAST_TASK_TYPES = {
+    TaskType.INTENT,
+    TaskType.GENERAL,
+    TaskType.DISAMBIGUATION,
+    TaskType.REWRITE,
+    TaskType.SPARQL,
+}
 
 from orchestrator.services.circuit_breaker import circuit_breaker_for
 from shared.config import get_llm_config, settings
@@ -48,6 +54,10 @@ LLM_BACKOFF_BASE_S = float(os.environ.get("LLM_BACKOFF_BASE_S", "1.0"))
 LLM_BACKOFF_FACTOR = float(os.environ.get("LLM_BACKOFF_FACTOR", "2.0"))
 
 
+class EmptyCompletionError(RuntimeError):
+    """The provider answered successfully but produced no text."""
+
+
 class LLMManager:
     """Manages LLM interactions with multiple providers.
 
@@ -62,7 +72,7 @@ class LLMManager:
         self.provider = self.config["provider"]
         self.client = None
         self.client_fast = None
-        self.last_request_time = 0.0       # rate-limit tracker for complex model
+        self.last_request_time = 0.0  # rate-limit tracker for complex model
         self.last_request_time_fast = 0.0  # rate-limit tracker for fast model
         self._breaker = circuit_breaker_for("llm", failure_threshold=5, recovery_timeout=30.0)
         self._initialize_client()
@@ -153,6 +163,8 @@ class LLMManager:
 
     def _is_retryable(self, error: Exception) -> bool:
         """Check if an error is transient and should be retried."""
+        if isinstance(error, EmptyCompletionError):
+            return True
         error_str = str(error).lower()
         # OpenAI rate limit (429) or server errors (500/502/503)
         if "rate limit" in error_str or "429" in error_str:
@@ -222,12 +234,24 @@ class LLMManager:
                     self._generate_once(prompt, system_message, temperature, active_client),
                     timeout=LLM_TIMEOUT_S,
                 )
+                if not (result or "").strip():
+                    # A local model that spends its whole budget on reasoning, or one
+                    # whose prompt crowds out the context window, returns an empty
+                    # completion with HTTP 200.  Callers parse that as a failed
+                    # response and fall back to a generic answer, so treat it as the
+                    # transient failure it is rather than a valid result.
+                    raise EmptyCompletionError(
+                        f"LLM [{client_label}] returned an empty completion "
+                        f"(prompt was {len(prompt)} chars)"
+                    )
                 self._breaker.record_success()
                 return result
 
             except asyncio.TimeoutError:
                 last_error = TimeoutError(f"LLM [{client_label}] timed out after {LLM_TIMEOUT_S}s")
-                logger.warning(f"LLM [{client_label}] timeout (attempt {attempt}/{LLM_MAX_RETRIES})")
+                logger.warning(
+                    f"LLM [{client_label}] timeout (attempt {attempt}/{LLM_MAX_RETRIES})"
+                )
                 self._breaker.record_failure()
             except Exception as e:
                 last_error = e

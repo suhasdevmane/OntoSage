@@ -15,13 +15,10 @@ networks:
     driver: bridge
     internal: true # no gateway to host/internet — isolates the code-executor RCE surface
 
-volumes:
-
-  # All building state is bind-mounted per building at ./volumes/<BUILDING_ID>/* —
-  # the only named volume is the shared embedding-model cache below.
-  huggingface-cache:
-    # Local embedding model cache (MiniLM) — persists across orchestrator restarts
-    driver: local
+# All building state is bind-mounted per building at ./volumes/<BUILDING_ID>/* — there
+# are no named volumes. The embedding model is baked into the orchestrator image
+# (HF_HOME=/app/.hf_cache, HF_HUB_OFFLINE=1), so it needs no cache volume and cannot
+# change without a rebuild.
 
 services:
   # ====================== Local LLM (Ollama) with GPU ======================
@@ -100,6 +97,11 @@ services:
       # External access via Cloudflare Tunnel → talk2futurebuildings.systems
       - WEBUI_URL=https://talk2futurebuildings.systems
       - ENABLE_WEBSOCKET_SUPPORT=true
+      - ENABLE_SIGNUP=true            # allow self-registration (see README: tester onboarding)
+      - DEFAULT_USER_ROLE=user        # without this new accounts land in 'pending' and cannot chat
+      - BYPASS_MODEL_ACCESS_CONTROL=true   # one shared model: every signed-in user must see it
+      - DEFAULT_MODELS=ontobot-pipeline     # preselect the OntoSage pipeline in new chats
+      - ENABLE_FORWARD_USER_INFO_HEADERS=true  # send X-OpenWebUI-User-* so OntoSage can apply per-user RBAC
     networks:
       - ontobot-agentic
     restart: unless-stopped
@@ -131,7 +133,12 @@ services:
       - ./orchestrator/agents/.env:/app/agents/.env:ro # Mount OpenAI credentials
       - ./data:/app/data:ro # Mount sensor map and other data files
       - ./config:/app/config:ro # Mount alert thresholds and other config files
-      - huggingface-cache:/root/.cache/huggingface # Persist local embedding model (MiniLM) across restarts — avoids ~14s re-download
+      - ./ontology:/app/ontology:ro # Building-independent ontologies (HBCO lay-term concepts) — ttl_uploader scans this path
+      # NOTE: the embedding model is BAKED INTO THE IMAGE at HF_HOME=/app/.hf_cache
+      # (orchestrator/Dockerfile), with HF_HUB_OFFLINE=1 — it is never fetched at
+      # runtime and cannot change without a rebuild. No model cache volume is
+      # mounted: one used to be, pointing at /root/.cache/huggingface, which HF_HOME
+      # does not use — so it sat empty while its comment claimed to cache the model.
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379

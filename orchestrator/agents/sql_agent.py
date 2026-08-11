@@ -445,9 +445,7 @@ Fix ONLY the SQL syntax/schema issue; keep the same logical intent.
                     return query_result.data
                 last_error = query_result.error or "unknown error"
                 failed_sql = repaired_sql
-                logger.warning(
-                    f"[sql_repair] Attempt {attempt} still failed: {last_error}"
-                )
+                logger.warning(f"[sql_repair] Attempt {attempt} still failed: {last_error}")
             except Exception as exc:
                 logger.warning(f"[sql_repair] Attempt {attempt} exception: {exc}")
                 last_error = str(exc)
@@ -558,16 +556,17 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
         """Sanitize datetime strings to avoid SQL injection in deterministic queries."""
         if not value or not isinstance(value, str):
             return None
-        v = value.strip()
-        # Allow ISO date/time chars only: digits, space, T, Z, colon, dash, dot,
-        # plus. NB single backslashes in the class — the previous r"...\\s..." used
-        # DOUBLE backslashes, so it matched a literal backslash and the letter 's'
-        # (never whitespace). That both REJECTED space-separated "YYYY-MM-DD HH:MM:SS"
-        # values (silently dropping the time filter) AND let a backslash through.
         import re
 
-        if re.match(r"^[0-9T:.Z+\s\-]+$", v):
-            return v
+        v = value.strip().replace("T", " ")
+        # Require a full calendar date, optionally with a time. A character-class
+        # filter is too permissive: the remains of a relative phrase ("last 24
+        # hours" → "-24") satisfy it and get spliced into the WHERE clause, where
+        # MySQL silently matches nothing and Postgres reads it as a timezone.
+        # Anything not an unambiguous timestamp is treated as absent so the
+        # caller's default window applies.
+        if re.match(r"^\d{4}-\d{2}-\d{2}([ ]\d{2}:\d{2}(:\d{2})?)?$", v):
+            return v[:19]
         return None
 
     def _build_uuid_union_query(

@@ -400,6 +400,29 @@ def _r_countable_metadata(c: _Ctx) -> Optional[str]:
     return "metadata" if _is_countable_meta(c.ql) else None
 
 
+def _r_inventory_to_discovery(c: _Ctx) -> Optional[str]:
+    """ "What/which X does this building have?" → discovery (BUG-122).
+
+    Runs AFTER countable_metadata, so a COUNT question keeps its existing route;
+    this claims only the open "what kinds of X are here" shape. Without it the
+    same question reached three different handlers depending on phrasing — the
+    capability agent, the sensor-map lister, and the SPARQL agent — each grouping
+    the answer its own way, so "what equipment is here?" and "what sensors are
+    here?" disagreed about what the building contains.
+    """
+    if c.intent not in ("sensor_data", "capability", "metadata", "general", "general_knowledge"):
+        return None
+    # Any COUNT question keeps its existing route. _is_countable_meta alone is not
+    # enough of a guard: its device list covers sensors and meters but not plant,
+    # so "how many air handling units are there?" slipped past it and lost the
+    # metadata answer (16) that already worked.
+    if _any(c.ql, COUNT_TRIGGER_KWS) or _is_countable_meta(c.ql):
+        return None
+    from orchestrator.services.ontology_inventory import is_inventory_question
+
+    return "discovery" if is_inventory_question(c.query) else None
+
+
 def _r_forecast(c: _Ctx) -> Optional[str]:
     if c.intent in ("trend", "analytics", "sensor_data"):
         return None
@@ -434,6 +457,50 @@ def _r_report_intake(c: _Ctx) -> Optional[str]:
     ):
         return None
     return c.sr.report_intake_intent(c.query)
+
+
+# "when was chiller 7 last serviced?" asks about the PAST. It states no problem, so
+# nothing needs reporting — but it names maintenance, so the classifier reaches for
+# the maintenance intent and the node files a ticket. Asking a question then being
+# told a work order was raised is a bad answer and a real side effect.
+SERVICE_HISTORY_RE = re.compile(
+    r"\b(?:when|what date|which date|how long ago)\b.{0,60}"
+    r"\b(?:serviced|servicing|inspected|maintained|repaired|replaced|checked|overhauled)\b"
+    r"|\blast\s+(?:serviced|inspected|maintained|repaired|replaced|checked|service|inspection)\b"
+    r"|\b(?:service|maintenance|repair|inspection)\s+(?:history|record|records|log)\b",
+    re.IGNORECASE,
+)
+
+
+def _r_self_description(c: _Ctx) -> Optional[str]:
+    """A question about the ASSISTANT is not open-domain general knowledge.
+
+    The open-domain answerer knows nothing about this system, so it supplies a
+    plausible substitute — live it claimed to be "a large-language model built by
+    OpenAI" and offered guidance on BACnet and ISO 50001 while naming none of
+    OntoSage's actual abilities. The same failure as BUG-123, one step over.
+    """
+    if c.intent not in ("general", "general_knowledge", "capability", "clarification", "greeting"):
+        return None
+    from orchestrator.services.self_description import is_self_question
+
+    return "self_description" if is_self_question(c.query) else None
+
+
+def _r_history_question_not_report(c: _Ctx) -> Optional[str]:
+    """A question about past maintenance is a question, not a report (BUG-104).
+
+    Sends it to the capability chain, which answers from a service-history topic
+    where the building has authored one and honestly declines where it has not —
+    either way without creating a ticket. A genuine report still wins: the semantic
+    router is consulted first, so "the lift is broken, when was it last serviced?"
+    is still filed.
+    """
+    if c.intent not in ("maintenance", "complaint", "safety_report", "feedback", "suggestion"):
+        return None
+    if c.sr.report_intake_intent(c.query) is not None:
+        return None
+    return "capability" if SERVICE_HISTORY_RE.search(c.query) else None
 
 
 def _r_comfort_question(c: _Ctx) -> Optional[str]:
@@ -489,6 +556,25 @@ def _r_data_query_promotion(c: _Ctx) -> Optional[str]:
     return "sensor_data"
 
 
+def _r_building_not_general(c: _Ctx) -> Optional[str]:
+    """A question about this building must never be answered open-domain (BUG-123).
+
+    Runs in the ``concept`` stage — after lay-term resolution, which is the only
+    signal that distinguishes "is it stuffy in RM157?" (a CO2 question about a
+    real room) from "what is stuffiness?" (a vocabulary question). The keyword
+    lists the earlier stages rely on cannot see it: "stuffy" is not a
+    measurement word, so the reading question looks like small talk and reaches
+    the open-domain answerer, which has no data and invents plausible values.
+    """
+    if c.intent not in ("general", "general_knowledge", "clarification", "greeting"):
+        return None
+    from orchestrator.services.grounding_guard import is_building_specific
+
+    if not is_building_specific(c.query, c.normalized.get("concepts")):
+        return None
+    return "analytics"
+
+
 # Precedence order is the contract. Historical rules keep their historical order;
 # the two automation-shape rules (2026-07-30) slot after the report-intake pair so
 # genuine reports and comfort questions still win.
@@ -528,6 +614,12 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         _r_countable_metadata,
     ),
     Rule(
+        "inventory_to_discovery",
+        "'what/which X does this building have' → discovery (one census handler), "
+        "after countable_metadata so COUNT questions keep their route",
+        _r_inventory_to_discovery,
+    ),
+    Rule(
         "forecast_to_trend",
         "predict/forecast + sensor metric → trend pipeline",
         _r_forecast,
@@ -547,6 +639,16 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "report_intake_statement",
         "fault/complaint/safety STATEMENT → report intake, beating capability/greeting",
         _r_report_intake,
+    ),
+    Rule(
+        "self_description",
+        "a question about the ASSISTANT → self_description, never open-domain",
+        _r_self_description,
+    ),
+    Rule(
+        "history_question_not_report",
+        "past-maintenance QUESTION mis-tagged as report → capability (never files a ticket)",
+        _r_history_question_not_report,
     ),
     Rule(
         "comfort_question_not_report",
@@ -575,9 +677,19 @@ POST_STAGE_RULES: Tuple[Rule, ...] = (
     ),
 )
 
+CONCEPT_STAGE_RULES: Tuple[Rule, ...] = (
+    Rule(
+        "building_question_not_general",
+        "lay-term measurand + a reference to this building → analytics, never open-domain",
+        _r_building_not_general,
+        sets_analytics=True,
+    ),
+)
+
 _STAGES: Dict[str, Tuple[Rule, ...]] = {
     "parse": PARSE_STAGE_RULES,
     "post": POST_STAGE_RULES,
+    "concept": CONCEPT_STAGE_RULES,
 }
 
 

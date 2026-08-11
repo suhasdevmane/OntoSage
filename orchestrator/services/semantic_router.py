@@ -74,6 +74,15 @@ _DATA_ANALYTIC_WORDS: FrozenSet[str] = frozenset(
         "temperature",
         "co2",
         "humidity",
+        # "air quality" was missing (TODO-133): "what is the air quality on floor 1?"
+        # therefore failed is_data_query, the capability probe was NOT bypassed, a
+        # lay-term matched a capability topic, and a plainly answerable data question
+        # was routed to capability and honestly declined — on a building whose
+        # LARGEST sensor class is Air_Quality_Sensor. These are generic measurand
+        # words (domain English, no building's vocabulary).
+        "air quality",
+        "aqi",
+        "iaq",
         "noise",
         "occupancy",
         "pressure",

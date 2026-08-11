@@ -211,13 +211,29 @@ _WORD_RE = re.compile(r"[a-z0-9][a-z0-9.\-]*", re.IGNORECASE)
 
 
 def _singular(word: str) -> str:
-    """Crude, dependency-free singulariser — enough to match 'sensors'↔'sensor'."""
+    """Crude, dependency-free stemmer — enough to match 'sensors'↔'sensor'.
+
+    Also folds the common verb endings, because a question and the document that
+    answers it rarely inflect the same way: "when was it last SERVICED" against a
+    log that says "SERVICING activity … SERVICE dates" shared no term at all, so
+    the passage was judged off-topic and the answer became "I don't have that
+    information" while the document sat there saying it. Endings are stripped only
+    while a 4-character stem survives, so short words are left alone rather than
+    collapsed into each other.
+    """
     if len(word) > 3 and word.endswith("ies"):
         return word[:-3] + "y"
     if len(word) > 3 and word.endswith("ses"):
         return word[:-2]
     if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
-        return word[:-1]
+        word = word[:-1]
+    if len(word) > 6 and word.endswith("ing"):
+        word = word[:-3]
+    elif len(word) > 5 and word.endswith("ed"):
+        word = word[:-2]
+    # "service" / "servic(ed)" / "servic(ing)" only agree once the silent -e goes.
+    if len(word) > 4 and word.endswith("e"):
+        word = word[:-1]
     return word
 
 
@@ -345,6 +361,129 @@ def filter_on_topic(
 # A refusal should teach the user how to make the question answerable. Wording is
 # building-agnostic: it names the mechanism (TTL + registered time-series, amenity
 # triple, uploaded document), never a specific building, path, or sensor.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Building scope (BUG-123)
+# ─────────────────────────────────────────────────────────────────────────────
+# A question about *this* building must be answered from this building's data. If
+# it reaches the open-domain answerer instead, that answerer has no data and no
+# way to know it lacks any — so it supplies plausible specifics. Observed live:
+# "Is it stuffy in RM157?" was answered "humidity around 45% and CO2 near 800 ppm"
+# for a room with neither sensor.
+#
+# Detection keys on question SHAPE plus the resolved lay-term concept, never on a
+# building's own vocabulary — the same test must hold for every building.
+
+# Locators for a place inside a building. Shape only: a word for a kind of space
+# followed by an identifier, which is how every building refers to its own.
+_PLACE_RE = re.compile(
+    r"\b(?:room|rm|zone|floor|storey|level|space|area|wing|lab|office|suite|unit)"
+    r"[_\s\-]?[a-z]?\d+[a-z]?(?:\.\d+)?\b",
+    re.IGNORECASE,
+)
+
+# "…in this building", "…in here" — the user pointing at where they are.
+_DEIXIS_RE = re.compile(
+    r"\b(?:in|at|inside|around|throughout)\s+(?:this|the|our|my)\s+"
+    r"(?:building|office|room|floor|space|site|premises|facility)\b"
+    r"|\bin\s+here\b|\bright\s+here\b|\bthis\s+building\b",
+    re.IGNORECASE,
+)
+
+# "is it …", "how is it …", "does it feel …" — a question about the present state
+# of the space the user occupies. Carries an implicit "here".
+_PRESENT_STATE_RE = re.compile(
+    r"\b(?:is|are|does|do|how)\s+(?:it|the\s+air|things|we|the\s+temperature|"
+    r"the\s+humidity)\b|\bfeel(?:s|ing)?\b|\btoo\s+(?:warm|hot|cold|humid|dry|stuffy|noisy)\b",
+    re.IGNORECASE,
+)
+
+
+def has_measurand_concept(concepts: Optional[Sequence]) -> bool:
+    """True when a resolved lay-term concept maps to a measurable building point.
+
+    ``concepts`` are HBCO matches (dicts or objects exposing ``brick_classes``).
+    A concept that maps to a Brick sensor class means the user named something
+    this building measures — "stuffy" is a CO2 question, not a vocabulary one.
+    """
+    for c in concepts or []:
+        classes = (
+            c.get("brick_classes", []) if isinstance(c, dict) else getattr(c, "brick_classes", [])
+        )
+        for bc in classes or []:
+            s = str(bc)
+            if s.endswith("_Sensor") or s.endswith("_Setpoint") or "Sensor" in s:
+                return True
+    return False
+
+
+def is_building_specific(query: str, concepts: Optional[Sequence] = None) -> bool:
+    """True when the question asks about THIS building rather than the world.
+
+    Requires BOTH a measurable subject and a reference to this building, so a
+    definitional question keeps going to the open-domain answerer: "what is
+    stuffiness?" names a measurand but no place and stays general, while "is it
+    stuffy in RM157?" names both and belongs to the data path.
+    """
+    q = query or ""
+    if not q.strip():
+        return False
+    if not has_measurand_concept(concepts):
+        return False
+    return bool(_PLACE_RE.search(q) or _DEIXIS_RE.search(q) or _PRESENT_STATE_RE.search(q))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Does the passage contain the KIND of fact that was asked for? (CAVEAT-108)
+# ─────────────────────────────────────────────────────────────────────────────
+# is_on_topic proves a passage is ABOUT the subject. It cannot prove the passage
+# ANSWERS the question. "When was chiller 7 last serviced?" returns HVAC prose that
+# genuinely discusses chillers and contains no date at all — presented plainly, that
+# reads as the answer. Naming what is missing turns a misleading reply into an honest
+# partial one, and tells the user what to go and add.
+
+_ASKS_DATE_RE = re.compile(
+    r"\b(?:when|what date|which date|how long ago|how old)\b"
+    r"|\blast\s+(?:serviced|inspected|maintained|repaired|replaced|checked|cleaned)\b",
+    re.IGNORECASE,
+)
+_ASKS_QUANTITY_RE = re.compile(
+    r"\bhow (?:many|much)\b|\bwhat (?:is|was) the (?:number|count|total|average|level|reading)\b",
+    re.IGNORECASE,
+)
+# A date in any of the shapes a building document actually uses.
+_HAS_DATE_RE = re.compile(
+    r"\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b"
+    r"|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}\b"
+    r"|\b\d{1,2}\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b"
+    r"|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{4}\b",
+    re.IGNORECASE,
+)
+_HAS_NUMBER_RE = re.compile(r"\d")
+
+
+def missing_fact_caveat(query: str, passage: str) -> Optional[str]:
+    """Return a caveat when the passage lacks the KIND of fact the question wants.
+
+    ``None`` when the question asks for no particular kind, or the passage does
+    contain one — silence is correct then, and a caveat on every answer would be
+    noise that teaches users to ignore it.
+    """
+    q, p = query or "", passage or ""
+    if not q.strip() or not p.strip():
+        return None
+    if _ASKS_DATE_RE.search(q) and not _HAS_DATE_RE.search(p):
+        return (
+            "I don't hold a specific date for this — what follows is the related "
+            "information I do have."
+        )
+    if _ASKS_QUANTITY_RE.search(q) and not _HAS_NUMBER_RE.search(p):
+        return (
+            "I don't hold a specific figure for this — what follows is the related "
+            "information I do have."
+        )
+    return None
+
 
 SUBJECT_SENSOR = "sensor"  # a measurable quantity / live reading
 SUBJECT_SPACE = "space"  # a room, floor, wing, zone, amenity

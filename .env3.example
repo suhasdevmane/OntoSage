@@ -488,3 +488,17 @@ OLLAMA_KEEP_ALIVE=30m
 OLLAMA_NUM_CTX=8192
 
 LLM_TIMEOUT_S=180
+
+# ── Per-user RBAC through the chat proxy ─────────────────────────────────────
+# Open WebUI authenticates with ONE shared PIPELINE_API_KEY, so without this every
+# chat user reaches OntoSage as the same least-privilege identity and roles cannot
+# differentiate answers. With it on, the proxy's forwarded identity header is
+# resolved to that OntoSage account and ITS role drives RBAC — a readonly user is
+# declined a setpoint change, a facility_manager gets it queued for approval.
+#
+# Safe in the shipped Docker topology because Open WebUI is the sole holder of
+# PIPELINE_API_KEY on the internal network. Set to false if port 8000 is reachable
+# by anything else: with the key, a caller could otherwise set the header themselves
+# and claim any role.
+TRUST_FORWARDED_USER=true
+FORWARDED_USER_HEADER=X-OpenWebUI-User-Email

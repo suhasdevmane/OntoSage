@@ -21,6 +21,16 @@ async function api(path, opts = {}) {
   try { body = await res.json(); } catch (_) {}
   if (res.status === 401 || res.status === 403)
     throw new Error("Not authorised — sign in with an admin account.");
+  if (res.status === 429) {
+    // The API allows a fixed number of requests per minute per client. Bulk work in
+    // the console (deleting many users in a row) can reach it; the old code let the
+    // dataless 429 body through and callers crashed on `body.data.roles`.
+    const wait = parseInt(res.headers.get("Retry-After") || "60", 10);
+    const err = new Error(`Too many requests — the API is rate limited. Retrying in ${wait}s.`);
+    err.rateLimited = true;
+    err.retryAfter = wait;
+    throw err;
+  }
   return { status: res.status, body };
 }
 function toast(msg, kind = "ok") {
@@ -159,13 +169,57 @@ function sourceCard(s) {
 function renderSources() {
   const box = $("cards"); box.innerHTML = "";
   state.sources.forEach((s) => box.appendChild(sourceCard(s)));
+  loadProvenance();
   const legend = $("legend-list"); legend.innerHTML = "";
   state.sources.forEach((s) => {
     const li = document.createElement("li");
-    li.innerHTML = `<span class="swatch" style="background:${s.color}"></span> ${s.provenance_system} ${s.synthetic ? '<span class="chip sim" style="margin-left:auto">sim</span>' : ""}`;
+    li.innerHTML = `<span class="swatch" style="background:${s.color}"></span> ${s.provenance_system} ${s.synthetic ? '<span class="chip sim" style="margin-left:auto" title="This demo source is synthetic. The building may still have real sensors for this modality — see Live data provenance.">demo</span>' : ""}`;
     legend.appendChild(li);
   });
 }
+async function loadProvenance() {
+  const box = $("prov-summary");
+  if (!box) return;
+  if (!state.token) { box.innerHTML = '<p class="hint">Sign in as admin to see the live split.</p>'; return; }
+  try {
+    const { body } = await api("/api/v1/admin/provenance");
+    if (!body || !body.data) throw new Error(body?.error || "unavailable");
+    const { backends, totals, building_nature: bn, building_note: bnote } = body.data;
+    const pct = totals.total ? Math.round((totals.real / totals.total) * 100) : 0;
+    // Building-level declaration first: a fixture building's ONTOLOGY and sensors are
+    // invented too, which a per-source real/synthetic split cannot convey on its own.
+    const NATURE_LABEL = {
+      synthetic: ["sim", "Fully synthetic building"],
+      mixed: ["real", "Real building · some generated sources"],
+      real: ["real", "Real building"],
+    };
+    const nat = NATURE_LABEL[bn];
+    const banner = nat
+      ? `<div class="prov-building ${bn}">
+           <span class="chip ${nat[0]}">${esc(bn)}</span>
+           <div><b>${esc(nat[1])}</b>${bnote ? `<div class="hint">${esc(bnote)}</div>` : ""}</div>
+         </div>`
+      : "";
+    const rows = backends.map((b) => `
+      <li class="prov-row">
+        <span class="chip ${b.nature === "real" ? "real" : "sim"}">${b.nature}</span>
+        <span class="prov-key" title="${esc(b.note || "")}">${esc(b.key)}</span>
+        <span class="prov-n">${b.sensors.toLocaleString()}</span>
+      </li>`).join("");
+    box.innerHTML = `
+      ${banner}
+      <div class="prov-bar" title="${totals.real} real / ${totals.total} total sensors">
+        <span style="width:${pct}%"></span>
+      </div>
+      <p class="prov-tot"><b>${totals.real.toLocaleString()}</b> real ·
+        <b>${totals.simulated.toLocaleString()}</b> simulated sensors (${pct}% real)</p>
+      <ul class="prov-list">${rows}</ul>`;
+  } catch (e) {
+    box.innerHTML = `<p class="hint">${esc(e.message)}</p>`;
+    if (e.rateLimited) setTimeout(loadProvenance, (e.retryAfter || 60) * 1000);
+  }
+}
+
 async function loadSources() {
   try {
     const { body } = await api("/api/v1/datasources");
@@ -473,10 +527,12 @@ function renderDbCards() {
     const actBadge = d.active
       ? '<span class="src-badge act" title="Initialized by this building (building.yaml storage.databases)">active</span>'
       : '<span class="src-badge dormant" title="Template — not initialized. Add its key to building.yaml storage.databases to activate.">dormant</span>';
-    // Real vs synthetic DATA SOURCE: only the original abacws dataset (database1) is real;
-    // every other table was generated for the demo. All timeseries values are demo data.
+    // Real vs synthetic DATA SOURCE, declared per connection in the ACTIVE building's
+    // database_registry.yaml (`nature:` + `note:`). The console must not assert which
+    // source is real — that differs per building, and hardcoding one building's answer
+    // mislabels every other one.
     const natBadge = d.nature === "real"
-      ? `<span class="src-badge real" title="${esc(d.note || "Original abacws dataset")}">real</span>`
+      ? `<span class="src-badge real" title="${esc(d.note || "Real measured data source")}">real</span>`
       : `<span class="src-badge sim" title="${esc(d.note || "Generated demo data source")}">synthetic</span>`;
     return `<div class="db-card${d.active ? "" : " is-dormant"}">
       <h4>${d.key} <span class="src-badge ${d.source}">${d.source}</span> ${natBadge} ${actBadge}</h4>
@@ -839,15 +895,20 @@ async function loadUsers() {
   if (!state.token) { $("users-list").innerHTML = '<p class="hint">Sign in as admin to manage users.</p>'; return; }
   try {
     const { body } = await api("/api/v1/admin/users");
+    if (!body || !body.data) throw new Error(body?.error || "No data returned by the server.");
     allRoles = body.data.roles || [];
     const opts = (sel) => allRoles.map((r) => `<option ${r === sel ? "selected" : ""}>${r}</option>`).join("");
     $("users-list").innerHTML = (body.data.users || []).map((u) => `
       <div class="user-row">
         <div><div class="uname">${u.username}</div><div class="uemail">${u.email || ""}</div></div>
         <select data-role-for="${u.username}">${opts(u.role)}</select>
+        <button class="btn ghost small" data-pw-for="${esc(u.username)}">Password</button>
         <button class="del" data-del-user="${u.username}">Delete</button>
       </div>`).join("") || '<p class="hint">No users.</p>';
-  } catch (e) { $("users-list").innerHTML = `<p class="err">${e.message}</p>`; }
+  } catch (e) {
+    $("users-list").innerHTML = `<p class="err">${esc(e.message)}</p>`;
+    if (e.rateLimited) setTimeout(loadUsers, (e.retryAfter || 60) * 1000);
+  }
 }
 async function changeRole(username, role) {
   try {
@@ -863,6 +924,79 @@ async function deleteUser(username) {
     loadUsers();
   } catch (e) { toast(e.message, "err"); }
 }
+// ── Passwords ────────────────────────────────────────────────────────────────
+// Reveal toggle: an admin typing a password into a masked field has no way to
+// confirm what they entered, which is how mistyped credentials get created.
+// Standard eye / eye-off glyphs (inline SVG — no icon font or external asset, so the
+// console keeps working with no network and nothing to version).
+const PW_ICON = {
+  show: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+  hide: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C5 20 1 12 1 12a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+};
+
+// Render the eye icon into every password toggle (and keep them masked to start).
+function initPasswordToggles(root) {
+  (root || document).querySelectorAll("[data-pw-toggle]").forEach((b) => {
+    b.innerHTML = PW_ICON.show;
+    b.setAttribute("aria-label", "Show password");
+  });
+}
+
+function setPasswordIcon(btn, revealed) {
+  if (!btn) return;
+  btn.innerHTML = revealed ? PW_ICON.hide : PW_ICON.show;
+  btn.setAttribute("aria-label", revealed ? "Hide password" : "Show password");
+  btn.setAttribute("aria-pressed", revealed ? "true" : "false");
+}
+
+function togglePassword(inputId, btn) {
+  const el = $(inputId);
+  if (!el) return;
+  const reveal = el.type === "password";
+  el.type = reveal ? "text" : "password";
+  setPasswordIcon(btn, reveal);
+}
+
+function openPasswordModal(username) {
+  $("pw-user").textContent = username;
+  $("pw-new").value = "";
+  $("pw-new").type = "password";
+  setPasswordIcon(document.querySelector('[data-pw-toggle="pw-new"]'), false);
+  state._pwUser = username;
+  open("pw-modal");
+  setTimeout(() => $("pw-new").focus(), 50);
+}
+
+async function submitPassword() {
+  const username = state._pwUser;
+  const password = $("pw-new").value;
+  // Mirror the server's floor so the admin gets an instant, specific message.
+  if (!password || password.length < 12) {
+    toast("Password must be at least 12 characters", "err");
+    return;
+  }
+  try {
+    const { body } = await api(`/api/v1/admin/users/${encodeURIComponent(username)}/password`, {
+      method: "PUT",
+      body: JSON.stringify({ password }),
+    });
+    if (body.success) {
+      const n = body.data?.sessions_revoked || 0;
+      toast(
+        `Password updated for ${username}` +
+          (n ? ` · ${n} active session${n > 1 ? "s" : ""} signed out` : "") +
+          " · effective immediately, no restart",
+        "ok"
+      );
+      closeModals();
+    } else {
+      toast(body.error || "Password update failed", "err");
+    }
+  } catch (e) {
+    toast(e.message, "err");
+  }
+}
+
 async function createUser() {
   const spec = { username: $("nu-name").value.trim(), password: $("nu-pass").value, role: $("nu-role").value, email: $("nu-email").value.trim() || null };
   if (!spec.username || !spec.password) return err("user-err", "Username and password required.");
@@ -878,7 +1012,10 @@ async function loadRoleAccess() {
   if (!state.token) { $("access-matrix").innerHTML = ""; return; }
   try {
     const { body } = await api("/api/v1/admin/role-access");
-    accessState = body.data;
+    accessState = body && body.data;
+    if (!accessState || !accessState.sources) {
+      throw new Error(body?.error || "No access matrix returned by the server.");
+    }
     const { sources, roles, access } = accessState;
     const head = `<tr><th>Role</th><th>All (*)</th>${sources.map((s) => `<th>${s}</th>`).join("")}</tr>`;
     const rows = roles.map((role) => {
@@ -890,7 +1027,10 @@ async function loadRoleAccess() {
       return `<tr><td>${role}</td><td><input type="checkbox" data-role="${role}" data-star="1" ${star ? "checked" : ""} /></td>${cells}</tr>`;
     }).join("");
     $("access-matrix").innerHTML = `<table><thead>${head}</thead><tbody>${rows}</tbody></table>`;
-  } catch (e) { $("access-matrix").innerHTML = `<p class="err">${e.message}</p>`; }
+  } catch (e) {
+    $("access-matrix").innerHTML = `<p class="err">${esc(e.message)}</p>`;
+    if (e.rateLimited) setTimeout(loadRoleAccess, (e.retryAfter || 60) * 1000);
+  }
 }
 async function saveRoleAccess() {
   // collect per role from the matrix
@@ -951,10 +1091,17 @@ function toggleHealthAuto(on) {
 }
 
 // ── Overview tab ─────────────────────────────────────────────────────────────
-function ovTile(name, val, sub, icon, kind) {
-  return `<div class="ov-tile"><div class="ov-icon">${icon || ""}</div><div class="ov-meta">
+function ovTile(name, val, sub, icon, kind, goto) {
+  // A tile with a `goto` is a real button: clicking (or Enter/Space) opens the tab
+  // that owns those numbers, so the summary and the detail never disagree.
+  const tag = goto ? "button" : "div";
+  const attrs = goto
+    ? ` type="button" data-goto="${esc(goto)}" title="Open ${esc(TAB_META[goto] ? TAB_META[goto][0] : goto)}"` +
+      ` aria-label="${esc(name)}: ${esc(String(val))}. Open ${esc(TAB_META[goto] ? TAB_META[goto][0] : goto)}"`
+    : "";
+  return `<${tag} class="ov-tile${goto ? " ov-link" : ""}"${attrs}><div class="ov-icon">${icon || ""}</div><div class="ov-meta">
     <div class="ov-name">${esc(name)}</div><div class="ov-val ${kind || ""}">${esc(String(val))}</div>
-    <div class="ov-sub">${esc(sub || "")}</div></div></div>`;
+    <div class="ov-sub">${esc(sub || "")}</div></div>${goto ? '<span class="ov-go" aria-hidden="true">→</span>' : ""}</${tag}>`;
 }
 async function loadOverview() {
   const grid = $("overview-grid");
@@ -963,37 +1110,53 @@ async function loadOverview() {
     const { body } = await api("/api/v1/datasources");
     const srcs = body?.data?.sources || [];
     const on = srcs.filter((s) => s.enabled).length;
-    tiles.push(ovTile("Data sources", `${on}/${srcs.length}`, `enabled · feature ${body?.data?.enabled ? "on" : "OFF"}`, "◧"));
-  } catch (_) { tiles.push(ovTile("Data sources", "—", "unavailable", "◧", "bad")); }
+    tiles.push(ovTile("Data sources", `${on}/${srcs.length}`, `enabled · feature ${body?.data?.enabled ? "on" : "OFF"}`, "◧", "", "sources"));
+  } catch (_) { tiles.push(ovTile("Data sources", "—", "unavailable", "◧", "bad", "sources")); }
   try {
     const r = await fetch("/health", { cache: "no-store" });
     const b = await r.json().catch(() => ({}));
     const d = b.data || b || {};
-    const svc = d.services || {};
+    const svcAll = d.services || {};
+    // Only real services count. /health also carries diagnostics (e.g. circuit_breakers,
+    // an array) which have no status and would otherwise be tallied as a failing service —
+    // that is why this tile read "7/8" on a completely healthy stack.
+    const svc = Object.fromEntries(
+      Object.entries(svcAll).filter(([, v]) =>
+        typeof v === "string" || (v && typeof v === "object" && !Array.isArray(v) && "status" in v)
+      )
+    );
     const total = Object.keys(svc).length;
     const okc = Object.values(svc).filter((v) => /ok|healthy|up|connected/i.test(String(typeof v === "object" ? v.status : v))).length;
     const kind = d.status === "healthy" ? "ok" : d.status === "degraded" ? "warn" : "bad";
-    tiles.push(ovTile("Services", `${okc}/${total}`, `status: ${d.status || "?"}`, "♥", kind));
-    tiles.push(ovTile("Building", d.building || "—", "active building", "▤"));
-  } catch (_) { tiles.push(ovTile("Services", "—", "health unavailable", "♥", "bad")); }
+    tiles.push(ovTile("Services", `${okc}/${total}`, `status: ${d.status || "?"}`, "♥", kind, "services"));
+    tiles.push(ovTile("Building", d.building || "—", "active building", "▤", "", "ontology"));
+  } catch (_) { tiles.push(ovTile("Services", "—", "health unavailable", "♥", "bad", "health")); }
   if (state.token) {
     try {
       const { body } = await api("/api/v1/admin/ai-config");
       const d = body.data || {};
       const model = d.model_provider === "openai" ? d.openai_model : d.model_provider === "cloud" ? d.ollama_cloud_model : d.ollama_model;
       const provLabel = d.model_provider === "local" ? "Local Ollama" : d.model_provider === "cloud" ? "Ollama Cloud" : "OpenAI";
-      tiles.push(ovTile("LLM provider", provLabel, model || "", "⚛"));
-      tiles.push(ovTile("Embeddings", embName(d), embDim(d) ? `${embDim(d)}-d` : "local", "▦"));
+      tiles.push(ovTile("LLM provider", provLabel, model || "", "⚛", "", "ai"));
+      tiles.push(ovTile("Embeddings", embName(d), embDim(d) ? `${embDim(d)}-d` : "local", "▦", "", "ai"));
     } catch (_) {}
     try {
       const { body } = await api("/api/v1/admin/users");
-      tiles.push(ovTile("Users", (body.data?.users || []).length, `${(body.data?.roles || []).length} roles`, "◐"));
+      tiles.push(ovTile("Users", (body.data?.users || []).length, `${(body.data?.roles || []).length} roles`, "◐", "", "users"));
     } catch (_) {}
   } else {
     tiles.push(ovTile("Session", "read-only", "sign in for AI + user info", "◐", "warn"));
   }
   grid.innerHTML = tiles.join("");
 }
+
+// Keep the summary honest: re-read it whenever the Overview becomes visible again
+// (switchTab already reloads on navigation; this covers returning to the browser
+// tab after changing something, so the tiles never disagree with the detail tabs).
+window.addEventListener("focus", () => {
+  const ov = $("tab-overview");
+  if (ov && !ov.hidden) loadOverview();
+});
 
 // ── Ask (query tester) tab ───────────────────────────────────────────────────
 const ASK_SUGGESTIONS = [
@@ -1295,7 +1458,26 @@ async function login(u, p) {
   const body = await res.json().catch(() => ({}));
   const token = body?.data?.session_token;
   if (!token) throw new Error(body?.error || "Login failed");
-  state.token = token; state.user = u;
+  // This console only does admin work: ontology, .env, databases, users. A non-admin
+  // could sign in and then hit 403 on every action — refuse here with a clear reason
+  // instead. (Server-side RBAC still gates every endpoint independently; this is the
+  // explanation, not the enforcement.)
+  const role = body?.data?.role;
+  // Confirm admin rights against the SERVER, not just the role field in the login
+  // response: this console only performs admin work, and a non-admin who got past a
+  // client-side check would simply hit 403 on every action with no explanation.
+  // The API is the real gate (every admin route requires system:admin); this probe
+  // makes the console agree with it instead of showing an empty, broken shell.
+  const probe = await fetch("/api/v1/admin/capabilities", {
+    headers: { "Content-Type": "application/json", Authorization: token },
+  });
+  if (probe.status === 401 || probe.status === 403) {
+    throw new Error(
+      `This console requires an admin account${role ? ` — '${u}' has the '${role}' role` : ""}. ` +
+        `Use the chat interface on port 3000 instead.`
+    );
+  }
+  state.token = token; state.user = u; state.role = role || "admin";
   localStorage.setItem("ds_token", token); localStorage.setItem("ds_user", u);
 }
 function logout() {
@@ -1307,6 +1489,11 @@ function logout() {
 function promptLogin(msg) {
   if (msg) { $("login-err").textContent = msg; $("login-err").hidden = false; }
   else { $("login-err").hidden = true; }
+  // Always reopen masked: a password left revealed from a previous attempt would sit
+  // in plain sight on a shared screen.
+  const pw = $("p");
+  if (pw) pw.type = "password";
+  setPasswordIcon(document.querySelector('[data-pw-toggle="p"]'), false);
   open("login-modal");
   setTimeout(() => $("u") && $("u").focus(), 60);
 }
@@ -1615,6 +1802,9 @@ document.addEventListener("click", (e) => {
   if (t.dataset.regen) regenerate(t.dataset.regen);
   if (t.dataset.details) showDetails(t.dataset.details);
   if (t.dataset.delUser) deleteUser(t.dataset.delUser);
+  if (t.dataset.pwFor) openPasswordModal(t.dataset.pwFor);
+  const pwBtn = e.target.closest && e.target.closest("[data-pw-toggle]");
+  if (pwBtn) togglePassword(pwBtn.dataset.pwToggle, pwBtn);
   if (t.dataset.sensors) openSensors(t.dataset.sensors);
   if (t.dataset.verifyDb) verifyDatasource(t.dataset.verifyDb);
   if (t.dataset.testDb) testDatabase(t.dataset.testDb);
@@ -1624,7 +1814,11 @@ document.addEventListener("click", (e) => {
   if (t.dataset.delDoc) deleteDocument(t.dataset.delDoc);
   if (t.dataset.dropGraph) dropGraph(t.dataset.dropGraph);
   if (t.classList.contains("mode-tab")) setSensorMode(t.dataset.mode);
-  if (t.dataset.goto) switchTab(t.dataset.goto);
+  // Resolve through ancestors: a tile's clickable area contains child nodes (icon,
+  // value, caption), and `e.target` is whichever of those was actually hit — so a
+  // click on the big number must still reach the element carrying data-goto.
+  const gotoEl = e.target.closest && e.target.closest("[data-goto]");
+  if (gotoEl) switchTab(gotoEl.dataset.goto);
   if (t.dataset.wizard !== undefined) openConnectWizard();
   if (t.dataset.askQ) askQuestion(t.dataset.askQ);
   if (t.id === "ai-test" || t.id === "ai-fetch-models") testAiProvider();
@@ -1693,6 +1887,9 @@ $("add-user").addEventListener("click", () => {
   open("user-modal");
 });
 $("do-user").addEventListener("click", createUser);
+$("do-pw").addEventListener("click", submitPassword);
+initPasswordToggles();  // render eye icons on load
+$("pw-new").addEventListener("keydown", (e) => { if (e.key === "Enter") submitPassword(); });
 $("save-access").addEventListener("click", saveRoleAccess);
 $("add-sensor-point").addEventListener("click", () => addSensorPointRow());
 $("do-sensors").addEventListener("click", submitSensors);

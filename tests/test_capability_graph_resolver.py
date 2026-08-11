@@ -296,8 +296,14 @@ async def test_off_topic_document_is_not_presented_as_an_answer(monkeypatch):
     """BUG-103: a real-but-unrelated chunk must NOT be dressed up as the answer.
 
     Vector similarity alone let an HVAC CO2 table 'answer' a question about pH — real
-    text, wrong question. Neither the passage nor the document name mentions what was
-    asked, so the node must fall through to the honest boundary instead.
+    text, wrong question. The invariant is that the off-topic chunk is never presented.
+
+    Since BUG-136 the interception happens even earlier: "the water tank" is a named
+    referent asking for a reading, and with no reachable graph (this test runs
+    offline) the existence check cannot complete — so the answer is the honest
+    "couldn't verify" rather than the post-search boundary. Either way the chunk
+    must not appear; which honest reply is produced depends only on whether the
+    check could run.
     """
     import orchestrator.agents.capability_agent as cap
 
@@ -314,7 +320,12 @@ async def test_off_topic_document_is_not_presented_as_an_answer(monkeypatch):
     )
     state = _cap_state("What is the pH level of the water tank?")
     res = (await cap.CapabilityAgent().answer(state)).intermediate_results["capability_result"]
-    assert res["provenance"] == "no_match"
+    # The load-bearing assertion: the unrelated chunk is never shown as the answer.
     assert "800 ppm" not in res["response"]
-    # …and the refusal must tell the user how to make it answerable.
-    assert "no code changes" in res["response"].lower()
+    assert res["provenance"] in ("no_match", "referent_not_found", "referent_unverified")
+    if res["provenance"] == "no_match":
+        # Post-search boundary: must tell the user how to make it answerable.
+        assert "no code changes" in res["response"].lower()
+    else:
+        # Pre-search gate: must be clearly about the named thing, not a doc miss.
+        assert "water tank" in res["response"]

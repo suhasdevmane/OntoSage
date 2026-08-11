@@ -18,7 +18,7 @@ import time
 import uuid as _uuid_mod
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from fastapi import (
     Cookie,
@@ -1097,6 +1097,25 @@ async def lifespan(app: FastAPI):
         from qdrant_client import AsyncQdrantClient
 
         _doc_qdrant_client_ref = AsyncQdrantClient(url=settings.QDRANT_URL)
+
+        # Before any indexing: state the position for EVERY vector collection, not
+        # just the one each indexer happens to touch. A collection left over from a
+        # different embedding model is unusable — comparing vectors of different
+        # widths returns nothing rather than raising — so without this a model swap
+        # stays invisible until a user gets an empty answer. Enumerates whatever
+        # exists, so a building onboarded tomorrow is covered too.
+        try:
+            from orchestrator.services.embedding_consistency import (
+                check_embedding_consistency,
+            )
+
+            await check_embedding_consistency(
+                _doc_qdrant_client_ref,
+                expected_dim=_doc_embed_ref.dimension,
+                model=settings.embedding_model,
+            )
+        except Exception as _ece:
+            logger.warning(f"[embedding] consistency check skipped (non-fatal): {_ece}")
 
         doc_indexer = DocumentIndexer(
             qdrant_client=_doc_qdrant_client_ref,
@@ -2554,6 +2573,69 @@ def _oai_auth(authorization: Optional[str] = Header(None)) -> None:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
 
+def _is_placeholder_account(row: Dict[str, Any]) -> bool:
+    """True for the auto-created ``/v1`` conversation-owner stub (never a real account)."""
+    meta = row.get("metadata")
+    if isinstance(meta, str):
+        try:
+            meta = json.loads(meta)
+        except Exception:
+            return False
+    return isinstance(meta, dict) and meta.get("source") == "open_webui"
+
+
+async def resolve_forwarded_user(request: Request) -> Tuple[str, str]:
+    """Identify the END user behind a shared-pipeline-key request.
+
+    Open WebUI authenticates to OntoSage with one shared key, so every chat request
+    would otherwise arrive as the same least-privilege identity and no per-user RBAC
+    could apply — an analyst and a visitor would get identical answers. With
+    ``TRUST_FORWARDED_USER`` on, the proxy also forwards who is signed in
+    (``X-OpenWebUI-User-Email`` by default) and that account's OntoSage role is used.
+
+    Returns ``(username, role)``, defaulting to least privilege. Security: the header
+    is only as trustworthy as the network holding the pipeline key, which is why this
+    is opt-in and never inferred.
+    """
+    fallback = ("openwebui_user", "readonly")
+    if not getattr(settings, "TRUST_FORWARDED_USER", False):
+        return fallback
+
+    header_name = getattr(settings, "FORWARDED_USER_HEADER", "X-OpenWebUI-User-Email")
+    ident = (request.headers.get(header_name) or "").strip()
+    if not ident or postgres_manager is None:
+        return fallback
+
+    # Match on username first, then email — Open WebUI forwards an email, while
+    # OntoSage accounts are keyed by username (often the email's local part).
+    candidates = [ident]
+    if "@" in ident:
+        candidates.append(ident.split("@", 1)[0])
+    for name in candidates:
+        try:
+            row = await postgres_manager.get_user(name)
+        except Exception as e:  # never let identity lookup break a chat turn
+            logger.warning(f"[forwarded-user] lookup failed for {name!r}: {e}")
+            return fallback
+        if not row or not row.get("username"):
+            continue
+        # Chatting through /v1 auto-creates a placeholder row so conversations have a
+        # valid owner. It is a foreign-key stub, not an identity decision — and it is
+        # always readonly. Treating one as an account would let a stub created before
+        # the admin provisioned someone permanently shadow their real (higher) role.
+        if _is_placeholder_account(row):
+            logger.debug(f"[forwarded-user] skipping placeholder row {row['username']!r}")
+            continue
+        role = row.get("role") or "readonly"
+        logger.info(f"[forwarded-user] {ident!r} → {row['username']!r} (role={role})")
+        return row["username"], role
+
+    # A real person signed into the proxy with no OntoSage account: let them ask,
+    # but at least privilege — silently granting more would be worse than a refusal.
+    logger.info(f"[forwarded-user] {ident!r} has no OntoSage account — using readonly")
+    return (ident, "readonly")
+
+
 # NOTE: The GET /v1/models and POST /v1/chat/completions routes are defined
 # in the 'OpenAI Compatibility Layer' section below.  Do not add duplicate
 # route decorators here — FastAPI uses the FIRST matching route, and a
@@ -3316,12 +3398,18 @@ async def openai_chat_completions(
             user_id=username,
             intermediate_results={},
         )
-        # RBAC context for workflow agents (fix 2026-06-12): /v1 users are
-        # external identities pinned to least-privilege readonly (P0.7). The
-        # alert / preference nodes accept any authenticated (non-guest) user;
-        # control:write paths stay declined for readonly.
+        # RBAC context for workflow agents. /v1 callers share ONE pipeline key, so by
+        # default they are pinned to least-privilege readonly (P0.7). When the proxy is
+        # trusted (TRUST_FORWARDED_USER) it also forwards WHO is signed in, and that
+        # account's real OntoSage role applies — so an analyst and a visitor asking the
+        # same question get answers scoped to their own access, and control:write paths
+        # open only for roles that actually hold the permission.
+        _fwd_user, _fwd_role = await resolve_forwarded_user(request)
+        if _fwd_role != "readonly" or _fwd_user != "openwebui_user":
+            username = _fwd_user
+            state.user_id = _fwd_user
         state.intermediate_results["user_id"] = username
-        state.intermediate_results["user_role"] = "readonly"
+        state.intermediate_results["user_role"] = _fwd_role
 
         logger.info(
             f"[persona-detect] explicit={explicit_persona!r} → resolved={req_persona!r}"
@@ -3641,7 +3729,7 @@ async def download_export(
 
 @app.get("/floor-plans/")
 async def list_floor_plans(current_user: Optional[str] = Depends(get_current_user)):
-    """List all available floor plan PDFs for the Abacws building."""
+    """List all available floor plan PDFs for the active building."""
     floors = floor_plan_service.get_available_floors()
     return {
         "floors": [
@@ -4857,6 +4945,82 @@ async def get_db_sensor_counts(user: UserContext = Depends(require_permission("s
     return APIResponse(success=True, data={"counts": counts})
 
 
+@app.get("/api/v1/admin/provenance", response_model=APIResponse)
+async def get_provenance(user: UserContext = Depends(require_permission("system:admin"))):
+    """Real vs simulated sensor coverage, computed LIVE from the active building.
+
+    A per-source "synthetic" flag alone misleads: a modality can have hundreds of REAL
+    sensors in the building's own historian *and* a handful of synthetic demo points in
+    a separate table. Reading only the demo flag, an operator concludes the whole
+    capability is fake. This counts each storage backend's sensors in the graph and
+    labels them with that backend's declared `nature`, so the split is evidence, not a
+    flag — and it is building-agnostic: both halves come from the ACTIVE building.
+    """
+    from orchestrator.agents.sparql_agent import _active_namespace
+    from orchestrator.services import admin_config
+    from orchestrator.services.building_metrics import _default_sparql_exec
+
+    natures = {d["key"]: d for d in admin_config.read_databases()}
+    ns = _active_namespace()
+
+    query = (
+        "PREFIX ref: <https://brickschema.org/schema/Brick/ref#>\n"
+        "SELECT ?storage (COUNT(DISTINCT ?s) AS ?n) WHERE {\n"
+        "  ?s ref:hasExternalReference ?e . ?e ref:storedAt ?storage .\n"
+        f'  FILTER(STRSTARTS(STR(?s), "{ns}"))\n'
+        "} GROUP BY ?storage"
+    )
+    rows: List[Dict[str, Any]] = []
+    try:
+        data = await _default_sparql_exec(query)
+        for b in (data or {}).get("results", {}).get("bindings", []):
+            uri = b.get("storage", {}).get("value", "")
+            key = uri.split("#")[-1].split("/")[-1]
+            meta = natures.get(key, {})
+            nature = meta.get("nature", "synthetic")
+            rows.append(
+                {
+                    "key": key,
+                    "nature": nature,
+                    "note": meta.get("note", ""),
+                    "type": meta.get("type", "?"),
+                    "sensors": int(b.get("n", {}).get("value", 0)),
+                }
+            )
+    except Exception as e:  # never break the console on a degraded graph
+        logger.warning(f"[provenance] live count failed: {e}")
+        return APIResponse(success=False, error=str(e), data={"backends": []})
+
+    rows.sort(key=lambda r: (-r["sensors"], r["key"]))
+    real = sum(r["sensors"] for r in rows if r["nature"] == "real")
+    sim = sum(r["sensors"] for r in rows if r["nature"] != "real")
+
+    # Building-level declaration from the ACTIVE building.yaml. Per-connection `nature`
+    # describes READINGS; this describes the building itself — a portability fixture's
+    # ontology and sensors are invented too, which per-source flags cannot express.
+    # Read live and never inferred, so each building states its own answer.
+    bnature, bnote = "", ""
+    try:
+        from orchestrator.services import admin_config
+
+        prov = (admin_config.read_building_config() or {}).get("provenance") or {}
+        bnature = str(prov.get("nature", "") or "")
+        bnote = str(prov.get("note", "") or "")
+    except Exception as e:
+        logger.debug(f"[provenance] building-level declaration unavailable: {e}")
+
+    return APIResponse(
+        success=True,
+        data={
+            "backends": rows,
+            "totals": {"real": real, "simulated": sim, "total": real + sim},
+            "building": getattr(settings, "BUILDING_NAME", settings.BUILDING_ID),
+            "building_nature": bnature,
+            "building_note": bnote,
+        },
+    )
+
+
 @app.post("/api/v1/admin/databases", response_model=APIResponse)
 async def create_database(
     body: DatabaseCreate,
@@ -5434,6 +5598,12 @@ class RoleUpdate(BaseModel):
     role: str = Field(..., description="One of the 6 RBAC roles")
 
 
+class PasswordReset(BaseModel):
+    password: str = Field(
+        ..., min_length=12, description="New password (12+ chars, same floor as registration)"
+    )
+
+
 class RoleAccessUpdate(BaseModel):
     role: str = Field(...)
     sources: Any = Field(..., description="'*' for all, or a list of data-source ids")
@@ -5470,6 +5640,31 @@ async def update_user_role(
         return APIResponse(success=False, error=f"invalid role '{body.role}'", data={})
     ok = await postgres_manager.update_user_role(username, body.role) if postgres_manager else False
     return APIResponse(success=ok, data={"username": username, "role": body.role})
+
+
+@app.put("/api/v1/admin/users/{username}/password", response_model=APIResponse)
+async def reset_user_password(
+    username: str,
+    body: PasswordReset,
+    user: UserContext = Depends(require_permission("user:write")),
+):
+    """Set a user's password (admin reset) and revoke their live sessions.
+
+    Passwords are stored as one-way Argon2id hashes, so an existing password can
+    never be read back — an admin sets a new one instead. The reset takes effect
+    immediately for every consumer (chat API, OpenWebUI, admin console): they all
+    authenticate against the same Postgres row, so no restart is required.
+    """
+    res = await auth_manager.set_password(username, body.password)
+    return APIResponse(
+        success=bool(res.get("success")),
+        error=res.get("error"),
+        data={
+            "username": username,
+            "sessions_revoked": res.get("sessions_revoked", 0),
+            "restart_required": False,
+        },
+    )
 
 
 @app.delete("/api/v1/admin/users/{username}", response_model=APIResponse)

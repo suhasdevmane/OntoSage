@@ -242,10 +242,15 @@ def test_precedence_order_is_pinned():
         "correlation_is_analytics",
         "floor_plan_navigation",
         "countable_metadata",
+        # Sits directly after countable_metadata so a COUNT question keeps its
+        # historical route and only the open "what kinds of X" shape is claimed.
+        "inventory_to_discovery",
         "forecast_to_trend",
         "actuation_control",
         "maintenance_schedule",
         "report_intake_statement",
+        "self_description",
+        "history_question_not_report",
         "comfort_question_not_report",
         "standing_alert_request",
         "automation_capability_question",
@@ -268,3 +273,92 @@ def test_audit_trail_records_applied_rules():
 def test_no_rules_fire_on_plain_greeting():
     n, applied = _apply("Hello there!", intent="greeting")
     assert n["intent"] == "greeting" and not applied
+
+
+# ── inventory questions reach one handler (BUG-122) ──────────────────────────
+
+
+@pytest.mark.parametrize(
+    "query,start",
+    [
+        ("What equipment is installed in this building?", "capability"),
+        ("what sensors are there?", "sensor_data"),
+        ("What sensor types are available in this building?", "sensor_data"),
+        ("which meters do we have?", "general"),
+        ("list the chillers", "metadata"),
+    ],
+)
+def test_inventory_questions_all_land_on_discovery(query, start):
+    """Before this rule the same question reached three different handlers
+    depending on phrasing — the capability agent, the sensor-map lister and the
+    SPARQL agent — each grouping its answer differently, so "what equipment is
+    here?" and "what sensors are here?" disagreed about the building."""
+    n, applied = _apply(query, intent=start)
+    assert n["intent"] == "discovery"
+    assert "inventory_to_discovery" in applied
+
+
+@pytest.mark.parametrize(
+    "query", ["How many sensors are there in total?", "how many floors does this building have?"]
+)
+def test_count_questions_keep_their_existing_route(query):
+    """countable_metadata is ordered first and must still win."""
+    n, applied = _apply(query, intent="spatial_query")
+    assert n["intent"] == "metadata"
+    assert "inventory_to_discovery" not in applied
+
+
+@pytest.mark.parametrize(
+    "query,intent",
+    [
+        ("What is a VAV box?", "general"),
+        ("What is the supply air temperature of AHU01N?", "sensor_data"),
+        ("Show me floor 1", "floor_plan"),
+    ],
+)
+def test_non_inventory_questions_are_not_rerouted(query, intent):
+    n, applied = _apply(query, intent=intent)
+    assert "inventory_to_discovery" not in applied
+
+
+# ── a question about past maintenance is not a report (BUG-104) ──────────────
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "When was chiller 7 last serviced?",
+        "when was the AHU last inspected?",
+        "what date was the lift last maintained?",
+        "show me the service history for the boiler",
+        "when was equipment last checked?",
+    ],
+)
+def test_a_past_maintenance_question_does_not_file_a_ticket(query):
+    """Asking a question and being told a work order was raised is a bad answer and
+    a real side effect. It routes to the capability chain, which answers from a
+    service-history topic where one is authored and declines honestly where none is."""
+    n, applied = _apply(query, intent="maintenance")
+    assert n["intent"] == "capability"
+    assert "history_question_not_report" in applied
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "The lift is broken and trapped someone",
+        "There is a water leak on floor 2",
+        "the toilet is leaking",
+    ],
+)
+def test_a_genuine_report_is_still_filed(query):
+    n, applied = _apply(query, intent="maintenance")
+    assert n["intent"] != "capability"
+    assert "history_question_not_report" not in applied
+
+
+def test_scheduled_maintenance_questions_keep_their_own_route():
+    """'what maintenance is scheduled this week?' is about the FUTURE — the
+    maintenance node answers it and must not be diverted."""
+    n, _ = _apply("What maintenance is scheduled this week?", intent="metadata")
+    assert n["intent"] == "maintenance"

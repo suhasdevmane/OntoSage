@@ -65,12 +65,17 @@ class ControlAgent:
         role = state.intermediate_results.get("user_role", "readonly")
         user_id = state.intermediate_results.get("user_id", "unknown")
         # building_id lives on the state model; the intermediate_results key is
-        # never populated (fix 2026-06-12 — the old "bldg1" default would have
-        # consulted the wrong building's actuation config after a swap).
+        # never populated. The last resort is the ACTIVE building, never a named
+        # one: a hardcoded fallback here would consult one building's actuation
+        # config — which points it may write, and which driver — while a different
+        # building is running. That is the one place in this agent where a wrong
+        # answer could actuate something.
+        from shared.config import settings
+
         building_id = (
             getattr(state, "building_id", None)
             or state.intermediate_results.get("building_id")
-            or "bldg1"
+            or settings.BUILDING_ID
         )
         # "user_query" is not a populated key — fall back to the actual message
         # (fix 2026-06-12: raw_query was always "", so "approve <id>" never matched

@@ -67,17 +67,35 @@ class EmbeddingService:
             if self._provider == "openai"
             else settings.EMBEDDING_MODEL_LOCAL
         )
-        self._dimension = (
-            settings.EMBEDDING_DIMENSION_OPENAI
-            if self._provider == "openai"
-            else settings.EMBEDDING_DIMENSION_LOCAL
-        )
+        # The MODEL settles its own width. Reading EMBEDDING_DIMENSION_* directly
+        # let the two drift: they are separate settings, so changing the model and
+        # forgetting the dimension built every collection at a width the model never
+        # emits — surfacing later as empty searches, not as an error.
+        self._dimension = settings.embedding_dimension
         # Lazy-loaded local model — only instantiated if EMBEDDING_PROVIDER=local
         self._local_model = None
 
     @property
     def dimension(self) -> int:
-        """Vector dimension for the current provider."""
+        """Width of the vectors this service produces.
+
+        Once the local model is loaded it is asked directly — the model itself is
+        the only authority that cannot be wrong, whereas a name-to-width table can
+        fall behind a newly released model.
+        """
+        model = getattr(self, "_local_model", None)
+        if model is not None:
+            try:
+                actual = model.get_sentence_embedding_dimension()
+                if actual and actual != self._dimension:
+                    logger.warning(
+                        f"[embedding] configured dimension {self._dimension} but the loaded "
+                        f"model emits {actual} — using {actual}. Collections built at the "
+                        f"old width will be rebuilt on next index."
+                    )
+                    self._dimension = int(actual)
+            except Exception:  # a model without the accessor keeps the known value
+                pass
         return self._dimension
 
     @property

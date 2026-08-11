@@ -11,7 +11,7 @@ import time
 
 sys.path.append("/app")
 
-from typing import Any, Dict, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 from uuid import uuid4
 
 from langgraph.graph import END, StateGraph
@@ -845,6 +845,30 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             logger.debug(f"[dialogue] concept resolution skipped: {_cr_err}")
             state.intermediate_results.setdefault("concepts", [])
 
+        # BUG-123: routing contract, concept stage. Lay-term resolution is the only
+        # signal that separates a reading question worded in plain English ("is it
+        # stuffy in RM157?") from a vocabulary question ("what is stuffiness?"), and
+        # it is not available at the earlier stages — so the rule that keeps
+        # building questions out of the open-domain answerer runs here.
+        try:
+            from orchestrator.services.routing_contract import apply_contract as _apply_rc
+
+            _rc_state = {
+                "intent": intent,
+                "concepts": state.intermediate_results.get("concepts", []),
+                "entities": state.intermediate_results.get("entities", []),
+            }
+            _rc_query = state.messages[-1].content if state.messages else ""
+            if _apply_rc(_rc_query, _rc_state, stage="concept"):
+                intent = _rc_state["intent"]
+                state.intermediate_results["intent"] = intent
+                if _rc_state.get("analytics"):
+                    state.intermediate_results["analytics_required"] = True
+                    state.analytics_required = True
+                clarification_question = ""
+        except Exception as _rc_err:  # routing must survive a broken rule
+            logger.warning(f"[routing-contract] concept stage skipped: {_rc_err}")
+
         # TODO-050: concept-aware grounding override. When a lay-term resolves to a
         # building SENSOR class (e.g. "wind" -> Wind_Speed_Sensor via the exterior
         # weather feed) but the LLM asked for an external location/building/city, the
@@ -1032,8 +1056,48 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             if any(w in _uq for w in _spatial):
                 pass  # dialogue_response intentionally not set; SPARQL node will answer
             else:
-                discovery_response = self._handle_sensor_discovery(discovery_filter, entities)
-                state.intermediate_results["dialogue_response"] = discovery_response
+                # One pipeline for "what does this building have": discovery groups
+                # by the SAME ontology census the capability path uses, so the two
+                # question families cannot drift apart or disagree.
+                _raw_q = state.messages[-1].content if state.messages else ""
+                _census = await self._ontology_census(_raw_q or "sensors")
+                _generic = None
+                try:
+                    from orchestrator.services.ontology_inventory import (
+                        is_inventory_question,
+                        render_census,
+                    )
+
+                    if is_inventory_question(_raw_q):
+                        from orchestrator.services.building_context import (
+                            resolve_building_context,
+                        )
+
+                        _bname = resolve_building_context(
+                            state.building_id or settings.BUILDING_ID
+                        ).name
+                        _generic = render_census(_census, _bname)
+                        if not _generic:
+                            # The building genuinely holds nothing of that kind. Say
+                            # so — falling through to the sensor lister answered
+                            # "which meters do we have?" by listing all 600 sensors,
+                            # which reads as if they were the meters.
+                            from orchestrator.services.grounding_guard import (
+                                enablement_hint,
+                                SUBJECT_EQUIPMENT,
+                            )
+
+                            _generic = (
+                                f"I couldn't find anything of that kind in "
+                                f"**{_bname}**'s ontology, so there is nothing to list.\n\n"
+                                + enablement_hint(SUBJECT_EQUIPMENT)
+                            )
+                except Exception as _inv_err:
+                    logger.warning(f"[discovery] inventory render skipped: {_inv_err}")
+
+                state.intermediate_results["dialogue_response"] = _generic or (
+                    self._handle_sensor_discovery(discovery_filter, entities, census=_census)
+                )
 
         elif intent in ("control",):
             state.current_intent = "control"
@@ -1249,6 +1313,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 from orchestrator.services.referent_resolver import (
                     GATED_INTENTS,
                     NOT_FOUND,
+                    SKIPPED,
                     ReferentResolver,
                 )
 
@@ -1274,6 +1339,36 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                         state.query_results = {}
                         state.analytics_required = False
                         state.intermediate_results["referent_resolution"] = "not_found"
+                        return state
+                    if _resolution.status == SKIPPED and _resolution.referent:
+                        # BUG-136 — the question NAMED something and the existence
+                        # check could not complete. Proceeding here hands the query
+                        # to the fallback cascade, which is built to always surface
+                        # SOME class-matching sensor's readings — i.e. the exact
+                        # fabrication this gate exists to stop, reached through its
+                        # own failure path. Failing open on a legitimate question
+                        # loses one answer; failing open on an existence check
+                        # produces a confident fabrication. Not symmetrical costs,
+                        # so not symmetrical handling: refuse to assert, say why.
+                        logger.warning(
+                            f"[referent_gate] existence check for '{_resolution.referent}' "
+                            "did not complete — refusing to assert rather than failing open"
+                        )
+                        state.intermediate_results["sparql_result"] = {
+                            "success": True,
+                            "analytics_required": False,
+                            "formatted_response": (
+                                f"I couldn't verify **{_resolution.referent}** against "
+                                f"**{getattr(settings, 'BUILDING_NAME', 'this building')}**'s "
+                                "model just now — the existence check didn't complete in "
+                                "time. Rather than risk attributing another sensor's "
+                                "readings to it, I'd rather you ask again in a moment."
+                            ),
+                            "referent_unverified": _resolution.referent,
+                        }
+                        state.query_results = {}
+                        state.analytics_required = False
+                        state.intermediate_results["referent_resolution"] = "unverified"
                         return state
 
                 # Sensor-TYPE existence gate (BUG-063): honest "no such sensors" for a
@@ -1395,6 +1490,23 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             )
         else:
             state.analytics_required = sparql_analytics or dialogue_analytics
+            # The upstream analytics heuristics are phrase lists, so a reading request
+            # worded even slightly off-pattern ("current air temperature" vs "current
+            # temperature") lands here as False and the answer stops at metadata —
+            # naming the sensor and its UUID but never reading it. When the graph has
+            # handed us timeseries UUIDs and the intent is one that asks for readings,
+            # that is signal enough to run the SQL stage.
+            _reading_intents = {"sensor_data", "analytics", "anomaly", "visualization"}
+            if (
+                not state.analytics_required
+                and _sparql_has_uuids
+                and _original_intent in _reading_intents
+            ):
+                state.analytics_required = True
+                logger.info(
+                    f"[route] intent={_original_intent} with timeseries UUIDs — "
+                    f"fetching readings despite heuristic analytics_required=False"
+                )
         logger.info(
             f"✅ Ontology Agent determined: analytics_required={state.analytics_required} "
             f"(sparql={sparql_analytics}, dialogue={dialogue_analytics}, "
@@ -2519,6 +2631,87 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             "model": model_name,
         }
 
+    async def _self_description_node(self, state: ConversationState) -> ConversationState:
+        """Describe OntoSage from its live configuration and this building's data.
+
+        Never a written-out blurb: prose drifts from the system the moment anyone
+        changes it. The capability list comes from the intent registry (which already
+        merges per-building overlays), the grounding sources from the shared schema,
+        and the figures from the active building's own graph — so the answer differs
+        per building because the building differs, and a new capability appears here
+        without anyone remembering to edit a paragraph.
+        """
+        from orchestrator.services.self_description import describe
+
+        building_id = state.building_id or settings.BUILDING_ID
+        try:
+            from orchestrator.services.building_context import resolve_building_context
+
+            building_name = resolve_building_context(building_id).name
+        except Exception:
+            building_name = getattr(settings, "BUILDING_NAME", "this building")
+
+        try:
+            from orchestrator.intents import get_intent_registry
+
+            registry = get_intent_registry(building_id)
+        except Exception as e:
+            logger.warning(f"[self_description] intent registry unavailable: {e}")
+            registry = None
+
+        # What this building actually holds, computed now.
+        facts: Dict[str, Any] = {}
+        try:
+            from orchestrator.services.building_metrics import get_building_metrics
+
+            snap = await get_building_metrics().snapshot(building_id)
+            for label, attr in (
+                ("Sensors in the ontology", "total_sensors"),
+                ("Instrumented points", "total_points"),
+                ("Zones", "zone_count"),
+            ):
+                value = getattr(snap, attr, None)
+                if value:
+                    facts[label] = f"{value:,}"
+        except Exception as e:
+            logger.debug(f"[self_description] metrics unavailable: {e}")
+
+        try:
+            from orchestrator.services.adapters.registry import adapter_registry
+
+            backends = list(getattr(adapter_registry, "_adapters", {}) or {})
+            if backends:
+                facts["Connected databases"] = ", ".join(sorted(backends))
+        except Exception:
+            pass
+
+        # The grounding vocabulary is TTL, like everything else.
+        source_types = None
+        try:
+            from orchestrator.agents.sparql_agent import SPARQLAgent
+
+            rows = await SPARQLAgent()._execute_query(
+                """PREFIX ontosage: <http://ontosage.org/capabilities#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?l WHERE {
+  ?s a ontosage:SourceType ; rdfs:label ?l .
+  FILTER(!CONTAINS(LCASE(STR(?l)), "deprecated"))
+}"""
+            )
+            source_types = [
+                b["l"]["value"]
+                for b in (rows or {}).get("results", {}).get("bindings", [])
+                if b.get("l")
+            ] or None
+        except Exception as e:
+            logger.debug(f"[self_description] source types unavailable: {e}")
+
+        state.intermediate_results["dialogue_response"] = describe(
+            registry, building_name, facts=facts, source_types=source_types
+        )
+        state.current_intent = "self_description"
+        return state
+
     async def _general_knowledge_node(self, state: ConversationState) -> ConversationState:
         """Answer an open-domain general-knowledge question directly via the LLM.
 
@@ -2615,6 +2808,22 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             "about the building. If you genuinely do not know, say so briefly. "
             f"Today's date is {_today}. "
         )
+        # This node has no access to the building's sensors, so any figure it gives
+        # for this building would be invented. Saying "the specialty is building
+        # management" without this makes inventing one the natural completion —
+        # observed live as a fabricated humidity and CO2 reading for a room that has
+        # neither sensor (BUG-123). The routing contract's concept stage should have
+        # sent such questions to the data path; this is the backstop for the ones it
+        # misses, and it costs nothing on genuine open-domain questions.
+        system_message += (
+            f"HARD CONSTRAINT: you have NO access to live sensors, meters or records "
+            f"for {bctx_name}. Never state a measurement, reading, status, count or "
+            f"date for {bctx_name} — not even an estimate, typical value or plausible "
+            "range. If the question asks for one, say plainly that you do not have "
+            "that reading and that it must come from the building's own data, then "
+            "stop. You may still explain concepts, standards and how things work in "
+            "general. "
+        )
         if live_context:
             system_message += (
                 "Live data is provided below the question — base your answer ONLY on "
@@ -2678,6 +2887,24 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
         persona = (getattr(state, "persona", "general") or "general").lower()
         voice = self._SYNTH_PERSONA_VOICE.get(persona, self._SYNTH_PERSONA_VOICE["general"])
         user_q = state.user_message or (state.messages[-1].content if state.messages else "")
+
+        # A verdict ("very strong", "high") claims the value was compared against
+        # something. When the number cannot be a reading of that quantity in ANY
+        # usual unit there is nothing to compare it to, and the verdict is a
+        # fabrication wearing a real number (CAVEAT-053). Attach the caveat to the
+        # draft — synthesis is instructed to keep ⚠️ lines verbatim — and forbid the
+        # judgement outright, so the reply reports the number without ruling on it.
+        # The response node attaches the implausibility caveat before this runs. When
+        # it is present, forbid the rewrite from re-introducing the judgement it was
+        # added to remove — otherwise synthesis would keep the warning and restate
+        # "very strong" underneath it.
+        _no_verdict = ""
+        if "raw or unscaled sensor output" in draft:
+            _no_verdict = (
+                "- The reading is flagged as implausible. Report the number, but do NOT "
+                "describe it as high, low, strong, weak, normal or comfortable — there "
+                "is no reliable scale to judge it against.\n"
+            )
         system_message = (
             "You are OntoSage, the assistant for a smart building. You rewrite a "
             "draft answer into one clear, natural reply. You NEVER invent data."
@@ -2692,6 +2919,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             "starting with '⚠️' or '*Note:' verbatim.\n"
             "- Do NOT add a follow-up question or an 'you might also ask' section.\n"
             "- Be concise; no preamble like 'Sure' or 'Here is'.\n"
+            f"{_no_verdict}"
             f"- Audience/voice: {voice}.\n\n"
             f"USER QUESTION: {user_q}\n\n"
             f"DRAFT:\n{draft}\n\n"
@@ -2907,6 +3135,21 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             notice_text = "\n\n---\n*Note: " + " ".join(notices) + "*"
             final_response += notice_text
 
+        # CAVEAT-053 — a verdict ("very strong", "high") claims the value was
+        # compared against something. When the number cannot be a reading of that
+        # quantity in ANY usual unit there is nothing to compare it to, and the
+        # verdict is a fabrication wearing a real number. Checked HERE, where every
+        # path's answer converges: the analytics path writes its own prose and never
+        # reaches the synthesis pass, which is exactly where this was first seen.
+        try:
+            from orchestrator.services.plausibility import implausibility_note
+
+            _pl_note = implausibility_note(state.user_message or "", final_response)
+            if _pl_note and _pl_note[:12] not in final_response:
+                final_response = f"{_pl_note}\n\n{final_response}"
+        except Exception as _ple:  # a guard must never cost the answer
+            logger.debug(f"[plausibility] check skipped: {_ple}")
+
         # Phase 1.4 (targeted) — grounded synthesis ONLY rewrites canned-template
         # drafts (export/maintenance/control/document) into natural prose. The
         # already-LLM-generated prose paths keep the existing persona formatter,
@@ -3055,11 +3298,37 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
 
         return state
 
-    def _handle_sensor_discovery(self, discovery_filter: str = None, entities: list = None) -> str:
+    async def _ontology_census(self, query: str) -> List[Tuple[str, int]]:
+        """Class→count for what this building holds, from the ontology.
+
+        The one place any "what does this building have" answer gets its grouping,
+        shared with the capability path so the two cannot disagree.
+        """
+        try:
+            from orchestrator.agents.sparql_agent import (
+                GRAPHDB_QUERY_ENDPOINT,
+                _active_namespace,
+            )
+            from orchestrator.services.ontology_inventory import class_census
+
+            return await class_census(query, _active_namespace(), GRAPHDB_QUERY_ENDPOINT)
+        except Exception as e:
+            logger.warning(f"[discovery] ontology census unavailable: {e}")
+            return []
+
+    def _handle_sensor_discovery(
+        self,
+        discovery_filter: str = None,
+        entities: list = None,
+        census: Optional[List[Tuple[str, int]]] = None,
+    ) -> str:
         """
         Build a sensor discovery response from the cached sensor_map.
 
         Args:
+            census: class→count from the ontology, used to group large result sets.
+                Passed in (not fetched here) because this method is synchronous and
+                per-request state must not live on the shared orchestrator instance.
             discovery_filter: Optional keyword to filter sensors (e.g. "temperature", "zone 5")
             entities: Optional entity list from intent detection
 
@@ -3115,8 +3384,23 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                 f'Try asking about a specific type (e.g., *"list all temperature sensors"*).'
             )
 
-        # If too many results, show a grouped summary
+        # If too many results, show a grouped summary. The grouping comes from the
+        # ontology (the same census the capability path uses), never from the
+        # labels — see _count_sensor_types for why label parsing cannot group.
         if matched > 20:
+            if census:
+                type_summary = "\n".join(f"- **{t.replace('_', ' ')}**: {c}" for t, c in census)
+                filter_note = f' matching **"{filter_text}"**' if filter_lower else ""
+                # `matched` counts instrumented POINTS (sensors, setpoints and
+                # commands all carry a timeseries id); the census counts what the
+                # ontology types as each class. Calling the first figure "sensors"
+                # made the header contradict its own breakdown — 600 vs 304.
+                return (
+                    f"This building has **{matched}** instrumented points{filter_note} "
+                    f"with live data. By ontology type:\n\n{type_summary}\n\n"
+                    f'To see specific sensors, ask for one type — e.g. *"list the zone air '
+                    f'temperature sensors"*.'
+                )
             type_counts = self._count_sensor_types(filtered)
             type_summary = "\n".join(
                 f"- **{t}**: {c} sensors"
@@ -3145,7 +3429,15 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
 
     @staticmethod
     def _count_sensor_types(sensors: dict) -> dict:
-        """Group sensors by type (e.g. Air_Temperature, Humidity, CO2)"""
+        """Group sensors by type parsed from their LABEL — last-resort fallback only.
+
+        This works only where a building encodes the type in the label and ends it
+        with an identifier ("Air Temperature Sensor 5.04" → "Air Temperature
+        Sensor"). A building whose labels do not follow that shape — e.g.
+        "…RM163E.Zone Air Temp" — gets every sensor as its own "type", which is how
+        600 sensors were once reported as 600 types of one each. Callers pass an
+        ontology census instead; this remains for when the graph is unreachable.
+        """
         type_counts = {}
         for uri, info in sensors.items():
             label = info.get("label", "")

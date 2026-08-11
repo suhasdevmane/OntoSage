@@ -374,3 +374,23 @@ intents:
       - '"Good morning"'
     pipeline_group: meta
     cacheable: false
+
+  # Questions about the ASSISTANT rather than the building. Without this they reach
+  # the open-domain answerer, which has no knowledge of this system and invents a
+  # plausible substitute — observed live as "I'm a large-language model built by
+  # OpenAI" and a capability list naming none of OntoSage's actual abilities.
+  - name: self_description
+    description: |-
+      The user is asking about OntoSage ITSELF — what it is, what it can do, how it
+      works, what kinds of question it accepts. NOT about the building's equipment,
+      sensors, spaces or policies; those are the data intents. Answered from the live
+      intent registry and the active building's own data, never from a fixed script.
+    examples:
+      - '"What is OntoSage?"'
+      - '"What can you do?"'
+      - '"How do you work?"'
+      - '"What kind of questions can I ask you?"'
+      - '"What are your capabilities?"'
+    pipeline_group: meta
+    route_target: self_description
+    node_method: _self_description_node
