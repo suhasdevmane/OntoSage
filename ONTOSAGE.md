@@ -2,7 +2,7 @@
 
 **Comprehensive technical reference for the OntoSage agentic-AI framework for smart buildings.** This document covers the full architecture, every Phase 11-22 improvement plus V3 corpus-driven extensions and P0 security hardening, the routing pipeline, the multi-tenant / multi-persona / multi-intent model, conversation memory, follow-up co-reference resolution, the forecasting pipeline, the admin portal, the operational surface (configuration, swap workflow, CI), the test coverage, and known issues — accurate as of 2026-07-09.
 
-**Test suite**: 582 deterministic tests passing, 8 skipped (Python 3.10/3.11/3.12); the suite runs from a clean checkout with no active building and no `.env` — the skips are optional deps plus fixtures that need an activated building. **Corpus coverage**: 63.8% (bldg1) and 70.4% (bldg2) of the 240-question stratified replay drawn from the 5,604-question survey (vs. 16.2% baseline before V3) — corroborates paper §6.5, and the bldg2 figure is the portability evidence (same code, different building).
+**Test suite**: 981 deterministic tests passing, 8 skipped (Python 3.10/3.11/3.12); the suite runs from a clean checkout with no active building and no `.env` — the skips are optional deps plus fixtures that need an activated building. **Corpus coverage**: 63.8% (bldg1) and 70.4% (bldg2) of the 240-question stratified replay drawn from the 5,604-question survey (vs. 16.2% baseline before V3) — corroborates paper §6.5, and the bldg2 figure is the portability evidence (same code, different building).
 
 **For new AI sessions:** Read `CLAUDE.md` first (navigation index, debugging, current branch state), then this file for deep architecture. Do not commit or push without explicit user approval.
 
@@ -192,7 +192,7 @@ scripts/
 ├── corpus_replay.py                # V3 — stratified 240q replay (40/level); LLM-graded pass rate
 └── survey_live_test.py             # 95-query regression survey
 
-tests/                              # 582 deterministic tests, 8 skipped (parked state); see §9
+tests/                              # 981 deterministic tests, 8 skipped; see §9
 ├── fixtures/buildings/bldg2/       # Phase 12A — fixture for multi-tenant tests
 ├── test_admin_ontology_endpoints.py # P0 — 13 admin endpoint tests
 ├── test_auth_manager.py             # P0 round 2 — 7 tests (login lockout, delete_user cleanup, default role)
@@ -230,7 +230,25 @@ tests/                              # 582 deterministic tests, 8 skipped (parked
 - `local` → Ollama at `http://ollama:11434` (default `deepseek-r1:32b`)
 - `cloud` → Ollama Cloud
 
-Embedding: `EMBEDDING_PROVIDER` independently selects `openai` (1536-d `text-embedding-3-small`) or `local` (384-d `sentence-transformers/all-MiniLM-L6-v2`). The capability indexer auto-rebuilds its Qdrant collection if the embedding dim changes between restarts.
+Embedding: `EMBEDDING_PROVIDER` independently selects `openai` (1536-d `text-embedding-3-small`) or
+`local` (1024-d `BAAI/bge-large-en-v1.5`, baked into the image and run fully offline —
+`HF_HUB_OFFLINE=1`, so it can never be silently fetched or swapped at runtime).
+
+**The model settles its own numbers, not a config constant.** Both the vector width and the document
+retrieval floor derive from the loaded model (`shared/config.py` → `dimension_for_model`,
+`document_score_floor`; once resident the local model is asked directly via
+`get_sentence_embedding_dimension()`). The previous code branched on *provider name* and applied a
+floor calibrated for 384-d MiniLM to a 1024-d model — a floor tuned for a model that is not running
+is worse than no floor. The `EMBEDDING_DIMENSION_*` settings are kept only as a fallback for an
+unrecognised model, and a disagreement is logged rather than followed silently.
+
+**Boot-time consistency sweep.** Vectors of different widths cannot be compared, and a failed
+similarity search returns no rows rather than raising — so a stale collection left by an earlier
+model is silent until a user gets an empty answer. `services/embedding_consistency.py` runs once in
+the lifespan, *enumerating whatever Qdrant collections exist* (never a fixed name list, so a building
+onboarded tomorrow is covered), drops any derived collection built at a mismatched width so its owner
+rebuilds it at the right one, and *reports but never deletes* an irreplaceable store like
+`user_memory`. It fails open, so Qdrant being briefly unavailable cannot block startup.
 
 ---
 
@@ -514,6 +532,45 @@ which is the connect-data → get-answers contract expressed in the answer itsel
 live stack and grades every answer, per building. On bldg1 it moved honest answers from 4/18 to
 12/18 with **zero** fabricated measurements remaining, while wifi, lift-location, live zone
 readings and building metrics all continued to answer normally.
+
+### 4.2c Grounding, continued — the rest of the honesty subsystem
+
+The grounding guard above stops an *unrelated passage* being dressed up as an answer. Three more
+guards, each building-agnostic, close the remaining ways a plausible-but-wrong answer could slip out:
+
+**Referent existence gate — and its deliberate asymmetry.** Before any fallback can attribute one
+sensor's readings to a place the building lacks, the named referent is checked against the active
+building's graph (`services/referent_resolver.py` → `detect_typed_referent` for floors, spaces,
+equipment and measurands; `capability_agent._absent_referent_decline` guards the metadata/capability
+door the sparql gate never sees). The gate's failure handling is intentionally **asymmetric**: a
+question that names *nothing* fails **open** (there is nothing to fabricate about), but once a
+referent is named and the existence check cannot complete — a timeout under load, a degraded GraphDB
+— it fails **closed**, returning an honest "I couldn't verify that — ask again" rather than letting
+the query proceed into the fabricating fallback. Failing open on a legitimate question loses one
+answer; failing open on an existence check produces a confident fabrication, so the two are handled
+differently (BUG-136).
+
+**Plausibility guard.** A comparative verdict — "very strong", "high", "too warm" — is a claim the
+value was compared against something. When a reading cannot be that quantity in *any* unit it is
+normally reported in (a "wind speed" of 8308 is not m/s, km/h, mph or knots), `services/plausibility.py`
+strips the verdict and reports the raw number with a note that its scaling needs checking. The
+ranges are physical facts keyed on measurand words from Brick classes, so the same guard serves
+every building; years and clock times are excluded so a timestamp is never mistaken for a reading.
+
+**Missing-fact caveat.** Being *about* the subject is not the same as *answering* the question. A
+service-history question can match a topic that discusses the equipment yet contains no date;
+`grounding_guard.missing_fact_caveat` prefixes such an answer with "I don't hold a specific date for
+this — here is the related information I do have", turning a misleading reply into an honest partial
+one. It is silent when the question asks for no particular kind of fact, so it never becomes noise.
+
+**Self-description is settled first.** "What is OntoSage / what can you do / how do you work" is
+resolved at the very top of intent detection, before the capability probe and before the LLM sees
+it. Left downstream, such a question matched a building document that happened to mention the name
+(an answer that exists on exactly one building) or fell through to the open-domain answerer, which
+claimed to be "a large language model." It is now answered from live configuration — the intent
+registry, the schema's grounding-source types, the connected building's own figures — described as a
+building-agnostic framework, so it is correct on every building including one with no data yet
+(`services/self_description.py`, `_self_description_node`).
 
 ### 4.3 Smart Python ↔ Agent split
 
@@ -894,6 +951,35 @@ and grant no permissions.
 | `occupant` | `sensor:read`, `metadata:read`, `system:health` |
 | `readonly` | `metadata:read`, `system:health` |
 
+### Identity through a shared-key proxy
+
+Open WebUI authenticates to OntoSage with one shared `PIPELINE_API_KEY`, so the
+OpenAI-compatible endpoint cannot infer the end user from the credential alone. Left there,
+every chat user is pinned to least privilege and role-aware answers are impossible.
+
+`resolve_forwarded_user()` (`main.py`) closes that gap: when `TRUST_FORWARDED_USER` is on,
+the proxy's forwarded identity header (`FORWARDED_USER_HEADER`, default
+`X-OpenWebUI-User-Email`) is resolved against Postgres — full identity first, then the
+email's local part, since proxies identify by email while accounts are keyed by username —
+and that account's role becomes `intermediate_results["user_role"]` for the whole pipeline.
+Control, alert and preference nodes read it, as does the role → data-source access matrix.
+
+Four properties make it safe to run:
+
+* **Opt-in.** With `TRUST_FORWARDED_USER` off the header is ignored entirely. A header is
+  only as trustworthy as whoever can set it, and anyone holding the pipeline key could
+  otherwise impersonate any user — so this is never inferred from traffic.
+* **Least privilege on the unknown.** Someone signed into the proxy with no OntoSage
+  account resolves to `readonly` rather than being refused or silently upgraded.
+* **Never fatal.** A lookup failure degrades to `readonly` instead of failing the turn.
+* **Stubs are not accounts.** `/v1` auto-creates a placeholder Postgres row so
+  conversations have a valid owner; it is always readonly and marked
+  `metadata.source = "open_webui"`. Resolution skips those rows — otherwise a stub created
+  before an admin provisioned someone would permanently shadow their real role.
+
+Roles are read per request, so creating a user or changing a role in the admin console
+applies to the next question with no restart, re-login or cache flush.
+
 ---
 
 ## 6.7 Narrow MySQL Tables — Workstream B
@@ -1134,17 +1220,28 @@ to Brick/REC/BOT/SOSA with SKOS mapping properties only (`skos:relatedMatch`/`cl
 
 | Module | Terms |
 |---|---|
-| **A — Capabilities** | `ontosage:Capability → Amenity` (PrayerRoom, Cafe, Lift, ToiletFacility, …) `+ KnowledgeTopic` (InformationTopic, Procedure, MaintenanceIssue); Brick-bridge object props (`locatedIn`, `aboutEquipment`, `servesFloor`); 13 datatype props (the guided-form fields) |
+| **A — Capabilities** | `ontosage:Capability → Amenity` (PrayerRoom, Cafe, Lift, ToiletFacility, …) `+ KnowledgeTopic` (InformationTopic, Procedure, **Policy**, MaintenanceIssue); Brick-bridge object props (`locatedIn`, `aboutEquipment`, `servesFloor`); datatype props incl. `documentRef`, `effectiveDate`, `policyOwner` |
 | **B — Conversation concepts** | `hbco:Concept`, `hbco:mapsToBrickClass`, `hbco:layTerm`, `requiresRecipe`, `personaDepth` — lay word → Brick sensor ("stuffy" → CO₂). Consolidated here from the former `ontology/hbco_core.ttl` (now a stub); `hbco:` terms unchanged |
 | **C — Stakeholder roles** | `ontosage:StakeholderRole` (Occupant, FacilityManager, Researcher, SustainabilityOfficer, …) + `asksAbout`/`defaultPersonaDepth` — frames answers, **explicitly not RBAC** |
 | **D — Question-intent grammar** | `ontosage:QuestionIntent` (Locate, Quantify, Trend, Compare, Anomaly, Forecast, Comfort, Discover, Procedure, Report) + `intentPattern`/`answeredBy` |
 | **E — Report intake** | `ontosage:Report → FaultReport/Complaint/SafetyReport/Feedback/Suggestion` + status/priority/`concernsIssue` |
-| **F — Answer provenance** | `ontosage:SourceType` (GraphDB, TimeSeriesDB, Analytics, FloorPlan, CapabilityKB, ReportIntake) + `groundedIn`/`isSimulated` — the vocabulary behind honest, auditable answers |
+| **F — Answer provenance** | `ontosage:SourceType` (GraphDB, TimeSeriesDB, Analytics, FloorPlan, **Ontology** and **Document** — an asserted triple and retrieved prose are different strengths of evidence and no longer share one chip — ReportIntake) + `groundedIn`/`isSimulated` — the vocabulary behind honest, auditable answers |
 | **G — Competency Qs + example SPARQL** | `ontosage:competencyQuestion` + `ontosage:exampleSparql` annotations per class (paper + RAG) |
 | **H / I / J** | Brick/REC/BOT/SOSA alignment; SHACL shapes (Capability/Concept/Report); worked examples + changelog |
 
 Every term carries `rdfs:label` + `rdfs:comment` + `skos:definition` + `skos:example` so each is
 individually retrievable when the schema is chunked into a vector store.
+
+**`ontosage:documentRef` makes document retrieval deterministic.** A `KnowledgeTopic`/`Policy` carries
+the short authoritative answer *and* names the document that sets it out in full. When a topic
+matches, the long-form detail is drawn from *that named file* — retrieval is filtered to it and the
+similarity floor dropped, because relevance was already settled by the triple. Without the link, a
+policy question is matched to a document by cosine score against a floor tuned for one corpus and one
+embedding model, so changing either silently changes which document answers. RDF holds the structure
+and the short answer; the document holds the long form; `documentRef` is the join — the schema stays
+TTL-first without pretending RDF is a document store. The shared OCBV schema now lives once under
+`ontology/ontosage_schema.ttl` (mounted read-only, uploaded per building by the TTL uploader) rather
+than a per-building copy that could drift.
 
 ### The schema is the source of truth for authoring AND answering
 
@@ -1564,7 +1661,25 @@ Markdown, PDF, or TXT files indexed into Qdrant collection `documents_<bldg>`. R
 
 ### 9.1 Deterministic suite (CI — Phase 16C, expanded through P0)
 
-**Current suite: 582 pass, 8 skip, 0 fail** on the Python 3.10/3.11/3.12 matrix (2026-08-04), measured in the canonical no-building-active state.
+**Current suite: 981 pass, 8 skip, 0 fail** on the Python 3.10/3.11/3.12 matrix.
+
+Honesty, self-description, embedding and portability guards (selected):
+
+| File | Tests | Coverage |
+|---|---|---|
+| `test_routing_contract.py` | 51 | Every question-shape → intent rule + precedence + a source scan proving no building literal |
+| `test_grounding_guard.py` | 47 | Unrelated-passage refusal; typed-referent existence gate; verb-inflection matching; the "I don't hold that fact" caveat |
+| `test_absent_referent_metrics.py` | 18 | A named place the building lacks is declined, not answered with whole-building figures — including when the existence check times out (fail-closed on a named referent) |
+| `test_plausibility.py` | 11 | No comparative verdict over a value outside every plausible unit-range for its measurand |
+| `test_self_description.py` | 16 | "What is OntoSage / what can you do" composed from live config as a building-agnostic framework; never a bare-LLM claim, never a per-building literal |
+| `test_ontology_inventory.py` | 18 | "What equipment/sensors does this building have" from the graph's own Brick classes |
+| `test_entity_label_resolution.py` | 12 | A prose-named sensor resolves to the one asked about, across two naming conventions |
+| `test_embedding_standardisation.py` | 14 | Retrieval floor + vector width derived from the loaded model |
+| `test_embedding_consistency.py` | 9 | Boot sweep drops any Qdrant collection at a mismatched width, for any building |
+| `test_document_indexer_hygiene.py` | 7 | Any-encoding document indexing; deleted-document folders never treated as a building |
+| `test_agents_building_agnostic.py` | 2 | Source scan: no agent names a building in code |
+
+Legacy baseline rows (still passing):
 
 | File | Tests | Coverage |
 |---|---|---|
@@ -1720,7 +1835,7 @@ docker exec postgres-user-data psql -U ontobot -d ontobot \
 ### Run the deterministic test suite
 
 ```bash
-pytest tests/ -m unit -q                        # fast offline suite — 582 pass (8 skip) ~2 min
+pytest tests/ -m unit -q                        # fast offline suite — 981 pass (8 skip) ~1 min
 pytest tests/test_routing_accuracy.py -v        # 29 canonical routing cases
 pytest tests/test_admin_ontology_endpoints.py   # 13 P0 admin endpoint tests
 ```

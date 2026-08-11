@@ -6,6 +6,7 @@
 @prefix bldg: <http://buildsys.org/ontologies/bldg2#> .
 @prefix ontosage: <http://ontosage.org/capabilities#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 bldg:BuildSysCafe a ontosage:Amenity,
         ontosage:Cafe ;
@@ -141,3 +142,19 @@ bldg:Cap_toilets a ontosage:Amenity,
     ontosage:locationText "near the central core on every floor" ;
     ontosage:note "Toilets including accessible and gender-neutral facilities are on every floor." .
 
+
+# WiFi / network access — a Policy backed by the document in documents/, matching
+# bldg1 and bldg3. The triple carries the short authoritative answer and NAMES its
+# document, so detail is drawn from the file the topic points at rather than from
+# whichever chunk a similarity search scores highest.
+bldg:Pol_wifi a ontosage:Policy ,
+        ontosage:Procedure ,
+        ontosage:KnowledgeTopic ;
+    rdfs:label "WiFi and network access"@en ;
+    ontosage:capabilityCategory "IT" ;
+    ontosage:layTerms "wifi, wi-fi, wireless, internet, network, broadband, connectivity, guest wifi, connect to wifi, join wifi, get online, network password, access policy" ;
+    ontosage:answerText "Guests connect to BuildSys-Guest — no password is required; a captive portal accepts the terms of use. Staff use BuildSys-Secure with their building credentials." ;
+    ontosage:steps "Select BuildSys-Guest (visitors) or BuildSys-Secure (staff) from the wireless list; Guests accept the terms on the captive portal — no password is needed; Staff sign in with their building credentials; If you cannot connect, contact the facilities desk" ;
+    ontosage:documentRef "bldg2_wifi.md" ;
+    ontosage:policyOwner "BuildSys Facilities" ;
+    ontosage:contactEmail "facilities@buildsys.example" .

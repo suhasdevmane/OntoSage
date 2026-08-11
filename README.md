@@ -8,7 +8,7 @@
 [![Brick Schema](https://img.shields.io/badge/Brick_Schema-1.3-orange.svg)](https://brickschema.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml/badge.svg)](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-582%20passing-brightgreen.svg)](#tests)
+[![Tests](https://img.shields.io/badge/tests-981%20passing-brightgreen.svg)](#tests)
 
 ---
 
@@ -31,7 +31,7 @@ Corpus replay, 240 stratified questions
     bldg1 (Abacws, real building)         63.8% pass   (vs 16.2% baseline before V3)
     bldg2 (portability building)          70.4% pass   — same code, zero changes
 Live survey (95 questions, Phase 18):     94/95 PASS · 1 WARN · 0 FAIL  (99%)
-Deterministic unit suite:                 582 pass / 0 fail, 8 skipped (Python 3.10/3.11/3.12)
+Deterministic unit suite:                 981 pass / 0 fail, 8 skipped (Python 3.10/3.11/3.12)
 ```
 
 Validates against the 5,604-question survey in `paper/Survey analysis and results/` — corroborates
@@ -70,10 +70,16 @@ commitment, not an accident of implementation:
 8. **Connect data, get answers.** A question becomes answerable when the sensor is described in the
    ontology *and* its readings are in a registered database. Onboarding a source is drop-in: add the
    triples, register the database, load the rows — no code.
-9. **Multiple datasources, pluggable.** Time-series is routed by an ontology reference to the right
-   backend (MySQL today; Postgres/Timescale/InfluxDB ready). A new backend is a new adapter, nothing more.
+9. **Multiple datasources, pluggable — even within one building.** Each sensor's `ref:storedAt`
+   routes its readings to the right backend, so different sensors in the *same* building can live in
+   different databases: one active building runs MySQL and PostgreSQL side by side, some sensors read
+   from each. A new backend technology is a new adapter, nothing more; the registry ships connection
+   templates for ~50 stores (MySQL, PostgreSQL, TimescaleDB, MongoDB, InfluxDB, Cassandra, Redis, …).
 10. **Local or API models, independently.** Language and embedding models are each switchable between
     OpenAI and local Ollama, so you can run fully offline for privacy or on the API for capability.
+    The local embedding model (`bge-large-en-v1.5`) is baked into the image and runs offline; its
+    vector width and retrieval threshold are read from the model itself, and a boot-time sweep repairs
+    any vector store left at a mismatched width — so the model can never silently drift.
 11. **One command to run it.** Activate a building once (a couple of renames — no build steps, no
     generators) and the entire stack boots with `docker compose up -d`; all configuration lives in
     `.env` and the `input/` folder.
@@ -196,9 +202,33 @@ ontology (authored via the admin Capabilities GUI or the OCBV TBox — see
 |---|---|---|
 | "Where is the lift?" | `capability` | `ontosage:Amenity` triple (`<id>_capabilities.ttl`) |
 | "Is there a prayer room?" | `capability` | `ontosage:Amenity` triple |
-| "What is the wifi / GDPR policy?" | `capability` | `ontosage:KnowledgeTopic` triple (`answerText`) |
+| "What is the wifi / GDPR policy?" | `capability` | `ontosage:Policy` / `ontosage:KnowledgeTopic` triple (`answerText`), with the full text drawn from the document the topic names via `ontosage:documentRef` |
 | "Is the building wheelchair accessible?" | `capability` | `ontosage:Amenity` triple |
-| "What are the fire evacuation procedures?" | `capability` | uploaded `documents/fire_safety.md` (long-form manual) |
+| "What are the fire evacuation procedures?" | `capability` | the `ontosage:Policy` topic points at `documents/fire_safety.md`; retrieval is scoped to that file, not chosen by similarity across the whole corpus |
+
+A `KnowledgeTopic` carries the short authoritative answer; when it also declares
+`ontosage:documentRef`, the long form is read from *that named document* rather than whichever
+chunk a vector search scores highest — so a policy question is answered deterministically from the
+document the ontology says governs it.
+
+### Asking about OntoSage itself (no building data needed)
+
+| Question | Intent | Answered from |
+|---|---|---|
+| "What is OntoSage?" | `self_description` | Live configuration — described as a building-agnostic framework, not one site's product |
+| "What can you do?" | `self_description` | The active building's own intent registry (so a per-building intent shows up automatically) |
+| "How do you work?" | `self_description` | The schema's grounding-source types + the connected building's live figures |
+| "What kind of questions can I ask?" | `self_description` | The capability groups, composed from configuration — never a written-out blurb |
+
+These are answered before any other path can claim them, so OntoSage never mistakes a question
+*about itself* for one about the building, never answers it from an unrelated document, and never
+falls through to a generic assistant that would claim to be "a large language model."
+
+![OntoSage describing itself](docs/screenshots/answer-self-description.png)
+*Asked "What can you do?", OntoSage answers as the framework it is. The capability groups are read
+from the active building's own intent registry and the figures from its live data — connect a
+different building and the capabilities stay the same while "Currently connected to" changes.*
+
 
 ### Questions that store a report (no data needed — just saves to Postgres)
 
@@ -235,6 +265,11 @@ upload a TTL describing the entity, give its sensors `ref:hasTimeseriesId` + `re
 register the database, or add an `ontosage:Amenity` — all config and data, never code.
 This is the honesty guarantee in practice: a plausible-sounding wrong number is worse than
 no number, because you cannot tell it apart from a right one.
+
+![An honest decline with the steps that would make it answerable](docs/screenshots/answer-honest-decline.png)
+*The building has no swimming pool. Rather than return its real whole-building sensor count — every
+figure true, none of them an answer — OntoSage says it cannot find the referent and lists exactly what
+to add.*
 
 ---
 
@@ -469,10 +504,31 @@ databases:
 ```
 
 Two supported table shapes: **wide** (`type: mysql`, one column per sensor uuid — note MySQL's
-~1017-column limit) and **narrow** (`type: mysql_narrow` with `table:`, rows of
-`(uuid, datetime, value)` — preferred for large estates). Add as many databases as you like; each
-`ref:storedAt` key routes to its own backend, so one building can span MySQL, Postgres and InfluxDB
-at once.
+~1017-column limit) and **narrow** (`type: mysql_narrow` / `postgresql` with `table:`, rows of
+`(uuid, datetime, value)` — preferred for large estates).
+
+**One building, several databases.** Add as many backends as you like; each `ref:storedAt` key
+routes to its own. Point some sensors at a second key and register it — no code:
+
+```yaml
+  database_pg:                                  # ← a subset of sensors: ref:storedAt bldg:database_pg
+    type: postgresql
+    host: "${POSTGRES_HOST:-postgres}"
+    database: "${POSTGRES_DB:-readings}"
+    table: sensor_timeseries                    # narrow (uuid, datetime, value); layout auto-detected
+    nature: synthetic
+    note: "Second backend technology for this building"
+```
+
+A working example ships in the repo: one building answers `AHU01N` readings from **MySQL** and
+`Server Room R101` readings from **PostgreSQL** in the same conversation — the adapter layer picks
+the backend per sensor from `ref:storedAt`. Adding a third technology (TimescaleDB, MongoDB, …) is
+the same three edits: point sensors at a new key, register it, supply its credentials in `.env`.
+
+![A reading served from MySQL](docs/screenshots/answer-mysql-reading.png)
+![The same building, a reading served from PostgreSQL](docs/screenshots/answer-postgres-reading.png)
+*Two questions, one building, two database technologies. Nothing in the question says which backend to
+use — the sensor's `ref:storedAt` decides, and the user never sees the difference.*
 
 ### Step 4 — Build and start
 
@@ -816,24 +872,65 @@ These are **RBAC roles**, distinct from *personas* (e.g. `sustainability_officer
 | `occupant` | `sensor:read`, `metadata:read`, `system:health` |
 | `readonly` | `metadata:read`, `system:health` only |
 
+### Users and roles in practice
+
+Accounts are created in the **Admin Console → Users & Access**: pick a username, a
+password (12+ characters, with a show/hide toggle so you can confirm what you typed), and
+a role. Each row also has a **Password** button to set a new one — stored passwords are
+one-way Argon2id hashes, so an existing password can never be displayed, only replaced.
+A reset signs out that user's active sessions, and both creating a user and changing a
+role take effect on the next request: **no restart, no re-login, no cache flush**.
+
+The **Role → Data-source access** matrix on the same tab controls which data sources each
+role may draw on when answering. A role left fully unticked is unrestricted (access
+control is opt-in), and changes apply immediately.
+
+### Role-aware answers in the chat UI
+
+Open WebUI authenticates to OntoSage with a single shared `PIPELINE_API_KEY`, so on its own
+every chat request would arrive as the same least-privilege identity. Setting
+`ENABLE_FORWARD_USER_INFO_HEADERS=true` on Open WebUI makes it forward who is signed in, and
+`TRUST_FORWARDED_USER=true` on the orchestrator resolves that identity to the matching
+OntoSage account so **its** role drives the answer:
+
+```
+"Set the temperature setpoint in zone 5.28 to 21 degrees"
+
+  readonly          → "You don't have permission to control building systems…"
+  facility_manager  → "Command queued for approval (ID: b2160acc)…"
+```
+
+Identical request, identical API key, different answers.
+
+Someone who signs into the chat UI without an OntoSage account is served at **readonly** —
+enough to explore the building, nothing more. Give them a role by creating an account whose
+username matches their sign-in email (or its local part, e.g. `alice@example.com` →
+`alice`); the next question they ask uses it.
+
+> **Trust boundary.** A forwarded header is only as trustworthy as whoever can set it —
+> anyone holding `PIPELINE_API_KEY` could claim to be any user. `TRUST_FORWARDED_USER` is
+> therefore **off by default** and safe to enable only where the proxy is the sole key
+> holder on a trusted network (the default Docker setup). With it off the header is ignored
+> entirely.
+
 ### Required env flags
 
 ```bash
-STRICT_SECRETS=true         # refuse startup if any password still equals its default
-SECRET_KEY=<random-64-char> # JWT signing key
+STRICT_SECRETS=true          # refuse startup if any password still equals its default
+SECRET_KEY=<random-64-char>  # JWT signing key
+TRUST_FORWARDED_USER=true    # apply each chat user's own role (see trust boundary above)
 ```
 
 ---
 
 ## Tests
 
-**582 deterministic tests pass, 8 skipped**, run in CI on Python 3.10/3.11/3.12.
-Skips are optional dependencies and fixtures that need an *active* building — with one activated the
-same suite reports 586 passed / 4 skipped.
+**981 deterministic tests pass, 8 skipped**, run in CI on Python 3.10/3.11/3.12.
+Skips are optional dependencies and fixtures that need an *active* building.
 The suite runs from a clean checkout with **no active building and no `.env`** — that is exactly what CI sees:
 
 ```bash
-pytest tests/ -m unit -q                       # fast offline suite (~20s)
+pytest tests/ -m unit -q                       # fast offline suite (~60s)
 pytest tests/ -m integration -q                # needs running stack
 pytest tests/test_routing_accuracy.py -v       # 29 canonical routing cases
 pytest tests/test_admin_ontology_endpoints.py  # 13 admin endpoint tests
@@ -844,25 +941,43 @@ Key test files:
 | File | Tests | What it covers |
 |---|---|---|
 | `test_routing_accuracy.py` | 29 | All 20+ intents + 5 override scenarios + 4 audit invariants |
+| `test_routing_contract.py` | 51 | Every question-shape → intent rule, its precedence order, and a scan proving no building literals |
 | `test_survey_aligned_phases.py` | 64 | Capability KB + persona + workflow wiring |
-| `test_phase_a_fixes.py` | 44 | Persona + routing (Phase 14A updates) |
-| `test_blended_persona.py` | 14 | Persona blending semantics |
 | `test_compound_query_e2e.py` | 17 | Multi-intent heuristic + decomposition |
 | `test_coreference_rewrite.py` | 16 | Follow-up query rewrite gate + LLM mock |
-| `test_turn_memory.py` | 10 | Redis count-eviction, Postgres `turn_memory` schema |
-| `test_admin_ontology_endpoints.py` | 13 | Admin portal endpoints, auth enforcement |
-| `test_intent_graph_autowire.py` | 5 | Every `node_method` resolves + is registered |
-| `test_routing_contract.py` | 32 | Every question-shape → intent rule, its precedence order, and a scan proving no building literals |
-| `test_grounding_guard.py` | 25 | Refusing unrelated passages; floor/space/equipment/measurand existence gate; enablement guidance |
+| `test_grounding_guard.py` | 47 | Refusing unrelated passages; floor/space/equipment/measurand existence gate; verb-inflection matching; the "I don't hold that fact" caveat |
 | `test_referent_resolver.py` | 12 | Named zone/room existence gate + fail-open behaviour |
-| `test_building_metrics.py` | 11 | Live counts incl. declared-vs-reporting sensor split |
+| `test_absent_referent_metrics.py` | 18 | A count/reading question about a place the building lacks is declined, not answered with whole-building figures — even when the existence check itself times out |
+| `test_plausibility.py` | 11 | No confident verdict ("very strong") over a value outside every plausible range for its measurand |
+| `test_self_description.py` | 16 | "What is OntoSage / what can you do / how do you work" answered from live configuration as a building-agnostic framework — never invented, never claiming to be a bare LLM |
+| `test_ontology_inventory.py` | 18 | "What equipment / sensors does this building have" answered from the graph's own Brick classes |
+| `test_entity_label_resolution.py` | 12 | A sensor named in prose resolves to the one asked about, across two different naming conventions |
+| `test_data_query_bypass.py` | 4 | A reading question reaches the data path regardless of the measurand's wording |
+| `test_agents_building_agnostic.py` | 2 | A source scan proving no agent names a building in code |
+| `test_embedding_standardisation.py` | 14 | Retrieval floor and vector width derive from the loaded model, not a hardcoded constant |
+| `test_embedding_consistency.py` | 9 | Boot-time sweep drops any Qdrant collection built at a different width, for any building |
+| `test_document_indexer_hygiene.py` | 7 | Documents in any editor encoding are indexed; deleted-document folders are never treated as a building |
+| `test_admin_ontology_endpoints.py` | 13 | Admin portal endpoints, auth enforcement |
+| `test_forwarded_user_rbac.py` | 8 | Per-user RBAC through the shared-key proxy; header ignored when untrusted; placeholder stubs never shadow real accounts |
+| `test_admin_password_reset.py` | 5 | Argon2id reset, session revocation, minimum length, non-recoverability |
 | `test_ttl_validator.py` | 10 | TTL parse, prefix/namespace, SHACL gating |
-| `test_auth_manager.py` | 7 | Default registration role, per-account login lockout, `delete_user` Redis cleanup |
+
+**Cross-building regression harness** — one command proves a change didn't break any building:
+
+```bash
+python scripts/regression_harness.py --record   # capture a behavioural baseline for the active building
+python scripts/regression_harness.py            # compare against it; non-zero exit on any regression
+```
+
+It fills 14 fixed checks from the *active* building's own graph (a real room, floor and measurand,
+discovered by SPARQL), so the same set runs on any building — including one onboarded tomorrow.
+It compares behaviour (route taken, whether live data was reached, answered-vs-declined), not
+answer text, and flags an honest decline that turns into an answer as a fabrication risk. A baseline
+is recorded per building under `tasks/regression_baselines/`.
 
 **Live tests (needs running stack):**
 ```bash
 python scripts/corpus_replay.py --sample 240   # stratified 240-question replay (~63.8% pass)
-python scripts/survey_live_test.py             # 95-question regression (94/95 last baseline)
 python scripts/ontosage_qa_suite.py --quick    # persona × intent QA battery
 ```
 

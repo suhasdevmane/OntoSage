@@ -104,14 +104,19 @@ class FloorPlanRegistry:
         )
         return merged
 
-    def load_manifest(self, building_id: str, floor: int) -> Optional[FloorPlanManifest]:
-        """Load the final merged manifest from disk (Phase 4 — alias-aware)."""
-        # Phase 4 — try the requested ID first, then each alias declared in the
-        # BuildingRegistry.  This keeps manifests written under legacy slugs
-        # (e.g. "abacws") accessible to callers using the logical ID ("bldg1").
+    @staticmethod
+    def _identity_candidates(building_id: str) -> List[str]:
+        """Every on-disk name that legitimately belongs to one building.
+
+        Manifests are written under whichever slug the pipeline saw, which for a
+        building onboarded under a legacy name is not its logical id — so a
+        building owns its id, the id that resolves from it, and every declared
+        floor-plan alias.
+        """
         candidates = [building_id]
         try:
             from orchestrator.services.building_registry import get_building_registry
+
             reg = get_building_registry()
             primary = reg.resolve_id(building_id)
             if primary and primary not in candidates:
@@ -123,6 +128,14 @@ class FloorPlanRegistry:
                         candidates.append(alias)
         except Exception:
             pass
+        return candidates
+
+    def load_manifest(self, building_id: str, floor: int) -> Optional[FloorPlanManifest]:
+        """Load the final merged manifest from disk (Phase 4 — alias-aware)."""
+        # Phase 4 — try the requested ID first, then each alias declared in the
+        # BuildingRegistry.  This keeps manifests written under legacy slugs
+        # (e.g. "abacws") accessible to callers using the logical ID ("bldg1").
+        candidates = self._identity_candidates(building_id)
 
         for bid in candidates:
             p = self._manifest_dir / bid / f"floor_{floor}.manifest.json"
@@ -160,9 +173,7 @@ class FloorPlanRegistry:
             return pdf
 
         # Both available — produce v2.0 merged manifest
-        logger.info(
-            f"[registry] Merging DWG + PDF for {pdf.building_id} floor {pdf.floor}"
-        )
+        logger.info(f"[registry] Merging DWG + PDF for {pdf.building_id} floor {pdf.floor}")
         merged_spaces = self._merge_spaces(dwg.spaces, pdf.spaces)
 
         return FloorPlanManifest(
@@ -224,7 +235,11 @@ class FloorPlanRegistry:
                 pdf_zone_ids_used.add(zone_id)
                 # DWG wins for geometry; PDF wins for label if DWG label is generic
                 label = dwg_space.label
-                if label.startswith("Zone ") and pdf_space.label and not pdf_space.label.startswith("Zone "):
+                if (
+                    label.startswith("Zone ")
+                    and pdf_space.label
+                    and not pdf_space.label.startswith("Zone ")
+                ):
                     label = pdf_space.label
 
                 merged.append(
@@ -261,8 +276,32 @@ class FloorPlanRegistry:
     # ── Manifest I/O ──────────────────────────────────────────────────────────
 
     def list_manifests(self) -> List[Tuple[str, int]]:
-        """Return [(building_id, floor)] for every merged manifest on disk."""
-        return self._pdf_pipeline.list_manifests()
+        """Return [(building_id, floor)] for the ACTIVE building's manifests.
+
+        The manifest directory is a mounted volume, so a manifest written by an
+        earlier occupant of that volume survives a building swap. Listing the
+        directory unfiltered served those foreign floors as if they belonged to
+        the running building. Only the active building's own identities are
+        returned; foreign directories are reported once so the leftovers are
+        visible rather than silently ignored.
+        """
+        found = self._pdf_pipeline.list_manifests()
+        try:
+            from shared.config import settings
+
+            owned = {c.lower() for c in self._identity_candidates(settings.BUILDING_ID)}
+        except Exception:
+            return found
+
+        mine = [(bid, floor) for bid, floor in found if str(bid).lower() in owned]
+        foreign = {bid for bid, _ in found if str(bid).lower() not in owned}
+        if foreign:
+            logger.warning(
+                f"[registry] ignoring {len(found) - len(mine)} floor-plan manifests from "
+                f"{sorted(foreign)} — not owned by the active building "
+                f"{settings.BUILDING_ID}; delete them from the mounted volume"
+            )
+        return mine
 
     async def _write_manifest(self, manifest: FloorPlanManifest) -> None:
         d = self._manifest_dir / manifest.building_id
@@ -279,9 +318,7 @@ class FloorPlanRegistry:
             from shared.config import settings
             import redis.asyncio as aioredis
 
-            redis = aioredis.from_url(
-                f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}"
-            )
+            redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}")
             key = f"floor_plan:manifest:{manifest.building_id}:{manifest.floor}"
             await redis.set(key, manifest.model_dump_json(), ex=3600)
             await redis.aclose()

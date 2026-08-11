@@ -7,7 +7,8 @@ import sys
 sys.path.append("/app")
 
 import json
-from datetime import datetime
+import re
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
@@ -23,6 +24,77 @@ from shared.persona_registry import get_persona_registry
 from shared.utils import generate_hash, get_logger
 
 logger = get_logger(__name__)
+
+
+# "now", "now-1d", "now-24h", "now-2w" — the relative forms the intent prompt
+# invites the LLM to produce for a time bound.
+_RELATIVE_DT_RE = re.compile(
+    r"^now(?:\s*-\s*(\d+)\s*(m|min|mins|minute|minutes|h|hr|hrs|hour|hours|"
+    r"d|day|days|w|wk|week|weeks|mo|month|months|y|yr|year|years))?$",
+    re.IGNORECASE,
+)
+
+_RELATIVE_DT_UNITS = {
+    "m": "minutes",
+    "min": "minutes",
+    "mins": "minutes",
+    "minute": "minutes",
+    "minutes": "minutes",
+    "h": "hours",
+    "hr": "hours",
+    "hrs": "hours",
+    "hour": "hours",
+    "hours": "hours",
+    "d": "days",
+    "day": "days",
+    "days": "days",
+    "w": "weeks",
+    "wk": "weeks",
+    "week": "weeks",
+    "weeks": "weeks",
+    "mo": "days",
+    "month": "days",
+    "months": "days",
+    "y": "days",
+    "yr": "days",
+    "year": "days",
+    "years": "days",
+}
+
+# Calendar units the LLM may ask for that timedelta has no field for.
+_RELATIVE_DT_SCALE = {
+    "mo": 30,
+    "month": 30,
+    "months": 30,
+    "y": 365,
+    "yr": 365,
+    "year": 365,
+    "years": 365,
+}
+
+
+def _resolve_relative_dt(value: Optional[str]) -> Optional[str]:
+    """Turn a relative time bound into an absolute 'YYYY-MM-DD HH:MM:SS' stamp.
+
+    The intent prompt accepts relative bounds, but every SQL builder downstream
+    treats a bound as a literal. An unresolved "now-24h" therefore reaches the
+    WHERE clause, where sanitising strips it to "-24" — MySQL then matches no
+    rows and Postgres rejects it as a timezone. Resolving here keeps that
+    contract in one place. Values already absolute pass through untouched.
+    """
+    if not value or not isinstance(value, str):
+        return value
+    s = value.strip()
+    m = _RELATIVE_DT_RE.match(s)
+    if not m:
+        return s
+    now = datetime.utcnow()
+    amount, unit = m.group(1), m.group(2)
+    if amount and unit:
+        u = unit.lower()
+        n = int(amount) * _RELATIVE_DT_SCALE.get(u, 1)
+        now = now - timedelta(**{_RELATIVE_DT_UNITS[u]: n})
+    return now.strftime("%Y-%m-%d %H:%M:%S")
 
 
 # P6: Few-shot library for intent detection
@@ -599,6 +671,32 @@ class DialogueAgent:
         logger.info(f"📥 User Query: {user_query}")
         logger.info(f"📜 Conversation History: {len(state.messages)} messages total")
 
+        # "What is OntoSage / what can you do / how do you work" is settled HERE,
+        # before the capability probe and before the LLM sees it. Left to run, the
+        # probe matched "What is OntoSage?" against a building document that happened
+        # to mention the name — an answer that exists on exactly one building — and
+        # anything it missed reached the open-domain answerer, which claimed to be
+        # "a large-language model built by OpenAI". This question has one correct
+        # answer on every building, including one with no documents and no data yet,
+        # so nothing downstream is allowed a say in it.
+        from orchestrator.services.self_description import is_self_question
+
+        if is_self_question(user_query):
+            logger.info("[dialogue] self-description question — answered from configuration")
+            return {
+                "intent": "self_description",
+                "entities": [],
+                "required_analytics": [],
+                "time_range": {"start": None, "end": None},
+                "general": False,
+                "analytics": False,
+                "sparql_query": "",
+                "start_date": None,
+                "end_date": None,
+                "explanation": "Question about OntoSage itself.",
+                "routing_rules_applied": ["self_description_early"],
+            }
+
         # ── Capability routing — TTL-first, SINGLE path (TODO-012) ──────────────
         # Capabilities are ontosage:Amenity / ontosage:KnowledgeTopic TRIPLES, authored via the
         # admin Capabilities GUI or the OCBV TBox. A query routes to the capability intent when it
@@ -737,8 +835,12 @@ class DialogueAgent:
             # routing is now the deterministic TTL-first probe above; there is no Qdrant
             # capability-KB fallback to soft-override from.)
 
-            # Cache result
-            await redis_manager.set_cache(cache_key, result, ttl=3600)
+            # Cache result — but never a classification failure, which would pin a
+            # wrong intent to this question for the whole TTL.
+            if result.get("classification_failed"):
+                logger.warning("[dialogue] classification failed — not caching this result")
+            else:
+                await redis_manager.set_cache(cache_key, result, ttl=3600)
 
             # Log the detected intent
             logger.info("═" * 80)
@@ -996,10 +1098,21 @@ Return ONLY the JSON object.
                 normalized["analytics"] = normalized["intent"] == "analytics"
                 normalized["sparql_query"] = ""  # No longer generated by LLM
 
-                # Flatten time_range for backward compatibility
+                # Flatten time_range for backward compatibility. The prompt invites
+                # relative bounds ("now-1d"), which every downstream SQL builder
+                # would otherwise splice in as a literal — so resolve them here,
+                # once, into absolute timestamps.
                 if normalized["time_range"]:
-                    normalized["start_date"] = normalized["time_range"].get("start")
-                    normalized["end_date"] = normalized["time_range"].get("end")
+                    normalized["start_date"] = _resolve_relative_dt(
+                        normalized["time_range"].get("start")
+                    )
+                    normalized["end_date"] = _resolve_relative_dt(
+                        normalized["time_range"].get("end")
+                    )
+                    normalized["time_range"] = {
+                        "start": normalized["start_date"],
+                        "end": normalized["end_date"],
+                    }
                 else:
                     normalized["start_date"] = None
                     normalized["end_date"] = None
@@ -1071,6 +1184,9 @@ Return ONLY the JSON object.
             # Fallback: treat as general question
             return {
                 "intent": "general",
+                # Marks this as "we could not classify", not "the user asked a
+                # general question" — the caller must not cache it as a result.
+                "classification_failed": True,
                 "entities": [],
                 "required_analytics": [],
                 "time_range": {"start": None, "end": None},

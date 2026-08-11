@@ -6,6 +6,7 @@
 @prefix bldg: <http://buildsys.org/ontologies/bldg3#> .
 @prefix ontosage: <http://ontosage.org/capabilities#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 bldg:Cap_accessibility a ontosage:InformationTopic,
         ontosage:KnowledgeTopic ;
@@ -127,3 +128,21 @@ bldg:Cap_toilets a ontosage:Amenity,
     ontosage:locationText "near the central core on every floor" ;
     ontosage:note "Toilets including accessible and gender-neutral facilities are on every floor." .
 
+
+# WiFi / network access — a Policy backed by the full document in documents/.
+# The triple carries the short authoritative answer and NAMES its document, so a
+# question is matched to the topic by lay term and any long-form detail is drawn
+# from the document the topic points at, not from whichever chunk scored highest.
+bldg:Pol_wifi a ontosage:Policy ,
+        ontosage:Procedure ,
+        ontosage:KnowledgeTopic ;
+    rdfs:label "WiFi and network access"@en ;
+    ontosage:capabilityCategory "IT" ;
+    ontosage:layTerms "wifi, wi-fi, wireless, internet, network, eduroam, broadband, connectivity, guest wifi, connect to wifi, join wifi, get online, network password, it support, it help, help desk" ;
+    ontosage:answerText "Guests connect to BuildSys3-Guest — no password; a captive portal accepts the terms of use. Staff and students use BuildSys3-Secure with their building credentials, and eduroam is available across all four floors. Coverage includes every floor, the atrium and the IoT Systems Lab." ;
+    ontosage:steps "Select BuildSys3-Guest (visitors) or BuildSys3-Secure (staff and students) from the wireless list; Guests accept the terms on the captive portal — no password is needed; Staff and students sign in with their building credentials; If you have eduroam from another institution it works on all four floors; If you cannot connect, contact the IT service desk" ;
+    ontosage:documentRef "bldg3_wifi.md" ;
+    ontosage:effectiveDate "2026-01-01"^^xsd:date ;
+    ontosage:policyOwner "IT Services" ;
+    ontosage:contactEmail "ithelp@buildsys.example" ;
+    ontosage:contactPhone "extension 4000" .

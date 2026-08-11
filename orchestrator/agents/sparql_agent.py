@@ -9,7 +9,7 @@ sys.path.append("/app")
 import json
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -265,7 +265,34 @@ Your Answer:"""
             if entities:
                 logger.info(f"Using entities extracted by DialogueAgent (filtered): {entities}")
             if not entities:
-                entities = self._extract_entities(user_query)
+                # These are guesses built from natural-language patterns in one
+                # building's naming convention ("zone 3" → bldg:Zone_3). Keep
+                # only the ones the graph actually holds: a guess that misses
+                # is still non-empty, which suppresses label resolution below,
+                # so the query then runs against IRIs that match nothing and the
+                # answer becomes a confident "no data" for a sensor that exists.
+                _guessed = self._extract_entities(user_query)
+                if _guessed:
+                    entities = await self._filter_existing(_guessed)
+                    if not entities:
+                        logger.info(
+                            f"[sparql] pattern-guessed entities {_guessed} are not in this "
+                            f"building's graph — falling back to label resolution"
+                        )
+            # Entities the graph confirms carry a timeseries reference; passed to
+            # template selection so "is this a point?" is answered by the data
+            # rather than by how this building spells its names.
+            ts_entities: Set[str] = set()
+            if not entities:
+                # The dialogue agent named the point in prose rather than as an IRI.
+                # Resolve those names against the graph instead of discarding them —
+                # otherwise the query falls back to a generic template that returns
+                # nothing, and the answer never reaches the timeseries.
+                plain = [e for e in raw_entities if not _valid_ent_re.match(str(e))]
+                if plain:
+                    entities = await self._resolve_entities_by_label(
+                        plain, user_query=user_query, ts_bearing=ts_entities
+                    )
             # T05: prefer HBCO concept brick class over static keyword map
             class_target = None
             _hbco_concepts = state.intermediate_results.get("concepts") or []
@@ -311,7 +338,7 @@ Your Answer:"""
             # Phase 3.1: Template-first routing (zero LLM for common patterns)
             # Expanded dynamically using OntologyIntrospector discovered classes
             if sparql_query is None:
-                sparql_query = self._template_sparql(user_query, entities)
+                sparql_query = self._template_sparql(user_query, entities, ts_entities)
 
             used_template = sparql_query is not None
             # Default analytics decision for template queries
@@ -865,6 +892,22 @@ Return ONLY the corrected SPARQL query."""
         floors = sorted(set(floors), key=int)
         if not floors:
             return None
+
+        # This resolver answers questions about the SENSORS on a floor. A
+        # question about the floor's spaces ("how many rooms are on floor 2")
+        # also names a floor, and answering it with a sensor query returns
+        # nothing — so the honest-sounding "no rooms found" was produced while
+        # the graph held them. Defer to the space templates unless the question
+        # also asks for a measurement.
+        _uq = user_query.lower()
+        _asks_about_spaces = self._mentions(
+            _uq, ["room", "rooms", "zone", "zones", "space", "spaces"]
+        )
+        _asks_for_readings = self._infer_class(_uq) is not None or self._mentions(
+            _uq, ["sensor", "sensors", "reading", "readings", "measurement", "measurements"]
+        )
+        if _asks_about_spaces and not _asks_for_readings:
+            return None
         floor_in = ", ".join(f'"{f}"' for f in floors)
         # Build the point SELECTOR with two naming-agnostic tiers:
         #  1) Brick class (preferred) — from the keyword map or the HBCO concept.
@@ -996,10 +1039,16 @@ SELECT DISTINCT ?sensor ?label ?floorNum ?uuid ?storage WHERE {{
                 out.append(t)
         return out[:limit]
 
-    def _template_sparql(self, user_query: str, entities: List[str]) -> Optional[str]:
+    def _template_sparql(
+        self,
+        user_query: str,
+        entities: List[str],
+        ts_entities: Optional[Set[str]] = None,
+    ) -> Optional[str]:
         """Return a direct SPARQL template for common sensor/location/entity queries with feature detection."""
         uq = user_query.lower()
         features = self._classify_query(uq)
+        ts_entities = ts_entities or set()
 
         # Special case: Building name query
         if ("building" in uq and "name" in uq) or "name of" in uq or "which building" in uq:
@@ -1228,17 +1277,45 @@ SELECT ?sensor ?label ?type ?uuid ?storage WHERE {{
         # ── E.5: 5 additional template patterns ─────────────────────────────
         # T0.6: Zones (or sensors) on a specific floor ("what zones are on floor 5?")
         floor_words = ["floor", "floors", "storey", "storeys", "level", "levels"]
-        _floor_num_m = re.search(r"\bfloor\s*(\d+)\b", uq)
+        _floor_num_m = re.search(r"\b(?:floor|storey|level)\s*(\d+)\b", uq)
         if _floor_num_m and any(w in uq for w in zone_words):
-            floor_entity = f"bldg:Floor{_floor_num_m.group(1)}"
+            # Find the floor by its NUMBER rather than by rebuilding its IRI.
+            # Buildings spell floors differently ("floor2", "Floor_2", label
+            # "Level 2"), so a constructed IRI matches one convention and
+            # silently returns nothing for every other building. Both part-of
+            # directions are traversed because either may be the asserted one,
+            # and rooms count as spaces — a floor's rooms are what "how many
+            # rooms on floor N" is asking for.
+            n = _floor_num_m.group(1)
+            # Count what was actually asked for. A room is usually also typed as
+            # a zone, so counting every space type answers "how many rooms" with
+            # the room count plus the zone count.
+            if self._mentions(uq, ["room", "rooms"]):
+                type_union = "{ ?zone a brick:Room }"
+            elif self._mentions(uq, ["zone", "zones"]):
+                type_union = "{ ?zone a brick:HVAC_Zone } UNION { ?zone a brick:Zone }"
+            else:
+                type_union = (
+                    "{ ?zone a brick:Room } UNION { ?zone a brick:HVAC_Zone } "
+                    "UNION { ?zone a brick:Zone } UNION { ?zone a brick:Space }"
+                )
+            floor_match = (
+                "  { ?floor a brick:Floor . } UNION { ?floor a brick:Level . }\n"
+                "  OPTIONAL { ?floor rdfs:label ?floorLabel . }\n"
+                '  BIND(LCASE(CONCAT(STR(?floor), " ", COALESCE(STR(?floorLabel), ""))) AS ?fhay)\n'
+                f'  FILTER(REGEX(?fhay, "(floor|storey|level)[ _-]*0*{n}([^0-9]|$)"))\n'
+                "  { ?floor brick:hasPart ?zone } UNION { ?zone brick:isPartOf ?floor }\n"
+                f"  {type_union}\n"
+            )
+            if features["wants_count"]:
+                return (
+                    self._prefix_block()
+                    + f"\nSELECT (COUNT(DISTINCT ?zone) AS ?count) WHERE {{\n{floor_match}}}"
+                )
             return (
                 self._prefix_block()
-                + f"""
-SELECT DISTINCT ?zone ?label WHERE {{
-  {floor_entity} brick:hasPart ?zone .
-  {{ ?zone a brick:HVAC_Zone . }} UNION {{ ?zone a brick:Zone . }}
-  OPTIONAL {{ ?zone rdfs:label ?label . }}
-}} ORDER BY ?zone"""
+                + f"\nSELECT DISTINCT ?zone ?label WHERE {{\n{floor_match}"
+                + "  OPTIONAL { ?zone rdfs:label ?label . }\n} ORDER BY ?zone LIMIT 200"
             )
 
         # T1: List all floors / storeys — only when not asking about zones or equipment on a floor
@@ -1336,8 +1413,17 @@ SELECT ?building ?label WHERE {
 } LIMIT 1"""
             )
 
-        # T3a: Direct sensor/entity lookup (entity itself is a sensor/point)
-        sensor_entities = [e for e in entities if re.search(r"(Sensor|Point)", e)]
+        # T3a: Direct sensor/entity lookup (entity itself is a sensor/point).
+        # Membership is decided by the graph — an entity the resolver confirmed
+        # carries a timeseries reference IS a point — with the name check kept
+        # only as a fallback for entities that never went through resolution.
+        # Naming alone cannot decide this: a building that names points
+        # "…Zone_Air_Temp" would fail a "Sensor"/"Point" spelling test and fall
+        # through to the class-level template, which answers about every sensor
+        # of that class instead of the one that was asked about.
+        sensor_entities = [
+            e for e in entities if e in ts_entities or re.search(r"(Sensor|Point)", e)
+        ]
         if sensor_entities:
             patterns = []
             for ent in sensor_entities:
@@ -1396,7 +1482,10 @@ SELECT ?building ?label WHERE {
             "actuator": "brick:Actuator",
         }
         for kw, equip_class in equipment_keywords.items():
-            if kw in uq:
+            # Whole-word only: an equipment type is also a prefix of the units a
+            # building names after it ("ahu" in "AHU01N", "fan" in "fancoil-3"),
+            # so a substring test turns a reading request into an equipment listing.
+            if self._mentions(uq, [kw]):
                 if features["wants_count"]:
                     return (
                         self._prefix_block()
@@ -1611,6 +1700,237 @@ SELECT ?s WHERE {{ ?s rdf:type {brick_class} . FILTER(STRSTARTS(STR(?s), '{bldg_
             logger.warning(f"Class instance query failed for {brick_class}: {e}")
             return []
 
+    # Words that carry no discriminating power when matching a point's name.
+    _LABEL_STOPWORDS = frozenset(
+        {
+            "the",
+            "a",
+            "an",
+            "of",
+            "in",
+            "on",
+            "at",
+            "for",
+            "to",
+            "and",
+            "or",
+            "is",
+            "are",
+            "was",
+            "were",
+            "current",
+            "latest",
+            "value",
+            "reading",
+            "readings",
+            "data",
+            "level",
+            "levels",
+            "what",
+            "show",
+            "me",
+            "my",
+        }
+    )
+
+    @staticmethod
+    def _name_tokens(text: str) -> List[str]:
+        """Split an IRI local name or phrase into comparable lowercase tokens.
+
+        Letter and digit runs are split apart, because a building may write a
+        name with no separator ("floor2"): left whole that is one opaque token,
+        every floor scores identically, and a reference to one floor matches all
+        of them. Single letters are dropped as noise, but single digits are kept
+        — the number is the whole of what distinguishes floor 2 from floor 1.
+        """
+        return [
+            t for t in re.findall(r"[A-Za-z]+|\d+", str(text).lower()) if len(t) > 1 or t.isdigit()
+        ]
+
+    @classmethod
+    def _narrow_to_best_match(cls, candidates: List[str], user_query: str) -> List[str]:
+        """Keep the candidates that best match the words of the question.
+
+        Resolving a unit name alone ("AHU01N") returns every point on that unit,
+        so a question about one measurement would fetch and average all of them.
+        Ranking by how many of the question's own words appear in each point's
+        name — then preferring the shortest such name — picks the measurement
+        actually asked for. Abbreviated names are handled by prefix matching
+        ("temperature" matches "Temp"), which is what makes this work across
+        buildings that abbreviate differently.
+        """
+        if len(candidates) <= 1 or not user_query:
+            return candidates
+
+        q_tokens = [t for t in cls._name_tokens(user_query) if t not in cls._LABEL_STOPWORDS]
+        if not q_tokens:
+            return candidates
+
+        def matches(q: str, cand_tokens: List[str]) -> bool:
+            return any(
+                q == c or (len(q) >= 3 and len(c) >= 3 and (q.startswith(c) or c.startswith(q)))
+                for c in cand_tokens
+            )
+
+        scored = []
+        for cand in candidates:
+            local = cand.split(":", 1)[-1]
+            toks = cls._name_tokens(local)
+            hits = sum(1 for q in q_tokens if matches(q, toks))
+            scored.append((hits, -len(set(toks)), cand))
+
+        # If every candidate scores the same, the question named no measurement —
+        # only the thing they all belong to ("everything about AHU01N"). There is
+        # nothing to choose between them, so keep them all rather than letting the
+        # name-length tie-break pick one arbitrarily.
+        if len({s[0] for s in scored}) == 1:
+            return candidates
+
+        best = max(s[:2] for s in scored)
+        if best[0] == 0:
+            return candidates
+        narrowed = [c for h, n, c in scored if (h, n) == best]
+        if narrowed and len(narrowed) < len(candidates):
+            logger.info(f"[sparql] narrowed {len(candidates)} candidates to {narrowed}")
+        return narrowed or candidates
+
+    async def _resolve_entities_by_label(
+        self,
+        names: List[str],
+        limit: int = 8,
+        user_query: str = "",
+        ts_bearing: Optional[Set[str]] = None,
+    ) -> List[str]:
+        """Resolve human-readable point names to <prefix>:LocalName IRIs.
+
+        The dialogue agent names a point the way a person would ("Supply Air Temp
+        AHU01N"), but the templates need an IRI.  Matching on rdfs:label and the
+        IRI's own local name keeps this portable: every building labels its
+        points, and no two share a naming convention, so nothing here can encode
+        one.  Points carrying a timeseries reference are preferred because those
+        are the ones the SQL stage can actually read.
+        """
+        bldg_ns = _active_namespace()
+        bldg_pfx = _active_prefix()
+        resolved: List[str] = []
+        ts_bearing = ts_bearing if ts_bearing is not None else set()
+
+        for name in names:
+            tokens = [
+                t
+                for t in re.split(r"[^A-Za-z0-9]+", str(name).lower())
+                if len(t) > 1 and t not in self._LABEL_STOPWORDS
+            ]
+            if not tokens:
+                continue
+            # Escape for safe embedding in a SPARQL string literal.
+            filters = " && ".join(
+                'CONTAINS(?hay, "{}")'.format(t.replace("\\", "\\\\").replace('"', '\\"'))
+                for t in tokens
+            )
+            hay = 'BIND(LCASE(CONCAT(STR(?s), " ", COALESCE(STR(?l), ""))) AS ?hay)'
+            # Timeseries-bearing points first, then any typed entity.
+            queries = [
+                f"""{self._prefix_block()}
+SELECT DISTINCT ?s WHERE {{
+  ?s ref:hasExternalReference ?r .
+  OPTIONAL {{ ?s rdfs:label ?l }}
+  {hay}
+  FILTER(STRSTARTS(STR(?s), '{bldg_ns}'))
+  FILTER({filters})
+}} LIMIT {limit}""",
+                f"""{self._prefix_block()}
+SELECT DISTINCT ?s WHERE {{
+  ?s rdf:type ?t .
+  OPTIONAL {{ ?s rdfs:label ?l }}
+  {hay}
+  FILTER(STRSTARTS(STR(?s), '{bldg_ns}'))
+  FILTER({filters})
+}} LIMIT {limit}""",
+            ]
+            for i, q in enumerate(queries):
+                hits = await self._select_subjects(q, bldg_ns, bldg_pfx)
+                if hits:
+                    hits = self._narrow_to_best_match(hits, user_query)
+                    resolved.extend(h for h in hits if h not in resolved)
+                    if i == 0:
+                        # Query 0 required a timeseries reference, so these are
+                        # points the SQL stage can read — regardless of how this
+                        # building spells their names.
+                        ts_bearing.update(hits)
+                    break
+
+        if resolved:
+            logger.info(f"[sparql] resolved {names} → {resolved[:limit]} via rdfs:label/IRI match")
+        return resolved[:limit]
+
+    async def _filter_existing(self, entities: List[str]) -> List[str]:
+        """Return only the entities the active building's graph actually contains.
+
+        An entity is present if it appears as a subject or an object — a room
+        may be described only by what points at it.
+        """
+        safe = [e for e in entities if re.match(r"^[A-Za-z_][A-Za-z0-9_]*:[A-Za-z0-9_.\-]+$", e)]
+        if not safe:
+            return []
+        values = " ".join(safe)
+        q = f"""{self._prefix_block()}
+SELECT DISTINCT ?e WHERE {{
+  VALUES ?e {{ {values} }}
+  {{ ?e ?p ?o }} UNION {{ ?s ?p2 ?e }}
+}}"""
+        try:
+            async with httpx.AsyncClient(timeout=25.0) as client:
+                auth = (
+                    (settings.GRAPHDB_USER, settings.GRAPHDB_PASSWORD)
+                    if settings.GRAPHDB_USER
+                    else None
+                )
+                resp = await client.post(
+                    GRAPHDB_QUERY_ENDPOINT,
+                    auth=auth,
+                    data={"query": q},
+                    headers={"Accept": "application/sparql-results+json"},
+                )
+                resp.raise_for_status()
+                found = {
+                    b.get("e", {}).get("value")
+                    for b in resp.json().get("results", {}).get("bindings", [])
+                }
+        except Exception as e:
+            # A validation outage must not drop entities that may well be real.
+            logger.warning(f"[sparql] entity existence check failed, keeping candidates: {e}")
+            return entities
+
+        ns = _active_namespace()
+        return [e for e in safe if f"{ns}{e.split(':', 1)[1]}" in found]
+
+    async def _select_subjects(self, query: str, bldg_ns: str, bldg_pfx: str) -> List[str]:
+        """Run a SELECT ?s query and return <prefix>:LocalName forms."""
+        try:
+            async with httpx.AsyncClient(timeout=25.0) as client:
+                auth = (
+                    (settings.GRAPHDB_USER, settings.GRAPHDB_PASSWORD)
+                    if settings.GRAPHDB_USER
+                    else None
+                )
+                resp = await client.post(
+                    GRAPHDB_QUERY_ENDPOINT,
+                    auth=auth,
+                    data={"query": query},
+                    headers={"Accept": "application/sparql-results+json"},
+                )
+                resp.raise_for_status()
+                out = []
+                for b in resp.json().get("results", {}).get("bindings", []):
+                    uri = b.get("s", {}).get("value")
+                    if uri and uri.startswith(bldg_ns) and "#" in uri:
+                        out.append(f"{bldg_pfx}:" + uri.split("#", 1)[1])
+                return out
+        except Exception as e:
+            logger.warning(f"[sparql] label resolution query failed: {e}")
+            return []
+
     async def _pattern_instance_search(self, brick_class: str, limit: int = 40) -> List[str]:
         """Fallback: search for URIs containing core type token (e.g., Humidity_Sensor) when rdf:type lookup empty."""
         token = None
@@ -1657,17 +1977,41 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
             logger.warning(f"Pattern instance search failed for token {token}: {e}")
             return []
 
+    @staticmethod
+    def _mentions(uq: str, words: List[str]) -> bool:
+        """True when any term appears as a whole word.
+
+        Substring matching silently misreads ordinary questions: "id" hides
+        inside "humidity", "meter" inside "parameter", and "ahu" inside an
+        identifier like "AHU01N" — so asking for a reading from a named unit
+        was classified as a question about equipment and answered with
+        relationships instead of the sensor's timeseries. Whole-word matching
+        also keeps this portable, since it stops a building's own naming
+        convention from tripping these keywords.
+        """
+        for w in words:
+            pattern = SPARQLAgent._WORD_RE_CACHE.get(w)
+            if pattern is None:
+                pattern = re.compile(rf"\b{re.escape(w)}\b", re.IGNORECASE)
+                SPARQLAgent._WORD_RE_CACHE[w] = pattern
+            if pattern.search(uq):
+                return True
+        return False
+
+    _WORD_RE_CACHE: Dict[str, Any] = {}
+
     def _classify_query(self, uq: str) -> Dict[str, bool]:
+        m = self._mentions
         return {
-            "wants_label": any(w in uq for w in ["label", "name", "called"]),
-            "wants_uuid": any(w in uq for w in ["uuid", "id", "identifier"]),
-            "wants_location": any(w in uq for w in ["location", "located"])
+            "wants_label": m(uq, ["label", "name", "called"]),
+            "wants_uuid": m(uq, ["uuid", "id", "identifier"]),
+            "wants_location": m(uq, ["location", "located"])
             or "where is" in uq
             or "where are" in uq,
-            "wants_count": any(w in uq for w in ["how many", "count", "number of"]),
-            "wants_equipment": any(
-                w in uq
-                for w in [
+            "wants_count": m(uq, ["how many", "count", "number of"]),
+            "wants_equipment": m(
+                uq,
+                [
                     "equipment",
                     "device",
                     "vav",
@@ -1682,9 +2026,9 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
                     "meter",
                     "damper",
                     "actuator",
-                ]
+                ],
             ),
-            "wants_definition": any(w in uq for w in ["definition", "describe", "meaning"]),
+            "wants_definition": m(uq, ["definition", "describe", "meaning"]),
         }
 
     def _ensure_prefixes(self, sparql: str) -> str:

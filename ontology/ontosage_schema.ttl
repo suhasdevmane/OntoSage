@@ -128,6 +128,7 @@
 #       └── ontosage:KnowledgeTopic           (a NON-physical topic: policy / how-to / fault route)
 #             ├── InformationTopic            (a fact: hours, contact, policy)
 #             ├── Procedure                   (a how-to: complaint, booking, lost property)
+#             ├── Policy                      (a governing rule, usually backed by a document)
 #             └── MaintenanceIssue            (a fault + who to report it to)
 #
 #     The admin console "Type" dropdown is generated from these classes.
@@ -172,6 +173,11 @@ ontosage:Procedure rdfs:subClassOf ontosage:KnowledgeTopic ; a owl:Class ;
     rdfs:label "Procedure (how-to)"@en ;
     rdfs:comment "A step-by-step process a stakeholder follows: making a complaint, booking a room, reporting lost property."@en ;
     skos:example "\"how do I make a complaint?\" -> the complaint procedure (with steps + contact)." .
+ontosage:Policy rdfs:subClassOf ontosage:KnowledgeTopic ; a owl:Class ;
+    rdfs:label "Policy"@en ;
+    rdfs:comment "A governing rule of the building — network access, fire safety, data protection, room booking — normally set out in full in an uploaded document. The triple carries the SHORT authoritative answer and, via ontosage:documentRef, names the document that holds the long form. That link is what makes document retrieval deterministic: the question is matched to the policy by lay term, then answered from the document the policy NAMES, instead of whichever chunk a similarity search happened to score highest."@en ;
+    skos:example "\"how do I connect to the wifi?\" -> the network access policy, whose documentRef points at the full policy document." .
+
 ontosage:MaintenanceIssue rdfs:subClassOf ontosage:KnowledgeTopic ; a owl:Class ;
     rdfs:label "Maintenance / fault issue"@en ;
     rdfs:comment "A fault type and who to report it to: leak, broken light, broken lift, heating fault. MAY reference the brick:Equipment it concerns via ontosage:aboutEquipment."@en ;
@@ -284,6 +290,24 @@ ontosage:openingHours a owl:DatatypeProperty ;
     rdfs:comment "Free-text opening hours for an amenity or service."@en ;
     rdfs:domain ontosage:Capability ; rdfs:range xsd:string ;
     skos:example "\"Mon-Fri 09:00-16:30; closed weekends\"" .
+
+ontosage:documentRef a owl:DatatypeProperty ;
+    rdfs:label "backing document"@en ;
+    rdfs:comment "File name of the uploaded document that sets out this topic in full, relative to the building's own documents/ folder. This is the ONE assertion that makes document retrieval deterministic. Without it a question is matched to a document by cosine similarity alone, against a floor calibrated on one corpus and one embedding model — so changing either silently changes which document answers which question. With it, the question is matched to the TOPIC by lay term and the answer is drawn from the document the topic NAMES; similarity then only orders chunks WITHIN the right document. No building name appears in code: the building declares its own documents."@en ;
+    rdfs:domain ontosage:KnowledgeTopic ; rdfs:range xsd:string ;
+    skos:example "\"fire_safety.md\"" .
+
+ontosage:effectiveDate a owl:DatatypeProperty ;
+    rdfs:label "effective date"@en ;
+    rdfs:comment "Date this policy came into force. Lets an answer say WHICH version it is quoting, and lets a superseded policy be spotted rather than silently answered from."@en ;
+    rdfs:domain ontosage:KnowledgeTopic ; rdfs:range xsd:date ;
+    skos:example "\"2026-01-01\"^^xsd:date" .
+
+ontosage:policyOwner a owl:DatatypeProperty ;
+    rdfs:label "policy owner"@en ;
+    rdfs:comment "The team accountable for this policy, so an answer can say who to take it up with rather than leaving the user to guess."@en ;
+    rdfs:domain ontosage:KnowledgeTopic ; rdfs:range xsd:string ;
+    skos:example "\"IT Services\"" .
 
 
 ####################################################################################################
@@ -609,7 +633,14 @@ ontosage:Src_GraphDB       a ontosage:SourceType ; rdfs:label "Knowledge graph (
 ontosage:Src_TimeSeriesDB  a ontosage:SourceType ; rdfs:label "Time-series database"@en ; rdfs:comment "Live sensor readings fetched by UUID from the registered time-series store."@en .
 ontosage:Src_Analytics     a ontosage:SourceType ; rdfs:label "Analytics / forecast engine"@en ; rdfs:comment "Computed results — aggregates, anomalies, forecasts — over sensor data."@en .
 ontosage:Src_FloorPlan     a ontosage:SourceType ; rdfs:label "Floor plan (PDF/DWG)"@en ; rdfs:comment "Spatial geometry answers from floor-plan manifests (areas, adjacency, block locations)."@en .
-ontosage:Src_CapabilityKB  a ontosage:SourceType ; rdfs:label "Capability / document KB"@en ; rdfs:comment "Off-ontology amenity/procedure/policy facts (Module A) and document retrieval."@en .
+# Ontology-asserted facts and retrieved document prose are DIFFERENT kinds of
+# evidence and must not share one chip: a fact stated in a triple is authored and
+# auditable, while a document chunk was selected by similarity and may merely be
+# nearby. Reporting both as one source made an answer look better-grounded than it
+# was. Src_CapabilityKB is retained so existing provenance records keep resolving.
+ontosage:Src_Ontology      a ontosage:SourceType ; rdfs:label "Building ontology (triples)"@en ; rdfs:comment "Amenity / knowledge-topic / policy facts asserted as triples in the building's own TTL (Module A). Authored and auditable — the answer is what the building states."@en .
+ontosage:Src_Document      a ontosage:SourceType ; rdfs:label "Uploaded document"@en ; rdfs:comment "Prose retrieved from an uploaded manual or policy document. When the topic names its document via ontosage:documentRef the retrieval is scoped to that document; otherwise it was chosen by similarity alone and is weaker evidence."@en .
+ontosage:Src_CapabilityKB  a ontosage:SourceType ; rdfs:label "Capability / document KB (deprecated)"@en ; rdfs:comment "DEPRECATED — superseded by ontosage:Src_Ontology and ontosage:Src_Document, which distinguish an asserted fact from retrieved prose. Kept so historical provenance records still resolve."@en ; owl:deprecated true .
 ontosage:Src_ReportIntake  a ontosage:SourceType ; rdfs:label "Report intake"@en ; rdfs:comment "The report-filing path (Module E) — used when the utterance states a problem."@en .
 
 ontosage:groundedIn a owl:ObjectProperty ;

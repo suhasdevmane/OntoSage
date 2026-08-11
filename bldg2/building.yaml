@@ -7,6 +7,19 @@ building_name: "BuildSys Building (bldg2)"
 ontology_namespace: "http://buildsys.org/ontologies/bldg2#"
 ontology_prefix: bldg          # bldg2.ttl uses the standard `bldg:` label
 
+# ── Data provenance (building-level) ─────────────────────────────────────────
+# Describes the WHOLE building — its ontology, sensors AND readings — which is a
+# broader statement than `nature:` on a single connection in database_registry.yaml
+# (that refines one data source). Both are read live; neither is hardcoded in code,
+# so a new building declares its own answer.
+#   real      — a real building: the model describes actual equipment and the
+#               readings come from it
+#   synthetic — a fabricated building: ontology, sensors and every reading generated
+#   mixed     — a real building where SOME sources are generated (see per-source nature)
+provenance:
+  nature: synthetic
+  note: "Portability fixture. The ontology, its sensors and every reading are generated — no element of this building corresponds to real equipment."
+
 # Off-ontology capability KB routing (defaults are fine for most buildings).
 capability_routing:
   enabled: true

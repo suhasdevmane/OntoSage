@@ -56,6 +56,22 @@
 
 databases:
 
+  # ── PostgreSQL time-series (a SECOND backend technology for this building) ──
+  # Demonstrates the pluggable-datasource claim: MySQL and PostgreSQL serve the same
+  # building simultaneously, chosen per sensor by `ref:storedAt`. Narrow shape:
+  # (uuid, datetime, value). Adding a backend needs no code — only this entry.
+  # TTL: ref:storedAt bldg:database_pg
+  database_pg:
+    type: postgresql
+    host: "${POSTGRES_USER_HOST:-postgres-user-data}"   # the running user/app Postgres
+    port: "${POSTGRES_PORT:-5432}"
+    user: "${POSTGRES_USER_USER:-ontobot}"
+    password: "${POSTGRES_USER_PASSWORD:-ontobot_secret}"
+    database: "${POSTGRES_USER_DB:-ontobot}"
+    table: sensor_timeseries
+    nature: synthetic
+    note: "PostgreSQL narrow time-series · second backend technology for this building"
+
   # ══════════════════════════════════════════════════════════════════════════
   # (1)  MySQL / MariaDB family
   #    Adapter: mysql  (aiomysql)
@@ -87,6 +103,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic series"
   occupancy_data:
     type: mysql_narrow
     table: occupancy_data
@@ -95,6 +113,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic series"
   water_data:
     type: mysql_narrow
     table: water_data
@@ -103,6 +123,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic series"
   noise_data:
     type: mysql_narrow
     table: noise_data
@@ -111,6 +133,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic series"
   iaq_data:
     type: mysql_narrow
     table: iaq_data
@@ -119,6 +143,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic series"
   light_data:
     type: mysql_narrow
     table: light_data
@@ -127,6 +153,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic series"
   equipment_data:
     type: mysql_narrow
     table: equipment_data
@@ -135,6 +163,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic series"
 
   # Floors 0-4 sensors (522 real abacws sensors) — demo timeseries in a narrow table.
   # TTL: ref:storedAt bldg:database1_floors04 (re-pointed from database1, which is

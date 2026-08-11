@@ -87,6 +87,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic energy series"
   occupancy_data:
     type: mysql_narrow
     table: occupancy_data
@@ -95,6 +97,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic occupancy series"
   water_data:
     type: mysql_narrow
     table: water_data
@@ -103,6 +107,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic water series"
   noise_data:
     type: mysql_narrow
     table: noise_data
@@ -111,6 +117,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic acoustic series — bldg1 has NO real noise sensors"
   iaq_data:
     type: mysql_narrow
     table: iaq_data
@@ -119,6 +127,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · 6 extra synthetic IAQ points; the building's 374 real IAQ sensors live in database1"
   light_data:
     type: mysql_narrow
     table: light_data
@@ -127,6 +137,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic illuminance; real Illuminance_Sensors live in database1"
   equipment_data:
     type: mysql_narrow
     table: equipment_data
@@ -135,6 +147,8 @@ databases:
     user: "${MYSQL_USER:-root}"
     password: "${MYSQL_PASSWORD:-mysql}"
     database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "demo source (datasources.yaml) · synthetic equipment power series"
 
   # Floors 0-4 sensors (522 real abacws sensors) — demo timeseries in a narrow table.
   # TTL: ref:storedAt bldg:database1_floors04 (re-pointed from database1, which is

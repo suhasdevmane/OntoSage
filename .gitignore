@@ -88,6 +88,10 @@ brick assets/
 !.env1.example
 !.env2.example
 !.env3.example
+# Plaintext credential exports from the admin console / bulk provisioning.
+# These contain real usernames + passwords — never commit them.
+user_credentials*.csv
+credentials*.csv
 gitpat.txt
 my_password.txt
 **/id_rsa

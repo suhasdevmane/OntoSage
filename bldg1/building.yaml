@@ -18,6 +18,19 @@ building_name: Abacws Building
 # hardcoded default in shared/config.py — swapping BACK to bldg1 would fail.
 ontology_namespace: "http://abacwsbuilding.cardiff.ac.uk/abacws#"
 
+# ── Data provenance (building-level) ─────────────────────────────────────────
+# Describes the WHOLE building — its ontology, sensors AND readings — a broader
+# statement than `nature:` on a single connection in database_registry.yaml (that
+# refines one data source). Both are read live; neither is hardcoded in code, so a
+# new building declares its own answer.
+#   real      — a real building: the model describes actual equipment and the
+#               readings come from it
+#   synthetic — a fabricated building: ontology, sensors and every reading generated
+#   mixed     — a real building where SOME sources are generated (see per-source nature)
+provenance:
+  nature: mixed
+  note: "Real building (Cardiff University Abacws). The ontology describes real equipment and database1 holds the original measured dataset; the demo tables marked nature: synthetic in database_registry.yaml are generated."
+
 # ── Capability semantic routing thresholds ────────────────────────────────────
 #
 # Calibrated 2026-05-22 against LOCAL sentence-transformers/all-MiniLM-L6-v2

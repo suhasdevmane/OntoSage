@@ -1,0 +1,146 @@
+{
+ "count_sensors": {
+  "question": "How many sensors are there?",
+  "expect": "ANSWERED",
+  "verdict": "ANSWERED",
+  "intent": "metadata",
+  "live": false,
+  "markers": {},
+  "forbidden_present": [],
+  "secs": 7.1
+ },
+ "count_floors": {
+  "question": "How many floors does this building have?",
+  "expect": "ANSWERED",
+  "verdict": "ANSWERED",
+  "intent": "metadata",
+  "live": false,
+  "markers": {},
+  "forbidden_present": [],
+  "secs": 6.1
+ },
+ "sensor_types": {
+  "question": "What sensor types are available in this building?",
+  "expect": "ANSWERED",
+  "verdict": "ANSWERED",
+  "intent": "discovery",
+  "live": false,
+  "markers": {},
+  "forbidden_present": [],
+  "secs": 11.1
+ },
+ "equipment_inventory": {
+  "question": "What equipment is installed in this building?",
+  "expect": "ANSWERED",
+  "verdict": "ANSWERED",
+  "intent": "capability",
+  "live": false,
+  "markers": {},
+  "forbidden_present": [],
+  "secs": 4.4
+ },
+ "reading_floor": {
+  "question": "What is the air quality on floor 1?",
+  "expect": "ANSWERED",
+  "verdict": "ANSWERED",
+  "intent": "sensor_data",
+  "live": true,
+  "markers": {},
+  "forbidden_present": [],
+  "secs": 22.0
+ },
+ "reading_room": {
+  "question": "What is the air quality in Room 0.01 \u2014 Main Reception?",
+  "expect": "ANSWERED",
+  "verdict": "ANSWERED",
+  "intent": "general_knowledge",
+  "live": false,
+  "markers": {},
+  "forbidden_present": [],
+  "secs": 26.1
+ },
+ "rooms_on_floor": {
+  "question": "How many rooms are on floor 1?",
+  "expect": "ANSWERED",
+  "verdict": "ANSWERED",
+  "intent": "sensor_data",
+  "live": false,
+  "markers": {},
+  "forbidden_present": [],
+  "secs": 10.3
+ },
+ "floor_plan": {
+  "question": "Show me floor 1",
+  "expect": "ANSWERED",
+  "verdict": "ANSWERED",
+  "intent": "floor_plan",
+  "live": false,
+  "markers": {},
+  "forbidden_present": [],
+  "secs": 6.7
+ },
+ "absent_space": {
+  "question": "How many sensors are in the swimming pool?",
+  "expect": "DECLINED",
+  "verdict": "DECLINED",
+  "intent": "metadata",
+  "live": false,
+  "markers": {},
+  "forbidden_present": [],
+  "secs": 7.4
+ },
+ "absent_space_2": {
+  "question": "What is the temperature on the rooftop helipad?",
+  "expect": "DECLINED",
+  "verdict": "DECLINED",
+  "intent": "capability",
+  "live": false,
+  "markers": {},
+  "forbidden_present": [],
+  "secs": 0.6
+ },
+ "absent_building": {
+  "question": "What is the air quality in Building 47?",
+  "expect": "DECLINED",
+  "verdict": "DECLINED",
+  "intent": "capability",
+  "live": false,
+  "markers": {},
+  "forbidden_present": [],
+  "secs": 0.4
+ },
+ "service_history": {
+  "question": "When was the equipment last serviced?",
+  "expect": "ANY",
+  "verdict": "DECLINED",
+  "intent": "capability",
+  "live": false,
+  "markers": {},
+  "forbidden_present": [],
+  "secs": 0.5
+ },
+ "general_knowledge": {
+  "question": "What is a VAV box?",
+  "expect": "ANSWERED",
+  "verdict": "ANSWERED",
+  "intent": "general_knowledge",
+  "live": false,
+  "markers": {
+   "definition": true
+  },
+  "forbidden_present": [],
+  "secs": 12.6
+ },
+ "fault_report": {
+  "question": "There is a water leak on floor 1",
+  "expect": "ANY",
+  "verdict": "ANSWERED",
+  "intent": "maintenance",
+  "live": false,
+  "markers": {
+   "ticket": true
+  },
+  "forbidden_present": [],
+  "secs": 10.0
+ }
+}

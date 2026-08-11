@@ -345,6 +345,9 @@ class AdapterRegistry:
                 user=cfg.get("user") or None,
                 password=cfg.get("password") or None,
                 database=cfg.get("database") or None,
+                # Narrow vs wide layout is detected from this table's schema;
+                # omitting it falls back to scanning the whole public schema.
+                table=cfg.get("table") or None,
             )
 
         if db_type == "timescaledb":

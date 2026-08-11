@@ -93,8 +93,14 @@
               <h3>Provenance legend</h3>
               <p class="hint">Every answer is tagged with the systems that produced it.</p>
               <ul id="legend-list"></ul>
-              <div class="legend-note"><span class="chip sim">simulated</span> = synthetic data
-                injected to demonstrate a capability current BMS access doesn't expose.</div>
+              <div class="legend-note"><span class="chip sim">demo source</span> labels THIS
+                synthetic source only — it does <b>not</b> mean the building has no real sensors
+                for that modality. See the live split below.</div>
+
+              <h3 class="prov-h">Live data provenance</h3>
+              <p class="hint">Counted now from this building's ontology — which backend each
+                sensor actually reads from, and whether that backend holds real or synthetic data.</p>
+              <div id="prov-summary"><p class="hint">Loading…</p></div>
             </aside>
           </div>
         </section>
@@ -202,8 +208,8 @@
             connection used to fetch its time-series. Credentials are stored in <code>.env</code>;
             the connection entry lives in <code>database_registry.custom.yaml</code> (your curated
             registry is never rewritten). Applies after a restart.</p>
-          <p class="legend-note"><span class="src-badge real">real</span> = the original abacws
-            dataset (<code>database1</code>) &nbsp; <span class="src-badge sim">synthetic</span> =
+          <p class="legend-note"><span class="src-badge real">real</span> = a source this building
+            declares as measured data &nbsp; <span class="src-badge sim">synthetic</span> =
             tables generated for this demo. <b>All time-series values are demo/simulated data</b> —
             the badge reflects the origin of the data <em>source</em>, not that any readings are live.</p>
           <div id="db-list" class="db-list"></div>
@@ -270,9 +276,9 @@
             Requires <code>system:admin</code>.</p>
           <div class="form-grid" id="bldg-identity">
             <label>Building ID <input id="bldg-id" disabled title="Set via BUILDING_ID / building.yaml" /></label>
-            <label>Name <input id="bldg-name" placeholder="Abacws Building" /></label>
+            <label>Name <input id="bldg-name" placeholder="e.g. Riverside HQ" /></label>
             <label class="wide-field">Ontology namespace <input id="bldg-ns"
-              placeholder="http://abacwsbuilding.cardiff.ac.uk/abacws#" /></label>
+              placeholder="e.g. http://example.org/riverside#" /></label>
             <label>Prefix <input id="bldg-prefix" placeholder="bldg" /></label>
           </div>
 
@@ -452,9 +458,15 @@
     <div class="modal-backdrop" id="login-modal" hidden>
       <div class="modal">
         <h3>Sign in</h3>
-        <p class="hint">Admin actions (.env, databases) need a <code>system:admin</code> account.</p>
+        <p class="hint">Sign in with an <b>admin</b> account. Username or email both work — the same credentials as the chat interface. Non-admin accounts can use chat on port 3000.</p>
         <label>Username <input id="u" autocomplete="username" /></label>
-        <label>Password <input id="p" type="password" autocomplete="current-password" /></label>
+        <label>Password
+          <span class="pw-wrap">
+            <input id="p" type="password" autocomplete="current-password" />
+            <button type="button" class="pw-eye" data-pw-toggle="p"
+                    aria-label="Show password" title="Show / hide password"></button>
+          </span>
+        </label>
         <div class="modal-actions">
           <button class="btn ghost" data-close>Cancel</button>
           <button class="btn primary" id="do-login">Sign in</button>
@@ -664,11 +676,39 @@
       </div>
     </div>
 
+    <div class="modal-backdrop" id="pw-modal" hidden>
+      <div class="modal">
+        <h3>Set password</h3>
+        <p class="hint">Setting a new password for <b id="pw-user">—</b>. Existing passwords are
+          hashed and cannot be displayed; this replaces it.</p>
+        <label>New password
+          <span class="pw-wrap">
+            <input id="pw-new" type="password" autocomplete="new-password" />
+            <button type="button" class="pw-eye" data-pw-toggle="pw-new"
+                    aria-label="Show password" title="Show / hide password"></button>
+          </span>
+          <span class="hint pw-hint">12+ characters. Takes effect immediately — no restart. Any
+            active sessions for this user are signed out.</span>
+        </label>
+        <div class="modal-actions">
+          <button class="btn ghost" data-close>Cancel</button>
+          <button class="btn primary" id="do-pw">Set password</button>
+        </div>
+      </div>
+    </div>
+
     <div class="modal-backdrop" id="user-modal" hidden>
       <div class="modal">
         <h3>Add user</h3>
         <label>Username <input id="nu-name" autocomplete="off" /></label>
-        <label>Password <input id="nu-pass" type="password" autocomplete="new-password" /></label>
+        <label>Password
+          <span class="pw-wrap">
+            <input id="nu-pass" type="password" autocomplete="new-password" />
+            <button type="button" class="pw-eye" data-pw-toggle="nu-pass"
+                    aria-label="Show password" title="Show / hide password"></button>
+          </span>
+          <span class="hint pw-hint">12+ characters. Stored as a one-way hash — it cannot be read back later, only reset.</span>
+        </label>
         <label>Role
           <select id="nu-role">
             <option value="readonly">readonly</option>
