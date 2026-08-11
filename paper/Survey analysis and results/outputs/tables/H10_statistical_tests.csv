@@ -1,6 +1,0 @@
-Test,Method,Statistic,p_value,Effect_size,Interpretation,Significant
-Outcome distribution vs. Complexity,Chi-square,chi2(2)=16.66,0.0002,V=0.048,small,Yes
-Outcome distribution vs. Stage,Chi-square,chi2(3)=54.25,0.0,V=0.087,small,Yes
-Latency vs. Outcome category,Kruskal-Wallis H,H=802.62,0.0,eta2=0.113,medium,Yes
-Outcome distribution vs. Intent type,Chi-square,chi2(3)=32.61,0.0,V=0.068,small,Yes
-Latency vs. Elicitation stage,Kruskal-Wallis H,H=56.98,0.0,eta2=0.008,small,Yes

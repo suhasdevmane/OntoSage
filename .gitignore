@@ -46,7 +46,7 @@ abacws_chatbot_env/
 .rasaenv/
 .rasa/
 todos/
-papers/
+paper/
 ##############################
 # Jupyter
 ##############################
@@ -258,17 +258,15 @@ blobs/
 paper/
 .paper/
 ##############################
-# Paper: explicit exclusions within force-tracked paper/ subtree
-# (build artifacts and compiled output — never commit these)
+# Paper: NOT tracked at all.
+# paper/ was listed above but its contents had been force-added (git add -f), so
+# 131 files — the survey analysis, participant response data and the unpublished
+# writeup — kept syncing despite the ignore rule. They are untracked as of
+# 2026-08-11 and stay on disk locally. The per-file exclusions that used to live
+# here only made sense while the subtree was force-tracked; the single paper/
+# rule above now covers everything, so nothing inside it needs listing.
+# Do NOT `git add -f` this folder.
 ##############################
-paper/research paper.aux
-paper/research paper.bbl
-paper/research paper.blg
-paper/research paper.log
-paper/research paper.out
-paper/research paper.pdf
-paper/post_design_survey/generate_session_logs.py
-paper/post_design_survey/sessions/
 ##############################
 # Claude Code local settings (machine-specific, not for sharing)
 ##############################

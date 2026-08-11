@@ -281,3 +281,18 @@ bldg:Cap_maintenance_history a ontosage:InformationTopic, ontosage:KnowledgeTopi
     ontosage:layTerms "maintenance history, service history, last serviced, when was it serviced, service record, maintenance log, repair history, last inspection, when was it last checked, servicing, maintenance record" ;
     ontosage:answerText "Maintenance and servicing activity for building equipment is recorded in the maintenance log, which covers service dates, work carried out and equipment condition." ;
     ontosage:documentRef "maintenance_log.md" .
+
+# ── First aid / defibrillator ────────────────────────────────────────────────
+# Backed by this building's OWN graph: bldg:AED_Reception, bldg:AED_Floor3 and
+# bldg:AED_Floor5 are modelled equipment, so this amenity states only what the
+# ontology already asserts. Amenities that cannot be verified for this REAL
+# building (vending, drinking-water points, a green roof) are deliberately NOT
+# declared — an unverified amenity is a fabrication, and the honest decline plus
+# "here is how to add it" is the correct answer until someone confirms.
+bldg:Cap_first_aid a ontosage:Amenity,
+        ontosage:FirstAidPoint ;
+    rdfs:label "Defibrillator (AED) and first aid"@en ;
+    ontosage:layTerms "defibrillator, aed, first aid, emergency medical, heart attack, cardiac, resuscitation, first aider" ;
+    ontosage:locationText "Defibrillators are modelled at reception, floor 3 and floor 5." ;
+    ontosage:capabilityCategory "EMERGENCY" ;
+    ontosage:answerText "Defibrillators (AEDs) are located at reception and on floors 3 and 5. In a medical emergency call 999 first, then Security on the internal emergency number." .

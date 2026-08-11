@@ -1,0 +1,57 @@
+# =============================================================================
+#  Abacws — the building's own description
+#
+#  WHY THIS FILE EXISTS
+#  Measured against the survey corpus, the largest class of unanswered question
+#  was not about sensors. It was about the building AS AN ENTITY — "how old is
+#  it?", "who owns it?", "what type of building is this?", "are visitors
+#  allowed?". Every one deflected, because no instance carried the facts. This
+#  building did not even declare itself as a brick:Building.
+#
+#  Brick's own predicates are used wherever they exist (yearBuilt, grossArea,
+#  buildingPrimaryFunction); the OCBV terms cover only what Brick has none for.
+#
+#  HONESTY NOTE — READ BEFORE EXTENDING
+#  Abacws is a REAL building. Only facts that are certain are asserted here.
+#  Anything uncertain is left OUT rather than guessed: an invented year in a
+#  real building's ontology is precisely the fabrication this system exists to
+#  prevent, and it would be indistinguishable from a sourced one. Questions
+#  about an absent fact are declined honestly and tell the reader what to add,
+#  which is the correct behaviour until someone who knows fills it in.
+#
+#  TO COMPLETE THIS FILE (values the building's estates team can confirm):
+#      brick:yearBuilt              "YYYY"^^xsd:integer
+#      brick:grossArea              "<m2>"^^xsd:decimal
+#      ontosage:buildingArchitect   "<practice / contractor>"
+#      ontosage:buildingStoreys     "<n>"^^xsd:integer
+#  Uncomment and fill; each one becomes answerable immediately, no code change.
+# =============================================================================
+
+@prefix brick:    <https://brickschema.org/schema/Brick#> .
+@prefix bldg:     <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+
+bldg:AbacwsBuilding a brick:Building ;
+    rdfs:label "Abacws Building" ;
+
+    # ── Brick's own vocabulary, used as-is ───────────────────────────────────
+    brick:buildingPrimaryFunction "Education" ;
+
+    # ── OCBV terms — what Brick has no predicate for ─────────────────────────
+    ontosage:buildingOwner "Cardiff University" ;
+    ontosage:buildingOperator "Cardiff University Estates" ;
+    ontosage:buildingAddress "Senghennydd Road, Cathays, Cardiff" ;
+    ontosage:buildingPurpose
+        "A university teaching and research building housing the School of Computer Science and Informatics and the School of Mathematics, with lecture theatres, teaching laboratories, research space and academic offices." ;
+    ontosage:buildingOccupancyType
+        "University staff, researchers and students; not a residential building." ;
+    ontosage:buildingAccessPolicy
+        "An academic building rather than a public one. Staff and students have card access; visitors should arrange their visit with the school they are attending and report to reception on arrival." .
+
+    # ── Left deliberately unasserted — see the honesty note above ────────────
+    # brick:yearBuilt            "YYYY"^^xsd:integer ;
+    # brick:grossArea            "0"^^xsd:decimal ;
+    # ontosage:buildingArchitect "…" ;
+    # ontosage:buildingStoreys   "0"^^xsd:integer ;
