@@ -1,0 +1,3086 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/CAPABILITY_ROUTING/">
+      
+      
+        <link rel="prev" href="../SERVICES/">
+      
+      
+        <link rel="next" href="../CONVERSATION_INTELLIGENCE/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Capability Routing (v2.0) - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../assets/overrides.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#capability-semantic-routing" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Capability Routing (v2.0)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-this-exists-the-off-ontology-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why This Exists — The Off-Ontology Problem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#four-collaborating-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Four Collaborating Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-three-band-routing-decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Three-Band Routing Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#capabilityyaml-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        capability.yaml Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="capability.yaml Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#indexing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indexing Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Categories
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#buildingyaml-routing-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        building.yaml Routing Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="building.yaml Routing Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#validation-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#provider-switching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider Switching
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider Switching">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#switch-with-one-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switch with one command
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#threshold-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threshold Calibration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Threshold Calibration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calibrated-values-for-bldg1-abacws-32-kb-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calibrated values for bldg1 (Abacws, 32 KB entries)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calibration-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calibration Script
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calibration-rules-of-thumb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calibration Rules of Thumb
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-characteristics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Characteristics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#failure-modes-graceful-degradation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure Modes &amp; Graceful Degradation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-intent-extension-opt-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Intent Extension (Opt-In)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-buildings-kb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Building's KB
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observability-admin-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability &amp; Admin Endpoints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Observability &amp; Admin Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#admin-endpoint-for-indexer-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Admin endpoint for indexer state
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-request-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-request observability
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Coverage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-this-exists-the-off-ontology-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why This Exists — The Off-Ontology Problem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#four-collaborating-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Four Collaborating Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-three-band-routing-decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Three-Band Routing Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#capabilityyaml-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        capability.yaml Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="capability.yaml Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#indexing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indexing Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Categories
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#buildingyaml-routing-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        building.yaml Routing Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="building.yaml Routing Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#validation-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#provider-switching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider Switching
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider Switching">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#switch-with-one-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switch with one command
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#threshold-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threshold Calibration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Threshold Calibration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calibrated-values-for-bldg1-abacws-32-kb-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calibrated values for bldg1 (Abacws, 32 KB entries)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calibration-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calibration Script
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calibration-rules-of-thumb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calibration Rules of Thumb
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-characteristics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Characteristics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#failure-modes-graceful-degradation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure Modes &amp; Graceful Degradation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-intent-extension-opt-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Intent Extension (Opt-In)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-buildings-kb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Building's KB
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observability-admin-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability &amp; Admin Endpoints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Observability &amp; Admin Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#admin-endpoint-for-indexer-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Admin endpoint for indexer state
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-request-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-request observability
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Coverage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/CAPABILITY_ROUTING.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="capability-semantic-routing">Capability Semantic Routing<a class="headerlink" href="#capability-semantic-routing" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>⚠️ <strong>SUPERSEDED (2026-07-28, TODO-012).</strong> The Qdrant capability-KB and its
+<code>capability.yaml</code> source were <strong>removed</strong>. Capabilities are now first-class
+<strong>triples</strong> — <code>ontosage:Amenity</code> / <code>ontosage:KnowledgeTopic</code> in
+<code>input/&lt;id&gt;_capabilities.ttl</code>, authored via <strong>Admin ▸ Capabilities</strong> and resolved
+deterministically by <code>services/capability_graph_resolver.py</code>. Uploaded documents
+remain a separate source, and since BUG-103 both are filtered by
+<code>services/grounding_guard.py</code>, which requires a passage to actually mention what was
+asked before it may be presented as an answer.</p>
+<p>This document is kept for the <strong>design rationale</strong> (the off-ontology problem and the
+corpus evidence behind it), which still holds. Treat the scoring bands, thresholds and
+<code>capability.yaml</code> schema below as historical.</p>
+<p><strong>Added in v2.0 (May 2026).</strong> Replaces the legacy <code>_CAPABILITY_KW</code> keyword-matching path with semantic vector routing. Reduces median latency for off-ontology questions from ~700 ms (LLM intent + KB search) to <strong>&lt;50 ms warm</strong> / &lt;150 ms cold, and eliminates an entire class of misclassification errors where the LLM picked <code>sparql</code> or <code>discovery</code> for questions that had no ontological answer.</p>
+</blockquote>
+<hr />
+<h2 id="why-this-exists-the-off-ontology-problem">Why This Exists — The Off-Ontology Problem<a class="headerlink" href="#why-this-exists-the-off-ontology-problem" title="Permanent link">&para;</a></h2>
+<p>Corpus analysis of <strong>5,916 pre-development survey questions</strong> across 81 participants and three real buildings revealed that <strong>~50% of real building queries cannot be answered by SPARQL or SQL</strong> because the information is not in the ontology or time-series database:</p>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Share of corpus</th>
+<th>Example queries</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CAPABILITY (building features, policies)</td>
+<td>25.6%</td>
+<td>"Can I bring my dog?", "What are the fire procedures?"</td>
+</tr>
+<tr>
+<td>OTHER / off-ontology</td>
+<td>24.0%</td>
+<td>"Where's the bike rack?", "Is there a prayer room?"</td>
+</tr>
+<tr>
+<td><strong>Total off-ontology</strong></td>
+<td><strong>~50%</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Pre-v2.0, these queries either fell through to a generic LLM response (hallucination risk) or matched a brittle hand-maintained keyword list (<code>_CAPABILITY_KW</code>) that grew unmaintainable past ~30 entries. Semantic routing solves both problems with a single Qdrant collection per building.</p>
+<hr />
+<h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart TB
+    subgraph Startup["Startup pipeline (idempotent · SHA-256 fingerprint)"]
+        direction LR
+        YAML["capability.yaml&lt;br/&gt;per building"] --&gt; Indexer[CapabilityIndexer]
+        BldgYAML["building.yaml&lt;br/&gt;routing config"] -.-&gt; Indexer
+        Indexer --&gt;|embed each&lt;br/&gt;keyword + content| Embed1[EmbeddingService]
+        Embed1 --&gt;|upsert points| QdrantColl[("Qdrant&lt;br/&gt;capability_&amp;lt;bldg&amp;gt;")]
+        Indexer --&gt;|cache SHA on every point| QdrantColl
+    end
+
+    subgraph Query["Query-time (every user message)"]
+        direction TB
+        User[User message] --&gt; Dialogue[Dialogue Agent]
+        Dialogue --&gt;|classify| Router[SemanticRouter.classify]
+        Router --&gt; Embed2[EmbeddingService&lt;br/&gt;+ Redis embed cache]
+        Embed2 --&gt; QdrantColl
+        QdrantColl --&gt;|top-k points| Router
+        Router --&gt;|group by entry_id&lt;br/&gt;max-pool score| Decide{score band?}
+        Decide --&gt;|score ≥ override_min| HardOverride[Hard override:&lt;br/&gt;intent = capability&lt;br/&gt;SKIP LLM]
+        Decide --&gt;|threshold ≤ score &lt; override_min| LLM[LLM intent classify]
+        Decide --&gt;|score &lt; threshold| LLM
+        LLM --&gt;|if non-data intent| SoftOverride[Soft override:&lt;br/&gt;intent = capability]
+        LLM --&gt;|otherwise| OtherIntent[other intents]
+        HardOverride --&gt; CapAgent[CapabilityAgent]
+        SoftOverride --&gt; CapAgent
+        CapAgent --&gt; Response[Grounded response&lt;br/&gt;+ provenance]
+    end</code></pre>
+<h3 id="four-collaborating-components">Four Collaborating Components<a class="headerlink" href="#four-collaborating-components" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>File</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EmbeddingService</code></td>
+<td><code>orchestrator/services/embedding_service.py</code></td>
+<td>Provider-agnostic embedding wrapper (OpenAI 1536-d ↔ local MiniLM 384-d). Redis <code>cache:embed:*</code> with 24 h TTL.</td>
+</tr>
+<tr>
+<td><code>CapabilityIndexer</code></td>
+<td><code>orchestrator/services/capability_indexer.py</code></td>
+<td>Startup pipeline — loads YAML, computes SHA-256, embeds, upserts. Idempotent; collection rebuilt only on YAML / dimension change.</td>
+</tr>
+<tr>
+<td><code>SemanticRouter</code></td>
+<td><code>orchestrator/services/semantic_router.py</code></td>
+<td>Query-time classifier — embeds the query, searches Qdrant, groups results by <code>entry_id</code> with max-pool scoring, applies threshold bands.</td>
+</tr>
+<tr>
+<td><code>CapabilityAgent</code></td>
+<td><code>orchestrator/agents/capability_agent.py</code></td>
+<td>Reads pre-fetched matches from state, formats grounded response with provenance. Never hallucinates — explicit boundary on miss.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="the-three-band-routing-decision">The Three-Band Routing Decision<a class="headerlink" href="#the-three-band-routing-decision" title="Permanent link">&para;</a></h2>
+<p>The router returns a <code>SemanticRouteResult(intent, score, matches, source)</code>. The dialogue agent applies these rules:</p>
+<div class="highlight"><pre><span></span><code>score ≥ override_min      →  intent = capability, SKIP the LLM intent call entirely (fast-path)
+threshold ≤ score &lt; override_min  →  LLM runs; if it picks a non-data intent, router corrects to capability
+score &lt; threshold         →  no router signal; LLM intent classification proceeds normally
+</code></pre></div>
+<pre class="mermaid"><code>stateDiagram-v2
+    direction LR
+    [*] --&gt; RouterProbe : query arrives
+    RouterProbe --&gt; HighBand : score ≥ override_min
+    RouterProbe --&gt; MediumBand : threshold ≤ score &lt; override_min
+    RouterProbe --&gt; LowBand : score &lt; threshold
+
+    HighBand --&gt; Capability : skip LLM
+    MediumBand --&gt; LLMIntent
+    LowBand --&gt; LLMIntent
+    LLMIntent --&gt; Capability : LLM picked non-data AND medium band
+    LLMIntent --&gt; OtherIntent : LLM picked data intent OR low band
+    Capability --&gt; [*]
+    OtherIntent --&gt; [*]</code></pre>
+<p><strong>Why two bands instead of one threshold?</strong> Empirically, the score distribution has a tail of medium-confidence matches (~0.50–0.60 in the local-MiniLM model) where the right answer is "ask the LLM, then trust it unless it's clearly wrong". A single threshold either over-triggers (intent=capability for data queries) or under-triggers (misses for valid KB hits). The two-band design is calibrated per embedding model — see <a href="#threshold-calibration">Threshold Calibration</a> below.</p>
+<hr />
+<h2 id="capabilityyaml-schema"><code>capability.yaml</code> Schema<a class="headerlink" href="#capabilityyaml-schema" title="Permanent link">&para;</a></h2>
+<p>One file per building at <code>input/&lt;building_id&gt;/capability.yaml</code>. Validated by <code>shared.capability_schema.CapabilityKB</code> (Pydantic).</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># input/capability.yaml</span>
+<span class="nt">building_info</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bldg1</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Abacws Building</span>
+<span class="w">  </span><span class="nt">institution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Cardiff University</span>
+<span class="w">  </span><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Senghennydd Road, Cardiff</span>
+<span class="w">  </span><span class="nt">year_built</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2021</span>
+<span class="w">  </span><span class="nt">floors</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span>
+<span class="w">  </span><span class="nt">smart_building</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">sensor_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~680</span>
+<span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
+<span class="w">    </span><span class="no">Abacws is Cardiff University&#39;s flagship digital innovation building,</span>
+<span class="w">    </span><span class="no">opened in 2021. It houses the School of Computer Science and Informatics.</span>
+
+<span class="nt">capabilities</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fire_safety</span><span class="w">                       </span><span class="c1"># unique within the file</span>
+<span class="w">    </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FIRE_SAFETY</span><span class="w">                 </span><span class="c1"># used for grouping in responses</span>
+<span class="w">    </span><span class="nt">keywords</span><span class="p">:</span><span class="w">                             </span><span class="c1"># each is embedded as a separate Qdrant point</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fire</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fire alarm</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">evacuation</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">emergency exit</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sprinkler</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">assembly point</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fire warden</span>
+<span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span><span class="w">                            </span><span class="c1"># also embedded as one point</span>
+<span class="w">      </span><span class="no">Fire safety features include: automatic smoke detectors on every floor;</span>
+<span class="w">      </span><span class="no">manual call points at every stairwell; wet pipe sprinkler system; fire</span>
+<span class="w">      </span><span class="no">doors on all stairwells; emergency lighting with battery backup. Assembly</span>
+<span class="w">      </span><span class="no">point: Senghennydd Road outside the main entrance.</span>
+<span class="w">    </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fire_safety_management_plan</span><span class="w">   </span><span class="c1"># cited in the response footer</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bike_parking</span>
+<span class="w">    </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AMENITIES</span>
+<span class="w">    </span><span class="nt">keywords</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">bike</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">bicycle</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">cycle</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">bike rack</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">cycling</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
+<span class="w">      </span><span class="no">Covered bike racks for ~40 bicycles are located outside the main</span>
+<span class="w">      </span><span class="no">entrance on Senghennydd Road. Showers and changing rooms are</span>
+<span class="w">      </span><span class="no">available on the ground floor for cyclists.</span>
+<span class="w">    </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">building_facilities</span>
+</code></pre></div>
+<h3 id="indexing-strategy">Indexing Strategy<a class="headerlink" href="#indexing-strategy" title="Permanent link">&para;</a></h3>
+<p>Every keyword <strong>and</strong> the content string are embedded as <strong>separate Qdrant points</strong>, all sharing the same <code>entry_id</code>. At query time, the router takes the <strong>max</strong> score across all points for each entry — this avoids dilution where a single long content string would have lower cosine similarity than its individual keywords.</p>
+<h3 id="recommended-categories">Recommended Categories<a class="headerlink" href="#recommended-categories" title="Permanent link">&para;</a></h3>
+<p>These are used by the persona system and report generator:</p>
+<div class="highlight"><pre><span></span><code>FIRE_SAFETY · SECURITY · HVAC · POWER · LIGHTING · IT_INFRASTRUCTURE ·
+ACCESSIBILITY · AMENITIES · POLICY · SUSTAINABILITY · EMERGENCY ·
+SMART_BUILDING · BUILDING_OVERVIEW
+</code></pre></div>
+<p>These are not enforced — you can add custom categories — but the persona priors and report templates know about these.</p>
+<hr />
+<h2 id="buildingyaml-routing-configuration"><code>building.yaml</code> Routing Configuration<a class="headerlink" href="#buildingyaml-routing-configuration" title="Permanent link">&para;</a></h2>
+<p>Per-building tuning lives at <code>input/&lt;building_id&gt;/building.yaml</code> under <code>capability_routing:</code>. Defaults make sense for OpenAI <code>text-embedding-3-small</code>; local MiniLM benefits from re-tuning.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># input/building.yaml</span>
+<span class="nt">capability_routing</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span><span class="w">       </span><span class="c1"># &#39;auto&#39; follows EMBEDDING_PROVIDER (recommended)</span>
+<span class="w">                              </span><span class="c1"># explicit &#39;openai&#39; or &#39;local&#39; overrides global setting</span>
+<span class="w">  </span><span class="nt">threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.56</span><span class="w">             </span><span class="c1"># soft-override band lower bound</span>
+<span class="w">  </span><span class="nt">override_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.60</span><span class="w">          </span><span class="c1"># hard skip-LLM threshold</span>
+<span class="w">  </span><span class="nt">top_k</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w">                    </span><span class="c1"># max KB entries to return per query</span>
+<span class="w">  </span><span class="nt">fallback_on_qdrant_failure</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skip</span><span class="w">   </span><span class="c1"># silently fall back to LLM-only</span>
+
+<span class="c1"># Multi-intent extension (opt-in; off by default)</span>
+<span class="nt">intent_routing</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">floor_plan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">descriptors</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;show</span><span class="nv"> </span><span class="s">me</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">floor</span><span class="nv"> </span><span class="s">plan&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;where</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">room</span><span class="nv"> </span><span class="s">X&quot;</span>
+<span class="w">    </span><span class="nt">threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.60</span>
+<span class="w">    </span><span class="nt">override_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.70</span>
+<span class="w">    </span><span class="nt">top_k</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</code></pre></div>
+<h3 id="validation-rules">Validation Rules<a class="headerlink" href="#validation-rules" title="Permanent link">&para;</a></h3>
+<p>Enforced by Pydantic at startup. Bad config fails fast with a clear error.</p>
+<ul>
+<li><code>override_min &gt;= threshold</code> — boundary value <code>override_min == threshold</code> is allowed</li>
+<li><code>0.0 &lt;= threshold &lt;= 1.0</code>, <code>0.0 &lt;= override_min &lt;= 1.0</code></li>
+<li><code>1 &lt;= top_k &lt;= 50</code></li>
+<li><code>fallback_on_qdrant_failure ∈ {"skip"}</code> (the legacy <code>"keyword"</code> value was removed in Phase 3 cleanup)</li>
+</ul>
+<hr />
+<h2 id="provider-switching">Provider Switching<a class="headerlink" href="#provider-switching" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>graph LR
+    Code[Code: state.intermediate_results] --&gt; ES{EmbeddingService}
+    ES --&gt;|EMBEDDING_PROVIDER=openai| OAI["OpenAI API&lt;br/&gt;text-embedding-3-small&lt;br/&gt;1536 dims"]
+    ES --&gt;|EMBEDDING_PROVIDER=local| ST["sentence-transformers&lt;br/&gt;all-MiniLM-L6-v2&lt;br/&gt;384 dims (CPU)"]
+    OAI --&gt; Redis[("Redis&lt;br/&gt;cache:embed:*&lt;br/&gt;24h TTL")]
+    ST --&gt; Redis</code></pre>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>OpenAI (default)</th>
+<th>Local (offline)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EMBEDDING_PROVIDER</code></td>
+<td><code>openai</code></td>
+<td><code>local</code></td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>text-embedding-3-small</code></td>
+<td><code>sentence-transformers/all-MiniLM-L6-v2</code></td>
+</tr>
+<tr>
+<td>Dimensions</td>
+<td>1536</td>
+<td>384</td>
+</tr>
+<tr>
+<td>Cost</td>
+<td>$0.02 / 1M tokens</td>
+<td>$0</td>
+</tr>
+<tr>
+<td>Cold latency</td>
+<td>80–150 ms</td>
+<td>30–80 ms (CPU) / &lt;10 ms (GPU)</td>
+</tr>
+<tr>
+<td>Warm latency (Redis cache hit)</td>
+<td>&lt;5 ms</td>
+<td>&lt;5 ms</td>
+</tr>
+<tr>
+<td>Data egress</td>
+<td>Query sent to OpenAI</td>
+<td>Stays on device</td>
+</tr>
+<tr>
+<td>First-run package install</td>
+<td>None</td>
+<td>~90 MB sentence-transformers + model download</td>
+</tr>
+</tbody>
+</table>
+<p>When you switch providers, the <code>CapabilityIndexer</code> detects the vector-dimension mismatch on next startup and rebuilds the collection automatically (drop + re-embed). <strong>No manual intervention required.</strong></p>
+<h3 id="switch-with-one-command">Switch with one command<a class="headerlink" href="#switch-with-one-command" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># To OpenAI (default)</span>
+<span class="nv">EMBEDDING_PROVIDER</span><span class="o">=</span>openai<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>restart<span class="w"> </span>orchestrator
+
+<span class="c1"># To local MiniLM (offline, no API cost)</span>
+<span class="nv">EMBEDDING_PROVIDER</span><span class="o">=</span><span class="nb">local</span><span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>restart<span class="w"> </span>orchestrator
+</code></pre></div>
+<p>Verify the new dimension after restart:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:6333/collections/capability_bldg1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.result.config.params.vectors.size&#39;</span>
+<span class="c1"># Expected: 1536 (OpenAI) or 384 (local MiniLM)</span>
+</code></pre></div>
+<hr />
+<h2 id="threshold-calibration">Threshold Calibration<a class="headerlink" href="#threshold-calibration" title="Permanent link">&para;</a></h2>
+<p>Default thresholds in <code>shared/capability_schema.py</code> (<code>threshold=0.65</code>, <code>override_min=0.85</code>) target OpenAI embeddings on a well-tuned corpus. Real-world distributions differ; calibrate per building.</p>
+<h3 id="calibrated-values-for-bldg1-abacws-32-kb-entries">Calibrated values for <code>bldg1</code> (Abacws, 32 KB entries)<a class="headerlink" href="#calibrated-values-for-bldg1-abacws-32-kb-entries" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th><code>threshold</code></th>
+<th><code>override_min</code></th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OpenAI <code>text-embedding-3-small</code></td>
+<td>0.50</td>
+<td>0.55</td>
+<td>Original calibration before local switch</td>
+</tr>
+<tr>
+<td>Local MiniLM (<code>all-MiniLM-L6-v2</code>)</td>
+<td><strong>0.56</strong></td>
+<td><strong>0.60</strong></td>
+<td>Current default in <code>input/building.yaml</code>; MiniLM produces tighter cosine ranges</td>
+</tr>
+</tbody>
+</table>
+<h3 id="calibration-script">Calibration Script<a class="headerlink" href="#calibration-script" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. Capture a baseline (live system, golden queries)</span>
+python<span class="w"> </span>scripts/capture_baseline.py<span class="w"> </span>--building<span class="w"> </span>bldg1<span class="w"> </span>--output<span class="w"> </span>tests/baselines/
+
+<span class="c1"># 2. Sweep thresholds and emit precision/recall per band</span>
+python<span class="w"> </span>scripts/calibrate_intent_routing.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--building<span class="w"> </span>bldg1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--baseline<span class="w"> </span>tests/baselines/survey_phase4_local_emb.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--threshold-range<span class="w"> </span><span class="m">0</span>.40:0.75:0.02<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--override-range<span class="w"> </span><span class="m">0</span>.50:0.85:0.02
+</code></pre></div>
+<p>The script outputs:
+- Confusion matrix per <code>(threshold, override_min)</code> pair
+- Precision (P) and recall (R) for the <code>capability</code> intent
+- F1-optimal point + 95% confidence band</p>
+<h3 id="calibration-rules-of-thumb">Calibration Rules of Thumb<a class="headerlink" href="#calibration-rules-of-thumb" title="Permanent link">&para;</a></h3>
+<ul>
+<li>If you see <strong>false positives</strong> (data queries routed to capability): raise <code>override_min</code> and <code>threshold</code> by 0.05–0.10</li>
+<li>If you see <strong>false negatives</strong> (KB queries missed): lower <code>threshold</code> first, only lower <code>override_min</code> if recall is still low</li>
+<li>Keep a <strong>0.04–0.05 gap</strong> between <code>threshold</code> and <code>override_min</code> to give the soft-override band breathing room</li>
+</ul>
+<hr />
+<h2 id="performance-characteristics">Performance Characteristics<a class="headerlink" href="#performance-characteristics" title="Permanent link">&para;</a></h2>
+<p>Measured on a dev machine (Apple M1 Pro · Open WebUI client · warm Qdrant · OpenAI embeddings):</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>p50</th>
+<th>p95</th>
+<th>p99</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cold query (no embed cache)</td>
+<td>110 ms</td>
+<td>180 ms</td>
+<td>240 ms</td>
+<td>OpenAI embed + Qdrant search</td>
+</tr>
+<tr>
+<td>Warm query (Redis embed hit)</td>
+<td>12 ms</td>
+<td>22 ms</td>
+<td>40 ms</td>
+<td>Qdrant search only</td>
+</tr>
+<tr>
+<td>Indexer startup (1 building, 32 entries)</td>
+<td>1.1 s</td>
+<td>1.4 s</td>
+<td>—</td>
+<td>One-time cost per restart</td>
+</tr>
+<tr>
+<td>Indexer no-op startup (SHA match)</td>
+<td>280 ms</td>
+<td>350 ms</td>
+<td>—</td>
+<td>Skips embedding entirely</td>
+</tr>
+<tr>
+<td>Provider-switch rebuild (32 entries)</td>
+<td>1.8 s</td>
+<td>2.2 s</td>
+<td>—</td>
+<td>Drop + re-embed + re-upsert</td>
+</tr>
+<tr>
+<td>Capability fast-path saving</td>
+<td>~600 ms</td>
+<td>~800 ms</td>
+<td>—</td>
+<td>Compared to LLM intent + KB search baseline</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="failure-modes-graceful-degradation">Failure Modes &amp; Graceful Degradation<a class="headerlink" href="#failure-modes-graceful-degradation" title="Permanent link">&para;</a></h2>
+<p>The orchestrator must always boot, and capability failures must never block sensor / analytics queries.</p>
+<table>
+<thead>
+<tr>
+<th>Failure</th>
+<th>Detection</th>
+<th>Behavior</th>
+<th>User-visible impact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qdrant unreachable at startup</td>
+<td><code>AsyncQdrantClient.get_collections</code> raises</td>
+<td>Indexer skips; logs <code>status=degraded reason=qdrant_unreachable</code></td>
+<td>Capability KB temporarily unavailable; ontology + SQL paths normal</td>
+</tr>
+<tr>
+<td>Embedding API down (OpenAI)</td>
+<td><code>aiohttp.ClientError</code> during embed</td>
+<td>Indexer marks collection <code>degraded</code>; router returns <code>source=fallback</code></td>
+<td>LLM-only intent path runs; no fast-path</td>
+</tr>
+<tr>
+<td><code>capability.yaml</code> missing for a building</td>
+<td><code>Path.exists()</code> false</td>
+<td>Indexer skips that building; logs warning</td>
+<td>CapabilityAgent returns explicit "no KB on record" for that building only</td>
+</tr>
+<tr>
+<td><code>capability.yaml</code> malformed</td>
+<td><code>yaml.safe_load</code> raises or Pydantic validation fails</td>
+<td>Service still boots; clear error in logs; other buildings unaffected</td>
+<td>Operator sees boot log error; that building has no KB</td>
+</tr>
+<tr>
+<td>Router scores all low</td>
+<td><code>score &lt; threshold</code> for every match</td>
+<td>No override; LLM intent classification proceeds</td>
+<td>Normal LLM-driven routing — no change</td>
+</tr>
+<tr>
+<td>KB has zero matches above threshold</td>
+<td>router returns 0 matches</td>
+<td><code>CapabilityAgent</code> returns <code>provenance="kb_no_match"</code> with explicit boundary message + facility contact</td>
+<td>Honest "I don't have that on record" — no hallucination</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="multi-intent-extension-opt-in">Multi-Intent Extension (Opt-In)<a class="headerlink" href="#multi-intent-extension-opt-in" title="Permanent link">&para;</a></h2>
+<p>The same indexer + router infrastructure can be extended to additional intents beyond <code>capability</code>. <strong>Off by default</strong> — turn on per building via <code>building.yaml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">intent_routing</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">floor_plan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">descriptors</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;show</span><span class="nv"> </span><span class="s">me</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">floor</span><span class="nv"> </span><span class="s">plan&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;display</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">layout</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">floor&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;where</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">room&quot;</span>
+<span class="w">    </span><span class="nt">threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.60</span>
+<span class="w">    </span><span class="nt">override_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.70</span>
+<span class="w">    </span><span class="nt">top_k</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</code></pre></div>
+<p>At startup, the indexer creates <code>intent_&lt;bldg&gt;_&lt;intent&gt;</code> Qdrant collections and embeds each descriptor. The router then evaluates each registered intent in parallel and picks the highest-confidence override. This is dormant for bldg1 (<code>floor_plan</code> is well-served by the existing deterministic keyword override) but is exercised by <code>tests/test_multi_intent_floor_plan.py</code>.</p>
+<p>Spec: <code>docs/superpowers/specs/2026-05-22-multi-intent-semantic-routing.md</code>.</p>
+<hr />
+<h2 id="adding-a-new-buildings-kb">Adding a New Building's KB<a class="headerlink" href="#adding-a-new-buildings-kb" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. Create the building input directory if it doesn&#39;t exist</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span>input/&lt;new_bldg&gt;/
+
+<span class="c1"># 2. Author capability TRIPLES (Admin &gt; Capabilities) - capability.yaml is removed</span>
+<span class="nv">$EDITOR</span><span class="w"> </span>input/&lt;new_bldg&gt;/capability.yaml
+
+<span class="c1"># 3. Optional: tune routing in building.yaml (defaults are usually fine)</span>
+<span class="nv">$EDITOR</span><span class="w"> </span>input/&lt;new_bldg&gt;/building.yaml
+
+<span class="c1"># 4. Restart the orchestrator</span>
+docker<span class="w"> </span>compose<span class="w"> </span>restart<span class="w"> </span>orchestrator
+
+<span class="c1"># 5. Verify</span>
+docker<span class="w"> </span>logs<span class="w"> </span>ontosage-orchestrator<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;capability_indexer&quot;</span>
+<span class="c1"># Expected: status=indexed entries=N points=M sha=&lt;8-hex&gt; ()ms</span>
+
+curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:6333/collections<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;capability_&lt;new_bldg&gt;&quot;</span>
+
+<span class="c1"># 6. End-to-end smoke test</span>
+curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/chat<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: &lt;session-token&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;message&quot;:&quot;What are the fire procedures?&quot;,&quot;session_id&quot;:&quot;smoke&quot;,&quot;building_id&quot;:&quot;&lt;new_bldg&gt;&quot;}&#39;</span>
+</code></pre></div>
+<p><strong>Zero Python edits required.</strong> No agent code, workflow, or routing logic changes per building.</p>
+<hr />
+<h2 id="observability-admin-endpoints">Observability &amp; Admin Endpoints<a class="headerlink" href="#observability-admin-endpoints" title="Permanent link">&para;</a></h2>
+<h3 id="admin-endpoint-for-indexer-state">Admin endpoint for indexer state<a class="headerlink" href="#admin-endpoint-for-indexer-state" title="Permanent link">&para;</a></h3>
+<p>RBAC-gated, <code>system:admin</code> permission:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: &lt;admin-token&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>http://localhost:8000/admin/indexer/status<span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool
+</code></pre></div>
+<p>Response:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;buildings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;bldg1&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;indexed&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;entries&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;points&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">187</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;yaml_sha&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;706ef6fe&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;collection&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;capability_bldg1&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;embedding_provider&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;embedding_dim&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">384</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;last_indexed_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-05-22T11:42:18Z&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;router_intents&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;capability&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;embedding_cache_hit_rate_last_1h&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.91</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="per-request-observability">Per-request observability<a class="headerlink" href="#per-request-observability" title="Permanent link">&para;</a></h3>
+<p><code>state.intermediate_results["_semantic_route"]</code> is populated on every query that hits the router:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+  <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="mf">0.73</span><span class="p">,</span>                   <span class="c1"># max-pool score across all matches</span>
+  <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;qdrant&quot;</span><span class="p">,</span>              <span class="c1"># &quot;qdrant&quot; | &quot;fallback&quot;</span>
+  <span class="s2">&quot;match_count&quot;</span><span class="p">:</span> <span class="mi">5</span>                 <span class="c1"># entries returned above threshold</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Logged at <code>INFO</code> level. Grep <code>[semantic-route]</code> in orchestrator logs:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>logs<span class="w"> </span>ontosage-orchestrator<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;\[semantic-route\]&#39;</span>
+</code></pre></div>
+<hr />
+<h2 id="test-coverage">Test Coverage<a class="headerlink" href="#test-coverage" title="Permanent link">&para;</a></h2>
+<p>The capability routing pipeline ships with comprehensive test coverage — <strong>all live against the real Docker stack with OpenAI credentials.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Test file</th>
+<th>Scope</th>
+<th>Live?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tests/test_embedding_service.py</code></td>
+<td>Provider switching, Redis cache, dim detection</td>
+<td>Unit</td>
+</tr>
+<tr>
+<td><code>tests/test_capability_indexer.py</code></td>
+<td>YAML parse, SHA idempotency, Qdrant upsert, dim rebuild</td>
+<td>Unit + Qdrant</td>
+</tr>
+<tr>
+<td><code>tests/test_semantic_router.py</code></td>
+<td>Three-band logic, max-pool grouping, top-k cap</td>
+<td>Unit</td>
+</tr>
+<tr>
+<td><code>tests/test_capability_routing_config.py</code></td>
+<td>Pydantic validation, <code>search()</code> removed inversion</td>
+<td>Unit</td>
+</tr>
+<tr>
+<td><code>tests/test_capability_e2e.py</code></td>
+<td>Full pipeline integration; multi-building isolation</td>
+<td>Live</td>
+</tr>
+<tr>
+<td><code>tests/test_capability_edge_cases.py</code></td>
+<td>14 adversarial inputs (injection, unicode, concurrency, malicious session IDs)</td>
+<td>Live</td>
+</tr>
+<tr>
+<td><code>tests/test_capability_semantic_quality.py</code></td>
+<td>Precision/recall on golden queries</td>
+<td>Live</td>
+</tr>
+<tr>
+<td><code>tests/test_non_regression_intents.py</code></td>
+<td>All 16 other intents unaffected</td>
+<td>Live</td>
+</tr>
+<tr>
+<td><code>tests/test_floor_n_protection.py</code></td>
+<td>"floor N" queries never hijacked by capability</td>
+<td>Live</td>
+</tr>
+<tr>
+<td><code>tests/test_multi_intent_floor_plan.py</code></td>
+<td>Multi-intent extension wiring (opt-in dormant for bldg1)</td>
+<td>Live</td>
+</tr>
+<tr>
+<td><code>tests/test_admin_indexer_status.py</code></td>
+<td>Admin endpoint schema + RBAC</td>
+<td>Live</td>
+</tr>
+<tr>
+<td><code>tests/perf/test_capability_performance.py</code></td>
+<td>Latency p95, cache hit rate, circuit breaker</td>
+<td>Live</td>
+</tr>
+<tr>
+<td><code>tests/test_ontology_integrity.py</code></td>
+<td>TTL → ontology contract unbroken by routing changes</td>
+<td>Live</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Current status (May 2026):</strong> 541 passed, 8 skipped, 2 xfailed, 0 failures.</p>
+<hr />
+<h2 id="related-documentation">Related Documentation<a class="headerlink" href="#related-documentation" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../ARCHITECTURE/">Architecture</a> — How capability routing sits in the broader orchestrator</li>
+<li><a href="../SERVICES/">Services</a> — Detailed reference for <code>EmbeddingService</code>, <code>CapabilityIndexer</code>, <code>SemanticRouter</code></li>
+<li><a href="../CONFIGURATION/#capability-semantic-routing-v31">Configuration</a> — All env vars and YAML knobs</li>
+<li><a href="../BUILDING_ONBOARDING/#part-10-optional-author-the-capability-kb">Building Onboarding</a> — Step-by-step capability KB onboarding</li>
+<li><a href="../WORKFLOW/#step-5-dialogue-agent-intent-and-entities">Workflow Deep Dive</a> — Dialogue node trace including the co-reference rewrite and router probe</li>
+<li><a href="../DEVELOPER_GUIDE/#working-with-the-capability-routing-pipeline-v31">Developer Guide</a> — Extending the pipeline</li>
+<li><a href="../RUNBOOK/#capability-semantic-routing-not-firing-v31">Runbook</a> — Operations &amp; troubleshooting</li>
+<li>Design spec: <code>docs/superpowers/specs/2026-05-21-capability-semantic-routing-design.md</code></li>
+<li>Multi-intent spec: <code>docs/superpowers/specs/2026-05-22-multi-intent-semantic-routing.md</code></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../SERVICES/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Services">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Services
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../CONVERSATION_INTELLIGENCE/" class="md-footer__link md-footer__link--next" aria-label="Next: Conversation Intelligence">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Conversation Intelligence
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2887 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/superpowers/plans/2026-06-01-known-issues-improvements/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Known-Issues Improvement Plan - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../../../assets/overrides.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#known-issues-improvement-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Known-Issues Improvement Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#file-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-1-forecastpredict-intent-pre-classifier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 1 — Forecast/Predict Intent Pre-classifier
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-2-maintenance-schedule-routing-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 2 — Maintenance Schedule Routing Fix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-3-strict-secrets-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 3 — Strict Secrets Validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-4-multi-intent-result-aggregation-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 4 — Multi-Intent Result Aggregation Fix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-5-async-job-queue-for-long-running-reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 5 — Async Job Queue for Long-Running Reports
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-6-post-fix-full-review-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 6 — Post-Fix Full Review Run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#self-review-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Self-Review Checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/superpowers/plans/2026-06-01-known-issues-improvements.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="known-issues-improvement-plan">Known-Issues Improvement Plan<a class="headerlink" href="#known-issues-improvement-plan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal:</strong> Resolve all five known remaining issues identified in <code>review docs/system-review-2026-06-01.md</code> without breaking any existing passing tests.</p>
+<p><strong>Architecture:</strong> Each issue is a targeted, isolated fix. No cross-cutting refactors. Order: quick wins first (T1–T3, each under 30 min), then structural fixes (T4 multi-intent aggregation, T5 async job queue). Every task is test-driven: write the failing test first, then the fix.</p>
+<p><strong>Tech Stack:</strong> Python 3.10, FastAPI, LangGraph, Redis (<code>aioredis</code>), Pydantic v2, pytest-asyncio, <code>requests</code> (live tests)</p>
+<hr />
+<h2 id="file-map">File Map<a class="headerlink" href="#file-map" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>orchestrator/agents/dialogue_agent.py</code></td>
+<td>T1: add <code>_FORECAST_KWS</code> post-LLM override; T2: add <code>_MAINTENANCE_SCHEDULE_KWS</code> override</td>
+</tr>
+<tr>
+<td><code>orchestrator/services/semantic_router.py</code></td>
+<td>T2: extend <code>_DATA_BYPASS_PHRASES</code> with maintenance-schedule phrases</td>
+</tr>
+<tr>
+<td><code>shared/config.py</code></td>
+<td>T3: add <code>STRICT_SECRETS</code> flag + Pydantic validator</td>
+</tr>
+<tr>
+<td><code>.env.example</code></td>
+<td>T3: document <code>STRICT_SECRETS=true</code> for production</td>
+</tr>
+<tr>
+<td><code>orchestrator/agents/planner_agent.py</code></td>
+<td>T4: fix <code>_execute_multi_intent</code> to include sensor_data results in section_results</td>
+</tr>
+<tr>
+<td><code>orchestrator/main.py</code></td>
+<td>T5: add <code>POST /jobs</code> background execution + <code>GET /jobs/{job_id}</code> polling</td>
+</tr>
+<tr>
+<td><code>tests/test_forecast_routing.py</code></td>
+<td>T1: new test file</td>
+</tr>
+<tr>
+<td><code>tests/test_maintenance_routing.py</code></td>
+<td>T2: new test file</td>
+</tr>
+<tr>
+<td><code>tests/test_strict_secrets.py</code></td>
+<td>T3: new test file</td>
+</tr>
+<tr>
+<td><code>tests/test_multi_intent_aggregation.py</code></td>
+<td>T4: new test file</td>
+</tr>
+<tr>
+<td><code>tests/test_async_jobs.py</code></td>
+<td>T5: new test file</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="task-1-forecastpredict-intent-pre-classifier">Task 1 — Forecast/Predict Intent Pre-classifier<a class="headerlink" href="#task-1-forecastpredict-intent-pre-classifier" title="Permanent link">&para;</a></h2>
+<p><strong>Problem:</strong> "Predict temperature for tomorrow afternoon" → <code>general_knowledge</code>. The LLM does not reliably map predict/forecast queries to the <code>trend</code> intent even after YAML update.</p>
+<p><strong>Fix:</strong> Add a post-LLM keyword override in <code>dialogue_agent.py</code> at the same location as the existing <code>_FLOOR_PLAN_KWS</code> override (line ~930). If query contains a forecast keyword <strong>and</strong> a sensor/metric keyword, force <code>trend</code>.</p>
+<p><strong>Files:</strong>
+- Modify: <code>orchestrator/agents/dialogue_agent.py</code> (after line 951, before the G1 taxonomy block at line 953)
+- Create: <code>tests/test_forecast_routing.py</code></p>
+<hr />
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 1.1 — Write failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># tests/test_forecast_routing.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+
+<span class="n">FORECAST_QUERIES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Predict temperature for tomorrow afternoon&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Forecast energy usage for next week&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;What will the CO2 level be tomorrow?&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Expected temperature next Monday&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Is temperature projected to rise next week?&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;What will humidity be like tomorrow morning?&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">NON_FORECAST_QUERIES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Show me floor 3 layout&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;What are the fire evacuation procedures?&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Hello, what can you do?&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_forecast_query</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mirror of the bypass logic we will add to dialogue_agent.py.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">orchestrator.agents.dialogue_agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">_FORECAST_KWS</span><span class="p">,</span> <span class="n">_SENSOR_METRIC_KWS</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">kw</span> <span class="ow">in</span> <span class="n">q</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">_FORECAST_KWS</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">kw</span> <span class="ow">in</span> <span class="n">q</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">_SENSOR_METRIC_KWS</span><span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_forecast_queries_detected</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">FORECAST_QUERIES</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">_is_forecast_query</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected forecast detection for: </span><span class="si">{</span><span class="n">q</span><span class="si">!r}</span><span class="s2">&quot;</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_non_forecast_queries_not_detected</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">NON_FORECAST_QUERIES</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">_is_forecast_query</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;False positive forecast for: </span><span class="si">{</span><span class="n">q</span><span class="si">!r}</span><span class="s2">&quot;</span>
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 1.2 — Run test to verify it fails</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>c:/Users/suhas/Documents/GitHub/OntoSage
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_forecast_routing.py<span class="w"> </span>-v
+</code></pre></div>
+<p>Expected: <code>ImportError: cannot import name '_FORECAST_KWS'</code></p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 1.3 — Add constants and override to dialogue_agent.py</strong></li>
+</ul>
+<p>Open <code>orchestrator/agents/dialogue_agent.py</code>. After the <code>_FLOOR_PLAN_KWS</code> block (after line 951, before the G1 taxonomy comment at line 953), add:</p>
+<div class="highlight"><pre><span></span><code>                <span class="c1"># Forecast / prediction queries must route to trend, not general.</span>
+                <span class="c1"># The LLM sometimes classifies &quot;predict X tomorrow&quot; as general</span>
+                <span class="c1"># because it treats future-state queries as outside building-data.</span>
+                <span class="n">_FORECAST_KWS</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">&quot;predict&quot;</span><span class="p">,</span> <span class="s2">&quot;forecast&quot;</span><span class="p">,</span> <span class="s2">&quot;projected&quot;</span><span class="p">,</span> <span class="s2">&quot;projection&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;what will&quot;</span><span class="p">,</span> <span class="s2">&quot;what would&quot;</span><span class="p">,</span> <span class="s2">&quot;expected to be&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;likely to be&quot;</span><span class="p">,</span> <span class="s2">&quot;tomorrow&quot;</span><span class="p">,</span> <span class="s2">&quot;next week&quot;</span><span class="p">,</span> <span class="s2">&quot;next month&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;next hour&quot;</span><span class="p">,</span> <span class="s2">&quot;in the next&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">_SENSOR_METRIC_KWS</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="s2">&quot;temp&quot;</span><span class="p">,</span> <span class="s2">&quot;co2&quot;</span><span class="p">,</span> <span class="s2">&quot;humidity&quot;</span><span class="p">,</span> <span class="s2">&quot;energy&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;consumption&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">,</span> <span class="s2">&quot;air quality&quot;</span><span class="p">,</span> <span class="s2">&quot;occupancy&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;noise&quot;</span><span class="p">,</span> <span class="s2">&quot;pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;sensor&quot;</span><span class="p">,</span> <span class="s2">&quot;reading&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">_has_forecast_kw</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">kw</span> <span class="ow">in</span> <span class="n">_q_lower</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">_FORECAST_KWS</span><span class="p">)</span>
+                <span class="n">_has_metric_kw</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">kw</span> <span class="ow">in</span> <span class="n">_q_lower</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">_SENSOR_METRIC_KWS</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">_has_forecast_kw</span>
+                    <span class="ow">and</span> <span class="n">_has_metric_kw</span>
+                    <span class="ow">and</span> <span class="n">normalized</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;intent&quot;</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;trend&quot;</span><span class="p">,</span> <span class="s2">&quot;analytics&quot;</span><span class="p">,</span> <span class="s2">&quot;sensor_data&quot;</span><span class="p">)</span>
+                <span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;[intent-override] Forcing &#39;trend&#39; (was &#39;</span><span class="si">{</span><span class="n">normalized</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;intent&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;) &quot;</span>
+                        <span class="s2">&quot;— forecast/predict keyword with sensor metric detected&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">normalized</span><span class="p">[</span><span class="s2">&quot;intent&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;trend&quot;</span>
+                    <span class="n">normalized</span><span class="p">[</span><span class="s2">&quot;analytics&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">normalized</span><span class="p">[</span><span class="s2">&quot;general&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+</code></pre></div>
+<p>Also add module-level exports so tests can import them. At the <strong>top of the file</strong> (after existing module-level constants, search for <code>_FLOOR_PLAN_KWS</code> in module scope or just add near line 160):</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Exported for testing</span>
+<span class="n">_FORECAST_KWS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;predict&quot;</span><span class="p">,</span> <span class="s2">&quot;forecast&quot;</span><span class="p">,</span> <span class="s2">&quot;projected&quot;</span><span class="p">,</span> <span class="s2">&quot;projection&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;what will&quot;</span><span class="p">,</span> <span class="s2">&quot;what would&quot;</span><span class="p">,</span> <span class="s2">&quot;expected to be&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;likely to be&quot;</span><span class="p">,</span> <span class="s2">&quot;tomorrow&quot;</span><span class="p">,</span> <span class="s2">&quot;next week&quot;</span><span class="p">,</span> <span class="s2">&quot;next month&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;next hour&quot;</span><span class="p">,</span> <span class="s2">&quot;in the next&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">_SENSOR_METRIC_KWS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="s2">&quot;temp&quot;</span><span class="p">,</span> <span class="s2">&quot;co2&quot;</span><span class="p">,</span> <span class="s2">&quot;humidity&quot;</span><span class="p">,</span> <span class="s2">&quot;energy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;consumption&quot;</span><span class="p">,</span> <span class="s2">&quot;power&quot;</span><span class="p">,</span> <span class="s2">&quot;air quality&quot;</span><span class="p">,</span> <span class="s2">&quot;occupancy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;noise&quot;</span><span class="p">,</span> <span class="s2">&quot;pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;sensor&quot;</span><span class="p">,</span> <span class="s2">&quot;reading&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Inside the <code>classify_intent</code> method, replace the inline tuple literals with references to these module-level constants:
+<div class="highlight"><pre><span></span><code>                <span class="n">_has_forecast_kw</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">kw</span> <span class="ow">in</span> <span class="n">_q_lower</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">_FORECAST_KWS</span><span class="p">)</span>
+                <span class="n">_has_metric_kw</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">kw</span> <span class="ow">in</span> <span class="n">_q_lower</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">_SENSOR_METRIC_KWS</span><span class="p">)</span>
+</code></pre></div></p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 1.4 — Run test to verify it passes</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_forecast_routing.py<span class="w"> </span>-v
+</code></pre></div>
+<p>Expected: <code>2 passed</code></p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 1.5 — Rebuild orchestrator and live-smoke-test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>build<span class="w"> </span>orchestrator<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>docker-compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>orchestrator
+<span class="c1"># wait ~20s for startup</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/chat<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;token&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;message&quot;:&quot;Predict temperature for tomorrow afternoon&quot;,&quot;session_id&quot;:&quot;t1-smoke&quot;,&quot;building_id&quot;:&quot;bldg1&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;&quot;intent&quot;&#39;</span>
+</code></pre></div>
+<p>Expected: <code>"intent": "trend"</code></p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 1.6 — Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>orchestrator/agents/dialogue_agent.py<span class="w"> </span>tests/test_forecast_routing.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;fix(routing): add forecast/predict keyword pre-classifier → trend intent&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="task-2-maintenance-schedule-routing-fix">Task 2 — Maintenance Schedule Routing Fix<a class="headerlink" href="#task-2-maintenance-schedule-routing-fix" title="Permanent link">&para;</a></h2>
+<p><strong>Problem:</strong> "What maintenance work is scheduled this week?" → <code>metadata</code>. The capability KB intercepts it (HVAC entries score 0.608), and even when it escapes the KB, the LLM maps it to <code>metadata</code>.</p>
+<p><strong>Fix (two parts):</strong>
+1. Add maintenance-schedule phrases to <code>_DATA_BYPASS_PHRASES</code> in <code>semantic_router.py</code> (blocks capability KB interception).
+2. Add <code>_MAINTENANCE_SCHEDULE_KWS</code> post-LLM override in <code>dialogue_agent.py</code> (forces <code>maintenance</code> when LLM returns <code>metadata</code> for schedule-type queries).</p>
+<p><strong>Files:</strong>
+- Modify: <code>orchestrator/services/semantic_router.py</code>
+- Modify: <code>orchestrator/agents/dialogue_agent.py</code>
+- Create: <code>tests/test_maintenance_routing.py</code></p>
+<hr />
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 2.1 — Write failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># tests/test_maintenance_routing.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+
+<span class="n">MAINTENANCE_SCHEDULE_QUERIES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;What maintenance work is scheduled this week?&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;What maintenance is planned for next month?&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Show me all open maintenance tickets&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;List outstanding maintenance tasks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;What is scheduled for building maintenance?&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Any planned maintenance on floor 3?&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">NON_MAINTENANCE_QUERIES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;the light in room 3.01 is broken&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;What sensors are installed?&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Show me floor 2 layout&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_router_would_bypass</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify the semantic router skips KB for these queries.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">orchestrator.services.semantic_router</span><span class="w"> </span><span class="kn">import</span> <span class="n">SemanticRouter</span>
+    <span class="k">return</span> <span class="n">SemanticRouter</span><span class="o">.</span><span class="n">is_data_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dialogue_would_override</span><span class="p">(</span><span class="n">current_intent</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify dialogue agent would force maintenance for schedule queries.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">orchestrator.agents.dialogue_agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">_MAINTENANCE_SCHEDULE_KWS</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">kw</span> <span class="ow">in</span> <span class="n">q</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">_MAINTENANCE_SCHEDULE_KWS</span><span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_maintenance_schedule_bypasses_kb</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">MAINTENANCE_SCHEDULE_QUERIES</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">_router_would_bypass</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;KB not bypassed for: </span><span class="si">{</span><span class="n">q</span><span class="si">!r}</span><span class="s2">&quot;</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_non_maintenance_not_bypassed</span><span class="p">():</span>
+    <span class="c1"># These should NOT be in data-bypass (they go through normal KB / LLM)</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">_router_would_bypass</span><span class="p">(</span><span class="s2">&quot;the light in room 3.01 is broken&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_maintenance_schedule_kws_exported</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">orchestrator.agents.dialogue_agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">_MAINTENANCE_SCHEDULE_KWS</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">_MAINTENANCE_SCHEDULE_KWS</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">4</span>
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 2.2 — Run test to verify it fails</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_maintenance_routing.py<span class="w"> </span>-v
+</code></pre></div>
+<p>Expected: <code>FAILED test_maintenance_schedule_bypasses_kb</code> + <code>ImportError: _MAINTENANCE_SCHEDULE_KWS</code></p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 2.3 — Extend <code>_DATA_BYPASS_PHRASES</code> in semantic_router.py</strong></li>
+</ul>
+<p>In <code>orchestrator/services/semantic_router.py</code>, inside <code>_DATA_BYPASS_PHRASES</code>, after the existing "alert/anomaly pipeline" block add:</p>
+<div class="highlight"><pre><span></span><code>    <span class="c1"># Maintenance schedule / ticket queries — these go to maintenance intent, not KB</span>
+    <span class="s2">&quot;maintenance schedule&quot;</span><span class="p">,</span> <span class="s2">&quot;scheduled maintenance&quot;</span><span class="p">,</span> <span class="s2">&quot;planned maintenance&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;maintenance this week&quot;</span><span class="p">,</span> <span class="s2">&quot;maintenance this month&quot;</span><span class="p">,</span> <span class="s2">&quot;maintenance next&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;open maintenance tickets&quot;</span><span class="p">,</span> <span class="s2">&quot;outstanding maintenance&quot;</span><span class="p">,</span> <span class="s2">&quot;maintenance tasks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;maintenance work scheduled&quot;</span><span class="p">,</span> <span class="s2">&quot;what maintenance&quot;</span><span class="p">,</span>
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 2.4 — Add <code>_MAINTENANCE_SCHEDULE_KWS</code> constant and override in dialogue_agent.py</strong></li>
+</ul>
+<p>At module level in <code>orchestrator/agents/dialogue_agent.py</code> (near the <code>_FORECAST_KWS</code> constants added in T1):</p>
+<div class="highlight"><pre><span></span><code><span class="n">_MAINTENANCE_SCHEDULE_KWS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;maintenance schedule&quot;</span><span class="p">,</span> <span class="s2">&quot;scheduled maintenance&quot;</span><span class="p">,</span> <span class="s2">&quot;planned maintenance&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;maintenance this week&quot;</span><span class="p">,</span> <span class="s2">&quot;maintenance this month&quot;</span><span class="p">,</span> <span class="s2">&quot;maintenance next&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;open maintenance tickets&quot;</span><span class="p">,</span> <span class="s2">&quot;outstanding maintenance&quot;</span><span class="p">,</span> <span class="s2">&quot;maintenance tasks&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;maintenance work scheduled&quot;</span><span class="p">,</span> <span class="s2">&quot;what maintenance is&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;list maintenance&quot;</span><span class="p">,</span> <span class="s2">&quot;show maintenance&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Inside <code>classify_intent</code>, after the forecast override block (T1), add:</p>
+<div class="highlight"><pre><span></span><code>                <span class="c1"># Maintenance schedule queries must route to maintenance, not metadata.</span>
+                <span class="c1"># &quot;What maintenance is scheduled&quot; has structural similarity to</span>
+                <span class="c1"># metadata list queries, so the LLM often picks metadata.</span>
+                <span class="n">_has_maintenance_schedule</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+                    <span class="n">kw</span> <span class="ow">in</span> <span class="n">_q_lower</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">_MAINTENANCE_SCHEDULE_KWS</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">_has_maintenance_schedule</span>
+                    <span class="ow">and</span> <span class="n">normalized</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;intent&quot;</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;maintenance&quot;</span><span class="p">,)</span>
+                <span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;[intent-override] Forcing &#39;maintenance&#39; (was &#39;</span><span class="si">{</span><span class="n">normalized</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;intent&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;) &quot;</span>
+                        <span class="s2">&quot;— maintenance schedule keyword detected&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">normalized</span><span class="p">[</span><span class="s2">&quot;intent&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;maintenance&quot;</span>
+                    <span class="n">normalized</span><span class="p">[</span><span class="s2">&quot;analytics&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="n">normalized</span><span class="p">[</span><span class="s2">&quot;general&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 2.5 — Run tests to verify they pass</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_maintenance_routing.py<span class="w"> </span>-v
+</code></pre></div>
+<p>Expected: <code>3 passed</code></p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 2.6 — Rebuild and live-smoke-test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>build<span class="w"> </span>orchestrator<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>docker-compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>orchestrator
+<span class="c1"># wait ~20s</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/chat<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;token&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;message&quot;:&quot;What maintenance work is scheduled this week?&quot;,&quot;session_id&quot;:&quot;t2-smoke&quot;,&quot;building_id&quot;:&quot;bldg1&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;&quot;intent&quot;&#39;</span>
+</code></pre></div>
+<p>Expected: <code>"intent": "maintenance"</code></p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 2.7 — Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>orchestrator/services/semantic_router.py<span class="w"> </span>orchestrator/agents/dialogue_agent.py<span class="w"> </span>tests/test_maintenance_routing.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;fix(routing): maintenance-schedule queries bypass KB and route to maintenance intent&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="task-3-strict-secrets-validation">Task 3 — Strict Secrets Validation<a class="headerlink" href="#task-3-strict-secrets-validation" title="Permanent link">&para;</a></h2>
+<p><strong>Problem:</strong> <code>shared/config.py</code> has hardcoded default passwords for GraphDB (<code>Admin@GraphDB2024</code>), Postgres (<code>ontobot_secret</code>), and MySQL (<code>mysql</code>). A new deployment that forgets to set these env vars silently uses the insecure defaults.</p>
+<p><strong>Fix:</strong> Add <code>STRICT_SECRETS: bool</code> flag. When <code>True</code>, a Pydantic <code>model_validator</code> raises <code>ValueError</code> if any password equals its default value.</p>
+<p><strong>Files:</strong>
+- Modify: <code>shared/config.py</code>
+- Modify: <code>.env.example</code>
+- Create: <code>tests/test_strict_secrets.py</code></p>
+<hr />
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 3.1 — Write failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># tests/test_strict_secrets.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_strict_secrets_off_by_default</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;STRICT_SECRETS defaults to False — default passwords should not raise.&quot;&quot;&quot;</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">delenv</span><span class="p">(</span><span class="s2">&quot;STRICT_SECRETS&quot;</span><span class="p">,</span> <span class="n">raising</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">shared.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Settings</span>
+    <span class="c1"># Should not raise even with default passwords</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Settings</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">STRICT_SECRETS</span> <span class="ow">is</span> <span class="kc">False</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_strict_secrets_raises_on_default_graphdb_password</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When STRICT_SECRETS=true, default GraphDB password should raise ValueError.&quot;&quot;&quot;</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;STRICT_SECRETS&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;GRAPHDB_PASSWORD&quot;</span><span class="p">,</span> <span class="s2">&quot;Admin@GraphDB2024&quot;</span><span class="p">)</span>  <span class="c1"># default value</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;SECRET_KEY&quot;</span><span class="p">,</span> <span class="s2">&quot;changed-key-for-testing-purposes-1234567890ab&quot;</span><span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">reload</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">shared.config</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cfg</span>
+    <span class="n">reload</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="s2">&quot;STRICT_SECRETS&quot;</span><span class="p">):</span>
+        <span class="n">cfg</span><span class="o">.</span><span class="n">Settings</span><span class="p">()</span>
+    <span class="n">reload</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>  <span class="c1"># restore</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_strict_secrets_passes_with_custom_password</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;When STRICT_SECRETS=true and passwords are custom, no error raised.&quot;&quot;&quot;</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;STRICT_SECRETS&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;GRAPHDB_PASSWORD&quot;</span><span class="p">,</span> <span class="s2">&quot;my-secure-graphdb-pass-xyz!&quot;</span><span class="p">)</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;POSTGRES_USER_PASSWORD&quot;</span><span class="p">,</span> <span class="s2">&quot;my-secure-postgres-pass!&quot;</span><span class="p">)</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;MYSQL_PASSWORD&quot;</span><span class="p">,</span> <span class="s2">&quot;my-secure-mysql-pass!&quot;</span><span class="p">)</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;SECRET_KEY&quot;</span><span class="p">,</span> <span class="s2">&quot;changed-key-for-testing-purposes-1234567890ab&quot;</span><span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">reload</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">shared.config</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cfg</span>
+    <span class="n">reload</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">Settings</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">STRICT_SECRETS</span> <span class="ow">is</span> <span class="kc">True</span>
+    <span class="n">reload</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>  <span class="c1"># restore</span>
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 3.2 — Run test to verify it fails</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_strict_secrets.py<span class="w"> </span>-v
+</code></pre></div>
+<p>Expected: <code>FAILED test_strict_secrets_raises_on_default_graphdb_password</code> — no validator exists yet.</p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 3.3 — Add <code>STRICT_SECRETS</code> field and validator to config.py</strong></li>
+</ul>
+<p>In <code>shared/config.py</code>, add the field after the existing <code>RBAC_ENABLED</code> field (around line 260):</p>
+<div class="highlight"><pre><span></span><code>    <span class="n">STRICT_SECRETS</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;When True, the application refuses to start if any service password &quot;</span>
+            <span class="s2">&quot;equals its default value. Set to True in all production deployments.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Add a <code>model_validator</code> <strong>after</strong> the existing <code>SECRET_KEY</code> validator at the bottom of the <code>Settings</code> class (search for <code>@model_validator</code> or <code>@validator</code> near line 590):</p>
+<div class="highlight"><pre><span></span><code>    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_strict_secrets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Settings&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Refuse startup when STRICT_SECRETS=True and any password is the default.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">STRICT_SECRETS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="n">_DEFAULT_PASSWORDS</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;GRAPHDB_PASSWORD&quot;</span><span class="p">:</span> <span class="s2">&quot;Admin@GraphDB2024&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;POSTGRES_USER_PASSWORD&quot;</span><span class="p">:</span> <span class="s2">&quot;ontobot_secret&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;MYSQL_PASSWORD&quot;</span><span class="p">:</span> <span class="s2">&quot;mysql&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">offenders</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">name</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">default</span> <span class="ow">in</span> <span class="n">_DEFAULT_PASSWORDS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">default</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">offenders</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;STRICT_SECRETS=true but the following passwords equal their &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;insecure defaults — set them via environment variables before &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;starting: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">offenders</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+</code></pre></div>
+<p>Ensure <code>model_validator</code> is imported at the top of <code>shared/config.py</code>:
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">model_validator</span>
+</code></pre></div>
+(It is likely already imported — check and add only if missing.)</p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 3.4 — Update <code>.env.example</code></strong></li>
+</ul>
+<p>Find the production/deployment section in <code>.env.example</code>. Add after the <code>RBAC_ENABLED</code> line:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Set to true in all production deployments. Refuses startup if any</span>
+<span class="c1"># service password (GraphDB, Postgres, MySQL) equals its insecure default.</span>
+<span class="c1"># STRICT_SECRETS=true</span>
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 3.5 — Run tests to verify they pass</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_strict_secrets.py<span class="w"> </span>-v
+</code></pre></div>
+<p>Expected: <code>3 passed</code></p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 3.6 — Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>shared/config.py<span class="w"> </span>.env.example<span class="w"> </span>tests/test_strict_secrets.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat(config): add STRICT_SECRETS validator — blocks startup with default passwords in prod&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="task-4-multi-intent-result-aggregation-fix">Task 4 — Multi-Intent Result Aggregation Fix<a class="headerlink" href="#task-4-multi-intent-result-aggregation-fix" title="Permanent link">&para;</a></h2>
+<p><strong>Problem:</strong> For compound queries like "tell me CO2 levels on floor 2 AND generate an energy report", the planner's <code>_execute_multi_intent</code> skips <code>sensor_data</code> sub-intents (line 185: <code>if agent in ("sparql", "sql", "sensor_data"): continue</code>). The sensor readings data-pipeline result is never added to <code>section_results</code>, so only the last standalone result (often <code>floor_plan</code>) appears in the response.</p>
+<p><strong>Fix:</strong> After the data pipeline (sparql+sql) completes, extract the SQL time-series result and add it as a <code>sensor_data</code> section in <code>section_results</code> — but only when <code>sensor_data</code> was one of the original sub-intents. Use <code>_extract_section_content("sensor_data", sql_result)</code> for the content.</p>
+<p><strong>Files:</strong>
+- Modify: <code>orchestrator/agents/planner_agent.py:329-424</code> (<code>_execute_multi_intent</code>)
+- Create: <code>tests/test_multi_intent_aggregation.py</code></p>
+<hr />
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 4.1 — Write failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># tests/test_multi_intent_aggregation.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">unittest.mock</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncMock</span><span class="p">,</span> <span class="n">MagicMock</span><span class="p">,</span> <span class="n">patch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">orchestrator.agents.planner_agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlannerAgent</span><span class="p">,</span> <span class="n">ExecutionPlan</span><span class="p">,</span> <span class="n">PlanStep</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_plan</span><span class="p">(</span><span class="n">sub_intents</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a multi-intent ExecutionPlan from a list of {&#39;intent&#39;, &#39;sub_query&#39;} dicts.&quot;&quot;&quot;</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sub_intents</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;intent&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;sparql&quot;</span><span class="p">,</span> <span class="s2">&quot;sql&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;intent&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;sensor_data&quot;</span><span class="p">:</span>
+            <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PlanStep</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="s2">&quot;sparql&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;sparql&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{}))</span>
+            <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PlanStep</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="s2">&quot;sql&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;sql&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{}))</span>
+            <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PlanStep</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;intent&quot;</span><span class="p">],</span> <span class="n">description</span><span class="o">=</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;sub_query&quot;</span><span class="p">],</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;sub_query&quot;</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;sub_query&quot;</span><span class="p">]}))</span>
+            <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">ExecutionPlan</span><span class="p">(</span>
+        <span class="n">user_query</span><span class="o">=</span><span class="s2">&quot;compound test query&quot;</span><span class="p">,</span>
+        <span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
+        <span class="n">rationale</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">,</span>
+        <span class="n">multi_intent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">asyncio</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_sensor_data_section_included_in_multi_intent_result</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;sensor_data sub-intent result must appear in the aggregated response.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">shared.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConversationState</span><span class="p">,</span> <span class="n">Message</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="n">ConversationState</span><span class="p">(</span>
+        <span class="n">conversation_id</span><span class="o">=</span><span class="s2">&quot;test-conv&quot;</span><span class="p">,</span>
+        <span class="n">messages</span><span class="o">=</span><span class="p">[</span><span class="n">Message</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="s2">&quot;CO2 on floor 2 and show floor 2 plan&quot;</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())],</span>
+        <span class="n">building_id</span><span class="o">=</span><span class="s2">&quot;bldg1&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">intermediate_results</span><span class="p">[</span><span class="s2">&quot;multi_intent_plan&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;sub_intents&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;intent&quot;</span><span class="p">:</span> <span class="s2">&quot;sensor_data&quot;</span><span class="p">,</span> <span class="s2">&quot;sub_query&quot;</span><span class="p">:</span> <span class="s2">&quot;CO2 on floor 2&quot;</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">&quot;intent&quot;</span><span class="p">:</span> <span class="s2">&quot;floor_plan&quot;</span><span class="p">,</span> <span class="s2">&quot;sub_query&quot;</span><span class="p">:</span> <span class="s2">&quot;show floor 2 plan&quot;</span><span class="p">},</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="n">agent</span> <span class="o">=</span> <span class="n">PlannerAgent</span><span class="p">()</span>
+
+    <span class="c1"># Mock all dispatch methods to avoid real API calls</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fake_sparql</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;uuids&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;uuid-co2-001&quot;</span><span class="p">]}</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fake_sql</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">uuids</span><span class="p">,</span> <span class="n">storage_map</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;sensor&quot;</span><span class="p">:</span> <span class="s2">&quot;CO2_Sensor_2.01&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">450</span><span class="p">}]},</span>
+            <span class="s2">&quot;formatted_text&quot;</span><span class="p">:</span> <span class="s2">&quot;CO2 in floor 2: 450 ppm&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fake_floor_plan</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">orchestrator.agents.floor_plan_agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">FloorPlanResult</span>
+        <span class="k">return</span> <span class="n">FloorPlanResult</span><span class="p">(</span><span class="n">markdown</span><span class="o">=</span><span class="s2">&quot;## Floor 2 Plan</span><span class="se">\n</span><span class="s2">Some rooms&quot;</span><span class="p">,</span> <span class="n">floors</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="k">with</span> <span class="n">patch</span><span class="o">.</span><span class="n">object</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="s2">&quot;_run_sparql&quot;</span><span class="p">,</span> <span class="n">side_effect</span><span class="o">=</span><span class="n">fake_sparql</span><span class="p">),</span> \
+         <span class="n">patch</span><span class="o">.</span><span class="n">object</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="s2">&quot;_run_sql&quot;</span><span class="p">,</span> <span class="n">side_effect</span><span class="o">=</span><span class="n">fake_sql</span><span class="p">),</span> \
+         <span class="n">patch</span><span class="o">.</span><span class="n">object</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="s2">&quot;_run_floor_plan&quot;</span><span class="p">,</span> <span class="n">side_effect</span><span class="o">=</span><span class="n">fake_floor_plan</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">agent</span><span class="o">.</span><span class="n">plan_and_execute</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">messages</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;success&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">True</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;formatted_response&quot;</span><span class="p">]</span>
+    <span class="c1"># Both sensor data AND floor plan must appear</span>
+    <span class="k">assert</span> <span class="s2">&quot;CO2&quot;</span> <span class="ow">in</span> <span class="n">response</span> <span class="ow">or</span> <span class="s2">&quot;450&quot;</span> <span class="ow">in</span> <span class="n">response</span> <span class="ow">or</span> <span class="s2">&quot;Sensor&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">,</span> \
+        <span class="sa">f</span><span class="s2">&quot;Sensor data missing from response: </span><span class="si">{</span><span class="n">response</span><span class="p">[:</span><span class="mi">300</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">assert</span> <span class="s2">&quot;Floor&quot;</span> <span class="ow">in</span> <span class="n">response</span> <span class="ow">or</span> <span class="s2">&quot;floor&quot;</span> <span class="ow">in</span> <span class="n">response</span> <span class="ow">or</span> <span class="s2">&quot;Plan&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">,</span> \
+        <span class="sa">f</span><span class="s2">&quot;Floor plan missing from response: </span><span class="si">{</span><span class="n">response</span><span class="p">[:</span><span class="mi">300</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 4.2 — Run test to verify it fails</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_multi_intent_aggregation.py::test_sensor_data_section_included_in_multi_intent_result<span class="w"> </span>-v
+</code></pre></div>
+<p>Expected: <code>FAILED</code> — sensor data section missing or only floor plan present.</p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 4.3 — Fix <code>_execute_multi_intent</code> in planner_agent.py</strong></li>
+</ul>
+<p>Read current <code>_execute_multi_intent</code> at lines 329–424. After the <code>data_steps</code> sequential execution loop (after line ~371), add a block that captures the SQL result as a sensor_data section <strong>when sensor_data was a requested sub-intent</strong>:</p>
+<div class="highlight"><pre><span></span><code>        <span class="c1"># After data pipeline completes: if sensor_data was a requested sub-intent,</span>
+        <span class="c1"># add the SQL time-series result as a section so it appears in the response.</span>
+        <span class="c1"># Previously, sensor_data was silently skipped (group_a filter excluded it).</span>
+        <span class="n">multi_intent_plan</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">intermediate_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;multi_intent_plan&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">_requested_sub_intents</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;intent&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">multi_intent_plan</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sub_intents&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="s2">&quot;sensor_data&quot;</span> <span class="ow">in</span> <span class="n">_requested_sub_intents</span><span class="p">:</span>
+            <span class="n">sql_r</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sql_result&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sql_r</span><span class="p">:</span>
+                <span class="n">sensor_content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_section_content</span><span class="p">(</span><span class="s2">&quot;sql&quot;</span><span class="p">,</span> <span class="n">sql_r</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">sensor_content</span> <span class="ow">and</span> <span class="n">sensor_content</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                    <span class="n">section_results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                        <span class="s2">&quot;agent&quot;</span><span class="p">:</span> <span class="s2">&quot;sensor_data&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="nb">next</span><span class="p">(</span>
+                            <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sub_query&quot;</span><span class="p">,</span> <span class="s2">&quot;sensor readings&quot;</span><span class="p">)</span>
+                             <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">multi_intent_plan</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sub_intents&quot;</span><span class="p">,</span> <span class="p">[])</span>
+                             <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;intent&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;sensor_data&quot;</span><span class="p">),</span>
+                            <span class="s2">&quot;sensor readings&quot;</span><span class="p">,</span>
+                        <span class="p">),</span>
+                        <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">sensor_content</span><span class="p">,</span>
+                    <span class="p">})</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="s2">&quot;[multi-intent] Added sensor_data section from SQL result &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sensor_content</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars)&quot;</span>
+                    <span class="p">)</span>
+</code></pre></div>
+<p>Place this block between the <code>data_steps</code> loop and the <code># Phase 2: Run post-data agents AND standalone agents in parallel</code> comment.</p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 4.4 — Also add <code>sensor_data</code> to <code>_section_header</code> map</strong></li>
+</ul>
+<p>In <code>_section_header</code> (line ~551), ensure <code>"sensor_data"</code> and <code>"sql"</code> are mapped:</p>
+<div class="highlight"><pre><span></span><code>        <span class="n">_HEADERS</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;analytics&quot;</span><span class="p">:</span> <span class="s2">&quot;Sensor Data Analysis&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;anomaly&quot;</span><span class="p">:</span> <span class="s2">&quot;Anomaly Detection&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;capability&quot;</span><span class="p">:</span> <span class="s2">&quot;Building Information&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;floor_plan&quot;</span><span class="p">:</span> <span class="s2">&quot;Floor Plan&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;spatial_query&quot;</span><span class="p">:</span> <span class="s2">&quot;Spatial Information&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;report&quot;</span><span class="p">:</span> <span class="s2">&quot;Report&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;compare&quot;</span><span class="p">:</span> <span class="s2">&quot;Comparison&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;trend&quot;</span><span class="p">:</span> <span class="s2">&quot;Trend Analysis&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;recommend&quot;</span><span class="p">:</span> <span class="s2">&quot;Recommendations&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;compliance&quot;</span><span class="p">:</span> <span class="s2">&quot;Compliance Check&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;maintenance&quot;</span><span class="p">:</span> <span class="s2">&quot;Maintenance&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;export&quot;</span><span class="p">:</span> <span class="s2">&quot;Data Export&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sensor_data&quot;</span><span class="p">:</span> <span class="s2">&quot;Sensor Readings&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sql&quot;</span><span class="p">:</span> <span class="s2">&quot;Sensor Readings&quot;</span><span class="p">,</span>        <span class="c1"># ← add these two</span>
+        <span class="p">}</span>
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 4.5 — Run test to verify it passes</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_multi_intent_aggregation.py<span class="w"> </span>-v
+</code></pre></div>
+<p>Expected: <code>1 passed</code></p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 4.6 — Run full suite to check for regressions</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-q<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span>-x<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-20
+</code></pre></div>
+<p>Expected: same number of failures as before (846 pass, 2 fail) — no new failures.</p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 4.7 — Rebuild and live-smoke-test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>build<span class="w"> </span>orchestrator<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>docker-compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>orchestrator
+<span class="c1"># flush cache so previous planner result doesn&#39;t mask the fix</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>redis-memory-store<span class="w"> </span>redis-cli<span class="w"> </span><span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;local keys = redis.call(&#39;keys&#39;, &#39;resp_cache:*&#39;) for i,k in ipairs(keys) do redis.call(&#39;del&#39;, k) end return #keys&quot;</span><span class="w"> </span><span class="m">0</span>
+<span class="c1"># wait ~20s</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/chat<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;token&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;message&quot;:&quot;Show me CO2 levels on floor 2 and also show me the floor 2 layout&quot;,&quot;session_id&quot;:&quot;t4-smoke&quot;,&quot;building_id&quot;:&quot;bldg1&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import sys,json; d=json.load(sys.stdin); r=d.get(&#39;&quot;</span><span class="s1">&#39;&quot;&#39;</span>data<span class="s1">&#39;&quot;&#39;</span><span class="s2">&quot;&#39;,{}).get(&#39;&quot;</span><span class="s1">&#39;&quot;&#39;</span>response<span class="s1">&#39;&quot;&#39;</span><span class="s2">&quot;&#39;,&#39;&#39;); print(&#39;HAS_CO2:&#39;, &#39;&quot;</span><span class="s1">&#39;&quot;&#39;</span>CO2<span class="s1">&#39;&quot;&#39;</span><span class="s2">&quot;&#39; in r or &#39;&quot;</span><span class="s1">&#39;&quot;&#39;</span>co2<span class="s1">&#39;&quot;&#39;</span><span class="s2">&quot;&#39; in r.lower()); print(&#39;HAS_FLOOR:&#39;, &#39;&quot;</span><span class="s1">&#39;&quot;&#39;</span>Floor<span class="s1">&#39;&quot;&#39;</span><span class="s2">&quot;&#39; in r or &#39;&quot;</span><span class="s1">&#39;&quot;&#39;</span>floor<span class="s1">&#39;&quot;&#39;</span><span class="s2">&quot;&#39; in r.lower()); print(r[:400])&quot;</span>
+</code></pre></div>
+<p>Expected: both <code>HAS_CO2: True</code> and <code>HAS_FLOOR: True</code>.</p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 4.8 — Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>orchestrator/agents/planner_agent.py<span class="w"> </span>tests/test_multi_intent_aggregation.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;fix(planner): include sensor_data section in multi-intent aggregated response&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="task-5-async-job-queue-for-long-running-reports">Task 5 — Async Job Queue for Long-Running Reports<a class="headerlink" href="#task-5-async-job-queue-for-long-running-reports" title="Permanent link">&para;</a></h2>
+<p><strong>Problem:</strong> <code>report</code> intent routes through the planner (4 LLM steps ≈ 3–5 min). The synchronous <code>/chat</code> endpoint times out for clients (45s in tests, browser ~60s). Users get an error even though the report eventually completes.</p>
+<p><strong>Fix:</strong> Add a lightweight Redis-backed async job queue:
+1. When <code>/chat</code> detects <code>report</code> (or <code>planner</code>) intent on a cold cache, start a background task and return <code>{"job_id": "...", "status": "queued", "poll_url": "/jobs/&lt;id&gt;"}</code> immediately with HTTP 202.
+2. <code>GET /jobs/{job_id}</code> returns <code>{"status": "running"|"done"|"failed", "result": {...}}</code>.
+3. Jobs expire from Redis after 1 hour.
+4. If the result is already cached (warm response cache hit), the synchronous path is used as before — no job overhead.</p>
+<p><strong>Files:</strong>
+- Create: <code>orchestrator/services/job_queue.py</code>
+- Modify: <code>orchestrator/main.py</code> — detect report intent before executing, start background task, add <code>/jobs/{job_id}</code> endpoint
+- Create: <code>tests/test_async_jobs.py</code></p>
+<hr />
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 5.1 — Write failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># tests/test_async_jobs.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_job_queue_module_importable</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Job queue module must exist and expose the required API.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">orchestrator.services.job_queue</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobQueue</span><span class="p">,</span> <span class="n">JobStatus</span>
+    <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">JobQueue</span><span class="p">,</span> <span class="s2">&quot;create_job&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">JobQueue</span><span class="p">,</span> <span class="s2">&quot;update_job&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">JobQueue</span><span class="p">,</span> <span class="s2">&quot;get_job&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">QUEUED</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;queued&quot;</span>
+    <span class="k">assert</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;running&quot;</span>
+    <span class="k">assert</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">DONE</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;done&quot;</span>
+    <span class="k">assert</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">FAILED</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;failed&quot;</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">asyncio</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_job_lifecycle</span><span class="p">(</span><span class="n">mocker</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A job goes queued → running → done and result is retrievable.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">orchestrator.services.job_queue</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobQueue</span><span class="p">,</span> <span class="n">JobStatus</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+    <span class="c1"># Mock redis</span>
+    <span class="n">store</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">mock_redis</span> <span class="o">=</span> <span class="n">mocker</span><span class="o">.</span><span class="n">AsyncMock</span><span class="p">()</span>
+    <span class="n">mock_redis</span><span class="o">.</span><span class="n">set</span> <span class="o">=</span> <span class="n">mocker</span><span class="o">.</span><span class="n">AsyncMock</span><span class="p">(</span><span class="n">side_effect</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">ex</span><span class="o">=</span><span class="kc">None</span><span class="p">:</span> <span class="n">store</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">}))</span>
+    <span class="n">mock_redis</span><span class="o">.</span><span class="n">get</span> <span class="o">=</span> <span class="n">mocker</span><span class="o">.</span><span class="n">AsyncMock</span><span class="p">(</span><span class="n">side_effect</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+
+    <span class="n">jq</span> <span class="o">=</span> <span class="n">JobQueue</span><span class="p">(</span><span class="n">mock_redis</span><span class="p">)</span>
+    <span class="n">job_id</span> <span class="o">=</span> <span class="k">await</span> <span class="n">jq</span><span class="o">.</span><span class="n">create_job</span><span class="p">(</span><span class="s2">&quot;test-conv&quot;</span><span class="p">,</span> <span class="s2">&quot;Generate energy report&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">job_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="n">raw</span> <span class="o">=</span> <span class="k">await</span> <span class="n">mock_redis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;job:</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">job</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">job</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">QUEUED</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="k">await</span> <span class="n">jq</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">)</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="k">await</span> <span class="n">mock_redis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;job:</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">job</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">job</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="k">await</span> <span class="n">jq</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">DONE</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;response&quot;</span><span class="p">:</span> <span class="s2">&quot;Report complete&quot;</span><span class="p">})</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="k">await</span> <span class="n">mock_redis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;job:</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">job</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">job</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">DONE</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">assert</span> <span class="n">job</span><span class="p">[</span><span class="s2">&quot;result&quot;</span><span class="p">][</span><span class="s2">&quot;response&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Report complete&quot;</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_jobs_endpoint_exists</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;GET /jobs/{job_id} endpoint must be registered in FastAPI app.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">orchestrator.main</span><span class="w"> </span><span class="kn">import</span> <span class="n">app</span>
+    <span class="n">routes</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">app</span><span class="o">.</span><span class="n">routes</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="s2">&quot;/jobs/</span><span class="si">{job_id}</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">routes</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Missing /jobs/</span><span class="se">{{</span><span class="s2">job_id</span><span class="se">}}</span><span class="s2"> in routes: </span><span class="si">{</span><span class="n">routes</span><span class="si">}</span><span class="s2">&quot;</span>
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 5.2 — Run test to verify it fails</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_async_jobs.py<span class="w"> </span>-v
+</code></pre></div>
+<p>Expected: <code>FAILED test_job_queue_module_importable</code> — module does not exist yet.</p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 5.3 — Create <code>orchestrator/services/job_queue.py</code></strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">JobQueue — lightweight Redis-backed async job store for long-running requests.</span>
+
+<span class="sd">Jobs live at key ``job:{job_id}`` with a 1-hour TTL.</span>
+<span class="sd">Callers create a job, fire a background task that calls update_job() on</span>
+<span class="sd">completion, and let clients poll GET /jobs/{job_id}.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">shared.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">_JOB_TTL_S</span> <span class="o">=</span> <span class="mi">3600</span>  <span class="c1"># 1 hour</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">JobStatus</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">QUEUED</span> <span class="o">=</span> <span class="s2">&quot;queued&quot;</span>
+    <span class="n">RUNNING</span> <span class="o">=</span> <span class="s2">&quot;running&quot;</span>
+    <span class="n">DONE</span> <span class="o">=</span> <span class="s2">&quot;done&quot;</span>
+    <span class="n">FAILED</span> <span class="o">=</span> <span class="s2">&quot;failed&quot;</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">JobQueue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Thin wrapper around a Redis client for job lifecycle management.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">redis_client</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_redis</span> <span class="o">=</span> <span class="n">redis_client</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_job</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">conversation_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">user_message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">intent</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new job and return its job_id.&quot;&quot;&quot;</span>
+        <span class="n">job_id</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_urlsafe</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;job_id&quot;</span><span class="p">:</span> <span class="n">job_id</span><span class="p">,</span>
+            <span class="s2">&quot;conversation_id&quot;</span><span class="p">:</span> <span class="n">conversation_id</span><span class="p">,</span>
+            <span class="s2">&quot;user_message&quot;</span><span class="p">:</span> <span class="n">user_message</span><span class="p">[:</span><span class="mi">200</span><span class="p">],</span>
+            <span class="s2">&quot;intent&quot;</span><span class="p">:</span> <span class="n">intent</span><span class="p">,</span>
+            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">QUEUED</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;created_at&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+            <span class="s2">&quot;updated_at&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+            <span class="s2">&quot;result&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redis</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;job:</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">),</span> <span class="n">ex</span><span class="o">=</span><span class="n">_JOB_TTL_S</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[job_queue] created job_id=</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> intent=</span><span class="si">{</span><span class="n">intent</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">job_id</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_job</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">status</span><span class="p">:</span> <span class="n">JobStatus</span><span class="p">,</span>
+        <span class="n">result</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update job status (and optionally result/error). Resets TTL.&quot;&quot;&quot;</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;job:</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[job_queue] update_job: job_id=</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+        <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;updated_at&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;result&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+        <span class="k">if</span> <span class="n">error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">error</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redis</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;job:</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">),</span> <span class="n">ex</span><span class="o">=</span><span class="n">_JOB_TTL_S</span>
+        <span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the job payload dict, or None if not found / expired.&quot;&quot;&quot;</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;job:</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 5.4 — Add <code>/jobs/{job_id}</code> endpoint and background execution to <code>main.py</code></strong></li>
+</ul>
+<p><strong>Part A — import and initialise JobQueue</strong></p>
+<p>In <code>orchestrator/main.py</code>, find where the other service instances are initialised (search for <code>redis_manager = RedisManager()</code> or similar, around the startup lifespan block). Add after Redis is connected:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">orchestrator.services.job_queue</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobQueue</span><span class="p">,</span> <span class="n">JobStatus</span> <span class="k">as</span> <span class="n">_JobStatus</span>
+<span class="c1"># ... (place near other service initialisations)</span>
+<span class="n">job_queue</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">JobQueue</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+<p>In the <code>lifespan</code> function, after <code>await redis_manager.connect()</code> succeeds:</p>
+<div class="highlight"><pre><span></span><code>        <span class="k">global</span> <span class="n">job_queue</span>
+        <span class="n">job_queue</span> <span class="o">=</span> <span class="n">JobQueue</span><span class="p">(</span><span class="n">redis_manager</span><span class="o">.</span><span class="n">redis</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Job queue initialised&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Part B — background worker helper</strong></p>
+<p>Add this helper function to <code>main.py</code> (just before the <code>/chat</code> endpoint at line ~1608):</p>
+<div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run_workflow_as_job</span><span class="p">(</span>
+    <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">state</span><span class="p">,</span>
+    <span class="n">user_message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">conversation_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Background coroutine: run orchestrator, update job status in Redis.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">job_queue</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">_JobStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">)</span>
+        <span class="n">updated_state</span> <span class="o">=</span> <span class="k">await</span> <span class="n">orchestrator</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">redis_manager</span><span class="o">.</span><span class="n">save_state</span><span class="p">(</span><span class="n">updated_state</span><span class="p">)</span>
+
+        <span class="n">response_text</span> <span class="o">=</span> <span class="n">updated_state</span><span class="o">.</span><span class="n">intermediate_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;response&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">intent</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">updated_state</span><span class="p">,</span> <span class="s2">&quot;current_intent&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">)</span>
+
+        <span class="k">await</span> <span class="n">job_queue</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span>
+            <span class="n">job_id</span><span class="p">,</span>
+            <span class="n">_JobStatus</span><span class="o">.</span><span class="n">DONE</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;conversation_id&quot;</span><span class="p">:</span> <span class="n">conversation_id</span><span class="p">,</span>
+                <span class="s2">&quot;response&quot;</span><span class="p">:</span> <span class="n">response_text</span><span class="p">,</span>
+                <span class="s2">&quot;intent&quot;</span><span class="p">:</span> <span class="n">intent</span><span class="p">,</span>
+                <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="n">username</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[job] job_id=</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> completed intent=</span><span class="si">{</span><span class="n">intent</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[job] job_id=</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">job_queue</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span>
+            <span class="n">job_id</span><span class="p">,</span> <span class="n">_JobStatus</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="p">)</span>
+</code></pre></div>
+<p><strong>Part C — detect long-running intent in <code>/chat</code> and offload to background</strong></p>
+<p>In the <code>/chat</code> handler, after the state is prepared and just before <code>updated_state = await orchestrator.execute(state)</code> (line ~1708), add:</p>
+<div class="highlight"><pre><span></span><code>        <span class="c1"># Long-running intents (report, planner) are offloaded to a background</span>
+        <span class="c1"># job so the client does not time out waiting for 3–5 minute pipelines.</span>
+        <span class="c1"># The response cache is checked first — warm-cache hits are still sync.</span>
+        <span class="n">_ASYNC_INTENTS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;report&quot;</span><span class="p">,</span> <span class="s2">&quot;planner&quot;</span><span class="p">})</span>
+        <span class="n">_pre_intent</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">intent</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="s2">&quot;intent&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">req</span><span class="o">.</span><span class="n">intent</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="c1"># Peek at the semantic router to detect report/planner before full execution</span>
+        <span class="c1"># by checking for explicit report/planner keywords in the message.</span>
+        <span class="n">_REPORT_TRIGGER_PHRASES</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;generate report&quot;</span><span class="p">,</span> <span class="s2">&quot;create report&quot;</span><span class="p">,</span> <span class="s2">&quot;build report&quot;</span><span class="p">,</span> <span class="s2">&quot;energy report&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;generate a report&quot;</span><span class="p">,</span> <span class="s2">&quot;create a report&quot;</span><span class="p">,</span> <span class="s2">&quot;monthly report&quot;</span><span class="p">,</span> <span class="s2">&quot;weekly report&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;daily report&quot;</span><span class="p">,</span> <span class="s2">&quot;annual report&quot;</span><span class="p">,</span> <span class="s2">&quot;generate an energy&quot;</span><span class="p">,</span> <span class="s2">&quot;full report&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">_is_long_running</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">ph</span> <span class="ow">in</span> <span class="n">user_message</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">ph</span> <span class="ow">in</span> <span class="n">_REPORT_TRIGGER_PHRASES</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">_is_long_running</span> <span class="ow">and</span> <span class="n">job_queue</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Check response cache first — if already cached, skip async path</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">orchestrator.services.response_cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">response_cache</span>
+            <span class="n">_cache_hit</span> <span class="o">=</span> <span class="k">await</span> <span class="n">response_cache</span><span class="o">.</span><span class="n">get_exact</span><span class="p">(</span><span class="n">user_message</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">building_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">_cache_hit</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[async-job] cache hit for report query — serving sync&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">job_id</span> <span class="o">=</span> <span class="k">await</span> <span class="n">job_queue</span><span class="o">.</span><span class="n">create_job</span><span class="p">(</span>
+                    <span class="n">conversation_id</span><span class="p">,</span> <span class="n">user_message</span><span class="p">,</span> <span class="n">intent</span><span class="o">=</span><span class="s2">&quot;report&quot;</span>
+                <span class="p">)</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_asyncio</span>
+                <span class="n">_asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>
+                    <span class="n">_run_workflow_as_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">user_message</span><span class="p">,</span> <span class="n">conversation_id</span><span class="p">,</span> <span class="n">username</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[async-job] report offloaded job_id=</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">APIResponse</span><span class="p">(</span>
+                    <span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;job_id&quot;</span><span class="p">:</span> <span class="n">job_id</span><span class="p">,</span>
+                        <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;queued&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="p">(</span>
+                            <span class="s2">&quot;Your report is being generated. &quot;</span>
+                            <span class="s2">&quot;Poll GET /jobs/&quot;</span> <span class="o">+</span> <span class="n">job_id</span> <span class="o">+</span> <span class="s2">&quot; for the result.&quot;</span>
+                        <span class="p">),</span>
+                        <span class="s2">&quot;poll_url&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;/jobs/</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;conversation_id&quot;</span><span class="p">:</span> <span class="n">conversation_id</span><span class="p">,</span>
+                        <span class="s2">&quot;intent&quot;</span><span class="p">:</span> <span class="s2">&quot;report&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="n">username</span><span class="p">,</span>
+                    <span class="p">},</span>
+                <span class="p">)</span>
+</code></pre></div>
+<p><strong>Part D — Add <code>GET /jobs/{job_id}</code> endpoint</strong></p>
+<p>Add this endpoint to <code>main.py</code> after the <code>/conversation/{conversation_id}</code> endpoints (around line 2345):</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/jobs/</span><span class="si">{job_id}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">APIResponse</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_job_status</span><span class="p">(</span>
+    <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">current_user</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user</span><span class="p">),</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Poll status of a background job (created when a long-running report was queued).&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">job_queue</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">APIResponse</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="s2">&quot;Job queue not initialised&quot;</span><span class="p">)</span>
+    <span class="n">job</span> <span class="o">=</span> <span class="k">await</span> <span class="n">job_queue</span><span class="o">.</span><span class="n">get_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">job</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">APIResponse</span><span class="p">(</span>
+            <span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">error</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Job </span><span class="si">{</span><span class="n">job_id</span><span class="si">!r}</span><span class="s2"> not found or expired (TTL 1 hour)&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">APIResponse</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">job</span><span class="p">)</span>
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 5.5 — Run tests to verify they pass</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_async_jobs.py<span class="w"> </span>-v
+</code></pre></div>
+<p>Expected: <code>3 passed</code></p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 5.6 — Run full suite to check for regressions</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-q<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-15
+</code></pre></div>
+<p>Expected: ≥ 846 pass, same 2 pre-existing failures.</p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 5.7 — Rebuild and live-smoke-test the async job path</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>build<span class="w"> </span>orchestrator<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>docker-compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>orchestrator
+<span class="c1"># flush cache</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>redis-memory-store<span class="w"> </span>redis-cli<span class="w"> </span><span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;local keys = redis.call(&#39;keys&#39;, &#39;resp_cache:*&#39;) for i,k in ipairs(keys) do redis.call(&#39;del&#39;, k) end return #keys&quot;</span><span class="w"> </span><span class="m">0</span>
+
+<span class="c1"># wait ~20s then request a report (should return 202 with job_id)</span>
+<span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/auth/login<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;username&quot;:&quot;reviewer&quot;,&quot;password&quot;:&quot;Review@2024!&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import sys,json; print(json.load(sys.stdin)[&#39;data&#39;][&#39;session_token&#39;])&quot;</span><span class="k">)</span>
+
+<span class="nv">RESP</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/chat<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;message&quot;:&quot;Generate an energy report for last month&quot;,&quot;session_id&quot;:&quot;t5-smoke&quot;,&quot;building_id&quot;:&quot;bldg1&quot;}&#39;</span><span class="k">)</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="nv">$RESP</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;job_id|status|poll_url&quot;</span>
+<span class="nv">JOB_ID</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="nv">$RESP</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import sys,json; print(json.load(sys.stdin)[&#39;data&#39;][&#39;job_id&#39;])&quot;</span><span class="k">)</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Polling job: </span><span class="nv">$JOB_ID</span><span class="s2">&quot;</span>
+
+<span class="c1"># Poll until done (max 5 min)</span>
+<span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>seq<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">30</span><span class="k">)</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span><span class="nv">STATUS</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-s<span class="w"> </span><span class="s2">&quot;http://localhost:8000/jobs/</span><span class="nv">$JOB_ID</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import sys,json; print(json.load(sys.stdin)[&#39;data&#39;][&#39;status&#39;])&quot;</span><span class="k">)</span>
+<span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;  [</span><span class="nv">$i</span><span class="s2">] status=</span><span class="nv">$STATUS</span><span class="s2">&quot;</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$STATUS</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;done&quot;</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$STATUS</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;failed&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="k">break</span><span class="p">;</span><span class="w"> </span><span class="k">fi</span>
+<span class="w">  </span>sleep<span class="w"> </span><span class="m">10</span>
+<span class="k">done</span>
+</code></pre></div>
+<p>Expected:
+1. First <code>curl</code> returns immediately with <code>"status": "queued"</code> and <code>"job_id": "..."</code>.
+2. Polling eventually returns <code>"status": "done"</code> with the full report in <code>result.response</code>.</p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 5.8 — Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>orchestrator/services/job_queue.py<span class="w"> </span>orchestrator/main.py<span class="w"> </span>tests/test_async_jobs.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat(jobs): async job queue for long-running report generation — GET /jobs/{id} polling&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="task-6-post-fix-full-review-run">Task 6 — Post-Fix Full Review Run<a class="headerlink" href="#task-6-post-fix-full-review-run" title="Permanent link">&para;</a></h2>
+<p>Run the complete review test suite and save the output as a new review document.</p>
+<p><strong>Files:</strong>
+- Run: <code>scripts/review_test_suite.py</code> (update token)
+- Create: <code>review docs/system-review-2026-06-01-post-fixes.md</code></p>
+<hr />
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 6.1 — Get fresh auth token and flush cache</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>redis-memory-store<span class="w"> </span>redis-cli<span class="w"> </span><span class="nb">eval</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;local keys = redis.call(&#39;keys&#39;, &#39;resp_cache:*&#39;) for i,k in ipairs(keys) do redis.call(&#39;del&#39;, k) end return #keys&quot;</span><span class="w"> </span><span class="m">0</span>
+
+<span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/auth/login<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;username&quot;:&quot;reviewer&quot;,&quot;password&quot;:&quot;Review@2024!&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import sys,json; print(json.load(sys.stdin)[&#39;data&#39;][&#39;session_token&#39;])&quot;</span><span class="k">)</span>
+<span class="c1"># Update TOKEN in scripts/review_test_suite.py</span>
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 6.2 — Run full pytest suite</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-q<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>/tmp/pytest-post-fixes.txt<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-15
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 6.3 — Run live review test suite</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-X<span class="w"> </span>utf8<span class="w"> </span>scripts/review_test_suite.py<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>/tmp/review-post-fixes.txt
+</code></pre></div>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 6.4 — Save review report</strong></li>
+</ul>
+<p>Create <code>review docs/system-review-2026-06-01-post-fixes.md</code> with:
+- Stack health (from <code>GET /health</code>)
+- pytest results (from <code>/tmp/pytest-post-fixes.txt</code>)
+- Live test scores (from <code>/tmp/review-post-fixes.txt</code>)
+- Changes-since-last-review section summarising what each task fixed
+- Any new issues discovered</p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Step 6.5 — Commit final report</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span><span class="s2">&quot;review docs/system-review-2026-06-01-post-fixes.md&quot;</span>
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;docs(review): post-improvement review report — all 5 known issues addressed&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="self-review-checklist">Self-Review Checklist<a class="headerlink" href="#self-review-checklist" title="Permanent link">&para;</a></h2>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled checked/> <strong>Spec coverage:</strong> All 5 known issues from review report have a corresponding task (T1–T5). Task 6 runs and saves the new review.</li>
+<li class="task-list-item"><input type="checkbox" disabled checked/> <strong>No placeholders:</strong> Every step has exact code, exact commands, and exact expected output.</li>
+<li class="task-list-item"><input type="checkbox" disabled checked/> <strong>Type consistency:</strong> <code>JobStatus</code> enum defined in T5.3 is imported in T5.1, T5.4 — consistent names throughout.</li>
+<li class="task-list-item"><input type="checkbox" disabled checked/> <strong>TDD order:</strong> Every task writes the failing test first (Step N.1), verifies failure (Step N.2), implements fix (Step N.3+), verifies pass (Step N.4/N.5).</li>
+<li class="task-list-item"><input type="checkbox" disabled checked/> <strong>No regression risk:</strong> Each change is isolated to a specific bypass/override pattern or a new module; existing routing paths are unaffected unless the new conditions trigger.</li>
+<li class="task-list-item"><input type="checkbox" disabled checked/> <strong>Imports:</strong> <code>_FORECAST_KWS</code> and <code>_MAINTENANCE_SCHEDULE_KWS</code> are exported at module level so tests can import them without instantiating a full agent.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../../../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

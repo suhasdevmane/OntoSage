@@ -1,0 +1,3485 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/WORKFLOW/">
+      
+      
+        <link rel="prev" href="../ARCHITECTURE/">
+      
+      
+        <link rel="next" href="../SERVICES/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Workflow Deep Dive - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../assets/overrides.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#workflow-deep-dive" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Workflow Deep Dive
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-complete-request-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Complete Request Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-input-capture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Input Capture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-authentication-and-rbac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Authentication and RBAC
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-conversation-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Conversation State
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-langgraph-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: LangGraph Execution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-dialogue-agent-intent-and-entities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Dialogue Agent — Intent and Entities
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 5: Dialogue Agent — Intent and Entities">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#50-follow-up-co-reference-rewrite-phase-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.0 Follow-up Co-reference Rewrite (Phase 22)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5a-capability-semantic-router-probe-v20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5a. Capability Semantic Router Probe (v2.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5b-cache-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5b. Cache Check
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5c-ontology-context-retrieval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5c. Ontology Context Retrieval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5d-intent-classification-prompt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5d. Intent Classification Prompt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5e-soft-override-deterministic-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5e. Soft Override + Deterministic Overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5f-routing-decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5f. Routing Decision
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-sparql-agent-ontology-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: SPARQL Agent — Ontology Query
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 6: SPARQL Agent — Ontology Query">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#6a-context-retrieval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6a. Context Retrieval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6b-sparql-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6b. SPARQL Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6c-validation-and-repair" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6c. Validation and Repair
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6d-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6d. Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6e-uuid-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6e. UUID Extraction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6f-semantic-fallback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6f. Semantic Fallback
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-sql-agent-time-series-retrieval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: SQL Agent — Time-Series Retrieval
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 7: SQL Agent — Time-Series Retrieval">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#7a-storage-adapter-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7a. Storage Adapter Routing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7b-time-range-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7b. Time Range Application
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7c-query-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7c. Query Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7d-sql-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7d. SQL Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7e-result-standardisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7e. Result Standardisation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-8-analytics-agent-computation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Analytics Agent — Computation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 8: Analytics Agent — Computation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#8a-template-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8a. Template Matching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8b-llm-code-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8b. LLM Code Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8c-sandbox-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8c. Sandbox Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8d-error-retry-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8d. Error Retry Loop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8e-label-substitution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8e. Label Substitution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-9-visualization-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 9: Visualization Agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-10-anomaly-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 10: Anomaly Agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-11-report-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 11: Report Agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-12-planner-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 12: Planner Agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-13-response-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 13: Response Node
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-14-state-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 14: State Persistence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Traces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example Traces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trace-a-simple-sensor-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace A: Simple Sensor Reading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trace-b-analytics-with-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace B: Analytics with Chart
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trace-c-metadata-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace C: Metadata Discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trace-d-anomaly-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace D: Anomaly Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#routing-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routing Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-complete-request-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Complete Request Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-input-capture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Input Capture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-authentication-and-rbac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Authentication and RBAC
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-conversation-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Conversation State
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-langgraph-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: LangGraph Execution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-dialogue-agent-intent-and-entities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Dialogue Agent — Intent and Entities
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 5: Dialogue Agent — Intent and Entities">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#50-follow-up-co-reference-rewrite-phase-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.0 Follow-up Co-reference Rewrite (Phase 22)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5a-capability-semantic-router-probe-v20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5a. Capability Semantic Router Probe (v2.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5b-cache-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5b. Cache Check
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5c-ontology-context-retrieval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5c. Ontology Context Retrieval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5d-intent-classification-prompt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5d. Intent Classification Prompt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5e-soft-override-deterministic-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5e. Soft Override + Deterministic Overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5f-routing-decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5f. Routing Decision
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-sparql-agent-ontology-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: SPARQL Agent — Ontology Query
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 6: SPARQL Agent — Ontology Query">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#6a-context-retrieval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6a. Context Retrieval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6b-sparql-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6b. SPARQL Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6c-validation-and-repair" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6c. Validation and Repair
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6d-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6d. Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6e-uuid-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6e. UUID Extraction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6f-semantic-fallback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6f. Semantic Fallback
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-sql-agent-time-series-retrieval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: SQL Agent — Time-Series Retrieval
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 7: SQL Agent — Time-Series Retrieval">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#7a-storage-adapter-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7a. Storage Adapter Routing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7b-time-range-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7b. Time Range Application
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7c-query-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7c. Query Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7d-sql-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7d. SQL Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7e-result-standardisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7e. Result Standardisation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-8-analytics-agent-computation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Analytics Agent — Computation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 8: Analytics Agent — Computation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#8a-template-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8a. Template Matching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8b-llm-code-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8b. LLM Code Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8c-sandbox-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8c. Sandbox Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8d-error-retry-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8d. Error Retry Loop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8e-label-substitution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8e. Label Substitution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-9-visualization-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 9: Visualization Agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-10-anomaly-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 10: Anomaly Agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-11-report-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 11: Report Agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-12-planner-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 12: Planner Agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-13-response-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 13: Response Node
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-14-state-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 14: State Persistence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Traces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example Traces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trace-a-simple-sensor-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace A: Simple Sensor Reading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trace-b-analytics-with-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace B: Analytics with Chart
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trace-c-metadata-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace C: Metadata Discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trace-d-anomaly-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace D: Anomaly Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#routing-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routing Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/WORKFLOW.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="workflow-deep-dive">Workflow Deep Dive<a class="headerlink" href="#workflow-deep-dive" title="Permanent link">&para;</a></h1>
+<p>This document traces every step of a request through OntoSage — from the moment a user presses Enter to the moment an answer appears. Understanding this pipeline is essential for debugging, extending the system, or simply understanding why the system behaves the way it does.</p>
+<hr />
+<h2 id="the-complete-request-lifecycle">The Complete Request Lifecycle<a class="headerlink" href="#the-complete-request-lifecycle" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>1. User input (text or voice)
+2. HTTP / WebSocket → FastAPI Orchestrator
+3. Auth middleware → RBAC enforcement
+4. Conversation state loaded from Redis
+5. LangGraph state machine invoked
+6. Dialogue Agent: intent classification + entity extraction
+7. Conditional routing based on intent
+8. SPARQL Agent: ontology query (if needed)
+9. SQL Agent: time-series fetch (if needed)
+10. Analytics / Report / Anomaly Agent (if needed)
+11. Visualization Agent (if needed)
+12. Response Node: merge, format, label
+13. State saved to Redis
+14. Response returned to frontend
+</code></pre></div>
+<p>Each step is described in full below.</p>
+<hr />
+<h2 id="step-1-input-capture">Step 1: Input Capture<a class="headerlink" href="#step-1-input-capture" title="Permanent link">&para;</a></h2>
+<p>Users interact through <strong>Open WebUI</strong> at <code>http://localhost:3000</code>.</p>
+<ul>
+<li><strong>Text</strong>: typed directly into the chat interface</li>
+<li><strong>Voice</strong>: spoken via the browser microphone, transcribed by Faster-Whisper (port 8003), and then treated identically to text</li>
+</ul>
+<p>The frontend sends messages to the orchestrator via one of two transports:</p>
+<table>
+<thead>
+<tr>
+<th>Transport</th>
+<th>Endpoint</th>
+<th>Use case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>REST</td>
+<td><code>POST /chat</code></td>
+<td>Single-turn, polling-based</td>
+</tr>
+<tr>
+<td>WebSocket</td>
+<td><code>WS /ws/{session_id}</code></td>
+<td>Streaming, real-time multi-turn</td>
+</tr>
+</tbody>
+</table>
+<p>The OpenAI-compatible endpoint (<code>POST /v1/chat/completions</code>) is also available for integrations with tools that expect the OpenAI API format. Open WebUI uses this endpoint.</p>
+<hr />
+<h2 id="step-2-authentication-and-rbac">Step 2: Authentication and RBAC<a class="headerlink" href="#step-2-authentication-and-rbac" title="Permanent link">&para;</a></h2>
+<p>Every request (except <code>/health</code>) passes through two middleware layers:</p>
+<ol>
+<li>
+<p><strong>Trace ID injection</strong> — A unique UUID is generated and attached to <code>request.state.trace_id</code>. This ID appears in every log line for the request.</p>
+</li>
+<li>
+<p><strong>Auth middleware</strong> — Validates the <code>Authorization: Bearer &lt;token&gt;</code> header against Redis. If the session is missing or expired, returns HTTP 401.</p>
+</li>
+<li>
+<p><strong>RBAC dependency</strong> — Each endpoint declares a required permission (e.g., <code>sensor:read</code>, <code>analytics:read</code>). The <code>create_rbac_dependency()</code> function checks whether the authenticated user's role includes that permission. Returns HTTP 403 on failure.</p>
+</li>
+</ol>
+<p>The RBAC check happens before any business logic runs. A guest user (role: <code>readonly</code>) cannot trigger analytics — they receive a 403 before the LangGraph pipeline is ever invoked.</p>
+<hr />
+<h2 id="step-3-conversation-state">Step 3: Conversation State<a class="headerlink" href="#step-3-conversation-state" title="Permanent link">&para;</a></h2>
+<p>Before the LangGraph pipeline starts, the orchestrator loads the <code>ConversationState</code> for the current session from Redis.</p>
+<p>If no state exists (new conversation), a fresh <code>ConversationState</code> is created with:
+- A new <code>conversation_id</code> (UUID)
+- The <code>user_id</code> from the session token
+- The <code>building_id</code> from the request (or the user's default building)
+- An empty <code>messages</code> list
+- An empty <code>intermediate_results</code> dict</p>
+<p>The state object is the single source of truth for the entire pipeline. It is passed to every agent node, mutated in place, and <strong>persisted to two-tier memory</strong> after the pipeline completes:</p>
+<ul>
+<li><strong>Redis</strong> <code>conversation:&lt;id&gt;</code> — the recent state, <strong>count-bounded</strong> to <code>CONVERSATION_MAX_MESSAGES</code> (no time-expiry by default).</li>
+<li><strong>PostgreSQL</strong> <code>turn_memory</code> — a deterministic one-line summary of the turn plus <code>carry_forward</code> (forecast/analytics artifacts), so the next turn can reuse prior results.</li>
+</ul>
+<p>On load, recent messages, carried-forward artifacts, and older-turn summaries are read back. See <a href="../CONVERSATION_INTELLIGENCE/">Conversation Intelligence</a>.</p>
+<hr />
+<h2 id="step-4-langgraph-execution">Step 4: LangGraph Execution<a class="headerlink" href="#step-4-langgraph-execution" title="Permanent link">&para;</a></h2>
+<p>The <code>WorkflowOrchestrator._build_graph()</code> method constructs the state machine once at startup. The graph is compiled into an executable runner.</p>
+<p>When a request arrives, <code>orchestrator.run(state)</code> is called. LangGraph:</p>
+<ol>
+<li>Starts at the <code>dialogue</code> entry node</li>
+<li>Passes state through each node in sequence</li>
+<li>At each conditional edge, calls the routing function to select the next node</li>
+<li>Continues until the <code>response</code> node, which returns the final state</li>
+</ol>
+<p>If any node raises an exception, <code>_safe_node()</code> catches it, logs it with the trace ID, sets <code>state.intermediate_results["error"]</code>, and returns state. The pipeline continues to the <code>response</code> node, which produces a graceful error message.</p>
+<hr />
+<h2 id="step-5-dialogue-agent-intent-and-entities">Step 5: Dialogue Agent — Intent and Entities<a class="headerlink" href="#step-5-dialogue-agent-intent-and-entities" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>orchestrator/agents/dialogue_agent.py</code></p>
+<p>This is always the first node. It produces the routing decision for every other node. A <strong>co-reference rewrite</strong> runs first (Phase 22), then the SemanticRouter probe (v2.0) enables a fast-path bypass of the LLM, followed by the classification substeps.</p>
+<h3 id="50-follow-up-co-reference-rewrite-phase-22">5.0 Follow-up Co-reference Rewrite (Phase 22)<a class="headerlink" href="#50-follow-up-co-reference-rewrite-phase-22" title="Permanent link">&para;</a></h3>
+<p>If the turn is a likely follow-up (a short query, or one with deictic markers like <em>there</em> / <em>that</em> / <em>the same</em> / a leading <em>and</em>), a fast LLM rewrites it into a self-contained query using recent history — <em>"and what about humidity there"</em> → <em>"what is the average humidity on floor 3"</em>. The rewrite is <strong>gated</strong> (skips self-contained queries) and <strong>graceful</strong> (falls back to the original on any failure). The standalone query replaces <code>messages[-1]</code> so every downstream substep and the SPARQL/SQL stages resolve the reference. Controlled by <code>COREFERENCE_REWRITE_ENABLED</code>. See <a href="../CONVERSATION_INTELLIGENCE/">Conversation Intelligence</a>.</p>
+<h3 id="5a-capability-semantic-router-probe-v20">5a. Capability Semantic Router Probe (v2.0)<a class="headerlink" href="#5a-capability-semantic-router-probe-v20" title="Permanent link">&para;</a></h3>
+<p><strong>Before</strong> any LLM call, the agent embeds the user query and searches the per-building Qdrant collection <code>capability_&lt;bldg&gt;</code>. The match scores are grouped by <code>entry_id</code> with max-pool aggregation; the highest group score is checked against <code>building.yaml::capability_routing</code> thresholds:</p>
+<div class="highlight"><pre><span></span><code><span class="n">sem</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">semantic_router</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span><span class="n">user_query</span><span class="p">,</span> <span class="n">building_id</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">sem</span><span class="o">.</span><span class="n">score</span> <span class="o">&gt;=</span> <span class="n">override_min</span><span class="p">:</span>        <span class="c1"># hard override (skip LLM entirely)</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">intermediate_results</span><span class="p">[</span><span class="s2">&quot;capability_matches&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sem</span><span class="o">.</span><span class="n">matches</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;intent&quot;</span><span class="p">:</span> <span class="s2">&quot;capability&quot;</span><span class="p">,</span> <span class="s2">&quot;general&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="o">...</span><span class="p">}</span>
+<span class="c1"># else: continue to cache + LLM path; possible soft override later</span>
+</code></pre></div>
+<p><strong>Decision bands</strong> (calibrated per building):</p>
+<table>
+<thead>
+<tr>
+<th>Score band</th>
+<th>Action</th>
+<th>LLM call?</th>
+<th>Latency saved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>score ≥ override_min</code> (e.g. 0.60)</td>
+<td>Hard override → <code>capability</code></td>
+<td>❌ Skipped</td>
+<td>~600 ms</td>
+</tr>
+<tr>
+<td><code>threshold ≤ score &lt; override_min</code> (e.g. 0.56–0.60)</td>
+<td>Soft override after LLM</td>
+<td>✅ Once</td>
+<td>~0</td>
+</tr>
+<tr>
+<td><code>score &lt; threshold</code></td>
+<td>No router signal</td>
+<td>✅ Once</td>
+<td>~0</td>
+</tr>
+</tbody>
+</table>
+<p>When the router fires high-band, the <code>CapabilityAgent</code> reads <code>state.intermediate_results["capability_matches"]</code> directly — no second KB search. See <a href="../CAPABILITY_ROUTING/">Capability Routing</a>.</p>
+<h3 id="5b-cache-check">5b. Cache Check<a class="headerlink" href="#5b-cache-check" title="Permanent link">&para;</a></h3>
+<p>If the router did not fire a hard override, the agent computes <code>hash(user_query + recent_context)</code> and checks Redis. If a cached intent result exists, it is returned immediately. This eliminates LLM latency for repeated questions.</p>
+<h3 id="5c-ontology-context-retrieval">5c. Ontology Context Retrieval<a class="headerlink" href="#5c-ontology-context-retrieval" title="Permanent link">&para;</a></h3>
+<p>The agent calls the RAG Service:</p>
+<div class="highlight"><pre><span></span><code>POST http://rag-service:8001/graphdb/retrieve
+{
+  &quot;query&quot;: &quot;temperature in Zone 5&quot;,
+  &quot;top_k&quot;: 10,
+  &quot;hops&quot;: 2
+}
+</code></pre></div>
+<p>The RAG Service returns entity IRIs, nearby triples, and a plain-text summary. This context grounds the LLM's understanding of the building's structure — it knows "Zone 5" maps to <code>&lt;http://building.org/Zone_5_01&gt;</code> and that it contains <code>brick:Temperature_Sensor</code> instances.</p>
+<h3 id="5d-intent-classification-prompt">5d. Intent Classification Prompt<a class="headerlink" href="#5d-intent-classification-prompt" title="Permanent link">&para;</a></h3>
+<p>The LLM receives a structured prompt containing:
+- Recent conversation history (last N turns)
+- Retrieved ontology context
+- The user's current query
+- The list of registered intent types with descriptions (22+, from the YAML intent registry)</p>
+<p>The LLM returns a JSON object:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;intent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;analytics&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;entities&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Zone_5_01&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;required_analytics&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;avg&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;max&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;time_range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;start&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-08T00:00:00&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;end&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T23:59:59&quot;</span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;response&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;clarification_question&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;explanation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;User wants temperature statistics for Zone 5 over the last week&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="5e-soft-override-deterministic-overrides">5e. Soft Override + Deterministic Overrides<a class="headerlink" href="#5e-soft-override-deterministic-overrides" title="Permanent link">&para;</a></h3>
+<p>After the LLM returns:</p>
+<ol>
+<li><strong>Soft override</strong> — if the semantic router score is in <code>[threshold, override_min)</code> AND the LLM picked a non-data intent, route corrects to <code>capability</code></li>
+<li><strong>Deterministic keyword overrides</strong> — protective rules for <code>compare</code>, <code>correlation</code>, <code>floor_plan</code> patterns the LLM occasionally misclassifies (e.g. "Show me floor 3" classified as <code>sparql</code>)</li>
+</ol>
+<h3 id="5f-routing-decision">5f. Routing Decision<a class="headerlink" href="#5f-routing-decision" title="Permanent link">&para;</a></h3>
+<p>The router <code>_route_from_dialogue()</code> reads <code>state.intermediate_results["intent"]</code> and returns the name of the next node:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_route_from_dialogue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">ConversationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">intent</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">intermediate_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;intent&quot;</span><span class="p">,</span> <span class="s2">&quot;general&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">intent</span> <span class="o">==</span> <span class="s2">&quot;capability&quot;</span><span class="p">:</span>           <span class="c1"># v2.0 — KB lookup, no SPARQL</span>
+        <span class="k">return</span> <span class="s2">&quot;capability&quot;</span>
+    <span class="k">elif</span> <span class="n">intent</span> <span class="o">==</span> <span class="s2">&quot;sensor_data&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;sparql&quot;</span>
+    <span class="k">elif</span> <span class="n">intent</span> <span class="o">==</span> <span class="s2">&quot;analytics&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;sparql&quot;</span>
+    <span class="k">elif</span> <span class="n">intent</span> <span class="o">==</span> <span class="s2">&quot;anomaly&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;sparql&quot;</span>
+    <span class="k">elif</span> <span class="n">intent</span> <span class="o">==</span> <span class="s2">&quot;report&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;sparql&quot;</span>
+    <span class="k">elif</span> <span class="n">intent</span> <span class="o">==</span> <span class="s2">&quot;discovery&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;sparql&quot;</span>
+    <span class="k">elif</span> <span class="n">intent</span> <span class="o">==</span> <span class="s2">&quot;planner&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;planner&quot;</span>
+    <span class="k">elif</span> <span class="n">intent</span> <span class="o">==</span> <span class="s2">&quot;floor_plan&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;floor_plan&quot;</span>
+    <span class="k">elif</span> <span class="n">intent</span> <span class="o">==</span> <span class="s2">&quot;spatial_query&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;spatial_query&quot;</span>
+    <span class="k">elif</span> <span class="n">intent</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;general&quot;</span><span class="p">,</span> <span class="s2">&quot;clarification&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;response&quot;</span>
+    <span class="c1"># ... 16 branches total</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;response&quot;</span>  <span class="c1"># safe default</span>
+</code></pre></div>
+<hr />
+<h2 id="step-6-sparql-agent-ontology-query">Step 6: SPARQL Agent — Ontology Query<a class="headerlink" href="#step-6-sparql-agent-ontology-query" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>orchestrator/agents/sparql_agent.py</code></p>
+<p>Activated for intents: <code>sensor_data</code>, <code>analytics</code>, <code>anomaly</code>, <code>report</code>, <code>comparison</code>, <code>discovery</code>, <code>forecast</code>, <code>alert</code>, <code>export</code>, <code>recommend</code>.</p>
+<h3 id="6a-context-retrieval">6a. Context Retrieval<a class="headerlink" href="#6a-context-retrieval" title="Permanent link">&para;</a></h3>
+<p>The agent calls the RAG Service again, this time using the extracted entities as the query. The response provides the exact RDF class names and property paths relevant to the user's question.</p>
+<h3 id="6b-sparql-generation">6b. SPARQL Generation<a class="headerlink" href="#6b-sparql-generation" title="Permanent link">&para;</a></h3>
+<p>The LLM receives:
+- RAG context (prefixes, triples, entity IRIs)
+- Conversation history
+- The user's entities and intent
+- Required output format (UUIDs if analytics needed, metadata if discovery)</p>
+<p>The LLM generates a SPARQL query. Required prefixes are always present:</p>
+<div class="highlight"><pre><span></span><code><span class="k">PREFIX</span> <span class="nn">rdf</span><span class="p">:</span>    <span class="nl">&lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;</span>
+<span class="k">PREFIX</span> <span class="nn">rdfs</span><span class="p">:</span>   <span class="nl">&lt;http://www.w3.org/2000/01/rdf-schema#&gt;</span>
+<span class="k">PREFIX</span> <span class="nn">brick</span><span class="p">:</span>  <span class="nl">&lt;https://brickschema.org/schema/Brick#&gt;</span>
+<span class="k">PREFIX</span> <span class="nn">bacnet</span><span class="p">:</span> <span class="nl">&lt;http://data.ashrae.org/bacnet/#&gt;</span>
+<span class="k">PREFIX</span> <span class="nn">xsd</span><span class="p">:</span>    <span class="nl">&lt;http://www.w3.org/2001/XMLSchema#&gt;</span>
+<span class="k">PREFIX</span> <span class="nn">s223</span><span class="p">:</span>   <span class="nl">&lt;http://data.ashrae.org/standard223#&gt;</span>
+</code></pre></div>
+<h3 id="6c-validation-and-repair">6c. Validation and Repair<a class="headerlink" href="#6c-validation-and-repair" title="Permanent link">&para;</a></h3>
+<p>The generated query is validated:
+- Syntax check (balanced brackets, valid SELECT clause)
+- Required prefix check
+- Safety check (no SPARQL Update operations)</p>
+<p>If the query is syntactically broken, a repair prompt is sent to the LLM with the error message.</p>
+<h3 id="6d-execution">6d. Execution<a class="headerlink" href="#6d-execution" title="Permanent link">&para;</a></h3>
+<p>The validated query is sent to GraphDB:</p>
+<div class="highlight"><pre><span></span><code>POST<span class="w"> </span>http://graphdb:7200/repositories/ontosage/sparql
+Content-Type:<span class="w"> </span>application/sparql-query
+Accept:<span class="w"> </span>application/sparql-results+json
+</code></pre></div>
+<p>Results are returned as JSON bindings:
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;results&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;bindings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;sensor&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;http://building.org/Temp_Sensor_5_01&quot;</span><span class="p">},</span>
+<span class="w">        </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc-123-def&quot;</span><span class="p">},</span>
+<span class="w">        </span><span class="nt">&quot;storage&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mysql&quot;</span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<h3 id="6e-uuid-extraction">6e. UUID Extraction<a class="headerlink" href="#6e-uuid-extraction" title="Permanent link">&para;</a></h3>
+<p>For analytics intents, the agent extracts the <code>uuid</code> and <code>storage</code> values from the bindings. These are stored in <code>state.intermediate_results["uuids"]</code> for the SQL Agent.</p>
+<p>The pattern used is:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">?sensor</span> <span class="nn">ashrae</span><span class="p">:</span><span class="nt">hasExternalReference</span> <span class="nv">?extRef</span> <span class="p">.</span>
+<span class="nv">?extRef</span> <span class="nn">ref</span><span class="p">:</span><span class="nt">hasTimeseriesId</span> <span class="nv">?uuid</span> <span class="p">.</span>
+<span class="k">OPTIONAL</span> <span class="p">{</span> <span class="nv">?extRef</span> <span class="nn">ref</span><span class="p">:</span><span class="nt">storedAt</span> <span class="nv">?storage</span> <span class="p">}</span>
+</code></pre></div>
+<h3 id="6f-semantic-fallback">6f. Semantic Fallback<a class="headerlink" href="#6f-semantic-fallback" title="Permanent link">&para;</a></h3>
+<p>If SPARQL returns zero results, the agent does not immediately fail. Instead, it runs a semantic fallback: the LLM reasons directly over the retrieved triples and context to produce an answer without database access. This handles questions about building structure that exist in the ontology but where the SPARQL generation went wrong.</p>
+<hr />
+<h2 id="step-7-sql-agent-time-series-retrieval">Step 7: SQL Agent — Time-Series Retrieval<a class="headerlink" href="#step-7-sql-agent-time-series-retrieval" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>orchestrator/agents/sql_agent.py</code></p>
+<p>Activated when <code>state.intermediate_results["uuids"]</code> is non-empty and analytics are needed.</p>
+<h3 id="7a-storage-adapter-routing">7a. Storage Adapter Routing<a class="headerlink" href="#7a-storage-adapter-routing" title="Permanent link">&para;</a></h3>
+<p>The agent calls <code>AdapterRegistry.get_adapter(building_id)</code> to obtain the correct storage adapter for the current building. This is configured in <code>config/database_registry.yaml</code>.</p>
+<h3 id="7b-time-range-application">7b. Time Range Application<a class="headerlink" href="#7b-time-range-application" title="Permanent link">&para;</a></h3>
+<p>The time range from <code>intermediate_results["time_range"]</code> is applied:</p>
+<table>
+<thead>
+<tr>
+<th>User phrase</th>
+<th>Translated to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"right now"</td>
+<td>Last 5 minutes</td>
+</tr>
+<tr>
+<td>"today"</td>
+<td><code>DATE(NOW())</code></td>
+</tr>
+<tr>
+<td>"yesterday"</td>
+<td><code>DATE(NOW()) - 1</code></td>
+</tr>
+<tr>
+<td>"this week"</td>
+<td>Monday 00:00 to now</td>
+</tr>
+<tr>
+<td>"last 7 days"</td>
+<td>Now minus 7 days</td>
+</tr>
+<tr>
+<td>"last month"</td>
+<td>30 days ago to now</td>
+</tr>
+<tr>
+<td>ISO datetime</td>
+<td>Exact range</td>
+</tr>
+</tbody>
+</table>
+<h3 id="7c-query-generation">7c. Query Generation<a class="headerlink" href="#7c-query-generation" title="Permanent link">&para;</a></h3>
+<p>For MySQL wide-format tables (where each UUID is a column), the agent generates a <code>UNION ALL</code> unpivot pattern:</p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">Datetime</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">timestamp</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;abc-123-def&#39;</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">uuid</span><span class="p">,</span><span class="w"> </span><span class="o">`</span><span class="n">abc</span><span class="o">-</span><span class="mi">123</span><span class="o">-</span><span class="n">def</span><span class="o">`</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">value</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">sensor_readings</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">Datetime</span><span class="w"> </span><span class="k">BETWEEN</span><span class="w"> </span><span class="s1">&#39;2024-01-08&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="s1">&#39;2024-01-15&#39;</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="o">`</span><span class="n">abc</span><span class="o">-</span><span class="mi">123</span><span class="o">-</span><span class="n">def</span><span class="o">`</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">Datetime</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;xyz-456-ghi&#39;</span><span class="p">,</span><span class="w"> </span><span class="o">`</span><span class="n">xyz</span><span class="o">-</span><span class="mi">456</span><span class="o">-</span><span class="n">ghi</span><span class="o">`</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">sensor_readings</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">Datetime</span><span class="w"> </span><span class="k">BETWEEN</span><span class="w"> </span><span class="s1">&#39;2024-01-08&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="s1">&#39;2024-01-15&#39;</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="o">`</span><span class="n">xyz</span><span class="o">-</span><span class="mi">456</span><span class="o">-</span><span class="n">ghi</span><span class="o">`</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">timestamp</span><span class="w"> </span><span class="k">DESC</span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="mi">1000</span>
+</code></pre></div>
+<h3 id="7d-sql-validation">7d. SQL Validation<a class="headerlink" href="#7d-sql-validation" title="Permanent link">&para;</a></h3>
+<p>Before execution, every generated query is validated:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_validate_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="c1"># Must start with SELECT (after stripping whitespace/comments)</span>
+    <span class="c1"># Must not contain DDL/DML keywords</span>
+    <span class="c1"># Must be a single statement (no semicolons mid-query)</span>
+</code></pre></div>
+<p>Queries that fail validation are rejected and an error is returned.</p>
+<h3 id="7e-result-standardisation">7e. Result Standardisation<a class="headerlink" href="#7e-result-standardisation" title="Permanent link">&para;</a></h3>
+<p>All adapters return data in a consistent format regardless of the underlying database:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T14:30:00&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc-123-def&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">22.4</span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T14:25:00&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc-123-def&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">22.3</span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;row_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;uuids&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;abc-123-def&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="step-8-analytics-agent-computation">Step 8: Analytics Agent — Computation<a class="headerlink" href="#step-8-analytics-agent-computation" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>orchestrator/agents/analytics_agent.py</code></p>
+<h3 id="8a-template-matching">8a. Template Matching<a class="headerlink" href="#8a-template-matching" title="Permanent link">&para;</a></h3>
+<p>For common operations, deterministic Python templates are used instead of LLM code generation. This ensures reliability and speed:</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Template</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Latest reading</td>
+<td>Select most recent row by timestamp</td>
+</tr>
+<tr>
+<td>Average</td>
+<td><code>df["value"].mean()</code></td>
+</tr>
+<tr>
+<td>Min / Max</td>
+<td><code>df["value"].min()</code> / <code>df["value"].max()</code></td>
+</tr>
+<tr>
+<td>Count</td>
+<td><code>len(df)</code></td>
+</tr>
+<tr>
+<td>Trend</td>
+<td>Linear regression over time series</td>
+</tr>
+<tr>
+<td>Daily summary</td>
+<td>Group by date, compute statistics</td>
+</tr>
+</tbody>
+</table>
+<h3 id="8b-llm-code-generation">8b. LLM Code Generation<a class="headerlink" href="#8b-llm-code-generation" title="Permanent link">&para;</a></h3>
+<p>For complex or novel queries, the LLM generates Python code. The prompt includes:
+- The standardised data structure (column names, row count, sample rows)
+- The user's question
+- Available libraries: pandas, numpy, matplotlib, seaborn, scipy
+- Instructions to print a formatted summary and, if a plot is needed, to save it with <code>plt.savefig(filename)</code> and print <code>PLOT_GENERATED: {filename}</code></p>
+<h3 id="8c-sandbox-execution">8c. Sandbox Execution<a class="headerlink" href="#8c-sandbox-execution" title="Permanent link">&para;</a></h3>
+<p>The generated code is sent to the Code Executor:</p>
+<div class="highlight"><pre><span></span><code>POST http://code-executor:8002/execute
+{ &quot;code&quot;: &quot;import pandas as pd\n...&quot; }
+</code></pre></div>
+<p>Execution is bounded by:
+- 30-second timeout
+- 512 MB memory limit
+- CPU quota</p>
+<h3 id="8d-error-retry-loop">8d. Error Retry Loop<a class="headerlink" href="#8d-error-retry-loop" title="Permanent link">&para;</a></h3>
+<p>If the Code Executor returns an error (e.g., <code>KeyError</code>, <code>NameError</code>), the agent sends the original code + error message to the LLM and requests a fix. This repeats up to 3 times. After 3 failures, the agent returns a graceful message explaining that the analysis could not be completed.</p>
+<h3 id="8e-label-substitution">8e. Label Substitution<a class="headerlink" href="#8e-label-substitution" title="Permanent link">&para;</a></h3>
+<p>After the code runs, the agent replaces UUID strings in the output with human-readable sensor labels:</p>
+<div class="highlight"><pre><span></span><code>&quot;abc-123-def had a max value of 24.5°C&quot;
+→
+&quot;Air Temperature Sensor 5.01 had a max value of 24.5°C&quot;
+</code></pre></div>
+<hr />
+<h2 id="step-9-visualization-agent">Step 9: Visualization Agent<a class="headerlink" href="#step-9-visualization-agent" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>orchestrator/agents/visualization_agent.py</code></p>
+<p>Activated when:
+- The user's query explicitly requests a chart ("show me", "plot", "graph")
+- The Analytics Agent ran but did not produce a plot</p>
+<p>The agent determines the appropriate chart type:
+- <code>line</code> — time series data
+- <code>bar</code> — categorical comparisons
+- <code>scatter</code> — correlations
+- <code>heatmap</code> — multi-sensor, multi-time grid
+- <code>histogram</code> — value distributions
+- <code>pie</code> — proportional breakdowns</p>
+<p>Chart code is generated by the LLM, executed in the Code Executor, and the resulting image is base64-encoded for embedding in the API response.</p>
+<hr />
+<h2 id="step-10-anomaly-agent">Step 10: Anomaly Agent<a class="headerlink" href="#step-10-anomaly-agent" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>orchestrator/agents/anomaly_agent.py</code></p>
+<p>Activated for <code>anomaly</code> and <code>alert</code> intents.</p>
+<p>Runs three detection algorithms concurrently:</p>
+<p><strong>Threshold detection:</strong>
+<div class="highlight"><pre><span></span><code><span class="n">COMFORT_RANGES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">18.0</span><span class="p">,</span> <span class="mf">26.0</span><span class="p">),</span>
+    <span class="s2">&quot;co2&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">1000</span><span class="p">),</span>
+    <span class="s2">&quot;humidity&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">70</span><span class="p">),</span>
+    <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">980</span><span class="p">,</span> <span class="mi">1050</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+Any reading outside these ranges is flagged.</p>
+<p><strong>Z-score detection:</strong>
+Computes <code>(value - mean) / std</code> for each sensor's time series. Values with <code>|z| &gt; 3.0</code> are flagged.</p>
+<p><strong>Spike detection:</strong>
+Computes the first derivative of the time series. Consecutive changes exceeding a configurable threshold are flagged as spikes.</p>
+<p>Results from all three methods are merged, deduplicated, and ranked by severity. The LLM then generates a plain-English narrative summary.</p>
+<hr />
+<h2 id="step-11-report-agent">Step 11: Report Agent<a class="headerlink" href="#step-11-report-agent" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>orchestrator/agents/report_agent.py</code></p>
+<p>Activated for <code>report</code> intent.</p>
+<p>Generates a structured report with sections:
+1. Executive summary
+2. Sensor data overview (descriptive statistics per sensor)
+3. Anomalies detected (if any)
+4. Comfort compliance summary
+5. Notable highlights (highest/lowest values, longest out-of-range period)</p>
+<p>The LLM narrates each section from the computed statistics. Output is formatted as a markdown document.</p>
+<hr />
+<h2 id="step-12-planner-agent">Step 12: Planner Agent<a class="headerlink" href="#step-12-planner-agent" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>orchestrator/agents/planner_agent.py</code></p>
+<p>Activated for <code>planner</code> intent — complex, multi-step queries such as:</p>
+<blockquote>
+<p>"Get me a report on CO₂ levels in all meeting rooms for the last week, export it as CSV, and highlight any rooms that exceeded 1000 ppm."</p>
+</blockquote>
+<p>The Planner decomposes this into:
+1. SPARQL: Find all CO₂ sensors in meeting rooms
+2. SQL: Fetch last 7 days of readings
+3. Analytics: Compute statistics, flag threshold breaches
+4. Export: Generate CSV
+5. Report: Summarise findings</p>
+<p>Each step is a <code>PlanStep</code> with <code>agent</code> and <code>description</code> fields. Steps are executed sequentially with results passed forward.</p>
+<hr />
+<h2 id="step-13-response-node">Step 13: Response Node<a class="headerlink" href="#step-13-response-node" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>orchestrator/workflow.py</code> (<code>_response_node</code>)</p>
+<p>The final node always runs, regardless of which agents executed. It:</p>
+<ol>
+<li><strong>Prioritises results</strong> — Checks for content in this order: visualization → analytics → SQL → SPARQL → dialogue</li>
+<li><strong>Replaces UUIDs</strong> — Substitutes technical identifiers with human-readable sensor labels throughout the response text</li>
+<li><strong>Attaches media</strong> — Embeds base64 chart images or download links for exports</li>
+<li><strong>Formats response</strong> — Calls the Dialogue Agent's formatter to produce persona-aware markdown</li>
+<li><strong>Handles errors</strong> — If <code>intermediate_results["error"]</code> is set, produces a graceful error message with suggested next steps</li>
+</ol>
+<hr />
+<h2 id="step-14-state-persistence">Step 14: State Persistence<a class="headerlink" href="#step-14-state-persistence" title="Permanent link">&para;</a></h2>
+<p>After the pipeline completes:</p>
+<ol>
+<li>The assistant's response is appended to <code>state.messages</code></li>
+<li>The full <code>ConversationState</code> is serialised and saved to Redis (<code>conversation:{conversation_id}</code>) — <strong>count-bounded</strong> to <code>CONVERSATION_MAX_MESSAGES</code>, with no time-expiry by default</li>
+<li>A deterministic one-line summary of the turn (plus forecast/analytics carry-forward) is written to the PostgreSQL <code>turn_memory</code> table for long-term recall — see <a href="../CONVERSATION_INTELLIGENCE/">Conversation Intelligence</a></li>
+<li>If this is a new conversation, the title is auto-generated from the first query</li>
+<li>Generated files (plots, exports) are written to the <code>outputs/</code> volume and served via the file server</li>
+<li>The final response is returned to the frontend</li>
+</ol>
+<hr />
+<h2 id="example-traces">Example Traces<a class="headerlink" href="#example-traces" title="Permanent link">&para;</a></h2>
+<h3 id="trace-a-simple-sensor-reading">Trace A: Simple Sensor Reading<a class="headerlink" href="#trace-a-simple-sensor-reading" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p>"What is the current temperature in Zone 5?"</p>
+</blockquote>
+<div class="highlight"><pre><span></span><code>dialogue      intent=sensor_data, entities=[Zone_5_01], time_range=now
+    ↓
+sparql        query Zone_5_01 sensors → uuid=&quot;abc-123&quot;, storage=&quot;mysql&quot;
+    ↓
+sql           SELECT last 5 min for uuid abc-123 → [{ts, uuid, 22.4}]
+    ↓
+analytics     latest template → &quot;22.4°C as of 14:32&quot;
+    ↓
+response      &quot;The current temperature in Zone 5.01 is 22.4°C (measured at 14:32).&quot;
+</code></pre></div>
+<p>Total time: ~2.5 seconds (with Redis cache hit on intent: ~0.8 seconds)</p>
+<hr />
+<h3 id="trace-b-analytics-with-chart">Trace B: Analytics with Chart<a class="headerlink" href="#trace-b-analytics-with-chart" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p>"Show me the temperature trend for Level 3 over the last 7 days"</p>
+</blockquote>
+<div class="highlight"><pre><span></span><code>dialogue      intent=analytics, entities=[Level_3], time_range=last_7_days
+    ↓
+sparql        query Level 3 sensors → 12 temperature sensor UUIDs
+    ↓
+sql           UNION ALL for 12 UUIDs, 7-day range → 8,640 rows
+    ↓
+analytics     generate trend code → execute → PLOT_GENERATED: trend_20240115.png
+    ↓
+visualization (skipped — analytics already produced plot)
+    ↓
+response      &quot;Average temperature on Level 3 over 7 days: 21.8°C.
+               Peak: 25.1°C on Tuesday afternoon. 
+               [chart embedded]&quot;
+</code></pre></div>
+<p>Total time: ~6–8 seconds</p>
+<hr />
+<h3 id="trace-c-metadata-discovery">Trace C: Metadata Discovery<a class="headerlink" href="#trace-c-metadata-discovery" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p>"What sensors are in the Building Management Room?"</p>
+</blockquote>
+<div class="highlight"><pre><span></span><code>dialogue      intent=discovery, entities=[Building_Management_Room]
+    ↓
+sparql        SELECT ?sensor ?type ?label WHERE { ?sensor brick:isPartOf :BMS_Room }
+              → 4 sensors: CO2, Temperature, Humidity, Occupancy
+    ↓
+(no sql, no analytics — discovery intent routes directly to response)
+    ↓
+response      &quot;The Building Management Room (Zone 1.08) contains 4 sensors:
+               • CO₂ Level Sensor 1.08 (brick:CO2_Sensor)
+               • Air Temperature Sensor 1.08 (brick:Air_Temperature_Sensor)
+               • Relative Humidity Sensor 1.08 (brick:Relative_Humidity_Sensor)
+               • Occupancy Sensor 1.08 (brick:Occupancy_Sensor)&quot;
+</code></pre></div>
+<p>Total time: ~1.8 seconds</p>
+<hr />
+<h3 id="trace-d-anomaly-detection">Trace D: Anomaly Detection<a class="headerlink" href="#trace-d-anomaly-detection" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p>"Are there any rooms with unusually high CO₂ levels today?"</p>
+</blockquote>
+<div class="highlight"><pre><span></span><code>dialogue      intent=anomaly, entities=[], time_range=today
+    ↓
+sparql        SELECT all CO₂ sensors in building → 47 UUIDs
+    ↓
+sql           Fetch today&#39;s readings for all 47 UUIDs → ~2,800 rows
+    ↓
+anomaly       threshold: 12 readings &gt;1000ppm in 5 zones
+              z-score: 3 spikes flagged
+              → merged: 8 anomalous events
+    ↓
+response      &quot;⚠ 8 anomalous CO₂ events detected today:
+               • Zone 5.03 — Peak 1,247 ppm at 10:15 (occupancy event)
+               • Zone 2.11 — Sustained elevation &gt;1000 ppm for 45 minutes
+               ...&quot;
+</code></pre></div>
+<p>Total time: ~5 seconds</p>
+<hr />
+<h2 id="routing-reference">Routing Reference<a class="headerlink" href="#routing-reference" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart TD
+    D[Dialogue Agent] --&gt;|sensor_data| SP[SPARQL]
+    D --&gt;|analytics| SP
+    D --&gt;|anomaly| SP
+    D --&gt;|report| SP
+    D --&gt;|discovery| SP
+    D --&gt;|comparison| SP
+    D --&gt;|export| SP
+    D --&gt;|recommend| SP
+    D --&gt;|forecast| SP
+    D --&gt;|alert| SP
+    D --&gt;|planner| PL[Planner]
+    D --&gt;|general| R[Response]
+    D --&gt;|clarification| R
+    D --&gt;|control| R
+
+    SP --&gt;|analytics_required=true| SQ[SQL]
+    SP --&gt;|analytics_required=false| R
+
+    SQ --&gt; AN[Analytics]
+    AN --&gt; VI[Visualization]
+    VI --&gt; R
+
+    SQ --&gt; REP[Report]
+    REP --&gt; R
+
+    SQ --&gt; ANO[Anomaly]
+    ANO --&gt; R
+
+    SQ --&gt; EX[Export]
+    EX --&gt; R
+
+    PL --&gt; R</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../ARCHITECTURE/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Architecture">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Architecture
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../SERVICES/" class="md-footer__link md-footer__link--next" aria-label="Next: Services">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Services
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

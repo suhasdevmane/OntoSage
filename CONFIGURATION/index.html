@@ -1,0 +1,3472 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/CONFIGURATION/">
+      
+      
+        <link rel="prev" href="../FORECASTING/">
+      
+      
+        <link rel="next" href="../GRAPHDB_SETUP/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Configuration - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../assets/overrides.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#configuration-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Configuration
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llm-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Provider
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LLM Provider">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#model_provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODEL_PROVIDER
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openai-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenAI Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-ollama-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local Ollama Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding Provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Building Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-building-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Building Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configbuilding_configyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config/building_config.yaml
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#graphdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GraphDB
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relational-databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relational Databases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Relational Databases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mysql-building-1-primary-time-series" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MySQL (Building 1 / Primary Time-Series)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#postgresql-user-accounts-and-rbac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PostgreSQL (User Accounts and RBAC)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-building-database-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Building Database Registry
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#service-urls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Service URLs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-executor-analytics-sandbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Executor (Analytics Sandbox)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conversation-and-session-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversation and Session Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rag-and-semantic-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RAG and Semantic Search
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#qdrant-vector-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Qdrant Vector Database
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#capability-semantic-routing-v20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability Semantic Routing (v2.0)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Capability Semantic Routing (v2.0)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-building-routing-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-building routing config
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ontology-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ontology Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#speech-to-text-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Speech-to-Text (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitoring-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-envexample-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete .env.example Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-precedence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Precedence
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llm-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Provider
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LLM Provider">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#model_provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODEL_PROVIDER
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openai-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenAI Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-ollama-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local Ollama Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding Provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Building Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-building-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Building Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configbuilding_configyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config/building_config.yaml
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#graphdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GraphDB
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relational-databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relational Databases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Relational Databases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mysql-building-1-primary-time-series" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MySQL (Building 1 / Primary Time-Series)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#postgresql-user-accounts-and-rbac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PostgreSQL (User Accounts and RBAC)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-building-database-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Building Database Registry
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#service-urls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Service URLs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-executor-analytics-sandbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Executor (Analytics Sandbox)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conversation-and-session-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversation and Session Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rag-and-semantic-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RAG and Semantic Search
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#qdrant-vector-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Qdrant Vector Database
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#capability-semantic-routing-v20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability Semantic Routing (v2.0)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Capability Semantic Routing (v2.0)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-building-routing-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-building routing config
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ontology-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ontology Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#speech-to-text-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Speech-to-Text (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitoring-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-envexample-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete .env.example Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-precedence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Precedence
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/CONFIGURATION.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="configuration-reference">Configuration Reference<a class="headerlink" href="#configuration-reference" title="Permanent link">&para;</a></h1>
+<p>This page documents every environment variable, configuration file, and tuning parameter available in OntoSage. All configuration is driven by the <code>.env</code> file and two YAML files in <code>config/</code>.</p>
+<hr />
+<h2 id="quick-setup">Quick Setup<a class="headerlink" href="#quick-setup" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Copy the template</span>
+cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+
+<span class="c1"># Edit the minimal required settings</span>
+nano<span class="w"> </span>.env
+</code></pre></div>
+<p>Required minimum for OpenAI mode:
+<div class="highlight"><pre><span></span><code><span class="nv">MODEL_PROVIDER</span><span class="o">=</span>openai
+<span class="nv">OPENAI_API_KEY</span><span class="o">=</span>sk-...
+<span class="nv">MYSQL_PASSWORD</span><span class="o">=</span>yourpassword
+<span class="nv">POSTGRES_USER_PASSWORD</span><span class="o">=</span>yourpassword
+</code></pre></div></p>
+<p>Required minimum for local GPU mode:
+<div class="highlight"><pre><span></span><code><span class="nv">MODEL_PROVIDER</span><span class="o">=</span><span class="nb">local</span>
+<span class="nv">OLLAMA_MODEL</span><span class="o">=</span>deepseek-r1:32b
+<span class="nv">MYSQL_PASSWORD</span><span class="o">=</span>yourpassword
+<span class="nv">POSTGRES_USER_PASSWORD</span><span class="o">=</span>yourpassword
+</code></pre></div></p>
+<hr />
+<h2 id="llm-provider">LLM Provider<a class="headerlink" href="#llm-provider" title="Permanent link">&para;</a></h2>
+<h3 id="model_provider"><code>MODEL_PROVIDER</code><a class="headerlink" href="#model_provider" title="Permanent link">&para;</a></h3>
+<p>Selects the LLM backend for all inference tasks (intent classification, SPARQL generation, code generation, response synthesis).</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+<th>Requirements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>openai</code></td>
+<td>OpenAI API</td>
+<td><code>OPENAI_API_KEY</code> required</td>
+</tr>
+<tr>
+<td><code>local</code></td>
+<td>Ollama running in Docker</td>
+<td>NVIDIA GPU + CUDA recommended</td>
+</tr>
+<tr>
+<td><code>cloud</code></td>
+<td>Ollama Cloud (external)</td>
+<td><code>OLLAMA_BASE_URL</code> pointing to remote</td>
+</tr>
+</tbody>
+</table>
+<p>Default: <code>local</code></p>
+<p>You can switch providers at runtime without rebuilding:
+<div class="highlight"><pre><span></span><code><span class="nv">MODEL_PROVIDER</span><span class="o">=</span>openai<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>restart<span class="w"> </span>orchestrator
+</code></pre></div></p>
+<hr />
+<h3 id="openai-settings">OpenAI Settings<a class="headerlink" href="#openai-settings" title="Permanent link">&para;</a></h3>
+<p>Used when <code>MODEL_PROVIDER=openai</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OPENAI_API_KEY</code></td>
+<td>—</td>
+<td><strong>Required.</strong> Your OpenAI API key (starts with <code>sk-</code>)</td>
+</tr>
+<tr>
+<td><code>OPENAI_MODEL</code></td>
+<td><code>gpt-4-turbo-preview</code></td>
+<td>Model for LLM inference. Options: <code>gpt-4o</code>, <code>gpt-4o-mini</code>, <code>gpt-4-turbo</code>, <code>gpt-3.5-turbo</code></td>
+</tr>
+<tr>
+<td><code>OPENAI_TEMPERATURE</code></td>
+<td><code>0.1</code></td>
+<td>Sampling temperature (0.0 = deterministic, 1.0 = creative). Keep at 0.0–0.2 for SPARQL generation</td>
+</tr>
+<tr>
+<td><code>OPENAI_RETRY_DELAY_S</code></td>
+<td><code>20</code></td>
+<td>Seconds to wait between retries on rate limit (429) errors</td>
+</tr>
+<tr>
+<td><code>EMBEDDING_MODEL_OPENAI</code></td>
+<td><code>text-embedding-3-small</code></td>
+<td>Embedding model for RAG. Options: <code>text-embedding-3-large</code>, <code>text-embedding-ada-002</code></td>
+</tr>
+<tr>
+<td><code>EMBEDDING_DIMENSION_OPENAI</code></td>
+<td><code>1536</code></td>
+<td>Dimension of embedding vectors (must match model)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="local-ollama-settings">Local Ollama Settings<a class="headerlink" href="#local-ollama-settings" title="Permanent link">&para;</a></h3>
+<p>Used when <code>MODEL_PROVIDER=local</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OLLAMA_BASE_URL</code></td>
+<td><code>http://ollama:11434</code></td>
+<td>Internal Docker URL for the Ollama service</td>
+</tr>
+<tr>
+<td><code>OLLAMA_MODEL</code></td>
+<td><code>deepseek-r1:32b</code></td>
+<td>Model to use for inference. Pull with <code>docker exec ollama ollama pull &lt;model&gt;</code></td>
+</tr>
+<tr>
+<td><code>OLLAMA_GPU_LAYERS</code></td>
+<td><code>-1</code></td>
+<td>Number of layers to offload to GPU. <code>-1</code> = all layers on GPU. <code>0</code> = CPU only</td>
+</tr>
+<tr>
+<td><code>OLLAMA_NUM_CTX</code></td>
+<td><code>8192</code></td>
+<td>Context window size (tokens). Larger = more conversation history but slower</td>
+</tr>
+<tr>
+<td><code>OLLAMA_KEEP_ALIVE</code></td>
+<td><code>5m</code></td>
+<td>How long to keep the model loaded after last request. <code>0</code> = unload immediately</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recommended models by VRAM:</strong></p>
+<table>
+<thead>
+<tr>
+<th>VRAM</th>
+<th>Recommended Model</th>
+<th>Quality</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8 GB</td>
+<td><code>llama3.2:7b</code> or <code>mistral:7b</code></td>
+<td>Good</td>
+</tr>
+<tr>
+<td>16 GB</td>
+<td><code>llama3.1:13b</code> or <code>deepseek-r1:14b</code></td>
+<td>Very Good</td>
+</tr>
+<tr>
+<td>24 GB</td>
+<td><code>deepseek-r1:32b</code></td>
+<td>Excellent</td>
+</tr>
+<tr>
+<td>48 GB+</td>
+<td><code>llama3.1:70b</code></td>
+<td>Best</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="embedding-provider">Embedding Provider<a class="headerlink" href="#embedding-provider" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EMBEDDING_PROVIDER</code></td>
+<td><code>local</code></td>
+<td><code>local</code> = sentence-transformers, <code>openai</code> = OpenAI embeddings API</td>
+</tr>
+<tr>
+<td><code>EMBEDDING_MODEL_LOCAL</code></td>
+<td><code>sentence-transformers/all-MiniLM-L6-v2</code></td>
+<td>Local embedding model (downloaded on first use)</td>
+</tr>
+<tr>
+<td><code>EMBEDDING_DIMENSION_LOCAL</code></td>
+<td><code>384</code></td>
+<td>Vector dimension for local embeddings</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="building-configuration">Building Configuration<a class="headerlink" href="#building-configuration" title="Permanent link">&para;</a></h2>
+<h3 id="core-building-settings">Core Building Settings<a class="headerlink" href="#core-building-settings" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BUILDING_ID</code></td>
+<td><code>bldg1</code></td>
+<td>Identifier passed to the orchestrator. Must match an ontology loaded in GraphDB</td>
+</tr>
+<tr>
+<td><code>BUILDING_NAME</code></td>
+<td><code>Abacws Building</code></td>
+<td>Human-readable name used in AI responses</td>
+</tr>
+<tr>
+<td><code>BUILDING_CONFIG_FILE</code></td>
+<td>—</td>
+<td>Path to a <code>building_config.yaml</code> file. If set, overrides individual env vars</td>
+</tr>
+</tbody>
+</table>
+<h3 id="configbuilding_configyaml"><code>config/building_config.yaml</code><a class="headerlink" href="#configbuilding_configyaml" title="Permanent link">&para;</a></h3>
+<p>Structured building metadata read at orchestrator startup. See the <a href="../BUILDING_ONBOARDING/">Building Onboarding Guide</a> for full field documentation.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">building</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;bldg1&quot;</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Abacws</span><span class="nv"> </span><span class="s">Building&quot;</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;http://abacwsbuilding.cardiff.ac.uk/abacws#&quot;</span>
+<span class="w">  </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;bldg&quot;</span>
+<span class="w">  </span><span class="nt">timezone</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Europe/London&quot;</span>
+<span class="w">  </span><span class="nt">abox_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;trial/dataset/bldg1_protege.ttl&quot;</span>
+<span class="w">  </span><span class="nt">tbox_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;trial/dataset/Brick.ttl&quot;</span>
+
+<span class="nt">ontology</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">schema</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;brick&quot;</span><span class="w">          </span><span class="c1"># brick | rec | s223 | custom</span>
+<span class="w">  </span><span class="nt">schema_uri</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://brickschema.org/schema/Brick#&quot;</span>
+<span class="w">  </span><span class="nt">extra_prefixes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+
+<span class="nt">storage</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;mysql&quot;</span>
+<span class="w">  </span><span class="nt">database</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;abacws&quot;</span>
+<span class="w">  </span><span class="nt">table</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sensor_data&quot;</span>
+<span class="w">  </span><span class="nt">columns</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">uuid</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;uuid&quot;</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;value&quot;</span>
+<span class="w">    </span><span class="nt">timestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;time&quot;</span>
+<span class="w">    </span><span class="nt">sensor_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sensor_name&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="graphdb">GraphDB<a class="headerlink" href="#graphdb" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GRAPHDB_HOST</code></td>
+<td><code>graphdb</code></td>
+<td>Docker service name (or external hostname)</td>
+</tr>
+<tr>
+<td><code>GRAPHDB_PORT</code></td>
+<td><code>7200</code></td>
+<td>HTTP port for GraphDB REST API</td>
+</tr>
+<tr>
+<td><code>GRAPHDB_REPOSITORY</code></td>
+<td><code>ontosage</code></td>
+<td>Repository ID to query. Must exist in GraphDB before use</td>
+</tr>
+<tr>
+<td><code>GRAPHDB_SIMILARITY_INDEX</code></td>
+<td><code>bldg_index</code></td>
+<td>Name of the text similarity index for semantic entity search</td>
+</tr>
+<tr>
+<td><code>GDB_HEAP_SIZE</code></td>
+<td><code>2g</code></td>
+<td>Java heap for GraphDB JVM. Increase to <code>4g</code>–<code>8g</code> for large ontologies (&gt;500K triples)</td>
+</tr>
+<tr>
+<td><code>GDB_MAX_MEM</code></td>
+<td><code>4g</code></td>
+<td>Java max memory (<code>-Xmx</code>). Set to 2–4 GB more than <code>GDB_HEAP_SIZE</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="relational-databases">Relational Databases<a class="headerlink" href="#relational-databases" title="Permanent link">&para;</a></h2>
+<h3 id="mysql-building-1-primary-time-series">MySQL (Building 1 / Primary Time-Series)<a class="headerlink" href="#mysql-building-1-primary-time-series" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MYSQL_HOST</code></td>
+<td><code>mysql</code></td>
+<td>MySQL server hostname</td>
+</tr>
+<tr>
+<td><code>MYSQL_PORT</code></td>
+<td><code>3306</code></td>
+<td>MySQL port</td>
+</tr>
+<tr>
+<td><code>MYSQL_USER</code></td>
+<td><code>root</code></td>
+<td>Username</td>
+</tr>
+<tr>
+<td><code>MYSQL_PASSWORD</code></td>
+<td><code>mysql</code></td>
+<td>Password — change in production</td>
+</tr>
+<tr>
+<td><code>MYSQL_DATABASE</code></td>
+<td><code>sensordb</code></td>
+<td>Database name containing sensor data</td>
+</tr>
+<tr>
+<td><code>MYSQL_ROOT_PASSWORD</code></td>
+<td>—</td>
+<td>Root password for container initialization</td>
+</tr>
+</tbody>
+</table>
+<h3 id="postgresql-user-accounts-and-rbac">PostgreSQL (User Accounts and RBAC)<a class="headerlink" href="#postgresql-user-accounts-and-rbac" title="Permanent link">&para;</a></h3>
+<p>OntoSage uses a dedicated PostgreSQL instance for user accounts, sessions, and role assignments. This is separate from sensor data storage.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POSTGRES_USER_USER</code></td>
+<td><code>ontosage</code></td>
+<td>PostgreSQL username for user data</td>
+</tr>
+<tr>
+<td><code>POSTGRES_USER_PASSWORD</code></td>
+<td><code>ontosage</code></td>
+<td>Password — change in production</td>
+</tr>
+<tr>
+<td><code>POSTGRES_USER_DB</code></td>
+<td><code>ontosage_users</code></td>
+<td>Database name</td>
+</tr>
+<tr>
+<td><code>POSTGRES_USER_PORT</code></td>
+<td><code>5433</code></td>
+<td>External host port (internal is 5432)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="multi-building-database-registry">Multi-Building Database Registry<a class="headerlink" href="#multi-building-database-registry" title="Permanent link">&para;</a></h3>
+<p>Additional databases for Buildings 2–8 are configured in <code>config/database_registry.yaml</code>. Each entry uses env var substitution:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Building 2 (PostgreSQL)</span>
+<span class="nv">PG_HOST</span><span class="o">=</span>postgres
+<span class="nv">PG_PORT</span><span class="o">=</span><span class="m">5432</span>
+<span class="nv">PG_USER</span><span class="o">=</span>ontosage
+<span class="nv">PG_PASSWORD</span><span class="o">=</span>yourpassword
+<span class="nv">PG_DATABASE</span><span class="o">=</span>bldg2
+
+<span class="c1"># Building 3 (TimescaleDB)</span>
+<span class="nv">TIMESCALE_HOST</span><span class="o">=</span>timescaledb
+<span class="nv">TIMESCALE_PORT</span><span class="o">=</span><span class="m">5432</span>
+<span class="nv">TIMESCALE_USER</span><span class="o">=</span>ontosage
+<span class="nv">TIMESCALE_PASSWORD</span><span class="o">=</span>yourpassword
+<span class="nv">TIMESCALE_DATABASE</span><span class="o">=</span>bldg3
+
+<span class="c1"># Building 4 (MongoDB)</span>
+<span class="nv">MONGO_HOST</span><span class="o">=</span>mongodb
+<span class="nv">MONGO_PORT</span><span class="o">=</span><span class="m">27017</span>
+<span class="nv">MONGO_USER</span><span class="o">=</span>
+<span class="nv">MONGO_PASSWORD</span><span class="o">=</span>
+<span class="nv">MONGO_DATABASE</span><span class="o">=</span>bldg4
+<span class="nv">MONGO_COLLECTION</span><span class="o">=</span>sensor_data
+
+<span class="c1"># Building 5 (InfluxDB 2.x)</span>
+<span class="nv">INFLUX_URL</span><span class="o">=</span>http://influxdb:8086
+<span class="nv">INFLUX_TOKEN</span><span class="o">=</span>your_influx_token_here
+<span class="nv">INFLUX_ORG</span><span class="o">=</span>ontosage
+<span class="nv">INFLUX_BUCKET</span><span class="o">=</span>sensors
+
+<span class="c1"># Building 6 (SQLite)</span>
+<span class="nv">SQLITE_PATH</span><span class="o">=</span>/app/data/bldg6.db
+
+<span class="c1"># Building 7 (Cassandra)</span>
+<span class="nv">CASSANDRA_HOST</span><span class="o">=</span>cassandra
+<span class="nv">CASSANDRA_PORT</span><span class="o">=</span><span class="m">9042</span>
+<span class="nv">CASSANDRA_KEYSPACE</span><span class="o">=</span>bldg7
+<span class="nv">CASSANDRA_TABLE</span><span class="o">=</span>sensor_data
+
+<span class="c1"># Building 8 (Redis TimeSeries)</span>
+<span class="nv">REDIS_TS_URL</span><span class="o">=</span>redis://redis:6379/1
+<span class="nv">REDIS_TS_KEY_PREFIX</span><span class="o">=</span>sensor
+</code></pre></div>
+<p>See <code>config/database_registry.yaml</code> for the full list of supported databases including cloud variants (AWS RDS, Aurora, Atlas, Timescale Cloud, InfluxDB Cloud, AstraDB).</p>
+<hr />
+<h2 id="service-urls">Service URLs<a class="headerlink" href="#service-urls" title="Permanent link">&para;</a></h2>
+<p>These URL environment variables point services to each other within the Docker network. Only change them if you are running services outside Docker or on non-standard ports.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Service</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QDRANT_URL</code></td>
+<td><code>http://qdrant:6333</code></td>
+<td>Vector database for agent memory</td>
+</tr>
+<tr>
+<td><code>REDIS_URL</code></td>
+<td><code>redis://redis:6379/0</code></td>
+<td>Conversation state and caching</td>
+</tr>
+<tr>
+<td><code>RAG_SERVICE_URL</code></td>
+<td><code>http://rag-service:8001</code></td>
+<td>RAG context retrieval</td>
+</tr>
+<tr>
+<td><code>CODE_EXECUTOR_URL</code></td>
+<td><code>http://code-executor:8002</code></td>
+<td>Python analytics sandbox</td>
+</tr>
+<tr>
+<td><code>WHISPER_STT_URL</code></td>
+<td><code>http://whisper-stt:8003</code></td>
+<td>Speech-to-text service</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="code-executor-analytics-sandbox">Code Executor (Analytics Sandbox)<a class="headerlink" href="#code-executor-analytics-sandbox" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CODE_EXECUTOR_TIMEOUT</code></td>
+<td><code>30</code></td>
+<td>Maximum execution time in seconds per analytics job</td>
+</tr>
+<tr>
+<td><code>CODE_EXECUTOR_MEMORY_LIMIT</code></td>
+<td><code>1g</code></td>
+<td>RAM limit per execution. Raise to <code>2g</code> for complex analytics on large datasets</td>
+</tr>
+<tr>
+<td><code>CODE_EXECUTOR_CPU_LIMIT</code></td>
+<td><code>1.0</code></td>
+<td>CPU core limit (1.0 = 1 full core)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="conversation-and-session-settings">Conversation and Session Settings<a class="headerlink" href="#conversation-and-session-settings" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CONVERSATION_TTL</code></td>
+<td><code>0</code></td>
+<td>Seconds before Redis time-expires a conversation's state. <strong><code>0</code> = no time-expiry</strong> (state is count-bounded instead, see below). Set e.g. <code>86400</code> to re-enable 24-hour expiry</td>
+</tr>
+<tr>
+<td><code>CONVERSATION_MAX_MESSAGES</code></td>
+<td><code>20</code></td>
+<td>Count-based eviction — max messages retained in the stored Redis conversation blob. The active bound when <code>CONVERSATION_TTL=0</code></td>
+</tr>
+<tr>
+<td><code>MAX_CONVERSATION_HISTORY</code></td>
+<td><code>20</code></td>
+<td>Maximum prior turns injected into the LLM context (sliding window)</td>
+</tr>
+<tr>
+<td><code>COREFERENCE_REWRITE_ENABLED</code></td>
+<td><code>true</code></td>
+<td>Resolve context-dependent follow-ups ("and humidity <em>there</em>?") into self-contained queries via a gated fast-LLM rewrite. See <a href="../CONVERSATION_INTELLIGENCE/">Conversation Intelligence</a></td>
+</tr>
+<tr>
+<td><code>MAX_RETRY_ATTEMPTS</code></td>
+<td><code>3</code></td>
+<td>Automatic retry count for SPARQL errors, code execution failures, and LLM API timeouts</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Memory eviction changed</p>
+<p>OntoSage now bounds conversation state by <strong>message count</strong> (<code>CONVERSATION_MAX_MESSAGES</code>) rather than a fixed TTL. <code>CONVERSATION_TTL</code> defaults to <code>0</code> (no time-expiry). See <a href="../CONVERSATION_INTELLIGENCE/">Conversation Intelligence</a> for the two-tier memory model (Redis + Postgres <code>turn_memory</code>).</p>
+</div>
+<hr />
+<h2 id="rag-and-semantic-search">RAG and Semantic Search<a class="headerlink" href="#rag-and-semantic-search" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GRAPHDB_SIMILARITY_INDEX</code></td>
+<td><code>bldg_index</code></td>
+<td>GraphDB similarity plugin index name</td>
+</tr>
+<tr>
+<td><code>SIMILARITY_THRESHOLD</code></td>
+<td><code>0.7</code></td>
+<td>Minimum similarity score (0.0–1.0) for entity retrieval. Lower = more results but less relevant</td>
+</tr>
+<tr>
+<td><code>RAG_TOP_K</code></td>
+<td><code>5</code></td>
+<td>Maximum number of entities returned per semantic search query</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="qdrant-vector-database">Qdrant Vector Database<a class="headerlink" href="#qdrant-vector-database" title="Permanent link">&para;</a></h2>
+<p>Qdrant stores agent memory, floor-plan vectors, and (v2.0) per-building capability KB collections.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QDRANT_URL</code></td>
+<td><code>http://qdrant:6333</code></td>
+<td>Qdrant REST API endpoint</td>
+</tr>
+<tr>
+<td><code>QDRANT_ONTOLOGY_COLLECTION</code></td>
+<td><code>ontology</code></td>
+<td>Collection for Brick Schema triples</td>
+</tr>
+<tr>
+<td><code>QDRANT_QUERIES_COLLECTION</code></td>
+<td><code>queries</code></td>
+<td>Collection for historical SPARQL query cache</td>
+</tr>
+<tr>
+<td><code>QDRANT_ANALYTICS_COLLECTION</code></td>
+<td><code>analytics</code></td>
+<td>Collection for reusable analytics code snippets</td>
+</tr>
+<tr>
+<td><code>QDRANT_DOCS_COLLECTION</code></td>
+<td><code>documentation</code></td>
+<td>Collection for help text and documentation</td>
+</tr>
+</tbody>
+</table>
+<p>Per-building collections (auto-managed; no env var needed):</p>
+<table>
+<thead>
+<tr>
+<th>Collection name pattern</th>
+<th>Created by</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>capability_&lt;building_id&gt;</code></td>
+<td><code>CapabilityIndexer</code> at startup</td>
+<td>KB lookup for off-ontology questions</td>
+</tr>
+<tr>
+<td><code>intent_&lt;building_id&gt;_&lt;intent&gt;</code></td>
+<td>Indexer if <code>intent_routing.enabled: true</code></td>
+<td>Multi-intent routing (opt-in)</td>
+</tr>
+<tr>
+<td><code>floor_plans</code></td>
+<td><code>FloorPlanRegistry</code></td>
+<td>Room description + DWG geometry</td>
+</tr>
+<tr>
+<td><code>user_memory</code></td>
+<td><code>AgentMemoryService</code></td>
+<td>Per-user cross-session memory</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="capability-semantic-routing-v20">Capability Semantic Routing <em>(v2.0)</em><a class="headerlink" href="#capability-semantic-routing-v20" title="Permanent link">&para;</a></h2>
+<p>Controls the embedding provider behind the capability KB indexer and the query-time semantic router. When <code>EMBEDDING_PROVIDER</code> is unset, it defaults to <code>openai</code> (uses <code>OPENAI_API_KEY</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EMBEDDING_PROVIDER</code></td>
+<td><code>openai</code></td>
+<td><code>openai</code> (uses OpenAI API) or <code>local</code> (uses sentence-transformers in-process)</td>
+</tr>
+<tr>
+<td><code>EMBEDDING_MODEL_OPENAI</code></td>
+<td><code>text-embedding-3-small</code></td>
+<td>OpenAI embedding model (1536 dims)</td>
+</tr>
+<tr>
+<td><code>EMBEDDING_MODEL_LOCAL</code></td>
+<td><code>sentence-transformers/all-MiniLM-L6-v2</code></td>
+<td>Local model name (384 dims, ~90 MB)</td>
+</tr>
+<tr>
+<td><code>EMBEDDING_CACHE_TTL_SECONDS</code></td>
+<td><code>86400</code></td>
+<td>Redis <code>cache:embed:*</code> TTL — 24 h by default</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Provider switching is free at runtime.</strong> Changing <code>EMBEDDING_PROVIDER</code> and restarting triggers automatic Qdrant collection rebuild — <code>CapabilityIndexer</code> detects the dimension mismatch and re-embeds. Thresholds in <code>input/&lt;bldg&gt;/building.yaml</code> may need re-calibration when switching models (the score distribution differs); see <a href="../CAPABILITY_ROUTING/#threshold-calibration">Capability Routing § Threshold calibration</a>.</p>
+</blockquote>
+<h3 id="per-building-routing-config">Per-building routing config<a class="headerlink" href="#per-building-routing-config" title="Permanent link">&para;</a></h3>
+<p>Lives in <code>input/&lt;building_id&gt;/building.yaml</code>. Read by <code>SemanticRouter</code> at query time.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">capability_routing</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span><span class="w">       </span><span class="c1"># &#39;auto&#39; follows EMBEDDING_PROVIDER</span>
+<span class="w">  </span><span class="nt">threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.56</span><span class="w">             </span><span class="c1"># soft-override band lower bound</span>
+<span class="w">  </span><span class="nt">override_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.60</span><span class="w">          </span><span class="c1"># hard skip-LLM threshold</span>
+<span class="w">  </span><span class="nt">top_k</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w">                    </span><span class="c1"># max KB entries returned</span>
+<span class="w">  </span><span class="nt">fallback_on_qdrant_failure</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skip</span><span class="w">   </span><span class="c1"># silent LLM-only fallback</span>
+</code></pre></div>
+<p><strong>Calibrated values for bldg1 (Abacws, 32 KB entries):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Embedding model</th>
+<th>Dimensions</th>
+<th><code>threshold</code></th>
+<th><code>override_min</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OpenAI <code>text-embedding-3-small</code></td>
+<td>1536</td>
+<td>0.50</td>
+<td>0.55</td>
+</tr>
+<tr>
+<td>Local <code>all-MiniLM-L6-v2</code></td>
+<td>384</td>
+<td><strong>0.56</strong></td>
+<td><strong>0.60</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Validation rules</strong> (Pydantic, fail-fast at startup):
+- <code>override_min &gt;= threshold</code> (boundary <code>==</code> allowed)
+- <code>0.0 &lt;= threshold, override_min &lt;= 1.0</code>
+- <code>1 &lt;= top_k &lt;= 50</code>
+- <code>fallback_on_qdrant_failure ∈ {"skip"}</code> (legacy <code>"keyword"</code> removed in Phase 3 cleanup)</p>
+<hr />
+<h2 id="logging">Logging<a class="headerlink" href="#logging" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LOG_LEVEL</code></td>
+<td><code>INFO</code></td>
+<td>Python logging level: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code></td>
+</tr>
+<tr>
+<td><code>LOG_FORMAT</code></td>
+<td><code>%(asctime)s - %(name)s - %(levelname)s - %(message)s</code></td>
+<td>Python logging format string</td>
+</tr>
+</tbody>
+</table>
+<p>For debugging, set <code>LOG_LEVEL=DEBUG</code> to see:
+- Full SPARQL queries generated and executed
+- SQL queries with bound parameters
+- LLM prompt/response pairs
+- State transitions between LangGraph nodes</p>
+<p><strong>Never set <code>LOG_LEVEL=DEBUG</code> in production</strong> — it logs sensitive data including query parameters.</p>
+<hr />
+<h2 id="ontology-settings">Ontology Settings<a class="headerlink" href="#ontology-settings" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>USE_SEMANTIC_ONTOLOGY</code></td>
+<td><code>true</code></td>
+<td>Enable semantic RAG fallback when SPARQL returns empty results</td>
+</tr>
+<tr>
+<td><code>ONTOLOGY_QUERY_MODE</code></td>
+<td><code>sparql</code></td>
+<td><code>sparql</code> = direct SPARQL query first; <code>semantic</code> = RAG-first approach</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="speech-to-text-optional">Speech-to-Text (Optional)<a class="headerlink" href="#speech-to-text-optional" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>STT_PROVIDER</code></td>
+<td><code>local</code></td>
+<td><code>local</code> = faster-whisper container, <code>openai</code> = Whisper API</td>
+</tr>
+<tr>
+<td><code>WHISPER_MODEL_LOCAL</code></td>
+<td><code>base</code></td>
+<td>Local Whisper model size: <code>tiny</code>, <code>base</code>, <code>small</code>, <code>medium</code>, <code>large</code></td>
+</tr>
+<tr>
+<td><code>WHISPER_MODEL</code></td>
+<td><code>tiny-int8</code></td>
+<td>Model variant when using local Whisper container</td>
+</tr>
+<tr>
+<td><code>WHISPER_BEAM</code></td>
+<td><code>1</code></td>
+<td>Beam search width. <code>1</code> = fastest, higher = more accurate</td>
+</tr>
+<tr>
+<td><code>WHISPER_LANG</code></td>
+<td><code>en</code></td>
+<td>Language code. Set explicitly for best results</td>
+</tr>
+<tr>
+<td><code>MAX_UPLOAD_SIZE_MB</code></td>
+<td><code>25</code></td>
+<td>Maximum audio file size in MB (OpenAI API limit)</td>
+</tr>
+<tr>
+<td><code>ALLOWED_AUDIO_FORMATS</code></td>
+<td><code>wav,mp3,m4a,ogg,webm</code></td>
+<td>Accepted audio MIME types</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>API_KEY</code></td>
+<td><code>change_me</code></td>
+<td>API key for the building management API. <strong>Change in production</strong></td>
+</tr>
+<tr>
+<td><code>SECRET_KEY</code></td>
+<td>—</td>
+<td>Application secret key for token signing. Generate with <code>openssl rand -hex 32</code></td>
+</tr>
+<tr>
+<td><code>STRICT_SECRETS</code></td>
+<td><code>false</code></td>
+<td>When <code>true</code>, the orchestrator <strong>refuses to start</strong> if any password (GraphDB, Postgres, MySQL) is still its built-in default — a fail-closed guard for production</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">Secret hygiene</p>
+<p>Secret-bearing settings (<code>OPENAI_API_KEY</code>, <code>GRAPHDB_PASSWORD</code>, <code>SECRET_KEY</code>, …) are masked in the application's config representation, so they are not echoed into logs or test output. Enable <code>STRICT_SECRETS=true</code> in production to block startup on default credentials.</p>
+</div>
+<p>See the <a href="../SECURITY/">Security Guide</a> for full documentation on authentication, RBAC, and secrets management.</p>
+<hr />
+<h2 id="monitoring-optional">Monitoring (Optional)<a class="headerlink" href="#monitoring-optional" title="Permanent link">&para;</a></h2>
+<p>Enable with <code>docker compose --profile monitoring up -d</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prometheus UI</td>
+<td><code>http://localhost:9090</code></td>
+<td>Metrics scraping from all services</td>
+</tr>
+<tr>
+<td>Grafana UI</td>
+<td><code>http://localhost:3001</code></td>
+<td>Dashboard: OntoSage Overview (latency, throughput, service health)</td>
+</tr>
+<tr>
+<td>Grafana login</td>
+<td><code>admin/admin</code></td>
+<td>Change in production</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="development-settings">Development Settings<a class="headerlink" href="#development-settings" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DEV_MODE=true</code></td>
+<td>Enables hot reload on code changes (mount source as volumes)</td>
+</tr>
+<tr>
+<td><code>SKIP_MODEL_DOWNLOAD=false</code></td>
+<td>Set to <code>true</code> to skip model pulls if already cached</td>
+</tr>
+<tr>
+<td><code>MOCK_LLM=false</code></td>
+<td>Set to <code>true</code> to use deterministic mock LLM responses for testing</td>
+</tr>
+<tr>
+<td><code>ABACWS_DEBUG=1</code></td>
+<td>Enable verbose 3D loader logging in the browser console</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="complete-envexample-reference">Complete <code>.env.example</code> Reference<a class="headerlink" href="#complete-envexample-reference" title="Permanent link">&para;</a></h2>
+<p>The <code>.env.example</code> file in the repository root is the canonical reference for all configuration options. It includes comments explaining every variable, valid values, trade-offs, and security warnings.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># View all options with comments</span>
+cat<span class="w"> </span>.env.example
+</code></pre></div>
+<p>Copy it to <code>.env</code> and change only the values you need:</p>
+<div class="highlight"><pre><span></span><code>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<span class="c1"># At minimum, set:</span>
+<span class="c1"># MODEL_PROVIDER (openai or local)</span>
+<span class="c1"># OPENAI_API_KEY (if using openai)</span>
+<span class="c1"># Database passwords</span>
+</code></pre></div>
+<hr />
+<h2 id="configuration-precedence">Configuration Precedence<a class="headerlink" href="#configuration-precedence" title="Permanent link">&para;</a></h2>
+<p>When the same variable is set in multiple places, the following precedence applies (highest wins):</p>
+<ol>
+<li><strong>Docker Compose override</strong> — <code>-e VAR=value</code> on the command line</li>
+<li><strong><code>.env</code> file</strong> — loaded by Docker Compose automatically</li>
+<li><strong><code>config/building_config.yaml</code></strong> — building-specific overrides</li>
+<li><strong><code>config/database_registry.yaml</code></strong> — <code>${VAR_NAME:-default}</code> fallbacks</li>
+<li><strong>Application defaults</strong> — hardcoded in <code>shared/config.py</code></li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../FORECASTING/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Forecasting">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Forecasting
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../GRAPHDB_SETUP/" class="md-footer__link md-footer__link--next" aria-label="Next: GraphDB Setup">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                GraphDB Setup
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

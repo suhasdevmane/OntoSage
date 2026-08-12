@@ -1,0 +1,2969 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/GRAPHDB_SETUP/">
+      
+      
+        <link rel="prev" href="../CONFIGURATION/">
+      
+      
+        <link rel="next" href="../BUILDING_ONBOARDING/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>GraphDB Setup - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../assets/overrides.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#graphdb-setup-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              GraphDB Setup
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-access-the-graphdb-workbench" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Access the GraphDB Workbench
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-create-a-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Create a Repository
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 2: Create a Repository">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-the-workbench" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the Workbench
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-the-rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the REST API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-load-your-building-ontology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Load Your Building Ontology
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 3: Load Your Building Ontology">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-the-graphdb-workbench" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the GraphDB Workbench
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-the-rest-api_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the REST API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-the-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify the Load
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-create-the-text-similarity-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Create the Text Similarity Index
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 4: Create the Text Similarity Index">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-the-graphdb-workbench_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the GraphDB Workbench
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monitoring-index-build-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring Index Build Progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-verify-the-similarity-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Verify the Similarity Index
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 5: Verify the Similarity Index">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-a-semantic-search-via-sparql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test a Semantic Search via SPARQL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-via-the-rag-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test via the RAG Service
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-configure-the-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Configure the Environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rebuilding-the-index-after-ontology-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rebuilding the Index After Ontology Updates
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rebuilding the Index After Ontology Updates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-sparql-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via SPARQL Update
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-recreate-if-index-is-corrupted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full Recreate (if index is corrupted)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multiple-buildings-multiple-repositories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple Buildings / Multiple Repositories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-and-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory and Performance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Memory and Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jvm-heap-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JVM Heap Size
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#index-build-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Index Build Time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#similarity-dimension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Similarity Dimension
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#similarity-plugin-is-not-available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Similarity plugin is not available"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#index-bldg_index-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Index bldg_index not found"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#similarity-search-returns-empty-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Similarity Search Returns Empty Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-memory-usage-during-indexing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High Memory Usage During Indexing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-access-the-graphdb-workbench" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Access the GraphDB Workbench
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-create-a-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Create a Repository
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 2: Create a Repository">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-the-workbench" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the Workbench
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-the-rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the REST API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-load-your-building-ontology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Load Your Building Ontology
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 3: Load Your Building Ontology">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-the-graphdb-workbench" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the GraphDB Workbench
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-the-rest-api_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the REST API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-the-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify the Load
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-create-the-text-similarity-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Create the Text Similarity Index
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 4: Create the Text Similarity Index">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-the-graphdb-workbench_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the GraphDB Workbench
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monitoring-index-build-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring Index Build Progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-verify-the-similarity-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Verify the Similarity Index
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 5: Verify the Similarity Index">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-a-semantic-search-via-sparql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test a Semantic Search via SPARQL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-via-the-rag-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test via the RAG Service
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-configure-the-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Configure the Environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rebuilding-the-index-after-ontology-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rebuilding the Index After Ontology Updates
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rebuilding the Index After Ontology Updates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-sparql-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via SPARQL Update
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-recreate-if-index-is-corrupted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full Recreate (if index is corrupted)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multiple-buildings-multiple-repositories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple Buildings / Multiple Repositories
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-and-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory and Performance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Memory and Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jvm-heap-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JVM Heap Size
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#index-build-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Index Build Time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#similarity-dimension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Similarity Dimension
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#similarity-plugin-is-not-available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Similarity plugin is not available"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#index-bldg_index-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Index bldg_index not found"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#similarity-search-returns-empty-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Similarity Search Returns Empty Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-memory-usage-during-indexing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High Memory Usage During Indexing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/GRAPHDB_SETUP.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="graphdb-setup-guide">GraphDB Setup Guide<a class="headerlink" href="#graphdb-setup-guide" title="Permanent link">&para;</a></h1>
+<p>GraphDB is the RDF triple store at the heart of OntoSage's knowledge layer. This guide covers creating a repository, loading ontologies, and — most importantly — creating the <strong>text similarity index</strong> that enables semantic search over your building's knowledge graph.</p>
+<hr />
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<ul>
+<li>OntoSage stack running: <code>docker compose up -d</code></li>
+<li>GraphDB accessible at <code>http://localhost:7200</code></li>
+<li>Building ontology file (<code>.ttl</code>) prepared (see <a href="../BUILDING_ONBOARDING/">Building Onboarding</a>)</li>
+</ul>
+<hr />
+<h2 id="step-1-access-the-graphdb-workbench">Step 1: Access the GraphDB Workbench<a class="headerlink" href="#step-1-access-the-graphdb-workbench" title="Permanent link">&para;</a></h2>
+<p>Open your browser and navigate to:</p>
+<div class="highlight"><pre><span></span><code>http://localhost:7200
+</code></pre></div>
+<p>The first time you open the Workbench, you will be prompted to agree to the licence (free edition is included). There is no login by default in the free edition.</p>
+<hr />
+<h2 id="step-2-create-a-repository">Step 2: Create a Repository<a class="headerlink" href="#step-2-create-a-repository" title="Permanent link">&para;</a></h2>
+<p>Before you can load data, you need to create a repository.</p>
+<h3 id="via-the-workbench">Via the Workbench<a class="headerlink" href="#via-the-workbench" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click <strong>Setup</strong> (gear icon in the left sidebar)</li>
+<li>Click <strong>Repositories</strong></li>
+<li>Click <strong>Create new repository</strong></li>
+<li>Select <strong>GraphDB Repository</strong> (not RDF4J)</li>
+<li>Fill in the form:</li>
+<li><strong>Repository ID</strong>: <code>ontosage</code> (must match <code>GRAPHDB_REPOSITORY</code> in your <code>.env</code>)</li>
+<li><strong>Repository title</strong>: <code>OntoSage Building Ontology</code> (human-readable label)</li>
+<li><strong>Ruleset</strong>: <code>rdfsplus-optimized</code> (recommended for Brick Schema reasoning)</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<h3 id="via-the-rest-api">Via the REST API<a class="headerlink" href="#via-the-rest-api" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:7200/rest/repositories<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;id&quot;: &quot;ontosage&quot;,</span>
+<span class="s1">    &quot;type&quot;: &quot;graphdb&quot;,</span>
+<span class="s1">    &quot;title&quot;: &quot;OntoSage Building Ontology&quot;,</span>
+<span class="s1">    &quot;params&quot;: {</span>
+<span class="s1">      &quot;ruleset&quot;: {</span>
+<span class="s1">        &quot;name&quot;: &quot;ruleset&quot;,</span>
+<span class="s1">        &quot;value&quot;: &quot;rdfsplus-optimized&quot;</span>
+<span class="s1">      },</span>
+<span class="s1">      &quot;storage-memory&quot;: {</span>
+<span class="s1">        &quot;name&quot;: &quot;storage-memory&quot;,</span>
+<span class="s1">        &quot;value&quot;: &quot;false&quot;</span>
+<span class="s1">      }</span>
+<span class="s1">    }</span>
+<span class="s1">  }&#39;</span>
+</code></pre></div>
+<p>Expected response: <code>HTTP 201 Created</code></p>
+<h3 id="verify">Verify<a class="headerlink" href="#verify" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:7200/rest/repositories<span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool
+</code></pre></div>
+<p>You should see <code>"ontosage"</code> in the list.</p>
+<hr />
+<h2 id="step-3-load-your-building-ontology">Step 3: Load Your Building Ontology<a class="headerlink" href="#step-3-load-your-building-ontology" title="Permanent link">&para;</a></h2>
+<h3 id="via-the-graphdb-workbench">Via the GraphDB Workbench<a class="headerlink" href="#via-the-graphdb-workbench" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Select the <code>ontosage</code> repository from the dropdown in the top right</li>
+<li>Navigate to <strong>Import → RDF</strong></li>
+<li>Click <strong>Upload RDF files</strong></li>
+<li>Select your building TTL file (e.g., <code>bldg1_protege.ttl</code>)</li>
+<li>Click <strong>Import</strong> → Keep default settings → <strong>Import</strong></li>
+<li>Optionally, also import the Brick Schema TBox (<code>Brick.ttl</code>) for full reasoning</li>
+</ol>
+<p>For large files (&gt; 50 MB), use <strong>Server files</strong> import instead:</p>
+<ol>
+<li>Copy the TTL into the GraphDB container:
+   <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>cp<span class="w"> </span>bldg1_protege.ttl<span class="w"> </span>graphdb:/opt/graphdb/home/userdata/imports/
+</code></pre></div></li>
+<li>In the Workbench: <strong>Import → Server files</strong> → select the file → <strong>Import</strong></li>
+</ol>
+<h3 id="via-the-rest-api_1">Via the REST API<a class="headerlink" href="#via-the-rest-api_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Load ABox (building instances)</span>
+curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;http://localhost:7200/repositories/ontosage/statements&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: text/turtle&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data-binary<span class="w"> </span>@bldg1_protege.ttl
+
+<span class="c1"># Load TBox (Brick Schema vocabulary — optional but recommended)</span>
+curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;http://localhost:7200/repositories/ontosage/statements&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: text/turtle&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data-binary<span class="w"> </span>@data/Brick.ttl
+</code></pre></div>
+<h3 id="verify-the-load">Verify the Load<a class="headerlink" href="#verify-the-load" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Count all triples</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;http://localhost:7200/repositories/ontosage/sparql&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/sparql-query&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Accept: application/sparql-results+json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }&quot;</span>
+</code></pre></div>
+<p>Expected output shows the total triple count. A Brick-annotated building with 500+ sensors typically has 5,000–100,000+ triples.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Count sensor instances</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;http://localhost:7200/repositories/ontosage/sparql&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/sparql-query&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Accept: application/sparql-results+json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;SELECT (COUNT(*) AS ?count) WHERE {</span>
+<span class="s2">    ?s a ?type .</span>
+<span class="s2">    FILTER(STRSTARTS(STR(?type), &#39;https://brickschema.org/&#39;))</span>
+<span class="s2">  }&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="step-4-create-the-text-similarity-index">Step 4: Create the Text Similarity Index<a class="headerlink" href="#step-4-create-the-text-similarity-index" title="Permanent link">&para;</a></h2>
+<p>The similarity index is what enables OntoSage to answer questions like <em>"temperature sensors near the lobby"</em> without exact keyword matching. It creates a vector space over your ontology's entity labels, types, and names using <strong>semantic vectors</strong> backed by the GraphDB Similarity Plugin.</p>
+<h3 id="prerequisites_1">Prerequisites<a class="headerlink" href="#prerequisites_1" title="Permanent link">&para;</a></h3>
+<p>GraphDB's Similarity Plugin must be enabled. It is included in the free edition — no additional installation is required.</p>
+<h3 id="via-the-graphdb-workbench_1">Via the GraphDB Workbench<a class="headerlink" href="#via-the-graphdb-workbench_1" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Ensure the <code>ontosage</code> repository is selected (top right dropdown)</li>
+<li>Navigate to <strong>Explore → Similarity</strong></li>
+<li>Click <strong>Create similarity index</strong></li>
+<li>Click <strong>Create text similarity index</strong></li>
+<li>Fill in the form:</li>
+</ol>
+<p><strong>Index Name:</strong>
+<div class="highlight"><pre><span></span><code>bldg_index
+</code></pre></div>
+This must match <code>GRAPHDB_SIMILARITY_INDEX</code> in your <code>.env</code> file.</p>
+<p><strong>Data Query (What to Index):</strong></p>
+<p>Paste the following SPARQL query exactly:</p>
+<div class="highlight"><pre><span></span><code><span class="k">PREFIX</span> <span class="nn">rdfs</span><span class="p">:</span> <span class="nl">&lt;http://www.w3.org/2000/01/rdf-schema#&gt;</span>
+<span class="k">PREFIX</span> <span class="nn">rdf</span><span class="p">:</span>  <span class="nl">&lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;</span>
+<span class="k">PREFIX</span> <span class="nn">brick</span><span class="p">:</span> <span class="nl">&lt;https://brickschema.org/schema/Brick#&gt;</span>
+
+<span class="k">SELECT</span> <span class="nv">?documentID</span> <span class="nv">?documentText</span> <span class="p">{</span>
+    <span class="nv">?documentID</span> <span class="nn">rdf</span><span class="p">:</span><span class="nt">type</span> <span class="nv">?type</span> <span class="p">.</span>
+    <span class="k">FILTER</span><span class="p">(</span><span class="nf">ISIRI</span><span class="p">(</span><span class="nv">?documentID</span><span class="p">))</span>
+
+    <span class="k">OPTIONAL</span> <span class="p">{</span> <span class="nv">?documentID</span> <span class="nn">rdfs</span><span class="p">:</span><span class="nt">label</span> <span class="nv">?label</span> <span class="p">}</span>
+
+    <span class="k">BIND</span><span class="p">(</span><span class="nf">REPLACE</span><span class="p">(</span><span class="nf">STR</span><span class="p">(</span><span class="nv">?type</span><span class="p">),</span> <span class="s">&quot;^.*[#/]([^#/]+)$&quot;</span><span class="p">,</span> <span class="s">&quot;$1&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="nv">?typeName</span><span class="p">)</span>
+    <span class="k">BIND</span><span class="p">(</span><span class="nf">REPLACE</span><span class="p">(</span><span class="nf">STR</span><span class="p">(</span><span class="nv">?documentID</span><span class="p">),</span> <span class="s">&quot;^.*[#/]([^#/]+)$&quot;</span><span class="p">,</span> <span class="s">&quot;$1&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="nv">?entityName</span><span class="p">)</span>
+
+    <span class="k">BIND</span><span class="p">(</span><span class="nf">CONCAT</span><span class="p">(</span>
+        <span class="nf">COALESCE</span><span class="p">(</span><span class="nv">?label</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">),</span> <span class="s">&quot; &quot;</span><span class="p">,</span>
+        <span class="nf">COALESCE</span><span class="p">(</span><span class="nv">?typeName</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">),</span> <span class="s">&quot; &quot;</span><span class="p">,</span>
+        <span class="nf">COALESCE</span><span class="p">(</span><span class="nv">?entityName</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="nv">?documentText</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>This query generates a rich text document for each RDF resource by combining:
+- The human-readable <code>rdfs:label</code> (if present)
+- The local name of the entity's class (e.g., <code>Temperature_Sensor</code>)
+- The local name of the entity itself (e.g., <code>sensor_001</code>)</p>
+<ol>
+<li>Click <strong>More options (show)</strong> and set:</li>
+</ol>
+<p><strong>Analyzer Class:</strong>
+<div class="highlight"><pre><span></span><code>org.apache.lucene.analysis.en.EnglishAnalyzer
+</code></pre></div></p>
+<p><strong>Stop words</strong> (optional, reduces noise):
+<div class="highlight"><pre><span></span><code>a,an,the,and,or,of,to,in,for,with
+</code></pre></div></p>
+<p><strong>Semantic Vectors create index parameters:</strong>
+<div class="highlight"><pre><span></span><code>-termweight idf -dimension 300 -minfrequency 2
+</code></pre></div></p>
+<p>These parameters control:
+- <code>-termweight idf</code> — weight terms by inverse document frequency (more discriminative)
+- <code>-dimension 300</code> — 300-dimensional semantic vectors (good balance of quality and speed)
+- <code>-minfrequency 2</code> — ignore terms that appear only once (likely typos or unique IDs)</p>
+<ol>
+<li>Click <strong>Create</strong></li>
+<li>The index will appear in the list with a spinning indicator while building</li>
+<li>Wait for the build to complete — typically 1–10 minutes depending on ontology size</li>
+</ol>
+<h3 id="monitoring-index-build-progress">Monitoring Index Build Progress<a class="headerlink" href="#monitoring-index-build-progress" title="Permanent link">&para;</a></h3>
+<p>Watch the GraphDB logs:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>graphdb<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;similarity|bldg_index&quot;</span>
+</code></pre></div>
+<p>Or check the Workbench: <strong>Explore → Similarity</strong> — the spinning indicator stops when complete.</p>
+<hr />
+<h2 id="step-5-verify-the-similarity-index">Step 5: Verify the Similarity Index<a class="headerlink" href="#step-5-verify-the-similarity-index" title="Permanent link">&para;</a></h2>
+<h3 id="test-a-semantic-search-via-sparql">Test a Semantic Search via SPARQL<a class="headerlink" href="#test-a-semantic-search-via-sparql" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">PREFIX</span> <span class="nn">inst</span><span class="p">:</span> <span class="nl">&lt;http://www.ontotext.com/graphdb/similarity/instance/&gt;</span>
+<span class="k">PREFIX</span> <span class="nn">sim</span><span class="p">:</span>  <span class="nl">&lt;http://www.ontotext.com/graphdb/similarity/&gt;</span>
+
+<span class="k">SELECT</span> <span class="nv">?entity</span> <span class="nv">?score</span> <span class="k">WHERE</span> <span class="p">{</span>
+    <span class="nv">?search</span> <span class="k">a</span> <span class="nn">inst</span><span class="p">:</span><span class="nt">bldg_index</span> <span class="p">;</span>
+            <span class="nn">sim</span><span class="p">:</span><span class="nt">searchTerm</span> <span class="s">&quot;temperature sensor zone 5&quot;</span> <span class="p">;</span>
+            <span class="nn">sim</span><span class="p">:</span><span class="nt">documentResult</span> <span class="nv">?result</span> <span class="p">.</span>
+    <span class="nv">?result</span> <span class="nn">sim</span><span class="p">:</span><span class="nt">value</span> <span class="nv">?entity</span> <span class="p">;</span>
+            <span class="nn">sim</span><span class="p">:</span><span class="nt">score</span> <span class="nv">?score</span> <span class="p">.</span>
+<span class="p">}</span>
+<span class="k">ORDER BY</span> <span class="k">DESC</span><span class="p">(</span><span class="nv">?score</span><span class="p">)</span>
+<span class="k">LIMIT</span> <span class="mi">10</span>
+</code></pre></div>
+<p>Expected: The top 10 RDF resources most semantically similar to "temperature sensor zone 5", ordered by relevance score. If results are empty, the index did not build correctly.</p>
+<h3 id="test-via-the-rag-service">Test via the RAG Service<a class="headerlink" href="#test-via-the-rag-service" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8001/graphdb/retrieve<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;query&quot;: &quot;temperature sensors in Zone 5&quot;,</span>
+<span class="s1">    &quot;top_k&quot;: 5,</span>
+<span class="s1">    &quot;hops&quot;: 2</span>
+<span class="s1">  }&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool
+</code></pre></div>
+<p>Expected: A JSON response with <code>entities</code>, <code>triples</code>, <code>prefixes</code>, and a <code>summary</code>. If this returns empty, check that <code>GRAPHDB_SIMILARITY_INDEX</code> in <code>.env</code> matches the index name exactly.</p>
+<hr />
+<h2 id="step-6-configure-the-environment">Step 6: Configure the Environment<a class="headerlink" href="#step-6-configure-the-environment" title="Permanent link">&para;</a></h2>
+<p>Ensure these variables are set in your <code>.env</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">GRAPHDB_HOST</span><span class="o">=</span>graphdb<span class="w">                  </span><span class="c1"># Docker service name</span>
+<span class="nv">GRAPHDB_PORT</span><span class="o">=</span><span class="m">7200</span>
+<span class="nv">GRAPHDB_REPOSITORY</span><span class="o">=</span>ontosage<span class="w">           </span><span class="c1"># Must match repository ID created in Step 2</span>
+<span class="nv">GRAPHDB_SIMILARITY_INDEX</span><span class="o">=</span>bldg_index<span class="w">   </span><span class="c1"># Must match index name created in Step 4</span>
+</code></pre></div>
+<p>Restart the orchestrator and RAG service to pick up the settings:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>restart<span class="w"> </span>orchestrator<span class="w"> </span>rag-service
+</code></pre></div>
+<hr />
+<h2 id="rebuilding-the-index-after-ontology-updates">Rebuilding the Index After Ontology Updates<a class="headerlink" href="#rebuilding-the-index-after-ontology-updates" title="Permanent link">&para;</a></h2>
+<p>After loading new data into GraphDB, rebuild the similarity index to include the new entities:</p>
+<h3 id="via-sparql-update">Via SPARQL Update<a class="headerlink" href="#via-sparql-update" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">PREFIX</span> <span class="nn">similarity-index</span><span class="p">:</span> <span class="nl">&lt;http://www.ontotext.com/graphdb/similarity/instance/&gt;</span>
+<span class="k">PREFIX</span> <span class="nn">similarity</span><span class="p">:</span> <span class="nl">&lt;http://www.ontotext.com/graphdb/similarity/&gt;</span>
+
+<span class="k">INSERT DATA</span> <span class="p">{</span>
+    <span class="nn">similarity-index</span><span class="p">:</span><span class="nt">bldg_index</span> <span class="nn">similarity</span><span class="p">:</span><span class="nt">rebuildIndex</span> <span class="s">&quot;&quot;</span> <span class="p">.</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Execute this in the Workbench under <strong>SPARQL → Update</strong> tab, or via curl:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:7200/repositories/ontosage/statements&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/sparql-update&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;PREFIX similarity-index: &lt;http://www.ontotext.com/graphdb/similarity/instance/&gt;</span>
+<span class="s1">      PREFIX similarity: &lt;http://www.ontotext.com/graphdb/similarity/&gt;</span>
+<span class="s1">      INSERT DATA {</span>
+<span class="s1">        similarity-index:bldg_index similarity:rebuildIndex &quot;&quot; .</span>
+<span class="s1">      }&#39;</span>
+</code></pre></div>
+<h3 id="full-recreate-if-index-is-corrupted">Full Recreate (if index is corrupted)<a class="headerlink" href="#full-recreate-if-index-is-corrupted" title="Permanent link">&para;</a></h3>
+<ol>
+<li>In the Workbench: <strong>Explore → Similarity</strong> → click the delete (trash) icon next to <code>bldg_index</code></li>
+<li>Recreate following Steps 4–5 above</li>
+</ol>
+<hr />
+<h2 id="multiple-buildings-multiple-repositories">Multiple Buildings / Multiple Repositories<a class="headerlink" href="#multiple-buildings-multiple-repositories" title="Permanent link">&para;</a></h2>
+<p>For each building, create a separate repository and similarity index:</p>
+<table>
+<thead>
+<tr>
+<th>Building</th>
+<th>Repository ID</th>
+<th>Similarity Index</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Building 1</td>
+<td><code>ontosage</code> or <code>bldg1</code></td>
+<td><code>bldg_index</code> or <code>bldg1_index</code></td>
+</tr>
+<tr>
+<td>Building 2</td>
+<td><code>bldg2</code></td>
+<td><code>bldg2_index</code></td>
+</tr>
+<tr>
+<td>Building 3</td>
+<td><code>bldg3</code></td>
+<td><code>bldg3_index</code></td>
+</tr>
+</tbody>
+</table>
+<p>Update <code>.env</code> to point to the active building's repository:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">GRAPHDB_REPOSITORY</span><span class="o">=</span>bldg2
+<span class="nv">GRAPHDB_SIMILARITY_INDEX</span><span class="o">=</span>bldg2_index
+</code></pre></div>
+<p>For true multi-building support with simultaneous queries, consider loading all buildings into a single repository using named graphs — each building gets its own named graph, and SPARQL queries can use <code>GRAPH &lt;uri&gt; { ... }</code> to scope queries.</p>
+<hr />
+<h2 id="memory-and-performance">Memory and Performance<a class="headerlink" href="#memory-and-performance" title="Permanent link">&para;</a></h2>
+<h3 id="jvm-heap-size">JVM Heap Size<a class="headerlink" href="#jvm-heap-size" title="Permanent link">&para;</a></h3>
+<p>For large ontologies (&gt; 500K triples), increase the GraphDB heap in <code>.env</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">GDB_HEAP_SIZE</span><span class="o">=</span>8g<span class="w">     </span><span class="c1"># Java heap (-Xms)</span>
+<span class="nv">GDB_MAX_MEM</span><span class="o">=</span>10g<span class="w">      </span><span class="c1"># Max memory (-Xmx)</span>
+</code></pre></div>
+<h3 id="index-build-time">Index Build Time<a class="headerlink" href="#index-build-time" title="Permanent link">&para;</a></h3>
+<p>Approximate build times by ontology size:</p>
+<table>
+<thead>
+<tr>
+<th>Triple Count</th>
+<th>Estimated Build Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&lt; 10,000</td>
+<td>&lt; 30 seconds</td>
+</tr>
+<tr>
+<td>10,000 – 100,000</td>
+<td>1–5 minutes</td>
+</tr>
+<tr>
+<td>100,000 – 500,000</td>
+<td>5–20 minutes</td>
+</tr>
+<tr>
+<td>&gt; 500,000</td>
+<td>20+ minutes</td>
+</tr>
+</tbody>
+</table>
+<h3 id="similarity-dimension">Similarity Dimension<a class="headerlink" href="#similarity-dimension" title="Permanent link">&para;</a></h3>
+<p>The default <code>-dimension 300</code> produces high-quality vectors. If memory is constrained, reduce to <code>-dimension 100</code> (faster, slightly lower quality). If you need the highest precision for complex ontologies, increase to <code>-dimension 500</code>.</p>
+<hr />
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="similarity-plugin-is-not-available">"Similarity plugin is not available"<a class="headerlink" href="#similarity-plugin-is-not-available" title="Permanent link">&para;</a></h3>
+<p>The Similarity Plugin is disabled or not licensed. Check:
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:7200/rest/info<span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool
+</code></pre></div></p>
+<p>Look for <code>"plugins"</code> in the response. The free edition includes the plugin for repositories up to 10 million triples.</p>
+<h3 id="index-bldg_index-not-found">"Index bldg_index not found"<a class="headerlink" href="#index-bldg_index-not-found" title="Permanent link">&para;</a></h3>
+<p>The RAG service cannot find the index. Verify:
+1. <code>GRAPHDB_SIMILARITY_INDEX=bldg_index</code> in <code>.env</code>
+2. The index exists: check <strong>Explore → Similarity</strong> in the Workbench
+3. The correct repository is selected: <code>GRAPHDB_REPOSITORY=ontosage</code>
+4. Restart the RAG service: <code>docker compose restart rag-service</code></p>
+<h3 id="similarity-search-returns-empty-results">Similarity Search Returns Empty Results<a class="headerlink" href="#similarity-search-returns-empty-results" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Verify the data query returns results:
+   <div class="highlight"><pre><span></span><code><span class="c1"># Run the index Data Query directly in the Workbench SPARQL tab</span>
+</code></pre></div></li>
+<li>If the query returns results but the index is empty, the index may have failed to build silently — delete it and recreate</li>
+<li>Check for <code>rdfs:label</code> annotations in your TTL — unlabelled entities are indexed by URI fragment only</li>
+</ol>
+<h3 id="high-memory-usage-during-indexing">High Memory Usage During Indexing<a class="headerlink" href="#high-memory-usage-during-indexing" title="Permanent link">&para;</a></h3>
+<p>The semantic vector indexing is memory-intensive. If GraphDB OOMs during index creation:
+1. Increase <code>GDB_HEAP_SIZE</code> and <code>GDB_MAX_MEM</code>
+2. Reduce <code>-dimension</code> parameter (e.g., 100 instead of 300)
+3. Load ontology in smaller batches (split TTL file)</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../CONFIGURATION/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Configuration">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Configuration
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../BUILDING_ONBOARDING/" class="md-footer__link md-footer__link--next" aria-label="Next: Building Onboarding">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Building Onboarding
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

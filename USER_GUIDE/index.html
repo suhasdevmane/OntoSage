@@ -1,0 +1,3188 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/USER_GUIDE/">
+      
+      
+        <link rel="prev" href="../DEVELOPER_GUIDE/">
+      
+      
+        <link rel="next" href="../SECURITY/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>User Guide - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../assets/overrides.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#user-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              User Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Getting Started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#accessing-the-chat-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accessing the Chat Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-an-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating an Account
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#starting-a-conversation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Starting a Conversation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-can-ask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You Can Ask
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What You Can Ask">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-sensor-readings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Sensor Readings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historical-data-and-trends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historical Data and Trends
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analytics-and-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analytics and Statistics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anomaly-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anomaly Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#building-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building Discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comparisons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparisons
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#forecasting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forecasting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alerts-and-threshold-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alerts and Threshold Queries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#floor-plans-and-spatial-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Floor Plans and Spatial Queries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-questions-v20-off-ontology-qa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability Questions (v2.0) — Off-Ontology Q&amp;A
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reporting-issues-faults-complaints-safety-feedback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting Issues — Faults, Complaints, Safety, Feedback
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interaction-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interaction Tips
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interaction Tips">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#you-do-not-need-to-know-sensor-names-or-ids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        You Do Not Need to Know Sensor Names or IDs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-is-preserved-within-a-conversation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Is Preserved Within a Conversation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#be-specific-about-time-ranges-when-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Be Specific About Time Ranges When Needed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#you-can-ask-complex-multi-part-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        You Can Ask Complex Multi-Part Questions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#charts-are-automatic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Charts Are Automatic
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#understanding-responses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Understanding Responses
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Understanding Responses">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#response-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-ontosage-asks-for-clarification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When OntoSage Asks for Clarification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-ontosage-cannot-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When OntoSage Cannot Answer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-conversations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Conversations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example Conversations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#facility-manager-comfort-investigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Facility Manager: Comfort Investigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sustainability-team-energy-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sustainability Team: Energy Reporting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#health-safety-officer-co2-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health &amp; Safety Officer: CO₂ Audit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-scientist-statistical-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Scientist: Statistical Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#occupant-comfort-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Occupant: Comfort Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#role-based-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role-Based Access
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keyboard-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keyboard Shortcuts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frequently-asked-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frequently Asked Questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Getting Started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#accessing-the-chat-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accessing the Chat Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-an-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating an Account
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#starting-a-conversation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Starting a Conversation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-can-ask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You Can Ask
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What You Can Ask">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-sensor-readings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Sensor Readings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historical-data-and-trends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historical Data and Trends
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analytics-and-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analytics and Statistics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anomaly-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anomaly Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#building-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building Discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comparisons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparisons
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#forecasting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forecasting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Export
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alerts-and-threshold-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alerts and Threshold Queries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#floor-plans-and-spatial-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Floor Plans and Spatial Queries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-questions-v20-off-ontology-qa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability Questions (v2.0) — Off-Ontology Q&amp;A
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reporting-issues-faults-complaints-safety-feedback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting Issues — Faults, Complaints, Safety, Feedback
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interaction-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interaction Tips
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interaction Tips">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#you-do-not-need-to-know-sensor-names-or-ids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        You Do Not Need to Know Sensor Names or IDs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-is-preserved-within-a-conversation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Is Preserved Within a Conversation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#be-specific-about-time-ranges-when-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Be Specific About Time Ranges When Needed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#you-can-ask-complex-multi-part-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        You Can Ask Complex Multi-Part Questions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#charts-are-automatic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Charts Are Automatic
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#understanding-responses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Understanding Responses
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Understanding Responses">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#response-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-ontosage-asks-for-clarification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When OntoSage Asks for Clarification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-ontosage-cannot-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When OntoSage Cannot Answer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-conversations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Conversations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example Conversations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#facility-manager-comfort-investigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Facility Manager: Comfort Investigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sustainability-team-energy-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sustainability Team: Energy Reporting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#health-safety-officer-co2-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health &amp; Safety Officer: CO₂ Audit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-scientist-statistical-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Scientist: Statistical Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#occupant-comfort-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Occupant: Comfort Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#role-based-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role-Based Access
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keyboard-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keyboard Shortcuts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frequently-asked-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frequently Asked Questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/USER_GUIDE.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="user-guide">User Guide<a class="headerlink" href="#user-guide" title="Permanent link">&para;</a></h1>
+<p>This guide is for anyone who uses OntoSage to ask questions about a building — facility managers, sustainability teams, occupants, IT staff, and researchers. No technical knowledge of databases, ontologies, or sensor IDs is required.</p>
+<hr />
+<h2 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h2>
+<h3 id="accessing-the-chat-interface">Accessing the Chat Interface<a class="headerlink" href="#accessing-the-chat-interface" title="Permanent link">&para;</a></h3>
+<p>Open your browser and navigate to:</p>
+<div class="highlight"><pre><span></span><code>http://localhost:3000
+</code></pre></div>
+<p>If your administrator has deployed OntoSage on a server, they will give you the URL.</p>
+<h3 id="creating-an-account">Creating an Account<a class="headerlink" href="#creating-an-account" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click <strong>Sign Up</strong> on the login page</li>
+<li>Enter your name, email, and a password</li>
+<li>The first user to register automatically becomes an <strong>admin</strong></li>
+<li>Subsequent users are assigned the <strong>occupant</strong> role by default; an admin must promote them</li>
+</ol>
+<h3 id="starting-a-conversation">Starting a Conversation<a class="headerlink" href="#starting-a-conversation" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click <strong>New Chat</strong> in the sidebar</li>
+<li>Type your question in the message box at the bottom</li>
+<li>Press <strong>Enter</strong> or click the send button</li>
+<li>OntoSage will respond within a few seconds</li>
+</ol>
+<hr />
+<h2 id="what-you-can-ask">What You Can Ask<a class="headerlink" href="#what-you-can-ask" title="Permanent link">&para;</a></h2>
+<p>OntoSage understands 14 different types of building-related questions. Here is what each type does and example questions.</p>
+<h3 id="current-sensor-readings">Current Sensor Readings<a class="headerlink" href="#current-sensor-readings" title="Permanent link">&para;</a></h3>
+<p>Ask for the current value of any sensor or device.</p>
+<blockquote>
+<p>"What is the CO₂ level in Zone 5 right now?"
+"What is the temperature in the conference room?"
+"What is the humidity on Floor 3?"
+"Is the AHU-01 fan running?"</p>
+</blockquote>
+<p><strong>What you get:</strong> The most recent sensor reading with units, timestamp, and the sensor's location in the building.</p>
+<hr />
+<h3 id="historical-data-and-trends">Historical Data and Trends<a class="headerlink" href="#historical-data-and-trends" title="Permanent link">&para;</a></h3>
+<p>Ask about sensor values over a time period.</p>
+<blockquote>
+<p>"Show me the temperature trend in Zone 5 for the last 7 days."
+"What was the CO₂ level in the lab yesterday afternoon?"
+"How did energy consumption change over the past month?"
+"Was the humidity above 70% at any point last week?"</p>
+</blockquote>
+<p><strong>What you get:</strong> A time-series chart and summary statistics (min, max, mean, standard deviation) for the requested period.</p>
+<hr />
+<h3 id="analytics-and-statistics">Analytics and Statistics<a class="headerlink" href="#analytics-and-statistics" title="Permanent link">&para;</a></h3>
+<p>Ask for computed analysis across one or more sensors.</p>
+<blockquote>
+<p>"What is the average temperature across all zones on Floor 3?"
+"Which zone has the highest CO₂ concentration right now?"
+"Calculate the correlation between outdoor temperature and chiller energy load."
+"How many hours was Zone 2 above 25°C this week?"
+"What is the 95th percentile CO₂ level in Meeting Room A?"</p>
+</blockquote>
+<p><strong>What you get:</strong> A computed result with the Python analytics code used, a chart where applicable, and a plain-English interpretation.</p>
+<hr />
+<h3 id="anomaly-detection">Anomaly Detection<a class="headerlink" href="#anomaly-detection" title="Permanent link">&para;</a></h3>
+<p>Ask OntoSage to identify unusual sensor behaviour.</p>
+<blockquote>
+<p>"Are there any CO₂ sensors showing abnormal readings right now?"
+"Has any temperature sensor spiked unusually in the past 24 hours?"
+"Which sensors are outside their normal operating range?"
+"Alert me to any HVAC equipment that looks like it's failing."</p>
+</blockquote>
+<p><strong>What you get:</strong> A list of anomalous readings, how far they deviate from expected values, and the time of the anomaly.</p>
+<hr />
+<h3 id="building-discovery">Building Discovery<a class="headerlink" href="#building-discovery" title="Permanent link">&para;</a></h3>
+<p>Ask what sensors, equipment, and spaces exist in the building.</p>
+<blockquote>
+<p>"What sensors are available in the building?"
+"Which floors have CO₂ sensors?"
+"List all the zones on Floor 5."
+"What HVAC equipment serves Zone 3?"
+"Show me the sensors in Meeting Room B."</p>
+</blockquote>
+<p><strong>What you get:</strong> A structured list of the building's assets derived directly from the ontology, including their types, locations, and relationships.</p>
+<hr />
+<h3 id="comparisons">Comparisons<a class="headerlink" href="#comparisons" title="Permanent link">&para;</a></h3>
+<p>Compare multiple zones, floors, sensors, or time periods against each other.</p>
+<blockquote>
+<p>"Compare the energy usage of Floor 2 and Floor 3 this week."
+"Which conference room has the best air quality today?"
+"How does current CO₂ compare to the same time last week?"
+"Show me temperature differences between the east and west wings."</p>
+</blockquote>
+<p><strong>What you get:</strong> A side-by-side comparison table or chart with statistical highlights.</p>
+<hr />
+<h3 id="reports">Reports<a class="headerlink" href="#reports" title="Permanent link">&para;</a></h3>
+<p>Request a structured summary report of building conditions.</p>
+<blockquote>
+<p>"Give me a daily building performance report."
+"Summarise the air quality conditions across all zones for this week."
+"Generate a monthly energy consumption report."
+"Create an environmental comfort report for Zone 5."</p>
+</blockquote>
+<p><strong>What you get:</strong> A formatted multi-section report covering the requested metrics, with charts and summary statistics.</p>
+<hr />
+<h3 id="forecasting">Forecasting<a class="headerlink" href="#forecasting" title="Permanent link">&para;</a></h3>
+<p>Ask for predictions of future sensor values (if historical data is available).</p>
+<blockquote>
+<p>"What will the temperature in Zone 3 be tomorrow afternoon?"
+"Forecast energy consumption for the next 7 days."
+"Will CO₂ levels be acceptable during Friday's conference?"</p>
+</blockquote>
+<p><strong>What you get:</strong> A multi-model forecast — OntoSage automatically selects the best-fitting model (ARIMA, exponential smoothing, or linear), parses your horizon from plain language ("next week", "tomorrow afternoon"), and reports the model used and its accuracy (RMSE / R²) alongside the chart. Forecasts are honest about confidence rather than presented as certainty. See the <a href="../FORECASTING/">Forecasting</a> guide for details.</p>
+<hr />
+<h3 id="data-export">Data Export<a class="headerlink" href="#data-export" title="Permanent link">&para;</a></h3>
+<p>Ask for raw data in a downloadable format.</p>
+<blockquote>
+<p>"Export the last 30 days of temperature data for all zones as CSV."
+"Give me a JSON file of all CO₂ readings from yesterday."
+"Download the sensor data for Zone 5 this week."</p>
+</blockquote>
+<p><strong>What you get:</strong> A downloadable file link in the chat response (CSV or JSON).</p>
+<hr />
+<h3 id="recommendations">Recommendations<a class="headerlink" href="#recommendations" title="Permanent link">&para;</a></h3>
+<p>Ask OntoSage for actionable advice based on building data.</p>
+<blockquote>
+<p>"Which zones should we prioritise for ventilation improvements?"
+"Are there any zones where we can reduce HVAC energy without affecting comfort?"
+"What changes would most improve the air quality in Zone 4?"</p>
+</blockquote>
+<p><strong>What you get:</strong> Evidence-based recommendations derived from actual sensor data and building topology.</p>
+<hr />
+<h3 id="alerts-and-threshold-queries">Alerts and Threshold Queries<a class="headerlink" href="#alerts-and-threshold-queries" title="Permanent link">&para;</a></h3>
+<p>Ask about threshold breaches or set up threshold checks.</p>
+<blockquote>
+<p>"Have any sensors exceeded their alert thresholds today?"
+"Which CO₂ sensors went above 1000 ppm this week?"
+"Were there any temperature alerts last Monday?"
+"List all sensors that breached their limit in the last 24 hours."</p>
+</blockquote>
+<p><strong>What you get:</strong> A filtered list of events where readings crossed defined thresholds, with times and values.</p>
+<h3 id="floor-plans-and-spatial-queries">Floor Plans and Spatial Queries<a class="headerlink" href="#floor-plans-and-spatial-queries" title="Permanent link">&para;</a></h3>
+<p>Ask to see a floor or query room geometry.</p>
+<blockquote>
+<p>"Show me floor 3"
+"Where is room 3.01?"
+"How many meeting rooms are on floor 4?"
+"Which rooms are adjacent to the server room?"
+"What is the total area of the building?"</p>
+</blockquote>
+<p><strong>What you get:</strong> A floor plan image (PDF render or DWG-rendered SVG) plus structured room data — area in m², adjacency lists, sensor block counts.</p>
+<h3 id="capability-questions-v20-off-ontology-qa">Capability Questions (v2.0) — Off-Ontology Q&amp;A<a class="headerlink" href="#capability-questions-v20-off-ontology-qa" title="Permanent link">&para;</a></h3>
+<p>Ask about building features, policies, amenities, fire safety, IT — anything that isn't a sensor reading or analytics question. Answered from the per-building <strong>Capability KB</strong> (Qdrant-backed semantic search) in <strong>under 50 ms</strong> when the system is confident.</p>
+<blockquote>
+<p>"What are the fire evacuation procedures?"
+"Where can I park my bike?"
+"What happens during a power outage?"
+"Is there a prayer room?"
+"When does reception close?"
+"How does access control work?"
+"Is there a quiet room?"
+"Can I bring my dog into the building?"</p>
+</blockquote>
+<p><strong>What you get:</strong> A structured answer drawn directly from the building's knowledge profile, with citation of the source document (e.g. <code>fire_safety_management_plan</code>). If the KB has no record, you'll get an <strong>explicit boundary message</strong> — never a hallucinated answer:</p>
+<blockquote>
+<p>"I don't have that specific information on record for <strong>Abacws Building</strong>. For building-specific queries please contact facility management at estates@cardiff.ac.uk or call the estates helpdesk (029 2087 6026)."</p>
+</blockquote>
+<p><strong>Why this matters:</strong> corpus analysis of 5,916 survey questions shows that ~50% of real building queries are off-ontology — they can't be answered from sensor data or SPARQL alone. The capability KB closes that gap honestly. See <a href="../CAPABILITY_ROUTING/">Capability Routing</a> for the technical pipeline.</p>
+<hr />
+<h3 id="reporting-issues-faults-complaints-safety-feedback">Reporting Issues — Faults, Complaints, Safety, Feedback<a class="headerlink" href="#reporting-issues-faults-complaints-safety-feedback" title="Permanent link">&para;</a></h3>
+<p>Report a problem or share feedback in plain English — no forms, no categories to pick. OntoSage classifies and prioritises it automatically and gives you a tracking ID.</p>
+<blockquote>
+<p>"The light in room 3.01 is broken."
+"There's a gas smell near the kitchen on floor 2."  <em>(→ flagged URGENT)</em>
+"The meeting room is always too cold in the mornings."
+"Suggestion: add more bike racks by the south entrance."
+"Great job fixing the lift so quickly!"</p>
+</blockquote>
+<p><strong>What you get:</strong> An acknowledgement with a tracking reference. Safety hazards (gas, fire, smoke) are escalated to <strong>URGENT</strong>; broken equipment to <strong>HIGH</strong>. Each report is stamped with your role and stored for the facilities team, who triage them through admin views. Be specific (location + what's wrong) for the fastest routing.</p>
+<hr />
+<h2 id="interaction-tips">Interaction Tips<a class="headerlink" href="#interaction-tips" title="Permanent link">&para;</a></h2>
+<h3 id="you-do-not-need-to-know-sensor-names-or-ids">You Do Not Need to Know Sensor Names or IDs<a class="headerlink" href="#you-do-not-need-to-know-sensor-names-or-ids" title="Permanent link">&para;</a></h3>
+<p>OntoSage understands natural language. You never need to know a sensor's UUID, database identifier, or ontology class name.</p>
+<table>
+<thead>
+<tr>
+<th>What you say</th>
+<th>What happens internally</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"the conference room"</td>
+<td>OntoSage finds the zone via semantic search of the ontology</td>
+</tr>
+<tr>
+<td>"CO₂ levels"</td>
+<td>OntoSage resolves this to <code>brick:CO2_Sensor</code> instances in the graph</td>
+</tr>
+<tr>
+<td>"this week"</td>
+<td>OntoSage computes the date range from the current date</td>
+</tr>
+<tr>
+<td>"temperature sensor near the window"</td>
+<td>Semantic similarity search in the ontology finds the closest match</td>
+</tr>
+</tbody>
+</table>
+<h3 id="context-is-preserved-within-a-conversation">Context Is Preserved Within a Conversation<a class="headerlink" href="#context-is-preserved-within-a-conversation" title="Permanent link">&para;</a></h3>
+<p>You can ask follow-up questions without repeating context. OntoSage remembers the conversation and resolves references like <em>"there"</em>, <em>"that"</em>, and <em>"the same"</em> to what you meant earlier:</p>
+<blockquote>
+<p><strong>You:</strong> "What is the CO₂ level in Zone 5?"
+<strong>OntoSage:</strong> "The current CO₂ level in Zone 5 is 842 ppm (measured at 14:23)."</p>
+<p><strong>You:</strong> "What about yesterday?"
+<strong>OntoSage:</strong> <em>(fetches yesterday's data for Zone 5 automatically)</em></p>
+<p><strong>You:</strong> "And how does that compare to Zone 3?"
+<strong>OntoSage:</strong> <em>(compares Zone 5 vs Zone 3, yesterday)</em></p>
+<p><strong>You:</strong> "and what about humidity there?"
+<strong>OntoSage:</strong> <em>(resolves "there" → Zone 3 and answers humidity — no need to restate the zone)</em></p>
+</blockquote>
+<p>It also <strong>carries results forward</strong>: after a forecast or analysis you can say <em>"now plot that"</em> or <em>"show it as a table"</em> and OntoSage reuses the previous result. See <a href="../CONVERSATION_INTELLIGENCE/">Conversation Intelligence</a> for how this works.</p>
+<h3 id="be-specific-about-time-ranges-when-needed">Be Specific About Time Ranges When Needed<a class="headerlink" href="#be-specific-about-time-ranges-when-needed" title="Permanent link">&para;</a></h3>
+<p>OntoSage defaults to "right now" for simple readings and "last 24 hours" for trend questions. Be explicit when you need a different range:</p>
+<ul>
+<li>"in the last 15 minutes"</li>
+<li>"between 8am and 6pm today"</li>
+<li>"last Monday"</li>
+<li>"over the past 30 days"</li>
+<li>"this month compared to last month"</li>
+</ul>
+<h3 id="you-can-ask-complex-multi-part-questions">You Can Ask Complex Multi-Part Questions<a class="headerlink" href="#you-can-ask-complex-multi-part-questions" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p>"Which zones had CO₂ above 1000 ppm for more than 2 hours yesterday, and what was the occupancy like at those times?"</p>
+</blockquote>
+<p>OntoSage will break this down internally and return a combined answer.</p>
+<h3 id="charts-are-automatic">Charts Are Automatic<a class="headerlink" href="#charts-are-automatic" title="Permanent link">&para;</a></h3>
+<p>When you ask for historical data, trends, or comparisons, OntoSage automatically generates a chart (line plot, bar chart, or scatter plot as appropriate). The chart appears inline in the response.</p>
+<hr />
+<h2 id="understanding-responses">Understanding Responses<a class="headerlink" href="#understanding-responses" title="Permanent link">&para;</a></h2>
+<h3 id="response-format">Response Format<a class="headerlink" href="#response-format" title="Permanent link">&para;</a></h3>
+<p>Each answer includes:</p>
+<ol>
+<li><strong>Direct answer</strong> — a plain-English sentence stating the result</li>
+<li><strong>Supporting data</strong> — the numbers, timestamps, and sensor details behind the answer</li>
+<li><strong>Visualisation</strong> (where applicable) — an inline chart</li>
+<li><strong>Confidence indicator</strong> (where applicable) — whether the answer is based on direct data or statistical inference</li>
+<li><strong>Suggested follow-up questions</strong> — related questions you might want to ask next</li>
+</ol>
+<h3 id="when-ontosage-asks-for-clarification">When OntoSage Asks for Clarification<a class="headerlink" href="#when-ontosage-asks-for-clarification" title="Permanent link">&para;</a></h3>
+<p>If your question is ambiguous — for example, if multiple zones match "the conference room" — OntoSage will ask a follow-up question to narrow the scope:</p>
+<blockquote>
+<p>"I found three spaces matching 'conference room': Meeting Room A (Zone 3.01), Meeting Room B (Zone 3.02), and the Board Room (Zone 4.05). Which one did you mean?"</p>
+</blockquote>
+<h3 id="when-ontosage-cannot-answer">When OntoSage Cannot Answer<a class="headerlink" href="#when-ontosage-cannot-answer" title="Permanent link">&para;</a></h3>
+<p>If OntoSage cannot find the data you are asking about, it will explain why rather than inventing an answer:</p>
+<ul>
+<li><strong>"No sensors found"</strong> — The building ontology does not have sensors matching your description. Check with your facility manager.</li>
+<li><strong>"No data in that time range"</strong> — The time-series database does not have readings for that period. Data may not have been collected.</li>
+<li><strong>"I need more information"</strong> — The question is too vague to resolve unambiguously.</li>
+</ul>
+<p>OntoSage never fabricates sensor readings or analytics results. If data is unavailable, it says so.</p>
+<hr />
+<h2 id="example-conversations">Example Conversations<a class="headerlink" href="#example-conversations" title="Permanent link">&para;</a></h2>
+<h3 id="facility-manager-comfort-investigation">Facility Manager: Comfort Investigation<a class="headerlink" href="#facility-manager-comfort-investigation" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Facility Manager:</strong> "Which zones on Floor 3 are currently outside their temperature comfort range of 20–24°C?"</p>
+<p><strong>OntoSage:</strong> "Three zones on Floor 3 are currently outside the 20–24°C comfort band:
+- Zone 3.01 (Open Plan East): 26.2°C (2.2°C above upper limit)
+- Zone 3.04 (Server Room Corridor): 18.1°C (1.9°C below lower limit)
+- Zone 3.07 (South Meeting Room): 25.6°C (1.6°C above upper limit)</p>
+<p>The remaining 5 zones are within range. Would you like to see the temperature trend for any of these zones over the past 24 hours?"</p>
+</blockquote>
+<hr />
+<h3 id="sustainability-team-energy-reporting">Sustainability Team: Energy Reporting<a class="headerlink" href="#sustainability-team-energy-reporting" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Sustainability Team:</strong> "What was the total energy consumption on Floor 2 last week, and how does it compare to the previous week?"</p>
+<p><strong>OntoSage:</strong> "Floor 2 energy consumption last week (Mon 07 Apr – Sun 13 Apr): <strong>14,820 kWh</strong></p>
+<p>Previous week (Mon 31 Mar – Sun 06 Apr): <strong>16,205 kWh</strong></p>
+<p><strong>Change: −8.5% (↓ 1,385 kWh)</strong></p>
+<p>This is primarily driven by reduced consumption in the east wing on Wednesday and Thursday, which may correspond to lower occupancy. Would you like a breakdown by zone or by day?"</p>
+</blockquote>
+<hr />
+<h3 id="health-safety-officer-co2-audit">Health &amp; Safety Officer: CO₂ Audit<a class="headerlink" href="#health-safety-officer-co2-audit" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>H&amp;S Officer:</strong> "Have any CO₂ sensors exceeded 1000 ppm for more than 15 minutes this week?"</p>
+<p><strong>OntoSage:</strong> "Yes — 4 CO₂ threshold breach events this week:</p>
+<table>
+<thead>
+<tr>
+<th>Zone</th>
+<th>Peak ppm</th>
+<th>Duration</th>
+<th>Date/Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zone 4.02 (Training Room)</td>
+<td>1,340 ppm</td>
+<td>47 min</td>
+<td>Tue 08 Apr 14:00–14:47</td>
+</tr>
+<tr>
+<td>Zone 4.02 (Training Room)</td>
+<td>1,210 ppm</td>
+<td>22 min</td>
+<td>Thu 10 Apr 15:30–15:52</td>
+</tr>
+<tr>
+<td>Zone 2.05 (Workshop)</td>
+<td>1,120 ppm</td>
+<td>31 min</td>
+<td>Wed 09 Apr 10:15–10:46</td>
+</tr>
+<tr>
+<td>Zone 5.01 (Open Plan)</td>
+<td>1,005 ppm</td>
+<td>18 min</td>
+<td>Mon 07 Apr 09:00–09:18</td>
+</tr>
+</tbody>
+</table>
+<p>Zone 4.02 has had 2 separate incidents this week. Would you like me to generate a full CO₂ compliance report for this zone?"</p>
+</blockquote>
+<hr />
+<h3 id="data-scientist-statistical-query">Data Scientist: Statistical Query<a class="headerlink" href="#data-scientist-statistical-query" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Data Scientist:</strong> "Calculate the Pearson correlation coefficient between outdoor temperature and HVAC energy consumption across the last 90 days."</p>
+<p><strong>OntoSage:</strong> "Pearson correlation coefficient (outdoor temperature vs HVAC energy, last 90 days): <strong>r = 0.84</strong> (strong positive correlation, p &lt; 0.001)</p>
+<p>This means that as outdoor temperature increases, HVAC energy consumption increases significantly — explaining approximately 71% of the variance (R² = 0.71).</p>
+<p>[Scatter plot with regression line attached]</p>
+<p>The relationship appears to be linear for temperatures below 20°C, with some non-linearity above 25°C, possibly due to cooling system saturation."</p>
+</blockquote>
+<hr />
+<h3 id="occupant-comfort-query">Occupant: Comfort Query<a class="headerlink" href="#occupant-comfort-query" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Occupant:</strong> "It's really cold in my office today — what's the temperature supposed to be versus what it actually is?"</p>
+<p><strong>OntoSage:</strong> "I can see you're in Zone 3.04. Here's the current situation:</p>
+<ul>
+<li><strong>Current temperature:</strong> 17.8°C (measured 5 minutes ago)</li>
+<li><strong>Setpoint:</strong> 21°C</li>
+<li><strong>Deviation:</strong> −3.2°C below setpoint</li>
+</ul>
+<p>The zone has been below setpoint since 07:30 this morning (about 4.5 hours). This may indicate an HVAC issue. I've flagged this for your facility manager."</p>
+</blockquote>
+<hr />
+<h2 id="role-based-access">Role-Based Access<a class="headerlink" href="#role-based-access" title="Permanent link">&para;</a></h2>
+<p>Different users see different capabilities based on their role:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>What they can do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Admin</strong></td>
+<td>All capabilities + user management, system configuration</td>
+</tr>
+<tr>
+<td><strong>Facility Manager</strong></td>
+<td>All sensor queries, analytics, reports, anomaly detection, recommendations</td>
+</tr>
+<tr>
+<td><strong>Analyst</strong></td>
+<td>All data queries, analytics, exports, reports</td>
+</tr>
+<tr>
+<td><strong>Operator</strong></td>
+<td>Sensor readings, anomaly alerts, basic reports</td>
+</tr>
+<tr>
+<td><strong>Occupant</strong></td>
+<td>Comfort queries, current conditions for accessible zones</td>
+</tr>
+<tr>
+<td><strong>Read-only</strong></td>
+<td>Discovery queries only — can see what sensors exist, not their values</td>
+</tr>
+</tbody>
+</table>
+<p>If you receive a "permission denied" response, ask your administrator to upgrade your role.</p>
+<hr />
+<h2 id="keyboard-shortcuts">Keyboard Shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Permanent link">&para;</a></h2>
+<p>When using the Open WebUI interface:</p>
+<table>
+<thead>
+<tr>
+<th>Shortcut</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Enter</code></td>
+<td>Send message</td>
+</tr>
+<tr>
+<td><code>Shift+Enter</code></td>
+<td>New line within message</td>
+</tr>
+<tr>
+<td><code>↑</code> (in input box)</td>
+<td>Recall previous message</td>
+</tr>
+<tr>
+<td><code>Ctrl+/</code></td>
+<td>Open keyboard shortcut help</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="frequently-asked-questions">Frequently Asked Questions<a class="headerlink" href="#frequently-asked-questions" title="Permanent link">&para;</a></h2>
+<p><strong>Q: Can I ask about a sensor that I don't know the name of?</strong>
+Yes. Describe it in plain English: "the sensor near the entrance", "the CO₂ sensor in the boardroom", "the energy meter for the kitchen". OntoSage uses semantic search to find the closest match.</p>
+<p><strong>Q: Can I ask questions that span multiple buildings?</strong>
+If your administrator has onboarded multiple buildings, yes. Include the building name in your question: "Compare CO₂ levels in Building A and Building B."</p>
+<p><strong>Q: How fresh is the data?</strong>
+Sensor data freshness depends on how frequently your building management system writes to the database. For most BMS systems, this is every 1–15 minutes. OntoSage always queries the live database — there is no caching of sensor readings.</p>
+<p><strong>Q: Can I ask questions in languages other than English?</strong>
+Currently optimised for English. If your Ollama model supports your language (e.g., LLaMA 3.1 has multilingual support), you can try other languages, but accuracy may be lower.</p>
+<p><strong>Q: What happens to my conversation history?</strong>
+Recent conversation state is held in Redis (bounded to the last ~20 messages, with no fixed time-expiry by default), so the assistant keeps the thread of your current conversation and resolves follow-up references. A concise per-turn summary is also kept in PostgreSQL (<code>turn_memory</code>) for long-term continuity, and full message history is stored in MongoDB for audit, retained per your administrator's policy. See <a href="../CONVERSATION_INTELLIGENCE/">Conversation Intelligence</a>.</p>
+<p><strong>Q: Can I export my conversation?</strong>
+Not directly from the chat UI. Your administrator can export conversation logs from MongoDB.</p>
+<p><strong>Q: Why did OntoSage give me a different answer to the same question?</strong>
+Most responses are deterministic (temperature = 0.0–0.1 for SPARQL generation and analytics). Small variations can occur if the LLM is running with non-zero temperature, or if sensor data changed between queries. If you see a significantly different answer, ask a follow-up to confirm.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../DEVELOPER_GUIDE/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Developer Guide">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Developer Guide
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../SECURITY/" class="md-footer__link md-footer__link--next" aria-label="Next: Security">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Security
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,4621 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/superpowers/specs/2026-05-21-capability-semantic-routing-design/">
+      
+      
+        <link rel="prev" href="../2026-04-14-mcp-server-design/">
+      
+      
+        <link rel="next" href="../2026-05-22-multi-intent-semantic-routing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Capability Semantic Routing Design - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../../../assets/overrides.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#capability-semantic-routing-design" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Capability Semantic Routing Design
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Problem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-decision-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Decision Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-key-design-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Key design properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-inputbldgcapabilityyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 input/&lt;bldg&gt;/capability.yaml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-inputbldgbuildingyaml-new-optional-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 input/&lt;bldg&gt;/building.yaml — new optional block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-qdrant-collection-layout-capability_bldg_id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Qdrant collection layout: capability_&lt;bldg_id&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Data Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-startup-per-building" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Startup (per building)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-query-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Query-time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-code-deletions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Code deletions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-code-that-explicitly-stays-non-deletions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Code that explicitly stays (non-deletions)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-new-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. New Files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. New Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-orchestratorservicescapability_indexerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 orchestrator/services/capability_indexer.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-orchestratorservicessemantic_routerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 orchestrator/services/semantic_router.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-orchestratorservicesembedding_servicepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 orchestrator/services/embedding_service.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-modified-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Modified Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-developer-workflow-the-user-facing-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Developer Workflow (the user-facing outcome)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 Unit tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-integration-tests-testsintegrationtest_capability_e2epy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.2 Integration tests (tests/integration/test_capability_e2e.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#103-survey-test-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.3 Survey-test integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Migration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-risks-mitigations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Risks &amp; Mitigations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-out-of-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Out of Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-non-regression-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Non-Regression Contract
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="15. Non-Regression Contract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#151-intent-classification-all-16-intents-preserved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15.1 Intent classification — all 16 intents preserved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#152-routing-edge-cases-all-4-floor-n-protections-preserved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15.2 Routing edge cases — all 4 floor-N protections preserved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#153-sparql-rag-pipeline-semantic-web-layer-preserved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15.3 SPARQL / RAG pipeline — semantic web layer preserved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#154-storage-layer-untouched" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15.4 Storage layer — untouched
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#155-api-contract-untouched" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15.5 API contract — untouched
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#156-per-building-startup-additive-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15.6 Per-building startup — additive only
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-regression-test-battery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. Regression Test Battery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16. Regression Test Battery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#161-layer-1-software-developer-unit-tests-for-new-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.1 Layer 1 — Software Developer: Unit tests for new code
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#162-layer-2-system-designer-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.2 Layer 2 — System Designer: Integration tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#163-layer-3-professional-tester-edge-case-adversarial-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.3 Layer 3 — Professional Tester: Edge case &amp; adversarial tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#164-layer-4-semantic-web-engineer-ontology-rag-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.4 Layer 4 — Semantic Web Engineer: Ontology &amp; RAG integrity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#165-layer-5-performance-resilience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.5 Layer 5 — Performance &amp; resilience
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#17-validation-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17. Validation Protocol
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="17. Validation Protocol">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#171-pre-flight-baseline-run-before-any-code-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17.1 Pre-flight baseline (run BEFORE any code change)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#172-phase-1-gate-code-lands-behind-disabled-flag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17.2 Phase 1 gate — Code lands behind disabled flag
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#173-phase-2-gate-flag-enabled-survey-regression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17.3 Phase 2 gate — Flag enabled, survey + regression
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#174-phase-3-gate-cleanup-deletes-legacy-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17.4 Phase 3 gate — Cleanup deletes legacy code
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#175-continuous-monitoring-post-merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17.5 Continuous monitoring (post-merge)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Problem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-decision-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Decision Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-key-design-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Key design properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-inputbldgcapabilityyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 input/&lt;bldg&gt;/capability.yaml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-inputbldgbuildingyaml-new-optional-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 input/&lt;bldg&gt;/building.yaml — new optional block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-qdrant-collection-layout-capability_bldg_id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Qdrant collection layout: capability_&lt;bldg_id&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Data Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-startup-per-building" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Startup (per building)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-query-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Query-time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-code-deletions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Code deletions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-code-that-explicitly-stays-non-deletions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Code that explicitly stays (non-deletions)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-new-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. New Files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. New Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-orchestratorservicescapability_indexerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 orchestrator/services/capability_indexer.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-orchestratorservicessemantic_routerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 orchestrator/services/semantic_router.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-orchestratorservicesembedding_servicepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 orchestrator/services/embedding_service.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-modified-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Modified Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-developer-workflow-the-user-facing-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Developer Workflow (the user-facing outcome)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 Unit tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-integration-tests-testsintegrationtest_capability_e2epy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.2 Integration tests (tests/integration/test_capability_e2e.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#103-survey-test-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.3 Survey-test integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Migration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-risks-mitigations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Risks &amp; Mitigations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-out-of-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Out of Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-non-regression-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Non-Regression Contract
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="15. Non-Regression Contract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#151-intent-classification-all-16-intents-preserved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15.1 Intent classification — all 16 intents preserved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#152-routing-edge-cases-all-4-floor-n-protections-preserved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15.2 Routing edge cases — all 4 floor-N protections preserved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#153-sparql-rag-pipeline-semantic-web-layer-preserved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15.3 SPARQL / RAG pipeline — semantic web layer preserved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#154-storage-layer-untouched" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15.4 Storage layer — untouched
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#155-api-contract-untouched" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15.5 API contract — untouched
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#156-per-building-startup-additive-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15.6 Per-building startup — additive only
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-regression-test-battery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. Regression Test Battery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16. Regression Test Battery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#161-layer-1-software-developer-unit-tests-for-new-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.1 Layer 1 — Software Developer: Unit tests for new code
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#162-layer-2-system-designer-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.2 Layer 2 — System Designer: Integration tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#163-layer-3-professional-tester-edge-case-adversarial-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.3 Layer 3 — Professional Tester: Edge case &amp; adversarial tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#164-layer-4-semantic-web-engineer-ontology-rag-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.4 Layer 4 — Semantic Web Engineer: Ontology &amp; RAG integrity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#165-layer-5-performance-resilience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.5 Layer 5 — Performance &amp; resilience
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#17-validation-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17. Validation Protocol
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="17. Validation Protocol">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#171-pre-flight-baseline-run-before-any-code-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17.1 Pre-flight baseline (run BEFORE any code change)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#172-phase-1-gate-code-lands-behind-disabled-flag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17.2 Phase 1 gate — Code lands behind disabled flag
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#173-phase-2-gate-flag-enabled-survey-regression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17.3 Phase 2 gate — Flag enabled, survey + regression
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#174-phase-3-gate-cleanup-deletes-legacy-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17.4 Phase 3 gate — Cleanup deletes legacy code
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#175-continuous-monitoring-post-merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17.5 Continuous monitoring (post-merge)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/superpowers/specs/2026-05-21-capability-semantic-routing-design.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="capability-semantic-routing-design">Capability Semantic Routing — Design<a class="headerlink" href="#capability-semantic-routing-design" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-05-21
+<strong>Author:</strong> OntoSage core
+<strong>Status:</strong> Draft — pending user review</p>
+<hr />
+<h2 id="1-goal">1. Goal<a class="headerlink" href="#1-goal" title="Permanent link">&para;</a></h2>
+<p>Replace the hardcoded keyword routing for the capability intent with semantic (embedding-based) routing so that adding a new building requires editing one YAML file and nothing else.</p>
+<h2 id="2-problem">2. Problem<a class="headerlink" href="#2-problem" title="Permanent link">&para;</a></h2>
+<p>The current capability routing fails the developer-experience test for multi-building deployment:</p>
+<ol>
+<li><strong>Two synchronized sources.</strong> Adding a new capability entry today requires editing <code>input/&lt;bldg&gt;/capability.yaml</code> AND <code>orchestrator/agents/dialogue_agent.py</code> (the <code>_STRONG_FACILITY_KW</code> / <code>_CAPABILITY_KW</code> frozensets). A YAML-only change is invisible to the router.</li>
+<li><strong>Substring matching, no semantics.</strong> <code>kw.lower() in query.lower()</code> misses synonyms: "elevator capacity" cannot match <code>lift_accessibility_detail</code> no matter what.</li>
+<li><strong>Tiered keyword gates are fragile.</strong> <code>_STRONG_FACILITY_KW</code> overrides unconditionally, <code>_CAPABILITY_KW</code> overrides only when LLM picks a non-data intent, and a separate floor-plan hijack guard had to be added in <code>workflow.py:_data_intents</code>. The interactions compound.</li>
+<li><strong>The codebase already has the infrastructure</strong> (Qdrant, OpenAI/Ollama embeddings, per-building YAML configs) but capabilities don't use any of it.</li>
+</ol>
+<h2 id="3-decision-summary">3. Decision Summary<a class="headerlink" href="#3-decision-summary" title="Permanent link">&para;</a></h2>
+<p>Six core decisions, each chosen from explicit options:</p>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Re-embed trigger</td>
+<td>Startup-only with SHA-256 fingerprint</td>
+<td>Matches floor-plan pipeline; predictable; idempotent</td>
+</tr>
+<tr>
+<td>Routing architecture</td>
+<td>Semantic-first, skip LLM if confident</td>
+<td>Best latency (~500ms saved per high-confidence query)</td>
+</tr>
+<tr>
+<td>Embed strategy</td>
+<td>Multi-vector per entry (per-keyword + per-content)</td>
+<td>Best recall for terse/synonym queries</td>
+</tr>
+<tr>
+<td>Scope</td>
+<td>Capability-only this iteration</td>
+<td>Smaller PR; floor_plan/spatial deferred to later spec</td>
+</tr>
+<tr>
+<td>Configuration location</td>
+<td><code>input/&lt;bldg&gt;/building.yaml</code></td>
+<td>Per-building tunable; matches existing config pattern</td>
+</tr>
+<tr>
+<td>Migration</td>
+<td>Behind feature flag, then cleanup</td>
+<td>Keyword-based routing is battle-tested; remove only after parity</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-architecture">4. Architecture<a class="headerlink" href="#4-architecture" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>┌──────────────────────────────────────────────────────────────────┐
+│  STARTUP (per building)                                          │
+│                                                                  │
+│  input/&lt;bldg&gt;/capability.yaml ──┐                                │
+│                                 ├──&gt; CapabilityIndexer           │
+│  input/&lt;bldg&gt;/building.yaml  ───┘    (SHA-256 fingerprint check) │
+│         (capability_routing:)                                    │
+│                                          │                       │
+│                            ┌─────────────┴──────────────┐        │
+│                            ↓                            ↓        │
+│                    embed each entry           Per-bldg config:   │
+│                    keywords + content         threshold,         │
+│                    (multi-vector)             top_k,             │
+│                            │                  override_min       │
+│                            ↓                                     │
+│                  Qdrant: capability_&lt;bldg&gt;                       │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│  QUERY-TIME                                                      │
+│                                                                  │
+│  user_query ──&gt; SemanticRouter.classify(query, bldg_id)          │
+│                       │                                          │
+│                       ↓ embed query                              │
+│                  Qdrant.search(&quot;capability_&lt;bldg&gt;&quot;, top_k)       │
+│                       │                                          │
+│                       ↓ group by entry_id, max(score)            │
+│                       │                                          │
+│           ┌───────────┴───────────┐                              │
+│           ↓                       ↓                              │
+│   score &gt;= override_min       score &gt;= threshold                 │
+│   (e.g. 0.85)                 (e.g. 0.65)                        │
+│   intent = capability         intent = capability                │
+│   skip LLM intent call        but only if LLM would have         │
+│                               picked non-data intent             │
+│           ↓                       ↓                              │
+│           └─────────┬─────────────┘                              │
+│                     ↓                                            │
+│      state.intermediate_results[&quot;capability_matches&quot;]            │
+│              (pre-populated entries, no second search)           │
+│                     ↓                                            │
+│             CapabilityAgent.handle()                             │
+│             formats response from pre-fetched matches            │
+└──────────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<h3 id="41-key-design-properties">4.1 Key design properties<a class="headerlink" href="#41-key-design-properties" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>One source of truth:</strong> <code>input/&lt;bldg&gt;/capability.yaml</code>. Edit YAML → restart → done.</li>
+<li><strong>Zero hardcoded keywords:</strong> <code>_CAPABILITY_KW</code>, <code>_STRONG_FACILITY_KW</code> are deleted entirely.</li>
+<li><strong>Per-building isolation:</strong> Each building gets its own Qdrant collection. No cross-building leakage.</li>
+<li><strong>Two-tier routing:</strong> A high score (<code>override_min</code>) overrides even LLM data-intent classifications. A medium score (<code>threshold</code>) is a softer override that yields to LLM data intents. Both numbers are per-building configurable.</li>
+<li><strong>Extension hook:</strong> <code>SemanticRouter</code> class is intent-agnostic — <code>register_intent("floor_plan", "spatial_")</code> works the same way when we extend to other intents later.</li>
+</ul>
+<h2 id="5-schema">5. Schema<a class="headerlink" href="#5-schema" title="Permanent link">&para;</a></h2>
+<h3 id="51-inputbldgcapabilityyaml">5.1 <code>input/&lt;bldg&gt;/capability.yaml</code><a class="headerlink" href="#51-inputbldgcapabilityyaml" title="Permanent link">&para;</a></h3>
+<p>Unchanged. Existing schema (<code>shared/capability_schema.py:CapabilityEntry</code>) stays as-is. The <code>keywords</code> field is now used for multi-vector embedding rather than substring matching, but the YAML structure does not change. Backwards compatible with every existing building config.</p>
+<h3 id="52-inputbldgbuildingyaml-new-optional-block">5.2 <code>input/&lt;bldg&gt;/building.yaml</code> — new optional block<a class="headerlink" href="#52-inputbldgbuildingyaml-new-optional-block" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">capability_routing</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                    </span><span class="c1"># default true; false → falls back to LLM-only intent</span>
+<span class="w">  </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span><span class="w">            </span><span class="c1"># auto | openai | local; &quot;auto&quot; follows MODEL_PROVIDER</span>
+<span class="w">  </span><span class="nt">threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.65</span><span class="w">                  </span><span class="c1"># min score to set intent=capability when LLM picked non-data</span>
+<span class="w">  </span><span class="nt">override_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.85</span><span class="w">               </span><span class="c1"># min score to override even LLM data-intent classifications</span>
+<span class="w">  </span><span class="nt">top_k</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w">                         </span><span class="c1"># how many points to fetch from Qdrant; grouped by entry_id</span>
+<span class="w">  </span><span class="nt">fallback_on_qdrant_failure</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">skip</span><span class="w"> </span><span class="c1"># skip | keyword</span>
+<span class="w">                                   </span><span class="c1"># skip → SemanticRouter returns source=&quot;fallback&quot;, score=0.0;</span>
+<span class="w">                                   </span><span class="c1">#        dialogue_agent reverts to LLM-only intent (current</span>
+<span class="w">                                   </span><span class="c1">#        behaviour for capability queries — they were not</span>
+<span class="w">                                   </span><span class="c1">#        being captured before this refactor anyway).</span>
+<span class="w">                                   </span><span class="c1"># keyword → use legacy `_CAPABILITY_KW` substring matcher.</span>
+<span class="w">                                   </span><span class="c1">#        Only valid during Phase 1 of migration (see §11),</span>
+<span class="w">                                   </span><span class="c1">#        when the keyword code still exists. After Phase 3</span>
+<span class="w">                                   </span><span class="c1">#        cleanup, this option is removed; default &quot;skip&quot;</span>
+<span class="w">                                   </span><span class="c1">#        is the only option going forward.</span>
+</code></pre></div>
+<p>If <code>capability_routing:</code> block is absent, defaults are applied — existing buildings need no edits.</p>
+<h3 id="53-qdrant-collection-layout-capability_bldg_id">5.3 Qdrant collection layout: <code>capability_&lt;bldg_id&gt;</code><a class="headerlink" href="#53-qdrant-collection-layout-capability_bldg_id" title="Permanent link">&para;</a></h3>
+<p>One collection per building. Vector dim auto-detected at startup (1536 for OpenAI <code>text-embedding-3-small</code>, 768 for <code>nomic-embed-text</code>). Multi-vector layout — one point per <code>(entry, vector_source)</code> tuple:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;uuid v5 from entry_id + vector_source + text_hash&gt;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;vector&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;payload&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;entry_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;lift_accessibility_detail&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ACCESSIBILITY&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cardiff_university_accessibility_page&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;vector_source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;keyword&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;lift dimensions&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;yaml_sha&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a4f2b9...&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>For an entry with 17 keywords + 1 content block = <strong>18 points</strong> in Qdrant. With 32 entries × ~15 vectors each ≈ <strong>~480 points per building</strong>. Trivial for Qdrant.</p>
+<h2 id="6-data-flow">6. Data Flow<a class="headerlink" href="#6-data-flow" title="Permanent link">&para;</a></h2>
+<h3 id="61-startup-per-building">6.1 Startup (per building)<a class="headerlink" href="#61-startup-per-building" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>For each building_id in /app/input/*/:
+  1. Load capability.yaml + building.yaml
+  2. Compute sha256(capability.yaml content) → yaml_sha
+  3. Query Qdrant: does collection capability_&lt;bldg&gt; exist?
+     a. Yes + any point&#39;s payload.yaml_sha matches → SKIP (no changes)
+     b. Yes + sha mismatch → DELETE collection, rebuild
+     c. No → CREATE collection
+  4. For each entry in capabilities:
+     a. For each keyword: embed(&quot;&lt;keyword&gt;&quot;) → upsert point (vector_source=keyword)
+     b. Embed content[:500] → upsert point (vector_source=content)
+  5. Log: &quot;[capability_indexer] bldg=bldg1, entries=32, points=480, sha=a4f2b9...&quot;
+</code></pre></div>
+<p>Idempotent. Unchanged YAML on restart → zero embedding API calls.</p>
+<h3 id="62-query-time">6.2 Query-time<a class="headerlink" href="#62-query-time" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># In dialogue_agent (before LLM intent call):</span>
+
+<span class="n">semantic</span> <span class="o">=</span> <span class="k">await</span> <span class="n">semantic_router</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span>
+    <span class="n">query</span><span class="o">=</span><span class="n">user_query</span><span class="p">,</span> <span class="n">building_id</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">building_id</span>
+<span class="p">)</span>
+<span class="c1"># Returns: SemanticRouteResult(intent, score, matches, source)</span>
+
+<span class="k">if</span> <span class="n">semantic</span><span class="o">.</span><span class="n">score</span> <span class="o">&gt;=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">override_min</span><span class="p">:</span>
+    <span class="n">intent</span> <span class="o">=</span> <span class="s2">&quot;capability&quot;</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">intermediate_results</span><span class="p">[</span><span class="s2">&quot;capability_matches&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">semantic</span><span class="o">.</span><span class="n">matches</span>
+    <span class="k">return</span> <span class="n">intent</span>  <span class="c1"># skip LLM intent call</span>
+
+<span class="n">llm_intent</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classify_intent_llm</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">threshold</span> <span class="o">&lt;=</span> <span class="n">semantic</span><span class="o">.</span><span class="n">score</span> <span class="o">&lt;</span> <span class="n">cfg</span><span class="o">.</span><span class="n">override_min</span>
+        <span class="ow">and</span> <span class="n">llm_intent</span> <span class="ow">in</span> <span class="n">NON_DATA_INTENTS</span><span class="p">):</span>
+    <span class="n">intent</span> <span class="o">=</span> <span class="s2">&quot;capability&quot;</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">intermediate_results</span><span class="p">[</span><span class="s2">&quot;capability_matches&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">semantic</span><span class="o">.</span><span class="n">matches</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">intent</span> <span class="o">=</span> <span class="n">llm_intent</span>
+</code></pre></div>
+<p><code>CapabilityAgent.handle()</code> reads <code>capability_matches</code> from state and formats — it does no second search.</p>
+<h3 id="63-code-deletions">6.3 Code deletions<a class="headerlink" href="#63-code-deletions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What is removed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dialogue_agent.py</code></td>
+<td><code>_CAPABILITY_KW</code> (108 keywords), <code>_STRONG_FACILITY_KW</code> (36 keywords), both override blocks (hot-path + cache-hit)</td>
+</tr>
+<tr>
+<td><code>shared/capability_schema.py</code></td>
+<td><code>CapabilityKB.search()</code> substring method</td>
+</tr>
+<tr>
+<td><code>capability_agent.py</code></td>
+<td>The <code>_load_kb()</code> lookup + <code>kb.search(query)</code> call inside <code>handle()</code> (replaced by reading <code>state.intermediate_results["capability_matches"]</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Net code reduction: roughly <strong>−200 lines</strong> of keyword sync logic.</p>
+<h3 id="64-code-that-explicitly-stays-non-deletions">6.4 Code that explicitly stays (non-deletions)<a class="headerlink" href="#64-code-that-explicitly-stays-non-deletions" title="Permanent link">&para;</a></h3>
+<p>These are common review traps — list them so the implementer doesn't "clean them up":</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What stays and why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workflow.py</code></td>
+<td>The <code>"capability"</code> entry in <code>_data_intents</code> <strong>stays</strong>. It is the floor-plan hijack guard for queries like "Which floors have accessible toilets?". Removing it would regress the fix shipped 2026-05-20.</td>
+</tr>
+<tr>
+<td><code>workflow.py</code></td>
+<td><code>_route_from_dialogue()</code> capability → <code>capability</code> node mapping stays unchanged.</td>
+</tr>
+<tr>
+<td><code>workflow.py</code></td>
+<td>The floor-plan heuristic (<code>floor_plan_service.is_floor_plan_query()</code> + <code>_data_intents</code> check) stays — it protects all data intents, not just capability.</td>
+</tr>
+<tr>
+<td><code>capability_agent.py</code></td>
+<td><code>_load_kb()</code> and <code>_KB_CACHE</code> stay — used as defensive fallback when <code>state.intermediate_results["capability_matches"]</code> is missing (e.g., when feature flag is off, or when fallback path triggers).</td>
+</tr>
+<tr>
+<td><code>shared/capability_schema.py</code></td>
+<td><code>CapabilityKB</code>, <code>CapabilityEntry</code>, <code>BuildingInfo</code> Pydantic models — KB still needs to be loaded for content lookup by <code>entry_id</code>. Only the <code>search()</code> method goes.</td>
+</tr>
+<tr>
+<td><code>dialogue_agent.py</code></td>
+<td>LLM intent classification, persona detection, time-range extraction, G1 taxonomy emission, entity extraction — all unchanged.</td>
+</tr>
+<tr>
+<td><code>dialogue_agent.py</code></td>
+<td>The intent cache (<code>cache:intent:&lt;hash&gt;</code>) and response cache (<code>resp_cache:exact:&lt;bldg&gt;:*</code>) stay unchanged.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="7-new-files">7. New Files<a class="headerlink" href="#7-new-files" title="Permanent link">&para;</a></h2>
+<h3 id="71-orchestratorservicescapability_indexerpy">7.1 <code>orchestrator/services/capability_indexer.py</code><a class="headerlink" href="#71-orchestratorservicescapability_indexerpy" title="Permanent link">&para;</a></h3>
+<p>Startup-time indexer. Owns SHA-256 fingerprint logic and Qdrant writes.</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CapabilityIndexer</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qdrant_client</span><span class="p">,</span> <span class="n">embedding_service</span><span class="p">,</span> <span class="n">input_root</span><span class="o">=</span><span class="s2">&quot;/app/input&quot;</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">index_all_buildings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">IndexResult</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Called once during FastAPI lifespan. Iterates every input/&lt;bldg&gt;/.&quot;&quot;&quot;</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">index_building</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">building_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IndexResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Index one building. Idempotent — skips if YAML sha matches existing collection.&quot;&quot;&quot;</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_embed_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">CapabilityEntry</span><span class="p">,</span> <span class="n">yaml_sha</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">PointStruct</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return one point per keyword + one for content. UUID v5 for deterministic IDs.&quot;&quot;&quot;</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_upsert_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collection</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">points</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">PointStruct</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Batch upsert. Retries on Qdrant 503.&quot;&quot;&quot;</span>
+</code></pre></div>
+<p><strong>Failure mode:</strong> If embedding API is down or Qdrant unreachable at startup, log error and set <code>IndexResult(status="degraded", reason=...)</code>. The orchestrator still starts — <code>SemanticRouter</code> uses <code>fallback_on_qdrant_failure</code> config at query time.</p>
+<h3 id="72-orchestratorservicessemantic_routerpy">7.2 <code>orchestrator/services/semantic_router.py</code><a class="headerlink" href="#72-orchestratorservicessemantic_routerpy" title="Permanent link">&para;</a></h3>
+<p>Query-time semantic classifier. Intent-agnostic by design.</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SemanticRouteResult</span><span class="p">:</span>
+    <span class="n">intent</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>               <span class="c1"># None if no match above threshold</span>
+    <span class="n">score</span><span class="p">:</span> <span class="nb">float</span>                        <span class="c1"># max similarity (0.0 if no match)</span>
+    <span class="n">matches</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">CapabilityMatch</span><span class="p">]</span>      <span class="c1"># grouped by entry_id, top-3</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;semantic&quot;</span><span class="p">,</span> <span class="s2">&quot;fallback&quot;</span><span class="p">,</span> <span class="s2">&quot;disabled&quot;</span><span class="p">]</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SemanticRouter</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qdrant_client</span><span class="p">,</span> <span class="n">embedding_service</span><span class="p">,</span> <span class="n">building_config_loader</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_intents</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">IntentBinding</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_intent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">intent</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">collection_prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extension hook: future floor_plan/spatial bindings register here.&quot;&quot;&quot;</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">classify</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">building_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SemanticRouteResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Embed query, search registered collections, return best match.&quot;&quot;&quot;</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_search_capability</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">query_vec</span><span class="p">,</span> <span class="n">building_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">CapabilityRoutingConfig</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CapabilityMatch</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Capability-specific search: group by entry_id, max-pool keyword+content scores.&quot;&quot;&quot;</span>
+</code></pre></div>
+<p>The <code>register_intent()</code> API is the extension hook for future floor_plan/spatial refactors.</p>
+<h3 id="73-orchestratorservicesembedding_servicepy">7.3 <code>orchestrator/services/embedding_service.py</code><a class="headerlink" href="#73-orchestratorservicesembedding_servicepy" title="Permanent link">&para;</a></h3>
+<p>Provider-agnostic embedding wrapper. Routes to OpenAI or Ollama based on <code>MODEL_PROVIDER</code>. Caches results in Redis (<code>cache:embed:&lt;sha256&gt;</code>) with 24h TTL.</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EmbeddingService</span><span class="p">:</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">embed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">embed_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span> <span class="o">...</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>
+</code></pre></div>
+<p>Used by <code>CapabilityIndexer</code> (batch, startup) and <code>SemanticRouter</code> (single, per-query, Redis-cached).</p>
+<h2 id="8-modified-files">8. Modified Files<a class="headerlink" href="#8-modified-files" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shared/capability_schema.py</code></td>
+<td>Delete <code>CapabilityKB.search()</code>. Add <code>CapabilityRoutingConfig</code> Pydantic model.</td>
+</tr>
+<tr>
+<td><code>shared/floor_plan_config.py</code> (or new <code>shared/building_config.py</code>)</td>
+<td>Add <code>capability_routing</code> field to <code>BuildingConfig</code></td>
+</tr>
+<tr>
+<td><code>orchestrator/agents/dialogue_agent.py</code></td>
+<td>Delete <code>_CAPABILITY_KW</code>, <code>_STRONG_FACILITY_KW</code>, both override blocks. Inject <code>SemanticRouter</code>. Call <code>semantic_router.classify()</code> before LLM intent call.</td>
+</tr>
+<tr>
+<td><code>orchestrator/agents/capability_agent.py</code></td>
+<td><code>handle()</code> reads <code>state.intermediate_results["capability_matches"]</code> directly. Falls back to <code>_load_kb()</code> only if matches missing (defensive).</td>
+</tr>
+<tr>
+<td><code>orchestrator/workflow.py</code></td>
+<td>Inject <code>SemanticRouter</code> into <code>dialogue_agent</code> via constructor. <strong>No change to <code>_data_intents</code> or <code>_route_from_dialogue</code> routing logic</strong> — capability routing is set BEFORE this function runs, by the semantic router inside dialogue_agent.</td>
+</tr>
+<tr>
+<td><code>orchestrator/main.py</code></td>
+<td>In <code>lifespan</code>: instantiate <code>CapabilityIndexer</code>, call <code>index_all_buildings()</code>, instantiate <code>SemanticRouter</code>, pass to <code>WorkflowOrchestrator</code>.</td>
+</tr>
+<tr>
+<td><code>shared/config.py</code></td>
+<td>Add <code>EMBEDDING_MODEL_AUTO</code>, <code>EMBEDDING_DIM_OPENAI=1536</code>, <code>EMBEDDING_DIM_LOCAL=768</code> constants.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="9-developer-workflow-the-user-facing-outcome">9. Developer Workflow (the user-facing outcome)<a class="headerlink" href="#9-developer-workflow-the-user-facing-outcome" title="Permanent link">&para;</a></h2>
+<p>Onboarding <code>bldg2</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. Drop YAML</span>
+cp<span class="w"> </span>input/bldg1/capability.yaml<span class="w"> </span>input/bldg2/capability.yaml
+<span class="c1"># (edit for bldg2-specific content)</span>
+
+<span class="c1"># 2. (Optional) Tune thresholds in input/bldg2/building.yaml</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;capability_routing:</span>
+<span class="s2">  threshold: 0.60</span>
+<span class="s2">  override_min: 0.80&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>input/bldg2/building.yaml
+
+<span class="c1"># 3. Restart</span>
+docker-compose<span class="w"> </span>restart<span class="w"> </span>orchestrator
+</code></pre></div>
+<p>Three steps. Zero Python edits. This is the entire developer flow.</p>
+<h2 id="10-testing">10. Testing<a class="headerlink" href="#10-testing" title="Permanent link">&para;</a></h2>
+<h3 id="101-unit-tests">10.1 Unit tests<a class="headerlink" href="#101-unit-tests" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Tests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tests/test_capability_indexer.py</code></td>
+<td>SHA-256 fingerprint skips unchanged YAML; rebuilds on change; missing YAML graceful; multi-vector point count = sum(keywords)+1 per entry</td>
+</tr>
+<tr>
+<td><code>tests/test_semantic_router.py</code></td>
+<td>High-confidence match returns intent without LLM call; low-confidence falls through; matches grouped by <code>entry_id</code> with max-pool; disabled config returns <code>source="disabled"</code>; Qdrant down → <code>source="fallback"</code></td>
+</tr>
+<tr>
+<td><code>tests/test_embedding_service.py</code></td>
+<td>OpenAI/Ollama auto-switch via <code>MODEL_PROVIDER</code>; Redis cache hit avoids API call; dimension matches provider</td>
+</tr>
+<tr>
+<td><code>tests/test_capability_schema.py</code></td>
+<td><code>CapabilityRoutingConfig</code> defaults applied when YAML block absent; invalid thresholds rejected</td>
+</tr>
+</tbody>
+</table>
+<h3 id="102-integration-tests-testsintegrationtest_capability_e2epy">10.2 Integration tests (<code>tests/integration/test_capability_e2e.py</code>)<a class="headerlink" href="#102-integration-tests-testsintegrationtest_capability_e2epy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Verifies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_lift_dimensions_routes_to_capability</code></td>
+<td>The exact query that failed today returns <code>lift_accessibility_detail</code></td>
+</tr>
+<tr>
+<td><code>test_synonym_query_matches</code></td>
+<td>"How big is the elevator?" matches <code>lift_accessibility_detail</code> (semantic)</td>
+</tr>
+<tr>
+<td><code>test_floor_word_does_not_steal_capability</code></td>
+<td>"Which floors have accessible toilets" routes to capability, not floor_plan</td>
+</tr>
+<tr>
+<td><code>test_sensor_query_not_hijacked</code></td>
+<td>"What is the CO2 level on floor 3?" still routes to sensor_data</td>
+</tr>
+<tr>
+<td><code>test_unchanged_yaml_skips_reindex</code></td>
+<td>Restart with unchanged YAML → zero embedding API calls</td>
+</tr>
+<tr>
+<td><code>test_yaml_edit_triggers_reindex</code></td>
+<td>YAML SHA change → collection rebuilt → new entries searchable</td>
+</tr>
+<tr>
+<td><code>test_multi_building_isolation</code></td>
+<td>bldg2 query never matches bldg1 entries</td>
+</tr>
+</tbody>
+</table>
+<h3 id="103-survey-test-integration">10.3 Survey-test integration<a class="headerlink" href="#103-survey-test-integration" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Re-run <code>scripts/survey_live_test.py</code> after migration. Must hit ≥ 70/70 (current baseline).</li>
+<li>Add 5 new survey tests with synonym phrasings (e.g., "elevator capacity", "where can I shower?", "wheelchair access lift").</li>
+</ul>
+<h2 id="11-migration">11. Migration<a class="headerlink" href="#11-migration" title="Permanent link">&para;</a></h2>
+<p>Three-phase rollout behind a feature flag:</p>
+<p><strong>Phase 1 — Land code behind flag (Sprint A):</strong>
+- <code>CAPABILITY_SEMANTIC_ROUTING_ENABLED=false</code> env var, default off
+- <code>CapabilityIndexer</code> runs at startup; <code>SemanticRouter</code> instantiated but <code>dialogue_agent</code> only calls it when flag enabled
+- Keyword-based routing remains in place but unused when flag enabled
+- Allows A/B comparison via survey test</p>
+<p><strong>Phase 2 — Validate (1 week):</strong>
+- Toggle flag on for bldg1. Run survey test on both flag states. Compare:
+  - Pass rate (must be ≥ current 70/70)
+  - Latency p50, p95 (semantic-first should <em>improve</em> latency for high-confidence matches)
+  - Cost per query (one extra embedding call vs. one fewer LLM call — net negative cost)</p>
+<p><strong>Phase 3 — Cleanup (Sprint B):</strong>
+- Default flag to <code>true</code>
+- Delete <code>_CAPABILITY_KW</code>, <code>_STRONG_FACILITY_KW</code>, override blocks, <code>CapabilityKB.search()</code>
+- Remove <code>keyword</code> option from <code>fallback_on_qdrant_failure</code> config; default becomes <code>skip</code> only
+- Delete the feature flag itself</p>
+<p>The staging is essential because the keyword approach has 32 entries that are battle-tested. We don't rip it out until semantic routing has proven equal-or-better against the survey baseline.</p>
+<h2 id="12-risks-mitigations">12. Risks &amp; Mitigations<a class="headerlink" href="#12-risks-mitigations" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Probability</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Embedding API latency adds to every query</td>
+<td>High (certain)</td>
+<td>Redis-cache embeddings by <code>sha256(query)</code> with 24h TTL. Cold queries pay ~80ms (OpenAI) or ~30ms (Ollama) once. Net p50 latency <em>decreases</em> because semantic-first skips LLM intent call.</td>
+</tr>
+<tr>
+<td>OpenAI embedding API down</td>
+<td>Low</td>
+<td><code>EmbeddingService</code> retries 3x with exponential backoff. Full failure → <code>SemanticRouter</code> returns <code>source="fallback"</code>. <code>dialogue_agent</code> reverts to LLM-only intent (current behaviour). Graceful degradation.</td>
+</tr>
+<tr>
+<td>Qdrant collection corrupt / missing</td>
+<td>Low</td>
+<td><code>CapabilityIndexer</code> rebuilds from YAML on every startup if SHA mismatch. Missing collection → rebuild from scratch. Self-healing.</td>
+</tr>
+<tr>
+<td>Threshold miscalibration → false positives</td>
+<td>Medium</td>
+<td>Conservative defaults (<code>threshold=0.65</code>, <code>override_min=0.85</code>). Per-building tunable. Survey test catches regressions before merge.</td>
+</tr>
+<tr>
+<td>Embedding model swap (OpenAI ↔ Ollama) requires reindex</td>
+<td>Certain</td>
+<td><code>EmbeddingService.dimension</code> exposed; <code>CapabilityIndexer</code> reads it. On dim mismatch with existing collection: rebuild. Logged with <code>[indexer] embedding model changed, rebuilding capability_&lt;bldg&gt;</code>.</td>
+</tr>
+<tr>
+<td>Multi-vector retrieval returns dupes from same entry</td>
+<td>Certain (by design)</td>
+<td>Group-by <code>entry_id</code> with max-pool in <code>_search_capability</code>. Top-k returned distinct entries, not points.</td>
+</tr>
+<tr>
+<td>Synonym recall not as good as expected</td>
+<td>Medium</td>
+<td><code>embed_text</code> strategy is a Phase 1 lever — per-keyword vs combined can be tuned in YAML without code changes.</td>
+</tr>
+<tr>
+<td>Embedding cost in production</td>
+<td>Low</td>
+<td>text-embedding-3-small is $0.02/1M tokens. 32 entries × 15 vecs × ~10 tokens = ~5K tokens per building per restart. Per-query: 1 embedding × ~10 tokens × $0.02/1M = $2e-7. Negligible.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="13-out-of-scope">13. Out of Scope<a class="headerlink" href="#13-out-of-scope" title="Permanent link">&para;</a></h2>
+<p>Explicit non-goals for this iteration:</p>
+<ul>
+<li><strong>Other intents</strong> (floor_plan, spatial, anomaly, etc.) — extension hook <code>SemanticRouter.register_intent()</code> is included so future refactors do not need a new design doc.</li>
+<li><strong>Cross-language semantic search</strong> — English-first. OpenAI multilingual works out of the box; local <code>nomic-embed-text</code> is English-primary. Multi-language KB content (translated YAMLs) is a separate problem.</li>
+<li><strong>Disambiguation between similar capability entries</strong> — if two entries score 0.84 and 0.83, we pick the higher; we do not ask the user. Multi-match disambiguation UX is a separate design.</li>
+<li><strong>Query rewriting / query expansion (HyDE, etc.)</strong> — we embed the raw query.</li>
+<li><strong>Persona-aware capability ranking</strong> — facility_manager and occupant get the same matches today.</li>
+</ul>
+<h2 id="14-acceptance-criteria">14. Acceptance Criteria<a class="headerlink" href="#14-acceptance-criteria" title="Permanent link">&para;</a></h2>
+<p>This design is implemented and shipped when:</p>
+<ol>
+<li>New <code>bldg2</code> with only a <code>capability.yaml</code> file (no Python edits) can answer capability queries correctly.</li>
+<li>All 70 existing survey tests still pass (no regressions).</li>
+<li>At least 5 new survey tests with synonym phrasings pass (e.g., "elevator capacity" → <code>lift_accessibility_detail</code>).</li>
+<li>Feature flag toggled off → exact current behaviour (rollback path validated).</li>
+<li>Latency p50 for capability queries does not regress (target: improves by 100–400ms via skipped LLM call).</li>
+<li>Unit + integration test coverage ≥ 80% for new files (<code>capability_indexer.py</code>, <code>semantic_router.py</code>, <code>embedding_service.py</code>).</li>
+<li>Cleanup phase complete: <code>_CAPABILITY_KW</code>, <code>_STRONG_FACILITY_KW</code>, <code>CapabilityKB.search()</code> deleted from codebase.</li>
+<li>Full regression test battery (§16) passes at every phase gate (§17).</li>
+</ol>
+<h2 id="15-non-regression-contract">15. Non-Regression Contract<a class="headerlink" href="#15-non-regression-contract" title="Permanent link">&para;</a></h2>
+<p>This section lists every behaviour from the current pipeline that MUST continue to work unchanged. Implementation that violates any item here is a P0 bug and blocks merge.</p>
+<h3 id="151-intent-classification-all-16-intents-preserved">15.1 Intent classification — all 16 intents preserved<a class="headerlink" href="#151-intent-classification-all-16-intents-preserved" title="Permanent link">&para;</a></h3>
+<p>These intents are NOT touched by this refactor. Their dialogue-agent classification, LLM prompts, few-shot examples, persona handling, entity extraction, and time-range parsing all remain bit-identical when the feature flag is off, and remain semantically identical when the flag is on (the only addition is a pre-LLM semantic check, which returns no-match for non-capability queries).</p>
+<table>
+<thead>
+<tr>
+<th>Intent</th>
+<th>Existing route</th>
+<th>Must continue to work</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sensor_data</code></td>
+<td>sparql → sql → response</td>
+<td>Current temperature/CO2/humidity readings</td>
+</tr>
+<tr>
+<td><code>analytics</code></td>
+<td>sparql → sql → analytics → response</td>
+<td>Statistical analysis, trends, averages</td>
+</tr>
+<tr>
+<td><code>discovery</code></td>
+<td>sparql → response (or → sparql when spatial words)</td>
+<td>Sensor type listings, zone/floor counts</td>
+</tr>
+<tr>
+<td><code>report</code></td>
+<td>planner → report → response</td>
+<td>Structured building reports</td>
+</tr>
+<tr>
+<td><code>anomaly</code></td>
+<td>sparql → sql → anomaly → response</td>
+<td>Out-of-range / spike detection</td>
+</tr>
+<tr>
+<td><code>comparison</code></td>
+<td>sparql → sql → analytics → response</td>
+<td>Zone/period comparisons</td>
+</tr>
+<tr>
+<td><code>export</code></td>
+<td>sparql → sql → export → response</td>
+<td>CSV/JSON/HTML exports</td>
+</tr>
+<tr>
+<td><code>recommend</code></td>
+<td>sparql → sql → analytics → response</td>
+<td>HVAC/energy/comfort recommendations</td>
+</tr>
+<tr>
+<td><code>planner</code></td>
+<td>planner → response</td>
+<td>Multi-step orchestrated tasks</td>
+</tr>
+<tr>
+<td><code>forecast</code></td>
+<td>sparql → sql → analytics → response</td>
+<td>Future predictions</td>
+</tr>
+<tr>
+<td><code>floor_plan</code></td>
+<td>floor_plan → response</td>
+<td>Floor map display, room location</td>
+</tr>
+<tr>
+<td><code>spatial_query</code></td>
+<td>spatial_query → response</td>
+<td>Area, adjacency, room counts</td>
+</tr>
+<tr>
+<td><code>control</code></td>
+<td>response (informs unsupported)</td>
+<td>Unsupported-action message</td>
+</tr>
+<tr>
+<td><code>general</code></td>
+<td>response</td>
+<td>Greetings, non-building questions</td>
+</tr>
+<tr>
+<td><code>clarification</code></td>
+<td>response</td>
+<td>Vague-query follow-ups</td>
+</tr>
+<tr>
+<td><code>alert</code></td>
+<td>sparql → sql → anomaly → response</td>
+<td>Threshold-based alerting</td>
+</tr>
+</tbody>
+</table>
+<h3 id="152-routing-edge-cases-all-4-floor-n-protections-preserved">15.2 Routing edge cases — all 4 floor-N protections preserved<a class="headerlink" href="#152-routing-edge-cases-all-4-floor-n-protections-preserved" title="Permanent link">&para;</a></h3>
+<p>These were fixed in commits <code>4995a7f</code> and <code>a432d57</code> (2026-05-20). The semantic router must NOT regress them.</p>
+<table>
+<thead>
+<tr>
+<th>Query</th>
+<th>Must route to</th>
+<th>Must NOT route to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"What is the temperature on floor 3?"</td>
+<td>sensor_data → sparql</td>
+<td>floor_plan</td>
+</tr>
+<tr>
+<td>"Show me analytics for floor 2 sensors"</td>
+<td>analytics</td>
+<td>floor_plan</td>
+</tr>
+<tr>
+<td>"How many CO2 sensors are on floor 1?"</td>
+<td>discovery → sparql</td>
+<td>floor_plan</td>
+</tr>
+<tr>
+<td>"Compare energy usage on floor 1 vs floor 3"</td>
+<td>comparison → sparql/analytics</td>
+<td>floor_plan</td>
+</tr>
+</tbody>
+</table>
+<h3 id="153-sparql-rag-pipeline-semantic-web-layer-preserved">15.3 SPARQL / RAG pipeline — semantic web layer preserved<a class="headerlink" href="#153-sparql-rag-pipeline-semantic-web-layer-preserved" title="Permanent link">&para;</a></h3>
+<p>The ontology subsystem is <strong>entirely untouched</strong>. This refactor does not modify:</p>
+<ul>
+<li>The Brick Schema TTL files in <code>input/&lt;bldg&gt;/</code></li>
+<li>GraphDB endpoint <code>http://graphdb:7200/repositories/ontosage/sparql</code></li>
+<li><code>orchestrator/agents/sparql_agent.py</code> — query generation, context retrieval, RAG fallback via <code>rag-service:8001</code></li>
+<li>The Qdrant <code>floor_plans</code> collection (DWG-derived geometry + room descriptions for semantic floor search)</li>
+<li>The Qdrant <code>user_memory</code> collection (cross-session agent memory)</li>
+<li>The hybrid retrieval flow (<code>services/hybrid_retrieval.py</code>)</li>
+<li>SPARQL prefixes, query templates, or LIMIT enforcement</li>
+</ul>
+<p>The new Qdrant collections (<code>capability_&lt;bldg&gt;</code>) live alongside existing collections — they do not share names, schemas, or vectors with <code>floor_plans</code> or <code>user_memory</code>.</p>
+<h3 id="154-storage-layer-untouched">15.4 Storage layer — untouched<a class="headerlink" href="#154-storage-layer-untouched" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Store</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GraphDB (port 7200)</td>
+<td>No reads modified, no writes added</td>
+</tr>
+<tr>
+<td>MySQL (port 3306)</td>
+<td>Untouched</td>
+</tr>
+<tr>
+<td>PostgreSQL (port 5433)</td>
+<td>Untouched (auth/RBAC)</td>
+</tr>
+<tr>
+<td>Redis (port 6379)</td>
+<td>NEW keys added: <code>cache:embed:&lt;sha256&gt;</code> with 24h TTL. Existing keys (<code>cache:intent:*</code>, <code>resp_cache:exact:*</code>, <code>conv_*</code>, etc.) are unchanged in schema and behaviour.</td>
+</tr>
+<tr>
+<td>Qdrant (port 6333)</td>
+<td>NEW collections added: <code>capability_&lt;bldg&gt;</code>. Existing collections (<code>floor_plans</code>, <code>user_memory</code>) are unchanged.</td>
+</tr>
+<tr>
+<td>MongoDB (port 27017)</td>
+<td>Untouched</td>
+</tr>
+</tbody>
+</table>
+<h3 id="155-api-contract-untouched">15.5 API contract — untouched<a class="headerlink" href="#155-api-contract-untouched" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /chat</code></td>
+<td>Request/response shape unchanged. New optional debug field <code>semantic_route_score</code> may appear in <code>meta</code> but is non-breaking.</td>
+</tr>
+<tr>
+<td><code>GET /health</code></td>
+<td>New optional service block <code>capability_router</code> added. Existing services unchanged.</td>
+</tr>
+<tr>
+<td><code>POST /v1/chat/completions</code> (OpenAI-compat)</td>
+<td>Untouched</td>
+</tr>
+<tr>
+<td><code>GET /floor-plans/*</code></td>
+<td>Untouched</td>
+</tr>
+<tr>
+<td><code>GET /api/v1/floor-plans/search</code></td>
+<td>Untouched</td>
+</tr>
+<tr>
+<td><code>POST /auth/login</code>, <code>/auth/logout</code>, <code>/auth/register</code></td>
+<td>Untouched</td>
+</tr>
+<tr>
+<td>WebSocket <code>/ws/{session_id}</code></td>
+<td>Untouched</td>
+</tr>
+<tr>
+<td>RBAC permissions (20 perms × 6 roles)</td>
+<td>Untouched</td>
+</tr>
+</tbody>
+</table>
+<h3 id="156-per-building-startup-additive-only">15.6 Per-building startup — additive only<a class="headerlink" href="#156-per-building-startup-additive-only" title="Permanent link">&para;</a></h3>
+<p>The existing startup lifecycle in <code>main.py:lifespan</code> MUST continue to work. The new <code>CapabilityIndexer.index_all_buildings()</code> call is added as a step but:</p>
+<ul>
+<li>Runs AFTER GraphDB, Redis, Qdrant, and floor-plan registry initialisation</li>
+<li>Failure of capability indexing does NOT abort startup — it logs <code>IndexResult(status="degraded")</code> and the orchestrator boots normally</li>
+<li>Buildings with no <code>capability.yaml</code> (or no <code>capability_routing:</code> block) get a degraded <code>IndexResult</code> and the semantic router returns <code>source="disabled"</code> for that building — current behaviour preserved</li>
+</ul>
+<h2 id="16-regression-test-battery">16. Regression Test Battery<a class="headerlink" href="#16-regression-test-battery" title="Permanent link">&para;</a></h2>
+<p>A multi-layered test suite written from four professional perspectives. Each layer is gated: failure of an earlier layer blocks the next.</p>
+<h3 id="161-layer-1-software-developer-unit-tests-for-new-code">16.1 Layer 1 — Software Developer: Unit tests for new code<a class="headerlink" href="#161-layer-1-software-developer-unit-tests-for-new-code" title="Permanent link">&para;</a></h3>
+<p>Goal: every new function has tests that verify correctness in isolation.</p>
+<p><strong><code>tests/unit/test_embedding_service.py</code></strong> (≥ 12 tests)</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Asserts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>test_embed_returns_correct_dimension_openai</code></td>
+<td><code>len(embed("hello")) == 1536</code> when MODEL_PROVIDER=openai</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>test_embed_returns_correct_dimension_local</code></td>
+<td><code>len(embed("hello")) == 768</code> when MODEL_PROVIDER=local</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>test_embed_batch_preserves_order</code></td>
+<td><code>embed_batch(["a","b","c"])[i]</code> corresponds to input <code>i</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>test_embed_caches_in_redis</code></td>
+<td>Second call to <code>embed("x")</code> makes 0 API calls</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>test_embed_cache_ttl_24h</code></td>
+<td>Redis TTL on <code>cache:embed:*</code> is between 86000 and 86500 seconds</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>test_embed_retries_on_transient_failure</code></td>
+<td>503 then 200 → returns vector after 1 retry</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>test_embed_raises_after_3_retries</code></td>
+<td>503 × 4 → raises <code>EmbeddingServiceError</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>test_dimension_property_matches_provider</code></td>
+<td><code>.dimension == 1536</code> for openai, <code>768</code> for local</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>test_embed_empty_string_raises</code></td>
+<td><code>embed("")</code> raises ValueError</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>test_embed_very_long_text_truncated</code></td>
+<td><code>embed("a" * 100000)</code> does not raise; truncated to model's max tokens</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>test_embed_unicode_handled</code></td>
+<td><code>embed("室温")</code> succeeds without UnicodeError</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>test_provider_switch_clears_cache</code></td>
+<td>Switching MODEL_PROVIDER invalidates cached embeddings</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>tests/unit/test_capability_indexer.py</code></strong> (≥ 14 tests)</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Asserts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>test_first_index_creates_collection</code></td>
+<td><code>capability_bldg1</code> collection created in Qdrant</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>test_unchanged_yaml_skips_reindex</code></td>
+<td>Restart → 0 embedding calls when YAML SHA matches</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>test_changed_yaml_rebuilds_collection</code></td>
+<td>New SHA → old collection deleted, new one created</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>test_point_count_matches_keyword_sum</code></td>
+<td>For each entry: <code>points = len(keywords) + 1</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>test_yaml_sha_recorded_in_payload</code></td>
+<td>Every point's <code>payload.yaml_sha</code> matches the file's SHA</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>test_uuid_v5_deterministic</code></td>
+<td>Reindexing same entry produces same point IDs</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>test_missing_yaml_returns_degraded</code></td>
+<td>Building without <code>capability.yaml</code> → <code>IndexResult(status="degraded")</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>test_malformed_yaml_returns_degraded</code></td>
+<td>Invalid YAML → no crash, degraded result, helpful error message</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>test_qdrant_unreachable_returns_degraded</code></td>
+<td>Qdrant down → degraded result; startup still succeeds</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>test_embedding_api_down_returns_degraded</code></td>
+<td>OpenAI 503 × 4 → degraded; orchestrator boots</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>test_dim_mismatch_rebuilds</code></td>
+<td>Existing collection has dim=1536, current provider gives dim=768 → rebuild</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>test_multiple_buildings_isolated</code></td>
+<td>Indexing bldg1 does not affect bldg2's points</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>test_batch_upsert_used_for_efficiency</code></td>
+<td><code>embed_batch</code> called once per entry, not once per keyword</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>test_index_skips_disabled_buildings</code></td>
+<td><code>capability_routing.enabled: false</code> → no collection created</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>tests/unit/test_semantic_router.py</code></strong> (≥ 16 tests)</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Asserts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>test_high_score_returns_capability_intent</code></td>
+<td>score=0.90 → <code>intent="capability"</code>, source=semantic</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>test_medium_score_returns_no_intent</code></td>
+<td>0.65 &lt; score &lt; 0.85 → <code>intent=None</code>, caller decides</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>test_low_score_returns_no_intent</code></td>
+<td>score=0.40 → <code>intent=None</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>test_matches_grouped_by_entry_id</code></td>
+<td>Multi-vector hits collapsed to distinct entries</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>test_max_pool_score_per_entry</code></td>
+<td>Entry with hits [0.7, 0.8, 0.9] → group_score=0.9</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>test_disabled_returns_source_disabled</code></td>
+<td>Config <code>enabled: false</code> → <code>source="disabled"</code>, score=0.0</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>test_qdrant_down_returns_source_fallback</code></td>
+<td>Qdrant 500 → <code>source="fallback"</code>, score=0.0</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>test_collection_missing_returns_source_disabled</code></td>
+<td>No <code>capability_bldg2</code> → <code>source="disabled"</code> for bldg2</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>test_per_building_threshold_honored</code></td>
+<td>bldg1.threshold=0.65, bldg2.threshold=0.80 — same query different intent decision</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>test_top_k_respected</code></td>
+<td><code>top_k=3</code> → returns at most 3 entries</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>test_register_intent_extension_hook</code></td>
+<td><code>router.register_intent("test", "test_")</code> stored in <code>_intents</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>test_embedding_failure_returns_fallback</code></td>
+<td>EmbeddingService raises → <code>source="fallback"</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>test_empty_query_returns_no_intent</code></td>
+<td><code>classify("")</code> → <code>score=0.0</code>, <code>intent=None</code> (no crash)</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>test_query_with_only_punctuation</code></td>
+<td><code>classify("???")</code> → no crash, low score</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>test_unicode_query_works</code></td>
+<td>Non-ASCII query routes correctly when matching content exists</td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>test_concurrent_classify_safe</code></td>
+<td>100 concurrent <code>classify()</code> calls all return correct results (no shared-state bug)</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>tests/unit/test_capability_schema.py</code></strong> (≥ 8 tests, augmenting existing)</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Asserts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>test_capability_routing_config_defaults</code></td>
+<td>Missing block → <code>threshold=0.65</code>, <code>override_min=0.85</code>, <code>top_k=5</code>, <code>enabled=true</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>test_invalid_threshold_rejected</code></td>
+<td><code>threshold: 1.5</code> → ValidationError</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>test_threshold_above_override_min_rejected</code></td>
+<td><code>threshold: 0.9, override_min: 0.8</code> → ValidationError (logically invalid)</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>test_negative_top_k_rejected</code></td>
+<td><code>top_k: -1</code> → ValidationError</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>test_embedding_model_auto_resolves_to_provider</code></td>
+<td><code>embedding_model: auto</code> → resolved at runtime via MODEL_PROVIDER</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>test_existing_capability_yaml_unchanged</code></td>
+<td>All 32 entries in bldg1 still validate with the existing schema</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>test_search_method_removed</code></td>
+<td><code>hasattr(CapabilityKB, "search") == False</code> after Phase 3</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>test_load_yaml_with_no_routing_block</code></td>
+<td>Existing buildings without <code>capability_routing:</code> load successfully</td>
+</tr>
+</tbody>
+</table>
+<h3 id="162-layer-2-system-designer-integration-tests">16.2 Layer 2 — System Designer: Integration tests<a class="headerlink" href="#162-layer-2-system-designer-integration-tests" title="Permanent link">&para;</a></h3>
+<p>Goal: components work correctly together. State propagation, service boundaries, lifecycle.</p>
+<p><strong><code>tests/integration/test_capability_e2e.py</code></strong> (≥ 12 tests)</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Asserts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>test_lift_dimensions_routes_to_capability</code></td>
+<td>The exact query that failed today returns <code>lift_accessibility_detail</code> content</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>test_synonym_query_matches</code></td>
+<td>"How big is the elevator?" → <code>lift_accessibility_detail</code> (no keyword would have matched)</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>test_floor_word_does_not_steal_capability</code></td>
+<td>"Which floors have accessible toilets?" → capability, not floor_plan</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>test_sensor_query_not_hijacked_by_capability</code></td>
+<td>"What is the CO2 level on floor 3?" → sensor_data, NOT capability</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>test_capability_match_propagated_to_state</code></td>
+<td><code>state.intermediate_results["capability_matches"]</code> populated when score ≥ threshold</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>test_capability_agent_uses_pre_fetched_matches</code></td>
+<td><code>CapabilityAgent.handle()</code> does 0 KB searches when matches are pre-populated</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>test_capability_agent_fallback_when_no_matches</code></td>
+<td>If <code>capability_matches</code> missing (e.g. flag off), agent falls back to <code>_load_kb()</code> + legacy lookup</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>test_feature_flag_off_is_byte_identical</code></td>
+<td>With flag off, all 70 survey responses byte-equal pre-refactor responses</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>test_startup_no_capability_yaml_for_one_building</code></td>
+<td>bldg with no YAML → <code>IndexResult(status="degraded")</code>, but bldg1 still indexes</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>test_multi_building_isolation</code></td>
+<td>bldg2 query never returns bldg1 entries (collection-scoped)</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>test_unchanged_yaml_startup_idempotent</code></td>
+<td>Two consecutive restarts → exactly the same points in Qdrant, 0 embedding calls on 2nd</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>test_yaml_edit_triggers_rebuild</code></td>
+<td>Modify YAML → restart → new entries searchable, old removed entries 404</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>tests/integration/test_non_regression_intents.py</code></strong> — one test per intent (16 tests minimum)</p>
+<p>For each of the 16 intents listed in §15.1, send one canonical query and assert:
+- Correct intent classification
+- Correct routing through the workflow
+- Response contains expected markers (e.g., temperature reading, KB content, floor plan image URL)
+- Latency within 2× current baseline</p>
+<p><strong><code>tests/integration/test_floor_n_protection.py</code></strong> — one test per case in §15.2 (4 tests)</p>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Query</th>
+<th>Asserts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>"What is the temperature on floor 3?"</td>
+<td>Routes to sparql, response contains a temperature reading</td>
+</tr>
+<tr>
+<td>2</td>
+<td>"Show me analytics for floor 2 sensors"</td>
+<td>Routes to analytics, response contains a numeric summary</td>
+</tr>
+<tr>
+<td>3</td>
+<td>"How many CO2 sensors are on floor 1?"</td>
+<td>Routes to sparql, response contains a count</td>
+</tr>
+<tr>
+<td>4</td>
+<td>"Compare energy usage on floor 1 vs floor 3"</td>
+<td>Routes to comparison, response contains a comparison structure</td>
+</tr>
+</tbody>
+</table>
+<h3 id="163-layer-3-professional-tester-edge-case-adversarial-tests">16.3 Layer 3 — Professional Tester: Edge case &amp; adversarial tests<a class="headerlink" href="#163-layer-3-professional-tester-edge-case-adversarial-tests" title="Permanent link">&para;</a></h3>
+<p>Goal: prove the system survives weird inputs, race conditions, and intentional abuse.</p>
+<p><strong><code>tests/edge/test_capability_edge_cases.py</code></strong> (≥ 14 tests)</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Input</th>
+<th>Asserts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Empty query</td>
+<td><code>""</code></td>
+<td>HTTP 422 (Pydantic validation), no crash</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Whitespace-only query</td>
+<td><code>"   "</code></td>
+<td>Clarification response, no crash</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Single-char query</td>
+<td><code>"?"</code></td>
+<td>Clarification or general, no crash</td>
+</tr>
+<tr>
+<td>4</td>
+<td>2000-char query</td>
+<td><code>"a" * 2000</code></td>
+<td>Handled (Pydantic max_length); not 500</td>
+</tr>
+<tr>
+<td>5</td>
+<td>SQL injection attempt</td>
+<td><code>"'; DROP TABLE sensors; --"</code></td>
+<td>Treated as natural language; no DB error; response is grounded English</td>
+</tr>
+<tr>
+<td>6</td>
+<td>XSS attempt</td>
+<td><code>"&lt;script&gt;alert(1)&lt;/script&gt;"</code></td>
+<td>Treated as text; response escapes any echo</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Non-English query</td>
+<td><code>"Quelle est la dimension de l'ascenseur?"</code></td>
+<td>Either responds in English or detects clarification — no crash</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Unicode emoji query</td>
+<td><code>"🚪 lift 🛗"</code></td>
+<td>No UnicodeError; semantic router handles</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Score exactly at threshold</td>
+<td>Score = 0.65 (mock)</td>
+<td>Inclusive: counts as match</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Score exactly at override_min</td>
+<td>Score = 0.85 (mock)</td>
+<td>Inclusive: overrides LLM</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Score just below threshold</td>
+<td>Score = 0.649</td>
+<td>NO match; falls through to LLM</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Concurrent identical queries</td>
+<td>100 × same query in parallel</td>
+<td>All 100 get correct response; Redis embed cache prevents stampede</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Concurrent different queries</td>
+<td>100 × different queries</td>
+<td>All routed correctly; no shared state corruption</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Qdrant connection drops mid-query</td>
+<td>Force Qdrant disconnect</td>
+<td>Single query: <code>source="fallback"</code>, response still returned (LLM-only intent)</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>tests/edge/test_idempotency.py</code></strong> (≥ 5 tests)</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Asserts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>test_5_consecutive_restarts_no_reembed</code></td>
+<td>5 × <code>docker-compose restart</code> → 1st triggers indexing, 2nd–5th call 0 embedding APIs</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>test_uuid_v5_collision_safe</code></td>
+<td>1000 entries with same keywords across different buildings → no UUID collisions</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>test_partial_index_failure_recoverable</code></td>
+<td>Kill orchestrator mid-indexing → next restart completes indexing</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>test_concurrent_indexer_safe</code></td>
+<td>Spawn 2 indexers on same building → idempotent, no duplicate points</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>test_yaml_save_during_indexing</code></td>
+<td>Edit YAML while indexer running → next restart picks up the edit</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>tests/edge/test_threshold_sensitivity.py</code></strong> (≥ 6 tests)</p>
+<p>Run the same set of 20 ambiguous queries against thresholds [0.50, 0.60, 0.65, 0.70, 0.75, 0.80]. Record:
+- False positives (non-capability query → capability route)
+- False negatives (capability query → other route)
+- Confusion matrix for each threshold</p>
+<p>Asserts: chosen default (0.65) sits at the F1-score maximum across the test corpus.</p>
+<h3 id="164-layer-4-semantic-web-engineer-ontology-rag-integrity">16.4 Layer 4 — Semantic Web Engineer: Ontology &amp; RAG integrity<a class="headerlink" href="#164-layer-4-semantic-web-engineer-ontology-rag-integrity" title="Permanent link">&para;</a></h3>
+<p>Goal: prove the semantic web layer (Brick Schema, GraphDB, RAG service) is unaffected.</p>
+<p><strong><code>tests/semantic/test_ontology_integrity.py</code></strong> (≥ 8 tests)</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Asserts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>test_sparql_endpoint_unchanged</code></td>
+<td><code>POST graphdb:7200/repositories/ontosage/sparql</code> with canonical query returns same result before/after refactor</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>test_brick_schema_classes_unchanged</code></td>
+<td>Sensor type count from <code>SELECT DISTINCT ?class WHERE { ?inst a ?class }</code> matches baseline</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>test_sensor_uuid_lookup_unchanged</code></td>
+<td><code>SELECT ?uuid WHERE { ?s rdfs:label "..." ; brick:hasExternalReference/brick:hasTimeseriesId ?uuid }</code> returns same UUIDs</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>test_zone_hierarchy_traversal</code></td>
+<td><code>hasPart</code> traversal from building → floors → rooms → sensors returns same shape</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>test_discovery_intent_still_uses_graphdb</code></td>
+<td>"What sensor types exist?" → SPARQL agent reads GraphDB (not capability KB)</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>test_rag_fallback_still_triggers</code></td>
+<td>SPARQL empty result → <code>hybrid_retrieval.py</code> runs against rag-service (not capability collection)</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>test_floor_plans_qdrant_collection_untouched</code></td>
+<td><code>floor_plans</code> collection point count unchanged before/after refactor</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>test_user_memory_qdrant_collection_untouched</code></td>
+<td><code>user_memory</code> collection point count unchanged</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>tests/semantic/test_capability_semantic_quality.py</code></strong> (≥ 10 tests)</p>
+<p>Goal: validate that semantic recall is genuinely better than substring recall.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Query (synonym/paraphrase)</th>
+<th>Expected entry</th>
+<th>Old (keyword) result</th>
+<th>New (semantic) result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Synonym</td>
+<td>"elevator capacity"</td>
+<td><code>lift_accessibility_detail</code></td>
+<td>MISS</td>
+<td>HIT</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Synonym</td>
+<td>"wheelchair access to floors"</td>
+<td><code>lift_accessibility_detail</code></td>
+<td>MISS</td>
+<td>HIT</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Paraphrase</td>
+<td>"where can I shower in this building?"</td>
+<td><code>shower_facilities_detail</code></td>
+<td>MISS</td>
+<td>HIT</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Paraphrase</td>
+<td>"is there a changing table for infants?"</td>
+<td><code>toilet_facilities_by_floor</code></td>
+<td>MISS</td>
+<td>HIT</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Paraphrase</td>
+<td>"do you offer secure cycle storage?"</td>
+<td><code>bicycle_parking_detail</code></td>
+<td>MISS</td>
+<td>HIT</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Paraphrase</td>
+<td>"what time can I sign in at the front desk?"</td>
+<td><code>reception_and_hours</code></td>
+<td>MISS</td>
+<td>HIT</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Question form</td>
+<td>"is location data being collected on me?"</td>
+<td><code>data_privacy_gdpr</code></td>
+<td>HIT (existing)</td>
+<td>HIT (must not regress)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Question form</td>
+<td>"what happens if the power goes out?"</td>
+<td><code>power_resilience</code></td>
+<td>HIT (existing)</td>
+<td>HIT (must not regress)</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Off-domain</td>
+<td>"what is the airspeed of an unladen swallow?"</td>
+<td>(no entry)</td>
+<td>MISS</td>
+<td>MISS (low score, fall through to general)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Adversarial</td>
+<td>"fire alarm temperature sensor" (mixed-topic)</td>
+<td>Should route to highest-score entry, NOT trigger BOTH capability+sensor_data</td>
+<td>One route only</td>
+<td>One route only</td>
+</tr>
+</tbody>
+</table>
+<p>A passing run produces a markdown report <code>tests/semantic/recall_report.md</code> showing the recall delta — this is the artefact that proves the refactor was worth doing.</p>
+<h3 id="165-layer-5-performance-resilience">16.5 Layer 5 — Performance &amp; resilience<a class="headerlink" href="#165-layer-5-performance-resilience" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>test_cold_query_latency</code></td>
+<td>p50 cold query: ≤ current p50 + 80ms (one embedding API call)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>test_warm_query_latency</code></td>
+<td>p50 warm query (embed cached): ≤ current p50 − 200ms (skipped LLM call)</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>test_high_confidence_skips_llm_call</code></td>
+<td>LLM call count = 0 for high-confidence capability queries</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>test_qdrant_query_p99_under_50ms</code></td>
+<td>Qdrant search latency p99 ≤ 50ms</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>test_no_memory_leak_over_1000_queries</code></td>
+<td>RSS growth ≤ 100MB over 1000 queries</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>test_redis_embed_cache_hit_rate</code></td>
+<td>After warm-up, embed cache hit rate ≥ 80%</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>test_circuit_breaker_protects_embedding_api</code></td>
+<td>OpenAI 503 × N → circuit opens; semantic router returns fallback without further API attempts</td>
+</tr>
+</tbody>
+</table>
+<h2 id="17-validation-protocol">17. Validation Protocol<a class="headerlink" href="#17-validation-protocol" title="Permanent link">&para;</a></h2>
+<p>Exact commands and gates the implementer runs at each phase. No phase advances until its gate passes.</p>
+<h3 id="171-pre-flight-baseline-run-before-any-code-change">17.1 Pre-flight baseline (run BEFORE any code change)<a class="headerlink" href="#171-pre-flight-baseline-run-before-any-code-change" title="Permanent link">&para;</a></h3>
+<p>Capture the current behaviour as the ground-truth baseline. All subsequent comparisons go against this.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. Capture current survey baseline</span>
+python<span class="w"> </span>scripts/survey_live_test.py<span class="w"> </span>&gt;<span class="w"> </span>tests/baselines/survey_pre_refactor.txt
+<span class="c1"># Required: 70/70 PASS</span>
+
+<span class="c1"># 2. Capture current test suite state</span>
+pytest<span class="w"> </span>tests/<span class="w"> </span>-v<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span>-q<span class="w"> </span>&gt;<span class="w"> </span>tests/baselines/pytest_pre_refactor.txt
+<span class="c1"># Required: no new failures vs. last green main</span>
+
+<span class="c1"># 3. Capture latency baseline (200 queries, mixed intents)</span>
+python<span class="w"> </span>scripts/latency_baseline.py<span class="w"> </span>--queries<span class="w"> </span><span class="m">200</span><span class="w"> </span>&gt;<span class="w"> </span>tests/baselines/latency_pre_refactor.json
+
+<span class="c1"># 4. Snapshot Qdrant collection sizes</span>
+curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:6333/collections<span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool<span class="w"> </span>&gt;<span class="w"> </span>tests/baselines/qdrant_pre_refactor.json
+
+<span class="c1"># 5. Snapshot GraphDB repository state</span>
+curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:7200/rest/repositories<span class="w"> </span>&gt;<span class="w"> </span>tests/baselines/graphdb_pre_refactor.json
+</code></pre></div>
+<p>Gate: all 5 baselines captured. Survey baseline = 70/70. No green-main pytest regressions.</p>
+<h3 id="172-phase-1-gate-code-lands-behind-disabled-flag">17.2 Phase 1 gate — Code lands behind disabled flag<a class="headerlink" href="#172-phase-1-gate-code-lands-behind-disabled-flag" title="Permanent link">&para;</a></h3>
+<p>After implementing all new code with <code>CAPABILITY_SEMANTIC_ROUTING_ENABLED=false</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># A. Run full unit-test layer (§16.1)</span>
+pytest<span class="w"> </span>tests/unit/<span class="w"> </span>-v<span class="w"> </span>-k<span class="w"> </span><span class="s2">&quot;embedding_service or capability_indexer or semantic_router or capability_schema&quot;</span><span class="w"> </span>-q
+
+<span class="c1"># B. Run integration tests with flag OFF</span>
+<span class="nv">CAPABILITY_SEMANTIC_ROUTING_ENABLED</span><span class="o">=</span><span class="nb">false</span><span class="w"> </span>pytest<span class="w"> </span>tests/integration/<span class="w"> </span>-v<span class="w"> </span>-q
+
+<span class="c1"># C. Re-run survey test with flag OFF</span>
+<span class="nv">CAPABILITY_SEMANTIC_ROUTING_ENABLED</span><span class="o">=</span><span class="nb">false</span><span class="w"> </span>python<span class="w"> </span>scripts/survey_live_test.py<span class="w"> </span>&gt;<span class="w"> </span>tests/results/survey_phase1_flag_off.txt
+
+<span class="c1"># D. Diff against pre-flight baseline</span>
+diff<span class="w"> </span>tests/baselines/survey_pre_refactor.txt<span class="w"> </span>tests/results/survey_phase1_flag_off.txt
+<span class="c1"># Required: byte-identical (proves flag-off is non-disruptive)</span>
+</code></pre></div>
+<p>Gate: A &amp; B all pass. C = 70/70. D = empty diff.</p>
+<h3 id="173-phase-2-gate-flag-enabled-survey-regression">17.3 Phase 2 gate — Flag enabled, survey + regression<a class="headerlink" href="#173-phase-2-gate-flag-enabled-survey-regression" title="Permanent link">&para;</a></h3>
+<p>Toggle <code>CAPABILITY_SEMANTIC_ROUTING_ENABLED=true</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># A. Re-run survey test with flag ON</span>
+<span class="nv">CAPABILITY_SEMANTIC_ROUTING_ENABLED</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span>python<span class="w"> </span>scripts/survey_live_test.py<span class="w"> </span>&gt;<span class="w"> </span>tests/results/survey_phase2_flag_on.txt
+<span class="c1"># Required: ≥ 70/70</span>
+
+<span class="c1"># B. Run synonym/paraphrase recall tests (§16.4)</span>
+pytest<span class="w"> </span>tests/semantic/test_capability_semantic_quality.py<span class="w"> </span>-v
+<span class="c1"># Required: ≥ 8/10 new HIT cases (synonyms that previously MISS)</span>
+
+<span class="c1"># C. Run non-regression intent tests (§16.2)</span>
+pytest<span class="w"> </span>tests/integration/test_non_regression_intents.py<span class="w"> </span>-v
+<span class="c1"># Required: 16/16</span>
+
+<span class="c1"># D. Run floor-N protection tests (§16.2)</span>
+pytest<span class="w"> </span>tests/integration/test_floor_n_protection.py<span class="w"> </span>-v
+<span class="c1"># Required: 4/4</span>
+
+<span class="c1"># E. Run edge case suite (§16.3)</span>
+pytest<span class="w"> </span>tests/edge/<span class="w"> </span>-v
+<span class="c1"># Required: all PASS</span>
+
+<span class="c1"># F. Run semantic web integrity tests (§16.4)</span>
+pytest<span class="w"> </span>tests/semantic/test_ontology_integrity.py<span class="w"> </span>-v
+<span class="c1"># Required: 8/8</span>
+
+<span class="c1"># G. Run performance suite (§16.5)</span>
+pytest<span class="w"> </span>tests/perf/<span class="w"> </span>-v
+<span class="c1"># Required: all latency targets met</span>
+</code></pre></div>
+<p>Gate: A ≥ 70/70. B ≥ 8/10. C = 16/16. D = 4/4. E all pass. F = 8/8. G all targets met.</p>
+<h3 id="174-phase-3-gate-cleanup-deletes-legacy-code">17.4 Phase 3 gate — Cleanup deletes legacy code<a class="headerlink" href="#174-phase-3-gate-cleanup-deletes-legacy-code" title="Permanent link">&para;</a></h3>
+<p>After deleting <code>_CAPABILITY_KW</code>, <code>_STRONG_FACILITY_KW</code>, <code>CapabilityKB.search()</code>, override blocks, and the feature flag:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># A. grep proves keyword frozensets are gone</span>
+!<span class="w"> </span>grep<span class="w"> </span>-rn<span class="w"> </span><span class="s2">&quot;_CAPABILITY_KW\|_STRONG_FACILITY_KW&quot;</span><span class="w"> </span>orchestrator/<span class="w"> </span>shared/
+<span class="c1"># Required: no matches</span>
+
+<span class="c1"># B. grep proves search() method is gone</span>
+!<span class="w"> </span>grep<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;def search&quot;</span><span class="w"> </span>shared/capability_schema.py
+<span class="c1"># Required: no matches</span>
+
+<span class="c1"># C. grep proves feature flag is gone</span>
+!<span class="w"> </span>grep<span class="w"> </span>-rn<span class="w"> </span><span class="s2">&quot;CAPABILITY_SEMANTIC_ROUTING_ENABLED&quot;</span><span class="w"> </span>orchestrator/<span class="w"> </span>shared/
+<span class="c1"># Required: no matches</span>
+
+<span class="c1"># D. Full test suite still passes</span>
+pytest<span class="w"> </span>tests/<span class="w"> </span>-v<span class="w"> </span>-q
+
+<span class="c1"># E. Final survey baseline</span>
+python<span class="w"> </span>scripts/survey_live_test.py<span class="w"> </span>&gt;<span class="w"> </span>tests/results/survey_phase3_final.txt
+<span class="c1"># Required: ≥ 70/70</span>
+</code></pre></div>
+<p>Gate: A, B, C all return non-zero exit (grep finds nothing). D = all pass. E ≥ 70/70.</p>
+<h3 id="175-continuous-monitoring-post-merge">17.5 Continuous monitoring (post-merge)<a class="headerlink" href="#175-continuous-monitoring-post-merge" title="Permanent link">&para;</a></h3>
+<p>For 7 days after Phase 3 merge:</p>
+<ul>
+<li>Dashboard panel: capability intent classification distribution (semantic vs LLM-fallback vs other)</li>
+<li>Dashboard panel: embedding API latency p50 / p95 / p99</li>
+<li>Dashboard panel: Qdrant search latency p50 / p95 / p99</li>
+<li>Alert: capability intent fallback rate &gt; 5% → page on-call</li>
+<li>Alert: embedding API error rate &gt; 1% → page on-call</li>
+<li>Alert: capability collection point count drops &gt; 10% unexpectedly → page on-call</li>
+</ul>
+<p>If any alert fires within the 7-day window: investigate, fix, or roll back via the feature flag (which still exists in Phase 2; if already Phase 3, revert the PR).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../2026-04-14-mcp-server-design/" class="md-footer__link md-footer__link--prev" aria-label="Previous: MCP Server Design">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                MCP Server Design
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../2026-05-22-multi-intent-semantic-routing/" class="md-footer__link md-footer__link--next" aria-label="Next: Multi-Intent Semantic Routing">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Multi-Intent Semantic Routing
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../../../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>
