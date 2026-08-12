@@ -334,3 +334,14 @@ bldg3_source/
 # Auto-generated per-building sensor-map cache (rebuilt from the live graph on boot)
 input/.sensor_map.cache.json
 bldg*/.sensor_map.cache.json
+
+##############################
+# Development working notes — local only, not part of the shipped repo.
+# Implementation plans, the fix/caveat tracker, audit reports and the
+# regression baselines are how the work was driven, not how it is run.
+# Untracked 2026-08-12; the files remain on disk.
+# NOTE: scripts/regression_harness.py reads tasks/regression_baselines/ —
+# a fresh clone therefore has no baseline to compare against and must
+# record its own with --record before compare mode is meaningful.
+##############################
+tasks/
