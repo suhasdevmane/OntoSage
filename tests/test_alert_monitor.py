@@ -1,7 +1,9 @@
 """Tests for AlertMonitor — proactive sensor threshold alert service."""
+
 import asyncio
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from orchestrator.services.alert_monitor import AlertMonitor, _eval_threshold
 
@@ -64,8 +66,13 @@ class TestAlertDeduplication:
             connection_manager=conn_mgr,
             redis_client=redis,
         )
-        rule = {"sensor_type": "CO2_Sensor", "threshold": 1000, "comparator": ">",
-                "severity": "warning", "message": "CO₂ in {zone} is {value} ppm."}
+        rule = {
+            "sensor_type": "CO2_Sensor",
+            "threshold": 1000,
+            "comparator": ">",
+            "severity": "warning",
+            "message": "CO₂ in {zone} is {value} ppm.",
+        }
         await monitor._maybe_fire("sensor-42", 1200, "Zone A", rule)
         redis.get.assert_called_once_with("alert:sensor-42:1000")
         redis.setex.assert_called_once_with("alert:sensor-42:1000", 600, "1")
@@ -83,8 +90,13 @@ class TestAlertDeduplication:
             connection_manager=conn_mgr,
             redis_client=redis,
         )
-        rule = {"sensor_type": "CO2_Sensor", "threshold": 1000, "comparator": ">",
-                "severity": "critical", "message": "CO₂ in {zone} is {value} ppm."}
+        rule = {
+            "sensor_type": "CO2_Sensor",
+            "threshold": 1000,
+            "comparator": ">",
+            "severity": "critical",
+            "message": "CO₂ in {zone} is {value} ppm.",
+        }
         await monitor._maybe_fire("sensor-1", 1250, "Lab 3", rule)
         conn_mgr.broadcast_alert.assert_called_once()
         call_kwargs = conn_mgr.broadcast_alert.call_args

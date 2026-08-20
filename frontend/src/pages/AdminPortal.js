@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import TopNav from '../components/TopNav';
+import OnboardingTab from '../components/admin/OnboardingTab';
 import OntologyTab from '../components/admin/OntologyTab';
 import CapabilitiesTab from '../components/admin/CapabilitiesTab';
+import PoliciesTab from '../components/admin/PoliciesTab';
 import DatabasesTab from '../components/admin/DatabasesTab';
 import UsersTab from '../components/admin/UsersTab';
 import DataSourcesTab from '../components/admin/DataSourcesTab';
@@ -23,8 +25,12 @@ function useAdminToken() {
 }
 
 const TABS = [
+  // First, and the default: it is the only screen that answers "what is still
+  // missing?" — every other tab shows one step in isolation.
+  { id: 'onboarding', label: 'Onboarding' },
   { id: 'ontology', label: 'Ontology' },
   { id: 'capabilities', label: 'Capabilities' },
+  { id: 'policies', label: 'Policies' },
   { id: 'databases', label: 'Databases' },
   { id: 'datasources', label: 'Data Sources' },
   { id: 'index', label: 'Index Status' },
@@ -35,7 +41,7 @@ const TABS = [
 ];
 
 export default function AdminPortal() {
-  const [tab, setTab] = useState('ontology');
+  const [tab, setTab] = useState('onboarding');
   const token = useAdminToken();
 
   if (!token) {
@@ -75,8 +81,10 @@ export default function AdminPortal() {
           ))}
         </ul>
         <div className="tab-content border border-top-0 p-3 bg-white rounded-bottom">
+          {tab === 'onboarding' && <OnboardingTab {...props} onNavigate={setTab} />}
           {tab === 'ontology' && <OntologyTab {...props} />}
           {tab === 'capabilities' && <CapabilitiesTab {...props} />}
+          {tab === 'policies' && <PoliciesTab {...props} />}
           {tab === 'databases' && <DatabasesTab {...props} />}
           {tab === 'datasources' && <DataSourcesTab {...props} />}
           {tab === 'index' && <IndexStatusTab {...props} />}

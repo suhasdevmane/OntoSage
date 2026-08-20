@@ -132,9 +132,8 @@ class Client:
         )
         r.raise_for_status()
         payload = r.json()
-        token = (
-            payload.get("data", {}).get("session_token")
-            or payload.get("data", {}).get("access_token")
+        token = payload.get("data", {}).get("session_token") or payload.get("data", {}).get(
+            "access_token"
         )
         if not token:
             raise RuntimeError(f"Login failed -- no token in response: {payload}")
@@ -171,15 +170,25 @@ def _flush_cache() -> None:
     """Best-effort Redis cache flush via docker exec."""
     try:
         keys_result = subprocess.run(
-            ["docker", "exec", REDIS_CONTAINER, "redis-cli",
-             "--scan", "--pattern", RESP_CACHE_PATTERN],
-            capture_output=True, text=True, timeout=10,
+            [
+                "docker",
+                "exec",
+                REDIS_CONTAINER,
+                "redis-cli",
+                "--scan",
+                "--pattern",
+                RESP_CACHE_PATTERN,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         keys = [k for k in keys_result.stdout.strip().splitlines() if k]
         if keys:
             subprocess.run(
                 ["docker", "exec", REDIS_CONTAINER, "redis-cli", "del"] + keys,
-                capture_output=True, timeout=10,
+                capture_output=True,
+                timeout=10,
             )
     except Exception:
         pass  # non-fatal; test still runs, may just get a stale cache hit

@@ -12,6 +12,7 @@ Covers:
   9. load_user_rules() adds user rules to RulesEngine
   10. load_user_rules() skips already-loaded rules (no duplicates)
 """
+
 from __future__ import annotations
 
 import json
@@ -20,9 +21,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from orchestrator.services.user_alert_store import UserAlertStore, get_user_alert_store
 from orchestrator.services.rules_engine import EcaRule, RulesEngine
-
+from orchestrator.services.user_alert_store import UserAlertStore, get_user_alert_store
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -48,6 +48,7 @@ async def _make_store_with_rules(rules: list) -> UserAlertStore:
 
     # Patch Redis scan_iter + get_cache
     mock_client = AsyncMock()
+
     # scan_iter returns keys as async generator
     async def fake_scan_iter(match=None, count=100):
         for i, doc in enumerate(docs):
@@ -136,8 +137,20 @@ async def test_delete_alert_removes_rule():
 @pytest.mark.asyncio
 async def test_get_all_building_alerts_returns_rules_across_users():
     docs = [
-        {"id": "rule0001", "name": "CO2 rule", "trigger": _TRIGGER, "action": _ACTION, "user_id": "alice"},
-        {"id": "rule0002", "name": "Temp rule", "trigger": {**_TRIGGER, "threshold": 28.0}, "action": _ACTION, "user_id": "bob"},
+        {
+            "id": "rule0001",
+            "name": "CO2 rule",
+            "trigger": _TRIGGER,
+            "action": _ACTION,
+            "user_id": "alice",
+        },
+        {
+            "id": "rule0002",
+            "name": "Temp rule",
+            "trigger": {**_TRIGGER, "threshold": 28.0},
+            "action": _ACTION,
+            "user_id": "bob",
+        },
     ]
     _, result = await _make_store_with_rules(docs)
     assert len(result) == 2
@@ -191,20 +204,39 @@ def test_auto_name_helper():
 @pytest.mark.asyncio
 async def test_load_user_rules_adds_to_engine():
     docs = [
-        {"id": "urule001", "name": "User CO2", "enabled": True, "trigger": _TRIGGER, "action": _ACTION, "user_id": "alice"},
+        {
+            "id": "urule001",
+            "name": "User CO2",
+            "enabled": True,
+            "trigger": _TRIGGER,
+            "action": _ACTION,
+            "user_id": "alice",
+        },
     ]
 
-    engine = RulesEngine("bldg_test", value_fetcher=AsyncMock(return_value=None), notifier=AsyncMock())
+    engine = RulesEngine(
+        "bldg_test", value_fetcher=AsyncMock(return_value=None), notifier=AsyncMock()
+    )
     engine._rules = []  # start empty (no operator rules)
 
     async def fake_get_all(building_id):
-        return [{"id": d["id"], "name": d["name"], "enabled": True,
-                 "trigger": d["trigger"], "action": d["action"]} for d in docs]
+        return [
+            {
+                "id": d["id"],
+                "name": d["name"],
+                "enabled": True,
+                "trigger": d["trigger"],
+                "action": d["action"],
+            }
+            for d in docs
+        ]
 
     mock_store = MagicMock()
     mock_store.get_all_building_alerts = AsyncMock(side_effect=fake_get_all)
 
-    with patch("orchestrator.services.user_alert_store.get_user_alert_store", return_value=mock_store):
+    with patch(
+        "orchestrator.services.user_alert_store.get_user_alert_store", return_value=mock_store
+    ):
         added = await engine.load_user_rules()
 
     assert added == 1
@@ -214,8 +246,16 @@ async def test_load_user_rules_adds_to_engine():
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_load_user_rules_no_duplicates():
-    doc = {"id": "urule001", "name": "User CO2", "enabled": True, "trigger": _TRIGGER, "action": _ACTION}
-    engine = RulesEngine("bldg_test", value_fetcher=AsyncMock(return_value=None), notifier=AsyncMock())
+    doc = {
+        "id": "urule001",
+        "name": "User CO2",
+        "enabled": True,
+        "trigger": _TRIGGER,
+        "action": _ACTION,
+    }
+    engine = RulesEngine(
+        "bldg_test", value_fetcher=AsyncMock(return_value=None), notifier=AsyncMock()
+    )
     engine._rules = [EcaRule(**doc)]  # already loaded
 
     async def fake_get_all(building_id):
@@ -224,7 +264,9 @@ async def test_load_user_rules_no_duplicates():
     mock_store = MagicMock()
     mock_store.get_all_building_alerts = AsyncMock(side_effect=fake_get_all)
 
-    with patch("orchestrator.services.user_alert_store.get_user_alert_store", return_value=mock_store):
+    with patch(
+        "orchestrator.services.user_alert_store.get_user_alert_store", return_value=mock_store
+    ):
         added = await engine.load_user_rules()
 
     assert added == 0

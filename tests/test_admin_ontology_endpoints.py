@@ -17,6 +17,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 import pytest
+
 import orchestrator.main as _main_module
 
 pytestmark = pytest.mark.unit
@@ -68,6 +69,7 @@ def _teardown_auth(app, get_user_context):
 async def _get(url, *, auth=True):
     """Make a GET request via ASGITransport."""
     from httpx import ASGITransport, AsyncClient
+
     from orchestrator.main import app, get_user_context
 
     if auth:
@@ -85,6 +87,7 @@ async def _get(url, *, auth=True):
 async def _post(url, body, *, auth=True):
     """Make a POST request via ASGITransport."""
     from httpx import ASGITransport, AsyncClient
+
     from orchestrator.main import app, get_user_context
 
     if auth:
@@ -102,6 +105,7 @@ async def _post(url, body, *, auth=True):
 async def _delete(url, *, auth=True):
     """Make a DELETE request via ASGITransport."""
     from httpx import ASGITransport, AsyncClient
+
     from orchestrator.main import app, get_user_context
 
     if auth:

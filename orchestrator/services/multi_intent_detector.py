@@ -24,17 +24,35 @@ logger = get_logger(__name__)
 # Phase 6 — populated from the intent registry (orchestrator/intents) so adding
 # a new intent in YAML automatically extends the multi-intent detector.  The
 # legacy hardcoded set is preserved as a fallback when the registry can't load.
-_LEGACY_VALID_INTENTS = frozenset({
-    "sensor_data", "analytics", "anomaly", "compare", "trend", "recommend",
-    "compliance", "report", "export", "planner", "floor_plan", "spatial_query",
-    "capability", "control", "maintenance", "discovery", "metadata",
-    "general", "clarification",
-})
+_LEGACY_VALID_INTENTS = frozenset(
+    {
+        "sensor_data",
+        "analytics",
+        "anomaly",
+        "compare",
+        "trend",
+        "recommend",
+        "compliance",
+        "report",
+        "export",
+        "planner",
+        "floor_plan",
+        "spatial_query",
+        "capability",
+        "control",
+        "maintenance",
+        "discovery",
+        "metadata",
+        "general",
+        "clarification",
+    }
+)
 
 
 def _load_valid_intents() -> frozenset:
     try:
         from orchestrator.intents import get_intent_registry
+
         names = get_intent_registry().names()
         if names:
             return names
@@ -46,55 +64,171 @@ def _load_valid_intents() -> frozenset:
 VALID_INTENTS = _load_valid_intents()
 
 INTENT_DOMAINS: Dict[str, frozenset] = {
-    "data": frozenset({
-        "temperature", "co2", "humidity", "sensor", "reading", "energy",
-        "consumption", "occupancy", "current", "latest", "average", "level",
-        "noise", "light", "power", "watt", "kwh",
-    }),
-    "anomaly": frozenset({
-        "unusual", "anomaly", "anomalies", "spike", "fault",
-        "flagged", "alert", "abnormal", "out of range",
-    }),
-    "capability": frozenset({
-        "contact", "book", "booking", "who should", "who do i",
-        "how do i", "policy", "opening hours", "lift", "elevator",
-        "accessible", "facilities", "wifi", "parking", "reception",
-        "report maintenance", "how to report",
-    }),
-    "floor_plan": frozenset({
-        "floor plan", "layout", "show me floor", "where is", "locate",
-        "navigate", "map", "building overview",
-    }),
-    "spatial": frozenset({
-        "area", "size", "how many rooms", "adjacent", "square",
-        "how big", "largest", "smallest", "room count",
-    }),
-    "report": frozenset({
-        "generate report", "create report", "building report",
-        "weekly report", "daily report", "monthly report",
-        "summary report", "energy report",
-        "summarise", "summarize", "give me a summary",
-    }),
-    "recommend": frozenset({
-        "recommend", "suggest", "should i", "advice", "optimize",
-        "improve", "what should", "best room", "most comfortable",
-    }),
-    "compare": frozenset({
-        "compare", "comparison", "vs", "versus", "difference between",
-        "higher than", "lower than", "better", "worse",
-    }),
+    "data": frozenset(
+        {
+            "temperature",
+            "co2",
+            "humidity",
+            "sensor",
+            "reading",
+            "energy",
+            "consumption",
+            "occupancy",
+            "current",
+            "latest",
+            "average",
+            "level",
+            "noise",
+            "light",
+            "power",
+            "watt",
+            "kwh",
+        }
+    ),
+    "anomaly": frozenset(
+        {
+            "unusual",
+            "anomaly",
+            "anomalies",
+            "spike",
+            "fault",
+            "flagged",
+            "alert",
+            "abnormal",
+            "out of range",
+        }
+    ),
+    "capability": frozenset(
+        {
+            "contact",
+            "book",
+            "booking",
+            "who should",
+            "who do i",
+            "how do i",
+            "policy",
+            "opening hours",
+            "lift",
+            "elevator",
+            "accessible",
+            "facilities",
+            "wifi",
+            "parking",
+            "reception",
+            "report maintenance",
+            "how to report",
+        }
+    ),
+    "floor_plan": frozenset(
+        {
+            "floor plan",
+            "layout",
+            "show me floor",
+            "where is",
+            "locate",
+            "navigate",
+            "map",
+            "building overview",
+        }
+    ),
+    "spatial": frozenset(
+        {
+            "area",
+            "size",
+            "how many rooms",
+            "adjacent",
+            "square",
+            "how big",
+            "largest",
+            "smallest",
+            "room count",
+        }
+    ),
+    "report": frozenset(
+        {
+            "generate report",
+            "create report",
+            "building report",
+            "weekly report",
+            "daily report",
+            "monthly report",
+            "summary report",
+            "energy report",
+            "summarise",
+            "summarize",
+            "give me a summary",
+        }
+    ),
+    "recommend": frozenset(
+        {
+            "recommend",
+            "suggest",
+            "should i",
+            "advice",
+            "optimize",
+            "improve",
+            "what should",
+            "best room",
+            "most comfortable",
+        }
+    ),
+    "compare": frozenset(
+        {
+            "compare",
+            "comparison",
+            "vs",
+            "versus",
+            "difference between",
+            "higher than",
+            "lower than",
+            "better",
+            "worse",
+        }
+    ),
 }
 
 _CONNECTIVE_PHRASES = [
-    "and also", "as well as", "plus ", "additionally", "in addition",
-    "can you also", "also tell", "also let", "also check", "also show",
-    "tell me", "let me know", "and let me", "and tell me",
-    "and remind me", "and show me", "and check",
-    "first ", "then ", "finally ", "first,", "then,", "finally,",
-    "1)", "2)", "3)", "1.", "2.", "3.",
-    ", and how", ", how do", ", how big", ", how many",
-    ", and do", ", and can", ", and what", ", and which",
-    "? and ", "? how ", "? what ", "? which ",
+    "and also",
+    "as well as",
+    "plus ",
+    "additionally",
+    "in addition",
+    "can you also",
+    "also tell",
+    "also let",
+    "also check",
+    "also show",
+    "tell me",
+    "let me know",
+    "and let me",
+    "and tell me",
+    "and remind me",
+    "and show me",
+    "and check",
+    "first ",
+    "then ",
+    "finally ",
+    "first,",
+    "then,",
+    "finally,",
+    "1)",
+    "2)",
+    "3)",
+    "1.",
+    "2.",
+    "3.",
+    ", and how",
+    ", how do",
+    ", how big",
+    ", how many",
+    ", and do",
+    ", and can",
+    ", and what",
+    ", and which",
+    "? and ",
+    "? how ",
+    "? what ",
+    "? which ",
 ]
 
 
@@ -215,11 +349,13 @@ Return ONLY a JSON array:
                 if intent not in VALID_INTENTS:
                     logger.debug(f"[multi-intent] Dropping invalid intent: {intent}")
                     continue
-                sub_intents.append(SubIntent(
-                    sub_query=item.get("sub_query", ""),
-                    intent=intent,
-                    entities=item.get("entities", []),
-                ))
+                sub_intents.append(
+                    SubIntent(
+                        sub_query=item.get("sub_query", ""),
+                        intent=intent,
+                        entities=item.get("entities", []),
+                    )
+                )
 
             if len(sub_intents) < 2:
                 return None

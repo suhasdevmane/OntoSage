@@ -1,0 +1,25 @@
+# SATURATE (V4-T08): simulated parking_free sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'parking_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://buildsys.org/ontologies/bldg2#> .
+
+<http://buildsys.org/ontologies/bldg2#parking_data>
+    a ref:Database ;
+    rdfs:label "Parking Data" .
+
+<http://buildsys.org/ontologies/bldg2#building_sat_parking_free>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "building parking_free (simulated) [bays]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#bldg2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "25a2dbb5-89d3-56ad-b60b-a923f26212f6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#parking_data> ;
+    ] .

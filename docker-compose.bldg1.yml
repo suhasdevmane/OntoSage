@@ -124,13 +124,14 @@ services:
     volumes:
       - ./orchestrator:/app/orchestrator # Mount source code for hot-reloading
       - ./shared:/app/shared # Mount shared module for hot-reloading
-      - ./.env:/app/.env # rw: admin console edits root .env (takes effect on restart)
+      - ./.env:/app/.env # rw: admin console edits root .env (needs `up -d`, NOT `restart` — CAVEAT-178)
       - ./input:/app/input # rw: GUI-created data sources persist to input/datasources.custom.yaml
       - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/floor-plans:/app/floor_plans # Writable — pipeline writes manifests + PNGs here
       - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/artifacts:/app/volumes/artifacts # rw: datasource toggle-state + ttl-upload cache
       - ./outputs:/app/outputs # Mount shared outputs (data, plots, query results)
       - ./orchestrator/agents/.env:/app/agents/.env:ro # Mount OpenAI credentials
-      - ./data:/app/data:ro # Mount sensor map and other data files
+      - ./data:/app/data:ro
+      - ./scripts:/app/scripts:ro # V5-T32: run graders/validators in-container # Mount sensor map and other data files
       - ./config:/app/config:ro # Mount alert thresholds and other config files
       - ./ontology:/app/ontology:ro # Building-independent ontologies (HBCO lay-term concepts) — ttl_uploader scans this path
       # NOTE: the embedding model is BAKED INTO THE IMAGE at HF_HOME=/app/.hf_cache
@@ -579,6 +580,13 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-mysql}
       - MYSQL_DB=${MYSQL_DATABASE:-sensordb}
       - MYSQL_TABLE=sensor_data
+      # DEV-MODE DESIGN (user-confirmed 2026-08-13, see BUG-144/NOTE-101): sensor_data
+      # holds a manually-loaded REAL abacws snapshot; the physical sensors feed a
+      # separate real DB this dev machine does not receive. This publisher deliberately
+      # tops up sensor_data with generated "latest" rows so real-time questions are
+      # testable during development. END OF DEVELOPMENT: flip PUBLISH_WIDE=false (or
+      # remove this service) and repoint database_registry.yaml at the real/cloud DB.
+      - PUBLISH_WIDE=true
       - PUBLISH_INTERVAL=30
     volumes:
       # Read-only: the publisher reads input/bldg1_timeseries_extension_uuids.json

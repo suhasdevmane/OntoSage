@@ -50,7 +50,7 @@ ALL_PERMISSIONS = {
     "building:delete",
     # Device control
     "device:control",
-    "control:write",   # T24: write setpoints via actuation gateway (admin + facility only)
+    "control:write",  # T24: write setpoints via actuation gateway (admin + facility only)
     # System
     "system:admin",
     "system:health",

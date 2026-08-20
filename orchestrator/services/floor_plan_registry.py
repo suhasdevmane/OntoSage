@@ -27,6 +27,57 @@ from shared.utils import get_logger
 logger = get_logger(__name__)
 
 
+def _norm_label(label: str) -> str:
+    """Collapse a room label to a comparison key.
+
+    Case and separators differ freely between a CAD label and a PDF caption for
+    the same room ("RM001A_room" / "RM001A Room"), and neither difference makes
+    them different rooms.
+    """
+    return "".join(ch for ch in (label or "").lower() if ch.isalnum())
+
+
+def _drop_duplicated_cad_copies(pdf_spaces: List[Space]) -> List[Space]:
+    """Undo an earlier bad merge that left both copies of a room (BUG-198).
+
+    The merged manifest is written to the same path the PDF pipeline writes to,
+    so a re-ingestion can hand the merge its OWN previous output as the "PDF"
+    side. When that output came from the era before rooms were paired, it holds
+    both halves of every room; every label is then ambiguous, the label pairing
+    below refuses to act, and the duplicates survive another round.
+
+    Only a CAD-sourced space whose label is ALSO claimed by another space in the
+    same list is dropped, because only then is it a leftover copy. A correctly
+    merged record is CAD-sourced too but owns its label alone, so it passes
+    through and re-pairs by zone_id — which is what makes merging a merged
+    manifest a no-op instead of a slow loss of identity.
+    """
+    counts: Dict[str, int] = {}
+    for s in pdf_spaces:
+        key = _norm_label(s.label)
+        if key:
+            counts[key] = counts.get(key, 0) + 1
+    return [
+        s for s in pdf_spaces if not (s.source == "dwg" and counts.get(_norm_label(s.label), 0) > 1)
+    ]
+
+
+def _unique_by_label(spaces: List[Space]) -> Dict[str, Space]:
+    """Index spaces by normalised label, keeping only UNAMBIGUOUS labels.
+
+    A label shared by two spaces cannot identify either of them, so it is
+    dropped rather than resolved arbitrarily — merging the wrong pair would fuse
+    one room's geometry onto another room's identity, and nothing downstream
+    could detect that.
+    """
+    counts: Dict[str, int] = {}
+    for s in spaces:
+        key = _norm_label(s.label)
+        if key:
+            counts[key] = counts.get(key, 0) + 1
+    return {_norm_label(s.label): s for s in spaces if counts.get(_norm_label(s.label)) == 1}
+
+
 class FloorPlanRegistry:
     """
     Merge orchestrator that combines DWG geometry with PDF renders.
@@ -94,6 +145,7 @@ class FloorPlanRegistry:
             pdf_m = pdf_map.get(key)
             result = self._merge(dwg_m, pdf_m)
             if result:
+                await self.link_unlinked_spaces(result)
                 await self._write_manifest(result)
                 merged.append(result)
 
@@ -103,6 +155,39 @@ class FloorPlanRegistry:
             f"({dwg_count} DWG-enriched)"
         )
         return merged
+
+    async def link_unlinked_spaces(self, manifest: FloorPlanManifest) -> None:
+        """Resolve ontology IRIs for the MERGED space set.
+
+        Linking used to happen only inside the PDF pipeline, over PDF spaces, and
+        a DWG space could acquire an IRI solely by being merged with a PDF space
+        that already had one. A floor whose PDF carries no text layer therefore
+        linked nothing at all, however well its CAD named the rooms -- and that
+        is not an edge case: it is exactly what a scanned or image-only floor
+        plan looks like, and what hand-drawn room boundaries produce.
+
+        This also closes a split between the two ways ingestion can be triggered.
+        The /reingest endpoint linked the merged set; boot-time ingest did not, so
+        the SAME inputs yielded a fully-linked floor or an unlinked one depending
+        on which path ran. Owning the step here makes the merge the single place
+        it happens, and both callers inherit it.
+        """
+        unlinked = [s for s in manifest.spaces if not s.ontology_iri]
+        if not unlinked:
+            return
+        try:
+            await self._pdf_pipeline._link_ontology(unlinked, manifest.building_id, manifest.floor)
+        except Exception as e:
+            logger.warning(
+                f"[registry] ontology linking failed for "
+                f"{manifest.building_id}/floor {manifest.floor}: {e}"
+            )
+            return
+        # Rebuilt, not patched: the map was assembled at merge time from the
+        # spaces that had IRIs then, so newly-linked spaces are missing from it.
+        manifest.ontology_links = {
+            s.zone_id: s.ontology_iri for s in manifest.spaces if s.ontology_iri
+        }
 
     @staticmethod
     def _identity_candidates(building_id: str) -> List[str]:
@@ -200,7 +285,10 @@ class FloorPlanRegistry:
             # Merged spaces
             spaces=merged_spaces,
             facilities=pdf.facilities or dwg.facilities,
-            ontology_links=pdf.ontology_links,
+            # Rebuilt from the MERGED spaces, not copied from the PDF manifest:
+            # a merged space keeps the DWG zone_id, so PDF-keyed links would
+            # point at ids no space in this manifest carries any more.
+            ontology_links={s.zone_id: s.ontology_iri for s in merged_spaces if s.ontology_iri},
             warnings=pdf.warnings + dwg.warnings,
             # DWG-specific geometry
             total_area_m2=dwg.total_area_m2,
@@ -215,24 +303,50 @@ class FloorPlanRegistry:
         pdf_spaces: List[Space],
     ) -> List[Space]:
         """
-        Merge DWG and PDF space lists.
+        Merge DWG and PDF space lists into ONE record per real room.
 
-        Strategy:
-        - DWG spaces have polygon/area geometry — they are the primary entries.
-        - For each DWG space with a generic label ("Zone X.XX"), try to find a
-          richer label from the PDF spaces by matching zone_id.
-        - PDF-only spaces (no matching DWG zone_id) are appended at the end.
+        The two sources describe the same rooms and each holds half of what a
+        room needs: the DWG carries polygon, area, centroid and adjacency but no
+        identity, while the PDF/LLM pass carries the ontology IRI but no
+        geometry at all.
+
+        Pairing them on ``zone_id`` alone silently failed (BUG-147, CAVEAT-154),
+        because the two sides mint ids from different things: the DWG uses the
+        positional CAD id ("0Z001") and the PDF uses a slug of the room name
+        ("fp.bldg2.0.rm001a_room"). Those id spaces never intersect, so every
+        space fell through to an "unmatched" branch and each room was emitted
+        TWICE — once with geometry and no IRI, once with an IRI and no geometry.
+        Half of every manifest was therefore unlinkable BY CONSTRUCTION, which
+        is why the measured join rate sat at exactly 50.0% on every floor of
+        every building rather than at some noisy fraction.
+
+        Both halves do agree on ``label`` ("RM001A_room"), so that is the
+        fallback key. It is applied only when the normalised label identifies
+        exactly ONE space on each side: an ambiguous label merges nothing, since
+        fusing two genuinely different rooms would corrupt geometry and identity
+        together, which is far worse than leaving a duplicate visible.
+
+        The surviving record keeps the DWG ``zone_id`` because the manifest's
+        ``adjacency`` block and every ``adjacent_spaces`` list reference it; the
+        PDF id is preserved as an alias so lookups by the old id still resolve.
         """
+        pdf_spaces = _drop_duplicated_cad_copies(pdf_spaces)
+
         dwg_by_zone: Dict[str, Space] = {s.zone_id: s for s in dwg_spaces}
         pdf_by_zone: Dict[str, Space] = {s.zone_id: s for s in pdf_spaces}
+        pdf_by_label = _unique_by_label(pdf_spaces)
 
         merged: List[Space] = []
         pdf_zone_ids_used = set()
 
         for zone_id, dwg_space in dwg_by_zone.items():
             pdf_space = pdf_by_zone.get(zone_id)
+            if pdf_space is None:
+                pdf_space = pdf_by_label.get(_norm_label(dwg_space.label))
+                if pdf_space is not None and pdf_space.zone_id in pdf_zone_ids_used:
+                    pdf_space = None  # already claimed by an earlier DWG space
             if pdf_space:
-                pdf_zone_ids_used.add(zone_id)
+                pdf_zone_ids_used.add(pdf_space.zone_id)
                 # DWG wins for geometry; PDF wins for label if DWG label is generic
                 label = dwg_space.label
                 if (
@@ -247,7 +361,9 @@ class FloorPlanRegistry:
                         id=dwg_space.id,
                         zone_id=zone_id,
                         label=label,
-                        aliases=list({*dwg_space.aliases, *pdf_space.aliases}),
+                        aliases=sorted(
+                            {*dwg_space.aliases, *pdf_space.aliases, pdf_space.zone_id} - {zone_id}
+                        ),
                         type=pdf_space.type if pdf_space.type != "unknown" else dwg_space.type,
                         tags=list({*dwg_space.tags, *pdf_space.tags}),
                         centroid=dwg_space.centroid or pdf_space.centroid,
@@ -266,7 +382,7 @@ class FloorPlanRegistry:
             else:
                 merged.append(dwg_space)
 
-        # Append PDF-only spaces not in DWG
+        # Append PDF-only spaces — those no DWG space claimed by id OR by label
         for zone_id, pdf_space in pdf_by_zone.items():
             if zone_id not in pdf_zone_ids_used and zone_id not in dwg_by_zone:
                 merged.append(pdf_space)
@@ -315,8 +431,9 @@ class FloorPlanRegistry:
 
         # Cache in Redis (best-effort)
         try:
-            from shared.config import settings
             import redis.asyncio as aioredis
+
+            from shared.config import settings
 
             redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}")
             key = f"floor_plan:manifest:{manifest.building_id}:{manifest.floor}"

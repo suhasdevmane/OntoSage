@@ -162,7 +162,7 @@ class VisualizationAgent:
         data_b64 = _b64.b64encode(json.dumps({"data": records}, default=str).encode()).decode()
         label_b64 = _b64.b64encode(json.dumps(label_map, default=str).encode()).decode()
 
-        return f'''
+        return f"""
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -211,7 +211,7 @@ plt.savefig(_buf, format="png", bbox_inches="tight", dpi=120)
 plt.close(fig)
 _buf.seek(0)
 print("PLOT_BASE64: " + base64.b64encode(_buf.read()).decode("utf-8"))
-'''
+"""
 
     async def _determine_chart_type(
         self, user_query: str, data: Optional[Dict[str, Any]] = None

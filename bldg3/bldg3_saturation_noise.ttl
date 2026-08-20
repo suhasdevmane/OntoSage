@@ -1,0 +1,1597 @@
+# SATURATE (V4-T08): simulated noise sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'noise_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://buildsys.org/ontologies/bldg3#> .
+
+<http://buildsys.org/ontologies/bldg3#noise_data>
+    a ref:Database ;
+    rdfs:label "Noise Data" .
+
+<http://buildsys.org/ontologies/bldg3#RM007_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM007_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM007_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2ac03036-e554-5021-9e12-5a65b8299d52" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM039_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM039_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM039_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bab5453e-bb22-5c61-b6ad-b57eaf24d7c6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM100A_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM100A_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM100A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6e203de6-a9f7-53a4-875d-8345332aea4f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM103_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM103_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM103_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3b886cbc-afe5-5853-9423-2fc6b18a8025" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM107_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM107_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM107_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fad131a1-d1dc-559c-95d2-ea6801d250f9" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM108_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM108_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM108_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "04910f24-fcfb-58c9-8782-228009f1d09e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM109_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM109_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM109_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "38cecf5c-db2c-57ba-84ef-f4ee44324a96" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM111_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM111_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM111_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d884f780-15a0-5a4e-871d-f28c31e312e4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM112_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM112_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM112_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ddb8bdf2-cc11-5952-8872-daa61d3ede34" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM114_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM114_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM114_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a7e0c851-be96-558d-8e1b-56d2d4824368" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM115_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM115_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM115_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7d49d1ca-d8f1-5b62-b93e-19f45c33da58" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM117_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM117_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM117_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ff164d2c-3631-5798-b295-181db8639ebe" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM118_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM118_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM118_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c7a9c8d7-364d-5f92-84f3-6066ebf4b591" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM120_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM120_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM120_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "336ef05c-a6a3-5ecf-b2d9-d79442bd661f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM122_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM122_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM122_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "662410dc-e4ea-516c-81ee-32fe13a15651" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM123_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM123_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM123_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "401ed6d8-e7b6-5f40-80c2-f6f673d6c01f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM124_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM124_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM124_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "15e340b1-9e88-5ce3-afd7-e40475b2cb3d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM125_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM125_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM125_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ecc98006-f506-5321-a317-ef2cc951a0e5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM126_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM126_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM126_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ee637898-96d0-5bbc-94af-924a79f239a6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM128_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM128_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM128_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "db7f09a1-6d8a-5ec3-b3b2-157827f26d24" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM131_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM131_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM131_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2c71f03d-8492-5fc7-98b6-fea0d1eea27d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM133_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM133_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM133_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "90855230-d21c-5310-9a69-2ae261d1661b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM143_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM143_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM143_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1e354309-6fd1-51ee-80b6-8c852ee335b5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM149_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM149_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM149_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4f545c24-c10e-571d-9c66-3aaa1c4c46fa" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM157_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM157_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM157_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5ba0d956-10f1-5e34-a104-03ca2c7cf12e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM159_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM159_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM159_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "92736a83-4c59-52ae-a261-b2562f001eb4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM161_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM161_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM161_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4a014f4b-bce8-5e93-a3e6-31f21c577ce6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163A_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163A_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "55c74149-2df3-52de-b684-fd8f05e47b5e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163B_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163B_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d5e6c2da-6b68-5415-b857-fa777b1cb08e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163C_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163C_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4c33998b-35ae-53a4-b670-7312791a5e8e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163E_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163E_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163E_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6dac0681-54f0-58db-8ef6-3609a3ccbab3" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163F-B_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163F-B_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163F-B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "05b314af-4439-56b2-b6aa-a0031e4ae7e6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163F_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163F_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163F_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4ebf7285-6895-571f-ab2c-d2be6763d0d8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163G_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163G_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163G_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8abe1da7-0e89-565b-83f8-143f6c0f0c15" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163I_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163I_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163I_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0626b41b-153a-5c1e-b250-926d78b69f99" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163J_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163J_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163J_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0b65e404-c29e-54ba-8f97-3b797d910321" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163K-B_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163K-B_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163K-B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b9e1c0d4-df93-5c5f-8924-7dde2485aff5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163K_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163K_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163K_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fe04c060-bff5-5cf0-8279-bc5f5d694ff8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163N-B_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163N-B_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163N-B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e7c04bf8-ce7b-5a27-84e1-b346039fda32" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163N_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM163N_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163N_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "24d1487b-48b8-5957-b334-08a89acc8584" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM166_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM166_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM166_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "008b8a28-3070-53e4-8bc2-2cadbde2a0bb" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM171_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM171_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM171_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "66bc51c2-7715-5961-9b85-73b6e47d073e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM172_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM172_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM172_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0a658cc1-0dc7-56ec-aedf-9675843c1c9d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM175E_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM175E_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM175E_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "da092638-1dab-55b7-84e0-6521b8301d5d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM175W_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM175W_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM175W_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1b7fd80c-587d-5387-a4d1-656b3bda158c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM176_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM176_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM176_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "de14bf73-b9a6-54f9-820c-cf1f4c5e5076" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM184_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM184_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM184_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7e9d3f24-2a02-531e-8bb9-b90442daa83a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM190_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM190_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM190_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3dcfd2b1-a3dd-5699-bf49-28e0530b9893" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM200C_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM200C_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM200C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3be0543b-5524-540e-a6f0-c82f5a785850" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM201_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM201_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM201_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6325b671-875b-558c-a2a8-071e988e9204" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM203_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM203_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM203_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "697a2139-2103-5baf-a374-1f038084e606" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM206_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM206_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM206_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "70cc6688-1a81-592c-a0c3-cb5f590040de" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM207_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM207_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM207_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f444ff07-d46d-5d29-ad32-ddcd396f7b3d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM208_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM208_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM208_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7c75ab42-71ff-5392-beb7-56e7785ed81b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM209_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM209_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM209_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "04192fc1-a4a7-5b8a-917d-f1818ab9de58" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM210_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM210_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM210_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "18cebb51-afab-5159-beff-93a02aae8495" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM211_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM211_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM211_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8c23eb60-826b-5104-97c4-6168ad9ab764" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM212_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM212_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM212_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "42a8f67d-cbe9-5e82-8c98-9903c03a715f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM213_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM213_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM213_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "abc19529-1861-52b8-bcf5-12b1f2f667e2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM214_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM214_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM214_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "957eefd3-0d0a-5b27-a7cd-977dda42a436" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM216_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM216_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM216_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c3877270-f96e-538a-baab-9ca96b5855e5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM217_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM217_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM217_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e207c2b7-c0c3-55ff-9c64-476e282c9bb4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM220_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM220_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM220_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "07246040-63a0-5245-b937-ffb9d910ef48" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM222_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM222_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM222_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0e5d7ba9-52b7-5e2e-b3b8-b9281f4ce2c8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM223_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM223_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM223_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4082107d-f5bf-53f2-961f-8bdb6b9993f2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM224_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM224_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM224_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8584149f-c833-5819-bce7-0e9ada5bd41d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM225_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM225_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM225_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "464cf9d4-d0b5-5a92-8930-f2f524080356" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM226_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM226_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM226_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f1ccc472-3d36-5272-9552-171849ac9c57" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM227_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM227_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM227_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3f2f4a8e-4dc0-5972-ab24-58f5db857a6f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM228_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM228_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM228_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e7fface3-6359-5842-912b-5ef384fee4c5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM231_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM231_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM231_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1065f6db-dc60-59f3-9232-bc5c5d76c1a6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM233_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM233_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM233_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "48551d9a-3efa-54c5-98e2-d50d57dc96af" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM239_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM239_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM239_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c424d0cb-262d-5149-93da-c79b81e2a3b5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM241_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM241_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM241_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5035d447-c76d-5cdb-b070-9f5bc3b5985e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM247_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM247_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM247_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b33f1e33-32b5-594b-a5a2-a29281d78fe0" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM249_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM249_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM249_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0abf754b-062c-55d3-9533-4a3298a3e4e1" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM251_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM251_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM251_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fedc8276-559a-5509-9aa1-e3994f404e69" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM253_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM253_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM253_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a23057f9-ad22-5fcc-bf34-97c92a7fae3e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM259A_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM259A_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM259A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6b50bf34-e59b-584f-b7b6-c422b9d1d508" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM259_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM259_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM259_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "99d3a58c-0949-592e-9458-06a34438f909" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM266_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM266_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM266_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1f18dc4e-5ded-55cf-b386-11a2d8498890" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM267_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM267_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM267_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "931f38ec-c1fd-5583-b29e-bafddb810ddd" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM270_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM270_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM270_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f7f2b4c4-11a6-5cc1-b473-c1978a6b44a2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM271_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM271_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM271_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0b818ca2-4d08-53da-a01a-d0f83d81491e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM272_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM272_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM272_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "999724bc-afc4-57b3-b1a2-803ff1a1d442" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM275_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM275_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM275_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c2761f60-524d-5c6c-b330-299fe105de14" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM276_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM276_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM276_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "acb1009f-bfd7-56dc-87ff-c9c858d05e52" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM278_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM278_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM278_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "93924137-9f42-5b7f-9fca-97ad4980ebbd" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM281_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM281_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM281_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "11c808d7-2633-5bd9-8d87-040e580fad70" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM300C_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM300C_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM300C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a8f942ac-5ad2-54a8-8d3e-f3b4449b9341" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM301A_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM301A_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM301A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "83c9a70e-a7c4-5262-8f26-f3292f9d4f31" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM306_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM306_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM306_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d9ae9ca4-e872-5bba-ae8f-dc1c778a178f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM308_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM308_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM308_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a1eb4f0b-4389-5419-9800-059a95dc7f26" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM309_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM309_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM309_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "80e99291-aaa3-5fe5-908e-abf07077fbb8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM310_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM310_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM310_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fad427a5-4001-56cd-a110-193fc58affed" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM311_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM311_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM311_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c935a81b-642e-51f6-aab4-7c2a1ca1cd1e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM312_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM312_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM312_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1378954d-7dc4-5b90-b800-079d2ec49019" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM314_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM314_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM314_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7e0d4f41-6fef-5eef-ba0d-d65749994753" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM315_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM315_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM315_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "876c4f47-39ae-5b7f-b874-1290e9926d0a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM316_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM316_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM316_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1bfeb0fe-3883-5f74-b64d-dbc156ba390f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM317_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM317_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM317_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "11f348c3-6b51-5738-9d12-b4560f56c4cc" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM320_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM320_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM320_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "64f4f6b8-d4b3-50a9-9ff6-df5c658034b4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM322_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM322_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM322_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5a0ceb5b-2722-59af-8d6f-38a495ee343e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM323_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM323_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM323_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "773d4d5b-ba64-52a9-95e8-2b7b3cf7c3ac" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM324_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM324_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM324_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "56f0c034-2e47-58af-b46a-12fb29eaf3eb" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM325_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM325_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM325_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a16a0802-f144-58a5-8f12-a12ae8f84acd" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM326_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM326_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM326_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "16d3c760-15af-5bf4-b63a-4d33ce315c41" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM327_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM327_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM327_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a11befd0-92cd-5fa4-bbac-9021ab60e2d7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM328_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM328_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM328_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "edead154-bc20-5269-9915-bbd639a3345f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM331_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM331_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM331_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dc5ba3e6-1681-5f5c-be14-4f61ed205bfa" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM333_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM333_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM333_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "42f8a581-e537-5470-a76c-fbaeb76776d6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM339_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM339_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM339_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "11992ba8-ba09-5562-906e-930404a3a6a9" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM341_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM341_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM341_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a46d9977-654b-5fd7-b7d5-3a49cd1531c5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM345_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM345_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM345_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "55b1d2ae-d32e-5a4f-83e9-9cef0d0271d6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM347_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM347_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM347_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "aa88085c-b29d-51a2-95ee-d8cf4054338f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM349_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM349_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM349_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3c326ceb-bfbc-50d6-84bd-9abba4a341af" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM350_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM350_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM350_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6f9285a9-ba92-52ac-b154-57cf72cabe63" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM351_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM351_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM351_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "311ed282-0b0d-578e-a0e3-b499f1e64fc7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM353_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM353_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM353_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9be13431-2d75-5fd1-8bfa-9984f37b0602" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM357_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM357_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM357_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d048ce13-42b7-55a0-a374-3135c0945c41" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM359_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM359_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM359_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6a9bcc25-18c7-584c-873a-4fbfa7ddcad6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM369_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM369_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM369_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "32c07b05-6c46-5a67-ad0e-1ccf656214fe" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM370_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM370_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM370_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a7d9b4f2-5241-5e6d-a9a1-d61c6372810f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM371_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM371_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM371_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1257c1a5-a115-572d-8ad8-4c5a82f7a025" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM372_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM372_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM372_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8f297a82-d7a9-5e53-9b34-4bd3c671b0da" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM373_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM373_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM373_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "439de861-14b2-5c77-a276-b4f64bb3afb5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM375_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM375_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM375_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ae471e38-5e66-5d59-bf19-a1219c66414e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM377_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM377_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM377_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0eae6037-5e0d-59c5-b3d6-9b57bf97f522" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM378_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM378_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM378_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e9b1c90f-67d0-5dbc-b316-0852982b24e1" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM380A_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM380A_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM380A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cbc77efa-bc40-52b4-94ad-0ac404ecfbd3" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM381_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM381_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM381_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ef809a33-99b7-5984-88cb-b16c852cfc12" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM385_room_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "RM385_room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM385_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1cd6ad60-ee8c-553f-8f9f-4cae29baf4fb" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#noise_data> ;
+    ] .

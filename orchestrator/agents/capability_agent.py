@@ -152,7 +152,10 @@ class CapabilityAgent:
         typed_phrase = ""
         try:
             from orchestrator.agents.sparql_agent import SPARQLAgent, _active_namespace
-            from orchestrator.services.grounding_guard import SUBJECT_SPACE, enablement_hint
+            from orchestrator.services.grounding_guard import (
+                SUBJECT_SPACE,
+                enablement_hint,
+            )
             from orchestrator.services.referent_resolver import (
                 NOT_FOUND,
                 SKIPPED,
@@ -336,7 +339,9 @@ class CapabilityAgent:
             # "Catering Amenities". An amenity may only answer if it actually mentions
             # what was asked about (its label or its rendered text).
             if _facts:
-                from orchestrator.services.grounding_guard import filter_on_topic as _on_topic
+                from orchestrator.services.grounding_guard import (
+                    filter_on_topic as _on_topic,
+                )
 
                 _rendered = [
                     {"text": f.render(), "doc_name": getattr(f, "label", "")} for f in _facts

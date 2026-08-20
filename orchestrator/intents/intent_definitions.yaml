@@ -156,6 +156,26 @@ intents:
     route_target: planner
     node_method: _planner_node
 
+  - name: deliberate
+    description: |-
+      Multi-constraint SPACE RECOMMENDATION over live or forecast sensor data: the
+      user wants a place chosen, ranked, or found under comfort/environment
+      constraints — "where can I sit that's quiet with good air near water",
+      "which room on floor 1 is the quietest", "rank the zones by CO2",
+      "show me the zone with minimum occupancy". Compiles the constraints,
+      verifies the building's own coverage, fetches per-room readings (and
+      forecasts for future-tense questions), ranks with a deterministic scorer,
+      and answers WITH a proof-of-analysis dossier. NOT for single-sensor
+      readings (sensor_data), single-space analytics (analytics), or static
+      floor-plan lookups (floor_plan).
+    examples:
+      - '"Where can I sit tomorrow that is quiet, with good air, near drinking water?"'
+      - '"Which room on floor 1 is the quietest right now?"'
+      - '"Show me the zone with minimum occupancy."'
+      - '"Rank the meeting rooms by CO2."'
+    pipeline_group: standalone
+    node_method: _deliberate_node
+
   - name: control
     description: |-
       User issues a command to physically change a building system state.
@@ -302,6 +322,61 @@ intents:
       - '"How do I report a fault?"'
     pipeline_group: standalone
     node_method: _capability_node
+
+  - name: events
+    description: |-
+      Booking / reservation, work-order / ticket, and entrance-footfall questions
+      answered from the building's interval-record store: "is the boardroom free
+      at 3pm?", "which rooms are free this afternoon?", "how many open work
+      orders?", "any overdue tickets?", "how busy was the entrance this morning?".
+      NOT for comfort-constrained room recommendations (deliberate), fault
+      REPORTS ("the door is broken" -> maintenance), or booking ACTIONS
+      ("book me a room" -> control/decline).
+    examples:
+      - '"Is RM101 free at 3pm today?"'
+      - '"How many open work orders are there?"'
+      - '"How busy was the main entrance this morning?"'
+    pipeline_group: standalone
+    node_method: _events_node
+
+  - name: privacy_refusal
+    description: |-
+      INTERNAL refusal lane (deterministic rule only — do not classify into
+      this): questions that would identify or track an INDIVIDUAL (who is in a
+      room, badge history, CCTV content, other users' data) or ask to bypass
+      access policies. Answered with the standing privacy policy and an
+      aggregate alternative.
+    examples:
+      - '"Is the professor in her office right now?"'
+    pipeline_group: standalone
+    node_method: _privacy_refusal_node
+
+  - name: diagnosis
+    description: |-
+      Indirect WHY-questions about a past condition: "why was floor 2 freezing
+      on Tuesday?", "why is it so stuffy in RM125?". Assembles evidence (series
+      stats, anomaly episodes, open windows, reports) and answers with ranked
+      candidate explanations in correlation language. NOT for live readings
+      (sensor_data), not for "any anomalies?" (anomaly), not for filing faults.
+    examples:
+      - '"Why was floor 2 freezing on Tuesday?"'
+      - '"Why is it so stuffy in RM125?"'
+    pipeline_group: standalone
+    node_method: _diagnosis_node
+
+  - name: register
+    description: |-
+      Compliance-REGISTER questions answered from dated ComplianceCheck records:
+      "which compliance checks are overdue?", "what's due this month?", "when was
+      the fire alarm last tested?", "when was the legionella flush last done?".
+      NOT for checking SENSOR READINGS against standards (that is 'compliance':
+      "is CO2 within safe limits?") and NOT for filing faults (maintenance).
+    examples:
+      - '"Which compliance checks are overdue?"'
+      - '"When was the fire alarm last tested?"'
+      - '"What inspections are due this month?"'
+    pipeline_group: standalone
+    node_method: _register_node
 
   - name: visualization
     description: Plot or chart a metric.

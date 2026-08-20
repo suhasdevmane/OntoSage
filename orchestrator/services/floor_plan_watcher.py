@@ -72,8 +72,10 @@ async def watch_forever(
             suffix = path.suffix.lower()
 
             # Imports available to both PDF and DWG branches
-            from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
             from orchestrator.services.dwg_pipeline import get_dwg_pipeline
+            from orchestrator.services.floor_plan_pipeline import (
+                get_floor_plan_pipeline,
+            )
 
             if suffix == ".pdf":
                 # Re-run PDF pipeline for this file only

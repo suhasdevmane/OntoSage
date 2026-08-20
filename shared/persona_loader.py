@@ -76,9 +76,7 @@ def _load_yaml_files(dirs: List[Path]) -> Dict[str, Dict]:
                 with open(path, "r", encoding="utf-8") as fh:
                     data = yaml.safe_load(fh) or {}
                 if not isinstance(data, dict):
-                    logger.warning(
-                        f"[persona_loader] {path} did not produce a mapping; ignored"
-                    )
+                    logger.warning(f"[persona_loader] {path} did not produce a mapping; ignored")
                     continue
                 name = data.get("name") or path.stem
                 out[name] = data

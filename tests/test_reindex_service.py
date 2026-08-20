@@ -99,52 +99,12 @@ def test_list_jobs_has_started_job():
 
 
 # ---------------------------------------------------------------------------
-# 7. _run calls capability_indexer.index_building
 # ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_run_capability_indexer():
-    """_run calls index_building and stores points/status/entries in results."""
-    mock_result = MagicMock()
-    mock_result.status = "indexed"
-    mock_result.points = 42
-    mock_result.entries = 10
-
-    cap_indexer = MagicMock()
-    cap_indexer.index_building = AsyncMock(return_value=mock_result)
-
-    svc = make_service(capability_indexer=cap_indexer)
-    job_id = svc.start(["capability"], building_id="bldg1")
-
-    # Yield to the event loop to allow the background task to run
-    await asyncio.sleep(0)
-    # Give it a couple more ticks in case there are awaited sub-calls
-    await asyncio.sleep(0)
-
-    status = svc.status(job_id)
-    assert status["found"] is True
-    assert status["results"]["capability"]["points"] == 42
-    assert status["results"]["capability"]["status"] == "indexed"
-    assert status["results"]["capability"]["entries"] == 10
 
 
 # ---------------------------------------------------------------------------
 # 8. capability indexer missing → skipped
 # ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_run_capability_indexer_missing():
-    """When no capability_indexer is provided, result contains 'skipped'."""
-    svc = make_service()  # no indexers
-    job_id = svc.start(["capability"], building_id="bldg1")
-
-    await asyncio.sleep(0)
-    await asyncio.sleep(0)
-
-    status = svc.status(job_id)
-    assert status["results"]["capability"]["skipped"] == "indexer not available"
 
 
 # ---------------------------------------------------------------------------
@@ -194,12 +154,17 @@ async def test_run_unknown_target():
 
 @pytest.mark.asyncio
 async def test_run_exception_sets_error_status():
-    """An exception in index_building sets job status='error' with error message."""
-    cap_indexer = MagicMock()
-    cap_indexer.index_building = AsyncMock(side_effect=RuntimeError("boom"))
+    """An exception inside a target sets job status='error' with the message.
 
-    svc = make_service(capability_indexer=cap_indexer)
-    job_id = svc.start(["capability"], building_id="bldg1")
+    Uses the document indexer because that is the target that still does work:
+    'capability' became a no-op when capability facts moved to ontology triples
+    (TODO-081), so it can no longer raise and cannot exercise this path.
+    """
+    doc_indexer = MagicMock()
+    doc_indexer.ingest_all = AsyncMock(side_effect=RuntimeError("boom"))
+
+    svc = make_service(document_indexer=doc_indexer)
+    job_id = svc.start(["documents"], building_id="bldg1")
 
     await asyncio.sleep(0)
     await asyncio.sleep(0)

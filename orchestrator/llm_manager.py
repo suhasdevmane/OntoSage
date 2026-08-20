@@ -8,6 +8,7 @@ import sys
 sys.path.append("/app")
 
 import asyncio
+import contextvars
 import os
 import time
 from enum import Enum
@@ -56,6 +57,72 @@ LLM_BACKOFF_FACTOR = float(os.environ.get("LLM_BACKOFF_FACTOR", "2.0"))
 
 class EmptyCompletionError(RuntimeError):
     """The provider answered successfully but produced no text."""
+
+
+# ── LLM degradation trace (V5-BUG-177) ───────────────────────────────────────
+# When the provider refuses a call — a quota 429, a timeout, an open circuit —
+# every caller falls back to a generic answer.  That answer looks like an
+# ordinary reply, so an offline grader scores it as a BEHAVIOURAL result and the
+# run reports a coverage/leak number that measures the outage, not the system.
+# The per-request trace below lets the API mark such turns as faulted so graders
+# can quarantine them instead of grading them.  Failures are appended to a
+# mutable list held in a ContextVar: child asyncio tasks inherit the same list
+# object, so nested node calls report into the request that spawned them.
+_llm_failures: contextvars.ContextVar[Optional[List[Dict[str, Any]]]] = contextvars.ContextVar(
+    "ontosage_llm_failures", default=None
+)
+
+RATE_LIMIT_MARKERS = ("429", "rate limit", "quota", "too many requests", "requires a subscription")
+
+
+def classify_llm_error(error: BaseException) -> str:
+    """Bucket an LLM failure into a cause a grader can act on."""
+    text = str(error).lower()
+    if any(m in text for m in RATE_LIMIT_MARKERS) or type(error).__name__ == "RateLimitError":
+        return "rate_limit"
+    if isinstance(error, EmptyCompletionError):
+        return "empty_completion"
+    if isinstance(error, (asyncio.TimeoutError, TimeoutError)) or "timed out" in text:
+        return "timeout"
+    if "circuit breaker" in text:
+        return "circuit_open"
+    if "connection" in text:
+        return "connection"
+    return "other"
+
+
+def begin_llm_trace() -> None:
+    """Start recording LLM failures for the current request."""
+    _llm_failures.set([])
+
+
+def record_llm_failure(error: BaseException, client_label: str = "") -> None:
+    """Note a terminal LLM failure against the in-flight request, if traced."""
+    failures = _llm_failures.get()
+    if failures is None:
+        return  # untraced caller (script, test) — nothing to report
+    failures.append(
+        {
+            "cause": classify_llm_error(error),
+            "client": client_label,
+            "detail": str(error)[:200],
+        }
+    )
+
+
+def llm_degradation() -> Optional[Dict[str, Any]]:
+    """Summarise this request's LLM failures, or None when the LLM behaved."""
+    failures = _llm_failures.get()
+    if not failures:
+        return None
+    causes = sorted({f["cause"] for f in failures})
+    return {
+        "failed_calls": len(failures),
+        "causes": causes,
+        # A quota refusal is the one cause the operator must act on, so name it.
+        "rate_limited": "rate_limit" in causes,
+        "detail": failures[0]["detail"],
+    }
 
 
 class LLMManager:
@@ -147,14 +214,28 @@ class LLMManager:
                 api_key=self.config["api_key"],
                 temperature=self.config["temperature"],
                 max_tokens=4096,
+                **self._reasoning_kwargs(),
             )
             self.client_fast = self.client  # same model for cloud Ollama
+            effort = self.config.get("reasoning_effort") or "provider default"
             logger.info(
-                f"Initialized Ollama Cloud LLM: {self.config['model']} at {self.config['base_url']}"
+                f"Initialized Ollama Cloud LLM: {self.config['model']} "
+                f"at {self.config['base_url']} (thinking: {effort})"
             )
         except ImportError:
             logger.error("langchain-openai not installed. Run: pip install langchain-openai")
             raise
+
+    def _reasoning_kwargs(self) -> Dict[str, Any]:
+        """Thinking-depth kwargs for hosted models, empty when unconfigured.
+
+        Reasoning models (gpt-oss, nemotron, minimax) keep their trace in a
+        separate ``reasoning`` field, so raising the effort deepens deliberation
+        without leaking chain-of-thought into the answer. Models that do not
+        speak the parameter reject it outright, hence opt-in only.
+        """
+        effort = self.config.get("reasoning_effort") or ""
+        return {"reasoning_effort": effort} if effort else {}
 
     def _pick_client(self, task_type: Optional[TaskType]):
         """Return (client, is_fast) based on task type."""
@@ -203,11 +284,13 @@ class LLMManager:
         errors) with exponential backoff. Each attempt is capped at LLM_TIMEOUT_S.
         """
         if not self._breaker.allow_request():
-            raise RuntimeError(
+            open_err = RuntimeError(
                 f"LLM circuit breaker is OPEN — the {self.provider} provider "
                 f"has been unresponsive. Requests will resume automatically in "
                 f"~{self._breaker.recovery_timeout:.0f}s."
             )
+            record_llm_failure(open_err, "breaker")
+            raise open_err
 
         active_client, is_fast = self._pick_client(task_type)
         client_label = "fast" if is_fast else "complex"
@@ -261,6 +344,7 @@ class LLMManager:
                         f"LLM [{client_label}] error (attempt {attempt}, non-retryable): {e}",
                         exc_info=True,
                     )
+                    record_llm_failure(e, client_label)
                     raise
                 logger.warning(
                     f"LLM [{client_label}] retryable error (attempt {attempt}/{LLM_MAX_RETRIES}): {e}"
@@ -273,7 +357,9 @@ class LLMManager:
                 logger.info(f"LLM [{client_label}] retry backoff: {backoff:.1f}s")
                 await asyncio.sleep(backoff)
 
-        raise last_error or RuntimeError("LLM generation failed after all retries")
+        final_error = last_error or RuntimeError("LLM generation failed after all retries")
+        record_llm_failure(final_error, client_label)
+        raise final_error
 
     # Injected into every LLM call to prevent language drift
     _LANGUAGE_INSTRUCTION = "Always respond in English, regardless of the language used in the user's message or any prior context."

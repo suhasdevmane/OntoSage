@@ -1,0 +1,805 @@
+# SATURATE (V4-T08): simulated temperature sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'temperature_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data>
+    a ref:Database ;
+    rdfs:label "Temperature Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 4.66 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "832d9459-8fa6-5c58-ae43-191f1eedfaa1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 4.67 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f7522661-9e02-5ff5-91be-40461fe73455" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 4.68 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cf68ea9f-73c4-5af9-8455-927b2b6399fd" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 4.69 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "51491871-51bc-5954-8686-b1502621de35" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 4.70 — Staff Break Room temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "78b6914d-3dfe-5567-84e0-f81e1e8f7538" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 4.71 — Storage Room temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4b7ec419-59ea-5b84-9280-10980455b4fc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.01 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e62fab9a-6fa4-5fb5-9531-49f48dfa4072" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.02 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "49199566-e65d-5316-b4da-aad32586dcbe" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.03 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "460169ce-faf6-5253-a08d-f0271939bbce" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.04 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c2eb0c81-568e-5122-ab58-b6d919c0b6ad" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.05 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "28f8dc73-a0ac-5ba7-b2f1-1e12fc22932c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.06 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f092d67e-838d-50ff-9e72-fddd9f5ad2b9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.07 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "31cfff0d-d6e1-5cb5-ae5f-1cecfdfefd0d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.08 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "16acefc2-ec7f-530b-9332-20f76d442b6d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.09 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "da9cfc55-a040-5432-9a05-1e465ee62fd2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.10 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "72f9eb2b-4532-5e19-a4b4-bf5304888a3b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.11 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c6111353-0fae-5482-8ed2-5f115ebb70e2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.12 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "58c29c72-6540-53a3-a419-a4bb6e2bb875" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.13 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "39a96257-e3b4-52c2-a848-72d989ff29be" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.14 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5c25d428-2933-56f4-901d-070f41ad99cd" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.15 — Seminar / Conference Room temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5c828611-e0eb-5422-83a9-204a21b87b6c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.16 — Seminar / Conference Room temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "634ddc24-906a-5a4f-9634-ce201e62924b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.17 — Meeting Room temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a0401d91-f184-5300-8e1f-170b70e10d4a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.18 — Meeting Room temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9fd59277-8253-5041-b57d-10b5863d7170" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.20 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8219991a-015a-5464-866c-cdfef2040bfa" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.21 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a8c5199a-2cbd-5cf7-bbe3-cb9bb6630018" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.22 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "886522e0-ffb4-58bc-b629-4a1e466fdb01" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.23 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "508bb237-9995-595d-b80e-76f857713881" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.26 — Staff Break Room / Kitchen temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5da2426b-047e-5dff-93a5-fd048d229251" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.34 — Telecommunications Room temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d40b3606-63b8-550d-953a-097e850fe9fb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.35 — Restroom (Male) temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b8b79e20-a96d-580e-a36c-f9804b5b8543" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.36 — Restroom (Female) temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7b68abca-98bc-5fd0-b716-c3df6ff6b51e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.44 — Server Room temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "abd25839-5267-59d9-ba53-ce66a06c475e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.45 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f78f4c64-b993-52f1-bb83-025cf88a7490" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.48 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5d2e5689-3ad1-5d2d-b01b-0bba387b5153" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.49 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "195b77b7-12d7-5d0a-8c4b-f283bfc7aff8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.50 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7a69b50e-b11d-5893-a592-9e4bbd27e60c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.51 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8888996f-d023-553b-aaeb-fb497da27d48" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.52 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "937c7ab5-665c-56b5-bdda-bd4f93a2812a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.53 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1011a5df-98fd-5c7e-ad84-601152279a7e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.54 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3ce8cfbe-830b-5b8c-91a9-6a10b728c311" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.56 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "473f16bf-5727-5d33-926e-0dcb24953364" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.57 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3e7cd822-9d55-5631-8afb-0d37b5619b8f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.58 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6f055055-141e-5b66-87b4-dcdb14df92b5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.59 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "19dd43ed-e47a-5f7d-9375-bc8c8101b9fa" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.60 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5fd066ac-9ed7-55c3-814a-aa003c1d1f67" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.61 — Research Laboratory temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d646a536-9bd9-5b0f-9fb5-1b934c542b1c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.62 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bdb7bfbc-8350-52d1-beb9-3f5d7b0fd955" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.63 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7052356f-87fa-5413-a2fe-4d9f2ee3ecc5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.64 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6604fae0-2bba-5e41-90b7-20317904af5d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.65 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c604833f-5919-5254-8ba6-5a0c38ef3cbf" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.66 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7b799e8a-0d7c-505a-81f7-535a0e750d7e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.67 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eebb7ca1-eb12-5cb1-b67b-f742467b6900" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.68 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9035c39f-866a-56ba-93fa-a92ba4c48a5f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.69 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cdea1bf9-ddb1-5366-b6f9-3137eb9b72b3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.70 — Academic Office temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1614705d-3a5d-54a6-99b3-cd4eba117b34" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Room 5.71 — Storage Room temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "70b6206f-981e-51b7-af53-5164a253039d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Server Room — Floor 2 (Room 2.44) temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1053a605-dba5-5f6c-a0ce-49717a87359b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Server Room — Floor 4 (Room 4.44) temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8a844535-1a3f-509c-9ff0-601815d084a2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Server Room — Floor 5 (Room 5.44) temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "af8cb805-f2f2-5f76-84c3-bb607f933f0b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 0 (Room 0.34) temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "56b5b20f-34b4-500d-8e5a-60f03cc9034b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 1 (Room 1.34) temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "62ccd1ce-8b05-5629-b15a-b87f633f2e8b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 2 (Room 2.34) temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "13d14160-20b4-5228-bcf6-3192f626a7b0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 3 (Room 3.38) temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1cb7eb88-e3a1-5c5b-bbe3-ae62696202c4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 4 (Room 4.34) temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "af5a6dbf-75f9-5cf0-87b9-af3983f2808e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 5 (Room 5.34) temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c0992eda-c4e3-5785-a4e4-10ecc9462669" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#temperature_data> ;
+    ] .

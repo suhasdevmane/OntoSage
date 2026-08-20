@@ -9,13 +9,13 @@ Covers:
   6. Missing override is silently skipped
   7. reload() picks up changes
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
 import yaml
-
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,8 +32,9 @@ def _make_registry(tmp_path: Path, base_yaml: str, override_yaml: str = "") -> "
         bldg_dir.mkdir(parents=True, exist_ok=True)
         (bldg_dir / "recipes.yaml").write_text(override_yaml)
 
-    import orchestrator.services.recipe_registry as mod
     import unittest.mock as mock
+
+    import orchestrator.services.recipe_registry as mod
 
     reg = RecipeRegistry()
     # Patch the search paths to point at tmp_path
@@ -161,8 +162,9 @@ def test_all_recipes_returns_copy(tmp_path):
 
 def test_reload_picks_up_changes(tmp_path):
     """reload() re-reads the YAML so new recipes appear."""
-    import orchestrator.services.recipe_registry as mod
     import unittest.mock as mock
+
+    import orchestrator.services.recipe_registry as mod
 
     cfg_dir = tmp_path / "config"
     cfg_dir.mkdir()

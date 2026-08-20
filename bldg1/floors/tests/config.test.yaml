@@ -1,0 +1,26 @@
+building: { id: Abacws, name: "Abacws Building", site: "Cardiff University" }
+units_to_metres: 0.001
+floors:
+  - { file: "synthetic/Abacws floor 0.dxf", storey: { id: "Storey_00", name: "Ground Floor", level: 0 } }
+  - { file: "synthetic/Abacws floor 1.dxf", storey: { id: "Storey_01", name: "First Floor",  level: 1 } }
+  - { file: "synthetic/Abacws floor 2.dxf", storey: { id: "Storey_02", name: "Second Floor", level: 2 } }
+merge:
+  core_patterns: ["\\bstair", "\\blift\\b", "\\bcore\\b"]
+  min_overlap_ratio: 0.5
+  adjacent_only: true
+  alignment_tolerance_m: 25.0
+geometry:
+  room_boundary_layers: ["USABLE", "POLYLINES"]
+  min_room_area_m2: 1.5
+  min_shared_boundary_m: 0.4
+  tolerance_m: 0.35
+labels:
+  layers: ["ROOM_NAMES"]
+  code_pattern: '^([0-9]{1,2}[A-Z][0-9]{1,3}|[0-9]{1,2}\.[0-9]{1,3})$'
+dimensions: { enabled: true, layers: [], min_measurement_m: 0.05, max_measurement_m: 500.0 }
+elements:
+  - { pattern: "*E-ELEC-EQPI*", brick_class: "Electrical_Equipment", label: "Electrical equipment" }
+doors:
+  layer_patterns: ["*A-DOOR*"]
+  block_name_patterns: ["*DR_*"]
+ignore_layers: ["A-ANNO-DIMS", "TITLE_BLK", "VPORT", "DEFPOINTS"]

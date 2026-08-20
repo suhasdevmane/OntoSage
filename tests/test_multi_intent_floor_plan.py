@@ -27,9 +27,7 @@ def test_floor_plan_intent_not_registered_by_default(chat_client):
     This is the non-regression contract: extending the router schema must not
     silently enable extra intents.
     """
-    r = requests.get(
-        f"{chat_client.base}/api/v1/admin/capability-indexer/status", timeout=10
-    )
+    r = requests.get(f"{chat_client.base}/api/v1/admin/capability-indexer/status", timeout=10)
     assert r.status_code == 200
     intents = r.json()["data"].get("router_intents", [])
     assert "capability" in intents, "capability must remain registered"
@@ -46,13 +44,11 @@ def test_floor_n_protection_still_holds_with_multi_intent_code(chat_client, fres
     """Sanity: the floor-N hijack protections must continue working with the
     intent-agnostic SemanticRouter refactor in place (even with no extra intents
     enabled)."""
-    resp = chat_client.chat(
-        "What is the temperature on floor 3?", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("What is the temperature on floor 3?", session_id=fresh_session_id)
     assert resp.success
-    assert not resp.contains("I have floor plans for"), (
-        "Floor-N hijack regression — multi-intent refactor must not break §15.2"
-    )
+    assert not resp.contains(
+        "I have floor plans for"
+    ), "Floor-N hijack regression — multi-intent refactor must not break §15.2"
 
 
 def test_capability_still_wins_with_no_extras(chat_client, fresh_session_id):

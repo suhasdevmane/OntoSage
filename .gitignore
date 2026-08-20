@@ -345,3 +345,8 @@ bldg*/.sensor_map.cache.json
 # record its own with --record before compare mode is meaningful.
 ##############################
 tasks/
+
+# Full CAD exports stashed by scripts/slim_floor_dxf.py --in-place. The repo
+# carries the slimmed, pipeline-equivalent DXFs; the untouched originals stay
+# local (50-135 MB each — over GitHub's 100 MB limit).
+dxf_originals/

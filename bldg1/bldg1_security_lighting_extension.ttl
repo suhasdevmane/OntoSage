@@ -5,6 +5,7 @@
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix owl:    <http://www.w3.org/2002/07/owl#> .
 @prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
 
 # ============================================================================
 # bldg1_security_lighting_extension.ttl
@@ -159,27 +160,27 @@ bldg:Daylight_Sensor_Roof a owl:NamedIndividual , brick:Illuminance_Sensor ;
 
 # ── Lighting on/off commands per floor ───────────────────────────────────────
 
-bldg:LightingCommand_Floor0 a owl:NamedIndividual , brick:Lighting_Command ;
+bldg:LightingCommand_Floor0 a owl:NamedIndividual , ontosage:Lighting_Command ;
     rdfs:label "Lighting On/Off Command — Floor 0"@en ;
     brick:isPartOf bldg:LightingSystem_Floor0 .
 
-bldg:LightingCommand_Floor1 a owl:NamedIndividual , brick:Lighting_Command ;
+bldg:LightingCommand_Floor1 a owl:NamedIndividual , ontosage:Lighting_Command ;
     rdfs:label "Lighting On/Off Command — Floor 1"@en ;
     brick:isPartOf bldg:LightingSystem_Floor1 .
 
-bldg:LightingCommand_Floor2 a owl:NamedIndividual , brick:Lighting_Command ;
+bldg:LightingCommand_Floor2 a owl:NamedIndividual , ontosage:Lighting_Command ;
     rdfs:label "Lighting On/Off Command — Floor 2"@en ;
     brick:isPartOf bldg:LightingSystem_Floor2 .
 
-bldg:LightingCommand_Floor3 a owl:NamedIndividual , brick:Lighting_Command ;
+bldg:LightingCommand_Floor3 a owl:NamedIndividual , ontosage:Lighting_Command ;
     rdfs:label "Lighting On/Off Command — Floor 3"@en ;
     brick:isPartOf bldg:LightingSystem_Floor3 .
 
-bldg:LightingCommand_Floor4 a owl:NamedIndividual , brick:Lighting_Command ;
+bldg:LightingCommand_Floor4 a owl:NamedIndividual , ontosage:Lighting_Command ;
     rdfs:label "Lighting On/Off Command — Floor 4"@en ;
     brick:isPartOf bldg:LightingSystem_Floor4 .
 
-bldg:LightingCommand_Floor5 a owl:NamedIndividual , brick:Lighting_Command ;
+bldg:LightingCommand_Floor5 a owl:NamedIndividual , ontosage:Lighting_Command ;
     rdfs:label "Lighting On/Off Command — Floor 5"@en ;
     brick:isPartOf bldg:LightingSystem_Floor5 .
 
@@ -258,33 +259,33 @@ bldg:CCTV_CarPark a owl:NamedIndividual , bldg:CCTV_Camera ;
 
 # ── Intruder detection (alarm zones) ─────────────────────────────────────────
 
-bldg:IntrusionZone_Floor0 a owl:NamedIndividual , brick:Alarm_Group ;
+bldg:IntrusionZone_Floor0 a owl:NamedIndividual , ontosage:Alarm_Group ;
     rdfs:label "Intruder Alarm Zone — Floor 0"@en ;
     brick:isPartOf bldg:Floor0 ;
     brick:hasPart bldg:IntrusionDetector_Floor0_A ;
     brick:hasPart bldg:IntrusionDetector_Floor0_B .
 
-bldg:IntrusionZone_Floor1 a owl:NamedIndividual , brick:Alarm_Group ;
+bldg:IntrusionZone_Floor1 a owl:NamedIndividual , ontosage:Alarm_Group ;
     rdfs:label "Intruder Alarm Zone — Floor 1"@en ;
     brick:isPartOf bldg:Floor1 ;
     brick:hasPart bldg:IntrusionDetector_Floor1 .
 
-bldg:IntrusionZone_Floor2 a owl:NamedIndividual , brick:Alarm_Group ;
+bldg:IntrusionZone_Floor2 a owl:NamedIndividual , ontosage:Alarm_Group ;
     rdfs:label "Intruder Alarm Zone — Floor 2"@en ;
     brick:isPartOf bldg:Floor2 ;
     brick:hasPart bldg:IntrusionDetector_Floor2 .
 
-bldg:IntrusionZone_Floor3 a owl:NamedIndividual , brick:Alarm_Group ;
+bldg:IntrusionZone_Floor3 a owl:NamedIndividual , ontosage:Alarm_Group ;
     rdfs:label "Intruder Alarm Zone — Floor 3"@en ;
     brick:isPartOf bldg:Floor3 ;
     brick:hasPart bldg:IntrusionDetector_Floor3 .
 
-bldg:IntrusionZone_Floor4 a owl:NamedIndividual , brick:Alarm_Group ;
+bldg:IntrusionZone_Floor4 a owl:NamedIndividual , ontosage:Alarm_Group ;
     rdfs:label "Intruder Alarm Zone — Floor 4"@en ;
     brick:isPartOf bldg:Floor4 ;
     brick:hasPart bldg:IntrusionDetector_Floor4 .
 
-bldg:IntrusionZone_Floor5 a owl:NamedIndividual , brick:Alarm_Group ;
+bldg:IntrusionZone_Floor5 a owl:NamedIndividual , ontosage:Alarm_Group ;
     rdfs:label "Intruder Alarm Zone — Floor 5"@en ;
     brick:isPartOf bldg:Floor5 ;
     brick:hasPart bldg:IntrusionDetector_Floor5 .
@@ -318,7 +319,7 @@ bldg:IntrusionDetector_Floor5 a owl:NamedIndividual , bldg:IntrusionDetector ;
     brick:isPartOf bldg:Floor5 .
 
 # ── Alarm panel ──────────────────────────────────────────────────────────────
-bldg:AlarmPanel_Main a owl:NamedIndividual , brick:Alarm_Group ;
+bldg:AlarmPanel_Main a owl:NamedIndividual , ontosage:Alarm_Group ;
     rdfs:label "Main Intruder Alarm Panel"@en ;
     brick:isPartOf bldg:Floor0 ;
     brick:hasPart bldg:IntrusionZone_Floor0 ;

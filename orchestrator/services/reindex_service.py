@@ -6,7 +6,9 @@ sensors.  start() returns immediately with a job_id; the actual work runs as
 an asyncio background task.  Callers poll status(job_id) until finished_at is
 set and status is "done" or "error".
 
-Supported targets: 'capability' | 'documents' | 'floor_plans' | 'ontology_similarity'
+Supported targets: 'documents' | 'floor_plans' | 'ontology_similarity'.
+'capability' is accepted but is a no-op — capability facts are ontology
+triples now (TODO-012), so there is no vector index behind them.
 
 'ontology_similarity' rebuilds the GraphDB similarity index (NOT a Qdrant collection) that the
 sensor RAG retriever queries — the reindex that surfaces newly-registered sensors in semantic
@@ -33,10 +35,8 @@ class ReindexService:
 
     def __init__(
         self,
-        capability_indexer: Optional[Any] = None,
         document_indexer: Optional[Any] = None,
     ) -> None:
-        self._capability_indexer = capability_indexer
         self._document_indexer = document_indexer
         self._jobs: Dict[str, Dict[str, Any]] = {}
         # Retain a strong reference to each background task. asyncio keeps only a
@@ -50,20 +50,27 @@ class ReindexService:
 
     def set_indexers(
         self,
-        capability_indexer: Optional[Any] = None,
         document_indexer: Optional[Any] = None,
     ) -> None:
         """Refresh the indexer references (called by the single reindex gateway each request).
 
         Resolving indexers late — rather than binding them once at construction — lets one shared
-        service be created early in startup (before the indexers exist) yet still run capability /
+        service be created early in startup (before the indexers exist) yet still run
         document reindexes correctly once they are attached to app.state.
         """
-        self._capability_indexer = capability_indexer
         self._document_indexer = document_indexer
 
-    def start(self, targets: List[str], *, building_id: str = "bldg1") -> str:
-        """Queue a re-index job and return the job_id (8-char UUID prefix) immediately."""
+    def start(self, targets: List[str], *, building_id: Optional[str] = None) -> str:
+        """Queue a re-index job and return the job_id (8-char UUID prefix) immediately.
+
+        ``building_id`` defaults to the ACTIVE building rather than a literal
+        (CAVEAT-094): a hardcoded default would silently re-index a building
+        this deployment may not even have.
+        """
+        if not building_id:
+            from shared.config import settings as _s
+
+            building_id = _s.BUILDING_ID
         job_id = uuid.uuid4().hex[:8]
         job: Dict[str, Any] = {
             "id": job_id,
@@ -168,13 +175,15 @@ class ReindexService:
     async def _run_target(self, target: str, building_id: str) -> Dict[str, Any]:
         """Dispatch a single target; return a result dict."""
         if target == "capability":
-            if self._capability_indexer is None:
-                return {"skipped": "indexer not available"}
-            result = await self._capability_indexer.index_building(building_id)
+            # Capability facts are ontosage:Amenity / ontosage:KnowledgeTopic
+            # TRIPLES now (TODO-012), not an embedded YAML KB, so there is
+            # nothing here to re-embed — uploading the TTL through the admin
+            # Capabilities screen is what publishes them. Answered explicitly
+            # rather than dropped, so an old client asking for this target gets
+            # a reason instead of silence.
             return {
-                "status": result.status,
-                "points": result.points,
-                "entries": result.entries,
+                "skipped": "capabilities are ontology triples — upload the TTL "
+                "via the admin Capabilities screen; no vector index to rebuild"
             }
 
         if target == "documents":

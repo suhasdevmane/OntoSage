@@ -40,6 +40,7 @@ from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from orchestrator.auth_manager import AuthManager
+from orchestrator.llm_manager import begin_llm_trace, llm_degradation
 from orchestrator.middleware.rbac import ROLE_PERMISSIONS, UserContext
 from orchestrator.postgres_manager import PostgresManager
 from orchestrator.redis_manager import RedisManager
@@ -843,6 +844,51 @@ async def lifespan(app: FastAPI):
     except Exception as _re_err:
         logger.warning(f"[rules_engine] failed to start (non-fatal): {_re_err}")
 
+    # V5-T39: PROTECT — warm-load the policy engine so the first fetch doesn't pay
+    if str(getattr(settings, "PROTECT_ENFORCE", "shadow")).lower() != "off":
+        try:
+            from orchestrator.services.privacy.enforcement import get_policy_engine
+
+            async def _pdp_warm_load() -> None:
+                await asyncio.sleep(150)  # GraphDB must be up before policies load
+                engine = await get_policy_engine()
+                if engine is not None:
+                    logger.info(
+                        f"[protect] PDP ready (mode={settings.PROTECT_ENFORCE}, "
+                        f"policies={len(engine._policies or [])})"
+                    )
+
+            asyncio.create_task(_pdp_warm_load())
+        except Exception as _pdp_err:
+            logger.warning(f"[protect] PDP warm-load not scheduled: {_pdp_err}")
+
+    # V5-T19: anomaly scanner — scheduled sweep persisting episodes to the events store
+    if settings.ANOMALY_SCAN_INTERVAL_SECS > 0:
+        try:
+            from orchestrator.services.anomaly.scanner import (
+                AnomalyScanner as _AScanner,
+            )
+
+            async def _anomaly_scan_loop() -> None:
+                await asyncio.sleep(180)  # let GraphDB/adapters warm up after boot
+                scanner = _AScanner(settings.BUILDING_ID, settings.BUILDING_NAMESPACE)
+                while True:
+                    try:
+                        await scanner.scan_once()
+                    except Exception as scan_err:
+                        logger.warning(f"[anomaly-scan] sweep failed (will retry): {scan_err}")
+                    await asyncio.sleep(settings.ANOMALY_SCAN_INTERVAL_SECS)
+
+            app.state.anomaly_scan_task = asyncio.create_task(_anomaly_scan_loop())
+            logger.info(
+                f"[anomaly-scan] scheduled every {settings.ANOMALY_SCAN_INTERVAL_SECS}s "
+                "(first sweep ~3min after boot)"
+            )
+        except Exception as _as_err:
+            logger.warning(f"[anomaly-scan] failed to schedule (non-fatal): {_as_err}")
+    else:
+        logger.info("[anomaly-scan] ANOMALY_SCAN_INTERVAL_SECS=0 — scanner idle")
+
     # B.6: Initialize multi-building manager — discovers and loads all building configs
     try:
         building_manager = get_building_manager(
@@ -996,89 +1042,31 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"Entity enrichment failed (non-fatal): {e}")
 
-    # Capability semantic routing — embed KB into Qdrant per building (idempotent
-    # via SHA-256 fingerprint).  Always runs, regardless of feature flag, so the
-    # data is ready when the flag is flipped on.  Failure is non-fatal — orchestrator
-    # boots, SemanticRouter returns source="fallback" at query time.
+    # Embedding service — shared by document search and agent memory.
+    #
+    # This block used to also build a CapabilityIndexer and a stateful
+    # SemanticRouter for the capability.yaml knowledge base. That KB was
+    # replaced by ontosage:Amenity / ontosage:KnowledgeTopic TRIPLES answered by
+    # CapabilityGraphResolver (TODO-012), so the indexer had no YAML to read and
+    # the router's classify() had no caller. Both are gone (TODO-081); what is
+    # kept is the embedding service they happened to create, which the document
+    # KB and agent memory genuinely need — including its background pre-warm, so
+    # the first user query does not pay the ~5-7s cold model load.
     try:
-        from qdrant_client import AsyncQdrantClient
-
-        from orchestrator.services.capability_indexer import CapabilityIndexer
         from orchestrator.services.embedding_service import EmbeddingService
-        from orchestrator.services.semantic_router import SemanticRouter
 
-        _qdrant_async = AsyncQdrantClient(url=settings.QDRANT_URL)
         _embedding_service = EmbeddingService(
             redis_manager=redis_manager,
             cache_ttl_seconds=settings.EMBEDDING_CACHE_TTL_SECONDS,
         )
-        # Pre-warm the local embedding model in the background so the first user
-        # query does not pay the ~5-7s cold-load (moves the cost to startup).
         asyncio.get_event_loop().run_in_executor(None, _embedding_service.warm)
-        capability_indexer = CapabilityIndexer(
-            qdrant_client=_qdrant_async,
-            embedding_service=_embedding_service,
-            input_root="/app/input",
-        )
-        index_results = await capability_indexer.index_all_buildings()
-        for bldg, result in index_results.items():
-            logger.info(
-                f"[capability_indexer] {bldg}: status={result.status} "
-                f"entries={result.entries} points={result.points} "
-                f"duration_ms={result.duration_ms:.0f}"
-                + (f" reason={result.reason}" if result.reason else "")
-            )
-
-        semantic_router = SemanticRouter(
-            qdrant_client=_qdrant_async,
-            embedding_service=_embedding_service,
-            input_root="/app/input",
-        )
-        semantic_router.register_intent("capability", "capability_")
-
-        # Multi-intent extension (2026-05-22): for each building, peek at its
-        # intent_routing block in building.yaml and register any enabled extra
-        # intents. Each one gets its own Qdrant collection prefix `intent_<name>_`.
-        # Indexing of those collections happened inside index_all_buildings() above.
-        from pathlib import Path as _Path
-
-        import yaml as _yaml_for_intents
-
-        _input_root_path = _Path("/app/input")
-        _extra_intents_registered = set()
-        if _input_root_path.exists():
-            for _bldg_dir in _input_root_path.iterdir():
-                _bldg_yaml = _bldg_dir / "building.yaml"
-                if not _bldg_yaml.exists():
-                    continue
-                try:
-                    with open(_bldg_yaml, "r", encoding="utf-8") as fh:
-                        _data = _yaml_for_intents.safe_load(fh) or {}
-                    _intent_block = _data.get("intent_routing") or {}
-                    for _intent_name, _raw in _intent_block.items():
-                        if (_raw or {}).get("enabled"):
-                            _extra_intents_registered.add(_intent_name)
-                except Exception as _e:
-                    logger.debug(
-                        f"[capability_routing] building.yaml parse skipped for "
-                        f"{_bldg_dir.name}: {_e}"
-                    )
-        for _intent in sorted(_extra_intents_registered):
-            semantic_router.register_intent(_intent, f"intent_{_intent}_")
-
-        app.state.capability_indexer = capability_indexer
-        app.state.semantic_router = semantic_router
         app.state.embedding_service = _embedding_service
-        # Expose the per-building IndexResult so /api/v1/admin/capability-indexer/status
-        # can surface it.  Keys are building_id, values are IndexResult dataclasses.
-        app.state.capability_index_results = index_results
-
-        # Inject into orchestrator so dialogue_agent can use it
-        if orchestrator and hasattr(orchestrator, "dialogue_agent"):
-            orchestrator.dialogue_agent.semantic_router = semantic_router
-            logger.info("[capability_routing] SemanticRouter wired into dialogue_agent")
+        logger.info(
+            f"[embedding] service ready (provider={_embedding_service.provider}, "
+            f"dim={_embedding_service.dimension}); pre-warm running in background"
+        )
     except Exception as e:
-        logger.warning(f"Capability semantic routing init failed (non-fatal): {e}")
+        logger.warning(f"Embedding service init failed (non-fatal): {e}")
 
     # T08: Document KB indexing (per-building documents/ folder -> Qdrant documents_<bldg>)
     try:
@@ -1132,6 +1120,7 @@ async def lifespan(app: FastAPI):
         # Wire into capability_agent so the document-search fallback is available
         init_document_search(_doc_qdrant_client_ref, _doc_embed_ref)
         app.state.doc_indexer = doc_indexer
+        app.state.doc_index_results = doc_index_results
     except Exception as e:
         logger.warning(f"Document KB indexing init failed (non-fatal): {e}")
 
@@ -2139,15 +2128,25 @@ async def _run_workflow_as_job(
 @app.post("/chat", response_model=APIResponse)
 async def chat(
     request: ChatRequest,
-    user: UserContext = Depends(require_permission("sensor:read")),
+    user: UserContext = Depends(require_permission("metadata:read")),
 ):
     """
     Synchronous chat endpoint (requires authentication)
+
+    V5-T42: the gate is ``metadata:read`` (every role has it, including
+    readonly) — the old ``sensor:read`` gate 403'd readonly users before the
+    conversational layer could refuse GRACEFULLY. Data protection does not
+    live at this door anymore: per-lane RBAC plus the PDP at every fetch
+    chokepoint (V5-T39) decide what each role actually receives.
 
     Request body validated via ChatRequest Pydantic model.
     Max message length: 10 000 chars. Null bytes / control chars stripped.
     """
     try:
+        # V5-BUG-177: see /v1/chat/completions — a turn must declare when the
+        # LLM refused, so graders quarantine it instead of scoring the fallback.
+        begin_llm_trace()
+
         username = user.username
 
         # Sanitize all input fields
@@ -2329,6 +2328,12 @@ async def chat(
         assistant_metadata = assistant_entry.metadata if assistant_entry else None
         logger.info(f"✅ Assistant Response: {assistant_message[:200]}...")
 
+        # V4 (T24): persist the proof-of-analysis dossier with the transcript,
+        # the same way media rides Message.metadata
+        _dossier = updated_state.intermediate_results.get("evidence_dossier")
+        if _dossier:
+            assistant_metadata = {**(assistant_metadata or {}), "evidence": _dossier}
+
         # Save assistant message
         await redis_manager.save_message(
             conversation_id, "assistant", assistant_message, metadata=assistant_metadata
@@ -2353,6 +2358,16 @@ async def chat(
                 "analytics": analytics_flag,
                 "media": (assistant_metadata.get("media") if assistant_metadata else None),
                 "sources": updated_state.intermediate_results.get("sources", []),
+                # V4 ARBITER (T24/T22): the proof-of-analysis dossier and the
+                # structured clarify payload ride the same wiring as `sources`
+                "evidence": updated_state.intermediate_results.get("evidence_dossier"),
+                "clarification": updated_state.intermediate_results.get(
+                    "needs_clarification_payload"
+                ),
+                # V4-T33: unified plan trace (reflex 1-step or deliberative)
+                "plan_trace": updated_state.intermediate_results.get("plan_trace"),
+                # V5-BUG-177: None when the LLM behaved; a cause summary otherwise.
+                "llm_degraded": llm_degradation(),
             },
         )
 
@@ -2364,11 +2379,12 @@ async def chat(
 @app.post("/chat/stream")
 async def chat_stream(
     request: ChatRequest,
-    user: UserContext = Depends(require_permission("sensor:read")),
+    user: UserContext = Depends(require_permission("metadata:read")),
 ):
     """
     Streaming chat endpoint (Server-Sent Events).
     Emits `progress` events per LangGraph node, then `token` with the final response.
+    V5-T42: gate matches /chat — metadata:read; lane RBAC + PDP protect the data.
     """
     # Node → user-friendly label map shared between SSE generator and WS handler
     _NODE_LABELS: dict = {
@@ -3028,6 +3044,11 @@ async def websocket_stream(websocket: WebSocket):
                     "conversation_id": conversation_id,
                     "intent": final_state.current_intent,
                     "sources": final_state.intermediate_results.get("sources", []),
+                    "evidence": final_state.intermediate_results.get("evidence_dossier"),
+                    "clarification": final_state.intermediate_results.get(
+                        "needs_clarification_payload"
+                    ),
+                    "plan_trace": final_state.intermediate_results.get("plan_trace"),
                 }
             )
 
@@ -3307,6 +3328,10 @@ async def openai_chat_completions(
     `_oai_auth` dependency — Open WebUI sends it as OPENAI_API_KEY.
     """
     try:
+        # V5-BUG-177: record LLM faults for THIS turn so the reply can declare
+        # whether it is behaviour or the wreckage of an outage/quota refusal.
+        begin_llm_trace()
+
         data = await request.json()
         messages = data.get("messages", [])
         if not messages:
@@ -3627,6 +3652,13 @@ async def openai_chat_completions(
                     }
                 ],
                 "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+                # This apology is not an answer — never let a grader score it.
+                "ontosage_llm_degraded": {
+                    "failed_calls": 1,
+                    "causes": ["pipeline_timeout"],
+                    "rate_limited": False,
+                    "detail": f"pipeline exceeded {settings.REQUEST_TIMEOUT_SECS}s",
+                },
             }
 
         assistant_message = (
@@ -3674,6 +3706,9 @@ async def openai_chat_completions(
                 }
             ],
             "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+            # None when the LLM behaved; a cause summary when it refused/timed out.
+            # OpenAI clients ignore unknown fields; graders quarantine on it.
+            "ontosage_llm_degraded": llm_degradation(),
         }
 
     except Exception as e:
@@ -3809,71 +3844,95 @@ async def list_floor_plan_manifests(
         return APIResponse(success=False, error=str(e), data={"floors": [], "total": 0})
 
 
+@app.get("/api/v1/admin/index-status", response_model=APIResponse)
 @app.get("/api/v1/admin/capability-indexer/status", response_model=APIResponse)
-async def capability_indexer_status(
+async def index_status(
     user: UserContext = Depends(require_permission("system:health")),
 ):
-    """Per-building status of the capability KB indexer.
+    """What the building currently has indexed, per subsystem.
 
-    Surfaces the IndexResult that the FastAPI lifespan recorded at startup.
-    Used by ops dashboards and by integration tests that previously skipped
-    because there was no API surface for this data.
+    This used to report the capability.yaml Qdrant KB. That KB is gone
+    (TODO-012/TODO-081) — structured capability facts are now
+    ``ontosage:Amenity`` / ``ontosage:KnowledgeTopic`` triples in the ontology,
+    and free prose lives in the document index. So the view reports the two
+    things that actually exist, which is what an admin needs before asking why
+    a question went unanswered:
 
-    Read-only.  No auth required (parity with /health) since it exposes no
-    secrets — just operational state.
+    * **documents** — per-building result of the last document ingestion,
+      the path behind a prose answer from an uploaded manual or policy.
+    * **capabilities** — how many Amenity / KnowledgeTopic subjects the graph
+      holds. Zero here with a capability question failing means the TTL was
+      never loaded, not that the query was misunderstood.
+    * **embedding** — provider and dimension. A collection written under a
+      different model is unusable and returns nothing rather than raising, so
+      the width belongs on the same screen as the counts.
 
-    Returns:
-        {
-          "success": true,
-          "data": {
-            "indexer_ready": bool,
-            "router_ready": bool,
-            "router_intents": ["capability", ...],
-            "embedding_provider": "openai"|"local",
-            "embedding_dimension": int,
-            "buildings": {
-              "<bldg_id>": {
-                "status": "indexed"|"skipped"|"degraded"|"disabled",
-                "entries": int,
-                "points": int,
-                "duration_ms": float,
-                "yaml_sha": str,
-                "reason": str
-              }
-            }
-          }
-        }
+    The legacy ``/capability-indexer/status`` path is kept as an alias so
+    existing dashboards and integration tests keep working. Read-only.
     """
     try:
-        indexer = getattr(app.state, "capability_indexer", None)
-        router = getattr(app.state, "semantic_router", None)
-        results = getattr(app.state, "capability_index_results", None) or {}
         embedder = getattr(app.state, "embedding_service", None)
+        doc_indexer = getattr(app.state, "doc_indexer", None)
+        doc_results = getattr(app.state, "doc_index_results", None) or {}
 
-        building_status = {}
-        for bldg_id, result in results.items():
-            building_status[bldg_id] = {
-                "status": result.status,
-                "entries": result.entries,
-                "points": result.points,
-                "duration_ms": round(result.duration_ms, 1),
-                "yaml_sha": result.yaml_sha,
-                "reason": result.reason,
+        documents = {}
+        for bldg_id, result in doc_results.items():
+            documents[bldg_id] = {
+                "status": getattr(result, "status", None),
+                "documents": getattr(result, "documents", None),
+                "chunks": getattr(result, "chunks", None),
+                "reason": getattr(result, "reason", None),
             }
+
+        # Capability triples — counted live, never cached, so the number is the
+        # graph's and not a boot-time snapshot that a later TTL upload invalidated.
+        capabilities: Dict[str, Any] = {"available": False}
+        try:
+            # Import the resolver's OWN prefix rather than restating the IRI:
+            # a count that silently disagrees with the resolver's namespace
+            # would report 0 amenities for a building that has them.
+            from orchestrator.services.capability_graph_resolver import (
+                _ONTO,
+                _default_sparql_exec,
+            )
+
+            data = await _default_sparql_exec(
+                _ONTO + "SELECT ?kind (COUNT(DISTINCT ?s) AS ?n) WHERE { "
+                "  { ?s a ontosage:Amenity . BIND('amenity' AS ?kind) } UNION "
+                "  { ?s a ontosage:KnowledgeTopic . BIND('knowledge_topic' AS ?kind) } "
+                "} GROUP BY ?kind"
+            )
+            counts = {
+                b.get("kind", {}).get("value", ""): int(b.get("n", {}).get("value", 0))
+                for b in (data.get("results", {}).get("bindings", []) or [])
+            }
+            capabilities = {
+                "available": True,
+                "amenities": counts.get("amenity", 0),
+                "knowledge_topics": counts.get("knowledge_topic", 0),
+            }
+        except Exception as cap_err:  # graph unreachable — say so, do not report 0
+            logger.warning(f"[index_status] capability triple count unavailable: {cap_err}")
+            capabilities = {"available": False, "reason": str(cap_err)}
 
         return APIResponse(
             success=True,
             data={
-                "indexer_ready": indexer is not None,
-                "router_ready": router is not None,
-                "router_intents": list(router._intents.keys()) if router else [],
+                "documents_ready": doc_indexer is not None,
+                "documents": documents,
+                "capabilities": capabilities,
                 "embedding_provider": embedder.provider if embedder else None,
                 "embedding_dimension": embedder.dimension if embedder else None,
-                "buildings": building_status,
+                # Retained so older dashboards reading these keys do not break;
+                # the capability KB they described no longer exists.
+                "indexer_ready": doc_indexer is not None,
+                "router_ready": False,
+                "router_intents": [],
+                "buildings": documents,
             },
         )
     except Exception as e:
-        logger.error(f"capability_indexer_status failed: {e}")
+        logger.error(f"index_status failed: {e}")
         return APIResponse(success=False, error=str(e), data={})
 
 
@@ -4014,6 +4073,16 @@ async def upload_ontology_ttl(
     )
     if result.get("ok"):
         _enqueue_similarity_rebuild(result)  # new triples → refresh semantic RAG index
+        # V5-T39: uploaded TTL may carry AccessPolicy triples — refresh the PDP
+        if "AccessPolicy" in (body.ttl or ""):
+            try:
+                from orchestrator.services.privacy.enforcement import reload_policies
+
+                n_policies = await reload_policies()
+                result["policies_reloaded"] = n_policies
+                logger.info(f"[protect] policies reloaded after TTL upload: {n_policies}")
+            except Exception as _rp_err:
+                logger.warning(f"[protect] policy reload after upload failed: {_rp_err}")
     return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
 
 
@@ -4147,6 +4216,107 @@ async def delete_capability(
 
 
 # ---------------------------------------------------------------------------
+# Admin — access policies (V5-T43): governance authored as versioned TTL
+# ---------------------------------------------------------------------------
+
+
+class PolicyCreate(BaseModel):
+    """Guided AccessPolicy form. Becomes one ontosage:AccessPolicy instance on the
+    active building's namespace, written to input/<id>_policies.ttl."""
+
+    id: str = Field(
+        ..., min_length=1, max_length=64, description="Local name, e.g. policy_occupant"
+    )
+    role: str = Field(..., description="An RBAC role, or '*' for every role")
+    scope_spaces: str = Field(default="any", max_length=200)
+    min_sensors: int = Field(default=1, ge=1, le=1000, description="k-anonymity floor (sensors)")
+    min_spaces: int = Field(default=1, ge=1, le=1000, description="k-anonymity floor (spaces)")
+    tiers: str = Field(default="0:1", max_length=200, description="'minutes:seconds' pairs")
+    rate_max: int = Field(default=0, ge=0, le=100000, description="0 = unlimited")
+    rate_window_min: int = Field(default=0, ge=0, le=100000, description="0 = unlimited")
+    comment: str = Field(default="", max_length=1000)
+    acknowledge_weakening: bool = Field(
+        default=False,
+        description="Required when the edit lowers a floor / relaxes a limit — never implicit",
+    )
+    building_id: Optional[str] = None
+
+
+@app.get("/api/v1/admin/policies", response_model=APIResponse)
+async def list_access_policies(
+    building_id: Optional[str] = None,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """List every AccessPolicy the PDP would enforce, plus the guided-form schema.
+
+    ``editable: false`` marks the individual-privacy rules, which the GUI must not
+    offer to change — the system explains the building, it never tracks individuals.
+    """
+    from orchestrator.services.policy_admin import (
+        POLICY_FORM_SCHEMA,
+        known_roles,
+        list_policies,
+    )
+
+    bid = building_id or settings.BUILDING_ID
+    policies = await list_policies(bid)
+    return APIResponse(
+        success=True,
+        data={
+            "building_id": bid,
+            "policies": policies,
+            "roles": known_roles(),
+            "form_schema": POLICY_FORM_SCHEMA,
+            "enforcement_mode": _protect_enforcement_mode(),
+        },
+    )
+
+
+@app.post("/api/v1/admin/policies", response_model=APIResponse)
+async def create_access_policy(
+    body: PolicyCreate,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Create/replace a policy, then reload the PDP and flush the response cache so the
+    change binds on the NEXT question. A change that weakens a guarantee is rejected
+    unless ``acknowledge_weakening`` is set, and is logged with the actor either way."""
+    from orchestrator.services.policy_admin import create_policy
+
+    bid = body.building_id or settings.BUILDING_ID
+    fields = body.model_dump(exclude={"building_id", "acknowledge_weakening"})
+    result = await create_policy(
+        bid,
+        fields,
+        actor=user.username,
+        acknowledge_weakening=body.acknowledge_weakening,
+    )
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
+@app.delete("/api/v1/admin/policies/{local_name}", response_model=APIResponse)
+async def delete_access_policy(
+    local_name: str,
+    building_id: Optional[str] = None,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Delete a policy. Individual-privacy rules are refused here by design."""
+    from orchestrator.services.policy_admin import delete_policy
+
+    bid = building_id or settings.BUILDING_ID
+    result = await delete_policy(bid, local_name, actor=user.username)
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
+def _protect_enforcement_mode() -> str:
+    try:
+        from orchestrator.services.privacy.enforcement import enforcement_mode
+
+        return enforcement_mode()
+    except Exception:
+        return "unknown"
+
+
+# ---------------------------------------------------------------------------
 # Admin — Qdrant re-index job queue
 # ---------------------------------------------------------------------------
 
@@ -4165,7 +4335,6 @@ def _get_reindex_service() -> Any:
 
         _reindex_service_instance = ReindexService()
     _reindex_service_instance.set_indexers(
-        capability_indexer=getattr(app.state, "capability_indexer", None),
         document_indexer=getattr(app.state, "doc_indexer", None),
     )
     return _reindex_service_instance
@@ -5480,6 +5649,43 @@ _COMMON_SENSOR_CLASSES = [
 ]
 
 
+@app.get("/api/v1/admin/onboarding/status", response_model=APIResponse)
+async def onboarding_status(user: UserContext = Depends(require_permission("system:admin"))):
+    """Per-step readiness for the ACTIVE building (TODO-072).
+
+    Every onboarding step already had an endpoint; what was missing was a way to
+    ASK whether they had been done. Without it "is this building ready?" could
+    only be answered by putting questions to it and reading the replies, which
+    cannot tell a missing step apart from a bad answer.
+
+    Each step reports from the LIVE SYSTEM, not from a checklist: the ontology
+    step counts spaces in the graph, the time-series step compares sensors the
+    graph DECLARES against UUIDs that actually have rows, and the floor-plan step
+    reports how many spaces resolved to an ontology IRI. Identity and ontology
+    are marked blocking — without them nothing can be answered at all; documents
+    and floor plans narrow what can be answered rather than breaking it.
+    """
+    from orchestrator.services import admin_config
+    from orchestrator.services import onboarding_status as _obs
+
+    # Reuse the batch answerability the Databases tab computes, so opening this
+    # screen does not fire a second round of probes at every datasource.
+    answerability = None
+    try:
+        dbs = admin_config.read_databases()
+        active = admin_config.active_db_keys()
+        keys = [d["key"] for d in dbs if (active is None) or (d["key"] in active)]
+        pairs = await asyncio.gather(*[_answerability_for(k) for k in keys]) if keys else []
+        answerability = {
+            "total_declared": sum(int(p.get("declared") or 0) for p in pairs),
+            "total_with_data": sum(int(p.get("with_data") or 0) for p in pairs),
+        }
+    except Exception as e:
+        logger.debug(f"[onboarding-status] answerability unavailable: {e}")
+
+    return APIResponse(success=True, data=await _obs.collect_status(answerability))
+
+
 @app.get("/api/v1/admin/onboarding/vocab", response_model=APIResponse)
 async def onboarding_vocab(user: UserContext = Depends(require_permission("system:admin"))):
     """Vocabulary for the guided sensor form: Brick sensor classes + brick:Location instances
@@ -5868,6 +6074,12 @@ async def reingest_floor_plans(
         pdf_pipeline = get_floor_plan_pipeline()
         dwg_pipeline = get_dwg_pipeline()
         results_map: dict = {}  # (building_id, floor) → result dict
+        # Keep what each pipeline just produced. Re-reading the PDF manifest
+        # from disk would return the previous MERGE, because the merged
+        # manifest is written to the same path (BUG-198); ingest_all() merges
+        # in-memory results for exactly this reason.
+        fresh_pdf: dict = {}
+        fresh_dwg: dict = {}
 
         for path in files_to_ingest:
             try:
@@ -5887,12 +6099,11 @@ async def reingest_floor_plans(
                     "warnings": 0,
                 }
                 if path.suffix.lower() == ".pdf":
+                    fresh_pdf[key] = manifest
                     results_map[key]["data_sources"].append("pdf")
-                    results_map[key]["spaces"] = max(
-                        results_map[key]["spaces"], len(manifest.spaces)
-                    )
                     results_map[key]["warnings"] += len(manifest.warnings)
                 else:
+                    fresh_dwg[key] = manifest
                     results_map[key]["data_sources"].append("dwg")
             except Exception as file_err:
                 logger.warning(f"[reingest] {path.name} failed: {file_err}")
@@ -5900,12 +6111,27 @@ async def reingest_floor_plans(
         # Run final merge pass for all affected floors
         for bid, fl in list(results_map.keys()):
             try:
-                dwg_m = dwg_pipeline.load_manifest(bid, fl)
-                pdf_m = pdf_pipeline.load_manifest(bid, fl)
+                dwg_m = fresh_dwg.get((bid, fl)) or dwg_pipeline.load_manifest(bid, fl)
+                pdf_m = fresh_pdf.get((bid, fl)) or pdf_pipeline.load_manifest(bid, fl)
                 merged = registry._merge(dwg_m, pdf_m)
                 if merged:
+                    # Link the MERGED space set — a floor whose PDF has no text
+                    # layer has no linked PDF space for a DWG space to inherit an
+                    # IRI from, so this is the only place those rooms get one.
+                    # Shared with boot-time ingest deliberately: this block used
+                    # to be a private copy, and the same inputs linked or did not
+                    # depending on which path ran.
+                    await registry.link_unlinked_spaces(merged)
                     await registry._write_manifest(merged)
+                    await pdf_pipeline._embed_and_index(merged)
                     results_map[(bid, fl)]["schema_version"] = merged.schema_version
+                    # Report the MERGED count — the pre-merge PDF count made a
+                    # floor whose duplicates had just been collapsed look
+                    # unchanged.
+                    results_map[(bid, fl)]["spaces"] = len(merged.spaces)
+                    results_map[(bid, fl)]["linked"] = sum(
+                        1 for s in merged.spaces if s.ontology_iri
+                    )
             except Exception as merge_err:
                 logger.warning(f"[reingest] merge failed for {bid}/floor {fl}: {merge_err}")
 

@@ -1,0 +1,1597 @@
+# SATURATE (V4-T08): simulated window_contact sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'contact_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://buildsys.org/ontologies/bldg3#> .
+
+<http://buildsys.org/ontologies/bldg3#contact_data>
+    a ref:Database ;
+    rdfs:label "Contact Data" .
+
+<http://buildsys.org/ontologies/bldg3#RM007_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM007_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM007_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b9a7a243-844b-55e9-91cc-07415b831c33" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM039_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM039_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM039_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "43b10c45-95af-5a73-b9f1-fc007dd20623" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM100A_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM100A_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM100A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "12bc20b1-6007-5135-ad57-52e5abbfa1d0" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM103_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM103_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM103_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "beb32271-73ca-5c1a-9435-520a48485a34" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM107_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM107_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM107_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d4aaad10-dbfd-53fb-8462-4d30add33c2f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM108_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM108_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM108_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "71600e55-eb25-5319-86b0-f09cb45bb8b4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM109_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM109_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM109_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "31ad7a70-0ab0-5248-833b-6055b03c5fbf" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM111_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM111_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM111_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fa1cb299-2294-5a3c-be1a-152fe69d8b4a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM112_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM112_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM112_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "31ed99b6-fa3b-52fe-918c-a4634c1154a7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM114_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM114_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM114_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cd17dfac-76b9-56b9-aeb8-deb62d3f2a59" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM115_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM115_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM115_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3606693a-8b53-54c9-82af-88f4bb67fe53" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM117_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM117_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM117_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "70ecf20b-4962-526d-af62-1df6f752a5fc" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM118_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM118_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM118_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5aac3530-7379-5e60-85ff-742f299b8174" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM120_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM120_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM120_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ab8563a9-e641-55b9-9b13-589846fddd3e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM122_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM122_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM122_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3e3eaaee-6a18-5b95-ae51-e1570daed24c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM123_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM123_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM123_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3cf235b9-23e6-5b59-aa11-6e2dcaabf415" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM124_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM124_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM124_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "21140959-2044-5719-9566-1aad6ea7a769" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM125_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM125_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM125_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1e43b800-a43c-5f36-a643-ef09f0fa0481" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM126_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM126_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM126_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "81bf2157-cf71-5594-81db-8c290602241f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM128_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM128_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM128_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "65e3c034-e9f9-5e22-88bc-a8242a9a46c6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM131_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM131_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM131_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b14e335d-32c6-5206-bac2-dc3c9e709a26" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM133_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM133_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM133_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a748e953-df1c-5051-b4d4-3a19f0b58e1c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM143_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM143_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM143_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5b126fef-3d9f-5add-a13b-0692c1d7b4b4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM149_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM149_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM149_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c54cd3be-6553-57ca-9fd9-f9d402667a70" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM157_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM157_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM157_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bd2713c5-d5cc-5f9d-a399-0c9e0fd36584" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM159_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM159_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM159_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "051c5a27-3605-5ea1-8250-2afe406fef1a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM161_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM161_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM161_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "52922f3c-1045-54a1-92c2-86cf6f1f7dba" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163A_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163A_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bb97051c-18bf-57d3-855a-df3070b9ce7d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163B_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163B_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6c0139ed-5293-54e8-b54a-3f89f7338f5e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163C_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163C_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "977650ad-f225-5d1f-b2bf-ab8172dcd729" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163E_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163E_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163E_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "14d708f4-ee99-56fb-a658-90b4fd8d697d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163F-B_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163F-B_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163F-B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "97b5a1c9-eb3d-5844-a313-143dc86fbaa2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163F_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163F_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163F_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4d3389e7-3aaf-5285-89ed-1631e93ed6c4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163G_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163G_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163G_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f8a23442-c995-534e-819f-bde40eaa6a0e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163I_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163I_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163I_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "35eb923f-d9c2-53b7-95bb-f178a71c9cc2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163J_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163J_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163J_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5a543475-8127-590c-9aa7-95574a70844c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163K-B_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163K-B_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163K-B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "827d76f4-d810-5e2d-9c75-1ae426e8759b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163K_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163K_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163K_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dac32464-8b8e-52ba-9b10-070c671854ee" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163N-B_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163N-B_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163N-B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "600ce584-03ac-56fe-a147-02e369899189" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163N_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM163N_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163N_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3ba72516-e098-5a07-9596-68764b88ebce" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM166_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM166_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM166_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c7272660-594e-5d09-a8d5-32b2dcecfa66" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM171_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM171_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM171_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "440d23dd-e5fd-5ecb-87ad-ba9ded4dc919" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM172_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM172_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM172_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4c3c1d4d-ca32-5e9e-b3e8-4798f36191ae" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM175E_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM175E_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM175E_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "60544830-bb03-5cdd-9447-4753b76039d3" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM175W_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM175W_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM175W_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "33eb22bb-b6f7-5c78-b876-f33f8e64bff4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM176_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM176_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM176_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eec219f9-c244-5691-bdaf-fbdd44a10c89" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM184_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM184_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM184_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "faa91bd9-b9fc-5f1d-823c-2f86dd5aab09" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM190_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM190_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM190_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "28310527-dcdd-59d9-bc5c-41561bb17efe" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM200C_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM200C_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM200C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "924a7691-4ef2-51d7-b3ff-6238a4bcda2c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM201_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM201_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM201_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "efbe2a10-7135-5aa9-8dcf-76e1f0c77089" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM203_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM203_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM203_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "71032067-742b-5eb8-876d-af32ac83fe44" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM206_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM206_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM206_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f85b7831-41c0-5d79-84c1-8b96d2bb9d8f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM207_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM207_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM207_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cf0770ef-9562-54ee-8221-122fc01211ca" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM208_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM208_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM208_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b00dc50f-9f91-5a95-9118-2b0edd5f22e5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM209_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM209_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM209_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "52b8a760-9432-508d-af87-6a42e637ba4b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM210_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM210_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM210_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "06a8277c-f645-51a4-bb40-005bc30b370f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM211_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM211_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM211_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "68e51d20-df7b-5996-bbd2-efcdaa8928b1" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM212_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM212_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM212_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f62cfab1-d7dc-5f17-886e-ae98483dc832" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM213_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM213_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM213_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6b918dd9-da12-5ffe-b911-d9281902d91b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM214_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM214_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM214_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ec889cd7-dc8a-53cb-9e6a-a06c9476f384" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM216_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM216_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM216_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "caee9cff-9471-5473-aa1d-f5ed96d8afe0" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM217_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM217_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM217_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ef33b58b-a559-5c2d-996a-a3cb0d72f57c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM220_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM220_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM220_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7c1f2e1e-d67a-53ce-b182-5488748e7c76" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM222_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM222_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM222_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e5b0b2e6-e84d-5ca7-ba72-3c704c9620a7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM223_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM223_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM223_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8dc30d20-8e02-50f2-922c-e0196a31359e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM224_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM224_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM224_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "929ed319-e6e2-5bcd-b1d8-919572f57245" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM225_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM225_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM225_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6a682343-242c-59d1-84df-f379ac3246d9" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM226_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM226_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM226_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8a2f1a7d-5ebc-51c3-90b3-5642decb09ae" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM227_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM227_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM227_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5c31758b-da93-50a0-a44a-be05f986b56c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM228_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM228_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM228_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "098a048c-55de-5d59-9ddd-29933241f14c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM231_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM231_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM231_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "efb046c4-d4b6-5e31-b2f5-6db411118c10" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM233_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM233_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM233_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "22e2ba6e-2183-51f9-98f4-1e534e142ab1" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM239_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM239_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM239_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fba5c2b8-9256-598a-b2c5-99a0be41ba4a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM241_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM241_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM241_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1918f1c2-2072-5331-b63a-b98225efed2a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM247_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM247_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM247_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4de7927e-30a0-5aef-a243-c0cdacf567a4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM249_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM249_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM249_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "45465b61-fcad-56d0-a6cd-2237472752c7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM251_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM251_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM251_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1e41fc58-3481-5249-8581-19282ac54325" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM253_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM253_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM253_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eaddbf6f-dd5e-59a5-8e31-a24c97e89572" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM259A_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM259A_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM259A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e92b7d9d-19c9-59e0-81b4-1ddf146755d9" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM259_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM259_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM259_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7af16d4a-ccb0-5b4d-a98c-68d7ae5dafb1" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM266_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM266_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM266_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ea2b5587-ec9e-5ec4-8fc5-a8f812c5997d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM267_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM267_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM267_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "74be380a-bc4a-585b-8ca7-b555e0f41f17" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM270_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM270_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM270_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "716c62f9-6eeb-5bcd-981b-8cdb0f8aa4e6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM271_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM271_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM271_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f75e08f1-634b-5860-8dda-5751adfc5b09" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM272_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM272_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM272_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "13c93927-9f37-5c9a-ba18-38b5275b178d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM275_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM275_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM275_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bbecb8e7-37a8-5759-a434-8ae71b198145" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM276_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM276_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM276_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "36f492ed-f75b-5d23-bf55-e1d7afee81d8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM278_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM278_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM278_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4c358c31-bae6-5da3-9983-36207d379831" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM281_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM281_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM281_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b22ce4d1-e71b-54d0-840d-30ecc3fd3cab" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM300C_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM300C_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM300C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "38576e04-fd68-51e6-9c97-bc3ebbdb641a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM301A_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM301A_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM301A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b5c57100-5681-5270-9ca9-faca3b93536f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM306_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM306_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM306_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0bd25b50-999d-5823-af25-23b6d4dd8485" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM308_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM308_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM308_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f2c96472-bb67-5fa2-82bb-52ffa5fa972b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM309_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM309_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM309_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4f15c707-2f12-55d6-a97e-1e140224ca3b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM310_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM310_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM310_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bd3cba9e-21ed-5827-8751-1ce25897135b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM311_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM311_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM311_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dca5115d-a9d6-5303-82c7-d854e40aa34b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM312_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM312_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM312_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "04b1d268-b039-5ad3-9802-50764cac3ea3" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM314_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM314_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM314_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "255f571c-e563-5f7f-bc27-823550d0b59a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM315_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM315_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM315_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "44f5e15b-44d1-55e2-a0d5-a6f7f8dbf4f2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM316_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM316_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM316_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a132701a-6a16-5ff7-8314-c92f78531e62" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM317_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM317_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM317_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "65559431-154e-57a5-8a69-0a9ef88200ce" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM320_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM320_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM320_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "54e39211-0c51-561c-9137-2fe32e02802c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM322_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM322_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM322_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9eab8de2-1c33-5f73-a039-a6dd62c8873c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM323_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM323_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM323_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ded87ba3-de6b-5c0d-8852-c012b3b7b219" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM324_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM324_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM324_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4301a3ce-0716-5f89-9f99-44754bcc8a0d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM325_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM325_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM325_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7fee3746-6479-56a5-a283-5cceeb2b6987" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM326_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM326_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM326_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8f6f53e9-2039-53ed-b424-13d281d291e8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM327_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM327_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM327_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "de65d16c-bd3c-5c62-b148-db7d9dba9a74" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM328_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM328_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM328_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "05d30d87-ba1d-5378-8bc4-ec7cc6093305" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM331_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM331_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM331_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "950321f9-5355-53fd-bd6d-65ead5a9c734" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM333_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM333_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM333_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d37b80e5-4c2d-5c0e-8c90-1304300e1cad" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM339_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM339_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM339_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dfd0de5d-c074-5a79-85af-aafae1354347" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM341_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM341_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM341_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5c7f0623-2cf0-5101-abe0-1605dfab9936" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM345_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM345_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM345_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4aacff78-b5c3-5832-b40a-f19ef16588f0" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM347_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM347_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM347_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c0d31d28-7b71-53af-b519-b229d0d33782" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM349_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM349_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM349_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "14146f19-d187-5a98-be80-6626cfbddddd" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM350_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM350_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM350_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "36df24d7-c4af-5223-9fc6-113e30b8979f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM351_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM351_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM351_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c9ee2fb3-514e-5c94-b943-a09692ac00a3" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM353_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM353_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM353_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9f830c48-fdd0-554c-94bd-86b8621df80d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM357_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM357_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM357_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4f481863-a2ed-58f9-980a-bd869cc668f6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM359_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM359_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM359_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "65509178-91b5-5e39-b72e-1164251d846e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM369_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM369_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM369_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f7a52fba-8de4-547c-99ba-de6e19be2c3e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM370_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM370_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM370_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "aba8e5b6-d698-597c-8299-b6f041210cf7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM371_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM371_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM371_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a9dc3bb1-51fb-5c29-8eac-033a2994eb9c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM372_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM372_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM372_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "230615f5-786d-50af-8b36-dade7381b76c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM373_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM373_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM373_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "19c07cff-3c7d-5972-b9a5-29c0d8e7e502" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM375_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM375_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM375_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7ace709a-a5e2-566c-8211-7207595f275f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM377_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM377_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM377_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c7d17d1a-e53c-55e4-9a64-b0a2d45851dc" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM378_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM378_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM378_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9334e73c-09ed-589b-922d-abf402bb2448" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM380A_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM380A_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM380A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "36b63d07-1173-5f11-9f5d-32081474a61e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM381_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM381_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM381_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "44da8bca-88a4-5895-aedb-99bf6fcf3789" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM385_room_sat_window_contact>
+    a brick:Contact_Sensor ;
+    rdfs:label "RM385_room window_contact (simulated)"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM385_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fab82125-aa57-58d0-8376-fffefe15ca56" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#contact_data> ;
+    ] .

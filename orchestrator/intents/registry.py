@@ -136,8 +136,8 @@ _DEFAULT_INTENTS: List[IntentDefinition] = [
         name="compare",
         description=(
             "Side-by-side comparison of TWO OR MORE sensors, zones, floors, or time periods. "
-            "ALWAYS use this when the user says \"compare\", \"vs\", \"versus\", \"difference between\", "
-            "\"higher/lower than\", \"which is better/worse\", or names two distinct things."
+            'ALWAYS use this when the user says "compare", "vs", "versus", "difference between", '
+            '"higher/lower than", "which is better/worse", or names two distinct things.'
         ),
         examples=[
             '"Compare air quality between floor 1 and floor 5."',
@@ -164,8 +164,8 @@ _DEFAULT_INTENTS: List[IntentDefinition] = [
         name="recommend",
         description=(
             "Request ACTIONABLE ADVICE — what to change, how to improve, what settings to use. "
-            "ALWAYS use this when the user says \"recommend\", \"suggest\", \"should I\", \"how can I improve\", "
-            "\"what settings\", \"optimize\", \"what should I do\", \"tips\", \"advice\"."
+            'ALWAYS use this when the user says "recommend", "suggest", "should I", "how can I improve", '
+            '"what settings", "optimize", "what should I do", "tips", "advice".'
         ),
         examples=[
             '"What HVAC settings do you recommend?"',
@@ -230,7 +230,7 @@ _DEFAULT_INTENTS: List[IntentDefinition] = [
         description=(
             "User issues a command to physically change a building system state. "
             "Entities: device (the system to control), action (set/on/off/lock/"
-            "unlock/increase/decrease), target_value (e.g. \"21°C\", \"50%\"), zone/room."
+            'unlock/increase/decrease), target_value (e.g. "21°C", "50%"), zone/room.'
         ),
         examples=[
             '"Set HVAC zone 3 to 21°C"',
@@ -245,9 +245,9 @@ _DEFAULT_INTENTS: List[IntentDefinition] = [
         name="maintenance",
         description=(
             "User reports a fault, raises a work order, checks ticket status, "
-            "or updates a maintenance ticket. Trigger phrases: \"broken\", \"not working\", "
-            "\"report fault\", \"raise ticket\", \"fix the\", \"maintenance request\", "
-            "\"check ticket\", \"status of MT-\". Entities: device, location, "
+            'or updates a maintenance ticket. Trigger phrases: "broken", "not working", '
+            '"report fault", "raise ticket", "fix the", "maintenance request", '
+            '"check ticket", "status of MT-". Entities: device, location, '
             "fault_description, ticket_id (format MT-XXXX), assignee."
         ),
         examples=[],
@@ -269,12 +269,12 @@ _DEFAULT_INTENTS: List[IntentDefinition] = [
         description=(
             "User wants to see a floor plan, locate a room/zone/sensor on a floor, "
             "navigate the building layout, or get a building overview. "
-            "ALWAYS use this when the user says: \"floor plan\", \"show me floor\", \"layout\", "
-            "\"where is [room/zone/facility]\", \"which floor is\", \"locate\", \"find my location\", "
-            "\"building map\", \"navigate\", \"directions to\", \"how do I get to\", "
-            "\"where can I find\", \"building directory\", \"building overview\", \"all floors\", "
-            "\"which floor has\", \"find the office\", \"where is the lab\", \"server room location\", "
-            "\"toilet\", \"meeting room location\", \"lift\", \"elevator\", \"staircase\", "
+            'ALWAYS use this when the user says: "floor plan", "show me floor", "layout", '
+            '"where is [room/zone/facility]", "which floor is", "locate", "find my location", '
+            '"building map", "navigate", "directions to", "how do I get to", '
+            '"where can I find", "building directory", "building overview", "all floors", '
+            '"which floor has", "find the office", "where is the lab", "server room location", '
+            '"toilet", "meeting room location", "lift", "elevator", "staircase", '
             "or mentions a floor number with spatial/location intent."
         ),
         examples=[
@@ -292,8 +292,8 @@ _DEFAULT_INTENTS: List[IntentDefinition] = [
             "User asks quantitative/analytical geometry questions about the building — "
             "room sizes, areas, adjacency relationships, counts, or MEP block locations. "
             "Use this when the user asks ABOUT DATA derived from the floor plan, not to SEE it. "
-            "DISAMBIGUATION: \"show me / where is / find\" -> \"floor_plan\". "
-            "\"how many / area / size / adjacent\" -> \"spatial_query\"."
+            'DISAMBIGUATION: "show me / where is / find" -> "floor_plan". '
+            '"how many / area / size / adjacent" -> "spatial_query".'
         ),
         examples=[
             '"Which rooms are larger than 50 m²?"',
@@ -432,9 +432,7 @@ def _load_yaml(building_id: Optional[str] = None) -> List[IntentDefinition]:
         try:
             out.append(IntentDefinition(**data))
         except Exception as e:
-            logger.warning(
-                f"[intent_registry] rejected definition for '{data.get('name')}': {e}"
-            )
+            logger.warning(f"[intent_registry] rejected definition for '{data.get('name')}': {e}")
     return out
 
 
@@ -480,9 +478,7 @@ class IntentRegistry:
 
     def in_group(self, group: str) -> FrozenSet[str]:
         """All intents in the given pipeline group ('data', 'standalone', 'meta')."""
-        return frozenset(
-            it.name for it in self.intents if it.pipeline_group == group
-        )
+        return frozenset(it.name for it in self.intents if it.pipeline_group == group)
 
     def with_node_method(self) -> List[IntentDefinition]:
         """Phase 13B — every intent that declared a `node_method`.
@@ -578,6 +574,7 @@ def get_intent_registry(building_id: Optional[str] = None) -> IntentRegistry:
     if not building_id:
         try:
             from shared.config import settings as _settings
+
             building_id = _settings.BUILDING_ID
         except Exception:
             building_id = None
@@ -588,8 +585,7 @@ def get_intent_registry(building_id: Optional[str] = None) -> IntentRegistry:
         # fallback, but if validation rejected every entry we still want a
         # working registry.
         logger.info(
-            "[intent_registry] every definition rejected — falling back to "
-            "hardcoded defaults"
+            "[intent_registry] every definition rejected — falling back to " "hardcoded defaults"
         )
         defs = list(_DEFAULT_INTENTS)
     else:

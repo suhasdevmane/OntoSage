@@ -1,0 +1,637 @@
+# SATURATE (V4-T08): simulated co2 sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'co2_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://buildsys.org/ontologies/bldg2#> .
+
+<http://buildsys.org/ontologies/bldg2#co2_data>
+    a ref:Database ;
+    rdfs:label "Co2 Data" .
+
+<http://buildsys.org/ontologies/bldg2#RM001A_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM001A_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM001A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0587b84f-97bf-509b-b58e-47041c6d52ce" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM001B_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM001B_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM001B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d1c936ae-b065-53f8-858b-9e4186f73d9f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM002A_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM002A_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM002A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e33db375-6cb6-5564-832d-a0d4f2653e12" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM002B_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM002B_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM002B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f19bd113-ce4f-5827-ba16-1ff9c38b8034" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM003_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM003_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM003_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6d5ea98a-e821-5fa3-a228-c7b88a27c3ca" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM005_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM005_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM005_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bdccb8e4-c3bb-5a5f-b899-5dda0605bfdf" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM006_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM006_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM006_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f608aee5-b6ad-5ca5-a28c-3747d426eca6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM007A_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM007A_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM007A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9afcd692-ef50-533a-b948-fa2f81f468b3" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM007B_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM007B_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM007B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b38a67fc-0783-514a-9de4-5735d8f296ce" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM015A_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM015A_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM015A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0ea1163f-8a6e-59c5-8d52-2fb1e5f32f0d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM015B_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM015B_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM015B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6042c678-fd6e-54a7-8048-09be02422d03" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM019A_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM019A_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM019A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "43129af8-0183-5444-8845-a95f5558ce96" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM019B_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM019B_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM019B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "29ecfc4e-a9c3-50e1-a3be-6562f4c35029" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM025_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM025_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM025_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8fc7f8e7-b004-5700-9ec9-364ea3841152" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM026_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM026_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM026_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "91f6028f-c16a-5fe9-a205-6b8bdeb9230c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM027_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM027_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM027_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4ef0fbf4-4f9b-58e2-b09f-492fca19873b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM101_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM101_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM101_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c0886f69-c73f-59c4-ac13-4f59a7de9803" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM102C_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM102C_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM102C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7b1c94c2-05d3-5916-8a4a-d636d11e3c44" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM103_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM103_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM103_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "397c250d-66dc-5a58-ae6c-ce31a329999b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM105_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM105_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM105_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "844893d8-3dc1-5dc0-8944-aa6059393b76" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM106_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM106_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM106_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "68ba71b7-7bde-523e-af35-bb41906747a6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM107_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM107_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM107_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "241c1a54-2b75-5671-a25c-2b56c0e1fb31" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM109_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM109_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM109_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d0996d10-7be7-553e-8b76-af5ad68bee6f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM111_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM111_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM111_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3d855ad4-6381-5b97-8e98-6f61fa61e665" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM115_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM115_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM115_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b2689faa-1ba2-5308-8cee-b7624dd10bdd" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM119_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM119_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM119_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "368574e5-7d4e-5ca9-96f0-5151f59f2b5b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM121_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM121_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM121_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c0547654-d889-59ca-942b-37ff03cf9346" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM123_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM123_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM123_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5feff5df-e4f2-5517-b1b8-887fd61c5d86" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM125_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM125_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM125_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1eb92015-f29e-5686-84af-d38d6638fe63" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM126_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM126_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM126_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "df8c4dbc-be2b-54d2-81a7-920ed3923a02" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM127_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM127_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM127_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e9c0e03b-ec34-5233-b53e-eb688d349cda" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM129_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM129_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM129_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0d26c104-b6f7-59bb-a337-0fc221c6c800" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM201_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM201_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM201_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7bbcdd86-ccfb-5447-bc2c-1a9c05a81a21" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM202_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM202_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM202_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d7417064-59fb-58b7-a27f-98ee95d9d542" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM203_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM203_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM203_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8dbdb1f0-a6d6-54bc-8e85-9ae2e075d6f7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM205_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM205_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM205_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2f4036d9-5811-5bbf-a75f-3d305d918530" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM207_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM207_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM207_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fab746df-116a-5817-9ad3-7f6b46c940d7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM208_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM208_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM208_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ad056263-96bf-5f69-939c-bc38bec5d6c6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM209_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM209_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM209_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c6963c94-44e3-54ae-9e6c-c1b90d41c43e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM211_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM211_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM211_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3a540f44-75de-507f-9d50-e40a73b8592a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM212_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM212_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM212_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cfa8ac90-a25b-519e-b8cc-e605a56be125" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM216_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM216_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM216_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e047ba46-5f1b-56b3-a256-485be600e24f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM217_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM217_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM217_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0fa3087a-a3ad-5a28-9663-b4c9203f2a9c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM220_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM220_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM220_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a0d38977-6c42-5dc9-9578-359d2f0c843b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM221_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM221_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM221_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0f53bf00-f2a2-5423-8ba2-9008a1098c5c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM226_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM226_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM226_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c52bd93b-3b69-5796-bbeb-67e7e09afb89" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM229_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM229_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM229_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f1ba2259-21f8-5297-af92-8b5d87364876" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM230_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM230_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM230_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1cfff686-62b4-5f32-b151-83e817043ae2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM233_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM233_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM233_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c66656c4-28b1-583b-84a1-652a2b448af5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM234A_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM234A_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM234A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "95676c02-de19-52d7-94ce-b047ebd97f6d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM234_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM234_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM234_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6138c95b-0452-5185-a3e0-db270355e12c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM235_room_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "RM235_room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM235_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f54b2a88-b51d-5165-99c0-c9fc4e5af563" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#co2_data> ;
+    ] .

@@ -102,7 +102,9 @@ class FeedAdapter(ABC):
             logger.error(f"[feeds] {self.spec.id} poll failed: {e}", exc_info=True)
             return []
 
-    def _make_record(self, value: float, metric: str = "value", ts: Optional[datetime] = None) -> FeedRecord:
+    def _make_record(
+        self, value: float, metric: str = "value", ts: Optional[datetime] = None
+    ) -> FeedRecord:
         """Convenience constructor using this adapter's spec."""
         from datetime import timezone
 

@@ -88,7 +88,10 @@ def capture_docker():
     try:
         result = subprocess.run(
             ["docker-compose", "ps", "--format", "json"],
-            cwd=ROOT, capture_output=True, text=True, timeout=20,
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=20,
         )
         if result.returncode == 0:
             _save("docker_compose_ps.json", result.stdout)
@@ -104,8 +107,7 @@ def capture_file_fingerprints():
     """
     print("[code] fingerprinting orchestrator/ and shared/ ...")
     targets = sorted(
-        list((ROOT / "orchestrator").rglob("*.py"))
-        + list((ROOT / "shared").rglob("*.py"))
+        list((ROOT / "orchestrator").rglob("*.py")) + list((ROOT / "shared").rglob("*.py"))
     )
     fingerprints = {}
     for path in targets:
@@ -124,6 +126,7 @@ def capture_settings():
     print("[settings] snapshotting active configuration...")
     try:
         from shared.config import settings
+
         snap = {
             "MODEL_PROVIDER": settings.MODEL_PROVIDER,
             "EMBEDDING_PROVIDER": settings.EMBEDDING_PROVIDER,

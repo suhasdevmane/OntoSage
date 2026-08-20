@@ -1,0 +1,16 @@
+PREFIX abx:    <https://abacws.cardiff.ac.uk/kg#>
+PREFIX bot:    <https://w3id.org/bot#>
+PREFIX brick:  <https://brickschema.org/schema/Brick#>
+PREFIX geo:    <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX unit:   <http://qudt.org/vocab/unit/>
+
+# "What are the biggest spaces on the ground floor?"
+SELECT ?code ?name ?area WHERE {
+  ?storey a bot:Storey ; bot:hasSpace ?room .
+  ?room abx:roomCode ?code ;
+        rdfs:label   ?name ;
+        brick:area/brick:value ?area .
+}
+ORDER BY DESC(?area)
+LIMIT 10

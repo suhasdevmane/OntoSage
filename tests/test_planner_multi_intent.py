@@ -15,11 +15,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from orchestrator.agents.planner_agent import (
-    ExecutionPlan,
-    PlanStep,
-    PlannerAgent,
     _DATA_PIPELINE_AGENTS,
     _STANDALONE_AGENTS,
+    ExecutionPlan,
+    PlannerAgent,
+    PlanStep,
 )
 
 
@@ -45,12 +45,17 @@ def mock_state():
 
 # ── Plan building from multi-intent ──────────────────────────────────
 
+
 class TestBuildFromMultiIntent:
     def test_mixed_group_a_and_b(self, planner):
         """Group A (data pipeline) + Group B (standalone) produces correct ordering."""
         multi_plan = {
             "sub_intents": [
-                {"sub_query": "Check temperature on floor 5", "intent": "analytics", "entities": ["floor 5"]},
+                {
+                    "sub_query": "Check temperature on floor 5",
+                    "intent": "analytics",
+                    "entities": ["floor 5"],
+                },
                 {"sub_query": "Flag anomalies", "intent": "anomaly", "entities": []},
                 {"sub_query": "Who to contact", "intent": "capability", "entities": []},
             ],
@@ -106,8 +111,7 @@ class TestBuildFromMultiIntent:
     def test_max_steps_enforced(self, planner):
         """Plans should be capped at MAX_STEPS."""
         many = [
-            {"sub_query": f"task {i}", "intent": "analytics", "entities": []}
-            for i in range(10)
+            {"sub_query": f"task {i}", "intent": "analytics", "entities": []} for i in range(10)
         ]
         multi_plan = {"sub_intents": many, "primary_intent": "analytics"}
         plan = planner._build_from_multi_intent("query", multi_plan)
@@ -116,17 +120,20 @@ class TestBuildFromMultiIntent:
 
 # ── Section assembly ──────────────────────────────────────────────────
 
+
 class TestSectionAssembly:
     def test_multi_section_output(self, planner):
         """Multi-intent assembly should produce ## headers with content."""
         sections = [
             {"agent": "analytics", "description": "temp check", "content": "Temperature is 22C"},
             {"agent": "anomaly", "description": "anomaly check", "content": "No anomalies found"},
-            {"agent": "capability", "description": "contact", "content": "Contact: facilities@building.com"},
+            {
+                "agent": "capability",
+                "description": "contact",
+                "content": "Contact: facilities@building.com",
+            },
         ]
-        plan = ExecutionPlan(
-            user_query="test", steps=[], rationale="test", multi_intent=True
-        )
+        plan = ExecutionPlan(user_query="test", steps=[], rationale="test", multi_intent=True)
         result = planner._assemble_multi_intent(plan, sections, [])
 
         assert result["success"] is True
@@ -142,9 +149,7 @@ class TestSectionAssembly:
             {"agent": "analytics", "description": "temp", "content": "Data here"},
             {"agent": "capability", "description": "contact", "content": ""},
         ]
-        plan = ExecutionPlan(
-            user_query="test", steps=[], rationale="test", multi_intent=True
-        )
+        plan = ExecutionPlan(user_query="test", steps=[], rationale="test", multi_intent=True)
         result = planner._assemble_multi_intent(plan, sections, [])
         assert "## Building Information" not in result["formatted_response"]
         assert "## Sensor Data Analysis" in result["formatted_response"]
@@ -155,14 +160,13 @@ class TestSectionAssembly:
             {"agent": "analytics", "description": "temp", "content": ""},
             {"agent": "capability", "description": "contact", "content": ""},
         ]
-        plan = ExecutionPlan(
-            user_query="test", steps=[], rationale="test", multi_intent=True
-        )
+        plan = ExecutionPlan(user_query="test", steps=[], rationale="test", multi_intent=True)
         result = planner._assemble_multi_intent(plan, sections, [])
         assert result["success"] is False
 
 
 # ── Content extraction ─────────────────────────────────────────────
+
 
 class TestContentExtraction:
     def test_dict_with_formatted_response(self, planner):
@@ -181,6 +185,7 @@ class TestContentExtraction:
 
 
 # ── _extract_sensor_metadata fix ─────────────────────────────────────
+
 
 class TestExtractSensorMetadata:
     def test_extracts_uuid_label_mapping(self, planner):
@@ -208,6 +213,7 @@ class TestExtractSensorMetadata:
 
 
 # ── Agent grouping constants ──────────────────────────────────────────
+
 
 class TestAgentGroups:
     def test_data_pipeline_agents_defined(self):

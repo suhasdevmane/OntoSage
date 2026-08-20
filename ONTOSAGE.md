@@ -154,7 +154,7 @@ data/mysql-init/
 └── create_narrow_timeseries_tables.sql  # P0 — 7 narrow (uuid, datetime, value) tables in sensordb
 
 frontend/src/
-├── pages/AdminPortal.js            # P0 — React admin portal (9 tabs)
+├── pages/AdminPortal.js            # P0 — React admin portal (10 tabs)
 ├── pages/Health.js                 # Updated — shows GraphDB, Qdrant, Ollama (removed stale entries)
 └── components/TopNav.js            # Updated — /admin link
 
@@ -830,6 +830,55 @@ NL question → SPARQL on GraphDB   (finds sensor + its UUID + which DB it's ref
 | List jobs | `GET /api/v1/admin/reindex` | Returns all jobs with `id`, `status`, `target`, `started_at` |
 | Job status | `GET /api/v1/admin/reindex/{job_id}` | Polls a specific job; `status` ∈ `{pending, running, done, error}` |
 
+#### Policies tab — access policies as versioned TTL (V5-T43)
+
+Access policies are `ontosage:AccessPolicy` triples that the policy decision point
+evaluates at every data fetch. They live in `input/<building>_policies.ttl`, so a GUI
+edit and a hand edit converge on the same reviewable file.
+
+| Action | API endpoint | What it does |
+|---|---|---|
+| List policies | `GET /api/v1/admin/policies` | Every policy the PDP would enforce, plus the guided-form schema, the RBAC role list, and the **live enforcement mode** |
+| Create / replace | `POST /api/v1/admin/policies` | Validates the form, renders Turtle, writes the file, re-syncs the graph, reloads the PDP and flushes the response cache — the edit binds on the next question, no restart |
+| Delete | `DELETE /api/v1/admin/policies/{id}` | Removes the policy from whichever input TTL defines it |
+
+Per policy: `appliesToRole` (an RBAC role or `*`), `scopeSpaces`,
+`minAggregationSensors` / `minAggregationSpaces` (the k-anonymity floors),
+`resolutionTier` (`minutes:seconds` pairs — how coarse recent data must be),
+`rateLimit` (`maxQueries:perMinutes`), and `inferenceClass` (denied question shapes).
+
+**Two refusals are deliberate**, because the 0-leak certification rests on these values
+and a GUI is where a guarantee gets weakened by accident:
+
+1. **Weakening needs an explicit acknowledgement.** Lowering a k floor, relaxing a rate
+   limit or sharpening a resolution tier is rejected unless `acknowledge_weakening` is
+   set; the response names each thing that got weaker, and the change is logged against
+   the actor either way (the `AuditMiddleware` already records every mutating
+   `/api/v1/admin/*` call, and the actor is also written into the policy's
+   `rdfs:comment`).
+2. **The individual-privacy rules are read-only here.** An inference class may only be
+   authored as `:deny`, and existing ones cannot be deleted through the GUI — deleting
+   `individual_presence:deny` would let the system answer questions about individuals.
+   Changing that means editing the TTL, where it is a reviewable diff rather than a click.
+
+> **`PROTECT_ENFORCE` decides whether any of this bites.** `off` / `shadow` (evaluate and
+> log only) / `on` (block). The tab shows the live value, because a tightened floor in
+> shadow mode changes the logs, not the answers — and a leak count measured in shadow is
+> not a privacy result (CAVEAT-182).
+
+#### Knowing when an answer is not an answer (`llm_degraded`)
+
+When the LLM provider refuses — a quota `429`, a plan `403`, a timeout, an open circuit —
+every agent falls back to generic text that is returned with HTTP 200 and reads like an
+ordinary reply. `/chat` therefore returns `data.llm_degraded` and
+`/v1/chat/completions` returns `ontosage_llm_degraded`: `null` when the LLM behaved, or
+`{failed_calls, causes, rate_limited, detail}` when it did not.
+
+Every grading harness quarantines those turns instead of scoring them. This is not
+theoretical tidiness: one such fallback was a 1000-row data dump that a grader scored as
+*answered-with-data*, so an outage would have **inflated** the coverage number
+(BUG-177). Never publish a figure from a run that reports invalid rows.
+
 ### Registering a sensor via the Admin Portal (Upload TTL path)
 
 Paste this Brick Turtle into the Ontology tab → Upload TTL:
@@ -1327,7 +1376,7 @@ This section captures every architectural change since v1.0. See `CLAUDE.md` for
 | P0-G | `data/mysql-init/create_narrow_timeseries_tables.sql` — DDL for 7 narrow modality tables in `sensordb` |
 | P0-H | `input/bldg1_timeseries_extension.ttl` — 19 sensors across 7 modalities with `ref:storedAt` to narrow tables |
 | P0-I | `input/bldg1_security_lighting_extension.ttl` — 293 triples: lighting systems, CCTV cameras, alarm zones |
-| P0-J | `frontend/src/pages/AdminPortal.js` — React admin portal (9 tabs: Ontology, KB Reindex, Health, Users, Buildings, Settings, …) |
+| P0-J | `frontend/src/pages/AdminPortal.js` — React admin portal (11 tabs: Onboarding, Ontology, Capabilities, Policies, KB Reindex, Health, Users, …) |
 | P0-K | `frontend/src/components/TopNav.js` — `/admin` nav link added |
 | P0-L | `frontend/src/pages/Health.js` — updated to show GraphDB endpoint (removed stale Redis/Fuseki/MySQL entries) |
 | P0-M | `tests/test_admin_ontology_endpoints.py` — 13 unit tests; auth via `get_user_context` override pattern |

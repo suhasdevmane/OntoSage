@@ -77,11 +77,32 @@ class PostgreSQLAdapter(DatabaseAdapter):
 
     @staticmethod
     def _build_dsn(host, port, user, password, database) -> str:
-        h = host or settings.PG_HOST
-        p = port or settings.PG_PORT
-        u = user or settings.PG_USER
-        pw = password or settings.PG_PASSWORD
-        db = database or settings.PG_DATABASE
+        """Fill in whatever the caller left out from the deployment's settings.
+
+        This used to read ``settings.PG_HOST`` / ``PG_PORT`` / ``PG_USER`` /
+        ``PG_PASSWORD`` / ``PG_DATABASE``. None of those exist — the settings are
+        named ``POSTGRES_USER_*`` — so ANY caller that omitted a single field got
+        an ``AttributeError`` on a phantom attribute rather than a connection or
+        a usable error (TODO-143). It went unnoticed because the registry always
+        passes all five from the datasource entry, so the fallback was never
+        taken until a test constructed the adapter directly.
+
+        ``database`` has no safe default and is therefore required: the only
+        Postgres this deployment knows about holds users and conversation
+        memory, and silently pointing a SENSOR adapter at it would connect fine
+        and return nothing, which is the worst of the three outcomes.
+        """
+        h = host or settings.POSTGRES_USER_HOST
+        p = port or settings.POSTGRES_USER_PORT
+        u = user or settings.POSTGRES_USER_USER
+        pw = password or settings.POSTGRES_USER_PASSWORD
+        db = database
+        if not db:
+            raise ValueError(
+                "PostgreSQLAdapter needs a database name: pass database=... or set it "
+                "on the datasource entry in database_registry.yaml. There is no safe "
+                "default — the deployment's own Postgres holds users, not readings."
+            )
         return f"postgresql://{u}:{pw}@{h}:{p}/{db}"
 
     # ------------------------------------------------------------------

@@ -25,6 +25,7 @@ from typing import Dict, List, Optional
 @dataclass(frozen=True)
 class PersonaPriors:
     """Per-persona routing and retrieval priors derived from survey D3/E1."""
+
     name: str
     # Ordered list of domain_l1 labels most relevant to this persona (D3)
     top_domains: List[str]
@@ -52,7 +53,7 @@ _REGISTRY: Dict[str, PersonaPriors] = {
         name="occupant",
         description="Building occupant (staff/student using the building day-to-day)",
         top_domains=["THERMAL", "AIR_QUALITY", "LIGHTING", "INFORMATIONAL"],
-        lookup_share=0.88,   # D3: LOOKUP 88% for occupants
+        lookup_share=0.88,  # D3: LOOKUP 88% for occupants
         default_complexity="SIMPLE",
         clarification_threshold=0.3,  # occupants tolerate fewer round-trips
         borda_topics=["Temperature", "Air Quality", "Lighting", "Humidity", "Energy"],
@@ -61,7 +62,7 @@ _REGISTRY: Dict[str, PersonaPriors] = {
         name="facility_manager",
         description="Responsible for building operations and maintenance",
         top_domains=["ENERGY", "THERMAL", "OCCUPANCY", "FIRE_SAFETY"],
-        lookup_share=0.62,   # more analytical queries than occupants
+        lookup_share=0.62,  # more analytical queries than occupants
         default_complexity="MODERATE",
         clarification_threshold=0.5,
         borda_topics=["Energy", "Temperature", "Occupancy", "Fire Safety", "Air Quality"],
@@ -97,7 +98,7 @@ _REGISTRY: Dict[str, PersonaPriors] = {
         name="student",
         description="Student using building spaces for study/research",
         top_domains=["THERMAL", "AIR_QUALITY", "INFORMATIONAL", "LIGHTING"],
-        lookup_share=0.92,   # D3: students are overwhelmingly LOOKUP
+        lookup_share=0.92,  # D3: students are overwhelmingly LOOKUP
         default_complexity="SIMPLE",
         clarification_threshold=0.25,  # students want direct answers
         borda_topics=["Temperature", "Air Quality", "Lighting", "Noise", "Humidity"],
@@ -106,7 +107,7 @@ _REGISTRY: Dict[str, PersonaPriors] = {
         name="executive",
         description="Senior management / building owner wanting KPI summaries",
         top_domains=["ENERGY", "OCCUPANCY", "THERMAL"],
-        lookup_share=0.50,   # needs aggregates and summaries
+        lookup_share=0.50,  # needs aggregates and summaries
         default_complexity="COMPLEX",
         clarification_threshold=0.4,
         borda_topics=["Energy", "Temperature", "Occupancy", "Cost", "Sustainability"],
@@ -191,6 +192,7 @@ def _build_runtime_registry() -> tuple[Dict[str, PersonaPriors], Dict[str, str]]
                 registry[name] = PersonaPriors(**raw)
             except Exception as e:
                 import logging
+
                 logging.getLogger(__name__).warning(
                     f"[persona_registry] YAML overlay for '{name}' rejected: {e}"
                 )
@@ -219,9 +221,7 @@ class PersonaRegistry:
         key = self._aliases.get(normalised, normalised)
         return self._registry.get(key, self._registry["general"])
 
-    def domain_score(
-        self, persona: Optional[str], domain: str, base_score: float = 1.0
-    ) -> float:
+    def domain_score(self, persona: Optional[str], domain: str, base_score: float = 1.0) -> float:
         """
         Boost score for a domain match with a persona's top_domains list.
         Returns base_score × boost where boost diminishes by rank.
@@ -238,9 +238,7 @@ class PersonaRegistry:
         """Return a copy of the alias → persona name map (debug / introspection)."""
         return dict(self._aliases)
 
-    def should_clarify(
-        self, persona: Optional[str], ambiguity_score: float
-    ) -> bool:
+    def should_clarify(self, persona: Optional[str], ambiguity_score: float) -> bool:
         """True if the ambiguity warrants a clarification question for this persona."""
         priors = self.get_priors(persona)
         return ambiguity_score >= priors.clarification_threshold
@@ -250,9 +248,7 @@ class PersonaRegistry:
 
     # ── Phase 14A — multi-persona stacking ────────────────────────────────────
 
-    def normalize_personas(
-        self, personas: Optional[List[str]]
-    ) -> List[str]:
+    def normalize_personas(self, personas: Optional[List[str]]) -> List[str]:
         """Resolve a list of persona strings to canonical names, dropping
         duplicates and unknowns.  Used by callers to validate a multi-persona
         input before passing it to `get_blended_priors`.
@@ -268,9 +264,7 @@ class PersonaRegistry:
                 seen.setdefault(key, None)
         return list(seen.keys()) or ["general"]
 
-    def get_blended_priors(
-        self, personas: Optional[List[str]]
-    ) -> PersonaPriors:
+    def get_blended_priors(self, personas: Optional[List[str]]) -> PersonaPriors:
         """Phase 14A — blend priors from multiple personas into a single
         `PersonaPriors` record.
 
@@ -316,20 +310,14 @@ class PersonaRegistry:
                 complexity = p.default_complexity
 
         blended_name = "+".join(names)
-        blended_desc = (
-            "Blended persona ("
-            + ", ".join(p.name for p in priors_list)
-            + ")"
-        )
+        blended_desc = "Blended persona (" + ", ".join(p.name for p in priors_list) + ")"
         return PersonaPriors(
             name=blended_name,
             description=blended_desc,
             top_domains=_rank_merge(lambda p: p.top_domains)[:6],
             lookup_share=sum(p.lookup_share for p in priors_list) / len(priors_list),
             default_complexity=complexity,
-            clarification_threshold=min(
-                p.clarification_threshold for p in priors_list
-            ),
+            clarification_threshold=min(p.clarification_threshold for p in priors_list),
             borda_topics=_rank_merge(lambda p: p.borda_topics)[:6],
         )
 

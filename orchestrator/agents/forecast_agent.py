@@ -31,9 +31,15 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from orchestrator.services.forecasting.horizon_parser import ForecastHorizon, parse_horizon
+from orchestrator.services.forecasting.horizon_parser import (
+    ForecastHorizon,
+    parse_horizon,
+)
 from orchestrator.services.forecasting.model_selector import ModelSelector
-from orchestrator.services.forecasting.preprocessor import detect_seasonality, preprocess_series
+from orchestrator.services.forecasting.preprocessor import (
+    detect_seasonality,
+    preprocess_series,
+)
 from shared.models import ConversationState
 from shared.utils import get_logger
 
@@ -55,11 +61,12 @@ class ForecastResult:
     upper_80: List[float]
     lower_95: List[float]
     upper_95: List[float]
-    metrics: Any                         # ForecastMetrics instance
-    all_metrics: Dict[str, Any]          # name → ForecastMetrics for all candidates
+    metrics: Any  # ForecastMetrics instance
+    all_metrics: Dict[str, Any]  # name → ForecastMetrics for all candidates
     n_history_points: int
     data_freq: str
     formatted_response: str = field(default="", repr=False)
+    skill_note: str = ""  # V5-T16: measured walk-forward skill + calibration status
     error: Optional[str] = None
 
 
@@ -68,10 +75,14 @@ class ForecastAgent:
 
     # Sensor physics bounds for unit labelling
     _UNIT_MAP = {
-        "temperature": "°C", "temp": "°C",
-        "co2": "ppm", "carbon": "ppm",
+        "temperature": "°C",
+        "temp": "°C",
+        "co2": "ppm",
+        "carbon": "ppm",
         "humidity": "%RH",
-        "energy": "kWh", "power": "kW", "electric": "kWh",
+        "energy": "kWh",
+        "power": "kW",
+        "electric": "kWh",
         "occupancy": "persons",
         "noise": "dB",
         "pressure": "Pa",
@@ -99,7 +110,9 @@ class ForecastAgent:
 
         # Parse horizon from user query
         horizon = parse_horizon(user_query)
-        logger.info(f"[forecast_agent] Horizon: {horizon.label} ({horizon.n_steps} steps @ {horizon.freq})")
+        logger.info(
+            f"[forecast_agent] Horizon: {horizon.label} ({horizon.n_steps} steps @ {horizon.freq})"
+        )
 
         # Extract raw sensor records
         records = self._extract_records(sql_data)
@@ -157,6 +170,32 @@ class ForecastAgent:
                 horizon=horizon,
             )
 
+        # V5-T16 — CI calibration + measured-skill citation. The raw model
+        # bands were graded ~2x over-confident (T17): widen them by this
+        # building's own measured coverage deficit before anyone reads them,
+        # and carry the walk-forward skill so the answer cites MEASURED error,
+        # not just its own hold-out. Uncalibrated buildings pass through
+        # untouched and say so.
+        lo80, hi80 = list(selection["lower_80"]), list(selection["upper_80"])
+        lo95, hi95 = list(selection["lower_95"]), list(selection["upper_95"])
+        skill_note = ""
+        try:
+            from orchestrator.services.forecasting.calibration import band_factors
+            from shared.config import settings as _settings
+
+            modality = self._modality_of(label) or ""
+            horizon_h = horizon.total.total_seconds() / 3600.0
+            f80, f95 = band_factors(_settings.BUILDING_ID, modality, horizon_h)
+            if f80 > 1.0 or f95 > 1.0:
+                fc = list(selection["forecast"])
+                lo80 = [v - (v - lo) * f80 for v, lo in zip(fc, lo80)]
+                hi80 = [v + (hi - v) * f80 for v, hi in zip(fc, hi80)]
+                lo95 = [v - (v - lo) * f95 for v, lo in zip(fc, lo95)]
+                hi95 = [v + (hi - v) * f95 for v, hi in zip(fc, hi95)]
+            skill_note = self._skill_note(_settings.BUILDING_ID, modality, horizon_h, unit)
+        except Exception as _cal_err:  # calibration must never cost a forecast
+            logger.debug(f"[forecast_agent] calibration skipped: {_cal_err}")
+
         # Build result
         result = ForecastResult(
             success=True,
@@ -166,15 +205,16 @@ class ForecastAgent:
             model_name=selection["winner"],
             forecast=selection["forecast"],
             future_index=selection["future_index"],
-            lower_80=selection["lower_80"],
-            upper_80=selection["upper_80"],
-            lower_95=selection["lower_95"],
-            upper_95=selection["upper_95"],
+            lower_80=lo80,
+            upper_80=hi80,
+            lower_95=lo95,
+            upper_95=hi95,
             metrics=selection["metrics"],
             all_metrics=selection["all_metrics"],
             n_history_points=n_pts,
             data_freq=horizon.freq,
         )
+        result.skill_note = skill_note
 
         result.formatted_response = self._format_response(result, unit, prep_info)
 
@@ -200,6 +240,7 @@ class ForecastAgent:
             "upper_80": result.upper_80,
             "lower_95": result.lower_95,
             "upper_95": result.upper_95,
+            "skill_note": result.skill_note,
             "formatted_response": result.formatted_response,
         }
 
@@ -243,6 +284,7 @@ class ForecastAgent:
         # Collect available UUIDs
         uuid_col = "uuid" if records and "uuid" in records[0] else "sensor_uuid"
         from collections import Counter
+
         counts = Counter(r.get(uuid_col, "") for r in records)
 
         q_lower = query.lower()
@@ -264,6 +306,61 @@ class ForecastAgent:
             return best_uuid, label
 
         return "", "Unknown Sensor"
+
+    #: label/query token -> registry modality key (matches the grader's tables)
+    _MODALITY_MAP = {
+        "temperature": "temperature",
+        "temp": "temperature",
+        "co2": "co2",
+        "carbon": "co2",
+        "humidity": "humidity",
+        "noise": "noise",
+        "sound": "noise",
+        "occupancy": "occupancy",
+        "pm2": "pm25",
+        "pm25": "pm25",
+        "particulate": "pm25",
+    }
+
+    def _modality_of(self, label: str) -> Optional[str]:
+        """Registry modality for a sensor label, or None when unmapped."""
+        text = (label or "").lower()
+        for token, modality in self._MODALITY_MAP.items():
+            if token in text:
+                return modality
+        return None
+
+    def _skill_note(self, building: str, modality: str, horizon_h: float, unit: str) -> str:
+        """One honest line about MEASURED skill and interval calibration (V5-T16)."""
+        try:
+            from orchestrator.services.forecasting.calibration import (
+                _nearest_horizon,
+                band_factors,
+                load_registry,
+            )
+
+            entries = (load_registry(building) or {}).get(modality) or {}
+            entry = _nearest_horizon(entries, horizon_h) if entries else None
+            if not entry:
+                return (
+                    "> **Measured skill:** not yet established for this modality on this "
+                    "building — the errors above are this fit's own hold-out, and the "
+                    "intervals are the raw model bands (uncalibrated). Run "
+                    "`scripts/grade_forecasts.py` to measure walk-forward skill."
+                )
+            f80, f95 = band_factors(building, modality, horizon_h)
+            calib = (
+                f"intervals widened x{f95:g} to match measured coverage"
+                if f95 > 1.0
+                else "intervals used as-is (measured coverage already at nominal)"
+            )
+            return (
+                f"> **Measured skill** (walk-forward, {entry.get('n_fits', '?')} fits): "
+                f"MAE {entry.get('mae')}{unit} at ~{horizon_h:g}h; raw 95% interval covered "
+                f"{entry.get('ci95_coverage')} of actuals (nominal 0.95), so {calib}."
+            )
+        except Exception:
+            return ""
 
     def _infer_unit(self, label: str, query: str) -> str:
         """Derive measurement unit from sensor label or query keywords."""
@@ -312,6 +409,8 @@ class ForecastAgent:
             f"> Lower MAE = better. Winner selected automatically by lowest MAE.",
             f"",
         ]
+        if getattr(result, "skill_note", ""):
+            lines += [result.skill_note, ""]
 
         # ── Forecast table ────────────────────────────────────────────────────
         lines += [
@@ -345,14 +444,14 @@ class ForecastAgent:
             )
 
         if len(result.forecast) > n_show:
-            lines.append(
-                f"| … ({len(result.forecast) - n_show} more rows) | … | … | … |"
-            )
+            lines.append(f"| … ({len(result.forecast) - n_show} more rows) | … | … | … |")
 
         # ── Trend insight ─────────────────────────────────────────────────────
         if result.forecast:
             delta = result.forecast[-1] - result.forecast[0]
-            direction = "📈 increasing" if delta > 0.1 else "📉 decreasing" if delta < -0.1 else "➡️ stable"
+            direction = (
+                "📈 increasing" if delta > 0.1 else "📉 decreasing" if delta < -0.1 else "➡️ stable"
+            )
             abs_delta = abs(delta)
             lines += [
                 f"",
@@ -361,11 +460,7 @@ class ForecastAgent:
             ]
 
         # ── Accuracy & reliability ────────────────────────────────────────────
-        reliability = (
-            "High" if m.mape < 5 else
-            "Moderate" if m.mape < 15 else
-            "Low"
-        )
+        reliability = "High" if m.mape < 5 else "Moderate" if m.mape < 15 else "Low"
         lines += [
             f"",
             f"### Forecast Reliability",
@@ -375,7 +470,11 @@ class ForecastAgent:
             f"- **Hold-out MAE:** {m.mae:.3f}{unit}",
             f"- **MAPE:** {m.mape:.1f}% → **{reliability} reliability**",
             f"- **R²:** {m.r2:.3f}"
-            + (" *(< 0: near-stationary series — mean is a competitive baseline)*" if m.r2 < 0 else ""),
+            + (
+                " *(< 0: near-stationary series — mean is a competitive baseline)*"
+                if m.r2 < 0
+                else ""
+            ),
             f"- **Confidence intervals:** 80% and 95% (wider = more uncertainty at longer horizon)",
         ]
 
@@ -401,9 +500,7 @@ class ForecastAgent:
         return {
             "success": False,
             "error": message,
-            "formatted_response": (
-                f"**Forecast not available**\n\n{message}"
-            ),
+            "formatted_response": (f"**Forecast not available**\n\n{message}"),
             "forecast": [],
             "metrics": None,
         }

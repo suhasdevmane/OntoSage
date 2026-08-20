@@ -105,9 +105,7 @@ def test_yaml_partial_overlay_merges_with_settings(reset_cache):
 def test_repeated_calls_are_cached(reset_cache):
     """The resolver caches per building_id (lru_cache); load is called once."""
     yaml_data = {"building_id": "bldg_cached", "building_name": "Cached"}
-    with patch.object(
-        bc_mod, "_load_building_yaml", return_value=yaml_data
-    ) as load_mock:
+    with patch.object(bc_mod, "_load_building_yaml", return_value=yaml_data) as load_mock:
         resolve_building_context("bldg_cached")
         resolve_building_context("bldg_cached")
         resolve_building_context("bldg_cached")
@@ -117,9 +115,7 @@ def test_repeated_calls_are_cached(reset_cache):
 def test_clear_cache_forces_reload(reset_cache):
     """After clear_cache(), the loader runs again."""
     yaml_data = {"building_id": "bldg_reload", "building_name": "x"}
-    with patch.object(
-        bc_mod, "_load_building_yaml", return_value=yaml_data
-    ) as load_mock:
+    with patch.object(bc_mod, "_load_building_yaml", return_value=yaml_data) as load_mock:
         resolve_building_context("bldg_reload")
         clear_cache()
         resolve_building_context("bldg_reload")
@@ -134,11 +130,15 @@ def test_clear_cache_forces_reload(reset_cache):
 def test_loader_reads_yaml_from_disk(tmp_path, reset_cache, monkeypatch):
     yaml_path = tmp_path / "bldg_x" / "building.yaml"
     yaml_path.parent.mkdir(parents=True)
-    yaml_path.write_text(yaml.dump({
-        "building_id": "bldg_x",
-        "building_name": "FromDisk",
-        "ontology_namespace": "http://from-disk.example.com/x#",
-    }))
+    yaml_path.write_text(
+        yaml.dump(
+            {
+                "building_id": "bldg_x",
+                "building_name": "FromDisk",
+                "ontology_namespace": "http://from-disk.example.com/x#",
+            }
+        )
+    )
 
     # Patch the search paths to point at our tmp dir
     def fake_load(bid):

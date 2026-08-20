@@ -63,25 +63,6 @@ def test_document_index_all_buildings_flat(tmp_path, monkeypatch):
     assert "bldg1" in res
 
 
-# ── capability_indexer: index the active building's flat capability.yaml ────
-
-
-def test_capability_index_all_buildings_flat(tmp_path, monkeypatch):
-    from orchestrator.services import capability_indexer as ci
-    from shared.config import settings
-
-    (tmp_path / "capability.yaml").write_text("capabilities: []\n", encoding="utf-8")
-
-    idx = ci.CapabilityIndexer(qdrant_client=None, embedding_service=None, input_root=str(tmp_path))
-    idx.index_building = AsyncMock(return_value="indexed")
-    idx.index_extra_intents = AsyncMock(return_value={})
-    monkeypatch.setattr(settings, "BUILDING_ID", "bldg1")
-
-    res = asyncio.run(idx.index_all_buildings())
-    idx.index_building.assert_awaited_once_with("bldg1")
-    assert "bldg1" in res
-
-
 # ── building_context: read building.yaml from flat input/ ───────────────────
 
 

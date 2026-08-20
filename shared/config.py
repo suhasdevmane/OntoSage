@@ -98,11 +98,24 @@ class Settings(BaseSettings):
 
     # Cloud (Ollama Cloud)
     OLLAMA_CLOUD_API_KEY: str = Field(default="", description="Ollama Cloud API key", repr=False)
+    # BUG-175: the old default (api.ollama.ai) has no DNS record — a clone that
+    # set MODEL_PROVIDER=cloud without overriding this failed every LLM call.
     OLLAMA_CLOUD_BASE_URL: str = Field(
-        default="https://api.ollama.ai/v1", description="Ollama Cloud API endpoint"
+        default="https://ollama.com/v1", description="Ollama Cloud API endpoint"
     )
+    # Both 'gpt-oss:120b' (as listed by /v1/models) and 'gpt-oss:120b-cloud'
+    # (the `ollama run` alias) are accepted — verified live 2026-08-18.
     OLLAMA_CLOUD_MODEL: str = Field(
         default="gpt-oss:120b-cloud", description="Ollama Cloud model name"
+    )
+    # Thinking depth for reasoning-capable hosted models (gpt-oss, nemotron,
+    # minimax). Empty = send nothing, i.e. keep the provider default; set
+    # low|medium|high to trade latency for deliberation. Sent only to providers
+    # that speak the OpenAI 'reasoning_effort' parameter — a model that does not
+    # support it would 400, so this stays opt-in rather than always-on.
+    LLM_REASONING_EFFORT: str = Field(
+        default="",
+        description="reasoning_effort for MODEL_PROVIDER=cloud: ''|low|medium|high",
     )
 
     # Cloud (OpenAI)
@@ -229,8 +242,11 @@ class Settings(BaseSettings):
     FUSEKI_HOST: str = Field(default="jena-fuseki", description="Fuseki hostname")
     FUSEKI_PORT: int = Field(default=3030, description="Fuseki port")
     FUSEKI_URL: str = Field(
-        default="http://fuseki:3030/abacws",
-        description="Jena Fuseki SPARQL endpoint for Building 1",
+        default="http://fuseki:3030/ds",
+        description=(
+            "Jena Fuseki SPARQL endpoint (legacy — the live triple store is GraphDB). "
+            "Dataset name is generic; it named one building's dataset before CAVEAT-094."
+        ),
     )
 
     # GraphDB Configuration (new architecture)
@@ -291,6 +307,21 @@ class Settings(BaseSettings):
         default=60,
         description="How often AlertMonitor polls sensor data for threshold breaches.",
     )
+    ANOMALY_SCAN_INTERVAL_SECS: int = Field(
+        default=3600,
+        description=(
+            "How often the V5 anomaly scanner sweeps all backed points and persists "
+            "episodes to the events store. 0 disables the background scan."
+        ),
+    )
+    PROTECT_ENFORCE: str = Field(
+        default="shadow",
+        description=(
+            "V5 PROTECT rollout stage: 'off' (never consult the PDP), 'shadow' "
+            "(consult + log verdicts, enforce nothing — the default), 'on' "
+            "(denials block fetches, restrictions are applied/declared)."
+        ),
+    )
     ALERT_THRESHOLDS_PATH: str = Field(
         default="/app/config/alert_thresholds.yaml",
         description="Path to YAML file defining sensor alert thresholds.",
@@ -317,7 +348,12 @@ class Settings(BaseSettings):
         default="bldg1", description="Building identifier (bldg1, bldg2, bldg3)"
     )
     BUILDING_NAME: str = Field(
-        default="Abacws Building", description="Human-readable building name"
+        default="Building",
+        description=(
+            "Human-readable building name, set per building in .env. The default is "
+            "deliberately generic: it named a real building before CAVEAT-094, so any "
+            "deployment that forgot to set it announced someone else's building."
+        ),
     )
     BUILDING_NAMESPACE: str = Field(
         default="http://example.org/building#",
@@ -973,6 +1009,10 @@ def get_llm_config() -> dict:
     Returns dict with model params; 'model_fast' is the lightweight model for
     intent classification, SPARQL generation, and rewrites.
     """
+    reasoning = (settings.LLM_REASONING_EFFORT or "").strip().lower()
+    if reasoning not in ("low", "medium", "high"):
+        reasoning = ""  # anything else means "leave the provider default alone"
+
     if settings.MODEL_PROVIDER == "openai":
         return {
             "provider": "openai",
@@ -980,6 +1020,8 @@ def get_llm_config() -> dict:
             "model_fast": settings.OPENAI_MODEL_FAST,
             "api_key": settings.OPENAI_API_KEY,
             "temperature": settings.OPENAI_TEMPERATURE,
+            # not forwarded to the OpenAI clients: the fast model (gpt-4o-mini)
+            # rejects the parameter, and mixing per-client support is a trap.
         }
     elif settings.MODEL_PROVIDER == "cloud":
         return {
@@ -989,6 +1031,7 @@ def get_llm_config() -> dict:
             "model_fast": settings.OLLAMA_CLOUD_MODEL,  # same model for cloud Ollama
             "api_key": settings.OLLAMA_CLOUD_API_KEY,
             "temperature": settings.OPENAI_TEMPERATURE,
+            "reasoning_effort": reasoning,
         }
     else:  # local (Ollama)
         return {

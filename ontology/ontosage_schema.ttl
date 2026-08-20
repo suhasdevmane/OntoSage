@@ -103,7 +103,7 @@
     dcterms:created "2026-07-15"^^xsd:date ;
     dcterms:modified "2026-07-17"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
-    owl:versionInfo "2.0.0" ;
+    owl:versionInfo "2.1.0" ;
     vann:preferredNamespacePrefix "ontosage" ;
     vann:preferredNamespaceUri "http://ontosage.org/capabilities#" ;
     rdfs:seeAlso <https://brickschema.org/schema/Brick> ,
@@ -347,7 +347,7 @@ ontosage:buildingOwner a owl:DatatypeProperty ;
     rdfs:label "owner"@en ;
     rdfs:comment "The organisation that owns the building. Distinct from the operator: an owner may lease the building to whoever runs it day to day, and 'who owns this?' and 'who runs this?' are different questions with different answers."@en ;
     rdfs:domain brick:Building ; rdfs:range xsd:string ;
-    skos:example "\"Cardiff University\"" .
+    skos:example "\"Example University\"" .
 
 ontosage:buildingOperator a owl:DatatypeProperty ;
     rdfs:label "operator"@en ;
@@ -365,7 +365,7 @@ ontosage:buildingAddress a owl:DatatypeProperty ;
     rdfs:label "address"@en ;
     rdfs:comment "Street address as a person would write it. Brick carries coordinates for geometry; this carries the form a human asks for and can act on."@en ;
     rdfs:domain brick:Building ; rdfs:range xsd:string ;
-    skos:example "\"Abacws, Senghennydd Road, Cardiff CF24 4AG\"" .
+    skos:example "\"Example Building, 1 Campus Road, Exampletown EX1 2AB\"" .
 
 ontosage:buildingPurpose a owl:DatatypeProperty ;
     rdfs:label "purpose"@en ;
@@ -737,6 +737,13 @@ ontosage:isSimulated a owl:DatatypeProperty ;
     rdfs:range xsd:boolean ;
     skos:example "true" .
 
+ontosage:zoneId a owl:DatatypeProperty ;
+    rdfs:label "zone id"@en ;
+    rdfs:comment "The canonical zone identifier a space carries in the building's floor-plan manifests (DWG/PDF pipeline). This literal is THE join key between a manifest Space and its ontology individual — label-based joins break on decorated labels ('HVAC Zone 5.28'@en) and non-dotted CAD ids ('3Z001'), so generators emit this instead and the manifest linker matches on it first."@en ;
+    rdfs:domain brick:Location ;
+    rdfs:range xsd:string ;
+    skos:example "bldg:Room_5.28 ontosage:zoneId \"5.28\" ." .
+
 
 ####################################################################################################
 #  MODULE G — COMPETENCY QUESTIONS + EXAMPLE SPARQL
@@ -954,6 +961,252 @@ ontosage:ReportShape a sh:NodeShape ;
 #      + Module I  Added SHACL shapes for Capability and Report (Concept shape moved from hbco_core).
 #      = Module A  Capabilities: unchanged from 1.0.0 (fully backward-compatible; all v1 instances
 #        keep resolving).
+#  2.1.0 (2026-08-15)  + Module J  V5 OCBV-2: IntervalRecord hierarchy (Booking / WorkOrder /
+#        AccessEvent / AlarmEvent / ComplianceCheck / AnomalyEvent) + lifecycle props;
+#        ForecastSkill (measured predictive skill, SPARQL-answerable confidence);
+#        AccessPolicy (PROTECT pillar: k-floors, resolution tiers, rate limits,
+#        inference classes); amenity kinds Locker + PrinterPoint (bank demand).
 #  1.0.0 (2026-07-15)  Initial OCBV — capabilities (amenities + knowledge topics) over Brick.
 ####################################################################################################
 
+
+####################################################################################################
+# Module J — V5 OCBV-2: Interval Records, Forecast Skill, Access Policies  (v2.1.0, 2026-08-15)
+#
+# Design: tasks/V5_OCBV2_DELTA_SPEC.md. Brick 1.4 has NO vocabulary for bookings, work
+# orders, access events, dated compliance checks, persisted anomaly episodes, forecast
+# skill, or access policies (audited) — this module adds exactly that, nothing Brick
+# already names. Instances of IntervalRecord subclasses live in each building's events
+# store (ref:storedAt -> events_data), NOT as per-event triples: the graph holds the
+# vocabulary and each building's record-source declarations; the rows are data.
+####################################################################################################
+
+# ── J.1 Interval records (S2) ──────────────────────────────────────────────────────────────────
+
+ontosage:IntervalRecord a owl:Class ;
+    rdfs:label "Interval record"@en ;
+    rdfs:comment "Abstract supertype for anything that happens over a time interval with a lifecycle: bookings, work orders, access events, alarms, compliance checks, anomaly episodes. Never instantiated directly."@en .
+
+ontosage:Booking rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Room booking"@en ;
+    rdfs:comment "A reservation of a space for a time interval."@en ;
+    skos:example "\"is the boardroom free at 3pm?\" -> overlap query on Booking records." .
+
+ontosage:WorkOrder rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Work order"@en ;
+    rdfs:comment "A maintenance task with an open->assigned->done lifecycle."@en ;
+    skos:example "\"how many overdue tickets?\" -> count WorkOrder where status=open and start older than SLA." .
+
+ontosage:AccessEvent rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Access event"@en ;
+    rdfs:comment "An aggregate-queryable entry event at an entrance. Per-person queries are denied by inference-class policy."@en .
+
+ontosage:AlarmEvent rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Alarm activation"@en ;
+    rdfs:comment "A persisted alarm activation episode (fire panel, freezer, leak...)."@en .
+
+ontosage:ComplianceCheck rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Compliance check"@en ;
+    rdfs:comment "A dated statutory or policy check (fire alarm test, legionella flush, LOLER, PAT...). Due/overdue is computed from dueDate vs completedDate."@en ;
+    skos:example "\"which risk assessments are past review?\" -> ComplianceCheck where dueDate < NOW and completedDate absent." .
+
+ontosage:AnomalyEvent rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Anomaly episode"@en ;
+    rdfs:comment "A persisted detector finding with a stable id: one episode per contiguous deviation (extended while it persists, closed when readings normalise)."@en ;
+    skos:example "\"summarise this week's anomalies\" -> AnomalyEvent episodes overlapping the week." .
+
+ontosage:aboutSpace a owl:ObjectProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range brick:Location ;
+    rdfs:label "about space"@en ; rdfs:comment "The room/zone the record concerns."@en .
+
+ontosage:aboutEquipment a owl:ObjectProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range brick:Equipment ;
+    rdfs:label "about equipment"@en .
+
+ontosage:aboutPoint a owl:ObjectProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range brick:Point ;
+    rdfs:label "about point"@en ; rdfs:comment "AnomalyEvent: the sensor concerned."@en .
+
+ontosage:recordStatus a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;
+    rdfs:label "record status"@en ;
+    rdfs:comment "Lifecycle state: open | assigned | done | cancelled | detected | resolved."@en .
+
+ontosage:dueDate a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ComplianceCheck ; rdfs:range xsd:dateTime ;
+    rdfs:label "due date"@en .
+
+ontosage:completedDate a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:dateTime ;
+    rdfs:label "completed date"@en .
+
+ontosage:responsibleRole a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;
+    rdfs:label "responsible role"@en ;
+    rdfs:comment "A ROLE name, never a person identifier (privacy by design)."@en .
+
+ontosage:detectedBy a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AnomalyEvent ; rdfs:range xsd:string ;
+    rdfs:label "detected by"@en ; rdfs:comment "Detector id, e.g. seasonal_residual, stuck_sensor."@en .
+
+ontosage:baselineValue a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AnomalyEvent ; rdfs:range xsd:double ;
+    rdfs:label "baseline value"@en ; rdfs:comment "The expected-band context the deviation is measured against."@en .
+
+# ── J.2 Forecast skill (P3 PREDICT) ────────────────────────────────────────────────────────────
+
+ontosage:ForecastSkill a owl:Class ;
+    rdfs:label "Forecast skill record"@en ;
+    rdfs:comment "Measured predictive skill for one (modality x horizon) on THIS building, from walk-forward backtesting. Cited in every forecast answer; makes 'how good are your forecasts?' SPARQL-answerable."@en ;
+    skos:example "\"how confident are you?\" -> the ForecastSkill for co2 @ 24h: MAE, MAPE, CI coverage." .
+
+ontosage:skillOf a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ForecastSkill ; rdfs:range xsd:string ;
+    rdfs:label "skill of modality"@en .
+
+ontosage:horizonHours a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ForecastSkill ; rdfs:range xsd:double ;
+    rdfs:label "horizon (hours)"@en .
+
+ontosage:backtestMAE a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ForecastSkill ; rdfs:range xsd:double ;
+    rdfs:label "backtest MAE"@en .
+
+ontosage:backtestMAPE a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ForecastSkill ; rdfs:range xsd:double ;
+    rdfs:label "backtest MAPE (%)"@en .
+
+ontosage:ciCoverage80 a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ForecastSkill ; rdfs:range xsd:double ;
+    rdfs:label "80% CI coverage (measured)"@en ;
+    rdfs:comment "Fraction of holdout actuals inside the 80% interval — calibration, not hope."@en .
+
+ontosage:skillMeasuredAt a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ForecastSkill ; rdfs:range xsd:dateTime ;
+    rdfs:label "skill measured at"@en .
+
+# ── J.3 Access policies (Pillar C PROTECT) ─────────────────────────────────────────────────────
+
+ontosage:AccessPolicy a owl:Class ;
+    rdfs:label "Access policy"@en ;
+    rdfs:comment "A query-parameter access policy: who may see what, at which aggregation floor, resolution tier and rate. Consumed ONLY by the deterministic Policy Decision Point; cited in the evidence dossier of every answer it shapes."@en ;
+    skos:example "\"what am I allowed to ask?\" -> the AccessPolicy set for the session role." .
+
+ontosage:appliesToRole a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessPolicy ; rdfs:range xsd:string ;
+    rdfs:label "applies to role"@en ;
+    rdfs:comment "Canonical RBAC role name. Personas NEVER map to policies."@en .
+
+ontosage:scopeSpaces a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessPolicy ; rdfs:range xsd:string ;
+    rdfs:label "space scope"@en ; rdfs:comment "own | public | any."@en .
+
+ontosage:minAggregationSensors a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessPolicy ; rdfs:range xsd:integer ;
+    rdfs:label "k-anonymity sensor floor"@en .
+
+ontosage:minAggregationSpaces a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessPolicy ; rdfs:range xsd:integer ;
+    rdfs:label "k-anonymity space floor"@en .
+
+ontosage:resolutionTier a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessPolicy ; rdfs:range xsd:string ;
+    rdfs:label "resolution tier"@en ;
+    rdfs:comment "Serialized 'recencyMinutes:maxResolutionSeconds' pairs; finer data for recent windows, coarser for history."@en .
+
+ontosage:rateLimit a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessPolicy ; rdfs:range xsd:string ;
+    rdfs:label "rate limit"@en ; rdfs:comment "Serialized 'maxQueries:perMinutes'; 0 = unlimited."@en .
+
+ontosage:inferenceClass a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessPolicy ; rdfs:range xsd:string ;
+    rdfs:label "inference class rule"@en ;
+    rdfs:comment "Question-shape rules, e.g. individual_presence:deny — the system explains the building, never tracks individuals."@en .
+
+# ── J.4 Amenity kinds added from measured bank demand (V5-T03) ─────────────────────────────────
+
+ontosage:Locker rdfs:subClassOf ontosage:Amenity ; a owl:Class ;
+    rdfs:label "Locker bank"@en ; rdfs:comment "Storage lockers for occupants/students."@en ;
+    skos:example "\"which lockers are still available?\"" .
+
+ontosage:PrinterPoint rdfs:subClassOf ontosage:Amenity ; a owl:Class ;
+    rdfs:label "Printer / copy point"@en ; rdfs:comment "A shared printing location."@en .
+
+# ── Module K — Sensor classes Brick does not define  (V5-T10, 2026-08-18) ─────────────────────
+#
+# WHY THIS MODULE EXISTS.  The SATURATE provisioner used to mint every configured
+# sensor class into the Brick namespace unconditionally.  Where Brick has no such
+# class, that invented a term inside someone else's namespace: an audited building
+# graph carried dozens of instances typed `brick:Sound_Level_Sensor`, a class Brick
+# does not define, and a Brick validator would reject them (BUG-179).
+#
+# The honest form is to declare the class HERE, in OntoSage's own namespace, as a
+# subclass of the nearest real Brick class.  A modality config may then name it
+# explicitly (`ontosage:Sound_Level_Sensor`); a bare name still means Brick.
+# These are TBox terms about sensing in general — no building facts, nothing
+# building-specific — so they belong in the shared ontology, not in input/.
+#
+# Acoustic sensing has no Brick class in the version this project pins; sound
+# level is nonetheless one of the most-asked-about quantities in the survey
+# corpus ("which room is quietest?"), so the building must be able to say it.
+
+ontosage:Sound_Level_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Sensor ;
+    rdfs:label "Sound level sensor"@en ;
+    rdfs:comment "Measures ambient sound pressure level, normally reported in dB(A). Declared by OntoSage because the pinned Brick version defines no acoustic sensor class; the WHO indoor guideline band 30-70 dB(A) anchors its comfort scoring."@en ;
+    skos:example "\"which room is quietest right now?\"" .
+
+ontosage:Noise_Level_Sensor a owl:Class ;
+    rdfs:subClassOf ontosage:Sound_Level_Sensor ;
+    rdfs:label "Noise level sensor"@en ;
+    rdfs:comment "Alias kept for graphs that label the same measurement 'noise' rather than 'sound level'."@en .
+
+# A time-series store a sensor's readings actually live in — the object of
+# `ref:storedAt`. Brick models the BUILDING, not the systems that persist its
+# telemetry, and the ref ontology names the reference (`ref:TimeseriesReference`)
+# without naming the store it points at. Instances were therefore typed
+# `brick:Database`, a term Brick does not define (TODO-181). Declared here for
+# the same reason as the acoustic classes above: the concept is load-bearing —
+# `ref:storedAt` is half of what makes a question answerable at all — so it
+# needs a class that genuinely exists.
+# ── Equipment and grouping concepts Brick 1.4 does not model ──────────────────
+# Surfaced by the undeclared-type audit when a real academic building was
+# booted: its model names plant and control concepts that Brick has no class
+# for, so the TTL had minted them into brick: — asserting Brick defines terms it
+# does not. Each is declared here against the closest Brick parent, for the same
+# reason as the acoustic classes above: the concepts are real and load-bearing
+# for the questions this building gets asked, so they need a class that exists.
+#
+# Where Brick DOES define a near-match the instance is retyped to Brick instead
+# and nothing is declared here — brick:Electric_Power_Sensor (not "Electrical")
+# and brick:Vibration_Sensor_Equipment are both real Brick classes.
+
+ontosage:Emergency_Generator a owl:Class ;
+    rdfs:subClassOf brick:Equipment ;
+    rdfs:label "Emergency generator"@en ;
+    rdfs:comment "Standby generation plant serving life-safety and critical loads during a supply failure. Brick 1.4 defines Emergency_Generator_Alarm and _Status points but no equipment class to hang them on."@en .
+
+ontosage:Heat_Pump a owl:Class ;
+    rdfs:subClassOf brick:Equipment ;
+    rdfs:label "Heat pump"@en ;
+    rdfs:comment "Reversible heat-transfer plant. Brick 1.4 defines only the compound condensing-unit variants (Heat_Pump_Condensing_Unit and its air/ground-source subclasses), none of which fit a whole-unit instance."@en .
+
+ontosage:Renewable_Energy_System a owl:Class ;
+    rdfs:subClassOf brick:System ;
+    rdfs:label "Renewable energy system"@en ;
+    rdfs:comment "On-site generation such as photovoltaic or solar-thermal, modelled as a system rather than a single equipment item because it spans arrays, inverters and metering."@en .
+
+ontosage:Alarm_Group a owl:Class ;
+    rdfs:subClassOf brick:Collection ;
+    rdfs:label "Alarm group"@en ;
+    rdfs:comment "A named set of alarms handled together. Deliberately a brick:Collection and NOT a brick:Alarm: a group of alarms is not itself an alarm, and typing it as one would let it match queries asking for active alarms."@en .
+
+ontosage:Lighting_Command a owl:Class ;
+    rdfs:subClassOf brick:Command ;
+    rdfs:label "Lighting command"@en ;
+    rdfs:comment "A writable point controlling luminaire state or level."@en .
+
+ontosage:Database a owl:Class ;
+    rdfs:label "Database"@en ;
+    rdfs:comment "A registered time-series backend holding sensor readings; the object of ref:storedAt, resolved to a connection through database_registry.yaml."@en ;
+    skos:example "\"bldg:database2\" — the MySQL instance behind this building's narrow tables" .

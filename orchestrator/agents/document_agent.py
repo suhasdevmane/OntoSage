@@ -213,6 +213,7 @@ class DocumentAgent:
         # uses building name / id from the conversation's building, not the
         # process-global setting.
         from orchestrator.services.building_context import resolve_building_context
+
         bctx = resolve_building_context(getattr(state, "building_id", None))
 
         # Best title

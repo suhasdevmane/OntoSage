@@ -21,6 +21,7 @@
 @prefix unit: <http://qudt.org/vocab/unit/> .
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
 
 <n97aa69a002664d2abf8cf1f708a3b23fb1> brick:hasUnits unit:FT_2 ;
     brick:value "43333^^xsd:integer"^^xsd:string .
@@ -32198,11 +32199,11 @@ $this brick:hasTag ?tag .\r\r\r
     sh:predicate brick:hasTag ;
     sh:subject sh:this .
 
-bldg:Wellman_ChilledWater_Demand_kBtu a brick:Electric_Meter ;
+bldg:Wellman_ChilledWater_Demand_kBtu a brick:Electrical_Meter ;
     rdfs:label "Wellman_ChilledWater_Demand_kBtu"^^xsd:string ;
     brick:isPointOf bldg:chiller .
 
-bldg:Wellman_Electricity_Demand_kBtu a brick:Building_Electric_Meter ;
+bldg:Wellman_Electricity_Demand_kBtu a brick:Building_Electrical_Meter ;
     rdfs:label "Wellman_Electricity_Demand_kBtu"^^xsd:string .
 
 bldg:bldg2 a brick:Building ;
@@ -60161,7 +60162,7 @@ brick:Heating_Command a owl:Class,
         tag:Heat,
         tag:Point .
 
-bldg:database2 a brick:Database .
+bldg:database2 a ontosage:Database .
 
 brick:VAV a owl:Class ;
     rdfs:label "VAV"^^xsd:string ;

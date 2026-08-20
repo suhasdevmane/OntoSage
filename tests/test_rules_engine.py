@@ -12,6 +12,7 @@ Covers:
   9. evaluate_all() returns correct fired count
   10. load() returns 0 when rules.yaml absent
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -22,7 +23,6 @@ import pytest
 import yaml
 
 from orchestrator.services.rules_engine import EcaRule, RulesEngine
-
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -98,6 +98,7 @@ def _engine_with_rules(rules: list, fetcher=None, notifier=None) -> RulesEngine:
 
 # ── tests ──────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_load_returns_correct_count(tmp_path):
@@ -134,9 +135,9 @@ async def test_breach_fires_notification():
     engine = _engine_from_yaml(_SAMPLE_RULES_YAML, fetcher=fetcher, notifier=notifier)
 
     # Patch Redis calls to no-ops
-    with patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), \
-         patch.object(engine, "_mark_cooldown", AsyncMock()), \
-         patch.object(engine, "_clear_breach", AsyncMock()):
+    with patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), patch.object(
+        engine, "_mark_cooldown", AsyncMock()
+    ), patch.object(engine, "_clear_breach", AsyncMock()):
 
         fired = await engine.evaluate_all()
 
@@ -157,8 +158,9 @@ async def test_no_breach_no_notification():
 
     engine = _engine_from_yaml(_SAMPLE_RULES_YAML, fetcher=fetcher, notifier=notifier)
 
-    with patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), \
-         patch.object(engine, "_clear_breach", AsyncMock()):
+    with patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), patch.object(
+        engine, "_clear_breach", AsyncMock()
+    ):
         fired = await engine.evaluate_all()
 
     assert fired == 0
@@ -173,8 +175,9 @@ async def test_cooldown_prevents_double_fire():
 
     engine = _engine_from_yaml(_SAMPLE_RULES_YAML, fetcher=fetcher, notifier=notifier)
 
-    with patch.object(engine, "_in_cooldown", AsyncMock(return_value=True)), \
-         patch.object(engine, "_clear_breach", AsyncMock()):
+    with patch.object(engine, "_in_cooldown", AsyncMock(return_value=True)), patch.object(
+        engine, "_clear_breach", AsyncMock()
+    ):
         fired = await engine.evaluate_all()
 
     assert fired == 0
@@ -188,16 +191,25 @@ async def test_duration_window_does_not_fire_on_first_detection():
     notifier = AsyncMock()
     fetcher = AsyncMock(return_value=1200.0)
 
-    rule_def = [{"id": "co2_sustained", "name": "CO2 sustained",
-                 "enabled": True,
-                 "trigger": {"sensor_uuid": "uuid-dur", "op": ">",
-                              "threshold": 1000.0, "duration_min": 10},
-                 "action": {"type": "notify", "message": "CO2 high", "severity": "warning"}}]
+    rule_def = [
+        {
+            "id": "co2_sustained",
+            "name": "CO2 sustained",
+            "enabled": True,
+            "trigger": {
+                "sensor_uuid": "uuid-dur",
+                "op": ">",
+                "threshold": 1000.0,
+                "duration_min": 10,
+            },
+            "action": {"type": "notify", "message": "CO2 high", "severity": "warning"},
+        }
+    ]
     engine = _engine_with_rules(rule_def, fetcher=fetcher, notifier=notifier)
 
-    with patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), \
-         patch.object(engine, "_breach_sustained", AsyncMock(return_value=False)), \
-         patch.object(engine, "_clear_breach", AsyncMock()):
+    with patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), patch.object(
+        engine, "_breach_sustained", AsyncMock(return_value=False)
+    ), patch.object(engine, "_clear_breach", AsyncMock()):
         fired = await engine.evaluate_all()
 
     assert fired == 0
@@ -211,17 +223,27 @@ async def test_duration_window_fires_when_sustained():
     notifier = AsyncMock()
     fetcher = AsyncMock(return_value=1200.0)
 
-    rule_def = [{"id": "co2_sustained", "name": "CO2 sustained",
-                 "enabled": True,
-                 "trigger": {"sensor_uuid": "uuid-dur", "op": ">",
-                              "threshold": 1000.0, "duration_min": 10},
-                 "action": {"type": "notify", "message": "CO2 high", "severity": "warning"}}]
+    rule_def = [
+        {
+            "id": "co2_sustained",
+            "name": "CO2 sustained",
+            "enabled": True,
+            "trigger": {
+                "sensor_uuid": "uuid-dur",
+                "op": ">",
+                "threshold": 1000.0,
+                "duration_min": 10,
+            },
+            "action": {"type": "notify", "message": "CO2 high", "severity": "warning"},
+        }
+    ]
     engine = _engine_with_rules(rule_def, fetcher=fetcher, notifier=notifier)
 
-    with patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), \
-         patch.object(engine, "_breach_sustained", AsyncMock(return_value=True)), \
-         patch.object(engine, "_mark_cooldown", AsyncMock()), \
-         patch.object(engine, "_clear_breach", AsyncMock()):
+    with patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), patch.object(
+        engine, "_breach_sustained", AsyncMock(return_value=True)
+    ), patch.object(engine, "_mark_cooldown", AsyncMock()), patch.object(
+        engine, "_clear_breach", AsyncMock()
+    ):
         fired = await engine.evaluate_all()
 
     assert fired == 1
@@ -252,9 +274,9 @@ async def test_evaluate_all_returns_correct_count():
     fetcher = AsyncMock(return_value=1200.0)
 
     engine = _engine_from_yaml(_SAMPLE_RULES_YAML, fetcher=fetcher, notifier=notifier)
-    with patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), \
-         patch.object(engine, "_mark_cooldown", AsyncMock()), \
-         patch.object(engine, "_clear_breach", AsyncMock()):
+    with patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), patch.object(
+        engine, "_mark_cooldown", AsyncMock()
+    ), patch.object(engine, "_clear_breach", AsyncMock()):
         fired = await engine.evaluate_all()
 
     assert fired == 1  # only co2_high fires with value 1200
@@ -287,19 +309,26 @@ async def test_concept_trigger_resolves_via_hbco():
         confidence="high",
     )
 
-    rule_def = [{"id": "humidity_damp", "name": "High humidity",
-                 "enabled": True,
-                 "trigger": {"concept": "damp", "op": ">", "threshold": 65.0, "duration_min": 0},
-                 "action": {"type": "notify", "message": "Humidity high", "severity": "warning"}}]
+    rule_def = [
+        {
+            "id": "humidity_damp",
+            "name": "High humidity",
+            "enabled": True,
+            "trigger": {"concept": "damp", "op": ">", "threshold": 65.0, "duration_min": 0},
+            "action": {"type": "notify", "message": "Humidity high", "severity": "warning"},
+        }
+    ]
     engine = _engine_with_rules(rule_def, fetcher=fetcher, notifier=notifier)
 
     mock_cr = MagicMock()
     mock_cr.resolve = AsyncMock(return_value=[mock_match])
-    with patch("orchestrator.services.concept_resolver.concept_resolver", mock_cr), \
-         patch.object(engine, "_uuid_for_class", AsyncMock(return_value="mock-humidity-uuid")), \
-         patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), \
-         patch.object(engine, "_mark_cooldown", AsyncMock()), \
-         patch.object(engine, "_clear_breach", AsyncMock()):
+    with patch("orchestrator.services.concept_resolver.concept_resolver", mock_cr), patch.object(
+        engine, "_uuid_for_class", AsyncMock(return_value="mock-humidity-uuid")
+    ), patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), patch.object(
+        engine, "_mark_cooldown", AsyncMock()
+    ), patch.object(
+        engine, "_clear_breach", AsyncMock()
+    ):
         fired = await engine.evaluate_all()
 
     assert fired == 1

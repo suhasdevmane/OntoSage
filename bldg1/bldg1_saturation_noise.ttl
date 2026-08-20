@@ -1,0 +1,2809 @@
+# SATURATE (V4-T08): simulated noise sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'noise_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data>
+    a ref:Database ;
+    rdfs:label "Noise Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.01 — Main Reception noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "84ecac3e-df8d-564b-b041-34c8be294922" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.04_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.04 — Mechanical Plant Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "41f9839a-b2cd-5e08-b4e3-d154ce49ca1b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.05_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.05 — Mechanical Plant Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ca4d1d0a-d778-595f-bee2-53842b309846" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.06_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.06 — Loading and Goods Storage noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d198d4bc-b400-5d09-80e4-9fc87e578595" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.07_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.07 — Service Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "63f0289a-0ffe-55d1-87a7-341f2585cc22" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.08_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.08 — Service Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3da5d80a-9d57-5b6a-8126-90b405da3813" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.10 — Building Management Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5e3c0cf7-128c-5211-bdbf-fc24605be633" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.17_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.17 — Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "465d036f-c942-5ea9-9813-28c7264e7eb1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.18_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.18 — Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dec134d8-991f-5c1c-9dbf-f0ed8fa62b9b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.19_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.19 — Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.19> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7cf0b33d-8e4d-512f-803d-83e886cb6aa2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.20_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.20 — Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e56619ac-ceed-59f4-81c4-1e3129fc137e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.29_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.29 — Storage Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.29> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "78630d15-fec3-5234-98a1-ac952e44b59f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.31_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.31 — Mechanical/Service Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.31> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ed5a95b1-49ab-5532-b92c-ee6d54c87ace" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.32_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.32 — Mechanical/Service Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.32> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d4048cf5-aa54-5ce9-a129-4b259b304e93" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.33_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.33 — Mechanical/Service Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.33> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "09dba42e-7a0b-52c3-b446-5dd153020233" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.34_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 0.34 — Building Telecommunications Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ca397578-d443-549b-a0bb-747c2f67a41f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.06_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 1.06 — Computer Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7135e22c-118c-5009-89ff-2e74f802fa8f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.07_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 1.07 — Computer Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3928e818-ef42-5270-9b4f-e06a7fc4373c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 1.08 — Computer Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "18bfb00b-e1a5-50d1-b45d-b45b84f5b24a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.09_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 1.09 — Computer Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2f253480-171b-5518-85fd-04f679898b6f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.25_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 1.25 — Conference/Seminar Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.25> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0d6deab5-88cf-5872-b365-d577df781838" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.26_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 1.26 — Conference/Seminar Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7fe9d1b1-545b-5d88-958c-810138a319e9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.34_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 1.34 — Telecommunications Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5096a175-0988-5737-871b-5a9bb437843d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.37_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 1.37 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.37> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5330706b-ae7b-5517-8657-871fb5b960f4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.38_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 1.38 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.38> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0e486d1d-b8b3-5be4-837a-24e0c151e03b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.39_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 1.39 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.39> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9791c979-a0c2-5a8f-94cb-38fcac8961d2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.40_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 1.40 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.40> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "67bf4436-6263-586c-b7f6-e5f9a17e37e2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.41_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 1.41 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.41> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cf1c3045-c274-578c-a103-2a73afb8360e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.01_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.01 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ebb7aeb1-ffff-5b5d-8d66-18c59d78ca9c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.02_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.02 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bf1f5ddd-f1d3-5e30-8886-6715c38924ef" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.03_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.03 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6e0e0052-96ad-5bd1-aa15-e3e550b99221" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.04_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.04 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "44919b2e-378c-50c2-9e9d-d1ba5e8e8449" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.05_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.05 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3ac138a2-6be7-54b2-8e9e-b1867bbc7569" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.06_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.06 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d8b7a873-8971-5349-90fc-37aa6b803a83" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.07_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.07 — Computer Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "924c5167-25ba-5389-a4bb-48e2470f2b8c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.08_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.08 — Computer Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6bdcc1c4-7b9b-597d-9f62-d547bb2a5048" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.09_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.09 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e2a85404-5a56-58e9-b93c-99363b298a42" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.10_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.10 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f5a75b0b-0e4d-5c05-8af4-2943b09c97db" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.11_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.11 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "29e212b8-67e3-5dd5-954d-7a8703550386" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.12_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.12 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e721c6d0-35d4-523d-a2da-87cfda865159" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.13_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.13 — Meeting Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c21b59dc-f573-5e23-8a90-9c74ab72b5a7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.14_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.14 — Meeting Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "31bdcb0e-8120-56fc-8f2e-99accc132993" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.15_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.15 — Seminar Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "868dc61f-c9b4-50c9-99a4-b9ecae8e51a3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.17_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.17 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "94ef4327-1c44-5ff3-8be0-ac11e05e8ab1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.18_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.18 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1a0ea27b-13af-51d6-8e04-c1df333266eb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.19_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.19 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.19> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f477de54-63f7-5b0e-b91d-3144efecc51f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.20_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.20 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "30a51ee2-3f5d-58c4-99da-f98e7bc01955" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.21_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.21 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.21> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c12784ea-d9bc-5dcc-a31c-74c0d98718d9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.22_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.22 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "27a84761-da04-5eb0-bade-184516196ed6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.24_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.24 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.24> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "972b872b-7230-58d4-a2a1-09999acb7894" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.26_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.26 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "155f1721-0c49-565d-8723-0a036c21e4a2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.34_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.34 — Telecommunications Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b018b3ce-2447-54d2-9c55-da6952028f5c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.35_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.35 — Restroom (Male) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.35> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "043e5e77-0f06-506e-803c-0fcd382cafcb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.36_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.36 — Restroom (Female) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "24eb67ab-8e8b-5c60-b8f9-71d3c83661b6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.44_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.44 — Server Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.44> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f4738aa6-858d-5af8-97c2-d8b6c97a376e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.47_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.47 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.47> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b088fe53-4063-5057-ace6-a87a9b1e1468" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.48_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.48 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.48> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2151cd5c-b22d-554b-80fa-4d27d41f8e7a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.49_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.49 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.49> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b1c23cba-bf8b-54dd-bdeb-6bc97841dd5b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.50_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.50 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1e212325-8d23-507d-951c-91503c6e8fb8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.52_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.52 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "76c1e707-8a95-57bf-8489-702649095ea3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.53_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.53 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "040f9554-16ea-54f4-9b0f-c1e3dfcc8839" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.54_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.54 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.54> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "440edbf5-9b50-56d8-aa73-d0bf3a785693" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.55_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.55 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.55> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7c09baea-4680-5e70-b65f-9c06bc3c1329" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.56_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.56 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6cf8d868-7377-5b61-90c8-2543d41a014d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.57_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.57 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "513050ec-cef9-5932-9559-0d4729f9b5b1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.58_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.58 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c82acd5a-51a5-5c22-8f3d-559a2c914950" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.59_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.59 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "58ebb242-6655-535b-8211-e0ad42d3c34f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.60_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.60 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "46416830-d89a-57c2-bd08-11eaa8a74e41" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.61_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.61 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c8d671b6-ea6a-595a-a3a3-0fc33defc795" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.62_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.62 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "336e8d59-0220-5f07-a404-4af6aa503f57" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.63_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.63 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0346b49a-30b8-51fa-b60d-8bdfa316ef6d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.64_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.64 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9f7204fc-cb9f-56a5-875c-821c30752a1d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.65_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.65 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "024c548a-c82c-5f90-99fc-cd549917da9c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.66_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.66 — Staff Break Room / Kitchen noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "63119138-65c6-5542-bb78-c3138b53c470" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.67_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 2.67 — Storage Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3469094d-0f42-5d31-b93d-38b56609b75d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.01_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.01 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "519454a2-22cb-5e9b-a0f1-db4a15f4e0c6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.02_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.02 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "11cae2b4-41dd-5a01-924f-35c233b3ab7c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.03_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.03 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e6951e2a-6e18-586a-ab61-66edef1db80a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.04_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.04 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9bb51489-7615-5466-88cc-e936deb7483e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.05_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.05 — Computer Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e114af33-ac3f-5f9b-8539-20e656cde193" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.06_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.06 — Computer Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cc092ae7-d003-5055-aaea-49fde6d39520" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.07_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.07 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "aa4c300a-2505-5f05-b997-88fab6300cff" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.08_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.08 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c476881a-0af0-54bc-9f5d-f03eec5fe977" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.09_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.09 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "43dca43d-c102-5a60-bcea-bb7785afb7a4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.10_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.10 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "359b3c20-8eed-5b4d-ae9a-bdc7b4240006" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.11_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.11 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cc1626aa-a961-59f8-974f-2139dae4d3f6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.12_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.12 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6900bbba-4324-58c6-841a-ba21d6015817" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.13_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.13 — Seminar Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b4190d44-bbb9-509f-b95d-fdc39e66ae13" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.14_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.14 — Seminar Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a2b129b8-8aea-5c2a-9f15-0ba20df4f6d7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.15_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.15 — Meeting Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "53c9aee1-1b27-5e3a-93a5-5c7ed328b5eb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.16_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.16 — Meeting Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.16> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1f08bdf9-68e1-5baf-bbba-9fd117754d2f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.17_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.17 — Staff Common Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "87a846bb-f9bc-5697-82f1-f03a23d35bc3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.18_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.18 — Kitchen noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "005d1669-8dce-523a-9458-184dd7113676" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.20_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.20 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "73c322a1-e663-568b-9ec6-d285a3dfe5d1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.22_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.22 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "61a8c7ca-cf3c-5cc5-b640-d03b4d98c0c1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.26_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.26 — Meeting Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "32fb9193-5d78-55dc-a588-d1d96a7c4a9b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.27_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.27 — Meeting Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.27> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dbe1938d-3010-5524-829c-a197a2538417" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.36_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.36 — Restroom (Male) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e3e09a60-dfef-5de8-9573-5c53047251c8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.37_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.37 — Restroom (Female) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.37> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8b515f31-f706-5c54-97f6-70816292ef55" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.38_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.38 — Telecommunications Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.38> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "658511ef-2438-512c-b54d-93ad4b047c4a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.46_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.46 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.46> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8d250f4f-2619-5e1b-9558-f2ea23bcd51d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.48_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.48 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.48> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d5e09ed3-2d72-5b8d-9a6e-97eb98daa7e9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.50_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.50 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bff0b789-6e72-5154-9689-7e0ae52e41f0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.51_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.51 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.51> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ede9efe5-619c-5d34-9067-f22fac535416" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.52_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.52 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "061e3618-2086-5661-8de1-d58ecf4e5995" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.53_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.53 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a0632772-7742-58f0-b038-437ce370f87e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.54_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.54 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.54> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2f69e178-3f05-5a00-b754-c493ccfd403d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.56_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.56 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "29f9539b-b6ad-51a0-8621-13162a4416a1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.57_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.57 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c3da49aa-0884-5160-bc3f-02e189731ce2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.58_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.58 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bd182a64-b7f1-53b8-84eb-c961052382a7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.59_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.59 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cce27f79-60f7-5744-a7ad-596cf51288b1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.60_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.60 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bcce9ca3-7552-5da8-aee8-69494182b6ff" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.61_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.61 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e933c529-1dc1-5f83-9259-53df8bce46b2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.62_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.62 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c16e521a-2ea6-51cf-a077-a513fd8f4948" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.63_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.63 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d33606cb-b662-5bec-8b1a-29e3c86c8fd1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.64_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.64 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "25933227-0379-5b42-84fe-176bd750c8d8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.65_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.65 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "33b71f58-3fce-5dd2-9c55-28e4f2defb64" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.66_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.66 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "50f7c83e-689c-5840-afca-7fb24738d7a2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.67_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.67 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "39ca508a-4ee4-59e4-9147-966f444e4f5e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.68_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.68 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1bb6e9c7-48ff-59ea-9485-03e7399dbbef" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.69_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.69 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "227ed9bd-9364-58d7-9498-d66c8553990d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.70_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.70 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "56cb4cab-8d80-5286-819b-f8af1af114c8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.71_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 3.71 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8d910e48-a359-5dc9-80fb-a6121ea775fb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.01_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.01 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "74a870a0-e64d-5e23-9f89-178b7225dc22" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.02_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.02 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b70c2d67-aefe-5c75-a50b-33cf18433ddb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.03_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.03 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c54e8bb7-5d03-517e-8d4d-f36b7ef90281" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.05_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.05 — Computer Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0b7b377d-bcc0-5f83-adf2-2bc452cb4e40" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.06_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.06 — Computer Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f07ae506-40d3-59c4-8671-a924192c70af" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.07_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.07 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8edc7934-6bb5-57d6-a2b3-e27012c72236" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.08_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.08 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a5312b75-efa2-5564-9fbc-607c4a92f3d1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.09_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.09 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a7fcd6ec-3151-5cfe-bf54-e1869f38c6ab" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.10_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.10 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d0c8588a-639a-506d-bc4b-957ef4a19cd1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.11_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.11 — Meeting Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a59e48d5-af61-531d-aa6a-76f09c228df8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.12_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.12 — Meeting Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cca58b7c-a6ba-5559-9fe3-865dd2be538a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.13_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.13 — Seminar Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3552d76b-90b2-5aaf-8e5d-59a4019fe4d9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.14_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.14 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "86211b81-4020-5c64-a8b2-d383b58ffd00" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.15_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.15 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3bbeff91-66a5-572d-881d-5db91e40c0b2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.16_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.16 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.16> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "91c64654-26c2-5416-802c-871dd602cedf" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.18_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.18 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1715f2f1-8d20-5f0e-bffd-3961f8439bea" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.19_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.19 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.19> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "30994fa5-9751-5215-b7ac-ec0ca9d9c154" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.20_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.20 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6a9beafc-67cb-5a3d-817d-9fabb734e0d0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.21_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.21 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.21> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cd0fdaf7-09ba-5529-845d-9e6c9732fcae" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.22_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.22 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cc5e9951-d90d-53eb-8a7e-cf4fa55a7c48" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.23_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.23 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.23> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "07bd32bf-8f31-550d-b567-8a5e14d90531" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.24_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.24 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.24> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2d9e452d-f673-509f-bd9c-9327777e1cf0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.34_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.34 — Telecommunications Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6c8bb5fe-ed3d-59a5-b8cc-099b3ef5bbc4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.35_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.35 — Restroom (Male) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.35> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9a7317e7-926a-559a-92cd-e6f94bcf3bc3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.36_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.36 — Restroom (Female) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ee0eee89-3536-5358-8e3b-6728e6e763a8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.38_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.38 — Mechanical/Service Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.38> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "57ce7a74-8547-5337-8d70-f87939dff41c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.44_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.44 — Server Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.44> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2c4b8e71-72ff-54d7-9610-ad250fb40615" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.47_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.47 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.47> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "571f6347-69d0-5760-96b0-52cc8010d939" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.49_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.49 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.49> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3ba2c916-7de9-5471-93f9-0ae53b86c673" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.50_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.50 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "aee8e838-37ee-5bd8-a4be-a01a7e5cbaf9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.51_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.51 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.51> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "896c69d1-85ba-5924-b3ff-b87d5012191b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.52_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.52 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "acf4b78d-ea76-5776-8e1e-aff647decf46" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.53_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.53 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5ed552b1-a8b5-515a-872c-a8aefc382afa" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.55_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.55 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.55> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e26a25e3-4076-526c-964c-a09b55868dbc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.56_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.56 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "01b7af0d-9239-5f1a-8430-82c8a0fbe84a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.57_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.57 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bda976b5-0732-5c82-96ab-f5bcf710c405" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.58_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.58 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b3164dde-54b9-51aa-8737-4e2879b03945" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.59_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.59 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "29cbbb5c-4cc5-5259-b76d-b1c4211c76fe" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.60_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.60 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5b6388e8-32da-58e6-aa7d-69d5f47a43dd" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.61_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.61 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a011a847-91b8-5e69-9dd0-e4c1a155c991" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.62_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.62 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8e58c91d-d0e3-57e8-9484-54d71920eddc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.63_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.63 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f5b447d2-f195-5b70-b9f0-6781f72e62e4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.64_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.64 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5b212669-23c6-53bd-b907-9b463b155cc2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.65_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.65 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f22e2b4f-762a-5752-8981-ed0fe444f07a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.66 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "59c3cc9e-0263-502e-8a0a-6684d2f28102" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.67 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6d430672-afd3-5fbf-a219-83ca73dbff3b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.68 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "023aad49-f056-59ea-9594-317798952a32" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.69 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1db73747-9e96-5a6c-9f6b-66a0ba4947fc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.70 — Staff Break Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "24b9c3f3-6f5a-5e23-bf27-b1ecfa62fd57" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 4.71 — Storage Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d2192491-712c-59b8-aeb9-044b1fa81d9c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.01 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3057c9f3-3f94-5add-b169-7c508974f493" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.02 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cb6f3fc4-a61c-5dee-9093-fed370112633" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.03 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "97bd5ffb-c1e2-544a-9dfe-125e91620252" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.04 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a46af9bc-2305-5693-8eef-2426c7830137" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.05 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9b14bba5-0e55-56f3-b37a-a247e6d70fdf" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.06 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3a31ab42-e609-5a62-9e17-73e9dac49683" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.07 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "871fc65d-c36f-5a8f-bd26-d8245437d41a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.08 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "98b1c1b7-d233-533f-b601-c7b7be07fb82" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.09 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a5f9b5a4-e6fc-5e0f-b092-7d17e5d43fea" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.10 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1a5ccaf0-e94b-5e7c-a9cb-543c2e7a74d9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.11 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "80d6fb8c-d877-5a01-a66e-39edeec08303" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.12 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "123c1a76-0c05-5ad6-946a-d4b7c0d62357" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.13 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "aee16ec4-6358-541e-8dab-8a84f4cc8b5a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.14 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e5a8b025-c2ad-5ab0-855b-aeb8d7ef47ce" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.15 — Seminar / Conference Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dfc9862e-7751-5671-ad73-07a0edb5179b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.16 — Seminar / Conference Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "18730482-0927-517a-8a1d-0030a4b8d2e6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.17 — Meeting Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f6e61ad4-3bbe-599d-b0be-381fdacc6e40" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.18 — Meeting Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c0c6dab1-4099-5427-848b-48848eeda410" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.20 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "597d30b0-9e36-532f-91d1-c2f709722197" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.21 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d9a7ba4a-a47b-5eb4-8fff-a66d8c1ebf73" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.22 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6053026a-30cb-5b2a-b367-89866a7ec6e0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.23 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2d660074-47b9-599d-92b4-f922600eb79a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.26 — Staff Break Room / Kitchen noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a8c36aa0-a047-5fc1-a718-3044118b814f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.34 — Telecommunications Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7c17aaa0-3c7b-51fa-bd9d-d7053e5729f4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.35 — Restroom (Male) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "01bdbe22-4aa0-5fc8-8665-ead4bbdb06c2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.36 — Restroom (Female) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1389ba3f-ca82-5ea7-b74e-0596f2263a46" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.44 — Server Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "12e7b788-bfc8-5d2d-99ee-1f18aae4fbb5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.45 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "90ef3565-67ba-597e-bc86-14e2d8252786" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.48 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e213a9f6-1172-516c-9727-2348b169ae98" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.49 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2002f7c4-8e15-57eb-a0be-f95538c62df0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.50 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cc2a46d9-c2c4-5d7c-b76f-f81aa912514c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.51 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "874b75db-8120-5fff-9f3c-0c94cdc56283" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.52 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3ad4d79d-c55b-580c-bea5-20516dd1a0a7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.53 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ddd345ff-b998-57cf-8681-578c70d5c1ed" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.54 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ac50ee13-748f-5c6c-8f23-ec156d200284" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.56 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "681e282e-d8b7-5f99-b6ef-e6bbeb49f58c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.57 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "48a320f6-9571-5666-9c75-1707d6ef0871" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.58 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b69fbe79-ca4d-5015-8a7e-42cb1629b3ef" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.59 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "90ff34d0-2c33-5e1a-9f5f-ceae8d4bba1f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.60 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c63b78a0-5e1c-5071-a677-cbdbf63fd7e5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.61 — Research Laboratory noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bf1096e3-19b7-5ea8-96c8-d92e1d930244" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.62 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3fb217e8-3960-5958-b767-86a26e161220" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.63 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a7e8e705-e0a0-5020-8953-8459feb80546" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.64 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "56fce6fa-45e2-5982-8fb9-66000939c64e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.65 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7b483e1e-bfe2-54f6-8110-ea6e841fc7f0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.66 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ec9b1ebb-0f83-5393-b33b-88bfc2f44803" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.67 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6f4f3145-5fdb-5bb7-86da-04ca8ee795e6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.68 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "50743b78-d372-55e2-b943-90bc9019e9bb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.69 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "14c2d24d-b28d-5c16-bc7e-bc6439577ea4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.70 — Academic Office noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6a3c010a-c9f5-5ac1-821a-c240fb7270b4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Room 5.71 — Storage Room noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d0b41497-50c8-5bf5-a672-9faa82287d76" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Server Room — Floor 2 (Room 2.44) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8cb113b8-115d-5f6f-89d4-514aa4222242" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Server Room — Floor 4 (Room 4.44) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "25646da8-c405-5a0c-bb7a-bf5a752c2e10" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Server Room — Floor 5 (Room 5.44) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "156a6168-2928-557f-a1d3-518c35791230" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 0 (Room 0.34) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4c2e01a6-cb63-5922-96a6-fc7c7c53dbfe" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 1 (Room 1.34) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e180e23e-c7e7-5239-9d27-629e7fe5f78f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 2 (Room 2.34) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a121625a-8f74-54e9-9b0d-c7644317e4c0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 3 (Room 3.38) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "108e01c5-a02b-59af-b617-eca5b5eb430e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 4 (Room 4.34) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fc492a9d-9c20-5592-bf61-025db4109e85" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5_sat_noise>
+    a ontosage:Sound_Level_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 5 (Room 5.34) noise (simulated) [dB]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8db064fe-243f-5237-a2b8-5e111b0d6006" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#noise_data> ;
+    ] .

@@ -43,7 +43,25 @@ _ZONE_RE = re.compile(
     re.IGNORECASE,
 )
 _PDF_DIR = Path("/app/input")
-_BUILDING_NAME = "Abacws"  # filename prefix for the PDFs
+
+# Matches "<anything> floor <N>.pdf" — the same shape the BuildingRegistry uses.
+# It used to be anchored to one building's name, so a deployment serving any
+# other building discovered no floor plans at all (CAVEAT-094).
+_PDF_FILE_RE = re.compile(r"^(?P<building>.+?)\s+floor\s+(?P<floor>\d+)\.pdf$", re.IGNORECASE)
+
+
+def _building_name() -> str:
+    """Display name of the ACTIVE building, read at call time.
+
+    This was a module constant fixed to the first building this system served,
+    which meant every heading it rendered — including the floor overview served
+    to users — announced that building's name whatever building was running.
+    Reading it per call also means a building swap is reflected without a
+    restart, since the constant would otherwise freeze at import.
+    """
+    name = (getattr(settings, "BUILDING_NAME", "") or "").strip()
+    return name or (getattr(settings, "BUILDING_ID", "") or "").strip() or "Building"
+
 
 # Base URL for serving floor plan PDFs.
 # In production this is the file-server nginx (port 8080).
@@ -77,23 +95,15 @@ class FloorPlanService:
         if not self._pdf_dir.exists():
             logger.warning(f"[FloorPlanService] PDF dir not found: {self._pdf_dir}")
             return
-        pattern = re.compile(
-            rf"{re.escape(_BUILDING_NAME)}\s+floor\s+(\d+)\.pdf$",
-            re.IGNORECASE,
-        )
         for path in self._pdf_dir.glob("*.pdf"):
-            m = pattern.match(path.name)
+            m = _PDF_FILE_RE.match(path.name)
             if m:
-                floor_num = int(m.group(1))
+                floor_num = int(m.group("floor"))
                 self._floor_map[floor_num] = path
         if self._floor_map:
-            logger.info(
-                f"[FloorPlanService] Discovered floors: {sorted(self._floor_map.keys())}"
-            )
+            logger.info(f"[FloorPlanService] Discovered floors: {sorted(self._floor_map.keys())}")
         else:
-            logger.warning(
-                f"[FloorPlanService] No floor plan PDFs found in {self._pdf_dir}"
-            )
+            logger.warning(f"[FloorPlanService] No floor plan PDFs found in {self._pdf_dir}")
 
     # ── Text extraction ────────────────────────────────────────────────────
 
@@ -125,9 +135,7 @@ class FloorPlanService:
             )
             return full_text
         except Exception as e:
-            logger.error(
-                f"[FloorPlanService] Failed to extract text from Floor {floor}: {e}"
-            )
+            logger.error(f"[FloorPlanService] Failed to extract text from Floor {floor}: {e}")
             return ""
 
     def get_pdf_url(self, floor: int, absolute: bool = False) -> str:
@@ -231,9 +239,7 @@ class FloorPlanService:
 
         return zones
 
-    def build_disambiguation_prompt(
-        self, floor: int, zones: Optional[List[str]] = None
-    ) -> str:
+    def build_disambiguation_prompt(self, floor: int, zones: Optional[List[str]] = None) -> str:
         """
         Build a markdown response that shows the floor plan PDF link and
         asks the user to specify which zone they want data for.
@@ -245,7 +251,7 @@ class FloorPlanService:
             zones = self.get_zones_for_floor(floor)
 
         lines = [
-            f"## \U0001f3e2 Floor {floor} \u2014 {_BUILDING_NAME} Building",
+            f"## \U0001f3e2 Floor {floor} \u2014 {_building_name()}",
             "",
             f"\U0001f4c4 **[Open Floor {floor} Plan (PDF)]({pdf_url})**",
             "",
@@ -260,12 +266,11 @@ class FloorPlanService:
                 f"**Known zones on Floor {floor}:** {zone_list}",
                 "",
                 "\U0001f4ac Which zone or room would you like sensor data for?  "
-                "(e.g. *\"zone 5.12\"* or just *\"5.12\"*)",
+                '(e.g. *"zone 5.12"* or just *"5.12"*)',
             ]
         else:
             lines.append(
-                "\U0001f4ac Which room or zone on Floor "
-                f"{floor} are you interested in?"
+                "\U0001f4ac Which room or zone on Floor " f"{floor} are you interested in?"
             )
 
         return "\n".join(lines)
@@ -290,9 +295,7 @@ class FloorPlanService:
                         distance=models.Distance.COSINE,
                     ),
                 )
-                logger.info(
-                    f"[FloorPlanService] Created Qdrant collection: {COLLECTION_NAME}"
-                )
+                logger.info(f"[FloorPlanService] Created Qdrant collection: {COLLECTION_NAME}")
             else:
                 # A prior run under a different EMBEDDING_PROVIDER may have sized
                 # this collection differently (e.g. 3072 for OpenAI vs. 384 for
@@ -330,9 +333,7 @@ class FloorPlanService:
                 self._embed_client = EmbeddingService()
             return await self._embed_client.embed_batch(texts)
         except Exception as e:
-            logger.warning(
-                f"[FloorPlanService] Embedding failed ({e}), using hash fallback"
-            )
+            logger.warning(f"[FloorPlanService] Embedding failed ({e}), using hash fallback")
             import struct
 
             dim = settings.embedding_dimension
@@ -400,9 +401,7 @@ class FloorPlanService:
             try:
                 # Skip floors that are already in Qdrant (e.g. after container restart)
                 if await self._floor_already_indexed(client, floor):
-                    logger.debug(
-                        f"[FloorPlanService] Floor {floor} already indexed — skipping."
-                    )
+                    logger.debug(f"[FloorPlanService] Floor {floor} already indexed — skipping.")
                     continue
 
                 # Run blocking pdfplumber extraction in a thread so we don't stall the loop
@@ -428,7 +427,7 @@ class FloorPlanService:
                                 "chunk_index": i,
                                 "text": chunk,
                                 "source": "floor_plan",
-                                "building": _BUILDING_NAME,
+                                "building": _building_name(),
                                 "pdf_url": self.get_pdf_url(floor),
                             },
                         )
@@ -483,7 +482,7 @@ class FloorPlanService:
         pdf_url = self.get_pdf_url(floor, absolute=True)
 
         lines = [
-            f"## \U0001f3e2 Floor {floor} \u2014 {_BUILDING_NAME} Building",
+            f"## \U0001f3e2 Floor {floor} \u2014 {_building_name()}",
             "",
             f"\U0001f4c4 **[Open Floor {floor} Plan (PDF)]({pdf_url})**",
             "",
@@ -511,30 +510,29 @@ class FloorPlanService:
         ]
         return "\n".join(lines)
 
-
     # ── Manifest-aware methods (Phase 9) ─────────────────────────────────────
 
-    def get_manifest(
-        self, floor: int, building_id: str
-    ) -> Optional[Any]:
+    def get_manifest(self, floor: int, building_id: str) -> Optional[Any]:
         """
         Return the FloorPlanManifest for a floor, or None if not yet generated.
         Delegates to the pipeline's disk-based manifest store.
         """
         try:
-            from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
+            from orchestrator.services.floor_plan_pipeline import (
+                get_floor_plan_pipeline,
+            )
 
             return get_floor_plan_pipeline().load_manifest(building_id, floor)
         except Exception as e:
             logger.warning(f"[FloorPlanService] get_manifest failed: {e}")
             return None
 
-    def get_all_manifests(
-        self, building_id: str
-    ) -> Dict[int, Any]:
+    def get_all_manifests(self, building_id: str) -> Dict[int, Any]:
         """Return {floor: manifest} for all available manifests of a building."""
         try:
-            from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
+            from orchestrator.services.floor_plan_pipeline import (
+                get_floor_plan_pipeline,
+            )
 
             pipeline = get_floor_plan_pipeline()
             return {
@@ -597,15 +595,11 @@ class FloorPlanService:
         results.sort(key=lambda r: (-r["score"], r["floor"]))
         return results
 
-    def get_facilities_by_type(
-        self, facility_type: str, building_id: str
-    ) -> List[Dict[str, Any]]:
+    def get_facilities_by_type(self, facility_type: str, building_id: str) -> List[Dict[str, Any]]:
         """Return all spaces of a given type across all floors."""
         return self.search_spaces(facility_type, building_id=building_id)
 
-    def get_building_overview_markdown(
-        self, building_id: str
-    ) -> str:
+    def get_building_overview_markdown(self, building_id: str) -> str:
         """Return a markdown building overview card per floor (manifest-based)."""
         manifests = self.get_all_manifests(building_id)
         if not manifests:
@@ -613,12 +607,12 @@ class FloorPlanService:
             floors = self.get_available_floors()
             if not floors:
                 return "No floor plans available."
-            lines = [f"## 🏢 {_BUILDING_NAME} Building — Floor Overview", ""]
+            lines = [f"## 🏢 {_building_name()} — Floor Overview", ""]
             for fl in floors:
                 lines.append(f"📄 [Floor {fl}]({self.get_pdf_url(fl, absolute=True)})")
             return "\n".join(lines)
 
-        lines = [f"## 🏢 {_BUILDING_NAME} Building — Floor Overview", ""]
+        lines = [f"## 🏢 {_building_name()} — Floor Overview", ""]
         for fl in sorted(manifests.keys()):
             manifest = manifests[fl]
             if not manifest:
@@ -632,9 +626,7 @@ class FloorPlanService:
 
             zone_count = type_counts.pop("zone", 0)
             summary = ", ".join(
-                f"{cnt} {t.replace('_', ' ')}"
-                for t, cnt in sorted(type_counts.items())
-                if cnt > 0
+                f"{cnt} {t.replace('_', ' ')}" for t, cnt in sorted(type_counts.items()) if cnt > 0
             )
             lines.append(f"### [{floor_label} 📄]({pdf_url})")
             if summary:
@@ -644,9 +636,7 @@ class FloorPlanService:
             lines.append("")
         return "\n".join(lines)
 
-    def suggest_floor_plan_link(
-        self, zone_id: str, building_id: str
-    ) -> str:
+    def suggest_floor_plan_link(self, zone_id: str, building_id: str) -> str:
         """
         Given a zone_id like '5.12', return a small markdown footer linking
         to the floor plan.  Used to append a floor plan hint to SPARQL / SQL

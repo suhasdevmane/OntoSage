@@ -54,19 +54,58 @@ VALID_PRIORITIES = ("LOW", "NORMAL", "HIGH", "URGENT")
 
 # ── Priority derivation keyword sets ───────────────────────────────────────────
 # URGENT — life-safety / property-damage signals; escalate regardless of category.
-_URGENT_KW = frozenset({
-    "fire", "smoke", "gas leak", "gas smell", "flood", "flooding", "electrical",
-    "sparks", "exposed wire", "trapped", "stuck in", "injury", "injured", "hurt",
-    "collapse", "burst", "carbon monoxide", "co alarm", "evacuat", "emergency",
-    "danger", "hazard", "water everywhere",
-})
+_URGENT_KW = frozenset(
+    {
+        "fire",
+        "smoke",
+        "gas leak",
+        "gas smell",
+        "flood",
+        "flooding",
+        "electrical",
+        "sparks",
+        "exposed wire",
+        "trapped",
+        "stuck in",
+        "injury",
+        "injured",
+        "hurt",
+        "collapse",
+        "burst",
+        "carbon monoxide",
+        "co alarm",
+        "evacuat",
+        "emergency",
+        "danger",
+        "hazard",
+        "water everywhere",
+    }
+)
 # HIGH — broken / non-functional infrastructure that disrupts use.
-_HIGH_KW = frozenset({
-    "broken", "not working", "doesn't work", "won't turn", "no power",
-    "no heating", "no cooling", "no water", "leak", "leaking", "stuck",
-    "blocked", "overflowing", "very cold", "very hot", "freezing", "boiling",
-    "won't open", "won't close", "out of order",
-})
+_HIGH_KW = frozenset(
+    {
+        "broken",
+        "not working",
+        "doesn't work",
+        "won't turn",
+        "no power",
+        "no heating",
+        "no cooling",
+        "no water",
+        "leak",
+        "leaking",
+        "stuck",
+        "blocked",
+        "overflowing",
+        "very cold",
+        "very hot",
+        "freezing",
+        "boiling",
+        "won't open",
+        "won't close",
+        "out of order",
+    }
+)
 
 
 class ReportIntakeService:
@@ -100,6 +139,19 @@ class ReportIntakeService:
                 ),
             }
 
+        # V5-T40 — redact identifying carriers BEFORE anything is derived or
+        # stored: the database never holds emails/phones/typed names. The
+        # reporter's account id stays on the row (authentication, not PII).
+        from orchestrator.services.pii_redaction import redact_pii
+
+        description, _pii = redact_pii(description)
+        if location:
+            location, _pii_loc = redact_pii(location)
+            for k, v in _pii_loc.items():
+                _pii[k] = _pii.get(k, 0) + v
+        if _pii:
+            logger.info(f"[report_intake] PII redacted at write time: {_pii}")
+
         category = category if category in VALID_CATEGORIES else "other"
         priority = self._derive_priority(description, category)
         title = self._derive_title(description)
@@ -115,8 +167,17 @@ class ReportIntakeService:
                          session_id)
                     VALUES ($1,$2,$3,$4,'OPEN',$5,$6,$7,$8,$9,$10,$11)
                     """,
-                    report_id, building_id, category, priority, title,
-                    description, location, device, reporter_id, persona, session_id,
+                    report_id,
+                    building_id,
+                    category,
+                    priority,
+                    title,
+                    description,
+                    location,
+                    device,
+                    reporter_id,
+                    persona,
+                    session_id,
                 )
             logger.info(
                 f"[report_intake] created {report_id} category={category} "
@@ -127,9 +188,7 @@ class ReportIntakeService:
                 "report_id": report_id,
                 "category": category,
                 "priority": priority,
-                "message": self._acknowledgment(
-                    report_id, category, priority, location, device
-                ),
+                "message": self._acknowledgment(report_id, category, priority, location, device),
             }
         except Exception as e:
             logger.error(f"[report_intake] create failed: {e}", exc_info=True)
@@ -156,12 +215,11 @@ class ReportIntakeService:
                 if reporter_id:
                     row = await conn.fetchrow(
                         "SELECT * FROM user_reports WHERE id=$1 AND reporter_id=$2",
-                        rid, reporter_id,
+                        rid,
+                        reporter_id,
                     )
                 else:
-                    row = await conn.fetchrow(
-                        "SELECT * FROM user_reports WHERE id=$1", rid
-                    )
+                    row = await conn.fetchrow("SELECT * FROM user_reports WHERE id=$1", rid)
             if not row:
                 return {
                     "success": False,
@@ -189,7 +247,8 @@ class ReportIntakeService:
                     FROM user_reports WHERE reporter_id=$1
                     ORDER BY created_at DESC LIMIT $2
                     """,
-                    reporter_id, limit,
+                    reporter_id,
+                    limit,
                 )
             reports = [dict(r) for r in rows]
             return {"success": True, "reports": reports, "message": self._list_message(reports)}
@@ -223,7 +282,8 @@ class ReportIntakeService:
         where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
         params.append(limit)
         sql = (
-            "SELECT * FROM user_reports" + where
+            "SELECT * FROM user_reports"
+            + where
             + " ORDER BY CASE priority WHEN 'URGENT' THEN 0 WHEN 'HIGH' THEN 1 "
             "WHEN 'NORMAL' THEN 2 ELSE 3 END, created_at DESC "
             f"LIMIT ${len(params)}"
@@ -286,15 +346,30 @@ class ReportIntakeService:
         m = (message or "").lower()
         if self._report_re.search(message or ""):
             return "status"
-        if any(k in m for k in (
-            "status of", "check report", "check my report", "is rep",
-            "what happened to my report", "any update on",
-        )):
+        if any(
+            k in m
+            for k in (
+                "status of",
+                "check report",
+                "check my report",
+                "is rep",
+                "what happened to my report",
+                "any update on",
+            )
+        ):
             return "status"
-        if any(k in m for k in (
-            "my reports", "my tickets", "my complaints", "list report",
-            "all my reports", "reports i", "reports i've",
-        )):
+        if any(
+            k in m
+            for k in (
+                "my reports",
+                "my tickets",
+                "my complaints",
+                "list report",
+                "all my reports",
+                "reports i",
+                "reports i've",
+            )
+        ):
             return "list"
         return "create"
 

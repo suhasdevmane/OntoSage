@@ -102,8 +102,11 @@ _CAP_SOURCES = {"triples", "documents", "kb"}
 def _token() -> str:
     u = f"corpus_{int(time.time())}"
     p = "VerifyPass123456"
-    httpx.post(f"{BASE}/auth/register", json={"username": u, "password": p, "email": f"{u}@e.com"},
-               timeout=10)
+    httpx.post(
+        f"{BASE}/auth/register",
+        json={"username": u, "password": p, "email": f"{u}@e.com"},
+        timeout=10,
+    )
     r = httpx.post(f"{BASE}/auth/login", json={"username": u, "password": p}, timeout=10)
     return r.json()["data"]["session_token"]
 
@@ -114,8 +117,12 @@ def main() -> int:
     rows = []
     for i, (kind, q) in enumerate(QUESTIONS):
         try:
-            r = httpx.post(f"{BASE}/chat", headers={"Authorization": tok},
-                           json={"message": q, "session_id": f"corpus_{i}"}, timeout=150)
+            r = httpx.post(
+                f"{BASE}/chat",
+                headers={"Authorization": tok},
+                json={"message": q, "session_id": f"corpus_{i}"},
+                timeout=150,
+            )
             d = r.json()
             ans = d.get("response") or d.get("data", {}).get("response") or ""
         except Exception as e:
@@ -139,21 +146,33 @@ def main() -> int:
     print("\n" + "=" * 60)
     print("REMOVAL-READINESS VERDICT (capability.yaml deletion)")
     print("=" * 60)
-    print(f"amenities -> triples : {len(by('amenity')) - len(amen_bad)}/{len(by('amenity'))}"
-          + (f"   MISS: {[r['q'][:30] for r in amen_bad]}" if amen_bad else ""))
+    print(
+        f"amenities -> triples : {len(by('amenity')) - len(amen_bad)}/{len(by('amenity'))}"
+        + (f"   MISS: {[r['q'][:30] for r in amen_bad]}" if amen_bad else "")
+    )
     print(f"prose -> documents   : {len(prose_docs)}/{len(by('prose'))}")
     if prose_kb:
         print(f"  *** KB SAFETY-NET (blocks removal): {[r['q'][:34] for r in prose_kb]}")
     if prose_fail:
         print(f"  *** FAIL (no_info/generic):         {[r['q'][:34] for r in prose_fail]}")
-    print(f"negatives NOT capability: {len(by('negative')) - len(neg_leak)}/{len(by('negative'))}"
-          + (f"   LEAK: {[r['q'][:30] for r in neg_leak]}" if neg_leak else ""))
-    print(f"guards NOT capability   : {len(by('guard')) - len(guard_leak)}/{len(by('guard'))}"
-          + (f"   LEAK: {[r['q'][:30] for r in guard_leak]}" if guard_leak else ""))
+    print(
+        f"negatives NOT capability: {len(by('negative')) - len(neg_leak)}/{len(by('negative'))}"
+        + (f"   LEAK: {[r['q'][:30] for r in neg_leak]}" if neg_leak else "")
+    )
+    print(
+        f"guards NOT capability   : {len(by('guard')) - len(guard_leak)}/{len(by('guard'))}"
+        + (f"   LEAK: {[r['q'][:30] for r in guard_leak]}" if guard_leak else "")
+    )
 
     blockers = len(prose_kb) + len(prose_fail) + len(neg_leak) + len(guard_leak) + len(amen_bad)
-    print("\n" + ("REMOVAL SAFE — no blockers." if blockers == 0
-                  else f"NOT SAFE — {blockers} blocker(s); fix before deleting capability.yaml."))
+    print(
+        "\n"
+        + (
+            "REMOVAL SAFE — no blockers."
+            if blockers == 0
+            else f"NOT SAFE — {blockers} blocker(s); fix before deleting capability.yaml."
+        )
+    )
     print(f"\nFull rows: {OUT / 'cap_corpus.json'}")
     return 0 if blockers == 0 else 1
 

@@ -34,8 +34,8 @@ import asyncio
 import hashlib
 import json
 from pathlib import Path
-from urllib.parse import quote
 from typing import Any, Dict, Iterable, List, Optional
+from urllib.parse import quote
 
 import httpx
 
@@ -267,6 +267,102 @@ async def upload_to_graphdb(
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+async def audit_undeclared_types(sample: int = 5) -> Dict[str, Any]:
+    """Report instances typed with a class NOTHING declares (TODO-181/BUG-203).
+
+    Two failure modes meet here, and neither announces itself.
+
+    A TTL can mint a type into a namespace that does not define it —
+    ``brick:Sound_Level_Sensor``, where Brick 1.4 has no acoustic class at all.
+    Queries still work, because matching is on the LOCAL name, so a
+    non-conformant graph behaves exactly like a correct one and nothing
+    complains. And separately, a triple that reached the DEFAULT graph is immune
+    to every later correction: each TTL is published with
+    ``PUT ?context=<named graph>``, which replaces that graph and cannot touch
+    anything outside it, so the file gets fixed, the upload reports success, and
+    the graph keeps answering from the old copy (BUG-194 was a policy shadowed
+    this way; TODO-181 left 52 subjects carrying BOTH the old and the new type).
+
+    An undeclared type is the symptom both produce, and unlike a raw
+    default-graph count it does not drown in inference: reasoning materialises
+    superclass types like ``brick:Sensor`` and Brick's own SHACL vocabulary
+    outside every named graph by the million, none of which is a defect. Asking
+    "is anything typed with a class that has no definition?" returned exactly
+    the 56 real instances and nothing else.
+
+    Read-only and non-fatal — a failed audit must never block startup.
+    """
+    from shared.config import settings as _s
+
+    # Scope: the namespaces THIS system mints into. Third-party vocabulary is
+    # out of scope by design — SHACL terms (sh:TripleRule and friends) are not
+    # declared as owl:Class in this repository and would otherwise contribute
+    # over a million "findings", burying the handful that mean something. A
+    # guard nobody can act on is worse than no guard (lessons.md #20).
+    owned = [
+        "https://brickschema.org/schema/Brick#",
+        "http://ontosage.org/capabilities#",
+    ]
+    building_ns = (getattr(_s, "BUILDING_NAMESPACE", "") or "").strip()
+    if building_ns:
+        owned.append(building_ns)
+    ns_filter = " || ".join(f'STRSTARTS(STR(?t), "{ns}")' for ns in owned)
+    query = (
+        "PREFIX owl: <http://www.w3.org/2002/07/owl#> "
+        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+        "SELECT ?t (COUNT(?s) AS ?n) WHERE { "
+        "  ?s a ?t . "
+        "  FILTER(isIRI(?t)) "
+        f"  FILTER({ns_filter}) "
+        "  FILTER NOT EXISTS { ?t a owl:Class } "
+        "  FILTER NOT EXISTS { ?t a rdfs:Class } "
+        "  FILTER NOT EXISTS { ?t rdfs:subClassOf ?parent } "
+        "} GROUP BY ?t ORDER BY DESC(?n)"
+    )
+    result: Dict[str, Any] = {"undeclared_types": 0, "instances": 0, "top": []}
+    try:
+        base = _s.GRAPHDB_URL.rstrip("/")
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                f"{base}/repositories/{_s.GRAPHDB_REPOSITORY}",
+                headers={
+                    "Content-Type": "application/sparql-query",
+                    "Accept": "application/sparql-results+json",
+                },
+                content=query,
+            )
+        if resp.status_code != 200:
+            logger.warning(f"[ttl_uploader] type audit skipped: HTTP {resp.status_code}")
+            return result
+        bindings = resp.json().get("results", {}).get("bindings", [])
+    except Exception as exc:
+        logger.warning(f"[ttl_uploader] type audit skipped: {exc}")
+        return result
+
+    rows = []
+    for item in bindings:
+        try:
+            rows.append((item["t"]["value"], int(item["n"]["value"])))
+        except (KeyError, TypeError, ValueError):
+            continue
+    result["undeclared_types"] = len(rows)
+    result["instances"] = sum(n for _, n in rows)
+    result["top"] = [{"type": ty, "count": n} for ty, n in rows[:sample]]
+
+    if rows:
+        preview = ", ".join(f"{ty.rsplit('#')[-1]} x{n}" for ty, n in rows[:sample])
+        logger.warning(
+            f"[ttl_uploader] type audit: {result['instances']} instance(s) carry "
+            f"{len(rows)} type(s) that NOTHING declares — queries still work "
+            f"(local-name matching) but the graph is non-conformant. If a TTL fix "
+            f"did not clear it, the triples are in the DEFAULT graph and need a "
+            f"scoped SPARQL DELETE (BUG-203). Top: {preview}"
+        )
+    else:
+        logger.info("[ttl_uploader] type audit clean — every instance carries a declared class")
+    return result
+
+
 async def run_idempotent_uploads(
     building_ids: Iterable[str],
     *,
@@ -348,4 +444,6 @@ async def run_idempotent_uploads(
         f"[ttl_uploader] done — uploaded={len(summary['uploaded'])} "
         f"skipped={len(summary['skipped'])} failed={len(summary['failed'])}"
     )
+    # State the position on what this upload could NOT have fixed.
+    summary["type_audit"] = await audit_undeclared_types()
     return summary

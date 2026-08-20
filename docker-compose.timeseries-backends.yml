@@ -1,0 +1,94 @@
+# Optional time-series backends — TimescaleDB and Apache Cassandra.
+#
+# Why a separate file (TODO-143). The paper's building-characteristics table
+# states that one building runs TimescaleDB and another runs Cassandra. Both
+# adapters were implemented and dispatched by the registry, but nothing ever ran
+# them: no test referenced either, no building pointed a ``ref:storedAt`` key at
+# one, and the Cassandra driver was not even installed — so a reader cloning the
+# artifact to reproduce that table found neither backend. This file is what makes
+# the claim reproducible.
+#
+# It is an OVERLAY, not a building's compose file, for two reasons: the backends
+# are a property of the DEPLOYMENT rather than of any one building, and Cassandra
+# in particular is heavy (a JVM, ~1 GB, a minute to become queryable) — nobody
+# should pay that on an ordinary `docker compose up -d`.
+#
+#   # start them alongside whichever building is active
+#   docker compose -f docker-compose.yml -f docker-compose.timeseries-backends.yml up -d
+#
+#   # or start ONLY the backends, against the running stack's network
+#   docker compose -f docker-compose.timeseries-backends.yml up -d
+#
+#   # seed both with readings and register them as datasources
+#   python scripts/seed_timeseries_backends.py
+#
+# Ports are bound to 127.0.0.1 so neither is reachable off the host, matching how
+# every other datastore in this project is exposed.
+
+services:
+  timescaledb:
+    # Timescale IS PostgreSQL plus the hypertable extension, which is why the
+    # adapter is a thin subclass of the PostgreSQL one — the wire protocol and
+    # the driver (asyncpg) are identical. What differs is the schema (a
+    # hypertable) and the query surface (time_bucket, locf, first/last).
+    # Pinned to 2.11 because the paper's building-characteristics table names
+    # that version. An artifact that ships a different one does not reproduce
+    # the table it claims to support.
+    image: timescale/timescaledb:2.11.2-pg15
+    container_name: ontosage-timescaledb
+    hostname: timescaledb
+    ports:
+      - "127.0.0.1:5434:5432" # 5433 is already taken by postgres-user-data
+    environment:
+      - POSTGRES_DB=${TIMESCALE_DB:-sensordb}
+      - POSTGRES_USER=${TIMESCALE_USER:-ontosage}
+      - POSTGRES_PASSWORD=${TIMESCALE_PASSWORD:-ontosage_ts_secret}
+    volumes:
+      - timescale-data:/var/lib/postgresql/data
+    networks:
+      - ontobot-agentic
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TIMESCALE_USER:-ontosage}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+
+  cassandra:
+    image: cassandra:4.1
+    container_name: ontosage-cassandra
+    hostname: cassandra
+    ports:
+      - "127.0.0.1:9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=ontosage
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      # A single-node dev cluster does not need the default 4 GB heap, and the
+      # JVM will happily take it if not told otherwise.
+      - MAX_HEAP_SIZE=512M
+      - HEAP_NEWSIZE=128M
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    networks:
+      - ontobot-agentic
+    healthcheck:
+      # `cqlsh` succeeding is the only honest readiness signal here: the port
+      # accepts connections well before the node can serve CQL, so a port check
+      # reports ready while every query still fails.
+      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES' >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+    restart: unless-stopped
+
+volumes:
+  timescale-data:
+  cassandra-data:
+
+networks:
+  ontobot-agentic:
+    external: true
+    name: ${COMPOSE_PROJECT_NAME:-ontosage}_ontobot-agentic

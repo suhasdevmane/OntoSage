@@ -54,7 +54,9 @@ logger = logging.getLogger(__name__)
 
 QDRANT_URL = os.environ.get("QDRANT_URL", "http://qdrant:6333")
 MEMORY_ENABLED = os.environ.get("AGENT_MEMORY_ENABLED", "true").lower() == "true"
-CROSS_SESSION_MEMORY_ENABLED = os.environ.get("CROSS_SESSION_MEMORY_ENABLED", "true").lower() == "true"
+CROSS_SESSION_MEMORY_ENABLED = (
+    os.environ.get("CROSS_SESSION_MEMORY_ENABLED", "true").lower() == "true"
+)
 COLLECTION_NAME = "user_memory"
 MAX_MEMORIES = int(os.environ.get("AGENT_MEMORY_MAX", "200"))  # per user
 RETRIEVE_TOP_K = int(os.environ.get("AGENT_MEMORY_TOP_K", "5"))  # memories per query

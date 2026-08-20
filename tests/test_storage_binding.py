@@ -20,7 +20,6 @@ import yaml
 from orchestrator.services.adapters.registry import AdapterRegistry
 from shared.floor_plan_config import BuildingConfig, StorageConfig, StorageRoute
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Pydantic models
 # ─────────────────────────────────────────────────────────────────────────────
@@ -140,10 +139,17 @@ def test_active_keys_returns_set_when_storage_block_present(tmp_path):
     registry = AdapterRegistry()
     with (
         patch("shared.config.settings.BUILDING_ID", "bldg_phase2"),
-        patch("pathlib.Path.exists", lambda self: tmp_path in self.parents or self.exists.__wrapped__(self)) if False else patch.object(
-            registry,
-            "_get_active_keys_for_current_building",
-            return_value={"database1", "database8"},
+        (
+            patch(
+                "pathlib.Path.exists",
+                lambda self: tmp_path in self.parents or self.exists.__wrapped__(self),
+            )
+            if False
+            else patch.object(
+                registry,
+                "_get_active_keys_for_current_building",
+                return_value={"database1", "database8"},
+            )
         ),
     ):
         active = registry._get_active_keys_for_current_building()

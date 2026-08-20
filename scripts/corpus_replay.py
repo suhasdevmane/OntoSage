@@ -156,9 +156,18 @@ VALID_GRADES = {
     "honest-capability-answer",
     "deflected",
     "wrong",
+    # L7 grades (V4-T27/28): emitted by the deliberative grader, not the LLM judge
+    "answered-with-proof",
+    "clarified-appropriately",
+    "fabricated",
 }
 
-PASS_GRADES = {"answered-with-data", "honest-capability-answer"}
+PASS_GRADES = {
+    "answered-with-data",
+    "honest-capability-answer",
+    "answered-with-proof",
+    "clarified-appropriately",
+}
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -438,15 +447,28 @@ def _ask_question(
             timeout=REQUEST_TIMEOUT,
         )
         elapsed = round(time.time() - t0, 1)
+        # V5: a non-answer is NOT a behavioural verdict. Grading transport
+        # failures as "wrong" silently converted a mid-run stack restart into
+        # a 9.2%-coverage "finding" (CAVEAT-173). These rows are excluded from
+        # the denominator and reported separately.
         if r.status_code != 200:
-            return "", "wrong", elapsed, f"HTTP {r.status_code}"
-        answer = r.json()["choices"][0]["message"]["content"]
+            return "", "invalid-no-response", elapsed, f"HTTP {r.status_code}"
+        payload = r.json()
+        answer = payload["choices"][0]["message"]["content"]
+        # HTTP 200 does not mean the system answered: when the provider refused
+        # (quota 429, timeout, open circuit) every agent falls back to generic
+        # text that reads like a reply. The server declares that, so quarantine
+        # the row rather than scoring an outage as behaviour (BUG-177).
+        degraded = payload.get("ontosage_llm_degraded")
+        if degraded:
+            causes = ",".join(degraded.get("causes") or ["unknown"])
+            return answer, "invalid-no-response", elapsed, f"LLM-DEGRADED:{causes}"
         grade = judge_fn(question, answer)
         return answer, grade, elapsed, "OK"
     except requests.Timeout:
-        return "", "wrong", round(time.time() - t0, 1), "TIMEOUT"
+        return "", "invalid-no-response", round(time.time() - t0, 1), "TIMEOUT"
     except Exception as exc:
-        return "", "wrong", round(time.time() - t0, 1), f"ERROR:{str(exc)[:80]}"
+        return "", "invalid-no-response", round(time.time() - t0, 1), f"ERROR:{str(exc)[:80]}"
 
 
 # ─── Checkpoint CSV ───────────────────────────────────────────────────────────
@@ -462,7 +484,52 @@ _CSV_FIELDNAMES = [
     "elapsed_s",
     "status",
     "answer_preview",
+    # L7 bank columns (V4-T27): the annotated expectation rides along so the
+    # deliberative grader (V4-T28) can score behavior-match without a re-join
+    "expected_behavior",
+    "l7_stratum",
+    # V5-T01: stakeholder-bank passthroughs for per-role rollups
+    "stakeholder_role",
+    "register",
 ]
+
+
+def _load_strata_source(path: Path) -> List[Dict[str, str]]:
+    """Load a question-bank CSV as replay rows.
+
+    Accepts BOTH bank shapes (V5-T01):
+      - L7 bank (V4-T27): ID/qid, Question/question, l7_stratum, expected_behavior
+      - stakeholder bank (tasks/smart_building_questions.csv): ID, Question,
+        Category, Register, Stakeholder_Role — Category becomes the stratum, the
+        role and register ride along for per-stakeholder rollups.
+    Every row is replayed — banks are curated sets, no stratified sampling.
+    """
+    rows: List[Dict[str, str]] = []
+    with open(path, encoding="utf-8-sig") as f:
+        for r in csv.DictReader(f):
+            qid = (r.get("qid") or r.get("ID") or "").strip()
+            question = (r.get("question") or r.get("Question") or "").strip()
+            if not qid or not question:
+                continue
+            stratum = (
+                (r.get("l7_stratum") or "").strip()
+                or (r.get("Category") or "").strip()
+                or "unknown"
+            )
+            rows.append(
+                {
+                    "qid": qid,
+                    "question": question,
+                    "latent_level": stratum,
+                    "latent_level_name": stratum,
+                    "answerability": (r.get("expected_behavior") or "").strip(),
+                    "expected_behavior": (r.get("expected_behavior") or "").strip(),
+                    "l7_stratum": stratum,
+                    "stakeholder_role": (r.get("Stakeholder_Role") or "").strip(),
+                    "register": (r.get("Register") or "").strip(),
+                }
+            )
+    return rows
 
 
 def _load_checkpoint(path: Path) -> Dict[str, Dict[str, str]]:
@@ -500,18 +567,32 @@ _LEVEL_NAMES = {
 
 def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) -> None:
     """Write final per-level report to .md and .csv."""
+    invalid_rows = [r for r in rows if r.get("grade") == "invalid-no-response"]
+    if invalid_rows:
+        rows = [r for r in rows if r.get("grade") != "invalid-no-response"]
     total = len(rows)
     passed = sum(1 for r in rows if r["pass"] == "True")
     pass_rate = 100 * passed / total if total else 0
 
-    # Per-level breakdown
+    # NOTE-142 split: data-backed answers and honest declines are both acceptable
+    # behaviour but not the same achievement — report them separately, always.
+    data_backed = sum(1 for r in rows if r.get("grade") == "answered-with-data")
+    honest_decline = sum(1 for r in rows if r.get("grade") == "honest-capability-answer")
+    db_rate = 100 * data_backed / total if total else 0
+    hd_rate = 100 * honest_decline / total if total else 0
+
+    # Per-level breakdown (with per-grade split)
     by_level: Dict[str, Dict[str, int]] = {}
     for r in rows:
         lv = str(r.get("latent_level", "?"))
-        entry = by_level.setdefault(lv, {"total": 0, "pass": 0})
+        entry = by_level.setdefault(lv, {"total": 0, "pass": 0, "data": 0, "honest": 0})
         entry["total"] += 1
         if r["pass"] == "True":
             entry["pass"] += 1
+        if r.get("grade") == "answered-with-data":
+            entry["data"] += 1
+        elif r.get("grade") == "honest-capability-answer":
+            entry["honest"] += 1
 
     # Per-grade breakdown
     grade_counts: Dict[str, int] = {}
@@ -532,19 +613,59 @@ def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) 
         f"| Metric | Value |",
         f"|--------|-------|",
         f"| Total questions | {total} |",
-        f"| PASS (answered-with-data + honest-capability) | {passed} ({pass_rate:.1f}%) |",
+        f"| **Data-backed answers** | **{data_backed} ({db_rate:.1f}%)** |",
+        f"| **Honest declines** | **{honest_decline} ({hd_rate:.1f}%)** |",
+        f"| PASS (combined, legacy) | {passed} ({pass_rate:.1f}%) |",
         f"| FAIL (deflected + wrong) | {total - passed} ({100 - pass_rate:.1f}%) |",
         "",
-        "## Per-level pass rates",
+        "> **NOTE-142:** quote the two split rates as the headline, never the combined",
+        "> PASS — a system that declines everything would score 100% combined.",
         "",
-        "| Level | Name | Total | Pass | Rate |",
-        "|-------|------|-------|------|------|",
+        "## Per-level rates",
+        "",
+        "| Level | Name | Total | Data-backed | Honest-decline | Fail | Combined |",
+        "|-------|------|-------|-------------|----------------|------|----------|",
     ]
     for lv in sorted(by_level.keys(), key=lambda x: int(x) if x.isdigit() else 99):
         entry = by_level[lv]
         rate = 100 * entry["pass"] / entry["total"] if entry["total"] else 0
         name = _LEVEL_NAMES.get(lv, lv)
-        md_lines.append(f"| L{lv} | {name} | {entry['total']} | {entry['pass']} | {rate:.1f}% |")
+        fails = entry["total"] - entry["pass"]
+        lv_label = f"L{lv}" if str(lv).isdigit() else str(lv)
+        md_lines.append(
+            f"| {lv_label} | {name} | {entry['total']} | {entry['data']} | {entry['honest']} "
+            f"| {fails} | {rate:.1f}% |"
+        )
+
+    # V5-T01: per-stakeholder rollup (present only when the bank carries roles)
+    by_role: Dict[str, Dict[str, int]] = {}
+    for r in rows:
+        role = (r.get("stakeholder_role") or "").strip()
+        if not role:
+            continue
+        entry = by_role.setdefault(role, {"total": 0, "pass": 0, "data": 0, "honest": 0})
+        entry["total"] += 1
+        if r["pass"] == "True":
+            entry["pass"] += 1
+        if r.get("grade") == "answered-with-data":
+            entry["data"] += 1
+        elif r.get("grade") == "honest-capability-answer":
+            entry["honest"] += 1
+    if by_role:
+        md_lines += [
+            "",
+            "## Per-stakeholder rates",
+            "",
+            "| Stakeholder role | Total | Data-backed | Honest-decline | Fail | Combined |",
+            "|---|---|---|---|---|---|",
+        ]
+        for role in sorted(by_role, key=lambda k: -by_role[k]["total"]):
+            e = by_role[role]
+            rate = 100 * e["pass"] / e["total"] if e["total"] else 0
+            md_lines.append(
+                f"| {role} | {e['total']} | {e['data']} | {e['honest']} "
+                f"| {e['total'] - e['pass']} | {rate:.1f}% |"
+            )
 
     md_lines += [
         "",
@@ -569,15 +690,63 @@ def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) 
     with open(md_path, "w", encoding="utf-8") as f:
         f.write("\n".join(md_lines) + "\n")
 
-    _safe_print(f"\n[report] Written {md_path.name}")
+    # Machine-readable per-level summary (for figures / cross-run comparison)
+    summary_path = md_path.with_name(md_path.stem + "_summary.csv")
+    with open(summary_path, "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f, lineterminator="\n")
+        w.writerow(
+            ["level", "name", "total", "data_backed", "honest_decline", "fail", "combined_pass"]
+        )
+        for lv in sorted(by_level.keys(), key=lambda x: int(x) if x.isdigit() else 99):
+            e = by_level[lv]
+            w.writerow(
+                [
+                    lv,
+                    _LEVEL_NAMES.get(lv, lv),
+                    e["total"],
+                    e["data"],
+                    e["honest"],
+                    e["total"] - e["pass"],
+                    e["pass"],
+                ]
+            )
+        w.writerow(["ALL", "", total, data_backed, honest_decline, total - passed, passed])
+        # V5-T01: role rollup rows (level column prefixed 'role:' to stay one file)
+        for role in sorted(by_role, key=lambda k: -by_role[k]["total"]):
+            e = by_role[role]
+            w.writerow(
+                [
+                    f"role:{role}",
+                    role,
+                    e["total"],
+                    e["data"],
+                    e["honest"],
+                    e["total"] - e["pass"],
+                    e["pass"],
+                ]
+            )
+
+    _safe_print(f"\n[report] Written {md_path.name} + {summary_path.name}")
+    if invalid_rows:
+        _safe_print(
+            f"[report] WARNING: {len(invalid_rows)} question(s) got NO response "
+            "(stack down/restarting mid-run) — excluded from the rates below; this run "
+            "is NOT certification grade unless that count is 0."
+        )
     _safe_print(
-        f"[report] OVERALL: {passed}/{total} PASS = {pass_rate:.1f}%"
-        f"  (baseline 16.2%, target >=60%)"
+        f"[report] OVERALL: data-backed {data_backed}/{total} = {db_rate:.1f}%"
+        f" | honest-decline {honest_decline}/{total} = {hd_rate:.1f}%"
+        f" | combined {passed}/{total} = {pass_rate:.1f}% (legacy; see NOTE-142)"
     )
     for lv in sorted(by_level.keys(), key=lambda x: int(x) if x.isdigit() else 99):
         entry = by_level[lv]
         rate = 100 * entry["pass"] / entry["total"] if entry["total"] else 0
-        _safe_print(f"  L{lv}: {entry['pass']}/{entry['total']} = {rate:.1f}%")
+        lv_label = f"L{lv}" if str(lv).isdigit() else str(lv)
+        _safe_print(
+            f"  {lv_label}: data {entry['data']} | honest {entry['honest']}"
+            f" | fail {entry['total'] - entry['pass']} of {entry['total']}"
+            f" (combined {rate:.1f}%)"
+        )
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
@@ -615,6 +784,15 @@ def _build_parser() -> argparse.ArgumentParser:
         default=str(_MASTER_TABLE),
         help="Path to complexity_master_table.csv",
     )
+    p.add_argument(
+        "--strata-source",
+        default=None,
+        help=(
+            "L7 bank CSV (V4-T27): replay THIS curated question set instead of the "
+            "master-table stratified sample (columns: ID/qid, Question/question, "
+            "l7_stratum, expected_behavior). All rows run; --sample is ignored."
+        ),
+    )
     return p
 
 
@@ -622,7 +800,7 @@ def main() -> int:
     args = _build_parser().parse_args()
 
     per_level = args.sample // 6
-    if per_level * 6 != args.sample:
+    if not getattr(args, "strata_source", None) and per_level * 6 != args.sample:
         _safe_print(
             f"[error] --sample must be divisible by 6 (6 latent levels); " f"got {args.sample}"
         )
@@ -637,7 +815,7 @@ def main() -> int:
 
     # ── Load + sample ─────────────────────────────────────────────────────────
     master_path = Path(args.master_table)
-    if not master_path.is_file():
+    if not getattr(args, "strata_source", None) and not master_path.is_file():
         _safe_print(f"[error] Master table not found: {master_path}")
         # paper/ holds survey responses and an unpublished writeup, so it is no
         # longer tracked in git — a fresh clone will not have it. Point the flag
@@ -648,9 +826,15 @@ def main() -> int:
         )
         return 1
 
-    all_rows = _load_master_table(master_path)
-    non_gk = _filter_non_gk(all_rows)
-    sample = _stratified_sample(non_gk, per_level, args.seed)
+    if getattr(args, "strata_source", None):
+        # L7 bank mode (V4-T27): curated question set replaces the master-table
+        # stratified sample — every bank row runs
+        sample = _load_strata_source(Path(args.strata_source))
+        _safe_print(f"[run] L7 bank: {len(sample)} questions from {args.strata_source}")
+    else:
+        all_rows = _load_master_table(master_path)
+        non_gk = _filter_non_gk(all_rows)
+        sample = _stratified_sample(non_gk, per_level, args.seed)
 
     if not sample:
         _safe_print("[error] No rows in sample after stratification")
@@ -712,6 +896,10 @@ def main() -> int:
             "elapsed_s": elapsed,
             "status": status,
             "answer_preview": answer[:300].replace("\n", " "),
+            "expected_behavior": q_row.get("expected_behavior", ""),
+            "l7_stratum": q_row.get("l7_stratum", ""),
+            "stakeholder_role": q_row.get("stakeholder_role", ""),
+            "register": q_row.get("register", ""),
         }
 
         _append_row(checkpoint_path, row, first=first_write)

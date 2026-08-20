@@ -125,13 +125,14 @@ services:
     volumes:
       - ./orchestrator:/app/orchestrator # Mount source code for hot-reloading
       - ./shared:/app/shared # Mount shared module for hot-reloading
-      - ./.env:/app/.env # rw: admin console edits root .env (takes effect on restart)
+      - ./.env:/app/.env # rw: admin console edits root .env (needs `up -d`, NOT `restart` — CAVEAT-178)
       - ./input:/app/input # rw: GUI-created data sources persist to input/datasources.custom.yaml
       - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/floor-plans:/app/floor_plans # Writable — pipeline writes manifests + PNGs here
       - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/artifacts:/app/volumes/artifacts # rw: datasource toggle-state + ttl-upload cache
       - ./outputs:/app/outputs # Mount shared outputs (data, plots, query results)
       - ./orchestrator/agents/.env:/app/agents/.env:ro # Mount OpenAI credentials
       - ./data:/app/data:ro # Mount sensor map and other data files
+      - ./scripts:/app/scripts:ro # V5-T32: graders/validators run in-container
       - ./config:/app/config:ro # Mount alert thresholds and other config files
       - ./ontology:/app/ontology:ro # Building-independent ontologies (HBCO lay-term concepts) — ttl_uploader scans this path
       # NOTE: the embedding model is BAKED INTO THE IMAGE at HF_HOME=/app/.hf_cache
@@ -600,6 +601,10 @@ services:
       - PUBLISH_REFRESH_EVERY=${PUBLISH_REFRESH_EVERY:-10}
     volumes:
       - ./scripts:/app/scripts:ro
+      # sat-tick generation imports orchestrator.services.deliberation +
+      # shared.* — without these mounts live sat publishing dies (BUG-164)
+      - ./orchestrator:/app/orchestrator:ro
+      - ./shared:/app/shared:ro
     command: python /app/scripts/generate_dummy_timeseries.py --publish
     # Not an HTTP server — disable the image's curl-based healthcheck (would false-fail).
     healthcheck:

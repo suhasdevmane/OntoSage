@@ -42,9 +42,9 @@ def test_empty_query_returns_validation_error(chat_client):
         json={"message": "", "session_id": f"edge-{uuid.uuid4().hex[:8]}", "building_id": "bldg1"},
         timeout=15,
     )
-    assert r.status_code == 422, (
-        f"Empty query must return 422 (string_too_short), got {r.status_code}"
-    )
+    assert (
+        r.status_code == 422
+    ), f"Empty query must return 422 (string_too_short), got {r.status_code}"
 
 
 def test_whitespace_only_query(chat_client, fresh_session_id):
@@ -53,9 +53,10 @@ def test_whitespace_only_query(chat_client, fresh_session_id):
     resp = chat_client.chat("   ", session_id=fresh_session_id)
     # Either rejected by validator OR any non-error response — both acceptable.
     if not resp.success:
-        assert resp.raw.get("status_code") in (400, 422), (
-            f"Unexpected error status for whitespace query: {resp.raw}"
-        )
+        assert resp.raw.get("status_code") in (
+            400,
+            422,
+        ), f"Unexpected error status for whitespace query: {resp.raw}"
     else:
         # Accept any coherent response — clarification, general greeting, or
         # building-info offer are all valid; the only requirement is no 5xx crash.
@@ -72,32 +73,30 @@ def test_long_query_2000_chars(chat_client, fresh_session_id):
     """2000-char query: Pydantic max_length is 2000 → should be accepted."""
     long_q = "What is the temperature " + ("a" * 1900)
     resp = chat_client.chat(long_q[:2000], session_id=fresh_session_id)
-    assert resp.success or resp.raw.get("status_code") not in (500, 502, 503), (
-        f"Long query crashed: {resp.raw}"
-    )
+    assert resp.success or resp.raw.get("status_code") not in (
+        500,
+        502,
+        503,
+    ), f"Long query crashed: {resp.raw}"
 
 
 def test_sql_injection_attempt_safe(chat_client, fresh_session_id):
     """Classic SQL injection input: must be treated as natural language. No DB error.
     No string from SQL error messages should leak into the response."""
-    resp = chat_client.chat(
-        "'; DROP TABLE sensors; --", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("'; DROP TABLE sensors; --", session_id=fresh_session_id)
     assert resp.success or resp.raw.get("status_code") < 500
     if resp.success:
         # Must NOT contain SQL error messages
         forbidden = ["sqlsyntax", "syntax error", "ORA-", "MySQL server", "drop table"]
         for f in forbidden:
-            assert f.lower() not in resp.response_text.lower(), (
-                f"SQL error leaked into response: {f}"
-            )
+            assert (
+                f.lower() not in resp.response_text.lower()
+            ), f"SQL error leaked into response: {f}"
 
 
 def test_xss_attempt_handled(chat_client, fresh_session_id):
     """XSS payload: treated as text; if echoed, must be escaped or not contain raw script tag."""
-    resp = chat_client.chat(
-        "<script>alert('xss')</script>", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("<script>alert('xss')</script>", session_id=fresh_session_id)
     assert resp.success or resp.raw.get("status_code") < 500
     # If the orchestrator echoes the query verbatim, that's fine — it's not HTML rendered.
     # The fail case is a 5xx.
@@ -113,15 +112,14 @@ def test_french_query_no_crash(chat_client, fresh_session_id):
 
 def test_unicode_emoji_query(chat_client, fresh_session_id):
     """Emoji + non-ASCII: no UnicodeError."""
-    resp = chat_client.chat(
-        "🌡️ 室温 温度はどうですか? 🏢", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("🌡️ 室温 温度はどうですか? 🏢", session_id=fresh_session_id)
     assert resp.success or resp.raw.get("status_code") < 500
 
 
 def test_concurrent_identical_queries_safe(chat_client):
     """20 concurrent identical queries. (Reduced from 100 to respect rate limit.)
     All must succeed; embed cache should prevent stampede on the semantic router."""
+
     def _one():
         return chat_client.chat(
             "What are the lift dimensions?",
@@ -134,9 +132,9 @@ def test_concurrent_identical_queries_safe(chat_client):
         results = list(pool.map(lambda _: _one(), range(20)))
 
     successes = sum(1 for r in results if r.success)
-    assert successes >= 15, (
-        f"Concurrent stampede: only {successes}/20 succeeded — check rate limits / state safety"
-    )
+    assert (
+        successes >= 15
+    ), f"Concurrent stampede: only {successes}/20 succeeded — check rate limits / state safety"
 
 
 def test_concurrent_different_queries_safe(chat_client):
@@ -153,6 +151,7 @@ def test_concurrent_different_queries_safe(chat_client):
         "What sensors are installed?",
         "Compare temperature between floor 1 and floor 3",
     ]
+
     def _send(q):
         return chat_client.chat(q, session_id=f"div-{uuid.uuid4().hex[:8]}", rate_limit=False)
 
@@ -177,17 +176,15 @@ def test_malicious_session_id_safe(chat_client):
         session_id="../../../etc/passwd",
     )
     # Should either be sanitised or rejected — never produce 5xx
-    assert resp.success or resp.raw.get("status_code") < 500, (
-        f"Malicious session_id crashed orchestrator: {resp.raw}"
-    )
+    assert (
+        resp.success or resp.raw.get("status_code") < 500
+    ), f"Malicious session_id crashed orchestrator: {resp.raw}"
 
 
 def test_very_long_session_id_safe(chat_client):
     """1024-char session_id: must not break Redis key encoding."""
     long_sid = "x" * 1024
-    resp = chat_client.chat(
-        "What is the temperature?", session_id=long_sid
-    )
+    resp = chat_client.chat("What is the temperature?", session_id=long_sid)
     assert resp.success or resp.raw.get("status_code") < 500
 
 

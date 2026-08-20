@@ -39,9 +39,7 @@ def test_normalize_empty_returns_general(reg):
 def test_normalize_aliases_resolve(reg):
     # 'fm' is the alias for facility_manager (per _ALIASES)
     out = reg.normalize_personas(["fm", "FACILITY_MANAGER", "facility_manager"])
-    assert out == ["facility_manager"], (
-        f"Duplicate aliases must dedup; got {out}"
-    )
+    assert out == ["facility_manager"], f"Duplicate aliases must dedup; got {out}"
 
 
 def test_normalize_drops_unknown(reg):
@@ -83,17 +81,17 @@ def test_empty_list_blends_to_general(reg):
 
 def test_two_personas_blend_top_domains_by_rank(reg):
     """facility_manager: [ENERGY, THERMAL, OCCUPANCY, FIRE_SAFETY]
-       researcher:       [AIR_QUALITY, ENERGY, THERMAL, OCCUPANCY]
+    researcher:       [AIR_QUALITY, ENERGY, THERMAL, OCCUPANCY]
 
-       Rank-merge points:
-         ENERGY     = 8 (FM #0) + 7 (R #1) = 15
-         THERMAL    = 7 (FM #1) + 6 (R #2) = 13
-         AIR_QUALITY = 8 (R #0)            =  8
-         OCCUPANCY  = 6 (FM #2) + 5 (R #3) = 11
-         FIRE_SAFETY = 5 (FM #3)           =  5
+    Rank-merge points:
+      ENERGY     = 8 (FM #0) + 7 (R #1) = 15
+      THERMAL    = 7 (FM #1) + 6 (R #2) = 13
+      AIR_QUALITY = 8 (R #0)            =  8
+      OCCUPANCY  = 6 (FM #2) + 5 (R #3) = 11
+      FIRE_SAFETY = 5 (FM #3)           =  5
 
-       So the blended order should start with ENERGY, then THERMAL, then OCCUPANCY,
-       then AIR_QUALITY, then FIRE_SAFETY.
+    So the blended order should start with ENERGY, then THERMAL, then OCCUPANCY,
+    then AIR_QUALITY, then FIRE_SAFETY.
     """
     blended = reg.get_blended_priors(["facility_manager", "researcher"])
     assert blended.top_domains[0] == "ENERGY"
@@ -115,9 +113,7 @@ def test_blended_clarification_threshold_is_min(reg):
     researcher = reg.get_priors("researcher")
     blended = reg.get_blended_priors(["researcher", "occupant"])
 
-    expected_min = min(
-        occupant.clarification_threshold, researcher.clarification_threshold
-    )
+    expected_min = min(occupant.clarification_threshold, researcher.clarification_threshold)
     assert blended.clarification_threshold == expected_min
 
 
@@ -138,9 +134,7 @@ def test_blended_name_includes_all_personas(reg):
 
 
 def test_blended_handles_three_personas(reg):
-    blended = reg.get_blended_priors(
-        ["facility_manager", "researcher", "occupant"]
-    )
+    blended = reg.get_blended_priors(["facility_manager", "researcher", "occupant"])
     assert "+" in blended.name
     # 3 personas across many domains — blend should produce a coherent
     # short top_domains list.
@@ -164,6 +158,4 @@ def test_should_clarify_unchanged_for_single_persona(reg):
     # Above the threshold → should clarify
     assert reg.should_clarify("facility_manager", fm.clarification_threshold + 0.1)
     # Below the threshold → should NOT clarify
-    assert not reg.should_clarify(
-        "facility_manager", fm.clarification_threshold - 0.1
-    )
+    assert not reg.should_clarify("facility_manager", fm.clarification_threshold - 0.1)

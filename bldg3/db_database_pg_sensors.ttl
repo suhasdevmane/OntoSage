@@ -66,7 +66,7 @@ _:ref_PG_Relative_Humidity_Sensor_R101 rdf:type ashrae:ExternalReference ,
 bldg:PG_Electrical_Power_Sensor_R101 rdf:type owl:NamedIndividual ,
         brick:Class ,
         brick:Entity ,
-        brick:Electrical_Power_Sensor ,
+        brick:Electric_Power_Sensor ,
         brick:Point ,
         brick:Sensor ;
     ashrae:hasExternalReference _:ref_PG_Electrical_Power_Sensor_R101 ;

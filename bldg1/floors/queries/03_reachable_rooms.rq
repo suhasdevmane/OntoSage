@@ -1,0 +1,18 @@
+PREFIX abx:    <https://abacws.cardiff.ac.uk/kg#>
+PREFIX bot:    <https://w3id.org/bot#>
+PREFIX brick:  <https://brickschema.org/schema/Brick#>
+PREFIX geo:    <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX unit:   <http://qudt.org/vocab/unit/>
+
+# "Which rooms can I reach from 0Z21 by passing through doors?"
+# Transitive closure over the door graph - the query that makes a topology
+# graph worth building instead of a flat room table.
+SELECT DISTINCT ?code ?name WHERE {
+  ?start abx:roomCode "0Z21" .
+  ?start abx:connectedTo+ ?reachable .
+  ?reachable abx:roomCode ?code ;
+             rdfs:label   ?name .
+  FILTER(?reachable != ?start)
+}
+ORDER BY ?code

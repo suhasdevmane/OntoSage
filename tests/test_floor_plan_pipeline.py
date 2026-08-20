@@ -55,13 +55,18 @@ def _fake_image_info() -> Dict[str, Any]:
 # Step 5 — Regex space detection
 # ---------------------------------------------------------------------------
 
+
 class TestDetectSpacesRegex:
     def _run(self, texts, building_id="abacws", floor=3):
         from orchestrator.services.floor_plan_pipeline import _detect_spaces_regex
-        from shared.floor_plan_config import ABACWS_CONFIG
+        from shared.floor_plan_config import default_config
 
         blocks = _make_text_blocks(texts)
-        spaces, warnings = _detect_spaces_regex(blocks, building_id, floor, ABACWS_CONFIG)
+        # The dotted-zone regex is a drawing convention, not a building fact —
+        # exercise it through the neutral default config.
+        spaces, warnings = _detect_spaces_regex(
+            blocks, building_id, floor, default_config(building_id)
+        )
         return spaces, warnings
 
     def test_detects_standard_zone_ids(self):
@@ -96,14 +101,15 @@ class TestDetectSpacesRegex:
     def test_non_zone_text_not_captured_as_zone(self):
         spaces, _ = self._run(["Page 1 of 1", "Scale 1:100"])
         zone_ids = {s.zone_id for s in spaces}
-        assert not any(zid.startswith("1.") for zid in zone_ids), (
-            "Page numbers should not be parsed as zone IDs"
-        )
+        assert not any(
+            zid.startswith("1.") for zid in zone_ids
+        ), "Page numbers should not be parsed as zone IDs"
 
 
 # ---------------------------------------------------------------------------
 # Step 6 — Type classification
 # ---------------------------------------------------------------------------
+
 
 class TestClassifyTypes:
     def _make_space(self, label: str, space_type: str = "unknown"):
@@ -142,6 +148,7 @@ class TestClassifyTypes:
 # Step 7 — ID normalisation
 # ---------------------------------------------------------------------------
 
+
 class TestNormaliseIds:
     def test_id_gets_building_prefix(self):
         from orchestrator.services.floor_plan_pipeline import _normalise_ids
@@ -163,6 +170,7 @@ class TestNormaliseIds:
 # ---------------------------------------------------------------------------
 # Step 2 — Fingerprinting / SHA-256
 # ---------------------------------------------------------------------------
+
 
 class TestFingerprint:
     def test_sha256_file(self, tmp_path):
@@ -186,6 +194,7 @@ class TestFingerprint:
 # ---------------------------------------------------------------------------
 # Step 10 — Manifest write
 # ---------------------------------------------------------------------------
+
 
 class TestManifestIO:
     def _make_manifest(self, building_id="abacws", floor=3):
@@ -244,6 +253,7 @@ class TestManifestIO:
 # ---------------------------------------------------------------------------
 # Full pipeline integration — mocked I/O
 # ---------------------------------------------------------------------------
+
 
 class TestPipelineIntegration:
     """Tests the full ingest_file path with mocked PDF I/O."""
@@ -330,14 +340,15 @@ class TestPipelineIntegration:
 # Portability — synthetic second building
 # ---------------------------------------------------------------------------
 
+
 class TestBuildingPortability:
     """Proves that a second building works without code changes (§11, §14 spec)."""
 
     @pytest.mark.asyncio
     async def test_synthetic_building_regex_detection(self, tmp_path):
         """A custom zone_id_pattern in building.yaml is honoured."""
-        from shared.floor_plan_config import BuildingConfig
         from orchestrator.services.floor_plan_pipeline import _detect_spaces_regex
+        from shared.floor_plan_config import BuildingConfig
 
         # Synthetic building uses R{floor}{nn} pattern, e.g. R301, R415
         cfg = BuildingConfig(
@@ -372,8 +383,11 @@ class TestBuildingPortability:
                 source_sha256="abc",
                 generated_at=datetime.utcnow(),
                 rendered_image=RenderedImage(
-                    png_url="/x.png", thumbnail_url="/t.png",
-                    width_px=100, height_px=100, dpi=72,
+                    png_url="/x.png",
+                    thumbnail_url="/t.png",
+                    width_px=100,
+                    height_px=100,
+                    dpi=72,
                 ),
                 pdf_url="/x.pdf",
             )
@@ -393,6 +407,7 @@ class TestBuildingPortability:
 # Pydantic model validation
 # ---------------------------------------------------------------------------
 
+
 class TestPydanticModels:
     def test_space_type_unknown_allowed(self):
         from shared.models import Space
@@ -402,6 +417,7 @@ class TestPydanticModels:
 
     def test_normalised_point_out_of_range_rejected(self):
         from pydantic import ValidationError
+
         from shared.models import NormalisedPoint
 
         with pytest.raises(ValidationError):
@@ -411,16 +427,27 @@ class TestPydanticModels:
         from datetime import datetime
 
         from pydantic import ValidationError
+
         from shared.models import FloorPlanManifest, RenderedImage
 
         def _make(**kw):
             return FloorPlanManifest(
-                building_id="x", building_name="X", floor=1, floor_label="Floor 1",
-                source_pdf="x.pdf", source_sha256="abc", generated_at=datetime.utcnow(),
+                building_id="x",
+                building_name="X",
+                floor=1,
+                floor_label="Floor 1",
+                source_pdf="x.pdf",
+                source_sha256="abc",
+                generated_at=datetime.utcnow(),
                 rendered_image=RenderedImage(
-                    png_url="/a.png", thumbnail_url="/t.png", width_px=1, height_px=1, dpi=72,
+                    png_url="/a.png",
+                    thumbnail_url="/t.png",
+                    width_px=1,
+                    height_px=1,
+                    dpi=72,
                 ),
-                pdf_url="/x.pdf", **kw,
+                pdf_url="/x.pdf",
+                **kw,
             )
 
         # Both "1.0" (PDF-only) and "2.0" (DWG-enriched) are valid schema versions
@@ -446,6 +473,7 @@ class TestPydanticModels:
 # Golden manifest test (optional — skipped unless fixture present)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.skipif(
     not (FIXTURES_DIR / "abacws_floor_3.manifest.golden.json").exists(),
     reason="Golden manifest fixture not present — run pipeline against real PDFs first",
@@ -465,6 +493,4 @@ class TestGoldenManifest:
 
         raw = (FIXTURES_DIR / "abacws_floor_3.manifest.golden.json").read_text("utf-8")
         m = FloorPlanManifest.model_validate_json(raw)
-        assert len(m.spaces) >= 10, (
-            f"Expected ≥10 spaces in golden manifest, got {len(m.spaces)}"
-        )
+        assert len(m.spaces) >= 10, f"Expected ≥10 spaces in golden manifest, got {len(m.spaces)}"

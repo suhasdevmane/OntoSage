@@ -308,7 +308,9 @@ def run_interactive():
 
     # ── Summary ────────────────────────────────────────────────────────────
     banner("Onboarding Complete!")
-    print(textwrap.dedent(f"""
+    print(
+        textwrap.dedent(
+            f"""
     {BOLD}Next steps:{RESET}
       1. Set the env var: {CYAN}BUILDING_CONFIG_FILE={out_path}{RESET}
       2. Upload your TTL to GraphDB:
@@ -318,7 +320,9 @@ def run_interactive():
          {CYAN}python scripts/cache_sensor_map.py{RESET}
       4. Start OntoSage:
          {CYAN}docker compose up orchestrator{RESET}
-    """))
+    """
+        )
+    )
 
 
 def run_non_interactive(args):

@@ -15,10 +15,21 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 2. `README.md` — architecture overview, stakeholder guide, data setup
 3. `ONTOSAGE.md` — complete technical reference (source layout, all phases, config)
 
-**Current state snapshot (2026-07-30):**
-- Test suite: **523 tests passing, 4 skipped** (`pytest -m unit -q`; skips are optional deps)
-- Corpus coverage: **63.8%** (bldg1) / **70.4%** (bldg2, 2026-07-30) on the 240-question
-  stratified replay — portability proven above the ≥60% target on both buildings
+**Current state snapshot (2026-08-19):**
+- Test suite: **1590 tests passing, 4 skipped** (`pytest -m unit -q`; skips are optional deps).
+  Nothing since the last commit is committed — the whole V4+V5 body of work is uncommitted
+  and awaiting the user's review.
+- Corpus coverage: **63.8%** (bldg1, 2026-06-18) / **70.4%** (bldg2, 2026-07-30) on the
+  240-question stratified replay — both above the ≥60% target. A 2026-08-18 replay on
+  bldg2 under the hosted model scored **78.8% combined / 25.0% data-backed** with zero
+  transport errors (`scripts/outputs/replay/cloud_240_r1.md`).
+- **Grading a run is only valid if the stack was healthy for all of it.** Two separate
+  incidents produced fictitious numbers: a mid-run container recreate (CAVEAT-173, and a
+  9.2%-coverage artifact, BUG-176) and an LLM outage whose fallback text reads like an
+  answer (BUG-177 — one such fallback was a 1000-row dump that would have graded as a
+  PASS). Both harnesses now quarantine those rows instead of scoring them; the API
+  declares `llm_degraded` per turn. Never publish a number from a run that reports
+  invalid rows.
 - **Three buildings, all tracked in git, swap-by-rename, ONE active at a time:**
   the active building's files are `input/` + `.env` + `docker-compose.yml`; parked
   buildings live as `bldgN/` + `.envN` (gitignored — identity delta tracked as
@@ -39,35 +50,99 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 
 **To verify current state before starting work:**
 ```bash
-pytest -m unit -q                                  # should show 523 pass, 4 skip, 0 fail
+pytest -m unit -q                                  # should show 1590 pass, 4 skip, 0 fail
 git status                                         # shows what's modified vs committed
 git diff --stat HEAD                               # shows scope of uncommitted changes
 docker-compose logs --tail=20 orchestrator         # live system health
 ```
 
 **Open issues / pending decisions:**
+- **ACTIVE WORKSTREAM (2026-08-15): Improvement Plan V5 — Universal Coverage.** V4 is
+  DELIVERED (36/36, see `tasks/V4_TRACKER.csv` + `scripts/outputs/V4_RESULTS.md`; nothing
+  committed). V5 design: [`tasks/IMPROVEMENT_PLAN_V5_UNIVERSAL_COVERAGE.md`](./tasks/IMPROVEMENT_PLAN_V5_UNIVERSAL_COVERAGE.md)
+  (v3: OCBV-2 + Event Framework + PREDICT + DETECT + PROTECT pillars). Execution:
+  [`tasks/V5_TRACKER.csv`](./tasks/V5_TRACKER.csv), 45 tasks, MVP-ordered. **Cold-start /
+  model-handoff pack: [`tasks/V5_HANDOFF.md`](./tasks/V5_HANDOFF.md) — read it FIRST when
+  resuming V5 work.** Session protocol: take the first `todo` row whose deps are done
+  (respecting the MVP order in the handoff doc), work it, flip status + notes with
+  evidence. User decisions already made are logged in the handoff doc — do not re-ask.
+  **Status 2026-08-19: 39/45 done, T02 skipped.** T33 (bldg2 pillar scorecard) and T43
+  (policy editor, live-probed 3/3) are DONE. Left: T34/T35 (bldg3/bldg1 legs — HELD, the
+  user asked to keep bldg2 live), T36 (certification ×3 + DELIVERED), T44 (multi-model
+  benchmark — needs the hosted quota window to reset), T45 (results tables).
+- **Certified bldg2 scorecard (2026-08-19):** COVERAGE 26.2% data-backed / **80.6%
+  combined** (237 graded, +3 quarantined) · PROTECT **0.0% leak** over 37 applicable
+  traps with the PDP **enforced** · DETECT **96.9% recall** (31/32) · PREDICT **CI95
+  0.92**. Artifact: `scripts/outputs/V5_SCORECARD_bldg2_*.md`. All on the LOCAL
+  `gpt-oss:20b`, which BEAT the hosted 120B on coverage (80.6% vs 78.8%) — the quota
+  exhaustion costs nothing scientifically.
+- **The LLM provider is `local` (`gpt-oss:20b`) as of 2026-08-18.** The hosted trial ran on
+  Ollama Cloud `gpt-oss:120b`, but its rolling ~5-hour call budget was **exhausted** during
+  the T44 benchmark and every cloud call now returns HTTP 429 — so no real work can be done
+  on cloud until the window resets. Embeddings were already `local`, so nothing needed
+  reindexing. Switch with `MODEL_PROVIDER=` in `.env` **plus `docker compose up -d`** —
+  `restart` silently keeps the old environment (CAVEAT-178). Only 7 of the 19 hosted models
+  are reachable on this key at all: `gpt-oss:120b/20b`, `gemma4:31b`, `minimax-m3`,
+  `nemotron-3-nano:30b/-super/-ultra`. deepseek-v4-*/qwen3.5/glm-5.x/kimi-*/mistral-large-3
+  all return HTTP 403 "requires a subscription" — a **paid plan** is needed to benchmark
+  those, which is the one open item that needs the user.
 - **Live fix/caveat log + backlog: [`tasks/FIX_TRACKER.csv`](./tasks/FIX_TRACKER.csv)** — read it at session start to see what's OPEN vs fixed; keep it updated (Workflow rule 7). FIX-001/002/003 done (verified live). **TODO-010→011→012 DONE (2026-07-28):** `capability.yaml` is **removed** — capabilities are now `ontosage:Amenity` / `ontosage:KnowledgeTopic` **triples** (authored via the admin Capabilities GUI `POST /api/v1/admin/capabilities` or the OCBV TBox `input/ontosage_schema.ttl`), answered by the `CapabilityGraphResolver`. Routing is a single TTL-first path (the Qdrant capability-KB probe is gone). Migration: `scripts/migrate_capability_yaml_to_ttl.py`. **Remaining: `TODO-081`** — excise the now-dead capability-KB infra (`capability_indexer`, `semantic_router.classify`, `shared/capability_schema.py`); it no-ops harmlessly today. Design/why in [`tasks/TODO_012_CAPABILITY_YAML_REMOVAL_STEP.md`](./tasks/TODO_012_CAPABILITY_YAML_REMOVAL_STEP.md) + [`tasks/TTL_NATIVE_CAPABILITIES_PLAN.md`](./tasks/TTL_NATIVE_CAPABILITIES_PLAN.md).
 - ALL changes need user review and explicit commit approval before any `git commit` or `git push`
-- **11 OPEN tracker items as of 2026-07-30** (audited against the mission: everything left
-  either improves NL answering or protects building-agnosticism). DONE this round:
-  TODO-070 (bldg2 replay **70.4%**), TODO-050 (routing contract), CAVEAT-007
-  (declared-vs-reporting counts), BUG-102 (automation node crash), TODO-071 (honesty
-  sweep harness: `scripts/honesty_sweep.py` — found BUG-103/104/105), BUG-105
-  (cross-building contamination cleaned; uploader now active-building-only), **BUG-103**
-  (fabrication gate: typed referents + grounding guard — bldg1 honesty 4/18 → 12/18).
-  Do-next:
-  BUG-104 (service-history question files a ticket; overlaps CAVEAT-108) →
-  TODO-072 (GUI-only onboarding) →
-  TODO-067/069 (clean-boot, embedding-switch) → papercuts (CAVEAT-005/006/053,
-  TODO-054, KNOWN-008) → CAVEAT-094 + TODO-081 (hygiene)
+- **Tracker: 193 rows as of 2026-08-19.** Fixed this session, in the order the evidence
+  arrived: **BUG-189** (P1 FABRICATION — a room's reading attributed to a "public corridor"
+  bldg2 does not have, because the referent gate matched FLOORS BEFORE SPACES so an existing
+  floor let an unverified space through); **BUG-191** (P1 — the leak grader counted the "2"
+  inside `bldg2` as a sensor reading, so refusals scored PASS and a run reported a spurious
+  39/39); **BUG-188** (2.7% of local turns returned empty completions from a 29,705-char
+  prompt against an 8192 context — `OLLAMA_NUM_CTX` now 16384, costing +200 MiB with the
+  model still 100% on GPU); **BUG-194** (P1 — a GUI policy edit was SHADOWED by a stale copy
+  in the default graph: file and named graph correct, API and enforcement using the OLD
+  value, editor reporting success); **BUG-195** (P1 — the sparql lane could answer a reading
+  question with NO PDP chokepoint, and "how many people" was not recognised as
+  presence-adjacent so the k-check was skipped even when the PDP ran); plus BUG-186,
+  CAVEAT-182/190/193.
+- **The measurement apparatus was wrong more often than the system.** Four of the five P1s
+  above were in graders/harnesses, and the same weak heuristic ("any digit means it
+  answered") hid a fabrication one day and manufactured a perfect score the next. When a
+  number looks perfect, read the rows behind it — see `tasks/lessons.md` #20-22.
+- Still OPEN and worth doing next: **BUG-192** (the model claims a sensor class is absent
+  reasoning from its RAG window rather than a graph COUNT), **CAVEAT-193** (trap P005
+  expects an answer the certified policy is designed to restrict), **CAVEAT-190** (two
+  answer-traps name spaces bldg2 lacks — now auto-marked N/A, but the bank should be fixed
+  for T34/T35), **TODO-181** (retype 56 legacy instances carrying undefined brick: classes).
+- **BUG-184 — root cause found, fix landed, re-measure owed.** `plan_hash` is
+  `sha256(plan_fingerprint | sorted candidate IRIs | fetch_window | time basis)`, and the
+  candidate set excludes *currently-busy rooms* — so on a live building it MUST differ
+  between runs by construction. It identifies what was computed, not how the system
+  reasoned, and the T44 invariance probe was comparing it. A layered probe (host Ollama,
+  temp 0, identical prompt, 6 repeats) showed the provider does return different text at
+  temp 0, but the parser absorbs nearly all of it: CQ-IR fingerprints came out 1/6, 1/6,
+  2/6 distinct. `cqir.plan_fingerprint()` — documented as "the determinism anchor" — was
+  never surfaced; it is now published in the dossier and `plan_trace` alongside
+  `plan_hash`, and the benchmark compares it. **Compare `plan_fingerprint` across runs;
+  `plan_hash` is provenance.** Residual: one query still compiles two ways — shrink via the
+  deterministic folds or a compile cache.
+- Remaining P1s: **BUG-147** (`FIXED_UNVERIFIED` — code landed in V4-T13, the live
+  join-rate assertion is still owed), **TODO-143** (paper claims TimescaleDB + Cassandra
+  backends no shipped fixture supports — deferred by the user), **TODO-072** (GUI-only
+  onboarding). Lower: KNOWN-153, CAVEAT-148/154, hygiene (CAVEAT-094, TODO-081, TODO-181).
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
-  (13 parse-stage + 1 post-stage ordered rules, tests in `tests/test_routing_contract.py`).
-  Add/change a routing rule THERE — never as a new inline override in `dialogue_agent`.
+  (17 parse-stage + 1 post-stage + 1 concept-stage ordered rules as of 2026-08-13, order
+  pinned by `tests/test_routing_contract.py::test_precedence_order_is_pinned` — update that
+  test in the SAME commit as any rule change). Add/change a routing rule THERE — never as a
+  new inline override in `dialogue_agent`.
 - `data/mysql-init/init.sql` creates `abacws` DB (legacy); live system uses `sensordb` — mismatch is inert (MySQL container is disabled; host MySQL used directly)
 - Maintenance agent "report broken light" → generic fallback (tracked as KNOWN-008)
-- bldg1 provenance is CORRECT as-is (NOTE-101): the dummy publisher writes only the
-  synthetic-labeled narrow tables (`sensor_data_floors04`/`sensor_data_synth`); the real
-  abacws wide `sensor_data` is pristine — do not "fix" `database1 nature: real`
+- **bldg1 `sensor_data` (wide) = REAL snapshot + INTENTIONAL dev-mode top-up — user-confirmed
+  2026-08-13, BUG-144 resolved as by-design. Do not "fix", purge, or relabel.** The physical
+  abacws sensors feed a separate real DB (3 years of readings, still collecting) that this
+  dev machine does NOT receive; the user manually loaded a real snapshot (2025-01-01→
+  2025-03-09) into local `sensor_data`, and `data-publisher` deliberately extends it with
+  generated "latest" rows (`PUBLISH_WIDE=true` in compose) so real-time questions are
+  testable during development. Everything else (all other modalities/buildings) is synthetic
+  and live-generated, labeled as such. **End of development (user will do):** disable the
+  generator (`PUBLISH_WIDE=false` / remove service) and repoint `database_registry.yaml`
+  `database1` at the real/cloud DB. `nature: real` stays as-is throughout.
 
 ---
 
@@ -117,8 +192,11 @@ these is wrong for this project even if it "works." Depth lives in `ONTOSAGE.md`
    rows — **no code change.**
 
 9. **Multiple datasources, pluggable.** Time-series routes by `ref:storedAt` → adapter registry → the
-   right backend (MySQL wide/narrow today; Postgres / Timescale / Influx templates ready). A new backend
-   is **a new adapter**, never edits to the agents.
+   right backend. MySQL (wide/narrow), PostgreSQL, **TimescaleDB 2.11 and Cassandra 4.1 are live and
+   test-covered** (TODO-143 — start them with `docker compose -f docker-compose.timeseries-backends.yml
+   up -d`, seed with `scripts/seed_timeseries_backends.py`); Influx / Mongo / SQLite / Redis-TS adapters
+   exist but are not yet exercised by a fixture. A new backend is **a new adapter**, never edits to the
+   agents.
 
 10. **Local or API models, independently.** `MODEL_PROVIDER` = `openai` / `local` (Ollama) / `cloud`;
     `EMBEDDING_PROVIDER` is independent. Never hardcode a provider or model — go through `llm_manager`
@@ -257,7 +335,14 @@ POST /chat (or /v1/chat/completions)
 - **Ontology manager** (`services/ontology_manager.py`): async GraphDB admin via httpx — list/validate/upload/drop named graphs + SELECT browser.
 - **Reindex service** (`services/reindex_service.py`): background job queue for re-embedding capability/documents/floor_plans into Qdrant. Singleton `_reindex_service_instance` in `main.py`.
 - **RBAC** (`middleware/rbac.py`): `require_permission(perm)` → `get_user_context` dependency chain; all data endpoints now return 401 without valid session.
-- **Admin React portal** (`frontend/src/pages/AdminPortal.js`): 9-tab UI at `/admin`; backed by the 8 admin endpoints above.
+- **Admin React portal** (`frontend/src/pages/AdminPortal.js`): 11-tab UI at `/admin` (Policies added by
+  V5-T43; **Onboarding** added by TODO-072 and now the default tab); backed by the admin endpoints above.
+- **GUI-only onboarding** (`services/onboarding_status.py`, `GET /api/v1/admin/onboarding/status`,
+  `components/admin/OnboardingTab.js`): a building is onboarded end-to-end through the console —
+  identity → TTL → datasource → documents → floor plans — with per-step readiness read from the LIVE
+  system (spaces in the graph; declared sensors vs UUIDs that actually have rows; share of floor-plan
+  spaces linked to an IRI), never from a checklist. `identity` and `ontology` are blocking; the rest
+  narrow what can be answered rather than breaking it.
 
 **V3 additions** (all config-driven, zero code for new buildings):
 - **HBCO concept resolver** (`services/concept_resolver.py`): lay-term → Brick class + recipe via `ontology/hbco_core.ttl` + `hbco_mappings.ttl`; per-building overlay `input/<id>/concepts.ttl`. Injected into dialogue + SPARQL + analytics.
@@ -348,7 +433,8 @@ First `Read` target for a task — go straight to the symbol (line numbers drift
 | **P0 — Narrow MySQL adapter** | `services/adapters/mysql_narrow_adapter.py` · `MySQLNarrowAdapter`, `build_timeseries_query`, `get_columns` |
 | **P0 — Sensor TTL generator** | `services/sensor_ttl_generator.py` · `generate_timeseries_ttl`, `parse_sensor_csv` |
 | **P0 — RBAC auth dependency** | **`main.py`** · `get_user_context`, `require_permission` (the LIVE session→permission gate); `middleware/rbac.py` provides `UserContext` + `ROLE_PERMISSIONS` only — the rest of that module (`TokenManager`/`create_rbac_dependency`/`RBACMiddleware`) is unwired legacy, do not use |
-| **P0 — Admin React portal** | `frontend/src/pages/AdminPortal.js` (9 tabs: Ontology, KB Reindex, …) |
+| **P0 — Admin React portal** | `frontend/src/pages/AdminPortal.js` (11 tabs: Onboarding, Ontology, Capabilities, Policies, …) |
+| **Onboarding readiness (GUI-only build)** | `services/onboarding_status.py` · `collect_status`; `main.py` · `onboarding_status`; `components/admin/OnboardingTab.js` |
 | **P0 — Narrow table DDL** | `data/mysql-init/create_narrow_timeseries_tables.sql` (7 tables in `sensordb`) |
 | **P0 — TTL extensions** | `input/bldg1_timeseries_extension.ttl` (19 sensors) · `input/bldg1_security_lighting_extension.ttl` (293 triples) |
 

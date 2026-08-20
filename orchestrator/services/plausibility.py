@@ -114,11 +114,18 @@ def _is_reading(raw: str, before: str, after: str) -> bool:
 
 
 def measurand_of(text: str) -> Optional[str]:
-    """Which physical quantity this text is about, or None."""
+    """Which physical quantity this text is about, or None.
+
+    BUG-169: hints match on WORD BOUNDARIES, never substrings — plain `in`
+    made "2h window" read as WIND (and would make "attempt" read as
+    temperature), which mislabelled a dossier's CO2 numbers as impossible
+    wind speeds the moment an availability answer mentioned its window.
+    """
     t = (text or "").lower()
     for measurand, hints in _MEASURAND_HINTS:
-        if any(h in t for h in hints):
-            return measurand
+        for h in hints:
+            if re.search(rf"(?<![a-z0-9]){re.escape(h)}(?![a-z0-9])", t):
+                return measurand
     return None
 
 

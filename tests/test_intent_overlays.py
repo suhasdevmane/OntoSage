@@ -13,8 +13,8 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from orchestrator.intents import registry as _registry_mod
 from orchestrator.intents import get_intent_registry
+from orchestrator.intents import registry as _registry_mod
 
 
 @pytest.fixture
@@ -58,12 +58,18 @@ def test_per_building_overlay_adds_intent(tmp_path, clear_cache):
     """A new intent declared in input/<bldg>/intents.yaml appears in the registry."""
     shipped = tmp_path / "shipped" / "intent_definitions.yaml"
     bldg_dir = tmp_path / "input" / "bldgX"
-    _write_yaml(shipped, [
-        {"name": "analytics", "description": "shipped analytics", "pipeline_group": "data"},
-    ])
-    _write_yaml(bldg_dir / "intents.yaml", [
-        {"name": "lab_booking", "description": "Book a lab", "pipeline_group": "standalone"},
-    ])
+    _write_yaml(
+        shipped,
+        [
+            {"name": "analytics", "description": "shipped analytics", "pipeline_group": "data"},
+        ],
+    )
+    _write_yaml(
+        bldg_dir / "intents.yaml",
+        [
+            {"name": "lab_booking", "description": "Book a lab", "pipeline_group": "standalone"},
+        ],
+    )
     with (
         patch.object(_registry_mod, "_REGISTRY_SEARCH_PATHS", [shipped]),
         patch.object(
@@ -82,20 +88,26 @@ def test_per_building_overlay_overrides_existing_intent(tmp_path, clear_cache):
     """An overlay entry with the same name overrides the shipped definition."""
     shipped = tmp_path / "shipped" / "intent_definitions.yaml"
     bldg_dir = tmp_path / "input" / "bldgX"
-    _write_yaml(shipped, [
-        {
-            "name": "analytics",
-            "description": "GLOBAL",
-            "pipeline_group": "data",
-        },
-    ])
-    _write_yaml(bldg_dir / "intents.yaml", [
-        {
-            "name": "analytics",
-            "description": "PER-BUILDING",
-            "pipeline_group": "data",
-        },
-    ])
+    _write_yaml(
+        shipped,
+        [
+            {
+                "name": "analytics",
+                "description": "GLOBAL",
+                "pipeline_group": "data",
+            },
+        ],
+    )
+    _write_yaml(
+        bldg_dir / "intents.yaml",
+        [
+            {
+                "name": "analytics",
+                "description": "PER-BUILDING",
+                "pipeline_group": "data",
+            },
+        ],
+    )
     with (
         patch.object(_registry_mod, "_REGISTRY_SEARCH_PATHS", [shipped]),
         patch.object(
@@ -113,12 +125,18 @@ def test_global_input_overlay_applies_when_no_per_building_file(tmp_path, clear_
     """A global input/intents.yaml overlay applies to any building_id."""
     shipped = tmp_path / "shipped" / "intent_definitions.yaml"
     global_overlay = tmp_path / "global" / "intents.yaml"
-    _write_yaml(shipped, [
-        {"name": "analytics", "description": "shipped"},
-    ])
-    _write_yaml(global_overlay, [
-        {"name": "site_specific", "description": "from global overlay"},
-    ])
+    _write_yaml(
+        shipped,
+        [
+            {"name": "analytics", "description": "shipped"},
+        ],
+    )
+    _write_yaml(
+        global_overlay,
+        [
+            {"name": "site_specific", "description": "from global overlay"},
+        ],
+    )
     with (
         patch.object(_registry_mod, "_REGISTRY_SEARCH_PATHS", [shipped]),
         patch.object(
@@ -136,9 +154,12 @@ def test_malformed_overlay_does_not_crash(tmp_path, clear_cache):
     """A broken overlay is logged and skipped — the registry still loads."""
     shipped = tmp_path / "shipped" / "intent_definitions.yaml"
     bad = tmp_path / "bad" / "intents.yaml"
-    _write_yaml(shipped, [
-        {"name": "analytics", "description": "shipped"},
-    ])
+    _write_yaml(
+        shipped,
+        [
+            {"name": "analytics", "description": "shipped"},
+        ],
+    )
     bad.parent.mkdir(parents=True, exist_ok=True)
     bad.write_text("not valid yaml: {[}")
     with (
@@ -153,9 +174,7 @@ def test_malformed_overlay_does_not_crash(tmp_path, clear_cache):
 def test_registry_falls_back_to_defaults_if_everything_fails(clear_cache):
     """When shipped + overlay are both unreadable, hardcoded defaults are used."""
     with (
-        patch.object(
-            _registry_mod, "_REGISTRY_SEARCH_PATHS", [Path("/nowhere/file.yaml")]
-        ),
+        patch.object(_registry_mod, "_REGISTRY_SEARCH_PATHS", [Path("/nowhere/file.yaml")]),
         patch.object(_registry_mod, "_overlay_search_paths", lambda bid: []),
     ):
         reg = get_intent_registry()

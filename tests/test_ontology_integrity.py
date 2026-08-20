@@ -149,12 +149,8 @@ def test_capability_collection_isolated_from_others():
 def test_sensor_uuid_lookup_path_intact(chat_client, fresh_session_id):
     """A sensor_data query must complete through SPARQL → SQL → response with no
     error. If the SPARQL→UUID pipeline broke, this would fail with 'no data'."""
-    resp = chat_client.chat(
-        "Show me the current temperature reading", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("Show me the current temperature reading", session_id=fresh_session_id)
     assert resp.success
     # Response either gives a reading OR asks for clarification on which room/zone.
     # Either is acceptable — the failure mode is a hard SPARQL error / no data path.
-    assert resp.contains_any(
-        "°C", "specific room", "which", "temperature", "sensor", "reading"
-    )
+    assert resp.contains_any("°C", "specific room", "which", "temperature", "sensor", "reading")

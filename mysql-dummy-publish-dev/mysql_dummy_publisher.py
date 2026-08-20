@@ -253,6 +253,10 @@ SETTINGS = {
     "TIMESTAMP_COLUMN": "Datetime",
     # Loop cadence (env var: PUBLISH_INTERVAL)
     "INTERVAL_SECONDS": int(os.environ.get("PUBLISH_INTERVAL", "30")),
+    # BUG-144: bldg1's wide table is the REAL abacws historian — fabricated rows
+    # must never land there. Wide-table publishing is therefore opt-in (dev only);
+    # the narrow synthetic-labeled tables are this publisher's actual job.
+    "PUBLISH_WIDE": os.environ.get("PUBLISH_WIDE", "false").strip().lower() in ("1", "true", "yes"),
     # Batching: when >1 uses executemany per tick
     "BATCH_SIZE": 1,  # set to e.g. 50 for batch mode
     # Limits: set to 0 to run forever (recommended)
@@ -532,19 +536,28 @@ def main() -> int:
     load_extended_sensors()
 
     try:
-        ts_col, cols = load_columns(conn, cfg)
-        cols = [c for c in cols if c and c.get("cname") is not None]
-        sql = build_insert_sql(cfg, ts_col, cols)
+        publish_wide = bool(SETTINGS.get("PUBLISH_WIDE", False))
+        ts_col, cols, sql = None, [], None
+        if publish_wide:
+            ts_col, cols = load_columns(conn, cfg)
+            cols = [c for c in cols if c and c.get("cname") is not None]
+            sql = build_insert_sql(cfg, ts_col, cols)
 
-        if verbose:
-            mode = "batch" if batch_size > 1 else "single"
-            limit = "infinite" if max_rows == 0 else str(max_rows)
+            if verbose:
+                mode = "batch" if batch_size > 1 else "single"
+                limit = "infinite" if max_rows == 0 else str(max_rows)
+                print(
+                    f"[py-dummy] Target: {cfg['db']}.{cfg['table']}, ts: {ts_col}, value cols: {len(cols)}",
+                    flush=True,
+                )
+                print(
+                    f"[py-dummy] Mode={mode}, batch_size={batch_size}, interval={interval}s, max_rows={limit}",
+                    flush=True,
+                )
+        elif verbose:
             print(
-                f"[py-dummy] Target: {cfg['db']}.{cfg['table']}, ts: {ts_col}, value cols: {len(cols)}",
-                flush=True,
-            )
-            print(
-                f"[py-dummy] Mode={mode}, batch_size={batch_size}, interval={interval}s, max_rows={limit}",
+                f"[py-dummy] Wide-table publishing DISABLED (PUBLISH_WIDE=false, BUG-144) — "
+                f"`{cfg['db']}`.`{cfg['table']}` will not be written; narrow tables only",
                 flush=True,
             )
 
@@ -554,22 +567,24 @@ def main() -> int:
                 break
 
             try:
-                if batch_size == 1:
-                    vals = make_row_values(cols)
-                    insert_single(conn, sql, vals, verbose=verbose)
-                    total += 1
-                else:
-                    rows = [make_row_values(cols) for _ in range(batch_size)]
-                    insert_batch(conn, sql, rows, verbose=verbose)
-                    total += len(rows)
+                if publish_wide:
+                    if batch_size == 1:
+                        vals = make_row_values(cols)
+                        insert_single(conn, sql, vals, verbose=verbose)
+                        total += 1
+                    else:
+                        rows = [make_row_values(cols) for _ in range(batch_size)]
+                        insert_batch(conn, sql, rows, verbose=verbose)
+                        total += len(rows)
 
-                # Live-publish the narrow per-modality tables alongside the wide table.
+                # Live-publish the narrow per-modality tables (the publisher's real job).
                 publish_narrow(conn, verbose=verbose)
                 # Live-publish the extended narrow tables (floors 0-4 + synthetic sensors).
                 publish_extended(conn, verbose=verbose)
 
                 # Print debug sample every 5 minutes
-                print_debug_sample(cols)
+                if publish_wide:
+                    print_debug_sample(cols)
 
                 # reset backoff after a successful tick
                 backoff = float(SETTINGS.get("BACKOFF_INITIAL_S", 1.0))

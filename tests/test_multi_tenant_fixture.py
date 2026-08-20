@@ -51,9 +51,8 @@ def test_fixture_dir_intact():
 def test_building_context_resolves_bldg2_from_yaml(fixture_input_dir):
     """resolve_building_context('bldg2') should return Cardiff Research Tower,
     not the global settings default."""
-    from orchestrator.services.building_context import (
-        resolve_building_context,
-    )
+    from orchestrator.services.building_context import resolve_building_context
+
     resolve_building_context.cache_clear()
 
     bctx = resolve_building_context("bldg2")
@@ -67,13 +66,14 @@ def test_intent_registry_loads_bldg2_overlay(fixture_input_dir):
     """The per-building intent registry must surface `lab_equipment`
     when keyed by building_id='bldg2'."""
     from orchestrator.intents import get_intent_registry
+
     get_intent_registry.cache_clear()
 
     reg = get_intent_registry("bldg2")
     names = reg.names()
-    assert "lab_equipment" in names, (
-        f"Expected 'lab_equipment' from bldg2 overlay, got: {sorted(names)}"
-    )
+    assert (
+        "lab_equipment" in names
+    ), f"Expected 'lab_equipment' from bldg2 overlay, got: {sorted(names)}"
 
     lab = reg.get("lab_equipment")
     assert lab is not None
@@ -84,6 +84,7 @@ def test_intent_registry_caches_per_building(fixture_input_dir):
     """Calls for different building_ids must return distinct registries
     (lru_cache(maxsize=None) keyed by building_id)."""
     from orchestrator.intents import get_intent_registry
+
     get_intent_registry.cache_clear()
 
     reg_bldg2 = get_intent_registry("bldg2")
@@ -108,6 +109,6 @@ def test_persona_loader_finds_bldg2_facility_manager(fixture_input_dir):
     # Sanity check that the OVERRIDE values came from bldg2's YAML,
     # not the shipped defaults.
     desc = fm.get("description", "")
-    assert "research" in desc.lower() or "hpc" in desc.lower() or "tower" in desc.lower(), (
-        f"Expected research-tower-specific description; got: {desc!r}"
-    )
+    assert (
+        "research" in desc.lower() or "hpc" in desc.lower() or "tower" in desc.lower()
+    ), f"Expected research-tower-specific description; got: {desc!r}"

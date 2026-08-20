@@ -36,6 +36,21 @@ storage:
   databases:
     - database1
     - database_pg
+    # SATURATE narrow tables (V4-T31)
+    - temperature_data
+    - humidity_data
+    - co2_data
+    - occupancy_data
+    - noise_data
+    - light_data
+    - contact_data
+    # V5 Event Framework (T07) - generic interval/event store
+    - events_data
+    # V5-T09 scalar expansion
+    - pm25_data
+    - submeter_data
+    - waterflow_data
+    - parking_data
 
 # Floor plans are generated from the graph (4 floors) during onboarding.
 floor_plan_aliases: []

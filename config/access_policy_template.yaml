@@ -1,0 +1,126 @@
+# ============================================================================
+# OntoSage — Universal access-policy template (V5-T37, Pillar C: PROTECT)
+# ============================================================================
+# BUILDING-AGNOSTIC. This file defines the DEFAULT policy set for every
+# building; scripts/generate_access_policies.py (T37) renders it into
+# per-building triples: input/<id>_policies.ttl (ontosage:AccessPolicy).
+# Per-building overrides: a building may ship its own copy of this file in its
+# input folder to tighten/loosen values — the VOCABULARY never changes.
+#
+# Design lineage: the k-anonymity floors, recency->resolution tiers, and rate
+# limits mirror the mechanisms validated in Patidar et al., BuildingChat
+# (IMWUT 2026) §4.2.2; the semantic-triple representation, dossier provenance,
+# and inference-class guard are OntoSage's extensions beyond it.
+#
+# Roles are the canonical RBAC roles (middleware/rbac.py). Personas NEVER map
+# to policies — only the session-derived RBAC role does.
+#
+# BENCHMARK CONTINUITY (verification note, V5 tracker T37): users running
+# replay/L7 benchmarks MUST be provisioned with the `analyst` role so that
+# pre-PROTECT baselines remain comparable after enforcement lands.
+# ============================================================================
+version: 1
+
+# Inference classes are question SHAPES, not data scopes. `deny` here means:
+# decline with an aggregate alternative, for EVERY role including admin —
+# the system exists to explain the building, never to track individuals.
+inference_classes:
+  individual_presence: deny        # "is <named person> in their office?"
+  individual_pattern: deny         # per-person movement/badge history
+  private_content: deny            # CCTV content, message content, calendars
+
+policies:
+
+  admin:
+    scope_spaces: any
+    min_aggregation_sensors: 1
+    min_aggregation_spaces: 1
+    resolution_tiers:              # recency_minutes -> max_resolution_seconds
+      - { recency_minutes: 0,      max_resolution_seconds: 1 }      # unrestricted
+    rate_limit: { max_queries: 0, per_minutes: 0 }                  # 0 = unlimited
+    comment: "Full operational access. Individual-inference classes still denied."
+
+  analyst:                         # research / benchmark / energy analysis
+    scope_spaces: any
+    min_aggregation_sensors: 1
+    min_aggregation_spaces: 1
+    resolution_tiers:
+      - { recency_minutes: 0,      max_resolution_seconds: 1 }
+    rate_limit: { max_queries: 0, per_minutes: 0 }
+    comment: "Full data access for analysis and benchmarking. Individual-inference denied."
+
+  facility_manager:
+    scope_spaces: any
+    min_aggregation_sensors: 1
+    min_aggregation_spaces: 1
+    resolution_tiers:
+      - { recency_minutes: 15,     max_resolution_seconds: 5 }
+      - { recency_minutes: 60,     max_resolution_seconds: 60 }
+      - { recency_minutes: 10080,  max_resolution_seconds: 3600 }
+    rate_limit: { max_queries: 600, per_minutes: 60 }
+    comment: >
+      Operational access at tiered resolution: fine-grained for the recent
+      window, coarser for history — usage trends stay visible while long-range
+      per-space patterns of individuals do not accumulate.
+
+  operator:
+    scope_spaces: any
+    min_aggregation_sensors: 2
+    min_aggregation_spaces: 1
+    resolution_tiers:
+      - { recency_minutes: 15,     max_resolution_seconds: 5 }
+      - { recency_minutes: 60,     max_resolution_seconds: 60 }
+      - { recency_minutes: 10080,  max_resolution_seconds: 3600 }
+    rate_limit: { max_queries: 300, per_minutes: 60 }
+    comment: "Duty-desk access; same tiers as facility_manager, mild aggregation floor."
+
+  occupant:
+    own_spaces:                    # spaces the session user is assigned to
+      scope_spaces: own
+      min_aggregation_sensors: 1
+      min_aggregation_spaces: 1
+      resolution_tiers:
+        - { recency_minutes: 0,    max_resolution_seconds: 1 }
+      comment: "Your own space, unrestricted — your data is yours."
+    public_spaces:
+      scope_spaces: public         # locationType in (corridor, kitchen, study, atrium...)
+      min_aggregation_sensors: 1
+      min_aggregation_spaces: 1
+      resolution_tiers:
+        - { recency_minutes: 15,   max_resolution_seconds: 5 }
+        - { recency_minutes: 60,   max_resolution_seconds: 60 }
+        - { recency_minutes: 10080, max_resolution_seconds: 3600 }
+      comment: "Public spaces at tiered resolution."
+    cross_space_aggregates:        # queries spanning other people's spaces
+      scope_spaces: any
+      min_aggregation_sensors: 14  # k-anonymity floor (BuildingChat-validated)
+      min_aggregation_spaces: 7
+      resolution_tiers:
+        - { recency_minutes: 60,   max_resolution_seconds: 300 }
+        - { recency_minutes: 10080, max_resolution_seconds: 3600 }
+      comment: >
+        Aggregates across spaces including others' are allowed only above the
+        k-floor, at coarse resolution — comparisons work, tracking doesn't.
+    rate_limit: { max_queries: 120, per_minutes: 60 }
+
+  readonly:                        # guests / visitors
+    public_spaces:
+      scope_spaces: public
+      min_aggregation_sensors: 1
+      min_aggregation_spaces: 1
+      resolution_tiers:
+        - { recency_minutes: 60,   max_resolution_seconds: 300 }
+        - { recency_minutes: 1440, max_resolution_seconds: 3600 }
+      comment: "Visitors see public-space conditions at moderate resolution."
+    cross_space_aggregates:
+      scope_spaces: any
+      min_aggregation_sensors: 14
+      min_aggregation_spaces: 7
+      resolution_tiers:
+        - { recency_minutes: 1440, max_resolution_seconds: 3600 }
+      comment: "Building-wide aggregates only, coarse, k-protected."
+    rate_limit: { max_queries: 60, per_minutes: 60 }
+
+# Denial UX contract (T41): every deny MUST carry the policy's plain-language
+# comment and, when the PDP can compute one, a nearest-allowed alternative
+# (aggregate-up / coarsen-window / public-scope) offered as consent options.

@@ -22,9 +22,8 @@ from __future__ import annotations
 import uuid as _uuid_mod
 from typing import Any, List, Optional
 
-from shared.utils import get_logger
-
 from orchestrator.services.actuation.base import ActuationDriver, ActuationResult
+from shared.utils import get_logger
 
 logger = get_logger(__name__)
 

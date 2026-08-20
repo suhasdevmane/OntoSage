@@ -37,7 +37,7 @@ _RULE_OPS = {">", "<", ">=", "<=", "==", "!="}
 _CHANNEL_TYPES = {"log", "webhook", "smtp"}
 _BENCHMARKS_REQUIRED_COLS = {"metric", "p25", "p50", "p75", "unit", "source"}
 _DOCS_ALLOWED_EXTENSIONS = {".md", ".txt", ".pdf"}
-_DATASOURCE_KINDS = {"timeseries", "text_reports"}
+_DATASOURCE_KINDS = {"timeseries", "text_reports", "events"}  # events store: V5-T07/T31
 _DATASOURCE_REQUIRED_KEYS = {"id", "label", "modality", "provenance_system"}
 _HEX_COLOR = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 

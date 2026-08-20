@@ -39,8 +39,15 @@ _AREA_BETWEEN_RE = re.compile(
     r"between\s+([\d.]+)\s+and\s+([\d.]+)\s*(?:m²|m2|sq(?:uare)?\s*m(?:etre)?s?)?",
     re.IGNORECASE,
 )
+#: Gate for the area lane. It admits questions about a NAMED space as well as
+#: about a floor: "the area of room 0.34" reached none of the floor-shaped
+#: alternatives below and fell through to the honest-no-data reply, even though
+#: the manifest held that room's 195 m2. The named-space handler runs first and
+#: returns None when no space is named, so floor and building questions are
+#: unaffected; the >/< guards at the call site keep filter queries out.
 _AREA_QUERY_RE = re.compile(
-    r"total\s+area|sum.*area|area.*floor|floor.*area|how\s+big|size\s+of\s+floor",
+    r"total\s+area|sum.*area|area.*floor|floor.*area|area\s+of\b"
+    r"|how\s+big|size\s+of\b|how\s+large|dimensions|perimeter|floor\s+space",
     re.IGNORECASE,
 )
 _ADJ_RE = re.compile(
@@ -56,6 +63,23 @@ _ZONE_RE = re.compile(r"\b(\d+)[.Z](\d{2,3})\b")
 _BLOCK_TYPE_RE = re.compile(
     r"\b(sensor|door|window|fire.?exit|hvac|diffuser|fire.?alarm|light|power.?outlet|equipment)\b",
     re.IGNORECASE,
+)
+
+_NEAREST_RE = re.compile(r"\b(?:nearest|closest)\b", re.IGNORECASE)
+_STEP_FREE_RE = re.compile(
+    r"step[- ]?free|wheel\s?chair|accessib(?:le|ility)|without\s+(?:using\s+)?(?:the\s+)?stairs"
+    r"|avoid(?:ing)?\s+(?:the\s+)?stairs|no\s+stairs",
+    re.IGNORECASE,
+)
+# generic facility words → floor-plan SpaceType / label fragment (V5-T27)
+_NEAREST_TARGETS = (
+    (re.compile(r"\btoilets?\b|\bwc\b|\brestrooms?\b|\bbathrooms?\b", re.I), {"toilet"}, None),
+    (re.compile(r"\blifts?\b|\belevators?\b", re.I), {"lift"}, None),
+    (re.compile(r"\bstair(?:s|case|way)?\b", re.I), {"staircase"}, None),
+    (re.compile(r"\bkitchens?\b|\bkitchenettes?\b", re.I), {"kitchen"}, None),
+    (re.compile(r"\breception\b|\bfront\s+desk\b", re.I), {"reception"}, None),
+    (re.compile(r"\bmeeting\s+rooms?\b", re.I), {"meeting_room"}, None),
+    (re.compile(r"\b(?:fire\s+)?exits?\b", re.I), None, "exit"),
 )
 
 _WAYFINDING_RE = re.compile(
@@ -155,9 +179,7 @@ class SpatialAgent:
                     ". Make sure the DWG files have been ingested."
                 )
 
-            has_geometry = any(
-                any(s.area_m2 is not None for s in m.spaces) for m in manifests
-            )
+            has_geometry = any(any(s.area_m2 is not None for s in m.spaces) for m in manifests)
             if not has_geometry:
                 return (
                     "Geometry data (room areas, polygons) is not yet available — "
@@ -183,6 +205,11 @@ class SpatialAgent:
     def _answer(self, query: str, manifests: List[FloorPlanManifest]) -> str:
         q = query.lower()
 
+        # Nearest-facility search sits above wayfinding: "how do I get to the
+        # NEAREST toilet" is a nearest question with route guidance (V5-T27)
+        if _NEAREST_RE.search(q) and any(pat.search(q) for pat, _t, _l in _NEAREST_TARGETS):
+            return self._answer_nearest(query, manifests)
+
         # Wayfinding takes priority (before adjacency — "get to X from Y" ≠ "next to X")
         if _WAYFINDING_RE.search(q):
             return self._answer_wayfinding(query, manifests)
@@ -191,8 +218,11 @@ class SpatialAgent:
         if _ADJ_RE.search(q):
             return self._answer_adjacency(query, manifests)
 
-        # Total area / floor size
+        # Area — a NAMED space asks about itself, not about its building
         if _AREA_QUERY_RE.search(q) and not _AREA_GT_RE.search(q) and not _AREA_LT_RE.search(q):
+            scoped = self._answer_space_area(query, manifests)
+            if scoped is not None:
+                return scoped
             return self._answer_total_area(manifests)
 
         # Area comparison
@@ -212,9 +242,7 @@ class SpatialAgent:
 
     # ── Area filter ───────────────────────────────────────────────────────────
 
-    def _answer_area_filter(
-        self, query: str, manifests: List[FloorPlanManifest]
-    ) -> str:
+    def _answer_area_filter(self, query: str, manifests: List[FloorPlanManifest]) -> str:
         min_area: Optional[float] = None
         max_area: Optional[float] = None
 
@@ -256,9 +284,7 @@ class SpatialAgent:
         lines.append("| Floor | Zone | Label | Type | Area (m²) |")
         lines.append("|-------|------|-------|------|-----------|")
         for fl, s in matched[:50]:
-            lines.append(
-                f"| {fl} | `{s.zone_id}` | {s.label} | {s.type} | {s.area_m2:.1f} |"
-            )
+            lines.append(f"| {fl} | `{s.zone_id}` | {s.label} | {s.type} | {s.area_m2:.1f} |")
         if len(matched) > 50:
             lines.append(f"\n_… and {len(matched) - 50} more._")
         return "\n".join(lines)
@@ -279,6 +305,54 @@ class SpatialAgent:
 
     # ── Total area ────────────────────────────────────────────────────────────
 
+    def _answer_space_area(self, query: str, manifests: List[FloorPlanManifest]) -> Optional[str]:
+        """Answer "how big is RM001A?" about THAT room (BUG-199).
+
+        Every area question used to fall through to the whole-building floor
+        table, so a question about one 20 m2 room came back as three floor
+        totals and a 1,040 m2 building sum. Nothing in that answer is false,
+        which is what made it easy to miss — it simply answers a question
+        nobody asked, and a reader who trusts it walks away with a number four
+        orders of magnitude off.
+
+        Returns None when the query names no space, so building- and
+        floor-scoped questions keep their existing answer.
+        """
+        zone_match = _ZONE_RE.search(query)
+        ref_zone = zone_match.group(0) if zone_match else None
+        if ref_zone is None:
+            ref_zone = self._find_zone_by_label(query, manifests)
+        if ref_zone is None:
+            return None
+
+        for m in manifests:
+            for s in m.spaces:
+                if s.zone_id != ref_zone and not s.id.endswith(f".{ref_zone}"):
+                    continue
+                if s.area_m2 is None:
+                    # Say which room has no geometry rather than substituting
+                    # the building total, which would read as its answer.
+                    return (
+                        f"**{s.label}** (`{s.zone_id}`, floor {m.floor}) is in the floor "
+                        "plan, but no area is recorded for it — area comes from the DWG "
+                        "geometry, and this space has none."
+                    )
+                lines = [
+                    f"**{s.label}** (`{s.zone_id}`, floor {m.floor}) is "
+                    f"**{s.area_m2:,.1f} m²**."
+                ]
+                if s.perimeter_m:
+                    lines.append(f"Perimeter: {s.perimeter_m:,.1f} m.")
+                floor_total = sum(x.area_m2 or 0 for x in m.spaces)
+                if floor_total > 0:
+                    share = s.area_m2 / floor_total * 100
+                    lines.append(
+                        f"That is {share:.1f}% of floor {m.floor} "
+                        f"({floor_total:,.1f} m² across {len(m.spaces)} spaces)."
+                    )
+                return "\n\n".join(lines)
+        return None
+
     def _answer_total_area(self, manifests: List[FloorPlanManifest]) -> str:
         lines = ["## Floor Areas", ""]
         lines.append("| Floor | Label | Total Area (m²) | Rooms |")
@@ -295,9 +369,7 @@ class SpatialAgent:
 
     # ── Adjacency ─────────────────────────────────────────────────────────────
 
-    def _answer_adjacency(
-        self, query: str, manifests: List[FloorPlanManifest]
-    ) -> str:
+    def _answer_adjacency(self, query: str, manifests: List[FloorPlanManifest]) -> str:
         # Find which zone is referenced
         zone_match = _ZONE_RE.search(query)
         ref_zone = zone_match.group(0) if zone_match else None
@@ -309,7 +381,7 @@ class SpatialAgent:
         if ref_zone is None:
             return (
                 "Please specify a zone ID (e.g. `3.01`) or room name to look up adjacency. "
-                "Example: *\"rooms adjacent to 3.01\"*"
+                'Example: *"rooms adjacent to 3.01"*'
             )
 
         results: List[Tuple[int, Space, List[str]]] = []
@@ -329,9 +401,7 @@ class SpatialAgent:
             )
 
         # Resolve adjacent zone IDs to spaces
-        all_spaces: Dict[str, Space] = {
-            s.zone_id: s for m in manifests for s in m.spaces
-        }
+        all_spaces: Dict[str, Space] = {s.zone_id: s for m in manifests for s in m.spaces}
         lines = [
             f"## Rooms adjacent to {target_space.label} (`{ref_zone}`, floor {fl})",
             "",
@@ -349,22 +419,94 @@ class SpatialAgent:
                 lines.append(f"| `{zid}` | — | — | — |")
         return "\n".join(lines)
 
-    def _find_zone_by_label(
-        self, query: str, manifests: List[FloorPlanManifest]
-    ) -> Optional[str]:
-        """Find zone_id for a space whose label appears in the query."""
+    def _find_zone_by_label(self, query: str, manifests: List[FloorPlanManifest]) -> Optional[str]:
+        """Find zone_id for a space whose label appears in the query.
+
+        V5-T27: labels are matched NORMALIZED as well — manifests store
+        'RM101_room' while people type 'RM101', so the exact-containment
+        check alone missed every room of an RM-labelled building.
+        """
         q_lower = query.lower()
         for m in manifests:
             for s in m.spaces:
                 if s.label.lower() in q_lower and len(s.label) > 3:
                     return s.zone_id
+
+        def _norm(text: str) -> str:
+            return text.replace(" ", "").replace("_", "").replace("-", "")
+
+        tokens = {_norm(t) for t in re.findall(r"\b[a-z]{1,4}\s?\d{1,4}[a-z]?\b", q_lower)}
+        if not tokens:
+            return None
+        for m in manifests:
+            for s in m.spaces:
+                core = _norm(s.label.lower())
+                for suffix in ("room", "zone", "space"):
+                    if core.endswith(suffix):
+                        core = core[: -len(suffix)]
+                candidates = {core} | {_norm(a.lower()) for a in (s.aliases or [])}
+                if tokens & candidates:
+                    return s.zone_id
         return None
 
     # ── Wayfinding ────────────────────────────────────────────────────────────
 
-    def _answer_wayfinding(
-        self, query: str, manifests: List[FloorPlanManifest]
-    ) -> str:
+    def _answer_nearest(self, query: str, manifests: List[FloorPlanManifest]) -> str:
+        """'nearest toilet to RM119' → closest matching space + hops + metres (V5-T27)."""
+        target_types = None
+        target_label = None
+        target_word = "facility"
+        for pat, types, label_frag in _NEAREST_TARGETS:
+            m = pat.search(query)
+            if m:
+                target_types, target_label, target_word = types, label_frag, m.group(0).lower()
+                break
+
+        zone_to_space: Dict[str, Space] = {}
+        for mset in manifests:
+            for s in mset.spaces:
+                zone_to_space[s.zone_id] = s
+
+        # the reference point reads like a destination in this phrasing
+        # ("nearest toilet TO room 3.01"); fall back to source-role, then default
+        src_zone = self._extract_waypoint(query, manifests, role="destination")
+        if src_zone is None or src_zone not in zone_to_space:
+            src_zone = self._extract_waypoint(query, manifests, role="source")
+        if src_zone is None or src_zone not in zone_to_space:
+            src_zone = self._find_default_start(zone_to_space)
+        if src_zone is None:
+            return (
+                f"I can look up the nearest {target_word}, but I need a starting point — "
+                "e.g. *'nearest toilet to room 3.01'*."
+            )
+
+        try:
+            from orchestrator.services.route_finder import METHOD_NOTE, RouteFinder
+
+            rf = RouteFinder(manifests)
+            step_free = bool(_STEP_FREE_RE.search(query))
+            hit = rf.nearest(
+                src_zone,
+                space_types=target_types,
+                label_contains=target_label,
+                step_free=step_free,
+            )
+        except Exception as rf_err:
+            logger.warning(f"[spatial] nearest search failed: {rf_err}")
+            hit = None
+        src_label = zone_to_space[src_zone].label
+        if hit is None:
+            return (
+                f"**No {target_word} is reachable from {src_label}** in the floor-plan "
+                "adjacency data — either none is mapped or the adjacency is incomplete."
+            )
+        dist_txt = f", ~{hit.distance_m:g} m straight-line" if hit.distance_m is not None else ""
+        return (
+            f"**Nearest {target_word} to {src_label}:** {hit.label} (`{hit.zone_id}`, "
+            f"floor {hit.floor}) — {hit.hops} hop(s){dist_txt}.\n\n{METHOD_NOTE}"
+        )
+
+    def _answer_wayfinding(self, query: str, manifests: List[FloorPlanManifest]) -> str:
         """BFS route guidance between two named spaces in the building."""
         zone_to_space: Dict[str, Space] = {}
         zone_to_floor: Dict[str, int] = {}
@@ -401,6 +543,57 @@ class SpatialAgent:
         if src_zone == dest_zone:
             src_space = zone_to_space[src_zone]
             return f"You are already at **{src_space.label}** (`{src_zone}`)."
+
+        # V5-T27: weighted route with metres + step-free support; the legacy
+        # BFS below stays as the fallback so unscaled manifests still route.
+        step_free = bool(_STEP_FREE_RE.search(query))
+        try:
+            from orchestrator.services.route_finder import METHOD_NOTE, RouteFinder
+
+            rf = RouteFinder(manifests)
+            rr = rf.route(src_zone, dest_zone, step_free=step_free)
+            if rr is None and step_free and rf.route(src_zone, dest_zone) is not None:
+                dest_label = zone_to_space[dest_zone].label
+                return (
+                    f"**No step-free route found to {dest_label}** (`{dest_zone}`) — every "
+                    "connected path uses a staircase and no lift link is recorded between "
+                    "these floors. A route using stairs does exist; ask without the "
+                    "step-free requirement to see it."
+                )
+            if rr is not None:
+                lines = [
+                    f"## Route to {zone_to_space[dest_zone].label} (`{dest_zone}`)",
+                    "",
+                    f"**From:** {zone_to_space[src_zone].label} (floor {rr.floors[0]})  ",
+                    f"**To:** {zone_to_space[dest_zone].label} (floor {rr.floors[-1]})  ",
+                    f"**Steps:** {rr.hops}",
+                ]
+                if rr.distance_m is not None:
+                    lines.append(f"**Distance:** ~{rr.distance_m:g} m (straight-line)")
+                if step_free:
+                    lines.append("**Step-free:** yes — staircases avoided")
+                lines.append("")
+                prev_floor = rr.floors[0]
+                for i, zid in enumerate(rr.path):
+                    space = zone_to_space.get(zid)
+                    fl = rr.floors[i]
+                    label = space.label if space else zid
+                    stype = space.type if space else ""
+                    floor_note = f" _(floor {prev_floor} → {fl})_" if fl != prev_floor else ""
+                    prev_floor = fl
+                    if i == 0:
+                        lines.append(f"1. **Start at** {label} (`{zid}`, floor {fl})")
+                    elif i == len(rr.path) - 1:
+                        lines.append(
+                            f"{i + 1}. **Arrive at** {label} (`{zid}`, floor {fl}){floor_note}"
+                        )
+                    else:
+                        verb = "Take" if stype in ("lift", "staircase") else "Continue through"
+                        lines.append(f"{i + 1}. {verb} {label} (`{zid}`){floor_note}")
+                lines += ["", METHOD_NOTE]
+                return "\n".join(lines)
+        except Exception as rf_err:  # the legacy path still answers
+            logger.warning(f"[spatial] route-finder failed, using legacy BFS: {rf_err}")
 
         path = self._bfs_route(src_zone, dest_zone, zone_to_space)
         src_space = zone_to_space.get(src_zone)
@@ -452,14 +645,10 @@ class SpatialAgent:
             if i == 0:
                 lines.append(f"1. **Start at** {label} (`{zid}`, floor {fl})")
             elif i == len(path) - 1:
-                lines.append(
-                    f"{i + 1}. **Arrive at** {label} (`{zid}`, floor {fl}){floor_note}"
-                )
+                lines.append(f"{i + 1}. **Arrive at** {label} (`{zid}`, floor {fl}){floor_note}")
             else:
                 verb = "Take" if space_type in ("lift", "staircase") else "Continue through"
-                lines.append(
-                    f"{i + 1}. {verb} **{label}** (`{zid}`, floor {fl}){floor_note}"
-                )
+                lines.append(f"{i + 1}. {verb} **{label}** (`{zid}`, floor {fl}){floor_note}")
 
         lines.append("")
         lines.append(
@@ -525,9 +714,7 @@ class SpatialAgent:
 
     # ── Block/MEP queries ─────────────────────────────────────────────────────
 
-    def _answer_blocks(
-        self, query: str, manifests: List[FloorPlanManifest]
-    ) -> str:
+    def _answer_blocks(self, query: str, manifests: List[FloorPlanManifest]) -> str:
         btype_match = _BLOCK_TYPE_RE.search(query)
         raw_type = btype_match.group(1).lower() if btype_match else None
 
@@ -588,9 +775,7 @@ class SpatialAgent:
 
     # ── Count ─────────────────────────────────────────────────────────────────
 
-    def _answer_count(
-        self, query: str, manifests: List[FloorPlanManifest]
-    ) -> str:
+    def _answer_count(self, query: str, manifests: List[FloorPlanManifest]) -> str:
         space_type = self._detect_space_type(query)
         lines = ["## Room Count", ""]
         lines.append("| Floor | Label | Rooms |" + (" Type |" if space_type else ""))
@@ -609,9 +794,7 @@ class SpatialAgent:
 
     # ── List spaces ───────────────────────────────────────────────────────────
 
-    def _answer_list(
-        self, query: str, manifests: List[FloorPlanManifest]
-    ) -> str:
+    def _answer_list(self, query: str, manifests: List[FloorPlanManifest]) -> str:
         space_type = self._detect_space_type(query)
         matched: List[Tuple[int, Space]] = []
         for m in manifests:
@@ -658,6 +841,7 @@ class SpatialAgent:
         cands: set = {building_id}
         try:
             from orchestrator.services.building_registry import get_building_registry
+
             reg = get_building_registry()
             primary = reg.resolve_id(building_id) or building_id
             cands.add(primary)
@@ -668,12 +852,13 @@ class SpatialAgent:
             pass
         return cands
 
-    def _load_manifests(
-        self, building_id: str, floor: Optional[int]
-    ) -> List[FloorPlanManifest]:
+    def _load_manifests(self, building_id: str, floor: Optional[int]) -> List[FloorPlanManifest]:
         """Load manifests from registry (alias-aware over both PDF and DWG floors)."""
         try:
-            from orchestrator.services.floor_plan_registry import get_floor_plan_registry
+            from orchestrator.services.floor_plan_registry import (
+                get_floor_plan_registry,
+            )
+
             registry = get_floor_plan_registry()
             candidates = self._candidate_building_ids(building_id)
             if floor is not None:

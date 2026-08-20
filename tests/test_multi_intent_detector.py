@@ -15,10 +15,10 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from orchestrator.services.multi_intent_detector import (
+    _CONNECTIVE_PHRASES,
     INTENT_DOMAINS,
     MultiIntentDetector,
     SubIntent,
-    _CONNECTIVE_PHRASES,
 )
 
 
@@ -28,6 +28,7 @@ def detector():
 
 
 # ── Heuristic gate tests (no LLM call) ────────────────────────────────
+
 
 class TestHeuristicGate:
     def test_short_query_rejected(self, detector):
@@ -73,6 +74,7 @@ class TestHeuristicGate:
 
 # ── Decomposition tests (mock LLM) ──────────────────────────────────
 
+
 class TestDecomposition:
     @pytest.mark.asyncio
     async def test_t15_c1_decomposition(self, detector):
@@ -83,13 +85,28 @@ class TestDecomposition:
             "and CO2 on floor 5, tell me if anything unusual was flagged, and let me "
             "know who I should contact?"
         )
-        mock_response = json.dumps([
-            {"sub_query": "Check temperature and CO2 on floor 5 yesterday", "intent": "analytics", "entities": ["floor 5", "temperature", "co2"]},
-            {"sub_query": "Were there any anomalies flagged?", "intent": "anomaly", "entities": ["floor 5"]},
-            {"sub_query": "Who should I contact about this?", "intent": "capability", "entities": []},
-        ])
+        mock_response = json.dumps(
+            [
+                {
+                    "sub_query": "Check temperature and CO2 on floor 5 yesterday",
+                    "intent": "analytics",
+                    "entities": ["floor 5", "temperature", "co2"],
+                },
+                {
+                    "sub_query": "Were there any anomalies flagged?",
+                    "intent": "anomaly",
+                    "entities": ["floor 5"],
+                },
+                {
+                    "sub_query": "Who should I contact about this?",
+                    "intent": "capability",
+                    "entities": [],
+                },
+            ]
+        )
         with patch.object(
-            detector, "_decompose",
+            detector,
+            "_decompose",
             wraps=detector._decompose,
         ):
             with patch(
@@ -114,11 +131,21 @@ class TestDecomposition:
             "Which rooms on floor 3 have the best temperature and air quality, "
             "how big are they, and how do I book them?"
         )
-        mock_response = json.dumps([
-            {"sub_query": "Best temperature and air quality rooms on floor 3", "intent": "analytics", "entities": ["floor 3"]},
-            {"sub_query": "Room sizes on floor 3", "intent": "spatial_query", "entities": ["floor 3"]},
-            {"sub_query": "How to book a room", "intent": "capability", "entities": []},
-        ])
+        mock_response = json.dumps(
+            [
+                {
+                    "sub_query": "Best temperature and air quality rooms on floor 3",
+                    "intent": "analytics",
+                    "entities": ["floor 3"],
+                },
+                {
+                    "sub_query": "Room sizes on floor 3",
+                    "intent": "spatial_query",
+                    "entities": ["floor 3"],
+                },
+                {"sub_query": "How to book a room", "intent": "capability", "entities": []},
+            ]
+        )
         with patch(
             "orchestrator.services.multi_intent_detector.llm_manager.generate",
             new_callable=AsyncMock,
@@ -147,11 +174,13 @@ class TestDecomposition:
             "Can you check the temperature and also tell me the meaning of life "
             "and let me know who to contact about maintenance?"
         )
-        mock_response = json.dumps([
-            {"sub_query": "Check temperature", "intent": "analytics", "entities": []},
-            {"sub_query": "Meaning of life", "intent": "philosophy", "entities": []},
-            {"sub_query": "Maintenance contact", "intent": "capability", "entities": []},
-        ])
+        mock_response = json.dumps(
+            [
+                {"sub_query": "Check temperature", "intent": "analytics", "entities": []},
+                {"sub_query": "Meaning of life", "intent": "philosophy", "entities": []},
+                {"sub_query": "Maintenance contact", "intent": "capability", "entities": []},
+            ]
+        )
         with patch(
             "orchestrator.services.multi_intent_detector.llm_manager.generate",
             new_callable=AsyncMock,
@@ -170,9 +199,15 @@ class TestDecomposition:
             "Can you check the temperature on floor 5 and also tell me the "
             "humidity reading in the same zone right now?"
         )
-        mock_response = json.dumps([
-            {"sub_query": "Temperature and humidity on floor 5", "intent": "analytics", "entities": ["floor 5"]},
-        ])
+        mock_response = json.dumps(
+            [
+                {
+                    "sub_query": "Temperature and humidity on floor 5",
+                    "intent": "analytics",
+                    "entities": ["floor 5"],
+                },
+            ]
+        )
         with patch(
             "orchestrator.services.multi_intent_detector.llm_manager.generate",
             new_callable=AsyncMock,
@@ -189,9 +224,7 @@ class TestDecomposition:
             "Check temperature, flag anomalies, and tell me who to contact "
             "about the heating system in the building right now?"
         )
-        with patch(
-            "orchestrator.services.multi_intent_detector.settings"
-        ) as mock_settings:
+        with patch("orchestrator.services.multi_intent_detector.settings") as mock_settings:
             mock_settings.MULTI_INTENT_ENABLED = False
             mock_settings.MULTI_INTENT_MIN_LENGTH = 80
             result = await detector.detect(query, "anomaly", [])
@@ -217,6 +250,7 @@ class TestDecomposition:
 
 # ── SubIntent dataclass tests ─────────────────────────────────────────
 
+
 class TestSubIntent:
     def test_to_dict(self):
         si = SubIntent(sub_query="test", intent="analytics", entities=["zone 5"])
@@ -227,6 +261,7 @@ class TestSubIntent:
 
 
 # ── Domain coverage tests ────────────────────────────────────────────
+
 
 class TestIntentDomains:
     def test_all_domains_have_keywords(self):

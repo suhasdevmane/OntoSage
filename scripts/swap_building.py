@@ -118,10 +118,14 @@ def _check_building_yaml(new_bldg: str, input_root: Path) -> Tuple[bool, dict, s
         if flat_yml.is_file():
             yml = flat_yml
         else:
-            return False, {}, (
-                f"building.yaml missing at {input_root / new_bldg}/. "
-                "Every building requires a building.yaml declaring "
-                "building_id, building_name, and ontology_namespace."
+            return (
+                False,
+                {},
+                (
+                    f"building.yaml missing at {input_root / new_bldg}/. "
+                    "Every building requires a building.yaml declaring "
+                    "building_id, building_name, and ontology_namespace."
+                ),
             )
 
     try:
@@ -138,24 +142,30 @@ def _check_building_yaml(new_bldg: str, input_root: Path) -> Tuple[bool, dict, s
     required = ("building_id", "ontology_namespace")
     missing = [k for k in required if not data.get(k)]
     if missing:
-        return False, data, (
-            f"{yml} is missing required keys: {missing}. "
-            "At minimum: building_id, ontology_namespace."
+        return (
+            False,
+            data,
+            (
+                f"{yml} is missing required keys: {missing}. "
+                "At minimum: building_id, ontology_namespace."
+            ),
         )
 
     declared_id = data["building_id"]
     if declared_id != new_bldg:
-        return False, data, (
-            f"{yml} declares building_id={declared_id!r} but the directory is "
-            f"{new_bldg!r}. They must match — pick one and align both."
+        return (
+            False,
+            data,
+            (
+                f"{yml} declares building_id={declared_id!r} but the directory is "
+                f"{new_bldg!r}. They must match — pick one and align both."
+            ),
         )
 
     return True, data, f"{yml} declares ontology_namespace={data['ontology_namespace']!r}"
 
 
-def _check_optional_configs(
-    new_bldg: str, input_root: Path, *, dry_run: bool
-) -> Tuple[bool, str]:
+def _check_optional_configs(new_bldg: str, input_root: Path, *, dry_run: bool) -> Tuple[bool, str]:
     """Run T37 validators on all optional per-building config files.
 
     Failures are warnings, not errors — optional files are skipped at runtime
@@ -277,12 +287,10 @@ def _flush_response_cache(redis_container: str, *, dry_run: bool) -> Tuple[bool,
     cmd = (
         f"docker exec {redis_container} sh -c "
         "\"redis-cli --scan --pattern 'resp_cache:*' | "
-        "xargs -r redis-cli del\""
+        'xargs -r redis-cli del"'
     )
     try:
-        result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, timeout=15
-        )
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=15)
         if result.returncode != 0:
             return False, (
                 f"redis flush returned exit={result.returncode}; "
@@ -336,8 +344,13 @@ def _archive_old_building(
 
         if declared == old_bldg:
             _BUILDING_CONFIG_FILES = {
-                "building.yaml", "capability.yaml", "channels.yaml",
-                "feeds.yaml", "rules.yaml", "intents.yaml", "equipment_linkage.ttl",
+                "building.yaml",
+                "capability.yaml",
+                "channels.yaml",
+                "feeds.yaml",
+                "rules.yaml",
+                "intents.yaml",
+                "equipment_linkage.ttl",
             }
             dest = archive_root / f"{old_bldg}_{ts}"
             if dry_run:
@@ -364,9 +377,7 @@ def _archive_old_building(
                 if src_dir.is_dir():
                     shutil.move(str(src_dir), str(dest / subdir))
                     archived.append(f"{subdir}/")
-            return True, (
-                f"archived flat-layout '{old_bldg}' ({len(archived)} items) -> {dest}"
-            )
+            return True, (f"archived flat-layout '{old_bldg}' ({len(archived)} items) -> {dest}")
 
     return True, f"no old input dir for '{old_bldg}' — nothing to archive"
 
@@ -396,31 +407,40 @@ def main() -> int:
         description="Swap the active OntoSage building to a new BUILDING_ID."
     )
     parser.add_argument(
-        "--to", required=True, metavar="NEW_BUILDING_ID",
+        "--to",
+        required=True,
+        metavar="NEW_BUILDING_ID",
         help="The new building id (must match input/<NEW_BUILDING_ID>/).",
     )
     parser.add_argument(
-        "--from", dest="from_bldg", metavar="OLD_BUILDING_ID",
+        "--from",
+        dest="from_bldg",
+        metavar="OLD_BUILDING_ID",
         help="Override the auto-detected current building id.",
     )
     parser.add_argument(
-        "--archive", action="store_true",
+        "--archive",
+        action="store_true",
         help="Move input/<old>/ to input/_archive/<old>_<timestamp>/.",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Show what would change without writing anything.",
     )
     parser.add_argument(
-        "--env", default=".env",
+        "--env",
+        default=".env",
         help="Path to the .env file to update (default: .env).",
     )
     parser.add_argument(
-        "--input-root", default="input",
+        "--input-root",
+        default="input",
         help="Path to the input/ root (default: input).",
     )
     parser.add_argument(
-        "--no-cache-flush", action="store_true",
+        "--no-cache-flush",
+        action="store_true",
         help=(
             "Skip flushing the Redis response cache after the swap.  By "
             "default the swap clears Redis so the new building's queries "
@@ -428,7 +448,8 @@ def main() -> int:
         ),
     )
     parser.add_argument(
-        "--redis-container", default="redis-memory-store",
+        "--redis-container",
+        default="redis-memory-store",
         help=(
             "Docker container name for Redis (used by --cache-flush).  "
             "Default matches docker-compose.yml."
@@ -465,11 +486,7 @@ def main() -> int:
         return 2
 
     namespace = building_data["ontology_namespace"]
-    prefix = (
-        building_data.get("building_prefix")
-        or building_data.get("ontology_prefix")
-        or "bldg"
-    )
+    prefix = building_data.get("building_prefix") or building_data.get("ontology_prefix") or "bldg"
 
     ok, msg = _check_ttl_consistency(new_bldg, namespace, prefix, input_root)
     (_ok if ok else _err)(msg)
@@ -505,6 +522,12 @@ def main() -> int:
         print("    (or: docker-compose up -d orchestrator)")
         print("  - watch logs: docker-compose logs -f orchestrator")
         print("    The TTL validator runs first; mismatches will hard-fail boot.")
+    # V5-T32: the capability-unlock report needs a LIVE stack (GraphDB +
+    # adapters), so the swap points at it rather than running it here.
+    print("  - once healthy, see what this building unlocks:")
+    print("      docker exec ontosage-orchestrator python /app/scripts/check_onboarding.py")
+    print("    (locked capabilities name the exact missing artefact — see")
+    print("     docs/ONBOARDING_CONTRACT.md)")
 
     return 0
 

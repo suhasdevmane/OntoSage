@@ -237,6 +237,7 @@ def get_notification_service(building_id: Optional[str] = None) -> NotificationS
     global _notification_service
     if _notification_service is None:
         from shared.config import settings
+
         bid = building_id or settings.BUILDING_ID
         _notification_service = NotificationService(bid)
     return _notification_service

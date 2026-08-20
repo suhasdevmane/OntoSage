@@ -1,0 +1,805 @@
+# SATURATE (V4-T08): simulated co2 sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'co2_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data>
+    a ref:Database ;
+    rdfs:label "Co2 Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 4.66 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6249b31e-dae4-5da7-8a70-04644650b81b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 4.67 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "68b0c346-b2f4-5029-a2bd-f97a1ebf73e7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 4.68 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "47c6a93e-80f3-5788-8230-f448b68934e6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 4.69 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "07ce97c1-bc1d-5f48-910c-d161eccea55d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 4.70 — Staff Break Room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "86b000f2-5d46-51a2-9400-3de7dddc43a5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 4.71 — Storage Room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ca4b2da6-fcd9-59a3-ba57-52abfdd3ec2f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.01 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "abae797f-70f8-5b6e-9c4b-f27303bb30e4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.02 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b885ff57-c900-5cea-b7d7-a861eceb7e90" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.03 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "544ca4c3-deb6-58be-8733-a6de97e40616" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.04 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "371dcfb1-5243-512d-8a4e-18003c709f6f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.05 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6a62050e-a493-5697-b020-fdd9d68befb6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.06 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "16a8b8aa-3df0-5d90-9101-50b6723d3f29" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.07 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d33a8b83-a48d-5d61-b333-c4e96c33fbcf" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.08 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5501c9c1-dce7-5f14-9a00-c7595385c7b2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.09 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d2e9b4de-cd51-5e01-837c-892e2a6ed066" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.10 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ed747622-fc26-5cf7-b68e-f6faf4fc1065" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.11 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "169cedf1-e780-5ea6-ae70-f68db2d00751" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.12 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bbecc86d-d8e9-5a23-aaf6-367129a23fd6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.13 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5c6fdd8c-9c1f-5156-9845-1eb51eed395d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.14 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fd4638e1-052f-5681-9d2f-73b3d6d8076b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.15 — Seminar / Conference Room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "512e8619-74a1-5bc5-94df-33f543d44e6a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.16 — Seminar / Conference Room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "08d13eb9-7a35-5193-9692-9e18c8786337" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.17 — Meeting Room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ae38bb70-c21d-51fd-827b-6a02005e1c76" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.18 — Meeting Room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "78c0ef0a-83a8-5889-a664-2da161aa2f1c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.20 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8f9114d2-cd3a-5aa0-8360-22b0ddc7865b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.21 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1ce367db-c2fe-5e58-b003-d4958b901d2b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.22 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c2f70577-6f5d-56ac-81ff-cbf771bc2348" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.23 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5c40b91f-27d3-5d4f-85e1-c3f8e30c58fa" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.26 — Staff Break Room / Kitchen co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "700ea71e-9b48-57ac-8428-b8a5fd3c70b7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.34 — Telecommunications Room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c1688bf5-b31f-51a3-ac9a-0c43a2429867" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.35 — Restroom (Male) co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6f13db09-5633-50f0-9c51-8d510c66376c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.36 — Restroom (Female) co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "88a2445c-b62f-5a11-bbfe-73cd0a446b3f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.44 — Server Room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a34411ce-ef46-5e43-9c5c-8e3003262054" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.45 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "165ff77a-1f7c-5c86-b0de-f80f7989fb2e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.48 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e1b85f5b-8757-5d6b-b87f-15e5670ca8c3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.49 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c5cdd61a-357b-53ef-884d-3d462ae12110" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.50 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2cfb736a-4bb7-5c3c-8440-c35b2d788ced" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.51 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fee15cec-df0a-5672-af65-df0e3f7899eb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.52 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c1a37798-0af1-5d94-b989-7c09a3762774" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.53 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a23d52f9-c52d-50ae-98a2-2a51ef1e817a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.54 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "932938d7-121a-5fb0-a5e1-7d699ecc6297" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.56 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "80f75c23-94d8-5e5a-af13-c83fcf9fcf81" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.57 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fc81b2b6-5b8d-57d3-9120-b7a049492d1e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.58 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "35aae300-9807-5bc3-b080-6a5860bb9d3f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.59 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "789de269-da96-570c-86dd-bc0438626c09" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.60 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6831e252-4112-55e9-b039-09c537463d5b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.61 — Research Laboratory co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "33819ed2-fc6c-5920-9fed-6aa3587af387" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.62 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9d198717-2316-5ff6-abc5-87d27fffe755" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.63 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d223bd08-a70a-5df4-8553-dc780969b983" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.64 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f3f4d718-480d-5ea8-b2d9-e40aa95f2223" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.65 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6b0310cd-0384-5a94-8d3c-3f8485fb5bff" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.66 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bf5b36d5-ec7c-511e-9292-38b05625156d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.67 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "71046ccb-3bd3-5d87-9d57-b02cf449d32f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.68 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "91d3cb4f-823d-59e3-b86c-d770a9ec7dc5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.69 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "41164125-2197-53b7-9eba-018f6d3ea55e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.70 — Academic Office co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0fadfa7e-8603-5b87-b8ba-883aad354be9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Room 5.71 — Storage Room co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5d3852ec-d9c5-5c6f-b699-98688f2dd6c2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Server Room — Floor 2 (Room 2.44) co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d2b4ffc5-966b-521f-9492-729a66d4e2df" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Server Room — Floor 4 (Room 4.44) co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8b121ef7-5872-5ba7-860c-f147ad1d8ae6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Server Room — Floor 5 (Room 5.44) co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "439654e7-abec-53fd-8f73-495da52c83ca" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 0 (Room 0.34) co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7dea9235-62d4-5b7f-be40-364f196affab" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 1 (Room 1.34) co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "468b6dc2-342e-59a7-9f60-9db8782775cf" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 2 (Room 2.34) co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fa092b62-4518-5349-b99b-6a3e215c5337" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 3 (Room 3.38) co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c810b5ea-59e4-551e-a351-1e0dc2916370" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 4 (Room 4.34) co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2fe97fdf-14c9-56ea-becc-0ba82ed1bf3a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5_sat_co2>
+    a brick:CO2_Level_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 5 (Room 5.34) co2 (simulated) [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e812f0ba-9b50-56ac-8d14-72386a50e2ea" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#co2_data> ;
+    ] .

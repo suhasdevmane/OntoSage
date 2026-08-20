@@ -18,7 +18,6 @@ from orchestrator.services.ttl_validator import (
     validate_building_ttls,
 )
 
-
 GOOD_TTL = """\
 @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix brick: <https://brickschema.org/schema/Brick#> .

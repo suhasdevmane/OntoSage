@@ -1,0 +1,19 @@
+PREFIX abx:    <https://abacws.cardiff.ac.uk/kg#>
+PREFIX bot:    <https://w3id.org/bot#>
+PREFIX brick:  <https://brickschema.org/schema/Brick#>
+PREFIX geo:    <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX unit:   <http://qudt.org/vocab/unit/>
+
+# "Where is the electrical equipment, and what are its asset tags?"
+# Pulls the ATTRIB key/values recovered from the block references - the only
+# native key/value data the DWG carried.
+SELECT ?code ?name ?equipment ?assetId ?circuit WHERE {
+  ?room abx:roomCode ?code ;
+        rdfs:label   ?name ;
+        bot:containsElement ?equipment .
+  ?equipment a brick:Electrical_Equipment .
+  OPTIONAL { ?equipment abx:attr_ASSET_ID ?assetId }
+  OPTIONAL { ?equipment abx:attr_CIRCUIT  ?circuit }
+}
+ORDER BY ?code

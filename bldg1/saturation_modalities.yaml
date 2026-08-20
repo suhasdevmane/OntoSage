@@ -1,0 +1,62 @@
+# Per-building modality overlay for this building.
+#
+# Entries here REPLACE the same-named entry in config/saturation_modalities.yaml;
+# new names are added. See that file for the full field reference.
+#
+# ── Why this building needs one (CAVEAT-207) ─────────────────────────────────
+#
+# This building instruments CO2 twice, at two different SCALES, and both
+# populations carry a Brick CO2 class, so class alone cannot tell them apart:
+#
+#   * physical hardware — labelled "CO2 Level Sensor installed-node <room>",
+#     readings stored in `database1_floors04` (table sensor_data_floors04),
+#     measured range 0-150 with a mean near 74. That is an air-quality INDEX,
+#     not a concentration.
+#
+#   * SATURATE-provisioned — labelled "... co2 (simulated) [ppm]", readings in
+#     `co2_data`, measured range 400-2510 ppm.
+#
+# The deliberative scorer normalises CO2 against the ASHRAE 420-1500 ppm band.
+# Every index reading sits BELOW 420, so the whole hardware population clamped
+# to the same utility and any CO2 ranking degenerated into a tie — observed live
+# as three rooms returned with identical scores on values of 62, 75.8 and 79.4.
+# It also made the two lanes disagree: asked directly, "CO2 in room 0.01"
+# answered 428 ppm from the provisioned sensor, while the ranking used 62 from
+# the hardware one for the same room.
+#
+# The split below sends each population to a modality of its own. `co2` keeps
+# the ppm sensors and its standards band, so rankings are computed on values the
+# band actually describes.
+#
+# `co2_index` carries its own band. The scale's direction was NOT inferred from
+# the data — which end of an index means "better air" is unknowable from the
+# numbers alone, and getting it backwards would rank the stuffiest room as the
+# freshest. It was confirmed by the building owner (2026-08-20): HIGHER means
+# WORSE air quality, the usual air-quality-index convention. lo is therefore the
+# clean end and hi the stuffy end, matching how ScoreAnchor is defined.
+
+modalities:
+  co2:
+    brick_classes:
+      - CO2_Level_Sensor
+      - CO2_Sensor
+    # Excludes the hardware population by its label. Exclusion is checked before
+    # inclusion, so a sensor named by both lists is left out rather than
+    # silently mixed in.
+    label_excludes:
+      - "installed-node"
+    sat:
+      brick_class: CO2_Level_Sensor
+      table: co2_data
+      unit: ppm
+
+  co2_index:
+    brick_classes:
+      - CO2_Level_Sensor
+      - CO2_Sensor
+    label_contains:
+      - "installed-node"
+    anchors:
+      lo: 0
+      hi: 150
+      citation: "on-site air-quality index 0-150 (higher = worse); range confirmed from 3.2M readings"

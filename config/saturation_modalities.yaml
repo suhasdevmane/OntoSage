@@ -1,0 +1,172 @@
+# Required per-space sensor modalities for the SATURATE coverage audit (V4-T06).
+#
+# The modality set is CONFIG, NOT CODE (2026-08-13 decision): any QA family that
+# demands a new modality is a new entry here (+ a narrow table via the saturation
+# pipeline), never a code change. Per-building overlay: drop a file with the same
+# name into the building's input folder (nested input/<id>/ or flat input/) —
+# entries there replace same-named entries here; extra entries are added.
+#
+# Fields per modality:
+#   brick_classes:  Brick class LOCAL NAMES a sensor may be typed with (matched
+#                   case-insensitively on the class IRI's local name).
+#   label_contains: optional lowercase substrings — at least one must appear in
+#                   the sensor's local name or rdfs:label. Used to split
+#                   modalities that share a Brick class (door vs window contact).
+#   sat:            how the SATURATE provisioner (V4-T08) fills a gap in this
+#                   modality: the Brick class for generated sensors, the narrow
+#                   MySQL table (= database_registry.yaml key = ref:storedAt local
+#                   name), and the unit label carried into the sensor's rdfs:label.
+#   anchors:        OPTIONAL per-building scoring band {lo, hi, citation}, set in
+#                   the building's OVERLAY (not here). The deliberative scorer
+#                   normalises readings against physical standards in standard
+#                   units - CO2 in ppm, noise in dB(A). Hardware that publishes
+#                   another scale (e.g. a CO2 air-quality INDEX around 60-90)
+#                   then sits entirely outside the band, every room scores a
+#                   perfect 1.0, and the ranking degenerates (CAVEAT-162).
+#                   Declare the real band next to the unit it belongs to:
+#
+#                     modalities:
+#                       co2:
+#                         anchors: {lo: 60, hi: 95, citation: "index scale, datasheet"}
+#
+#                   Only named modalities are overridden; the rest keep their
+#                   standard band and citation. An inverted, incomplete or
+#                   non-numeric block is logged and IGNORED - a bad calibration
+#                   must not silently replace a good standard.
+modalities:
+  temperature:
+    brick_classes:
+      - Zone_Air_Temperature_Sensor
+      - Air_Temperature_Sensor
+      - Temperature_Sensor
+    sat:
+      brick_class: Zone_Air_Temperature_Sensor
+      table: temperature_data
+      unit: degC
+  humidity:
+    brick_classes:
+      - Relative_Humidity_Sensor
+      - Humidity_Sensor
+    sat:
+      brick_class: Relative_Humidity_Sensor
+      table: humidity_data
+      unit: percent
+  co2:
+    brick_classes:
+      - CO2_Level_Sensor
+      - CO2_Sensor
+    sat:
+      brick_class: CO2_Level_Sensor
+      table: co2_data
+      unit: ppm
+  occupancy:
+    brick_classes:
+      - Occupancy_Count_Sensor
+      - People_Count_Sensor
+      - Occupancy_Sensor
+      - Motion_Sensor
+    sat:
+      brick_class: Occupancy_Count_Sensor
+      table: occupancy_data
+      unit: persons
+  noise:
+    # Matching stays on the LOCAL name, so both the legacy brick:-namespaced
+    # instances and newly minted ontosage: ones are found by these entries.
+    brick_classes:
+      - Sound_Level_Sensor
+      - Noise_Level_Sensor
+    sat:
+      # Explicitly prefixed: the pinned Brick version defines no acoustic sensor
+      # class, so minting `brick:Sound_Level_Sensor` invented a term in Brick's
+      # namespace (BUG-179). The class is declared in ontology/ontosage_schema.ttl.
+      brick_class: ontosage:Sound_Level_Sensor
+      table: noise_data
+      unit: dB
+  illuminance:
+    brick_classes:
+      - Illuminance_Sensor
+      - Luminance_Sensor
+    sat:
+      brick_class: Illuminance_Sensor
+      table: light_data
+      unit: lux
+  door_contact:
+    brick_classes:
+      - Contact_Sensor
+      - Open_Close_Status
+    label_contains:
+      - door
+    sat:
+      brick_class: Contact_Sensor
+      table: contact_data
+      unit: binary
+  window_contact:
+    brick_classes:
+      - Contact_Sensor
+      - Open_Close_Status
+    label_contains:
+      - window
+    sat:
+      brick_class: Contact_Sensor
+      table: contact_data
+      unit: binary
+  # ── V5-T09 expansion ────────────────────────────────────────────────────────
+  # pm25 is per-room like the V4 set. The scoped entries below use sat.scope:
+  #   floor    → one sensor per floor  (anchor = the floor entity)
+  #   building → one sensor            (anchor = the building entity)
+  # Scoped modalities are EXCLUDED from the per-room coverage matrix; the audit
+  # reports their presence separately.
+  pm25:
+    brick_classes:
+      - PM2.5_Level_Sensor
+      - PM2.5_Sensor
+      - Particulate_Matter_Sensor
+    sat:
+      brick_class: PM2.5_Level_Sensor
+      table: pm25_data
+      unit: ug/m3
+  energy_submeter:
+    brick_classes:
+      - Electrical_Meter
+      - Energy_Sensor
+    sat:
+      brick_class: Electrical_Meter
+      table: submeter_data
+      unit: kWh
+      scope: floor
+  water_flow:
+    brick_classes:
+      - Water_Meter
+      - Water_Flow_Sensor
+    sat:
+      brick_class: Water_Meter
+      table: waterflow_data
+      unit: L
+      scope: floor
+  parking_free:
+    brick_classes:
+      - Parking_Occupancy_Sensor
+      - Occupancy_Count_Sensor
+    label_contains:
+      - parking
+    sat:
+      brick_class: Occupancy_Count_Sensor
+      table: parking_data
+      unit: bays
+      scope: building
+  # ── V5-T10 expansion ────────────────────────────────────────────────────────
+  lift_state:
+    # brick:Availability_Status is a real Brick class (verified against the loaded
+    # TBox), but it is generic, so the label filter is what makes it lift-specific
+    # — the same split used for door vs window contact.
+    brick_classes:
+      - Availability_Status
+      - Elevator_Status
+    label_contains:
+      - lift
+      - elevator
+    sat:
+      brick_class: Availability_Status
+      table: lift_data
+      unit: binary
+      scope: building

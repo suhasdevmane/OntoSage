@@ -46,20 +46,40 @@ logger = get_logger(__name__)
 # and the YAML registry.  Now they derive from the registry; legacy hardcoded sets
 # remain as a fallback when the registry can't load.
 
-_LEGACY_DATA_PIPELINE_AGENTS = frozenset({
-    "sparql", "sql", "analytics", "anomaly", "compare", "trend",
-    "recommend", "compliance", "report", "export", "sensor_data",
-})
+_LEGACY_DATA_PIPELINE_AGENTS = frozenset(
+    {
+        "sparql",
+        "sql",
+        "analytics",
+        "anomaly",
+        "compare",
+        "trend",
+        "recommend",
+        "compliance",
+        "report",
+        "export",
+        "sensor_data",
+    }
+)
 
-_LEGACY_STANDALONE_AGENTS = frozenset({
-    "capability", "floor_plan", "spatial_query", "maintenance",
-    "control", "general", "discovery", "metadata",
-})
+_LEGACY_STANDALONE_AGENTS = frozenset(
+    {
+        "capability",
+        "floor_plan",
+        "spatial_query",
+        "maintenance",
+        "control",
+        "general",
+        "discovery",
+        "metadata",
+    }
+)
 
 
 def _load_pipeline_groups():
     try:
         from orchestrator.intents import get_intent_registry
+
         reg = get_intent_registry()
         # sparql / sql are pipeline-stage agent names, not LLM intents — keep
         # them in the data set even though they aren't in the registry.
@@ -104,18 +124,25 @@ class PlannerAgent:
     MAX_STEPS = settings.PLANNER_MAX_STEPS
 
     COMPLEX_TRIGGERS = [
-        "report", "export", "generate", "create", "download",
-        "anomaly", "alert", "trend report", "weekly", "monthly",
-        "compare and export", "analyze and report",
+        "report",
+        "export",
+        "generate",
+        "create",
+        "download",
+        "anomaly",
+        "alert",
+        "trend report",
+        "weekly",
+        "monthly",
+        "compare and export",
+        "analyze and report",
     ]
 
     def is_complex_query(self, query: str) -> bool:
         q = query.lower()
         return any(kw in q for kw in self.COMPLEX_TRIGGERS)
 
-    async def plan_and_execute(
-        self, state: ConversationState, user_query: str
-    ) -> Dict[str, Any]:
+    async def plan_and_execute(self, state: ConversationState, user_query: str) -> Dict[str, Any]:
         """Main entry: build a plan then execute it step-by-step."""
         logger.info("=" * 70)
         logger.info("PLANNER AGENT: Building execution plan")
@@ -127,8 +154,7 @@ class PlannerAgent:
             if multi_plan:
                 plan = self._build_from_multi_intent(user_query, multi_plan)
                 logger.info(
-                    f"[multi-intent] Pre-built plan: {len(plan.steps)} steps "
-                    f"— {plan.rationale}"
+                    f"[multi-intent] Pre-built plan: {len(plan.steps)} steps " f"— {plan.rationale}"
                 )
             else:
                 plan = await self._build_plan(user_query)
@@ -161,48 +187,58 @@ class PlannerAgent:
         idx = 1
 
         # Build a focused data query from Group A sub-queries (not the full compound)
-        data_sub_queries = [
-            s.get("sub_query", "") for s in group_a if s.get("sub_query")
-        ]
+        data_sub_queries = [s.get("sub_query", "") for s in group_a if s.get("sub_query")]
         focused_data_query = "; ".join(data_sub_queries) if data_sub_queries else ""
 
         if group_a:
-            steps.append(PlanStep(
-                index=idx, agent="sparql",
-                description="Retrieve sensor metadata and UUIDs",
-                params={"focused_query": focused_data_query},
-            ))
+            steps.append(
+                PlanStep(
+                    index=idx,
+                    agent="sparql",
+                    description="Retrieve sensor metadata and UUIDs",
+                    params={"focused_query": focused_data_query},
+                )
+            )
             idx += 1
-            steps.append(PlanStep(
-                index=idx, agent="sql",
-                description="Fetch time-series sensor data",
-                params={"focused_query": focused_data_query},
-            ))
+            steps.append(
+                PlanStep(
+                    index=idx,
+                    agent="sql",
+                    description="Fetch time-series sensor data",
+                    params={"focused_query": focused_data_query},
+                )
+            )
             idx += 1
 
             for sub in group_a:
                 agent = sub["intent"]
                 if agent in ("sparql", "sql", "sensor_data"):
                     continue
-                steps.append(PlanStep(
-                    index=idx, agent=agent,
-                    description=sub.get("sub_query", sub["intent"]),
-                    params={"sub_query": sub.get("sub_query", "")},
-                ))
+                steps.append(
+                    PlanStep(
+                        index=idx,
+                        agent=agent,
+                        description=sub.get("sub_query", sub["intent"]),
+                        params={"sub_query": sub.get("sub_query", "")},
+                    )
+                )
                 idx += 1
 
         for sub in group_b:
-            steps.append(PlanStep(
-                index=idx, agent=sub["intent"],
-                description=sub.get("sub_query", sub["intent"]),
-                params={"sub_query": sub.get("sub_query", "")},
-            ))
+            steps.append(
+                PlanStep(
+                    index=idx,
+                    agent=sub["intent"],
+                    description=sub.get("sub_query", sub["intent"]),
+                    params={"sub_query": sub.get("sub_query", "")},
+                )
+            )
             idx += 1
 
         intents = [s["intent"] for s in sub_intents]
         return ExecutionPlan(
             user_query=user_query,
-            steps=steps[:self.MAX_STEPS],
+            steps=steps[: self.MAX_STEPS],
             rationale=f"Multi-intent decomposition: {', '.join(intents)}",
             multi_intent=True,
         )
@@ -294,9 +330,7 @@ Rules:
     # Plan execution
     # ------------------------------------------------------------------
 
-    async def _execute_plan(
-        self, state: ConversationState, plan: ExecutionPlan
-    ) -> Dict[str, Any]:
+    async def _execute_plan(self, state: ConversationState, plan: ExecutionPlan) -> Dict[str, Any]:
         """Execute plan steps, running standalone agents in parallel."""
         import asyncio
 
@@ -308,16 +342,12 @@ Rules:
             return await self._execute_multi_intent(state, plan)
 
         for step in plan.steps:
-            logger.info(
-                f"  Step {step.index}/{len(plan.steps)}: [{step.agent}] {step.description}"
-            )
+            logger.info(f"  Step {step.index}/{len(plan.steps)}: [{step.agent}] {step.description}")
             try:
                 result = await self._dispatch_step(state, plan, step, context)
                 step.result = result
                 step.success = True
-                provenance.append(
-                    f"Step {step.index} [{step.agent}]: done — {step.description}"
-                )
+                provenance.append(f"Step {step.index} [{step.agent}]: done — {step.description}")
             except Exception as e:
                 step.error = str(e)
                 step.success = False
@@ -339,12 +369,11 @@ Rules:
         # Split steps into sequential (data pipeline) and parallel (standalone)
         data_steps = [s for s in plan.steps if s.agent in ("sparql", "sql")]
         post_data_steps = [
-            s for s in plan.steps
+            s
+            for s in plan.steps
             if s.agent not in ("sparql", "sql") and s.agent in _DATA_PIPELINE_AGENTS
         ]
-        standalone_steps = [
-            s for s in plan.steps if s.agent in _STANDALONE_AGENTS
-        ]
+        standalone_steps = [s for s in plan.steps if s.agent in _STANDALONE_AGENTS]
 
         _STEP_TIMEOUT = 45  # seconds per individual step
 
@@ -375,9 +404,7 @@ Rules:
         # the aggregated response. Previously sensor_data was silently
         # skipped in _build_from_multi_intent (group_a filter).
         _multi_plan = state.intermediate_results.get("multi_intent_plan", {})
-        _requested_sub_intents = {
-            s.get("intent") for s in _multi_plan.get("sub_intents", [])
-        }
+        _requested_sub_intents = {s.get("intent") for s in _multi_plan.get("sub_intents", [])}
         if "sensor_data" in _requested_sub_intents:
             _sql_r = context.get("sql_result")
             if _sql_r:
@@ -391,11 +418,13 @@ Rules:
                         ),
                         "sensor readings",
                     )
-                    section_results.append({
-                        "agent": "sensor_data",
-                        "description": _sub_query_for_label,
-                        "content": _sensor_content,
-                    })
+                    section_results.append(
+                        {
+                            "agent": "sensor_data",
+                            "description": _sub_query_for_label,
+                            "content": _sensor_content,
+                        }
+                    )
                     logger.info(
                         "[multi-intent] injected sensor_data section from SQL result "
                         f"({len(_sensor_content)} chars)"
@@ -465,9 +494,7 @@ Rules:
         agent = step.agent
         # For multi-intent plans, use the focused data query instead of the
         # full compound question — produces better SPARQL/SQL generation.
-        effective_query = (
-            step.params.get("focused_query") or plan.user_query
-        )
+        effective_query = step.params.get("focused_query") or plan.user_query
 
         if agent == "sparql":
             result = await self._run_sparql(state, effective_query, step.params)
@@ -479,9 +506,7 @@ Rules:
         elif agent == "sql":
             uuids = context.get("uuids", [])
             storage_map = context.get("storage_map", {})
-            result = await self._run_sql(
-                state, effective_query, uuids, storage_map, step.params
-            )
+            result = await self._run_sql(state, effective_query, uuids, storage_map, step.params)
             context["sql_result"] = result
             return result
 
@@ -499,9 +524,7 @@ Rules:
 
         elif agent == "report":
             query = step.params.get("sub_query") or effective_query
-            result = await self._run_report(
-                state, query, context, step.params
-            )
+            result = await self._run_report(state, query, context, step.params)
             context["report_result"] = result
             return result
 
@@ -608,8 +631,12 @@ Rules:
 
         if isinstance(result, dict):
             for key in (
-                "formatted_response", "formatted_text", "response",
-                "markdown", "content", "message",
+                "formatted_response",
+                "formatted_text",
+                "response",
+                "markdown",
+                "content",
+                "message",
             ):
                 val = result.get(key)
                 if val and isinstance(val, str):
@@ -624,8 +651,11 @@ Rules:
     ) -> Dict[str, Any]:
         """Build final response from accumulated context (single-intent planner)."""
         for key in [
-            "report_result", "analytics_result", "export_result",
-            "sql_result", "sparql_result",
+            "report_result",
+            "analytics_result",
+            "export_result",
+            "sql_result",
+            "sparql_result",
         ]:
             if key in context:
                 r = context[key]
@@ -649,9 +679,7 @@ Rules:
     # Agent delegates — data pipeline
     # ------------------------------------------------------------------
 
-    async def _run_sparql(
-        self, state: ConversationState, query: str, params: Dict
-    ) -> Dict:
+    async def _run_sparql(self, state: ConversationState, query: str, params: Dict) -> Dict:
         from orchestrator.agents.sparql_agent import SPARQLAgent
 
         return await SPARQLAgent().generate_query(state, query)
@@ -670,9 +698,7 @@ Rules:
             return await SQLAgent().fetch_data_for_uuids(uuids, query, storage_map)
         return await SQLAgent().generate_and_execute(state, query)
 
-    async def _run_analytics(
-        self, state: ConversationState, query: str, ctx: Dict
-    ) -> Dict:
+    async def _run_analytics(self, state: ConversationState, query: str, ctx: Dict) -> Dict:
         from orchestrator.agents.analytics_agent import AnalyticsAgent
 
         sql_result = ctx.get("sql_result", {})
@@ -684,17 +710,11 @@ Rules:
             state, query, data=data, sensor_metadata=sensor_metadata
         )
 
-    async def _run_anomaly(
-        self, state: ConversationState, query: str, ctx: Dict
-    ) -> Dict:
+    async def _run_anomaly(self, state: ConversationState, query: str, ctx: Dict) -> Dict:
         from orchestrator.agents.anomaly_agent import AnomalyDetectionAgent
 
         sql_result = ctx.get("sql_result", {})
-        data = (
-            sql_result.get("results", sql_result)
-            if isinstance(sql_result, dict)
-            else sql_result
-        )
+        data = sql_result.get("results", sql_result) if isinstance(sql_result, dict) else sql_result
         return await AnomalyDetectionAgent().detect(state, query, sensor_data=data)
 
     async def _run_report(
@@ -714,23 +734,16 @@ Rules:
         from orchestrator.agents.data_export_agent import DataExportAgent
 
         data = (
-            ctx.get("sql_result")
-            or ctx.get("anomaly_result")
-            or ctx.get("analytics_result")
-            or {}
+            ctx.get("sql_result") or ctx.get("anomaly_result") or ctx.get("analytics_result") or {}
         )
         fmt = params.get("format", "json")
-        return await DataExportAgent().export(
-            data=data, label="planner_export", fmt=fmt
-        )
+        return await DataExportAgent().export(data=data, label="planner_export", fmt=fmt)
 
     # ------------------------------------------------------------------
     # Agent delegates — standalone (no data pipeline needed)
     # ------------------------------------------------------------------
 
-    async def _run_capability(
-        self, state: ConversationState, step: PlanStep
-    ) -> Dict:
+    async def _run_capability(self, state: ConversationState, step: PlanStep) -> Dict:
         from orchestrator.agents.capability_agent import CapabilityAgent
 
         sub_query = step.params.get("sub_query", step.description)
@@ -743,9 +756,7 @@ Rules:
             "response": result.get("response", ""),
         }
 
-    async def _run_floor_plan(
-        self, state: ConversationState, step: PlanStep
-    ) -> Dict:
+    async def _run_floor_plan(self, state: ConversationState, step: PlanStep) -> Dict:
         from orchestrator.agents.floor_plan_agent import get_floor_plan_agent
 
         sub_query = step.params.get("sub_query", step.description)
@@ -757,9 +768,7 @@ Rules:
             "markdown": result.markdown,
         }
 
-    async def _run_spatial_query(
-        self, state: ConversationState, step: PlanStep
-    ) -> Dict:
+    async def _run_spatial_query(self, state: ConversationState, step: PlanStep) -> Dict:
         from orchestrator.agents.spatial_agent import get_spatial_agent
 
         sub_query = step.params.get("sub_query", step.description)
@@ -780,9 +789,7 @@ Rules:
             "markdown": markdown,
         }
 
-    async def _run_maintenance(
-        self, state: ConversationState, step: PlanStep
-    ) -> Dict:
+    async def _run_maintenance(self, state: ConversationState, step: PlanStep) -> Dict:
         sub_query = step.params.get("sub_query", step.description)
         return {
             "success": True,
@@ -803,6 +810,7 @@ Rules:
     ) -> ConversationState:
         """Create a shallow copy of state with overridden message + intent for a sub-task."""
         from copy import copy
+
         from shared.models import Message
 
         cloned = copy(state)
@@ -817,22 +825,14 @@ Rules:
         if not isinstance(sparql_result, dict):
             return []
         standardized = sparql_result.get("standardized", {})
-        results = (
-            standardized.get("results", [])
-            if isinstance(standardized, dict)
-            else []
-        )
+        results = standardized.get("results", []) if isinstance(standardized, dict) else []
         return [r.get("uuid") for r in results if r.get("uuid")]
 
     def _extract_storage_map(self, sparql_result: Dict) -> Dict[str, str]:
         if not isinstance(sparql_result, dict):
             return {}
         standardized = sparql_result.get("standardized", {})
-        results = (
-            standardized.get("results", [])
-            if isinstance(standardized, dict)
-            else []
-        )
+        results = standardized.get("results", []) if isinstance(standardized, dict) else []
         return {r["uuid"]: r.get("storage", "") for r in results if r.get("uuid")}
 
     def _extract_sensor_metadata(self, sparql_result: Dict) -> Dict[str, Dict]:
@@ -840,11 +840,7 @@ Rules:
         if not isinstance(sparql_result, dict):
             return {}
         standardized = sparql_result.get("standardized", {})
-        results = (
-            standardized.get("results", [])
-            if isinstance(standardized, dict)
-            else []
-        )
+        results = standardized.get("results", []) if isinstance(standardized, dict) else []
         metadata = {}
         for r in results:
             uuid = r.get("uuid")

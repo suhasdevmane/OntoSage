@@ -1,0 +1,19 @@
+PREFIX abx:    <https://abacws.cardiff.ac.uk/kg#>
+PREFIX bot:    <https://w3id.org/bot#>
+PREFIX brick:  <https://brickschema.org/schema/Brick#>
+PREFIX geo:    <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX unit:   <http://qudt.org/vocab/unit/>
+
+# "Which sensors report from the Vending area?"
+# Only returns rows once you have run `rdf --sensors sensors.csv`. This is
+# the join that turns the static floor graph into a live digital twin: the
+# room URI is shared between the CAD-derived topology and the IoT points.
+SELECT ?code ?roomName ?sensor ?sensorType WHERE {
+  ?room abx:roomCode ?code ;
+        rdfs:label   ?roomName ;
+        brick:hasPoint ?sensor .
+  ?sensor a ?sensorType .
+  FILTER(STRSTARTS(STR(?sensorType), STR(brick:)))
+}
+ORDER BY ?code

@@ -9,11 +9,7 @@ hardcoded lists.
 Adding a new intent: edit `intent_definitions.yaml`.  No Python edits.
 """
 
-from .registry import (
-    IntentDefinition,
-    IntentRegistry,
-    get_intent_registry,
-)
+from .registry import IntentDefinition, IntentRegistry, get_intent_registry
 
 __all__ = [
     "IntentDefinition",

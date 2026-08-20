@@ -68,9 +68,7 @@ class SelfCorrectionPolicy:
         success_fn(state) -> bool  (was the last attempt successful?)
         error_fn(state) -> str | None  (extract error message from state)
         """
-        traces: List[Dict[str, Any]] = state.intermediate_results.get(
-            "correction_trace", []
-        )
+        traces: List[Dict[str, Any]] = state.intermediate_results.get("correction_trace", [])
         last_error: Optional[str] = None
 
         for attempt in range(1, MAX_ATTEMPTS + 2):  # 1, 2, 3
@@ -78,9 +76,7 @@ class SelfCorrectionPolicy:
             try:
                 state = await attempt_fn(state, attempt, last_error)
             except Exception as exc:
-                logger.warning(
-                    f"[self_correction] {node_name} attempt {attempt} raised: {exc}"
-                )
+                logger.warning(f"[self_correction] {node_name} attempt {attempt} raised: {exc}")
                 last_error = str(exc)
                 traces.append(
                     {

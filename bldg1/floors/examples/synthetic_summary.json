@@ -1,0 +1,12 @@
+{
+  "storeys": 3,
+  "spaces": 12,
+  "spaces_with_code": 12,
+  "elements": 12,
+  "dimensions": 9,
+  "adjacency_edges": 12,
+  "connectivity_edges": 9,
+  "total_area_m2": 279.0,
+  "vertical_links": 2,
+  "triples": 584
+}

@@ -95,9 +95,7 @@ def parse_sensor_csv(text: str) -> Tuple[List[Dict[str, str]], List[str]]:
     Returns (rows, parse_warnings).
     """
     warnings: List[str] = []
-    clean_lines = [
-        ln for ln in text.splitlines() if ln.strip() and not ln.strip().startswith("#")
-    ]
+    clean_lines = [ln for ln in text.splitlines() if ln.strip() and not ln.strip().startswith("#")]
     if not clean_lines:
         return [], ["CSV is empty"]
 

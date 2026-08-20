@@ -1,0 +1,637 @@
+# SATURATE (V4-T08): simulated occupancy sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'occupancy_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://buildsys.org/ontologies/bldg2#> .
+
+<http://buildsys.org/ontologies/bldg2#occupancy_data>
+    a ref:Database ;
+    rdfs:label "Occupancy Data" .
+
+<http://buildsys.org/ontologies/bldg2#RM001A_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM001A_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM001A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3ff5a76b-bf8f-5f70-8652-d6ca218b4f8e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM001B_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM001B_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM001B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "61c8e9de-0468-5f64-94a9-cf400ebafd11" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM002A_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM002A_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM002A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9ca6a6ed-68f0-53af-b821-55fba88e0273" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM002B_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM002B_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM002B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7d2c8e4b-0307-5835-886c-ee6f3e49d04d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM003_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM003_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM003_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a4da08d9-cd22-5eac-b857-aa5336b32aff" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM005_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM005_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM005_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "32df8923-56ed-5df0-9612-1daa7dbc7ddc" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM006_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM006_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM006_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4b6ac7f1-55d4-543c-bb99-f58ec43804f2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM007A_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM007A_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM007A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "14f78548-4186-5b7c-99af-7ac6309d6c69" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM007B_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM007B_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM007B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6cd1d57c-a273-5040-b975-f58a6c82678a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM015A_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM015A_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM015A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4cf16dc9-6f7e-50d4-bb12-aa02581c68e8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM015B_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM015B_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM015B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5dddefc0-7c94-5ff7-a1be-4b4202d891a2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM019A_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM019A_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM019A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bac5b16a-57d1-54ef-bdfe-b5dfc59310d2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM019B_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM019B_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM019B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "24dca1c6-1e0d-5c2d-852c-17c82f90bb32" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM025_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM025_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM025_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1dd018da-f738-5bf2-8993-0d775c2a03b8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM026_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM026_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM026_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "40f68c65-8e34-5358-8e23-a4acf448ba93" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM027_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM027_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM027_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "20a852f4-7ec3-5f0a-b257-fef3ffb7495c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM101_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM101_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM101_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4b1af2a1-c85a-52af-b829-e1d7e4999264" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM102C_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM102C_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM102C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "99c61cfc-8336-51fe-9b55-53a8bbbf50c9" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM103_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM103_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM103_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bfa8dde4-0a89-5a0b-886c-ddd81b77e32e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM105_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM105_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM105_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eeb18bc3-4dbb-592e-abd4-9ff659a05edc" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM106_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM106_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM106_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ca8c1636-06e6-5b6c-a106-d75797c2053d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM107_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM107_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM107_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "986712cc-3c17-52af-a9d4-f98262ddad92" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM109_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM109_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM109_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5de3681a-80e5-57bc-bd57-3a2c6f8694f8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM111_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM111_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM111_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c18b0e32-ecb5-5757-9c2d-a9917969ba33" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM115_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM115_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM115_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "761ec166-d3cb-54d7-92d9-94e14670eb5f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM119_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM119_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM119_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "57330552-edf7-5393-8e2c-c24a343e5507" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM121_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM121_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM121_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4540e572-062e-5c23-8836-fdd19972b568" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM123_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM123_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM123_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "777dc795-15b8-5c01-b94a-dd996eb203e6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM125_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM125_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM125_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6974397c-2fea-5e1f-b1ae-939f986ac51e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM126_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM126_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM126_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5b714442-8097-5140-82ba-3da3fa6ac95d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM127_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM127_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM127_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4a3f3a30-ac95-5d71-b39b-4e8460c3b8cf" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM129_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM129_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM129_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cf9f6dd2-aedf-5fdf-a052-ce85dbe84ab5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM201_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM201_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM201_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "44280277-7e97-5389-8d71-f2fe05a5bce5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM202_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM202_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM202_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cb6aba60-02d7-51d1-9b44-4efbceb06987" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM203_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM203_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM203_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c485b732-aea7-53f3-82f7-92da9e64bbb4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM205_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM205_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM205_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c9c24d48-e43a-540b-9788-44c71a632c8f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM207_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM207_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM207_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0c74c593-d865-5eaf-8ede-90f1ebdb3c9d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM208_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM208_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM208_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "449ec3e7-d485-5fdc-b65b-aaf92282760f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM209_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM209_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM209_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e4714d89-0d11-5fb2-909d-0f5b1ebf4417" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM211_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM211_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM211_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "df947cb5-75c3-5f89-b43b-3a15e51b6dd4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM212_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM212_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM212_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0cee5ec1-adbc-5cd5-8a46-2fedc1179694" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM216_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM216_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM216_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "44bd9a1f-b310-58a0-8bba-6ed24f3c42c0" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM217_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM217_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM217_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "24a58bee-02b1-5013-a150-c17b67e86ada" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM220_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM220_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM220_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "49846721-a6c7-540c-bede-83dbd827e9fc" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM221_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM221_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM221_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "99382ecc-69ae-54c0-8be6-7b64c3102635" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM226_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM226_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM226_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "29bf42b2-2563-5a47-91a5-55d487b67058" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM229_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM229_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM229_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2dd1180d-5b69-5823-8789-fff582fd7ccd" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM230_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM230_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM230_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a1447895-618c-5110-92a8-32d5fcc21552" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM233_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM233_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM233_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "21793b6b-1c1a-5a16-811d-7e0cb4b54784" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM234A_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM234A_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM234A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "aa418424-b596-5b39-be14-c4a8007057c6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM234_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM234_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM234_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "35aadab3-bad1-5bfb-ac35-03ee9a71b4f5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM235_room_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "RM235_room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM235_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "77621fae-de39-5f79-bfe6-e1b19337eb4a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#occupancy_data> ;
+    ] .

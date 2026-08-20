@@ -63,6 +63,12 @@ GATED_INTENTS = frozenset(
         # A query with no named referent still returns NO_REFERENT and passes through.
         "metadata",
         "discovery",
+        # BUG-156: advice is the MOST fabricable shape, not the least — it invites a
+        # number in a sentence the user reads as a recommendation. "Should we charge
+        # the battery now or wait?" fell through to generic analytics and quoted a
+        # real reading from an unrelated series, presenting it in a battery context
+        # this building does not model. Gate it like any other scoped data answer.
+        "recommend",
     }
 )
 
@@ -114,6 +120,14 @@ _SPACE_HEADS = (
     "boilerhouse",
     "plantroom",
     "loadingbay",
+    # BUG-189: 'corridor' was missing, so "the public corridor on floor 1" was
+    # invisible to the gate and a ROOM's reading was attributed to a corridor the
+    # building does not have. These are generic English building-space words, in
+    # keeping with the rest of this list — no building's own vocabulary.
+    "corridor",
+    "hallway",
+    "stairwell",
+    "foyer",
 )
 _SPACE_RE = re.compile(
     r"\b(?:the\s+)?([a-z][a-z-]{2,19})\s+(" + "|".join(_SPACE_HEADS) + r")\b", re.IGNORECASE
@@ -226,14 +240,11 @@ def detect_typed_referent(query: str) -> Optional[TypedReferent]:
                 kind=KIND_LOCATION, token=f"{head}|{ident}", phrase=phrase, head=head
             )
 
-    m = _FLOOR_RE.search(q)
-    if m:
-        num = m.group(1) or m.group(2)
-        if num and _SAFE_TOKEN_RE.match(num):
-            return TypedReferent(
-                kind=KIND_FLOOR, token=f"floor|{num}", phrase=f"floor {num}", head="floor"
-            )
-
+    # BUG-189: the MOST SPECIFIC referent governs. Floors used to be matched first,
+    # so "<space> on floor N" resolved to the floor — and because the floor exists,
+    # the gate passed and the space was never existence-checked. That is how a
+    # non-existent corridor received a real room's temperature. A question that
+    # names a space is about that space; the floor is only context.
     m = _SPACE_RE.search(q)
     if m:
         modifier, head = m.group(1).lower(), m.group(2).lower()
@@ -266,6 +277,15 @@ def detect_typed_referent(query: str) -> Optional[TypedReferent]:
         head = m.group(1).lower()
         if _SAFE_TOKEN_RE.match(head):
             return TypedReferent(kind=KIND_SPACE, token=head, phrase=head, head=head)
+
+    # Only once no space is named does the floor become the referent.
+    m = _FLOOR_RE.search(q)
+    if m:
+        num = m.group(1) or m.group(2)
+        if num and _SAFE_TOKEN_RE.match(num):
+            return TypedReferent(
+                kind=KIND_FLOOR, token=f"floor|{num}", phrase=f"floor {num}", head="floor"
+            )
 
     m = _MEASURAND_RE.search(q)
     if m:

@@ -1,0 +1,20 @@
+PREFIX abx:    <https://abacws.cardiff.ac.uk/kg#>
+PREFIX bot:    <https://w3id.org/bot#>
+PREFIX brick:  <https://brickschema.org/schema/Brick#>
+PREFIX geo:    <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX unit:   <http://qudt.org/vocab/unit/>
+
+# "Starting from 0Z19, where can I get to in the whole building?"
+# Combines door connectivity within a storey with vertical circulation between
+# storeys, which is the query a wayfinding QA system actually needs. The
+# alternation inside the property path lets a route mix both edge types.
+SELECT DISTINCT ?code ?name ?level WHERE {
+  ?start abx:roomCode "0Z19" .
+  ?start (abx:connectedTo|abx:verticallyConnectedTo)+ ?reachable .
+  ?reachable abx:roomCode ?code ;
+             rdfs:label   ?name .
+  ?storey bot:hasSpace ?reachable ; abx:level ?level .
+  FILTER(?reachable != ?start)
+}
+ORDER BY ?level ?code

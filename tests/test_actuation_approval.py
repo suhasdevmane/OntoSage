@@ -16,7 +16,6 @@ from orchestrator.services.actuation.approval_store import (
     ActuationApprovalStore,
 )
 
-
 # ── RBAC permission tests ─────────────────────────────────────────────────────
 
 

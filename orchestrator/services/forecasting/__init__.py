@@ -10,10 +10,13 @@ Implements PhD-grade multi-model forecasting with:
   - Validation metrics: RMSE, MAE, MAPE, R²
 """
 
-from orchestrator.services.forecasting.horizon_parser import parse_horizon, ForecastHorizon
-from orchestrator.services.forecasting.preprocessor import preprocess_series
+from orchestrator.services.forecasting.horizon_parser import (
+    ForecastHorizon,
+    parse_horizon,
+)
 from orchestrator.services.forecasting.metrics import ForecastMetrics, compute_metrics
 from orchestrator.services.forecasting.model_selector import ModelSelector
+from orchestrator.services.forecasting.preprocessor import preprocess_series
 
 __all__ = [
     "parse_horizon",

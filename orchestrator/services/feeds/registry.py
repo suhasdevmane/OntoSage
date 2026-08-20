@@ -96,7 +96,9 @@ class FeedRegistry:
         """Load feeds.yaml for the building.  Returns number of enabled feeds loaded."""
         yaml_path = self._find_yaml()
         if yaml_path is None:
-            logger.info(f"[feeds] no feeds.yaml for building '{self._building_id}' — feed framework idle")
+            logger.info(
+                f"[feeds] no feeds.yaml for building '{self._building_id}' — feed framework idle"
+            )
             return 0
 
         try:
@@ -142,8 +144,7 @@ class FeedRegistry:
             loaded += 1
 
         logger.info(
-            f"[feeds] building='{self._building_id}' loaded {loaded} feed(s) "
-            f"from {yaml_path}"
+            f"[feeds] building='{self._building_id}' loaded {loaded} feed(s) " f"from {yaml_path}"
         )
         return loaded
 
@@ -342,10 +343,10 @@ class FeedRegistry:
 
             lines.append(f"                 ashrae:hasExternalReference {bnode} ;")
             lines.append(f"                 ref:hasExternalReference {bnode} ;")
-            lines.append(
-                f'                 rdfs:comment "feed-auto-registered"^^xsd:string ;'
+            lines.append(f'                 rdfs:comment "feed-auto-registered"^^xsd:string ;')
+            label = (
+                spec.brick_class.split(":")[-1].replace("_", " ") if spec.brick_class else feed_id
             )
-            label = spec.brick_class.split(":")[-1].replace("_", " ") if spec.brick_class else feed_id
             lines.append(f'                 rdfs:label "{label} feed {feed_id}"@en .')
             lines.append("")
 

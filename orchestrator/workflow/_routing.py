@@ -41,16 +41,21 @@ class WorkflowRoutingMixin:
 
         # Short-circuit: compliance/follow-up recovered prior sensor data → go direct to analytics
         if ctx.use_existing_query_results and state.analytics_required:
-            logger.info(
-                "[route] SPARQL→Analytics (prior data recovered for compliance)"
-            )
+            logger.info("[route] SPARQL→Analytics (prior data recovered for compliance)")
             return "analytics"
 
         # Check if analytics is required (and we are coming from SPARQL)
         # Allow routing to SQL for any data-fetching intent
         _sql_intents = {
-            "sparql", "sensor_data", "analytics", "compare", "trend", "recommend",
-            "compliance", "visualization", "anomaly",
+            "sparql",
+            "sensor_data",
+            "analytics",
+            "compare",
+            "trend",
+            "recommend",
+            "compliance",
+            "visualization",
+            "anomaly",
         }
         if state.analytics_required and state.current_intent in _sql_intents:
             logger.info("Routing SPARQL -> SQL for data fetching (analytics=True)")
@@ -70,9 +75,7 @@ class WorkflowRoutingMixin:
         ctx = state.pipeline_ctx
         # If analytics already embedded a plot in its output, skip the separate viz node
         if ctx.analytics_result and ctx.analytics_result.get("media"):
-            logger.info(
-                "[route] Analytics already produced a plot — skipping visualization node"
-            )
+            logger.info("[route] Analytics already produced a plot — skipping visualization node")
             return "response"
 
         latest_message = state.messages[-1].content if state.messages else ""

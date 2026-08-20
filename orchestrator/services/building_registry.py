@@ -20,7 +20,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from shared.floor_plan_config import ABACWS_CONFIG, BuildingConfig
+from shared.floor_plan_config import BuildingConfig, default_config
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -91,11 +91,10 @@ class BuildingRegistry:
             except Exception as e:
                 logger.warning(f"[BuildingRegistry] Failed to load {yaml_path}: {e}")
 
-        # Register Abacws as a default ONLY when no pre-scanned building has
-        # already claimed its ID via an alias.  This prevents the default
-        # config from shadowing the logical building that aliases to it.
-        if "abacws" not in pre_scanned_aliases and "abacws" not in self._configs:
-            self._register(ABACWS_CONFIG)
+        # (A hardcoded 'abacws' default used to be registered here. It was
+        # redundant — the PDF scan below registers a config for whatever slug it
+        # finds, for any building — and actively wrong on a site that has no
+        # such building: CAVEAT-094.)
 
         for path in sorted(self._pdf_dir.glob("*.pdf")):
             m = _DEFAULT_PDF_PATTERN.match(path.name)
@@ -107,10 +106,7 @@ class BuildingRegistry:
             # Phase 4 — when the PDF slug already resolves via an alias to a
             # pre-scanned building, do NOT register a duplicate config under
             # the slug.  The alias subsumes it.
-            if (
-                building_slug not in self._configs
-                and self.resolve_id(building_slug) is None
-            ):
+            if building_slug not in self._configs and self.resolve_id(building_slug) is None:
                 # Try to load a building.yaml from <pdf_dir>/<building_id>/
                 yaml_path = self._pdf_dir / building_slug / "building.yaml"
                 if yaml_path.exists():
@@ -125,15 +121,9 @@ class BuildingRegistry:
                             f"[BuildingRegistry] Failed to load {yaml_path}: {e}. "
                             "Using defaults."
                         )
-                        cfg = BuildingConfig(
-                            building_id=building_slug,
-                            building_name=m.group("building"),
-                        )
+                        cfg = default_config(building_slug, m.group("building"))
                 else:
-                    cfg = BuildingConfig(
-                        building_id=building_slug,
-                        building_name=m.group("building"),
-                    )
+                    cfg = default_config(building_slug, m.group("building"))
                 self._register(cfg)
 
             # Phase 4 — if the PDF's slug is an alias for a pre-scanned
@@ -197,7 +187,15 @@ class BuildingRegistry:
             pass
         if self._configs:
             return next(iter(self._configs.values()))
-        return ABACWS_CONFIG  # absolute last resort: registry empty
+        # Absolute last resort: an empty registry. Describe the configured
+        # building generically rather than naming a building that may not exist
+        # at this site.
+        try:
+            from shared.config import settings as _s
+
+            return default_config(_s.BUILDING_ID)
+        except Exception:
+            return default_config("")
 
     def building_ids(self) -> List[str]:
         return sorted(self._configs.keys())
@@ -234,13 +232,13 @@ class BuildingRegistry:
                 try:
                     self._register(BuildingConfig.from_yaml(yaml_path))
                 except Exception:
-                    self._register(BuildingConfig(building_id=building_id))
+                    self._register(default_config(building_id))
             else:
-                self._register(BuildingConfig(building_id=building_id))
+                self._register(default_config(building_id))
 
 
 def _slugify(name: str) -> str:
-    """Convert a building display name to a lowercase slug (e.g. 'Abacws' → 'abacws')."""
+    """Convert a building display name to a lowercase slug (e.g. 'North Wing' -> 'north_wing')."""
     return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
 
 

@@ -46,10 +46,20 @@ Selects the LLM backend for all inference tasks (intent classification, SPARQL g
 
 Default: `local`
 
-You can switch providers at runtime without rebuilding:
+You can switch providers without rebuilding — edit `.env`, then **recreate** the
+container:
 ```bash
-MODEL_PROVIDER=openai docker compose restart orchestrator
+# 1. set MODEL_PROVIDER=openai in .env
+docker compose up -d orchestrator      # NOT `restart`
 ```
+
+> ⚠️ **`docker compose restart` does not re-read `.env`** (CAVEAT-178, verified
+> 2026-08-18). Compose injects `env_file` values into the container environment
+> when the container is *created*; a restart reuses that environment, and the
+> process env wins over the mounted `.env` file. The old value therefore stays
+> live and the change silently does nothing. Likewise, a shell prefix such as
+> `MODEL_PROVIDER=openai docker compose restart …` sets the variable for the
+> *compose CLI*, not inside the container. Always `up -d` after an `.env` edit.
 
 ---
 

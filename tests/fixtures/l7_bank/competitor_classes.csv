@@ -1,0 +1,21 @@
+ID,Question,question_class,expected_behavior
+SB01,How many temperature sensors does this building have?,static_brick,answer
+SB02,How many rooms are on floor 2?,static_brick,answer
+SB03,What types of sensors are installed in this building?,static_brick,answer
+SB04,Which floors does this building have?,static_brick,answer
+SB05,List the CO2 sensors on floor 1.,static_brick,answer
+SB06,What equipment is in this building?,static_brick,answer
+SB07,How many occupancy sensors are on floor 0?,static_brick,answer
+SB08,Does this building monitor humidity?,static_brick,answer
+SA01,What is the average CO2 on floor 2 over the last 24 hours?,single_system_analytics,answer
+SA02,What was the peak occupancy on floor 1 yesterday?,single_system_analytics,answer
+SA03,Show the temperature trend on floor 0 for the last week.,single_system_analytics,answer
+SA04,What is the current noise level on floor 3?,single_system_analytics,answer
+SA05,How has humidity changed on floor 2 today?,single_system_analytics,answer
+SA06,What is the minimum illuminance recorded on floor 1 in the last 24 hours?,single_system_analytics,answer
+AR01,"Where can I sit that's quiet, with good air, near drinking water?",arbiter_only,answer
+AR02,Which room on floor 2 will have the best air tomorrow morning?,arbiter_only,answer
+AR03,"Find me a quiet, well-lit room near a study area.",arbiter_only,answer
+AR04,Rank the rooms on floor 1 by a combination of low noise and low occupancy.,arbiter_only,answer
+AR05,Which three rooms are the best for focused work right now - quiet and not stuffy?,arbiter_only,answer
+AR06,I need a warm room with few people near the toilets - where should I go?,arbiter_only,answer

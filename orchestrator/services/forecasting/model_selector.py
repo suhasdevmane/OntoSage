@@ -21,8 +21,15 @@ import pandas as pd
 
 from orchestrator.services.forecasting.metrics import ForecastMetrics
 from orchestrator.services.forecasting.models.arima_forecaster import ARIMAForecaster
-from orchestrator.services.forecasting.models.exp_smoothing_forecaster import ExpSmoothingForecaster
-from orchestrator.services.forecasting.models.linear_forecaster import LinearTrendForecaster
+from orchestrator.services.forecasting.models.exp_smoothing_forecaster import (
+    ExpSmoothingForecaster,
+)
+from orchestrator.services.forecasting.models.linear_forecaster import (
+    LinearTrendForecaster,
+)
+from orchestrator.services.forecasting.models.seasonal_naive_forecaster import (
+    SeasonalNaiveForecaster,
+)
 from orchestrator.services.forecasting.preprocessor import MIN_POINTS_FOR_ARIMA
 from shared.utils import get_logger
 
@@ -30,6 +37,7 @@ logger = get_logger(__name__)
 
 MIN_POINTS_FOR_EXP = 10
 MIN_POINTS_FOR_ARIMA_SELECTOR = max(MIN_POINTS_FOR_ARIMA, 30)
+MIN_POINTS_FOR_SEASONAL_NAIVE = 24  # a day of hourly data — enough for a profile
 
 
 class ModelSelector:
@@ -69,6 +77,16 @@ class ModelSelector:
         except Exception as e:
             logger.warning(f"[model_selector] LinearTrend failed: {e}")
 
+        # ── Seasonal-Naive (V5-T13; ≥24 points or an explicit season) ──────
+        if n >= MIN_POINTS_FOR_SEASONAL_NAIVE or seasonal_periods:
+            try:
+                sn = SeasonalNaiveForecaster()
+                result = sn.fit_predict(series, n_steps, ci_levels, test_fraction)
+                candidates.append(result)
+                logger.info(f"[model_selector] SeasonalNaive: {result['metrics'].summary()}")
+            except Exception as e:
+                logger.warning(f"[model_selector] SeasonalNaive failed: {e}")
+
         # ── Exponential Smoothing (≥10 points) ─────────────────────────────
         if n >= MIN_POINTS_FOR_EXP:
             try:
@@ -94,13 +112,10 @@ class ModelSelector:
 
         # ── Pick winner by MAE ──────────────────────────────────────────────
         winner = min(candidates, key=lambda c: c["metrics"].mae)
-        all_metrics: Dict[str, ForecastMetrics] = {
-            c["model"]: c["metrics"] for c in candidates
-        }
+        all_metrics: Dict[str, ForecastMetrics] = {c["model"]: c["metrics"] for c in candidates}
 
         logger.info(
-            f"[model_selector] Winner: {winner['model']} "
-            f"(MAE={winner['metrics'].mae:.4f})"
+            f"[model_selector] Winner: {winner['model']} " f"(MAE={winner['metrics'].mae:.4f})"
         )
 
         return {

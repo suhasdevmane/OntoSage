@@ -26,6 +26,9 @@ os.environ.setdefault("PIPELINE_API_KEY", "sk-test-pipeline-key-ci")
 # deployment or a test that exercises the guard itself sets it deliberately).
 os.environ.setdefault("STRICT_SECRETS", "false")
 
+# Live-chat fixtures for the capability-semantic-routing regression battery.
+# Imports `chat_client` and `fresh_session_id` fixtures.
+from tests.fixtures.live_chat_client import chat_client, fresh_session_id  # noqa: F401
 from tests.fixtures.ontology_fixtures import (
     brick_fixture,
     mock_anomalous_readings,
@@ -35,10 +38,6 @@ from tests.fixtures.ontology_fixtures import (
     rec_fixture,
     s223_fixture,
 )
-
-# Live-chat fixtures for the capability-semantic-routing regression battery.
-# Imports `chat_client` and `fresh_session_id` fixtures.
-from tests.fixtures.live_chat_client import chat_client, fresh_session_id  # noqa: F401
 
 
 @pytest.fixture

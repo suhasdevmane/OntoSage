@@ -615,3 +615,60 @@ recipes:
       Filter replacement recommended at 2,500h cumulative runtime.
       Belt check recommended at 1,000h.
       {verdict}.
+
+  # ── V5-T27: computation classes with honest method citations ──────────────
+
+  degree_day_normalization:
+    kind: estimate
+    description: >
+      Weather-normalize energy consumption by dividing kWh by heating degree
+      days (base 15.5C), so periods/buildings compare fairly - a cold month is
+      EXPECTED to use more heat. Computed deterministically by
+      services/recipes_compute.degree_day_normalized_kwh.
+      Trigger phrases: 'degree day', 'weather normalised consumption',
+      'adjusted for weather', 'fair comparison of energy use'.
+    params:
+      base_temp_c: 15.5
+      unit: kWh per degree day
+      source: "CIBSE TM41: Degree days - theory and application"
+    brick_class: brick:Electrical_Energy_Sensor
+    answer_template: >
+      Weather-normalized consumption: {value:.2f} kWh per degree day
+      ({kwh:.0f} kWh over {degree_days:.0f} heating degree days, base 15.5C).
+      Method: CIBSE TM41 degree-day normalization.
+
+  air_change_rate_co2_decay:
+    kind: estimate
+    description: >
+      Estimate a room's ventilation rate (air changes per hour) from overnight
+      CO2 decay while the space is empty: ACH = ln((C0-Cout)/(C1-Cout))/t.
+      Only valid in clean decay (start > end > outdoor CO2, unoccupied).
+      Computed deterministically by services/recipes_compute.ach_from_co2_decay.
+      Trigger phrases: 'air change rate', 'ACH', 'how well ventilated',
+      'ventilation rate of room'.
+    params:
+      c_outdoor_ppm: 420
+      unit: air changes per hour
+      source: "ASTM D6245 / Persily (1997): CO2 tracer-gas decay method"
+    brick_class: brick:CO2_Sensor
+    answer_template: >
+      Estimated ventilation: {value:.2f} air changes per hour from CO2 decay
+      ({c_start_ppm:.0f} -> {c_end_ppm:.0f} ppm over {hours:.1f} h, outdoor 420 ppm).
+      Method: ASTM D6245 tracer decay - valid only while the room was empty.
+
+  energy_tariff_cost:
+    kind: estimate
+    description: >
+      Convert metered kWh into money using the building's registered tariff
+      rate (feeds/tariff or database registry). Computed deterministically by
+      services/recipes_compute.tariff_cost - never an invented price.
+      Trigger phrases: 'how much does the electricity cost', 'energy cost',
+      'cost of power', 'electricity bill', 'spend on energy'.
+    params:
+      currency: GBP
+      unit: GBP
+      source: "metered consumption x the building's registered tariff rate"
+    brick_class: brick:Electrical_Energy_Sensor
+    answer_template: >
+      Estimated cost: {value:.2f} {currency} ({kwh:.1f} kWh x {tariff_per_kwh:.4f}
+      {currency}/kWh). Method: metered consumption times the registered tariff rate.

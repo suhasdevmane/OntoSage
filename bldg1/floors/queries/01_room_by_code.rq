@@ -1,0 +1,15 @@
+PREFIX abx:    <https://abacws.cardiff.ac.uk/kg#>
+PREFIX bot:    <https://w3id.org/bot#>
+PREFIX brick:  <https://brickschema.org/schema/Brick#>
+PREFIX geo:    <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX unit:   <http://qudt.org/vocab/unit/>
+
+# "Tell me everything about room 0Z19."
+# The single lookup your QA system will make most often.
+SELECT ?room ?name ?area ?wkt WHERE {
+  ?room abx:roomCode "0Z19" ;
+        rdfs:label   ?name .
+  OPTIONAL { ?room brick:area/brick:value ?area }
+  OPTIONAL { ?room geo:hasGeometry/geo:asWKT ?wkt }
+}

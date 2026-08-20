@@ -4,6 +4,7 @@ AlertMonitor — background service that polls sensor data and fires threshold a
 Started as an asyncio task in main.py:lifespan. Runs every ALERT_POLL_INTERVAL_SECS.
 Uses Redis deduplication to prevent alert storms (10-minute TTL per sensor+threshold).
 """
+
 import asyncio
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -31,6 +32,7 @@ def _load_thresholds(path: str) -> List[Dict[str, Any]]:
     """Load threshold rules from YAML. Returns empty list on any error."""
     try:
         import yaml
+
         with open(path) as f:
             data = yaml.safe_load(f)
         return data.get("thresholds", [])

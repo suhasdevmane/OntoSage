@@ -218,6 +218,19 @@ SENSOR_METRIC_KWS = (
     "reading",
 )
 
+# An explicit ASK for a document about the data: "give me a report on ...",
+# "monthly summary", "breakdown of ...". Deliberately requires the noun —
+# "report the average temperature" is a data question wearing the verb, and
+# belongs in the reading lane, not here.
+REPORT_REQUEST_RE = re.compile(
+    r"\b(?:give|show|send|generate|create|produce|prepare|make|provide|need|want)\b"
+    r"[^?]*?\b(?:report|summary|breakdown)\b"
+    r"|\b(?:report|summary|breakdown)\s+(?:on|of|for|about)\b"
+    r"|\b(?:monthly|weekly|daily|annual|quarterly)\s+(?:report|summary|breakdown)\b",
+    re.IGNORECASE,
+)
+
+
 EXTERNAL_ACTION_KWS = (
     "email it",
     "email this",
@@ -424,8 +437,25 @@ def _r_inventory_to_discovery(c: _Ctx) -> Optional[str]:
 
 
 def _r_forecast(c: _Ctx) -> Optional[str]:
-    if c.intent in ("trend", "analytics", "sensor_data"):
+    if c.intent in ("trend", "analytics"):
         return None
+    # V5-T16: an EXPLICIT forecast verb ("forecast/predict humidity for the
+    # next 6 hours") classified as sensor_data would answer with the CURRENT
+    # reading — a wrong answer to a predictive question. Future-time phrasing
+    # keeps it in the forecast pipeline; bare metric questions do not move.
+    if c.intent == "sensor_data":
+        explicit = re.search(
+            r"\b(?:forecast|predict|projection|projected)\b|\bwhat will\b|\bwhat would\b",
+            c.query,
+            re.IGNORECASE,
+        )
+        future = re.search(
+            r"\b(?:tomorrow|next (?:hour|week|month|day|\d+\s*(?:hours?|days?|weeks?))"
+            r"|later today|this evening|in \d+\s*(?:hours?|days?))\b",
+            c.query,
+            re.IGNORECASE,
+        )
+        return "trend" if (explicit and future) else None
     if _any(c.ql, FORECAST_KWS) and _any(c.ql, SENSOR_METRIC_KWS):
         return "trend"
     return None
@@ -446,6 +476,16 @@ def _r_maintenance_schedule(c: _Ctx) -> Optional[str]:
 
 
 def _r_report_intake(c: _Ctx) -> Optional[str]:
+    # "report" is in this set on purpose (BUG-200). "The toilet on floor 1 is
+    # leaking." is a FAULT STATEMENT, but the word "report" lives in the same
+    # semantic neighbourhood as reporting a problem, so the classifier reaches
+    # for the summary intent and returns an executive summary of the leak
+    # instead of filing it. Nothing then records the fault.
+    #
+    # Widening the set is safe because the rescue is conditional on
+    # report_intake_intent() ALSO firing, and that only recognises statement
+    # shapes: "give me a report on energy use", "show me the monthly report"
+    # and "report on CO2 last week" all return None and keep the summary lane.
     if c.intent not in (
         "capability",
         "general",
@@ -453,6 +493,7 @@ def _r_report_intake(c: _Ctx) -> Optional[str]:
         "metadata",
         "clarification",
         "discovery",
+        "report",
         None,
     ):
         return None
@@ -490,6 +531,49 @@ def _r_building_profile(c: _Ctx) -> Optional[str]:
     from orchestrator.services.building_profile import detect_facet
 
     return "capability" if detect_facet(c.query) else None
+
+
+def report_request_about_data(query: str) -> bool:
+    """True when the query ASKS FOR A DOCUMENT about something measured.
+
+    Public because two places need the SAME answer and must not drift: the
+    parse-stage rule below, and the capability short-circuit in dialogue_agent,
+    which returns intent="capability" before the LLM is ever called and
+    therefore before any contract rule can run. A rule alone could not fix
+    CAVEAT-201 — the request never reached it.
+    """
+    if not query or not REPORT_REQUEST_RE.search(query):
+        return False
+    return _any(query.lower(), SENSOR_METRIC_KWS)
+
+
+def _r_report_request_not_capability(c: _Ctx) -> Optional[str]:
+    """A request for a report ABOUT MEASURED DATA is a report, not an amenity.
+
+    "Give me a report on energy use last week." was answered with the building's
+    sustainability blurb: the ontology holds a KnowledgeTopic whose lay terms
+    cover "energy", nothing in the query looks like a sensor reading, so the
+    classifier picked capability and the question was answered by prose that
+    contains no data at all.
+
+    Three conditions, all required, keep this narrow:
+
+    * the query must ASK for a document — the noun "report"/"summary"/
+      "breakdown", not merely the verb, so "report the average temperature"
+      stays a reading question;
+    * it must name something MEASURED (SENSOR_METRIC_KWS — the same vocabulary
+      the other data-promotion rules use), so "give me a report on the parking
+      policy" keeps its capability answer, which is the correct one;
+    * it must not be a fault STATEMENT, so "send someone a report, the toilet is
+      leaking" still files a ticket rather than generating a document.
+    """
+    if c.intent not in ("capability", "general", "metadata", None):
+        return None
+    if not report_request_about_data(c.query):
+        return None
+    if c.sr.report_intake_intent(c.query):
+        return None
+    return "report"
 
 
 def _r_self_description(c: _Ctx) -> Optional[str]:
@@ -561,6 +645,256 @@ def _r_automation_question(c: _Ctx) -> Optional[str]:
     return "automation_capability" if AUTOMATION_Q_RE.search(c.query) else None
 
 
+# V4 ARBITER — constraint-recommendation shapes: choose/rank spaces under
+# comfort constraints. Conservative from-set: weak intents + 'recommend' (which
+# has no dedicated logic and collapses to generic analytics today); analytics/
+# spatial_query classifications keep their proven routes.
+DELIBERATE_RE = re.compile(
+    r"(?:\bfind\s+(?:me\s+)?an?\s+[\w,\- ]{0,30}(?:room|space|spot|desk|place)\b"
+    r"|\bwhere\s+(?:can|should|could)\s+i\s+(?:sit|work|study|go|be|stay)\b"
+    r"|\b(?:quietest|noisiest|busiest|emptiest|calmest)\b"
+    r"|\bwhich\s+(?:room|rooms|zone|zones|space|spaces|area|areas)\b"
+    r".{0,50}\b(?:lowest|highest|least|most|best|worst|minimum|maximum"
+    r"|warmest|coolest|coldest|hottest|brightest|darkest|loudest|driest|stuffiest)\b"
+    # superlative-first shape: 'warmest room', 'brightest space on floor 2'
+    r"|\b(?:warmest|coolest|coldest|hottest|brightest|darkest|loudest|quietest)\s+"
+    r"(?:room|zone|space|area)s?\b"
+    r"|\brank\s+(?:the\s+)?\w*\s*(?:rooms|zones|spaces|areas)\b"
+    r"|\b(?:zone|room|space|area)s?\s+with\s+(?:the\s+)?(?:minimum|maximum|least|most|lowest|highest)\b)",
+    re.IGNORECASE,
+)
+
+
+def _r_constraint_recommendation(c: _Ctx) -> Optional[str]:
+    """Constraint/recommendation question over spaces → deliberate (weak intents only)."""
+    if c.intent not in _WEAK_INTENTS + ("recommend",):
+        return None
+    return "deliberate" if DELIBERATE_RE.search(c.query) else None
+
+
+# V5-T24 — event-store questions: bookings/availability, work orders, entrance
+# footfall. Combined comfort+availability phrasings ("QUIET room free at 3")
+# must stay deliberate, so this rule sits BELOW the deliberate rules and its
+# regex targets pure event vocabulary.
+EVENTS_RE = re.compile(
+    # "is <subject> free/booked" — single-subject availability; the subject
+    # token keeps inventory questions ("what sensor types are available") out
+    r"(?:\bis\s+(?!there\b)\S{2,}\s+(?:free|booked|available|in use)\b"
+    r"|\b(?:which|what|any|list)\b.{0,40}\brooms?\b.{0,30}\b(?:free|available)\b"
+    r"|\b(?:a|any)\s+rooms?\s+(?:free|available)\b"
+    r"|\bbookings?\b|\breservations?\b"
+    r"|\bwork ?orders?\b|\b(?:open|overdue|outstanding)\s+tickets?\b"
+    r"|\bmaintenance backlog\b"
+    r"|\bfootfall\b|\bentrance\b.{0,30}\b(?:busy|arrivals|count)\b"
+    r"|\bhow busy was\b.{0,30}\b(?:entrance|building)\b)",
+    re.IGNORECASE,
+)
+
+
+_INTERROGATIVE_RE = re.compile(
+    r"^\s*(?:how many|how much|any|are there|is there|what|which|when|show|list|count|do we have)\b"
+    r"|\?\s*$",
+    re.IGNORECASE,
+)
+
+
+def _r_event_store_query(c: _Ctx) -> Optional[str]:
+    """Pure event-store question → events lane (never fault reports/actions).
+
+    BUG-166: work-order vocabulary classifies as maintenance and the intake
+    path FILES A TICKET even for questions ("how many open work orders?").
+    Interrogative shapes flip to the events lane; statements keep filing.
+    """
+    from_set = _WEAK_INTENTS + ("sensor_data", "analytics", "recommend")
+    interrogative = bool(_INTERROGATIVE_RE.search(c.query or ""))
+    if c.intent in ("maintenance", "complaint", "report"):
+        if not interrogative:
+            return None  # a statement — intake is correct
+    elif c.intent not in from_set:
+        return None
+    if c.sr.is_control_command(c.query):
+        return None
+    if c.intent not in ("maintenance", "complaint", "report") and c.sr.report_intake_intent(
+        c.query
+    ):
+        return None  # statement shapes stay with intake
+    if DELIBERATE_RE.search(c.query):
+        return None  # comfort-constrained phrasing keeps the deliberative lane
+    return "events" if EVENTS_RE.search(c.query) else None
+
+
+# V5-T26 — compliance-REGISTER questions (dated checks), distinct from both the
+# sensor-standards 'compliance' intent and workorder/ticket questions (events).
+REGISTER_RE = re.compile(
+    r"(?:\b(?:overdue|past due|missed)\b.{0,40}\b(?:check|test|inspection|assessment|"
+    r"compliance|certificate|service|flush|examination)s?\b"
+    r"|\b(?:check|test|inspection|assessment|compliance|certificate)s?\b.{0,30}\b(?:overdue|past due)\b"
+    r"|\bwhen (?:was|did)\b.{0,60}\blast\b.{0,30}\b(?:tested|serviced|inspected|checked|flushed|examined|done)\b"
+    r"|\blast (?:tested|serviced|inspected|checked|flushed|examined)\b"
+    r"|\b(?:fire alarm|emergency lighting|legionella|fire door|extinguisher|loler|pat test"
+    r"|f-?gas|risk assessment)\b.{0,40}\b(?:due|overdue|test|record|history|when|last)\b"
+    r"|\bcompliance (?:calendar|register|record)s?\b"
+    r"|\bwhat(?:'s| is)?\s+(?:due|coming up)\b.{0,30}\b(?:month|week|days|quarter)\b"
+    # "what inspections are due this month?", "any checks due next week?"
+    r"|\b(?:check|test|inspection|assessment|certificate)s?\s+(?:are\s+|is\s+)?"
+    r"(?:due|coming up)\b)",
+    re.IGNORECASE,
+)
+
+
+def register_question(query: str) -> bool:
+    """True when the register lane would claim this query (shape + known item).
+
+    Shared by the ``compliance_register`` rule below AND the dialogue agent's
+    capability short-circuit bypass — "when was the fire alarm last tested?"
+    matches the fire-safety KnowledgeTopic by lay-term, and without the bypass
+    the topic prose (which holds no dates) answers instead of the register.
+    """
+    if not REGISTER_RE.search(query or ""):
+        return False
+    # last-done shapes are claimed only for KNOWN register items ("fire alarm",
+    # "PAT", …). Generic equipment service-history ("when was chiller 7 last
+    # serviced?") stays with history_question_not_report → capability chain.
+    from orchestrator.services.compliance_register_service import (  # local: no cycle
+        classify_register_question,
+        match_item,
+    )
+
+    return not (classify_register_question(query) == "last_done" and match_item(query) is None)
+
+
+def _r_compliance_register(c: _Ctx) -> Optional[str]:
+    """Dated register question → register lane; sensor-limit checks stay put."""
+    interrogative = bool(_INTERROGATIVE_RE.search(c.query or ""))
+    if c.intent in ("maintenance", "complaint", "report"):
+        if not interrogative:
+            return None
+    elif c.intent not in _WEAK_INTENTS + ("sensor_data", "analytics", "compliance", "recommend"):
+        return None
+    if c.sr.is_control_command(c.query):
+        return None
+    if c.intent not in ("maintenance", "complaint", "report") and c.sr.report_intake_intent(
+        c.query
+    ):
+        return None  # statement shapes ("the fire door is broken") stay with intake
+    if EVENTS_RE.search(c.query) and re.search(
+        r"\btickets?|work ?orders?\b", c.query, re.IGNORECASE
+    ):
+        return None  # workorder aging stays with the events lane
+    return "register" if register_question(c.query) else None
+
+
+def _r_why_diagnosis(c: _Ctx) -> Optional[str]:
+    """Comfort why-question -> diagnosis lane (V5-T20). Runs LAST: comfort
+    questions were already flipped to analytics by comfort_question, so
+    analytics is in the from-set; statements keep their intake route."""
+    from orchestrator.services.anomaly.diagnosis import (
+        is_why_question,  # local: no cycle
+    )
+
+    if c.intent in ("maintenance", "complaint", "report"):
+        if not _INTERROGATIVE_RE.search(c.query or ""):
+            return None
+    elif c.intent not in _WEAK_INTENTS + ("sensor_data", "analytics", "anomaly", "recommend"):
+        return None
+    if c.sr.is_control_command(c.query):
+        return None
+    return "diagnosis" if is_why_question(c.query) else None
+
+
+WAYFIND_RE = re.compile(
+    r"\bdirections?\s+(?:to|for)\b"
+    r"|\broute\s+to\b"
+    r"|\bnavigate\s+to\b"
+    r"|\bguide\s+me\s+to\b"
+    r"|\bfind\s+my\s+way\s+to\b"
+    r"|\bhow\s+(?:do|can|would)\s+i\s+(?:get|reach|go)\s+to\b"
+    r"|\b(?:nearest|closest)\s+(?:toilet|wc|restroom|bathroom|lift|elevator|stair\w*"
+    r"|kitchen|exit|reception|meeting\s+room)s?\b"
+    r"|\b(?:step[- ]?free|wheelchair(?:[- ]accessible)?)\s+(?:route|way|path|access)\b",
+    re.IGNORECASE,
+)
+
+
+def _r_wayfinding_spatial(c: _Ctx) -> Optional[str]:
+    """Route/nearest-facility questions -> spatial_query (V5-T27).
+
+    The spatial agent's route finder answers with hop paths, metres and
+    step-free handling; the floor_plan node only LOCATES. Claims floor_plan
+    too (the LLM's habitual label for these) but never 'where is room X' /
+    'show me floor N', which carry none of these shapes.
+    """
+    if c.intent not in _WEAK_INTENTS + ("floor_plan",):
+        return None
+    if c.sr.is_control_command(c.query):
+        return None
+    return "spatial_query" if WAYFIND_RE.search(c.query) else None
+
+
+def _r_room_geometry_spatial(c: _Ctx) -> Optional[str]:
+    """ "How big is room X" -> spatial_query, not capability.
+
+    Room areas live in the DWG floor-plan manifests, so only the spatial agent
+    can answer them. The classifier reads a question about a named room as a
+    capability lookup, which then reports having no information -- while the
+    manifest holds that room's measured area. That failure is worse than a wrong
+    number: it tells the user to go add data the system already has, and it hides
+    exactly the geometry that surveying a building's floor plans produced.
+
+    The shape test lives on SemanticRouter, shared with the capability bypass, so
+    the two cannot disagree about what a geometry question is. Adjacency is NOT
+    claimed here; it already routes correctly and its rules run earlier.
+    """
+    if c.intent not in _WEAK_INTENTS:
+        return None
+    if c.sr.is_control_command(c.query):
+        return None
+    return "spatial_query" if c.sr.is_space_geometry_question(c.query) else None
+
+
+ANOMALY_HISTORY_RE = re.compile(
+    r"\banomal(?:y|ies|ous)\b|\bunusual (?:readings?|behaviou?rs?|activity|patterns?)\b"
+    r"|\bweird (?:data|readings?|values?)\b|\boutliers?\b|\bsensor (?:faults?|glitch(?:es)?)\b",
+    re.IGNORECASE,
+)
+
+
+def _r_anomaly_history_to_events(c: _Ctx) -> Optional[str]:
+    """Anomaly questions -> the scanner's persisted episodes (V5-T21).
+
+    The events store holds durable anomaly episodes with stable IDs (T19); a
+    fresh z-score pass over one fetch cannot see stuck/dropout/drift history.
+    Claims 'report' too — the LLM labelled "any anomalies this week?" a
+    report and GENERATED a document asserting zero data (live shakedown) —
+    but an explicit document ask ("generate the anomaly report") keeps the
+    report pipeline."""
+    if c.intent == "report":
+        if re.search(
+            r"\b(?:generate|create|produce|prepare|compile|write|draft)\b.{0,40}\breport\b",
+            c.query,
+            re.IGNORECASE,
+        ):
+            return None  # a document request, not a question
+    elif c.intent not in _WEAK_INTENTS + ("anomaly", "sensor_data", "analytics"):
+        return None
+    if c.sr.is_control_command(c.query):
+        return None
+    return "events" if ANOMALY_HISTORY_RE.search(c.query) else None
+
+
+def _r_superlative_room_takeover(c: _Ctx) -> Optional[str]:
+    """Room-superlative shape classified analytics/sensor_data → deliberate (BUG-163).
+
+    Post-saturation the deliberative path holds full per-room coverage on every
+    modality; generic analytics demonstrably cannot rank rooms (it aggregated a
+    hardware-scale column into '0.00 ppm' answers). Lowest precedence: it fires
+    only when no earlier rule (comfort question, compare, data promotion) did.
+    """
+    if c.intent not in ("analytics", "sensor_data"):
+        return None
+    return "deliberate" if DELIBERATE_RE.search(c.query) else None
+
+
 def _r_data_query_promotion(c: _Ctx) -> Optional[str]:
     """A value/reading question naming a place + measurable → sensor_data (post stage).
 
@@ -598,7 +932,24 @@ def _r_building_not_general(c: _Ctx) -> Optional[str]:
 # Precedence order is the contract. Historical rules keep their historical order;
 # the two automation-shape rules (2026-07-30) slot after the report-intake pair so
 # genuine reports and comfort questions still win.
+def _r_inference_privacy(c: _Ctx) -> Optional[str]:
+    """Person-tracking / private-content / policy-override shapes → the
+    privacy-refusal lane, FIRST — before clarification can ask 'which
+    professor?' and before any data lane runs (V5-T42, traps P2xx/P5xx/P6xx).
+    Fires from ANY intent: these denials are absolute in every profile."""
+    from orchestrator.services.privacy.inference_classes import (  # local: no cycle
+        classify_inference,
+    )
+
+    return "privacy_refusal" if classify_inference(c.query) else None
+
+
 PARSE_STAGE_RULES: Tuple[Rule, ...] = (
+    Rule(
+        "inference_privacy_denial",
+        "individual presence/pattern/private-content/override shapes → refusal (V5-T42)",
+        _r_inference_privacy,
+    ),
     Rule(
         "compare_two_referents",
         "comparison keywords + ≥2 entities/floors → compare (never compliance/analytics)",
@@ -661,6 +1012,11 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         _r_report_intake,
     ),
     Rule(
+        "report_request_not_capability",
+        "'give me a report on <measured thing>' -> report, never a capability blurb",
+        _r_report_request_not_capability,
+    ),
+    Rule(
         "self_description",
         "a question about the ASSISTANT → self_description, never open-domain",
         _r_self_description,
@@ -690,6 +1046,46 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "automation_capability_question",
         "'can the system automatically …?' → automation_capability",
         _r_automation_question,
+    ),
+    Rule(
+        "constraint_recommendation",
+        "choose/rank spaces under comfort constraints → deliberate (V4 ARBITER)",
+        _r_constraint_recommendation,
+    ),
+    Rule(
+        "superlative_room_takeover",
+        "room-superlative classified analytics/sensor_data → deliberate (BUG-163)",
+        _r_superlative_room_takeover,
+    ),
+    Rule(
+        "event_store_query",
+        "bookings / work orders / footfall → events lane (V5-T24)",
+        _r_event_store_query,
+    ),
+    Rule(
+        "compliance_register",
+        "dated compliance-register questions → register lane (V5-T26)",
+        _r_compliance_register,
+    ),
+    Rule(
+        "why_diagnosis",
+        "comfort why-questions → diagnosis lane (V5-T20)",
+        _r_why_diagnosis,
+    ),
+    Rule(
+        "wayfinding_spatial",
+        "route / nearest-facility questions → spatial route finder (V5-T27)",
+        _r_wayfinding_spatial,
+    ),
+    Rule(
+        "room_geometry_spatial",
+        "area / size of a named room → floor-plan geometry, not capability",
+        _r_room_geometry_spatial,
+    ),
+    Rule(
+        "anomaly_history_to_events",
+        "anomaly questions → persisted detector episodes (V5-T21)",
+        _r_anomaly_history_to_events,
     ),
 )
 
@@ -760,4 +1156,7 @@ def apply_contract(
         logger.info(f"[routing-contract] {rule.name}: '{old}' → '{new_intent}' — {rule.shape}")
     if applied:
         normalized.setdefault("routing_rules_applied", []).extend(applied)
+    # stamp which stages ran even when nothing applied, so callers can detect a
+    # path that skipped the parse stage (CAVEAT: the JSON-parse fallback did)
+    normalized.setdefault("routing_stages_run", []).append(stage)
     return applied

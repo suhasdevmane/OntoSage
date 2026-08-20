@@ -234,13 +234,18 @@ When you switch providers, the `CapabilityIndexer` detects the vector-dimension 
 
 ### Switch with one command
 
-```bash
-# To OpenAI (default)
-EMBEDDING_PROVIDER=openai docker compose restart orchestrator
+Edit `EMBEDDING_PROVIDER` in `.env`, then **recreate** the container:
 
-# To local MiniLM (offline, no API cost)
-EMBEDDING_PROVIDER=local docker compose restart orchestrator
+```bash
+# To OpenAI (default):   set EMBEDDING_PROVIDER=openai in .env
+# To local (offline):    set EMBEDDING_PROVIDER=local  in .env
+docker compose up -d orchestrator      # NOT `restart` — see below
 ```
+
+> ⚠️ `docker compose restart` reuses the environment from container creation, so
+> an edited `.env` has no effect and a shell prefix (`EMBEDDING_PROVIDER=local
+> docker compose restart …`) only sets the variable for the compose CLI, never
+> inside the container (CAVEAT-178, verified 2026-08-18).
 
 Verify the new dimension after restart:
 

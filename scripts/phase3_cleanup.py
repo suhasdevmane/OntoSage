@@ -62,6 +62,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # Each cleanup operation: (description, file_path, transformer_function)
 # Each transformer takes the file's text and returns the transformed text.
 
+
 def _cleanup_capability_kw(text: str) -> str:
     """Remove the _CAPABILITY_KW frozenset definition entirely."""
     # Match from "# Off-ontology capability keywords" comment block through the
@@ -179,26 +180,26 @@ def _invert_kb_search_test(text: str) -> str:
     exist.  This keeps the unit-test suite green after cleanup.
     """
     old_block = (
-        'def test_capability_kb_search_method_exists_in_phase1():\n'
+        "def test_capability_kb_search_method_exists_in_phase1():\n"
         '    """Test 7: CapabilityKB.search() still exists in Phase 1 (will be removed in Phase 3).\n'
-        '\n'
-        '    This guards against accidentally deleting search() before the migration is\n'
-        '    complete — it is still the fallback path while the feature flag is OFF.\n'
-        '    Phase 3 cleanup explicitly inverts this assertion.\n'
+        "\n"
+        "    This guards against accidentally deleting search() before the migration is\n"
+        "    complete — it is still the fallback path while the feature flag is OFF.\n"
+        "    Phase 3 cleanup explicitly inverts this assertion.\n"
         '    """\n'
         '    assert hasattr(CapabilityKB, "search")\n'
-        '    assert callable(CapabilityKB.search)\n'
+        "    assert callable(CapabilityKB.search)\n"
     )
     new_block = (
-        'def test_capability_kb_search_method_removed_after_phase3():\n'
+        "def test_capability_kb_search_method_removed_after_phase3():\n"
         '    """Test 7 (Phase 3 inversion): CapabilityKB.search() has been removed.\n'
-        '\n'
-        '    Phase 3 cleanup deleted the legacy substring-search method.  Semantic\n'
-        '    routing is now the single source of truth for capability lookup.\n'
+        "\n"
+        "    Phase 3 cleanup deleted the legacy substring-search method.  Semantic\n"
+        "    routing is now the single source of truth for capability lookup.\n"
         '    """\n'
         '    assert not hasattr(CapabilityKB, "search"), (\n'
         '        "CapabilityKB.search() should be removed after Phase 3 cleanup"\n'
-        '    )\n'
+        "    )\n"
     )
     return text.replace(old_block, new_block)
 
@@ -206,26 +207,52 @@ def _invert_kb_search_test(text: str) -> str:
 # ── Operation registry ──────────────────────────────────────────────────────────
 
 OPERATIONS: List[Tuple[str, Path, Callable[[str], str]]] = [
-    ("delete _CAPABILITY_KW frozenset",
-     ROOT / "orchestrator/agents/dialogue_agent.py", _cleanup_capability_kw),
-    ("delete _STRONG_FACILITY_KW frozenset",
-     ROOT / "orchestrator/agents/dialogue_agent.py", _cleanup_strong_facility_kw),
-    ("delete cache-hit-path keyword override",
-     ROOT / "orchestrator/agents/dialogue_agent.py", _cleanup_cache_hit_override),
-    ("delete hot-path keyword override",
-     ROOT / "orchestrator/agents/dialogue_agent.py", _cleanup_hot_path_override),
-    ("flatten feature-flag guards",
-     ROOT / "orchestrator/agents/dialogue_agent.py", _cleanup_feature_flag_guards),
-    ("delete feature flag from config.py",
-     ROOT / "shared/config.py", _cleanup_flag_definition),
-    ("delete CapabilityKB.search() method",
-     ROOT / "shared/capability_schema.py", _cleanup_capability_kb_search),
-    ("delete capability_agent kb.search fallback",
-     ROOT / "orchestrator/agents/capability_agent.py", _cleanup_capability_agent_fallback),
-    ("delete 'keyword' option from fallback_on_qdrant_failure",
-     ROOT / "shared/capability_schema.py", _cleanup_fallback_keyword_option),
-    ("invert CapabilityKB.search() existence test",
-     ROOT / "tests/test_capability_routing_config.py", _invert_kb_search_test),
+    (
+        "delete _CAPABILITY_KW frozenset",
+        ROOT / "orchestrator/agents/dialogue_agent.py",
+        _cleanup_capability_kw,
+    ),
+    (
+        "delete _STRONG_FACILITY_KW frozenset",
+        ROOT / "orchestrator/agents/dialogue_agent.py",
+        _cleanup_strong_facility_kw,
+    ),
+    (
+        "delete cache-hit-path keyword override",
+        ROOT / "orchestrator/agents/dialogue_agent.py",
+        _cleanup_cache_hit_override,
+    ),
+    (
+        "delete hot-path keyword override",
+        ROOT / "orchestrator/agents/dialogue_agent.py",
+        _cleanup_hot_path_override,
+    ),
+    (
+        "flatten feature-flag guards",
+        ROOT / "orchestrator/agents/dialogue_agent.py",
+        _cleanup_feature_flag_guards,
+    ),
+    ("delete feature flag from config.py", ROOT / "shared/config.py", _cleanup_flag_definition),
+    (
+        "delete CapabilityKB.search() method",
+        ROOT / "shared/capability_schema.py",
+        _cleanup_capability_kb_search,
+    ),
+    (
+        "delete capability_agent kb.search fallback",
+        ROOT / "orchestrator/agents/capability_agent.py",
+        _cleanup_capability_agent_fallback,
+    ),
+    (
+        "delete 'keyword' option from fallback_on_qdrant_failure",
+        ROOT / "shared/capability_schema.py",
+        _cleanup_fallback_keyword_option,
+    ),
+    (
+        "invert CapabilityKB.search() existence test",
+        ROOT / "tests/test_capability_routing_config.py",
+        _invert_kb_search_test,
+    ),
 ]
 
 
@@ -234,10 +261,10 @@ OPERATIONS: List[Tuple[str, Path, Callable[[str], str]]] = [
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Show changes without writing")
-    parser.add_argument("--no-backup", action="store_true",
-                        help="Skip .bak_phase3 file backup (NOT RECOMMENDED)")
+    parser.add_argument("--dry-run", action="store_true", help="Show changes without writing")
+    parser.add_argument(
+        "--no-backup", action="store_true", help="Skip .bak_phase3 file backup (NOT RECOMMENDED)"
+    )
     args = parser.parse_args()
 
     print("=" * 72)
@@ -297,8 +324,14 @@ def main():
     print("\n[verify] grep checks (all must return zero matches):\n")
     checks = [
         (["grep", "-rn", "_CAPABILITY_KW", "orchestrator/", "shared/"], "_CAPABILITY_KW removed"),
-        (["grep", "-rn", "_STRONG_FACILITY_KW", "orchestrator/", "shared/"], "_STRONG_FACILITY_KW removed"),
-        (["grep", "-rn", "CAPABILITY_SEMANTIC_ROUTING_ENABLED", "orchestrator/", "shared/"], "feature flag removed"),
+        (
+            ["grep", "-rn", "_STRONG_FACILITY_KW", "orchestrator/", "shared/"],
+            "_STRONG_FACILITY_KW removed",
+        ),
+        (
+            ["grep", "-rn", "CAPABILITY_SEMANTIC_ROUTING_ENABLED", "orchestrator/", "shared/"],
+            "feature flag removed",
+        ),
     ]
     any_fail = False
     for cmd, label in checks:
@@ -312,8 +345,10 @@ def main():
             print(f"  [PASS] {label}")
 
     if any_fail:
-        print("\nSome cleanup operations did not remove all references. "
-              "Review the offending lines manually and re-run.")
+        print(
+            "\nSome cleanup operations did not remove all references. "
+            "Review the offending lines manually and re-run."
+        )
         sys.exit(1)
 
     print("\nCleanup complete. Recommended next steps:")

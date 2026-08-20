@@ -1,0 +1,1597 @@
+# SATURATE (V4-T08): simulated illuminance sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'light_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://buildsys.org/ontologies/bldg3#> .
+
+<http://buildsys.org/ontologies/bldg3#light_data>
+    a ref:Database ;
+    rdfs:label "Light Data" .
+
+<http://buildsys.org/ontologies/bldg3#RM007_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM007_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM007_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fa986c36-7f75-55cd-9069-f481e5670c19" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM039_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM039_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM039_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b0b7b482-0e77-5d1c-95fe-d0b875334485" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM100A_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM100A_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM100A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cd2653d5-8397-56b1-b782-b9203ea06c17" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM103_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM103_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM103_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "59f87a18-9f30-528e-a742-a661b7c8f18f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM107_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM107_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM107_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "225452bb-2fd5-59b4-b112-62175b94204b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM108_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM108_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM108_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "250bdcd0-4aad-5f0b-948a-4d3682241928" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM109_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM109_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM109_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "010d363d-e74e-5d0a-b62d-7de84efc55cf" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM111_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM111_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM111_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c2b4a7ae-d924-5856-b098-e7a23de37f6a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM112_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM112_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM112_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9fd5d85c-0d91-5894-b52e-271f6ac6d312" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM114_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM114_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM114_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f149485b-c09e-5271-b1fd-33913ad9cc87" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM115_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM115_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM115_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dbe710f3-508f-5493-8538-525b68cd7537" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM117_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM117_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM117_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6f0b2a4a-f514-56a6-acc6-77d574e05c6d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM118_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM118_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM118_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9e93d00e-d394-5541-a726-3af3619b1d9f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM120_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM120_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM120_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7744c984-16c2-5cb1-bf6b-40af30d9b083" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM122_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM122_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM122_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b4229642-0541-5c24-91fd-7e349be431a6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM123_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM123_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM123_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a6ff8480-436d-504e-9c23-d80f13c6dcba" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM124_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM124_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM124_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7b955a60-fca9-5f0d-afda-99a3e679ebee" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM125_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM125_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM125_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8c11aa77-fa3f-54fd-a252-52fface31e89" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM126_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM126_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM126_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "72000cbe-e8d2-5d20-9083-d915f07e69db" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM128_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM128_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM128_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5e333944-26fc-5324-9393-8102bca4a6d2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM131_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM131_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM131_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "af106f5f-a4e3-5616-97ee-2d06b249244b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM133_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM133_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM133_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "abef531a-97c8-5566-a3ae-32bca20585a9" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM143_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM143_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM143_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "40e594cd-7628-510a-8a37-2e38eed57c09" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM149_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM149_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM149_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f0e61fea-216a-5cf3-aa8b-18926cc0dca6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM157_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM157_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM157_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "aa7b25cb-0de2-5954-b26f-3caaf8f0b8fd" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM159_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM159_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM159_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "aa772007-1a90-541e-94ff-50d5a001a3de" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM161_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM161_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM161_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b31581c7-f8b2-50ae-bc1b-3fbd4be26222" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163A_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163A_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c7e52b3d-62ce-54da-bf4e-3baf9f226e2e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163B_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163B_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "27445e7a-5eb9-560a-8a92-7b8f17cbddd8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163C_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163C_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9a6b7d46-8f40-5015-9bd0-b64a6ef97dd2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163E_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163E_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163E_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ef4993e3-5a2f-537f-adfa-4081f6fad2bc" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163F-B_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163F-B_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163F-B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ac21ae50-35c2-52db-805b-51f34719189c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163F_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163F_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163F_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "287c1276-6c65-5423-99f2-306e5315ef44" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163G_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163G_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163G_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e050e4b2-2a93-52fc-8aca-387dd9083f87" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163I_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163I_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163I_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b7cd2bf6-c5ed-5548-ae38-ba0054e93604" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163J_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163J_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163J_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a7ed02c8-01cd-5dfb-9b55-852422f46499" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163K-B_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163K-B_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163K-B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7d91eea9-8377-5a50-a0b8-cf00448bd015" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163K_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163K_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163K_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "34f71622-de6a-5023-b38e-97a4fbb2c890" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163N-B_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163N-B_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163N-B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bdfda78e-181b-571f-891c-a1623e02c36a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM163N_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM163N_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM163N_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4d4ebe54-0ae2-57d6-8a1a-584efe9b151f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM166_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM166_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM166_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cc01a873-ba07-52a5-b201-0c19a6281d00" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM171_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM171_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM171_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "74e633d8-5021-584f-84df-710ee15888b7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM172_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM172_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM172_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6fc1f679-bf4d-5447-a3e4-8bab428bc444" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM175E_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM175E_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM175E_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "19f071b7-0180-5db9-846e-2c1ec2c60010" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM175W_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM175W_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM175W_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d0a7e8ec-b2ef-5882-b1c5-b8fd0ed90534" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM176_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM176_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM176_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fafcc81b-d9ed-59a7-b546-a624ca7113cb" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM184_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM184_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM184_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0e57698e-da83-5f1c-852f-8b336e6f5f52" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM190_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM190_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM190_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e1c85c69-23fe-506d-8354-c1d99e8b6003" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM200C_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM200C_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM200C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eedd6c53-b716-569f-b3f8-f7ff5771891b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM201_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM201_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM201_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "704ded51-c030-5c55-a5dc-0cea645857d5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM203_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM203_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM203_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "47cd3122-2ee9-5927-b8b8-903dac1ebb8b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM206_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM206_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM206_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a7af8963-3253-51d7-94e2-b1d9cd25e4fc" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM207_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM207_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM207_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "77934685-c430-5113-9726-3898a3e260ee" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM208_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM208_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM208_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5cfc1371-079d-59be-9e44-e2d5feee4a2f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM209_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM209_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM209_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "907766f5-e7a5-515b-b2b8-2cb01bc5fe81" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM210_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM210_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM210_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6c2310cf-70b8-5c1e-8604-3cc0be08e3df" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM211_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM211_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM211_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c12df63a-b84c-58a9-b766-924e032082e6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM212_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM212_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM212_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3c6ac4ca-6822-5e63-95f6-d994fa7a7b60" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM213_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM213_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM213_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "030fea09-77a8-5966-a5e5-ca6bfac12913" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM214_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM214_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM214_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "449f64c7-f8e0-5e27-9173-25564bb8a13f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM216_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM216_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM216_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e73e71d0-060d-5b80-ab81-31046f25b7b7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM217_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM217_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM217_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fbfa2045-2728-5530-99d5-a075480d4c38" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM220_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM220_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM220_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9933d811-2586-5396-8424-5573bfb26e6c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM222_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM222_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM222_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8535b0dc-2c74-58ad-940c-1aef69eaf8d6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM223_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM223_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM223_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c495ab6a-477a-5d44-a38e-16951272428d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM224_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM224_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM224_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "49320dde-161f-5bd7-a8c2-a4f23aa28feb" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM225_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM225_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM225_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0140c367-d19e-5a1f-9990-fe344dd8effc" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM226_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM226_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM226_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3a000534-e8df-5e79-87cc-b0438d985410" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM227_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM227_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM227_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eeadc18e-d4e3-58e1-ac8d-d300e33af902" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM228_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM228_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM228_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3627cb5c-be84-5899-a3e2-9c3d709314a8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM231_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM231_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM231_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "de36ce6b-3996-50f8-a596-37549abdd75b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM233_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM233_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM233_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dce32905-b699-5aeb-bb27-a156557d62f6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM239_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM239_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM239_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a00f92f8-9948-571d-a5f5-76c03466ca25" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM241_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM241_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM241_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "52521f43-f551-5d19-8ef9-dd2a336da561" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM247_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM247_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM247_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "88c4de7e-4914-56c4-9348-ff3f12d406dc" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM249_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM249_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM249_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5e4a4ada-eb0d-5eba-8117-1fcb5d18c133" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM251_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM251_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM251_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c2e40b32-a0df-54ee-b958-ce2d04ff9821" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM253_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM253_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM253_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "040e03f6-b436-586a-985b-6d238ff13df3" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM259A_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM259A_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM259A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "91782948-6386-5bec-925c-9e236daffb8b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM259_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM259_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM259_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b1b7a586-fbb8-5b1d-8a88-ad6106a47c54" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM266_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM266_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM266_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cc1be90a-e835-5eb5-b254-6aea24f3e0ab" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM267_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM267_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM267_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "499c2d32-7925-5dc9-8502-72f5064f3ea3" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM270_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM270_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM270_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ec28dea7-c304-5c2e-81e2-dfdae7eaf1e3" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM271_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM271_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM271_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a12a3742-f44e-5927-9873-a572d8f4a3fc" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM272_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM272_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM272_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "69382717-56c8-50c6-b4e3-a5527537b89e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM275_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM275_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM275_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "01530e42-a76d-5187-ba6a-169e3a198688" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM276_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM276_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM276_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6ade2f94-51d3-59b2-96dc-a2ea4ef28452" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM278_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM278_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM278_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e22e7f7a-03b7-5b5b-b18b-d5a1069bace1" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM281_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM281_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM281_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5f044728-fb19-568c-95db-818368cdeddb" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM300C_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM300C_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM300C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6409b90e-4ca8-5fc6-af22-e9599d6fc660" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM301A_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM301A_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM301A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "367291c6-40c9-5b19-97b5-3d8ba4bf8700" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM306_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM306_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM306_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1488ecf6-6446-5f09-b707-e804156f89ab" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM308_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM308_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM308_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "302a2482-7bd7-5b23-acc4-c955e2e7fc45" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM309_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM309_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM309_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e0757460-c9ad-541a-980d-344307c5e305" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM310_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM310_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM310_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3d859a7b-a2d8-5c5e-818b-dd3e591895f9" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM311_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM311_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM311_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4c2d7134-6d26-543b-a8dc-9248bd7a14d5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM312_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM312_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM312_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "828feda8-6f08-51aa-bb19-dec891594ccf" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM314_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM314_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM314_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a3b28434-4202-5868-a8ea-3e4cbe581e1b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM315_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM315_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM315_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "757b2cc9-f8f3-57b9-ad09-fcd60aa9afd9" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM316_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM316_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM316_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1b368d9c-ed92-5830-b812-5d52de3ddcac" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM317_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM317_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM317_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f5f50fdf-845f-5939-a69f-e7e208cdbd9d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM320_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM320_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM320_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9aba1864-d456-54ed-a95a-3b631a661c24" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM322_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM322_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM322_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c3ca3722-0a46-5371-8b9c-eb19df8980a7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM323_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM323_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM323_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3ac50eda-be0e-5486-99b4-6fb9302152de" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM324_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM324_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM324_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "30ef0e4a-570b-519f-81e5-14350aea3ef2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM325_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM325_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM325_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1f76fe40-3c4e-5d0e-92b9-3822755a31e2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM326_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM326_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM326_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "30d2123f-735c-5572-b9e2-d1699dae9db6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM327_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM327_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM327_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a56cf16b-94a1-59eb-9cc7-61df38f4fc55" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM328_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM328_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM328_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b8388327-fe73-5361-bbfd-3a2138f87140" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM331_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM331_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM331_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4e2cf622-d144-54f1-a057-27ddf516f326" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM333_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM333_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM333_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "524b5614-d5f8-5a71-9229-677bf2d428a8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM339_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM339_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM339_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ff31fee8-24e6-5cb1-b8df-30440dcf2e0a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM341_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM341_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM341_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "59a1fa36-9693-539a-89f3-234f1788f06e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM345_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM345_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM345_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8f795dbf-f7fd-5c87-8044-940c52f5490c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM347_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM347_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM347_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "716dfd56-eafe-5036-9b0a-f2779174c059" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM349_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM349_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM349_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5843fd3f-fa2b-5893-8136-dff6220bc2ac" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM350_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM350_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM350_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b330bded-8e3d-5592-97fa-39d55b36617f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM351_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM351_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM351_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00d89bd6-991e-52be-8d34-b68bfb35beeb" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM353_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM353_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM353_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bde38101-d02a-5b57-842c-891be1f2f4b9" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM357_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM357_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM357_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2ca359e0-38f9-5cfa-941f-100ced29dc13" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM359_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM359_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM359_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f036ba4b-00f0-5170-a890-c2b266ca4a6f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM369_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM369_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM369_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f95fc69e-20b3-53fa-a3c4-3040e7622de7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM370_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM370_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM370_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b8b5f76c-5ce0-53c3-89b4-f3c740f001dc" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM371_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM371_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM371_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "81da632f-222f-585f-bcba-e8dcb89ed9b3" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM372_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM372_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM372_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3a203b42-c5b0-5f32-9bea-31798c6e1736" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM373_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM373_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM373_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "71d7d9fc-cefa-58ac-9d70-3d9bd14e27b3" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM375_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM375_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM375_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "516c8094-8787-5fc5-bfe5-87f21b021bb0" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM377_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM377_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM377_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "234d8653-f9f1-5433-b8f2-54e5f94e710c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM378_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM378_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM378_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "62c5b072-b421-59ee-987a-b85f73c44490" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM380A_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM380A_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM380A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1577d3c1-790d-5af6-a268-09293ab79022" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM381_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM381_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM381_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1512b1e8-2bff-5392-8c53-361bb084e9df" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg3#RM385_room_sat_illuminance>
+    a brick:Illuminance_Sensor ;
+    rdfs:label "RM385_room illuminance (simulated) [lux]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM385_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "53660bb1-1083-56fb-90d7-8e4cc270505a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg3#light_data> ;
+    ] .

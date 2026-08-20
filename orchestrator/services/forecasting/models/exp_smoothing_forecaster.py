@@ -55,14 +55,14 @@ class ExpSmoothingForecaster:
 
         # Build model with appropriate complexity
         kwargs = dict(initialization_method="estimated")
-        use_seasonal = (
-            self.seasonal_periods is not None
-            and n_train >= 2 * self.seasonal_periods
-        )
+        use_seasonal = self.seasonal_periods is not None and n_train >= 2 * self.seasonal_periods
         if use_seasonal:
             model = ExponentialSmoothing(
-                train_series, trend="add", seasonal="add",
-                seasonal_periods=self.seasonal_periods, **kwargs,
+                train_series,
+                trend="add",
+                seasonal="add",
+                seasonal_periods=self.seasonal_periods,
+                **kwargs,
             )
             self.name = f"Holt-Winters (seasonal={self.seasonal_periods})"
         elif n_train >= 10:
@@ -119,6 +119,7 @@ class ExpSmoothingForecaster:
 
         for alpha in ci_levels:
             from scipy import stats as _stats
+
             z = float(_stats.norm.ppf((1 + alpha) / 2))
             pct = int(alpha * 100)
             result[f"lower_{pct}"] = (point_forecast - z * se).tolist()

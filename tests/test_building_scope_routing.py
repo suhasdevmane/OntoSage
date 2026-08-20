@@ -16,7 +16,10 @@ Nothing here may name a building: the same rules route every building.
 
 import pytest
 
-from orchestrator.services.grounding_guard import has_measurand_concept, is_building_specific
+from orchestrator.services.grounding_guard import (
+    has_measurand_concept,
+    is_building_specific,
+)
 from orchestrator.services.routing_contract import apply_contract
 
 pytestmark = pytest.mark.unit

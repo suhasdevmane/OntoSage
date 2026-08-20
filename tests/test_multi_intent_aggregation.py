@@ -10,9 +10,10 @@ Fix: _execute_multi_intent injects the SQL result as a sensor_data section
 after the data pipeline completes and before the parallel phase.
 """
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 
 @pytest.mark.asyncio
@@ -65,19 +66,21 @@ async def test_sensor_data_section_included_in_multi_intent_result():
             "markdown": "## Floor 2 Plan\nRoom A, Room B",
         }
 
-    with patch.object(agent, "_run_sparql", side_effect=fake_sparql), \
-         patch.object(agent, "_run_sql", side_effect=fake_sql), \
-         patch.object(agent, "_run_floor_plan", side_effect=fake_floor_plan):
+    with patch.object(agent, "_run_sparql", side_effect=fake_sparql), patch.object(
+        agent, "_run_sql", side_effect=fake_sql
+    ), patch.object(agent, "_run_floor_plan", side_effect=fake_floor_plan):
         result = await agent.plan_and_execute(state, state.messages[-1].content)
 
     assert result.get("success") is True, f"Plan failed: {result}"
     response = result.get("formatted_response", "")
 
     # Both sensor data AND floor plan content must be present
-    assert any(term in response for term in ["CO2", "450", "co2", "Sensor"]), \
-        f"Sensor data content missing from response:\n{response[:500]}"
-    assert any(term in response for term in ["Floor 2 Plan", "Room A", "floor", "layout"]), \
-        f"Floor plan content missing from response:\n{response[:500]}"
+    assert any(
+        term in response for term in ["CO2", "450", "co2", "Sensor"]
+    ), f"Sensor data content missing from response:\n{response[:500]}"
+    assert any(
+        term in response for term in ["Floor 2 Plan", "Room A", "floor", "layout"]
+    ), f"Floor plan content missing from response:\n{response[:500]}"
 
 
 @pytest.mark.asyncio
@@ -119,14 +122,16 @@ async def test_multi_intent_floor_plan_only_not_broken():
     async def fake_spatial_query(state, step):
         return {"formatted_text": "Floor 3 has 34 rooms.", "success": True}
 
-    with patch.object(agent, "_run_floor_plan", side_effect=fake_floor_plan), \
-         patch.object(agent, "_run_spatial_query", side_effect=fake_spatial_query):
+    with patch.object(agent, "_run_floor_plan", side_effect=fake_floor_plan), patch.object(
+        agent, "_run_spatial_query", side_effect=fake_spatial_query
+    ):
         result = await agent.plan_and_execute(state, state.messages[-1].content)
 
     assert result.get("success") is True
     response = result.get("formatted_response", "")
-    assert "Floor 3" in response or "34" in response, \
-        f"Expected floor plan content in response:\n{response[:300]}"
+    assert (
+        "Floor 3" in response or "34" in response
+    ), f"Expected floor plan content in response:\n{response[:300]}"
 
 
 @pytest.mark.asyncio
@@ -171,17 +176,19 @@ async def test_sensor_data_not_injected_when_sql_empty():
             "markdown": "## Floor 2 Plan\nRoom A, Room B",
         }
 
-    with patch.object(agent, "_run_sparql", side_effect=fake_sparql), \
-         patch.object(agent, "_run_sql", side_effect=fake_sql), \
-         patch.object(agent, "_run_floor_plan", side_effect=fake_floor_plan):
+    with patch.object(agent, "_run_sparql", side_effect=fake_sparql), patch.object(
+        agent, "_run_sql", side_effect=fake_sql
+    ), patch.object(agent, "_run_floor_plan", side_effect=fake_floor_plan):
         result = await agent.plan_and_execute(state, state.messages[-1].content)
 
     # Should still succeed via floor_plan section
     assert result.get("success") is True
     response = result.get("formatted_response", "")
     # Floor plan should be present
-    assert "Floor 2 Plan" in response or "Room A" in response, \
-        f"Floor plan missing from response:\n{response[:300]}"
+    assert (
+        "Floor 2 Plan" in response or "Room A" in response
+    ), f"Floor plan missing from response:\n{response[:300]}"
     # No sensor_data section injected when sql_result is None
-    assert "Sensor Readings" not in response, \
-        f"Unexpected sensor section in response:\n{response[:300]}"
+    assert (
+        "Sensor Readings" not in response
+    ), f"Unexpected sensor section in response:\n{response[:300]}"

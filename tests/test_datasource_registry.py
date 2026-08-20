@@ -244,12 +244,27 @@ def test_validator_point_missing_fields(tmp_path: Path):
 
 
 def test_seed_manifest_is_valid():
-    seed = Path("input/datasources.yaml")
+    # The seed being validated is BLDG1's manifest specifically (all-disabled
+    # toggles). Resolve it wherever bldg1 lives — parked folder or active input/
+    # — never another building's file that happens to be active.
+    seed = Path("bldg1/datasources.yaml")
     if not seed.exists():
-        pytest.skip("seed manifest not present")
-    ok, issues = validate_datasources_yaml(seed, input_root=Path("input"))
+        env = Path("input/env.building")
+        if env.exists() and "BUILDING_ID=bldg1" in env.read_text(encoding="utf-8"):
+            seed = Path("input/datasources.yaml")
+    if not seed.exists():
+        pytest.skip("bldg1 seed manifest not present")
+    ok, issues = validate_datasources_yaml(seed, input_root=seed.parent)
     assert ok, issues
-    reg = DataSourceRegistry("bldg1", input_root=Path("input"))
+    reg = DataSourceRegistry("bldg1", input_root=seed.parent)
     assert reg.load() >= 7
-    # every source disabled by default in the seed
-    assert reg.enabled_ids() == []
+    # Seed invariant: no capability is unlocked by default. TOGGLE sources
+    # (non-empty `unlocks`) ship disabled; SATURATE provenance-only sources
+    # (V4-T31, `unlocks: []`) are enabled by design — they gate nothing and
+    # exist so provenance chips render '· simulated' for the sat tables.
+    enabled = {s.id: s for s in reg.list() if s.enabled}
+    gating_enabled = [sid for sid, s in enabled.items() if getattr(s, "unlocks", [])]
+    assert gating_enabled == [], f"seed manifest enables gating sources: {gating_enabled}"
+    # provenance-only sources: the sat_* saturation legs + the V5 events store
+    # (bookings/work orders/access, T31) — all synthetic, none gate anything
+    assert all(sid.startswith("sat_") or sid == "events_store" for sid in enabled), sorted(enabled)
