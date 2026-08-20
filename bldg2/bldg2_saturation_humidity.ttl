@@ -1,0 +1,637 @@
+# SATURATE (V4-T08): simulated humidity sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'humidity_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://buildsys.org/ontologies/bldg2#> .
+
+<http://buildsys.org/ontologies/bldg2#humidity_data>
+    a ref:Database ;
+    rdfs:label "Humidity Data" .
+
+<http://buildsys.org/ontologies/bldg2#RM001A_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM001A_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM001A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "655f3cc1-27b3-5210-93ef-d831d2bddfea" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM001B_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM001B_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM001B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8e1003f5-1c7d-523b-a1f4-1ca12c64dcb3" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM002A_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM002A_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM002A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5eada775-2a99-54f6-b364-4b9393b68c82" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM002B_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM002B_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM002B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ab5fb02f-bd64-51e6-a4d5-79e22c16fe4c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM003_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM003_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM003_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c5195779-2b29-5794-a809-5d2bd5b99fdf" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM005_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM005_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM005_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9594d75c-4d96-550a-b0c3-6c524d035698" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM006_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM006_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM006_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "04d41527-2321-54ee-9293-30094e99475f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM007A_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM007A_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM007A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d6e957d8-f6c5-5e2b-b677-5a2059bbf9b8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM007B_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM007B_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM007B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f9ab5a43-5917-5663-85ac-2695b02805de" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM015A_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM015A_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM015A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dd10cc20-d7ac-5d3f-b288-b43f896a747b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM015B_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM015B_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM015B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cd3508a8-90f9-52e4-a00a-0afa57d12f07" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM019A_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM019A_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM019A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dc27acf0-3694-5efe-8424-77c46fcc006d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM019B_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM019B_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM019B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3c67279e-9d5b-5924-bcf7-172d371ddb5c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM025_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM025_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM025_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7408783f-7e14-5399-908d-04900ab00e5e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM026_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM026_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM026_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e1408c85-81e7-55ac-95ba-c15cd0b6bde0" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM027_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM027_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM027_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "999c43a6-0f96-5e38-88d6-b7446634a62a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM101_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM101_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM101_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c4fdb2e8-8d82-5a6f-895c-66f00d5c1dc2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM102C_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM102C_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM102C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "263084f1-5a85-5dc8-91e7-d03ef7a32171" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM103_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM103_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM103_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "86655fac-e10a-59b5-8f78-78f9debfc079" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM105_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM105_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM105_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "45684797-618e-5675-ba3f-1294d8e8a240" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM106_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM106_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM106_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c5491eda-3d82-5499-8c38-bb4fc2832db7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM107_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM107_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM107_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b39288eb-efb4-5c70-bc6f-7a6f38839112" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM109_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM109_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM109_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a974f0ac-2fd0-5c9c-a01c-ba932bb15158" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM111_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM111_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM111_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b549c11c-fa77-51d8-b1cf-88daae2b8c8d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM115_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM115_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM115_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e47ada3f-83fe-5c15-89eb-bb7524289112" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM119_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM119_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM119_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "85b7f537-8400-58fb-9f28-67328d39baaa" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM121_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM121_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM121_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4aa76bb3-4fdc-520d-a040-9110a795a2c0" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM123_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM123_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM123_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cfdbc421-b174-5778-9861-66a269b20fdf" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM125_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM125_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM125_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b33242d8-053d-5647-98c9-188e3450a2b0" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM126_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM126_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM126_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a027feb7-dc60-5d58-8d27-68653ebac4e6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM127_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM127_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM127_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "42a63bb7-3116-5314-b3e2-eb4ada3f3854" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM129_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM129_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM129_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dd32df43-dc84-5562-b1a2-cf96777509bf" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM201_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM201_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM201_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c91ac091-4580-53b7-8d18-68de452c9429" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM202_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM202_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM202_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2e7ba5ae-ef47-5497-b1f0-a61947a8db53" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM203_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM203_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM203_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "38870843-944a-5dbe-bc03-7e7a6d93bc7d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM205_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM205_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM205_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e6336466-1f3b-5fa1-8d98-6b6dca05c344" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM207_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM207_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM207_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4fe30762-4942-5a00-b3d3-0c1559f36a8f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM208_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM208_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM208_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c2ac3abd-27a3-5955-9ea5-0b943fe64fe2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM209_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM209_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM209_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "774c9f91-e82b-51b8-8a99-902e77e0e7bb" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM211_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM211_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM211_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2b97fb3a-2bf9-5dca-84cd-21843a917dcf" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM212_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM212_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM212_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1d6af90e-44c0-56f9-a7f1-61cfab9b88c5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM216_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM216_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM216_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "40cbb462-70ec-51b8-8610-8d3c728266a0" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM217_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM217_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM217_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e283b03c-e6af-5309-bc56-37b9ce6f9ec5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM220_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM220_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM220_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "151e46ff-66f4-5b78-a984-4e02fab54ce8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM221_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM221_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM221_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3395371d-f859-5688-9d7b-3b495eb6d2c9" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM226_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM226_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM226_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "da8c5316-2cea-562c-8aa0-2d396eb9ba99" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM229_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM229_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM229_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "14a4413e-0720-59af-a80d-af6dd186672a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM230_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM230_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM230_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "70b3ac15-0e35-570e-b1cf-d71bc38fe2fb" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM233_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM233_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM233_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a8335b48-7d25-539f-8101-94736beff171" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM234A_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM234A_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM234A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "09b96191-2aaa-5d0a-8fa1-017cf29bdb3b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM234_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM234_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM234_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e8fa6c96-eac6-5c6a-b7f0-347c44f5d4c8" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM235_room_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "RM235_room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM235_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b409b067-b345-5955-b114-d80945beff8a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#humidity_data> ;
+    ] .

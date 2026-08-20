@@ -43,7 +43,14 @@ def chat(message, session_id=None, building_id=None, personas=None, timeout=45):
             "raw": d,
         }
     except Exception as e:
-        return {"success": False, "intent": "ERROR", "response": str(e), "route": "", "elapsed": 0, "status_code": 0}
+        return {
+            "success": False,
+            "intent": "ERROR",
+            "response": str(e),
+            "route": "",
+            "elapsed": 0,
+            "status_code": 0,
+        }
 
 
 def check_intent(result, expected_intents, label):
@@ -71,22 +78,54 @@ section("PHASE 4 — INTENT ROUTING MATRIX (16 intents + 4 hijack tests)")
 
 ROUTING_TESTS = [
     # (query, [acceptable_intents], label)
-    ("What is the current CO2 level in zone 3?",            ["sensor_data","analytics","sparql"],          "sensor_data"),
-    ("Show average temperature trend for floor 2 last week",["analytics","sensor_data"],                   "analytics"),
-    ("What sensor types are installed in this building?",   ["discovery","sparql","general"],              "discovery"),
-    ("Generate an energy report for last month",            ["report","analytics"],                        "report"),
-    ("Were there any temperature spikes in the last 24 hours?", ["anomaly","analytics","sensor_data"],    "anomaly"),
-    ("Compare CO2 levels between floor 1 and floor 3",      ["comparison","analytics"],                    "comparison"),
-    ("Export sensor data for zone 5 as CSV",                ["export"],                                    "export"),
-    ("Predict temperature for tomorrow afternoon",          ["forecast","analytics"],                      "forecast"),
-    ("Show me floor 3 layout",                              ["floor_plan"],                                "floor_plan"),
-    ("How many rooms are on floor 2?",                      ["spatial_query","spatial"],                   "spatial_query"),
-    ("What maintenance work is scheduled this week?",       ["maintenance","report","general"],            "maintenance"),
-    ("Does this building have fire evacuation procedures?", ["capability","general_knowledge"],             "capability"),
-    ("Hello, what can you help me with?",                   ["general","general_knowledge","clarification"],"general"),
-    ("Turn off the lights in room 3.01",                    ["control","general","clarification"],         "control_unsupported"),
-    ("It",                                                  ["clarification","general"],                   "clarification"),
-    ("Alert me if CO2 exceeds 1000 ppm in any zone",        ["alert","anomaly","sensor_data"],             "alert"),
+    (
+        "What is the current CO2 level in zone 3?",
+        ["sensor_data", "analytics", "sparql"],
+        "sensor_data",
+    ),
+    (
+        "Show average temperature trend for floor 2 last week",
+        ["analytics", "sensor_data"],
+        "analytics",
+    ),
+    (
+        "What sensor types are installed in this building?",
+        ["discovery", "sparql", "general"],
+        "discovery",
+    ),
+    ("Generate an energy report for last month", ["report", "analytics"], "report"),
+    (
+        "Were there any temperature spikes in the last 24 hours?",
+        ["anomaly", "analytics", "sensor_data"],
+        "anomaly",
+    ),
+    ("Compare CO2 levels between floor 1 and floor 3", ["comparison", "analytics"], "comparison"),
+    ("Export sensor data for zone 5 as CSV", ["export"], "export"),
+    ("Predict temperature for tomorrow afternoon", ["forecast", "analytics"], "forecast"),
+    ("Show me floor 3 layout", ["floor_plan"], "floor_plan"),
+    ("How many rooms are on floor 2?", ["spatial_query", "spatial"], "spatial_query"),
+    (
+        "What maintenance work is scheduled this week?",
+        ["maintenance", "report", "general"],
+        "maintenance",
+    ),
+    (
+        "Does this building have fire evacuation procedures?",
+        ["capability", "general_knowledge"],
+        "capability",
+    ),
+    (
+        "Hello, what can you help me with?",
+        ["general", "general_knowledge", "clarification"],
+        "general",
+    ),
+    (
+        "Turn off the lights in room 3.01",
+        ["control", "general", "clarification"],
+        "control_unsupported",
+    ),
+    ("It", ["clarification", "general"], "clarification"),
+    ("Alert me if CO2 exceeds 1000 ppm in any zone", ["alert", "anomaly", "sensor_data"], "alert"),
 ]
 
 routing_pass = 0
@@ -100,10 +139,26 @@ for query, expected, label in ROUTING_TESTS:
 # Hijack prevention tests - floor keywords must NOT steal data queries
 print("\n  --- Anti-hijack tests: floor mentions must NOT route to floor_plan ---")
 HIJACK_TESTS = [
-    ("What is the temperature on floor 3?",            ["sensor_data","analytics","sparql","general_knowledge"],  "temperature-on-floor → NOT floor_plan"),
-    ("Show me analytics for floor 2 sensors",          ["analytics","sensor_data"],                               "analytics-for-floor → NOT floor_plan"),
-    ("How many CO2 sensors are on floor 1?",           ["discovery","sparql","spatial_query","general_knowledge"],"CO2-count-on-floor → NOT floor_plan"),
-    ("Compare energy usage on floor 1 vs floor 3",     ["comparison","analytics"],                                "energy-compare-floor → NOT floor_plan"),
+    (
+        "What is the temperature on floor 3?",
+        ["sensor_data", "analytics", "sparql", "general_knowledge"],
+        "temperature-on-floor → NOT floor_plan",
+    ),
+    (
+        "Show me analytics for floor 2 sensors",
+        ["analytics", "sensor_data"],
+        "analytics-for-floor → NOT floor_plan",
+    ),
+    (
+        "How many CO2 sensors are on floor 1?",
+        ["discovery", "sparql", "spatial_query", "general_knowledge"],
+        "CO2-count-on-floor → NOT floor_plan",
+    ),
+    (
+        "Compare energy usage on floor 1 vs floor 3",
+        ["comparison", "analytics"],
+        "energy-compare-floor → NOT floor_plan",
+    ),
 ]
 
 hijack_pass = 0
@@ -116,13 +171,17 @@ for query, expected, label in HIJACK_TESTS:
     status = PASS if ok else FAIL
     resp = result.get("response", "")[:100].replace("\n", " ")
     print(f"  {status} {label}")
-    print(f"         intent={got} hijacked={'YES' if hijacked else 'NO'}  [{result['elapsed']:.1f}s]")
+    print(
+        f"         intent={got} hijacked={'YES' if hijacked else 'NO'}  [{result['elapsed']:.1f}s]"
+    )
     if ok:
         hijack_pass += 1
 
 routing_score = routing_pass + hijack_pass
 routing_total_all = routing_total + len(HIJACK_TESTS)
-print(f"\n  ROUTING SCORE: {routing_score}/{routing_total_all} ({routing_score*100//routing_total_all}%)")
+print(
+    f"\n  ROUTING SCORE: {routing_score}/{routing_total_all} ({routing_score*100//routing_total_all}%)"
+)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -131,17 +190,17 @@ print(f"\n  ROUTING SCORE: {routing_score}/{routing_total_all} ({routing_score*1
 section("PHASE 5 — CAPABILITY KB COVERAGE (12 categories)")
 
 KB_TESTS = [
-    ("What are the fire evacuation procedures?",                    "fire safety"),
-    ("What happens if there is a power outage in the building?",    "power outage"),
-    ("How do I access the building after hours?",                   "access control"),
-    ("Where can I park near the building?",                         "parking"),
-    ("How do I print from my laptop in this building?",             "printing"),
-    ("Is there a prayer room or quiet room in the building?",       "wellbeing/quiet room"),
-    ("Does the building track my location or movements?",           "data privacy"),
-    ("Who manages this building and who should I contact?",         "building contact"),
-    ("Can I bring a visitor or guest to the building?",             "visitor policy"),
-    ("The office is too cold — who do I contact about comfort?",    "thermal comfort"),
-    ("How do I connect to WiFi in this building?",                  "WiFi"),
+    ("What are the fire evacuation procedures?", "fire safety"),
+    ("What happens if there is a power outage in the building?", "power outage"),
+    ("How do I access the building after hours?", "access control"),
+    ("Where can I park near the building?", "parking"),
+    ("How do I print from my laptop in this building?", "printing"),
+    ("Is there a prayer room or quiet room in the building?", "wellbeing/quiet room"),
+    ("Does the building track my location or movements?", "data privacy"),
+    ("Who manages this building and who should I contact?", "building contact"),
+    ("Can I bring a visitor or guest to the building?", "visitor policy"),
+    ("The office is too cold — who do I contact about comfort?", "thermal comfort"),
+    ("How do I connect to WiFi in this building?", "WiFi"),
     ("What green or sustainability certifications does this building have?", "sustainability"),
 ]
 
@@ -152,7 +211,16 @@ for query, category in KB_TESTS:
     resp = result.get("response", "").lower()
     got_intent = result.get("intent", "").lower()
     # KB success = intent is capability OR response contains substantive content (not just "I don't know")
-    has_content = len(resp) > 80 and not any(x in resp for x in ["i don't know", "i cannot", "no information", "not sure about", "not have information"])
+    has_content = len(resp) > 80 and not any(
+        x in resp
+        for x in [
+            "i don't know",
+            "i cannot",
+            "no information",
+            "not sure about",
+            "not have information",
+        ]
+    )
     is_capability = "capability" in got_intent or has_content
     status = PASS if is_capability else FAIL
     print(f"  {status} [{category}] intent={got_intent}")
@@ -208,13 +276,43 @@ print(f"\n  MULTI-INTENT SCORE: {multi_pass}/{len(MULTI_TESTS)}")
 section("PHASE 7 — PERSONA × INTENT SPOT-CHECK")
 
 PERSONA_TESTS = [
-    ("Show me a maintenance report for HVAC systems this week", ["facility_manager"],           ["report","analytics","maintenance"],    "facility_manager → report"),
-    ("What is the energy consumption trend for floor 2?",       ["energy_manager"],             ["analytics","sensor_data"],             "energy_manager → analytics"),
-    ("Is there a quiet room available on floor 3?",             ["occupant"],                   ["capability","floor_plan","general"],   "occupant → capability"),
-    ("What are the fire evacuation assembly points?",           ["safety_officer"],             ["capability","general_knowledge"],     "safety_officer → capability"),
-    ("Run a statistical analysis of CO2 sensor variance by floor", ["analyst"],                 ["analytics","sensor_data"],             "analyst → analytics"),
+    (
+        "Show me a maintenance report for HVAC systems this week",
+        ["facility_manager"],
+        ["report", "analytics", "maintenance"],
+        "facility_manager → report",
+    ),
+    (
+        "What is the energy consumption trend for floor 2?",
+        ["energy_manager"],
+        ["analytics", "sensor_data"],
+        "energy_manager → analytics",
+    ),
+    (
+        "Is there a quiet room available on floor 3?",
+        ["occupant"],
+        ["capability", "floor_plan", "general"],
+        "occupant → capability",
+    ),
+    (
+        "What are the fire evacuation assembly points?",
+        ["safety_officer"],
+        ["capability", "general_knowledge"],
+        "safety_officer → capability",
+    ),
+    (
+        "Run a statistical analysis of CO2 sensor variance by floor",
+        ["analyst"],
+        ["analytics", "sensor_data"],
+        "analyst → analytics",
+    ),
     # Blended persona test
-    ("What should I prioritise for building efficiency this week?", ["facility_manager","energy_manager"], ["analytics","report","general_knowledge"], "blended persona → analytics/report"),
+    (
+        "What should I prioritise for building efficiency this week?",
+        ["facility_manager", "energy_manager"],
+        ["analytics", "report", "general_knowledge"],
+        "blended persona → analytics/report",
+    ),
 ]
 
 persona_pass = 0
@@ -241,6 +339,7 @@ section("PHASE 8 — EDGE CASES")
 edge_pass = 0
 edge_total = 0
 
+
 def edge(label, fn):
     global edge_pass, edge_total
     edge_total += 1
@@ -253,45 +352,68 @@ def edge(label, fn):
     except Exception as e:
         print(f"  {FAIL} {label}: EXCEPTION {e}")
 
+
 # Empty query
 def test_empty():
     r = chat("")
     ok = r["status_code"] in (200, 400, 422)  # should not crash (500)
     return ok, f"status={r['status_code']} intent={r.get('intent','?')}"
+
+
 edge("Empty query (no 500)", test_empty)
+
 
 # Very long query (500 chars)
 def test_long():
-    q = "What is the current temperature and CO2 level in every single zone and floor of this building? " * 6
+    q = (
+        "What is the current temperature and CO2 level in every single zone and floor of this building? "
+        * 6
+    )
     r = chat(q[:500])
     ok = r["status_code"] not in (500, 0)
     return ok, f"status={r['status_code']} intent={r.get('intent','?')[:30]}"
+
+
 edge("500-char query (no 500)", test_long)
+
 
 # SQL injection attempt
 def test_sqli():
     r = chat("'; DROP TABLE sensors; --")
     ok = r["success"] and "error" not in r.get("response", "").lower()[:50]
     return ok, f"intent={r.get('intent','?')} response_safe={'yes' if ok else 'no'}"
+
+
 edge("SQL injection treated as NL", test_sqli)
+
 
 # Non-English query
 def test_nonen():
     r = chat("Quelle est la température au 3ème étage?")
     ok = r["status_code"] not in (500, 0) and len(r.get("response", "")) > 20
     return ok, f"status={r['status_code']} intent={r.get('intent','?')}"
+
+
 edge("Non-English query (no crash)", test_nonen)
+
 
 # Unknown building
 def test_unknown_bldg():
     try:
-        payload = {"message": "What sensors exist?", "session_id": f"edge-{uuid.uuid4().hex[:6]}", "building_id": "bldg99"}
+        payload = {
+            "message": "What sensors exist?",
+            "session_id": f"edge-{uuid.uuid4().hex[:6]}",
+            "building_id": "bldg99",
+        }
         r = requests.post(f"{BASE}/chat", headers=HEADERS, json=payload, timeout=30)
         ok = r.status_code != 500
         return ok, f"status={r.status_code}"
     except Exception as e:
         return False, str(e)
+
+
 edge("Unknown building_id (no 500)", test_unknown_bldg)
+
 
 # Multi-floor ambiguous — must NOT go to floor_plan
 def test_multi_floor():
@@ -299,7 +421,10 @@ def test_multi_floor():
     got = r.get("intent", "").lower()
     ok = "floor_plan" not in got
     return ok, f"intent={got} floor_plan_hijack={'NO' if ok else 'YES'}"
+
+
 edge("Multi-floor compare → NOT floor_plan", test_multi_floor)
+
 
 # Sensor + floor — must NOT go to floor_plan
 def test_sensor_floor():
@@ -307,6 +432,8 @@ def test_sensor_floor():
     got = r.get("intent", "").lower()
     ok = "floor_plan" not in got
     return ok, f"intent={got} floor_plan_hijack={'NO' if ok else 'YES'}"
+
+
 edge("Sensor+floor → NOT floor_plan", test_sensor_floor)
 
 print(f"\n  EDGE CASE SCORE: {edge_pass}/{edge_total}")
@@ -323,7 +450,7 @@ cache_pass = 0
 q_cap = "Does the building have fire evacuation procedures?"
 r1 = chat(q_cap, session_id=f"cache-a1-{uuid.uuid4().hex[:6]}")
 r2 = chat(q_cap, session_id=f"cache-a2-{uuid.uuid4().hex[:6]}")
-same_intent = r1.get("intent","").lower() == r2.get("intent","").lower()
+same_intent = r1.get("intent", "").lower() == r2.get("intent", "").lower()
 print(f"  {'✅ PASS' if same_intent else '❌ FAIL'} Cache consistency: same query → same intent")
 print(f"         r1_intent={r1.get('intent')} r2_intent={r2.get('intent')}")
 if same_intent:
@@ -333,19 +460,21 @@ if same_intent:
 q_temp = "What is the temperature on floor 3?"
 r_cold = chat(q_temp, session_id=f"cache-b1-{uuid.uuid4().hex[:6]}")
 r_warm = chat(q_temp, session_id=f"cache-b2-{uuid.uuid4().hex[:6]}")
-cold_ok = "floor_plan" not in r_cold.get("intent","").lower()
-warm_ok = "floor_plan" not in r_warm.get("intent","").lower()
+cold_ok = "floor_plan" not in r_cold.get("intent", "").lower()
+warm_ok = "floor_plan" not in r_warm.get("intent", "").lower()
 cache_floor_ok = cold_ok and warm_ok
-print(f"  {'✅ PASS' if cache_floor_ok else '❌ FAIL'} Temperature-on-floor not hijacked (cold+warm)")
+print(
+    f"  {'✅ PASS' if cache_floor_ok else '❌ FAIL'} Temperature-on-floor not hijacked (cold+warm)"
+)
 print(f"         cold_intent={r_cold.get('intent')} warm_intent={r_warm.get('intent')}")
 if cache_floor_ok:
     cache_pass += 1
 
 # 9c: Response cache in Redis
 import subprocess
+
 redis_keys = subprocess.run(
-    ["docker", "exec", "redis-memory-store", "redis-cli", "dbsize"],
-    capture_output=True, text=True
+    ["docker", "exec", "redis-memory-store", "redis-cli", "dbsize"], capture_output=True, text=True
 ).stdout.strip()
 print(f"  ℹ️  Redis total keys: {redis_keys}")
 print(f"\n  CACHE SCORE: {cache_pass}/2")
@@ -357,10 +486,10 @@ print(f"\n  CACHE SCORE: {cache_pass}/2")
 section("PHASE 10 — PERFORMANCE SPOT-CHECK")
 
 perf_queries = [
-    ("What is the current temperature in zone 3?",                 "sensor_query"),
-    ("What is the current temperature in zone 3?",                 "sensor_query_warm"),
-    ("Show average temperature trend for floor 2 last week",        "analytics_query"),
-    ("What floor plan does floor 2 look like?",                     "floor_plan_query"),
+    ("What is the current temperature in zone 3?", "sensor_query"),
+    ("What is the current temperature in zone 3?", "sensor_query_warm"),
+    ("Show average temperature trend for floor 2 last week", "analytics_query"),
+    ("What floor plan does floor 2 look like?", "floor_plan_query"),
 ]
 
 perf_pass = 0
@@ -389,8 +518,18 @@ print(f"  Persona × Intent:                {persona_pass}/{len(PERSONA_TESTS)}"
 print(f"  Edge Cases:                      {edge_pass}/{edge_total}")
 print(f"  Cache Behaviour:                 {cache_pass}/2")
 print(f"  Performance:                     {perf_pass}/{len(perf_queries)}")
-total_pass = routing_score + kb_pass + multi_pass + persona_pass + edge_pass + cache_pass + perf_pass
-total_all = routing_total_all + kb_total + len(MULTI_TESTS) + len(PERSONA_TESTS) + edge_total + 2 + len(perf_queries)
+total_pass = (
+    routing_score + kb_pass + multi_pass + persona_pass + edge_pass + cache_pass + perf_pass
+)
+total_all = (
+    routing_total_all
+    + kb_total
+    + len(MULTI_TESTS)
+    + len(PERSONA_TESTS)
+    + edge_total
+    + 2
+    + len(perf_queries)
+)
 pct = total_pass * 100 // total_all
 print(f"\n  OVERALL: {total_pass}/{total_all} ({pct}%)")
 print(f"  {'🟢 HEALTHY' if pct >= 80 else '🟡 DEGRADED' if pct >= 60 else '🔴 FAILING'}")

@@ -135,9 +135,7 @@ class LiveChatClient:
 
         t0 = time.time()
         for attempt in range(3):
-            r = requests.post(
-                f"{self.base}/chat", headers=headers, json=body, timeout=timeout
-            )
+            r = requests.post(f"{self.base}/chat", headers=headers, json=body, timeout=timeout)
             if r.status_code == 429:
                 # Rate limited — back off then retry
                 time.sleep(30 + attempt * 30)

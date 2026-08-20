@@ -1,0 +1,4 @@
+ezdxf>=1.4
+shapely>=2.0
+rdflib>=7.0
+PyYAML>=6.0

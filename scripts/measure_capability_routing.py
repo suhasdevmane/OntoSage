@@ -69,8 +69,11 @@ def _classify(ans: str) -> str:
 def _token() -> str:
     u = f"meas_{int(time.time())}"
     p = "VerifyPass123456"
-    httpx.post(f"{BASE}/auth/register", json={"username": u, "password": p, "email": f"{u}@e.com"},
-               timeout=10)
+    httpx.post(
+        f"{BASE}/auth/register",
+        json={"username": u, "password": p, "email": f"{u}@e.com"},
+        timeout=10,
+    )
     r = httpx.post(f"{BASE}/auth/login", json={"username": u, "password": p}, timeout=10)
     return r.json()["data"]["session_token"]
 
@@ -83,8 +86,12 @@ def run(label: str) -> int:
         try:
             # Unique session per question — isolate routing (no conversation-memory /
             # co-reference contamination between questions).
-            r = httpx.post(f"{BASE}/chat", headers={"Authorization": tok},
-                           json={"message": q, "session_id": f"meas_{label}_{i}"}, timeout=120)
+            r = httpx.post(
+                f"{BASE}/chat",
+                headers={"Authorization": tok},
+                json={"message": q, "session_id": f"meas_{label}_{i}"},
+                timeout=120,
+            )
             d = r.json()
             ans = d.get("response") or d.get("data", {}).get("response") or ""
         except Exception as e:

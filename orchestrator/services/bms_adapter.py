@@ -4,6 +4,7 @@ BMS (Building Management System) adapter.
 If settings.BMS_ENDPOINT is empty, all commands are simulated — logged but not sent.
 If BMS_ENDPOINT is set, commands are POSTed as JSON to that URL.
 """
+
 import asyncio
 from typing import Any, Dict
 
@@ -54,7 +55,9 @@ class BMSAdapter:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.post(settings.BMS_ENDPOINT, json=payload)
                 resp.raise_for_status()
-                logger.info(f"[BMS EXECUTE] {device} → {action}({target_value}) HTTP {resp.status_code}")
+                logger.info(
+                    f"[BMS EXECUTE] {device} → {action}({target_value}) HTTP {resp.status_code}"
+                )
                 return {
                     "status": "executed",
                     "device": device,

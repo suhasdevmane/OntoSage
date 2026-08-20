@@ -1,0 +1,2809 @@
+# SATURATE (V4-T08): simulated occupancy sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'occupancy_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data>
+    a ref:Database ;
+    rdfs:label "Occupancy Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.01 — Main Reception occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "024edcf2-9d2f-5594-a11b-4d28b42ce554" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.04_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.04 — Mechanical Plant Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7be24272-60fe-506f-b032-ff5d87f08c18" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.05_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.05 — Mechanical Plant Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eea20824-b53f-5f37-a694-79f3a06c7ebf" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.06_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.06 — Loading and Goods Storage occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "722243a1-0f18-514d-9620-3442fd9f6c11" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.07_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.07 — Service Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4a70d306-3aa4-574a-8b3e-9db59a92525a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.08_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.08 — Service Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "68bd5058-fa9a-5c88-b1cb-42f753223f38" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.10 — Building Management Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "01084a54-01f6-5141-9c88-13e000f8b662" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.17_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.17 — Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "400220c9-8dfb-5f3c-9d19-99c23af53705" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.18_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.18 — Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "de0d1d81-8d6a-5efd-89d7-04e15cc151c0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.19_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.19 — Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.19> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "515729ae-9946-56b0-9579-e1e47c82eaf8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.20_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.20 — Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ea2f5e0c-1a61-5fe6-bb03-4f7657801dd4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.29_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.29 — Storage Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.29> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6f3ba3ee-1b32-5cd6-9669-959f6ba3c2cb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.31_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.31 — Mechanical/Service Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.31> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5dede140-e1a3-529c-a150-0c5a89350cdb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.32_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.32 — Mechanical/Service Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.32> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a018db65-b88e-5a8a-9c0e-f3038544d4fc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.33_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.33 — Mechanical/Service Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.33> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b7e3e191-89f7-51d1-9309-c80040735b8d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.34_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 0.34 — Building Telecommunications Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6ccc9abc-df0f-53c4-bc53-9f635e4736fa" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.06_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 1.06 — Computer Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b9b93198-3f7f-59cc-ab1d-63b528ab4297" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.07_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 1.07 — Computer Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5b901a7f-7ae4-5204-b695-3a5e5e6e104e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 1.08 — Computer Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e4d28055-b76e-5f6d-a588-a9f6ad6becc0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.09_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 1.09 — Computer Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "86d37806-bc76-5386-823a-7b6ec2c92152" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.25_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 1.25 — Conference/Seminar Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.25> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "711b5b72-aebc-5476-8bbb-2f3f360b096e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.26_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 1.26 — Conference/Seminar Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3bffefd2-508b-51cf-a8e2-9909e8e17940" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.34_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 1.34 — Telecommunications Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3c4f9d09-3dde-5297-9f64-16905836f957" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.37_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 1.37 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.37> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1b302e2d-cf04-5ab8-b2a5-09a3bfe34ba5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.38_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 1.38 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.38> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "19d74fb1-2a6e-5dd1-b07b-707128ae5676" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.39_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 1.39 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.39> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c95460d4-66fc-50b5-816c-9997584a7780" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.40_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 1.40 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.40> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "33fd3fd6-1922-5557-8735-4227c089271b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.41_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 1.41 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.41> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "11eee185-89e8-5bde-8f34-cf120baf772b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.01_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.01 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "261af1f8-1724-5516-92b6-0f0adc873b59" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.02_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.02 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1c50c489-69ea-5dab-a22e-b9c200821d28" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.03_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.03 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b79ef6c0-8dce-5a71-9310-c98d5d290e95" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.04_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.04 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d71bff4f-2fdc-55f0-89ea-97f48d1469cf" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.05_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.05 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4ce00a3c-1521-5cab-8be5-a9544049eaf3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.06_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.06 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "67db8fd8-fcd5-5f4f-a3cb-14a8cd5d6701" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.07_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.07 — Computer Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fe9f8798-2bc5-5ae2-81e2-c1d74482392c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.08_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.08 — Computer Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "37880fa1-8a10-5cbe-9f8c-1fa51233732a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.09_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.09 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "67f22175-7e91-5b8a-ab99-129b62d6bbe5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.10_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.10 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8bc70aa2-1d1e-54eb-a71c-e62b7e6e65f4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.11_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.11 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "949c56ba-184c-5c9d-ad2c-eb027e7a9f74" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.12_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.12 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8b026b74-db30-575d-b08d-4b8c62deb8fb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.13_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.13 — Meeting Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6ef1db42-151a-5bae-8c20-21d857434885" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.14_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.14 — Meeting Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "668931f1-77e2-5b84-9947-501417f61014" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.15_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.15 — Seminar Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "108466bd-6817-5a19-a450-31cd20c5dc34" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.17_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.17 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e20abc26-224a-58e8-8581-64c9a8830314" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.18_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.18 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "90ad1101-fddc-5ca4-bdcb-7e37a180233d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.19_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.19 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.19> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c46bfbbe-41a9-547e-8e61-45c3c995ca97" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.20_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.20 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "90a40d0d-bda5-5cc9-9950-dd915dfbc5e9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.21_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.21 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.21> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "039e5da3-226e-50fb-a683-bed54d31ae2d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.22_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.22 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "80b5bc95-78c3-518a-85f1-5d470cc5c624" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.24_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.24 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.24> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8ea7a0e9-4977-5492-97ab-4138b8e514e1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.26_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.26 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b70b4e2d-d6f7-5ed4-871b-ffa2b3364cc9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.34_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.34 — Telecommunications Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e45414b6-6dcd-588a-bb68-4693c6171d9a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.35_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.35 — Restroom (Male) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.35> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "20ab7f37-7036-5f36-aeec-562f29323d01" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.36_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.36 — Restroom (Female) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7bc793af-28a4-5d57-819c-70a458efca50" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.44_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.44 — Server Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.44> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "944b4cb2-4e9a-5cba-a5f8-4dc3cfed8111" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.47_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.47 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.47> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0fdf5b0a-95f2-58be-b7c3-36fe75bcaf7e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.48_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.48 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.48> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "10aa6a89-589b-5e4d-9591-0cde318be87b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.49_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.49 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.49> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "de5482cc-b8c4-5902-913f-19270d672546" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.50_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.50 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "36ed38e6-57c4-58c0-ae65-0e2f3212dcb3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.52_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.52 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f2cae4dd-1c99-57ee-872c-92f336baa5d8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.53_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.53 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a0bcc817-4f53-50fa-a1cb-7dacb744fe72" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.54_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.54 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.54> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0e972e37-965a-57b5-b283-759d05eb4b71" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.55_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.55 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.55> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "46311542-bd82-562c-a07d-dc5d80baf065" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.56_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.56 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ad508709-495e-5028-a0f8-ecbaf17a7d5a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.57_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.57 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d2529843-0675-5bac-bb1e-9fd5a7bc034b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.58_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.58 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d344e4a1-d7ee-5c3e-92b2-3be8ae9457c0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.59_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.59 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6c9422f0-60af-587e-bcb9-5b06d84aade6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.60_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.60 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "42a550d6-663d-545a-96b3-512a9c97fa37" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.61_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.61 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "316f3fa6-3485-5d52-9421-dbf30cedc6a2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.62_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.62 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e9341179-44f8-5c2e-a0a8-0a8271ac5a36" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.63_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.63 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "01ee7c37-c2b1-556c-86ad-be10c6a089a7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.64_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.64 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0478d445-aa93-5ecc-98f5-104cfe98a6d0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.65_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.65 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cac15b2c-a194-55f5-a82e-3e1c0c088846" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.66_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.66 — Staff Break Room / Kitchen occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e8a603d7-b906-57ef-84a6-772c2eaac2ff" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.67_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 2.67 — Storage Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "da905240-ca36-57aa-8a0f-c85b03d4c41f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.01_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.01 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "17ab57e7-6126-569b-b3af-e354f74e4502" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.02_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.02 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c419262f-1b24-54c4-911d-5d053ae188e2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.03_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.03 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bc630faa-3119-5b08-b6e8-e4333c74d4c9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.04_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.04 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a5816b5b-c5d8-58d7-83b7-e6368d7ba4ca" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.05_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.05 — Computer Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e056bab9-a560-5094-988d-5801e12598b9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.06_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.06 — Computer Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2ee48b66-3af1-5cdb-8d02-8b5825d0204f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.07_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.07 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cd79e7eb-604f-5edc-9e38-9ffb84f67918" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.08_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.08 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "15811add-5961-59fb-b54a-10698c674eec" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.09_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.09 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "491bd4e4-afe6-5402-b434-6f7cd7b9b778" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.10_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.10 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "571bdafe-63d8-5cce-a953-98afa74b8baa" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.11_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.11 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5c953c7f-0c26-5371-aa29-f8726ed771d4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.12_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.12 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0fab8c9e-b8e6-5e11-848b-12674459b54a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.13_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.13 — Seminar Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b4bafd3a-9ecf-5a62-8743-4cc6c6fc348a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.14_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.14 — Seminar Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e71f115e-1421-5fa3-8090-1fecb7cb48f8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.15_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.15 — Meeting Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "67e4bf1e-4630-5e28-b6c2-83ce8766f0a5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.16_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.16 — Meeting Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.16> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "80b90abf-6c69-5c19-a489-162f138cdb0c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.17_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.17 — Staff Common Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "198a7888-e1e4-515f-a1ba-0a24650aedfc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.18_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.18 — Kitchen occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d6b6f842-ba87-5f82-aada-e3f8ec6bed0d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.20_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.20 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6e5637ba-842a-5d49-b81e-49a26b585f50" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.22_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.22 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f039d638-6383-53e9-afaa-4769e86d2c7a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.26_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.26 — Meeting Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cdcb72ab-f92a-5cf3-b150-c62886527ef9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.27_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.27 — Meeting Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.27> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1ef251fb-4951-54c9-b06d-aa24cea404d2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.36_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.36 — Restroom (Male) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0a426298-f4a4-5f66-837a-1a9b70bdfab4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.37_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.37 — Restroom (Female) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.37> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "71f9df60-bd13-518c-a654-8bb90afd88e0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.38_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.38 — Telecommunications Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.38> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f935344c-f4b1-5cf7-a626-851c9af833e3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.46_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.46 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.46> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "99e61a95-d879-5589-8d33-246d98906df5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.48_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.48 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.48> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "69879aea-177f-504c-96cc-708def088c59" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.50_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.50 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a95db615-2544-57a8-b8ac-1cb96410bdab" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.51_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.51 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.51> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e6e53d0d-1a85-5bb7-a111-a1cb118f41a2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.52_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.52 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ef07b059-d33a-5a93-850a-b2bc6878e93e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.53_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.53 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b7a37824-1d33-5301-b29b-eb718afc925c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.54_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.54 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.54> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e1a72558-8584-5f58-941d-ec7083b2310e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.56_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.56 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3356a801-debc-5ac3-a27a-103703b406ce" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.57_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.57 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "753e0f93-ef71-515c-a49a-c8b839985eaa" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.58_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.58 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ac44136a-ebc1-5a5a-9de7-14ef0e2938af" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.59_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.59 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "880bf7f7-45fc-5b44-876c-9a76b691246f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.60_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.60 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "396a8bb5-af8c-5253-9cbf-4da1a66bf115" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.61_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.61 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b0a39f2c-8ebf-5e97-9362-8e50dc9b85e6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.62_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.62 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "527aa905-bdde-5759-9bbc-54b7032568df" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.63_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.63 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "34d9ba37-da74-5359-81e8-6e7847b4a089" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.64_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.64 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d3a09576-a7cd-5ee7-b1b0-f85881d49da1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.65_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.65 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b3627b02-d442-54f8-afbf-e48349bb01d5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.66_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.66 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "aa24f271-b8f5-5c6c-8b3d-c74d5b29fe19" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.67_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.67 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "54006537-18d8-5862-a85a-a65af44db43d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.68_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.68 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4ec949ac-e7a0-5aa9-88a1-f9296f916f60" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.69_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.69 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5ee7b09e-d1aa-5648-bc73-cf255abab718" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.70_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.70 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e9ee0e8d-a29f-5eb9-87f9-db90866038b0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.71_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 3.71 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "335d2818-76aa-5a7a-b916-434d5a9ec9d5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.01_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.01 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8f4a444a-1f25-566f-9978-3615e46dccbe" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.02_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.02 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4105c296-2e59-5c75-88f1-0783506e8733" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.03_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.03 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4164d87d-6a69-5be4-a7c3-8eddbdf67ca1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.05_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.05 — Computer Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "204064b7-66eb-534e-a774-a63b1cc4a702" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.06_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.06 — Computer Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4df5db0f-40ff-5bab-ab36-cfeebf419bd1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.07_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.07 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "72e30023-2713-5c29-8570-924250afdf84" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.08_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.08 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f18a2877-e14f-57fc-b343-f0de530d80e2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.09_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.09 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "17010906-20c3-5034-bb3f-40d0671574c0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.10_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.10 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a06750b3-f36d-5de6-a7b9-554b0320626c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.11_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.11 — Meeting Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bc6852b8-d5b3-5ec6-b364-b9618a0e37a2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.12_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.12 — Meeting Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "51f13425-dae7-594b-a61d-73b5d0afaf8b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.13_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.13 — Seminar Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "43ff678d-e1ab-5d7e-b48e-9aa125c43465" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.14_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.14 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3628dbfb-c424-5f80-b44a-375f3be70100" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.15_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.15 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7ed1a3a4-e3eb-5722-a26c-b52b4c29db09" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.16_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.16 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.16> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "31306a6c-8a78-5f37-812e-d850a1ac59df" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.18_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.18 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "88045dd4-aa9b-53dd-91e7-a557166e699e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.19_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.19 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.19> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a6f7a7ef-7d4d-5f10-94a6-71b60db948e4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.20_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.20 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f7621f01-c080-5430-8c57-898439951ff3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.21_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.21 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.21> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "90a48bd5-bf22-50de-9a7a-b90b6d44c74e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.22_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.22 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d178f203-4ecb-5cb5-abc1-246b71ba204e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.23_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.23 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.23> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bbeadeb5-7205-5ba3-b2ad-5696bbf49530" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.24_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.24 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.24> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1e1c1b5b-f4b1-5413-b4f7-9dd05fc91e9d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.34_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.34 — Telecommunications Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c5422931-da49-5e65-bba7-9879cf8c30a0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.35_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.35 — Restroom (Male) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.35> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e16a8852-18f1-5657-9335-ae27f460821a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.36_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.36 — Restroom (Female) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4b6d5da8-0cd5-5f6d-862a-736542403726" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.38_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.38 — Mechanical/Service Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.38> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "40f6eb91-578f-52ba-8b68-562d48697bb0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.44_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.44 — Server Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.44> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "45266be0-d144-521a-8eb0-4fcbd219d88f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.47_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.47 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.47> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d77e17b3-e4ee-5aee-b340-16cef34b5f34" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.49_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.49 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.49> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "265a6abf-cc2a-54d2-8c1a-cb39c90d4f9d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.50_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.50 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bfe90b05-ae46-5210-ac0d-6f1bfeda0b9c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.51_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.51 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.51> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ad2fc05c-6c16-5d1c-a167-7a02cccc2bdc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.52_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.52 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "02f48c9a-3e04-51bc-b1e3-91fa95a6a707" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.53_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.53 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "45d1f33d-1d14-584f-b385-3fe8d7eae6c7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.55_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.55 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.55> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6669cc06-6963-5113-8974-7a6a174bb57f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.56_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.56 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c3ebe0c1-e597-5f31-82b4-5a7176894124" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.57_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.57 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4e06a312-6613-5f05-bfdc-757a87d9bb88" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.58_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.58 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f101e5a9-5afe-5cac-9001-a81ba994411b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.59_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.59 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ddaadc26-8e1f-5787-80a3-c34b0afb7bb9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.60_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.60 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "77ea2e4a-0172-584e-9bf5-504a88115717" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.61_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.61 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6bcb63a3-b02d-5e4f-a0f5-75f8323d797a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.62_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.62 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "43c5bc00-b805-5bd3-8f3c-cbe478700873" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.63_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.63 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f259f022-b9dc-575d-87f1-fb4ef1e6176e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.64_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.64 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e9ad26f9-6f0a-587b-8ad1-6a02d4031f43" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.65_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.65 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ca064d86-8666-5619-85f0-6256eacc6cdb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.66 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "25955689-44b9-5a11-9e55-18a9aebeb055" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.67 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00f24885-f994-512a-be41-7e8516042f2e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.68 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "972b10cf-8ff9-5dcd-8eaa-ff5af20db6e1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.69 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "daaeda54-2c14-5db8-94e5-052dd319a157" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.70 — Staff Break Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7a5191ef-9683-5631-abef-44bf4950801f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 4.71 — Storage Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9fd1a726-5332-5b82-b2c0-78edd1e22ed9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.01 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4c1d504d-e247-5b20-bfb1-1774e2596e5b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.02 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "308d0e1c-e79e-53dd-ab71-21778d21223f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.03 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "68317d00-3a60-5ab4-a733-c4cfcb5dc323" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.04 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9d586bf9-0f81-56eb-811d-98e84d935200" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.05 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "53a7a6dc-68b5-5e4b-aed8-dc152c34df8d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.06 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4243471c-7780-57dd-860d-ba35c3268020" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.07 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "18bbac42-5f5d-5fa4-acf2-385e95266179" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.08 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a21b6a1a-5ba3-53c6-845a-aac163f3bf0d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.09 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ce8dbf71-e51c-56d0-90df-b3ed5e9b71cd" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.10 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8bd68063-6385-5edf-b4dd-f151c5b11bc3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.11 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "afcd2e81-096a-5366-9d7f-ed0140510689" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.12 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4802ed4c-0e8b-5341-b905-7f3661c90025" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.13 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0731c419-63d6-5eb9-b21b-e757a2ac765d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.14 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "171f97de-5d07-5fea-ae37-09fdec5b379a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.15 — Seminar / Conference Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "82161870-e195-5709-83d5-8f20d62acab6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.16 — Seminar / Conference Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7c0ac634-4c23-5fa9-8dd2-7a1456fe4bd5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.17 — Meeting Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "23207e1e-acd4-5a54-86b2-384b00b634f6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.18 — Meeting Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f93f76e5-6ea9-5047-94c1-a2ffa5d95e6d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.20 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cd5fd60f-24d1-5a0a-89b2-33e3159cbaf5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.21 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f6997c6a-4bef-5464-a4a5-a7b6629211df" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.22 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e133c6df-7f24-5da7-a1b4-d4825fa68cae" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.23 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f1145e94-68ea-516f-99bc-c29cee3a4029" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.26 — Staff Break Room / Kitchen occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e7000faf-58b7-5781-8bf3-8eefc4e9c40d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.34 — Telecommunications Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f5bf7577-c1af-5f4b-892a-50d9ad401b40" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.35 — Restroom (Male) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "86672a2b-6c37-5cce-b3c9-760068e7c4bc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.36 — Restroom (Female) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a38ef877-0b7d-5271-9f97-8d159a2478c9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.44 — Server Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3e5542f8-f13b-524a-9367-f1cb6087e82a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.45 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c941d6b4-5563-5fd0-9a2a-6dcd1393f174" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.48 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "98063dd1-374c-5dd1-8b41-dfc4b10062c4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.49 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "968a8cc6-a307-5ee1-8da8-99075658104f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.50 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3c527b05-e4c3-57f2-adca-c96aa77da87d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.51 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "62cf3c24-71fb-5ef7-a008-3bcf4d454ced" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.52 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "60434196-d6a1-5628-9fe8-c7ab8e0d7fe7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.53 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c2154f53-4cae-546c-8522-835c34fbadf8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.54 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4df381fc-b1f4-5461-a359-7f2a9847b51d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.56 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "87c543d0-1e8c-5759-86b5-47e6bb8ffff2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.57 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4bb14f75-6402-51d7-8946-503f48552d8b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.58 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "039f16ce-500d-54d5-8b50-de21db6fc97b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.59 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "755b83e7-1598-5b7a-88d2-8f1e073b1221" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.60 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b29dad27-e2d0-5db5-ba74-d78b01d252f7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.61 — Research Laboratory occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "914570a5-d829-53a9-bb3c-13cc81677fd9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.62 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0d719006-47f1-5d3d-a54d-c214ba6ac920" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.63 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e61765d6-bf52-5ce2-97be-0ce8b2873a96" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.64 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b003595f-b4aa-5bea-8d3e-f1b61e32ba5f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.65 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f9dff940-69a9-57e4-ad07-e9e86e248b01" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.66 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8d74cadd-ef16-5cb0-b52b-94d8eecffd37" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.67 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a6f827c2-a062-52d9-aa1f-7c2453dfd41c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.68 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9ce04935-7412-5911-91a2-e1194fb28957" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.69 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4fca1612-9b3e-5221-98fc-bfa51656ab8d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.70 — Academic Office occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dd6c8f73-04cf-5d88-917f-34c722ae7d23" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Room 5.71 — Storage Room occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e410ec02-7b1d-5b6b-b7d0-bfba1bc93b86" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Server Room — Floor 2 (Room 2.44) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f9c2719a-165c-5d6b-878f-852917905ac3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Server Room — Floor 4 (Room 4.44) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7eb9bfcf-9e19-5fa7-93e6-584002b5eb7d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Server Room — Floor 5 (Room 5.44) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0d29ac0d-e27f-5454-9dd2-fa480bc0e42c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 0 (Room 0.34) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dc892780-4990-50db-9b9c-bc0511dba9d4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 1 (Room 1.34) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "382cec75-32c1-509c-a9a9-dde493f1c9cb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 2 (Room 2.34) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "171e7eb9-ef49-571b-9c47-281e84f1518d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 3 (Room 3.38) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4c009969-8f2b-50a3-aa1f-7120a4a8c5f1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 4 (Room 4.34) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8475adb2-f201-5ec2-b38a-293b74e7442f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5_sat_occupancy>
+    a brick:Occupancy_Count_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 5 (Room 5.34) occupancy (simulated) [persons]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9ad95892-201d-51b3-9f95-de139ce271ab" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#occupancy_data> ;
+    ] .

@@ -68,8 +68,7 @@ class TurnMemoryService:
                     json.dumps(self._extract_carry_forward(state), default=str),
                 )
                 logger.info(
-                    f"[turn_memory] saved turn {turn_index} "
-                    f"for conv={state.conversation_id}"
+                    f"[turn_memory] saved turn {turn_index} " f"for conv={state.conversation_id}"
                 )
                 # Retention: prune everything older than the newest N turns so a
                 # long conversation can't grow the table unbounded. turn_index is
@@ -107,9 +106,7 @@ class TurnMemoryService:
                 cf = row["carry_forward"]
                 return json.loads(cf) if isinstance(cf, str) else cf
         except Exception as e:
-            logger.warning(
-                f"[turn_memory] get_carry_forward failed (non-fatal): {e}"
-            )
+            logger.warning(f"[turn_memory] get_carry_forward failed (non-fatal): {e}")
         return {}
 
     async def get_older_context(
@@ -149,9 +146,7 @@ class TurnMemoryService:
                 )
             return "Earlier conversation context:\n" + "\n".join(lines)
         except Exception as e:
-            logger.warning(
-                f"[turn_memory] get_older_context failed (non-fatal): {e}"
-            )
+            logger.warning(f"[turn_memory] get_older_context failed (non-fatal): {e}")
         return ""
 
     async def delete_conversation(self, conversation_id: str) -> int:
@@ -172,9 +167,7 @@ class TurnMemoryService:
             return 0
         try:
             async with self.pool.acquire() as conn:
-                result = await conn.execute(
-                    f"DELETE FROM turn_memory WHERE {column} = $1", value
-                )
+                result = await conn.execute(f"DELETE FROM turn_memory WHERE {column} = $1", value)
             deleted = int(result.split()[-1]) if result else 0  # asyncpg -> "DELETE <n>"
             logger.info(f"[turn_memory] deleted {deleted} rows where {column}={value!r}")
             return deleted
@@ -212,8 +205,4 @@ class TurnMemoryService:
 
     def _extract_carry_forward(self, state: ConversationState) -> Dict[str, Any]:
         """Extract only the safe carry-forward keys (forecast + analytics)."""
-        return {
-            k: v
-            for k, v in state.intermediate_results.items()
-            if k in _CARRY_FORWARD_KEYS
-        }
+        return {k: v for k, v in state.intermediate_results.items() if k in _CARRY_FORWARD_KEYS}

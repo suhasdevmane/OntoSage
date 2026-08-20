@@ -39,6 +39,11 @@ aiomysql==0.3.0
 pymysql==1.1.1
 cryptography>=41.0.0  # Required for MySQL sha256_password auth
 asyncpg==0.29.0
+# Cassandra (CQL) time-series backend. Pinned alongside asyncpg because the two
+# adapters they serve are the backends the paper's building table names, and the
+# Cassandra one could not even IMPORT without this — the claim had no driver
+# behind it until TODO-143.
+cassandra-driver==3.29.1
 sqlalchemy==2.0.25
 
 # Logging

@@ -18,7 +18,6 @@ from orchestrator.services.report_intake_service import (
     get_report_intake_service,
 )
 
-
 # -- Pure-logic tests (no DB) ----------------------------------------------------
 
 
@@ -42,31 +41,37 @@ def test_intent_to_category_table_complete():
         assert intent in INTENT_TO_CATEGORY
 
 
-@pytest.mark.parametrize("text,category,expected", [
-    ("there is a fire in the server room", "safety", "URGENT"),
-    ("there is a gas leak near the lifts", "complaint", "URGENT"),
-    ("someone could get injured on the wet floor", "safety", "URGENT"),
-    ("the light is broken in 3.01", "maintenance", "HIGH"),
-    ("the heater is not working", "maintenance", "HIGH"),
-    ("fire exit blocked by boxes", "safety", "URGENT"),
-    ("the corridor is a bit untidy", "safety", "HIGH"),
-    ("please add more bike racks", "suggestion", "LOW"),
-    ("the new lighting is great", "feedback", "LOW"),
-    ("the room is a little warm", "complaint", "NORMAL"),
-])
+@pytest.mark.parametrize(
+    "text,category,expected",
+    [
+        ("there is a fire in the server room", "safety", "URGENT"),
+        ("there is a gas leak near the lifts", "complaint", "URGENT"),
+        ("someone could get injured on the wet floor", "safety", "URGENT"),
+        ("the light is broken in 3.01", "maintenance", "HIGH"),
+        ("the heater is not working", "maintenance", "HIGH"),
+        ("fire exit blocked by boxes", "safety", "URGENT"),
+        ("the corridor is a bit untidy", "safety", "HIGH"),
+        ("please add more bike racks", "suggestion", "LOW"),
+        ("the new lighting is great", "feedback", "LOW"),
+        ("the room is a little warm", "complaint", "NORMAL"),
+    ],
+)
 def test_priority_derivation(svc, text, category, expected):
     assert svc._derive_priority(text, category) == expected
 
 
-@pytest.mark.parametrize("msg,expected", [
-    ("the light in 3.01 is broken", "create"),
-    ("report a fault on floor 2", "create"),
-    ("what is the status of REP-A1B2C3", "status"),
-    ("check report REP-ABC123", "status"),
-    ("any update on REP-123ABC", "status"),
-    ("show my reports", "list"),
-    ("list all my reports", "list"),
-])
+@pytest.mark.parametrize(
+    "msg,expected",
+    [
+        ("the light in 3.01 is broken", "create"),
+        ("report a fault on floor 2", "create"),
+        ("what is the status of REP-A1B2C3", "status"),
+        ("check report REP-ABC123", "status"),
+        ("any update on REP-123ABC", "status"),
+        ("show my reports", "list"),
+        ("list all my reports", "list"),
+    ],
+)
 def test_action_classification(svc, msg, expected):
     assert svc.classify_action(msg) == expected
 
@@ -187,9 +192,15 @@ async def test_create_report_unavailable_when_no_pool():
 @pytest.mark.asyncio
 async def test_get_status_found():
     row = {
-        "id": "REP-ABC123", "title": "broken light", "category": "maintenance",
-        "priority": "HIGH", "status": "IN_PROGRESS", "assignee": "facilities",
-        "admin_notes": None, "resolved_at": None, "description": "broken light",
+        "id": "REP-ABC123",
+        "title": "broken light",
+        "category": "maintenance",
+        "priority": "HIGH",
+        "status": "IN_PROGRESS",
+        "assignee": "facilities",
+        "admin_notes": None,
+        "resolved_at": None,
+        "description": "broken light",
     }
     pg = _FakePG(row=row)
     svc = ReportIntakeService(postgres_manager=pg)
@@ -211,10 +222,22 @@ async def test_get_status_not_found():
 @pytest.mark.asyncio
 async def test_list_user_reports():
     rows = [
-        {"id": "REP-1", "category": "maintenance", "priority": "HIGH",
-         "status": "OPEN", "title": "a", "created_at": None},
-        {"id": "REP-2", "category": "complaint", "priority": "NORMAL",
-         "status": "RESOLVED", "title": "b", "created_at": None},
+        {
+            "id": "REP-1",
+            "category": "maintenance",
+            "priority": "HIGH",
+            "status": "OPEN",
+            "title": "a",
+            "created_at": None,
+        },
+        {
+            "id": "REP-2",
+            "category": "complaint",
+            "priority": "NORMAL",
+            "status": "RESOLVED",
+            "title": "b",
+            "created_at": None,
+        },
     ]
     pg = _FakePG(rows=rows)
     svc = ReportIntakeService(postgres_manager=pg)
@@ -245,6 +268,7 @@ async def test_update_status_rejects_invalid_status():
 
 def test_singleton_accessor_binds_pool_later():
     import orchestrator.services.report_intake_service as mod
+
     mod._service = None
     s1 = get_report_intake_service(None)
     assert s1.postgres is None

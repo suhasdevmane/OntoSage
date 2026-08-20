@@ -8,7 +8,6 @@ Validates that:
 
 import pytest
 
-
 MAINTENANCE_SCHEDULE_QUERIES = [
     "What maintenance work is scheduled this week?",
     "What maintenance is planned for next month?",

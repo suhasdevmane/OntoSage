@@ -46,8 +46,8 @@ class BuildingContext:
     legacy callers ignore new ones.
     """
 
-    building_id: str  # canonical id (e.g. "bldg1")
-    name: str  # human-readable (e.g. "Abacws Building")
+    building_id: str  # canonical id, from settings.BUILDING_ID
+    name: str  # human-readable, from settings.BUILDING_NAME
     namespace: str  # SPARQL ABox namespace (must end in '#' or '/')
     prefix: str  # short SPARQL prefix (e.g. "bldg")
     timezone: str  # IANA tz name for time-range parsing

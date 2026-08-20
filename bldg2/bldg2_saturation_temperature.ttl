@@ -1,0 +1,37 @@
+# SATURATE (V4-T08): simulated temperature sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'temperature_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://buildsys.org/ontologies/bldg2#> .
+
+<http://buildsys.org/ontologies/bldg2#temperature_data>
+    a ref:Database ;
+    rdfs:label "Temperature Data" .
+
+<http://buildsys.org/ontologies/bldg2#RM109_room_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "RM109_room temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM109_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "aee094b1-ea04-53ea-bade-76fa2e997132" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#temperature_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM217_room_sat_temperature>
+    a brick:Zone_Air_Temperature_Sensor ;
+    rdfs:label "RM217_room temperature (simulated) [degC]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM217_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "03741125-0d47-5d0f-af7e-2163d2022af6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#temperature_data> ;
+    ] .

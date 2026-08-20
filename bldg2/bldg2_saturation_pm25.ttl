@@ -1,0 +1,637 @@
+# SATURATE (V4-T08): simulated pm25 sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'pm25_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://buildsys.org/ontologies/bldg2#> .
+
+<http://buildsys.org/ontologies/bldg2#pm25_data>
+    a ref:Database ;
+    rdfs:label "Pm25 Data" .
+
+<http://buildsys.org/ontologies/bldg2#RM001A_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM001A_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM001A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b725b4ca-db40-5b4f-873a-717203fa7c78" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM001B_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM001B_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM001B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4db192ec-1c65-56f2-ba18-454007ea1ab2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM002A_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM002A_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM002A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e16a85c9-7f1c-5e18-bef2-6063e92df436" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM002B_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM002B_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM002B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "97a1bec2-a63d-53f3-ae05-e9119beab14d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM003_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM003_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM003_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "06f9846c-8a36-587c-a769-3c306f34679b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM005_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM005_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM005_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c22384bf-f95b-549e-8b51-d650105ef215" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM006_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM006_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM006_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8fec5169-3b00-5705-9064-74faa82d2c58" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM007A_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM007A_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM007A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "33d6d87b-812d-50cd-8810-2090d8609e99" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM007B_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM007B_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM007B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d3f43e16-d035-56a9-8424-dcbc27094648" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM015A_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM015A_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM015A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "be57347e-1f54-55e8-b102-181057e3c9f6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM015B_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM015B_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM015B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "477af702-e4c2-58ed-8df7-2dba3392beea" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM019A_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM019A_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM019A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eb13816e-670d-5d26-ad04-50b8ae5ca03d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM019B_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM019B_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM019B_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "67487e6c-a40f-5a34-9da8-4ba7294bc636" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM025_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM025_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM025_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3220905f-980c-5d09-bff5-818a20adc4fd" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM026_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM026_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM026_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eaf9b59f-6583-5825-b6d4-746f615d463c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM027_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM027_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM027_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4974ad0e-10f6-57d2-856d-2d01aa0af9d4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM101_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM101_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM101_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ea866952-8931-5ebd-a626-4d5a7df24f00" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM102C_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM102C_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM102C_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "934f8b51-134b-56ac-9ee8-5c52fd3b2513" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM103_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM103_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM103_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2373d5a7-9d43-5f41-8e5a-de58675a835e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM105_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM105_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM105_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1921b0d0-c34d-562b-b60c-b6615d39bf5d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM106_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM106_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM106_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f6673d63-c5f0-505d-a08a-3d8dfab85e16" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM107_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM107_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM107_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a34bc9b7-d492-55e5-8d24-1074ec95a102" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM109_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM109_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM109_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fa9b0953-b08b-5a6c-b57c-895fe6636fa1" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM111_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM111_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM111_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9c72b97f-fac1-52e2-b961-248ad60c4b2c" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM115_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM115_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM115_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "397f3a95-0625-5299-a33e-b3d20f4543e1" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM119_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM119_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM119_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "06da8499-59a0-519b-ac1b-cfa5f899dd53" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM121_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM121_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM121_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "95a8ffb5-d3e2-530f-8832-d9438ef09c29" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM123_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM123_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM123_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "589fadc9-1403-52cc-9650-dbd97979ac33" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM125_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM125_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM125_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b6230831-32b3-542c-aa57-f851efb07ca0" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM126_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM126_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM126_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d7926ade-6a08-5853-8014-7fb7799833f9" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM127_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM127_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM127_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "69d3fe05-ef97-50d7-948d-59ecf4beba39" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM129_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM129_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM129_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a9ff2cea-5a9b-5b23-8b2b-e488c91dee03" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM201_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM201_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM201_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fa8fa6af-7f78-5238-bfa9-f797f8296443" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM202_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM202_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM202_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1a9ad44c-468f-5cd4-acee-07754eec55ec" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM203_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM203_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM203_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c00fea69-dad3-5093-8eb6-5f2e5fc701da" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM205_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM205_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM205_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e738db58-a26d-57e2-beba-2741dc1e242b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM207_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM207_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM207_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0df21031-8ab4-5f49-b21a-bf12eb335b6a" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM208_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM208_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM208_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2ba1a54e-3b03-520a-8fee-4235a936d219" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM209_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM209_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM209_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9ca76632-5f63-5e06-a352-2cc4c68625e2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM211_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM211_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM211_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "91b3855f-1b30-528e-9aac-5add399cfbd6" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM212_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM212_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM212_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f186da6c-137c-5db6-821b-b44a8dc1f5f4" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM216_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM216_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM216_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cd08d507-4733-555f-8e9a-cfd0e902bfbd" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM217_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM217_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM217_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9c211802-d8cd-5834-b0f6-13343f51dbef" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM220_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM220_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM220_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2040af56-946b-5e01-b751-200848785698" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM221_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM221_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM221_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ac36ebb7-ea1e-529f-9c65-ee0d2835b8e7" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM226_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM226_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM226_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "978392b7-dc4c-532f-b1d8-a7b2163711af" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM229_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM229_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM229_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "202b8f2b-757e-5d1f-87b8-41e37881534e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM230_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM230_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM230_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "079b778b-ab93-5654-8896-2162e1e1bab2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM233_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM233_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM233_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "46e093a0-b1b1-5f20-90f1-146aaf9592f5" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM234A_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM234A_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM234A_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4804788c-050c-5096-bf80-412e06f7d02b" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM234_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM234_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM234_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "feb8a8f7-379a-52aa-9dd2-0d616ccec695" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#RM235_room_sat_pm25>
+    a brick:PM2.5_Level_Sensor ;
+    rdfs:label "RM235_room pm25 (simulated) [ug/m3]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#RM235_room> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "95d982ed-59d9-5221-a53f-1b3e0739746e" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#pm25_data> ;
+    ] .

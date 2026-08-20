@@ -54,20 +54,21 @@ class ARIMAForecaster:
 
         # auto_arima with optional seasonal component
         use_seasonal = (
-            self.seasonal_periods is not None
-            and n_train >= 2 * self.seasonal_periods + 10
+            self.seasonal_periods is not None and n_train >= 2 * self.seasonal_periods + 10
         )
         try:
             model = pm.auto_arima(
                 train,
                 seasonal=use_seasonal,
                 m=self.seasonal_periods if use_seasonal else 1,
-                stepwise=True,          # stepwise search (fast)
+                stepwise=True,  # stepwise search (fast)
                 information_criterion="aic",
-                max_p=3, max_q=3,
-                max_P=1, max_Q=1,
-                d=None,                 # auto-differencing
-                D=None,                 # auto-seasonal-differencing
+                max_p=3,
+                max_q=3,
+                max_P=1,
+                max_Q=1,
+                d=None,  # auto-differencing
+                D=None,  # auto-seasonal-differencing
                 error_action="ignore",
                 suppress_warnings=True,
                 n_jobs=1,
@@ -79,9 +80,7 @@ class ARIMAForecaster:
         order = model.order
         seasonal_order = model.seasonal_order if use_seasonal else None
         if seasonal_order and any(v != 0 for v in seasonal_order[:3]):
-            self.name = (
-                f"SARIMA{order}×{seasonal_order[:3]}[{self.seasonal_periods}]"
-            )
+            self.name = f"SARIMA{order}×{seasonal_order[:3]}[{self.seasonal_periods}]"
         else:
             self.name = f"ARIMA{order}"
 
@@ -96,12 +95,12 @@ class ARIMAForecaster:
         fc, ci_95 = model.predict(
             n_periods=n_steps,
             return_conf_int=True,
-            alpha=0.05,   # 95% CI
+            alpha=0.05,  # 95% CI
         )
         _, ci_80 = model.predict(
             n_periods=n_steps,
             return_conf_int=True,
-            alpha=0.20,   # 80% CI
+            alpha=0.20,  # 80% CI
         )
 
         future_index = self._build_future_index(series, n_steps)

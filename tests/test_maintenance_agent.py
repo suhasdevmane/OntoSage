@@ -1,7 +1,9 @@
 """Tests for MaintenanceAgent — work-order CRUD and state machine."""
+
 import re
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from orchestrator.agents.maintenance_agent import MaintenanceAgent, _detect_operation
 from shared.models import ConversationState, Message
@@ -64,10 +66,17 @@ class TestPermissions:
     async def test_occupant_can_create(self):
         agent = MaintenanceAgent()
         state = _make_state("The heating in room 4.02 is broken", role="occupant")
-        with patch.object(agent, "_create_ticket", new=AsyncMock(return_value={
-            "status": "created", "ticket_id": "MT-0001",
-            "message": "🔧 Maintenance ticket created: MT-0001\nLocation: Room 4.02",
-        })):
+        with patch.object(
+            agent,
+            "_create_ticket",
+            new=AsyncMock(
+                return_value={
+                    "status": "created",
+                    "ticket_id": "MT-0001",
+                    "message": "🔧 Maintenance ticket created: MT-0001\nLocation: Room 4.02",
+                }
+            ),
+        ):
             result = await agent.handle(state)
         assert result["status"] == "created"
 
@@ -88,9 +97,16 @@ class TestPermissions:
             {"type": "ticket_id", "value": "MT-0042"},
             {"type": "assignee", "value": "John"},
         ]
-        with patch.object(agent, "_assign_ticket", new=AsyncMock(return_value={
-            "status": "assigned", "ticket_id": "MT-0042",
-            "message": "📋 MT-0042 assigned to John",
-        })):
+        with patch.object(
+            agent,
+            "_assign_ticket",
+            new=AsyncMock(
+                return_value={
+                    "status": "assigned",
+                    "ticket_id": "MT-0042",
+                    "message": "📋 MT-0042 assigned to John",
+                }
+            ),
+        ):
             result = await agent.handle(state)
         assert result["status"] == "assigned"

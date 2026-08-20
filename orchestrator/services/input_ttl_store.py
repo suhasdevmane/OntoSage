@@ -264,11 +264,27 @@ def _bind_prefixes(g: Graph, building_id: str) -> None:
     g.bind("ontosage", Namespace(_ONTO_NS))
 
 
-def _serialize_graph(path: Path, g: Graph, building_id: str, *, with_header: bool) -> None:
-    """Atomically serialize ``g`` to ``path`` (with the capabilities header when owned)."""
+def _serialize_graph(
+    path: Path,
+    g: Graph,
+    building_id: str,
+    *,
+    with_header: bool,
+    header_text: Optional[str] = None,
+) -> None:
+    """Atomically serialize ``g`` to ``path``, with the owning file's header when owned.
+
+    ``header_text`` selects which header this file owns (capabilities by default,
+    policies for the V5-T43 editor); it is ignored when ``with_header`` is False,
+    i.e. when we are editing a file some other tool owns.
+    """
     body = g.serialize(format="turtle")
-    header = _capabilities_header(building_id) if with_header else ""
-    # An EMPTY capabilities graph (last amenity deleted) serializes to no @prefix lines,
+    header = (
+        (header_text if header_text is not None else _capabilities_header(building_id))
+        if with_header
+        else ""
+    )
+    # An EMPTY owned graph (last amenity/policy deleted) serializes to no @prefix lines,
     # but the startup TTL validator hard-fails a *.ttl that lacks @prefix bldg: — which
     # crash-loops the orchestrator. Ensure the prefix block is present when the body omits
     # it (only the empty case; a non-empty body already declares them). Building-agnostic.
@@ -314,6 +330,7 @@ async def _remove_from_file(
     building_id: str,
     *,
     with_header: bool,
+    header_text: Optional[str] = None,
     client: Optional[Any] = None,
 ) -> dict:
     """Remove every triple of ``subj`` from ``path`` (backup first), rewrite it atomically,
@@ -324,7 +341,7 @@ async def _remove_from_file(
         _bind_prefixes(g, building_id)
         g.remove((subj, None, None))
         _backup(path)
-        _serialize_graph(path, g, building_id, with_header=with_header)
+        _serialize_graph(path, g, building_id, with_header=with_header, header_text=header_text)
     res = await _sync_file_to_graph(path, client=client)
     return {
         "ok": res["ok"],
@@ -358,6 +375,106 @@ async def remove_amenity(
         return await _remove_from_file(other, subj, building_id, with_header=False, client=client)
 
     # Not backed by any input file — a graph-only delete is durable (nothing reloads it).
+    from orchestrator.services.ontology_manager import delete_subject
+
+    res = await delete_subject(subject_uri, client=client)
+    res["file"] = None
+    return res
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Access policies (V5-T43) — same durable path as capabilities: the input/ TTL
+# stays the source of truth, so a GUI edit and a hand edit converge and the
+# change lands in version control as a reviewable diff.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def policies_path(building_id: str) -> Path:
+    """Resolve the building's policy TTL (existing file preferred, else flat)."""
+    existing = resolve_building_file(building_id, f"{building_id}_policies.ttl")
+    if existing is not None:
+        return existing
+    return writable_input_dir() / f"{building_id}_policies.ttl"
+
+
+def _policies_header(building_id: str) -> str:
+    return (
+        f"# {building_id}_policies.ttl — AccessPolicy triples (V5-T37/T43).\n"
+        "# The PDP evaluates these at every fetch chokepoint; the 0-leak certification\n"
+        "# rests on them. Edit here or via the admin console Policies tab; both stay\n"
+        "# consistent (auto-loaded on restart by ttl_uploader). Inference-class denials\n"
+        "# ('never track individuals') are deliberately NOT editable from the GUI.\n\n"
+    )
+
+
+async def upsert_policy(
+    building_id: str, subject_uri: str, ttl_block: str, *, client: Optional[Any] = None
+) -> dict:
+    """Add/replace one AccessPolicy in the building's policy file, then re-sync its graph.
+
+    BUG-194: re-syncing is NOT sufficient on its own. ``_sync_file_to_graph`` PUTs
+    the file into its named graph, which replaces only THAT graph — but the same
+    policy triples are also present in the DEFAULT graph, which the PUT never
+    touches. The PDP queries the union, so after an edit the subject carried BOTH
+    values (measured: minAggregationSensors 14 AND 555 for one policy) and the
+    stale one won. The editor reported success, the file was correct, the named
+    graph was correct, and enforcement quietly kept using the OLD floor — the
+    worst possible failure for a governance surface. Clearing the subject from
+    every graph first makes the file the single source of truth.
+    """
+    path = policies_path(building_id)
+    from orchestrator.services.ontology_manager import delete_subject
+
+    # Order matters: purge everywhere, THEN write the file and PUT it back, so the
+    # named graph ends up holding exactly one copy.
+    purge = await delete_subject(subject_uri, client=client)
+    if not purge.get("ok"):
+        logger.warning(
+            f"[input_ttl_store] could not purge {subject_uri} before upsert "
+            f"({purge.get('error')}) — a stale copy may shadow the new value"
+        )
+    with _file_write_lock():
+        g = Graph()
+        if path.exists():
+            g.parse(str(path), format="turtle")
+        _bind_prefixes(g, building_id)
+        g.remove((URIRef(subject_uri), None, None))  # replace if it already exists
+        g.parse(data=ttl_block, format="turtle")
+        _backup(path)
+        _atomic_write(path, _policies_header(building_id) + g.serialize(format="turtle"))
+    res = await _sync_file_to_graph(path, client=client)
+    return {
+        "ok": res["ok"],
+        "subject": subject_uri,
+        "file": str(path),
+        "error": None if res["ok"] else "graph sync failed",
+    }
+
+
+async def remove_policy(
+    building_id: str, subject_uri: str, *, client: Optional[Any] = None
+) -> dict:
+    """Remove a policy so the deletion PERSISTS across restarts (see remove_amenity)."""
+    subj = URIRef(subject_uri)
+    path = policies_path(building_id)
+    if _file_has_subject(path, subj):
+        # This file is ours, so keep its header AND the @prefix guarantee — deleting
+        # the last policy must not leave a prefix-less TTL that fails the startup
+        # validator and crash-loops the orchestrator.
+        return await _remove_from_file(
+            path,
+            subj,
+            building_id,
+            with_header=True,
+            header_text=_policies_header(building_id),
+            client=client,
+        )
+
+    other = _find_input_ttl_with_subject(subj, skip=path)
+    if other is not None:
+        logger.info(f"[input_ttl_store] policy {subject_uri} lives in {other.name}; editing it")
+        return await _remove_from_file(other, subj, building_id, with_header=False, client=client)
+
     from orchestrator.services.ontology_manager import delete_subject
 
     res = await delete_subject(subject_uri, client=client)

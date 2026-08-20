@@ -44,8 +44,17 @@ _FLOOR_RE = re.compile(r"\b(?:floor|level|storey|story)\s*(\d+)\b", re.IGNORECAS
 _ORDINAL_FLOOR_RE = re.compile(r"\b(\d+)(?:st|nd|rd|th)\s+floor\b", re.IGNORECASE)
 # Matches written ordinals: "first floor", "second floor", ..., "tenth floor"
 _WORD_ORDINAL_MAP = {
-    "ground": 0, "first": 1, "second": 2, "third": 3, "fourth": 4,
-    "fifth": 5, "sixth": 6, "seventh": 7, "eighth": 8, "ninth": 9, "tenth": 10,
+    "ground": 0,
+    "first": 1,
+    "second": 2,
+    "third": 3,
+    "fourth": 4,
+    "fifth": 5,
+    "sixth": 6,
+    "seventh": 7,
+    "eighth": 8,
+    "ninth": 9,
+    "tenth": 10,
 }
 _WORD_FLOOR_RE = re.compile(
     r"\b(" + "|".join(_WORD_ORDINAL_MAP.keys()) + r")\s+floor\b",
@@ -58,16 +67,28 @@ _ZONE_RE = re.compile(r"\b(\d+)\.(\d{2,3})\b")
 # Keywords that suggest a building-overview request
 _OVERVIEW_KEYWORDS = frozenset(
     [
-        "overview", "all floors", "each floor", "entire building",
-        "building summary", "building layout", "what floors", "how many floors",
+        "overview",
+        "all floors",
+        "each floor",
+        "entire building",
+        "building summary",
+        "building layout",
+        "what floors",
+        "how many floors",
     ]
 )
 
 # Keywords that trigger cross-floor search even without a floor number
 _LOCATION_KEYWORDS = frozenset(
     [
-        "where is", "where are", "find", "locate", "which floor",
-        "navigate", "directions to", "how do i get to",
+        "where is",
+        "where are",
+        "find",
+        "locate",
+        "which floor",
+        "navigate",
+        "directions to",
+        "how do i get to",
     ]
 )
 
@@ -83,9 +104,7 @@ class FloorPlanAgent:
 
     # ── Public API ────────────────────────────────────────────────────────────
 
-    async def resolve(
-        self, query: str, state: ConversationState
-    ) -> FloorPlanResult:
+    async def resolve(self, query: str, state: ConversationState) -> FloorPlanResult:
         """
         Main entry point.  Returns a FloorPlanResult.  Never raises —
         errors produce a result with a descriptive markdown message.
@@ -102,9 +121,7 @@ class FloorPlanAgent:
 
     # ── Resolution logic ──────────────────────────────────────────────────────
 
-    async def _resolve(
-        self, query: str, state: ConversationState
-    ) -> FloorPlanResult:
+    async def _resolve(self, query: str, state: ConversationState) -> FloorPlanResult:
         pipeline = get_floor_plan_pipeline()
 
         # 1. Determine building
@@ -142,13 +159,9 @@ class FloorPlanAgent:
                 pass
 
         # 5. Cross-floor search if user mentions a space type/name but no floor
-        if floor is None and (
-            space_label or any(kw in q_lower for kw in _LOCATION_KEYWORDS)
-        ):
+        if floor is None and (space_label or any(kw in q_lower for kw in _LOCATION_KEYWORDS)):
             search_term = space_label or query
-            results = self._search_across_floors(
-                search_term, pipeline, building_id, building_name
-            )
+            results = self._search_across_floors(search_term, pipeline, building_id, building_name)
             if results:
                 return self._build_search_result(query, results, building_id, building_name)
 
@@ -165,9 +178,7 @@ class FloorPlanAgent:
                     ),
                     interactive=False,
                 )
-            floor_list = " • ".join(
-                _floor_label(f) for f in available
-            )
+            floor_list = " • ".join(_floor_label(f) for f in available)
             return FloorPlanResult(
                 building_id=building_id,
                 markdown=(
@@ -264,15 +275,25 @@ class FloorPlanAgent:
         q_lower = query.lower()
         # Remove question words and navigation phrases
         for prefix in [
-            "where is the", "where is", "where are the", "where are",
-            "find the", "find", "locate the", "locate",
-            "how do i get to the", "how do i get to",
-            "navigate to the", "navigate to",
-            "show me the", "show me",
-            "which floor has the", "which floor has",
+            "where is the",
+            "where is",
+            "where are the",
+            "where are",
+            "find the",
+            "find",
+            "locate the",
+            "locate",
+            "how do i get to the",
+            "how do i get to",
+            "navigate to the",
+            "navigate to",
+            "show me the",
+            "show me",
+            "which floor has the",
+            "which floor has",
         ]:
             if q_lower.startswith(prefix):
-                remainder = query[len(prefix):].strip(" ?")
+                remainder = query[len(prefix) :].strip(" ?")
                 if remainder and len(remainder) > 2:
                     return remainder
                 break
@@ -280,9 +301,7 @@ class FloorPlanAgent:
 
     # ── Available floors ──────────────────────────────────────────────────────
 
-    def _available_floors(
-        self, pipeline, building_id: str
-    ) -> List[int]:
+    def _available_floors(self, pipeline, building_id: str) -> List[int]:
         # Phase 4 — accept both the primary building_id and its aliases when
         # matching manifests on disk (legacy slug paths remain valid).
         candidates: set = {building_id}
@@ -290,23 +309,17 @@ class FloorPlanAgent:
             candidates.update(pipeline._candidate_building_ids(building_id))
         except Exception:
             pass
-        return sorted(
-            fl for bid, fl in pipeline.list_manifests() if bid in candidates
-        )
+        return sorted(fl for bid, fl in pipeline.list_manifests() if bid in candidates)
 
     # ── Space lookup ──────────────────────────────────────────────────────────
 
-    def _find_space_by_zone(
-        self, manifest: FloorPlanManifest, zone_id: str
-    ) -> Optional[Space]:
+    def _find_space_by_zone(self, manifest: FloorPlanManifest, zone_id: str) -> Optional[Space]:
         for space in manifest.spaces:
             if space.zone_id == zone_id or space.id.endswith(zone_id):
                 return space
         return None
 
-    def _find_space_by_label(
-        self, manifest: FloorPlanManifest, label: str
-    ) -> Optional[Space]:
+    def _find_space_by_label(self, manifest: FloorPlanManifest, label: str) -> Optional[Space]:
         label_lower = label.lower()
         # Exact match first
         for space in manifest.spaces:
@@ -439,14 +452,12 @@ class FloorPlanAgent:
                     md_lines.append(f"- **Sensor zones:** {zones_str}")
                 else:
                     labels_str = ", ".join(f"**{s.label}**" for s in spaces[:6])
-                    md_lines.append(
-                        f"- **{stype.replace('_', ' ').title()}:** {labels_str}"
-                    )
+                    md_lines.append(f"- **{stype.replace('_', ' ').title()}:** {labels_str}")
 
         md_lines += [
             "",
             "💬 Which zone or room would you like sensor data for?  "
-            "(e.g. *\"zone 3.12\"* or *\"the meeting room\"*)",
+            '(e.g. *"zone 3.12"* or *"the meeting room"*)',
         ]
 
         return FloorPlanResult(
@@ -480,7 +491,11 @@ class FloorPlanAgent:
             pdf_url = r["pdf_url"]
             floor_label = r["floor_label"]
             zone_str = f" (Zone `{space.zone_id}`)" if space.zone_id else ""
-            type_str = f" — *{space.type.replace('_', ' ').title()}*" if space.type not in ("unknown", "zone") else ""
+            type_str = (
+                f" — *{space.type.replace('_', ' ').title()}*"
+                if space.type not in ("unknown", "zone")
+                else ""
+            )
             md_lines.append(
                 f"- **{floor_label}**: {space.label}{zone_str}{type_str} "
                 f"[📄 View Plan]({pdf_url})"
@@ -509,9 +524,7 @@ class FloorPlanAgent:
         building_id: str,
         building_name: str,
     ) -> FloorPlanResult:
-        floors = [
-            fl for bid, fl in pipeline.list_manifests() if bid == building_id
-        ]
+        floors = [fl for bid, fl in pipeline.list_manifests() if bid == building_id]
         if not floors:
             return FloorPlanResult(
                 building_id=building_id,
@@ -554,7 +567,7 @@ class FloorPlanAgent:
 
         md_lines.append(
             "💬 *Which floor would you like to explore? "
-            "Or ask \"where is the server room?\" to search across all floors.*"
+            'Or ask "where is the server room?" to search across all floors.*'
         )
 
         return FloorPlanResult(

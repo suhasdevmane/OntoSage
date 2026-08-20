@@ -28,7 +28,6 @@ from orchestrator.services.feeds.csv_drop import CsvDropAdapter, _parse_ts
 from orchestrator.services.feeds.registry import FeedRegistry, _derive_uuid
 from orchestrator.services.feeds.rest_poll import RestPollAdapter, _extract_by_dotpath
 
-
 # ─── FeedSpec validation ──────────────────────────────────────────────────────
 
 
@@ -109,7 +108,9 @@ async def test_rest_poll_extracts_field_map():
     mock_client.__aexit__ = AsyncMock(return_value=False)
     mock_client.get = AsyncMock(return_value=mock_resp)
 
-    with patch("orchestrator.services.feeds.rest_poll._httpx.AsyncClient", return_value=mock_client):
+    with patch(
+        "orchestrator.services.feeds.rest_poll._httpx.AsyncClient", return_value=mock_client
+    ):
         adapter = RestPollAdapter(spec)
         records = await adapter.poll()
 
@@ -135,7 +136,9 @@ async def test_rest_poll_http_error_returns_empty():
     mock_client.__aexit__ = AsyncMock(return_value=False)
     mock_client.get = AsyncMock(return_value=mock_resp)
 
-    with patch("orchestrator.services.feeds.rest_poll._httpx.AsyncClient", return_value=mock_client):
+    with patch(
+        "orchestrator.services.feeds.rest_poll._httpx.AsyncClient", return_value=mock_client
+    ):
         adapter = RestPollAdapter(spec)
         records = await adapter.poll()
 
@@ -156,7 +159,9 @@ async def test_rest_poll_no_url_returns_empty():
 @pytest.mark.asyncio
 async def test_csv_drop_reads_rows(tmp_path):
     csv_file = tmp_path / "sensors.csv"
-    csv_file.write_text("timestamp,temperature\n2026-01-01T00:00:00Z,21.5\n2026-01-01T00:01:00Z,22.0\n")
+    csv_file.write_text(
+        "timestamp,temperature\n2026-01-01T00:00:00Z,21.5\n2026-01-01T00:01:00Z,22.0\n"
+    )
 
     spec = FeedSpec(
         id="room_temp",
@@ -203,6 +208,7 @@ async def test_csv_drop_missing_file_returns_empty(tmp_path):
 
 def test_parse_ts_iso_with_z():
     from datetime import timezone
+
     dt = _parse_ts("2026-01-01T10:30:00Z")
     assert dt is not None
     assert dt.tzinfo is not None

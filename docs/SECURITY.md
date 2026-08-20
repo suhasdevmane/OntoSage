@@ -364,6 +364,44 @@ When `MODEL_PROVIDER=openai`, the following data is sent to OpenAI's API:
 
 Refer to [OpenAI's data privacy policy](https://openai.com/policies/privacy-policy) for information on data retention and processing.
 
+### Access policies — what the building will and won't answer (V5)
+
+RBAC decides which *endpoints* a role may call. Access policies decide what a role
+may *learn*, and they are enforced separately, by a deterministic policy decision
+point at every data fetch. They are RDF triples (`ontosage:AccessPolicy`) living in
+`input/<building>_policies.ttl`, so governance is versioned alongside the building
+rather than hidden in a database.
+
+Each policy sets, per role:
+
+| Field | Meaning |
+|---|---|
+| `minAggregationSensors` / `minAggregationSpaces` | k-anonymity floors — refuse an answer drawn from fewer sensors/spaces than this, so a "room average" can't become one person |
+| `resolutionTier` | `minutes:seconds` pairs — how coarse recent data must be (fresh data is blunted, history sharpens) |
+| `rateLimit` | `maxQueries:perMinutes`; `0:0` = unlimited. Blocks reconstructing detail by asking repeatedly |
+| `inferenceClass` | Question *shapes* that are denied outright, e.g. `individual_presence:deny` |
+
+**Editing policies.** Admin portal → **Policies** tab, or edit the TTL directly.
+A GUI edit writes the same file, reloads the decision point and flushes cached
+answers, so it binds on the next question — no restart.
+
+Two refusals are built in, because a GUI is where a guarantee gets weakened by
+accident:
+
+1. **Weakening requires acknowledgement.** Lowering a k floor, relaxing a rate
+   limit or sharpening a resolution tier is rejected unless you explicitly confirm
+   it; the response names exactly what got weaker, and the change is logged
+   against your account.
+2. **The individual-privacy rules are read-only here.** An inference class may
+   only be authored as `:deny`, and existing ones cannot be deleted through the
+   GUI. "The system explains the building; it never tracks individuals" is a
+   product property, not a setting. If you genuinely mean to change it, edit the
+   TTL — where it is a reviewable diff, not a click.
+
+Check what is actually being enforced: `PROTECT_ENFORCE` is `off`, `shadow`
+(evaluated and logged, not applied) or `on`. The Policies tab shows the live
+value; a tightened floor in `shadow` mode changes the logs, not the answers.
+
 ### Conversation History
 
 - **Redis:** Recent conversation state is count-bounded to `CONVERSATION_MAX_MESSAGES` with no time-expiry by default (set `CONVERSATION_TTL` > 0 to enforce time-based expiry)

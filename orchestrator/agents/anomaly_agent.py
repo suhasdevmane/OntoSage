@@ -26,10 +26,7 @@ from zoneinfo import ZoneInfo
 from orchestrator.llm_manager import llm_manager
 from shared.config import settings
 from shared.constants import COMFORT_RANGES as DEFAULT_COMFORT_RANGES
-from shared.constants import (
-    SPIKE_PCT_THRESHOLD,
-    Z_SCORE_THRESHOLD,
-)
+from shared.constants import SPIKE_PCT_THRESHOLD, Z_SCORE_THRESHOLD
 from shared.models import ConversationState
 from shared.utils import get_logger
 

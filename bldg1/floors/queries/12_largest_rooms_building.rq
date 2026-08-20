@@ -1,0 +1,20 @@
+PREFIX abx:    <https://abacws.cardiff.ac.uk/kg#>
+PREFIX bot:    <https://w3id.org/bot#>
+PREFIX brick:  <https://brickschema.org/schema/Brick#>
+PREFIX geo:    <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX unit:   <http://qudt.org/vocab/unit/>
+
+# "What are the biggest spaces anywhere in the building?"
+# Also returns the bounding-box footprint, which answers "will this fit in
+# there" far better than area alone.
+SELECT ?level ?code ?name ?area ?width ?depth WHERE {
+  ?storey a bot:Storey ; abx:level ?level ; bot:hasSpace ?room .
+  ?room abx:roomCode ?code ;
+        rdfs:label   ?name ;
+        brick:area/brick:value ?area .
+  OPTIONAL { ?room abx:bboxWidth ?width }
+  OPTIONAL { ?room abx:bboxDepth ?depth }
+}
+ORDER BY DESC(?area)
+LIMIT 15

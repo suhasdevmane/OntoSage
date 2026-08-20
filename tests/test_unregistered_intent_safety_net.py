@@ -47,23 +47,23 @@ def test_unknown_route_target_falls_back_to_response():
     orch = _make_orchestrator_stub()
     state = _make_state("totally_made_up_intent")
 
-    fake_reg = IntentRegistry(intents=[
-        IntentDefinition(
-            name="totally_made_up_intent",
-            description="...",
-            pipeline_group="standalone",
-            route_target="nonexistent_node_name",
-        ),
-    ])
+    fake_reg = IntentRegistry(
+        intents=[
+            IntentDefinition(
+                name="totally_made_up_intent",
+                description="...",
+                pipeline_group="standalone",
+                route_target="nonexistent_node_name",
+            ),
+        ]
+    )
     with patch(
         "orchestrator.intents.get_intent_registry",
         return_value=fake_reg,
     ):
         target = orch._route_from_dialogue(state)
 
-    assert target == "response", (
-        f"Expected fallback to 'response', got {target!r}"
-    )
+    assert target == "response", f"Expected fallback to 'response', got {target!r}"
 
 
 def test_fallback_sets_polite_dialogue_response():
@@ -74,14 +74,16 @@ def test_fallback_sets_polite_dialogue_response():
     orch = _make_orchestrator_stub()
     state = _make_state("lab_booking")
 
-    fake_reg = IntentRegistry(intents=[
-        IntentDefinition(
-            name="lab_booking",
-            description="...",
-            pipeline_group="standalone",
-            # default route_target falls back to intent name → "lab_booking"
-        ),
-    ])
+    fake_reg = IntentRegistry(
+        intents=[
+            IntentDefinition(
+                name="lab_booking",
+                description="...",
+                pipeline_group="standalone",
+                # default route_target falls back to intent name → "lab_booking"
+            ),
+        ]
+    )
     with patch(
         "orchestrator.intents.get_intent_registry",
         return_value=fake_reg,
@@ -89,9 +91,9 @@ def test_fallback_sets_polite_dialogue_response():
         orch._route_from_dialogue(state)
 
     msg = state.intermediate_results.get("dialogue_response", "")
-    assert "lab_booking" in msg or "lab" in msg, (
-        f"Expected user-facing message mentioning the intent, got: {msg!r}"
-    )
+    assert (
+        "lab_booking" in msg or "lab" in msg
+    ), f"Expected user-facing message mentioning the intent, got: {msg!r}"
 
 
 def test_registered_node_routes_through_normally():
@@ -101,13 +103,15 @@ def test_registered_node_routes_through_normally():
     orch = _make_orchestrator_stub()
     state = _make_state("floor_plan")
 
-    fake_reg = IntentRegistry(intents=[
-        IntentDefinition(
-            name="floor_plan",
-            description="...",
-            pipeline_group="standalone",
-        ),
-    ])
+    fake_reg = IntentRegistry(
+        intents=[
+            IntentDefinition(
+                name="floor_plan",
+                description="...",
+                pipeline_group="standalone",
+            ),
+        ]
+    )
     with patch(
         "orchestrator.intents.get_intent_registry",
         return_value=fake_reg,

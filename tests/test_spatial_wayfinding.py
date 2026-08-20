@@ -17,14 +17,19 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from orchestrator.agents.spatial_agent import SpatialAgent, _WAYFINDING_RE
+from orchestrator.agents.spatial_agent import _WAYFINDING_RE, SpatialAgent
 from shared.models import FloorPlanManifest, RenderedImage, Space
-
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 
-def _space(zone_id: str, label: str, space_type: str = "office", adjacent: List[str] = None, area: float = 20.0) -> Space:
+def _space(
+    zone_id: str,
+    label: str,
+    space_type: str = "office",
+    adjacent: List[str] = None,
+    area: float = 20.0,
+) -> Space:
     return Space(
         id=f"bldg1.{zone_id}",
         zone_id=zone_id,
@@ -62,55 +67,70 @@ def _manifest(floor: int, spaces: List[Space]) -> FloorPlanManifest:
 def linear_manifests():
     """Three rooms on floor 5: reception → corridor → office 5.01 (linear adjacency)."""
     return [
-        _manifest(5, [
-            _space("5.00", "Main Reception", "reception", adjacent=["5.01"]),
-            _space("5.01", "Corridor", "corridor", adjacent=["5.00", "5.02"]),
-            _space("5.02", "Office 5.02", "office", adjacent=["5.01"]),
-        ])
+        _manifest(
+            5,
+            [
+                _space("5.00", "Main Reception", "reception", adjacent=["5.01"]),
+                _space("5.01", "Corridor", "corridor", adjacent=["5.00", "5.02"]),
+                _space("5.02", "Office 5.02", "office", adjacent=["5.01"]),
+            ],
+        )
     ]
 
 
 @pytest.fixture
 def cross_floor_manifests():
     """Lift on floor 3 adjacent to lift on floor 5; final office only on floor 5."""
-    floor3 = _manifest(3, [
-        _space("3.00", "Floor 3 Reception", "reception", adjacent=["3.lift"]),
-        _space("3.lift", "Lift Floor 3", "lift", adjacent=["3.00", "5.lift"]),
-    ])
-    floor5 = _manifest(5, [
-        _space("5.lift", "Lift Floor 5", "lift", adjacent=["3.lift", "5.01"]),
-        _space("5.01", "Office 5.01", "office", adjacent=["5.lift"]),
-    ])
+    floor3 = _manifest(
+        3,
+        [
+            _space("3.00", "Floor 3 Reception", "reception", adjacent=["3.lift"]),
+            _space("3.lift", "Lift Floor 3", "lift", adjacent=["3.00", "5.lift"]),
+        ],
+    )
+    floor5 = _manifest(
+        5,
+        [
+            _space("5.lift", "Lift Floor 5", "lift", adjacent=["3.lift", "5.01"]),
+            _space("5.01", "Office 5.01", "office", adjacent=["5.lift"]),
+        ],
+    )
     return [floor3, floor5]
 
 
 # ─── _WAYFINDING_RE ───────────────────────────────────────────────────────────
 
 
-@pytest.mark.parametrize("phrase", [
-    "how do I get to room 5.01",
-    "how do I get to room 5.01 from the main entrance",
-    "directions to the server room from reception",
-    "route to 3.01 from 5.20",
-    "navigate to the meeting room",
-    "find my way to the kitchen",
-    "guide me to the server room",
-    "how do I reach the library",
-    "way to get to room 4.02",
-    "how can I get to floor 3",
-    "how would I get to zone 2.01",
-])
+@pytest.mark.parametrize(
+    "phrase",
+    [
+        "how do I get to room 5.01",
+        "how do I get to room 5.01 from the main entrance",
+        "directions to the server room from reception",
+        "route to 3.01 from 5.20",
+        "navigate to the meeting room",
+        "find my way to the kitchen",
+        "guide me to the server room",
+        "how do I reach the library",
+        "way to get to room 4.02",
+        "how can I get to floor 3",
+        "how would I get to zone 2.01",
+    ],
+)
 def test_wayfinding_re_matches_trigger_phrases(phrase):
     assert _WAYFINDING_RE.search(phrase), f"Expected match for: '{phrase}'"
 
 
-@pytest.mark.parametrize("phrase", [
-    "rooms adjacent to 3.01",
-    "what's next to the server room",
-    "how many rooms on floor 2",
-    "show me the floor plan",
-    "total area of floor 5",
-])
+@pytest.mark.parametrize(
+    "phrase",
+    [
+        "rooms adjacent to 3.01",
+        "what's next to the server room",
+        "how many rooms on floor 2",
+        "show me the floor plan",
+        "total area of floor 5",
+    ],
+)
 def test_wayfinding_re_does_not_match_non_wayfinding(phrase):
     assert not _WAYFINDING_RE.search(phrase), f"Unexpected match for: '{phrase}'"
 
@@ -173,7 +193,9 @@ def test_bfs_route_unknown_start():
 
 def test_wayfinding_finds_route_on_same_floor(linear_manifests):
     agent = SpatialAgent()
-    result = agent._answer_wayfinding("how do I get to room 5.02 from the main reception", linear_manifests)
+    result = agent._answer_wayfinding(
+        "how do I get to room 5.02 from the main reception", linear_manifests
+    )
     assert "Arrive at" in result or "Office 5.02" in result
     assert "5.02" in result
 
@@ -208,13 +230,22 @@ def test_wayfinding_no_path_honest_fallback(linear_manifests):
     # 5.02 is reachable, but if we ask for something disconnected we get fallback
     # Create manifests with an isolated space
     isolated_manifests = [
-        _manifest(5, [
-            _space("5.00", "Reception", "reception", adjacent=[]),
-            _space("5.99", "Isolated Room", "office", adjacent=[]),
-        ])
+        _manifest(
+            5,
+            [
+                _space("5.00", "Reception", "reception", adjacent=[]),
+                _space("5.99", "Isolated Room", "office", adjacent=[]),
+            ],
+        )
     ]
-    result = agent._answer_wayfinding("how do I get to isolated room from reception", isolated_manifests)
-    assert "could not find" in result.lower() or "not available" in result.lower() or "adjacency" in result.lower()
+    result = agent._answer_wayfinding(
+        "how do I get to isolated room from reception", isolated_manifests
+    )
+    assert (
+        "could not find" in result.lower()
+        or "not available" in result.lower()
+        or "adjacency" in result.lower()
+    )
 
 
 # ─── _answer dispatch priority ───────────────────────────────────────────────

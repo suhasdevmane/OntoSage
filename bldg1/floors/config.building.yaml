@@ -1,0 +1,98 @@
+# ---------------------------------------------------------------------------
+# Whole-building run: every storey in one pass, merged into one graph.
+#
+#   python -m pipeline.cli building -c config.building.yaml --outdir out
+#
+# Point `file:` at the .dwg directly - LibreDWG's WebAssembly build reads DWG
+# natively, so there is no ODA File Converter step and no DXF intermediate.
+# A .dxf or a cached .dwg.json works here too.
+# ---------------------------------------------------------------------------
+
+building:
+  id: Abacws
+  name: "Abacws Building"
+  site: "Cardiff University"
+
+units_to_metres: 0.001    # UK architectural DWGs are millimetres; verify with `layers`
+
+floors:
+  - file: "dwg/Abacws floor 0.dwg"
+    storey: { id: "Storey_00", name: "Ground Floor", level: 0 }
+  - file: "dwg/Abacws floor 1.dwg"
+    storey: { id: "Storey_01", name: "First Floor", level: 1 }
+  - file: "dwg/Abacws floor 2.dwg"
+    storey: { id: "Storey_02", name: "Second Floor", level: 2 }
+  - file: "dwg/Abacws floor 3.dwg"
+    storey: { id: "Storey_03", name: "Third Floor", level: 3 }
+  - file: "dwg/Abacws floor 4.dwg"
+    storey: { id: "Storey_04", name: "Fourth Floor", level: 4 }
+  - file: "dwg/Abacws floor 5.dwg"
+    storey: { id: "Storey_05", name: "Fifth Floor", level: 5 }
+    # Per-floor overrides go here if one drawing breaks the house style, e.g.
+    # overrides:
+    #   units_to_metres: 1.0
+    #   geometry: { room_boundary_layers: ["USABLE", "ROOM OUTLINE"] }
+
+# --- cross-floor inference -------------------------------------------------
+merge:
+  # There is nothing in a 2D plan saying the stair on floor 1 is the same
+  # stair as on floor 2. It is inferred from stacked footprints + a name that
+  # reads as circulation.
+  core_patterns:
+    - "\\bstair"
+    - "\\blift\\b"
+    - "\\belevator"
+    - "\\briser\\b"
+    - "\\bcore\\b"
+    - "\\bshaft\\b"
+    - "\\bescape\\b"
+  # Overlap measured against the SMALLER footprint, so a lift shaft still
+  # links to the larger stair core enclosing it.
+  min_overlap_ratio: 0.5
+  # Only link storeys one level apart. Set false to link a full-height shaft
+  # across every storey directly.
+  adjacent_only: true
+  # Warn if floor bounding boxes disagree by more than this - a sign the
+  # drawings do not share a coordinate origin, which would make every
+  # vertical link and cross-floor spatial query wrong.
+  alignment_tolerance_m: 25.0
+
+# --- everything below is shared by all floors ------------------------------
+geometry:
+  room_boundary_layers: ["USABLE", "POLYLINES"]
+  min_room_area_m2: 1.5
+  min_shared_boundary_m: 0.4
+  tolerance_m: 0.35
+  explode_block_references: true
+
+labels:
+  layers: ["ROOM_NAMES", "ROOM ASSIGNMENT", "PRSNAMES", "A-AREA-IDEN"]
+  code_pattern: '^([0-9]{1,2}[A-Z][0-9]{1,3}|[0-9]{1,2}\.[0-9]{1,3})$'
+
+dimensions:
+  enabled: true
+  layers: []
+  min_measurement_m: 0.05
+  max_measurement_m: 500.0
+
+elements:
+  - { pattern: "*E-ELEC-EQPI*", brick_class: "Electrical_Equipment", label: "Electrical equipment" }
+  - { pattern: "*E-ELEC-FI*",   brick_class: "Electrical_Equipment", label: "Electrical fitting" }
+  - { pattern: "*I-FURN*",      brick_class: "Furniture",            label: "Furniture" }
+  - { pattern: "SANITARY",      brick_class: "Equipment",            label: "Sanitary fitting" }
+  - { pattern: "WASTE & RECYCLING STATION", brick_class: "Equipment", label: "Waste and recycling station" }
+
+doors:
+  layer_patterns: ["*A-DOOR*", "*DOOR*"]
+  block_name_patterns: ["*DOOR*", "*DR_*"]
+
+ignore_layers:
+  # Note: dimensions are collected regardless of this list (see above),
+  # so excluding the annotation layer here does not lose measurements.
+  - "A-ANNO-DIMS"
+  - "A-DETL-THIN"
+  - "A-DETL-WIDE"
+  - "AECFROZEN"
+  - "TITLE_BLK"
+  - "VPORT"
+  - "DEFPOINTS"

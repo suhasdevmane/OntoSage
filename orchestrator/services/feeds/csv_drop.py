@@ -21,9 +21,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from shared.utils import get_logger
-
 from orchestrator.services.feeds.base import FeedAdapter, FeedRecord, FeedSpec
+from shared.utils import get_logger
 
 logger = get_logger(__name__)
 

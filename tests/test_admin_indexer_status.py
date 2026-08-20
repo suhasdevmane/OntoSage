@@ -60,13 +60,13 @@ def test_status_yaml_sha_is_valid_when_indexed(chat_client):
     for bldg_id, info in buildings.items():
         if info["status"] in ("indexed", "skipped"):
             sha = info.get("yaml_sha", "")
-            assert len(sha) == 64, (
-                f"{bldg_id}: expected 64-char hex sha, got len={len(sha)}: {sha!r}"
-            )
+            assert (
+                len(sha) == 64
+            ), f"{bldg_id}: expected 64-char hex sha, got len={len(sha)}: {sha!r}"
             # Hex-only
-            assert all(c in "0123456789abcdef" for c in sha.lower()), (
-                f"{bldg_id}: yaml_sha is not hex: {sha!r}"
-            )
+            assert all(
+                c in "0123456789abcdef" for c in sha.lower()
+            ), f"{bldg_id}: yaml_sha is not hex: {sha!r}"
 
 
 def test_status_router_intents_includes_capability(chat_client):
@@ -75,6 +75,6 @@ def test_status_router_intents_includes_capability(chat_client):
     r = requests.get(f"{chat_client.base}/api/v1/admin/capability-indexer/status", timeout=10)
     data = r.json()["data"]
     assert data["router_ready"] is True
-    assert "capability" in data["router_intents"], (
-        f"Expected 'capability' in router_intents, got: {data['router_intents']!r}"
-    )
+    assert (
+        "capability" in data["router_intents"]
+    ), f"Expected 'capability' in router_intents, got: {data['router_intents']!r}"

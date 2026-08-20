@@ -31,7 +31,6 @@ import uuid
 
 import pytest
 
-
 pytestmark = pytest.mark.live
 
 
@@ -49,9 +48,7 @@ def test_lift_dimensions_routes_to_capability(chat_client, fresh_session_id):
         "1000 kg", "1000kg", "106 cm", "106cm", "lift", "dimensions"
     ), f"Expected lift detail content, got: {resp.response_text[:300]}"
     # MUST NOT be the generic SPARQL miss
-    assert not resp.contains("ontology data does not provide"), (
-        "Routing regressed back to SPARQL"
-    )
+    assert not resp.contains("ontology data does not provide"), "Routing regressed back to SPARQL"
 
 
 def test_synonym_query_matches(chat_client, fresh_session_id):
@@ -62,9 +59,9 @@ def test_synonym_query_matches(chat_client, fresh_session_id):
         session_id=fresh_session_id,
     )
     assert resp.success, f"Chat failed: {resp.raw}"
-    assert resp.contains_any("lift", "1000", "106", "passenger"), (
-        f"Synonym query should hit lift KB entry, got: {resp.response_text[:300]}"
-    )
+    assert resp.contains_any(
+        "lift", "1000", "106", "passenger"
+    ), f"Synonym query should hit lift KB entry, got: {resp.response_text[:300]}"
 
 
 def test_floor_word_does_not_steal_capability(chat_client, fresh_session_id):
@@ -76,12 +73,10 @@ def test_floor_word_does_not_steal_capability(chat_client, fresh_session_id):
     )
     assert resp.success
     # Must not be the floor_plan response
-    assert not resp.contains("I have floor plans for"), (
-        "Floor-plan hijack regression — see §15.2"
-    )
-    assert resp.contains_any("baby changing", "accessible toilet", "ground floor"), (
-        f"Expected toilet-by-floor KB content, got: {resp.response_text[:300]}"
-    )
+    assert not resp.contains("I have floor plans for"), "Floor-plan hijack regression — see §15.2"
+    assert resp.contains_any(
+        "baby changing", "accessible toilet", "ground floor"
+    ), f"Expected toilet-by-floor KB content, got: {resp.response_text[:300]}"
 
 
 def test_sensor_query_not_hijacked_by_capability(chat_client, fresh_session_id):
@@ -92,9 +87,9 @@ def test_sensor_query_not_hijacked_by_capability(chat_client, fresh_session_id):
     )
     assert resp.success
     # Sensor data responses contain ppm, sensor counts, or floor breakdowns
-    assert resp.contains_any("ppm", "sensor", "co2", "co₂"), (
-        f"CO2 sensor query should return sensor data, got: {resp.response_text[:300]}"
-    )
+    assert resp.contains_any(
+        "ppm", "sensor", "co2", "co₂"
+    ), f"CO2 sensor query should return sensor data, got: {resp.response_text[:300]}"
     # Must NOT be a capability KB response
     assert not resp.contains_any(
         "information I have on record",
@@ -108,9 +103,7 @@ def test_sensor_query_not_hijacked_by_capability(chat_client, fresh_session_id):
 def test_capability_match_propagated_to_state(chat_client, fresh_session_id):
     """The /chat response should expose the semantic score in metadata when
     capability semantic routing fires. Skip if the API doesn't surface it yet."""
-    resp = chat_client.chat(
-        "What are the lift dimensions?", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("What are the lift dimensions?", session_id=fresh_session_id)
     assert resp.success
     # If the orchestrator exposes meta — verify; otherwise this is a soft check
     meta = resp.raw.get("meta") or {}
@@ -122,30 +115,26 @@ def test_capability_agent_uses_pre_fetched_matches(chat_client, fresh_session_id
     """When semantic routing populates capability_matches, the response should
     contain content from the *most specific* entry (lift_accessibility_detail),
     not the generic 'accessibility' entry that substring search would prefer."""
-    resp = chat_client.chat(
-        "How big is the lift?", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("How big is the lift?", session_id=fresh_session_id)
     assert resp.success
     # The specific entry mentions 106cm or 1000kg or "Braille"
     has_specific = resp.contains_any("106", "1000 kg", "1000kg", "Braille", "tactile")
     # The generic entry mentions "fully accessible: (1) Step-free access"
     has_generic_only = resp.contains("Step-free access") and not has_specific
-    assert has_specific or not has_generic_only, (
-        f"Expected specific lift_accessibility_detail content, got: {resp.response_text[:300]}"
-    )
+    assert (
+        has_specific or not has_generic_only
+    ), f"Expected specific lift_accessibility_detail content, got: {resp.response_text[:300]}"
 
 
 def test_capability_agent_fallback_when_no_matches(chat_client, fresh_session_id):
     """When semantic routing finds no high-confidence match, the LLM intent
     classification and legacy keyword override still work. 'fire safety' is
     well-covered by both paths, so this tests the fallback layering."""
-    resp = chat_client.chat(
-        "What are the fire safety features?", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("What are the fire safety features?", session_id=fresh_session_id)
     assert resp.success
-    assert resp.contains_any("smoke detector", "sprinkler", "assembly point", "fire"), (
-        f"Fire safety capability query failed, got: {resp.response_text[:300]}"
-    )
+    assert resp.contains_any(
+        "smoke detector", "sprinkler", "assembly point", "fire"
+    ), f"Fire safety capability query failed, got: {resp.response_text[:300]}"
 
 
 # ── 8: rollback path ───────────────────────────────────────────────────────────
@@ -162,13 +151,9 @@ def test_feature_flag_off_is_byte_identical(chat_client, fresh_session_id):
     if flag in ("true", "1", "yes"):
         pytest.skip("Test only meaningful with CAPABILITY_SEMANTIC_ROUTING_ENABLED=false")
 
-    resp = chat_client.chat(
-        "What are the fire evacuation procedures?", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("What are the fire evacuation procedures?", session_id=fresh_session_id)
     assert resp.success
-    assert resp.contains_any("evacuation", "fire", "assembly point"), (
-        "Flag-off behaviour regressed"
-    )
+    assert resp.contains_any("evacuation", "fire", "assembly point"), "Flag-off behaviour regressed"
 
 
 # ── 9-12: multi-building + idempotency contracts (deferred to Phase 2 prep) ────
@@ -183,6 +168,7 @@ def test_startup_no_capability_yaml_for_one_building(chat_client):
     won't include it in results (it short-circuits before logging).
     """
     import requests
+
     r = requests.get(f"{chat_client.base}/api/v1/admin/capability-indexer/status", timeout=10)
     assert r.status_code == 200
     data = r.json()
@@ -216,9 +202,11 @@ def test_multi_building_isolation(chat_client, fresh_session_id):
         session_id=fresh_session_id,
         building_id="bldg99",  # doesn't exist → no capability_bldg99 collection
     )
-    assert resp.success or resp.raw.get("status_code") in (404, 400, 422), (
-        f"Unexpected error on unknown building: {resp.raw}"
-    )
+    assert resp.success or resp.raw.get("status_code") in (
+        404,
+        400,
+        422,
+    ), f"Unexpected error on unknown building: {resp.raw}"
     if resp.success:
         assert "1000 kg" not in resp.response_text, "Cross-building leakage detected"
         assert "106 cm" not in resp.response_text, "Cross-building leakage detected"
@@ -228,6 +216,7 @@ def test_unchanged_yaml_startup_idempotent(chat_client):
     """The status endpoint exposes the yaml_sha that drives idempotency.
     Confirms a non-empty sha is recorded — proves the SHA-256 fingerprint is wired."""
     import requests
+
     r = requests.get(f"{chat_client.base}/api/v1/admin/capability-indexer/status", timeout=10)
     assert r.status_code == 200
     bldg1 = r.json()["data"]["buildings"]["bldg1"]

@@ -133,19 +133,32 @@ def test_route_from_analytics_node_falls_through_when_no_media():
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-@pytest.mark.parametrize("key,attr,sample", [
-    ("dialogue_response", "dialogue_response", "Direct answer"),
-    ("planner_result", "planner_result", {"formatted_response": "..."}),
-    ("floor_plan_result", "floor_plan_result", "## Floor 3"),
-    ("anomaly_result", "anomaly_result", {"formatted_response": "..."}),
-    ("export_result", "export_result", {"success": True, "filename": "x.csv", "row_count": 10, "size_bytes": 100, "content": "..."}),
-    ("control_result", "control_result", {"message": "ok"}),
-    ("maintenance_result", "maintenance_result", {"operation": "CREATE", "ticket_id": "MT-1"}),
-    ("compliance_context", "compliance_context", "ASHRAE 55"),
-    ("sensor_metadata", "sensor_metadata", {"uuid1": {"label": "Temp Zone 1"}}),
-    ("viz_result", "viz_result", {"formatted_response": "...", "media": [{}]}),
-    ("document_result", "document_result", {"success": True, "filename": "r.pdf"}),
-])
+@pytest.mark.parametrize(
+    "key,attr,sample",
+    [
+        ("dialogue_response", "dialogue_response", "Direct answer"),
+        ("planner_result", "planner_result", {"formatted_response": "..."}),
+        ("floor_plan_result", "floor_plan_result", "## Floor 3"),
+        ("anomaly_result", "anomaly_result", {"formatted_response": "..."}),
+        (
+            "export_result",
+            "export_result",
+            {
+                "success": True,
+                "filename": "x.csv",
+                "row_count": 10,
+                "size_bytes": 100,
+                "content": "...",
+            },
+        ),
+        ("control_result", "control_result", {"message": "ok"}),
+        ("maintenance_result", "maintenance_result", {"operation": "CREATE", "ticket_id": "MT-1"}),
+        ("compliance_context", "compliance_context", "ASHRAE 55"),
+        ("sensor_metadata", "sensor_metadata", {"uuid1": {"label": "Temp Zone 1"}}),
+        ("viz_result", "viz_result", {"formatted_response": "...", "media": [{}]}),
+        ("document_result", "document_result", {"success": True, "filename": "r.pdf"}),
+    ],
+)
 def test_pipeline_ctx_field_matches_dict_key(key, attr, sample):
     """For every key _response_node reads via ctx, the field maps correctly."""
     state = _make_state({key: sample})

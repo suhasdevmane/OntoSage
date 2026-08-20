@@ -1,0 +1,49 @@
+# SATURATE (V4-T08): simulated energy_submeter sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'submeter_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://buildsys.org/ontologies/bldg2#> .
+
+<http://buildsys.org/ontologies/bldg2#submeter_data>
+    a ref:Database ;
+    rdfs:label "Submeter Data" .
+
+<http://buildsys.org/ontologies/bldg2#floor0_sat_energy_submeter>
+    a brick:Electrical_Meter ;
+    rdfs:label "floor0 energy_submeter (simulated) [kWh]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#floor0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a5cfc367-ae98-5f1c-b34e-aa8231338361" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#submeter_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#floor1_sat_energy_submeter>
+    a brick:Electrical_Meter ;
+    rdfs:label "floor1 energy_submeter (simulated) [kWh]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#floor1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2ae33c60-b5e1-5de4-8590-365975c77e49" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#submeter_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#floor2_sat_energy_submeter>
+    a brick:Electrical_Meter ;
+    rdfs:label "floor2 energy_submeter (simulated) [kWh]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#floor2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "de9d0b68-8ac0-5aee-8deb-d7a28efac3a2" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#submeter_data> ;
+    ] .

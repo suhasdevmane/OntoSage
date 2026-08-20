@@ -148,6 +148,22 @@ def _get_few_shot_examples(persona: str, max_examples: int = 2) -> str:
 RAG_SERVICE_URL = f"http://{settings.RAG_SERVICE_HOST}:{settings.RAG_SERVICE_PORT}"
 
 
+def _format_triple(triple: Any) -> str:
+    """Render one retrieved triple as a readable line for the prompt.
+
+    The retriever returns triples as dicts; interpolating those straight into the
+    prompt gave the model Python dict reprs to read (BUG-170). Anything that is
+    already a string is passed through, so a change in the retriever's shape
+    degrades to the old behaviour instead of raising.
+    """
+    if isinstance(triple, dict):
+        subject = triple.get("subject", "")
+        predicate = triple.get("predicate", "")
+        obj = triple.get("object", "")
+        return f"{subject} {predicate} {obj}".strip()
+    return str(triple)
+
+
 def format_conversation_history(messages: List[Message], max_messages: int = 5) -> str:
     """
     Format recent conversation messages for LLM context.
@@ -404,12 +420,24 @@ _TIME_KW = (
 # here under their historical names for tests and backward compatibility.
 from orchestrator.services.routing_contract import (
     BUILDING_INFO_KWS as _BUILDING_INFO_KWS,
+)
+from orchestrator.services.routing_contract import (
     COUNT_TRIGGER_KWS as _COUNT_TRIGGER_KWS,
+)
+from orchestrator.services.routing_contract import (
     COUNTABLE_DEVICE_KWS as _COUNTABLE_DEVICE_KWS,
-    FORECAST_KWS as _FORECAST_KWS,
+)
+from orchestrator.services.routing_contract import FORECAST_KWS as _FORECAST_KWS
+from orchestrator.services.routing_contract import (
     MAINTENANCE_SCHEDULE_KWS as _MAINTENANCE_SCHEDULE_KWS,
+)
+from orchestrator.services.routing_contract import (
     ROOM_GEOMETRY_KWS as _ROOM_GEOMETRY_KWS,
+)
+from orchestrator.services.routing_contract import (
     SENSOR_METRIC_KWS as _SENSOR_METRIC_KWS,
+)
+from orchestrator.services.routing_contract import (
     STRUCTURE_COUNT_KWS as _STRUCTURE_COUNT_KWS,
 )
 
@@ -606,13 +634,16 @@ class DialogueAgent:
             return None
         return rewritten
 
-    async def _retrieve_ontology_context(self, query: str, top_k: int = 5) -> List[str]:
+    async def _retrieve_ontology_context(
+        self, query: str, top_k: int = 5, max_context_items: int = 30
+    ) -> List[str]:
         """
         Retrieve relevant ontology context from RAG service
 
         Args:
             query: User's question
-            top_k: Number of context items to retrieve
+            top_k: Number of ENTITIES the retriever should find (its own contract)
+            max_context_items: How many context lines to keep for the prompt
 
         Returns:
             List of context strings with ontology information
@@ -627,12 +658,22 @@ class DialogueAgent:
                     )
                     if response.status_code == 200:
                         data = response.json()
-                        # Format GraphDB result as context strings
+                        # BUG-170: top_k is the retriever's ENTITY budget, but this
+                        # method used it again to truncate the returned CONTEXT — so
+                        # a 5-entity retrieval yielding ~1000 triples was cut to the
+                        # summary plus four triples, throwing away nearly all of the
+                        # context that was just fetched. The two budgets are separate.
                         summary = data.get("summary", "")
                         triples = data.get("triples", [])
-                        contexts = [summary] + triples
-                        logger.info(f"✅ Retrieved {len(contexts)} context items from GraphDB RAG")
-                        return contexts[:top_k]
+                        contexts = ([summary] if summary else []) + [
+                            _format_triple(t) for t in triples
+                        ]
+                        kept = contexts[:max_context_items]
+                        logger.info(
+                            f"✅ GraphDB RAG: {data.get('metadata', {}).get('entity_count', '?')} "
+                            f"entities / {len(triples)} triples → keeping {len(kept)} context lines"
+                        )
+                        return kept
                     else:
                         logger.warning(f"GraphDB retrieval returned status {response.status_code}")
                         return []
@@ -704,6 +745,18 @@ class DialogueAgent:
         # manual scores strongly in the document KB. The legacy Qdrant capability-KB probe,
         # the medium-band soft override, and capability.yaml have all been removed — there is no
         # second path. `_SR` is still used below for the report/control/floor-plan/spatial bypasses.
+        # V4: a constraint-recommendation query ("where can I sit that's quiet …
+        # near drinking water") mentions amenity lay-terms but is NOT an
+        # amenity-info question — it must reach the deliberate pipeline, so it
+        # bypasses the capability short-circuit (same guard family as the
+        # data/report/control bypasses above it).
+        from orchestrator.services.routing_contract import DELIBERATE_RE as _DELIB_RE
+        from orchestrator.services.routing_contract import (
+            register_question as _register_q,
+        )
+        from orchestrator.services.routing_contract import (
+            report_request_about_data as _report_request_about_data,
+        )
         from orchestrator.services.semantic_router import (
             SemanticRouter as _SR,  # local import avoids cycle
         )
@@ -719,6 +772,23 @@ class DialogueAgent:
             # must reach the floor_plan agent, not a floor-areas capability document.
             and not _SR.is_floor_plan_query(user_query)
             and not _SR.is_spatial_query(user_query)
+            and not _DELIB_RE.search(user_query)
+            # V5-T26: "when was the fire alarm last tested?" matches the fire-safety
+            # topic by lay-term, but it asks for a DATE — the register lane answers
+            # with one; the topic prose admits it holds none. Same guard family.
+            and not _register_q(user_query)
+            # CAVEAT-201: "give me a report on energy use last week" asks for a
+            # document about MEASURED data. The ontology holds a topic whose lay
+            # terms cover "energy", so without this the amenity prose answers a
+            # question about readings — with no readings in it. Same guard
+            # family as the data/report/control bypasses above.
+            and not _report_request_about_data(user_query)
+            # V5-T42: individual-tracking / private-content shapes must reach the
+            # privacy-refusal rule — never a topic document about 'security'.
+            and not __import__(
+                "orchestrator.services.privacy.inference_classes",
+                fromlist=["classify_inference"],
+            ).classify_inference(user_query)
         ):
             try:
                 from orchestrator.services.capability_graph_resolver import (
@@ -827,8 +897,16 @@ class DialogueAgent:
             # ── Routing contract, post stage (TODO-050) ────────────────────────
             # Data-query promotion runs after parsing (covers the JSON-parse
             # fallback path too), exactly where the historical override ran.
-            from orchestrator.services.routing_contract import apply_contract as _apply_rc
+            from orchestrator.services.routing_contract import (
+                apply_contract as _apply_rc,
+            )
 
+            # V5-T24 fix: the JSON-parse FALLBACK path returns intent 'general'
+            # without ever running the parse-stage rules, so post-stage
+            # promotion could hijack event/booking questions into sensor_data.
+            # Run parse-stage here whenever it hasn't run for this result.
+            if "parse" not in (result.get("routing_stages_run") or []):
+                _apply_rc(user_query, result, stage="parse")
             _apply_rc(user_query, result, stage="post")
 
             # (Legacy medium-band capability SOFT override removed — TODO-012. Capability
@@ -858,13 +936,32 @@ class DialogueAgent:
 
         except Exception as e:
             logger.error(f"❌ LLM intent detection failed: {e}", exc_info=True)
-            # Fallback to safe default
-            return {
+            # BUG-167: the deterministic routing contract must survive an LLM
+            # outage — an empty completion used to return a bare 'general'
+            # fallback that skipped every rule, so shape-routable questions
+            # (events, register, diagnosis…) fell into the open-domain answerer.
+            fallback = {
+                "intent": "general",
                 "general": True,
+                "entities": [],
+                "required_analytics": [],
+                "time_range": {"start": None, "end": None},
+                "start_date": None,
+                "end_date": None,
                 "sparql_query": "",
                 "analytics": False,
-                "response": f"I encountered an error processing your question. Please try rephrasing: {str(e)}",
+                "response": "",
+                "classification_failed": True,
             }
+            try:
+                from orchestrator.services.routing_contract import apply_contract as _rc
+
+                _rc(user_query, fallback, stage="parse")
+                _rc(user_query, fallback, stage="post")
+            except Exception as rc_err:  # never let routing break the fallback
+                logger.warning(f"[dialogue] contract on fallback skipped: {rc_err}")
+            fallback["general"] = fallback.get("intent") == "general"
+            return fallback
 
     def _build_intent_detection_prompt(
         self,
@@ -904,11 +1001,21 @@ class DialogueAgent:
             logger.warning(f"Failed to get local time: {e}")
             current_time_str = datetime.now().strftime("%A, %B %d, %Y, %H:%M (UTC)")
 
-        # Format ontology context
+        # Format ontology context. HARD CAP (BUG-168): the RAG retrieve has
+        # returned 270 items for a single query, inflating this prompt to
+        # ~30k chars — past the local model's num_ctx, which then returns an
+        # EMPTY completion and drops the whole turn to the fallback path.
+        # 30 items is far more than classification uses.
         context_str = ""
         if ontology_context:
+            capped = list(ontology_context)[:30]
+            if len(capped) < len(ontology_context):
+                logger.warning(
+                    f"[dialogue] ontology context capped {len(ontology_context)} → "
+                    f"{len(capped)} items for the intent prompt (BUG-168 guard)"
+                )
             context_str = "\\n\\nRelevant Ontology Context (from vector database):\\n"
-            for i, ctx in enumerate(ontology_context, 1):
+            for i, ctx in enumerate(capped, 1):
                 context_str += f"{i}. {ctx}\\n"
 
         # Phase 6 — intent definitions come from orchestrator/intents/intent_definitions.yaml
@@ -1122,6 +1229,36 @@ Return ONLY the JSON object.
                 # answers open-domain general-knowledge questions. Classification as
                 # "general" routes to the dedicated _general_knowledge_node, which
                 # generates the answer with user-controlled length.
+
+                # ── Undefined intents are not classifications ──────────────────
+                # The model occasionally answers with an intent name that exists
+                # in no registry — an observed case was the literal string
+                # "failure". It parses cleanly, so nothing downstream treats it as
+                # an error, but it matches no route and it is not in the WEAK set
+                # the routing contract is allowed to override. The question then
+                # skipped every deterministic rule and fell through to the default
+                # data lane: "what is the area of room 3.50" was answered from
+                # sensor counts while the floor plan held that room's measured
+                # 8.87 m2. Demoting it to "general" restores the ordinary
+                # unclassified path — the contract gets its chance, and the result
+                # is not cached, so one bad completion cannot pin a wrong route to
+                # this question for an hour.
+                _raw_intent = normalized.get("intent")
+                if _raw_intent:
+                    try:
+                        from orchestrator.intents.registry import get_intent_registry
+
+                        _reg = get_intent_registry(getattr(state, "building_id", None))
+                        if _reg.resolve_name(str(_raw_intent)) is None:
+                            logger.warning(
+                                f"[dialogue] LLM returned undefined intent "
+                                f"{_raw_intent!r} — treating as unclassified"
+                            )
+                            normalized["intent"] = "general"
+                            normalized["general"] = True
+                            normalized["classification_failed"] = True
+                    except Exception as _reg_err:  # never let this break routing
+                        logger.warning(f"[dialogue] intent validation skipped: {_reg_err}")
 
                 # ── Deterministic routing contract (TODO-050) ──────────────────
                 # Every question-shape → intent override lives in ONE ordered,

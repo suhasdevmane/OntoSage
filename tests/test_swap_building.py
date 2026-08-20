@@ -18,7 +18,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "swap_building.py"
 
@@ -58,15 +57,16 @@ def _stage_building(input_root: Path, building_id: str, ttl_content: str) -> Pat
 def _run_swap(*args: str, env_file: Path, input_root: Path) -> subprocess.CompletedProcess:
     """Invoke the swap CLI with --no-cache-flush so tests don't touch docker."""
     cmd = [
-        sys.executable, str(SCRIPT),
-        "--env", str(env_file),
-        "--input-root", str(input_root),
+        sys.executable,
+        str(SCRIPT),
+        "--env",
+        str(env_file),
+        "--input-root",
+        str(input_root),
         "--no-cache-flush",
         *args,
     ]
-    return subprocess.run(
-        cmd, capture_output=True, text=True, timeout=60, cwd=str(REPO_ROOT)
-    )
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=60, cwd=str(REPO_ROOT))
 
 
 @pytest.fixture
@@ -88,8 +88,7 @@ def test_valid_swap_dry_run_exits_clean(tmp_path: Path, env_file: Path):
     input_root.mkdir()
     _stage_building(input_root, "test_bldg", GOOD_TTL)
 
-    result = _run_swap("--to", "test_bldg", "--dry-run",
-                       env_file=env_file, input_root=input_root)
+    result = _run_swap("--to", "test_bldg", "--dry-run", env_file=env_file, input_root=input_root)
 
     assert result.returncode == 0, (
         f"Expected exit 0; got {result.returncode}.  stdout=\n{result.stdout}\n"
@@ -101,9 +100,7 @@ def test_valid_swap_dry_run_exits_clean(tmp_path: Path, env_file: Path):
 
     # .env must NOT have been modified
     env_after = env_file.read_text(encoding="utf-8")
-    assert "BUILDING_ID=bldg_old" in env_after, (
-        f"Dry-run unexpectedly wrote to .env: {env_after}"
-    )
+    assert "BUILDING_ID=bldg_old" in env_after, f"Dry-run unexpectedly wrote to .env: {env_after}"
 
 
 def test_valid_swap_applies_env_update(tmp_path: Path, env_file: Path):
@@ -112,8 +109,7 @@ def test_valid_swap_applies_env_update(tmp_path: Path, env_file: Path):
     input_root.mkdir()
     _stage_building(input_root, "test_bldg", GOOD_TTL)
 
-    result = _run_swap("--to", "test_bldg",
-                       env_file=env_file, input_root=input_root)
+    result = _run_swap("--to", "test_bldg", env_file=env_file, input_root=input_root)
 
     assert result.returncode == 0, result.stderr or result.stdout
 
@@ -133,8 +129,7 @@ def test_namespace_mismatch_rejects(tmp_path: Path, env_file: Path):
     input_root.mkdir()
     _stage_building(input_root, "test_bldg", MISMATCH_TTL)
 
-    result = _run_swap("--to", "test_bldg", "--dry-run",
-                       env_file=env_file, input_root=input_root)
+    result = _run_swap("--to", "test_bldg", "--dry-run", env_file=env_file, input_root=input_root)
 
     assert result.returncode == 2, (
         f"Expected exit 2 for namespace mismatch; got {result.returncode}.\n"
@@ -152,8 +147,7 @@ def test_missing_building_dir_rejects(tmp_path: Path, env_file: Path):
     input_root.mkdir()
     # Don't stage anything.
 
-    result = _run_swap("--to", "ghost_bldg", "--dry-run",
-                       env_file=env_file, input_root=input_root)
+    result = _run_swap("--to", "ghost_bldg", "--dry-run", env_file=env_file, input_root=input_root)
 
     assert result.returncode == 2
     combined = result.stdout + result.stderr
@@ -174,8 +168,7 @@ def test_building_yaml_id_mismatch_rejects(tmp_path: Path, env_file: Path):
         encoding="utf-8",
     )
 
-    result = _run_swap("--to", "test_bldg", "--dry-run",
-                       env_file=env_file, input_root=input_root)
+    result = _run_swap("--to", "test_bldg", "--dry-run", env_file=env_file, input_root=input_root)
 
     assert result.returncode == 2
     combined = result.stdout + result.stderr
@@ -194,12 +187,10 @@ def test_same_building_no_op(tmp_path: Path, env_file: Path):
     input_root.mkdir()
     _stage_building(input_root, "test_bldg", GOOD_TTL)
 
-    result = _run_swap("--to", "test_bldg", "--dry-run",
-                       env_file=env_file, input_root=input_root)
+    result = _run_swap("--to", "test_bldg", "--dry-run", env_file=env_file, input_root=input_root)
 
     assert result.returncode == 0
     combined = result.stdout + result.stderr
     assert (
-        "already" in combined.lower()
-        or "nothing to do" in combined.lower()
+        "already" in combined.lower() or "nothing to do" in combined.lower()
     ), f"Expected no-op message; got: {combined}"

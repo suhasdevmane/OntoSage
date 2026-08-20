@@ -1,0 +1,6 @@
+ID,Question,expected_behavior
+ASK01,Which room on the top floor is the quietest right now?,clarify
+ASK02,Which room upstairs has the best air?,clarify
+ASK03,Where can I sit near the water thing?,clarify
+ASK04,Which room on the middle floor is coolest?,clarify
+ASK05,Where can I work near the amenity?,clarify

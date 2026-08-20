@@ -204,7 +204,12 @@ class ConversationState(BaseModel):
     user_id: str = Field(default="anonymous", description="User identifier")
     title: Optional[str] = Field(default="New Conversation", description="Conversation title")
     summary: Optional[str] = Field(default=None, description="Conversation summary")
-    building_id: str = Field(default="bldg1", description="Building context")
+    building_id: str = Field(
+        default_factory=lambda: __import__(
+            "shared.config", fromlist=["settings"]
+        ).settings.BUILDING_ID,
+        description="Building context — defaults to the ACTIVE building, never a literal",
+    )
     # Phase 14A — persona is now `str` not `Literal[...]` so YAML-added
     # personas resolve without a code change.  When `personas` (list) is
     # populated, it takes precedence; `persona` is the primary/legacy

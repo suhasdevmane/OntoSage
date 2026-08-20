@@ -140,3 +140,15 @@ def test_years_and_clock_times_are_not_judged_as_readings(text):
 def test_a_real_reading_beside_a_timestamp_is_still_caught():
     text = "At 14:40 on 2026-08-06 the wind value was 8308."
     assert pl.implausible_values(text, "wind") == [8308.0]
+
+
+def test_hints_match_words_not_substrings():
+    """BUG-169: '2h window' must never read as WIND — a dossier's CO2 numbers
+    were flagged as impossible wind speeds the moment an availability answer
+    mentioned its booking window."""
+    from orchestrator.services.plausibility import measurand_of
+
+    assert measurand_of("not free for the requested 2h window") is None
+    assert measurand_of("several attempts were made") is None
+    assert measurand_of("is the wind strong today?") == "wind"
+    assert measurand_of("the temp in RM101") == "temperature"

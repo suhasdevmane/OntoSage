@@ -12,7 +12,6 @@ import yaml
 from orchestrator.services.goal_planner import GoalPlanner
 from shared.config import settings
 
-
 # ── GoalPlanner unit tests ────────────────────────────────────────────────────
 
 

@@ -51,10 +51,19 @@ class PipelineContext(BaseModel):
     # a typed VIEW for IDE autocomplete + read-time documentation; runtime
     # writers store whatever shape they want.  Pydantic validation must not
     # block legitimate-but-unconventional payloads.
-    intent: Optional[Any] = Field(default=None, description="LLM-classified intent string (typically str)")
-    llm_intent: Optional[Any] = Field(default=None, description="Raw LLM intent response (typically dict with intent/entities/analytics)")
-    entities: Optional[Any] = Field(default_factory=list, description="Entities extracted by the LLM (typically List[str])")
-    explanation: Optional[Any] = Field(default=None, description="LLM explanation of the classification (typically str)")
+    intent: Optional[Any] = Field(
+        default=None, description="LLM-classified intent string (typically str)"
+    )
+    llm_intent: Optional[Any] = Field(
+        default=None,
+        description="Raw LLM intent response (typically dict with intent/entities/analytics)",
+    )
+    entities: Optional[Any] = Field(
+        default_factory=list, description="Entities extracted by the LLM (typically List[str])"
+    )
+    explanation: Optional[Any] = Field(
+        default=None, description="LLM explanation of the classification (typically str)"
+    )
     required_analytics: Optional[Any] = Field(
         default_factory=list,
         description="Analytics ops the LLM said are needed (avg, min, max, count, ...) - typically List[str]",
@@ -75,10 +84,16 @@ class PipelineContext(BaseModel):
     anomaly_result: Optional[Any] = Field(default=None, description="Anomaly agent output")
     capability_result: Optional[Any] = Field(default=None, description="Capability KB answer")
     control_result: Optional[Any] = Field(default=None, description="Control agent ack")
-    floor_plan_result: Optional[Any] = Field(default=None, description="Floor plan response (typically markdown str)")
-    floor_plan_structured: Optional[Any] = Field(default=None, description="Structured FloorPlanResult dict")
+    floor_plan_result: Optional[Any] = Field(
+        default=None, description="Floor plan response (typically markdown str)"
+    )
+    floor_plan_structured: Optional[Any] = Field(
+        default=None, description="Structured FloorPlanResult dict"
+    )
     maintenance_result: Optional[Any] = Field(default=None, description="Maintenance ticket result")
-    planner_result: Optional[Any] = Field(default=None, description="Planner agent output (multi-step)")
+    planner_result: Optional[Any] = Field(
+        default=None, description="Planner agent output (multi-step)"
+    )
     report_result: Optional[Any] = Field(default=None, description="Report agent output")
     viz_result: Optional[Any] = Field(default=None, description="Visualization agent output")
     document_result: Optional[Any] = Field(default=None, description="Document agent output")
@@ -133,7 +148,9 @@ class PipelineContext(BaseModel):
     # ─── Internal: prefix with underscore.  These are agent-private state ──
     # PRIVATE keys — names preserved to match existing writers.  Avoid using
     # in new code; future cleanup may rename or remove these.
-    saved_query_results: Optional[Dict[str, Any]] = Field(default=None, alias="_saved_query_results")
+    saved_query_results: Optional[Dict[str, Any]] = Field(
+        default=None, alias="_saved_query_results"
+    )
     semantic_route: Optional[Dict[str, Any]] = Field(default=None, alias="_semantic_route")
     user_lang: Optional[str] = Field(default=None, alias="_user_lang")
     llm_sparql_query: Optional[str] = Field(default=None)

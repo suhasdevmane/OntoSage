@@ -51,22 +51,22 @@ def test_no_agent_names_a_building_in_code(agent):
     assert not offenders, f"{agent.name} names a building in code: {offenders}"
 
 
-# Core services and shared/ still carry literals — CAVEAT-094, open. Most are
-# documented DEFAULTS (settings.BUILDING_ID defaults to bldg1 and warns when it is
-# still the default) or legacy-alias fallbacks reached only after the building
-# registry has already been consulted. They are not clean, and this test does not
-# pretend otherwise: it pins the known set so the count can only go DOWN. A new
-# file appearing here fails, which is the point.
+# CAVEAT-094 ratchet. Core code must not name a building; this pins the only
+# files still allowed to, so the set can shrink but never grow. It stood at nine
+# files and is now two — the removals were not cosmetic: floor_plan_service.py
+# rendered "Abacws Building - Floor Overview" to users of a DIFFERENT building,
+# and anchored its PDF discovery to that name so no other building's floor plans
+# were found at all.
+#
+# What legitimately remains:
+#   config.py         - the DOCUMENTED BUILDING_ID default, plus the guard whose
+#                       whole job is to recognise that default and warn about it.
+#                       It cannot detect a literal without naming one.
+#   service_catalog.py - an optional add-on service's own product name and its
+#                       docker-compose service key. Not a building reference.
 _KNOWN_LITERAL_FILES = {
-    "building_registry.py",  # legacy "abacws" alias resolution
-    "dwg_pipeline.py",  # ABACWS_CONFIG fallback after registry miss
-    "floor_plan_pipeline.py",  # ABACWS_CONFIG fallback after registry miss
-    "floor_plan_service.py",  # default display name
-    "reindex_service.py",  # default kwarg
-    "service_catalog.py",  # an optional add-on service's own product name
-    "config.py",  # documented legacy default + the warning that detects it
-    "floor_plan_config.py",  # the shipped example floor-plan config
-    "models.py",  # default field value
+    "config.py",
+    "service_catalog.py",
 }
 
 

@@ -135,17 +135,17 @@ class GoalPlanner:
         for kpi in kpis:
             template = kpi.get("question_template", "")
             question = template.replace("{building_id}", building_id)
-            result.append({
-                "id": kpi.get("id"),
-                "label": kpi.get("label", kpi.get("id", "")),
-                "intent": kpi.get("intent", "sensor_data"),
-                "question": question,
-            })
+            result.append(
+                {
+                    "id": kpi.get("id"),
+                    "label": kpi.get("label", kpi.get("id", "")),
+                    "intent": kpi.get("intent", "sensor_data"),
+                    "question": question,
+                }
+            )
         return result
 
-    def format_goal_answer(
-        self, goal_id: str, kpi_results: List[Dict]
-    ) -> str:
+    def format_goal_answer(self, goal_id: str, kpi_results: List[Dict]) -> str:
         """Format a structured multi-KPI answer from KPI results.
 
         T27 — Three-tier structure per the master-table answerability model:
@@ -162,8 +162,12 @@ class GoalPlanner:
         goal_cfg = self._goals.get(goal_id, {})
         display_name = goal_cfg.get("display_name", goal_id.replace("_", " ").title())
 
-        measured = [k for k in kpi_results if k.get("answer") and k["answer"] != "No data available"]
-        no_data = [k for k in kpi_results if not k.get("answer") or k["answer"] == "No data available"]
+        measured = [
+            k for k in kpi_results if k.get("answer") and k["answer"] != "No data available"
+        ]
+        no_data = [
+            k for k in kpi_results if not k.get("answer") or k["answer"] == "No data available"
+        ]
         automatable = [k for k in kpi_results if k.get("automatable") is True]
         needs_ext = [k for k in kpi_results if k.get("extension")]
 
@@ -179,10 +183,10 @@ class GoalPlanner:
             lines.append("\n### What I can automate now (ECA alerts)\n")
             for kpi in automatable:
                 label = kpi.get("label", kpi.get("id", ""))
-                lines.append(f"- **{label}**: I can watch this and notify you when it falls outside range.")
-            lines.append(
-                "\nWant me to set up an alert for any of these? Just say which ones."
-            )
+                lines.append(
+                    f"- **{label}**: I can watch this and notify you when it falls outside range."
+                )
+            lines.append("\nWant me to set up an alert for any of these? Just say which ones.")
 
         if needs_ext:
             lines.append("\n### What needs further capability\n")

@@ -1,0 +1,684 @@
+@prefix abx: <https://abacws.cardiff.ac.uk/kg#> .
+@prefix bot: <https://w3id.org/bot#> .
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix unit: <http://qudt.org/vocab/unit/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+abx:Cardiff_University a bot:Site ;
+    rdfs:label "Cardiff University" ;
+    bot:hasBuilding abx:Abacws .
+
+abx:Interface_Storey_00_0001 a bot:Interface ;
+    bot:interfaceOf abx:Storey_00_Door_0001,
+        abx:Storey_00_Space_0Z19,
+        abx:Storey_00_Space_0Z21 .
+
+abx:Interface_Storey_00_0002 a bot:Interface ;
+    bot:interfaceOf abx:Storey_00_Door_0002,
+        abx:Storey_00_Space_0Z19,
+        abx:Storey_00_Space_0_29 .
+
+abx:Interface_Storey_00_0003 a bot:Interface ;
+    bot:interfaceOf abx:Storey_00_Door_0003,
+        abx:Storey_00_Space_0Z05,
+        abx:Storey_00_Space_0Z21 .
+
+abx:Interface_Storey_01_0001 a bot:Interface ;
+    bot:interfaceOf abx:Storey_01_Door_0001,
+        abx:Storey_01_Space_1Z19,
+        abx:Storey_01_Space_1Z21 .
+
+abx:Interface_Storey_01_0002 a bot:Interface ;
+    bot:interfaceOf abx:Storey_01_Door_0002,
+        abx:Storey_01_Space_1Z19,
+        abx:Storey_01_Space_1_29 .
+
+abx:Interface_Storey_01_0003 a bot:Interface ;
+    bot:interfaceOf abx:Storey_01_Door_0003,
+        abx:Storey_01_Space_1Z05,
+        abx:Storey_01_Space_1Z21 .
+
+abx:Interface_Storey_02_0001 a bot:Interface ;
+    bot:interfaceOf abx:Storey_02_Door_0001,
+        abx:Storey_02_Space_2Z19,
+        abx:Storey_02_Space_2Z21 .
+
+abx:Interface_Storey_02_0002 a bot:Interface ;
+    bot:interfaceOf abx:Storey_02_Door_0002,
+        abx:Storey_02_Space_2Z19,
+        abx:Storey_02_Space_2_29 .
+
+abx:Interface_Storey_02_0003 a bot:Interface ;
+    bot:interfaceOf abx:Storey_02_Door_0003,
+        abx:Storey_02_Space_2Z05,
+        abx:Storey_02_Space_2Z21 .
+
+abx:Storey_00_Dimension_0001 a abx:Dimension ;
+    geo:hasGeometry abx:Geometry_Storey_00_Dimension_0001 ;
+    abx:dimensionKind "linear" ;
+    abx:measurement [ brick:hasUnit unit:M ;
+            brick:value 6e+00 ] ;
+    abx:sourceLayer "A-ANNO-DIMS" .
+
+abx:Storey_00_Dimension_0002 a abx:Dimension ;
+    geo:hasGeometry abx:Geometry_Storey_00_Dimension_0002 ;
+    abx:dimensionKind "linear" ;
+    abx:measurement [ brick:hasUnit unit:M ;
+            brick:value 6e+00 ] ;
+    abx:sourceLayer "A-ANNO-DIMS" .
+
+abx:Storey_00_Dimension_0003 a abx:Dimension ;
+    geo:hasGeometry abx:Geometry_Storey_00_Dimension_0003 ;
+    abx:appliesTo abx:Storey_00_Space_0Z19 ;
+    abx:dimensionKind "linear" ;
+    abx:measurement [ brick:hasUnit unit:M ;
+            brick:value 4e+00 ] ;
+    abx:sourceLayer "A-ANNO-DIMS" .
+
+abx:Storey_01_Dimension_0001 a abx:Dimension ;
+    geo:hasGeometry abx:Geometry_Storey_01_Dimension_0001 ;
+    abx:dimensionKind "linear" ;
+    abx:measurement [ brick:hasUnit unit:M ;
+            brick:value 6e+00 ] ;
+    abx:sourceLayer "A-ANNO-DIMS" .
+
+abx:Storey_01_Dimension_0002 a abx:Dimension ;
+    geo:hasGeometry abx:Geometry_Storey_01_Dimension_0002 ;
+    abx:dimensionKind "linear" ;
+    abx:measurement [ brick:hasUnit unit:M ;
+            brick:value 6e+00 ] ;
+    abx:sourceLayer "A-ANNO-DIMS" .
+
+abx:Storey_01_Dimension_0003 a abx:Dimension ;
+    geo:hasGeometry abx:Geometry_Storey_01_Dimension_0003 ;
+    abx:appliesTo abx:Storey_01_Space_1Z19 ;
+    abx:dimensionKind "linear" ;
+    abx:measurement [ brick:hasUnit unit:M ;
+            brick:value 4e+00 ] ;
+    abx:sourceLayer "A-ANNO-DIMS" .
+
+abx:Storey_02_Dimension_0001 a abx:Dimension ;
+    geo:hasGeometry abx:Geometry_Storey_02_Dimension_0001 ;
+    abx:dimensionKind "linear" ;
+    abx:measurement [ brick:hasUnit unit:M ;
+            brick:value 6e+00 ] ;
+    abx:sourceLayer "A-ANNO-DIMS" .
+
+abx:Storey_02_Dimension_0002 a abx:Dimension ;
+    geo:hasGeometry abx:Geometry_Storey_02_Dimension_0002 ;
+    abx:dimensionKind "linear" ;
+    abx:measurement [ brick:hasUnit unit:M ;
+            brick:value 6e+00 ] ;
+    abx:sourceLayer "A-ANNO-DIMS" .
+
+abx:Storey_02_Dimension_0003 a abx:Dimension ;
+    geo:hasGeometry abx:Geometry_Storey_02_Dimension_0003 ;
+    abx:appliesTo abx:Storey_02_Space_2Z19 ;
+    abx:dimensionKind "linear" ;
+    abx:measurement [ brick:hasUnit unit:M ;
+            brick:value 4e+00 ] ;
+    abx:sourceLayer "A-ANNO-DIMS" .
+
+abx:appliesTo a owl:ObjectProperty ;
+    rdfs:label "applies to" ;
+    rdfs:comment "The space a drawn dimension was placed inside." .
+
+abx:attr_ASSET_ID a owl:DatatypeProperty .
+
+abx:attr_CIRCUIT a owl:DatatypeProperty .
+
+abx:bboxDepth a owl:DatatypeProperty ;
+    rdfs:label "bounding box depth (m)" ;
+    rdfs:range xsd:double .
+
+abx:bboxWidth a owl:DatatypeProperty ;
+    rdfs:label "bounding box width (m)" ;
+    rdfs:range xsd:double .
+
+abx:blockName a owl:DatatypeProperty ;
+    rdfs:label "source block name" ;
+    rdfs:comment "Provenance: the CAD block definition this element came from." .
+
+abx:connectedTo a owl:ObjectProperty,
+        owl:SymmetricProperty ;
+    rdfs:label "connected to" ;
+    rdfs:comment "Two spaces are directly passable between one another through a door. Stronger than bot:adjacentZone, which only asserts that two spaces share a boundary." ;
+    rdfs:domain bot:Zone ;
+    rdfs:range bot:Zone .
+
+abx:dimensionKind a owl:DatatypeProperty ;
+    rdfs:label "dimension kind" ;
+    rdfs:comment "linear | aligned | angular | radius | diameter | ordinate - the DXF dimension type the drafter used." .
+
+abx:level a owl:DatatypeProperty ;
+    rdfs:label "storey level" ;
+    rdfs:comment "Signed storey index; 0 is ground, negative is below ground." ;
+    rdfs:range xsd:integer .
+
+abx:measurement a owl:ObjectProperty ;
+    rdfs:label "measurement" ;
+    rdfs:domain abx:Dimension .
+
+abx:perimeter a owl:DatatypeProperty ;
+    rdfs:label "perimeter (m)" ;
+    rdfs:range xsd:double .
+
+abx:roomCode a owl:DatatypeProperty ;
+    rdfs:label "room code" ;
+    rdfs:comment "Institutional room identifier as drawn on the floor plan, e.g. '0Z19'. Stable join key to timetabling and BMS systems." ;
+    rdfs:range xsd:string .
+
+abx:sourceLayer a owl:DatatypeProperty ;
+    rdfs:label "source CAD layer" ;
+    rdfs:comment "Provenance: the CAD layer the geometry was recovered from." .
+
+abx:textOverride a owl:DatatypeProperty ;
+    rdfs:label "dimension text override" ;
+    rdfs:comment "Text the drafter typed in place of the computed measurement. When present it should be trusted over the measurement, because the drafter deliberately replaced it." .
+
+abx:verticallyConnectedTo a owl:ObjectProperty,
+        owl:SymmetricProperty ;
+    rdfs:label "vertically connected to" ;
+    rdfs:comment "Two spaces on different storeys are linked by shared vertical circulation - a stair, lift or riser core occupying the same footprint on both floors." ;
+    rdfs:domain bot:Zone ;
+    rdfs:range bot:Zone .
+
+abx:Abacws a brick:Building,
+        bot:Building ;
+    rdfs:label "Abacws Building" ;
+    bot:hasStorey abx:Storey_00,
+        abx:Storey_01,
+        abx:Storey_02 .
+
+abx:Centroid_Storey_00_Space_0Z05 a geo:Point ;
+    geo:asWKT "POINT(13.5 1.5)"^^geo:wktLiteral .
+
+abx:Centroid_Storey_00_Space_0Z19 a geo:Point ;
+    geo:asWKT "POINT(3.0 2.0)"^^geo:wktLiteral .
+
+abx:Centroid_Storey_00_Space_0Z21 a geo:Point ;
+    geo:asWKT "POINT(9.0 2.0)"^^geo:wktLiteral .
+
+abx:Centroid_Storey_00_Space_0_29 a geo:Point ;
+    geo:asWKT "POINT(6.0 5.5)"^^geo:wktLiteral .
+
+abx:Centroid_Storey_01_Space_1Z05 a geo:Point ;
+    geo:asWKT "POINT(13.5 1.5)"^^geo:wktLiteral .
+
+abx:Centroid_Storey_01_Space_1Z19 a geo:Point ;
+    geo:asWKT "POINT(3.0 2.0)"^^geo:wktLiteral .
+
+abx:Centroid_Storey_01_Space_1Z21 a geo:Point ;
+    geo:asWKT "POINT(9.0 2.0)"^^geo:wktLiteral .
+
+abx:Centroid_Storey_01_Space_1_29 a geo:Point ;
+    geo:asWKT "POINT(6.0 5.5)"^^geo:wktLiteral .
+
+abx:Centroid_Storey_02_Space_2Z05 a geo:Point ;
+    geo:asWKT "POINT(13.5 1.5)"^^geo:wktLiteral .
+
+abx:Centroid_Storey_02_Space_2Z19 a geo:Point ;
+    geo:asWKT "POINT(3.0 2.0)"^^geo:wktLiteral .
+
+abx:Centroid_Storey_02_Space_2Z21 a geo:Point ;
+    geo:asWKT "POINT(9.0 2.0)"^^geo:wktLiteral .
+
+abx:Centroid_Storey_02_Space_2_29 a geo:Point ;
+    geo:asWKT "POINT(6.0 5.5)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_00_Dimension_0001 a geo:Point ;
+    geo:asWKT "POINT(3.0 -0.999775)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_00_Dimension_0002 a geo:Point ;
+    geo:asWKT "POINT(9.0 -0.999775)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_00_Dimension_0003 a geo:Point ;
+    geo:asWKT "POINT(3.0 2.000225)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_00_Door_0001 a geo:Point ;
+    geo:asWKT "POINT(6.0 2.0)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_00_Door_0002 a geo:Point ;
+    geo:asWKT "POINT(3.0 4.0)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_00_Door_0003 a geo:Point ;
+    geo:asWKT "POINT(12.0 1.5)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_00_Element_0004 a geo:Point ;
+    geo:asWKT "POINT(1.0 1.0)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_00_Space_0Z05 a geo:Polygon ;
+    geo:asWKT "POLYGON ((12 0, 15 0, 15 3, 12 3, 12 0))"^^geo:wktLiteral .
+
+abx:Geometry_Storey_00_Space_0Z19 a geo:Polygon ;
+    geo:asWKT "POLYGON ((0 0, 6 0, 6 4, 0 4, 0 0))"^^geo:wktLiteral .
+
+abx:Geometry_Storey_00_Space_0Z21 a geo:Polygon ;
+    geo:asWKT "POLYGON ((6 0, 12 0, 12 4, 6 4, 6 0))"^^geo:wktLiteral .
+
+abx:Geometry_Storey_00_Space_0_29 a geo:Polygon ;
+    geo:asWKT "POLYGON ((0 4, 12 4, 12 7, 0 7, 0 4))"^^geo:wktLiteral .
+
+abx:Geometry_Storey_01_Dimension_0001 a geo:Point ;
+    geo:asWKT "POINT(3.0 -0.999775)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_01_Dimension_0002 a geo:Point ;
+    geo:asWKT "POINT(9.0 -0.999775)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_01_Dimension_0003 a geo:Point ;
+    geo:asWKT "POINT(3.0 2.000225)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_01_Door_0001 a geo:Point ;
+    geo:asWKT "POINT(6.0 2.0)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_01_Door_0002 a geo:Point ;
+    geo:asWKT "POINT(3.0 4.0)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_01_Door_0003 a geo:Point ;
+    geo:asWKT "POINT(12.0 1.5)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_01_Element_0004 a geo:Point ;
+    geo:asWKT "POINT(1.0 1.0)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_01_Space_1Z05 a geo:Polygon ;
+    geo:asWKT "POLYGON ((12 0, 15 0, 15 3, 12 3, 12 0))"^^geo:wktLiteral .
+
+abx:Geometry_Storey_01_Space_1Z19 a geo:Polygon ;
+    geo:asWKT "POLYGON ((0 0, 6 0, 6 4, 0 4, 0 0))"^^geo:wktLiteral .
+
+abx:Geometry_Storey_01_Space_1Z21 a geo:Polygon ;
+    geo:asWKT "POLYGON ((6 0, 12 0, 12 4, 6 4, 6 0))"^^geo:wktLiteral .
+
+abx:Geometry_Storey_01_Space_1_29 a geo:Polygon ;
+    geo:asWKT "POLYGON ((0 4, 12 4, 12 7, 0 7, 0 4))"^^geo:wktLiteral .
+
+abx:Geometry_Storey_02_Dimension_0001 a geo:Point ;
+    geo:asWKT "POINT(3.0 -0.999775)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_02_Dimension_0002 a geo:Point ;
+    geo:asWKT "POINT(9.0 -0.999775)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_02_Dimension_0003 a geo:Point ;
+    geo:asWKT "POINT(3.0 2.000225)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_02_Door_0001 a geo:Point ;
+    geo:asWKT "POINT(6.0 2.0)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_02_Door_0002 a geo:Point ;
+    geo:asWKT "POINT(3.0 4.0)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_02_Door_0003 a geo:Point ;
+    geo:asWKT "POINT(12.0 1.5)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_02_Element_0004 a geo:Point ;
+    geo:asWKT "POINT(1.0 1.0)"^^geo:wktLiteral .
+
+abx:Geometry_Storey_02_Space_2Z05 a geo:Polygon ;
+    geo:asWKT "POLYGON ((12 0, 15 0, 15 3, 12 3, 12 0))"^^geo:wktLiteral .
+
+abx:Geometry_Storey_02_Space_2Z19 a geo:Polygon ;
+    geo:asWKT "POLYGON ((0 0, 6 0, 6 4, 0 4, 0 0))"^^geo:wktLiteral .
+
+abx:Geometry_Storey_02_Space_2Z21 a geo:Polygon ;
+    geo:asWKT "POLYGON ((6 0, 12 0, 12 4, 6 4, 6 0))"^^geo:wktLiteral .
+
+abx:Geometry_Storey_02_Space_2_29 a geo:Polygon ;
+    geo:asWKT "POLYGON ((0 4, 12 4, 12 7, 0 7, 0 4))"^^geo:wktLiteral .
+
+abx:Sensor_ABACWS-CO2-121 a brick:CO2_Sensor ;
+    rdfs:label "First floor collab CO2" ;
+    brick:isPointOf abx:Storey_01_Space_1Z21 .
+
+abx:Sensor_ABACWS-OCC-221 a brick:Occupancy_Sensor ;
+    rdfs:label "Second floor collab occupancy" ;
+    brick:isPointOf abx:Storey_02_Space_2Z21 .
+
+abx:Sensor_ABACWS-T-014 a brick:Air_Temperature_Sensor ;
+    rdfs:label "Ground vending air temperature" ;
+    brick:isPointOf abx:Storey_00_Space_0Z19 .
+
+abx:Storey_00 a brick:Floor,
+        bot:Storey ;
+    rdfs:label "Ground Floor" ;
+    abx:level 0 ;
+    bot:hasSpace abx:Storey_00_Space_0Z05,
+        abx:Storey_00_Space_0Z19,
+        abx:Storey_00_Space_0Z21,
+        abx:Storey_00_Space_0_29 .
+
+abx:Storey_00_Door_0001 a brick:Door,
+        bot:Element ;
+    rdfs:label "Door" ;
+    geo:hasGeometry abx:Geometry_Storey_00_Door_0001 ;
+    abx:blockName "DR_SINGLE" ;
+    abx:sourceLayer "A-DOOR" .
+
+abx:Storey_00_Door_0002 a brick:Door,
+        bot:Element ;
+    rdfs:label "Door" ;
+    geo:hasGeometry abx:Geometry_Storey_00_Door_0002 ;
+    abx:blockName "DR_SINGLE" ;
+    abx:sourceLayer "A-DOOR" .
+
+abx:Storey_00_Door_0003 a brick:Door,
+        bot:Element ;
+    rdfs:label "Door" ;
+    geo:hasGeometry abx:Geometry_Storey_00_Door_0003 ;
+    abx:blockName "DR_SINGLE" ;
+    abx:sourceLayer "A-DOOR" .
+
+abx:Storey_00_Element_0004 a brick:Electrical_Equipment,
+        bot:Element ;
+    rdfs:label "Electrical equipment" ;
+    geo:hasGeometry abx:Geometry_Storey_00_Element_0004 ;
+    abx:attr_ASSET_ID "DB-0-014" ;
+    abx:attr_CIRCUIT "L0-04" ;
+    abx:blockName "ELEC_DB" ;
+    abx:sourceLayer "CSM-STL-XX-ZZ-E-ELEC-EQPI" .
+
+abx:Storey_01 a brick:Floor,
+        bot:Storey ;
+    rdfs:label "First Floor" ;
+    abx:level 1 ;
+    bot:hasSpace abx:Storey_01_Space_1Z05,
+        abx:Storey_01_Space_1Z19,
+        abx:Storey_01_Space_1Z21,
+        abx:Storey_01_Space_1_29 .
+
+abx:Storey_01_Door_0001 a brick:Door,
+        bot:Element ;
+    rdfs:label "Door" ;
+    geo:hasGeometry abx:Geometry_Storey_01_Door_0001 ;
+    abx:blockName "DR_SINGLE" ;
+    abx:sourceLayer "A-DOOR" .
+
+abx:Storey_01_Door_0002 a brick:Door,
+        bot:Element ;
+    rdfs:label "Door" ;
+    geo:hasGeometry abx:Geometry_Storey_01_Door_0002 ;
+    abx:blockName "DR_SINGLE" ;
+    abx:sourceLayer "A-DOOR" .
+
+abx:Storey_01_Door_0003 a brick:Door,
+        bot:Element ;
+    rdfs:label "Door" ;
+    geo:hasGeometry abx:Geometry_Storey_01_Door_0003 ;
+    abx:blockName "DR_SINGLE" ;
+    abx:sourceLayer "A-DOOR" .
+
+abx:Storey_01_Element_0004 a brick:Electrical_Equipment,
+        bot:Element ;
+    rdfs:label "Electrical equipment" ;
+    geo:hasGeometry abx:Geometry_Storey_01_Element_0004 ;
+    abx:attr_ASSET_ID "DB-1-014" ;
+    abx:attr_CIRCUIT "L1-04" ;
+    abx:blockName "ELEC_DB" ;
+    abx:sourceLayer "CSM-STL-XX-ZZ-E-ELEC-EQPI" .
+
+abx:Storey_02 a brick:Floor,
+        bot:Storey ;
+    rdfs:label "Second Floor" ;
+    abx:level 2 ;
+    bot:hasSpace abx:Storey_02_Space_2Z05,
+        abx:Storey_02_Space_2Z19,
+        abx:Storey_02_Space_2Z21,
+        abx:Storey_02_Space_2_29 .
+
+abx:Storey_02_Door_0001 a brick:Door,
+        bot:Element ;
+    rdfs:label "Door" ;
+    geo:hasGeometry abx:Geometry_Storey_02_Door_0001 ;
+    abx:blockName "DR_SINGLE" ;
+    abx:sourceLayer "A-DOOR" .
+
+abx:Storey_02_Door_0002 a brick:Door,
+        bot:Element ;
+    rdfs:label "Door" ;
+    geo:hasGeometry abx:Geometry_Storey_02_Door_0002 ;
+    abx:blockName "DR_SINGLE" ;
+    abx:sourceLayer "A-DOOR" .
+
+abx:Storey_02_Door_0003 a brick:Door,
+        bot:Element ;
+    rdfs:label "Door" ;
+    geo:hasGeometry abx:Geometry_Storey_02_Door_0003 ;
+    abx:blockName "DR_SINGLE" ;
+    abx:sourceLayer "A-DOOR" .
+
+abx:Storey_02_Element_0004 a brick:Electrical_Equipment,
+        bot:Element ;
+    rdfs:label "Electrical equipment" ;
+    geo:hasGeometry abx:Geometry_Storey_02_Element_0004 ;
+    abx:attr_ASSET_ID "DB-2-014" ;
+    abx:attr_CIRCUIT "L2-04" ;
+    abx:blockName "ELEC_DB" ;
+    abx:sourceLayer "CSM-STL-XX-ZZ-E-ELEC-EQPI" .
+
+abx:Storey_00_Space_0Z05 a brick:Room,
+        bot:Space ;
+    rdfs:label "Stair Core" ;
+    dcterms:title "Stair Core" ;
+    geo:hasCentroid abx:Centroid_Storey_00_Space_0Z05 ;
+    geo:hasGeometry abx:Geometry_Storey_00_Space_0Z05 ;
+    abx:bboxDepth 3e+00 ;
+    abx:bboxWidth 3e+00 ;
+    abx:connectedTo abx:Storey_00_Space_0Z21 ;
+    abx:perimeter 1.2e+01 ;
+    abx:roomCode "0Z05" ;
+    abx:sourceLayer "USABLE" ;
+    abx:verticallyConnectedTo abx:Storey_01_Space_1Z05 ;
+    brick:area [ brick:hasUnit unit:M2 ;
+            brick:value 9e+00 ] ;
+    bot:adjacentZone abx:Storey_00_Space_0Z21 .
+
+abx:Storey_00_Space_0_29 a brick:Room,
+        bot:Space ;
+    rdfs:label "Refuse Store" ;
+    dcterms:title "Refuse Store" ;
+    geo:hasCentroid abx:Centroid_Storey_00_Space_0_29 ;
+    geo:hasGeometry abx:Geometry_Storey_00_Space_0_29 ;
+    abx:bboxDepth 3e+00 ;
+    abx:bboxWidth 1.2e+01 ;
+    abx:connectedTo abx:Storey_00_Space_0Z19 ;
+    abx:perimeter 3e+01 ;
+    abx:roomCode "0.29" ;
+    abx:sourceLayer "USABLE" ;
+    brick:area [ brick:hasUnit unit:M2 ;
+            brick:value 3.6e+01 ] ;
+    bot:adjacentZone abx:Storey_00_Space_0Z19,
+        abx:Storey_00_Space_0Z21 .
+
+abx:Storey_01_Space_1_29 a brick:Room,
+        bot:Space ;
+    rdfs:label "Refuse Store" ;
+    dcterms:title "Refuse Store" ;
+    geo:hasCentroid abx:Centroid_Storey_01_Space_1_29 ;
+    geo:hasGeometry abx:Geometry_Storey_01_Space_1_29 ;
+    abx:bboxDepth 3e+00 ;
+    abx:bboxWidth 1.2e+01 ;
+    abx:connectedTo abx:Storey_01_Space_1Z19 ;
+    abx:perimeter 3e+01 ;
+    abx:roomCode "1.29" ;
+    abx:sourceLayer "USABLE" ;
+    brick:area [ brick:hasUnit unit:M2 ;
+            brick:value 3.6e+01 ] ;
+    bot:adjacentZone abx:Storey_01_Space_1Z19,
+        abx:Storey_01_Space_1Z21 .
+
+abx:Storey_02_Space_2Z05 a brick:Room,
+        bot:Space ;
+    rdfs:label "Stair Core" ;
+    dcterms:title "Stair Core" ;
+    geo:hasCentroid abx:Centroid_Storey_02_Space_2Z05 ;
+    geo:hasGeometry abx:Geometry_Storey_02_Space_2Z05 ;
+    abx:bboxDepth 3e+00 ;
+    abx:bboxWidth 3e+00 ;
+    abx:connectedTo abx:Storey_02_Space_2Z21 ;
+    abx:perimeter 1.2e+01 ;
+    abx:roomCode "2Z05" ;
+    abx:sourceLayer "USABLE" ;
+    abx:verticallyConnectedTo abx:Storey_01_Space_1Z05 ;
+    brick:area [ brick:hasUnit unit:M2 ;
+            brick:value 9e+00 ] ;
+    bot:adjacentZone abx:Storey_02_Space_2Z21 .
+
+abx:Storey_02_Space_2_29 a brick:Room,
+        bot:Space ;
+    rdfs:label "Refuse Store" ;
+    dcterms:title "Refuse Store" ;
+    geo:hasCentroid abx:Centroid_Storey_02_Space_2_29 ;
+    geo:hasGeometry abx:Geometry_Storey_02_Space_2_29 ;
+    abx:bboxDepth 3e+00 ;
+    abx:bboxWidth 1.2e+01 ;
+    abx:connectedTo abx:Storey_02_Space_2Z19 ;
+    abx:perimeter 3e+01 ;
+    abx:roomCode "2.29" ;
+    abx:sourceLayer "USABLE" ;
+    brick:area [ brick:hasUnit unit:M2 ;
+            brick:value 3.6e+01 ] ;
+    bot:adjacentZone abx:Storey_02_Space_2Z19,
+        abx:Storey_02_Space_2Z21 .
+
+abx:Storey_01_Space_1Z05 a brick:Room,
+        bot:Space ;
+    rdfs:label "Stair Core" ;
+    dcterms:title "Stair Core" ;
+    geo:hasCentroid abx:Centroid_Storey_01_Space_1Z05 ;
+    geo:hasGeometry abx:Geometry_Storey_01_Space_1Z05 ;
+    abx:bboxDepth 3e+00 ;
+    abx:bboxWidth 3e+00 ;
+    abx:connectedTo abx:Storey_01_Space_1Z21 ;
+    abx:perimeter 1.2e+01 ;
+    abx:roomCode "1Z05" ;
+    abx:sourceLayer "USABLE" ;
+    abx:verticallyConnectedTo abx:Storey_00_Space_0Z05,
+        abx:Storey_02_Space_2Z05 ;
+    brick:area [ brick:hasUnit unit:M2 ;
+            brick:value 9e+00 ] ;
+    bot:adjacentZone abx:Storey_01_Space_1Z21 .
+
+abx:Storey_00_Space_0Z21 a brick:Room,
+        bot:Space ;
+    rdfs:label "41P Collab S" ;
+    dcterms:title "41P Collab S" ;
+    geo:hasCentroid abx:Centroid_Storey_00_Space_0Z21 ;
+    geo:hasGeometry abx:Geometry_Storey_00_Space_0Z21 ;
+    abx:bboxDepth 4e+00 ;
+    abx:bboxWidth 6e+00 ;
+    abx:connectedTo abx:Storey_00_Space_0Z05,
+        abx:Storey_00_Space_0Z19 ;
+    abx:perimeter 2e+01 ;
+    abx:roomCode "0Z21" ;
+    abx:sourceLayer "USABLE" ;
+    brick:area [ brick:hasUnit unit:M2 ;
+            brick:value 2.4e+01 ] ;
+    bot:adjacentZone abx:Storey_00_Space_0Z05,
+        abx:Storey_00_Space_0Z19,
+        abx:Storey_00_Space_0_29 .
+
+abx:Storey_01_Space_1Z19 a brick:Room,
+        bot:Space ;
+    rdfs:label "Vending" ;
+    dcterms:title "Vending" ;
+    geo:hasCentroid abx:Centroid_Storey_01_Space_1Z19 ;
+    geo:hasGeometry abx:Geometry_Storey_01_Space_1Z19 ;
+    abx:bboxDepth 4e+00 ;
+    abx:bboxWidth 6e+00 ;
+    abx:connectedTo abx:Storey_01_Space_1Z21,
+        abx:Storey_01_Space_1_29 ;
+    abx:perimeter 2e+01 ;
+    abx:roomCode "1Z19" ;
+    abx:sourceLayer "USABLE" ;
+    brick:area [ brick:hasUnit unit:M2 ;
+            brick:value 2.4e+01 ] ;
+    bot:adjacentZone abx:Storey_01_Space_1Z21,
+        abx:Storey_01_Space_1_29 ;
+    bot:containsElement abx:Storey_01_Element_0004 .
+
+abx:Storey_02_Space_2Z19 a brick:Room,
+        bot:Space ;
+    rdfs:label "Vending" ;
+    dcterms:title "Vending" ;
+    geo:hasCentroid abx:Centroid_Storey_02_Space_2Z19 ;
+    geo:hasGeometry abx:Geometry_Storey_02_Space_2Z19 ;
+    abx:bboxDepth 4e+00 ;
+    abx:bboxWidth 6e+00 ;
+    abx:connectedTo abx:Storey_02_Space_2Z21,
+        abx:Storey_02_Space_2_29 ;
+    abx:perimeter 2e+01 ;
+    abx:roomCode "2Z19" ;
+    abx:sourceLayer "USABLE" ;
+    brick:area [ brick:hasUnit unit:M2 ;
+            brick:value 2.4e+01 ] ;
+    bot:adjacentZone abx:Storey_02_Space_2Z21,
+        abx:Storey_02_Space_2_29 ;
+    bot:containsElement abx:Storey_02_Element_0004 .
+
+abx:Storey_00_Space_0Z19 a brick:Room,
+        bot:Space ;
+    rdfs:label "Vending" ;
+    dcterms:title "Vending" ;
+    geo:hasCentroid abx:Centroid_Storey_00_Space_0Z19 ;
+    geo:hasGeometry abx:Geometry_Storey_00_Space_0Z19 ;
+    abx:bboxDepth 4e+00 ;
+    abx:bboxWidth 6e+00 ;
+    abx:connectedTo abx:Storey_00_Space_0Z21,
+        abx:Storey_00_Space_0_29 ;
+    abx:perimeter 2e+01 ;
+    abx:roomCode "0Z19" ;
+    abx:sourceLayer "USABLE" ;
+    brick:area [ brick:hasUnit unit:M2 ;
+            brick:value 2.4e+01 ] ;
+    brick:hasPoint abx:Sensor_ABACWS-T-014 ;
+    bot:adjacentZone abx:Storey_00_Space_0Z21,
+        abx:Storey_00_Space_0_29 ;
+    bot:containsElement abx:Storey_00_Element_0004 .
+
+abx:Storey_01_Space_1Z21 a brick:Room,
+        bot:Space ;
+    rdfs:label "41P Collab S" ;
+    dcterms:title "41P Collab S" ;
+    geo:hasCentroid abx:Centroid_Storey_01_Space_1Z21 ;
+    geo:hasGeometry abx:Geometry_Storey_01_Space_1Z21 ;
+    abx:bboxDepth 4e+00 ;
+    abx:bboxWidth 6e+00 ;
+    abx:connectedTo abx:Storey_01_Space_1Z05,
+        abx:Storey_01_Space_1Z19 ;
+    abx:perimeter 2e+01 ;
+    abx:roomCode "1Z21" ;
+    abx:sourceLayer "USABLE" ;
+    brick:area [ brick:hasUnit unit:M2 ;
+            brick:value 2.4e+01 ] ;
+    brick:hasPoint abx:Sensor_ABACWS-CO2-121 ;
+    bot:adjacentZone abx:Storey_01_Space_1Z05,
+        abx:Storey_01_Space_1Z19,
+        abx:Storey_01_Space_1_29 .
+
+abx:Storey_02_Space_2Z21 a brick:Room,
+        bot:Space ;
+    rdfs:label "41P Collab S" ;
+    dcterms:title "41P Collab S" ;
+    geo:hasCentroid abx:Centroid_Storey_02_Space_2Z21 ;
+    geo:hasGeometry abx:Geometry_Storey_02_Space_2Z21 ;
+    abx:bboxDepth 4e+00 ;
+    abx:bboxWidth 6e+00 ;
+    abx:connectedTo abx:Storey_02_Space_2Z05,
+        abx:Storey_02_Space_2Z19 ;
+    abx:perimeter 2e+01 ;
+    abx:roomCode "2Z21" ;
+    abx:sourceLayer "USABLE" ;
+    brick:area [ brick:hasUnit unit:M2 ;
+            brick:value 2.4e+01 ] ;
+    brick:hasPoint abx:Sensor_ABACWS-OCC-221 ;
+    bot:adjacentZone abx:Storey_02_Space_2Z05,
+        abx:Storey_02_Space_2Z19,
+        abx:Storey_02_Space_2_29 .
+
+abx:Dimension a owl:Class ;
+    rdfs:label "Dimension" ;
+    rdfs:comment "A measurement annotation from the drawing. The value is what the CAD application computed from the underlying geometry, so it is a fact about the building rather than a picture of one." .
+

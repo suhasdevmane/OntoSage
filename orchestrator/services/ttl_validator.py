@@ -229,7 +229,7 @@ def validate_building_ttls(
     *,
     run_shacl: bool = False,
 ) -> TTLValidationReport:
-    """Validate every TTL under `input_root / building_id / **`.
+    """Validate every TTL the uploader would load for this building.
 
     Parameters
     ----------
@@ -281,7 +281,17 @@ def validate_building_ttls(
     # TTL files live either directly under bldg_dir/ OR at the input/ root
     # prefixed with the building id (legacy layout: `input/bldg1_*.ttl`).
     ttl_paths: List[Path] = []
-    ttl_paths.extend(sorted(bldg_dir.glob("**/*.ttl")))
+    # NON-RECURSIVE, to match ttl_uploader.discover_building_ttls() exactly. A boot
+    # gate must gate precisely what it admits: the uploader globs "*.ttl" in the
+    # building dir and never descends, so a TTL in a SUBDIRECTORY is never loaded
+    # into GraphDB and cannot corrupt anything -- yet recursing here let one halt
+    # startup. That is how an unrelated `floors/examples/synthetic_building.ttl`,
+    # sitting in the input tree as a downloaded sample, put the orchestrator into a
+    # restart loop: it declares no `bldg:` prefix because it describes a different
+    # building, which is correct for a sample and irrelevant to this one. Widening
+    # the scaffolding-directory exclusion list instead would only postpone the next
+    # name nobody thought of.
+    ttl_paths.extend(sorted(bldg_dir.glob("*.ttl")))
     if bldg_dir != input_root:
         # Only scan root-level legacy prefix when in nested layout to avoid
         # double-counting flat-layout TTLs already found above.

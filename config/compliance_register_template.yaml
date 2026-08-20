@@ -1,0 +1,81 @@
+# ============================================================================
+# OntoSage — Universal compliance-register template (V5-T05, shape S3)
+# ============================================================================
+# BUILDING-AGNOSTIC. scripts/generate_compliance_register.py renders this into
+# per-building ComplianceCheck triples (<id>_compliance.ttl): dates live in the
+# GRAPH so "what's overdue?" is a SPARQL query (TTL-first rule). A building may
+# ship its own copy in its input folder to add/remove items or change
+# frequencies; the vocabulary (OCBV-2 Module J) never changes.
+#
+# For development the generator emits a synthetic-but-declared history: past
+# cycles completed (deterministic jitter), the current cycle mixed open /
+# due-soon / deliberately overdue so due/overdue questions have true answers.
+# Real buildings replace generated instances with their actual register via
+# the same TTL shape (admin upload).
+# ============================================================================
+version: 1
+
+# frequency_days drives the cycle; history_cycles = completed past instances
+defaults:
+  history_cycles: 6
+
+items:
+  - id: fire_alarm_weekly_test
+    label: "Fire alarm weekly call-point test"
+    frequency_days: 7
+    responsible_role: facility_manager
+    history_cycles: 12
+
+  - id: emergency_lighting_function_test
+    label: "Emergency lighting monthly function test"
+    frequency_days: 30
+    responsible_role: maintenance
+
+  - id: legionella_outlet_flush
+    label: "Legionella flushing of infrequently used outlets"
+    frequency_days: 7
+    responsible_role: facility_manager
+    history_cycles: 12
+
+  - id: water_temperature_monitoring
+    label: "Hot/cold water temperature monitoring"
+    frequency_days: 30
+    responsible_role: maintenance
+
+  - id: fire_door_inspection
+    label: "Fire door quarterly inspection"
+    frequency_days: 90
+    responsible_role: facility_manager
+
+  - id: fire_extinguisher_service
+    label: "Fire extinguisher annual service"
+    frequency_days: 365
+    responsible_role: contractor
+
+  - id: loler_lift_examination
+    label: "LOLER lift thorough examination"
+    frequency_days: 180
+    responsible_role: contractor
+
+  - id: pat_testing
+    label: "Portable appliance testing (PAT)"
+    frequency_days: 365
+    responsible_role: contractor
+
+  - id: fgas_leak_check
+    label: "F-gas refrigerant leak check"
+    frequency_days: 365
+    responsible_role: contractor
+
+  - id: fire_risk_assessment_review
+    label: "Fire risk assessment review"
+    frequency_days: 365
+    responsible_role: safety_officer
+
+# Dev-mode state mix for the CURRENT cycle of each item (deterministic per
+# building+item): most items get an open check due in the future; the items
+# listed here are forced OVERDUE so the register always contains true
+# positives for "what's overdue?" testing.
+dev_overdue_items:
+  - fire_door_inspection
+  - pat_testing

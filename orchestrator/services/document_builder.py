@@ -221,9 +221,7 @@ class DocumentBuilder:
             )
             return self._result(pdf_bytes, filename, "pdf")
         except ImportError:
-            logger.warning(
-                "Neither weasyprint nor pdfkit installed — falling back to HTML"
-            )
+            logger.warning("Neither weasyprint nor pdfkit installed — falling back to HTML")
             html_filename = filename.replace(".pdf", ".html")
             result = self._result(html_content, html_filename, "html")
             result["fallback"] = True

@@ -28,6 +28,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 try:
     from qdrant_client import QdrantClient
     from qdrant_client.models import Filter, FieldCondition, MatchAny
+
     _QDRANT_OK = True
 except ImportError:
     _QDRANT_OK = False
@@ -73,18 +74,24 @@ def payload_to_row(payload: dict) -> dict:
 
 
 FIELDNAMES = [
-    "user_id", "session_date", "persona",
-    "domain_l1", "query_type_l2", "intent",
-    "temporal", "spatial", "complexity",
-    "grounded", "memory_type", "query_snippet",
+    "user_id",
+    "session_date",
+    "persona",
+    "domain_l1",
+    "query_type_l2",
+    "intent",
+    "temporal",
+    "spatial",
+    "complexity",
+    "grounded",
+    "memory_type",
+    "query_snippet",
 ]
 
 
 def main():
     parser = argparse.ArgumentParser(description="Export production corpus in G1 format")
-    parser.add_argument(
-        "--qdrant-url", default="http://localhost:6333", help="Qdrant URL"
-    )
+    parser.add_argument("--qdrant-url", default="http://localhost:6333", help="Qdrant URL")
     parser.add_argument(
         "--output",
         default=f"outputs/production_corpus_{datetime.now():%Y%m%d_%H%M}.csv",

@@ -113,7 +113,9 @@ def point_block(
     seen: set = set()
     tlist = [t for t in types if not (t in seen or seen.add(t))]
     type_str = " ,\n        ".join(tlist)
-    unit_line = f"    brick:hasUnit {_safe_prefixed_name(unit)} ;\n" if (unit and ":" in unit) else ""
+    unit_line = (
+        f"    brick:hasUnit {_safe_prefixed_name(unit)} ;\n" if (unit and ":" in unit) else ""
+    )
 
     return (
         f"bldg:{_safe_local_name(local)} rdf:type {type_str} ;\n"

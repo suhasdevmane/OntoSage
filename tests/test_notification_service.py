@@ -13,6 +13,7 @@ Covers:
   10. reset_notification_service clears singleton
   11. 'email me this' decline when no smtp channel configured
 """
+
 from __future__ import annotations
 
 import os
@@ -26,7 +27,6 @@ from orchestrator.services.notification_service import (
     get_notification_service,
     reset_notification_service,
 )
-
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -67,10 +67,17 @@ async def test_webhook_dispatches_successfully():
 
     with patch("orchestrator.services.notification_service.httpx") as mock_httpx:
         mock_httpx.AsyncClient.return_value = mock_client
-        svc = _svc([
-            {"id": "log", "type": "log", "enabled": True},
-            {"id": "webhook1", "type": "webhook", "enabled": True, "url": "http://test.example/notify"},
-        ])
+        svc = _svc(
+            [
+                {"id": "log", "type": "log", "enabled": True},
+                {
+                    "id": "webhook1",
+                    "type": "webhook",
+                    "enabled": True,
+                    "url": "http://test.example/notify",
+                },
+            ]
+        )
         ok = await svc.dispatch(title="Alert", message="high CO2")
 
     assert ok == 2  # log + webhook
@@ -90,10 +97,17 @@ async def test_webhook_non_2xx_returns_failure():
 
     with patch("orchestrator.services.notification_service.httpx") as mock_httpx:
         mock_httpx.AsyncClient.return_value = mock_client
-        svc = _svc([
-            {"id": "log", "type": "log", "enabled": True},
-            {"id": "bad_wh", "type": "webhook", "enabled": True, "url": "http://test.example/notify"},
-        ])
+        svc = _svc(
+            [
+                {"id": "log", "type": "log", "enabled": True},
+                {
+                    "id": "bad_wh",
+                    "type": "webhook",
+                    "enabled": True,
+                    "url": "http://test.example/notify",
+                },
+            ]
+        )
         ok = await svc.dispatch(title="Alert", message="CO2 high")
 
     assert ok == 1  # only log succeeded
@@ -115,14 +129,21 @@ async def test_webhook_auth_header_injected():
     mock_client.__aexit__ = AsyncMock(return_value=False)
     mock_client.post = fake_post
 
-    with patch("orchestrator.services.notification_service.httpx") as mock_httpx, \
-         patch.dict(os.environ, {"MY_WEBHOOK_TOKEN": "Bearer test-secret"}):
+    with patch("orchestrator.services.notification_service.httpx") as mock_httpx, patch.dict(
+        os.environ, {"MY_WEBHOOK_TOKEN": "Bearer test-secret"}
+    ):
         mock_httpx.AsyncClient.return_value = mock_client
-        svc = _svc([{
-            "id": "auth_wh", "type": "webhook", "enabled": True,
-            "url": "http://test.example/notify",
-            "auth_header_env": "MY_WEBHOOK_TOKEN",
-        }])
+        svc = _svc(
+            [
+                {
+                    "id": "auth_wh",
+                    "type": "webhook",
+                    "enabled": True,
+                    "url": "http://test.example/notify",
+                    "auth_header_env": "MY_WEBHOOK_TOKEN",
+                }
+            ]
+        )
         await svc.dispatch(title="T", message="M")
 
     assert sent_headers.get("Authorization") == "Bearer test-secret"
@@ -131,10 +152,17 @@ async def test_webhook_auth_header_injected():
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_disabled_channel_is_skipped():
-    svc = _svc([
-        {"id": "log", "type": "log", "enabled": True},
-        {"id": "disabled_wh", "type": "webhook", "enabled": False, "url": "http://test.example"},
-    ])
+    svc = _svc(
+        [
+            {"id": "log", "type": "log", "enabled": True},
+            {
+                "id": "disabled_wh",
+                "type": "webhook",
+                "enabled": False,
+                "url": "http://test.example",
+            },
+        ]
+    )
     ok = await svc.dispatch(title="T", message="M")
     assert ok == 1  # only log
 
@@ -142,10 +170,12 @@ async def test_disabled_channel_is_skipped():
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_unknown_channel_type_skipped_gracefully():
-    svc = _svc([
-        {"id": "log", "type": "log", "enabled": True},
-        {"id": "pager", "type": "pagerduty", "enabled": True},
-    ])
+    svc = _svc(
+        [
+            {"id": "log", "type": "log", "enabled": True},
+            {"id": "pager", "type": "pagerduty", "enabled": True},
+        ]
+    )
     ok = await svc.dispatch(title="T", message="M")
     assert ok == 1  # log only; pagerduty is unknown but does not raise
 
@@ -153,20 +183,28 @@ async def test_unknown_channel_type_skipped_gracefully():
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_smtp_placeholder_returns_false():
-    svc = _svc([{
-        "id": "email1", "type": "smtp", "enabled": True,
-        "to_addr": "mgr@example.com",
-    }])
+    svc = _svc(
+        [
+            {
+                "id": "email1",
+                "type": "smtp",
+                "enabled": True,
+                "to_addr": "mgr@example.com",
+            }
+        ]
+    )
     ok = await svc.dispatch(title="T", message="M")
     assert ok == 0  # smtp dispatch is a no-op placeholder
 
 
 @pytest.mark.unit
 def test_has_channel_type_detects_webhook():
-    svc = _svc([
-        {"id": "log", "type": "log", "enabled": True},
-        {"id": "wh", "type": "webhook", "enabled": True, "url": "http://x"},
-    ])
+    svc = _svc(
+        [
+            {"id": "log", "type": "log", "enabled": True},
+            {"id": "wh", "type": "webhook", "enabled": True, "url": "http://x"},
+        ]
+    )
     assert svc.has_channel_type("webhook") is True
     assert svc.has_channel_type("smtp") is False
 

@@ -45662,7 +45662,7 @@ bldg:bldg3.AHU.AHU01N.Mixed_Air_Temp a brick:Mixed_Air_Temperature_Sensor ;
         tag:Temperature ;
     brick:isPointOf bldg:AHU01N .
 
-bldg:bldg3.AHU.AHU01N.Mode a brick:Mode ;
+bldg:bldg3.AHU.AHU01N.Mode a brick:Mode_Status ;
     rdfs:label "bldg3.AHU.AHU01N.Mode"^^xsd:string .
 
 bldg:bldg3.AHU.AHU01N.Outside_Air_Temp a brick:Outside_Air_Temperature_Sensor ;
@@ -45736,7 +45736,7 @@ bldg:bldg3.AHU.AHU01S.Heating_Valve_Output a brick:Command ;
     brick:isPointOf bldg:AHU01S ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab11 .
 
-bldg:bldg3.AHU.AHU01S.Mode a brick:Mode ;
+bldg:bldg3.AHU.AHU01S.Mode a brick:Mode_Status ;
     rdfs:label "bldg3.AHU.AHU01S.Mode"^^xsd:string ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab12 .
 
@@ -45811,7 +45811,7 @@ bldg:bldg3.AHU.AHU02N.Heating_Valve_Output a brick:Command ;
     brick:isPointOf bldg:AHU02N ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab19 .
 
-bldg:bldg3.AHU.AHU02N.Mode a brick:Mode ;
+bldg:bldg3.AHU.AHU02N.Mode a brick:Mode_Status ;
     rdfs:label "bldg3.AHU.AHU02N.Mode"^^xsd:string ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab20 .
 
@@ -45876,7 +45876,7 @@ bldg:bldg3.AHU.AHU02S.Heating_Valve_Output a brick:Command ;
     brick:isPointOf bldg:AHU02S ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab26 .
 
-bldg:bldg3.AHU.AHU02S.Mode a brick:Mode ;
+bldg:bldg3.AHU.AHU02S.Mode a brick:Mode_Status ;
     rdfs:label "bldg3.AHU.AHU02S.Mode"^^xsd:string ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab27 .
 
@@ -45951,7 +45951,7 @@ bldg:bldg3.AHU.AHU03N.Heating_Valve_Output a brick:Command ;
     brick:isPointOf bldg:AHU03N ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab34 .
 
-bldg:bldg3.AHU.AHU03N.Mode a brick:Mode ;
+bldg:bldg3.AHU.AHU03N.Mode a brick:Mode_Status ;
     rdfs:label "bldg3.AHU.AHU03N.Mode"^^xsd:string ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab35 .
 
@@ -46016,7 +46016,7 @@ bldg:bldg3.AHU.AHU03S.Heating_Valve_Output a brick:Command ;
     brick:isPointOf bldg:AHU03S ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab41 .
 
-bldg:bldg3.AHU.AHU03S.Mode a brick:Mode ;
+bldg:bldg3.AHU.AHU03S.Mode a brick:Mode_Status ;
     rdfs:label "bldg3.AHU.AHU03S.Mode"^^xsd:string ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab42 .
 
@@ -46246,7 +46246,7 @@ bldg:bldg3.CHW.Building_Chilled_Water_Supply_Temp a brick:Chilled_Water_Supply_T
     brick:isPointOf bldg:chiller ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab63 .
 
-bldg:bldg3.CHW.Building_Chilled_Water_Supply_Temp_Setpoint a brick:Chilled_Water_Supply_Temperature_Setpoint ;
+bldg:bldg3.CHW.Building_Chilled_Water_Supply_Temp_Setpoint a brick:Supply_Chilled_Water_Temperature_Setpoint ;
     rdfs:label "bldg3.CHW.Building Chilled Water Supply Temp Setpoint"^^xsd:string ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab64 .
 
@@ -46289,7 +46289,7 @@ bldg:bldg3.CHW.Loop_Chilled_Water_Return_Temp a brick:Chilled_Water_Return_Tempe
     brick:isPointOf bldg:chiller ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab68 .
 
-bldg:bldg3.CHW.Loop_Chilled_Water_Return_Temp_Setpoint a brick:Chilled_Water_Return_Temperature_Setpoint ;
+bldg:bldg3.CHW.Loop_Chilled_Water_Return_Temp_Setpoint a brick:Return_Chilled_Water_Temperature_Setpoint ;
     rdfs:label "bldg3.CHW.Loop Chilled Water Return Temp Setpoint"^^xsd:string ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab69 .
 
@@ -46304,11 +46304,11 @@ bldg:bldg3.CHW.Loop_Chilled_Water_Supply_Temp a brick:Chilled_Water_Supply_Tempe
     brick:isPointOf bldg:chiller ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab70 .
 
-bldg:bldg3.CHW.Loop_Chilled_Water_Supply_Temp_Setpoint a brick:Chilled_Water_Supply_Temperature_Setpoint ;
+bldg:bldg3.CHW.Loop_Chilled_Water_Supply_Temp_Setpoint a brick:Supply_Chilled_Water_Temperature_Setpoint ;
     rdfs:label "bldg3.CHW.Loop Chilled Water Supply Temp Setpoint"^^xsd:string ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab71 .
 
-bldg:bldg3.CHW.OA_ENABLE a brick:Outside_Air_Damper_Command ;
+bldg:bldg3.CHW.OA_ENABLE a brick:Damper_Command ;
     rdfs:label "bldg3.CHW.OA ENABLE"^^xsd:string ;
     ref:hasExternalReference bldg:n32c4720a45cf4235b3ca4ec5b38920fab72 .
 

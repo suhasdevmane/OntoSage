@@ -17,6 +17,7 @@ from orchestrator.services.building_context import BuildingContext
 
 def _stub_resolver(*, name="StubBuilding", namespace="http://stub#", prefix="stub", tz="UTC"):
     """Patch resolve_building_context to return a known context."""
+
     def _fake(bid):
         return BuildingContext(
             building_id=bid or "stub",
@@ -25,6 +26,7 @@ def _stub_resolver(*, name="StubBuilding", namespace="http://stub#", prefix="stu
             prefix=prefix,
             timezone=tz,
         )
+
     return _fake
 
 
@@ -49,8 +51,7 @@ def test_prompt_includes_per_building_name_when_building_id_provided():
 
     # The SCOPE rule must mention the building we asked about
     assert "Cardiff Eng" in prompt, (
-        "Prompt did not include the per-building name "
-        f"(found: {prompt[:300]!r}...)"
+        "Prompt did not include the per-building name " f"(found: {prompt[:300]!r}...)"
     )
 
 

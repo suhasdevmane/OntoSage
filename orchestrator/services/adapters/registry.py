@@ -334,6 +334,21 @@ class AdapterRegistry:
                 database=cfg.get("database") or None,
             )
 
+        if db_type == "mysql_events":
+            # V5-T07: generic interval/event store (bookings, work orders,
+            # access, alarms, compliance, anomaly episodes) — one per building.
+            from orchestrator.services.adapters.mysql_events_adapter import (
+                MySQLEventsAdapter,
+            )
+
+            return MySQLEventsAdapter(
+                host=cfg.get("host") or None,
+                port=int(cfg.get("port", 3306)) or None,
+                user=cfg.get("user") or None,
+                password=cfg.get("password") or None,
+                database=cfg.get("database") or None,
+            )
+
         if db_type == "postgresql":
             from orchestrator.services.adapters.postgresql_adapter import (
                 PostgreSQLAdapter,

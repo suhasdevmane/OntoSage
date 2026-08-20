@@ -1,0 +1,22 @@
+PREFIX abx:    <https://abacws.cardiff.ac.uk/kg#>
+PREFIX bot:    <https://w3id.org/bot#>
+PREFIX brick:  <https://brickschema.org/schema/Brick#>
+PREFIX geo:    <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX unit:   <http://qudt.org/vocab/unit/>
+
+# "What dimensions were drawn inside the Vending area, and what do they measure?"
+# DIMENSION entities carry a value the CAD application computed from the real
+# geometry, so these are measured facts, not label text. Where the drafter
+# typed an override, trust it over the computed value - they replaced it
+# deliberately.
+SELECT ?code ?roomName ?kind ?metres ?override WHERE {
+  ?dim a abx:Dimension ;
+       abx:dimensionKind ?kind ;
+       abx:appliesTo ?room .
+  ?room abx:roomCode ?code ;
+        rdfs:label   ?roomName .
+  OPTIONAL { ?dim abx:measurement/brick:value ?metres }
+  OPTIONAL { ?dim abx:textOverride ?override }
+}
+ORDER BY ?code DESC(?metres)

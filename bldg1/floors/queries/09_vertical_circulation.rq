@@ -1,0 +1,21 @@
+PREFIX abx:    <https://abacws.cardiff.ac.uk/kg#>
+PREFIX bot:    <https://w3id.org/bot#>
+PREFIX brick:  <https://brickschema.org/schema/Brick#>
+PREFIX geo:    <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX unit:   <http://qudt.org/vocab/unit/>
+
+# "Which stair and lift cores connect the storeys, and which floors do they link?"
+# Nothing in a 2D plan says the stair on floor 1 is the same stair as on floor 2.
+# abx:verticallyConnectedTo is inferred from stacked footprints plus a name that
+# reads as circulation - treat it as an inference, not a surveyed fact.
+SELECT ?lowerCode ?lowerName ?lowerLevel ?upperCode ?upperLevel WHERE {
+  ?lower abx:verticallyConnectedTo ?upper ;
+         abx:roomCode ?lowerCode ;
+         rdfs:label   ?lowerName .
+  ?upper abx:roomCode ?upperCode .
+  ?lowerStorey bot:hasSpace ?lower ; abx:level ?lowerLevel .
+  ?upperStorey bot:hasSpace ?upper ; abx:level ?upperLevel .
+  FILTER(?lowerLevel < ?upperLevel)
+}
+ORDER BY ?lowerLevel ?lowerCode

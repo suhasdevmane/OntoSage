@@ -24,6 +24,18 @@ from shared.models import ProvenanceTag
 
 _PROV_KEY = "_prov_stores"
 
+#: Fallback tag for store keys no registry entry can attribute. Deliberately NOT
+#: the real "Live Sensor Data" tag: an unregistered table must never be chip-
+#: labeled as real data (BUG-145). Declare the source in datasources.yaml to get
+#: its true real/synthetic chip.
+UNKNOWN_PROVENANCE = ProvenanceTag(
+    source_id="unknown_source",
+    label="Unknown Source",
+    color="#9CA3AF",
+    synthetic=False,
+    store="",
+)
+
 
 def record(state: Any, store_key: str) -> None:
     """Append a store key to the answer's provenance list (deduped, order-kept)."""
@@ -70,7 +82,7 @@ def build_tags(store_keys: List[str], registry: Optional[Any]) -> List[Provenanc
             if registry is not None:
                 tag = registry.provenance_for_table(table)
             if tag is None:
-                tag = BUILTIN_PROVENANCE["live_sensors"]
+                tag = UNKNOWN_PROVENANCE
         if tag is not None and tag.source_id not in seen:
             tags.append(tag)
             seen.add(tag.source_id)

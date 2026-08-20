@@ -1,0 +1,19 @@
+PREFIX abx:    <https://abacws.cardiff.ac.uk/kg#>
+PREFIX bot:    <https://w3id.org/bot#>
+PREFIX brick:  <https://brickschema.org/schema/Brick#>
+PREFIX geo:    <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX unit:   <http://qudt.org/vocab/unit/>
+
+# "What is next to the Vending area, and can you actually walk there?"
+# Distinguishes sharing a wall (bot:adjacentZone) from being passable
+# (abx:connectedTo, which requires a door). A QA system that conflates the
+# two will confidently give wrong wayfinding answers.
+SELECT ?neighbourCode ?neighbourName ?passable WHERE {
+  ?room abx:roomCode "0Z19" .
+  ?room bot:adjacentZone ?neighbour .
+  ?neighbour abx:roomCode ?neighbourCode ;
+             rdfs:label   ?neighbourName .
+  BIND(EXISTS { ?room abx:connectedTo ?neighbour } AS ?passable)
+}
+ORDER BY ?neighbourCode

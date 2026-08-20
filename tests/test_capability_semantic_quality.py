@@ -28,8 +28,9 @@ pytestmark = pytest.mark.live
 _REPORT_PATH = Path(__file__).resolve().parent / "results" / "semantic_recall_report.md"
 
 
-def _record(report_rows, test_name, query, expected_entry_id, expected_markers, resp,
-            should_hit=True):
+def _record(
+    report_rows, test_name, query, expected_entry_id, expected_markers, resp, should_hit=True
+):
     """Append one row to the per-session recall report.
 
     should_hit=True  → this query SHOULD match the expected_entry (positive test)
@@ -129,11 +130,16 @@ def test_synonym_elevator_capacity(chat_client, fresh_session_id, report_rows):
     resp = chat_client.chat("What's the elevator capacity?", session_id=fresh_session_id)
     assert resp.success
     hit = _record(
-        report_rows, "synonym_elevator_capacity", "What's the elevator capacity?",
+        report_rows,
+        "synonym_elevator_capacity",
+        "What's the elevator capacity?",
         "lift_accessibility_detail",
-        ["1000", "weight", "kg", "passenger", "lift"], resp,
+        ["1000", "weight", "kg", "passenger", "lift"],
+        resp,
     )
-    assert hit, f"Synonym 'elevator capacity' should hit lift_accessibility_detail. Response: {resp.response_text[:200]}"
+    assert (
+        hit
+    ), f"Synonym 'elevator capacity' should hit lift_accessibility_detail. Response: {resp.response_text[:200]}"
 
 
 def test_synonym_wheelchair_lift_access(chat_client, fresh_session_id, report_rows):
@@ -143,25 +149,33 @@ def test_synonym_wheelchair_lift_access(chat_client, fresh_session_id, report_ro
     )
     assert resp.success
     hit = _record(
-        report_rows, "synonym_wheelchair_lift", "Can a wheelchair reach all floors in this building?",
+        report_rows,
+        "synonym_wheelchair_lift",
+        "Can a wheelchair reach all floors in this building?",
         "lift_accessibility_detail",
-        ["lift", "passenger", "accessible", "step-free", "floor"], resp,
+        ["lift", "passenger", "accessible", "step-free", "floor"],
+        resp,
     )
-    assert hit, f"Wheelchair access paraphrase should hit accessibility KB. Response: {resp.response_text[:200]}"
+    assert (
+        hit
+    ), f"Wheelchair access paraphrase should hit accessibility KB. Response: {resp.response_text[:200]}"
 
 
 def test_paraphrase_shower_location(chat_client, fresh_session_id, report_rows):
     """'where can I shower' — paraphrase of shower_facilities_detail."""
-    resp = chat_client.chat(
-        "Where can I shower in this building?", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("Where can I shower in this building?", session_id=fresh_session_id)
     assert resp.success
     hit = _record(
-        report_rows, "paraphrase_shower", "Where can I shower in this building?",
+        report_rows,
+        "paraphrase_shower",
+        "Where can I shower in this building?",
         "shower_facilities_detail",
-        ["shower", "floor 1", "cubicle", "accessible"], resp,
+        ["shower", "floor 1", "cubicle", "accessible"],
+        resp,
     )
-    assert hit, f"Shower paraphrase should hit shower_facilities_detail. Response: {resp.response_text[:200]}"
+    assert (
+        hit
+    ), f"Shower paraphrase should hit shower_facilities_detail. Response: {resp.response_text[:200]}"
 
 
 def test_paraphrase_baby_changing(chat_client, fresh_session_id, report_rows):
@@ -171,11 +185,16 @@ def test_paraphrase_baby_changing(chat_client, fresh_session_id, report_rows):
     )
     assert resp.success
     hit = _record(
-        report_rows, "paraphrase_baby_changing", "Is there a changing table for infants somewhere?",
+        report_rows,
+        "paraphrase_baby_changing",
+        "Is there a changing table for infants somewhere?",
         "toilet_facilities_by_floor",
-        ["baby changing", "ground floor", "changing"], resp,
+        ["baby changing", "ground floor", "changing"],
+        resp,
     )
-    assert hit, f"Baby-changing paraphrase should hit toilet KB. Response: {resp.response_text[:200]}"
+    assert (
+        hit
+    ), f"Baby-changing paraphrase should hit toilet KB. Response: {resp.response_text[:200]}"
 
 
 def test_paraphrase_bike_storage(chat_client, fresh_session_id, report_rows):
@@ -185,11 +204,16 @@ def test_paraphrase_bike_storage(chat_client, fresh_session_id, report_rows):
     )
     assert resp.success
     hit = _record(
-        report_rows, "paraphrase_bike_storage", "Do you have secure storage for my bicycle?",
+        report_rows,
+        "paraphrase_bike_storage",
+        "Do you have secure storage for my bicycle?",
         "bicycle_parking_detail",
-        ["bike", "bicycle", "rack", "cycle", "covered"], resp,
+        ["bike", "bicycle", "rack", "cycle", "covered"],
+        resp,
     )
-    assert hit, f"Bike storage paraphrase should hit cycle parking KB. Response: {resp.response_text[:200]}"
+    assert (
+        hit
+    ), f"Bike storage paraphrase should hit cycle parking KB. Response: {resp.response_text[:200]}"
 
 
 # ── Existing baseline (must HIT — old keyword path already did) ────────────────
@@ -197,14 +221,15 @@ def test_paraphrase_bike_storage(chat_client, fresh_session_id, report_rows):
 
 def test_baseline_fire_safety(chat_client, fresh_session_id, report_rows):
     """'fire safety procedures' was always a keyword hit; must not regress."""
-    resp = chat_client.chat(
-        "What are the fire safety procedures?", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("What are the fire safety procedures?", session_id=fresh_session_id)
     assert resp.success
     hit = _record(
-        report_rows, "baseline_fire", "What are the fire safety procedures?",
+        report_rows,
+        "baseline_fire",
+        "What are the fire safety procedures?",
         "fire_safety",
-        ["evacuation", "fire", "alarm", "assembly point", "smoke detector"], resp,
+        ["evacuation", "fire", "alarm", "assembly point", "smoke detector"],
+        resp,
     )
     assert hit, f"Fire safety baseline regressed: {resp.response_text[:200]}"
 
@@ -212,28 +237,30 @@ def test_baseline_fire_safety(chat_client, fresh_session_id, report_rows):
 def test_baseline_data_privacy(chat_client, fresh_session_id, report_rows):
     """'does the building track my location' — keyword path hit (post-2026-05-20 fix);
     semantic path must also hit."""
-    resp = chat_client.chat(
-        "Does the building track my location?", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("Does the building track my location?", session_id=fresh_session_id)
     assert resp.success
     hit = _record(
-        report_rows, "baseline_privacy", "Does the building track my location?",
+        report_rows,
+        "baseline_privacy",
+        "Does the building track my location?",
         "data_privacy_gdpr",
-        ["privacy", "tracking", "GDPR", "anonym", "personal data", "track"], resp,
+        ["privacy", "tracking", "GDPR", "anonym", "personal data", "track"],
+        resp,
     )
     assert hit, f"Privacy baseline regressed: {resp.response_text[:200]}"
 
 
 def test_baseline_power_outage(chat_client, fresh_session_id, report_rows):
     """'what happens during a power outage' — classic capability query."""
-    resp = chat_client.chat(
-        "What happens during a power outage?", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("What happens during a power outage?", session_id=fresh_session_id)
     assert resp.success
     hit = _record(
-        report_rows, "baseline_power", "What happens during a power outage?",
+        report_rows,
+        "baseline_power",
+        "What happens during a power outage?",
         "power_resilience",
-        ["UPS", "generator", "backup", "power", "uninterruptible"], resp,
+        ["UPS", "generator", "backup", "power", "uninterruptible"],
+        resp,
     )
     assert hit, f"Power resilience baseline regressed: {resp.response_text[:200]}"
 
@@ -250,29 +277,31 @@ def test_negative_off_domain_query(chat_client, fresh_session_id, report_rows):
     # Should NOT contain capability KB markers
     not_capability = not resp.contains("information I have on record for **Abacws")
     _record(
-        report_rows, "negative_off_domain", "What is the airspeed of an unladen swallow?",
+        report_rows,
+        "negative_off_domain",
+        "What is the airspeed of an unladen swallow?",
         "(none — capability should NOT fire)",
         ["information I have on record"],  # the marker capability response would contain
-        resp, should_hit=False,
+        resp,
+        should_hit=False,
     )
-    assert not_capability, (
-        f"Off-domain query incorrectly routed to capability: {resp.response_text[:200]}"
-    )
+    assert (
+        not_capability
+    ), f"Off-domain query incorrectly routed to capability: {resp.response_text[:200]}"
 
 
 def test_negative_pure_sensor_query(chat_client, fresh_session_id, report_rows):
     """'CO2 ppm on floor 3' is pure sensor_data — semantic router must NOT hijack."""
-    resp = chat_client.chat(
-        "Current CO2 ppm reading on floor 3?", session_id=fresh_session_id
-    )
+    resp = chat_client.chat("Current CO2 ppm reading on floor 3?", session_id=fresh_session_id)
     assert resp.success
     not_capability = not resp.contains("information I have on record for **Abacws")
     _record(
-        report_rows, "negative_sensor", "Current CO2 ppm reading on floor 3?",
+        report_rows,
+        "negative_sensor",
+        "Current CO2 ppm reading on floor 3?",
         "(none — capability should NOT fire)",
         ["information I have on record"],
-        resp, should_hit=False,
+        resp,
+        should_hit=False,
     )
-    assert not_capability, (
-        f"Sensor query was hijacked by capability: {resp.response_text[:200]}"
-    )
+    assert not_capability, f"Sensor query was hijacked by capability: {resp.response_text[:200]}"

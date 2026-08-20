@@ -25,11 +25,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from orchestrator.services.embedding_service import (
+    _PROVIDER_MAX_CHARS,
     EmbeddingService,
     EmbeddingServiceError,
-    _PROVIDER_MAX_CHARS,
 )
-
 
 # ── Helpers ─────────────────────────────────────────────────────────────────────
 
@@ -171,8 +170,9 @@ async def test_embed_retries_on_transient_failure():
             raise RuntimeError("503 Service Unavailable")
         return _fake_openai_response([fake_vec])
 
-    with patch("openai.AsyncOpenAI") as mock_client_cls, \
-         patch("orchestrator.services.embedding_service.asyncio.sleep", new=AsyncMock()):
+    with patch("openai.AsyncOpenAI") as mock_client_cls, patch(
+        "orchestrator.services.embedding_service.asyncio.sleep", new=AsyncMock()
+    ):
         mock_client_cls.return_value.embeddings.create = flaky
         vec = await svc.embed("retry test")
 
@@ -188,8 +188,9 @@ async def test_embed_raises_after_three_retries():
     async def always_fail(*_args, **_kwargs):
         raise RuntimeError("persistent failure")
 
-    with patch("openai.AsyncOpenAI") as mock_client_cls, \
-         patch("orchestrator.services.embedding_service.asyncio.sleep", new=AsyncMock()):
+    with patch("openai.AsyncOpenAI") as mock_client_cls, patch(
+        "orchestrator.services.embedding_service.asyncio.sleep", new=AsyncMock()
+    ):
         mock_client_cls.return_value.embeddings.create = always_fail
         with pytest.raises(EmbeddingServiceError):
             await svc.embed("doomed")

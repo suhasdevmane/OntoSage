@@ -248,14 +248,19 @@ You can switch between OpenAI and local Ollama at any time without rebuilding:
 ```bash
 # Switch to local mode
 ./switch-provider.ps1 local     # Windows PowerShell
-# or
-MODEL_PROVIDER=local docker-compose restart orchestrator
+# or: set MODEL_PROVIDER=local in .env, then recreate the container
+docker compose up -d orchestrator
 
 # Switch to OpenAI mode
 ./switch-provider.ps1 openai    # Windows PowerShell
-# or
-MODEL_PROVIDER=openai docker-compose restart orchestrator
+# or: set MODEL_PROVIDER=openai in .env, then recreate the container
+docker compose up -d orchestrator
 ```
+
+> ⚠️ Use `up -d`, not `restart`. `docker compose restart` reuses the environment
+> captured when the container was created, so an edited `.env` is ignored and the
+> old provider stays live (CAVEAT-178). Verify what actually took effect:
+> `docker compose logs orchestrator | grep "Initialized.*LLM"`.
 
 ---
 

@@ -2,8 +2,9 @@
 floor_plan_config.py — Building-specific floor plan configuration.
 
 Each building can override defaults via an optional `building.yaml` file
-placed in /app/input/<building_id>/building.yaml.  Without the file the
-system uses the Abacws defaults so existing behaviour is unchanged.
+placed in /app/input/<building_id>/building.yaml.  Without the file,
+`default_config(building_id)` supplies drawing conventions only — never
+another building's name or namespace (CAVEAT-094).
 
 building.yaml example for a second building:
 --------------------------------------------
@@ -34,7 +35,8 @@ from typing import Dict, List, Optional
 import yaml
 from pydantic import BaseModel, Field
 
-# Default regex that matches Abacws-style zone IDs: "3.01", "5.28"
+# Default regex for dotted floor.room zone IDs: "3.01", "5.28". A convention,
+# not a building — overridden per building via zone_id_pattern in building.yaml.
 _DEFAULT_ZONE_PATTERN = r"\b(\d+)\.(\d{2})\b"
 
 # AIA/NCS layer naming conventions → semantic role
@@ -47,7 +49,13 @@ _DEFAULT_LAYER_MAP: Dict[str, str] = {
     r"(?i)A[_-]?DOOR": "door",
     r"(?i)A[_-]?GLAZ": "window",
     r"(?i)A[_-]?WIND": "window",
-    r"(?i)A[_-]?FURN": "furniture",
+    # Any discipline prefix, not just architectural: interiors drawings put
+    # furniture on I-FURN, and a furniture polygon mistaken for a room adds
+    # dozens of spaces that can never match anything in the ontology.
+    r"(?i)[A-Z][_-]?FURN": "furniture",
+    r"(?i)^GIA$|GROSS[_-]?INTERNAL": "gross_area",
+    r"(?i)BUILDING[_-]?ACCESS|^ACCESS$": "circulation",
+    r"(?i)^USABLE$|USABLE[_-]?AREA": "gross_area",
     r"(?i)A[_-]?EQPM": "equipment",
     r"(?i)A[_-]?ANNO": "annotation",
     r"(?i)A[_-]?TEXT": "annotation",
@@ -130,15 +138,24 @@ class BuildingConfig(BaseModel):
     """
     Per-building configuration loaded from building.yaml (or defaults).
 
-    All fields have sensible defaults so the Abacws building works
-    without any YAML file.
+    Identity fields default to EMPTY, never to a real building (CAVEAT-094).
+    They used to default to Abacws — the first building this system served — so
+    any config built without an explicit id silently claimed to be that
+    building, complete with its name and ontology namespace. On a different
+    site that is not a harmless default: it is one building's identity
+    answering for another's. Empty is visibly missing; a wrong name is not.
+
+    Use :func:`default_config` to build a neutral config for a known id.
     """
 
-    building_id: str = "abacws"
-    building_name: str = "Abacws"
+    building_id: str = ""
+    building_name: str = ""
     display_name: Optional[str] = None
     zone_id_pattern: str = _DEFAULT_ZONE_PATTERN
-    ontology_namespace: str = "https://abacws.example/zones/"
+    # Vestigial here: the namespace that actually governs queries comes from
+    # building.yaml via settings.BUILDING_NAMESPACE. Kept empty so nothing can
+    # read a stale one out of this object.
+    ontology_namespace: str = ""
     default_dpi: int = Field(default=200, ge=72, le=600)
     thumbnail_width_px: int = Field(default=400, ge=100, le=1200)
     floors_label_override: Dict[int, str] = Field(default_factory=dict)
@@ -203,7 +220,7 @@ class BuildingConfig(BaseModel):
 
     @classmethod
     def default(cls) -> "BuildingConfig":
-        """Return the Abacws default configuration."""
+        """Return a config with all-default values and no building identity."""
         return cls()
 
 
@@ -211,7 +228,7 @@ class BuildingConfig(BaseModel):
 DEFAULT_BUILDING_CONFIG: BuildingConfig = BuildingConfig.default()
 
 # Abacws-specific floor label map (ground floor is floor 0)
-_ABACWS_FLOOR_LABELS: Dict[int, str] = {
+_DEFAULT_FLOOR_LABELS: Dict[int, str] = {
     0: "Ground Floor",
     1: "First Floor",
     2: "Second Floor",
@@ -220,13 +237,27 @@ _ABACWS_FLOOR_LABELS: Dict[int, str] = {
     5: "Fifth Floor",
 }
 
-ABACWS_CONFIG = BuildingConfig(
-    building_id="abacws",
-    building_name="Abacws",
-    display_name="Abacws Building",
-    zone_id_pattern=_DEFAULT_ZONE_PATTERN,
-    ontology_namespace="https://abacws.example/zones/",
-    default_dpi=200,
-    thumbnail_width_px=400,
-    floors_label_override=_ABACWS_FLOOR_LABELS,
-)
+
+def default_config(building_id: str, building_name: Optional[str] = None) -> BuildingConfig:
+    """A neutral floor-plan config for ``building_id``.
+
+    The fallback every caller reaches when no ``building.yaml`` was found. It
+    describes the building it was ASKED about — never a different one — so a
+    site with no config file renders its own name and its own floors instead of
+    inheriting the first building this system ever served (CAVEAT-094).
+
+    Everything it supplies is a drawing convention rather than a building fact:
+    dotted zone ids, English floor labels, standard AIA/NCS layer names. Any of
+    it is overridden by dropping a ``building.yaml`` in the building's input
+    folder.
+    """
+    name = building_name or (building_id.replace("_", " ").strip() or "Building")
+    return BuildingConfig(
+        building_id=building_id,
+        building_name=name,
+        display_name=name,
+        zone_id_pattern=_DEFAULT_ZONE_PATTERN,
+        default_dpi=200,
+        thumbnail_width_px=400,
+        floors_label_override=dict(_DEFAULT_FLOOR_LABELS),
+    )

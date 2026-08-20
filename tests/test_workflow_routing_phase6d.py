@@ -20,7 +20,6 @@ import pytest
 
 from orchestrator.intents import IntentDefinition, IntentRegistry, get_intent_registry
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # IntentDefinition.route_target
 # ─────────────────────────────────────────────────────────────────────────────
@@ -47,54 +46,66 @@ def test_intent_definition_route_target_defaults_to_none():
 
 
 def test_explicit_route_target_wins_over_defaults():
-    reg = IntentRegistry(intents=[
-        IntentDefinition(
-            name="report",
-            description="...",
-            pipeline_group="data",
-            route_target="planner",   # override default "sparql"
-        ),
-    ])
+    reg = IntentRegistry(
+        intents=[
+            IntentDefinition(
+                name="report",
+                description="...",
+                pipeline_group="data",
+                route_target="planner",  # override default "sparql"
+            ),
+        ]
+    )
     assert reg.route_target_for("report") == "planner"
 
 
 def test_data_group_default_is_sparql():
-    reg = IntentRegistry(intents=[
-        IntentDefinition(name="analytics", description="...", pipeline_group="data"),
-    ])
+    reg = IntentRegistry(
+        intents=[
+            IntentDefinition(name="analytics", description="...", pipeline_group="data"),
+        ]
+    )
     assert reg.route_target_for("analytics") == "sparql"
 
 
 def test_standalone_group_default_is_intent_name():
-    reg = IntentRegistry(intents=[
-        IntentDefinition(name="floor_plan", description="...", pipeline_group="standalone"),
-    ])
+    reg = IntentRegistry(
+        intents=[
+            IntentDefinition(name="floor_plan", description="...", pipeline_group="standalone"),
+        ]
+    )
     assert reg.route_target_for("floor_plan") == "floor_plan"
 
 
 def test_meta_group_default_is_response():
-    reg = IntentRegistry(intents=[
-        IntentDefinition(name="greeting", description="...", pipeline_group="meta"),
-    ])
+    reg = IntentRegistry(
+        intents=[
+            IntentDefinition(name="greeting", description="...", pipeline_group="meta"),
+        ]
+    )
     assert reg.route_target_for("greeting") == "response"
 
 
 def test_unknown_intent_returns_none():
-    reg = IntentRegistry(intents=[
-        IntentDefinition(name="known", description="..."),
-    ])
+    reg = IntentRegistry(
+        intents=[
+            IntentDefinition(name="known", description="..."),
+        ]
+    )
     assert reg.route_target_for("unknown_intent") is None
 
 
 def test_alias_resolves_through_route_target():
-    reg = IntentRegistry(intents=[
-        IntentDefinition(
-            name="compare",
-            description="...",
-            pipeline_group="data",
-            aliases=["comparison"],
-        ),
-    ])
+    reg = IntentRegistry(
+        intents=[
+            IntentDefinition(
+                name="compare",
+                description="...",
+                pipeline_group="data",
+                aliases=["comparison"],
+            ),
+        ]
+    )
     assert reg.route_target_for("comparison") == "sparql"
 
 
@@ -111,37 +122,40 @@ def live_reg():
     get_intent_registry.cache_clear()
 
 
-@pytest.mark.parametrize("intent,expected", [
-    # Data group with explicit route_target
-    ("report", "planner"),
-    ("export", "export"),
-    ("visualization", "visualization"),
-    # Data group default
-    ("analytics", "sparql"),
-    ("anomaly", "sparql"),
-    ("compare", "sparql"),
-    ("trend", "sparql"),
-    ("recommend", "sparql"),
-    ("compliance", "sparql"),
-    ("sensor_data", "sparql"),
-    ("metadata", "sparql"),
-    ("discovery", "sparql"),
-    # Meta group with explicit
-    ("planner", "planner"),
-    # Meta group default
-    ("greeting", "response"),
-    ("clarification", "response"),
-    # Meta group with explicit route_target → dedicated open-domain answering node
-    ("general", "general_knowledge"),
-    # Standalone group default
-    ("floor_plan", "floor_plan"),
-    ("spatial_query", "spatial_query"),
-    ("capability", "capability"),
-    ("control", "control"),
-    ("maintenance", "maintenance"),
-])
+@pytest.mark.parametrize(
+    "intent,expected",
+    [
+        # Data group with explicit route_target
+        ("report", "planner"),
+        ("export", "export"),
+        ("visualization", "visualization"),
+        # Data group default
+        ("analytics", "sparql"),
+        ("anomaly", "sparql"),
+        ("compare", "sparql"),
+        ("trend", "sparql"),
+        ("recommend", "sparql"),
+        ("compliance", "sparql"),
+        ("sensor_data", "sparql"),
+        ("metadata", "sparql"),
+        ("discovery", "sparql"),
+        # Meta group with explicit
+        ("planner", "planner"),
+        # Meta group default
+        ("greeting", "response"),
+        ("clarification", "response"),
+        # Meta group with explicit route_target → dedicated open-domain answering node
+        ("general", "general_knowledge"),
+        # Standalone group default
+        ("floor_plan", "floor_plan"),
+        ("spatial_query", "spatial_query"),
+        ("capability", "capability"),
+        ("control", "control"),
+        ("maintenance", "maintenance"),
+    ],
+)
 def test_production_intent_routing_table(live_reg, intent, expected):
     """Every shipped intent routes to the expected workflow node."""
-    assert live_reg.route_target_for(intent) == expected, (
-        f"intent={intent} expected target {expected!r}"
-    )
+    assert (
+        live_reg.route_target_for(intent) == expected
+    ), f"intent={intent} expected target {expected!r}"

@@ -17,7 +17,6 @@ from orchestrator.services.actuation.base import ActuationDriver, ActuationResul
 from orchestrator.services.actuation.registry import ActuationRegistry, _NullDriver
 from orchestrator.services.actuation.sim_driver import SimDriver
 
-
 # ── helpers ───────────────────────────────────────────────────────────────────
 
 
@@ -106,9 +105,7 @@ class TestSimDriverCapabilities:
         driver = SimDriver("bldg1", ["urn:bldg1:AHU-F5-SP"], postgres_manager=pm)
         driver._table_ensured = True
 
-        result = await driver.set_point(
-            "urn:bldg1:AHU-F5-SP", 18.0, reason="energy saving policy"
-        )
+        result = await driver.set_point("urn:bldg1:AHU-F5-SP", 18.0, reason="energy saving policy")
         assert result.success is True
 
 
@@ -180,9 +177,7 @@ class TestActuationRegistry:
         assert isinstance(driver, _NullDriver)
 
     def test_no_actuation_block_returns_null(self, tmp_path):
-        input_root = self._write_building_yaml(
-            tmp_path, "bldg3", {"building_id": "bldg3"}
-        )
+        input_root = self._write_building_yaml(tmp_path, "bldg3", {"building_id": "bldg3"})
         reg = ActuationRegistry()
         yaml_path = input_root / "bldg3" / "building.yaml"
         reg._find_yaml = lambda bid: yaml_path if bid == "bldg3" else None
@@ -231,6 +226,7 @@ class TestActuationRegistry:
             p = Path(template)
             if p.is_file():
                 import yaml as _yaml
+
                 data = _yaml.safe_load(p.read_text(encoding="utf-8")) or {}
                 assert "actuation" in data, "building.yaml must have actuation block"
                 assert data["actuation"]["driver"] == "sim"

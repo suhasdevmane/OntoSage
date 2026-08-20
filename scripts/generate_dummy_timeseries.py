@@ -87,17 +87,40 @@ def sparql(query):
         return json.load(resp)["results"]["bindings"]
 
 
+# Wide-table store keys: ONLY points whose ref:storedAt local name is listed here
+# become wide-table columns. Narrow-stored points (occupancy_data, co2_data, ...)
+# have their own tables and adapters — adding them as wide columns bloated the
+# table past MySQL's 8126-byte row limit when the V4 saturation TTLs landed.
+WIDE_STORE_KEYS = {
+    k.strip()
+    for k in os.environ.get("WIDE_STORE_KEYS", "database1,database2").split(",")
+    if k.strip()
+}
+BLDG_NS = os.environ.get("BUILDING_NAMESPACE", "")
+
+
 def fetch_points():
-    """{uuid: best_class} for every time-series point of the active building."""
+    """{uuid: best_class} for the active building's WIDE-stored points only.
+
+    storedAt filter: narrow per-modality points must never become wide columns.
+    Namespace filter: never pick up another building's points from a shared
+    repo state (BUG-105 class).
+    """
+    ns_filter = f'FILTER(STRSTARTS(STR(?s), "{BLDG_NS}"))' if BLDG_NS else ""
     rows = sparql(
-        """PREFIX ref: <https://brickschema.org/schema/Brick/ref#>
-        SELECT ?uuid ?cls WHERE {
+        f"""PREFIX ref: <https://brickschema.org/schema/Brick/ref#>
+        SELECT ?uuid ?cls ?st WHERE {{
           ?s ref:hasExternalReference ?r . ?r ref:hasTimeseriesId ?uuid .
-          OPTIONAL { ?s a ?cls FILTER(STRSTARTS(STR(?cls),"https://brickschema.org")) }
-        }"""
+          ?r ref:storedAt ?st .
+          {ns_filter}
+          OPTIONAL {{ ?s a ?cls FILTER(STRSTARTS(STR(?cls),"https://brickschema.org")) }}
+        }}"""
     )
     pts = {}
     for b in rows:
+        st_local = b.get("st", {}).get("value", "").split("#")[-1].split("/")[-1]
+        if st_local not in WIDE_STORE_KEYS:
+            continue
         u = b["uuid"]["value"]
         cls = b.get("cls", {}).get("value", "")
         cls = cls.split("#")[-1].split("/")[-1]
@@ -209,6 +232,124 @@ def _ensure_table_and_columns(cur, uuids):
     return added
 
 
+# ── V4-T11: live append for SATURATE narrow sensors ─────────────────────────
+# The wide loop above serves the building's native points; saturation sensors
+# live in narrow per-modality tables and get their current 10-min-grid value
+# from the SAME deterministic signal model the backfill used — so live rows
+# continue the backfilled series without a seam.
+_SAT_MARKER = "synthetic-saturation-v4"
+_sat_state = {"points": [], "day": None, "series": {}, "import_warned": False}
+
+_REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_DIR not in sys.path:
+    sys.path.insert(0, _REPO_DIR)
+
+
+def fetch_sat_points():
+    """[(uuid, table, space_local, modality)] for the active building's sat sensors."""
+    ns_filter = f'FILTER(STRSTARTS(STR(?s), "{BLDG_NS}"))' if BLDG_NS else ""
+    rows = sparql(
+        f"""PREFIX ref: <https://brickschema.org/schema/Brick/ref#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        SELECT ?s ?uuid ?st WHERE {{
+          ?s rdfs:comment "{_SAT_MARKER}" ;
+             ref:hasExternalReference [ ref:hasTimeseriesId ?uuid ; ref:storedAt ?st ] .
+          {ns_filter}
+        }}"""
+    )
+    pts = []
+    for b in rows:
+        local = b["s"]["value"].rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+        if "_sat_" not in local:
+            continue
+        space_local, modality = local.rsplit("_sat_", 1)
+        table = b["st"]["value"].rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+        pts.append((b["uuid"]["value"], table, space_local, modality))
+    return pts
+
+
+def publish_sat_tick(cur, now):
+    """Write the current 10-min-grid value for every sat sensor (INSERT IGNORE)."""
+    pts = _sat_state["points"]
+    if not pts:
+        return
+    try:
+        from orchestrator.services.deliberation.synthetic_signals import (
+            STEP_MINUTES,
+            generate_room_day,
+        )
+    except Exception as e:  # container without the module — degrade, never die
+        if not _sat_state["import_warned"]:
+            print(f"[gen] sat publish disabled (import failed: {str(e)[:80]})", flush=True)
+            _sat_state["import_warned"] = True
+        return
+    from datetime import timedelta
+
+    bid = os.environ.get("BUILDING_ID", DB.replace("_sensordb", ""))
+    day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    if _sat_state["day"] != day:
+        by_room = {}
+        for _u, _t, room, modality in pts:
+            by_room.setdefault(room, set()).add(modality)
+        _sat_state["series"] = {
+            room: generate_room_day(bid, room, sorted(mods), day) for room, mods in by_room.items()
+        }
+        _sat_state["day"] = day
+    step = (now.hour * 60 + now.minute) // STEP_MINUTES
+    grid_ts = day + timedelta(minutes=step * STEP_MINUTES)
+    by_table = {}
+    for uuid_, table, room, modality in pts:
+        series = _sat_state["series"].get(room, {}).get(modality)
+        if series and step < len(series):
+            by_table.setdefault(table, []).append((uuid_, grid_ts, series[step]))
+    for table, rows in by_table.items():
+        cur.executemany(
+            f"INSERT IGNORE INTO {table} (uuid, datetime, value) VALUES (%s, %s, %s)", rows
+        )
+
+
+_evt_state = {"hour": None, "rooms": None, "warned": False}
+
+
+def publish_events_tick(cur, now):
+    """V5-T08: keep TODAY's events current (hourly regenerate + INSERT IGNORE).
+
+    Deterministic event_ids make this idempotent: only genuinely new records
+    (later work orders, the day's remaining bookings once their windows exist)
+    insert; everything else is ignored on the PK.
+    """
+    hour = now.replace(minute=0, second=0, microsecond=0)
+    if _evt_state["hour"] == hour:
+        return
+    try:
+        from orchestrator.services.deliberation.synthetic_events import (
+            generate_building_day,
+            to_row,
+        )
+    except Exception as e:
+        if not _evt_state["warned"]:
+            print(f"[gen] events publish disabled (import failed: {str(e)[:80]})", flush=True)
+            _evt_state["warned"] = True
+        return
+    if _evt_state["rooms"] is None:
+        # rooms from the sat-point inventory (already graph-derived, no extra query)
+        _evt_state["rooms"] = sorted({room for _u, _t, room, _m in _sat_state["points"]})
+    rooms = [r for r in _evt_state["rooms"] if not r.lower().startswith(("floor", "building"))]
+    if not rooms:
+        return
+    bid = os.environ.get("BUILDING_ID", DB.replace("_sensordb", ""))
+    day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    events = generate_building_day(bid, rooms, day, now)
+    if events:
+        cur.executemany(
+            "INSERT IGNORE INTO events "
+            "(event_id, event_type, subject_uuid, start_dt, end_dt, status, attrs) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            [to_row(e) for e in events],
+        )
+    _evt_state["hour"] = hour
+
+
 def publish_loop(interval=None):
     """Keep the wide table live: append one fresh (now) row every ``interval`` seconds so
     'current reading' queries always find recent data. Building-agnostic and self-healing:
@@ -246,9 +387,15 @@ def publish_loop(interval=None):
                     ph = ", ".join(["%s"] * (len(uuids) + 1))
                     sql = f"INSERT INTO sensor_data ({collist}) VALUES ({ph})"
                     print(f"[gen] tracking {len(uuids)} sensors", flush=True)
+                sat_points = fetch_sat_points()
+                if len(sat_points) != len(_sat_state["points"]):
+                    print(f"[gen] tracking {len(sat_points)} SATURATE narrow sensors", flush=True)
+                _sat_state["points"] = sat_points
             now = datetime.utcnow().replace(microsecond=0)
             if sql:
                 cur.execute(sql, (now, *[value_at(rng[u], now, u) for u in uuids]))
+            publish_sat_tick(cur, now)
+            publish_events_tick(cur, now)
             conn.close()
         except Exception as e:  # keep the loop alive on transient DB/graph hiccups
             print(f"[gen] publish tick failed: {str(e)[:120]}", flush=True)

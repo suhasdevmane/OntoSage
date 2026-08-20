@@ -1,0 +1,9 @@
+{
+  "name": "abacws-kg-tools",
+  "private": true,
+  "type": "module",
+  "description": "DWG reading for the Abacws knowledge-graph pipeline, via LibreDWG compiled to WebAssembly.",
+  "dependencies": {
+    "@mlightcad/libredwg-web": "^0.7.9"
+  }
+}

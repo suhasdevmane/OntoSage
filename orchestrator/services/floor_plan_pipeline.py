@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from shared.building_paths import resolve_building_file
-from shared.floor_plan_config import ABACWS_CONFIG, BuildingConfig
+from shared.floor_plan_config import BuildingConfig, default_config
 from shared.models import (
     FloorPlanManifest,
     NormalisedBBox,
@@ -436,9 +436,9 @@ class FloorPlanPipeline:
                 return cfg
         except Exception:
             pass
-        if building_id == "abacws":
-            return ABACWS_CONFIG
-        return BuildingConfig(building_id=building_id)
+        # No building.yaml and no registry entry: describe THIS building
+        # generically rather than handing back another building's identity.
+        return default_config(building_id)
 
     # ── Step 5 LLM space detection ─────────────────────────────────────────────
 
@@ -517,19 +517,29 @@ class FloorPlanPipeline:
     # ── Step 8 Ontology linking ────────────────────────────────────────────────
 
     async def _link_ontology(self, spaces: List[Space], building_id: str, floor: int) -> List[str]:
-        """Query GraphDB to populate ontology_iri on each space."""
+        """Query GraphDB to populate ontology_iri on each space.
+
+        BUG-147 repair: match on the canonical ``ontosage:zoneId`` literal FIRST
+        (emitted per space by the V4 saturation provisioner) with substring label
+        matching as fallback. The old code exact-matched decorated labels
+        ('HVAC Zone 5.28'@en never equals '5.28'), dropped every non-dotted CAD
+        id, and queried a repository named 'ontosage' that does not exist — the
+        combination produced 0 links on every persisted manifest.
+        """
         warnings: List[str] = []
         try:
             import httpx
 
-            zone_ids = [s.zone_id for s in spaces if "." in s.zone_id]
+            from shared.config import settings as _settings
+
+            zone_ids = [s.zone_id for s in spaces if s.zone_id]
             if not zone_ids:
                 return []
 
-            sparql = _build_zone_sparql(zone_ids[:30])
+            sparql = _build_zone_sparql(zone_ids[:60])
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.post(
-                    f"{self._graphdb_url}/repositories/ontosage/sparql",
+                    f"{self._graphdb_url}/repositories/{_settings.GRAPHDB_REPOSITORY}",
                     headers={
                         "Content-Type": "application/sparql-query",
                         "Accept": "application/sparql-results+json",
@@ -542,16 +552,38 @@ class FloorPlanPipeline:
 
             data = resp.json()
             bindings = data.get("results", {}).get("bindings", [])
-            iri_map: Dict[str, str] = {}
+            zoneid_map: Dict[str, str] = {}
+            label_map: Dict[str, str] = {}
             for b in bindings:
-                label = b.get("label", {}).get("value", "")
                 iri = b.get("zone", {}).get("value", "")
-                if label and iri:
-                    iri_map[label] = iri
+                if not iri:
+                    continue
+                zid = b.get("zid", {}).get("value", "")
+                if zid:
+                    zoneid_map.setdefault(zid, iri)
+                label = b.get("label", {}).get("value", "")
+                if label:
+                    label_map.setdefault(label, iri)
+                local = iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+                label_map.setdefault(local, iri)
 
             linked = 0
             for space in spaces:
-                iri = iri_map.get(space.zone_id) or iri_map.get(f"Zone {space.zone_id}")
+                # zone_id first, then the CAD label — synthetic plans carry the
+                # graph's room name as the label while zone_id stays positional
+                candidates = [space.zone_id, getattr(space, "label", "") or ""]
+                iri = None
+                for key in candidates:
+                    if not key:
+                        continue
+                    iri = (
+                        zoneid_map.get(key)
+                        or label_map.get(key)
+                        or label_map.get(f"Zone {key}")
+                        or label_map.get(f"HVAC Zone {key}")
+                    )
+                    if iri:
+                        break
                 if iri:
                     space.ontology_iri = iri
                     linked += 1
@@ -697,7 +729,9 @@ class FloorPlanPipeline:
             if "floor_plans" not in names:
                 await client.create_collection(
                     collection_name="floor_plans",
-                    vectors_config=models.VectorParams(size=embed_dim, distance=models.Distance.COSINE),
+                    vectors_config=models.VectorParams(
+                        size=embed_dim, distance=models.Distance.COSINE
+                    ),
                 )
             else:
                 # A prior run under a different EMBEDDING_PROVIDER may have sized
@@ -894,6 +928,8 @@ def _detect_spaces_regex(
     """Extract zone IDs and facility labels using regex and keyword matching."""
     warnings: List[str] = []
     spaces: List[Space] = []
+    #: descriptive labels ("Research Laboratory"); folded into zones at the end
+    named: List[Space] = []
     seen_ids: set = set()
 
     zone_re = cfg.zone_id_regex()
@@ -950,7 +986,7 @@ def _detect_spaces_regex(
                     if label in seen_ids:
                         break
                     seen_ids.add(label)
-                    spaces.append(
+                    named.append(
                         Space(
                             id=f"{building_id}.fp.{floor}.{_slugify(label)[:20]}",
                             zone_id=f"fp.{floor}.{_slugify(label)[:20]}",
@@ -964,7 +1000,60 @@ def _detect_spaces_regex(
                     )
                     break
 
+    spaces.extend(_attach_names_to_zones(spaces, named))
     return spaces, warnings
+
+
+#: How close a descriptive label must sit to a zone id, in normalised page units,
+#: to be read as that room's NAME. Room numbers and room names are separate text
+#: objects placed together inside the same room, so the gap is small; a legend
+#: entry in the page margin is far from every room number.
+_NAME_ATTACH_RADIUS = 0.03
+
+
+def _attach_names_to_zones(zones: List[Space], named: List[Space]) -> List[Space]:
+    """Fold a descriptive label into the nearest zone, or keep it as its own space.
+
+    A drawing writes a room as two pieces of text placed together -- "5.05" and
+    "Research Laboratory" -- and the extractor turned each into a separate space.
+    The named one carries no zone id, so it can never resolve to anything in the
+    ontology; on a real floor that was 27-42 permanently unlinkable spaces, which
+    both understated the link rate and cluttered every space listing.
+
+    Both pieces come from the SAME page, so unlike the DWG-versus-PDF case their
+    coordinates are directly comparable and proximity is trustworthy. A label
+    close to a zone id becomes that zone's name; one that is far from every zone
+    id is kept as its own space, because a room the drawing names but never
+    numbers is still a room -- it simply cannot be identified yet.
+    """
+    kept: List[Space] = []
+    for space in named:
+        if space.centroid is None:
+            kept.append(space)
+            continue
+        nearest = None
+        best = _NAME_ATTACH_RADIUS
+        for zone in zones:
+            if zone.centroid is None:
+                continue
+            d = (
+                (zone.centroid.x - space.centroid.x) ** 2
+                + (zone.centroid.y - space.centroid.y) ** 2
+            ) ** 0.5
+            if d < best:
+                best, nearest = d, zone
+        if nearest is None:
+            kept.append(space)
+            continue
+        # Enrich the zone rather than duplicating it. The generic "Zone 5.05"
+        # placeholder is replaced; a name already taken from the drawing is not.
+        if nearest.label.startswith("Zone "):
+            nearest.label = f"{nearest.zone_id} {space.label}".strip()
+        if nearest.type in ("unknown", "zone"):
+            nearest.type = space.type
+        if space.label not in nearest.aliases:
+            nearest.aliases.append(space.label)
+    return kept
 
 
 def _classify_types(spaces: List[Space]) -> List[Space]:
@@ -989,16 +1078,23 @@ def _normalise_ids(spaces: List[Space], building_id: str, floor: int) -> List[Sp
 
 
 def _build_zone_sparql(zone_ids: List[str]) -> str:
-    values = " ".join(f'"{z}"' for z in zone_ids)
-    return f"""
+    """Candidate zones/rooms with their zoneId + label for manifest linking.
+
+    Fetches ALL located space-like individuals (Zone or Room closure) carrying
+    either an ``ontosage:zoneId`` or a label — the caller joins in Python.
+    Returning the superset beats an IN-filter that must anticipate every label
+    decoration a building might use.
+    """
+    return """
 PREFIX brick: <https://brickschema.org/schema/Brick#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT ?zone ?label WHERE {{
+PREFIX ontosage: <http://ontosage.org/capabilities#>
+SELECT ?zone ?label ?zid WHERE {
     ?zone a ?type .
-    ?type rdfs:subClassOf* brick:Zone .
-    ?zone rdfs:label ?label .
-    FILTER(?label IN ({values}))
-}} LIMIT 100
+    { ?type rdfs:subClassOf* brick:Zone . } UNION { ?type rdfs:subClassOf* brick:Room . }
+    OPTIONAL { ?zone rdfs:label ?label }
+    OPTIONAL { ?zone ontosage:zoneId ?zid }
+} LIMIT 2000
 """
 
 

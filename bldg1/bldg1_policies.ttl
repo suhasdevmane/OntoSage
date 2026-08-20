@@ -1,0 +1,103 @@
+# bldg1_policies.ttl — AccessPolicy instances (V5-T37, profile=standard)
+# GENERATED 2026-08-17 15:20 UTC by scripts/generate_access_policies.py — edit the template,
+# not this file. Inference-class denials are active in EVERY profile.
+@prefix bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+bldg:policy_inference_individual_presence a ontosage:AccessPolicy ;
+    ontosage:appliesToRole "*" ;
+    ontosage:inferenceClass "individual_presence:deny" ;
+    rdfs:comment "The system explains the building; it never tracks individuals. Denied for every role; aggregate alternatives are offered."@en .
+
+bldg:policy_inference_individual_pattern a ontosage:AccessPolicy ;
+    ontosage:appliesToRole "*" ;
+    ontosage:inferenceClass "individual_pattern:deny" ;
+    rdfs:comment "The system explains the building; it never tracks individuals. Denied for every role; aggregate alternatives are offered."@en .
+
+bldg:policy_inference_private_content a ontosage:AccessPolicy ;
+    ontosage:appliesToRole "*" ;
+    ontosage:inferenceClass "private_content:deny" ;
+    rdfs:comment "The system explains the building; it never tracks individuals. Denied for every role; aggregate alternatives are offered."@en .
+
+bldg:policy_admin_any a ontosage:AccessPolicy ;
+    ontosage:appliesToRole "admin" ;
+    ontosage:scopeSpaces "any" ;
+    ontosage:minAggregationSensors 1 ;
+    ontosage:minAggregationSpaces 1 ;
+    ontosage:resolutionTier "0:1" ;
+    ontosage:rateLimit "0:0" ;
+    rdfs:comment "Full operational access. Individual-inference classes still denied."@en .
+
+bldg:policy_analyst_any a ontosage:AccessPolicy ;
+    ontosage:appliesToRole "analyst" ;
+    ontosage:scopeSpaces "any" ;
+    ontosage:minAggregationSensors 1 ;
+    ontosage:minAggregationSpaces 1 ;
+    ontosage:resolutionTier "0:1" ;
+    ontosage:rateLimit "0:0" ;
+    rdfs:comment "Full data access for analysis and benchmarking. Individual-inference denied."@en .
+
+bldg:policy_facility_manager_any a ontosage:AccessPolicy ;
+    ontosage:appliesToRole "facility_manager" ;
+    ontosage:scopeSpaces "any" ;
+    ontosage:minAggregationSensors 1 ;
+    ontosage:minAggregationSpaces 1 ;
+    ontosage:resolutionTier "15:5,60:60,10080:3600" ;
+    ontosage:rateLimit "600:60" ;
+    rdfs:comment "Operational access at tiered resolution: fine-grained for the recent window, coarser for history — usage trends stay visible while long-range per-space patterns of individuals do not accumulate."@en .
+
+bldg:policy_operator_any a ontosage:AccessPolicy ;
+    ontosage:appliesToRole "operator" ;
+    ontosage:scopeSpaces "any" ;
+    ontosage:minAggregationSensors 2 ;
+    ontosage:minAggregationSpaces 1 ;
+    ontosage:resolutionTier "15:5,60:60,10080:3600" ;
+    ontosage:rateLimit "300:60" ;
+    rdfs:comment "Duty-desk access; same tiers as facility_manager, mild aggregation floor."@en .
+
+bldg:policy_occupant_own_spaces a ontosage:AccessPolicy ;
+    ontosage:appliesToRole "occupant" ;
+    ontosage:scopeSpaces "own" ;
+    ontosage:minAggregationSensors 1 ;
+    ontosage:minAggregationSpaces 1 ;
+    ontosage:resolutionTier "0:1" ;
+    ontosage:rateLimit "120:60" ;
+    rdfs:comment "Your own space, unrestricted — your data is yours."@en .
+
+bldg:policy_occupant_public_spaces a ontosage:AccessPolicy ;
+    ontosage:appliesToRole "occupant" ;
+    ontosage:scopeSpaces "public" ;
+    ontosage:minAggregationSensors 1 ;
+    ontosage:minAggregationSpaces 1 ;
+    ontosage:resolutionTier "15:5,60:60,10080:3600" ;
+    ontosage:rateLimit "120:60" ;
+    rdfs:comment "Public spaces at tiered resolution."@en .
+
+bldg:policy_occupant_cross_space_aggregates a ontosage:AccessPolicy ;
+    ontosage:appliesToRole "occupant" ;
+    ontosage:scopeSpaces "any" ;
+    ontosage:minAggregationSensors 14 ;
+    ontosage:minAggregationSpaces 7 ;
+    ontosage:resolutionTier "60:300,10080:3600" ;
+    ontosage:rateLimit "120:60" ;
+    rdfs:comment "Aggregates across spaces including others' are allowed only above the k-floor, at coarse resolution — comparisons work, tracking doesn't."@en .
+
+bldg:policy_readonly_public_spaces a ontosage:AccessPolicy ;
+    ontosage:appliesToRole "readonly" ;
+    ontosage:scopeSpaces "public" ;
+    ontosage:minAggregationSensors 1 ;
+    ontosage:minAggregationSpaces 1 ;
+    ontosage:resolutionTier "60:300,1440:3600" ;
+    ontosage:rateLimit "60:60" ;
+    rdfs:comment "Visitors see public-space conditions at moderate resolution."@en .
+
+bldg:policy_readonly_cross_space_aggregates a ontosage:AccessPolicy ;
+    ontosage:appliesToRole "readonly" ;
+    ontosage:scopeSpaces "any" ;
+    ontosage:minAggregationSensors 14 ;
+    ontosage:minAggregationSpaces 7 ;
+    ontosage:resolutionTier "1440:3600" ;
+    ontosage:rateLimit "60:60" ;
+    rdfs:comment "Building-wide aggregates only, coarse, k-protected."@en .
+

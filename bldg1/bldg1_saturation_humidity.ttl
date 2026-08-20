@@ -1,0 +1,805 @@
+# SATURATE (V4-T08): simulated humidity sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'humidity_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data>
+    a ref:Database ;
+    rdfs:label "Humidity Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 4.66 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c3647bfb-21fa-50c0-8314-79c3dede6bea" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 4.67 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f3a3c04d-f98d-57ad-a8d7-dac92f455cae" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 4.68 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bbcb2bc0-fb76-5111-b25e-e7f41ff25c41" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 4.69 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6b7d5368-cf68-59ef-827f-6f4c4290fe41" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 4.70 — Staff Break Room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "02250399-564c-5577-8a52-58e35a1935f0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 4.71 — Storage Room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6836438b-293d-5199-8636-02a1df3ee97d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.01 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5c5c042d-7d37-5f7c-b918-a702e7508330" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.02 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7d7bdbdf-2683-50b4-81a0-03caa55d9f48" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.03 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eb5e9f0e-2e19-5a18-81cf-c9c22c430064" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.04 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d4b257a4-8353-557e-9355-07fb333f3a0d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.05 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "893678ab-f97d-5e96-8686-773712023d4a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.06 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "21bde80b-cea6-51cf-9bf1-85908da10a06" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.07 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ca45eaee-afb7-5ef8-8710-d9b55de2d564" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.08 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "891feb49-a437-5cbf-9d75-5457a87afb3f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.09 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "58d9d2fd-51f1-5cef-a2b2-4149e7c8dbbc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.10 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8019cb0e-2c11-52a0-86e8-91446aa0d98f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.11 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c89b2a4a-9bfc-5133-bb5d-f30e351a804c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.12 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3991de8b-858a-5c91-8491-4b4a10436072" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.13 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "98ba5b8d-a1c5-5cc7-af1d-8970a2382e5c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.14 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c3e169ea-7c59-5442-838a-8cc1063a177a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.15 — Seminar / Conference Room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7907d4a3-a5f2-54f8-8cb5-440b2337c907" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.16 — Seminar / Conference Room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c84a0a51-befc-5a57-a029-404bb1c32d6d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.17 — Meeting Room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "729c8161-8a19-548f-a4c1-00b140e98c6b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.18 — Meeting Room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d03db611-db52-5377-99e3-9420eb01beb2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.20 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1b293402-3f31-561a-a0e8-731ca6006199" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.21 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eb5b96c9-f4e0-54a4-abd8-9784af2f1f03" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.22 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0c79b661-bc9e-5bf8-a622-8fcd99023fe1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.23 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a84c19d7-648d-5f59-913b-eee5fdad90f5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.26 — Staff Break Room / Kitchen humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "36d20b3e-16e7-5fb8-9884-b53026f411c5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.34 — Telecommunications Room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "97249dc8-25f6-5087-a3dc-fa422a0cb9b8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.35 — Restroom (Male) humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3fcedb29-1f3d-55ae-8dd4-98b0667f22df" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.36 — Restroom (Female) humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5edd3fc4-db61-5869-865f-c439733565e8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.44 — Server Room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cc06e24e-c72c-5722-839f-517b96403919" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.45 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c92e7add-ac5c-5d60-862a-af6ab5ba729c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.48 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dc52835c-0b13-5f77-b857-cbf58c2bfd70" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.49 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c96f3653-283d-5220-a403-934e3200e6d1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.50 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e0752a87-5a8d-52af-b56c-3f4a6bf703d3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.51 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "bf90c80d-a8ca-5508-bf0d-9c093da05f28" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.52 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fd7ec43c-fb38-5c71-a75d-f3f91e275a0c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.53 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d1519a55-8c06-5c28-8bf0-63ea2eb985d6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.54 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0674ba5b-8da2-5cb5-a914-dcf90c6be613" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.56 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "85344194-2ecb-58c5-8120-bd44999a493b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.57 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8f837fb7-f637-52d6-a680-a033fcc95add" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.58 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3057c731-55c9-53ba-bb16-26294c4fba18" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.59 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8cbb9a45-f346-5e70-9184-de03c26263b5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.60 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "41eb8867-52af-5ad7-881b-d142a572cf81" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.61 — Research Laboratory humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8e3b1e51-7cbb-5a6e-9e3d-4f3a9b100e49" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.62 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "08235201-04f5-5049-b3ff-2cbdbf3e1370" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.63 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "44967cb9-0e22-5c4d-9ee9-036a9cfbcce0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.64 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "68d09115-b8db-57d7-9593-08dc5f6866e3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.65 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8d600690-4746-5ae6-9954-761736efd225" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.66 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9a8f4ef5-a8b9-5e8b-b5b7-2b7acdcf7de7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.67 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "79b35d83-ac96-5f1b-a0be-2efad9e6f07e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.68 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1aac2440-9512-5bb0-9e86-37c8afc45a95" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.69 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "18b8ad56-bfdb-5c69-b9d6-5074e3d1feb0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.70 — Academic Office humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "40792702-4c82-5b6a-97f8-160d0a4a4057" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Room 5.71 — Storage Room humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8ceeaa8f-45ef-5e19-8b62-8534ac792bae" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Server Room — Floor 2 (Room 2.44) humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b35d8d47-fb0e-57cb-bddc-3f284c0702de" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Server Room — Floor 4 (Room 4.44) humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "758af6fa-5619-5589-b070-8af7bab50fd6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Server Room — Floor 5 (Room 5.44) humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "70ab8796-db56-559c-8fd3-3a1d29971e8b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 0 (Room 0.34) humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c90385f7-06cf-51f1-9747-5d14878c968b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 1 (Room 1.34) humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a62bb31f-e481-5b86-bc35-f94098611d2e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 2 (Room 2.34) humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "150effa0-d918-5801-a5df-718b2d0c5b52" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 3 (Room 3.38) humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "aeada075-48f2-54eb-94e9-a67773f9cfa8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 4 (Room 4.34) humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f3aba3cb-8ce8-574a-bab9-da6ade4bafbc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5_sat_humidity>
+    a brick:Relative_Humidity_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 5 (Room 5.34) humidity (simulated) [percent]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5a6e180b-33b0-505a-bb0a-5eb60834b408" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#humidity_data> ;
+    ] .

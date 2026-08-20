@@ -21,10 +21,10 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
-MIN_POINTS_FOR_ARIMA = 24       # fewer than this → skip ARIMA
-MIN_POINTS_FOR_SARIMA = 72      # fewer than this → skip SARIMA
-MIN_POINTS_ABSOLUTE = 5         # fewer than this → abort (not enough history)
-MAX_GAP_FILL = 6                # fill up to 6 consecutive NaN gaps
+MIN_POINTS_FOR_ARIMA = 24  # fewer than this → skip ARIMA
+MIN_POINTS_FOR_SARIMA = 72  # fewer than this → skip SARIMA
+MIN_POINTS_ABSOLUTE = 5  # fewer than this → abort (not enough history)
+MAX_GAP_FILL = 6  # fill up to 6 consecutive NaN gaps
 
 
 def preprocess_series(

@@ -41,7 +41,7 @@ def test_single_persona_survives_round_trip():
     )
     out = _round_trip(state)
     assert out.persona == "facility_manager"
-    assert out.personas == []           # default factory empty list
+    assert out.personas == []  # default factory empty list
     assert out.building_id == "bldg1"
 
 

@@ -128,11 +128,13 @@ def restart_orchestrator(dry_run: bool = False) -> bool:
     print("[docker] force-recreating orchestrator container...")
     subprocess.run(
         ["docker-compose", "up", "-d", "--force-recreate", "orchestrator"],
-        cwd=ROOT, check=True,
+        cwd=ROOT,
+        check=True,
     )
 
     # Wait for /health (max 90s)
     import urllib.request
+
     print("[docker] waiting for /health to return 200...")
     for i in range(30):
         try:
@@ -216,15 +218,18 @@ def run_pytest(target: str, label: str, extra_args: Optional[list] = None) -> di
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--use-openai", action="store_true",
+        "--use-openai",
+        action="store_true",
         help="Switch EMBEDDING_PROVIDER=openai (uses existing OPENAI_API_KEY)",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Print actions without modifying .env or restarting docker",
     )
     parser.add_argument(
-        "--skip-restart", action="store_true",
+        "--skip-restart",
+        action="store_true",
         help="Skip docker restart (assume orchestrator is already running with new code)",
     )
     args = parser.parse_args()
@@ -254,11 +259,13 @@ def main():
 
     # ── §16 regression battery, in order ──
     results = []
-    results.append(run_pytest(
-        "tests/test_embedding_service.py tests/test_capability_routing_config.py "
-        "tests/test_capability_indexer.py tests/test_semantic_router.py",
-        "unit tests (sanity)",
-    ))
+    results.append(
+        run_pytest(
+            "tests/test_embedding_service.py tests/test_capability_routing_config.py "
+            "tests/test_capability_indexer.py tests/test_semantic_router.py",
+            "unit tests (sanity)",
+        )
+    )
     results.append(run_pytest("tests/test_capability_e2e.py", "integration: capability E2E"))
     results.append(run_pytest("tests/test_non_regression_intents.py", "non-regression: 16 intents"))
     results.append(run_pytest("tests/test_floor_n_protection.py", "edge: floor-N protection"))
@@ -271,21 +278,25 @@ def main():
     print(f"\n── survey live test ────────────────────────────────────────────")
     survey_out = subprocess.run(
         ["python", "scripts/survey_live_test.py"],
-        cwd=ROOT, capture_output=True, text=True,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
     )
     survey_summary = next(
         (ln for ln in survey_out.stdout.splitlines() if "RESULTS:" in ln),
         "(no summary parsed)",
     )
     print(f"[survey] {survey_summary}")
-    results.append({
-        "label": "survey live test",
-        "target": "scripts/survey_live_test.py",
-        "exit_code": survey_out.returncode,
-        "duration_s": None,
-        "summary": survey_summary,
-        "stdout_tail": survey_out.stdout[-2000:],
-    })
+    results.append(
+        {
+            "label": "survey live test",
+            "target": "scripts/survey_live_test.py",
+            "exit_code": survey_out.returncode,
+            "duration_s": None,
+            "summary": survey_summary,
+            "stdout_tail": survey_out.stdout[-2000:],
+        }
+    )
 
     # ── Write summary report ──
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -298,7 +309,7 @@ def main():
         fh.write("| Stage | Exit Code | Duration | Summary |\n")
         fh.write("|---|---|---|---|\n")
         for r in results:
-            dur = f"{r['duration_s']}s" if r['duration_s'] else "n/a"
+            dur = f"{r['duration_s']}s" if r["duration_s"] else "n/a"
             fh.write(f"| {r['label']} | {r['exit_code']} | {dur} | {r['summary']} |\n")
 
         any_failed = any(r["exit_code"] != 0 for r in results)

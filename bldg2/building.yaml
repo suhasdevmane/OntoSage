@@ -35,6 +35,29 @@ capability_routing:
 storage:
   databases:
     - database2
+    # SATURATE narrow tables (V4-T09) — simulated per-room modalities
+    - temperature_data
+    - humidity_data
+    - co2_data
+    - occupancy_data
+    - noise_data
+    - light_data
+    - contact_data
+    # V5 Event Framework (T07) - generic interval/event store
+    - events_data
+    # V5-T09 scalar expansion
+    - pm25_data
+    - submeter_data
+    # TODO-143 — the two backends the paper's building table names, stood up so
+    # the claim is reproducible from the artifact. ADDITIVE: no sensor's
+    # ref:storedAt points here, so nothing this building already answers
+    # changes; the adapters simply become reachable. Start them with
+    # docker-compose.timeseries-backends.yml and seed with
+    # scripts/seed_timeseries_backends.py.
+    - timescaledb
+    - cassandra
+    - waterflow_data
+    - parking_data
 
 # No floor plans provided yet → spatial/floor queries will honestly report that
 # there is no floor plan for this building (watch the building_registry residual).

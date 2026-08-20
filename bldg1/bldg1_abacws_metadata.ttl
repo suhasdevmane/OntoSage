@@ -32,6 +32,7 @@
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @base <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
 
 # ---------------------------------------------------------------------------
 # Ontology header
@@ -1882,7 +1883,7 @@ bldg:Chiller_1
     brick:isPartOf bldg:Rooftop .
 
 bldg:Heat_Pump_1
-    rdf:type owl:NamedIndividual , brick:Heat_Pump ;
+    rdf:type owl:NamedIndividual , ontosage:Heat_Pump ;
     rdfs:label "Heat Pump 1 — Building Heating/Cooling Plant" ;
     brick:isPartOf bldg:Rooftop .
 
@@ -1945,7 +1946,7 @@ bldg:Breaker_Panel_F5
     brick:isPartOf bldg:Floor5 .
 
 bldg:Emergency_Generator_1
-    rdf:type owl:NamedIndividual , brick:Emergency_Generator ;
+    rdf:type owl:NamedIndividual , ontosage:Emergency_Generator ;
     rdfs:label "Emergency Diesel Generator" ;
     brick:isPartOf bldg:Rooftop .
 
@@ -2246,7 +2247,7 @@ bldg:EV_Charger_6
 # ===========================================================================
 
 bldg:Renewable_Energy_System
-    rdf:type owl:NamedIndividual , brick:Renewable_Energy_System ;
+    rdf:type owl:NamedIndividual , ontosage:Renewable_Energy_System ;
     rdfs:label "Abacws Photovoltaic Generation System" ;
     brick:isPartOf bldg:Abacws ;
     brick:hasPart bldg:PV_Array_1 ,

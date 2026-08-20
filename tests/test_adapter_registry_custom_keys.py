@@ -8,9 +8,8 @@ into an adapter — on reload *or* restart. See registry.reload()/_merge_custom_
 
 from __future__ import annotations
 
-import yaml
-
 import pytest
+import yaml
 
 from orchestrator.services.adapters.registry import AdapterRegistry
 

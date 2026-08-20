@@ -22,15 +22,14 @@ import uuid
 import pytest
 import requests
 
-
 pytestmark = pytest.mark.live
 
 
 # Targets pulled from spec §16.5
-COLD_LATENCY_BUDGET_S = 12.0     # p50 ≤ 12s (conservative; current baseline ~10s)
-WARM_LATENCY_BUDGET_S = 5.0      # p50 warm ≤ 5s (skipped LLM intent call)
-QDRANT_P99_BUDGET_MS = 50        # Qdrant search itself
-CACHE_HIT_RATE_TARGET = 0.50     # Conservative — embeddings should mostly hit cache
+COLD_LATENCY_BUDGET_S = 12.0  # p50 ≤ 12s (conservative; current baseline ~10s)
+WARM_LATENCY_BUDGET_S = 5.0  # p50 warm ≤ 5s (skipped LLM intent call)
+QDRANT_P99_BUDGET_MS = 50  # Qdrant search itself
+CACHE_HIT_RATE_TARGET = 0.50  # Conservative — embeddings should mostly hit cache
 
 
 def test_cold_query_latency(chat_client):
@@ -40,9 +39,9 @@ def test_cold_query_latency(chat_client):
         session_id=f"perf-cold-{uuid.uuid4().hex[:6]}",
     )
     assert resp.success
-    assert resp.latency_s < COLD_LATENCY_BUDGET_S, (
-        f"Cold capability latency {resp.latency_s:.2f}s exceeds {COLD_LATENCY_BUDGET_S}s budget"
-    )
+    assert (
+        resp.latency_s < COLD_LATENCY_BUDGET_S
+    ), f"Cold capability latency {resp.latency_s:.2f}s exceeds {COLD_LATENCY_BUDGET_S}s budget"
 
 
 def test_warm_query_latency_below_baseline(chat_client):
@@ -57,9 +56,9 @@ def test_warm_query_latency_below_baseline(chat_client):
     r2 = chat_client.chat(query, session_id=sid_pattern + "-warm2")
 
     assert r2.success
-    assert r2.latency_s < WARM_LATENCY_BUDGET_S, (
-        f"Warm capability latency {r2.latency_s:.2f}s exceeds {WARM_LATENCY_BUDGET_S}s budget"
-    )
+    assert (
+        r2.latency_s < WARM_LATENCY_BUDGET_S
+    ), f"Warm capability latency {r2.latency_s:.2f}s exceeds {WARM_LATENCY_BUDGET_S}s budget"
 
 
 def test_high_confidence_skips_llm():
@@ -103,7 +102,9 @@ def test_qdrant_search_latency():
     if not latencies_ms:
         pytest.skip("No latency samples collected")
     p99 = max(latencies_ms)  # 5 samples — max is good enough proxy
-    assert p99 < QDRANT_P99_BUDGET_MS * 4, (  # Generous 4x for first-request warmup
+    assert (
+        p99 < QDRANT_P99_BUDGET_MS * 4
+    ), (  # Generous 4x for first-request warmup
         f"Qdrant p99 search latency {p99:.0f}ms exceeds {QDRANT_P99_BUDGET_MS * 4}ms"
     )
 
@@ -128,9 +129,9 @@ def test_no_memory_leak_over_100_queries(chat_client):
         if r.success:
             successes += 1
 
-    assert successes >= 18, (
-        f"Only {successes}/20 sustained queries succeeded — possible resource leak or rate-limit"
-    )
+    assert (
+        successes >= 18
+    ), f"Only {successes}/20 sustained queries succeeded — possible resource leak or rate-limit"
 
 
 def test_redis_embed_cache_hit_rate():

@@ -22,14 +22,15 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import math
 import re
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 from shared.building_paths import resolve_building_file
-from shared.floor_plan_config import ABACWS_CONFIG, BuildingConfig
+from shared.floor_plan_config import BuildingConfig, default_config
 from shared.models import (
     Block,
     FloorPlanManifest,
@@ -158,6 +159,32 @@ def _strip_mtext_codes(text: str) -> str:
 async def _run_in_executor(fn, *args):
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, fn, *args)
+
+
+#: Layer roles that are definitively NOT room boundaries. Used only by the
+#: fallback path, where no layer was recognised as holding rooms.
+_NON_ROOM_ROLES = frozenset(
+    {
+        "furniture",
+        "annotation",
+        "room_label",
+        "dimension",
+        "gross_area",
+        "circulation",
+        "wall",
+        "door",
+        "window",
+        "equipment",
+        "hvac",
+        "lighting",
+        "power",
+        "fire_protection",
+        "plumbing",
+        "staircase",
+        "lift",
+        "mechanical",
+    }
+)
 
 
 class DWGPipeline:
@@ -351,9 +378,9 @@ class DWGPipeline:
                 return cfg
         except Exception:
             pass
-        if building_id == "abacws":
-            return ABACWS_CONFIG
-        return BuildingConfig(building_id=building_id)
+        # No building.yaml and no registry entry: describe THIS building
+        # generically rather than handing back another building's identity.
+        return default_config(building_id)
 
     # ── Step 3: DWG → DXF conversion ─────────────────────────────────────────
 
@@ -453,6 +480,37 @@ class DWGPipeline:
                 f"No room polygons found in {dxf_path.name} — "
                 "check layer names against AIA/NCS conventions or add layer_map in building.yaml"
             )
+            # A drawing with no room outlines can still NAME its rooms, and on a
+            # real export that is the normal case rather than a broken one: the
+            # room numbers sit on the area-identification layer while the only
+            # closed polylines are furniture and the floor outline. Returning
+            # here threw those names away and left the floor with nothing at all
+            # (CAVEAT-206). Normalise against the labels' own extent, which is
+            # the only extent the drawing offers once the polygons are gone.
+            zone_re = cfg.zone_id_regex()
+            named = [(txt, lx, ly) for txt, lx, ly in labels if zone_re.search(txt)]
+            if named:
+                lxs = [p[1] for p in named]
+                lys = [p[2] for p in named]
+                lmin_x, lmin_y = min(lxs), min(lys)
+                lw = (max(lxs) - lmin_x) or 1.0
+                lh = (max(lys) - lmin_y) or 1.0
+                spaces = self._spaces_from_unclaimed_labels(
+                    labels, set(), building_id, floor, zone_re, lmin_x, lmin_y, lw, lh
+                )
+                bounding_box = {
+                    "min_x": lmin_x,
+                    "min_y": lmin_y,
+                    "max_x": max(lxs),
+                    "max_y": max(lys),
+                    "width_m": lw * scale_to_m,
+                    "height_m": lh * scale_to_m,
+                }
+                logger.info(
+                    f"[dwg_pipeline] floor {floor}: no room polygons, but {len(spaces)} named "
+                    f"room(s) recovered from labels"
+                )
+                return spaces, blocks, layer_role_map, units_str, bounding_box, warnings
             return spaces, blocks, layer_role_map, units_str, {}, warnings
 
         # Compute global bounding box for normalisation
@@ -582,9 +640,11 @@ SELECT ?entity ?label ?uuid WHERE {{
         try:
             import httpx
 
+            from shared.config import settings as _settings
+
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.post(
-                    f"{self._graphdb_url}/repositories/ontosage/sparql",
+                    f"{self._graphdb_url}/repositories/{_settings.GRAPHDB_REPOSITORY}",
                     headers={
                         "Content-Type": "application/sparql-query",
                         "Accept": "application/sparql-results+json",
@@ -664,7 +724,7 @@ SELECT ?entity ?label ?uuid WHERE {{
         scale_to_m: float,
     ) -> Tuple[List[Tuple[List[Tuple[float, float]], str]], List[str]]:
         """
-        Extract closed LWPOLYLINEs that represent room boundaries.
+        Extract closed polylines that represent room boundaries.
 
         Returns list of (world_coords, layer_name) pairs.
         """
@@ -676,13 +736,7 @@ SELECT ?entity ?label ?uuid WHERE {{
         candidates = []
         all_closed = []
 
-        for entity in msp.query("LWPOLYLINE"):
-            if not entity.closed:
-                continue
-            pts = [(p[0], p[1]) for p in entity.get_points("xy")]
-            if len(pts) < 3:
-                continue
-            layer = entity.dxf.layer
+        for pts, layer in _iter_closed_rings(msp):
 
             try:
                 from shapely.geometry import Polygon as ShapelyPoly
@@ -699,12 +753,29 @@ SELECT ?entity ?label ?uuid WHERE {{
             if layer in room_boundary_layers:
                 candidates.append((pts, layer, area_m2))
 
-        # Fallback: if no room_boundary layers found, use all closed polys
+        # Fallback: no layer was recognised as a room boundary. Use every closed
+        # polyline EXCEPT those positively identified as something else. Sweeping
+        # in everything made furniture and gross-area outlines into "rooms" — on
+        # a real drawing that is dozens of spaces per floor which can never match
+        # anything in the ontology, and which crowd out the rooms that can.
+        # Unclassified layers are still admitted: not knowing a layer is a reason
+        # to consider it, whereas knowing it is furniture is a reason not to.
         if not candidates and all_closed:
+            kept = [
+                (pts, layer, area)
+                for pts, layer, area in all_closed
+                if layer_role_map.get(layer) not in _NON_ROOM_ROLES
+            ]
+            dropped = len(all_closed) - len(kept)
             warnings.append(
-                "No room_boundary layers matched — using all closed polylines as fallback"
+                "No room_boundary layers matched — using closed polylines as fallback"
+                + (
+                    f" ({dropped} excluded as furniture/annotation/area outlines)"
+                    if dropped
+                    else ""
+                )
             )
-            candidates = all_closed
+            candidates = kept
 
         # Filter by area bounds
         result = []
@@ -796,6 +867,18 @@ SELECT ?entity ?label ?uuid WHERE {{
         For each polygon, find labels inside it via point-in-polygon.
         Extract zone_id from the label text if it matches the building's zone pattern.
         Falls back to positional ID if no matching label is found.
+
+        Labels that no polygon contains become POINT SPACES (CAVEAT-206). Not
+        every drawing outlines its rooms: a real architectural export may name
+        all 51 rooms as text on the area-identification layer while its only
+        closed polylines are the gross-internal-area outline, furniture and
+        access routes. Dropping those labels lost the rooms entirely — the very
+        rooms the ontology knows by name — and left the manifest holding
+        furniture polygons under positional ids instead. A space with an
+        identity and a position, honestly carrying no area, is worth far more
+        than that: it answers "where is 5.26", links to the ontology, and joins
+        to its sensors. Area stays None rather than guessed, so nothing
+        downstream can mistake it for measured geometry.
         """
         try:
             from shapely.geometry import Point
@@ -804,6 +887,8 @@ SELECT ?entity ?label ?uuid WHERE {{
             return []
 
         spaces: List[Space] = []
+        #: labels a polygon claimed, so the fallback below adds only the rest
+        consumed: set = set()
 
         for i, (pts, layer) in enumerate(polygons_raw):
             try:
@@ -835,9 +920,33 @@ SELECT ?entity ?label ?uuid WHERE {{
                 # Find labels inside polygon
                 zone_id: Optional[str] = None
                 label_text: Optional[str] = None
-                for txt, lx, ly in labels:
-                    pt = Point(lx, ly)
-                    if pt.within(poly):
+                inside = [(txt, lx, ly) for txt, lx, ly in labels if Point(lx, ly).within(poly)]
+                numbered = [p for p in inside if zone_re.search(p[0])]
+
+                if len(numbered) > 1:
+                    # One outline, several room numbers: the drawing says these
+                    # rooms are in here, and says nothing about where the line
+                    # between them falls. Naming it after the first number found
+                    # would hand that room the OTHERS' floor space -- on a real
+                    # floor, a boundary drawn across two 11 m2 rooms reported one
+                    # of them as 22.8 m2, a plausible number that is simply wrong,
+                    # and the kind of answer this system exists not to give.
+                    # The outline is kept as an unnamed space so the floor total
+                    # stays right, and its room numbers are left unconsumed so
+                    # each becomes a point space below: known to exist, known
+                    # where, honestly carrying no area.
+                    logger.info(
+                        f"[dwg_pipeline] floor {floor}: one boundary encloses "
+                        f"{len(numbered)} room numbers "
+                        f"({', '.join(sorted(zone_re.search(p[0]).group(0).strip() for p in numbered))})"
+                        " - area left unattributed; split the outline per room to recover it"
+                    )
+                    for p in inside:
+                        if p not in numbered:
+                            consumed.add(p)
+                else:
+                    for txt, lx, ly in inside:
+                        consumed.add((txt, lx, ly))
                         # Try to extract zone_id from text
                         m = zone_re.search(txt)
                         if m:
@@ -876,7 +985,70 @@ SELECT ?entity ?label ?uuid WHERE {{
             except Exception as e:
                 logger.debug(f"[dwg_pipeline] Skipping polygon {i}: {e}")
 
+        spaces.extend(
+            self._spaces_from_unclaimed_labels(
+                labels, consumed, building_id, floor, zone_re, min_x, min_y, width, height
+            )
+        )
         return spaces
+
+    def _spaces_from_unclaimed_labels(
+        self,
+        labels: List[Tuple[str, float, float]],
+        consumed: set,
+        building_id: str,
+        floor: int,
+        zone_re: Any,
+        min_x: float,
+        min_y: float,
+        width: float,
+        height: float,
+    ) -> List[Space]:
+        """Rooms the drawing NAMES but does not outline (CAVEAT-206).
+
+        Only labels that match the building's own ``zone_id_pattern`` qualify, so
+        legend entries, dimension callouts and title-block text cannot become
+        rooms. Each yields one space at the label's own position, with no
+        polygon and ``area_m2`` left None: the drawing states where the room is
+        and what it is called, and states nothing about its extent.
+        """
+        out: List[Space] = []
+        seen: set = set()
+        for txt, lx, ly in labels:
+            if (txt, lx, ly) in consumed:
+                continue
+            m = zone_re.search(txt)
+            if not m:
+                continue
+            zone_id = m.group(0).strip()
+            if zone_id in seen:
+                continue  # one space per room, however often the CAD repeats it
+            seen.add(zone_id)
+            out.append(
+                Space(
+                    id=f"{building_id}.{zone_id}",
+                    zone_id=zone_id,
+                    label=txt.strip() or f"Zone {zone_id}",
+                    type=_classify_space_type_from_label(txt),
+                    centroid=NormalisedPoint(
+                        x=max(0.0, min((lx - min_x) / width, 1.0)),
+                        y=max(0.0, min(1.0 - (ly - min_y) / height, 1.0)),
+                    ),
+                    polygon=None,
+                    source="dwg",
+                    # Lower than a polygon-backed space: the identity and place
+                    # are read straight from the drawing, the extent is unknown.
+                    confidence=0.9,
+                    area_m2=None,
+                    layer="",
+                )
+            )
+        if out:
+            logger.info(
+                f"[dwg_pipeline] {len(out)} room label(s) had no enclosing polygon — "
+                f"kept as point spaces with identity but no area (CAVEAT-206)"
+            )
+        return out
 
     # ── Adjacency computation ─────────────────────────────────────────────────
 
@@ -887,7 +1059,16 @@ SELECT ?entity ?label ?uuid WHERE {{
         scale_to_m: float,
         threshold_m: float = 0.6,
     ) -> None:
-        """Populate space.adjacent_spaces for spaces whose polygons are within threshold_m."""
+        """Populate space.adjacent_spaces for spaces whose polygons are within threshold_m.
+
+        ``spaces`` and ``polygons_raw`` were once index-parallel, one space per
+        polygon. They no longer are: a room the drawing names but does not
+        outline becomes a point space with no polygon (CAVEAT-206), so indexing
+        polygons_raw by space position walked off the end. Pad to the length of
+        ``spaces`` with None, which the loops below already treat as "no
+        geometry, no adjacency" — a point space genuinely has no measurable
+        distance to anything.
+        """
         try:
             from shapely.geometry import Polygon as ShapelyPoly
         except ImportError:
@@ -903,6 +1084,8 @@ SELECT ?entity ?label ?uuid WHERE {{
                 polys.append(p)
             except Exception:
                 polys.append(None)
+        # Spaces beyond the polygon list carry no geometry.
+        polys.extend([None] * max(0, len(spaces) - len(polys)))
 
         threshold_world = threshold_m / scale_to_m
 
@@ -930,3 +1113,68 @@ def get_dwg_pipeline() -> DWGPipeline:
     if _pipeline is None:
         _pipeline = DWGPipeline()
     return _pipeline
+
+
+#: How large an endpoint gap may be, as a share of the ring's own perimeter,
+#: before the polyline is read as a genuinely OPEN path rather than a boundary
+#: someone meant to close. Relative rather than absolute because a drawing may be
+#: in millimetres or metres, and a 15 mm slip means something different on a 14 m
+#: room than on a 140 mm one. The two failure modes sit orders of magnitude apart:
+#: real drafting closures measured here come in at 0.0025%-0.10%, while an open
+#: wall run has a gap comparable to its own length -- tens of percent at least.
+_RING_CLOSURE_TOLERANCE = 0.01
+
+
+def _iter_closed_rings(msp: Any) -> Iterator[Tuple[List[Tuple[float, float]], str]]:
+    """Yield (points, layer) for every polyline that bounds an area.
+
+    Two things this deliberately does NOT do. It does not trust the ``closed``
+    flag alone: AutoCAD sets that flag only when the ring is finished with the
+    Close option, so a boundary drawn by snapping the last vertex back onto the
+    first -- which is what a person naturally does, and which is geometrically a
+    closed ring -- arrives flagged open. Requiring the flag silently discarded
+    such rooms, and because the fallback then kept them as point spaces with no
+    area, the loss looked like missing source data rather than a bug here.
+
+    Nor does it accept any old open path: a polyline qualifies only if its ends
+    already meet within _RING_CLOSURE_TOLERANCE of its perimeter, so wall runs,
+    leader lines and section marks cannot become rooms.
+
+    Heavy POLYLINE entities are read alongside LWPOLYLINE because which of the
+    two a DXF carries is a function of the exporting tool, not of what was drawn;
+    querying only the modern form made the result depend on the user's CAD build.
+    Meshes and polyface entities are excluded -- they are 3D geometry, not plan
+    boundaries.
+    """
+    for entity in msp.query("LWPOLYLINE"):
+        try:
+            pts = [(p[0], p[1]) for p in entity.get_points("xy")]
+            if _is_ring(pts, bool(entity.closed)):
+                yield pts, entity.dxf.layer
+        except Exception:  # a malformed entity must not abort the whole floor
+            continue
+
+    for entity in msp.query("POLYLINE"):
+        try:
+            if not getattr(entity, "is_2d_polyline", False):
+                continue
+            pts = [(v.dxf.location[0], v.dxf.location[1]) for v in entity.vertices]
+            if _is_ring(pts, bool(entity.is_closed)):
+                yield pts, entity.dxf.layer
+        except Exception:
+            continue
+
+
+def _is_ring(pts: List[Tuple[float, float]], closed_flag: bool) -> bool:
+    """True when these points bound an area, by flag or by meeting ends."""
+    if len(pts) < 3:
+        return False
+    if closed_flag:
+        return True
+    perimeter = sum(
+        math.dist(pts[i], pts[i + 1]) for i in range(len(pts) - 1)  # type: ignore[arg-type]
+    )
+    if perimeter <= 0:
+        return False
+    gap = math.dist(pts[0], pts[-1])  # type: ignore[arg-type]
+    return gap <= _RING_CLOSURE_TOLERANCE * perimeter

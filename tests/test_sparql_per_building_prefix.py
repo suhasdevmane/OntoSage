@@ -47,7 +47,7 @@ def test_prefix_block_uses_per_building_namespace_when_building_id_given():
 
 def test_prefix_block_falls_back_to_global_when_no_building_id():
     """_prefix_block() with no arg uses the process-global EXTENDED_PREFIXES."""
-    from orchestrator.agents.sparql_agent import SPARQLAgent, EXTENDED_PREFIXES
+    from orchestrator.agents.sparql_agent import EXTENDED_PREFIXES, SPARQLAgent
 
     agent = SPARQLAgent.__new__(SPARQLAgent)
     block = agent._prefix_block()
@@ -57,7 +57,7 @@ def test_prefix_block_falls_back_to_global_when_no_building_id():
 
 def test_prefix_block_handles_resolver_failure_gracefully():
     """When the resolver raises, _prefix_block falls back to EXTENDED_PREFIXES."""
-    from orchestrator.agents.sparql_agent import SPARQLAgent, EXTENDED_PREFIXES
+    from orchestrator.agents.sparql_agent import EXTENDED_PREFIXES, SPARQLAgent
 
     agent = SPARQLAgent.__new__(SPARQLAgent)
     with patch.object(

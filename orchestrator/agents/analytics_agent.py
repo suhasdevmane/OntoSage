@@ -234,17 +234,44 @@ class AnalyticsAgent:
         except Exception:
             _viz_pos = frozenset(
                 [
-                    "plot", "chart", "graph", "visualize", "visualise",
-                    "show trend", "show graph", "show chart", "show plot",
-                    "line chart", "bar chart", "time series", "histogram",
-                    "scatter plot", "heatmap", "generate chart", "draw chart",
+                    "plot",
+                    "chart",
+                    "graph",
+                    "visualize",
+                    "visualise",
+                    "show trend",
+                    "show graph",
+                    "show chart",
+                    "show plot",
+                    "line chart",
+                    "bar chart",
+                    "time series",
+                    "histogram",
+                    "scatter plot",
+                    "heatmap",
+                    "generate chart",
+                    "draw chart",
                 ]
             )
             _viz_neg = (
-                "do not", "don't", "dont", "no chart", "no graph", "no plot",
-                "no visual", "without chart", "without graph", "without plot",
-                "skip chart", "skip graph", "just text", "text only",
-                "numbers only", "stats only", "data only", "no viz",
+                "do not",
+                "don't",
+                "dont",
+                "no chart",
+                "no graph",
+                "no plot",
+                "no visual",
+                "without chart",
+                "without graph",
+                "without plot",
+                "skip chart",
+                "skip graph",
+                "just text",
+                "text only",
+                "numbers only",
+                "stats only",
+                "data only",
+                "no viz",
             )
             return any(w in query_lower for w in _viz_pos) and not any(
                 n in query_lower for n in _viz_neg
@@ -334,10 +361,14 @@ if df.empty:
             return None
 
         # Template 1: Latest + Average (combined)
-        if not _wants_viz and any(w in query_lower for w in ["average", "mean", "avg"]) and any(
-            w in query_lower for w in ["current", "latest", "now", "recent"]
+        if (
+            not _wants_viz
+            and any(w in query_lower for w in ["average", "mean", "avg"])
+            and any(w in query_lower for w in ["current", "latest", "now", "recent"])
         ):
-            return setup_code + """
+            return (
+                setup_code
+                + """
 # Calculate Average and Latest
 avg_results = df.groupby('uuid')['value'].mean()
 latest_indices = df.groupby('uuid')['timestamp'].idxmax()
@@ -354,10 +385,13 @@ for uuid, avg_val in avg_results.items():
         print(f"Average: {avg_val:.2f}{unit_str}")
         print("-" * 20)
 """
+            )
 
         # Template 2: Average/Mean
         if not _wants_viz and any(w in query_lower for w in ["average", "mean", "avg"]):
-            return setup_code + """
+            return (
+                setup_code
+                + """
 # Calculate Average
 results = df.groupby('uuid')['value'].mean()
 
@@ -369,10 +403,13 @@ for uuid, val in results.items():
     print(f"Average: {val:.2f}{unit_str}")
     print("-" * 20)
 """
+            )
 
         # Template 3: Maximum/Peak
         if not _wants_viz and any(w in query_lower for w in ["maximum", "max", "peak", "highest"]):
-            return setup_code + """
+            return (
+                setup_code
+                + """
 # Calculate Maximum
 results = df.groupby('uuid')['value'].max()
 
@@ -384,10 +421,13 @@ for uuid, val in results.items():
     print(f"Max: {val:.2f}{unit_str}")
     print("-" * 20)
 """
+            )
 
         # Template 4: Minimum/Lowest
         if not _wants_viz and any(w in query_lower for w in ["minimum", "min", "lowest"]):
-            return setup_code + """
+            return (
+                setup_code
+                + """
 # Calculate Minimum
 results = df.groupby('uuid')['value'].min()
 
@@ -399,10 +439,13 @@ for uuid, val in results.items():
     print(f"Min: {val:.2f}{unit_str}")
     print("-" * 20)
 """
+            )
 
         # Template 5: Latest/Current
         if not _wants_viz and any(w in query_lower for w in ["current", "latest", "now", "recent"]):
-            return setup_code + """
+            return (
+                setup_code
+                + """
 # Get Latest Values
 latest_indices = df.groupby('uuid')['timestamp'].idxmax()
 latest_df = df.loc[latest_indices]
@@ -417,12 +460,15 @@ for _, row in latest_df.iterrows():
     print(f"Time: {row['timestamp']}")
     print("-" * 20)
 """
+            )
 
         # Template 6: Count
         if not _wants_viz and any(
             w in query_lower for w in ["count", "how many readings", "number of readings"]
         ):
-            return setup_code + """
+            return (
+                setup_code
+                + """
 # Count Readings
 results = df.groupby('uuid').size()
 
@@ -432,12 +478,15 @@ for uuid, count in results.items():
     print(f"Count: {count}")
     print("-" * 20)
 """
+            )
 
         # Template 7a: chart + stats.  `_wants_viz` was computed once at the top
         # of this method and the stats-only templates above are guarded by it,
         # so a visualization request always reaches this branch.
         if _wants_viz:
-            return setup_code + """
+            return (
+                setup_code
+                + """
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -491,9 +540,12 @@ else:
     _buf.seek(0)
     print("PLOT_BASE64: " + base64.b64encode(_buf.read()).decode('utf-8'))
 """
+            )
 
         # Template 7b: Stats-only fallback (no chart) — default for all other queries
-        return setup_code + """
+        return (
+            setup_code
+            + """
 if df.empty:
     print("No sensor data found.")
 else:
@@ -511,6 +563,7 @@ else:
         print(f"Std Dev: {s.std():.2f}{unit_str}")
         print("-" * 40)
 """
+        )
 
     async def _generate_code(
         self,
@@ -556,7 +609,9 @@ else:
         if _recipe_hints:
             metadata_context += "\n\nAnalytics Recipe Guidance (from HBCO):\n"
             for _rh in _recipe_hints:
-                metadata_context += f"  - Concept: {_rh.get('concept_id')} | Recipe: {_rh.get('recipe_id')}\n"
+                metadata_context += (
+                    f"  - Concept: {_rh.get('concept_id')} | Recipe: {_rh.get('recipe_id')}\n"
+                )
                 metadata_context += f"    Description: {_rh.get('description')}\n"
                 _params = _rh.get("params") or {}
                 if _params:
@@ -904,11 +959,27 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
         # Add sustainability/compliance context if relevant keywords present
         _q_lower = user_query.lower()
         compliance_hint = ""
-        if any(kw in _q_lower for kw in [
-            "ashrae", "well", "breeam", "iso 50001", "leed", "compliance",
-            "standard", "threshold", "limit", "comfort", "esg", "carbon",
-            "emission", "sustainability", "energy target", "kpi",
-        ]):
+        if any(
+            kw in _q_lower
+            for kw in [
+                "ashrae",
+                "well",
+                "breeam",
+                "iso 50001",
+                "leed",
+                "compliance",
+                "standard",
+                "threshold",
+                "limit",
+                "comfort",
+                "esg",
+                "carbon",
+                "emission",
+                "sustainability",
+                "energy target",
+                "kpi",
+            ]
+        ):
             compliance_hint = """
 Sustainability/Compliance Context:
 - ASHRAE 55 thermal comfort: temperature 20–26°C, humidity 20–60%RH

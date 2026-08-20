@@ -2,12 +2,13 @@
 
 Tests exercise TurnMemoryService at the boundary — no live Postgres/Redis.
 """
+
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from shared.models import ConversationState, Message
+import pytest
 
+from shared.models import ConversationState, Message
 
 _FORECAST_CF = {
     "forecast_result": {
@@ -28,7 +29,9 @@ _FORECAST_CF = {
 
 def test_carry_forward_survives_json_round_trip():
     """carry_forward JSON stored in Postgres must deserialise back identically."""
-    import importlib.util, pathlib
+    import importlib.util
+    import pathlib
+
     spec = importlib.util.spec_from_file_location(
         "turn_memory",
         str(pathlib.Path("orchestrator/services/turn_memory.py").resolve()),
@@ -55,7 +58,9 @@ def test_carry_forward_survives_json_round_trip():
 @pytest.mark.asyncio
 async def test_carry_forward_injected_into_new_state():
     """get_carry_forward result appears in new state's intermediate_results."""
-    import importlib.util, pathlib
+    import importlib.util
+    import pathlib
+
     spec = importlib.util.spec_from_file_location(
         "turn_memory",
         str(pathlib.Path("orchestrator/services/turn_memory.py").resolve()),
@@ -65,14 +70,14 @@ async def test_carry_forward_injected_into_new_state():
     TurnMemoryService = mod.TurnMemoryService
 
     mock_conn = AsyncMock()
-    mock_conn.fetchrow = AsyncMock(
-        return_value={"carry_forward": json.dumps(_FORECAST_CF)}
-    )
+    mock_conn.fetchrow = AsyncMock(return_value={"carry_forward": json.dumps(_FORECAST_CF)})
     mock_pool = MagicMock()
-    mock_pool.acquire = MagicMock(return_value=AsyncMock(
-        __aenter__=AsyncMock(return_value=mock_conn),
-        __aexit__=AsyncMock(return_value=False),
-    ))
+    mock_pool.acquire = MagicMock(
+        return_value=AsyncMock(
+            __aenter__=AsyncMock(return_value=mock_conn),
+            __aexit__=AsyncMock(return_value=False),
+        )
+    )
 
     svc = TurnMemoryService(pool=mock_pool)
     cf = await svc.get_carry_forward("conv-fc")
@@ -85,15 +90,15 @@ async def test_carry_forward_injected_into_new_state():
         messages=[Message(role="user", content="show graph")],
         intermediate_results=cf,
     )
-    assert new_state.intermediate_results.get(
-        "forecast_result", {}
-    ).get("success") is True
+    assert new_state.intermediate_results.get("forecast_result", {}).get("success") is True
 
 
 @pytest.mark.asyncio
 async def test_older_context_text_format():
     """Older turn summaries are formatted as readable text."""
-    import importlib.util, pathlib
+    import importlib.util
+    import pathlib
+
     spec = importlib.util.spec_from_file_location(
         "turn_memory",
         str(pathlib.Path("orchestrator/services/turn_memory.py").resolve()),
@@ -103,19 +108,23 @@ async def test_older_context_text_format():
     TurnMemoryService = mod.TurnMemoryService
 
     mock_conn = AsyncMock()
-    mock_conn.fetch = AsyncMock(return_value=[
-        {
-            "turn_index": 1,
-            "user_query": "what is the temperature in room 5.02",
-            "intent": "sensor_data",
-            "result_summary": "Room 5.02: 22.3 deg C current reading",
-        }
-    ])
+    mock_conn.fetch = AsyncMock(
+        return_value=[
+            {
+                "turn_index": 1,
+                "user_query": "what is the temperature in room 5.02",
+                "intent": "sensor_data",
+                "result_summary": "Room 5.02: 22.3 deg C current reading",
+            }
+        ]
+    )
     mock_pool = MagicMock()
-    mock_pool.acquire = MagicMock(return_value=AsyncMock(
-        __aenter__=AsyncMock(return_value=mock_conn),
-        __aexit__=AsyncMock(return_value=False),
-    ))
+    mock_pool.acquire = MagicMock(
+        return_value=AsyncMock(
+            __aenter__=AsyncMock(return_value=mock_conn),
+            __aexit__=AsyncMock(return_value=False),
+        )
+    )
 
     svc = TurnMemoryService(pool=mock_pool)
     ctx = await svc.get_older_context("conv-fc", skip_recent=20)
@@ -128,7 +137,9 @@ async def test_older_context_text_format():
 @pytest.mark.asyncio
 async def test_save_turn_does_not_store_raw_sensor_arrays():
     """Raw SQL/SPARQL data must never reach the turn_memory table."""
-    import importlib.util, pathlib
+    import importlib.util
+    import pathlib
+
     spec = importlib.util.spec_from_file_location(
         "turn_memory",
         str(pathlib.Path("orchestrator/services/turn_memory.py").resolve()),
@@ -147,10 +158,12 @@ async def test_save_turn_does_not_store_raw_sensor_arrays():
 
     mock_conn.execute = AsyncMock(side_effect=capture_execute)
     mock_pool = MagicMock()
-    mock_pool.acquire = MagicMock(return_value=AsyncMock(
-        __aenter__=AsyncMock(return_value=mock_conn),
-        __aexit__=AsyncMock(return_value=False),
-    ))
+    mock_pool.acquire = MagicMock(
+        return_value=AsyncMock(
+            __aenter__=AsyncMock(return_value=mock_conn),
+            __aexit__=AsyncMock(return_value=False),
+        )
+    )
 
     svc = TurnMemoryService(pool=mock_pool)
     state = ConversationState(

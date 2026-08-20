@@ -1,0 +1,5 @@
+sensor_id,room_code,brick_class,label
+ABACWS-T-014,0Z19,Air_Temperature_Sensor,Ground vending air temperature
+ABACWS-CO2-121,1Z21,CO2_Sensor,First floor collab CO2
+ABACWS-OCC-221,2Z21,Occupancy_Sensor,Second floor collab occupancy
+ABACWS-T-999,9Z99,Air_Temperature_Sensor,Deliberately unmatched sensor

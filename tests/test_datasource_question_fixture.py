@@ -21,7 +21,25 @@ import yaml
 pytestmark = pytest.mark.unit
 
 FIXTURE_PATH = Path(__file__).resolve().parent / "fixtures" / "datasource_question_set.yaml"
-DATASOURCES_PATH = Path(__file__).resolve().parents[1] / "input" / "datasources.yaml"
+
+
+def _bldg1_datasources_path() -> Path:
+    """The bldg1 toggle manifest, wherever bldg1 currently lives.
+
+    The question fixture below is written against BLDG1's source ids, so this
+    test must never read another building's datasources.yaml just because that
+    building happens to be active (buildings swap by folder rename)."""
+    repo = Path(__file__).resolve().parents[1]
+    parked = repo / "bldg1" / "datasources.yaml"
+    if parked.exists():
+        return parked
+    env = repo / "input" / "env.building"
+    if env.exists() and "BUILDING_ID=bldg1" in env.read_text(encoding="utf-8"):
+        return repo / "input" / "datasources.yaml"
+    return parked  # missing -> _require_datasources() skips
+
+
+DATASOURCES_PATH = _bldg1_datasources_path()
 
 VALID_PERSONAS = {"facility_manager", "occupant", "researcher", "admin"}
 VALID_BEHAVIORS = {"locked_decline", "substantive_answer", "pass_through"}

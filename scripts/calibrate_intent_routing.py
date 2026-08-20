@@ -53,18 +53,18 @@ QDRANT_URL = "http://localhost:6333"
 # Calibration corpus — (label, query, should_hit_capability)
 CORPUS = [
     # should HIT capability
-    ("cap_lift",         "What are the lift dimensions and weight limit?", True),
-    ("cap_elevator",     "How big is the elevator?",                         True),
-    ("cap_shower",       "Where can I shower in this building?",             True),
-    ("cap_baby",         "Is there a changing table for infants?",           True),
-    ("cap_bike",         "Do you have secure storage for my bicycle?",       True),
-    ("cap_fire",         "What are the fire safety procedures?",             True),
+    ("cap_lift", "What are the lift dimensions and weight limit?", True),
+    ("cap_elevator", "How big is the elevator?", True),
+    ("cap_shower", "Where can I shower in this building?", True),
+    ("cap_baby", "Is there a changing table for infants?", True),
+    ("cap_bike", "Do you have secure storage for my bicycle?", True),
+    ("cap_fire", "What are the fire safety procedures?", True),
     # should NOT hit capability
-    ("neg_off_domain",   "What is the airspeed of an unladen swallow?",      False),
-    ("neg_sensor_co2",   "What is the current CO2 level on floor 3?",        False),
-    ("neg_sensor_temp",  "What is the temperature on floor 3?",              False),
-    ("neg_analytics",    "Compare CO2 levels between floor 1 and floor 3",   False),
-    ("neg_floor_plan",   "Show me floor 3",                                  False),
+    ("neg_off_domain", "What is the airspeed of an unladen swallow?", False),
+    ("neg_sensor_co2", "What is the current CO2 level on floor 3?", False),
+    ("neg_sensor_temp", "What is the temperature on floor 3?", False),
+    ("neg_analytics", "Compare CO2 levels between floor 1 and floor 3", False),
+    ("neg_floor_plan", "Show me floor 3", False),
 ]
 
 
@@ -73,8 +73,10 @@ def _embed(text: str) -> list:
     # Mirror the provider detection from shared/config.py
     sys.path.insert(0, str(ROOT))
     from shared.config import settings
+
     if settings.EMBEDDING_PROVIDER == "openai":
         import openai
+
         client = openai.OpenAI()
         r = client.embeddings.create(model=settings.EMBEDDING_MODEL_OPENAI, input=text)
         return list(r.data[0].embedding)
@@ -85,6 +87,7 @@ def _embed(text: str) -> list:
             _LOCAL_MODEL
         except NameError:
             from sentence_transformers import SentenceTransformer
+
             _LOCAL_MODEL = SentenceTransformer(settings.EMBEDDING_MODEL_LOCAL)
         return _LOCAL_MODEL.encode(text, convert_to_numpy=True).tolist()
 
@@ -93,8 +96,10 @@ def calibrate(building_id: str) -> dict:
     """Run the corpus, return suggested threshold values."""
     collection = f"capability_{building_id}"
     print(f"Calibrating against Qdrant collection: {collection}")
-    print(f"Corpus: {len(CORPUS)} queries ({sum(1 for _,_,h in CORPUS if h)} positive, "
-          f"{sum(1 for _,_,h in CORPUS if not h)} negative)\n")
+    print(
+        f"Corpus: {len(CORPUS)} queries ({sum(1 for _,_,h in CORPUS if h)} positive, "
+        f"{sum(1 for _,_,h in CORPUS if not h)} negative)\n"
+    )
 
     results = []
     print(f"{'label':22s} {'should_hit':>11s} {'score':>7s}  entry")
@@ -137,8 +142,10 @@ def calibrate(building_id: str) -> dict:
     if gap <= 0:
         print("\nWARNING: NEGATIVE OVERLAP DETECTED.")
         print("  No safe threshold separates capability from non-capability.")
-        print("  Consider: re-tuning prompts, adding more descriptors, or accepting "
-              "some false-positive rate.")
+        print(
+            "  Consider: re-tuning prompts, adding more descriptors, or accepting "
+            "some false-positive rate."
+        )
         suggested_threshold = (min_pos + max_neg) / 2
         suggested_override = min_pos
     else:
@@ -166,6 +173,7 @@ def calibrate(building_id: str) -> dict:
 def apply(building_id: str, threshold: float, override_min: float) -> None:
     """Write suggested values into input/<bldg>/building.yaml."""
     import yaml
+
     path = ROOT / "input" / building_id / "building.yaml"
     if not path.exists():
         print(f"[apply] {path} not found — creating new file")
@@ -186,8 +194,9 @@ def apply(building_id: str, threshold: float, override_min: float) -> None:
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--building", default="bldg1", help="Building ID to calibrate")
-    p.add_argument("--apply", action="store_true",
-                   help="Write suggested values to input/<bldg>/building.yaml")
+    p.add_argument(
+        "--apply", action="store_true", help="Write suggested values to input/<bldg>/building.yaml"
+    )
     args = p.parse_args()
 
     result = calibrate(args.building)

@@ -1,6 +1,7 @@
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from shared.config import settings
 from shared.models import ConversationState, Message
@@ -14,6 +15,7 @@ def test_conversation_max_messages_exists():
 def test_conversation_ttl_default_is_zero():
     """TTL=0 means no expiry — count-based eviction instead."""
     from shared.config import Settings
+
     s = Settings()
     assert s.CONVERSATION_TTL == 0
 
@@ -35,15 +37,12 @@ def _make_state(n_messages: int = 5, conversation_id: str = "conv-1") -> Convers
 @pytest.mark.asyncio
 async def test_save_state_uses_set_not_setex_when_ttl_zero():
     """When CONVERSATION_TTL==0, save_state must call SET (no expiry)."""
-    from pathlib import Path
     import importlib.util
+    from pathlib import Path
 
     # Import directly from the module to bypass __init__ issues
     redis_manager_path = Path(__file__).parent.parent / "orchestrator" / "redis_manager.py"
-    spec = importlib.util.spec_from_file_location(
-        "redis_manager_direct",
-        str(redis_manager_path)
-    )
+    spec = importlib.util.spec_from_file_location("redis_manager_direct", str(redis_manager_path))
     redis_mgr_mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(redis_mgr_mod)
     RedisManager = redis_mgr_mod.RedisManager
@@ -62,14 +61,13 @@ async def test_save_state_uses_set_not_setex_when_ttl_zero():
 @pytest.mark.asyncio
 async def test_save_state_uses_setex_when_ttl_nonzero():
     """When CONVERSATION_TTL>0, legacy setex behaviour is preserved."""
-    from pathlib import Path
     import importlib.util
+    from pathlib import Path
 
     # Import directly from the module to bypass __init__ issues
     redis_manager_path = Path(__file__).parent.parent / "orchestrator" / "redis_manager.py"
     spec = importlib.util.spec_from_file_location(
-        "redis_manager_direct_nonzero",
-        str(redis_manager_path)
+        "redis_manager_direct_nonzero", str(redis_manager_path)
     )
     redis_mgr_mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(redis_mgr_mod)
@@ -89,14 +87,13 @@ async def test_save_state_uses_setex_when_ttl_nonzero():
 @pytest.mark.asyncio
 async def test_trim_messages_called_after_save():
     """After saving state, messages list must be trimmed to max_messages."""
-    from pathlib import Path
     import importlib.util
+    from pathlib import Path
 
     # Import directly from the module to bypass __init__ issues
     redis_manager_path = Path(__file__).parent.parent / "orchestrator" / "redis_manager.py"
     spec = importlib.util.spec_from_file_location(
-        "redis_manager_direct_trim",
-        str(redis_manager_path)
+        "redis_manager_direct_trim", str(redis_manager_path)
     )
     redis_mgr_mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(redis_mgr_mod)
@@ -118,14 +115,13 @@ async def test_trim_messages_called_after_save():
 @pytest.mark.asyncio
 async def test_init_schema_creates_turn_memory_table():
     """_init_schema must CREATE TABLE IF NOT EXISTS turn_memory."""
-    from pathlib import Path
     import importlib.util
+    from pathlib import Path
 
     # Import directly from the module to bypass orchestrator.__init__ issues
     postgres_manager_path = Path(__file__).parent.parent / "orchestrator" / "postgres_manager.py"
     spec = importlib.util.spec_from_file_location(
-        "postgres_manager_direct",
-        str(postgres_manager_path)
+        "postgres_manager_direct", str(postgres_manager_path)
     )
     postgres_mgr_mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(postgres_mgr_mod)
@@ -138,10 +134,12 @@ async def test_init_schema_creates_turn_memory_table():
     mock_conn.execute = AsyncMock(side_effect=lambda sql: executed_sqls.append(sql))
 
     mock_pool = MagicMock()
-    mock_pool.acquire = MagicMock(return_value=AsyncMock(
-        __aenter__=AsyncMock(return_value=mock_conn),
-        __aexit__=AsyncMock(return_value=False),
-    ))
+    mock_pool.acquire = MagicMock(
+        return_value=AsyncMock(
+            __aenter__=AsyncMock(return_value=mock_conn),
+            __aexit__=AsyncMock(return_value=False),
+        )
+    )
     pm.pool = mock_pool
 
     await pm._init_schema()

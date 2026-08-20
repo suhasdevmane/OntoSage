@@ -1,0 +1,49 @@
+# SATURATE (V4-T08): simulated water_flow sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'waterflow_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://buildsys.org/ontologies/bldg2#> .
+
+<http://buildsys.org/ontologies/bldg2#waterflow_data>
+    a ref:Database ;
+    rdfs:label "Waterflow Data" .
+
+<http://buildsys.org/ontologies/bldg2#floor0_sat_water_flow>
+    a brick:Water_Meter ;
+    rdfs:label "floor0 water_flow (simulated) [L]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#floor0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a66beaf4-d5b0-5acb-972a-9be770bd0af1" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#waterflow_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#floor1_sat_water_flow>
+    a brick:Water_Meter ;
+    rdfs:label "floor1 water_flow (simulated) [L]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#floor1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9f1163a1-dad6-5387-9d25-a42e1ec3e08f" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#waterflow_data> ;
+    ] .
+
+<http://buildsys.org/ontologies/bldg2#floor2_sat_water_flow>
+    a brick:Water_Meter ;
+    rdfs:label "floor2 water_flow (simulated) [L]"@en ;
+    brick:hasLocation <http://buildsys.org/ontologies/bldg2#floor2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "593f86ea-b814-55cf-951a-9972eecc343d" ;
+        ref:storedAt <http://buildsys.org/ontologies/bldg2#waterflow_data> ;
+    ] .

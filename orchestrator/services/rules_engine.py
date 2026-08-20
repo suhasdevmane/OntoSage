@@ -145,6 +145,7 @@ class RulesEngine:
         """Append user-tier alert rules (from Redis) to the evaluation cycle. Returns count added."""
         try:
             from orchestrator.services.user_alert_store import get_user_alert_store
+
             store = get_user_alert_store()
             docs = await store.get_all_building_alerts(self._building_id)
             added = 0
@@ -159,7 +160,9 @@ class RulesEngine:
                 except Exception as e:
                     logger.debug(f"[rules_engine] user rule parse error: {e}")
             if added:
-                logger.info(f"[rules_engine] loaded {added} user-tier rule(s) for {self._building_id}")
+                logger.info(
+                    f"[rules_engine] loaded {added} user-tier rule(s) for {self._building_id}"
+                )
             return added
         except Exception as e:
             logger.debug(f"[rules_engine] load_user_rules error: {e}")
@@ -235,14 +238,17 @@ class RulesEngine:
         if rule.trigger.concept:
             try:
                 from orchestrator.services.concept_resolver import concept_resolver
+
                 matches = await concept_resolver.resolve(rule.trigger.concept)
                 if matches:
-                    bc = (matches[0].brick_classes or [])
+                    bc = matches[0].brick_classes or []
                     if bc:
                         # Get first UUID for this brick class from GraphDB
                         return await self._uuid_for_class(bc[0])
             except Exception as e:
-                logger.warning(f"[rules_engine] concept resolve failed for {rule.trigger.concept}: {e}")
+                logger.warning(
+                    f"[rules_engine] concept resolve failed for {rule.trigger.concept}: {e}"
+                )
         return None
 
     async def _uuid_for_class(self, brick_class: str) -> Optional[str]:
@@ -258,6 +264,7 @@ SELECT ?uuid WHERE {{
 }} LIMIT 1"""
         try:
             import httpx
+
             endpoint = (
                 f"http://{settings.GRAPHDB_HOST}:{settings.GRAPHDB_PORT}"
                 f"/repositories/{settings.GRAPHDB_REPOSITORY}"
@@ -286,11 +293,13 @@ SELECT ?uuid WHERE {{
         key = f"rules:breach_start:{rule_id}:{uuid}"
         try:
             from orchestrator.redis_manager import redis_manager
+
             raw = await redis_manager.get_cache(key)
             if raw is None:
                 # First detection — record start time
-                await redis_manager.set_cache(key, datetime.now(tz=timezone.utc).isoformat(),
-                                               ttl=duration_min * 60 + 300)
+                await redis_manager.set_cache(
+                    key, datetime.now(tz=timezone.utc).isoformat(), ttl=duration_min * 60 + 300
+                )
                 return False
             start = datetime.fromisoformat(raw if isinstance(raw, str) else str(raw))
             elapsed_min = (datetime.now(tz=timezone.utc) - start).total_seconds() / 60
@@ -303,6 +312,7 @@ SELECT ?uuid WHERE {{
         """Remove breach start timestamp when value returns to normal."""
         try:
             from orchestrator.redis_manager import redis_manager
+
             await redis_manager.delete_cache(f"rules:breach_start:{rule_id}:{uuid}")
         except Exception:
             pass
@@ -311,6 +321,7 @@ SELECT ?uuid WHERE {{
         """Return True if this rule+uuid recently fired and is in cooldown."""
         try:
             from orchestrator.redis_manager import redis_manager
+
             val = await redis_manager.get_cache(f"rules:fired:{rule_id}:{uuid}")
             return val is not None
         except Exception:
@@ -319,9 +330,8 @@ SELECT ?uuid WHERE {{
     async def _mark_cooldown(self, rule_id: str, uuid: str) -> None:
         try:
             from orchestrator.redis_manager import redis_manager
-            await redis_manager.set_cache(
-                f"rules:fired:{rule_id}:{uuid}", "1", ttl=_COOLDOWN_TTL_S
-            )
+
+            await redis_manager.set_cache(f"rules:fired:{rule_id}:{uuid}", "1", ttl=_COOLDOWN_TTL_S)
         except Exception:
             pass
 
@@ -331,6 +341,7 @@ SELECT ?uuid WHERE {{
         """Fetch the latest value for a UUID from MySQL sensor_data."""
         try:
             from orchestrator.services.adapters.mysql_adapter import MySQLAdapter
+
             adapter = MySQLAdapter()
             backtick_uuid = f"`{uuid}`"
             result = await adapter.execute_query(
@@ -365,7 +376,10 @@ SELECT ?uuid WHERE {{
 
         # Write to user_reports (persistent record)
         try:
-            from orchestrator.services.report_intake_service import get_report_intake_service
+            from orchestrator.services.report_intake_service import (
+                get_report_intake_service,
+            )
+
             svc = get_report_intake_service()
             await svc.create_report(
                 description=f"{title}: {msg}",
@@ -380,7 +394,10 @@ SELECT ?uuid WHERE {{
 
         # Dispatch through configured channels (log always fires; webhook/smtp if configured)
         try:
-            from orchestrator.services.notification_service import get_notification_service
+            from orchestrator.services.notification_service import (
+                get_notification_service,
+            )
+
             notif_svc = get_notification_service(self._building_id)
             await notif_svc.dispatch(
                 title=title,
@@ -396,7 +413,9 @@ SELECT ?uuid WHERE {{
 
     async def run_forever(self, interval_s: int = 60) -> None:
         """Polling loop — called as an asyncio task from FastAPI lifespan."""
-        logger.info(f"[rules_engine] starting poll loop interval={interval_s}s rules={len(self._rules)}")
+        logger.info(
+            f"[rules_engine] starting poll loop interval={interval_s}s rules={len(self._rules)}"
+        )
         while True:
             try:
                 fired = await self.evaluate_all()

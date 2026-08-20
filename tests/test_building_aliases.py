@@ -17,8 +17,7 @@ import pytest
 import yaml
 
 from orchestrator.services.building_registry import BuildingRegistry
-from shared.floor_plan_config import ABACWS_CONFIG, BuildingConfig
-
+from shared.floor_plan_config import BuildingConfig, default_config
 
 # ─────────────────────────────────────────────────────────────────────────────
 # BuildingConfig model
@@ -149,12 +148,26 @@ def test_scan_prescans_per_building_yaml_without_pdfs(tmp_path):
     assert reg.resolve_id("legacyA") == "bldgA"
 
 
-def test_scan_keeps_legacy_abacws_default(tmp_path):
-    """Even with no per-building YAML, ABACWS_CONFIG is always registered."""
+def test_scan_invents_no_building(tmp_path):
+    """An empty input folder yields an empty registry (CAVEAT-094).
+
+    A hardcoded "abacws" config used to be registered here unconditionally, so
+    every deployment reported a building it did not have. The PDF scan already
+    registers whatever slug it finds, for any building, which is the
+    building-agnostic path that replaced it.
+    """
     reg = BuildingRegistry(pdf_dir=tmp_path)
     reg.scan()
-    assert "abacws" in reg.building_ids()
-    assert reg.get("abacws") is ABACWS_CONFIG
+    assert reg.building_ids() == [], f"registry invented {reg.building_ids()}"
+
+
+def test_the_fallback_config_describes_the_building_it_was_asked_about(tmp_path):
+    """Never another building's identity — the whole point of CAVEAT-094."""
+    cfg = default_config("bldg7")
+    assert cfg.building_id == "bldg7"
+    assert "abacws" not in cfg.building_name.lower()
+    assert "abacws" not in (cfg.ontology_namespace or "").lower()
+    assert cfg.effective_display_name
 
 
 def test_realistic_bldg1_alias_to_abacws(tmp_path):

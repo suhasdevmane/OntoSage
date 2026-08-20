@@ -14,6 +14,7 @@ Usage:
     if recipe:
         print(recipe["params"]["co2_ppm_alert"])
 """
+
 from __future__ import annotations
 
 import copy

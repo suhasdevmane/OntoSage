@@ -20,6 +20,7 @@ import pytest
 def graph():
     """Build the workflow graph once per module — it's expensive."""
     from orchestrator.workflow import WorkflowOrchestrator
+
     inst = WorkflowOrchestrator.__new__(WorkflowOrchestrator)
     return inst._build_graph()
 
@@ -27,6 +28,7 @@ def graph():
 @pytest.fixture(scope="module")
 def registry():
     from orchestrator.intents import get_intent_registry
+
     get_intent_registry.cache_clear()
     return get_intent_registry()
 
@@ -42,8 +44,7 @@ def test_every_node_method_in_registry_resolves(registry):
             missing.append((intent_def.name, intent_def.node_method))
 
     assert missing == [], (
-        f"Intents declare node_method that doesn't exist on "
-        f"WorkflowOrchestrator: {missing}"
+        f"Intents declare node_method that doesn't exist on " f"WorkflowOrchestrator: {missing}"
     )
 
 

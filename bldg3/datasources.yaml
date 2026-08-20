@@ -1,0 +1,148 @@
+# ============================================================================
+# OntoSage — Data sources (bldg3) · SATURATE simulated modalities (V4-T09)
+# ============================================================================
+# These sources exist primarily for PROVENANCE: every narrow table written by
+# the saturation pipeline is declared here so provenance chips render each
+# figure as "· simulated" (an undeclared table would render as Unknown Source).
+#
+# Unlike bldg1's toggle sources these are enabled and lock nothing (`unlocks`
+# empty): the saturation TTLs load via ttl_uploader named graphs, which are the
+# per-modality on/off switch (drop the graph via the admin portal to disable).
+# UUIDs derive deterministically from (building_id, "sat_<modality>", space).
+# ============================================================================
+version: 1
+datasources:
+
+  - id: sat_temperature
+    label: "Temperature (simulated)"
+    modality: temperature
+    kind: timeseries
+    enabled: true
+    synthetic: true
+    provenance_system: "Simulated Temperature Sensing"
+    color: "#F59E0B"
+    ts_table: temperature_data
+    unlocks: []
+
+  - id: sat_humidity
+    label: "Humidity (simulated)"
+    modality: humidity
+    kind: timeseries
+    enabled: true
+    synthetic: true
+    provenance_system: "Simulated Humidity Sensing"
+    color: "#06B6D4"
+    ts_table: humidity_data
+    unlocks: []
+
+  - id: sat_co2
+    label: "CO2 (simulated)"
+    modality: co2
+    kind: timeseries
+    enabled: true
+    synthetic: true
+    provenance_system: "Simulated CO2 Sensing"
+    color: "#84CC16"
+    ts_table: co2_data
+    unlocks: []
+
+  - id: sat_occupancy
+    label: "Occupancy (simulated)"
+    modality: occupancy
+    kind: timeseries
+    enabled: true
+    synthetic: true
+    provenance_system: "Simulated Occupancy Sensing"
+    color: "#3B82F6"
+    ts_table: occupancy_data
+    unlocks: []
+
+  - id: sat_noise
+    label: "Noise (simulated)"
+    modality: noise
+    kind: timeseries
+    enabled: true
+    synthetic: true
+    provenance_system: "Simulated Acoustic Sensing"
+    color: "#8B5CF6"
+    ts_table: noise_data
+    unlocks: []
+
+  - id: sat_illuminance
+    label: "Lighting (simulated)"
+    modality: illuminance
+    kind: timeseries
+    enabled: true
+    synthetic: true
+    provenance_system: "Simulated Light Sensing"
+    color: "#EAB308"
+    ts_table: light_data
+    unlocks: []
+
+  - id: sat_contacts
+    label: "Door/Window Contacts (simulated)"
+    modality: contact
+    kind: timeseries
+    enabled: true
+    synthetic: true
+    provenance_system: "Simulated Contact Sensing"
+    color: "#EC4899"
+    ts_table: contact_data
+    unlocks: []
+
+  # ── V5 additions (T09 saturation legs + T07 events store) — provenance ────
+
+  - id: sat_pm25
+    label: "PM2.5 (simulated)"
+    modality: pm25
+    kind: timeseries
+    enabled: true
+    synthetic: true
+    provenance_system: "Simulated PM2.5 Sensing"
+    color: "#8B5CF6"
+    ts_table: pm25_data
+    unlocks: []
+
+  - id: sat_energy_submeter
+    label: "Energy submeter (simulated)"
+    modality: energy_submeter
+    kind: timeseries
+    enabled: true
+    synthetic: true
+    provenance_system: "Simulated Energy Submetering"
+    color: "#EF4444"
+    ts_table: submeter_data
+    unlocks: []
+
+  - id: sat_water_flow
+    label: "Water flow (simulated)"
+    modality: water_flow
+    kind: timeseries
+    enabled: true
+    synthetic: true
+    provenance_system: "Simulated Water Flow Sensing"
+    color: "#3B82F6"
+    ts_table: waterflow_data
+    unlocks: []
+
+  - id: sat_parking
+    label: "Parking availability (simulated)"
+    modality: parking_free
+    kind: timeseries
+    enabled: true
+    synthetic: true
+    provenance_system: "Simulated Parking Counting"
+    color: "#10B981"
+    ts_table: parking_data
+    unlocks: []
+
+  - id: events_store
+    label: "Bookings / work orders / access events (simulated)"
+    modality: events
+    kind: events
+    enabled: true
+    synthetic: true
+    provenance_system: "Simulated Event Records (bookings, work orders, access)"
+    color: "#F97316"
+    ts_table: events
+    unlocks: []

@@ -64,7 +64,7 @@ MIN_SIMILARITY = float(os.environ.get("RESPONSE_CACHE_MIN_SIMILARITY", "0.85"))
 # phrasing (short/summary/long), so a cached answer could be served at the wrong
 # length (especially via fuzzy match). Fresh LLM calls keep length control
 # reliable — the credit cost is an accepted trade-off.
-NON_CACHEABLE_INTENTS = {"clarification", "discovery", "control", "general_knowledge"}
+NON_CACHEABLE_INTENTS = {"clarification", "discovery", "control", "general_knowledge", "deliberate"}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Query normalisation

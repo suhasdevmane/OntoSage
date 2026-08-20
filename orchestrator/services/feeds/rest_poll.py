@@ -16,9 +16,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from shared.utils import get_logger
-
 from orchestrator.services.feeds.base import FeedAdapter, FeedRecord, FeedSpec
+from shared.utils import get_logger
 
 try:
     import httpx as _httpx
@@ -104,6 +103,8 @@ class RestPollAdapter(FeedAdapter):
                 if val is not None:
                     records.append(self._make_record(val, metric_name, ts))
                 else:
-                    logger.debug(f"[feeds] {self.spec.id} field '{source_path}' not found in response")
+                    logger.debug(
+                        f"[feeds] {self.spec.id} field '{source_path}' not found in response"
+                    )
 
         return records

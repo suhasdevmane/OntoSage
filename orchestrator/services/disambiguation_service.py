@@ -133,6 +133,39 @@ class DisambiguationService:
     # Public API                                                           #
     # ------------------------------------------------------------------ #
 
+    def extract_clarification_answer(
+        self, answer_text: str, pending_type: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Parse a clarification reply into user-context updates (BUG-146).
+
+        This method was called from the dialogue node since Phase 4 but never
+        existed — the AttributeError was swallowed at debug level, so numbered
+        replies to clarification questions silently did nothing. It parses from
+        TEXT ALONE (the call site has no context access; the caller merges the
+        returned dict into user_context). Conservative by design: returns None
+        unless something concrete binds — a wrong binding is worse than falling
+        back to the co-reference rewrite.
+        """
+        text = (answer_text or "").strip()
+        if not text:
+            return None
+        out: Dict[str, Any] = {}
+        if text.isdigit():
+            # 1-based option pick; the consumer resolves it against ITS parked
+            # options (pending_candidates / a parked CQ-IR's option list)
+            out["selected_option_index"] = int(text)
+        m = re.search(r"\b(?:zone|room)\s*#?\s*([\w][\w.\-]*)", text, re.IGNORECASE)
+        if m:
+            out["zone"] = m.group(1)
+        m = re.search(r"\bfloor\s*#?\s*([\w][\w.\-]*)", text, re.IGNORECASE)
+        if m:
+            out["floor"] = m.group(1)
+        if pending_type and str(pending_type).startswith("deliberate"):
+            # the deliberate node binds precisely via clarify_policy.bind_answer;
+            # it needs the verbatim reply regardless of what parsed above
+            out["deliberate_reply"] = text
+        return out or None
+
     def extract_ambiguous_node(self, user_query: str) -> Optional[str]:
         """
         Return the node number (e.g. '5.12') if the query contains an

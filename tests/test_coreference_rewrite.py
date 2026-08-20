@@ -29,13 +29,14 @@ def _state(*contents: str) -> ConversationState:
 
 # ── Heuristic gate ────────────────────────────────────────────────────────────
 
+
 @pytest.mark.parametrize(
     "query,expected",
     [
         ("and what about humidity there", True),
         ("the same for floor 5", True),
         ("how about floor 2", True),
-        ("show me", True),                       # very short
+        ("show me", True),  # very short
         ("what about it", True),
         ("what is the temperature on floor 3", False),
         ("list all CO2 sensors in the building please", False),
@@ -49,6 +50,7 @@ def test_is_followup_query(query, expected):
 
 
 # ── rewrite_to_standalone ──────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def agent():

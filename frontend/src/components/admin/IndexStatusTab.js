@@ -1,15 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
+/**
+ * What the active building currently has indexed, and how to rebuild it.
+ *
+ * This screen used to report the capability.yaml Qdrant KB. That KB is gone —
+ * structured capability facts are ontosage:Amenity / ontosage:KnowledgeTopic
+ * TRIPLES now, published by uploading TTL on the Capabilities screen, so there
+ * is no vector index behind them to rebuild. What is left that genuinely gets
+ * indexed is the document KB (uploaded manuals and policies), which is what an
+ * admin needs to see before asking why a question went unanswered.
+ */
 export default function IndexStatusTab({ api, headers }) {
   const [status, setStatus] = useState(null);
   const [jobs, setJobs] = useState([]);
-  const [targets, setTargets] = useState({ capability: true, documents: false });
+  const [targets, setTargets] = useState({ documents: true, floor_plans: false });
   const [activeJob, setActiveJob] = useState(null);
   const [polling, setPolling] = useState(false);
 
   const loadStatus = useCallback(async () => {
     try {
-      const r = await fetch(`${api}/api/v1/admin/capability-indexer/status`, { headers });
+      const r = await fetch(`${api}/api/v1/admin/index-status`, { headers });
       setStatus((await r.json()).data);
     } catch {}
   }, [api, headers]);
@@ -51,21 +61,48 @@ export default function IndexStatusTab({ api, headers }) {
     return () => clearInterval(interval);
   }, [polling, activeJob, api, headers, loadStatus, loadJobs]);
 
-  const bldgStatus = status?.buildings || {};
+  const docs = status?.documents || {};
+  const caps = status?.capabilities || {};
 
   return (
     <div>
-      <h5>Capability KB Index Status</h5>
+      <h5>Capabilities (ontology triples)</h5>
+      <p className="small text-muted">
+        Answered straight from the graph — no vector index, nothing to rebuild.
+        Publish or edit these on the <strong>Capabilities</strong> tab.
+      </p>
+      <div className="mb-4">
+        {caps.available ? (
+          <>
+            <span className="badge bg-success me-2">Amenities: {caps.amenities}</span>
+            <span className="badge bg-success me-2">Knowledge topics: {caps.knowledge_topics}</span>
+            {(caps.amenities === 0 && caps.knowledge_topics === 0) && (
+              <span className="small text-danger">
+                None loaded — a capability question will honestly say it has no information.
+                Upload <code>&lt;building&gt;_capabilities.ttl</code> on the Capabilities tab.
+              </span>
+            )}
+          </>
+        ) : (
+          <span className="badge bg-warning text-dark">
+            Graph unreachable — count unknown{caps.reason ? `: ${caps.reason}` : ''}
+          </span>
+        )}
+      </div>
+
+      <h5>Document KB Index Status</h5>
       <div className="table-responsive mb-4">
         <table className="table table-sm table-bordered">
           <thead className="table-light">
-            <tr><th>Building</th><th>Status</th><th>Entries (YAML)</th><th>Points (Qdrant)</th><th>Duration</th><th>Reason</th></tr>
+            <tr><th>Building</th><th>Status</th><th>Documents</th><th>Chunks</th><th>Reason</th></tr>
           </thead>
           <tbody>
-            {Object.entries(bldgStatus).length === 0 && (
-              <tr><td colSpan={6} className="text-center text-muted">Not loaded (GET /health for diagnostics)</td></tr>
+            {Object.entries(docs).length === 0 && (
+              <tr><td colSpan={5} className="text-center text-muted">
+                No documents indexed — drop files into the building&apos;s <code>documents/</code> folder, then re-index.
+              </td></tr>
             )}
-            {Object.entries(bldgStatus).map(([bid, b]) => (
+            {Object.entries(docs).map(([bid, b]) => (
               <tr key={bid}>
                 <td><code>{bid}</code></td>
                 <td>
@@ -73,9 +110,8 @@ export default function IndexStatusTab({ api, headers }) {
                     {b.status}
                   </span>
                 </td>
-                <td>{b.entries}</td>
-                <td>{b.points}</td>
-                <td>{b.duration_ms}ms</td>
+                <td>{b.documents}</td>
+                <td>{b.chunks}</td>
                 <td style={{fontSize:11}}>{b.reason||'-'}</td>
               </tr>
             ))}
@@ -83,12 +119,19 @@ export default function IndexStatusTab({ api, headers }) {
         </table>
       </div>
 
+      <div className="mb-4 small text-muted">
+        Embedding: <code>{status?.embedding_provider || 'unknown'}</code>
+        {status?.embedding_dimension ? ` · ${status.embedding_dimension}-d` : ''}
+        {' — '}a collection written under a different model returns nothing rather than failing,
+        so re-index after changing provider.
+      </div>
+
       <div className="card mb-4" style={{maxWidth:520}}>
         <div className="card-header"><strong>Trigger Re-index</strong></div>
         <div className="card-body">
-          <p className="small text-muted">Run after uploading new TTL or registering sensors to make new knowledge discoverable.</p>
+          <p className="small text-muted">Run after uploading new documents to make them searchable.</p>
           <div className="mb-2">
-            {['capability', 'documents', 'floor_plans'].map(t => (
+            {['documents', 'floor_plans'].map(t => (
               <div className="form-check form-check-inline" key={t}>
                 <input className="form-check-input" type="checkbox" id={`tgt-${t}`}
                   checked={!!targets[t]}

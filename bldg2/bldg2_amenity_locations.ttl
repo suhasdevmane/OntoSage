@@ -1,0 +1,98 @@
+# SATURATE (V4-T12): per-instance amenities with STRUCTURED locations
+# (ontosage:locatedIn <space>) so proximity constraints are computable.
+# Placement is simulated and labeled as such; replace with surveyed
+# locations for a real building — the structure is what matters.
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://buildsys.org/ontologies/bldg2#> .
+
+<http://buildsys.org/ontologies/bldg2#Amenity_DrinkingWater_floor0>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water point — RM001A_room"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, fill my bottle" ;
+    ontosage:locatedIn <http://buildsys.org/ontologies/bldg2#RM001A_room> ;
+    ontosage:onFloor "floor0" ;
+    ontosage:locationText "Drinking water point in RM001A_room (floor floor0)" ;
+    ontosage:answerText "There is a drinking water point in RM001A_room on floor floor0." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://buildsys.org/ontologies/bldg2#Amenity_DrinkingWater_floor1>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water point — RM101_room"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, fill my bottle" ;
+    ontosage:locatedIn <http://buildsys.org/ontologies/bldg2#RM101_room> ;
+    ontosage:onFloor "floor1" ;
+    ontosage:locationText "Drinking water point in RM101_room (floor floor1)" ;
+    ontosage:answerText "There is a drinking water point in RM101_room on floor floor1." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://buildsys.org/ontologies/bldg2#Amenity_DrinkingWater_floor2>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water point — RM201_room"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, fill my bottle" ;
+    ontosage:locatedIn <http://buildsys.org/ontologies/bldg2#RM201_room> ;
+    ontosage:onFloor "floor2" ;
+    ontosage:locationText "Drinking water point in RM201_room (floor floor2)" ;
+    ontosage:answerText "There is a drinking water point in RM201_room on floor floor2." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://buildsys.org/ontologies/bldg2#Amenity_StudyArea_floor0>
+    a ontosage:Amenity , ontosage:StudyArea ;
+    rdfs:label "Study area — RM002A_room"@en ;
+    ontosage:layTerms "study area, study space, workspace, quiet study, place to work, place to sit and work" ;
+    ontosage:locatedIn <http://buildsys.org/ontologies/bldg2#RM002A_room> ;
+    ontosage:onFloor "floor0" ;
+    ontosage:locationText "Study area in RM002A_room (floor floor0)" ;
+    ontosage:answerText "There is a study area in RM002A_room on floor floor0." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://buildsys.org/ontologies/bldg2#Amenity_StudyArea_floor1>
+    a ontosage:Amenity , ontosage:StudyArea ;
+    rdfs:label "Study area — RM103_room"@en ;
+    ontosage:layTerms "study area, study space, workspace, quiet study, place to work, place to sit and work" ;
+    ontosage:locatedIn <http://buildsys.org/ontologies/bldg2#RM103_room> ;
+    ontosage:onFloor "floor1" ;
+    ontosage:locationText "Study area in RM103_room (floor floor1)" ;
+    ontosage:answerText "There is a study area in RM103_room on floor floor1." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://buildsys.org/ontologies/bldg2#Amenity_StudyArea_floor2>
+    a ontosage:Amenity , ontosage:StudyArea ;
+    rdfs:label "Study area — RM203_room"@en ;
+    ontosage:layTerms "study area, study space, workspace, quiet study, place to work, place to sit and work" ;
+    ontosage:locatedIn <http://buildsys.org/ontologies/bldg2#RM203_room> ;
+    ontosage:onFloor "floor2" ;
+    ontosage:locationText "Study area in RM203_room (floor floor2)" ;
+    ontosage:answerText "There is a study area in RM203_room on floor floor2." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://buildsys.org/ontologies/bldg2#Amenity_ToiletFacility_floor0>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — RM001B_room"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, accessible toilet" ;
+    ontosage:locatedIn <http://buildsys.org/ontologies/bldg2#RM001B_room> ;
+    ontosage:onFloor "floor0" ;
+    ontosage:locationText "Toilet facility in RM001B_room (floor floor0)" ;
+    ontosage:answerText "There is a toilet facility in RM001B_room on floor floor0." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://buildsys.org/ontologies/bldg2#Amenity_ToiletFacility_floor1>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — RM102C_room"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, accessible toilet" ;
+    ontosage:locatedIn <http://buildsys.org/ontologies/bldg2#RM102C_room> ;
+    ontosage:onFloor "floor1" ;
+    ontosage:locationText "Toilet facility in RM102C_room (floor floor1)" ;
+    ontosage:answerText "There is a toilet facility in RM102C_room on floor floor1." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://buildsys.org/ontologies/bldg2#Amenity_ToiletFacility_floor2>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — RM202_room"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, accessible toilet" ;
+    ontosage:locatedIn <http://buildsys.org/ontologies/bldg2#RM202_room> ;
+    ontosage:onFloor "floor2" ;
+    ontosage:locationText "Toilet facility in RM202_room (floor floor2)" ;
+    ontosage:answerText "There is a toilet facility in RM202_room on floor floor2." ;
+    ontosage:isSimulated "true"^^xsd:boolean .

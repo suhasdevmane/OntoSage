@@ -12,7 +12,10 @@ Usage:
     result = await driver.set_point(point_uri, value, user_id=user_id)
 """
 
-from orchestrator.services.actuation.approval_store import ActuationApprovalStore, get_approval_store
+from orchestrator.services.actuation.approval_store import (
+    ActuationApprovalStore,
+    get_approval_store,
+)
 from orchestrator.services.actuation.base import ActuationDriver, ActuationResult
 from orchestrator.services.actuation.registry import ActuationRegistry
 from orchestrator.services.actuation.sim_driver import SimDriver

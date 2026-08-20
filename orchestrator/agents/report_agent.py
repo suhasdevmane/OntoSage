@@ -175,6 +175,7 @@ class ReportAgent:
         # Phase 10 — per-request building context: name and timezone come
         # from this conversation's building, not the process-global setting.
         from orchestrator.services.building_context import resolve_building_context
+
         bctx = resolve_building_context(building_id)
 
         # Section 1: Overview

@@ -1,39 +1,34 @@
 """
-SemanticRouter — query-time semantic classifier for intent routing.
+semantic_router.py — deterministic query guards for intent routing.
 
-Embeds the user query once, searches one or more registered Qdrant collections,
-groups raw points by entry_id with max-pool scoring, and returns a
-SemanticRouteResult that the dialogue agent uses to decide whether to:
-  - SKIP the LLM intent call entirely (score >= override_min)
-  - SOFT-override an LLM non-data intent (threshold <= score < override_min)
-  - DO NOTHING and let the LLM classify (score < threshold)
+Every function here is a PURE PREDICATE over the query string: given the same
+text it returns the same verdict, with no embedding call, no vector search and
+no per-building state. They answer the questions routing has to settle before
+anything expensive runs — is this live data, a fault report, a control command,
+a floor-plan or spatial question — and `routing_contract` composes them into the
+ordered precedence rules that decide the lane.
 
-Intent-agnostic by design: `register_intent("capability", "capability_")` today;
-future `register_intent("floor_plan", "spatial_")` requires no further changes.
+Historically this module also held a stateful Qdrant router: it embedded the
+query, searched a per-building ``capability_<bldg>`` collection built from
+``capability.yaml``, and returned a routing verdict with matched KB entries.
+That knowledge base was replaced by ``ontosage:Amenity`` /
+``ontosage:KnowledgeTopic`` triples served by ``CapabilityGraphResolver``
+(TODO-012), which left ``classify()`` and everything under it — the KB cache,
+the routing-config loader, the collection searches — with no caller. It was
+removed in TODO-081 along with ``capability_indexer`` and
+``shared/capability_schema.py``.
 
-Failure modes (all non-raising):
-  - Qdrant unreachable     → source="fallback", score=0.0, matches=[]
-  - Per-building disabled  → source="disabled", score=0.0, matches=[]
-  - Empty/whitespace query → source="semantic", score=0.0 (no embed call attempted)
+Consequence worth knowing: routing no longer depends on Qdrant being reachable
+or on an embedding model being loaded. A vector store outage can still cost a
+document-grounded ANSWER, but it can no longer change which lane a question
+takes.
 """
 
 from __future__ import annotations
 
-import os
 import re as _re
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Dict, FrozenSet, List, Literal, Optional
+from typing import FrozenSet, Optional
 
-import yaml
-
-from shared.building_paths import resolve_building_file
-from shared.capability_schema import (
-    CapabilityEntry,
-    CapabilityKB,
-    CapabilityRoutingConfig,
-    IntentRouteConfig,
-)
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -313,6 +308,46 @@ _FLOOR_PLAN_BYPASS_PHRASES: FrozenSet[str] = frozenset(
 # ── Spatial-query bypass ─────────────────────────────────────────────────────
 # Quantitative geometry queries (area, count, adjacency) must reach the
 # spatial_query agent which reads the DWG manifest, not the KB router.
+#: Words asking for a MEASUREMENT of a space, paired below with the nouns that
+#: name one. Kept as a two-part test rather than as more literal phrases in
+#: _SPATIAL_BYPASS_PHRASES: that list already carried "how big is" but not "area
+#: of room", so one phrasing of the same question reached the floor plan and
+#: another was answered by the capability lane with "no information on record" --
+#: about a room whose measured area the manifest was holding. Enumerating
+#: phrasings loses that race indefinitely; enumerating the two ingredients does
+#: not.
+_SPACE_MEASURE_WORDS: FrozenSet[str] = frozenset(
+    [
+        "area",
+        "how big",
+        "how large",
+        "size of",
+        "square met",
+        "square feet",
+        "dimensions",
+        "perimeter",
+        "floor space",
+    ]
+)
+
+#: Generic nouns only. A room identifier ("0.34", "RM001A") is the stronger
+#: signal but its shape differs per building, and hard-coding one here would put
+#: a building literal into shared routing code.
+_SPACE_NOUNS: FrozenSet[str] = frozenset(
+    [
+        "room",
+        "rooms",
+        "space",
+        "spaces",
+        "office",
+        "offices",
+        "lab",
+        "labs",
+        "theatre",
+        "theater",
+    ]
+)
+
 _SPATIAL_BYPASS_PHRASES: FrozenSet[str] = frozenset(
     [
         "area of floor",
@@ -330,6 +365,26 @@ _SPATIAL_BYPASS_PHRASES: FrozenSet[str] = frozenset(
         "square meters",
         "square metres",
         "square feet",
+        # V5-T27 — nearest-facility + accessible-route shapes reach the
+        # route finder instead of the amenity-info capability probe. Facility-
+        # specific on purpose: bare "nearest" would steal data questions.
+        "nearest toilet",
+        "closest toilet",
+        "nearest lift",
+        "closest lift",
+        "nearest stair",
+        "closest stair",
+        "nearest kitchen",
+        "closest kitchen",
+        "nearest exit",
+        "closest exit",
+        "nearest meeting room",
+        "closest meeting room",
+        "nearest reception",
+        "step-free route",
+        "step free route",
+        "wheelchair route",
+        "wheelchair accessible route",
     ]
 )
 
@@ -624,6 +679,28 @@ _CONTROL_VERB_TARGET_RE = _re.compile(
     _re.IGNORECASE,
 )
 
+# BUG-157: "Fix the temperature in here." The verb-target rule above pairs actuation
+# verbs with PLANT nouns (hvac, thermostat, damper) — the things an engineer names.
+# Occupants name the QUANTITY instead ("the temperature", "the stuffiness"), and the
+# verb they reach for is "fix"/"sort out", which was in neither list. So an actuation
+# request fell through to analytics and was answered with real AHU temperatures:
+# the system did nothing while sounding like it had acted.
+_CONTROL_COMFORT_FIX_RE = _re.compile(
+    r"\b(fix|sort(?:\s+out)?|do\s+something\s+about|deal\s+with|see\s+to|sort\s+me\s+out)\b"
+    r".{0,30}?\b(temperature|temp|heating|heat|cooling|humidity|air|airflow|"
+    r"ventilation|stuffiness|stuffy|draught|draft|noise|brightness|co2)\b",
+    _re.IGNORECASE,
+)
+
+# ...but a fix VERB alone does not make a command. These shapes contain one and are
+# not requests to act: instruction-seeking ("how do I fix the temperature myself?")
+# and maintenance history ("when was the thermostat last fixed?"). Checked first.
+_COMFORT_FIX_NOT_COMMAND_RE = _re.compile(
+    r"^\s*(?:how|when|who|why|what|where)\b"
+    r"|\b(?:was|were|has\s+been|had\s+been|got)\s+(?:\w+\s+){0,2}?fixed\b",
+    _re.IGNORECASE,
+)
+
 # Indirect / polite / interrogative actuation requests directed at the assistant:
 # "can you ensure every door is unlocked", "make sure the windows are open",
 # "keep the doors unlocked", "please open ...". These are commands phrased as asks.
@@ -660,80 +737,24 @@ _CONTROL_ENSURE_RE = _re.compile(
 )
 
 
-@dataclass
-class CapabilityMatch:
-    """Single grouped match returned by the semantic router.
-
-    entry_id  → the YAML capability id (e.g. 'lift_accessibility_detail')
-    score     → max similarity score across all vectors for this entry
-    entry     → the loaded CapabilityEntry (content used by CapabilityAgent)
-    """
-
-    entry_id: str
-    score: float
-    entry: Optional[CapabilityEntry] = None
-
-
-@dataclass
-class SemanticRouteResult:
-    """Result of one classification call.
-
-    intent  → "capability" if score >= override_min; None otherwise
-              (caller decides what to do with medium-score matches)
-    score   → max grouped entry score
-    matches → top-k grouped CapabilityMatches (may be populated even when intent=None,
-              so caller can apply soft-override logic)
-    source  → "semantic" | "fallback" | "disabled"
-    """
-
-    intent: Optional[str]
-    score: float
-    matches: List[CapabilityMatch] = field(default_factory=list)
-    source: Literal["semantic", "fallback", "disabled"] = "semantic"
-
-
-@dataclass
-class _IntentBinding:
-    """One registered intent → its Qdrant collection prefix."""
-
-    intent: str
-    collection_prefix: str  # e.g. "capability_" → real collection is "capability_<bldg>"
-
-
-# Document-KB rescue (route policy/governance/privacy questions to the capability
-# node so its doc-search fallback can ground them from documents_<bldg>). Gated +
-# tunable: behavior-changing, so it can be disabled / re-calibrated per deployment.
-_DOC_KB_ROUTING_ENABLED = os.environ.get("DOC_KB_ROUTING_ENABLED", "true").strip().lower() in (
-    "1",
-    "true",
-    "yes",
-    "on",
-)
-_DOC_KB_ROUTE_THRESHOLD = float(os.environ.get("DOC_KB_ROUTE_THRESHOLD", "0.38"))
-
-
 class SemanticRouter:
-    """Query-time semantic router. See module docstring.
+    """Deterministic, stateless query guards used by intent routing.
 
-    Args:
-        qdrant_client: AsyncQdrantClient instance
-        embedding_service: EmbeddingService instance
-        input_root: where to read per-building config + KB (defaults to /app/input)
+    This class was once a stateful Qdrant router: it embedded a query, searched
+    a per-building ``capability_<bldg>`` collection built from ``capability.yaml``
+    and returned a routing verdict. That knowledge base was replaced by
+    ``ontosage:Amenity`` / ``ontosage:KnowledgeTopic`` triples answered by
+    ``CapabilityGraphResolver`` (TODO-012), which left ``classify()`` — and the
+    search, config-loading and KB-caching machinery beneath it — with no caller
+    at all. All of it is gone (TODO-081).
+
+    What remains, and what was always the load-bearing part, are the ``is_*``
+    predicates below: pure functions over the query string that decide whether a
+    question is live-data, a report, a control command, floor-plan or spatial.
+    ``routing_contract`` and ``dialogue_agent`` call them ON THE CLASS, never on
+    an instance, so nothing needs constructing, wiring at boot, or a Qdrant
+    connection to make a routing decision.
     """
-
-    def __init__(
-        self,
-        qdrant_client,
-        embedding_service,
-        input_root: str = "/app/input",
-    ):
-        self._qdrant = qdrant_client
-        self._embedder = embedding_service
-        self._input_root = Path(input_root)
-        self._intents: Dict[str, _IntentBinding] = {}
-        # Per-building cache: KB + routing config — loaded once, reused
-        self._kb_cache: Dict[str, CapabilityKB] = {}
-        self._config_cache: Dict[str, CapabilityRoutingConfig] = {}
 
     # ── public API ──────────────────────────────────────────────────────────────
 
@@ -816,7 +837,27 @@ class SemanticRouter:
         if not query or not query.strip():
             return False
         q = query.lower()
-        return any(phrase in q for phrase in _SPATIAL_BYPASS_PHRASES)
+        if any(phrase in q for phrase in _SPATIAL_BYPASS_PHRASES):
+            return True
+        return SemanticRouter.is_space_geometry_question(query)
+
+    @staticmethod
+    def is_space_geometry_question(query: str) -> bool:
+        """True for "how big is room X" / "the area of office Y".
+
+        A measurement OF a space, not a reading taken inside one: "how warm is
+        room 3.01" asks a sensor question and must not match. Shared with the
+        routing contract so the capability bypass and the intent override cannot
+        disagree about what counts as a geometry question -- they did, and the
+        result was that one phrasing answered with the room's area while another
+        told the user no such information existed.
+        """
+        if not query or not query.strip():
+            return False
+        q = query.lower()
+        if not any(w in q for w in _SPACE_MEASURE_WORDS):
+            return False
+        return any(_re.search(rf"\b{n}\b", q) for n in _SPACE_NOUNS)
 
     @staticmethod
     def report_intake_intent(query: str) -> Optional[str]:
@@ -878,348 +919,8 @@ class SemanticRouter:
             return True
         if _CONTROL_VERB_TARGET_RE.search(query) or _CONTROL_ENSURE_RE.search(query):
             return True
+        # BUG-157: comfort-quantity fix requests ("fix the temperature in here"),
+        # excluding the question shapes that merely contain a fix verb.
+        if _CONTROL_COMFORT_FIX_RE.search(query) and not _COMFORT_FIX_NOT_COMMAND_RE.search(query):
+            return True
         return False
-
-    def register_intent(self, intent: str, collection_prefix: str) -> None:
-        """Extension hook for adding new intent bindings (e.g. floor_plan later)."""
-        self._intents[intent] = _IntentBinding(intent=intent, collection_prefix=collection_prefix)
-        logger.info(f"[semantic_router] registered intent={intent} prefix={collection_prefix}")
-
-    async def classify(self, query: str, building_id: str) -> SemanticRouteResult:
-        """Classify a user query for a given building.  Intent-agnostic.
-
-        Loops over all registered intents, searches each one's collection, and
-        returns the WINNING intent (highest grouped score) — provided its score
-        crosses the per-intent threshold band.
-
-        Returns SemanticRouteResult. Never raises.
-        """
-        # Empty/whitespace queries — no embedding call needed
-        if not query or not query.strip():
-            return SemanticRouteResult(intent=None, score=0.0, matches=[], source="semantic")
-
-        # Too-short queries are vague/clarification requests; skip KB routing entirely.
-        # A 1-3 word query like "It" or "that" has no semantic signal for KB matching
-        # and will produce spurious high-score matches on short KB entry keywords.
-        if len(query.split()) <= 3:
-            return SemanticRouteResult(intent=None, score=0.0, matches=[], source="semantic")
-
-        # Data-query bypass: sensor/zone/discovery queries must go to SPARQL, not KB.
-        # Check this BEFORE embedding so we pay zero cost on the fast path.
-        if self.is_data_query(query):
-            logger.debug(f"[semantic_router] data-query bypass (no KB lookup): '{query[:70]}'")
-            return SemanticRouteResult(intent=None, score=0.0, matches=[], source="semantic")
-
-        # Floor-plan bypass: explicit floor plan / room visualisation requests
-        # must reach the floor_plan agent which returns the actual PDF/image,
-        # not a generic KB capability description.  Return intent directly so
-        # downstream routing is deterministic, not heuristic.
-        if self.is_floor_plan_query(query):
-            logger.info(f"[semantic_router] floor-plan bypass: '{query[:70]}'")
-            return SemanticRouteResult(intent="floor_plan", score=1.0, matches=[], source="bypass")
-
-        # Spatial-query bypass: quantitative geometry (area, count, adjacency)
-        # must reach the spatial_query agent which reads the DWG manifest.
-        if self.is_spatial_query(query):
-            logger.info(f"[semantic_router] spatial-query bypass: '{query[:70]}'")
-            return SemanticRouteResult(
-                intent="spatial_query", score=1.0, matches=[], source="bypass"
-            )
-
-        if not self._intents:
-            return SemanticRouteResult(intent=None, score=0.0, matches=[], source="disabled")
-
-        # Embed query once — reused across all intent searches
-        try:
-            query_vec = await self._embedder.embed(query)
-        except Exception as e:
-            logger.warning(f"[semantic_router] embedding failed (fallback): {e}")
-            return SemanticRouteResult(intent=None, score=0.0, matches=[], source="fallback")
-
-        # Search each registered intent's collection.
-        # Track per-intent results to pick the highest-scoring intent.
-        candidates: list = []  # [(intent_name, cfg, matches), ...]
-        any_disabled = False
-        any_fallback = False
-
-        for intent_name, binding in self._intents.items():
-            cfg = self._get_config_for_intent(building_id, intent_name)
-            if cfg is None or not getattr(cfg, "enabled", False):
-                any_disabled = True
-                continue
-
-            collection = f"{binding.collection_prefix}{building_id}"
-            try:
-                if intent_name == "capability":
-                    # Capability uses the KB-backed multi-vector search (group-by entry_id)
-                    matches = await self._search_capability(
-                        query_vec=query_vec,
-                        collection=collection,
-                        building_id=building_id,
-                        cfg=cfg,
-                    )
-                else:
-                    # Generic intent search — descriptors → points, no entry lookup
-                    matches = await self._search_generic_intent(
-                        query_vec=query_vec,
-                        collection=collection,
-                        top_k=getattr(cfg, "top_k", 3),
-                    )
-            except Exception as e:
-                logger.warning(
-                    f"[semantic_router] search failed for intent={intent_name} "
-                    f"collection={collection} (continuing): {e}"
-                )
-                any_fallback = True
-                continue
-
-            if matches:
-                candidates.append((intent_name, cfg, matches))
-
-        # Build the base decision (the documents rescue may override it below).
-        if not candidates:
-            source = (
-                "fallback"
-                if any_fallback
-                else ("disabled" if any_disabled and len(self._intents) == 1 else "semantic")
-            )
-            base = SemanticRouteResult(intent=None, score=0.0, matches=[], source=source)
-        else:
-            # Pick the WINNING intent: highest top-score across all candidates
-            winner_intent, winner_cfg, winner_matches = max(candidates, key=lambda c: c[2][0].score)
-            top_score = winner_matches[0].score
-            if top_score >= winner_cfg.override_min:
-                base = SemanticRouteResult(
-                    intent=winner_intent, score=top_score, matches=winner_matches, source="semantic"
-                )
-            elif top_score >= winner_cfg.threshold:
-                base = SemanticRouteResult(
-                    intent=None, score=top_score, matches=winner_matches, source="semantic"
-                )
-            else:
-                base = SemanticRouteResult(
-                    intent=None, score=top_score, matches=[], source="semantic"
-                )
-
-        # Document-KB rescue: when the query did NOT route to capability but a
-        # building document strongly matches, route to capability so its
-        # doc-search fallback grounds the answer. Policy / governance / privacy
-        # questions live in documents_<bldg>, not capability.yaml, so without this
-        # they fall through to a generic general-knowledge answer. (Data/spatial
-        # queries already bypassed above, so this only affects info questions.)
-        if base.intent != "capability" and _DOC_KB_ROUTING_ENABLED:
-            doc_score = await self._documents_route_signal(query_vec, building_id)
-            if doc_score >= _DOC_KB_ROUTE_THRESHOLD:
-                logger.info(
-                    f"[semantic_router] documents rescue (score={doc_score:.3f}) → capability"
-                )
-                return SemanticRouteResult(
-                    intent="capability", score=doc_score, matches=[], source="documents"
-                )
-
-        return base
-
-    async def _documents_route_signal(self, query_vec: List[float], building_id: str) -> float:
-        """Top similarity score from the per-building documents collection (0.0 on miss).
-
-        Pure routing signal: when the structured capability KB did not win but a
-        policy/manual/governance document matches well, route the query to the
-        capability node so its doc-search fallback can ground the answer. Never
-        raises (a missing collection or outage degrades to 0.0 = no rescue).
-        """
-        collection = f"documents_{building_id}"
-        try:
-            if hasattr(self._qdrant, "query_points"):
-                res = await self._qdrant.query_points(
-                    collection_name=collection, query=query_vec, limit=1, with_payload=False
-                )
-                pts = res.points if hasattr(res, "points") else res
-            else:
-                pts = await self._qdrant.search(
-                    collection_name=collection, query_vector=query_vec, limit=1, with_payload=False
-                )
-            return float(getattr(pts[0], "score", 0.0)) if pts else 0.0
-        except Exception as e:
-            logger.debug(f"[semantic_router] documents probe skipped: {e}")
-            return 0.0
-
-    def _get_config_for_intent(self, building_id: str, intent_name: str):
-        """Returns per-intent config object (CapabilityRoutingConfig for capability,
-        IntentRouteConfig for additional intents)."""
-        if intent_name == "capability":
-            return self._get_routing_config(building_id)
-
-        # Other intents: read from intent_routing.<intent_name> block
-        bldg_yaml = resolve_building_file(building_id, "building.yaml", self._input_root)
-        if bldg_yaml is None:
-            return None
-        try:
-            with open(bldg_yaml, "r", encoding="utf-8") as fh:
-                data = yaml.safe_load(fh) or {}
-            block = (data.get("intent_routing") or {}).get(intent_name)
-            if not block:
-                return None
-            return IntentRouteConfig(**block)
-        except Exception as e:
-            logger.warning(
-                f"[semantic_router] intent config invalid for {building_id}/{intent_name}: {e}"
-            )
-            return None
-
-    async def _search_generic_intent(
-        self, query_vec, collection: str, top_k: int
-    ) -> List[CapabilityMatch]:
-        """Search a non-capability intent collection. Each point is a descriptor.
-
-        Returns CapabilityMatch (reused as a generic container) with entry=None.
-        The caller uses entry_id (which holds the descriptor index) only for logging.
-        """
-        if hasattr(self._qdrant, "query_points"):
-            result = await self._qdrant.query_points(
-                collection_name=collection,
-                query=query_vec,
-                limit=top_k,
-                with_payload=True,
-            )
-            raw_points = result.points if hasattr(result, "points") else result
-        else:
-            raw_points = await self._qdrant.search(
-                collection_name=collection,
-                query_vector=query_vec,
-                limit=top_k,
-                with_payload=True,
-            )
-        matches = []
-        for point in raw_points:
-            payload = point.payload or {}
-            matches.append(
-                CapabilityMatch(
-                    entry_id=str(payload.get("descriptor_idx", "?")),
-                    score=float(getattr(point, "score", 0.0)),
-                    entry=None,
-                )
-            )
-        return matches
-
-    # ── internal: routing config + KB loaders ──────────────────────────────────
-
-    def _get_routing_config(self, building_id: str) -> CapabilityRoutingConfig:
-        if building_id in self._config_cache:
-            return self._config_cache[building_id]
-
-        bldg_yaml = resolve_building_file(building_id, "building.yaml", self._input_root)
-        if bldg_yaml is None:
-            cfg = CapabilityRoutingConfig()
-        else:
-            try:
-                with open(bldg_yaml, "r", encoding="utf-8") as fh:
-                    data = yaml.safe_load(fh) or {}
-                cfg = CapabilityRoutingConfig(**(data.get("capability_routing") or {}))
-            except Exception as e:
-                logger.warning(
-                    f"[semantic_router] routing config invalid for {building_id}: "
-                    f"{e} — falling back to defaults"
-                )
-                cfg = CapabilityRoutingConfig()
-        self._config_cache[building_id] = cfg
-        return cfg
-
-    def _get_kb(self, building_id: str) -> Optional[CapabilityKB]:
-        if building_id in self._kb_cache:
-            return self._kb_cache[building_id]
-        # Nested layout (input/<id>/capability.yaml) then FLAT layout
-        # (input/capability.yaml — the active single-building layout). Mirrors
-        # the capability agent's loader; without the flat fallback the router
-        # could not resolve entry_id → CapabilityEntry, so every match came back
-        # with entry=None and was filtered out (capability answers never grounded).
-        for cap_yaml in (
-            self._input_root / building_id / "capability.yaml",
-            self._input_root / "capability.yaml",
-        ):
-            if not cap_yaml.exists():
-                continue
-            try:
-                kb = CapabilityKB.from_yaml(cap_yaml)
-                self._kb_cache[building_id] = kb
-                return kb
-            except Exception as e:
-                logger.error(
-                    f"[semantic_router] failed to load KB for {building_id} at {cap_yaml}: {e}"
-                )
-        return None
-
-    # ── internal: Qdrant search + max-pool group-by ─────────────────────────────
-
-    async def _search_capability(
-        self,
-        query_vec: List[float],
-        collection: str,
-        building_id: str,
-        cfg: CapabilityRoutingConfig,
-    ) -> List[CapabilityMatch]:
-        """Return up to top_k distinct entries ranked by max-pool of point scores."""
-        # Fetch raw points — pull more than top_k because we'll collapse to entries
-        raw_top_k = max(cfg.top_k * 5, 20)
-        # Newer Qdrant client uses query_points; older uses search.
-        if hasattr(self._qdrant, "query_points"):
-            result = await self._qdrant.query_points(
-                collection_name=collection,
-                query=query_vec,
-                limit=raw_top_k,
-                with_payload=True,
-            )
-            raw_points = result.points if hasattr(result, "points") else result
-        else:
-            raw_points = await self._qdrant.search(
-                collection_name=collection,
-                query_vector=query_vec,
-                limit=raw_top_k,
-                with_payload=True,
-            )
-
-        # Group by entry_id, max-pool the score
-        per_entry: Dict[str, float] = {}
-        for point in raw_points:
-            payload = point.payload or {}
-            entry_id = payload.get("entry_id")
-            if not entry_id:
-                continue
-            score = float(getattr(point, "score", 0.0))
-            if entry_id not in per_entry or score > per_entry[entry_id]:
-                per_entry[entry_id] = score
-
-        # Sort by score desc, take top_k
-        ranked = sorted(per_entry.items(), key=lambda x: x[1], reverse=True)[: cfg.top_k]
-
-        # Resolve entry_id → CapabilityEntry (for content lookup by caller)
-        kb = self._get_kb(building_id)
-        kb_index = {e.id: e for e in (kb.capabilities if kb else [])}
-
-        return [
-            CapabilityMatch(entry_id=eid, score=sc, entry=kb_index.get(eid)) for eid, sc in ranked
-        ]
-
-    async def search_capability_entries(
-        self, query: str, building_id: str, min_score: float = 0.0
-    ) -> List[CapabilityMatch]:
-        """Threshold-free capability KB search for the agent answer fallback.
-
-        Routing intentionally discards capability matches below the routing
-        threshold (to avoid false-positive *routing*). But once the LLM has
-        independently routed a query to the capability node, the agent still
-        wants the best KB entries even when they sat just under that bar. This
-        embeds `query`, searches the per-building capability collection, and
-        returns resolved matches with ``score >= min_score``. Never raises.
-        """
-        binding = self._intents.get("capability")
-        cfg = self._get_config_for_intent(building_id, "capability")
-        if binding is None or cfg is None:
-            return []
-        try:
-            query_vec = await self._embedder.embed(query)
-            collection = f"{binding.collection_prefix}{building_id}"
-            matches = await self._search_capability(query_vec, collection, building_id, cfg)
-            return [m for m in matches if m.score >= min_score and m.entry is not None]
-        except Exception as e:
-            logger.warning(f"[semantic_router] capability fallback search failed: {e}")
-            return []

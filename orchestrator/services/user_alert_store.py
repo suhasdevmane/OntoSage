@@ -58,6 +58,7 @@ class UserAlertStore:
         key = self._key(building_id, user_id, rule_id)
         try:
             from orchestrator.redis_manager import redis_manager
+
             await redis_manager.set_cache(key, json.dumps(rule_doc), ttl=_TTL_SECONDS)
             logger.info(f"[user_alerts] created rule {rule_id} for user {user_id[:8]}...")
         except Exception as e:
@@ -72,6 +73,7 @@ class UserAlertStore:
         rules: List[Dict[str, Any]] = []
         try:
             from orchestrator.redis_manager import redis_manager
+
             client = await redis_manager._ensure_client()
             if client is None:
                 return rules
@@ -94,6 +96,7 @@ class UserAlertStore:
         key = self._key(building_id, user_id, rule_id)
         try:
             from orchestrator.redis_manager import redis_manager
+
             await redis_manager.delete_cache(key)
             logger.info(f"[user_alerts] deleted rule {rule_id} for user {user_id[:8]}...")
             return True
@@ -109,6 +112,7 @@ class UserAlertStore:
         rules: List[Dict[str, Any]] = []
         try:
             from orchestrator.redis_manager import redis_manager
+
             client = await redis_manager._ensure_client()
             if client is None:
                 return rules

@@ -1,0 +1,218 @@
+# SATURATE (V4-T12): per-instance amenities with STRUCTURED locations
+# (ontosage:locatedIn <space>) so proximity constraints are computable.
+# Placement is simulated and labeled as such; replace with surveyed
+# locations for a real building — the structure is what matters.
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_Floor0>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water point — Room 0.01 — Main Reception"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01> ;
+    ontosage:onFloor "Floor0" ;
+    ontosage:locationText "Drinking water point in Room 0.01 — Main Reception (floor Floor0)" ;
+    ontosage:answerText "There is a drinking water point in Room 0.01 — Main Reception on floor Floor0." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_Floor1>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water point — Room 1.06 — Computer Laboratory"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.06> ;
+    ontosage:onFloor "Floor1" ;
+    ontosage:locationText "Drinking water point in Room 1.06 — Computer Laboratory (floor Floor1)" ;
+    ontosage:answerText "There is a drinking water point in Room 1.06 — Computer Laboratory on floor Floor1." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_Floor2>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water point — Room 2.01 — Research Laboratory"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.01> ;
+    ontosage:onFloor "Floor2" ;
+    ontosage:locationText "Drinking water point in Room 2.01 — Research Laboratory (floor Floor2)" ;
+    ontosage:answerText "There is a drinking water point in Room 2.01 — Research Laboratory on floor Floor2." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_Floor3>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water point — Room 3.01 — Research Laboratory"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.01> ;
+    ontosage:onFloor "Floor3" ;
+    ontosage:locationText "Drinking water point in Room 3.01 — Research Laboratory (floor Floor3)" ;
+    ontosage:answerText "There is a drinking water point in Room 3.01 — Research Laboratory on floor Floor3." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_Floor4>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water point — Room 4.01 — Research Laboratory"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.01> ;
+    ontosage:onFloor "Floor4" ;
+    ontosage:locationText "Drinking water point in Room 4.01 — Research Laboratory (floor Floor4)" ;
+    ontosage:answerText "There is a drinking water point in Room 4.01 — Research Laboratory on floor Floor4." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_Floor5>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water point — Room 5.01 — Research Laboratory"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01> ;
+    ontosage:onFloor "Floor5" ;
+    ontosage:locationText "Drinking water point in Room 5.01 — Research Laboratory (floor Floor5)" ;
+    ontosage:answerText "There is a drinking water point in Room 5.01 — Research Laboratory on floor Floor5." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_unknown>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water point — Server Room — Floor 2 (Room 2.44)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2> ;
+    ontosage:onFloor "unknown" ;
+    ontosage:locationText "Drinking water point in Server Room — Floor 2 (Room 2.44) (floor unknown)" ;
+    ontosage:answerText "There is a drinking water point in Server Room — Floor 2 (Room 2.44) on floor unknown." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_StudyArea_Floor0>
+    a ontosage:Amenity , ontosage:StudyArea ;
+    rdfs:label "Study area — Room 0.05 — Mechanical Plant Room"@en ;
+    ontosage:layTerms "study area, study space, workspace, quiet study, place to work, place to sit and work" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.05> ;
+    ontosage:onFloor "Floor0" ;
+    ontosage:locationText "Study area in Room 0.05 — Mechanical Plant Room (floor Floor0)" ;
+    ontosage:answerText "There is a study area in Room 0.05 — Mechanical Plant Room on floor Floor0." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_StudyArea_Floor1>
+    a ontosage:Amenity , ontosage:StudyArea ;
+    rdfs:label "Study area — Room 1.08 — Computer Laboratory"@en ;
+    ontosage:layTerms "study area, study space, workspace, quiet study, place to work, place to sit and work" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08> ;
+    ontosage:onFloor "Floor1" ;
+    ontosage:locationText "Study area in Room 1.08 — Computer Laboratory (floor Floor1)" ;
+    ontosage:answerText "There is a study area in Room 1.08 — Computer Laboratory on floor Floor1." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_StudyArea_Floor2>
+    a ontosage:Amenity , ontosage:StudyArea ;
+    rdfs:label "Study area — Room 2.03 — Research Laboratory"@en ;
+    ontosage:layTerms "study area, study space, workspace, quiet study, place to work, place to sit and work" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.03> ;
+    ontosage:onFloor "Floor2" ;
+    ontosage:locationText "Study area in Room 2.03 — Research Laboratory (floor Floor2)" ;
+    ontosage:answerText "There is a study area in Room 2.03 — Research Laboratory on floor Floor2." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_StudyArea_Floor3>
+    a ontosage:Amenity , ontosage:StudyArea ;
+    rdfs:label "Study area — Room 3.03 — Research Laboratory"@en ;
+    ontosage:layTerms "study area, study space, workspace, quiet study, place to work, place to sit and work" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.03> ;
+    ontosage:onFloor "Floor3" ;
+    ontosage:locationText "Study area in Room 3.03 — Research Laboratory (floor Floor3)" ;
+    ontosage:answerText "There is a study area in Room 3.03 — Research Laboratory on floor Floor3." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_StudyArea_Floor4>
+    a ontosage:Amenity , ontosage:StudyArea ;
+    rdfs:label "Study area — Room 4.03 — Research Laboratory"@en ;
+    ontosage:layTerms "study area, study space, workspace, quiet study, place to work, place to sit and work" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.03> ;
+    ontosage:onFloor "Floor4" ;
+    ontosage:locationText "Study area in Room 4.03 — Research Laboratory (floor Floor4)" ;
+    ontosage:answerText "There is a study area in Room 4.03 — Research Laboratory on floor Floor4." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_StudyArea_Floor5>
+    a ontosage:Amenity , ontosage:StudyArea ;
+    rdfs:label "Study area — Room 5.03 — Research Laboratory"@en ;
+    ontosage:layTerms "study area, study space, workspace, quiet study, place to work, place to sit and work" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03> ;
+    ontosage:onFloor "Floor5" ;
+    ontosage:locationText "Study area in Room 5.03 — Research Laboratory (floor Floor5)" ;
+    ontosage:answerText "There is a study area in Room 5.03 — Research Laboratory on floor Floor5." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_StudyArea_unknown>
+    a ontosage:Amenity , ontosage:StudyArea ;
+    rdfs:label "Study area — Server Room — Floor 5 (Room 5.44)"@en ;
+    ontosage:layTerms "study area, study space, workspace, quiet study, place to work, place to sit and work" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5> ;
+    ontosage:onFloor "unknown" ;
+    ontosage:locationText "Study area in Server Room — Floor 5 (Room 5.44) (floor unknown)" ;
+    ontosage:answerText "There is a study area in Server Room — Floor 5 (Room 5.44) on floor unknown." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Floor0>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 0.04 — Mechanical Plant Room"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, accessible toilet" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.04> ;
+    ontosage:onFloor "Floor0" ;
+    ontosage:locationText "Toilet facility in Room 0.04 — Mechanical Plant Room (floor Floor0)" ;
+    ontosage:answerText "There is a toilet facility in Room 0.04 — Mechanical Plant Room on floor Floor0." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Floor1>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 1.07 — Computer Laboratory"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, accessible toilet" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.07> ;
+    ontosage:onFloor "Floor1" ;
+    ontosage:locationText "Toilet facility in Room 1.07 — Computer Laboratory (floor Floor1)" ;
+    ontosage:answerText "There is a toilet facility in Room 1.07 — Computer Laboratory on floor Floor1." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Floor2>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 2.02 — Research Laboratory"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, accessible toilet" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.02> ;
+    ontosage:onFloor "Floor2" ;
+    ontosage:locationText "Toilet facility in Room 2.02 — Research Laboratory (floor Floor2)" ;
+    ontosage:answerText "There is a toilet facility in Room 2.02 — Research Laboratory on floor Floor2." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Floor3>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 3.02 — Research Laboratory"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, accessible toilet" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.02> ;
+    ontosage:onFloor "Floor3" ;
+    ontosage:locationText "Toilet facility in Room 3.02 — Research Laboratory (floor Floor3)" ;
+    ontosage:answerText "There is a toilet facility in Room 3.02 — Research Laboratory on floor Floor3." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Floor4>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 4.02 — Research Laboratory"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, accessible toilet" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.02> ;
+    ontosage:onFloor "Floor4" ;
+    ontosage:locationText "Toilet facility in Room 4.02 — Research Laboratory (floor Floor4)" ;
+    ontosage:answerText "There is a toilet facility in Room 4.02 — Research Laboratory on floor Floor4." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Floor5>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 5.02 — Research Laboratory"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, accessible toilet" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02> ;
+    ontosage:onFloor "Floor5" ;
+    ontosage:locationText "Toilet facility in Room 5.02 — Research Laboratory (floor Floor5)" ;
+    ontosage:answerText "There is a toilet facility in Room 5.02 — Research Laboratory on floor Floor5." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_unknown>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Server Room — Floor 4 (Room 4.44)"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, accessible toilet" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4> ;
+    ontosage:onFloor "unknown" ;
+    ontosage:locationText "Toilet facility in Server Room — Floor 4 (Room 4.44) (floor unknown)" ;
+    ontosage:answerText "There is a toilet facility in Server Room — Floor 4 (Room 4.44) on floor unknown." ;
+    ontosage:isSimulated "true"^^xsd:boolean .

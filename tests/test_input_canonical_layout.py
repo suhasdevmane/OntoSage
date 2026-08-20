@@ -15,7 +15,6 @@ from unittest.mock import patch
 
 import pytest
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Adapter registry search-path ordering
 # ─────────────────────────────────────────────────────────────────────────────
@@ -25,17 +24,13 @@ def test_adapter_registry_search_paths_prefer_input():
     """input/ paths must appear BEFORE config/ paths so they win when both exist."""
     from orchestrator.services.adapters.registry import _REGISTRY_SEARCH_PATHS
 
-    input_indices = [
-        i for i, p in enumerate(_REGISTRY_SEARCH_PATHS) if "input" in str(p)
-    ]
-    config_indices = [
-        i for i, p in enumerate(_REGISTRY_SEARCH_PATHS) if "config" in str(p)
-    ]
+    input_indices = [i for i, p in enumerate(_REGISTRY_SEARCH_PATHS) if "input" in str(p)]
+    config_indices = [i for i, p in enumerate(_REGISTRY_SEARCH_PATHS) if "config" in str(p)]
     assert input_indices, "expected at least one input/ search path"
     assert config_indices, "expected at least one config/ search path (legacy)"
-    assert max(input_indices) < min(config_indices), (
-        "input/ search paths must be checked first so they take precedence"
-    )
+    assert max(input_indices) < min(
+        config_indices
+    ), "input/ search paths must be checked first so they take precedence"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -55,14 +50,19 @@ def test_per_building_yaml_overrides_building_name(tmp_path, monkeypatch):
 
     # Need to reimport shared.config with a fresh module state.  Easiest is to
     # call the loader directly with a stub Settings object.
-    from shared.config import _load_per_building_yaml, Settings
+    from shared.config import Settings, _load_per_building_yaml
 
     s = Settings()
     s.BUILDING_ID = "bldgZ"
     s.BUILDING_NAME = "DEFAULT"
 
     # Patch the dir search so the test fixture is found.
-    with patch("shared.config.Path", side_effect=lambda p: (tmp_path / p) if "input" in str(p) and "/app" not in str(p) else Path(p)):
+    with patch(
+        "shared.config.Path",
+        side_effect=lambda p: (
+            (tmp_path / p) if "input" in str(p) and "/app" not in str(p) else Path(p)
+        ),
+    ):
         # The loader checks both /app/input and input.  Override env to ensure
         # YAML wins.
         monkeypatch.delenv("BUILDING_NAME", raising=False)
@@ -76,7 +76,7 @@ def test_per_building_yaml_overrides_building_name(tmp_path, monkeypatch):
 
 def test_per_building_yaml_loader_runs_without_error_when_file_missing(monkeypatch):
     """When input/<bldg>/building.yaml is absent, the loader is a no-op."""
-    from shared.config import _load_per_building_yaml, Settings
+    from shared.config import Settings, _load_per_building_yaml
 
     s = Settings()
     s.BUILDING_ID = "nonexistent_bldg_99"
@@ -87,7 +87,7 @@ def test_per_building_yaml_loader_runs_without_error_when_file_missing(monkeypat
 
 def test_env_var_still_wins_over_yaml(monkeypatch, tmp_path):
     """When BUILDING_NAME is in the env, the YAML is ignored."""
-    from shared.config import _load_per_building_yaml, Settings
+    from shared.config import Settings, _load_per_building_yaml
 
     monkeypatch.setenv("BUILDING_NAME", "FROM_ENV")
     s = Settings()
@@ -106,6 +106,7 @@ def test_env_var_still_wins_over_yaml(monkeypatch, tmp_path):
 def test_existing_bldg1_yaml_has_explicit_name_and_id():
     """The shipped input/building.yaml (flat layout) declares its identity explicitly."""
     import yaml
+
     yaml_path = Path("input/building.yaml")
     if not yaml_path.exists():
         pytest.skip("input/building.yaml not present")

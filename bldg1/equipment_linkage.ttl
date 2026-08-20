@@ -32,7 +32,7 @@ bldg:PUMP-CH1 a brick:Pump ;
 # Feed UUIDs deterministic: MD5("bldg1:{feed_id}") formatted 8-4-4-4-12
 # (must match feeds/registry.py _derive_uuid() and the MySQL column names)
 
-bldg:feed_lift_vibration_floor0 a brick:Vibration_Sensor ;
+bldg:feed_lift_vibration_floor0 a brick:Vibration_Sensor_Equipment ;
     rdfs:label "Lift Vibration Monitor"^^xsd:string ;
     brick:isPointOf bldg:LIFT-01 ;
     brick:hasLocation bldg:Floor0 ;

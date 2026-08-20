@@ -342,6 +342,65 @@ def _live_data_need_from_hint(hint: Optional[Any], query: str) -> Optional[Tuple
     return None
 
 
+#: reflex pipeline stages, in execution order, keyed by the intermediate_results
+#: key each stage writes (the shared-state contract in CLAUDE.md)
+_TRACE_STAGE_MARKERS = (
+    ("sparql", "sparql_results"),
+    ("sql", "sql_data"),
+    ("analytics", "analytics_output"),
+    ("forecast", "forecast_result"),
+    ("visualization", "visualization_path"),
+)
+
+
+def build_plan_trace(
+    results: Dict[str, Any], executed_stages: Optional[List[str]] = None
+) -> Dict[str, Any]:
+    """V4-T33 — 'the brain routes everything': one plan-trace formalism.
+
+    Deliberative answers already carry a plan (the dossier); reflex answers get
+    the route_decision audit record wrapped as a 1-step reflex plan. Pure dict
+    assembly over data every request already produces — no extra LLM or I/O,
+    so there is no latency tax. `executed_stages` (from the typed pipeline_ctx)
+    takes precedence over dict-key sniffing for the reflex step list.
+    """
+    rd = results.get("route_decision") or {}
+    base = {
+        "intent": rd.get("intent_after_overrides") or rd.get("intent_from_dialogue"),
+        "final_node": rd.get("final_node"),
+        "decision_source": rd.get("decision_source"),
+        "overrides_applied": list(rd.get("overrides_applied") or []),
+    }
+    dossier = results.get("evidence_dossier") or {}
+    if dossier:
+        return {
+            **base,
+            "kind": "deliberative",
+            "final_node": base["final_node"] or "deliberate",
+            # plan_hash = plan + execution context (candidate set, window, basis):
+            # a provenance id for what was computed, which legitimately differs
+            # between runs because busy rooms are excluded from the candidate set.
+            "plan_hash": dossier.get("plan_hash"),
+            # plan_fingerprint = the reasoning plan alone. THIS is the determinism
+            # anchor to compare across runs, models or buildings (BUG-184).
+            "plan_fingerprint": dossier.get("plan_fingerprint"),
+            "steps": [
+                "compile_cqir",
+                "admission_gate",
+                "enumerate_candidates",
+                "fetch_aggregate",
+                "score",
+                "dossier_guard",
+            ],
+        }
+    steps = list(executed_stages or []) or [
+        name for name, key in _TRACE_STAGE_MARKERS if results.get(key) is not None
+    ]
+    if not steps and base["final_node"]:
+        steps = [base["final_node"]]
+    return {**base, "kind": "reflex", "steps": steps}
+
+
 class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
     """LangGraph-based conversation workflow.
 
@@ -851,7 +910,9 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # it is not available at the earlier stages — so the rule that keeps
         # building questions out of the open-domain answerer runs here.
         try:
-            from orchestrator.services.routing_contract import apply_contract as _apply_rc
+            from orchestrator.services.routing_contract import (
+                apply_contract as _apply_rc,
+            )
 
             _rc_state = {
                 "intent": intent,
@@ -862,6 +923,11 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             if _apply_rc(_rc_query, _rc_state, stage="concept"):
                 intent = _rc_state["intent"]
                 state.intermediate_results["intent"] = intent
+                # BUG-167: refresh the general flag HERE — the re-sync below
+                # only refreshes it when local and stored intents DIFFER, so a
+                # concept-stage flip left is_general=True and the dispatch
+                # chain sent the corrected intent to the open-domain answerer.
+                is_general = intent == "general"
                 if _rc_state.get("analytics"):
                     state.intermediate_results["analytics_required"] = True
                     state.analytics_required = True
@@ -1083,8 +1149,8 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                             # "which meters do we have?" by listing all 600 sensors,
                             # which reads as if they were the meters.
                             from orchestrator.services.grounding_guard import (
-                                enablement_hint,
                                 SUBJECT_EQUIPMENT,
+                                enablement_hint,
                             )
 
                             _generic = (
@@ -1391,6 +1457,66 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         finally:
             reset_request_bctx(_bctx_token)
 
+        # CAVEAT-148 — repair a retrieval that returned the WRONG modality.
+        # Measured: "building-wide average humidity" generated SPARQL binding
+        # bldg:Building_Air_Static_Pressure_Sensor.01 — a PRESSURE sensor — so the
+        # answer could only decline, and any aggregate would have rested on 2 of
+        # ~70 humidity sensors. Fires ONLY on a total miss (the question names a
+        # modality and NOT ONE returned sensor matches it), so a correct or even
+        # partially-correct retrieval is untouched.
+        try:
+            from orchestrator.services import modality_repair as _mr
+
+            _want = self._infer_query_kind(_sparql_query)
+            _res_now = result.get("results", {}) if isinstance(result, dict) else {}
+            _binds_now = (
+                _res_now.get("results", {}).get("bindings", [])
+                if isinstance(_res_now, dict)
+                else []
+            )
+            # Two distinct failures share one repair. A WRONG-modality result is a
+            # total miss. An UNDER-POPULATED one has the right modality but too
+            # little of it — and for a question that claims to span the building
+            # that is equally wrong: "building-wide average humidity" was computed
+            # from 8 of ~70 humidity sensors, which the k-anonymity floor then
+            # blocked at k=8. The privacy gate was catching a correctness bug.
+            _miss = _mr.needs_repair(_binds_now, _want)
+            _under = _mr.needs_population(_sparql_query, _binds_now, _want)
+            logger.info(
+                f"[modality_repair] want={_want} rows={len(_binds_now)} "
+                f"miss={_miss} under_populated={_under}"
+            )
+            if _miss or _under:
+                _q = _mr.build_modality_query(_want, settings.BUILDING_NAMESPACE)
+                if _q:
+                    from orchestrator.services.deliberation.live import (
+                        sparql_exec as _sx,
+                    )
+
+                    _repaired = await _sx(_q)
+                    _rb = (_repaired or {}).get("results", {}).get("bindings", [])
+                    # For an under-populated aggregate, only replace if the graph
+                    # genuinely offers MORE — never shrink a good result set.
+                    if _rb and (_miss or len(_rb) > len(_binds_now)):
+                        logger.warning(
+                            f"[modality_repair] {'no' if _miss else 'only a sample of'} {_want} "
+                            f"sensors from retrieval ({len(_binds_now)} rows); "
+                            f"replaced with {len(_rb)} from the graph"
+                        )
+                        result["results"] = _repaired
+                        result["success"] = True
+                        result["analytics_required"] = True
+                        state.intermediate_results["modality_repair"] = {
+                            "modality": _want,
+                            "reason": "wrong_modality" if _miss else "under_populated",
+                            "was": len(_binds_now),
+                            "now": len(_rb),
+                        }
+        except Exception as _mr_err:
+            # WARNING, not debug: a guard that stops guarding must say so, or a
+            # disabled repair is indistinguishable from one that found nothing.
+            logger.warning(f"[modality_repair] skipped ({type(_mr_err).__name__}): {_mr_err}")
+
         state.intermediate_results["sparql_result"] = result
         state.query_results = result.get("results", {})
         if result.get("success"):
@@ -1515,6 +1641,43 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         if result.get("llm_reasoning"):
             logger.info(f"💭 LLM reasoning: {result.get('llm_reasoning')}")
 
+        # V5-T39 / BUG-195 — PROTECT chokepoint for the SPARQL lane.
+        #
+        # The sql lane already consults the PDP before any row leaves the database,
+        # but SPARQL can ANSWER A READING QUESTION ON ITS OWN: when it resolves the
+        # query fully (analytics_required False) the pipeline ends here, and the
+        # graph-resolved values go straight to the user. Measured live: an occupant
+        # asked "How many people are in the building right now?", was told "about
+        # 183 people", and the orchestrator logged ZERO [protect] lines — the
+        # k-anonymity floor could be raised to 900 sensors and the answer never
+        # changed, because the decision point was never reached on this path.
+        #
+        # Consult only when this node is actually terminal for a reading question:
+        # when analytics_required is True the sql chokepoint runs next and would
+        # otherwise double-count the same fetch.
+        if not state.analytics_required and result.get("success"):
+            try:
+                from orchestrator.services.privacy import enforcement as _protect
+
+                _n_sensors = len(state.intermediate_results.get("uuids") or []) or None
+                _verdict = await _protect.consult(
+                    "sparql",
+                    state.intermediate_results.get("user_role"),
+                    modality=self._infer_query_kind(latest_message) or "",
+                    n_sensors=_n_sensors,
+                    data_age_minutes=0.0,
+                    user_id=state.intermediate_results.get("user_id"),
+                )
+                if _protect.should_block(_verdict, n_sensors=_n_sensors):
+                    state.intermediate_results["sparql_results"] = []
+                    state.intermediate_results["sparql_result"] = _protect.refusal_payload(
+                        _verdict, "sparql", latest_message
+                    )
+                    state.analytics_required = False
+                    return state
+            except Exception as _protect_err:  # pragma: no cover - never break the lane
+                logger.warning(f"[protect] sparql consult failed (non-fatal): {_protect_err}")
+
         # NEW: Save analytics decision and results as JSON
         if result.get("success"):
             self._save_query_output(
@@ -1620,6 +1783,49 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             logger.info("=" * 80)
             start_date = state.intermediate_results.get("start_date")
             end_date = state.intermediate_results.get("end_date")
+
+            # V5-T39 — PROTECT chokepoint: the PDP is consulted BEFORE any row
+            # leaves the database. shadow = log only; on = a denial returns a
+            # structured refusal with ZERO adapter fetches.
+            try:
+                from datetime import datetime as _dt
+
+                from orchestrator.services.privacy import enforcement as _protect
+
+                _age_min = None
+                if start_date:
+                    try:
+                        _age_min = max(
+                            0.0,
+                            (_dt.utcnow() - _dt.fromisoformat(str(start_date)[:19])).total_seconds()
+                            / 60.0,
+                        )
+                    except ValueError:
+                        _age_min = None
+                _verdict = await _protect.consult(
+                    "sql",
+                    state.intermediate_results.get("user_role"),
+                    modality=self._infer_query_kind(latest_message) or "",
+                    n_sensors=len(uuids),
+                    data_age_minutes=_age_min,
+                    user_id=state.intermediate_results.get("user_id"),
+                )
+                if _protect.should_block(_verdict, n_sensors=len(uuids)):
+                    state.intermediate_results["sql_result"] = _protect.refusal_payload(
+                        _verdict, "sql"
+                    )
+                    state.intermediate_results["applied_policies"] = [
+                        f"{_verdict.policy_iri} ({_verdict.decision}: {_verdict.reason})"
+                    ]
+                    state.analytics_required = False
+                    return state
+                if _verdict is not None and _verdict.decision != "allow":
+                    state.intermediate_results.setdefault("applied_policies", []).append(
+                        f"{_verdict.policy_iri} ({_verdict.decision}: {_verdict.reason})"
+                    )
+            except Exception as _protect_err:  # enforcement must never break the lane
+                logger.warning(f"[protect] sql consult failed (non-fatal): {_protect_err}")
+
             result = await self.sql_agent.fetch_data_for_uuids(
                 uuids, latest_message, storage_map, start_date, end_date
             )
@@ -1707,48 +1913,104 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                     _missing_type = stype
                     break
 
+            # NEVER claim a sensor kind is absent without asking the graph
+            # (BUG-152): after saturation these kinds DO exist, and the old
+            # hardcoded denial would lie. Asymmetric failure: if the check
+            # errors, assume the sensors exist and fall through to the generic
+            # no-UUIDs path — a discovery miss must not become a false absence
+            # claim.
+            if _missing_type is not None:
+                _kind_classes = {
+                    "occupancy": (
+                        "Occupancy_Count_Sensor",
+                        "People_Count_Sensor",
+                        "Occupancy_Sensor",
+                        "Motion_Sensor",
+                    ),
+                    "energy": (
+                        "Energy_Sensor",
+                        "Electrical_Energy_Sensor",
+                        "Energy_Usage_Sensor",
+                        "Power_Sensor",
+                        "Electric_Power_Sensor",
+                    ),
+                }[_missing_type]
+                try:
+                    import httpx as _httpx
+
+                    from orchestrator.agents.sparql_agent import (
+                        GRAPHDB_QUERY_ENDPOINT as _GQE,
+                    )
+                    from orchestrator.agents.sparql_agent import (
+                        _active_namespace as _ns_fn,
+                    )
+
+                    _vals = " ".join(f"brick:{c}" for c in _kind_classes)
+                    _ask = (
+                        "PREFIX brick: <https://brickschema.org/schema/Brick#> "
+                        "ASK { ?s a ?cls . VALUES ?cls { " + _vals + " } "
+                        f'FILTER(STRSTARTS(STR(?s), "{_ns_fn()}")) }}'
+                    )
+                    async with _httpx.AsyncClient(timeout=8.0) as _client:
+                        _resp = await _client.post(
+                            _GQE,
+                            content=_ask.encode("utf-8"),
+                            headers={
+                                "Content-Type": "application/sparql-query",
+                                "Accept": "application/sparql-results+json",
+                            },
+                        )
+                        _resp.raise_for_status()
+                        if bool(_resp.json().get("boolean")):
+                            logger.info(
+                                f"[{state.current_intent}] {_missing_type} sensors DO exist "
+                                "in the graph — discovery missed them; using generic path"
+                            )
+                            _missing_type = None
+                except Exception as _exc:
+                    logger.warning(
+                        f"[{state.current_intent}] sensor-kind existence check failed "
+                        f"({_exc}) — refusing to claim absence"
+                    )
+                    _missing_type = None
+
             if _missing_type == "occupancy":
                 logger.info(
-                    f"[{state.current_intent}] No UUIDs + occupancy query — "
-                    "Abacws has no occupancy sensors, skipping text-to-SQL"
+                    f"[{state.current_intent}] No UUIDs + occupancy query — graph confirms "
+                    "no occupancy sensors, skipping text-to-SQL"
                 )
                 result = {
                     "success": False,
                     "query": "NO_OCCUPANCY_SENSORS",
                     "results": {"data": []},
                     "formatted_response": (
-                        "**0 occupancy sensors identified** — "
-                        "occupancy data is not available for the Abacws building.\n\n"
-                        "This building does not have occupancy sensors, motion detectors, "
-                        "or desk-utilisation monitors installed. As a result, occupancy "
-                        "patterns, headcounts, and space utilisation reports cannot be "
-                        "generated from sensor data.\n\n"
-                        "Abacws actively monitors: **temperature**, **CO₂**, **humidity**, "
-                        "**air quality** (PM2.5 / TVOC / NO₂), **illuminance**, and **gas** sensors. "
-                        "Would you like to check one of those instead?"
+                        "**No occupancy sensors are modelled for this building.**\n\n"
+                        "Its ontology lists no occupancy counters, motion detectors, or "
+                        "desk-utilisation monitors, so headcounts and space-utilisation "
+                        "reports cannot be generated from sensor data.\n\n"
+                        'Ask *"what does this building monitor?"* to see the sensor '
+                        "kinds that are available."
                     ),
                     "analytics_required": False,
                 }
                 state.analytics_required = False
             elif _missing_type == "energy":
                 logger.info(
-                    f"[{state.current_intent}] No UUIDs + energy query — "
-                    "Abacws has no energy meters, skipping text-to-SQL"
+                    f"[{state.current_intent}] No UUIDs + energy query — graph confirms "
+                    "no energy meters, skipping text-to-SQL"
                 )
                 result = {
                     "success": False,
                     "query": "NO_ENERGY_METERS",
                     "results": {"data": []},
                     "formatted_response": (
-                        "**Energy meter data is not available for the Abacws building.**\n\n"
-                        "This building does not have smart energy meters or power consumption "
-                        "sensors. Direct kWh readings, Energy Use Intensity (EUI) calculations, "
-                        "and energy cost estimates cannot be produced from the installed hardware.\n\n"
-                        "Abacws actively monitors: **temperature**, **CO₂**, **humidity**, "
-                        "**air quality** (PM2.5 / TVOC / NO₂), **illuminance**, and **gas** sensors. "
-                        "Energy efficiency can be *inferred* from these — for example, "
-                        "over-heating or poor ventilation often indicates wasted energy. "
-                        "Would you like that kind of analysis instead?"
+                        "**No energy meters are modelled for this building.**\n\n"
+                        "Its ontology lists no smart energy meters or power sensors, so "
+                        "direct kWh readings, Energy Use Intensity (EUI) calculations and "
+                        "energy-cost estimates cannot be produced from the installed "
+                        "hardware.\n\n"
+                        'Ask *"what does this building monitor?"* to see the sensor '
+                        "kinds that are available."
                     ),
                     "analytics_required": False,
                 }
@@ -2949,6 +3211,33 @@ SELECT ?l WHERE {
         """
         logger.info("Executing response node")
 
+        # V4-T33: every answer carries a plan trace — reflex or deliberative,
+        # one formalism. Pure dict assembly; never allowed to break responses.
+        try:
+            results = state.intermediate_results
+            if "route_decision" not in results:
+                # router mutations don't persist through LangGraph edges —
+                # recover the audit record from the routing stash
+                stash = getattr(self, "_route_stash", {})
+                rd = stash.pop(getattr(state, "conversation_id", "") or "_", None)
+                if rd is not None:
+                    results["route_decision"] = rd
+            _ctx = state.pipeline_ctx
+            executed = [
+                name
+                for name, val in (
+                    ("sparql", getattr(_ctx, "sparql_result", None)),
+                    ("sql", getattr(_ctx, "sql_result", None)),
+                    ("analytics", getattr(_ctx, "analytics_result", None)),
+                    ("forecast", results.get("forecast_result")),
+                    ("visualization", getattr(_ctx, "viz_result", None)),
+                )
+                if val
+            ]
+            results["plan_trace"] = build_plan_trace(results, executed_stages=executed)
+        except Exception as _pt:
+            logger.debug(f"plan_trace skipped: {_pt}")
+
         # Phase 1: attach grounding verification record (rule-based, no LLM call)
         try:
             state = await self.verifier_agent.verify(state)
@@ -2975,8 +3264,30 @@ SELECT ?l WHERE {
         # (document/export/control/maintenance). Prose paths (analytics/sparql/
         # capability/etc.) are already LLM-generated, so synthesis is skipped there.
         _template_draft = False
-        if dialogue_response:
+        _deliberate_result = state.intermediate_results.get("deliberate_result") or {}
+        _events_result = state.intermediate_results.get("events_result") or {}
+        _register_result = state.intermediate_results.get("register_result") or {}
+        _diagnosis_result = state.intermediate_results.get("diagnosis_result") or {}
+        _privacy_refusal = state.intermediate_results.get("privacy_refusal_result") or {}
+        if _privacy_refusal.get("formatted_response"):
+            # V5-T42: absolute — outranks even a dialogue_response draft
+            final_response = _privacy_refusal["formatted_response"]
+        elif dialogue_response:
             final_response = dialogue_response
+        elif _diagnosis_result.get("formatted_response"):
+            # V5-T20: why-question diagnosis (evidence rows, correlation language)
+            final_response = _diagnosis_result["formatted_response"]
+        elif _register_result.get("formatted_response"):
+            # V5-T26: compliance-register lane (dates from graph triples)
+            final_response = _register_result["formatted_response"]
+        elif _events_result.get("formatted_response"):
+            # V5-T24: event lane (bookings / work orders / access) — deterministic
+            # template over adapter numbers, same trust class as deliberate
+            final_response = _events_result["formatted_response"]
+        elif _deliberate_result.get("formatted_response"):
+            # ARBITER deliberation (V4): deterministic template prose, already
+            # numeric-guard checked against its own evidence dossier
+            final_response = _deliberate_result["formatted_response"]
         elif viz_result.get("formatted_response") and viz_result.get("media"):
             # Only use viz_result if it actually produced an image (has media payload)
             final_response = viz_result["formatted_response"]
@@ -3141,14 +3452,29 @@ SELECT ?l WHERE {
         # verdict is a fabrication wearing a real number. Checked HERE, where every
         # path's answer converges: the analytics path writes its own prose and never
         # reaches the synthesis pass, which is exactly where this was first seen.
-        try:
-            from orchestrator.services.plausibility import implausibility_note
+        # V5-T21: template lanes (events/register/diagnosis/privacy) narrate
+        # COUNTS and policy text from their own payloads — the plausibility
+        # note exists for LLM-narrated READINGS and misread an episode count
+        # of 500 as an impossible humidity value. Those lanes carry their own
+        # numeric guard, so the note is scoped to LLM-narrated answers only.
+        _from_template_lane = any(
+            (state.intermediate_results.get(k) or {}).get("formatted_response") == final_response
+            for k in (
+                "events_result",
+                "register_result",
+                "diagnosis_result",
+                "privacy_refusal_result",
+            )
+        )
+        if not _from_template_lane:
+            try:
+                from orchestrator.services.plausibility import implausibility_note
 
-            _pl_note = implausibility_note(state.user_message or "", final_response)
-            if _pl_note and _pl_note[:12] not in final_response:
-                final_response = f"{_pl_note}\n\n{final_response}"
-        except Exception as _ple:  # a guard must never cost the answer
-            logger.debug(f"[plausibility] check skipped: {_ple}")
+                _pl_note = implausibility_note(state.user_message or "", final_response)
+                if _pl_note and _pl_note[:12] not in final_response:
+                    final_response = f"{_pl_note}\n\n{final_response}"
+            except Exception as _ple:  # a guard must never cost the answer
+                logger.debug(f"[plausibility] check skipped: {_ple}")
 
         # Phase 1.4 (targeted) — grounded synthesis ONLY rewrites canned-template
         # drafts (export/maintenance/control/document) into natural prose. The
@@ -3209,6 +3535,30 @@ SELECT ?l WHERE {
                     final_response += _prov.render_chips(_tags)
             except Exception as _pe:
                 logger.debug(f"provenance rendering skipped: {_pe}")
+
+        # BUG-192 — an answer may not tell the user this building cannot sense
+        # something it senses. The answering LLM sees a bounded slice of ontology
+        # context and generalises "not in what I was given" to "not in the
+        # building": measured live, bldg2 (138 temperature sensors) was told
+        # "the ontology data you provided does not contain any temperature
+        # sensors". The refusal was right; the REASON was false — and because the
+        # leak grader counts refusal markers, the false claim scored as a privacy
+        # PASS. Non-existence is knowable only from the graph, so verify with a
+        # COUNT before letting the claim reach the user. Fails OPEN and silent-free:
+        # if the count cannot be run, the answer is left exactly as it was.
+        try:
+            from orchestrator.services.absence_guard import (
+                guard_answer as _absence_guard,
+            )
+            from orchestrator.services.deliberation.live import sparql_exec as _sx
+
+            final_response, _absence_violation = await _absence_guard(
+                final_response, settings.BUILDING_NAMESPACE, _sx
+            )
+            if _absence_violation:
+                state.intermediate_results["absence_correction"] = _absence_violation
+        except Exception as _ag_err:
+            logger.debug(f"absence guard skipped: {_ag_err}")
 
         # Add to messages
         state.messages.append(
@@ -3658,6 +4008,26 @@ SELECT ?l WHERE {
         return state
 
     def _route_from_dialogue(self, state: ConversationState) -> str:
+        """Routing entry — delegates, then stashes the route_decision audit.
+
+        LangGraph conditional-edge callbacks receive the state but their
+        mutations are NOT merged back into the channel, so the record written
+        inside routing never reaches the response node. The stash (keyed by
+        conversation) survives on the orchestrator instance; _response_node
+        pops it to build the V4-T33 plan trace.
+        """
+        target = self._route_from_dialogue_impl(state)
+        rd = state.intermediate_results.get("route_decision")
+        if rd is not None:
+            if not hasattr(self, "_route_stash"):
+                self._route_stash = {}
+            self._route_stash[getattr(state, "conversation_id", "") or "_"] = rd
+            if len(self._route_stash) > 256:  # bound: drop oldest entries
+                for k in list(self._route_stash)[:64]:
+                    self._route_stash.pop(k, None)
+        return target
+
+    def _route_from_dialogue_impl(self, state: ConversationState) -> str:
         """Route from dialogue node based on intent.
 
         Phase 6D — the imperative if/elif chain that lived here was replaced
@@ -3671,11 +4041,23 @@ SELECT ?l WHERE {
           - "floor_plan" misroute when comparison+data keywords appear
           - "discovery" with spatial words → sparql instead of response
           - cached-data short-circuit for analytics-family intents
+          - V4 deliberation resume when a parked clarify question owns the turn
 
         Phase 13A — every override/decision logs a structured route_decision
         record under state.intermediate_results["route_decision"] so we can
         audit routing correctness without guessing from interleaved logs.
         """
+        # ── V4 deliberation resume: a parked clarify question owns the next turn.
+        # Session state (not query shape), so it lives here rather than in the
+        # routing contract; the deliberate node binds the reply and resumes.
+        if (state.intermediate_results.get("user_context") or {}).get("deliberate_pending"):
+            state.intermediate_results["route_decision"] = {
+                "intent_from_dialogue": state.current_intent,
+                "final_node": "deliberate",
+                "decision_source": "override",
+                "overrides_applied": ["deliberate_pending_resume"],
+            }
+            return "deliberate"
         intent = state.current_intent
         original_intent = intent  # for the audit trail
         user_query = state.messages[-1].content if state.messages else ""
@@ -4347,6 +4729,268 @@ SELECT ?l WHERE {
         state.intermediate_results["planner_result"] = result
         return state
 
+    async def _deliberate_node(self, state: ConversationState) -> ConversationState:
+        """V4 ARBITER: compile → admit → clarify-or-proceed → execute → dossier."""
+        from orchestrator.services.deliberation import clarify_policy as _cp
+        from orchestrator.services.deliberation.candidates import live_geometry
+        from orchestrator.services.deliberation.capability_schema import build_schema
+        from orchestrator.services.deliberation.capability_schema import (
+            validate as _admit,
+        )
+        from orchestrator.services.deliberation.compiler import compile_query
+        from orchestrator.services.deliberation.coverage_audit import load_modalities
+        from orchestrator.services.deliberation.dossier import (
+            build_dossier,
+            numeric_guard,
+            render_answer,
+            render_dossier_details,
+        )
+        from orchestrator.services.deliberation.live import active_identity
+        from orchestrator.services.deliberation.live import sparql_exec as _live_sparql
+        from orchestrator.services.deliberation.plan_executor import (
+            execute as _exec_plan,
+        )
+
+        query = state.messages[-1].content if state.messages else ""
+        user_ctx = dict(state.intermediate_results.get("user_context", {}) or {})
+        identity = active_identity()
+        building_id = identity["BUILDING_ID"]
+        namespace = identity["BUILDING_NAMESPACE"]
+        modalities = load_modalities(building_id)
+        # intermediate_results persist across turns in conversation state — a
+        # stale ask-turn dialogue_response would outrank this turn's answer in
+        # the response ladder, so every deliberate turn starts clean
+        for _stale in ("dialogue_response", "needs_clarification_payload", "evidence_dossier"):
+            state.intermediate_results.pop(_stale, None)
+        logger.info(f"[deliberate] building={building_id} query={query[:80]!r}")
+
+        # ── resume a parked plan: bind the reply, else recompile with it folded in
+        cqir = None
+        pending = user_ctx.pop("deliberate_pending", None)
+        reply = user_ctx.pop("deliberate_reply", None) or query
+        if pending:
+            cqir = _cp.bind_answer(pending, reply)
+            if cqir is None:
+                base = (pending.get("cqir") or {}).get("raw_query") or ""
+                query = f"{base} ({reply})" if base else query
+                logger.info("[deliberate] reply unbindable — recompiling with it folded in")
+        if cqir is None:
+            cqir = await compile_query(query, modalities)
+
+        # scope guard: this system answers for THIS building only — ranking our
+        # own rooms for "the building next door" would be a wrong-scope answer
+        # dressed in real numbers (honesty-sweep finding, 2026-08-14)
+        import re as _re
+
+        if _re.search(
+            r"\b(?:next door|neighbou?ring building|other building|building next|adjacent building)\b",
+            query,
+            _re.IGNORECASE,
+        ):
+            state.intermediate_results["deliberate_result"] = {
+                "success": False,
+                "formatted_response": (
+                    "I only hold data for **this** building — I can't rank spaces in a "
+                    "neighbouring one. Ask me about this building and I'll answer with "
+                    "its own sensors."
+                ),
+            }
+            state.intermediate_results["user_context"] = user_ctx
+            return state
+
+        # graceful degradation for terms the building cannot sense: drop-and-
+        # declare when something else mapped; decline with the sensed-modality
+        # list when nothing did — never a rephrase loop for missing vocabulary
+        cqir, _dropped_terms, _must_decline = _cp.absorb_unmapped(cqir)
+        if _must_decline:
+            sensed = ", ".join(sorted(m.name for m in modalities))
+            _what = ", ".join(f"'{d}'" for d in _dropped_terms) or "that"
+            state.intermediate_results["deliberate_result"] = {
+                "success": False,
+                "formatted_response": (
+                    f"**{_what} isn't something this building senses**, so I can't rank "
+                    f"spaces by it. It does sense: {sensed}. Ask about any of those — or "
+                    "add the sensor (TTL + registered readings) and this unlocks."
+                ),
+            }
+            state.intermediate_results["user_context"] = user_ctx
+            return state
+
+        try:
+            schema = await build_schema(building_id, namespace, _live_sparql, modalities)
+        except Exception as exc:
+            # asymmetric failure: cannot verify the building → decline, never assume
+            logger.error(f"[deliberate] schema build failed: {exc}")
+            state.intermediate_results["deliberate_result"] = {
+                "success": False,
+                "formatted_response": (
+                    "I couldn't verify this building's sensor coverage just now, so I "
+                    "won't rank spaces on unverified data. Please try again shortly."
+                ),
+            }
+            state.intermediate_results["user_context"] = user_ctx
+            return state
+
+        admission = _admit(cqir, schema)
+        decision = _cp.decide(cqir, admission)
+        for _term in _dropped_terms:
+            # dropped-but-declared: the unmappable extra shows up as an assumption
+            decision.assumptions.append(
+                _cp.Assumption(
+                    text=f"'{_term}' isn't a sensed modality here — ignored",
+                    source="not sensed",
+                )
+            )
+
+        if decision.action == "ask":
+            q = decision.question
+            text = q.question
+            if q.options:
+                text += "\n\nOptions: " + ", ".join(f"[{i+1}] {o}" for i, o in enumerate(q.options))
+            state.intermediate_results["dialogue_response"] = text
+            state.intermediate_results["needs_clarification_payload"] = {
+                "question": q.question,
+                "options": list(q.options or []),
+                "slot": q.slot,
+            }
+            # park ONLY bindable questions, and never re-park after a failed
+            # resume — a second unanswerable ask must not loop the conversation
+            if decision.pending is not None and pending is None:
+                user_ctx["deliberate_pending"] = decision.pending
+                state.intermediate_results["pending_clarification_type"] = decision.pending["type"]
+                logger.info(f"[deliberate] asking ONE question (slot={q.slot}); plan parked")
+            else:
+                logger.info(f"[deliberate] stateless ask (slot={q.slot}); nothing parked")
+            state.intermediate_results["user_context"] = user_ctx
+            return state
+
+        if decision.action == "forced_bind":
+            # V4-T29 clarify-off ablation: bind the first option instead of
+            # asking; the guess is DECLARED so the answer stays honest about it.
+            forced = (decision.pending or {}).get("options", [None])[0]
+            bound = _cp.bind_answer(decision.pending, forced) if forced else None
+            if bound is None:
+                state.intermediate_results["deliberate_result"] = {
+                    "success": False,
+                    "formatted_response": (
+                        f"I can't run this request honestly: {decision.reason}."
+                    ),
+                }
+                state.intermediate_results["user_context"] = user_ctx
+                return state
+            cqir = bound
+            admission = _admit(cqir, schema)
+            decision = _cp.decide(cqir, admission)
+            decision.assumptions.append(
+                _cp.Assumption(
+                    text=f"clarification disabled — interpreted the ambiguous part as '{forced}'",
+                    source="clarify-off ablation",
+                )
+            )
+            if decision.action != "proceed":
+                state.intermediate_results["deliberate_result"] = {
+                    "success": False,
+                    "formatted_response": (
+                        f"I can't run this request honestly: {decision.reason or 'still ambiguous after forced binding'}."
+                    ),
+                }
+                state.intermediate_results["user_context"] = user_ctx
+                return state
+
+        if decision.action == "decline":
+            missing = ", ".join(admission.missing_modalities)
+            state.intermediate_results["deliberate_result"] = {
+                "success": False,
+                "formatted_response": (
+                    (
+                        f"**No {missing} sensors are modelled with data for this building**, "
+                        "so I can't rank spaces on that. Ask \"what does this building "
+                        "monitor?\" to see what's available — or add the sensors (TTL + "
+                        "registered readings) and this question unlocks."
+                    )
+                    if missing
+                    else f"I can't run this request honestly: {decision.reason}."
+                ),
+            }
+            state.intermediate_results["user_context"] = user_ctx
+            return state
+
+        # V5-T39 — PROTECT: one PDP consult for the deliberative fetch. Ranking
+        # spans many spaces (aggregate by construction), so verdicts here are
+        # normally allow/restrict; the applied policy is CITED in the dossier.
+        _applied_policies: list = []
+        try:
+            from orchestrator.services.privacy import enforcement as _protect
+
+            _p_verdict = await _protect.consult(
+                "deliberate",
+                state.intermediate_results.get("user_role"),
+                modality=",".join(m.name for m in modalities)[:60],
+                n_spaces=len(schema.spaces),
+                data_age_minutes=0.0,
+                user_id=state.intermediate_results.get("user_id"),
+            )
+            if _protect.should_block(_p_verdict):
+                state.intermediate_results["deliberate_result"] = {
+                    "success": False,
+                    "formatted_response": _protect.refusal_payload(_p_verdict, "deliberate")[
+                        "formatted_response"
+                    ],
+                }
+                state.intermediate_results["user_context"] = user_ctx
+                return state
+            if _p_verdict is not None and _p_verdict.decision != "allow":
+                _applied_policies.append(
+                    f"{_p_verdict.policy_iri.rsplit('#', 1)[-1]}: {_p_verdict.reason}"
+                )
+        except Exception as _protect_err:
+            logger.warning(f"[protect] deliberate consult failed (non-fatal): {_protect_err}")
+
+        outcome = await _exec_plan(cqir, admission, schema, live_geometry(building_id))
+
+        def _synthetic_lookup(table: str):
+            try:
+                from orchestrator.services.datasource_registry import DataSourceRegistry
+
+                registry = DataSourceRegistry(building_id)
+                registry.load()
+                tag = registry.provenance_for_table(table)
+                return None if tag is None else bool(tag.synthetic)
+            except Exception:
+                return None  # undeclared → unknown, never claimed real
+
+        dossier = build_dossier(
+            cqir,
+            decision,
+            outcome,
+            building_id,
+            synthetic_lookup=_synthetic_lookup,
+            applied_policies=_applied_policies,
+        )
+        text = render_answer(dossier) + "\n" + render_dossier_details(dossier)
+        violations = numeric_guard(text, dossier)
+        if violations:
+            # the template should never invent a number — if it somehow did,
+            # ship the dossier-backed table only, never the violating prose
+            logger.error(f"[deliberate] numeric guard tripped: {violations}")
+            text = "I computed a ranking but its narration failed the evidence check — see the dossier."
+        state.intermediate_results["deliberate_result"] = {
+            "success": True,
+            "formatted_response": text,
+            "plan_hash": dossier.plan_hash,
+            "plan_fingerprint": getattr(dossier, "plan_fingerprint", ""),
+        }
+        state.intermediate_results["evidence_dossier"] = (
+            dossier.model_dump() if hasattr(dossier, "model_dump") else dossier.dict()
+        )
+        state.intermediate_results["user_context"] = user_ctx
+        logger.info(
+            f"[deliberate] answered: plan={dossier.plan_hash} "
+            f"fp={getattr(dossier, 'plan_fingerprint', '')} ranked={len(dossier.ranked)} "
+            f"guard_violations={len(violations)}"
+        )
+        return state
+
     async def _report_node(self, state: ConversationState) -> ConversationState:
         """Phase 4.2 — Report generation node."""
         logger.info("Executing Phase 4 Report Node")
@@ -4371,6 +5015,199 @@ SELECT ?l WHERE {
         sql_result = state.intermediate_results.get("sql_result")
         result = await self.anomaly_agent.detect(state, latest_message, sensor_data=sql_result)
         state.intermediate_results["anomaly_result"] = result
+        return state
+
+    async def _events_node(self, state: ConversationState) -> ConversationState:
+        """V5-T24 — bookings / work orders / access questions from the events store."""
+        question = state.messages[-1].content if state.messages else ""
+        logger.info(f"[events] intent={state.current_intent} q={question[:60]!r}")
+        # V5-T39 — PROTECT (shadow consult): event answers are aggregate by
+        # construction (counts, availability — never named individuals), so
+        # this lane only LOGS its verdict; denial semantics live in the
+        # inference-class gate upstream.
+        try:
+            from orchestrator.services.privacy import enforcement as _protect
+
+            await _protect.consult(
+                "events",
+                state.intermediate_results.get("user_role"),
+                modality="access",
+                user_id=state.intermediate_results.get("user_id"),
+            )
+        except Exception as _protect_err:
+            logger.debug(f"[protect] events consult skipped: {_protect_err}")
+        try:
+            from orchestrator.services.adapters.registry import adapter_registry
+            from orchestrator.services.deliberation.coverage_audit import (
+                CoverageAuditor,
+                load_modalities,
+            )
+            from orchestrator.services.deliberation.live import sparql_exec
+            from orchestrator.services.event_query_service import EventQueryService
+            from shared.config import settings
+
+            building_id = settings.BUILDING_ID
+            namespace = settings.BUILDING_NAMESPACE
+            adapter = None
+            try:
+                adapter = adapter_registry.get("bldg:events_data")
+            except Exception:
+                adapter = None
+            rooms: list = []
+            point_map: dict = {}
+            if adapter is not None:
+                auditor = CoverageAuditor(sparql_exec, load_modalities(building_id))
+                spaces = await auditor.discover_spaces(namespace)
+                rooms = sorted(s.space_iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1] for s in spaces)
+                # V5-T21: sensor uuid -> (room, modality) so anomaly episodes
+                # narrate WHERE they happened, not bare uuids
+                try:
+                    from orchestrator.services.deliberation.capability_schema import (
+                        build_schema,
+                    )
+
+                    schema = await build_schema(
+                        building_id, namespace, sparql_exec, load_modalities(building_id)
+                    )
+                    for sc in schema.spaces:
+                        local = sc.space_iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+                        for modality, h in (sc.modalities or {}).items():
+                            if h.get("uuid"):
+                                point_map[h["uuid"]] = (local, modality)
+                except Exception as pm_err:
+                    logger.debug(f"[events] point map skipped: {pm_err}")
+            from orchestrator.services.numeric_guard import guard_payload
+
+            service = EventQueryService(building_id, adapter, rooms, point_map=point_map)
+            result = await service.answer(question)
+            state.intermediate_results["events_result"] = guard_payload(result, "events")
+        except Exception as exc:
+            logger.error(f"[events] node failed: {exc}", exc_info=True)
+            state.intermediate_results["events_result"] = {
+                "success": False,
+                "formatted_response": (
+                    "I couldn't read the events store just now — please try again."
+                ),
+            }
+        return state
+
+    async def _privacy_refusal_node(self, state: ConversationState) -> ConversationState:
+        """V5-T42 — absolute privacy refusals: individual tracking / overrides.
+
+        These denials hold in EVERY profile and EVERY enforcement mode (user
+        decision: demo_open keeps individual-inference denials) — the node
+        cites the policy when the PDP is loaded and refuses regardless.
+        """
+        question = state.messages[-1].content if state.messages else ""
+        logger.info(f"[privacy-refusal] q={question[:70]!r}")
+        from orchestrator.services.privacy.inference_classes import classify_inference
+
+        cls = classify_inference(question) or "individual_presence"
+        if cls == "policy_override":
+            text = (
+                "**Access policies can't be bypassed** — not per query, not in any "
+                "'maintenance mode', and not on someone else's behalf. The building's "
+                "privacy rules are enforced where the data is fetched, so there is no "
+                "phrasing that turns them off. I can answer aggregate questions "
+                "(counts and averages over rooms) for any role."
+            )
+            policy_iri = ""
+        else:
+            text = (
+                "**I don't answer questions about individual people.** This system "
+                "explains the building — occupancy counts, environmental conditions, "
+                "bookings — and never identifies or tracks a person (where someone is, "
+                "their badge history, their messages or preferences)."
+            )
+            policy_iri = ""
+            try:
+                from orchestrator.services.privacy import enforcement as _protect
+                from orchestrator.services.privacy.reformulation import render_refusal
+
+                engine = await _protect.get_policy_engine()
+                if engine is not None and engine._policies:
+                    verdict = engine.evaluate(
+                        state.intermediate_results.get("user_role") or "readonly",
+                        inference_class=cls,
+                    )
+                    if verdict.decision == "deny":
+                        policy_iri = verdict.policy_iri
+                        comment = next(
+                            (
+                                p.comment
+                                for p in engine._policies
+                                if p.iri == verdict.policy_iri and p.comment
+                            ),
+                            "",
+                        )
+                        # V5-T41: explain in the building's OWN policy words and
+                        # propose the nearest allowed question
+                        text = render_refusal(verdict, question, comment)
+            except Exception as _pe_err:
+                logger.debug(f"[privacy-refusal] PDP cite skipped: {_pe_err}")
+            if "You can instead" not in text:
+                text += (
+                    " Ask for an aggregate instead: room or floor occupancy counts, "
+                    "availability, or environmental conditions."
+                )
+        state.intermediate_results["privacy_refusal_result"] = {
+            "success": True,
+            "inference_class": cls,
+            "denied_by_policy": policy_iri,
+            "formatted_response": text,
+        }
+        return state
+
+    async def _diagnosis_node(self, state: ConversationState) -> ConversationState:
+        """V5-T20 — indirect why-questions: evidence assembly, correlation language."""
+        question = state.messages[-1].content if state.messages else ""
+        logger.info(f"[diagnosis] q={question[:60]!r}")
+        try:
+            from orchestrator.services.anomaly.diagnosis import DiagnosisService
+            from orchestrator.services.numeric_guard import guard_payload
+            from shared.config import settings
+
+            pg_pool = getattr(self.postgres_manager, "pool", None)
+            service = DiagnosisService(
+                settings.BUILDING_ID, settings.BUILDING_NAMESPACE, pg_pool=pg_pool
+            )
+            state.intermediate_results["diagnosis_result"] = guard_payload(
+                await service.diagnose(question), "diagnosis"
+            )
+        except Exception as exc:
+            logger.error(f"[diagnosis] node failed: {exc}", exc_info=True)
+            state.intermediate_results["diagnosis_result"] = {
+                "success": False,
+                "formatted_response": (
+                    "I couldn't assemble the diagnostic evidence just now — please try again."
+                ),
+            }
+        return state
+
+    async def _register_node(self, state: ConversationState) -> ConversationState:
+        """V5-T26 — compliance-register questions (overdue / due-soon / last-done)."""
+        question = state.messages[-1].content if state.messages else ""
+        logger.info(f"[register] q={question[:60]!r}")
+        try:
+            from orchestrator.services.compliance_register_service import (
+                ComplianceRegisterService,
+            )
+            from orchestrator.services.deliberation.live import sparql_exec
+            from orchestrator.services.numeric_guard import guard_payload
+            from shared.config import settings
+
+            service = ComplianceRegisterService(sparql_exec, settings.BUILDING_NAMESPACE)
+            state.intermediate_results["register_result"] = guard_payload(
+                await service.answer(question), "register"
+            )
+        except Exception as exc:
+            logger.error(f"[register] node failed: {exc}", exc_info=True)
+            state.intermediate_results["register_result"] = {
+                "success": False,
+                "formatted_response": (
+                    "I couldn't read the compliance register just now — please try again."
+                ),
+            }
         return state
 
     async def _export_node(self, state: ConversationState) -> ConversationState:
@@ -4420,13 +5257,40 @@ SELECT ?l WHERE {
         t = text.lower()
         if "temperature" in t or "temp" in t:
             return "temperature"
-        if "humidity" in t:
+        if "humid" in t:  # "how humid is it" never matched the longer "humidity"
             return "humidity"
         if "co2" in t or "carbon dioxide" in t:
             return "co2"
         if "air quality" in t or "iaq" in t:
             return "air_quality"
-        if "occupancy" in t or "occupant" in t:
+        if (
+            "occupancy" in t
+            or "occupant" in t
+            # V5-T42: motion/presence vocabulary IS the occupancy class — the
+            # leak benchmark exported raw "motion sensor data" untagged, so the
+            # PDP never saw it as presence-adjacent (trap P105)
+            or "motion" in t
+            or "presence" in t
+            or "pir" in t
+            or "people count" in t
+            or "footfall" in t
+            # BUG-195: the COMMONEST phrasing of a presence question matched
+            # nothing here, so it reached the PDP as modality="-" — and consult()
+            # forwards n_sensors only for presence-adjacent modalities, so the
+            # k-anonymity floor was skipped entirely. Measured: the floor could be
+            # raised to 900 sensors and "how many people are in the building"
+            # still answered. Widening errs toward MORE privacy, which is the
+            # safe direction: a capacity question caught here only makes the PDP
+            # stricter, never looser.
+            or "how many people" in t
+            or "people are in" in t
+            or "people in" in t
+            or "headcount" in t
+            or "head count" in t
+            or "how busy" in t
+            or "crowded" in t
+            or "attendance" in t
+        ):
             return "occupancy"
         if "energy" in t or "electric" in t or "power" in t or "kwh" in t or "kw" in t:
             return "energy"
@@ -4672,6 +5536,54 @@ SELECT ?l WHERE {
         except Exception as e:
             logger.warning(f"[control_node] Failed to persist log: {e}")
 
+    #: Marker used to recognise our own clarification on the NEXT turn, so a user
+    #: who does not supply a location is never asked twice (KNOWN-008).
+    _WHERE_PROMPT_TEXT = "Which room, floor or piece of equipment is affected?"
+
+    #: Room/zone codes a building uses in prose: "RM101", "rm 101", "3.15", "B2-14".
+    #: Structural shapes only — no building's own vocabulary.
+    _PLACE_CODE_RE = re.compile(
+        r"\b(?:rm|room|office|lab|zone)\s*[-_. ]?\d{1,4}[a-z]?\b|\b\d{1,2}\.\d{1,3}[a-z]?\b",
+        re.IGNORECASE,
+    )
+
+    @classmethod
+    def _message_names_a_place(cls, text: str) -> bool:
+        """Does the report text itself say WHERE, even if entity extraction missed it?
+
+        The first cut of KNOWN-008 trusted the extracted `location` entity alone,
+        and entity extraction does not reliably fire on report-shaped sentences —
+        so "The light in RM101 is broken" was asked "which room?", which is worse
+        than the bug being fixed. The message text is the authority here: the
+        referent resolver already recognises floors, named spaces and equipment
+        building-agnostically, and a room CODE is a structural pattern.
+        """
+        if not text:
+            return False
+        if cls._PLACE_CODE_RE.search(text):
+            return True
+        try:
+            from orchestrator.services.referent_resolver import detect_typed_referent
+
+            return detect_typed_referent(text) is not None
+        except Exception:
+            return False
+
+    @staticmethod
+    def _already_asked_where(state: ConversationState) -> bool:
+        """True when the previous assistant turn was this same clarification.
+
+        Without this the pair (bare report -> ask -> bare reply) could ping-pong.
+        Asking at most once and then filing with what we have keeps the report,
+        which matters more than the missing field.
+        """
+        for msg in reversed(getattr(state, "messages", []) or []):
+            if getattr(msg, "role", "") == "assistant":
+                return WorkflowOrchestrator._WHERE_PROMPT_TEXT in (
+                    getattr(msg, "content", "") or ""
+                )
+        return False
+
     async def _report_intake_node(self, state: ConversationState) -> ConversationState:
         """Phase 19 - unified user-report intake.
 
@@ -4737,6 +5649,18 @@ SELECT ?l WHERE {
                     ),
                     None,
                 )
+                # KNOWN-008 — a fault report with NEITHER a location NOR a device
+                # is not actionable: "report broken light" filed REP-C9228F with
+                # no location, so whoever picks it up cannot find the light. Ask
+                # once instead of filing. Feedback and suggestions are exempt —
+                # they are about the building in general, not a thing to go fix.
+                _needs_where = (
+                    category in ("maintenance", "safety_report", "complaint")
+                    and not location
+                    and not device
+                    and not self._message_names_a_place(user_message or "")
+                    and not self._already_asked_where(state)
+                )
                 res = await service.create_report(
                     description=user_message or "(no description provided)",
                     building_id=building_id,
@@ -4748,6 +5672,19 @@ SELECT ?l WHERE {
                     session_id=state.conversation_id,
                 )
                 msg = res.get("message", "Your report has been received.")
+                if _needs_where:
+                    # KNOWN-008 — file FIRST, then ask. An earlier version withheld
+                    # the report until the user said where, and the follow-up
+                    # ("in RM101") routed elsewhere, so the fault was lost
+                    # altogether: strictly worse than the unactionable ticket the
+                    # fix was meant to prevent. A report that exists but lacks a
+                    # location can be completed; one that was never filed cannot.
+                    msg += (
+                        f"\n\n**One thing missing:** {self._WHERE_PROMPT_TEXT} "
+                        "Reply with the room, floor or equipment and I'll add it to "
+                        "this report — otherwise whoever picks it up won't know where to go."
+                    )
+                    state.intermediate_results["report_missing_location"] = res.get("report_id")
 
             state.intermediate_results["report_intake_result"] = {
                 "category": category,
@@ -5392,6 +6329,15 @@ SELECT ?l WHERE {
                     )
                     state.current_intent = cached.get("intent", "general")
                     state.intermediate_results["cache_hit"] = True
+                    # V4-T33: cache hits skip the graph but still carry a trace
+                    state.intermediate_results["plan_trace"] = {
+                        "kind": "reflex",
+                        "intent": state.current_intent,
+                        "final_node": "response_cache",
+                        "decision_source": "cache",
+                        "overrides_applied": [],
+                        "steps": ["cache"],
+                    }
                     return state
 
             # Run the graph with timeout
@@ -5403,6 +6349,17 @@ SELECT ?l WHERE {
                 )
             except asyncio.TimeoutError:
                 logger.error(f"Workflow timed out after {timeout_s}s for {state.conversation_id}")
+                # BUG-177 (extension): this apology is NOT an answer, and until now
+                # nothing said so. A model too slow for the timeout — e.g. a 32B
+                # local model spilling into system RAM — produced a full run of
+                # these, which an offline grader scored as behaviour. Record it as a
+                # terminal LLM failure so the reply declares `llm_degraded` and the
+                # harnesses quarantine the row instead of grading it.
+                from orchestrator.llm_manager import record_llm_failure
+
+                record_llm_failure(
+                    TimeoutError(f"workflow timed out after {timeout_s}s"), "workflow"
+                )
                 state.messages.append(
                     Message(
                         role="assistant",

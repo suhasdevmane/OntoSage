@@ -1,6 +1,8 @@
 """Tests for ControlAgent — RBAC-gated device control."""
-import pytest
+
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from orchestrator.agents.control_agent import ControlAgent
 from shared.models import ConversationState, Message
@@ -30,10 +32,19 @@ class TestControlAgentPermissions:
     async def test_operator_can_execute(self):
         agent = ControlAgent()
         state = _make_state("Set HVAC Zone 3 to 21°C", role="operator")
-        with patch.object(agent.bms, "send_command", new=AsyncMock(return_value={
-            "status": "simulated", "device": "HVAC Zone 3",
-            "action": "set", "value": "21°C", "mode": "simulation",
-        })):
+        with patch.object(
+            agent.bms,
+            "send_command",
+            new=AsyncMock(
+                return_value={
+                    "status": "simulated",
+                    "device": "HVAC Zone 3",
+                    "action": "set",
+                    "value": "21°C",
+                    "mode": "simulation",
+                }
+            ),
+        ):
             result = await agent.execute_command(state)
         assert result["status"] == "simulated"
         assert result["device"] == "HVAC Zone 3"
@@ -57,10 +68,19 @@ class TestControlAgentPermissions:
     async def test_facility_manager_can_execute(self):
         agent = ControlAgent()
         state = _make_state("Turn off the lights in room 2.04", role="facility_manager")
-        with patch.object(agent.bms, "send_command", new=AsyncMock(return_value={
-            "status": "simulated", "device": "lights room 2.04",
-            "action": "off", "value": "", "mode": "simulation",
-        })):
+        with patch.object(
+            agent.bms,
+            "send_command",
+            new=AsyncMock(
+                return_value={
+                    "status": "simulated",
+                    "device": "lights room 2.04",
+                    "action": "off",
+                    "value": "",
+                    "mode": "simulation",
+                }
+            ),
+        ):
             result = await agent.execute_command(state)
         assert result["status"] == "simulated"
 
@@ -70,10 +90,19 @@ class TestControlAgentLogging:
     async def test_log_entry_written(self):
         agent = ControlAgent()
         state = _make_state("Set HVAC Zone 3 to 21°C", role="operator")
-        with patch.object(agent.bms, "send_command", new=AsyncMock(return_value={
-            "status": "simulated", "device": "HVAC Zone 3",
-            "action": "set", "value": "21°C", "mode": "simulation",
-        })):
+        with patch.object(
+            agent.bms,
+            "send_command",
+            new=AsyncMock(
+                return_value={
+                    "status": "simulated",
+                    "device": "HVAC Zone 3",
+                    "action": "set",
+                    "value": "21°C",
+                    "mode": "simulation",
+                }
+            ),
+        ):
             result = await agent.execute_command(state)
         assert "log_entry" in result
         log = result["log_entry"]

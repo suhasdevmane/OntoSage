@@ -19,6 +19,7 @@ Routing-precedence safety: this module ONLY affects class inference and recipe
   CLAUDE.md (report-intake > capability, actuation → control-decline, etc.)
   must continue to run unchanged in dialogue_agent and _route_from_dialogue.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -163,9 +164,7 @@ class ConceptResolver:
                     },
                 )
                 if resp.status_code != 200:
-                    logger.warning(
-                        f"[concept_resolver] GraphDB returned {resp.status_code}"
-                    )
+                    logger.warning(f"[concept_resolver] GraphDB returned {resp.status_code}")
                     return {}
                 data = resp.json()
                 bindings = data.get("results", {}).get("bindings", [])
@@ -212,9 +211,7 @@ class ConceptResolver:
 
         # Sort: longer lay term first (more specific), then by confidence
         _conf_order = {"high": 0, "medium": 1, "low": 2, "": 3}
-        matches.sort(
-            key=lambda m: (-len(m.lay_term), _conf_order.get(m.confidence, 3))
-        )
+        matches.sort(key=lambda m: (-len(m.lay_term), _conf_order.get(m.confidence, 3)))
         return matches
 
     async def invalidate_cache(self) -> None:

@@ -1,0 +1,15 @@
+PREFIX abx:    <https://abacws.cardiff.ac.uk/kg#>
+PREFIX bot:    <https://w3id.org/bot#>
+PREFIX brick:  <https://brickschema.org/schema/Brick#>
+PREFIX geo:    <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX unit:   <http://qudt.org/vocab/unit/>
+
+# "How big is the ground floor and how many rooms does it have?"
+# Aggregate answers a floor plan image can never give you directly.
+SELECT ?storeyName (COUNT(DISTINCT ?room) AS ?rooms)
+                   (ROUND(SUM(?area)) AS ?totalAreaM2) WHERE {
+  ?storey a bot:Storey ; rdfs:label ?storeyName ; bot:hasSpace ?room .
+  ?room brick:area/brick:value ?area .
+}
+GROUP BY ?storeyName

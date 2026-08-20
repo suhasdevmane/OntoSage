@@ -70,9 +70,7 @@ def _sparql_returned_data(sparql_result: Dict[str, Any]) -> bool:
         return False
     if not sparql_result.get("success", True):
         return False
-    bindings = (
-        sparql_result.get("results", {}).get("results", {}).get("bindings", [])
-    )
+    bindings = sparql_result.get("results", {}).get("results", {}).get("bindings", [])
     return len(bindings) > 0
 
 
@@ -92,12 +90,8 @@ class VerifierAgent:
         sensor_ids = _extract_sensor_ids(sparql_result)
         sql_rows = _count_sql_rows(sql_result)
         sparql_ok = _sparql_returned_data(sparql_result)
-        analytics_ok = bool(
-            isinstance(analytics_result, dict) and analytics_result.get("success")
-        )
-        capability_ok = bool(
-            state.intermediate_results.get("capability_result", {}).get("success")
-        )
+        analytics_ok = bool(isinstance(analytics_result, dict) and analytics_result.get("success"))
+        capability_ok = bool(state.intermediate_results.get("capability_result", {}).get("success"))
 
         # Determine grounding source and confidence
         missing: List[str] = []
@@ -126,7 +120,11 @@ class VerifierAgent:
             source = "none"
             grounded = False
             confidence = 0.20
-            if intent in _STATUS_INTENTS and intent not in ("general", "general_knowledge", "capability"):
+            if intent in _STATUS_INTENTS and intent not in (
+                "general",
+                "general_knowledge",
+                "capability",
+            ):
                 missing.append("ontology_bindings")
             if intent in ("sensor_data", "analytics", "trend"):
                 missing.append("time_series_data")

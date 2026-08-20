@@ -1,8 +1,9 @@
 """Tests for T35 — UserPreferenceStore (Redis-backed per-user comfort preferences)."""
 
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 
 @pytest.fixture()

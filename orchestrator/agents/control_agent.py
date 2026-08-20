@@ -38,8 +38,8 @@ def _entity_value(entities: Any, etype: str, default: str = "") -> str:
 
 
 try:
-    from orchestrator.services.actuation.registry import get_actuation_registry
     from orchestrator.services.actuation.approval_store import get_approval_store
+    from orchestrator.services.actuation.registry import get_actuation_registry
 
     _ACTUATION_AVAILABLE = True
 except Exception:

@@ -12,6 +12,7 @@ Covers:
   9. invalidate_cache() does not raise when Redis unavailable
   10. Cache is bypassed on second call when concept map is already populated
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -28,8 +29,8 @@ from orchestrator.services.concept_resolver import (
     _parse_bindings,
 )
 
-
 # ── helpers ────────────────────────────────────────────────────────────────────
+
 
 def _make_bindings(rows: List[Dict[str, Any]]) -> list:
     """Wrap plain dicts into SPARQL binding format."""
@@ -42,36 +43,38 @@ def _make_bindings(rows: List[Dict[str, Any]]) -> list:
     return result
 
 
-_SAMPLE_BINDINGS = _make_bindings([
-    {
-        "concept": "http://ontosage.org/hbco#stuffiness",
-        "layTerm": "stuffy",
-        "brickClass": "https://brickschema.org/schema/Brick#CO2_Level_Sensor",
-        "recipe": "co2_threshold",
-        "confidence": "high",
-    },
-    {
-        "concept": "http://ontosage.org/hbco#stuffiness",
-        "layTerm": "stale air",
-        "brickClass": "https://brickschema.org/schema/Brick#CO2_Level_Sensor",
-        "recipe": "co2_threshold",
-        "confidence": "high",
-    },
-    {
-        "concept": "http://ontosage.org/hbco#warmth",
-        "layTerm": "warm",
-        "brickClass": "https://brickschema.org/schema/Brick#Air_Temperature_Sensor",
-        "recipe": "temperature_threshold_warm",
-        "confidence": "medium",
-    },
-    {
-        "concept": "http://ontosage.org/hbco#hotness",
-        "layTerm": "hot",
-        "brickClass": "https://brickschema.org/schema/Brick#Air_Temperature_Sensor",
-        "recipe": "temperature_threshold_warm",
-        "confidence": "low",
-    },
-])
+_SAMPLE_BINDINGS = _make_bindings(
+    [
+        {
+            "concept": "http://ontosage.org/hbco#stuffiness",
+            "layTerm": "stuffy",
+            "brickClass": "https://brickschema.org/schema/Brick#CO2_Level_Sensor",
+            "recipe": "co2_threshold",
+            "confidence": "high",
+        },
+        {
+            "concept": "http://ontosage.org/hbco#stuffiness",
+            "layTerm": "stale air",
+            "brickClass": "https://brickschema.org/schema/Brick#CO2_Level_Sensor",
+            "recipe": "co2_threshold",
+            "confidence": "high",
+        },
+        {
+            "concept": "http://ontosage.org/hbco#warmth",
+            "layTerm": "warm",
+            "brickClass": "https://brickschema.org/schema/Brick#Air_Temperature_Sensor",
+            "recipe": "temperature_threshold_warm",
+            "confidence": "medium",
+        },
+        {
+            "concept": "http://ontosage.org/hbco#hotness",
+            "layTerm": "hot",
+            "brickClass": "https://brickschema.org/schema/Brick#Air_Temperature_Sensor",
+            "recipe": "temperature_threshold_warm",
+            "confidence": "low",
+        },
+    ]
+)
 
 _SAMPLE_MAP = _parse_bindings(_SAMPLE_BINDINGS)
 
@@ -84,6 +87,7 @@ def _resolver_with_map(concept_map: dict) -> ConceptResolver:
 
 
 # ── unit tests ─────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 @pytest.mark.asyncio
@@ -190,6 +194,7 @@ async def test_invalidate_cache_no_raise_without_redis():
 
 
 # ── helper function tests ──────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_brick_local():

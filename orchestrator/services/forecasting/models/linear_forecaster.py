@@ -102,9 +102,7 @@ class LinearTrendForecaster:
 
         for alpha in ci_levels:
             t_crit = float(stats.t.ppf((1 + alpha) / 2, df=max(1, n_train - self.degree - 1)))
-            se = self._residual_std * np.sqrt(
-                1 + 1 / n_train + (x_future - x_mean) ** 2 / ssx
-            )
+            se = self._residual_std * np.sqrt(1 + 1 / n_train + (x_future - x_mean) ** 2 / ssx)
             margin = t_crit * se
             pct = int(alpha * 100)
             forecast = np.polyval(self._coeffs, x_future)

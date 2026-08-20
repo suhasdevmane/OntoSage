@@ -34,9 +34,9 @@ class TestAgentMemoryVectorSize:
         src = inspect.getsource(am_module.AgentMemoryService.initialise)
         # 1536 is permitted as the OpenAI-specific branch; the important check is that
         # settings.embedding_dimension is also used (for local/non-OpenAI models)
-        assert "embedding_dimension" in src, (
-            "initialise() must reference settings.embedding_dimension for non-OpenAI models"
-        )
+        assert (
+            "embedding_dimension" in src
+        ), "initialise() must reference settings.embedding_dimension for non-OpenAI models"
 
     def test_fallback_embed_uses_settings_dimension(self):
         import inspect

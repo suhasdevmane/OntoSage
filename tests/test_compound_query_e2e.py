@@ -21,11 +21,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from orchestrator.services.multi_intent_detector import (
-    MultiIntentDetector,
-    SubIntent,
-)
-
+from orchestrator.services.multi_intent_detector import MultiIntentDetector, SubIntent
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Heuristic gate — fast path for single-intent queries
@@ -39,10 +35,7 @@ SINGLE_INTENT_QUERIES = [
     "show me floor 3",
     "where is the prayer room?",
     # Long but only one intent domain.
-    (
-        "Can you tell me the average temperature in zone 5.28 over the "
-        "past two weeks please?"
-    ),
+    ("Can you tell me the average temperature in zone 5.28 over the " "past two weeks please?"),
 ]
 
 
@@ -63,9 +56,9 @@ SHORT_COMPOUND_QUERIES = [
 @pytest.mark.parametrize("query", SINGLE_INTENT_QUERIES)
 def test_heuristic_rejects_single_intent(query):
     detector = MultiIntentDetector()
-    assert not detector._passes_heuristic(query), (
-        f"Heuristic incorrectly flagged single-intent query as compound: {query!r}"
-    )
+    assert not detector._passes_heuristic(
+        query
+    ), f"Heuristic incorrectly flagged single-intent query as compound: {query!r}"
 
 
 COMPOUND_QUERIES = [
@@ -83,10 +76,7 @@ COMPOUND_QUERIES = [
         "the building has a lift to floor 5"
     ),
     # 2. floor_plan + spatial: explicit "tell me" connective
-    (
-        "Show me the floor 3 layout and also tell me how many rooms are "
-        "there on that floor"
-    ),
+    ("Show me the floor 3 layout and also tell me how many rooms are " "there on that floor"),
     # 3. compare + recommend: numeric list connective "1." / "2."
     (
         "1. Compare CO2 levels between floor 1 and floor 3 over the past week. "
@@ -103,9 +93,7 @@ COMPOUND_QUERIES = [
 @pytest.mark.parametrize("query", COMPOUND_QUERIES)
 def test_heuristic_accepts_compound(query):
     detector = MultiIntentDetector()
-    assert detector._passes_heuristic(query), (
-        f"Heuristic missed compound query: {query!r}"
-    )
+    assert detector._passes_heuristic(query), f"Heuristic missed compound query: {query!r}"
 
 
 @pytest.mark.parametrize("query", SHORT_COMPOUND_QUERIES)
@@ -113,12 +101,10 @@ def test_heuristic_accepts_short_compound(query):
     """Phase 16A — short compound queries that were missed at the old 80-char
     threshold but should pass at the new 50-char threshold."""
     detector = MultiIntentDetector()
-    assert len(query) >= 50, (
-        f"Test misconfigured — query is only {len(query)} chars: {query!r}"
-    )
-    assert detector._passes_heuristic(query), (
-        f"Heuristic still misses {len(query)}-char compound query: {query!r}"
-    )
+    assert len(query) >= 50, f"Test misconfigured — query is only {len(query)} chars: {query!r}"
+    assert detector._passes_heuristic(
+        query
+    ), f"Heuristic still misses {len(query)}-char compound query: {query!r}"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -134,11 +120,17 @@ async def test_decompose_returns_subintents_when_llm_yields_valid_json():
         "floor 3 and recommend HVAC settings"
     )
 
-    mock_llm_response = json.dumps([
-        {"sub_query": "temperature in 5.28", "intent": "sensor_data", "entities": ["5.28"]},
-        {"sub_query": "how many rooms on floor 3", "intent": "spatial_query", "entities": ["floor 3"]},
-        {"sub_query": "recommend HVAC settings", "intent": "recommend", "entities": []},
-    ])
+    mock_llm_response = json.dumps(
+        [
+            {"sub_query": "temperature in 5.28", "intent": "sensor_data", "entities": ["5.28"]},
+            {
+                "sub_query": "how many rooms on floor 3",
+                "intent": "spatial_query",
+                "entities": ["floor 3"],
+            },
+            {"sub_query": "recommend HVAC settings", "intent": "recommend", "entities": []},
+        ]
+    )
 
     with patch(
         "orchestrator.services.multi_intent_detector.llm_manager.generate",
@@ -179,11 +171,13 @@ async def test_decompose_drops_invalid_intents():
         "building has a lift to the upper floors"
     )
 
-    mock_llm_response = json.dumps([
-        {"sub_query": "temp in 5.28", "intent": "sensor_data", "entities": []},
-        {"sub_query": "prayer room", "intent": "totally_made_up_intent_xyz", "entities": []},
-        {"sub_query": "fire safety", "intent": "discovery", "entities": []},
-    ])
+    mock_llm_response = json.dumps(
+        [
+            {"sub_query": "temp in 5.28", "intent": "sensor_data", "entities": []},
+            {"sub_query": "prayer room", "intent": "totally_made_up_intent_xyz", "entities": []},
+            {"sub_query": "fire safety", "intent": "discovery", "entities": []},
+        ]
+    )
 
     with patch(
         "orchestrator.services.multi_intent_detector.llm_manager.generate",
@@ -205,10 +199,9 @@ async def test_decompose_caps_at_five_subintents():
     detector = MultiIntentDetector()
     query = "long compound query " * 8  # 160+ chars
 
-    mock_llm_response = json.dumps([
-        {"sub_query": f"task {i}", "intent": "analytics", "entities": []}
-        for i in range(8)
-    ])
+    mock_llm_response = json.dumps(
+        [{"sub_query": f"task {i}", "intent": "analytics", "entities": []} for i in range(8)]
+    )
 
     with patch(
         "orchestrator.services.multi_intent_detector.llm_manager.generate",
@@ -253,6 +246,6 @@ def test_valid_intents_is_a_frozenset_of_strings():
     assert all(isinstance(s, str) for s in VALID_INTENTS)
     # At minimum the core intents must be present
     for intent in ("sensor_data", "analytics", "compare", "report"):
-        assert intent in VALID_INTENTS, (
-            f"core intent {intent!r} missing from VALID_INTENTS — registry load failure?"
-        )
+        assert (
+            intent in VALID_INTENTS
+        ), f"core intent {intent!r} missing from VALID_INTENTS — registry load failure?"

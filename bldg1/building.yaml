@@ -106,6 +106,18 @@ storage:
     # wide table: 522 real floor 0-4 sensors + 106 synthetic enhancement sensors.
     - database1_floors04
     - database1_synth
+    # SATURATE narrow tables (V4-T31) — full-coverage simulated modalities
+    - temperature_data
+    - humidity_data
+    - co2_data
+    - contact_data
+    # V5 Event Framework (T07) - generic interval/event store
+    - events_data
+    # V5-T09 scalar expansion
+    - pm25_data
+    - submeter_data
+    - waterflow_data
+    - parking_data
 
 # ── Floor-plan aliases (Phase 4 — 2026-05-29) ────────────────────────────────
 #

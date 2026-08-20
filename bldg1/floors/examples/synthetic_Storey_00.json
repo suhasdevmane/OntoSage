@@ -1,0 +1,258 @@
+{
+  "building": {
+    "id": "Abacws",
+    "name": "Abacws Building",
+    "site": "Cardiff University"
+  },
+  "storey": {
+    "id": "Storey_00",
+    "name": "Ground Floor",
+    "level": 0
+  },
+  "spaces": [
+    {
+      "id": "Storey_00_Space_0_29",
+      "code": "0.29",
+      "name": "Refuse Store",
+      "area_m2": 36.0,
+      "perimeter_m": 30.0,
+      "centroid": [
+        6.0,
+        5.5
+      ],
+      "bbox_m": [
+        12.0,
+        3.0
+      ],
+      "wkt": "POLYGON ((0 4, 12 4, 12 7, 0 7, 0 4))",
+      "source_layer": "USABLE",
+      "raw_labels": [
+        "0.29",
+        "Refuse Store"
+      ]
+    },
+    {
+      "id": "Storey_00_Space_0Z19",
+      "code": "0Z19",
+      "name": "Vending",
+      "area_m2": 24.0,
+      "perimeter_m": 20.0,
+      "centroid": [
+        3.0,
+        2.0
+      ],
+      "bbox_m": [
+        6.0,
+        4.0
+      ],
+      "wkt": "POLYGON ((0 0, 6 0, 6 4, 0 4, 0 0))",
+      "source_layer": "USABLE",
+      "raw_labels": [
+        "0Z19",
+        "Vending"
+      ]
+    },
+    {
+      "id": "Storey_00_Space_0Z21",
+      "code": "0Z21",
+      "name": "41P Collab S",
+      "area_m2": 24.0,
+      "perimeter_m": 20.0,
+      "centroid": [
+        9.0,
+        2.0
+      ],
+      "bbox_m": [
+        6.0,
+        4.0
+      ],
+      "wkt": "POLYGON ((6 0, 12 0, 12 4, 6 4, 6 0))",
+      "source_layer": "USABLE",
+      "raw_labels": [
+        "0Z21",
+        "41P Collab S"
+      ]
+    },
+    {
+      "id": "Storey_00_Space_0Z05",
+      "code": "0Z05",
+      "name": "Stair Core",
+      "area_m2": 9.0,
+      "perimeter_m": 12.0,
+      "centroid": [
+        13.5,
+        1.5
+      ],
+      "bbox_m": [
+        3.0,
+        3.0
+      ],
+      "wkt": "POLYGON ((12 0, 15 0, 15 3, 12 3, 12 0))",
+      "source_layer": "USABLE",
+      "raw_labels": [
+        "0Z05",
+        "Stair Core"
+      ]
+    }
+  ],
+  "elements": [
+    {
+      "id": "Storey_00_Door_0001",
+      "kind": "door",
+      "brick_class": "Door",
+      "label": "Door",
+      "layer": "A-DOOR",
+      "block_name": "DR_SINGLE",
+      "point": [
+        6.0,
+        2.0
+      ],
+      "attributes": {},
+      "in_space": null
+    },
+    {
+      "id": "Storey_00_Door_0002",
+      "kind": "door",
+      "brick_class": "Door",
+      "label": "Door",
+      "layer": "A-DOOR",
+      "block_name": "DR_SINGLE",
+      "point": [
+        3.0,
+        4.0
+      ],
+      "attributes": {},
+      "in_space": null
+    },
+    {
+      "id": "Storey_00_Door_0003",
+      "kind": "door",
+      "brick_class": "Door",
+      "label": "Door",
+      "layer": "A-DOOR",
+      "block_name": "DR_SINGLE",
+      "point": [
+        12.0,
+        1.5
+      ],
+      "attributes": {},
+      "in_space": null
+    },
+    {
+      "id": "Storey_00_Element_0004",
+      "kind": "equipment",
+      "brick_class": "Electrical_Equipment",
+      "label": "Electrical equipment",
+      "layer": "CSM-STL-XX-ZZ-E-ELEC-EQPI",
+      "block_name": "ELEC_DB",
+      "point": [
+        1.0,
+        1.0
+      ],
+      "attributes": {
+        "ASSET_ID": "DB-0-014",
+        "CIRCUIT": "L0-04"
+      },
+      "in_space": "Storey_00_Space_0Z19"
+    }
+  ],
+  "dimensions": [
+    {
+      "id": "Storey_00_Dimension_0001",
+      "kind": "linear",
+      "measurement_m": 6.0,
+      "text_override": null,
+      "layer": "A-ANNO-DIMS",
+      "point": [
+        3.0,
+        -0.999775
+      ],
+      "in_space": null
+    },
+    {
+      "id": "Storey_00_Dimension_0002",
+      "kind": "linear",
+      "measurement_m": 6.0,
+      "text_override": null,
+      "layer": "A-ANNO-DIMS",
+      "point": [
+        9.0,
+        -0.999775
+      ],
+      "in_space": null
+    },
+    {
+      "id": "Storey_00_Dimension_0003",
+      "kind": "linear",
+      "measurement_m": 4.0,
+      "text_override": null,
+      "layer": "A-ANNO-DIMS",
+      "point": [
+        3.0,
+        2.000225
+      ],
+      "in_space": "Storey_00_Space_0Z19"
+    }
+  ],
+  "adjacency": [
+    {
+      "a": "Storey_00_Space_0_29",
+      "b": "Storey_00_Space_0Z19",
+      "shared_boundary_m": 6.0
+    },
+    {
+      "a": "Storey_00_Space_0_29",
+      "b": "Storey_00_Space_0Z21",
+      "shared_boundary_m": 6.0
+    },
+    {
+      "a": "Storey_00_Space_0Z19",
+      "b": "Storey_00_Space_0Z21",
+      "shared_boundary_m": 4.0
+    },
+    {
+      "a": "Storey_00_Space_0Z21",
+      "b": "Storey_00_Space_0Z05",
+      "shared_boundary_m": 3.0
+    }
+  ],
+  "connectivity": [
+    {
+      "door": "Storey_00_Door_0001",
+      "spaces": [
+        "Storey_00_Space_0Z19",
+        "Storey_00_Space_0Z21"
+      ]
+    },
+    {
+      "door": "Storey_00_Door_0002",
+      "spaces": [
+        "Storey_00_Space_0Z19",
+        "Storey_00_Space_0_29"
+      ]
+    },
+    {
+      "door": "Storey_00_Door_0003",
+      "spaces": [
+        "Storey_00_Space_0Z05",
+        "Storey_00_Space_0Z21"
+      ]
+    }
+  ],
+  "stats": {
+    "source": "synthetic/Abacws floor 0.dxf",
+    "entities_scanned": 28,
+    "layers_in_drawing": 9,
+    "unknown_entity_count": 0,
+    "spaces": 4,
+    "spaces_with_code": 4,
+    "spaces_with_name": 4,
+    "elements": 4,
+    "doors": 3,
+    "dimensions": 3,
+    "dimensions_with_measurement": 3,
+    "adjacency_edges": 4,
+    "connectivity_edges": 3,
+    "total_area_m2": 93.0
+  }
+}

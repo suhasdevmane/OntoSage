@@ -21,6 +21,7 @@ NON_FORECAST_QUERIES = [
 
 def _is_forecast_query(query: str) -> bool:
     from orchestrator.agents.dialogue_agent import _FORECAST_KWS, _SENSOR_METRIC_KWS
+
     q = query.lower()
     return any(kw in q for kw in _FORECAST_KWS) and any(kw in q for kw in _SENSOR_METRIC_KWS)
 
