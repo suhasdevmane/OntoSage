@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from shared.utils import get_logger
@@ -652,13 +653,22 @@ def _r_automation_question(c: _Ctx) -> Optional[str]:
 DELIBERATE_RE = re.compile(
     r"(?:\bfind\s+(?:me\s+)?an?\s+[\w,\- ]{0,30}(?:room|space|spot|desk|place)\b"
     r"|\bwhere\s+(?:can|should|could)\s+i\s+(?:sit|work|study|go|be|stay)\b"
+    # "where's a quiet place to sit" -- the same request without the pronoun.
+    r"|\bwhere(?:'s|\s+is)\s+(?:a|an|the)\s+(?:\w+\s+){0,2}(?:place|spot|room|space|desk|seat|area)\b"
     r"|\b(?:quietest|noisiest|busiest|emptiest|calmest)\b"
-    r"|\bwhich\s+(?:room|rooms|zone|zones|space|spaces|area|areas)\b"
+    # Same intervening-adjective fix as WAYFIND_RE: "which STUDY spaces had the best air
+    # quality" was measured landing in the document lane because "study" sat here.
+    r"|\bwhich\s+(?:\w+\s+){0,2}(?:room|rooms|zone|zones|space|spaces|area|areas|desk|desks|seat|seats|spot|spots)\b"
     r".{0,50}\b(?:lowest|highest|least|most|best|worst|minimum|maximum"
     r"|warmest|coolest|coldest|hottest|brightest|darkest|loudest|driest|stuffiest)\b"
     # superlative-first shape: 'warmest room', 'brightest space on floor 2'
     r"|\b(?:warmest|coolest|coldest|hottest|brightest|darkest|loudest|quietest)\s+"
     r"(?:room|zone|space|area)s?\b"
+    # "which desk should I take this afternoon" -- a recommendation request with
+    # no superlative in it. Narrow on purpose: it needs a space noun AND an explicit
+    # should-I verb, so "which policy should I read" and "which room is 2.14" stay out.
+    r"|\bwhich\s+(?:\w+\s+){0,2}(?:room|zone|space|area|desk|seat|spot|floor)s?\s+"
+    r"should\s+i\s+(?:take|book|use|choose|pick|sit|work)\b"
     r"|\brank\s+(?:the\s+)?\w*\s*(?:rooms|zones|spaces|areas)\b"
     r"|\b(?:zone|room|space|area)s?\s+with\s+(?:the\s+)?(?:minimum|maximum|least|most|lowest|highest)\b)",
     re.IGNORECASE,
@@ -802,18 +812,177 @@ def _r_why_diagnosis(c: _Ctx) -> Optional[str]:
     return "diagnosis" if is_why_question(c.query) else None
 
 
+# The `(?:\w+\s+){0,2}` gaps are load-bearing. Every one of these was measured failing on
+# the golden baseline because an adjective sat between the cue word and the noun: "the nearest
+# ACCESSIBLE toilet", "the nearest FIRE exit". Bounded at two words rather than `.*` so the
+# pattern cannot run across a clause and claim an unrelated question.
 WAYFIND_RE = re.compile(
     r"\bdirections?\s+(?:to|for)\b"
     r"|\broute\s+to\b"
     r"|\bnavigate\s+to\b"
     r"|\bguide\s+me\s+to\b"
+    r"|\btake\s+me\s+to\b"
     r"|\bfind\s+my\s+way\s+to\b"
     r"|\bhow\s+(?:do|can|would)\s+i\s+(?:get|reach|go)\s+to\b"
-    r"|\b(?:nearest|closest)\s+(?:toilet|wc|restroom|bathroom|lift|elevator|stair\w*"
-    r"|kitchen|exit|reception|meeting\s+room)s?\b"
+    r"|\b(?:nearest|closest)\s+(?:\w+\s+){0,2}(?:toilet|wc|restroom|bathroom|lift|elevator"
+    r"|stair\w*|kitchen|exit|reception|meeting\s+room|desk|office|room|space)s?\b"
     r"|\b(?:step[- ]?free|wheelchair(?:[- ]accessible)?)\s+(?:route|way|path|access)\b",
     re.IGNORECASE,
 )
+
+
+#: Equipment classes whose points a plant question names. These are BRICK vocabulary, not
+#: building literals -- every Brick building that has an air handler types it brick:AHU -- so
+#: they are portable in a way a room id or a zone name would not be.
+_PLANT_EQUIP_RE = re.compile(
+    r"\b(?:ahu[-_ ]?\w{0,8}|air[- ]handl\w+(?:\s+unit)?|vav\b\w{0,20}"
+    r"|air[- ]handler|fan[- ]coil|fcu\b|chiller|boiler|heat pump)\b",
+    re.IGNORECASE,
+)
+
+
+#: Measurands nothing in a ROOM has, so they identify a plant question on their own without
+#: an equipment id in the text. Deliberately short: every entry here is a phrase that would be
+#: meaningless about a room, because a false positive drags a room reading into the plant lane.
+_PLANT_ONLY_RE = re.compile(
+    r"\b(?:damper"
+    r"|filter\s+(?:d[/\s]?p|differential|pressure|loading)"
+    r"|supply\s+fan|return\s+fan|extract\s+fan"
+    r"|fan\s+(?:state|status)"
+    r"|supply\s+air\b|return\s+air\b)",
+    re.IGNORECASE,
+)
+
+
+@lru_cache(maxsize=8)
+def _plant_measurand_re(building_id: Optional[str] = None) -> "re.Pattern":
+    """Phrases naming a plant measurand, BUILT FROM THE MODALITY CONFIG.
+
+    Derived rather than written out so a building that declares a seventh equipment-scoped
+    modality is recognised without a code change -- the same rule that keeps sensor
+    vocabulary out of this file. `supply_air_temperature` becomes `supply\s+air\s+temperature`.
+
+    Falls back to matching nothing when the config is unreadable. That is the safe direction:
+    an unmatched plant question is misrouted, whereas a catch-all pattern would drag ordinary
+    room-temperature questions into the plant lane.
+    """
+    try:
+        from orchestrator.services.evidence.plant_state import plant_modalities
+
+        names = plant_modalities(building_id)
+    except Exception:
+        names = []
+    if not names:
+        return re.compile(r"(?!x)x")
+    alts = [r"\s+".join(re.escape(part) for part in n.split("_")) for n in names]
+    # Common shorthands operators actually type. Tied to the modality that licenses them, so
+    # they disappear from the pattern if the building does not declare that modality.
+    if "fan_state" in names:
+        alts += [r"(?:supply\s+)?fan\s+(?:is\s+)?(?:running|on|off|state|status)"]
+    if "filter_differential_pressure" in names:
+        alts += [r"filter\s+(?:d[/\s]?p|pressure|loading)", r"filter\s+differential"]
+    if "damper_position" in names:
+        alts += [r"damper\b"]
+    if "supply_air_flow" in names:
+        alts += [r"air\s*flow\b", r"airflow\b"]
+    return re.compile(r"\b(?:" + "|".join(alts) + r")", re.IGNORECASE)
+
+
+def plant_point_question(query: str, building_id: Optional[str] = None) -> bool:
+    """True when a question asks about a plant/BMS point rather than a room reading.
+
+    BOTH halves are required -- a plant measurand AND a named equipment kind. "What is the
+    air temperature in room 5.01" names a measurand this config knows about (`return air
+    temperature` shares the word) but is a ROOM question, and answering it from a duct sensor
+    would be exactly the substitution the non-substitution rule forbids. Requiring the
+    equipment reference keeps the two populations apart.
+
+    The exception is a measurand only plant has: nothing in a room has a damper position, a
+    filter differential pressure or a supply fan, so those stand alone. "Is the supply fan
+    running on floor 5?" carries no equipment id at all -- it names the fan, which IS the
+    equipment -- and was measured landing in a maintenance-log document without this.
+    """
+    if not query or not query.strip():
+        return False
+    mre = _plant_measurand_re(building_id)
+    if not mre.search(query):
+        return False
+    if _PLANT_EQUIP_RE.search(query):
+        return True
+    return bool(_PLANT_ONLY_RE.search(query))
+
+
+#: Mass nouns for a metered resource. A quantity OF one of these is never a count of devices.
+_RESOURCE_NOUN = r"(?:energy|electricity|power|water|gas|kwh|fuel|heat)"
+
+#: A question about METERED CONSUMPTION of a utility. Generic English and generic resources --
+#: no building literals -- so the same rule serves any estate with a meter.
+CONSUMPTION_RE = re.compile(
+    r"\b(?:how much|what(?:'s| is| was)|total|monthly|weekly|daily|annual)\b.{0,40}"
+    r"\b(?:energy|electricity|power|water|gas|kwh|consumption|utilit(?:y|ies))\b"
+    r"|\b(?:energy|electricity|power|water|gas)\s+(?:use|usage|consumption|consumed|bill|cost)\b"
+    r"|\b(?:consumption|kwh)\b.{0,30}\b(?:floor|building|room|zone|lab|last|this|yesterday)\b"
+    r"|\bhow (?:much|many) kwh\b",
+    re.IGNORECASE,
+)
+
+
+def consumption_question(query: str) -> bool:
+    """True when the question asks what something CONSUMED, rather than about a device.
+
+    "How many energy meters are there?" is a census and must stay with the inventory guard that
+    already owns that distinction -- giving one decision two owners is how the two drift.
+    """
+    if not query or not query.strip():
+        return False
+    # "How much <resource>" asks for a QUANTITY of a mass noun and can never be a device
+    # census, so it settles the question before the inventory guard is consulted. That guard
+    # returns True for "How much electricity does the lab on floor 5 use?" — a false positive
+    # that would otherwise route a consumption question to the inventory lane. Narrowing the
+    # shared guard itself would risk the counting behaviour it owns; this states the one case
+    # where counting is impossible instead.
+    if re.search(rf"\bhow much\b.{{0,20}}\b{_RESOURCE_NOUN}\b", query, re.IGNORECASE):
+        return True
+    if _is_countable_meta(query.lower()):
+        return False
+    return bool(CONSUMPTION_RE.search(query))
+
+
+def _r_consumption_query(c: _Ctx) -> Optional[str]:
+    """Metered-consumption questions -> analytics, not a document (V6-T27).
+
+    Measured before the rule existed: "How much energy did the building use last week?" was
+    answered "I don't have that specific information on record" while six floor meters held the
+    data, and "How much electricity does the lab on floor 5 use?" returned the room-bookings
+    document. Both were classified `capability` and never reached a lane that could state a
+    figure -- so they could not state a BOUNDARY either, which is what this turn is for.
+    """
+    if c.intent not in _WEAK_INTENTS:
+        return None
+    if c.sr.is_control_command(c.query):
+        return None
+    # An attribution question is refused, not answered — the privacy rule owns it and runs first.
+    from orchestrator.services.privacy.inference_classes import classify_inference
+
+    if classify_inference(c.query):
+        return None
+    return "analytics" if consumption_question(c.query) else None
+
+
+def _r_plant_point_query(c: _Ctx) -> Optional[str]:
+    """Plant / BMS point questions -> sensor_data (V6-T26).
+
+    Measured before the rule existed: "what is the filter differential pressure on AHU_F5?"
+    and "is the supply fan running on floor 5?" were classified `capability` and answered from
+    a maintenance-log document and a building-statistics block respectively -- with the points
+    connected and readable the whole time. `is_data_query` could not catch them because an
+    equipment id matches none of its sensor / zone / room / floor patterns.
+    """
+    if c.intent not in _WEAK_INTENTS:
+        return None
+    if c.sr.is_control_command(c.query):
+        return None
+    return "sensor_data" if plant_point_question(c.query) else None
 
 
 def _r_wayfinding_spatial(c: _Ctx) -> Optional[str]:
@@ -927,6 +1096,70 @@ def _r_building_not_general(c: _Ctx) -> Optional[str]:
     if not is_building_specific(c.query, c.normalized.get("concepts")):
         return None
     return "analytics"
+
+
+#: A question ABOUT a document rather than about the building's state. These name a measurand
+#: and still belong in the capability lane: "what does the policy say about temperature?" wants
+#: the policy, not a thermometer.
+_DOCUMENTARY_RE = re.compile(
+    r"\b(?:polic(?:y|ies)|manual|handbook|procedure|guidance|guideline|regulation|"
+    r"standard|specification|documentation|say about|says about|stated in|written in|"
+    r"according to)\b",
+    re.IGNORECASE,
+)
+
+#: Shapes that want a COMPUTATION over a period rather than a current reading. Routed to
+#: analytics so the answer is an average or a trend; sending these to sensor_data would return
+#: one instantaneous value to a question about a week, which is a wrong answer that looks right.
+_AGGREGATE_SHAPE_RE = re.compile(
+    r"\b(?:average|mean|median|total|sum|trend|typical|"
+    r"over the (?:last|past)|during the (?:last|past)|this (?:week|month|term|year)|"
+    r"last (?:week|month|term|year)|per (?:square|floor|room|day|week|hour)|"
+    r"peak|minimum|maximum|distribution|breakdown|correlat)\b",
+    re.IGNORECASE,
+)
+
+
+def _r_capability_measurand_is_data(c: _Ctx) -> Optional[str]:
+    """A capability question naming something this building MEASURES -> a data lane (BUG-225).
+
+    The capability lane absorbed 87% of the corpus and 88% of all measurement-shaped
+    questions, so the building's connected sensors were unreachable by ordinary phrasing.
+
+    Runs in the CONCEPT stage because the measurand test needs HBCO lay-term resolution --
+    "stuffy" is a CO2 question and no keyword list available at parse time can know that.
+    """
+    if c.intent != "capability":
+        return None
+
+    from orchestrator.services.grounding_guard import has_measurand_concept
+
+    if not has_measurand_concept(c.normalized.get("concepts")):
+        return None
+    # A question about what a document SAYS keeps its lane, even though it names a measurand.
+    if _DOCUMENTARY_RE.search(c.ql):
+        return None
+    # "How many CO2 sensors are there?" is a census, not a reading. The existing guard owns
+    # that distinction; reimplementing it here would give one decision two owners.
+    if _is_countable_meta(c.ql):
+        return None
+    # A WHY-question about a measurand is a diagnosis, not a reading lookup, and the
+    # diagnosis rule must get it. Rules stop at the first claim, and this one sits in an
+    # earlier stage than `why_diagnosis` -- so without this guard EVERY "why is 5.01 stuffy?"
+    # the LLM labels `capability` was converted to sensor_data here and the V5-T20 diagnosis
+    # lane never ran. Measured live: the answer reported the CO2 mean and then guessed
+    # ("ventilation is insufficient") while the AHU fan state and VAV damper position that
+    # would have ANSWERED it sat connected and readable.
+    #
+    # Deliberately narrow: only why-questions move, and only to the lane already designed for
+    # them. Everything else this rule was built for (BUG-225's 88% absorption) is untouched.
+    from orchestrator.services.anomaly.diagnosis import (
+        is_why_question,  # local: no cycle
+    )
+
+    if is_why_question(c.query):
+        return None
+    return "analytics" if _AGGREGATE_SHAPE_RE.search(c.ql) else "sensor_data"
 
 
 # Precedence order is the contract. Historical rules keep their historical order;
@@ -1073,6 +1306,16 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         _r_why_diagnosis,
     ),
     Rule(
+        "consumption_query",
+        "metered utility consumption → analytics, not a document (V6-T27)",
+        _r_consumption_query,
+    ),
+    Rule(
+        "plant_point_query",
+        "BMS / plant point questions → sensor_data, not a document (V6-T26)",
+        _r_plant_point_query,
+    ),
+    Rule(
         "wayfinding_spatial",
         "route / nearest-facility questions → spatial route finder (V5-T27)",
         _r_wayfinding_spatial,
@@ -1104,6 +1347,15 @@ CONCEPT_STAGE_RULES: Tuple[Rule, ...] = (
         "lay-term measurand + a reference to this building → analytics, never open-domain",
         _r_building_not_general,
         sets_analytics=True,
+    ),
+    # AFTER the rule above: that one rescues open-domain questions, which is the more urgent
+    # failure (an invented value beats no value in nobody's book). This one then handles the
+    # far larger population that was landing in capability.
+    Rule(
+        "capability_measurand_is_data",
+        "capability question naming a measurand this building instruments → sensor_data "
+        "(or analytics for an aggregate shape)",
+        _r_capability_measurand_is_data,
     ),
 )
 

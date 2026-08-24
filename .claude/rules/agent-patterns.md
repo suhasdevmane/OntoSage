@@ -38,11 +38,11 @@ Rules:
 state.intermediate_results["my_node_result"] = {"data": ..., "success": True}
 
 # CORRECT — read previous results with default
-sparql_data = state.intermediate_results.get("sparql_results", [])
+sparql_data = state.intermediate_results.get("sparql_result", {})
 uuids = state.intermediate_results.get("uuids", [])
 
 # WRONG — overwrite another node's key
-state.intermediate_results["sparql_results"] = []  # breaks SPARQL→SQL data handoff
+state.intermediate_results["sparql_result"] = {}  # breaks SPARQL→SQL data handoff
 
 # WRONG — add new top-level state fields without updating shared/models.py
 state.my_new_field = "something"
@@ -50,8 +50,21 @@ state.my_new_field = "something"
 
 Reserved keys (do not overwrite):
 - `intent`, `entities`, `time_range` — set by dialogue node
-- `sparql_results`, `uuids` — set by sparql node
-- `sql_data` — set by sql node
+- `sparql_result` — set by sparql node
+- `sensor_metadata` — dict keyed by timeseries uuid, set by the sql node. **`uuids` is
+  NOT a bus key**: it is a local in that node and nothing writes it. This list said it
+  was, and three readers believed it — `_sources_from` created no per-sensor sources at
+  all as a result. Use `evidence.assemble.contributing_uuids(results)`.
+- `sql_result` — set by sql node
+- `spatial_result` — set by the spatial_query node (V6-T02: it used to write
+  `floor_plan_result`, another lane's key, which mislabelled every geometry answer
+  in the evidence record)
+
+> These names were WRONG in this file until 2026-08-22: it documented `sparql_results`
+> and `sql_data`, strings that appear nowhere in the pipeline. `assemble.py` was written
+> from this list rather than from the code, so the two most important data lanes could
+> never be identified and their answers were recorded as having no evidence at all.
+> When adding a key here, grep for it in `orchestrator/` first.
 - `analytics_output` — set by analytics node
 - `visualization_path` — set by visualization node
 - `error` — set by _safe_node on failure

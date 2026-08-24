@@ -422,12 +422,31 @@ async def lifespan(app: FastAPI):
                     session_id   VARCHAR(256),
                     created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
                     updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-                    resolved_at  TIMESTAMPTZ
+                    resolved_at  TIMESTAMPTZ,
+                    -- V6-T23: the space this report is ABOUT, resolved once at intake against
+                    -- the active building's graph. NULL when no space was named or the named
+                    -- one does not exist -- a guessed IRI would put a fabricated location on
+                    -- a record that feeds work orders.
+                    space_iri    VARCHAR(512),
+                    observed_at  TIMESTAMPTZ
                 )
             """
             )
+            # V6-T23: existing deployments gain the columns in place; IF NOT EXISTS makes
+            # every boot after the first a no-op, so no migration runner is needed.
+            for _alter in (
+                "ALTER TABLE user_reports ADD COLUMN IF NOT EXISTS space_iri VARCHAR(512)",
+                "ALTER TABLE user_reports ADD COLUMN IF NOT EXISTS observed_at TIMESTAMPTZ",
+                # V6-T24: the EXPLICIT link to a work order. Never inferred — a report and a
+                # work order in the same room on the same day are not necessarily the same
+                # issue, and merging them on proximity would combine two people's problems.
+                "ALTER TABLE user_reports ADD COLUMN IF NOT EXISTS work_order_id VARCHAR(64)",
+            ):
+                await _conn.execute(_alter)
             for _idx_sql in (
                 "CREATE INDEX IF NOT EXISTS idx_user_reports_status ON user_reports (status)",
+                "CREATE INDEX IF NOT EXISTS idx_user_reports_space ON user_reports (building_id, space_iri)",
+                "CREATE INDEX IF NOT EXISTS idx_user_reports_wo ON user_reports (work_order_id)",
                 "CREATE INDEX IF NOT EXISTS idx_user_reports_category ON user_reports (category)",
                 "CREATE INDEX IF NOT EXISTS idx_user_reports_priority ON user_reports (priority)",
                 "CREATE INDEX IF NOT EXISTS idx_user_reports_building ON user_reports (building_id)",
@@ -2361,6 +2380,11 @@ async def chat(
                 # V4 ARBITER (T24/T22): the proof-of-analysis dossier and the
                 # structured clarify payload ride the same wiring as `sources`
                 "evidence": updated_state.intermediate_results.get("evidence_dossier"),
+                # V6-T02: the universal evidence record, assembled at the chokepoint for
+                # EVERY lane. Deliberately a separate key from `evidence`: that one is V4's
+                # deliberate-lane dossier and only the ranking lane produces it, so merging
+                # them would make an absent dossier indistinguishable from an absent record.
+                "evidence_record": updated_state.intermediate_results.get("evidence_record"),
                 "clarification": updated_state.intermediate_results.get(
                     "needs_clarification_payload"
                 ),
@@ -3045,6 +3069,7 @@ async def websocket_stream(websocket: WebSocket):
                     "intent": final_state.current_intent,
                     "sources": final_state.intermediate_results.get("sources", []),
                     "evidence": final_state.intermediate_results.get("evidence_dossier"),
+                    "evidence_record": final_state.intermediate_results.get("evidence_record"),
                     "clarification": final_state.intermediate_results.get(
                         "needs_clarification_payload"
                     ),
@@ -3709,6 +3734,13 @@ async def openai_chat_completions(
             # None when the LLM behaved; a cause summary when it refused/timed out.
             # OpenAI clients ignore unknown fields; graders quarantine on it.
             "ontosage_llm_degraded": llm_degradation(),
+            # V6-T02: the evidence record, on this endpoint too. It was on /chat and the
+            # websocket but not here, and this is the endpoint Open WebUI and every
+            # OpenAI-compatible client actually use -- so the answers most people see
+            # carried no statement of what they rest on. Same extension-field convention as
+            # ontosage_llm_degraded above: unknown fields are ignored by OpenAI clients, so
+            # adding it cannot break a consumer.
+            "ontosage_evidence_record": updated_state.intermediate_results.get("evidence_record"),
         }
 
     except Exception as e:
@@ -5432,6 +5464,11 @@ async def database_table_stats(
 # UUID *shape* (8-4-4-4-12), alphanumeric — matches real hex UUIDs AND the
 # synthetic ontology ids like ``00000000-ac01-0000-0000-000000000001``. Specific
 # enough that ordinary columns (``Datetime``, ``value``) never match.
+#: Freshness window for "is this sensor still reporting?" (CAVEAT-233). 24 h is long enough
+#: that an hourly or daily-rollup sensor is not called stale, and short enough that a dead
+#: feed shows up within a day.
+_FRESHNESS_WINDOW_H = 24
+
 _UUID_RE = _re.compile(
     r"^[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}$"
 )
@@ -5508,8 +5545,44 @@ async def database_distinct_uuids(
     return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
 
 
-async def _answerability_for(db_key: str) -> Dict[str, Any]:
-    """One datasource's {declared, with_data, level} (declared UUIDs vs UUIDs with data)."""
+def _store_local_name(key: str) -> str:
+    """Local name of a ``ref:storedAt`` IRI — the same rule the declared-UUID SPARQL uses."""
+    return str(key).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+
+
+async def _reporting_by_local_name(window_hours: int = 24) -> Dict[str, set]:
+    """Fresh declared UUIDs per datasource, keyed by the admin's connection key (CAVEAT-233).
+
+    One measurement for the whole screen: the freshness probe walks each store once, and the
+    per-datasource numbers are read out of that. Returns ``{}`` when the check can't run, which
+    the callers report as "unknown" rather than as zero — an unavailable probe is not evidence
+    that nothing is streaming.
+    """
+    try:
+        from orchestrator.services.building_metrics import reporting_uuids_by_store
+
+        by_store = await asyncio.wait_for(reporting_uuids_by_store(window_hours), timeout=20)
+    except Exception as e:
+        logger.debug(f"[answerability] freshness probe unavailable: {e}")
+        return {}
+    if not by_store:
+        return {}
+    out: Dict[str, set] = {}
+    for k, uuids in by_store.items():
+        out.setdefault(_store_local_name(k), set()).update(uuids)
+    return out
+
+
+async def _answerability_for(
+    db_key: str, reporting: Optional[Dict[str, set]] = None
+) -> Dict[str, Any]:
+    """One datasource's {declared, with_data, reporting, level}.
+
+    `with_data` is "has rows AT ALL"; `reporting` is "produced a reading inside the freshness
+    window". Reporting coverage without freshness invites the reader to hear a claim of
+    liveness it does not make (CAVEAT-233). `level` deliberately stays driven by coverage:
+    a historical-only store is a legitimate configuration and must not be flagged as broken.
+    """
     declared = await _declared_uuids_for_datasource(db_key)
     dec = len(declared)
     try:
@@ -5526,7 +5599,132 @@ async def _answerability_for(db_key: str) -> Dict[str, Any]:
         level = "bad"
     else:
         level = "warn"
-    return {"declared": dec, "with_data": ans, "no_data": len(declared - have), "level": level}
+    # `db_key not in reporting` = this store was not measured (unreachable adapter, failed
+    # query). That is not the same as nothing streaming, so it stays None.
+    fresh = None
+    if reporting is not None and db_key in reporting:
+        fresh = len(declared & reporting[db_key])
+    return {
+        "declared": dec,
+        "with_data": ans,
+        "no_data": len(declared - have),
+        "level": level,
+        "reporting": fresh,  # None = freshness unknown, distinct from 0 = nothing streaming
+        "reporting_window_h": _FRESHNESS_WINDOW_H,
+    }
+
+
+@app.get("/api/v1/admin/sensors/health", response_model=APIResponse)
+async def sensors_health(
+    window_hours: int = 24,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Per-stream health over the narrow stores (V6-T08), assessed by the sensor_health
+    module against the policy's per-modality age limits.
+
+    One MAX(datetime) GROUP BY uuid query per store — never one per sensor. The wide store is
+    reported as NOT PROBED per sensor rather than guessed: its per-column scan is a different
+    cost class, and a wrong health verdict is worse than a declared gap. Drift needs
+    co-located peer values and calibration needs TTL instances (T65); both are named in the
+    payload as not-assessed rather than silently skipped.
+    """
+    from datetime import datetime, timezone
+
+    from orchestrator.services.adapters.registry import adapter_registry
+    from orchestrator.services.evidence.policy import load_policy
+    from orchestrator.services.evidence.sensor_health import assess_sensor, summarise
+
+    policy = load_policy()
+    now = datetime.now(timezone.utc)
+    try:
+        from zoneinfo import ZoneInfo
+
+        local_now = datetime.now(ZoneInfo(settings.BUILDING_TIMEZONE))
+    except Exception:
+        local_now = now
+
+    declared: Dict[str, set] = {}
+    try:
+        import json as _json
+        from pathlib import Path as _Path
+
+        smap = _json.loads(_Path(settings.SENSOR_MAP_PATH).read_text(encoding="utf-8"))
+        for v in smap.values():
+            if isinstance(v, dict) and v.get("uuid") and v.get("storage"):
+                declared.setdefault(str(v["storage"]), set()).add(str(v["uuid"]))
+    except Exception as exc:
+        return APIResponse(success=False, error=f"sensor map unavailable: {exc}", data={})
+
+    healths = []
+    not_probed: List[str] = []
+    for storage_key, uuids in sorted(declared.items()):
+        local = _store_local_name(storage_key)
+        adapter = adapter_registry.get(storage_key)
+        table = getattr(adapter, "table", None)
+        if adapter is None or not hasattr(adapter, "execute_query"):
+            not_probed.append(f"{local}: no adapter")
+            continue
+        if not table:
+            # Wide shape — per-sensor MAX means scanning every uuid column.
+            not_probed.append(f"{local}: wide shape, not probed per sensor")
+            continue
+        try:
+            res = await adapter.execute_query(
+                f"SELECT `uuid`, MAX(`datetime`) AS latest FROM `{table}` GROUP BY `uuid`"
+            )
+        except Exception as exc:
+            not_probed.append(f"{local}: query failed ({type(exc).__name__})")
+            continue
+        if not res.success:
+            not_probed.append(f"{local}: query failed")
+            continue
+        latest_by_uuid = {}
+        for row in res.data:
+            u, ts = row.get("uuid"), row.get("latest")
+            if u is not None and ts is not None:
+                latest_by_uuid[str(u)] = ts
+        # The policy keys freshness by modality; the store's local name is the closest
+        # per-building signal available here, and an unknown name falls to the default limit.
+        modality = local.replace("_data", "")
+        max_age = policy.max_age_minutes(modality)
+        for u in sorted(uuids):
+            ts = latest_by_uuid.get(u)
+            stamps = []
+            if ts is not None:
+                if isinstance(ts, str):
+                    try:
+                        stamps = [datetime.fromisoformat(ts)]
+                    except ValueError:
+                        stamps = []
+                else:
+                    stamps = [ts]
+            h = assess_sensor(u, stamps, local_now.replace(tzinfo=None), max_age)
+            healths.append(
+                {
+                    "uuid": u,
+                    "store": local,
+                    "state": h.state.value,
+                    "age_minutes": h.age_minutes,
+                    "detail": h.detail,
+                }
+            )
+
+    counts = summarise(
+        [type("H", (), {"state": type("S", (), {"value": e["state"]})()})() for e in healths]
+    )
+    return APIResponse(
+        success=True,
+        data={
+            "assessed": len(healths),
+            "by_state": counts,
+            "not_probed": not_probed,
+            "not_assessed": {
+                "drift": "needs co-located peer values; not computed by this endpoint yet",
+                "calibration": "no calibration instances declared in any graph (T65)",
+            },
+            "sensors": healths,
+        },
+    )
 
 
 @app.get("/api/v1/admin/databases/answerability", response_model=APIResponse)
@@ -5542,15 +5740,19 @@ async def databases_answerability_batch(
     active = admin_config.active_db_keys()
     keys = [d["key"] for d in dbs if (active is None) or (d["key"] in active)]
 
+    # One freshness pass for the whole screen, shared by every card (CAVEAT-233).
+    reporting = await _reporting_by_local_name(_FRESHNESS_WINDOW_H) if keys else {}
+
     async def _one(k: str):
         try:
-            return k, await _answerability_for(k)
+            return k, await _answerability_for(k, reporting=reporting or None)
         except Exception as e:
             logger.debug(f"[answerability-batch] {k}: {e}")
             return k, {"declared": 0, "with_data": 0, "no_data": 0, "level": "warn"}
 
     pairs = await asyncio.gather(*[_one(k) for k in keys]) if keys else []
     counts = {k: v for k, v in pairs}
+    _fresh = [v.get("reporting") for v in counts.values() if v.get("reporting") is not None]
     return APIResponse(
         success=True,
         data={
@@ -5558,6 +5760,10 @@ async def databases_answerability_batch(
             "datasources": len(keys),
             "total_declared": sum(v["declared"] for v in counts.values()),
             "total_with_data": sum(v["with_data"] for v in counts.values()),
+            # None (not 0) when the probe could not run anywhere: "unknown" and "nothing is
+            # streaming" are different answers and only one of them is bad news.
+            "total_reporting": sum(_fresh) if _fresh else None,
+            "reporting_window_h": _FRESHNESS_WINDOW_H,
         },
     )
 
@@ -5606,11 +5812,34 @@ async def database_answerability(
     else:
         verdict, level = f"All {len(declared)} declared sensor(s) are answerable.", "ok"
 
+    # CAVEAT-233: say how many of those are CURRENT. "Answerable" means rows exist, which is
+    # what a historical question needs; a real-time question needs a reading from the window,
+    # and the gap between the two numbers is the whole point of reporting them together.
+    _rep = await _reporting_by_local_name(_FRESHNESS_WINDOW_H)
+    reporting = len(declared & _rep[db_key]) if db_key in _rep else None
+    if answerable and reporting is not None:
+        # Three distinct sentences: "0 of them reported ... the rest answer historical
+        # questions only" reads as though some subset were still live when none is.
+        if reporting == 0:
+            verdict += (
+                f" None of them reported in the last {_FRESHNESS_WINDOW_H} h — this "
+                "datasource answers historical questions only."
+            )
+        elif reporting < len(answerable):
+            verdict += (
+                f" {reporting} of them reported in the last {_FRESHNESS_WINDOW_H} h; the rest "
+                "answer historical questions only."
+            )
+        else:
+            verdict += f" All of them reported in the last {_FRESHNESS_WINDOW_H} h."
+
     return APIResponse(
         success=True,
         data={
             "declared": len(declared),
             "with_data": len(answerable),
+            "reporting": reporting,
+            "reporting_window_h": _FRESHNESS_WINDOW_H,
             "no_data": len(no_data),
             "orphan_data": len(have - declared),
             "verdict": verdict,
@@ -5675,10 +5904,20 @@ async def onboarding_status(user: UserContext = Depends(require_permission("syst
         dbs = admin_config.read_databases()
         active = admin_config.active_db_keys()
         keys = [d["key"] for d in dbs if (active is None) or (d["key"] in active)]
-        pairs = await asyncio.gather(*[_answerability_for(k) for k in keys]) if keys else []
+        reporting = await _reporting_by_local_name(_FRESHNESS_WINDOW_H) if keys else {}
+        pairs = (
+            await asyncio.gather(
+                *[_answerability_for(k, reporting=reporting or None) for k in keys]
+            )
+            if keys
+            else []
+        )
+        _fresh = [p.get("reporting") for p in pairs if p.get("reporting") is not None]
         answerability = {
             "total_declared": sum(int(p.get("declared") or 0) for p in pairs),
             "total_with_data": sum(int(p.get("with_data") or 0) for p in pairs),
+            "total_reporting": sum(_fresh) if _fresh else None,
+            "reporting_window_h": _FRESHNESS_WINDOW_H,
         }
     except Exception as e:
         logger.debug(f"[onboarding-status] answerability unavailable: {e}")

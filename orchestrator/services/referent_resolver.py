@@ -42,6 +42,16 @@ _WORDED_REF_RE = re.compile(
     r"\b(?:zone|room|space|node|area)\s+([A-Za-z0-9][A-Za-z0-9._-]{0,23})\b",
     re.IGNORECASE,
 )
+#: Does this token look like something a building would USE as an identifier?
+#:
+#: `_WORDED_REF_RE` captures the word after "room"/"zone"/"space", and English puts a verb
+#: there as readily as an id: "this room FEELS stuffy", "which room HAS the most daylight".
+#: A token carrying a digit ("5.01", "B12", "3") is an id in every building convention seen
+#: here; a bare word may be a real named space ("Atrium") or may be a verb, and only the graph
+#: can say which. So this is not used to reject a token -- it decides how a MISS is reported.
+_IDENTIFIER_SHAPED_RE = re.compile(r"\d")
+
+
 # Injection guard: only these characters may reach a SPARQL string literal.
 _SAFE_TOKEN_RE = re.compile(r"^[A-Za-z0-9._-]{1,24}$")
 
@@ -339,6 +349,21 @@ class ReferentResolver:
 
         if exists:
             return ReferentResolution(status=RESOLVED, referent=token)
+
+        # BUG-232: a word-shaped token that the graph does not know was almost certainly
+        # never a referent -- "room FEELS stuffy" is not a question about a place called
+        # "feels". Declining on it by name is worse than not spotting it: the user gets a
+        # confident error about a word they never used as a location, and the question they
+        # DID ask goes unanswered. Fall through instead and let the rest of the pipeline try.
+        #
+        # An identifier-shaped token is different: "room 5.99" that does not exist is a real
+        # mistake, and telling the user is the whole point of this gate.
+        if not _IDENTIFIER_SHAPED_RE.search(token):
+            logger.debug(
+                f"[referent_resolver] {token!r} is word-shaped and unknown to the graph; "
+                "treating it as not a referent rather than as a failed one"
+            )
+            return ReferentResolution(status=NO_REFERENT)
 
         # Not found — best-effort suggestions (never fatal).
         try:

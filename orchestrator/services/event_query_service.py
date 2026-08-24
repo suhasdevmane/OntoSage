@@ -325,15 +325,88 @@ class EventQueryService:
         else:
             parts = ", ".join(f"{v} {k}" for k, v in counts.items()) or "none on record"
             text = f"**Work orders: {parts}** ({total} total)."
-        return {
+        # V6-T24: a work-order count that ignores what people actually reported answers the
+        # estate's question and not the building's. The joined view adds unlinked user
+        # reports and counts a linked pair ONCE, then states how the figure reconciles with
+        # the two raw ones — otherwise a reader who knows one store's number cannot tell a
+        # correction from a contradiction.
+        joined, joined_counts = await self._joined_ticket_note()
+        if joined:
+            text = text + "\n\n" + joined
+        payload = {
             "success": True,
             "kind": "workorder_summary",
             "counts": counts,
             "total": total,
             "aged_filter_days": 7 if aged else None,
-            "source": "events_data",
+            "source": "events_data + user_reports",
             "formatted_response": text,
         }
+        # This module's own contract, stated in its docstring: everything the prose says must
+        # exist in the payload so the numeric guard can trace it. The joined note introduces
+        # figures the work-order counts do not carry, and without them the guard correctly
+        # refused the entire answer — a number in the text with no counterpart in the data is
+        # precisely what it exists to stop.
+        if joined_counts:
+            payload["joined_tickets"] = joined_counts
+        return payload
+
+    async def _joined_ticket_note(self) -> Tuple[str, Dict[str, int]]:
+        """One line reconciling work orders with what people reported (V6-T24).
+
+        Degrades to "" — never raises and never blocks the work-order answer. A building with
+        no intake store keeps the events-only behaviour it had, which is the portability
+        contract: the join is additive where both stores exist.
+        """
+        try:
+            from orchestrator.services.report_intake_service import get_report_intake_service
+            from orchestrator.services.tickets import (
+                counts as ticket_counts,
+                merge,
+                reconciliation_note,
+                ticket_from_event,
+            )
+
+            svc = get_report_intake_service()
+            reports = await svc.tickets_from_reports(self._bid)
+            if not reports:
+                return "", {}
+            rows = await self._rows(
+                self._adapter.build_overlap_window(
+                    "workorder", "1970-01-01 00:00:00", "2999-01-01 00:00:00", limit=2000
+                )
+            )
+            wos = []
+            for r in rows:
+                wos.append(
+                    ticket_from_event(
+                        r
+                        if isinstance(r, dict)
+                        else {
+                            "event_id": self._col(r, 0, "event_id"),
+                            "status": self._col(r, 5, "status"),
+                            "start_dt": self._col(r, 3, "start_dt"),
+                            "attrs": self._col(r, 6, "attrs"),
+                        }
+                    )
+                )
+            merged = merge(reports, wos)
+            note = reconciliation_note(len(reports), len(wos), merged)
+            tcounts = {
+                **ticket_counts(merged),
+                "raw_reports": len(reports),
+                "raw_work_orders": len(wos),
+            }
+            open_reports = [t for t in merged if t.origin == "user_report" and t.is_open]
+            if open_reports:
+                note += (
+                    f" {len(open_reports)} report(s) filed by people are not yet linked to a "
+                    "work order."
+                )
+            return f"_{note}_", tcounts
+        except Exception as exc:
+            logger.debug(f"[events] joined ticket note skipped: {exc}")
+            return "", {}
 
     async def _access_summary(self, question, start, end, label, now):
         su = derive_point_uuid(self._bid, "evt_subject", "entrance_main")

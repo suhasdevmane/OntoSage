@@ -491,17 +491,30 @@ _CSV_FIELDNAMES = [
     # V5-T01: stakeholder-bank passthroughs for per-role rollups
     "stakeholder_role",
     "register",
+    # V6-T46: the supervisors' own classification, carried through so coverage can be
+    # reported per readiness tier rather than as one number that hides which half is empty.
+    "readiness_r",
+    "complexity_l",
+    "bank_source",
 ]
 
 
 def _load_strata_source(path: Path) -> List[Dict[str, str]]:
     """Load a question-bank CSV as replay rows.
 
-    Accepts BOTH bank shapes (V5-T01):
+    Accepts THREE bank shapes:
       - L7 bank (V4-T27): ID/qid, Question/question, l7_stratum, expected_behavior
-      - stakeholder bank (tasks/smart_building_questions.csv): ID, Question,
-        Category, Register, Stakeholder_Role — Category becomes the stratum, the
-        role and register ride along for per-stakeholder rollups.
+      - V5 synthetic bank: ID, Question, Category, Register, Stakeholder_Role —
+        Category becomes the stratum.
+      - supervisor catalogue (V6-T46): ID, Question, Readiness_R (R1/R2/R3),
+        Complexity_L (L1-L4), Stakeholder_Role — READINESS becomes the stratum.
+
+    The two corpora stratify on different axes ON PURPOSE, and the choice matters more
+    than it looks. R1 coverage measures OntoSage; R2 coverage measures the estate's
+    integration backlog; R3 measures governance. Rolling them into one number would let a
+    good R1 score mask an empty R2 — and would tempt exactly the scoring inflation that
+    already cost this project three false results (CAVEAT-173, BUG-176, BUG-177).
+
     Every row is replayed — banks are curated sets, no stratified sampling.
     """
     rows: List[Dict[str, str]] = []
@@ -511,8 +524,12 @@ def _load_strata_source(path: Path) -> List[Dict[str, str]]:
             question = (r.get("question") or r.get("Question") or "").strip()
             if not qid or not question:
                 continue
+            readiness = (r.get("Readiness_R") or "").strip()
+            # Readiness first: a catalogue row has no Category, and falling through to
+            # "unknown" would silently drop 480 questions into one meaningless bucket.
             stratum = (
                 (r.get("l7_stratum") or "").strip()
+                or readiness
                 or (r.get("Category") or "").strip()
                 or "unknown"
             )
@@ -527,6 +544,9 @@ def _load_strata_source(path: Path) -> List[Dict[str, str]]:
                     "l7_stratum": stratum,
                     "stakeholder_role": (r.get("Stakeholder_Role") or "").strip(),
                     "register": (r.get("Register") or "").strip(),
+                    "readiness_r": readiness,
+                    "complexity_l": (r.get("Complexity_L") or "").strip(),
+                    "bank_source": (r.get("Source") or "").strip(),
                 }
             )
     return rows

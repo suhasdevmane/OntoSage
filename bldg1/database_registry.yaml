@@ -155,6 +155,21 @@ databases:
     nature: synthetic
     note: "demo source (datasources.yaml) · synthetic equipment power series"
 
+  # PLANT / BMS (V6-T26) — points the building's control system already holds.
+  # Master Package D's rule is INTEGRATE, don't duplicate: a supply-air temperature the BMS
+  # already reads must not be re-instrumented with a second IoT sensor that then disagrees
+  # with it. Same narrow shape as every other store, so routing needs no new adapter.
+  plant_data:
+    type: mysql_narrow
+    table: plant_data
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "BMS/plant telemetry (V6-T26) · supply+return air temp, fan state, damper position, filter dP, supply air flow"
+
   # SATURATE (V4-T31) — full-coverage simulated modalities. Same narrow shape
   # (uuid, datetime, value); UUIDs derive from (bldg1, "sat_<modality>", room).
   temperature_data:

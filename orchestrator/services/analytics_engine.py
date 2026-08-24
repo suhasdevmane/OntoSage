@@ -946,6 +946,7 @@ class AnalyticsEngine:
                 f"Analytics [{req.analysis_type}]: grade={result.grade}, "
                 f"violations={len(result.violations)}"
             )
+            self._attach_observational_basis(req, result)
             return result
         except Exception as e:
             logger.error(f"Analytics [{req.analysis_type}] failed: {e}", exc_info=True)
@@ -959,6 +960,55 @@ class AnalyticsEngine:
                 recommendations=[],
                 formatted_response="An error occurred during analytics computation.",
             )
+
+    def _attach_observational_basis(self, req: AnalysisRequest, result: AnalysisResult) -> None:
+        """State what the analysis actually rested on (V6-T19). Never raises.
+
+        One implementation at the dispatch, not one per analyser — ten copies would drift
+        (BUG-210). With no declared cadence the share of the window observed is UNKNOWN, and
+        the sentence says so rather than implying full coverage; when a cadence is declared
+        (T65) the same call starts returning a real percentage with no code change here.
+        """
+        try:
+            from datetime import datetime
+
+            from orchestrator.services.evidence.completeness import assess
+
+            rows = req.data or []
+            stamps = []
+            for row in rows:
+                for key in ("timestamp", "Datetime", "datetime", "time"):
+                    ts = row.get(key)
+                    if ts is None:
+                        continue
+                    if isinstance(ts, datetime):
+                        stamps.append(ts)
+                    elif isinstance(ts, str):
+                        try:
+                            stamps.append(datetime.fromisoformat(ts.replace("Z", "+00:00")))
+                        except ValueError:
+                            pass
+                    break
+            if not stamps:
+                return
+            start, end = min(stamps), max(stamps)
+            report = assess(stamps, start, end, cadence_seconds=None)
+            if report.coverage is None:
+                basis = (
+                    f"Basis: {len(stamps)} reading(s) spanning "
+                    f"{start:%Y-%m-%d %H:%M} to {end:%Y-%m-%d %H:%M}; share of the window "
+                    "observed: unknown (no declared cadence for these streams)."
+                )
+            else:
+                basis = (
+                    f"Basis: {len(stamps)} reading(s), {report.coverage:.0%} of the window "
+                    f"{start:%Y-%m-%d %H:%M} to {end:%Y-%m-%d %H:%M} observed."
+                )
+            result.metrics["observational_basis"] = basis
+            if result.formatted_response and basis not in result.formatted_response:
+                result.formatted_response += f"\n\n_{basis}_"
+        except Exception as exc:
+            logger.debug(f"[analytics] observational basis skipped: {exc}")
 
     def available_types(self) -> List[str]:
         return list(self._ANALYSERS.keys())

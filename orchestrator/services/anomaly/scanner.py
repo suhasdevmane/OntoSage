@@ -27,10 +27,12 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from orchestrator.services.anomaly.detectors import (
+    FLOW_MODALITIES,
     AnomalyFinding,
     cross_modality_inconsistency,
     drift_vs_peers,
     dropout,
+    minimum_flow_persistence,
     schedule_violation,
     seasonal_residual,
     spike,
@@ -43,6 +45,9 @@ logger = get_logger(__name__)
 
 #: modalities where out-of-hours activity is meaningful (generic, not per-building)
 ACTIVITY_MODALITIES = {"occupancy", "illuminance", "energy_submeter", "water_flow"}
+# water_flow appears in BOTH sets deliberately: schedule_violation catches a burst large
+# enough to rival daytime demand, minimum_flow_persistence catches a trickle that never
+# stops. Neither sees the other's failure, so dropping either would leave a real gap.
 
 #: driver → response pairs for the cross-modality detector
 CROSS_MODALITY_PAIRS = (("occupancy", "co2"),)
@@ -128,6 +133,10 @@ class AnomalyScanner:
                 findings += spike(series, uid, modality)
                 if modality in ACTIVITY_MODALITIES:
                     findings += schedule_violation(series, uid, modality)
+                if modality in FLOW_MODALITIES:
+                    # V6-T44: a slow leak is invisible by magnitude and obvious by
+                    # persistence, so it needs its own detector rather than a threshold.
+                    findings += minimum_flow_persistence(series, uid, modality)
                 peer_groups.setdefault((modality, cand.floor), {})[uid] = series
         # drift vs the peer group (same modality + floor)
         for (modality, _floor), group in peer_groups.items():

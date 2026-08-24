@@ -168,11 +168,18 @@ async def _timeseries_step(answerability: Optional[Dict[str, Any]] = None) -> Di
             blocking=False,
             hint="Register the time-series database on the Databases tab.",
         )
-    detail = (
-        f"{len(dbs)} datasource(s); {with_data} of {declared} declared sensor(s) have rows"
-        if declared
-        else f"{len(dbs)} datasource(s); the ontology declares no sensors yet"
-    )
+    # CAVEAT-233: "has rows" and "is still reporting" are different facts about the same
+    # sensor, and the first one alone reads as a claim about the second. Historical-only is a
+    # legitimate state (an archived snapshot answers historical questions correctly), so this
+    # narrows what the building can answer rather than failing the step.
+    reporting = (answerability or {}).get("total_reporting")
+    window = int((answerability or {}).get("reporting_window_h") or 24)
+    if not declared:
+        detail = f"{len(dbs)} datasource(s); the ontology declares no sensors yet"
+    else:
+        detail = f"{len(dbs)} datasource(s); {with_data} of {declared} declared sensor(s) have rows"
+        if reporting is not None:
+            detail += f", {reporting} reporting in the last {window} h"
     return _step(
         "timeseries",
         "Sensor data",

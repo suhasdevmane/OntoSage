@@ -4,6 +4,7 @@ Used across all microservices for type safety
 """
 
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
@@ -423,6 +424,255 @@ class ProvenanceTag(BaseModel):
     store: str = Field(
         default="", description="Backing store, e.g. 'graphdb' | 'mysql:occupancy_data'"
     )
+
+
+# ==================== Evidence Models (V6-T01) ====================
+#
+# The Master Technical Report's central demand: "the building should never sound more
+# certain than the evidence available inside the building." Two structures carry that -
+# a status the reader can see, and a record a machine can check.
+
+
+class AnswerStatus(str, Enum):
+    """What KIND of claim an answer is (Master Report Table 16).
+
+    Exactly six members, no more. The taxonomy is the supervisors', and adding a
+    seventh ("partial", "probably") would reopen the ambiguity it exists to close:
+    every one of these is either something the building OBSERVED, something derived
+    from what it observed, or an admission that it cannot say.
+
+    NOT_ASSESSABLE is a first-class success, not an error. Master Report 15.5 calls it
+    the single most important design requirement, and the graders must score a
+    justified refusal as CORRECT - BUG-191 in this project counted a refusal as a pass
+    only because a digit happened to appear in it, which is the opposite mistake.
+    """
+
+    OBSERVED = "observed"  # a measurement, read from an instrument
+    CALCULATED = "calculated"  # arithmetic over observations, method stated
+    INFERRED = "inferred"  # reasoned from observations; not itself measured
+    PREDICTED = "predicted"  # a forecast, with horizon and interval
+    RECOMMENDED = "recommended"  # an action proposed, with its basis
+    NOT_ASSESSABLE = "not_assessable"  # the evidence cannot support an answer
+
+
+class Operation(str, Enum):
+    """What the system DID to produce the answer (rule R-2, all six catalogues).
+
+    Distinct from AnswerStatus on purpose: status describes the claim, operation
+    describes the act. A lookup and an observation can both be OBSERVED, but only one
+    of them read a sensor, and the catalogues are explicit that these must never be
+    blurred together in one figure.
+    """
+
+    OBSERVATION = "observation"
+    AUTHORITATIVE_LOOKUP = "authoritative_lookup"
+    CALCULATION = "calculation"
+    ESTIMATE = "estimate"
+    FORECAST = "forecast"
+    DIAGNOSIS = "diagnosis"
+    RECOMMENDATION = "recommendation"
+
+
+class SpatialAdequacy(str, Enum):
+    """How well the evidence's location matches the question's (rule R-4, Master 8).
+
+    The non-substitution rule graded rather than made binary. The Master Report permits
+    proxy data *labelled as context* while forbidding silent substitution, so a
+    three-way distinction is needed: "the corridor outside 2.15 read 900 ppm" is a good
+    answer, "900 ppm" is a lie, and "I don't know" throws away real evidence.
+    """
+
+    IN_ROOM = "in_room"  # sensor inside the space asked about
+    SERVED_ZONE = "served_zone"  # validated serving relation, not mere adjacency
+    PROXY = "proxy"  # nearby only - must be named and its limits stated
+    NONE = "none"  # nothing relevant
+
+
+class OmissionReason(str, Enum):
+    """Why a requested criterion is absent from the answer (rule R-9).
+
+    RESTRICTED is deliberately distinct from MISSING. Collapsing them tells a user that
+    data does not exist when in fact they may not see it - misleading, and it hides the
+    governance route that would actually get it.
+    """
+
+    MISSING = "missing"
+    STALE = "stale"
+    RESTRICTED = "restricted"
+    NOT_INSTRUMENTED = "not_instrumented"
+    INADEQUATE_COVERAGE = "inadequate_coverage"
+
+
+class CausalSupport(str, Enum):
+    """What KIND of evidence stands behind a causal claim (rule R-6, Master 12.2).
+
+    The worked example the supervisors give: the system *may* report that temperature rose
+    after occupancy rose; it *must not* conclude that the occupants caused the overheating.
+    The difference is not the wording -- it is what the evidence can carry.
+
+    Graded rather than binary because banning causal language outright would break the
+    anomaly-diagnosis lane, which legitimately reasons about causes and has the evidence to
+    do it. Two series moving together licenses no attribution at all; an asserted serving
+    relation licenses a mechanism; a control action with a measured response licenses the
+    full claim. The guard's job is to check the claim against the class, not to police
+    vocabulary.
+    """
+
+    NONE = "none"  # nothing relates the two quantities
+    CORRELATIONAL = "correlational"  # they moved together; that is all
+    MECHANISTIC = "mechanistic"  # the graph ASSERTS a path between them (serves, feeds)
+    INTERVENTIONAL = "interventional"  # something was changed and the response measured
+
+
+class OmittedCriterion(BaseModel):
+    """One thing the user asked for that the answer does not cover."""
+
+    criterion: str = Field(..., description="What was asked for, in the user's terms")
+    reason: OmissionReason
+    detail: str = Field(default="", description="The specific gap, and the remedy where one exists")
+
+
+class EvidenceSource(BaseModel):
+    """One contributing source, with the provenance the Master Report requires."""
+
+    source_id: str = Field(..., description="Sensor UUID, register id, document id, feed name")
+    kind: str = Field(..., description="'sensor' | 'authoritative' | 'document' | 'human_report'")
+    store: str = Field(default="", description="Backing store, e.g. 'mysql:co2_data'")
+    simulated: Optional[bool] = Field(
+        default=None,
+        description="True = declared synthetic. None = the source declares no provenance, "
+        "which is NOT the same as real and must never be rendered as such.",
+    )
+    observed_at: Optional[datetime] = Field(
+        default=None, description="When the evidence was OBSERVED (not when it was fetched)"
+    )
+    calibration_state: str = Field(
+        default="unknown",
+        description="'calibrated' | 'expired' | 'uncalibrated' | 'unknown'. Absent metadata is "
+        "'unknown', never an assumed-good default.",
+    )
+    spatial_adequacy: SpatialAdequacy = Field(default=SpatialAdequacy.NONE)
+
+
+class EvidenceRecord(BaseModel):
+    """The machine-readable evidence record carried by every consequential answer.
+
+    Master Report 12.1 lists eleven things such a record must state. They map here as:
+    interpreted location and spatial scope; requested period; sources used;
+    latest-evidence timestamp; whether the answer is direct observation or derived;
+    calibration and health; completeness and spatial coverage; analysis method and
+    comparison baseline; uncertainty; the threshold or standard applied; and access
+    restrictions plus omitted sources.
+
+    Assembled at ONE chokepoint, never per lane. BUG-210 in this repository was two
+    copies of a single step drifting until identical inputs produced different results
+    depending which path ran; ten lanes each building their own record would reproduce
+    that ten times over.
+
+    A record is not decoration. It is what makes the acceptance scenarios checkable by a
+    machine rather than by reading prose, and what lets the regression gate tell an
+    intended tightening from a regression.
+    """
+
+    # -- what was asked, as the system understood it --------------------------------
+    status: AnswerStatus = Field(default=AnswerStatus.NOT_ASSESSABLE)
+    operation: Optional[Operation] = Field(default=None)
+    interpreted_location: str = Field(default="", description="The referent the system resolved")
+    spatial_scope: str = Field(default="", description="'space' | 'floor' | 'building' | 'zone'")
+    requested_period: str = Field(default="", description="The window the question asked about")
+
+    # -- what answered it -----------------------------------------------------------
+    sources: List[EvidenceSource] = Field(default_factory=list)
+    latest_evidence_at: Optional[datetime] = Field(
+        default=None, description="Newest observation behind the answer"
+    )
+    retrieved_at: Optional[datetime] = Field(
+        default=None,
+        description="When the system fetched it. Distinct from latest_evidence_at on purpose: "
+        "without both, 'stale evidence is not current status' cannot be enforced at all.",
+    )
+
+    # -- how good that evidence is ---------------------------------------------------
+    completeness: Optional[float] = Field(
+        default=None, ge=0.0, le=1.0, description="Share of expected samples actually present"
+    )
+    spatial_adequacy: SpatialAdequacy = Field(default=SpatialAdequacy.NONE)
+    calibration_state: str = Field(default="unknown")
+    conflicts: List[str] = Field(
+        default_factory=list,
+        description="Disagreements between sources that should agree. Reported, never averaged "
+        "away - an averaged pair yields a value neither sensor measured.",
+    )
+
+    # -- how the answer was derived ---------------------------------------------------
+    analysis_method: str = Field(default="")
+    comparison_baseline: str = Field(default="")
+    uncertainty: str = Field(default="")
+    thresholds_applied: List[str] = Field(
+        default_factory=list, description="Cited standard or policy, with its source"
+    )
+
+    # -- what is NOT in the answer -----------------------------------------------------
+    access_tier: str = Field(default="", description="Tier that answered (Master Table 15)")
+    omitted_criteria: List[OmittedCriterion] = Field(default_factory=list)
+    backup_independent: Optional[bool] = Field(
+        default=None,
+        description="For a recommendation: whether the offered backup shares no dependency "
+        "with the primary (V6-T36, rule R-10). None when not a recommendation; False is a "
+        "real finding — a single point of failure worth raising.",
+    )
+    consequence_class: str = Field(
+        default="",
+        description="How much it costs to be wrong here — informational / operational / "
+        "safety_or_compliance (V6-T32). Decided from the ROUTED intent, never from the "
+        "model's self-assessment (D-6).",
+    )
+    source_tier: str = Field(
+        default="",
+        description="Precedence tier of the source that answered — authoritative / "
+        "measurement / inference (V6-T21, rule R-7). States WHAT KIND of thing answered, "
+        "which a reader cannot otherwise tell from a number.",
+    )
+    entitlement_claim: str = Field(
+        default="",
+        description="Set when the question asked for an entitlement (availability, access, "
+        "privacy, permission) that only a system of record can establish (V6-T22, rule R-8).",
+    )
+    gates_advisory: List[str] = Field(
+        default_factory=list,
+        description="Gates that FAILED in advisory mode: recorded, and deliberately changed "
+        "nothing. Without this an advisory verdict leaves no trace, and shadow mode exists to "
+        "be read before a gate is switched to enforcing.",
+    )
+    gates_not_evaluated: List[str] = Field(
+        default_factory=list,
+        description="Gates that could not run, and the input each is waiting on. A gate that "
+        "is silently absent is indistinguishable from one that passed — which is how three "
+        "gate turns came to be marked done while nothing ever invoked them.",
+    )
+    gates_applied: List[str] = Field(
+        default_factory=list,
+        description="Evidence gates that fired. This is what lets the regression gate "
+        "distinguish an INTENDED TIGHTENING (a gate fired, and named itself) from a "
+        "REGRESSION (the answer got worse and no gate claims responsibility).",
+    )
+    not_assessable_reason: str = Field(default="")
+    remedy: str = Field(
+        default="",
+        description="The concrete connection or authoring step that would make this answerable",
+    )
+
+    def is_answerable(self) -> bool:
+        """True when the record represents an actual answer rather than a refusal."""
+        return self.status is not AnswerStatus.NOT_ASSESSABLE
+
+    def declared_simulated(self) -> bool:
+        """True when ANY contributing source is declared synthetic.
+
+        Any, not all: an answer mixing a real reading with a simulated booking is not a
+        real answer, and rendering it as one is the failure V6-T62 exists to prevent.
+        """
+        return any(s.simulated for s in self.sources)
 
 
 # ==================== Floor Plan Models ====================

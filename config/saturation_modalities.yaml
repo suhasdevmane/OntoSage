@@ -134,6 +134,16 @@ modalities:
       table: submeter_data
       unit: kWh
       scope: floor
+  # V6-T44 -- water split three ways, not two.
+  #
+  # The obvious split is hot/cold, and Brick 1.4 does not support it: there are
+  # Hot_Water_* and Chilled_Water_* sensor classes, but NO class meaning domestic cold
+  # water. Declaring a generic Water_Meter to be "cold" would assert something about what
+  # that meter measures that nothing in the graph supports -- a small fabrication, but the
+  # kind design contract 4 exists to forbid. So the generic meter stays generic (mains or
+  # unsplit), and only the two streams Brick can actually name are split out. A building
+  # that genuinely submeters cold water separately says so by typing that meter, not by
+  # this file guessing.
   water_flow:
     brick_classes:
       - Water_Meter
@@ -143,6 +153,129 @@ modalities:
       table: waterflow_data
       unit: L
       scope: floor
+  water_flow_hot:
+    brick_classes:
+      - Hot_Water_Meter
+      - Hot_Water_Flow_Sensor
+    sat:
+      brick_class: Hot_Water_Meter
+      table: waterflow_data
+      unit: L
+      scope: floor
+  water_flow_chilled:
+    brick_classes:
+      - Chilled_Water_Meter
+      - Chilled_Water_Flow_Sensor
+    sat:
+      brick_class: Chilled_Water_Meter
+      table: waterflow_data
+      unit: L
+      scope: floor
+  # ── V6: modalities needed to link points the enrichment TTLs described but never
+  # connected to a time series. Each Brick class was verified present in
+  # input/Brick+extensions.ttl; each table already exists in the schema.
+  electric_power:
+    brick_classes:
+      - Electric_Power_Sensor
+      - Active_Power_Sensor
+      - Power_Sensor
+    sat:
+      brick_class: Electric_Power_Sensor
+      table: submeter_data
+      unit: kW
+      scope: building
+  motion:
+    brick_classes:
+      - Motion_Sensor
+      - PIR_Sensor
+    sat:
+      brick_class: Motion_Sensor
+      table: occupancy_data
+      unit: binary
+      scope: room
+  occupancy_status:
+    brick_classes:
+      - Occupancy_Status
+    sat:
+      brick_class: Occupancy_Status
+      table: occupancy_data
+      unit: binary
+      scope: room
+  position:
+    brick_classes:
+      - Position_Sensor
+    sat:
+      brick_class: Position_Sensor
+      table: equipment_data
+      unit: percent
+      scope: building
+  water_level:
+    brick_classes:
+      - Water_Level_Sensor
+    sat:
+      brick_class: Water_Level_Sensor
+      table: water_data
+      unit: percent
+      scope: building
+  water_usage:
+    brick_classes:
+      - Water_Usage_Sensor
+    sat:
+      brick_class: Water_Usage_Sensor
+      table: waterflow_data
+      unit: L
+      scope: building
+  solar_irradiance:
+    brick_classes:
+      - Solar_Irradiance_Sensor
+    sat:
+      brick_class: Solar_Irradiance_Sensor
+      table: equipment_data
+      unit: W/m2
+      scope: building
+  runtime_hours:
+    brick_classes:
+      - Duration_Sensor
+    sat:
+      brick_class: Duration_Sensor
+      table: equipment_data
+      unit: hours
+      scope: building
+  # Air_Quality_Sensor is the generic class, so it routes to the generic IAQ table rather
+  # than to co2_data. Some instances measure CO2 and one measures NO2; asserting them all as
+  # CO2 because most are would be a claim the graph does not support.
+  air_quality:
+    brick_classes:
+      - Air_Quality_Sensor
+    sat:
+      brick_class: Air_Quality_Sensor
+      table: iaq_data
+      unit: index
+      scope: room
+  soil_moisture:
+    brick_classes:
+      - ontosage:Soil_Moisture_Sensor
+    sat:
+      brick_class: ontosage:Soil_Moisture_Sensor
+      table: iaq_data
+      unit: percent
+      scope: building
+  rainfall:
+    brick_classes:
+      - ontosage:Rainfall_Sensor
+    sat:
+      brick_class: ontosage:Rainfall_Sensor
+      table: iaq_data
+      unit: mm
+      scope: building
+  lighting_cct:
+    brick_classes:
+      - Lighting_Correlated_Color_Temperature_Sensor
+    sat:
+      brick_class: Lighting_Correlated_Color_Temperature_Sensor
+      table: equipment_data
+      unit: K
+      scope: room
   parking_free:
     brick_classes:
       - Parking_Occupancy_Sensor
@@ -170,3 +303,119 @@ modalities:
       table: lift_data
       unit: binary
       scope: building
+  # ── V6-T43: waste as a measurable domain ────────────────────────────────────
+  # Verified completely absent before this was added: grepping orchestrator/,
+  # shared/, config/, ontology/ and scripts/ for recycl|waste_|bin_fill|WasteBin
+  # returned only an unrelated hbco:energy_waste concept — and, tellingly,
+  # scripts/ttl_gap_audit.py had already recorded this exact gap as backlog item
+  # P4. It is the largest wholly-missing domain the category sweep found.
+  #
+  # Two modalities rather than one because they answer different questions and
+  # fail differently: fill level says "is this bin full NOW" (an operational
+  # question with a live answer), weight says "how much did we throw away"
+  # (a reporting question that needs history). A single "waste" modality would
+  # force one to stand in for the other.
+  waste_fill:
+    # Matching stays on the LOCAL name so both minted ontosage: instances and any
+    # legacy brick:-namespaced ones are found.
+    brick_classes:
+      - Waste_Fill_Sensor
+      - Level_Sensor
+      - Fill_Level_Sensor
+    label_contains:
+      - waste
+      - bin
+      - recycl
+    sat:
+      # Explicitly prefixed: the pinned Brick version defines NO level or weight
+      # sensor class, so an unprefixed name would mint a term into Brick's own
+      # namespace (BUG-179). Verified against the loaded TBox before writing this.
+      brick_class: ontosage:Waste_Fill_Sensor
+      table: wastefill_data
+      unit: percent
+      scope: room
+  waste_weight:
+    brick_classes:
+      - Waste_Weight_Sensor
+      - Weight_Sensor
+    label_contains:
+      - waste
+      - bin
+      - recycl
+    sat:
+      brick_class: ontosage:Waste_Weight_Sensor
+      table: wasteweight_data
+      unit: kg
+      scope: room
+
+  # ── Plant / BMS state (V6-T26, Master Package D) ──────────────────────────
+  # The Master Report is explicit that the hundreds of points a BMS already holds should be
+  # INTEGRATED, not duplicated with new IoT sensors: duplication costs more and produces a
+  # second, less authoritative copy of the same measurement.
+  #
+  # So plant state is declared exactly like any other modality. A point typed with one of
+  # these Brick classes and carrying ref:hasTimeseriesId + ref:storedAt is answerable through
+  # the normal lanes with no code change — which is the whole portability claim, applied to
+  # the one source family that most often lives outside the sensor estate.
+  #
+  # Every class below was verified present in the loaded Brick TBox before being written
+  # here; none needs an ontosage: prefix (contrast waste_fill above, and BUG-179).
+  #
+  # `scope: equipment` — these describe PLANT, not a room. Grading them against room coverage
+  # would report a false gap: an AHU serving thirty rooms is one point, not thirty.
+  supply_air_temperature:
+    brick_classes:
+      - Supply_Air_Temperature_Sensor
+      - Discharge_Air_Temperature_Sensor
+    sat:
+      brick_class: Supply_Air_Temperature_Sensor
+      table: plant_data
+      unit: degC
+      scope: equipment
+  return_air_temperature:
+    brick_classes:
+      - Return_Air_Temperature_Sensor
+      - Mixed_Air_Temperature_Sensor
+    sat:
+      brick_class: Return_Air_Temperature_Sensor
+      table: plant_data
+      unit: degC
+      scope: equipment
+  fan_state:
+    brick_classes:
+      - Fan_Status
+      - Start_Stop_Status
+    sat:
+      brick_class: Fan_Status
+      table: plant_data
+      unit: binary
+      scope: equipment
+  damper_position:
+    brick_classes:
+      - Damper_Position_Sensor
+      - Damper_Position_Command
+    sat:
+      brick_class: Damper_Position_Sensor
+      table: plant_data
+      unit: percent
+      scope: equipment
+  filter_differential_pressure:
+    brick_classes:
+      - Filter_Differential_Pressure_Sensor
+      - Differential_Pressure_Sensor
+    label_contains:
+      - filter
+    sat:
+      brick_class: Filter_Differential_Pressure_Sensor
+      table: plant_data
+      unit: pa
+      scope: equipment
+  supply_air_flow:
+    brick_classes:
+      - Supply_Air_Flow_Sensor
+      - Air_Flow_Sensor
+    sat:
+      brick_class: Air_Flow_Sensor
+      table: plant_data
+      unit: m3h
+      scope: equipment

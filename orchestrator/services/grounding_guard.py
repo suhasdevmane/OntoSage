@@ -324,6 +324,53 @@ def is_on_topic(query: str, passage: str, *, extra_vocab: Optional[Iterable[str]
     return bool(q_terms & p_terms)
 
 
+#: How well a retrieved passage matches the question. Three values, because the useful
+#: distinction is not on/off: a passage sharing a word the whole corpus uses is genuinely
+#: weaker evidence than one sharing a word that appears nowhere else, and pretending those are
+#: the same is what BUG-218 was.
+MATCH_DISTINCTIVE = "distinctive"  # shares a term that narrows this corpus
+MATCH_COMMON = "common"  # shares only vocabulary most documents use
+MATCH_NONE = "none"  # shares nothing
+
+
+def match_strength(
+    query: str,
+    passage: str,
+    *,
+    extra_vocab: Optional[Iterable[str]] = None,
+    corpus_df: Optional[dict] = None,
+    n_docs: int = 0,
+) -> str:
+    """How strongly this passage matches, given what is common in this building's corpus.
+
+    Used to decide how an answer is FRAMED, not whether it is shown. That is the deliberate
+    choice: measured over the golden baseline, using this signal to suppress would drop about
+    one legitimate answer for every off-topic one it removed, whereas using it to hedge costs
+    nothing in recall and removes the thing that actually misleads -- a passage presented under
+    a heading that asserts it answers the question.
+
+    With no corpus table (a building with fewer than a few documents, or none loaded) every
+    shared term counts as distinctive and this reduces to :func:`is_on_topic`.
+    """
+    if not is_on_topic(query, passage, extra_vocab=extra_vocab):
+        return MATCH_NONE
+
+    q_terms = content_terms(query)
+    synonyms = {_singular(str(v).lower()) for v in (extra_vocab or []) if v}
+    q_terms |= synonyms
+    overlap = (q_terms - GENERIC_TERMS) & content_terms(passage)
+    if not overlap:
+        # Cleared is_on_topic on wholly generic vocabulary ("what is the temperature?").
+        return MATCH_COMMON
+
+    if not corpus_df or n_docs <= 0:
+        return MATCH_DISTINCTIVE
+
+    from orchestrator.services.corpus_stats import distinctive_terms
+
+    return MATCH_DISTINCTIVE if distinctive_terms(overlap, corpus_df, n_docs) else MATCH_COMMON
+
+
 def filter_on_topic(
     query: str,
     hits: Sequence[dict],

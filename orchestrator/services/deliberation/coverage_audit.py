@@ -25,7 +25,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Set
 
 import yaml
 
@@ -177,9 +177,18 @@ def _config_candidates(base_path: Path, building_id: Optional[str]) -> List[Path
 class CoverageAuditor:
     """Builds the space × modality coverage matrix from the live graph."""
 
-    def __init__(self, sparql_exec: SparqlExec, modalities: List[ModalitySpec]):
+    def __init__(
+        self,
+        sparql_exec: SparqlExec,
+        modalities: List[ModalitySpec],
+        fresh_uuids: Optional[Set[str]] = None,
+    ):
         self._exec = sparql_exec
         self._modalities = modalities
+        #: uuids with a recent reading, or None when freshness could not be measured.
+        #: None and empty-set mean OPPOSITE things here (see audit()), so the distinction is
+        #: preserved rather than normalised away.
+        self._fresh = fresh_uuids
 
     # ── discovery ────────────────────────────────────────────────────────────
 
@@ -237,6 +246,18 @@ class CoverageAuditor:
             # hasPart — but a floor's hasPart must never grant floor-wide coverage
             "  UNION { ?sensor brick:hasLocation ?zone . ?zone brick:hasPart ?space .\n"
             "          FILTER NOT EXISTS { ?zone a brick:Floor } }\n"
+            # ...and the INVERSE nesting. The hop above models a zone that CONTAINS rooms (an
+            # HVAC zone spanning several offices). The opposite shape is equally valid and just
+            # as common: a per-room zone nested INSIDE the room, `?zone brick:isPartOf ?room`.
+            # A building modelled that way had every physically-installed sensor attached to a
+            # zone and therefore INVISIBLE to the room matrix, while sensors provisioned
+            # directly onto rooms were the only candidates — measured at 66/233 rooms covered
+            # for one modality with ZERO of them fresh, because the reporting sensor in each of
+            # those rooms could not be seen. Both ends are guarded against Floor so that a
+            # room's sensor never grants floor-wide coverage.
+            "  UNION { ?sensor brick:hasLocation ?zone3 . ?zone3 brick:isPartOf ?space .\n"
+            "          FILTER NOT EXISTS { ?zone3 a brick:Floor }\n"
+            "          FILTER NOT EXISTS { ?space a brick:Floor } }\n"
             "  UNION { ?sensor brick:isPointOf ?eq2 . ?eq2 brick:feeds ?zone2 .\n"
             "          ?zone2 brick:hasPart ?space .\n"
             "          FILTER NOT EXISTS { ?zone2 a brick:Floor } }\n"
@@ -286,7 +307,10 @@ class CoverageAuditor:
 
         for sc in spaces:
             for spec in self._modalities:
-                # V5-T09: floor/building-scoped modalities are not per-room
+                # V5-T09: floor/building-scoped modalities are not per-room.
+                # V6-T26 adds `equipment`: plant state describes an AHU or a VAV, not a room.
+                # An AHU serving thirty rooms is ONE point, and grading it against room
+                # coverage would report a 29-room gap that does not exist.
                 # requirements — they never enter the room coverage matrix.
                 if str((spec.sat or {}).get("scope", "room")).lower() != "room":
                     continue
@@ -296,17 +320,34 @@ class CoverageAuditor:
                     "uuid": "",
                     "stored_at": "",
                 }
+                # BUG-255: take the FRESH one when a room has more than one sensor of a
+                # modality. This used to `break` on the first backed point the GRAPH happened
+                # to return, which is an arbitrary order. Room 5.01 has two CO2 populations --
+                # the real CO2_Level_Sensor_5.01 (current) and Room5.01_sat_co2 (SATURATE, last
+                # row four days old) -- and the stale one won. The diagnosis lane then reported
+                # "I have no co2 readings over the last 24 hours" for a room the sensor_data
+                # lane answered with live CO2 in the same minute: two lanes, two sensors,
+                # opposite answers, both honest about what they held.
+                #
+                # `_fresh` is None when freshness could not be measured. That is NOT the same
+                # as "nothing is fresh": on None this falls straight back to first-match, so a
+                # building with no adapters behaves exactly as before.
+                _backed: List[Dict[str, str]] = []
                 for p in by_space.get(sc.space_iri, []):
                     if not spec.matches(p["class_local"], p["text"]):
                         continue
                     if p["uuid"] and p["stored_at"]:
-                        best = {
-                            "status": STATUS_PRESENT,
-                            "sensor": p["sensor"],
-                            "uuid": p["uuid"],
-                            "stored_at": p["stored_at"],
-                        }
-                        break  # contract #8 satisfied — done for this modality
+                        # Dedupe by sensor IRI. Reasoning returns one sensor once per matched
+                        # class (CO2_Level_Sensor AND CO2_Sensor AND Sensor AND Point...), so
+                        # an undeduped list reported "2 candidates" for a room holding one
+                        # sensor — the same class fan-out that inflated the plant point count
+                        # from 7 to 9 in V6-T26.
+                        if any(b["sensor"] == p["sensor"] for b in _backed):
+                            continue
+                        _backed.append(p)
+                        if self._fresh is None:
+                            break  # no freshness signal — historical first-match behaviour
+                        continue
                     if best["status"] == STATUS_MISSING:
                         best = {
                             "status": STATUS_UNBACKED,
@@ -314,6 +355,22 @@ class CoverageAuditor:
                             "uuid": p["uuid"],
                             "stored_at": p["stored_at"],
                         }
+                if _backed:
+                    chosen = next(
+                        (p for p in _backed if self._fresh and p["uuid"] in self._fresh),
+                        _backed[0],
+                    )
+                    best = {
+                        "status": STATUS_PRESENT,
+                        "sensor": chosen["sensor"],
+                        "uuid": chosen["uuid"],
+                        "stored_at": chosen["stored_at"],
+                        # Recorded so a lane can SAY the only sensor it has is stale, rather
+                        # than reporting "no readings" as though the room were uninstrumented.
+                        # Those are different facts and they need different remedies.
+                        "fresh": (None if self._fresh is None else (chosen["uuid"] in self._fresh)),
+                        "candidates": len(_backed),
+                    }
                 sc.modalities[spec.name] = best
         return spaces
 

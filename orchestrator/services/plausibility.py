@@ -98,10 +98,21 @@ _NUMBER_RE = re.compile(r"(?<![\w.])(-?\d{1,3}(?:,\d{3})+|-?\d+(?:\.\d+)?)(?![\w
 # and '/' count as separators here; '-' is left out because it is also a minus.
 _CLOCK_CONTEXT_RE = re.compile(r"[:/]\s*$|^\s*[:/]")
 
+#: An identifier's numeric tail — REP-571188, WO-4471, #90210. The lookbehind in _NUMBER_RE
+#: rejects a preceding word character but NOT a hyphen, so every hyphenated id in an answer
+#: was a candidate reading. A report acknowledgement is largely made of one, which is how
+#: "logged as REP-571188" became "the recorded sound value (571188) is outside the range".
+_IDENTIFIER_PREFIX_RE = re.compile(r"(?:[A-Za-z]-|#|\bno\.\s*|\bref\s*)$")
+
 
 def _is_reading(raw: str, before: str, after: str) -> bool:
-    """False for a number that is plainly part of a date or a clock time."""
+    """False for a number that is plainly part of a date, a clock time or an identifier."""
     if _CLOCK_CONTEXT_RE.search(before) or _CLOCK_CONTEXT_RE.match(after):
+        return False
+    # An identifier is a name that happens to contain digits. Judging it as a quantity
+    # produces a warning about a value nothing measured, attached to an answer that was
+    # correct — which teaches readers to skip the caveat exactly when it is real.
+    if _IDENTIFIER_PREFIX_RE.search(before):
         return False
     try:
         val = float(raw.replace(",", ""))

@@ -750,7 +750,18 @@ class DialogueAgent:
         # amenity-info question — it must reach the deliberate pipeline, so it
         # bypasses the capability short-circuit (same guard family as the
         # data/report/control bypasses above it).
+        from orchestrator.services.anomaly.diagnosis import (
+            is_why_question as _is_why_question,
+        )
         from orchestrator.services.routing_contract import DELIBERATE_RE as _DELIB_RE
+        from orchestrator.services.routing_contract import EVENTS_RE as _EVENTS_RE
+        from orchestrator.services.routing_contract import WAYFIND_RE as _WAYFIND_RE
+        from orchestrator.services.routing_contract import (
+            consumption_question as _consumption_question,
+        )
+        from orchestrator.services.routing_contract import (
+            plant_point_question as _plant_point_question,
+        )
         from orchestrator.services.routing_contract import (
             register_question as _register_q,
         )
@@ -772,7 +783,46 @@ class DialogueAgent:
             # must reach the floor_plan agent, not a floor-areas capability document.
             and not _SR.is_floor_plan_query(user_query)
             and not _SR.is_spatial_query(user_query)
+            # BUG-231: route questions had NO bypass here. Measured, neither
+            # is_floor_plan_query nor is_spatial_query matches "take me to the nearest
+            # accessible toilet", "where's the nearest fire exit" or "how do I get to the
+            # seminar room" -- so all three were answered from a document before the LLM
+            # classified anything, in 250ms. WAYFIND_RE is the contract's existing definition
+            # of a route question and is what _r_wayfinding_spatial routes on; reusing it
+            # keeps one definition rather than two that can drift.
+            and not _WAYFIND_RE.search(user_query)
             and not _DELIB_RE.search(user_query)
+            # V6-T24: event-store questions had no bypass either. "How many work
+            # orders are open?" matched the building-hours document on "open" and was
+            # answered from prose before the LLM classified anything -- the routing
+            # contract sends all four probe phrasings to the events lane and never got
+            # a say. Same remedy and same reasoning as WAYFIND_RE above: EVENTS_RE is
+            # the contract's own definition of an event-store question, so reusing it
+            # keeps one definition instead of two that drift.
+            and not _EVENTS_RE.search(user_query)
+            # V6-T26: plant/BMS point questions had no bypass. Measured with the points
+            # connected and readable: "is the supply fan running on floor 5?" returned a
+            # maintenance-log excerpt and "what is the filter differential pressure on
+            # AHU_F5?" returned the building-statistics block. `is_data_query` cannot catch
+            # these because an equipment id (AHU_F5, VAV_Floor5_West) matches none of its
+            # sensor / zone / room / floor patterns. Fourth member of BUG-231's family.
+            and not _plant_point_question(user_query)
+            # V6-T27: metered-consumption questions had no bypass. "How much energy did the
+            # building use last week?" was answered "I don't have that on record" while six
+            # floor meters held the data, and "How much electricity does the lab on floor 5
+            # use?" returned the room-bookings document. A question answered from prose never
+            # reaches a lane that can state a figure -- so it can state no BOUNDARY either,
+            # which is the whole point of this turn. Sixth member of BUG-231's family.
+            and not _consumption_question(user_query)
+            # V6-T26: a WHY-question belongs to the diagnosis lane, never to a document.
+            # "Why is room 5.01 stuffy?" was answered here in 1.3s with "I don't have that
+            # specific information on record" -- for a room whose CO2, AHU fan state and VAV
+            # damper position are all connected and readable. It previously survived only
+            # because a later concept-stage rule converted it to sensor_data, which produced a
+            # reading plus a guess at the cause; with that rule correctly declining to claim
+            # why-questions, this bypass is what gets it to the lane built for it.
+            # Fifth member of BUG-231's family.
+            and not _is_why_question(user_query)
             # V5-T26: "when was the fire alarm last tested?" matches the fire-safety
             # topic by lay-term, but it asks for a DATE — the register lane answers
             # with one; the topic prose admits it holds none. Same guard family.

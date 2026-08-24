@@ -107,7 +107,11 @@ class TestAdjacencyToleratesPolygonlessSpaces:
                 id="b.1",
                 zone_id="1",
                 label="with polygon",
-                polygon=[NormalisedPoint(x=0, y=0), NormalisedPoint(x=1, y=0), NormalisedPoint(x=1, y=1)],
+                polygon=[
+                    NormalisedPoint(x=0, y=0),
+                    NormalisedPoint(x=1, y=0),
+                    NormalisedPoint(x=1, y=1),
+                ],
                 source="dwg",
             ),
             Space(id="b.5.26", zone_id="5.26", label="point only", source="dwg"),

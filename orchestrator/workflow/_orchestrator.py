@@ -1164,6 +1164,20 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 state.intermediate_results["dialogue_response"] = _generic or (
                     self._handle_sensor_discovery(discovery_filter, entities, census=_census)
                 )
+                # V6-T02: declare the lane. This census is a live SPARQL count against the
+                # building's own ontology, but it runs here rather than in the sparql node,
+                # so without this the evidence chokepoint saw no lane key and reported a
+                # correct, graph-grounded answer as "nothing supports it". A record that
+                # defames a good answer is worse than no record: it trains people to skip it.
+                if _census:
+                    state.intermediate_results.setdefault(
+                        "sparql_result",
+                        {
+                            "source": "ontology_census",
+                            "classes": len(_census),
+                            "total": sum(n for _c, n in _census),
+                        },
+                    )
 
         elif intent in ("control",):
             state.current_intent = "control"
@@ -2135,14 +2149,27 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             for k in r.keys()
         )
 
-        # Context note about what sensors ARE available (for energy queries with no energy data)
+        # Context note for an energy question whose retrieved data holds no energy readings.
+        #
+        # This used to assert "This building (Abacws) does NOT have energy meters or power
+        # consumption sensors" and then enumerate a fixed sensor list. Three faults in one
+        # string (BUG-214): it named a building in core code; the claim went stale and became
+        # FALSE once that building gained energy_data and a per-floor energy_submeter modality;
+        # and it was emitted for whichever building was active, so any other building was told
+        # it was Abacws and given a sensor list that was not its own.
+        #
+        # The replacement makes a claim about the RETRIEVED EVIDENCE rather than about the
+        # building's instrumentation. That is true by construction here - _has_energy_data is
+        # computed from the rows just above - needs no graph query, and cannot go stale. What
+        # the building actually owns is a COUNT question that belongs to the coverage auditor,
+        # not to a prompt string; ontology_summary already lists the sensors in play.
         _sensor_context = ""
         if _is_energy_focused and not _has_energy_data:
             _sensor_context = (
-                "\n\nNOTE: This building (Abacws) does NOT have energy meters or power consumption sensors. "
-                "Available sensors: temperature, CO₂, humidity, air quality (PM2.5, TVOC, NO₂), illuminance. "
-                "Recommendations should focus on HVAC efficiency, ventilation optimisation, and comfort "
-                "improvements inferred from these environmental sensors (e.g. over-heating = wasted energy)."
+                "\n\nNOTE: the data retrieved for this question contains no energy or power "
+                "readings. Do not state, estimate or imply an energy or carbon figure. Base any "
+                "recommendation only on the measurements listed above, and say plainly that "
+                "energy consumption was not measured here."
             )
 
         prompt = f"""You are an expert smart-building consultant. The user asked:
@@ -3202,6 +3229,215 @@ SELECT ?l WHERE {
             logger.debug(f"[synthesis] fallback to draft: {_se}")
             return draft
 
+    def _append_spatial_basis(self, results: Dict[str, Any], text: str) -> str:
+        """Append the spatial-adequacy note when the evidence does not cover the space (T14).
+
+        Only when the BEST grade is proxy or none — one in-room sensor makes the claim
+        room-level and needs no caveat — and only on observation answers, where "the reading
+        is from somewhere else" changes what the number means.
+        """
+        grades = results.get("_spatial_grades") or {}
+        if not grades or not text:
+            return text
+        from orchestrator.services.evidence.narration import adequacy_note
+        from shared.models import SpatialAdequacy
+
+        order = {"in_room": 3, "served_zone": 2, "proxy": 1, "none": 0}
+        best, reason = None, ""
+        for g in grades.values():
+            grade = str(g.get("grade") or "")
+            if grade not in order:
+                continue
+            if best is None or order[grade] > order[best]:
+                best, reason = grade, str(g.get("reason") or "")
+        if best not in ("proxy", "none"):
+            return text
+        note = adequacy_note(SpatialAdequacy(best), reason)
+        if not note or note in text:
+            return text
+        return f"{text}\n\n> **Spatial basis:** {note}"
+
+    async def _assess_backup_independence(self, results: Dict[str, Any]) -> None:
+        """Find an independent backup for a recommendation (V6-T36).
+
+        Writes `_backup_verdict` for the chokepoint. Never raises: a recommendation without a
+        backup assessment is still a recommendation, while an exception here would cost the
+        answer entirely.
+        """
+        try:
+            dossier = results.get("evidence_dossier")
+            if not isinstance(dossier, dict):
+                return
+            ranked = dossier.get("ranked") or []
+            if len(ranked) < 2:
+                return
+
+            from orchestrator.services.evidence.independence import (
+                Candidate,
+                build_query,
+                choose,
+                dependencies_from_rows,
+            )
+            from orchestrator.services.evidence.spatial_facts import (
+                active_namespace,
+                default_run_select,
+                resolve_space_iri,
+            )
+
+            ns = active_namespace()
+            entries = []
+            for r in ranked[:6]:
+                if not isinstance(r, dict):
+                    continue
+                label = str(r.get("space") or "")
+                if not label:
+                    continue
+                iri = await resolve_space_iri(label, ns, default_run_select)
+                if iri:
+                    entries.append((iri, label, r.get("total")))
+            if len(entries) < 2:
+                return
+
+            res = await default_run_select(build_query([e[0] for e in entries]), limit=2000)
+            deps = dependencies_from_rows((res or {}).get("rows") or [])
+            verdict = choose(
+                [
+                    Candidate(
+                        identifier=iri, label=label, score=score, dependencies=deps.get(iri, set())
+                    )
+                    for iri, label, score in entries
+                ]
+            )
+            results["_backup_verdict"] = {
+                "primary": verdict.primary.name() if verdict.primary else "",
+                "backup": verdict.backup.name() if verdict.backup else "",
+                "independent": verdict.has_independent_backup,
+                "reason": verdict.reason,
+                "text": verdict.describe(),
+            }
+        except Exception as exc:
+            logger.debug(f"[backup] independence assessment skipped: {exc}")
+
+    async def _grade_spatial_adequacy(self, results: Dict[str, Any]) -> None:
+        """Grade every contributing point against the question's space (V6-T13).
+
+        Writes ``_spatial_grades`` (uuid -> {grade, reason}) and ``_spatial_target`` onto the
+        bus for the evidence chokepoint to read. Never raises and never blocks an answer: a
+        spatial grade describes evidence, and a describer that can take down the thing it
+        describes is worse than none.
+        """
+        try:
+            from orchestrator.services.evidence.assemble import contributing_uuids
+
+            # NOT results["uuids"] — that reserved key is documented and never written; the
+            # SQL node puts `sensor_metadata` on the bus instead. Reading the documented name
+            # made this return at the first guard on every question.
+            uuids = contributing_uuids(results)
+            entities = [e for e in (results.get("entities") or []) if isinstance(e, str)]
+            if not uuids or not entities:
+                return
+
+            from orchestrator.services.evidence.spatial_adequacy import classify
+            from orchestrator.services.evidence.spatial_facts import (
+                active_namespace,
+                cadences_for_uuids,
+                calibration_for_uuids,
+                default_run_select,
+                facts_for_uuids,
+                resolve_space_iri,
+            )
+
+            ns = active_namespace()
+            # V6-T17: declared cadences ride this same graph pass; the completeness gate
+            # reads them at assembly. Fetched here because the chokepoint is deliberately
+            # synchronous and this is its one async antechamber.
+            try:
+                cadences = await cadences_for_uuids(uuids, ns, default_run_select)
+                if cadences:
+                    results["_cadences"] = cadences
+            except Exception as _cad_err:
+                logger.debug(f"[evidence] cadence fetch skipped: {_cad_err}")
+            # V6-T34: calibration rides the same pass. Absent = unknown, and unknown is
+            # disqualifying for a standards verdict rather than quietly acceptable.
+            try:
+                _cal = await calibration_for_uuids(uuids, ns, default_run_select)
+                if _cal:
+                    results["_calibration"] = _cal
+            except Exception as _cal_err:
+                logger.debug(f"[evidence] calibration fetch skipped: {_cal_err}")
+            target = await resolve_space_iri(entities[0], ns, default_run_select)
+            if not target:
+                # Unresolved or ambiguous. Grading against an arbitrary candidate would
+                # produce a confident verdict about the wrong room, so nothing is written and
+                # the gate stays unevaluated rather than wrong.
+                return
+
+            facts = await facts_for_uuids(uuids, ns, default_run_select, target=target)
+            if not facts:
+                return
+            grades = {}
+            for uid, f in facts.items():
+                v = classify(target, f)
+                grades[uid] = {
+                    "grade": v.grade.value,
+                    "reason": v.reason,
+                    "evidence_space": v.evidence_space or "",
+                }
+            results["_spatial_grades"] = grades
+            results["_spatial_target"] = target
+        except Exception as exc:
+            logger.debug(f"[spatial-adequacy] grading skipped: {exc}")
+
+    #: Words that make an answer a CONSUMPTION answer. Deliberately narrow: a boundary line on
+    #: an answer that is not about metered consumption is noise, and noise trains people to skip
+    #: the line that matters. Generic English, no building literals.
+    _ENERGY_ANSWER_RE = re.compile(
+        r"\b(?:kwh|kw ?h|kilowatt|energy|electricity|electrical consumption|power (?:use|usage|"
+        r"consumption)|water (?:use|usage|consumption)|gas (?:use|usage|consumption)|"
+        r"consumption|metered?|sub[- ]meter)\b",
+        re.IGNORECASE,
+    )
+
+    async def _meter_boundary_line(self, state: ConversationState, answer: str) -> str:
+        """The boundary sentence for an energy answer, or "" when the answer is not one.
+
+        Which meters produced the figure is resolved by TIMESERIES UUID first — that is what the
+        reading was actually fetched with — and only then by meter names appearing in the text.
+        Name matching alone would attach a boundary to any answer that happened to mention a
+        meter, which is how a caveat becomes a decoration.
+        """
+        question = state.messages[-1].content if state.messages else ""
+        if not self._ENERGY_ANSWER_RE.search(f"{question} {answer}"):
+            return ""
+        # A boundary describes a FIGURE. An answer with no figure has nothing to bound, and
+        # appending "Boundary: not declared" to one is noise at best — measured live, the
+        # per-person REFUSAL picked up a boundary line, which reads as though a number had been
+        # withheld rather than being impossible to produce.
+        if state.current_intent in ("privacy_refusal", "clarification", "greeting", "control"):
+            return ""
+        if not re.search(r"\d", answer or ""):
+            return ""
+
+        from orchestrator.services.evidence import meter_boundary as _mb
+        from orchestrator.services.evidence.assemble import contributing_uuids
+
+        results = state.intermediate_results or {}
+        uuids = list(contributing_uuids(results) or [])
+        # Meter names the answer itself cites, as the fallback key.
+        names = [n for n in re.findall(r"\b[A-Za-z][A-Za-z0-9_]*Meter[A-Za-z0-9_]*\b", answer)]
+        names += re.findall(r"\b(?:Energy|Electric|Water|Gas|HVAC)_Meter_\w+\b", answer)
+
+        from orchestrator.services.deliberation.live import sparql_exec
+        from shared.config import settings
+
+        boundaries = await _mb.for_building(settings.BUILDING_NAMESPACE, sparql_exec)
+        if not boundaries:
+            return ""
+        hits = _mb.match(boundaries, uuids, names)
+        # No hit means the figure's meter is unknown to the topology. Saying nothing would let
+        # the number stand boundary-less, which is the state this turn exists to end.
+        return _mb.statement(hits, subject=question[:60])
+
     async def _response_node(self, state: ConversationState) -> ConversationState:
         """Format final response — with response-cache store after generation.
 
@@ -3237,6 +3473,64 @@ SELECT ?l WHERE {
             results["plan_trace"] = build_plan_trace(results, executed_stages=executed)
         except Exception as _pt:
             logger.debug(f"plan_trace skipped: {_pt}")
+
+        # V6-T02: THE evidence chokepoint. Every lane leaves what it knows on the state bus;
+        # the record is assembled here, once, for all of them.
+        #
+        # Assembled in one place rather than per lane because BUG-210 in this repository was
+        # two copies of a single step drifting until identical inputs gave different results
+        # depending which path ran. Ten copies of an evidence assembler would reproduce that
+        # ten times over, and each drift would be invisible because every lane would still be
+        # producing *a* record.
+        #
+        # Wrapped like plan_trace above, and for a stronger reason: a record exists to
+        # DESCRIBE an answer, so a describer that can take down the thing it describes is
+        # worse than not having one. A lane that emitted nothing yields NOT_ASSESSABLE with a
+        # reason saying so, which is what makes this safe to add ahead of the lanes that do
+        # not populate it yet.
+        # V6-T13: grade each contributing point against the space the question asked about,
+        # BEFORE assembly. The fetch is async and the chokepoint is not, and making the
+        # chokepoint async would put I/O inside the one function whose contract is that it can
+        # never break the answer. So the graph access lives here and assembly reads a dict.
+        # V6-T22: the permission guard matches on the QUESTION, never the answer — a safety
+        # property that depends on model output being well-formed is not one (BUG-213). The
+        # bus does not otherwise carry the user's text, so it is put here, once.
+        #
+        # By ROLE, never by index. Elsewhere in this file the question is read as
+        # messages[-2] because the assistant's reply has been appended by then; at THIS point
+        # it has not, so the same index returns the wrong message — and an empty question
+        # makes the guard silently pass every entitlement claim.
+        try:
+            _q = ""
+            for _m in reversed(getattr(state, "messages", None) or []):
+                if str(getattr(_m, "role", "") or "").lower() in ("user", "human"):
+                    _q = str(getattr(_m, "content", "") or "")
+                    break
+            if not _q and getattr(state, "messages", None):
+                _q = str(getattr(state.messages[-1], "content", "") or "")
+            if _q:
+                results.setdefault("original_query", _q)
+        except Exception:
+            pass
+
+        await self._grade_spatial_adequacy(results)
+        # V6-T36: a recommendation needs a backup that cannot fail with the primary.
+        await self._assess_backup_independence(results)
+
+        try:
+            from orchestrator.services.evidence.assemble import record_for_response
+
+            results["evidence_record"] = record_for_response(
+                results, gate_verdicts=results.get("gate_verdicts") or []
+            )
+        except Exception as _ev:
+            # WARNING, not debug. An evidence record that silently fails to assemble leaves
+            # the answer with no statement of what it rests on, and every downstream consumer
+            # -- the regression gate, the plausibility scoping, the API contract T02 promises
+            # -- then behaves as though the lane produced nothing. That is invisible at INFO,
+            # which is how a reproducible assembly failure went unnoticed after T02 was
+            # verified: the probe questions happened not to hit it.
+            logger.warning(f"evidence record skipped: {type(_ev).__name__}: {_ev}", exc_info=True)
 
         # Phase 1: attach grounding verification record (rule-based, no LLM call)
         try:
@@ -3298,6 +3592,10 @@ SELECT ?l WHERE {
         ):
             pr = ctx.planner_result
             final_response = pr.get("formatted_response") or pr.get("formatted_text")
+        elif results.get("spatial_result"):
+            # V6-T02: the spatial lane renders here too. Checked BEFORE floor_plan_result so
+            # a turn that touched both is presented as what it computed, not what it drew.
+            final_response = results["spatial_result"]
         elif ctx.floor_plan_result:
             final_response = ctx.floor_plan_result
         elif document_result.get("success"):
@@ -3466,7 +3764,28 @@ SELECT ?l WHERE {
                 "privacy_refusal_result",
             )
         )
-        if not _from_template_lane:
+        # BUG-230: and only when the numbers in the draft could be READINGS at all.
+        #
+        # The guard scans the draft for values, so a document excerpt's threshold table --
+        # "CO2 < 800 ppm, > 1000 ppm triggers boost, TVOC < 300 ppb" -- was read as
+        # temperature readings and warned about as impossible. It then asserted "the recorded
+        # temperature value" when nothing was recorded, on 4.7% of answers before the routing
+        # fixes and 3.2% after.
+        #
+        # The evidence record (V6-T02) states what act produced the answer, which is exactly
+        # the missing condition. Numbers are readings for an observation, a calculation over
+        # observations, or a forecast; they are not readings for an authoritative lookup of a
+        # document, a register or a booking. Fails OPEN: with no record the guard runs as
+        # before, because not knowing is not a reason to stop guarding.
+        _rec = results.get("evidence_record") or {}
+        _op = str(_rec.get("operation") or "")
+        _numbers_could_be_readings = (not _op) or _op in (
+            "observation",
+            "calculation",
+            "forecast",
+            "estimate",
+        )
+        if not _from_template_lane and _numbers_could_be_readings:
             try:
                 from orchestrator.services.plausibility import implausibility_note
 
@@ -3492,6 +3811,31 @@ SELECT ?l WHERE {
                 state, final_response, state.current_intent
             )
 
+        # ── V6-T27: meter boundary on every energy answer ─────────────────────
+        # Master Package E: a consumption figure without its boundary is four different claims
+        # wearing one number — a directly-metered floor, a share of a building total apportioned
+        # by area, a single riser, or a circuit that merely sits on that floor. Measured before
+        # this: every energy answer stated a figure and no boundary at all.
+        #
+        # Appended AFTER persona formatting on purpose. Placed before it, the line was quietly
+        # PARAPHRASED AWAY by the formatter — a factual caveat an LLM may reword is a caveat that
+        # can vanish, and the entire point of this one is that it cannot.
+        #
+        # The line also goes into the payload, not only the prose: the numeric guard checks every
+        # number in the text against the payload's own fields, so a boundary naming "Floor 2"
+        # would otherwise be an unbacked "2" — the shape that suppressed an honest diagnosis in
+        # V6-T26 when a room name was read as a reading.
+        try:
+            _boundary_line = await self._meter_boundary_line(state, final_response)
+            if _boundary_line and _boundary_line[:14] not in final_response:
+                for _k in ("analytics_result", "sql_result"):
+                    _payload = state.intermediate_results.get(_k)
+                    if isinstance(_payload, dict):
+                        _payload["meter_boundary"] = _boundary_line
+                final_response = f"{final_response}\n\n{_boundary_line}"
+        except Exception as _exc:  # pragma: no cover - a caveat must never cost the answer
+            logger.warning(f"[meter-boundary] skipped: {_exc}")
+
         # Phase 7.2: Append proactive follow-up suggestions based on intent
         suggestions = self._get_follow_up_suggestions(state.current_intent)
         if suggestions:
@@ -3512,6 +3856,24 @@ SELECT ?l WHERE {
                 )
             except Exception as _pa_err:
                 logger.debug(f"Persona adapter skipped: {_pa_err}")
+
+        # V6-T14: when the evidence is a proxy for the place asked about, the ANSWER says
+        # so, naming the space it is really from. Labelling, not enforcement: D-3 permits
+        # proxy data reported as context, so this ships while the spatial gate stays
+        # advisory. Placed before i18n so the note is translated with the rest.
+        try:
+            _bk = results.get("_backup_verdict") or {}
+            if _bk.get("text") and _bk["text"] not in final_response:
+                # Stated on the ANSWER, not only on the record: "no independent backup
+                # exists" is advice, and advice the reader never sees is not advice.
+                final_response = f"{final_response}\n\n> {_bk['text']}"
+        except Exception as _bk_err:
+            logger.debug(f"[response] backup note skipped: {_bk_err}")
+
+        try:
+            final_response = self._append_spatial_basis(results, final_response)
+        except Exception as _sb_err:
+            logger.debug(f"[response] spatial basis note skipped: {_sb_err}")
 
         # WIRE-A: i18n — translate response back to user's language
         _user_lang = state.intermediate_results.get("_user_lang", "en")
@@ -3580,6 +3942,10 @@ SELECT ?l WHERE {
                         intent=state.current_intent or "general",
                         media=[media_payload] if media_payload else [],
                         building_id=state.building_id,
+                        # BUG-235: the record travels WITH the answer. Without it a cache hit
+                        # returns prose with no statement of what supports it, voiding the
+                        # T02 guarantee for every repeated question.
+                        metadata={"evidence_record": results.get("evidence_record")},
                     )
             except Exception as _cache_err:
                 logger.debug(f"Response cache store skipped: {_cache_err}")
@@ -3640,6 +4006,11 @@ SELECT ?l WHERE {
             "memory_context",
             "compliance_context",  # consumed above; clear after appending
             "floor_plan_result",  # consumed above; clear after appending
+            # V6-T02: spatial_result joins the cleanup for the same reason floor_plan_result
+            # is here. It is rendered above and must not survive the turn, or a later
+            # question falls into the spatial branch and is answered with stale geometry.
+            # Safe to pop here: the evidence record is assembled earlier in this same node.
+            "spatial_result",
             "floor_plan_structured",  # consumed by response node; clear after appending
             "floor_context_hint",  # consumed by SPARQL agent; clear so it doesn't bleed across turns
         ]
@@ -5112,6 +5483,23 @@ SELECT ?l WHERE {
                 "(counts and averages over rooms) for any role."
             )
             policy_iri = ""
+        elif cls == "individual_attribution":
+            # V6-T27. This refusal is about what a METER can measure, not only about privacy,
+            # and saying so is what makes it useful rather than obstructive. Measured before
+            # the class existed: "How much energy did I use this month?" was answered "22.06
+            # kWh" by summing all six floor meters, and "Which employee uses the most
+            # electricity?" answered "Energy Meter Floor4" — substituting a meter for a person.
+            # Both are fabrications: no meter in this building measures an individual.
+            text = (
+                "**Energy can't be attributed to an individual here.** A meter measures a "
+                "boundary — a circuit, a floor, a whole building — so there is no reading that "
+                "belongs to one person, and splitting a shared total by headcount would invent "
+                "a number rather than measure one.\n\n"
+                "I can answer the metered questions: consumption for a floor or the whole "
+                "building over a period, how floors compare, and per-capita figures where a "
+                "total is divided by an occupancy count (an average, not an attribution)."
+            )
+            policy_iri = ""
         else:
             text = (
                 "**I don't answer questions about individual people.** This system "
@@ -5491,11 +5879,15 @@ SELECT ?l WHERE {
 
             agent = get_spatial_agent()
             markdown = await agent.resolve(user_query, building_id, floor)
-            state.intermediate_results["floor_plan_result"] = markdown
+            # V6-T02: its OWN key, not the floor-plan lane's. This node used to write
+            # `floor_plan_result` because that is what _response_node renders, which broke
+            # the reserved-key rule and made every geometry answer look like a drawing
+            # lookup in the evidence record. _response_node now renders this key too.
+            state.intermediate_results["spatial_result"] = markdown
         except Exception as e:
             logger.error(f"[spatial_query] Unexpected error: {e}", exc_info=True)
             state.intermediate_results["error"] = f"spatial_query: {str(e)}"
-            state.intermediate_results["floor_plan_result"] = (
+            state.intermediate_results["spatial_result"] = (
                 "I encountered an error analysing the spatial data. Please try again."
             )
 
@@ -5861,7 +6253,10 @@ SELECT ?l WHERE {
             )
             return state
 
-        building_id = state.building_id or "bldg1"
+        # BUG-215: this fell back to the literal "bldg1", so any building whose state
+        # carried no building_id read and wrote ANOTHER building's user alerts. The
+        # active building is what settings resolves to.
+        building_id = state.building_id or settings.BUILDING_ID
         query = (state.messages[-1].content if state.messages else "").lower()
 
         # Detect subcommand
@@ -6329,6 +6724,18 @@ SELECT ?l WHERE {
                     )
                     state.current_intent = cached.get("intent", "general")
                     state.intermediate_results["cache_hit"] = True
+                    # BUG-235: restore the evidence record alongside the answer it describes.
+                    # Its `retrieved_at` is deliberately NOT refreshed -- that field says when
+                    # the evidence was gathered, and for a cached answer it genuinely was
+                    # gathered then. Moving it to now would manufacture currency the answer
+                    # does not have, which is precisely what the freshness gate exists to
+                    # catch. `served_from_cache` carries the rest of the story.
+                    _cached_rec = (cached.get("metadata") or {}).get("evidence_record")
+                    if isinstance(_cached_rec, dict):
+                        state.intermediate_results["evidence_record"] = {
+                            **_cached_rec,
+                            "served_from_cache": True,
+                        }
                     # V4-T33: cache hits skip the graph but still carry a trace
                     state.intermediate_results["plan_trace"] = {
                         "kind": "reflex",

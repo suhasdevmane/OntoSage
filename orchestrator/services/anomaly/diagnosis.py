@@ -76,6 +76,15 @@ def parse_day_window(question: str, now: datetime) -> Tuple[datetime, datetime, 
     return now - timedelta(hours=24), now, "the last 24 hours"
 
 
+def _squash(text: str) -> str:
+    """Lowercase, strip every non-alphanumeric. Used on BOTH sides of a label comparison.
+
+    One function so the two sides cannot drift apart again -- they already did once, and the
+    result was a comparison that could never match.
+    """
+    return re.sub(r"[^a-z0-9]", "", (text or "").lower())
+
+
 class DiagnosisService:
     """All I/O injectable; every gatherer degrades to 'no evidence' silently."""
 
@@ -101,8 +110,16 @@ class DiagnosisService:
         q = (question or "").lower()
         m = re.search(r"\b(?:room\s*)?(rm\s?\w{2,6}|\d{1,2}\.\d{2,3})\b", q, re.IGNORECASE)
         if m:
-            token = m.group(1).replace(" ", "").replace(".", "").lower()
-            hits = [sc for sc in spaces if token in sc.label.replace("_", "").lower()]
+            # BOTH sides must be normalised the same way. The token dropped "." while the
+            # label kept it, so "5.01" became "501" and was compared against "room 5.01" --
+            # a match that could never succeed for ANY label form (Room 5.01, Room5.01,
+            # Room_5.01, 5.01 all fail). Every room-scoped why-question therefore fell
+            # through to the building branch below and was answered from a whole-building
+            # average, which is a wrong-scope answer that reads exactly like a right one:
+            # "why is 5.01 stuffy" returned the mean across 233 rooms with no indication the
+            # room had not been found.
+            token = _squash(m.group(1))
+            hits = [sc for sc in spaces if token in _squash(sc.label)]
             if hits:
                 return "room", hits[:1]
         m = re.search(r"\b(?:floor|level)\s*(\w{1,3})\b", q)
@@ -140,6 +157,100 @@ class DiagnosisService:
             candidates, [modality], window_hours=window_hours, adapter_getter=self._adapter_getter
         )
         return series, candidates
+
+    async def _plant_state(self, targets, start: datetime, end: datetime):
+        """What the plant serving this space was DOING during the window (V6-T26).
+
+        This is the difference between describing a problem and explaining it. Before this,
+        "why is 5.01 stuffy?" answered with the CO2 mean and then guessed -- "the elevated
+        average suggests that ventilation is insufficient" -- while the AHU's fan state and
+        the VAV's damper position sat connected and readable in the graph the whole time. A
+        guess phrased as a suggestion is still a claim the data did not support.
+
+        Returns (notes, figures). Figures ride in the payload because the numeric guard
+        refuses an answer whose prose contains numbers the evidence does not carry -- the
+        same rule that caught the T24 note.
+        """
+        notes: List[Tuple[float, str]] = []
+        figures: Dict[str, Any] = {}
+        if not targets:
+            return notes, figures
+        try:
+            from orchestrator.services.deliberation.candidates import Candidate
+            from orchestrator.services.deliberation.fetch import fetch_series
+            from orchestrator.services.evidence import plant_state as _plant
+
+            sparql = self._sparql
+            if sparql is None:  # pragma: no cover - live wiring
+                from orchestrator.services.deliberation.live import (
+                    sparql_exec as sparql,
+                )
+
+            ctx = await _plant.for_space(targets[0].space_iri, sparql, self.building_id)
+            figures["plant_equipment"] = [e.rsplit("#", 1)[-1] for e in ctx.equipment]
+            figures["plant_points"] = len(ctx.points)
+            if not ctx.has_points:
+                # Named, not silent. "No plant data" read as an omission is indistinguishable
+                # from "the plant is fine", and they are opposite messages to a facilities team.
+                figures["plant_note"] = ctx.describe()
+                return notes, figures
+
+            wanted = {"Fan_Status": "fan_state", "Damper_Position_Sensor": "damper_position"}
+            cands, byuuid = [], {}
+            for pt in ctx.points:
+                mod = wanted.get(pt.kind)
+                if not mod or not pt.uuid:
+                    continue
+                byuuid[pt.uuid] = (mod, pt.equipment_name)
+                cands.append(
+                    Candidate(
+                        space_iri=pt.equipment_iri,
+                        label=pt.equipment_name,
+                        floor="",
+                        sensors={mod: {"uuid": pt.uuid, "stored_at": "plant_data"}},
+                    )
+                )
+            if not cands:
+                return notes, figures
+
+            hours = max(24.0, (datetime.utcnow() - start).total_seconds() / 3600.0)
+            series = await fetch_series(
+                cands,
+                sorted({m for m, _ in byuuid.values()}),
+                window_hours=hours,
+                adapter_getter=self._adapter_getter,
+            )
+            for uuid, (mod, equip) in byuuid.items():
+                pts = [v for t, v in _clean(series.get(uuid) or []) if start <= t < end]
+                if not pts:
+                    continue
+                mean = sum(pts) / len(pts)
+                if mod == "fan_state":
+                    on_pct = round(100.0 * sum(1 for v in pts if v >= 0.5) / len(pts), 1)
+                    figures[f"fan_on_pct::{equip}"] = on_pct
+                    if on_pct < 50.0:
+                        # A measured cause outranks every heuristic below it: this is the
+                        # plant not running, not a correlation in time.
+                        notes.append(
+                            (
+                                6.0,
+                                f"{equip}'s supply fan ran for only {on_pct}% of the window — "
+                                f"the space was barely being ventilated",
+                            )
+                        )
+                elif mod == "damper_position":
+                    figures[f"damper_mean::{equip}"] = round(mean, 1)
+                    if mean < 20.0:
+                        notes.append(
+                            (
+                                5.0,
+                                f"{equip}'s damper averaged {mean:.1f}% open — near-minimum "
+                                f"fresh-air position",
+                            )
+                        )
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.debug(f"[diagnosis] plant state unavailable: {exc}")
+        return notes, figures
 
     @staticmethod
     def _window_mean(series, start: datetime, end: datetime) -> Optional[float]:
@@ -239,8 +350,22 @@ class DiagnosisService:
         prior_mean = self._window_mean(merged, start - timedelta(days=7), end - timedelta(days=7))
 
         if window_mean is None:
+            # The referent and window MUST ride in the payload, not only in the prose. The
+            # numeric guard checks every number in the narration against the payload's own
+            # fields, and a room name like "Room 5.01" is numerically indistinguishable from a
+            # reading -- the same shape as BUG-242, where report id REP-571188 was judged as a
+            # measurement. Without these fields the guard suppressed this message and replaced
+            # a correct, useful "I have no readings for 5.01" with "a number could not be
+            # traced back to the underlying data": an honest answer destroyed by the mechanism
+            # meant to protect honesty. The success path already carries them; only this
+            # early return did not.
             return {
                 "success": False,
+                "kind": "diagnosis",
+                "modality": modality,
+                "referent": label,
+                "window": [start.isoformat(), end.isoformat()],
+                "window_label": window_label,
                 "formatted_response": (
                     f"**I have no {modality} readings for {label} over {window_label}**, so I "
                     "can't reconstruct what happened — nothing to diagnose from."
@@ -334,6 +459,20 @@ class DiagnosisService:
                     f"{len(complaints)} user report(s) were filed in the same window — occupants noticed something too",
                 )
             )
+        plant_notes, plant_figures = await self._plant_state(targets, start, end)
+        causes.extend(plant_notes)
+        # Deduplicate before ranking. Live: "why is 5.16 so warm?" listed "a sensor reporting
+        # gap overlaps the window" as explanations 1, 2, 3 AND 4 -- one finding per overlapping
+        # episode, presented as four independent explanations. Repetition reads as corroboration
+        # and it is the same fact four times.
+        _seen_cause = set()
+        _unique = []
+        for _score, _text in causes:
+            if _text in _seen_cause:
+                continue
+            _seen_cause.add(_text)
+            _unique.append((_score, _text))
+        causes = _unique
         causes.sort(key=lambda c: -c[0])
 
         # ── narration (numbers only from assembled evidence) ───────────────
@@ -372,6 +511,7 @@ class DiagnosisService:
             "peer_median": round(peer_median, 2) if peer_median is not None else None,
             "n_overlapping_anomalies": len(anomalies),
             "causes": [c[1] for c in causes[:4]],
-            "source": "diagnosis (series + events store + reports)",
+            "plant": plant_figures,
+            "source": "diagnosis (series + events store + reports + plant state)",
             "formatted_response": "\n".join(lines),
         }

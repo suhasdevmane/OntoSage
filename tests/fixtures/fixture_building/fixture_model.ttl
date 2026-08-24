@@ -1,0 +1,33 @@
+@prefix fix:   <http://example.invalid/fixture/> .
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix ontosage: <http://ontosage.org/schema#> .
+
+# Two NAMED storeys, not numbered 0..5 - code that parses a floor number from an id fails here.
+fix:Building  a brick:Building ;  rdfs:label "Fixture Test Building" ;
+              brick:hasPart fix:StoreyGround , fix:StoreyUpper .
+
+fix:StoreyGround a brick:Floor ; rdfs:label "Ground" ;
+    brick:hasPart fix:W-A1 , fix:W-A2 .
+fix:StoreyUpper  a brick:Floor ; rdfs:label "Upper" ;
+    brick:hasPart fix:W-B1 .
+
+# Room ids are hyphenated, not dotted. bldg1's zone_id regex must not be assumed.
+fix:W-A1 a brick:Room ; rdfs:label "W-A1 Workshop" .
+fix:W-A2 a brick:Room ; rdfs:label "W-A2 Store" .
+fix:W-B1 a brick:Room ; rdfs:label "W-B1 Office" .
+
+# ONE temperature sensor with data, in ONE room. Everything else is uninstrumented, so the
+# spatial-adequacy gate has an in-room case, a no-sensor case, and a whole uninstrumented floor.
+fix:TempA1 a brick:Air_Temperature_Sensor ; rdfs:label "W-A1 air temperature" ;
+    brick:isPointOf fix:W-A1 ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fixture-temp-a1" ; ref:storedAt "fixture_db" ] ;
+    ontosage:isSimulated true .
+
+# A CO2 sensor DECLARED but with no timeseries reference at all: the "declared but not
+# connected" case, which is distinct from "not instrumented" and must not be conflated.
+fix:Co2B1 a brick:CO2_Sensor ; rdfs:label "W-B1 CO2" ;
+    brick:isPointOf fix:W-B1 ;
+    ontosage:isSimulated true .

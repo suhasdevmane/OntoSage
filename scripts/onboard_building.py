@@ -313,9 +313,13 @@ def run_interactive():
             f"""
     {BOLD}Next steps:{RESET}
       1. Set the env var: {CYAN}BUILDING_CONFIG_FILE={out_path}{RESET}
-      2. Upload your TTL to GraphDB:
-         {CYAN}curl -X PUT http://localhost:7200/repositories/{bldg_id}/statements \\
-               -H "Content-Type: text/turtle" --data-binary @{abox_file}{RESET}
+      2. Put your TTL where the loader finds it:
+         {CYAN}cp {abox_file} input/{RESET}
+         (ttl_uploader ingests every input/*.ttl into its OWN named graph at boot.
+          Do NOT curl it to /statements: a context-less PUT there REPLACES the entire
+          default graph, and a context-less POST appends a fresh copy of every blank
+          node on every run -- that is CAVEAT-039. The old instruction here also named
+          the wrong repository: it is a single repo, not one per building.)
       3. Rebuild the sensor cache:
          {CYAN}python scripts/cache_sensor_map.py{RESET}
       4. Start OntoSage:

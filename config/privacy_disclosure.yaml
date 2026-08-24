@@ -1,0 +1,105 @@
+# What the building monitors, how long it keeps it, and how to challenge that (V6-T31).
+#
+# The Master Report requires the system to explain its OWN privacy limits on request:
+# modalities, spatial granularity, feature extraction, aggregation, retention, access
+# logging, combination risk, DPIA records, and how a person can challenge or report misuse.
+#
+# WHY DECLARED RATHER THAN DERIVED
+# A system that refuses to explain its own surveillance is not trustworthy even when its
+# refusals are correct. But the explanation must also be TRUE, and truth here is a property
+# of how the building was configured -- not of what this file wishes were so. Every entry is
+# therefore a declaration a building makes about itself, and a building that monitors less
+# discloses less. Nothing here is inferred from the data.
+#
+# THE ANSWER MUST NEVER BECOME A DISCLOSURE
+# Explaining "we count people per room at 15-minute granularity" is transparency. Answering
+# "there are 3 people in room 2.15 and one of them is you" under the guise of transparency
+# is the very thing the policy exists to prevent. The self-explanation lane reads this file
+# and the modality declarations; it never reads the data.
+
+version: 1
+
+citation: >-
+  Master Technical Report 11.1 (privacy-by-design defaults, ICO-informed), Table 13
+  (retention strategy), and the PhD stakeholder catalogue's requirement that the system
+  explain its sensing limits on request.
+
+# ── What is and is not collected ────────────────────────────────────────────
+# Stated as absolutes because they are design commitments, not settings. A building that
+# changes one of these has changed what it is, and should say so here.
+never_collected:
+  - id: facial_recognition
+    statement: "No facial recognition is used anywhere in this building."
+  - id: device_tracking
+    statement: >-
+      No persistent Wi-Fi or Bluetooth device tracking. Network health is monitored in
+      aggregate; individual devices are not followed between spaces.
+  - id: raw_audio
+    statement: >-
+      No raw audio is recorded or retained. Acoustic levels are computed on the device into
+      statistics (LAeq and percentiles) and only those statistics leave it, so speech content
+      is never captured.
+  - id: individual_identification
+    statement: >-
+      Occupancy is counted anonymously at room level. The system does not hold, and cannot
+      produce, a record of which individual was in which room.
+  - id: always_listening
+    statement: >-
+      No always-listening microphones. Voice interaction, where offered, is push-to-talk on
+      a user's own device or a clearly activated kiosk.
+
+# ── Granularity: what resolution the data actually has ──────────────────────
+# The honest counterweight to the list above. Saying "anonymous" without saying "per room,
+# per minute" understates what can be inferred from a small enough space.
+granularity:
+  spatial: >-
+    Room level. In a space occupied by one person, a room-level count is effectively about
+    that person, and this system treats such counts as presence-adjacent and restricts them
+    accordingly.
+  temporal: "One-minute records for environmental data; occupancy as counts, not tracks."
+  derivation: >-
+    Acoustic data is reduced to statistics on the device. Occupancy is a count, never a
+    trajectory: the system holds how many, never who or where-next.
+
+# ── Retention (Master Report Table 13) ──────────────────────────────────────
+retention:
+  - stream: "High-frequency raw environmental data"
+    period: "30-90 days"
+    reason: "Diagnostic detail, kept only as long as a fault investigation might need it."
+  - stream: "One-minute environmental and operational records"
+    period: "At least the research period; typically 2-3 years"
+    reason: "The canonical analytical record."
+  - stream: "Fifteen-minute and hourly aggregates"
+    period: "Long term"
+    reason: "Trend and benchmark reporting; too coarse to identify anyone."
+  - stream: "Full-resolution windows around faults and interventions"
+    period: "Kept with the incident record"
+    reason: "Evidence for what happened and what was done about it."
+  - stream: "Door, leak, alarm and maintenance events"
+    period: "Per operational and governance policy"
+    reason: "Operational and safety record."
+  - stream: "Raw ambient audio"
+    period: "Not retained"
+    reason: "Never recorded in the first place; only derived statistics exist."
+  - stream: "Personally identifiable occupancy data"
+    period: "Not collected"
+    reason: "Avoided by design rather than deleted after the fact."
+
+# ── Governance ──────────────────────────────────────────────────────────────
+governance:
+  access_logging: >-
+    Access to restricted data is authenticated and logged. Who asked what, and when, is
+    itself a record.
+  combination_risk: >-
+    Individually harmless data can identify someone in combination -- a room count of one,
+    plus a booking, plus a door event. The access policy is applied to the COMBINATION, not
+    only to each source, which is why some questions are declined even though every
+    individual field behind them is visible.
+  dpia: "A Data Protection Impact Assessment is held by the building's data controller."
+  # Left blank in the default: a contact route is a per-building fact, and a placeholder
+  # here would be worse than an honest "ask your building's data controller".
+  challenge_route: ""
+  challenge_fallback: >-
+    To challenge how you are monitored, or to report misuse, contact your building's data
+    controller or data protection officer. This system can tell you what it collects; it
+    cannot authorise or refuse access to it.

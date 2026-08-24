@@ -9,7 +9,7 @@ sys.path.append("/app")
 import json
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -158,6 +158,23 @@ def reset_request_bctx(token) -> None:
             pass
 
 
+#: Row cap for a class listing. 50 could not express a real sensor population -- bldg1 alone
+#: has 280 CO2 sensors -- so any "how many / which floors have X" answered from a 50-row result
+#: reported the truncation as the population. Raised to a figure that covers a realistic
+#: single-class count while still bounding the query, per the project's no-unbounded-query rule.
+#: A class that genuinely exceeds this is still truncated, and that is what the caller must
+#: disclose rather than silently present as complete.
+_CLASS_LISTING_LIMIT = 500
+
+#: The class-listing projections are aliased because SPARQL forbids `(SAMPLE(?x) AS ?x)`, and
+#: the aliases MUST still contain the substrings the binding reader looks for -- it matches
+#: variables by name ("uuid"/"id" for the timeseries id, "storage" for the storedAt ref), not
+#: by position. Aliasing ?storage to ?store silently emptied the storage map for every
+#: class-listing query, so sql_agent lost every sensor's storedAt and validated them all
+#: against a fallback adapter (BUG-236). Pinned by
+#: tests/test_sparql_projection_contract.py.
+
+
 class SPARQLAgent:
     """Generates and executes SPARQL queries with RAG support"""
 
@@ -283,6 +300,42 @@ Your Answer:"""
             # template selection so "is this a point?" is answered by the data
             # rather than by how this building spells its names.
             ts_entities: Set[str] = set()
+            # V6-T26: a plant question resolves its points DETERMINISTICALLY, overriding
+            # whatever entity extraction or label similarity produced.
+            #
+            # This has to happen HERE rather than via class_target below, because class_target
+            # is consulted only when `entities` is empty -- and for "is the supply fan running
+            # on floor 5?" it never was: label resolution matched "supply" and "floor 5" to
+            # bldg:AHU_Floor5_Supply_Air_Temperature, a real plant point and the wrong one. The
+            # model then answered "there is no sensor that reports the running status of a
+            # supply fan on floor 5" while AHU_F5_Fan_Status sat connected with 1,344 rows.
+            #
+            # A near-miss is worse than a miss here: a fuzzy match on a plant point produces a
+            # confident denial that cites a genuine-looking sensor as evidence of absence.
+            _plant_cls = self._infer_plant_class(user_query.lower())
+            if _plant_cls:
+                _plant_hits = await self._plant_instances(_plant_cls, user_query)
+                if _plant_hits:
+                    if entities and set(entities) != set(_plant_hits):
+                        logger.info(
+                            f"[sparql] plant override: {entities} -> {_plant_hits} "
+                            f"(class {_plant_cls} resolved from config)"
+                        )
+                    entities = _plant_hits
+                    # Mark them ts-bearing so template selection knows these are POINTS.
+                    # Without this the entity-specific template asks "what sensors are
+                    # LOCATED IN bldg:AHU_F5_Filter_DP" -- treating the point as a room --
+                    # and returns 0 rows. The spelling test it falls back on (`Sensor|Point`
+                    # in the name) is defeated by every plant name here: Filter_DP,
+                    # Fan_Status and Damper_Position contain neither word. This file's own
+                    # comment predicted that exact failure; ts_entities is the answer it names.
+                    ts_entities.update(await self._ts_bearing(_plant_hits))
+                else:
+                    # The class is right and the building has no such point. Say nothing here
+                    # and let the honest "no data" path own it -- inventing a substitute point
+                    # is the substitution that produced the wrong answer above.
+                    logger.info(f"[sparql] plant class {_plant_cls} has no instances here")
+
             if not entities:
                 # The dialogue agent named the point in prose rather than as an IRI.
                 # Resolve those names against the graph instead of discarding them —
@@ -1161,8 +1214,21 @@ SELECT ?building ?label ?comment WHERE {
                         + f"\nSELECT DISTINCT ?sensor ?label ?type ?uuid ?storage WHERE {{\n{union_block}\n}} ORDER BY ?sensor LIMIT 50"
                     )
 
-            # Order of checks matters: prioritize equipment and definition before uuid-only
-            if features["wants_equipment"]:
+            # Order of checks matters: prioritize equipment and definition before uuid-only.
+            #
+            # ...EXCEPT when the entities we resolved are themselves timeseries-bearing points.
+            # "vav" and "ahu" are equipment keywords, so "what is the damper position of
+            # VAV_Floor5_West?" set wants_equipment and returned this topology template --
+            # which selects ?label ?equipment ?equipLabel and NO uuid. The pipeline then read
+            # sparql_has_uuids=False, never ran the SQL node, and answered with the sensor's
+            # NAME where a percentage was asked for. The reading existed the whole time.
+            #
+            # The distinction is the question's subject: "what equipment serves X" is topology,
+            # "what is X's damper position" is a measurement that merely NAMES equipment to
+            # locate the point. Once the point is resolved and confirmed ts-bearing, it is the
+            # subject, and the reading template is the right shape.
+            _resolved_points = bool(ts_entities) and all(e in ts_entities for e in entities)
+            if features["wants_equipment"] and not _resolved_points:
                 patterns = []
                 for ent in entities:
                     # sensor → equipment: brick:isPointOf / brick:hasPoint
@@ -1567,7 +1633,7 @@ SELECT ?parent ?parentLabel ?child ?childLabel WHERE {
         if target_class:
             return (
                 self._prefix_block()
-                + f"\nSELECT ?sensor ?location ?uuid ?storage ?unit WHERE {{\n  ?sensor rdf:type {target_class} .\n  OPTIONAL {{ ?sensor brick:hasLocation ?location . }}\n  OPTIONAL {{ ?sensor brick:hasUnit ?unit . }}\n  OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }}\n  OPTIONAL {{ ?sensor bldg:connstring ?uuid . }}\n}} LIMIT 50"
+                + f"\nSELECT ?sensor (SAMPLE(?location) AS ?locationName) (SAMPLE(?uuid) AS ?uuidValue) (SAMPLE(?storage) AS ?storageRef) (SAMPLE(?unit) AS ?unitName) WHERE {{\n  ?sensor rdf:type {target_class} .\n  OPTIONAL {{ ?sensor brick:hasLocation ?location . }}\n  OPTIONAL {{ ?sensor brick:hasUnit ?unit . }}\n  OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }}\n  OPTIONAL {{ ?sensor bldg:connstring ?uuid . }}\n}} GROUP BY ?sensor LIMIT {_CLASS_LISTING_LIMIT}"
             )
         # Generic sensor listing fallback
         sensor_words = ["sensor", "sensors", "point", "points"]
@@ -1658,8 +1724,144 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
                     static_map[keyword] = f"{ns}:{local_name}"
         return static_map
 
+    @staticmethod
+    def _infer_plant_class(uq: str) -> Optional[str]:
+        """Brick class for a plant/BMS measurand, resolved from the modality config (V6-T26).
+
+        Checked BEFORE the keyword class map because plant questions were being answered from
+        whatever the vector retriever happened to rank. Measured: `_retrieve_context("is the
+        supply fan running on floor 5")` returned 6,385 characters containing no fan point at
+        all -- the floor-5 room sensors outranked it -- so the model concluded "there is no
+        sensor that reports the running status of the supply fan on Floor 5" while
+        AHU_F5_Fan_Status sat connected and readable. A confident denial of a sensor that
+        exists is worse than no answer, and it is invisible from the outside.
+
+        Deterministic on purpose. Design contract #2 puts SPARQL first and treats retrieval as
+        the fallback; for a question whose class is derivable from config there is no reason to
+        let similarity decide.
+        """
+        try:
+            from orchestrator.services.deliberation.coverage_audit import (
+                load_modality_raw,
+            )
+        except Exception:  # pragma: no cover - defensive
+            return None
+        try:
+            raw = load_modality_raw() or {}
+        except Exception:  # pragma: no cover - defensive
+            return None
+        best: Optional[Tuple[int, str]] = None
+        for name, spec in raw.items():
+            sat = (spec or {}).get("sat") or {}
+            if str(sat.get("scope", "room")).lower() != "equipment":
+                continue
+            brick_class = str(sat.get("brick_class") or "")
+            if not brick_class:
+                continue
+            phrase = name.replace("_", " ")
+            # Longest match wins: "supply air temperature" must beat "supply air flow" on a
+            # question naming both words, and "return air temperature" must not lose to a
+            # shorter prefix of itself.
+            if phrase in uq and (best is None or len(phrase) > best[0]):
+                best = (len(phrase), brick_class)
+        if best:
+            return f"brick:{best[1]}"
+        # Shorthands operators actually type, each tied to the modality that licenses it so a
+        # building not declaring that modality never matches.
+        declared = {
+            n
+            for n, s in raw.items()
+            if str(((s or {}).get("sat") or {}).get("scope", "room")).lower() == "equipment"
+        }
+        shorthand = [
+            ("damper", "damper_position"),
+            ("filter differential", "filter_differential_pressure"),
+            ("filter dp", "filter_differential_pressure"),
+            ("filter pressure", "filter_differential_pressure"),
+            ("supply fan", "fan_state"),
+            ("fan status", "fan_state"),
+            ("fan running", "fan_state"),
+        ]
+        for token, modality in shorthand:
+            if token in uq and modality in declared:
+                cls = ((raw.get(modality) or {}).get("sat") or {}).get("brick_class")
+                if cls:
+                    return f"brick:{cls}"
+        return None
+
+    async def _ts_bearing(self, entities: List[str]) -> Set[str]:
+        """Which of these entities actually carry a timeseries reference.
+
+        Asked of the GRAPH, not of the name. Template selection otherwise falls back to
+        testing whether the local name contains "Sensor" or "Point" -- a spelling test that
+        every plant point here defeats (Filter_DP, Fan_Status, Damper_Position contain
+        neither), which sends them to the "what is located inside this room" template and
+        returns nothing.
+        """
+        if not entities:
+            return set()
+        values = " ".join(entities)
+        q = (
+            f"{self._prefix_block()}\n"
+            "SELECT DISTINCT ?e WHERE {\n"
+            f"  VALUES ?e {{ {values} }}\n"
+            "  ?e ref:hasExternalReference/ref:hasTimeseriesId ?uuid .\n"
+            "}"
+        )
+        try:
+            data = await self._execute_query(q)
+            found = {
+                (b.get("e") or {}).get("value") or ""
+                for b in (data or {}).get("results", {}).get("bindings", [])
+            }
+            return {
+                ent
+                for ent in entities
+                if any(iri.rsplit("#", 1)[-1] == ent.split(":", 1)[-1] for iri in found)
+            }
+        except Exception as exc:
+            logger.debug(f"[sparql] ts-bearing probe failed: {exc}")
+            return set()
+
+    async def _plant_instances(self, brick_class: str, user_query: str) -> List[str]:
+        """Instances of a plant class, narrowed to the equipment or floor the question names.
+
+        Narrowing is a FILTER over instances the graph returned, never a guess: if the query
+        names no equipment and no floor, every instance of the class is returned and the
+        downstream template decides. Silently picking one when the question was ambiguous is
+        how a building-wide question gets answered from a single AHU.
+
+        bldg1 carries twelve AHU individuals for six physical units (BUG-249), so a floor
+        filter can legitimately match two. Both are returned -- the duplication is reported,
+        not resolved here.
+        """
+        instances = await self._get_instances_for_class(brick_class, limit=200)
+        if not instances:
+            return []
+        uq = user_query.lower()
+        # An explicit equipment id in the question is the strongest signal available.
+        named = re.findall(r"\b((?:ahu|vav|fcu)[-_][\w.]+)\b", uq)
+        if named:
+            hits = [i for i in instances if any(n in i.lower() for n in named)]
+            if hits:
+                return hits
+        m = re.search(r"\b(?:floor|level)\s*(\w{1,3})\b", uq)
+        if m:
+            token = m.group(1).lower()
+            # Match the floor token at a WORD BOUNDARY inside the local name: plain substring
+            # matching lets "floor 5" select AHU_Floor15 on a taller building.
+            pat = re.compile(rf"(?:^|[_\-])(?:f|floor)0*{re.escape(token)}(?:$|[_\-])", re.I)
+            hits = [i for i in instances if pat.search(i.rsplit(":", 1)[-1])]
+            if hits:
+                return hits
+        return instances
+
     def _infer_class(self, uq: str) -> Optional[str]:
         """Phase 3.1: Uses _get_extended_class_map for class inference."""
+        plant = self._infer_plant_class(uq)
+        if plant:
+            logger.info(f"[sparql] plant class resolved deterministically: {plant}")
+            return plant
         class_map = self._get_extended_class_map()
         for k, v in class_map.items():
             if k in uq:

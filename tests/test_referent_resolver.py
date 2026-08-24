@@ -8,6 +8,7 @@ offline / in CI.
 
 import pytest
 
+import orchestrator.services.referent_resolver as rr
 from orchestrator.services.referent_resolver import (
     NO_REFERENT,
     NOT_FOUND,
@@ -173,3 +174,72 @@ async def test_fallback_stays_broad_without_location():
     import re as _re
 
     assert not _re.search(r"CONTAINS\(STR\(\?sensor\), '\d{1,2}\.\d{1,2}'\)", client.queries[0])
+
+
+# ── BUG-232: a failed guess at a referent must not become the answer ─────────
+
+
+def _resolver(exists: bool = False):
+    """A resolver over a fixture graph that knows nothing (or everything)."""
+
+    async def _exec(_q):
+        return {"results": {"bindings": [{"s": {"value": "x"}}] if exists else []}}
+
+    return rr.ReferentResolver(_exec)
+
+
+@pytest.mark.parametrize(
+    "query,captured",
+    [
+        ("This room feels stuffy even though the CO2 reading is normal.", "feels"),
+        ("Which room has the most daylight?", "has"),
+        ("Would a smaller approved room plausibly reduce energy use?", "plausibly"),
+    ],
+)
+def test_the_pattern_still_captures_the_word_after_room(query, captured):
+    """Documents the cause rather than hiding it.
+
+    `_WORDED_REF_RE` takes whatever follows "room"/"zone"/"space", and English puts a verb
+    there as readily as an id. The capture is NOT narrowed -- a building may genuinely name a
+    space "Atrium" -- so the fix has to live in how a MISS is handled.
+    """
+    assert rr.detect_referent(query, []) == captured
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "query",
+    [
+        "This room feels stuffy even though the CO2 reading is normal.",
+        "Which room has the most daylight?",
+        "Would a smaller approved room plausibly reduce energy use?",
+    ],
+)
+async def test_a_word_shaped_unknown_token_is_not_a_referent(query):
+    """The defect: the user was told 'I couldn't find "feels" in <building>' and their actual
+    question went unanswered. Measured at 12 of the 20 declines in the sensor_data lane."""
+    res = await _resolver(exists=False).resolve(query, [], "http://x#", "B")
+    assert res.status == rr.NO_REFERENT
+    assert not res.message
+
+
+@pytest.mark.asyncio
+async def test_an_identifier_shaped_token_still_reports_not_found():
+    """The gate's whole purpose. "room 99.99" that does not exist is a real mistake and the
+    user must hear about it -- this fix must not silence that."""
+    res = await _resolver(exists=False).resolve(
+        "What is the temperature in room 99.99?", [], "http://x#", "B"
+    )
+    assert res.status == rr.NOT_FOUND
+    assert res.referent == "99.99"
+    assert res.message
+
+
+@pytest.mark.asyncio
+async def test_a_word_shaped_token_that_DOES_exist_still_resolves():
+    """A building may name a space "Atrium". The graph is what decides, not the shape."""
+    res = await _resolver(exists=True).resolve(
+        "What is the temperature in room Atrium?", [], "http://x#", "B"
+    )
+    assert res.status == rr.RESOLVED
+    assert res.referent == "Atrium"

@@ -170,15 +170,19 @@ SERVICE_CATALOG: List[Dict[str, Any]] = [
         "note": "Uncomment the `thingsboard` service in docker-compose.yml, then recreate.",
     },
     {
-        "id": "abacws3d",
-        "name": "3D Abacws Visualiser",
+        # Named generically on purpose (BUG-214 family): this catalogue is shown for
+        # WHICHEVER building is active, so a service labelled after one building told every
+        # other building it ran that building's viewer. The compose service name stays as it
+        # is because it is a literal docker-compose identifier, not a claim about the building.
+        "id": "building3d",
+        "name": "3D Building Visualiser",
         "desc": "3D building & sensor visualization",
         "category": "Optional",
         "icon": "🏢",
         "port": 8090,
         "path": "/",
         "probe": None,
-        "note": "Uncomment `abacws-visualiser` in docker-compose.yml, then recreate.",
+        "note": "Uncomment the 3D visualiser service in docker-compose.yml, then recreate.",
     },
 ]
 
