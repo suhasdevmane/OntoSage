@@ -12,10 +12,11 @@ and the area provider are injectable, so the snapshot is unit-testable offline.
 
 from __future__ import annotations
 
+import asyncio
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Awaitable, Callable, List, Optional, Tuple
+from typing import Awaitable, Callable, Dict, List, Optional, Tuple
 
 from shared.utils import get_logger
 
@@ -241,13 +242,58 @@ def _default_area_provider(building_id: str) -> List[Tuple[int, float, int]]:
     return out
 
 
-async def _default_reporting_provider(window_hours: int = 24) -> Optional[int]:
-    """DISTINCT declared sensors with a stored reading in the last ``window_hours``.
+def _wide_table_for(storage_key: str) -> str:
+    """The wide table behind a store, from schema discovery.
+
+    Returns "" when it cannot be established, which the caller reports as UNKNOWN freshness
+    rather than as zero — an undiscovered table and a silent building are different facts.
+    """
+    try:
+        from orchestrator.services.adapters.registry import adapter_registry
+
+        disc = adapter_registry._discoveries.get(  # noqa: SLF001 - no public accessor yet
+            storage_key
+        ) or adapter_registry._discoveries.get(
+            str(storage_key).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+        )
+        schema = getattr(disc, "schema", None)
+        tables = list(getattr(schema, "tables", []) or [])
+        if not tables:
+            return ""
+        # The wide table is the one whose COLUMNS are uuid-shaped. Picking the largest table
+        # would pick whichever happens to have most rows, which is not the same question.
+        import re as _re
+
+        shape = _re.compile(
+            r"^[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}$"
+        )
+        best, best_n = "", 0
+        for t in tables:
+            cols = [c[0] for c in (getattr(schema, "columns", {}) or {}).get(t, [])]
+            n = sum(1 for c in cols if shape.match(str(c)))
+            if n > best_n:
+                best, best_n = t, n
+        return best
+    except Exception as exc:
+        logger.debug(f"[building_metrics] wide-table discovery unavailable: {exc}")
+        return ""
+
+
+async def reporting_uuids_by_store(window_hours: int = 24) -> Optional[Dict[str, set]]:
+    """``{storage key: declared uuids with a reading in the last window_hours}``.
 
     Building-agnostic: the declared uuid→storage mapping comes from the ACTIVE
     building's sensor-map cache (``settings.SENSOR_MAP_PATH``), and each storage
     key resolves through the adapter registry — the same config-driven routing the
     SQL pipeline uses. Never raises; returns ``None`` when the check can't run.
+
+    Freshness is computed PER UUID, never per table (CAVEAT-233). A table-level
+    ``MAX(datetime)`` would call a store live when a single sensor in it is: bldg1's
+    ``noise_data`` has a table max of "now" and one current stream out of 236.
+
+    Exposed as a map rather than a count so every surface that reports coverage can report
+    the matching freshness beside it, from the one measurement — see
+    :func:`_default_reporting_provider` for the count the metrics block uses.
     """
     import json
     from pathlib import Path
@@ -273,7 +319,10 @@ async def _default_reporting_provider(window_hours: int = 24) -> Optional[int]:
     if not adapter_registry.is_available:
         return None
 
-    reporting: set = set()
+    # A store appears in this map only if its probe SUCCEEDED. Absent means "not measured",
+    # which the callers must not render as zero: an unreachable datasource would otherwise be
+    # indistinguishable from a building whose sensors have all gone quiet.
+    by_store: Dict[str, set] = {}
     for storage_key, uuids in declared.items():
         try:
             adapter = adapter_registry.get(storage_key)
@@ -287,10 +336,21 @@ async def _default_reporting_provider(window_hours: int = 24) -> Optional[int]:
                 )
                 res = await adapter.execute_query(sql)
                 if res.success:
-                    reporting |= {str(r.get("uuid")) for r in res.data} & uuids
+                    fresh = {str(r.get("uuid")) for r in res.data} & uuids
+                    by_store.setdefault(storage_key, set()).update(fresh)
             else:  # wide table — uuids are COLUMNS; sample recent rows
+                # The table name comes from schema DISCOVERY, not from a literal. `sensor_data`
+                # was hardcoded here, which is a building literal in core code (contract rule 3)
+                # and silently wrong for any building whose wide table is named differently.
+                wide = _wide_table_for(storage_key)
+                if not wide:
+                    logger.warning(
+                        f"[building_metrics] no wide table discovered for '{storage_key}'; "
+                        "freshness for this store is UNKNOWN rather than zero"
+                    )
+                    continue
                 sql = (
-                    "SELECT * FROM `sensor_data` "
+                    f"SELECT * FROM `{wide}` "
                     f"WHERE `datetime` >= NOW() - INTERVAL {int(window_hours)} HOUR "
                     "ORDER BY `datetime` DESC LIMIT 25"
                 )
@@ -299,10 +359,49 @@ async def _default_reporting_provider(window_hours: int = 24) -> Optional[int]:
                     seen: set = set()
                     for row in res.data:
                         seen |= {k for k, val in row.items() if val is not None}
-                    reporting |= seen & uuids
+                    by_store.setdefault(storage_key, set()).update(seen & uuids)
         except Exception as e:
             logger.warning(f"[building_metrics] reporting check failed for '{storage_key}': {e}")
-    return len(reporting)
+    return by_store
+
+
+#: (window_hours) -> (monotonic stamp, flattened fresh-uuid set). The measurement costs one
+#: query per store, which is cheap for a page render and far too expensive per chat turn --
+#: the coverage schema is rebuilt on every deliberate/diagnosis request.
+_FRESH_CACHE: Dict[int, Tuple[float, Optional[set]]] = {}
+_FRESH_TTL_S = 300.0
+
+
+async def fresh_uuids(window_hours: int = 24, timeout_s: float = 20.0) -> Optional[set]:
+    """Every declared uuid with a reading inside the window, flattened and CACHED.
+
+    Returns ``None`` when the check cannot run (no sensor map, no adapters, timeout). Callers
+    must treat ``None`` as "no freshness information", NEVER as "nothing is fresh" -- reading
+    an unavailable measurement as an empty one would silently mark every sensor in the building
+    stale, which is the degrade-to-a-legal-value failure this codebase keeps paying for.
+    """
+    import time
+
+    now = time.monotonic()
+    hit = _FRESH_CACHE.get(window_hours)
+    if hit and (now - hit[0]) < _FRESH_TTL_S:
+        return hit[1]
+    try:
+        by_store = await asyncio.wait_for(reporting_uuids_by_store(window_hours), timeout_s)
+    except Exception as exc:
+        logger.debug(f"[building_metrics] freshness unavailable: {exc}")
+        by_store = None
+    flat = None if by_store is None else (set().union(*by_store.values()) if by_store else set())
+    _FRESH_CACHE[window_hours] = (now, flat)
+    return flat
+
+
+async def _default_reporting_provider(window_hours: int = 24) -> Optional[int]:
+    """Total DISTINCT declared sensors reporting inside the window (the snapshot's number)."""
+    by_store = await reporting_uuids_by_store(window_hours)
+    if by_store is None:
+        return None
+    return len(set().union(*by_store.values())) if by_store else 0
 
 
 def _resolve_namespace(building_id: str) -> str:

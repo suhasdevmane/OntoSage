@@ -283,6 +283,16 @@ def test_precedence_order_is_pinned():
         # V5-T20: comfort why-questions; last so every earlier claim wins.
         "why_diagnosis",
         # V5-T27: route / nearest-facility questions → the spatial route finder.
+        # V6-T27: consumption sits BEFORE plant. "How much energy does the AHU use?" is a
+        # consumption question that happens to name plant, and it must reach the lane that can
+        # state a metered figure and its boundary — not the point lane, which would answer with
+        # a fan state. Neither pattern is a superset of the other, so the order is the tie-break.
+        "consumption_query",
+        # V6-T26: sits BEFORE wayfinding_spatial. Both can claim a weak intent, and a plant
+        # question naming a floor ("is the supply fan running on floor 5?") must not be read
+        # as a route request. Neither pattern matches the other's shapes today, so the order
+        # is a guard rather than a live tie-break.
+        "plant_point_query",
         "wayfinding_spatial",
         # Sits beside wayfinding_spatial: both take a question the classifier
         # read as capability and hand it to the agent that actually holds the
@@ -640,3 +650,203 @@ def test_present_tense_readings_stay_sensor_data(query):
     n, applied = _apply(query, intent="sensor_data")
     assert n["intent"] == "sensor_data"
     assert "forecast_to_trend" not in applied
+
+
+# ── BUG-225: the capability lane was absorbing the whole corpus ──────────────
+
+
+def test_concept_stage_precedence_is_pinned():
+    """The concept stage was UNPINNED while the parse stage was pinned.
+
+    Order matters here for a specific reason: building_question_not_general rescues questions
+    heading for the open-domain answerer, which is the more urgent failure (an invented value
+    is worse than a mis-laned one), and capability_measurand_is_data then handles the far
+    larger population that was landing in capability.
+    """
+    assert [r.name for r in rc.CONCEPT_STAGE_RULES] == [
+        "building_question_not_general",
+        "capability_measurand_is_data",
+    ]
+
+
+_CO2 = [{"concept_id": "co2", "lay_term": "stuffy", "brick_classes": ["CO2_Level_Sensor"]}]
+
+
+def _concept_route(query, intent="capability", concepts=None):
+    st = {"intent": intent, "concepts": concepts if concepts is not None else _CO2, "entities": []}
+    rc.apply_contract(query, st, stage="concept")
+    return st["intent"]
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "What's the CO2 in the lecture theatre right now?",
+        "Is it stuffy in the basement?",
+        "Are the windows open anywhere they shouldn't be?",
+        "What is the CO2 level in the lab?",
+    ],
+)
+def test_a_measurand_question_reaches_a_data_lane(query):
+    """Measured: 88% of measurement-shaped questions were absorbed by capability, and only
+    THREE of 384 reached sensor_data. None of these names a room by number, which is the only
+    thing the old locator test could see."""
+    assert _concept_route(query) in ("sensor_data", "analytics")
+
+
+def test_an_aggregate_question_goes_to_analytics_not_a_single_reading():
+    """Sending "the average last week" to sensor_data returns one instantaneous value to a
+    question about a week -- a wrong answer that looks right."""
+    assert _concept_route("What was the average CO2 last week?") == "analytics"
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "What does the policy say about CO2 levels?",
+        "What is the CO2 guidance in the manual?",
+        "According to the handbook, what temperature should offices be?",
+    ],
+)
+def test_a_question_about_a_document_keeps_its_lane(query):
+    """These name a measurand and still want the document, not a thermometer."""
+    assert _concept_route(query) == "capability"
+
+
+def test_a_census_question_is_not_a_reading():
+    """ "How many CO2 sensors are there" counts triples; it does not read one."""
+    assert _concept_route("How many CO2 sensors are there in this building?") == "capability"
+
+
+def test_no_measurand_means_no_promotion():
+    """The whole test is whether the building MEASURES the thing named."""
+    assert _concept_route("Is there a bike storage in this building?", concepts=[]) == "capability"
+
+
+def test_only_the_capability_intent_is_touched():
+    """A narrow rule. Widening it to other intents would silently re-decide routes that other
+    rules already own."""
+    for intent in ("general", "floor_plan", "deliberate", "control", "privacy_refusal"):
+        assert _concept_route("What's the CO2 in the lecture theatre?", intent=intent) == intent
+
+
+def test_the_measurand_test_comes_from_the_ontology_not_a_word_list():
+    """Building-agnostic by construction: a building that measures noise recognises 'noisy',
+    one that does not, does not. A keyword list would be the hardcoded domain vocabulary
+    design contract 3 forbids."""
+    import inspect
+
+    src = inspect.getsource(rc._r_capability_measurand_is_data)
+    assert "has_measurand_concept" in src
+    for literal in ("abacws", "bldg1", "temperature'", '"temperature"'):
+        assert literal not in src.lower()
+
+
+# ── BUG-231: two regexes that broke on an intervening adjective ──────────────
+#
+# Measured, not guessed. Replaying the real contract over all 1,360 capability answers in the
+# golden baseline showed the largest fixable cluster was not a missing rule but two EXISTING
+# patterns requiring the noun to sit immediately after the cue word, while real questions put
+# an adjective there: "the nearest ACCESSIBLE toilet", "which STUDY spaces".
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "Take me to the nearest accessible toilet from where I'm standing.",
+        "Where's the nearest fire exit from the third-floor kitchen?",
+        "How do I get to the seminar room on level 3?",
+    ],
+)
+def test_wayfinding_survives_an_adjective_before_the_facility(query):
+    assert rc.WAYFIND_RE.search(query)
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "Which study spaces had the best air quality last week?",
+        "Where's a quiet place to sit right now?",
+        "I get cold easily - which desk should I take this afternoon?",
+        "Which room should I book for six people?",
+    ],
+)
+def test_ranking_and_preference_shapes_reach_deliberate(query):
+    assert rc.DELIBERATE_RE.search(query)
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "Is there a bike storage in this building?",
+        "What is the fire safety policy?",
+        "Show me the floor plan of floor 2.",
+        "Which policy should I read about fire safety?",
+        "Which room is 2.14 next to?",
+    ],
+)
+def test_the_widened_patterns_do_not_over_reach(query):
+    """The gap is bounded at two words for this reason: an unbounded `.*` would run across a
+    clause and claim questions that belong elsewhere. These are the cases that must stay put."""
+    assert not rc.WAYFIND_RE.search(query)
+    assert not rc.DELIBERATE_RE.search(query)
+
+
+def test_the_intervening_gap_stays_bounded():
+    """A pattern that allows unlimited words between cue and noun matches almost anything."""
+    import inspect
+
+    src = inspect.getsource(rc)
+    start = src.index("WAYFIND_RE = re.compile")
+    end = src.index("DELIBERATE_RE = re.compile")
+    for blob in (src[start:end], src[end : end + 2000]):
+        assert ".*" not in blob.replace(".*?", ""), "unbounded gap in a routing pattern"
+
+
+def test_no_stray_control_characters_in_the_patterns():
+    """A heredoc once turned `\b` into a literal backspace here. The branch compiled, was
+    present in the pattern, and could never match, because no question contains chr(8)."""
+    for pattern in (rc.WAYFIND_RE.pattern, rc.DELIBERATE_RE.pattern):
+        for ch in pattern:
+            assert ch.isprintable() or ch in " \t", f"control character {ch!r} in a routing regex"
+
+
+def test_the_pre_llm_capability_probe_bypasses_route_questions():
+    """The gate that actually held 87% of the corpus is NOT the classifier.
+
+    dialogue_agent runs a capability probe BEFORE the LLM; if no bypass fires and the resolver
+    finds any matching fact, the question is answered from a document and never classified.
+    Measured live: a route question went from arrival to intent=capability in 250 ms.
+
+    Neither is_spatial_query nor is_floor_plan_query matches a route question, so WAYFIND_RE
+    has to be on that list. Asserted against the source because the probe is an inline
+    condition, and its absence is invisible from outside -- the answer looks fine.
+    """
+    from pathlib import Path
+
+    src = (
+        Path(__file__).resolve().parent.parent / "orchestrator" / "agents" / "dialogue_agent.py"
+    ).read_text(encoding="utf-8")
+    probe = src[src.index("_SR.is_data_query(user_query)") :][:2000]
+    assert "_WAYFIND_RE.search(user_query)" in probe
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "Take me to the nearest accessible toilet from where I'm standing.",
+        "Where's the nearest fire exit from the third-floor kitchen?",
+        "How do I get to the seminar room on level 3?",
+    ],
+)
+def test_route_questions_are_not_covered_by_the_other_spatial_predicates(query):
+    """Documents WHY the wayfinding bypass is needed rather than reusing an existing one.
+
+    If either of these ever starts matching route questions, this test fails and the extra
+    bypass can be reconsidered — better than leaving a redundant condition nobody revisits.
+    """
+    from orchestrator.services.semantic_router import SemanticRouter as SR
+
+    assert not SR.is_spatial_query(query)
+    assert not SR.is_floor_plan_query(query)
+    assert rc.WAYFIND_RE.search(query)

@@ -142,7 +142,12 @@ class SQLAgent:
             primary_storage_uri = None
             if storage_map:
                 primary_storage_uri = next((v for v in storage_map.values() if v), None)
-            valid_uuids = await adapter_registry.get_valid_uuids(uuids, primary_storage_uri)
+            # BUG-234: pass the WHOLE map. Validating every uuid against one adapter --
+            # whichever store happened to be first -- reported sensors in every other store
+            # as absent from the database while they held tens of thousands of rows.
+            valid_uuids = await adapter_registry.get_valid_uuids(
+                uuids, primary_storage_uri, storage_map=storage_map
+            )
             missing_uuids = set(uuids) - set(valid_uuids)
 
             if missing_uuids:
@@ -152,7 +157,25 @@ class SQLAgent:
                 # logger.debug(f"Missing: {missing_uuids}")
 
             if not valid_uuids:
-                msg = f"Found {len(uuids)} sensors in metadata, but none exist in the time-series database."
+                # BUG-234: say what was actually checked. "None exist in the time-series
+                # database" is a claim about the estate's configuration; what was checked is
+                # whether these ids appear in the stores they are registered to. Telling
+                # users their sensors are not connected when they are sends them to fix the
+                # wrong thing.
+                _stores = sorted(
+                    {
+                        adapter_registry._resolve_storage_key(str(v))
+                        for v in (storage_map or {}).values()
+                        if v
+                    }
+                )
+                _where = f" ({', '.join(_stores)})" if _stores else ""
+                msg = (
+                    f"I found {len(uuids)} sensor(s) in the ontology, but none of their "
+                    f"identifiers appear in the store they are registered to{_where}. "
+                    "That usually means the readings have not been loaded yet, rather than "
+                    "that the sensors are missing."
+                )
                 logger.warning(f"❌ {msg}")
                 return {
                     "success": True,
@@ -190,6 +213,21 @@ class SQLAgent:
                     grouped_uuids[key] = grouped_uuids[key][:_UUID_CAP]
 
             all_data = []
+
+            # V6-T40: a recurring-window question ("overnight", "at the weekend", "around
+            # lunchtime") filters by HOUR, not by date range. Detected once, applied twice:
+            # as a predicate inside the deterministic SQL (so LIMIT cannot be exhausted by
+            # daytime rows) and again in Python over whatever came back (which also covers
+            # the LLM-generated and fallback paths).
+            _hour_mask = None
+            try:
+                from orchestrator.services.evidence.time_windows import detect_mask
+
+                _hour_mask = detect_mask(user_query)
+                if _hour_mask is not None:
+                    logger.info(f"[sql] recurring window detected: {_hour_mask.label}")
+            except Exception as _tw_err:
+                logger.debug(f"[sql] time-window detection skipped: {_tw_err}")
 
             # Process each storage group (currently only supporting MySQL/default)
             for storage_key, group_uuids in grouped_uuids.items():
@@ -231,6 +269,7 @@ class SQLAgent:
                     start_date=start_date,
                     end_date=end_date,
                     limit=1000,
+                    hour_predicate=(_hour_mask.sql_predicate(ts_col) if _hour_mask else ""),
                 )
 
                 # Construct time context (for LLM fallback)
@@ -365,11 +404,45 @@ Return ONLY the SQL query, no markdown, no explanations.
                 else:
                     logger.warning(f"⚠️  No results returned from query")
 
+            # V6-T40 second layer: enforce the mask over whatever the queries returned.
+            # A row whose timestamp cannot be parsed is dropped UNDER A MASK, not kept: a
+            # reading whose hour is unknowable cannot be claimed to lie inside the window.
+            if _hour_mask is not None and all_data:
+                from datetime import datetime as _dt
+
+                _before_mask = len(all_data)
+                _kept = []
+                for _row in all_data:
+                    _ts = _row.get("timestamp") or _row.get("Datetime") or _row.get("datetime")
+                    _parsed = None
+                    if isinstance(_ts, _dt):
+                        _parsed = _ts
+                    elif isinstance(_ts, str):
+                        try:
+                            _parsed = _dt.fromisoformat(_ts.replace("Z", "+00:00"))
+                        except ValueError:
+                            _parsed = None
+                    if _parsed is not None and _hour_mask.covers(_parsed):
+                        _kept.append(_row)
+                all_data = _kept
+                logger.info(
+                    f"[sql] window '{_hour_mask.label}': {len(all_data)} of {_before_mask} "
+                    "rows inside it"
+                )
+
             # Standardize output format for Analytics Agent
             # We want a flat list of records: [{"timestamp": "...", "uuid": "...", "value": ...}, ...]
             standardized_data = {"data": all_data}
 
             formatted = await self._format_results(all_data, user_query, "Multiple Queries")
+            if _hour_mask is not None:
+                # The basis is stated on the answer itself: which recurring window, and how
+                # many readings actually fall inside it. Without this a night question
+                # answered from three rows reads exactly like one answered from a thousand.
+                formatted += (
+                    f"\n\n_Window applied: {_hour_mask.label} — "
+                    f"{len(all_data)} reading(s) inside it._"
+                )
 
             return {
                 "success": True,
@@ -377,6 +450,9 @@ Return ONLY the SQL query, no markdown, no explanations.
                 "results": standardized_data,  # Standardized JSON for Analytics
                 "formatted_response": formatted,
                 "analytics_required": True,
+                # V6-T40: which recurring window shaped these rows, "" when none did. The
+                # evidence record reads it so requested_period can state the real basis.
+                "window_mask": _hour_mask.label if _hour_mask is not None else "",
             }
         except Exception as e:
             logger.error(f"Fetch data for UUIDs failed: {e}")
@@ -576,13 +652,22 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
         start_date: Optional[str],
         end_date: Optional[str],
         limit: int = 1000,
+        hour_predicate: str = "",
     ) -> str:
-        """Build deterministic SQL for UUID columns using UNION ALL."""
+        """Build deterministic SQL for UUID columns using UNION ALL.
+
+        ``hour_predicate`` (V6-T40) restricts rows to a recurring daily window — HourMask's
+        dialect-neutral HOUR() clause. In the WHERE alongside the date bounds, because
+        filtering after LIMIT would let daytime rows exhaust the cap before one night row
+        arrived, which answers an overnight question with an empty set.
+        """
         ts_safe = f"`{ts_col}`"
         start = self._sanitize_datetime(start_date)
         end = self._sanitize_datetime(end_date)
 
         time_clauses = []
+        if hour_predicate:
+            time_clauses.append(hour_predicate)
         if start:
             time_clauses.append(f"{ts_safe} >= '{start}'")
         elif not end:

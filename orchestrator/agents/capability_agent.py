@@ -68,12 +68,22 @@ def init_document_search(qdrant_client: Any, embedding_service: Any) -> None:
 
 
 async def _search_documents(
-    query: str, building_id: str, top_k: int = 3, only_document: str = ""
+    query: str,
+    building_id: str,
+    top_k: int = 3,
+    only_document: str = "",
+    stats: Optional[Dict[str, Any]] = None,
 ) -> List[Dict[str, Any]]:
     """Search the per-building uploaded-documents collection.  Returns [] on any failure.
 
     ``only_document`` scopes the search to the file the ontology declared for this
     topic (``ontosage:documentRef``) — see search_documents for why that matters.
+
+    ``stats``, when given, is filled with ``retrieved`` / ``kept`` / ``floor`` (CAVEAT-226).
+    The floor is applied HERE rather than server-side so the caller can tell "nothing was
+    retrieved" from "everything retrieved fell below the floor". Those are different facts and
+    only the second is attributable to a threshold; without the distinction, raising the floor
+    looks identical to unexplained drift in the regression gate.
     """
     if not query.strip() or _doc_qdrant_client is None or _doc_embedding_service is None:
         return []
@@ -86,15 +96,21 @@ async def _search_documents(
         # "local", a value calibrated for MiniLM at 384 dimensions while bge-large at
         # 1024 was the model actually running. Override with DOCUMENT_SCORE_FLOOR.
         threshold = settings.document_score_floor
-        return await search_documents(
+        # score_threshold=0.0 so the raw candidates come back and the floor is applied below.
+        # Same query, same top_k -- no extra cost, and the suppression becomes visible.
+        raw = await search_documents(
             _doc_qdrant_client,
             _doc_embedding_service,
             query,
             building_id,
             top_k=top_k,
-            score_threshold=threshold,
+            score_threshold=0.0,
             only_document=only_document or None,
         )
+        kept = [h for h in raw if float(h.get("score") or 0.0) >= threshold]
+        if stats is not None:
+            stats.update({"retrieved": len(raw), "kept": len(kept), "floor": threshold})
+        return kept
     except Exception as e:
         logger.debug(f"[capability] document search unavailable: {e}")
         return []
@@ -446,7 +462,20 @@ class CapabilityAgent:
         # ── 3. Uploaded documents (documents_<bldg>) ─────────────────────────
         # Genuinely-uploaded manuals / policy PDFs, semantically retrieved. This is NOT a
         # capability.yaml fallback — it is a distinct source for long-form uploaded content.
-        doc_hits = await _search_documents(state.user_message or "", building_id)
+        _doc_stats: Dict[str, Any] = {}
+        doc_hits = await _search_documents(state.user_message or "", building_id, stats=_doc_stats)
+        # CAVEAT-226: when the floor removed EVERY candidate, say so on the evidence record.
+        # An answer that got thinner because a threshold moved is an attributable tightening;
+        # one that got thinner for no stated reason is a regression, and the gate cannot tell
+        # them apart unless the threshold names itself.
+        if _doc_stats.get("retrieved") and not _doc_stats.get("kept"):
+            _ev = state.intermediate_results.setdefault("evidence", {})
+            if isinstance(_ev, dict):
+                _ev.setdefault("gates_applied", []).append("retrieval_floor")
+                logger.info(
+                    f"[capability] retrieval floor {_doc_stats['floor']} suppressed all "
+                    f"{_doc_stats['retrieved']} candidate passage(s)"
+                )
         # BUG-103: vector similarity alone is not grounding. The cosine floor above was
         # calibrated for one embedding model; under another (bge-large) generic building
         # prose clears it for ANY question, so an HVAC table was surfaced under "Here is
@@ -460,12 +489,85 @@ class CapabilityAgent:
                 for c in (state.intermediate_results.get("concepts") or [])
                 if isinstance(c, dict)
             ]
+            _before_guard = len(doc_hits)
             doc_hits = filter_on_topic(
                 state.user_message or "", doc_hits, extra_vocab=_concept_vocab
             )
+            # The on-topic guard must name itself for the same reason the retrieval floor has
+            # to (CAVEAT-226): it SUPPRESSES an answer, and a suppression that names nothing is
+            # indistinguishable from breakage to the regression gate. Measured on the 0.55
+            # floor run, 3 of 8 blocking findings were this guard rather than the floor --
+            # "which anchor points are certified for the abseil window clean", which used to be
+            # answered with the building's HVAC CO2 table, scores 0.5749 and clears the floor
+            # outright. Correct behaviour, reported as a regression for want of a name.
+            if _before_guard and not doc_hits:
+                _ev = state.intermediate_results.setdefault("evidence", {})
+                if isinstance(_ev, dict):
+                    _applied = _ev.setdefault("gates_applied", [])
+                    if "grounding_guard" not in _applied:
+                        _applied.append("grounding_guard")
+                    logger.info(
+                        f"[capability] on-topic guard suppressed all {_before_guard} "
+                        "retrieved passage(s)"
+                    )
         if doc_hits:
+            # BUG-218: the guard above decides WHETHER a passage is shown; this decides
+            # how confidently it is introduced. Measured over the golden baseline, 148 of
+            # 377 document-citing answers (39.3%) came from an unrelated document sharing
+            # ONE incidental word with the question -- 'cleaned annually' in an HVAC table
+            # answering a question about carpets. The content was real, so no
+            # anti-fabrication guard fired; what misled was the heading asserting it
+            # answered.
+            #
+            # Suppressing those was measured and rejected: every count-based threshold
+            # dropped roughly one legitimate answer per off-topic one it removed. Hedging
+            # costs no recall and removes the false assertion, so the corpus signal drives
+            # the FRAMING rather than the filtering.
+            from orchestrator.services.corpus_stats import document_frequencies
+            from orchestrator.services.grounding_guard import (
+                MATCH_DISTINCTIVE,
+                match_strength,
+                missing_fact_caveat,
+            )
+
+            try:
+                _corpus_df, _n_docs = document_frequencies(building_id)
+            except Exception as exc:  # a statistics helper must never break an answer
+                logger.debug(f"[capability] corpus stats unavailable: {exc}")
+                _corpus_df, _n_docs = {}, 0
+
+            _strong = any(
+                match_strength(
+                    state.user_message or "",
+                    str(h.get("text", "")),
+                    extra_vocab=_concept_vocab,
+                    corpus_df=_corpus_df,
+                    n_docs=_n_docs,
+                )
+                == MATCH_DISTINCTIVE
+                for h in doc_hits
+            )
+
             seen_docs: set = set()
-            parts: List[str] = [f"Here is what I found in **{building_name}** documentation:\n"]
+            if _strong:
+                parts: List[str] = [f"Here is what I found in **{building_name}** documentation:\n"]
+            else:
+                # Names the match instead of claiming it. The passage is still shown --
+                # it is real content and may help -- but a reader can no longer mistake
+                # proximity for an answer.
+                parts = [
+                    f"I could not find a passage in **{building_name}**'s documents that "
+                    "directly addresses this. The closest related material is below, and "
+                    "it may not answer your question:\n"
+                ]
+
+            # Already wired on the graph path (and tested there); its absence here is why
+            # a question asking for a DATE could be answered with prose containing none.
+            _caveat = missing_fact_caveat(
+                state.user_message or "", str((doc_hits[0] or {}).get("text", ""))
+            )
+            if _caveat:
+                parts.append(f"{_caveat}\n")
             for hit in doc_hits:
                 doc_label = hit["doc_name"].replace("_", " ").title()
                 if doc_label not in seen_docs:

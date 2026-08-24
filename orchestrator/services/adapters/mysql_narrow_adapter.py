@@ -46,6 +46,19 @@ class MySQLNarrowAdapter(MySQLAdapter):
             raise ValueError(f"unsafe narrow table name: {table!r}")
         self._table = table
 
+    @property
+    def table(self) -> str:
+        """The one table this adapter is scoped to.
+
+        Public because callers legitimately need it — a freshness or cadence probe has to know
+        whether it is looking at a narrow ``(uuid, datetime, value)`` table or a wide one, and
+        the presence of a table name is how they tell. While this was private,
+        ``getattr(adapter, "table", None)`` returned None and every narrow store was queried as
+        though it were the wide table, whose uuid-shaped COLUMN names share nothing with a
+        narrow store's uuid VALUES — so the probes returned a confident zero.
+        """
+        return self._table
+
     async def get_schema(self) -> SchemaInfo:
         """Describe only this narrow table (timestamp column = 'datetime')."""
         if self._schema_cache:

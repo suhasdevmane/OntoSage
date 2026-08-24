@@ -1,0 +1,7 @@
+room,start,end,module
+Room5.16,2026-09-01 09:00,2026-09-01 11:00,CM2101 Software Engineering
+Room5.16,2026-09-01 14:00,2026-09-01 16:00,CM2202 Data Structures
+Room5.03,2026-09-01 10:00,2026-09-01 12:00,CM3115 Machine Learning
+Room2.14,2026-09-02 09:00,2026-09-02 10:30,CM1101 Programming
+LT-NOT-A-REAL-ROOM,2026-09-02 11:00,2026-09-02 12:00,Ghost Lecture
+Room5.16,not-a-time,2026-09-03 10:00,Broken Row

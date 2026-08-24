@@ -1,0 +1,11 @@
+# Types the green-roof sensors against the classes declared in the OCBV TBox.
+#
+# Both were authored as bare brick:Sensor, so the graph knew they existed and not what they
+# measured -- which is why the timeseries linker refused to route them anywhere. Brick 1.4
+# has no class for either quantity; see ontology/ontosage_schema.ttl.
+
+@prefix bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+
+bldg:GreenRoof_SoilMoisture_Sensor a ontosage:Soil_Moisture_Sensor .
+bldg:GreenRoof_Rainfall_Sensor a ontosage:Rainfall_Sensor .

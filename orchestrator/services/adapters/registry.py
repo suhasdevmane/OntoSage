@@ -481,6 +481,24 @@ class AdapterRegistry:
         key = self._resolve_storage_key(storage_uri or "")
         adapter = self._adapters.get(key)
         if adapter is None:
+            # A named storedAt key that resolves to something else is a WIRING error, and the
+            # fallback hides it in the worst possible way. Measured (V6-T26): plant points
+            # declared `ref:storedAt bldg:plant_data`, the key was absent from building.yaml's
+            # storage filter so no adapter was built, and this returned the WIDE mysql adapter
+            # -- which reads a uuid as a COLUMN NAME. The failure surfaced as
+            # "Unknown column '2532e981-...' in 'field list'", six layers from the cause, and
+            # the user saw "no current value is provided" for a point holding 1,344 rows.
+            #
+            # Still falls back: an unnamed/legacy storedAt genuinely wants the default. But a
+            # NAMED key missing from the pool now says so.
+            if key and key != "default":
+                logger.warning(
+                    f"[adapters] storedAt key '{key}' has no adapter — falling back to "
+                    f"default. Registered: {sorted(self._adapters)}. If '{key}' is a real "
+                    f"store, add it to building.yaml storage.databases AND "
+                    f"database_registry.yaml; the fallback will otherwise query the wrong "
+                    f"table shape."
+                )
             adapter = self._adapters.get("default")
         if adapter is None and self._adapters:
             adapter = next(iter(self._adapters.values()))
@@ -511,8 +529,41 @@ class AdapterRegistry:
         )
         return (disc.timestamp_column if disc else None) or "Datetime"
 
-    async def get_valid_uuids(self, candidates: list, storage_uri: Optional[str] = None) -> list:
-        """Validate UUIDs against the matched adapter's column/field list."""
+    async def get_valid_uuids(
+        self,
+        candidates: list,
+        storage_uri: Optional[str] = None,
+        storage_map: Optional[dict] = None,
+    ) -> list:
+        """Validate UUIDs against the column/field list of the store each one lives in.
+
+        ``storage_map`` (uuid -> storedAt URI) is the correct input and should be preferred.
+        Without it this validates every candidate against a SINGLE adapter, which is how
+        BUG-234 happened: bldg1's water sensors span water_data and waterflow_data, the caller
+        passed the first storedAt it found, and the sensors in the other table were reported
+        as "not in the time-series database" while holding 27,454 rows.
+
+        ``storage_uri`` is kept for callers that genuinely have one store, and for the case
+        where no map is available.
+        """
+        if storage_map:
+            by_key: Dict[str, list] = {}
+            for uuid in candidates:
+                key = self._resolve_storage_key(str(storage_map.get(uuid) or storage_uri or ""))
+                by_key.setdefault(key, []).append(uuid)
+            valid: list = []
+            for key, group in by_key.items():
+                # Deliberately NOT falling back to an arbitrary other discovery here. The
+                # single-store path below does that, and borrowing another store's column
+                # list is exactly the mistake this branch exists to stop: it is how sensors
+                # in water_data were judged against waterflow_data and declared absent.
+                # "default" is a real shared discovery and is still honoured.
+                disc = self._discoveries.get(key) or self._discoveries.get("default")
+                # No discovery for this store: pass its candidates through rather than
+                # declaring them absent. An unknown store is not an empty one.
+                valid.extend(await disc.get_valid_uuids(group) if disc else group)
+            return valid
+
         key = self._resolve_storage_key(storage_uri or "")
         disc = (
             self._discoveries.get(key)

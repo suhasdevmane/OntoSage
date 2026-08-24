@@ -15,10 +15,33 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 2. `README.md` — architecture overview, stakeholder guide, data setup
 3. `ONTOSAGE.md` — complete technical reference (source layout, all phases, config)
 
-**Current state snapshot (2026-08-19):**
-- Test suite: **1590 tests passing, 4 skipped** (`pytest -m unit -q`; skips are optional deps).
-  Nothing since the last commit is committed — the whole V4+V5 body of work is uncommitted
-  and awaiting the user's review.
+> **STALE BELOW — see [`tasks/V6_HANDOFF.md`](./tasks/V6_HANDOFF.md) first (2026-08-23).**
+> The snapshot in this section predates the V6 audit and Waves A+B. Current truth lives in
+> `tasks/V6_HANDOFF.md`, `tasks/V6_AUDIT_2026_08_23.md` and the two trackers. Headline: V6 is
+> 31 done / 28 todo, suite 2,655 pass, every evidence gate wired ADVISORY and live-verified,
+> 1,994 measured cadences loaded as TTL with zero code change, nothing committed.
+
+**Current state snapshot (2026-08-22):**
+- Test suite: **2488 passing, 2 skipped** (`pytest -m unit -q`). Nothing since the last commit
+  is committed — the whole V4+V5+V6 body of work is uncommitted and awaiting the user's review.
+- **Sensor connectivity is now complete on bldg1** (TODO-224): every one of the 2,688 timeseries
+  UUIDs resolves to rows in a registered database (was 2,597/2,598), and the 90 points that were
+  described in the ontology but connected to nothing are linked. The 23 points still without a
+  UUID are the correct ones — cameras, setpoints, commands. Full audit, including how the
+  GraphDB deletion was verified:
+  [`scripts/outputs/SENSOR_CONNECTIVITY_AUDIT.md`](./scripts/outputs/SENSOR_CONNECTIVITY_AUDIT.md).
+- **CAVEAT-039 was a live wrong-answer defect, not the P2 it was labelled.** Blank-node
+  duplication from a pre-b4c7381 context-less POST had grown sensor reference fan-out to 68.9
+  (expected 1-2), and the class-listing query's `LIMIT 50` with no `DISTINCT` was exhausted by a
+  single subject: `brick:CO2_Sensor` returned **1 distinct sensor against a true 280**. Cleaned
+  (1,211,551 triples, backed up first, rescue gate 0) and the query rewritten to `GROUP BY` +
+  `SAMPLE`. Now returns 280 of 280. **Both fixes were needed; neither sufficed alone.**
+- **`--resume` on the capture harness was inert** (BUG-219): it counted quarantined rows as
+  captured, so the remedy its own output recommends did nothing. Fourth measurement-apparatus
+  bug in this project's history — see `tasks/lessons.md`.
+- **BUG-188's context-window fix never reached bldg1** (BUG-221): `.env` sat at
+  `OLLAMA_NUM_CTX=8192` while `.env2`/`.env3` had 16384, so the entire 1,580-question golden
+  baseline ran on the configuration BUG-188 identified as faulty. Now 16384, verified live.
 - Corpus coverage: **63.8%** (bldg1, 2026-06-18) / **70.4%** (bldg2, 2026-07-30) on the
   240-question stratified replay — both above the ≥60% target. A 2026-08-18 replay on
   bldg2 under the hosted model scored **78.8% combined / 25.0% data-backed** with zero
@@ -88,7 +111,7 @@ docker-compose logs --tail=20 orchestrator         # live system health
   those, which is the one open item that needs the user.
 - **Live fix/caveat log + backlog: [`tasks/FIX_TRACKER.csv`](./tasks/FIX_TRACKER.csv)** — read it at session start to see what's OPEN vs fixed; keep it updated (Workflow rule 7). FIX-001/002/003 done (verified live). **TODO-010→011→012 DONE (2026-07-28):** `capability.yaml` is **removed** — capabilities are now `ontosage:Amenity` / `ontosage:KnowledgeTopic` **triples** (authored via the admin Capabilities GUI `POST /api/v1/admin/capabilities` or the OCBV TBox `input/ontosage_schema.ttl`), answered by the `CapabilityGraphResolver`. Routing is a single TTL-first path (the Qdrant capability-KB probe is gone). Migration: `scripts/migrate_capability_yaml_to_ttl.py`. **Remaining: `TODO-081`** — excise the now-dead capability-KB infra (`capability_indexer`, `semantic_router.classify`, `shared/capability_schema.py`); it no-ops harmlessly today. Design/why in [`tasks/TODO_012_CAPABILITY_YAML_REMOVAL_STEP.md`](./tasks/TODO_012_CAPABILITY_YAML_REMOVAL_STEP.md) + [`tasks/TTL_NATIVE_CAPABILITIES_PLAN.md`](./tasks/TTL_NATIVE_CAPABILITIES_PLAN.md).
 - ALL changes need user review and explicit commit approval before any `git commit` or `git push`
-- **Tracker: 193 rows as of 2026-08-19.** Fixed this session, in the order the evidence
+- **Tracker: 223 rows as of 2026-08-22** (7 not closed). **Tracker: 193 rows as of 2026-08-19.** Fixed this session, in the order the evidence
   arrived: **BUG-189** (P1 FABRICATION — a room's reading attributed to a "public corridor"
   bldg2 does not have, because the referent gate matched FLOORS BEFORE SPACES so an existing
   floor let an unverified space through); **BUG-191** (P1 — the leak grader counted the "2"
@@ -367,7 +390,7 @@ Full design, all phases, and the floor-plan PDF+DWG pipeline: **[ONTOSAGE.md](./
 ### Shared state
 All nodes read/write one `ConversationState` (`shared/models.py`); `intermediate_results: Dict` is the
 data bus. **Reserved keys — never overwrite another node's key:**
-`intent`, `entities`, `time_range` (dialogue) · `sparql_results`, `uuids` (sparql) · `sql_data` (sql)
+`intent`, `entities`, `time_range` (dialogue) · `sparql_result` (sparql) · `sql_result`, `sensor_metadata` (sql; **not** `uuids` — that name is a local, never a bus key)
 · `analytics_output` (analytics) · `visualization_path` (visualization) · `concepts` (concept_resolver)
 · `recipe_hints` (concept_resolver → analytics) · `control_result` (control) · `goal_plan` (planner)
 · `error` (_safe_node on failure).

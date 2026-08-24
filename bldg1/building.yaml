@@ -111,6 +111,11 @@ storage:
     - humidity_data
     - co2_data
     - contact_data
+    # V6-T26 BMS / plant telemetry. Required in BOTH places: this list decides which
+    # adapters are BUILT, database_registry.yaml decides HOW. Missing from here, the
+    # registry silently served the wide adapter and every plant reading failed with
+    # "Unknown column '<uuid>'".
+    - plant_data
     # V5 Event Framework (T07) - generic interval/event store
     - events_data
     # V5-T09 scalar expansion

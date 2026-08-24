@@ -143,15 +143,17 @@ def main() -> int:
     out.write_text(ttl, encoding="utf-8", newline="\n")
     print(f"[spatial] wrote {out}")
 
-    # upload to GraphDB (default graph) for immediate effect
-    req = urllib.request.Request(
-        f"{GRAPHDB}/repositories/{REPO}/statements",
-        data=ttl.encode("utf-8"),
-        headers={"Content-Type": "text/turtle"},
-        method="POST",
-    )
-    urllib.request.urlopen(req, timeout=60)
-    print("[spatial] uploaded to GraphDB (default graph)")
+    # NO direct upload. The file is already in input/, where ttl_uploader discovers it on
+    # the next boot and PUTs it into its own named graph.
+    #
+    # This used to POST the TTL to /statements with no ?context=, which is what CAVEAT-039
+    # is: a context-less POST APPENDS, and Brick models timeseries linkage with blank nodes
+    # (`?sensor ref:hasExternalReference [ ... ]`), so every re-run minted fresh bnode IDs
+    # and stacked another copy in the default graph. The uploader was fixed in b4c7381 to
+    # use a scoped PUT; this script was the surviving way back in. Removing the call rather
+    # than re-scoping it removes the vector instead of relocating it -- the upload was
+    # redundant with the boot path anyway.
+    print("[spatial] restart the stack (or reload the TTL from the admin portal) to ingest it")
     return 0
 
 

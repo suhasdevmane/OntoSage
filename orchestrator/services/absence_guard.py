@@ -45,6 +45,20 @@ _MODALITY_ALIASES: Dict[str, Tuple[str, ...]] = {
     "illuminance": ("illuminance", "lux", "light level"),
     "pm25": ("pm2.5", "pm25", "particulate"),
     "energy_submeter": ("energy", "electricity", "power"),
+    # V6-T43/T44: these were missing, so a false "this building has no water sensors"
+    # claim sailed past the guard that exists precisely to catch it. The alias table
+    # must track config/saturation_modalities.yaml -- a modality the guard does not
+    # know about is a modality the system can be wrong about, unchallenged.
+    "water_flow": ("water", "water flow", "water usage", "water consumption"),
+    # V6-T44 split. Listed separately because "no hot water sensors" is a different false
+    # claim from "no water sensors", and a guard that only knew the umbrella term would let
+    # the narrower one through unchallenged.
+    "water_flow_hot": ("hot water", "hot water flow", "domestic hot water"),
+    "water_flow_chilled": ("chilled water", "chilled water flow", "cooling water"),
+    "waste_fill": ("waste", "bin", "recycling", "rubbish", "refuse"),
+    "waste_weight": ("waste weight", "waste tonnage", "recycling weight"),
+    "lift_state": ("lift", "elevator"),
+    "parking_free": ("parking", "parking space", "car park"),
 }
 
 

@@ -1,0 +1,96 @@
+# The Master Technical Report's six access tiers, mapped onto OntoSage RBAC (V6-T28).
+#
+# Master Report Table 15 names six tiers; OntoSage already implements six ROLES with twenty
+# permissions. These are two vocabularies for one thing, and until they are reconciled neither
+# the supervisors nor an auditor can check the specification against the implementation.
+#
+# THIS FILE MAPS. IT DOES NOT GRANT.
+# Authorisation stays exactly where it is — `require_permission()` over ROLE_PERMISSIONS. This
+# mapping is read-only metadata used to (a) stamp the answering tier onto every EvidenceRecord,
+# and (b) let a question say which tier would be needed to answer it. Replacing RBAC with tiers
+# was rejected: it would throw away a working, tested authorisation system to gain a vocabulary,
+# and Master 11.2 is explicit that the conversational layer must enforce the SAME permissions as
+# the underlying systems, not a parallel set of its own.
+#
+# THE ORDER MATTERS. Tiers are ranked so "at least tier X" is answerable. Public is the floor;
+# strategic is not "highest privilege" in the security sense but the widest aggregate scope, and
+# it deliberately does NOT imply security_safety — an executive dashboard has no business
+# reading door-access events. Rank is about breadth of view, not about trust, which is why the
+# security tier sits outside the ladder for anything it does not explicitly grant.
+
+version: 1
+
+citation: >-
+  Master Technical Report Table 15 (access tiers) and section 11.2: "the conversational model
+  must enforce the same permissions as the underlying systems and must not become a route
+  around existing access controls."
+
+tiers:
+  public:
+    rank: 0
+    label: "Public"
+    description: >-
+      Wayfinding, opening hours, accessible routes, non-sensitive availability and broad
+      environmental status. Answerable without authenticating.
+    roles: [readonly]
+    requires_permission: "metadata:read"
+
+  occupant:
+    rank: 1
+    label: "Authenticated occupant"
+    description: >-
+      Local environmental history, room recommendations, own reports and notifications.
+      Scoped to what an occupant of this building may legitimately see.
+    roles: [occupant]
+    requires_permission: "sensor:read"
+
+  operational:
+    rank: 2
+    label: "Operational"
+    description: >-
+      Asset telemetry, faults, maintenance, detailed environmental data and authorised
+      occupancy. The tier that runs the building.
+    roles: [operator, facility_manager, analyst]
+    requires_permission: "analytics:read"
+
+  security_safety:
+    rank: 3
+    label: "Security and safety"
+    description: >-
+      Access events, certified alarm status, incident-specific information. Deliberately NOT
+      implied by the strategic tier: breadth of view is not a reason to see door records.
+    roles: [facility_manager, admin]
+    requires_permission: "building:write"
+
+  research:
+    rank: 4
+    label: "Research"
+    description: >-
+      De-identified, quality-controlled historical data under approved governance. Master 11.2
+      requires operational and research datasets to stay separate, so this tier grants scale
+      and history, never live identity.
+    roles: [analyst, admin]
+    requires_permission: "export:read"
+
+  strategic:
+    rank: 5
+    label: "Strategic"
+    description: >-
+      Aggregated performance, cost, risk and intervention outcomes. The widest scope and the
+      coarsest grain — aggregates, not individuals.
+    roles: [facility_manager, admin]
+    requires_permission: "report:read"
+
+# Which tier a question shape is answered at, when the shape alone determines it. Anything not
+# listed is resolved from the answering user's role instead. Listing is for shapes whose tier is
+# a property of the QUESTION rather than of the asker — an access-event query is a
+# security-tier question no matter who asks it.
+by_shape:
+  access_events: security_safety
+  alarm_status: security_safety
+  occupancy_individual: security_safety
+  dataset_request: research
+  portfolio_summary: strategic
+  wayfinding: public
+  opening_hours: public
+  accessibility_route: public

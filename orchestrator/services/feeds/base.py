@@ -36,7 +36,12 @@ class FeedSpec(BaseModel):
     """Pydantic model for one entry in feeds.yaml."""
 
     id: str = Field(..., min_length=1)
-    type: str = Field(..., pattern=r"^(rest_poll|csv_drop)$")
+    # V6-T25: institutional-context kinds join the sensor kinds. A building declares a
+    # timetable or booking export exactly as it declares a sensor feed — that sameness IS
+    # the R2 unlock: connecting one is config plus rows, never code.
+    type: str = Field(
+        ..., pattern=r"^(rest_poll|csv_drop|timetable|booking_export|room_allocation)$"
+    )
     url: Optional[str] = None
     path: Optional[str] = None
     auth_env: Optional[str] = None
@@ -48,6 +53,12 @@ class FeedSpec(BaseModel):
     storage: str = ""
     uuid: Optional[str] = None
     enabled: bool = True
+    # V6-T25: which column holds what, for institutional exports. Declared rather than
+    # sniffed, because guessing widely is how a column called "notes" becomes a room name.
+    space_field: Optional[str] = None
+    start_field: Optional[str] = None
+    end_field: Optional[str] = None
+    title_field: Optional[str] = None
 
     @field_validator("url", "path", mode="before")
     @classmethod

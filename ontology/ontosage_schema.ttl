@@ -1156,6 +1156,24 @@ ontosage:Sound_Level_Sensor a owl:Class ;
     rdfs:comment "Measures ambient sound pressure level, normally reported in dB(A). Declared by OntoSage because the pinned Brick version defines no acoustic sensor class; the WHO indoor guideline band 30-70 dB(A) anchors its comfort scoring."@en ;
     skos:example "\"which room is quietest right now?\"" .
 
+# Outdoor/green-roof sensing. Brick 1.4 defines no soil-moisture or precipitation
+# sensor class, and a building with a green roof is asked about both ("does the roof
+# need watering?", "how much rain did we capture?"). Declared here for the same reason
+# as the acoustic classes above: the alternative is inventing a term inside Brick's
+# namespace, which BUG-179 established this project does not do.
+
+ontosage:Soil_Moisture_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Sensor ;
+    rdfs:label "Soil moisture sensor"@en ;
+    rdfs:comment "Measures volumetric water content of a growing medium, reported as a percentage. Declared by OntoSage because the pinned Brick version defines no soil or substrate moisture class; distinct from Relative_Humidity_Sensor, which measures air."@en ;
+    skos:example "\"does the green roof need watering?\"" .
+
+ontosage:Rainfall_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Sensor ;
+    rdfs:label "Rainfall sensor"@en ;
+    rdfs:comment "Measures precipitation depth over an interval, normally in millimetres. Declared by OntoSage because the pinned Brick version defines no precipitation class; relevant to green-roof retention and rainwater harvesting questions."@en ;
+    skos:example "\"how much rain fell on the roof this week?\"" .
+
 ontosage:Noise_Level_Sensor a owl:Class ;
     rdfs:subClassOf ontosage:Sound_Level_Sensor ;
     rdfs:label "Noise level sensor"@en ;
@@ -1210,3 +1228,444 @@ ontosage:Database a owl:Class ;
     rdfs:label "Database"@en ;
     rdfs:comment "A registered time-series backend holding sensor readings; the object of ref:storedAt, resolved to a connection through database_registry.yaml."@en ;
     skos:example "\"bldg:database2\" — the MySQL instance behind this building's narrow tables" .
+
+
+####################################################################################################
+#  Module M — Sensor metadata and evidence quality  (V6-T06, Master Report Table 14)
+#  ------------------------------------------------------------------------------------------------
+#  The Master Technical Report lists the MINIMUM metadata a data source must carry before the
+#  building may reason about how much its own evidence is worth: identity and purpose, spatial
+#  context, operational cadence, semantic relationships, quality state, calibration and
+#  maintenance, historical validity, and access classification.
+#
+#  WHY THESE ARE TRIPLES AND NOT A SIDECAR YAML
+#  A sensor's calibration date is a fact ABOUT THE BUILDING, so design contract #2 puts it in the
+#  graph. Two practical consequences follow, and both matter more than the principle: the gates
+#  that consult it are SPARQL queries, so they need it graph-resident; and the admin Ontology tab
+#  can already upload and edit TTL, so authoring needs no new interface. A second file describing
+#  the same sensors would drift from the first, and nothing would notice.
+#
+#  ABSENCE IS "UNKNOWN", NEVER "FINE"
+#  A building that authors none of this is not thereby well-calibrated. Every consuming gate must
+#  read a missing value as `unknown` and act accordingly — which for a standards verdict means
+#  refusing it (Master 14.1 acceptance scenario 7). Defaults that assume good state would let an
+#  uninstrumented building claim conformance it cannot support.
+
+ontosage:calibratedOn a owl:DatatypeProperty ;
+    rdfs:label "calibration date"@en ;
+    rdfs:comment "Date this point was last calibrated. Absence means UNKNOWN — not uncalibrated, and not fine: a standards or compliance verdict may not rest on a point whose calibration state is unknown."@en ;
+    rdfs:range xsd:date ;
+    skos:example "\"2026-03-14\"^^xsd:date" .
+
+ontosage:calibrationMethod a owl:DatatypeProperty ;
+    rdfs:label "calibration method"@en ;
+    rdfs:comment "How the calibration was performed, and against what reference. Master 10.1 asks for comparison against trusted reference instruments; recording the method is what makes one calibration comparable to another."@en ;
+    rdfs:range xsd:string ;
+    skos:example "\"NDIR two-point against a certified 400/1000 ppm reference\"" .
+
+ontosage:calibrationDueOn a owl:DatatypeProperty ;
+    rdfs:label "calibration due date"@en ;
+    rdfs:comment "When calibration next falls due. Lets a gate distinguish EXPIRED from never-calibrated — a different remedy, and a different level of trust in the interim readings."@en ;
+    rdfs:range xsd:date .
+
+ontosage:qualityFlag a owl:DatatypeProperty ;
+    rdfs:label "data quality flag"@en ;
+    rdfs:comment "Operator-asserted quality state of this point: good | suspect | faulty | unknown. Distinct from computed health (which comes from the readings themselves) because an operator may know a sensor is faulty before the data shows it, and may know a plausible-looking series is wrong."@en ;
+    rdfs:range xsd:string ;
+    skos:example "\"suspect\"" .
+
+ontosage:faultState a owl:DatatypeProperty ;
+    rdfs:label "fault state"@en ;
+    rdfs:comment "Current fault condition, where the device or BMS reports one."@en ;
+    rdfs:range xsd:string .
+
+ontosage:mountingHeightM a owl:DatatypeProperty ;
+    rdfs:label "mounting height (m)"@en ;
+    rdfs:comment "Height above finished floor. HSE guidance places CO2 monitors at head height and away from openings; a sensor at ceiling level measures something different from one at desk level, and an answer that ignores this compares unlike with unlike."@en ;
+    rdfs:range xsd:decimal ;
+    skos:example "\"1.2\"^^xsd:decimal" .
+
+ontosage:environmentalBoundary a owl:ObjectProperty ;
+    rdfs:label "environmental boundary"@en ;
+    rdfs:comment "The space whose conditions this point actually measures. Usually the space that contains it — but NOT always, which is the entire reason the property exists: a sensor in a duct, a plenum, or mounted on a corridor wall serving an adjacent room has a containing space that is not the space it describes. The non-substitution rule (Master 8) is enforced against THIS, never against containment."@en ;
+    rdfs:range brick:Location .
+
+ontosage:samplingIntervalS a owl:DatatypeProperty ;
+    rdfs:label "sampling interval (s)"@en ;
+    rdfs:comment "How often the device physically measures. First of the Master Report's three clocks (Table 12); distinct from how often it transmits and from what is archived."@en ;
+    rdfs:range xsd:integer .
+
+ontosage:transmissionIntervalS a owl:DatatypeProperty ;
+    rdfs:label "transmission interval (s)"@en ;
+    rdfs:comment "How often the device reports. Second of the three clocks. This is what a freshness gate must judge against: a point transmitting every 15 minutes is not stale at 10."@en ;
+    rdfs:range xsd:integer .
+
+ontosage:archivalIntervalS a owl:DatatypeProperty ;
+    rdfs:label "archival interval (s)"@en ;
+    rdfs:comment "The permanent canonical resolution. Third of the three clocks, and the one a completeness gate needs: expected sample count over a window is derived from THIS, never assumed."@en ;
+    rdfs:range xsd:integer ;
+    skos:example "\"60\"^^xsd:integer" .
+
+ontosage:accessClassification a owl:DatatypeProperty ;
+    rdfs:label "access tier"@en ;
+    rdfs:comment "Which of the Master Report's six access tiers (Table 15) may see this point: public | occupant | operational | safety_security | research | strategic. The conversational layer must enforce the same permissions as the underlying systems and must never become a route around them."@en ;
+    rdfs:range xsd:string ;
+    skos:example "\"operational\"" .
+
+#  ── Effective-dated validity (V6-T07 builds on this) ───────────────────────────────────────────
+#  A sensor that moves, or is recalibrated, produces a step change that reads exactly like a real
+#  change in the building. Master 14.1 acceptance scenario 3 requires historical observations to
+#  stay linked to the location and configuration in force WHEN THEY WERE COLLECTED, so validity is
+#  modelled as an interval rather than by overwriting the current value.
+
+ontosage:ConfigurationPeriod a owl:Class ;
+    rdfs:label "Configuration period"@en ;
+    rdfs:comment "An interval during which a point's location, calibration and configuration were stable. Readings are interpreted against the period covering their timestamp, so a window spanning a boundary can be flagged rather than silently averaged across a discontinuity."@en .
+
+ontosage:hasConfigurationPeriod a owl:ObjectProperty ;
+    rdfs:label "has configuration period"@en ;
+    rdfs:domain brick:Point ; rdfs:range ontosage:ConfigurationPeriod .
+
+ontosage:effectiveFrom a owl:DatatypeProperty ;
+    rdfs:label "effective from"@en ;
+    rdfs:comment "Start of the period. Inclusive."@en ;
+    rdfs:domain ontosage:ConfigurationPeriod ; rdfs:range xsd:dateTime .
+
+ontosage:effectiveTo a owl:DatatypeProperty ;
+    rdfs:label "effective until"@en ;
+    rdfs:comment "End of the period. ABSENT means still in force — the open interval is the normal case, and writing a far-future date instead would silently expire."@en ;
+    rdfs:domain ontosage:ConfigurationPeriod ; rdfs:range xsd:dateTime .
+
+ontosage:configurationChange a owl:DatatypeProperty ;
+    rdfs:label "configuration change"@en ;
+    rdfs:comment "What changed at the start of this period: relocation | recalibration | replacement | firmware | commissioning. Reported alongside any trend that spans the boundary, so a measurement artefact is never presented as building behaviour."@en ;
+    rdfs:domain ontosage:ConfigurationPeriod ; rdfs:range xsd:string ;
+    skos:example "\"recalibration\"" .
+
+ontosage:periodLocation a owl:ObjectProperty ;
+    rdfs:label "location during period"@en ;
+    rdfs:comment "Where the point was during this period. This is what an as-of query resolves, so a reading from March stays attributed to the room the sensor was in during March."@en ;
+    rdfs:domain ontosage:ConfigurationPeriod ; rdfs:range brick:Location .
+
+
+####################################################################################################
+#  Module N — Served zones  (V6-T12, Master Report 8 — the non-substitution rule)
+#  ------------------------------------------------------------------------------------------------
+#  The Master Report's primary placement rule is that a sensor must sit within the environmental
+#  boundary it answers about. It permits exactly ONE alternative: a *validated served zone*. This
+#  module is that alternative, and nothing else.
+#
+#  WHY THIS IS ASSERTED AND VALIDATED, NEVER INFERRED
+#  Two tempting shortcuts are both wrong, and both have already cost this project:
+#
+#    * "same floor" — this IS the corridor substitution the report forbids. A floor is not a
+#      thermal, acoustic or ventilation boundary, and a corridor sensor is on the same floor as
+#      every room it cannot speak for.
+#    * "geometrically nearest" — nearness implying attribution is exactly how BUG-189 attributed
+#      one room's reading to a corridor the building did not have. Distance is not evidence of
+#      what a sensor measures; ductwork is.
+#
+#  So membership must be ASSERTED by someone who knows the mechanical design, and must carry a
+#  validation record. An unvalidated assertion does NOT count: `ontosage:zoneValidated false`
+#  (or an absent flag) leaves the relation visible for review while keeping it out of every
+#  answer. That asymmetry is deliberate — an unvalidated zone silently trusted is a substitution
+#  wearing a label.
+#
+#  A building that authors none of this is not thereby broken. It falls back to
+#  in-room-or-proxy, which is the SAFE direction: fewer answers, none of them substituted.
+
+ontosage:ServedZone a owl:Class ;
+    rdfs:subClassOf brick:Location ;
+    rdfs:label "Served zone"@en ;
+    rdfs:comment "A set of spaces whose conditions are genuinely represented by a shared point — typically because one air-handling unit, one thermal zone or one distributed sensor array serves them all. Membership is a claim about the MECHANICAL design, not about geometry, and it must be validated before any answer may rest on it."@en .
+
+ontosage:servesSpace a owl:ObjectProperty ;
+    rdfs:label "serves space"@en ;
+    rdfs:comment "A space this zone genuinely represents. Asserted from the mechanical design or a commissioning survey — never derived from adjacency, floor membership or distance."@en ;
+    rdfs:domain ontosage:ServedZone ; rdfs:range brick:Location .
+
+ontosage:servedByPoint a owl:ObjectProperty ;
+    rdfs:label "served by point"@en ;
+    rdfs:comment "The point whose readings represent this zone. Usually located in one of the served spaces, but it may sit in a duct or plenum — which is why ontosage:environmentalBoundary exists alongside containment."@en ;
+    rdfs:domain ontosage:ServedZone ; rdfs:range brick:Point .
+
+ontosage:zoneValidated a owl:DatatypeProperty ;
+    rdfs:label "zone validated"@en ;
+    rdfs:comment "True only when the serving relation has been checked against the mechanical design or a commissioning survey. ABSENT OR FALSE MEANS THE ZONE DOES NOT COUNT: the spatial-adequacy gate treats an unvalidated zone as proxy evidence, so it can be reported as context but can never carry a room-level claim. Fail-closed on purpose — an unvalidated zone that were trusted is a silent substitution."@en ;
+    rdfs:domain ontosage:ServedZone ; rdfs:range xsd:boolean .
+
+ontosage:zoneValidationMethod a owl:DatatypeProperty ;
+    rdfs:label "zone validation method"@en ;
+    rdfs:comment "How the serving relation was established: mechanical_schedule | commissioning_survey | tracer_test | as_built_drawing. Recorded because 'validated' means little without saying against what — and because a tracer test and a drawing are not equally strong evidence."@en ;
+    rdfs:domain ontosage:ServedZone ; rdfs:range xsd:string ;
+    skos:example "\"commissioning_survey\"" .
+
+ontosage:zoneValidatedOn a owl:DatatypeProperty ;
+    rdfs:label "zone validated on"@en ;
+    rdfs:comment "When the serving relation was last verified. A zone validated against a mechanical schedule from before a refurbishment describes a building that no longer exists."@en ;
+    rdfs:domain ontosage:ServedZone ; rdfs:range xsd:date .
+
+
+####################################################################################################
+#  Module O — Service state, accessibility and institutional context  (V6-T58 / T60 vocabulary)
+#  ------------------------------------------------------------------------------------------------
+#  The supervisors' 480 catalogue questions were counted by the source family each one needs. The
+#  largest families after occupancy are: opening hours & closures (271 questions), room bookings
+#  (249), lift status (162), network/IT service (158), AV and teaching equipment (94), and the
+#  accessibility inventory (59). `ontosage:openingHours`, `ontosage:Booking`, `ontosage:Lift` and
+#  the Amenity hierarchy already exist; this module adds the rest.
+#
+#  ONE RULE GOVERNS THE WHOLE MODULE: STATE COMES FROM AN AUTHORITATIVE SOURCE, NEVER FROM A SENSOR
+#  The PhD catalogue states the failure modes as a list, and each is a plausible inference the
+#  system must refuse to make: an empty room is not available; an open door is not access; a quiet
+#  room is not private; a green service heartbeat is not proof a device will work. So every status
+#  here is an ASSERTED record with an issuing source and an observation time — not something
+#  derived from telemetry. A lift that no-one has reported as working is `unverified`, which is a
+#  different answer from `working`, and the difference is the point.
+
+ontosage:AssetStatus rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Asset status record"@en ;
+    rdfs:comment "The reported operational state of a lift, door, AV system, network service or amenity over an interval. An IntervalRecord because status is a thing that STARTED at a time and may still hold: 'the lift failed at 09:14 and is still out' is one record, not a flag that was overwritten."@en ;
+    skos:example "\"is the lift working?\" -> newest AssetStatus for that lift, with its issuing source and observation time." .
+
+ontosage:statusValue a owl:DatatypeProperty ;
+    rdfs:label "status value"@en ;
+    rdfs:comment "operational | degraded | out_of_service | unverified. UNVERIFIED is the default for anything no authoritative source has reported, and is deliberately NOT the same as operational: 'nobody has told me it is broken' is not evidence that it works, and answering as though it were is how a step-free route gets recommended through a failed lift."@en ;
+    rdfs:domain ontosage:AssetStatus ; rdfs:range xsd:string ;
+    skos:example "\"out_of_service\"" .
+
+ontosage:statusSource a owl:DatatypeProperty ;
+    rdfs:label "issuing source"@en ;
+    rdfs:comment "The authoritative system or role that reported this state. Recorded because the Master Report requires source authority on every consequential answer, and because a status with no traceable issuer cannot be relied on for a safety-adjacent decision."@en ;
+    rdfs:domain ontosage:AssetStatus ; rdfs:range xsd:string ;
+    skos:example "\"lift_controller\" | \"estates_helpdesk\" | \"av_support\"" .
+
+ontosage:statusObservedAt a owl:DatatypeProperty ;
+    rdfs:label "status observed at"@en ;
+    rdfs:comment "When the issuing source last confirmed this state. A three-week-old 'operational' is not current status, and the freshness gate judges it exactly as it judges a sensor reading."@en ;
+    rdfs:domain ontosage:AssetStatus ; rdfs:range xsd:dateTime .
+
+ontosage:statusOf a owl:ObjectProperty ;
+    rdfs:label "status of"@en ;
+    rdfs:comment "The asset, amenity or service this record describes."@en ;
+    rdfs:domain ontosage:AssetStatus .
+
+ontosage:assistanceContact a owl:DatatypeProperty ;
+    rdfs:label "assistance contact"@en ;
+    rdfs:comment "Who to contact when this asset is unavailable. Present so a decline can be USEFUL: 'the lift is out of service, and step-free access to level 5 is via the estates helpdesk on x1234' is an answer; 'the lift is out of service' strands someone."@en ;
+    rdfs:range xsd:string .
+
+#  ── Service catalogue: the assets whose state gets reported ─────────────────────────────────────
+
+ontosage:AVEquipment a owl:Class ;
+    rdfs:subClassOf brick:Equipment ;
+    rdfs:label "AV / teaching equipment"@en ;
+    rdfs:comment "Projector, display, lecture-capture, microphone or hybrid-conferencing rig serving a space. 94 of the supervisors' questions depend on knowing whether the teaching kit in a room works BEFORE the class starts."@en .
+
+ontosage:NetworkService a owl:Class ;
+    rdfs:subClassOf brick:System ;
+    rdfs:label "Network / IT service"@en ;
+    rdfs:comment "An aggregate connectivity or IT service serving spaces — wired, wireless, or a named platform. Deliberately an aggregate: the catalogues ask about SERVICE health, and per-device or per-user network monitoring would be surveillance the privacy rules forbid."@en .
+
+ontosage:serviceStatus a owl:ObjectProperty ;
+    rdfs:label "current service status"@en ;
+    rdfs:comment "Convenience link from an asset to its newest AssetStatus record. The records remain the source of truth — this is a shortcut for the common 'is it working now' query, not a replacement for the history."@en ;
+    rdfs:range ontosage:AssetStatus .
+
+#  ── Accessibility register ──────────────────────────────────────────────────────────────────────
+#  Accessibility is a HARD filter, not a preference (rule R-11). An unverified feature must never
+#  be labelled accessible: the real-world cost of that error is stranding somebody, which is the
+#  highest-consequence failure anywhere in the question bank.
+
+ontosage:AccessibilityFeature a owl:Class ;
+    rdfs:subClassOf ontosage:Amenity ;
+    rdfs:label "Accessibility feature"@en ;
+    rdfs:comment "A feature provided for accessibility: hearing loop, tactile paving, Changing Places facility, accessible WC, power-assisted door, accessible parking bay. An Amenity subclass so the existing capability resolver locates it with no new code."@en .
+
+ontosage:accessibilityKind a owl:DatatypeProperty ;
+    rdfs:label "accessibility feature kind"@en ;
+    rdfs:comment "hearing_loop | tactile_paving | changing_places | accessible_wc | power_assisted_door | accessible_parking | step_free_entrance | adjustable_desk."@en ;
+    rdfs:domain ontosage:AccessibilityFeature ; rdfs:range xsd:string .
+
+ontosage:accessibilityVerified a owl:DatatypeProperty ;
+    rdfs:label "accessibility verified"@en ;
+    rdfs:comment "True only when the feature has been inspected and confirmed working. ABSENT OR FALSE MEANS UNVERIFIED, and an unverified feature may NOT be presented as accessible — the hard filter fails closed for the same reason a served zone does, but the consequence of getting it wrong is a person stranded rather than a wrong number."@en ;
+    rdfs:domain ontosage:AccessibilityFeature ; rdfs:range xsd:boolean .
+
+ontosage:accessibilityVerifiedOn a owl:DatatypeProperty ;
+    rdfs:label "accessibility verified on"@en ;
+    rdfs:comment "When the feature was last inspected. A hearing loop verified three years ago is a claim about a building that may no longer be true."@en ;
+    rdfs:domain ontosage:AccessibilityFeature ; rdfs:range xsd:date .
+
+#  ── Scheduled operations ────────────────────────────────────────────────────────────────────────
+
+ontosage:ServiceSchedule a owl:Class ;
+    rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Service schedule entry"@en ;
+    rdfs:comment "A planned recurring operation on a space: cleaning, waste collection, planned maintenance, planned shutdown. Distinct from a WorkOrder, which is reactive: 'when is this room next cleaned' and 'who is fixing the broken tap' are different questions with different sources."@en .
+
+ontosage:scheduleKind a owl:DatatypeProperty ;
+    rdfs:label "schedule kind"@en ;
+    rdfs:comment "cleaning | waste_collection | planned_maintenance | planned_shutdown | inspection."@en ;
+    rdfs:domain ontosage:ServiceSchedule ; rdfs:range xsd:string .
+
+ontosage:TimetabledSession rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Timetabled session"@en ;
+    rdfs:comment "A scheduled teaching or institutional session in a space. Separate from Booking because the two answer different questions and have different authority: a timetable says what the institution has PLANNED, a booking says what somebody has RESERVED, and where they disagree the answer must say so rather than silently prefer one."@en .
+
+ontosage:sessionKind a owl:DatatypeProperty ;
+    rdfs:label "session kind"@en ;
+    rdfs:comment "lecture | seminar | lab | exam | event | meeting."@en ;
+    rdfs:domain ontosage:TimetabledSession ; rdfs:range xsd:string .
+
+ontosage:expectedAttendance a owl:DatatypeProperty ;
+    rdfs:label "expected attendance"@en ;
+    rdfs:comment "Planned headcount. An institutional expectation, never an occupancy measurement — the catalogues are explicit that a planned figure must not be reported as an observed one."@en ;
+    rdfs:range xsd:integer .
+
+ontosage:ClosurePeriod rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Closure period"@en ;
+    rdfs:comment "An interval during which a space, floor or the whole building is closed or restricted. Opening hours say what is NORMAL; a closure says what overrides it, and 271 of the supervisors' questions depend on the override being visible."@en .
+
+ontosage:closureReason a owl:DatatypeProperty ;
+    rdfs:label "closure reason"@en ;
+    rdfs:comment "Why the space is closed, in terms a person can act on."@en ;
+    rdfs:domain ontosage:ClosurePeriod ; rdfs:range xsd:string .
+
+
+####################################################################################################
+#  Module P — Amenity service status and potability  (V6-T45)
+#  ------------------------------------------------------------------------------------------------
+#  Two gaps found by the category gap sweep, both of which cause a WRONG answer rather than a
+#  missing one — which is why they are worth a vocabulary addition rather than a backlog note.
+#
+#  1. AMENITIES HAVE NO SERVICE STATE. ontosage:Amenity carries locatedIn, onFloor, locationText,
+#     answerText and openingHours — and nothing about whether the thing currently works. So an
+#     out-of-service drinking fountain is still recommended as a drinking fountain. Module O gave
+#     ASSETS a status record; this extends the same treatment to amenities, which are what a
+#     stakeholder actually asks about ("is that water fountain working?").
+#
+#  2. POTABILITY IS A HEALTH CLAIM AND MUST NEVER BE INFERRED. The lay-term mapping already sends
+#     "drinking water" and "potable water" at brick:Water_Quality_Sensor, and a flow reading sits
+#     one short step away. The Master Report is explicit that a sensor reading does not support a
+#     health statement, so potability is modelled as a PUBLISHED STATEMENT with a responsible
+#     owner — never as something derived from a measurement. This is the non-substitution rule
+#     applied to its most dangerous case: being wrong about drinkability harms someone.
+
+ontosage:amenityStatus a owl:ObjectProperty ;
+    rdfs:label "amenity service status"@en ;
+    rdfs:comment "Links an amenity to its current ontosage:AssetStatus record. An amenity whose status is out_of_service must be EXCLUDED from recommendations rather than listed with a caveat: somebody who walks to a broken fountain has been given a wrong answer, however well hedged."@en ;
+    rdfs:domain ontosage:Amenity ; rdfs:range ontosage:AssetStatus .
+
+ontosage:PotabilityStatement a owl:Class ;
+    rdfs:subClassOf ontosage:KnowledgeTopic ;
+    rdfs:label "Potability statement"@en ;
+    rdfs:comment "A published statement about whether water from a given outlet or area is fit to drink, with the responsible owner and the date it was issued. A KnowledgeTopic subclass so the existing capability resolver answers it with no new code."@en .
+
+ontosage:potabilityValue a owl:DatatypeProperty ;
+    rdfs:label "potability"@en ;
+    rdfs:comment "potable | not_potable | unknown. UNKNOWN is the default and is a legitimate answer: 'nobody has published a statement about this outlet' is honest, whereas assuming either value is a health claim nobody made."@en ;
+    rdfs:domain ontosage:PotabilityStatement ; rdfs:range xsd:string .
+
+ontosage:potabilityAuthority a owl:DatatypeProperty ;
+    rdfs:label "issuing authority"@en ;
+    rdfs:comment "Who published the statement and stands behind it. Required, because a drinkability claim with no owner is exactly the kind of confident unattributable assertion the evidence discipline exists to prevent."@en ;
+    rdfs:domain ontosage:PotabilityStatement ; rdfs:range xsd:string .
+
+ontosage:potabilityIssuedOn a owl:DatatypeProperty ;
+    rdfs:label "issued on"@en ;
+    rdfs:comment "When the statement was published. A potability statement from four years ago describes a plumbing system that may since have been altered."@en ;
+    rdfs:domain ontosage:PotabilityStatement ; rdfs:range xsd:date .
+
+ontosage:appliesToOutlet a owl:ObjectProperty ;
+    rdfs:label "applies to outlet"@en ;
+    rdfs:comment "The amenity, space or floor this statement covers. Scoped rather than building-wide because potability commonly differs between a mains-fed drinking point and a tank-fed tap in the same building."@en ;
+    rdfs:domain ontosage:PotabilityStatement .
+
+
+####################################################################################################
+#  Module Q — Waste, recycling and institutional targets  (V6-T43)
+#  ------------------------------------------------------------------------------------------------
+#  The largest wholly-missing domain found by the category gap sweep, and one this project had
+#  already noticed: scripts/ttl_gap_audit.py records the same gap as backlog item P4.
+#
+#  TWO THINGS ARE MODELLED HERE, AND THE SECOND IS THE LESS OBVIOUS ONE.
+#
+#  1. Waste points as locatable amenities, so "where are the recycling bins" is answered by the
+#     existing capability resolver with no new code, and so a suggestion about level 5 can be
+#     answered with what level 5 actually has.
+#
+#  2. A dated, published TARGET. Questions like "are we on track for our diversion target" are
+#     unanswerable without one — and the tempting failure is not refusing them, it is inventing
+#     a plausible target and reporting progress against it. A target is an institutional
+#     commitment with an owner and a date, so it is authored, cited, and never inferred from
+#     the data it is meant to judge.
+#
+#  CONTAMINATION IS A RATIO, NOT AN ESTIMATE. It is computable only where two streams are
+#  separately measured. Where a building weighs general waste alone, the honest answer is that
+#  contamination is not measurable here — not a figure derived from one number.
+
+ontosage:WastePoint a owl:Class ;
+    rdfs:subClassOf ontosage:Amenity ;
+    rdfs:label "Waste or recycling point"@en ;
+    rdfs:comment "A bin, cluster of bins or collection point where waste is deposited. An Amenity subclass so the existing capability chain locates it -- 'where are the recycling bins' needs authoring, not engineering."@en .
+
+ontosage:wasteStream a owl:DatatypeProperty ;
+    rdfs:label "waste stream"@en ;
+    rdfs:comment "general | mixed_recycling | paper | glass | food | WEEE | confidential | batteries. A point may declare several. The stream is what makes a contamination ratio meaningful: without knowing which stream a measurement belongs to, two numbers cannot be compared."@en ;
+    rdfs:domain ontosage:WastePoint ; rdfs:range xsd:string ;
+    skos:example "\"mixed_recycling\"" .
+
+ontosage:streamCapacityLitres a owl:DatatypeProperty ;
+    rdfs:label "stream capacity (L)"@en ;
+    rdfs:comment "Nominal capacity of this point for this stream. Needed to turn a fill-level percentage into anything actionable: 80% of a 25 L office bin and 80% of a 1100 L euro-bin are different problems."@en ;
+    rdfs:domain ontosage:WastePoint ; rdfs:range xsd:decimal .
+
+#  ── Institutional targets ───────────────────────────────────────────────────────────────────────
+
+ontosage:SustainabilityTarget a owl:Class ;
+    rdfs:label "Sustainability target"@en ;
+    rdfs:comment "A published institutional commitment against which progress is reported: a diversion rate, a carbon reduction, a consumption ceiling. Authored and cited, NEVER inferred - a target derived from the data it is meant to judge would make every trend look like success or failure by construction."@en ;
+    skos:example "\"are we on track for our recycling target?\" -> compare measured diversion against THIS, and say who set it." .
+
+ontosage:targetMetric a owl:DatatypeProperty ;
+    rdfs:label "target metric"@en ;
+    rdfs:comment "What is being targeted, in the same terms the measurement uses: diversion_rate | carbon_intensity | energy_intensity | water_per_capita | waste_per_capita."@en ;
+    rdfs:domain ontosage:SustainabilityTarget ; rdfs:range xsd:string .
+
+ontosage:targetValue a owl:DatatypeProperty ;
+    rdfs:label "target value"@en ;
+    rdfs:domain ontosage:SustainabilityTarget ; rdfs:range xsd:decimal .
+
+ontosage:targetUnit a owl:DatatypeProperty ;
+    rdfs:label "target unit"@en ;
+    rdfs:comment "Unit of the target value. Required: a diversion target of 65 means nothing without knowing whether that is a percentage or a tonnage."@en ;
+    rdfs:domain ontosage:SustainabilityTarget ; rdfs:range xsd:string .
+
+ontosage:targetDate a owl:DatatypeProperty ;
+    rdfs:label "target date"@en ;
+    rdfs:comment "When the target is to be met. Progress against an undated target cannot be judged, because 'on track' is a statement about a rate, not a level."@en ;
+    rdfs:domain ontosage:SustainabilityTarget ; rdfs:range xsd:date .
+
+ontosage:targetBaselinePeriod a owl:DatatypeProperty ;
+    rdfs:label "baseline period"@en ;
+    rdfs:comment "The period the target is measured against. A 20% reduction is meaningless without it, and choosing a baseline after the fact is the oldest way to make a number say what you want."@en ;
+    rdfs:domain ontosage:SustainabilityTarget ; rdfs:range xsd:string .
+
+ontosage:targetAuthority a owl:DatatypeProperty ;
+    rdfs:label "target authority"@en ;
+    rdfs:comment "Who set the target and stands behind it. Required for the same reason a potability statement needs an owner: an unattributed commitment cannot be relied on, and cannot be challenged."@en ;
+    rdfs:domain ontosage:SustainabilityTarget ; rdfs:range xsd:string .
+
+#  Minted here because the pinned Brick version defines no level or weight sensor class.
+#  Following the precedent set by ontosage:Sound_Level_Sensor after BUG-179: a class the
+#  vocabulary does not define must be declared in OUR namespace, never invented inside Brick's.
+ontosage:Waste_Fill_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Sensor ;
+    rdfs:label "Waste fill-level sensor"@en ;
+    rdfs:comment "Reports how full a waste or recycling receptacle is, as a percentage of its capacity."@en .
+
+ontosage:Waste_Weight_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Sensor ;
+    rdfs:label "Waste weight sensor"@en ;
+    rdfs:comment "Reports the mass of waste in a receptacle or collected from a stream."@en .

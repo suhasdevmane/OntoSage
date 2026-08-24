@@ -152,3 +152,50 @@ def test_hints_match_words_not_substrings():
     assert measurand_of("several attempts were made") is None
     assert measurand_of("is the wind strong today?") == "wind"
     assert measurand_of("the temp in RM101") == "temperature"
+
+
+# ── BUG-230: only judge numbers that could be readings ───────────────────────
+
+
+def test_the_guard_is_scoped_by_the_evidence_operation():
+    """The guard scans the DRAFT for numbers, so a document excerpt's threshold table became
+    "temperature readings" and was warned about as impossible -- asserting "the recorded
+    temperature value" when nothing was recorded, on 4.7% of baseline answers.
+
+    V6-T02's evidence record states the act behind the answer, which is the condition the
+    guard needed and did not have. Asserted against the call site because the scoping is a
+    condition in _response_node, and its absence is invisible from outside.
+    """
+    from pathlib import Path
+
+    src = (
+        Path(__file__).resolve().parent.parent / "orchestrator" / "workflow" / "_orchestrator.py"
+    ).read_text(encoding="utf-8")
+    call = src[src.index("_from_template_lane = any(") :][:2600]
+    assert "_numbers_could_be_readings" in call
+    assert '"authoritative_lookup"' not in call, (
+        "scope by what IS a measurement, not by listing what is not -- a new lookup-shaped "
+        "operation would silently start being guarded again"
+    )
+    # Fails open: no record means the guard still runs.
+    assert "(not _op)" in call
+
+
+def test_the_measurement_operations_are_the_ones_that_produce_readings():
+    """A forecast and a calculation over observations carry numbers that ARE readings in the
+    sense this guard cares about; a document lookup does not."""
+    from pathlib import Path
+
+    src = (
+        Path(__file__).resolve().parent.parent / "orchestrator" / "workflow" / "_orchestrator.py"
+    ).read_text(encoding="utf-8")
+    call = src[src.index("_numbers_could_be_readings") :][:400]
+    for op in ("observation", "calculation", "forecast"):
+        assert f'"{op}"' in call
+
+
+def test_a_document_threshold_table_is_still_implausible_as_a_temperature():
+    """The underlying check is CORRECT and must not be weakened -- 800 degC is impossible.
+    The fix is about WHEN it runs, not about widening the plausible range."""
+    bad = pl.implausible_values("The value is 800 and 1000 and 300 degrees.", "temperature")
+    assert bad, "the plausible range must not have been widened to accommodate the bug"

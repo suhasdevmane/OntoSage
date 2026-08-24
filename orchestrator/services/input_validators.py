@@ -358,6 +358,96 @@ def _flat_building_matches(yaml_path: Path, building_id: str) -> bool:
         return False
 
 
+_EVIDENCE_GATES = (
+    "freshness",
+    "completeness",
+    "agreement",
+    "spatial_adequacy",
+    "calibration",
+    "consequence",
+)
+_EVIDENCE_GATE_MODES = ("advisory", "enforcing")
+
+
+def validate_evidence_policy_yaml(path: Path) -> Tuple[bool, List[str]]:
+    """Validate the optional per-building evidence_policy.yaml overlay (V6-T04).
+
+    The overlay narrows or widens the shipped defaults in ``config/evidence_policy.yaml``.
+    The loader already ignores an unreadable overlay so a typo cannot take a building's
+    evidence policy down at runtime -- but silently ignoring it is a poor way to LEARN that
+    a threshold never took effect. Catching it here means the operator hears about it at
+    swap time, when they can still fix it, rather than discovering weeks later that a gate
+    they thought they had tuned was running on defaults.
+
+    Absent is valid: like every other optional per-building file, absence means "use the
+    defaults", not "misconfigured".
+    """
+    if not path.exists():
+        return True, []
+    issues: List[str] = []
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return False, [f"evidence_policy.yaml: YAML parse error - {exc}"]
+    if data is None:
+        return True, ["evidence_policy.yaml: empty; shipped defaults apply"]
+    if not isinstance(data, dict):
+        return False, ["evidence_policy.yaml: top level must be a mapping"]
+
+    fresh = data.get("freshness")
+    if fresh is not None:
+        if not isinstance(fresh, dict):
+            issues.append("evidence_policy.yaml: 'freshness' must be a mapping")
+        else:
+            per = fresh.get("by_modality") or {}
+            if not isinstance(per, dict):
+                issues.append("evidence_policy.yaml: freshness.by_modality must be a mapping")
+            else:
+                for modality, spec in per.items():
+                    if not isinstance(spec, dict):
+                        issues.append(
+                            f"evidence_policy.yaml: freshness.{modality} must be a mapping"
+                        )
+                        continue
+                    age = spec.get("max_age_minutes")
+                    if age is not None and (not isinstance(age, (int, float)) or age <= 0):
+                        issues.append(
+                            f"evidence_policy.yaml: freshness.{modality}.max_age_minutes "
+                            f"must be a positive number (got {age!r})"
+                        )
+
+    comp = data.get("completeness")
+    if isinstance(comp, dict):
+        cov = comp.get("min_window_coverage")
+        if cov is not None and (not isinstance(cov, (int, float)) or not 0.0 <= cov <= 1.0):
+            issues.append(
+                "evidence_policy.yaml: completeness.min_window_coverage must be a fraction "
+                f"between 0 and 1 (got {cov!r}) - 90 is not 0.90"
+            )
+
+    gates = data.get("gates")
+    if gates is not None:
+        if not isinstance(gates, dict):
+            issues.append("evidence_policy.yaml: 'gates' must be a mapping")
+        else:
+            for gate, spec in gates.items():
+                if gate not in _EVIDENCE_GATES:
+                    issues.append(
+                        f"evidence_policy.yaml: unknown gate '{gate}' "
+                        f"(known: {', '.join(_EVIDENCE_GATES)}) - a typo here means the gate "
+                        f"you meant to configure is still running on its default"
+                    )
+                    continue
+                mode = (spec or {}).get("mode") if isinstance(spec, dict) else None
+                if mode is not None and str(mode).lower() not in _EVIDENCE_GATE_MODES:
+                    issues.append(
+                        f"evidence_policy.yaml: gates.{gate}.mode must be one of "
+                        f"{_EVIDENCE_GATE_MODES} (got {mode!r}); treated as advisory"
+                    )
+
+    return (not issues), issues
+
+
 def validate_building_input(building_id: str, input_root: Path) -> Tuple[bool, Dict[str, Any]]:
     """Run all optional-file validators for a building directory.
 
@@ -403,6 +493,7 @@ def validate_building_input(building_id: str, input_root: Path) -> Tuple[bool, D
             bldg_dir / "datasources.yaml",
             lambda p: validate_datasources_yaml(p, input_root=input_root),
         ),
+        ("evidence_policy.yaml", bldg_dir / "evidence_policy.yaml", validate_evidence_policy_yaml),
     ]
 
     for name, path, validator in checks:

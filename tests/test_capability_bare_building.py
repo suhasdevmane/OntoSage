@@ -97,7 +97,11 @@ def _bare_building(
     monkeypatch.setattr(cgr, "get_capability_graph_resolver", lambda: _FakeResolver())
 
     # 5. Document KB — miss by default (no policy/manual chunks).
-    async def _fake_docs(_q, _bid, top_k: int = 3, only_document: str = ""):
+    async def _fake_docs(_q, _bid, top_k: int = 3, only_document: str = "", stats=None):
+        # `stats` is CAVEAT-226's out-parameter: the real search reports how many candidates
+        # the retrieval floor suppressed, so a threshold change can name itself in the
+        # evidence record. The double accepts it and leaves it empty -- these tests are about
+        # source precedence, not about the floor.
         return docs or []
 
     monkeypatch.setattr(cap, "_search_documents", _fake_docs)

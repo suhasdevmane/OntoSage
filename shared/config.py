@@ -24,8 +24,48 @@ except ImportError:
 # MiniLM at 384 dimensions, while bge-large at 1024 was the model actually loaded. A
 # floor tuned for a model that is not running is worse than no floor, because it
 # looks deliberate.
+# MEASURED, not assumed. Swept against 377 hand-labelled document-citing answers from the
+# golden baseline (148 off-topic / 42 arguable / 187 on-topic) by re-running retrieval only --
+# embedder plus Qdrant, no LLM -- and recording each hit's real cosine score:
+#
+#   floor   off-topic kept   on-topic kept
+#   0.45        148/148         187/187     <- filters NOTHING; every hit clears it
+#   0.50        139/148         185/187     <- -9 misleading, -2 correct
+#   0.55         68/148         153/187     <- SHIPPED: -80 misleading, -34 correct (2.35:1)
+#   0.60         13/148          79/187     <- collapses; loses 58% of correct answers
+#
+# 0.45 was doing no work: it admitted every retrieved passage, which is why all 377 answers
+# came from just eleven chunks of five documents and why the grounding guard was being asked
+# to do retrieval's job (BUG-218).
+#
+# 0.55 was held back deliberately while the regression gate could not tell "this answer got
+# thinner because a threshold moved" from "this answer broke". CAVEAT-226 fixed that: the
+# floor now declares itself as `retrieval_floor` on the evidence record when it suppresses
+# every candidate, so the change is attributable rather than a wall of unexplained regressions.
+#
+# RE-DERIVED before shipping, because the original sweep described a system that no longer
+# exists. It was measured pre-routing, when 87% of the corpus reached the capability lane;
+# routing moved that to 57.3%, so the floor now acts on a different population. The hand
+# labels are per question and transfer unchanged; the population does not. On the 55 labelled
+# questions that STILL reach the document lane:
+#
+#   floor   off-topic kept   on-topic kept   removed off:on
+#   0.50         26/27           23/24            1.00:1
+#   0.55         14/27           19/24            2.60:1   <- better than it was (2.35:1)
+#   0.60          0/27            9/24            1.80:1
+#   0.65          0/27            1/24            1.17:1
+#
+# The routing fix took 11 on-topic and 6 off-topic questions off this lane -- proportionally
+# more CORRECT document answers than incorrect ones, because they became data answers. What
+# is left is 27 off-topic against 24 on-topic: the document lane, unfiltered, is close to a
+# coin flip, and that is the argument for the floor rather than against it.
+#
+# THE COST IS REAL AND IS NOT HIDDEN: about a quarter of answers that currently cite a
+# document become an honest "no relevant passage". Roughly 72% of what disappears was wrong,
+# so headline combined coverage falls while the answers behind it get more trustworthy. Any
+# report of the coverage number across this change must say so.
 MODEL_SCORE_FLOORS = {
-    "bge-large": 0.45,
+    "bge-large": 0.55,
     "bge-base": 0.45,
     "all-minilm": 0.50,
     "minilm": 0.50,

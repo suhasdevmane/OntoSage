@@ -112,7 +112,18 @@ async def build_schema(
     modalities: List[ModalitySpec],
 ) -> BuildingCapabilitySchema:
     """Resolve the live schema (spaces × modalities + located amenities)."""
-    auditor = CoverageAuditor(sparql_exec, modalities)
+    # BUG-255: when a room holds two sensors of the same modality, the auditor must pick the
+    # one that is actually reporting. Cached for 5 minutes and never fatal -- None means "no
+    # freshness signal" and restores the historical first-match behaviour exactly.
+    try:
+        from orchestrator.services.building_metrics import fresh_uuids as _fresh_uuids
+
+        fresh = await _fresh_uuids()
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.debug(f"[capability_schema] freshness unavailable: {exc}")
+        fresh = None
+
+    auditor = CoverageAuditor(sparql_exec, modalities, fresh_uuids=fresh)
     spaces = await auditor.audit(namespace)
     space_floor = {s.space_iri: s.floor for s in spaces}
 

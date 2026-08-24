@@ -503,8 +503,16 @@ async function loadAnswerability() {
 }
 function applyAnswerability() {
   Object.entries(dbAnswerability).forEach(([k, a]) => {
-    if (a) setStatus(`verify-${k}`, a.level || "warn", `${a.with_data}/${a.declared} answerable`);
+    if (a) setStatus(`verify-${k}`, a.level || "warn", answerabilityLabel(a));
   });
+}
+// "8/10 answerable · 3 live" — coverage and freshness in one line (CAVEAT-233). `reporting`
+// is null when the freshness probe could not run against that datasource, and an unmeasured
+// store must not be labelled "0 live": that would make a broken connection look like a
+// building whose sensors went quiet, and those need different fixes.
+function answerabilityLabel(a) {
+  const base = `${a.with_data}/${a.declared} answerable`;
+  return (a.reporting === null || a.reporting === undefined) ? base : `${base} · ${a.reporting} live`;
 }
 // Building-wide declared-vs-populated coverage on the Ontology tab: declaring sensors as
 // triples isn't enough — their datasource must actually hold the data.
@@ -515,7 +523,18 @@ function renderOntoCoverage(data) {
   if (!dec) { el.hidden = true; return; }
   const level = wd === dec ? "ok" : wd === 0 ? "bad" : "warn";
   el.hidden = false;
-  el.innerHTML = `<span class="dot ${level}"></span><b>Sensor data coverage:</b> ${wd} of ${dec} datasource-linked sensor(s) are answerable (their UUIDs have data) across ${ds} active datasource(s). Declaring a sensor as a triple isn't enough — its datasource must hold the readings; use a datasource's <b>Verify</b> to see which are missing data.`;
+  // CAVEAT-233: "answerable" means rows EXIST, which is what a historical question needs.
+  // Shown alone next to a green dot it reads as "the building is live", and it is routinely
+  // not: bldg1 had every declared sensor answerable while ~7% were still streaming. The
+  // freshness number is stated beside it, and deliberately does NOT change the dot —
+  // an archived snapshot answers historical questions correctly.
+  const rep = data?.total_reporting, win = data?.reporting_window_h || 24;
+  const fresh = (rep === null || rep === undefined)
+    ? ""
+    : (rep === 0
+        ? ` <b>None</b> of those reported in the last ${win} h — the building answers historical questions only.`
+        : ` <b>${rep}</b> of those reported in the last ${win} h${rep < wd ? "; the rest answer historical questions only." : "."}`);
+  el.innerHTML = `<span class="dot ${level}"></span><b>Sensor data coverage:</b> ${wd} of ${dec} datasource-linked sensor(s) are answerable (their UUIDs have data) across ${ds} active datasource(s).${fresh} Declaring a sensor as a triple isn't enough — its datasource must hold the readings; use a datasource's <b>Verify</b> to see which are missing data.`;
 }
 function renderDbCards() {
   const shown = dbActiveOnly ? dbCache.filter((d) => d.active) : dbCache;
@@ -575,8 +594,8 @@ async function verifyDatasource(key) {
     }
     const d = body.data || {};
     const dot = d.level === "ok" ? "ok" : d.level === "bad" ? "bad" : "warn";
-    setStatus(`verify-${key}`, dot, `${d.with_data}/${d.declared} answerable`);
-    dbAnswerability[key] = { declared: d.declared, with_data: d.with_data, level: d.level }; // persist across re-renders
+    setStatus(`verify-${key}`, dot, answerabilityLabel(d));
+    dbAnswerability[key] = { declared: d.declared, with_data: d.with_data, level: d.level, reporting: d.reporting }; // persist across re-renders
     toast(d.verdict || "checked", d.level === "ok" ? "ok" : d.level === "bad" ? "err" : "");
   } catch (e) {
     setStatus(`verify-${key}`, "bad", "error");
@@ -789,8 +808,12 @@ async function wizVerify() {
     const d = body.data || {};
     v.classList.add(d.level === "ok" ? "ok" : d.level === "bad" ? "bad" : "warn");
     v.innerHTML = `<b>${esc(d.verdict || "checked")}</b>` +
-      `<div class="hint">${d.with_data}/${d.declared} declared sensors return data.</div>`;
-    dbAnswerability[wizKey] = { declared: d.declared, with_data: d.with_data, level: d.level };
+      `<div class="hint">${d.with_data}/${d.declared} declared sensors return data` +
+      ((d.reporting === null || d.reporting === undefined)
+        ? "."
+        : `; ${d.reporting} reported in the last ${d.reporting_window_h || 24} h.`) +
+      `</div>`;
+    dbAnswerability[wizKey] = { declared: d.declared, with_data: d.with_data, level: d.level, reporting: d.reporting };
     // Only surface the restart shortcut if the hot-reload actually failed; a hot-applied
     // connection with no data is a data/UUID problem a restart won't fix.
     if (wizIsNew && !wizHotApplied && (d.with_data || 0) === 0) $("wiz-restart").hidden = false;

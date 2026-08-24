@@ -46,7 +46,12 @@ def _floor(model, override=None):
 @pytest.mark.parametrize(
     "model,expected",
     [
-        ("BAAI/bge-large-en-v1.5", 0.45),
+        # 0.55 since TODO-222: 0.45 admitted every retrieved hit (148/148 off-topic
+        # and 187/187 on-topic in the labelled set), so it filtered nothing at all;
+        # 0.50 was the free step; 0.55 removes 54% of off-topic document answers for
+        # 18% of correct ones, re-derived post-routing at 2.60:1 on the questions the
+        # floor can still reach.
+        ("BAAI/bge-large-en-v1.5", 0.55),
         ("sentence-transformers/all-MiniLM-L6-v2", 0.50),
         ("text-embedding-3-small", 0.35),
     ],
@@ -71,7 +76,10 @@ def test_the_running_model_and_its_floor_agree():
     from shared.config import settings
 
     assert "bge-large" in settings.embedding_model.lower()
-    assert settings.document_score_floor == 0.45
+    # Pinned deliberately: this number is expected to be TUNED, and a tuning that nobody
+    # noticed is how a floor ends up calibrated for a model that is not running. Changing it
+    # should require changing this line, with the measurement that justifies it.
+    assert settings.document_score_floor == 0.55
 
 
 # ── a collection built at another width is rebuilt ───────────────────────────

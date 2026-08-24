@@ -153,6 +153,10 @@ class ReportIntakeService:
             logger.info(f"[report_intake] PII redacted at write time: {_pii}")
 
         category = category if category in VALID_CATEGORIES else "other"
+        # V6-T23: resolve the space ONCE, here, against the active building's graph. Doing it
+        # at read time with an LLM would be unqueryable and would bind the same report
+        # differently on different days; an unresolvable name stays NULL rather than guessed.
+        space_iri = await self._resolve_space(f"{location or ''} {description}")
         priority = self._derive_priority(description, category)
         title = self._derive_title(description)
         report_id = self._new_report_id()
@@ -164,8 +168,8 @@ class ReportIntakeService:
                     INSERT INTO user_reports
                         (id, building_id, category, priority, status, title,
                          description, location, device, reporter_id, persona,
-                         session_id)
-                    VALUES ($1,$2,$3,$4,'OPEN',$5,$6,$7,$8,$9,$10,$11)
+                         session_id, space_iri, observed_at)
+                    VALUES ($1,$2,$3,$4,'OPEN',$5,$6,$7,$8,$9,$10,$11,$12,NOW())
                     """,
                     report_id,
                     building_id,
@@ -178,9 +182,11 @@ class ReportIntakeService:
                     reporter_id,
                     persona,
                     session_id,
+                    space_iri,
                 )
             logger.info(
-                f"[report_intake] created {report_id} category={category} "
+                f"[report_intake] created {report_id} space={space_iri or '(unbound)'} "
+                f"category={category} "
                 f"priority={priority} persona={persona} reporter={reporter_id}"
             )
             return {
@@ -341,6 +347,119 @@ class ReportIntakeService:
 
     # ── Action classification (create vs status vs list) ───────────────────────
 
+    async def _resolve_space(self, text: str) -> Optional[str]:
+        """The space IRI this report is about, or None (V6-T23).
+
+        Goes through the SAME resolver the answering pipeline uses, so "does this building
+        have a space called X" has one definition. Never raises and never guesses: a report
+        naming a space the building does not have is stored unbound, because a fabricated
+        location on a maintenance record is worse than a missing one.
+        """
+        try:
+            from orchestrator.services.evidence.spatial_facts import (
+                active_namespace,
+                default_run_select,
+                resolve_space_iri,
+            )
+            from orchestrator.services.referent_resolver import detect_referent
+
+            token = detect_referent(text or "")
+            if not token:
+                return None
+            ns = active_namespace()
+            # The bare identifier is often ambiguous: "5.16" matches Room5.16 AND Zone_5.16,
+            # and resolve_space_iri rightly refuses to pick one. The reporter usually said
+            # which they meant ("the radiator in ROOM 5.16"), so the fuller phrase is tried
+            # first and the bare token only as a fallback. Still no guessing — an ambiguous
+            # phrase resolves to nothing and the report stays unbound.
+            import re as _re
+
+            m = _re.search(
+                r"\b(room|zone|floor|level|space|lab|office)\s+" + _re.escape(token),
+                text or "",
+                _re.I,
+            )
+            for candidate in ([m.group(0)] if m else []) + [token]:
+                iri = await resolve_space_iri(candidate, ns, default_run_select)
+                if iri:
+                    return iri
+            return None
+        except Exception as exc:
+            logger.debug(f"[report_intake] space resolution skipped: {exc}")
+            return None
+
+    async def reports_for_space(
+        self, space_iri: str, building_id: str, limit: int = 20
+    ) -> List[Dict[str, Any]]:
+        """Reports bound to one space — the queryable half of V6-T23.
+
+        Human-reported evidence, labelled as such by the caller. It belongs to the INFERENCE
+        tier in the precedence contract (T21): a person saying a room is cold is real evidence
+        and is not a temperature.
+        """
+        if not self.postgres or getattr(self.postgres, "pool", None) is None or not space_iri:
+            return []
+        try:
+            async with self.postgres.pool.acquire() as conn:
+                rows = await conn.fetch(
+                    """
+                    SELECT id, category, priority, status, title, description,
+                           space_iri, observed_at, created_at
+                      FROM user_reports
+                     WHERE building_id = $1 AND space_iri = $2
+                     ORDER BY created_at DESC
+                     LIMIT $3
+                    """,
+                    building_id,
+                    space_iri,
+                    int(limit),
+                )
+            return [dict(r) for r in rows]
+        except Exception as exc:
+            logger.warning(f"[report_intake] reports_for_space failed: {exc}")
+            return []
+
+    async def link_to_work_order(self, report_id: str, work_order_id: str) -> bool:
+        """Record that a filed report became a work order (V6-T24).
+
+        Explicit, because nothing else may create this link: two tickets in one room on one
+        day are not necessarily one issue.
+        """
+        if not self.postgres or getattr(self.postgres, "pool", None) is None:
+            return False
+        try:
+            async with self.postgres.pool.acquire() as conn:
+                await conn.execute(
+                    "UPDATE user_reports SET work_order_id = $1, updated_at = NOW() "
+                    "WHERE id = $2",
+                    str(work_order_id),
+                    self._normalise_id(report_id),
+                )
+            return True
+        except Exception as exc:
+            logger.warning(f"[report_intake] link_to_work_order failed: {exc}")
+            return False
+
+    async def tickets_from_reports(self, building_id: str, limit: int = 500) -> List[Any]:
+        """Every report as a canonical Ticket, for the joined ticket view (V6-T24)."""
+        if not self.postgres or getattr(self.postgres, "pool", None) is None:
+            return []
+        from orchestrator.services.tickets import ticket_from_report
+
+        try:
+            async with self.postgres.pool.acquire() as conn:
+                rows = await conn.fetch(
+                    "SELECT id, status, title, space_iri, created_at, work_order_id "
+                    "FROM user_reports WHERE building_id = $1 "
+                    "ORDER BY created_at DESC LIMIT $2",
+                    building_id,
+                    int(limit),
+                )
+            return [ticket_from_report(dict(r)) for r in rows]
+        except Exception as exc:
+            logger.warning(f"[report_intake] tickets_from_reports failed: {exc}")
+            return []
+
     def classify_action(self, message: str) -> str:
         """Heuristic: is the user creating, checking, or listing reports?"""
         m = (message or "").lower()
@@ -498,4 +617,19 @@ def get_report_intake_service(postgres_manager=None) -> ReportIntakeService:
         _service = ReportIntakeService(postgres_manager=postgres_manager)
     elif postgres_manager is not None and _service.postgres is None:
         _service.postgres = postgres_manager
+    if _service.postgres is None:
+        # V6-T24: acquire it lazily rather than depending on call ORDER. The singleton was
+        # only ever handed a connection by the report-intake node, so any other caller — the
+        # events lane's joined ticket view, the rules engine — got a service that silently
+        # returned nothing unless somebody had happened to file a report in this process
+        # first. A read that returns [] because of initialisation order is indistinguishable
+        # from a building with no reports, which is exactly the wrong thing to be ambiguous
+        # about in a count that is supposed to reconcile.
+        try:
+            from orchestrator import main as _main
+
+            if getattr(_main, "postgres_manager", None) is not None:
+                _service.postgres = _main.postgres_manager
+        except Exception as exc:  # pragma: no cover - import cycle / not booted
+            logger.debug(f"[report_intake] lazy postgres acquisition skipped: {exc}")
     return _service

@@ -39,6 +39,10 @@ import yaml
 from orchestrator.services.feeds.base import FeedAdapter, FeedRecord, FeedSpec
 from orchestrator.services.feeds.csv_drop import CsvDropAdapter
 from orchestrator.services.feeds.rest_poll import RestPollAdapter
+from orchestrator.services.feeds.institutional import (
+    SOURCE_KINDS,
+    InstitutionalFeedAdapter,
+)
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -54,9 +58,17 @@ _YAML_SEARCH_PATHS = [
     "input/{building_id}/feeds.yaml",
 ]
 
+#: The source kinds institutional.py handles. Named here so the dispatch and the class
+#: map cannot drift apart.
+_INSTITUTIONAL_KINDS = tuple(SOURCE_KINDS)
+
+
 _ADAPTER_CLASSES = {
     "rest_poll": RestPollAdapter,
     "csv_drop": CsvDropAdapter,
+    # V6-T25 — institutional context uses ONE adapter for all three kinds; they differ
+    # only in what the source is called, not in how it is read.
+    **{k: InstitutionalFeedAdapter for k in _INSTITUTIONAL_KINDS},
 }
 
 
@@ -134,7 +146,7 @@ class FeedRegistry:
                 logger.warning(f"[feeds] unknown feed type '{spec.type}' for {spec.id}")
                 continue
 
-            if spec.type == "csv_drop":
+            if spec.type == "csv_drop" or spec.type in _INSTITUTIONAL_KINDS:
                 adapter = adapter_cls(spec, input_root=str(self._input_root))
             else:
                 adapter = adapter_cls(spec)

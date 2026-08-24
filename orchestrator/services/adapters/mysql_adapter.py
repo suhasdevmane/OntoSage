@@ -30,6 +30,13 @@ logger = get_logger(__name__)
 
 import re as _re
 
+# Identifier / value guards for the wide timeseries builder. Deliberately the SAME uuid shape
+# the narrow adapter accepts, so one store's sensor cannot be readable through one adapter and
+# rejected by the other.
+_UUID_RE = _re.compile(r"^[0-9A-Za-z][0-9A-Za-z-]{7,63}$")
+_IDENT_RE = _re.compile(r"^[A-Za-z0-9_]+$")
+_DT_RE = _re.compile(r"^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$")
+
 # SQL keywords that are forbidden for safety.
 # Word-boundary regex matches regardless of trailing whitespace/newline variant.
 _FORBIDDEN_KEYWORD_RE = _re.compile(
@@ -108,6 +115,16 @@ class MySQLAdapter(DatabaseAdapter):
                 async with conn.cursor() as cursor:
                     await cursor.execute("SELECT 1")
             logger.info("MySQLAdapter: pool ready and connection test passed")
+            # Warm the column cache here, once, so build_timeseries_query -- which is SYNC by
+            # the adapter contract and therefore cannot await it -- can validate uuid columns
+            # on its very first call. Cold, it would have to either skip validation or return
+            # nothing, and both were live failures: a uuid that is not a column aborts the
+            # whole UNION with "Unknown column", taking every OTHER sensor in the batch down
+            # with it.
+            try:
+                await self.get_columns()
+            except Exception as exc:  # pragma: no cover - warming is best-effort
+                logger.debug(f"MySQLAdapter: column cache warm skipped: {exc}")
         except Exception as e:
             logger.error(f"MySQLAdapter: pool creation / connection test failed: {e}")
             raise
@@ -265,6 +282,96 @@ class MySQLAdapter(DatabaseAdapter):
             logger.error(f"MySQLAdapter.execute_query error: {e}")
             breaker.record_failure()
             return QueryResult.failure(str(e), query=sql)
+
+    def build_timeseries_query(
+        self,
+        uuids: List[str],
+        ts_col: str,
+        start_date: Optional[str],
+        end_date: Optional[str],
+        limit: int = 1000,
+    ) -> Optional[str]:
+        """Wide-table equivalent of the narrow builder: (timestamp, uuid, value) rows.
+
+        **This method did not exist**, and its absence made the entire deliberative stack blind
+        to the wide store. ``fetch_series`` looks the builder up with ``getattr(...)``, and a
+        missing one is skipped with a log line — so diagnosis, ranking and prediction silently
+        saw ZERO readings for every sensor whose ``ref:storedAt`` points at a wide table, which
+        on a retrofitted building is typically all of the physically-installed hardware. It
+        surfaced as "I have no temperature readings for Room X over the last 24 hours" about a
+        sensor holding 581,572 current values, which is indistinguishable from an
+        uninstrumented room.
+
+        In a wide table each sensor IS a column, so one SELECT per uuid is unioned rather than
+        an ``IN`` list. That also gives per-uuid limiting for free — the property the narrow
+        builder needed a window function for, and for the same reason: a flat ``LIMIT`` across
+        a multi-sensor result returns the N newest rows COMBINED and silently drops every
+        reading for the sensors that sort later.
+
+        Columns are validated against the cached schema (warmed in ``connect``). An unvalidated
+        uuid is DROPPED rather than included, because one unknown column aborts the whole
+        statement and would take every healthy sensor in the batch with it.
+        """
+        safe = [str(u) for u in uuids if _UUID_RE.match(str(u))]
+        if not safe:
+            return None
+        known = self._columns_cache
+        if known:
+            dropped = [u for u in safe if u not in known]
+            if dropped:
+                logger.warning(
+                    f"[mysql_wide] {len(dropped)} uuid(s) are not columns of this store and "
+                    f"were dropped from the query (first: {dropped[0]}); the remaining "
+                    f"{len(safe) - len(dropped)} are queried normally"
+                )
+            safe = [u for u in safe if u in known]
+        if not safe:
+            return None
+
+        table = self._wide_table()
+        ts = ts_col if _IDENT_RE.match(str(ts_col or "")) else "datetime"
+        start = self._sanitize_dt(start_date)
+        end = self._sanitize_dt(end_date)
+        per_uuid = max(1, int(limit))
+
+        blocks = []
+        for u in safe:
+            clauses = [f"`{u}` IS NOT NULL"]
+            if start:
+                clauses.append(f"`{ts}` >= '{start}'")
+            elif not end:
+                clauses.append(f"`{ts}` >= DATE_SUB(NOW(), INTERVAL 30 DAY)")
+            if end:
+                clauses.append(f"`{ts}` <= '{end}'")
+            blocks.append(
+                f"(SELECT `{ts}` AS `timestamp`, '{u}' AS `uuid`, `{u}` AS `value` "
+                f"FROM `{table}` WHERE {' AND '.join(clauses)} "
+                f"ORDER BY `{ts}` DESC LIMIT {per_uuid})"
+            )
+        return "\nUNION ALL\n".join(blocks)
+
+    def _wide_table(self) -> str:
+        """The wide table this adapter reads. Configured value first, discovery second.
+
+        Never a building literal: the name comes from the adapter's own config or from schema
+        discovery, so a building whose wide table is called something else still works.
+        """
+        for attr in ("table", "_table", "wide_table"):
+            val = getattr(self, attr, None)
+            if val and _IDENT_RE.match(str(val)):
+                return str(val)
+        # The conventional wide-table name, used when nothing configured one. This mirrors
+        # write_records(), which has always written to the same table — one name for reads and
+        # writes rather than two that can drift.
+        return "sensor_data"
+
+    @staticmethod
+    def _sanitize_dt(value: Optional[str]) -> Optional[str]:
+        """Accept only 'YYYY-MM-DD[ HH:MM:SS]'. Anything else is dropped, never interpolated."""
+        if not value:
+            return None
+        text = str(value).strip()
+        return text if _DT_RE.match(text) else None
 
     async def write_records(self, records: List[Any]) -> int:
         """Persist feed records (uuid, timestamp, value) into wide sensor_data.

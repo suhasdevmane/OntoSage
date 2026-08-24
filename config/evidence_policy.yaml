@@ -1,0 +1,239 @@
+# OntoSage evidence policy (V6-T04)
+#
+# The thresholds every V6 gate consults: how fresh evidence must be, how complete, how far
+# two sensors may disagree, and how much of all three a claim needs before it may be made.
+#
+# WHY THIS IS A FILE AND NOT A SET OF CONSTANTS
+# The 5-minute and 90%-complete figures come from the supervisors' own stakeholder
+# catalogues, but they describe THIS estate's sampling regime. A building that archives at
+# 15-minute resolution would be permanently "stale" against a 5-minute floor, and a building
+# whose sensors report on change would be permanently "incomplete" against a fixed expected
+# count. Design contract #3 forbids building literals in code, and a threshold is a building
+# literal wearing a number.
+#
+# HOW OVERLAYS WORK
+# This file is the DEFAULT and always applies. A building may narrow or widen it with
+# input/evidence_policy.yaml, which is merged key-by-key. Absence of an overlay is normal and
+# leaves these defaults in force. An unparseable overlay logs a warning and is ignored -
+# absence must fail safe, never fail open.
+#
+# EVERY THRESHOLD CARRIES A CITATION. A number without a source is indistinguishable from a
+# number somebody tuned until the score looked better, and this project has already published
+# three figures that turned out to be artefacts rather than findings.
+
+version: 1
+
+# ── Freshness ────────────────────────────────────────────────────────────────
+# How old the newest observation may be before a "right now" answer stops being OBSERVED.
+# Per modality, because a CO2 reading goes stale in minutes while a compliance certificate
+# is current for a year.
+freshness:
+  default_max_age_minutes: 15
+  default_citation: >-
+    Master Technical Report Table 12 archives most environmental streams at 1-minute
+    resolution; a 15-minute default allows several missed transmissions before an answer
+    stops being called current.
+  by_modality:
+    co2:
+      max_age_minutes: 5
+      citation: >-
+        Stakeholder catalogues 05 (Lecturers) and 06 (Office Occupants): "live values no
+        more than 5 minutes old". CO2 responds to occupancy within minutes, so a stale
+        value actively misleads about a room's current state.
+    temperature: { max_age_minutes: 15, citation: "Master Table 12: 1-min archival; slow-moving variable." }
+    humidity:    { max_age_minutes: 15, citation: "Master Table 12: 1-min archival; slow-moving variable." }
+    occupancy:
+      max_age_minutes: 5
+      citation: >-
+        Master Table 12 records occupancy as event-driven with immediate state change;
+        anything older than a few minutes is a claim about the past, not the present.
+    noise:       { max_age_minutes: 5,  citation: "Master Table 12: 1-min LAeq statistics." }
+    illuminance: { max_age_minutes: 15, citation: "Master Table 12: 1-min archival." }
+    pm25:        { max_age_minutes: 15, citation: "Master Table 12: 1-min archival plus a smoothed display value." }
+    energy_submeter:
+      max_age_minutes: 30
+      citation: >-
+        Master Table 12 pairs 1-minute electrical records with a 15-minute energy product;
+        30 minutes admits one missed settlement period.
+    water_flow:  { max_age_minutes: 30, citation: "Master Table 12: 1-min and 15-min totals." }
+    # Authoritative records are current until superseded, not until they age.
+    booking:     { max_age_minutes: 60, citation: "Authoritative record; refreshed on change, not sampled." }
+    timetable:   { max_age_minutes: 1440, citation: "Authoritative record; published per term, changed by exception." }
+    compliance:  { max_age_minutes: 525600, citation: "Statutory records are valid for their stated period; see the register's own due dates." }
+
+# ── Completeness ─────────────────────────────────────────────────────────────
+# Share of EXPECTED samples that must actually be present before an aggregate may be stated.
+# Expected count is derived from the stream's declared cadence, never assumed.
+completeness:
+  min_window_coverage: 0.90
+  citation: >-
+    Stakeholder catalogue 05 (Lecturers and Tutors), repeated per record: "historical windows
+    at least 90% complete". Master 10.1 additionally requires explicit missingness reporting
+    in every analysis, which is why coverage is reported even when it passes.
+  # Below the floor the answer is refused; between floor and 1.0 it is stated alongside.
+  report_even_when_passing: true
+
+# ── Source agreement ─────────────────────────────────────────────────────────
+# How far two sensors that should agree may differ before the disagreement is REPORTED
+# rather than averaged. Averaging produces a value neither sensor measured.
+agreement:
+  citation: >-
+    Master Report 14.1 acceptance scenario 4: "create conflicting sensors -> answer reports
+    the disagreement rather than averaging it away". Tolerances are typical field accuracies,
+    widened so that ordinary instrument spread does not read as a fault.
+  by_modality:
+    temperature:     { max_delta: 1.5,  unit: "degC" }
+    humidity:        { max_delta: 10.0, unit: "%RH" }
+    co2:             { max_delta: 150.0, unit: "ppm" }
+    illuminance:     { max_delta: 100.0, unit: "lux" }
+    noise:           { max_delta: 6.0,  unit: "dB" }
+    pm25:            { max_delta: 15.0, unit: "ug/m3" }
+
+# ── Spatial adequacy ─────────────────────────────────────────────────────────
+# Which grades of evidence each answer scope may rest on (rule R-4, Master 8).
+# A proxy may be reported as CONTEXT but may never carry a room-level claim.
+spatial_adequacy:
+  citation: >-
+    Master Report 8 (non-substitution) and Stakeholder catalogue 05: "a room-level answer
+    requires a correctly located sensor inside the room or a validated served zone; corridor
+    and adjacent-room data may be labelled context but cannot be silently substituted."
+  space_scope_allows: [in_room, served_zone]
+  floor_scope_allows: [in_room, served_zone, proxy]
+  building_scope_allows: [in_room, served_zone, proxy]
+  # A proxy is never silently used; when it is all there is, it is named and the room-level
+  # judgement is declined.
+  proxy_requires_labelling: true
+
+# ── Consequence classes ──────────────────────────────────────────────────────
+# The evidence threshold rises with the cost of being wrong (Master 1.1). Classes attach to
+# question SHAPES, which are building-independent; a building overlay may raise a class but
+# never lower a safety one.
+consequence:
+  citation: >-
+    Master Report 1.1: "reporting a temperature is lower-risk than declaring a workplace
+    safe, diagnosing a mechanical failure, or claiming regulatory compliance; higher-
+    consequence questions trigger stronger requirements for calibration, coverage, source
+    authority, review and explanation."
+  classes:
+    informational:
+      description: "A reading or a lookup. Being wrong is inconvenient."
+      requires_calibration: false
+      min_completeness: 0.90
+    operational:
+      description: "Drives an action - a booking, a maintenance call, a route."
+      requires_calibration: false
+      min_completeness: 0.95
+      requires_authoritative_source: true
+    safety_or_compliance:
+      description: >-
+        A claim about safety, health, or conformance with a standard. Being wrong carries
+        the authority of the standard with none of its rigour.
+      requires_calibration: true
+      min_completeness: 0.95
+      requires_authoritative_source: true
+      # No standards verdict may rest on a sensor whose calibration state is unknown.
+      forbid_unknown_calibration: true
+  # Shapes not listed default to `informational`, which is the permissive end -- so a NEW
+  # question shape can never silently acquire a safety threshold it was not designed for,
+  # and equally never silently bypass one. Add safety shapes explicitly.
+  by_shape:
+    # KEYED ON THE ROUTER'S OWN INTENT NAMES. The first version of this map used invented
+    # shape names -- compliance_verdict, standards_check, control_command, booking_query --
+    # none of which the router emits, so EVERY question resolved to `informational` and the
+    # whole consequence-scaling mechanism was inert: no claim ever required calibration or an
+    # authoritative source. Verified against orchestrator/intents/intent_definitions.yaml;
+    # the descriptive aliases are kept below so a caller passing either form still resolves.
+    compliance: safety_or_compliance
+    safety_report: safety_or_compliance
+    control: safety_or_compliance
+    diagnosis: safety_or_compliance
+    alert: safety_or_compliance
+    anomaly: operational
+    recommend: operational
+    deliberate: operational
+    planner: operational
+    events: operational
+    lab_booking: operational
+    maintenance: operational
+    spatial_query: operational
+    floor_plan: operational
+    sensor_data: informational
+    analytics: informational
+    trend: informational
+    compare: informational
+    metadata: informational
+    discovery: informational
+    capability: informational
+    report: informational
+    export: informational
+    # ── descriptive aliases, for callers that pass a shape rather than an intent ──
+    compliance_verdict: safety_or_compliance
+    standards_check: safety_or_compliance
+    control_command: safety_or_compliance
+    accessibility_route: safety_or_compliance
+    booking_query: operational
+    wayfinding: operational
+
+# ── Gate enforcement mode (V6-T55) ───────────────────────────────────────────
+# Each gate runs `advisory` first: it records the verdict it WOULD reach without changing
+# any answer, so the blast radius is measurable BEFORE it is felt. Flip to `enforcing` only
+# after reviewing that gate's impact report.
+#
+# Everything starts advisory ON PURPOSE. A gate that arrives enforcing changes answers on the
+# commit that introduces it, and the change is then entangled with every other change in the
+# same run -- which is exactly what makes a regression indistinguishable from a tightening.
+gates:
+  # V6-T21/T22 — advisory first, as every V6 gate is (D-9). The permission guard in
+  # particular is a candidate for early enforcement: an entitlement claim from a sensor is a
+  # harm, not a hedge. That decision belongs to the impact report, not to this default.
+  source_precedence: { mode: advisory }
+  permission: { mode: advisory }
+  freshness:         { mode: advisory }
+  completeness:      { mode: advisory }
+  agreement:         { mode: advisory }
+  spatial_adequacy:  { mode: advisory }
+  calibration:       { mode: advisory }
+  consequence:       { mode: advisory }
+  # Whether an unlicensed causal claim is REWRITTEN or merely recorded. Advisory while the
+  # rewrite's blast radius is measured against the golden baseline -- a guard that rewords
+  # answers is the one most likely to damage a good answer while fixing a bad one.
+  causal_claim:      { mode: advisory }
+
+# ── Source precedence (V6-T21, rule R-7) ─────────────────────────────────────
+# "Bookings, access, timetables and alarms come from authorised systems, never from
+# environmental inference" — PhD, RS and AO catalogues. A lower tier never overrides a
+# higher one, and a disagreement between them is REPORTED rather than resolved: a booking
+# that says occupied over a room that is empty is a no-show, and that is worth knowing.
+#
+# Keyed by SOURCE KIND, not by building — every building has systems of record and sensors,
+# and which is which is a property of the source, not of the estate.
+source_precedence:
+  citation: >-
+    Rule R-7 (PhD 4.2, RS 6.1, AO 3.3): authoritative systems of record outrank derived
+    measurement, which outranks inference. Applies to availability, access, timetabling
+    and alarm claims.
+  by_kind:
+    authoritative:  authoritative
+    register:       authoritative
+    booking:        authoritative
+    timetable:      authoritative
+    access_control: authoritative
+    alarm:          authoritative
+    document:       authoritative   # a policy document IS the record for a policy
+    sensor:         measurement
+    human_report:   inference
+
+# ── Entitlement claims (V6-T22, rule R-8) ────────────────────────────────────
+# The four inference chains the PhD catalogue lists: empty is not available, open is not
+# accessible, quiet is not private, presence is not permission. Declared here so the
+# consequence of each is reviewable, though the chains themselves are properties of the
+# claim type and live in permission_guard.py.
+entitlement:
+  citation: >-
+    Rule R-8 (PhD 4.3): never infer entitlement from physical state. Each chain is a
+    real-world harm, not a style preference.
+  requires_authoritative:
+    - availability
+    - access
+    - privacy
+    - permission

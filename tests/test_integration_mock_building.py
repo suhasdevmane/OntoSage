@@ -55,11 +55,21 @@ class TestDialogueIntentDetection:
 
     INTENT_SCENARIOS = [
         ("what is the current temperature in zone 1?", "analytics"),
-        ("list all CO2 sensors on floor 2", "metadata"),
+        # Same story as the anomaly case below: routing rule inventory_to_discovery sends
+        # "list/what/which X does this building have" to the single census handler, after
+        # countable_metadata so COUNT questions keep their own route. The expectation here
+        # predated that rule.
+        ("list all CO2 sensors on floor 2", "discovery"),
         ("hello, how are you?", "general"),
         ("generate a weekly report", "report"),
         ("export the sensor data as CSV", "export"),
-        ("check for any anomaly in humidity sensors", "anomaly"),
+        # The routing contract deliberately sends anomaly QUESTIONS to the events lane
+        # (rule anomaly_history_to_events, V5-T21): the events store holds durable episodes
+        # with stable IDs, and a fresh z-score pass over one fetch cannot see stuck/dropout/
+        # drift history. This expectation predated that rule and was asserting the old
+        # behaviour -- it only stayed green because the test needs the container network and
+        # is deselected from the unit set.
+        ("check for any anomaly in humidity sensors", "events"),
         ("compare zones 1 and 2 temperatures", "compare"),
         ("what sensors do you have?", "discovery"),
     ]

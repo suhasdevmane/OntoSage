@@ -165,14 +165,38 @@ class AgentMemoryService:
             collections = await self._client.get_collections()
             names = [c.name for c in collections.collections]
 
-            # If collection exists with wrong dimensions, recreate it
+            # A dimension mismatch means EMBEDDING_PROVIDER changed under a populated
+            # collection. This used to delete it behind a single logger.warning, and this is
+            # the one collection with NO on-disk source: floor_plans rebuild from PDF/DWG,
+            # capability_<bldg> from the TTL, documents_<bldg> from input/documents/ -- but
+            # every user memory exists only here. One provider flip destroyed all of it,
+            # silently, and the loss was unrecoverable by construction (CAVEAT-015).
+            #
+            # Deleting an empty collection is harmless, so that path is unchanged. Deleting a
+            # populated one now requires a snapshot to have succeeded first, and if the
+            # snapshot cannot be taken the service degrades to unavailable rather than
+            # destroying the data. Memory that is temporarily unreachable is a far smaller
+            # failure than memory that is gone.
             if COLLECTION_NAME in names:
                 info = await self._client.get_collection(COLLECTION_NAME)
                 existing_size = info.config.params.vectors.size
                 if existing_size != embed_dim:
+                    stored = getattr(info, "points_count", None) or 0
+                    if stored and not await self._snapshot_before_drop(stored, existing_size):
+                        logger.error(
+                            f"Agent memory DISABLED rather than destroyed: collection "
+                            f"'{COLLECTION_NAME}' holds {stored} point(s) at dim "
+                            f"{existing_size}, the active embedder produces {embed_dim}, and "
+                            f"a snapshot could not be taken. Nothing has been deleted. "
+                            f"Either restore the previous EMBEDDING_PROVIDER, or snapshot "
+                            f"and drop '{COLLECTION_NAME}' deliberately to re-enable memory."
+                        )
+                        self._ready = False
+                        return
                     logger.warning(
                         f"Collection '{COLLECTION_NAME}' has dim {existing_size}, "
                         f"expected {embed_dim} — recreating"
+                        + (f" ({stored} point(s) snapshotted first)" if stored else " (empty)")
                     )
                     await self._client.delete_collection(COLLECTION_NAME)
                     names = [n for n in names if n != COLLECTION_NAME]
@@ -191,6 +215,26 @@ class AgentMemoryService:
         except Exception as e:
             logger.warning(f"Qdrant connection failed — fallback mode: {e}")
             self._ready = False
+
+    async def _snapshot_before_drop(self, stored: int, existing_size: int) -> bool:
+        """Preserve a populated collection before it is dropped. True only if it is safe.
+
+        Returns False on ANY failure, including "this Qdrant build has no snapshot API".
+        That is the whole point: the caller treats False as "do not delete", so an
+        unavailable snapshot mechanism costs availability rather than data.
+        """
+        try:
+            snap = await self._client.create_snapshot(collection_name=COLLECTION_NAME)
+            name = getattr(snap, "name", None) or str(snap)
+            logger.warning(
+                f"Snapshotted {stored} agent-memory point(s) at dim {existing_size} to "
+                f"Qdrant snapshot '{name}' before recreating '{COLLECTION_NAME}'. "
+                f"Restore with the Qdrant snapshot API if the change was unintended."
+            )
+            return True
+        except Exception as exc:
+            logger.error(f"Could not snapshot '{COLLECTION_NAME}' before drop: {exc}")
+            return False
 
     # ─────────────────────────────────────────────────────────────────────────
     # Store

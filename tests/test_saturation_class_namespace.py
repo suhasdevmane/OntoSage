@@ -37,6 +37,36 @@ VERIFIED_BRICK_CLASSES = {
     "Electrical_Meter",
     "Water_Meter",
     "Availability_Status",
+    # V6-T44. Both confirmed present as owl:Class declarations in the shipped
+    # input/Brick+extensions.ttl before being added here -- this set is an assertion that
+    # someone LOOKED, so adding a name to silence the failure without checking would defeat
+    # the only thing it does. Note the absence of a cold-water entry: Brick 1.4 has no class
+    # for domestic cold water flow, so the generic Water_Meter stays generic rather than
+    # being asserted to measure something it may not.
+    "Hot_Water_Meter",
+    "Chilled_Water_Meter",
+    # V6-T26 plant / BMS state (Master Package D). Each confirmed as an `owl:Class`
+    # declaration in the shipped input/Brick+extensions.ttl AND queried live against the
+    # loaded TBox before being added -- this set is an assertion that someone LOOKED, so
+    # adding a name to silence the failure would defeat the only thing it does.
+    "Supply_Air_Temperature_Sensor",
+    "Return_Air_Temperature_Sensor",
+    "Fan_Status",
+    "Damper_Position_Sensor",
+    "Filter_Differential_Pressure_Sensor",
+    "Air_Flow_Sensor",
+    # V6 sensor-linking modalities. Each grepped out of input/Brick+extensions.ttl as an
+    # owl:Class declaration before being added, same as the two above.
+    "Electric_Power_Sensor",
+    "Motion_Sensor",
+    "Occupancy_Status",
+    "Position_Sensor",
+    "Water_Level_Sensor",
+    "Water_Usage_Sensor",
+    "Solar_Irradiance_Sensor",
+    "Duration_Sensor",
+    "Air_Quality_Sensor",
+    "Lighting_Correlated_Color_Temperature_Sensor",
 }
 
 
@@ -116,7 +146,7 @@ def test_scope_uses_the_vocabulary_the_auditor_actually_checks():
     """
     for name, spec in _modalities().items():
         scope = str((spec.get("sat") or {}).get("scope", "room")).lower()
-        assert scope in ("room", "floor", "building"), (
+        assert scope in ("room", "floor", "building", "equipment"), (
             f"modality '{name}' declares scope '{scope}'; the auditor only understands "
-            "room / floor / building, and treats anything else as non-room"
+            "room / floor / building / equipment, and treats anything else as non-room"
         )

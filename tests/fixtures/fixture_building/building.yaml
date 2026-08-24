@@ -1,0 +1,27 @@
+# Fixture building for V6 unit tests (V6-T64).
+#
+# Deliberately UNLIKE every real building this system serves. V6 is developed entirely
+# against bldg1, so a test written against bldg1's data passes for bldg1-shaped reasons and
+# the assumption stays invisible until somebody swaps buildings weeks later. Every property
+# below is chosen to break a plausible assumption:
+#
+#   * namespace is not a cardiff.ac.uk / buildsys.org URL, and has no "#" terminator
+#   * room ids are NOT dotted ("W-A1", not "2.15") - the dotted pattern is bldg1's
+#   * TWO floors, and they are named, not numbered 0..5
+#   * NO floor plans at all - no DWG, no PDF, so geometry/spatial/wayfinding must decline
+#   * one modality declared with NO data whatsoever, so the empty path is always exercised
+#   * no personas, no feeds, no rules, no channels - every optional file absent
+#
+# A test that passes here cannot be relying on any of those.
+building_id: fixture
+building_name: Fixture Test Building
+ontology_namespace: "http://example.invalid/fixture/"
+ontology_prefix: fix
+timezone: "UTC"
+
+provenance:
+  nature: synthetic
+  note: "Test fixture. Never a real building; never used for any published figure."
+
+storage:
+  graphdb_repository: fixture

@@ -502,3 +502,175 @@ def cross_modality_inconsistency(
             },
         )
     ]
+
+
+# -- 8. minimum-flow persistence (slow leaks) --------------------------------
+
+
+#: Modalities whose night minimum is meaningful. A flow meter should read its idle value when
+#: the building is empty; a temperature sensor should not, so running this on one would flag
+#: every heated building overnight.
+FLOW_MODALITIES = ("water_flow", "water_flow_hot", "water_flow_chilled")
+
+
+def minimum_flow_persistence(
+    series: Sequence[Tuple[object, object]],
+    subject_uuid: str,
+    modality: str = "",
+    night_start_hour: int = 1,
+    night_end_hour: int = 5,
+    min_nights: int = 3,
+    noise_multiple: float = 3.0,
+    relative_floor: float = 0.005,
+    meters_on_this_stream: int = 1,
+) -> List[AnomalyFinding]:
+    """A flow that never returns to idle overnight, for several nights running (V6-T44).
+
+    The standard slow-leak test, and the one the existing checks cannot perform. A 0.3 L/min
+    leak on a main whose daytime median is 12 L/min is 2.5% of normal flow: it sits far below
+    any sensible daytime threshold, and ``schedule_violation``'s 0.5x-in-hours-median rule
+    would need the leak to reach 6 L/min before noticing. The leak is invisible by magnitude
+    and obvious by PERSISTENCE, which is what this measures instead.
+
+    Two things separate a leak from legitimate low flow, and both are required:
+
+    * the night minimum sits above the meter's OWN idle level -- not above a fixed number, so
+      a building with a genuine continuous draw has a high idle level and is not flagged for
+      having one;
+    * it does so on ``min_nights`` CONSECUTIVE nights. One night of late working is not a
+      leak, and a rule without persistence cannot tell the two apart -- which is precisely
+      why the previous single-reading check was useless.
+
+    The floor above idle is the larger of the meter's own overnight noise (``noise_multiple``
+    x median absolute deviation of the night minima) and a small fraction of its daytime
+    median (``relative_floor``). Both are derived from this meter's history, so nothing here
+    is building-specific: a 2 L/min trickle meter and a 200 L/min main each get their own.
+
+    ``meters_on_this_stream`` is recorded, not used. A single-metered building can detect that
+    it is leaking and cannot say WHERE, and an answer that quietly omits that limitation
+    invites someone to go looking in the wrong place.
+    """
+    samples = _clean(series)
+    if len(samples) < 24:
+        return []
+
+    nights = _night_minima(samples, night_start_hour, night_end_hour)
+    if len(nights) < min_nights + 1:
+        # Needs at least one night beyond the run being tested, or "every night observed is
+        # above idle" is trivially true and every new meter reads as leaking on day one.
+        return []
+
+    minima = [v for _, v in nights]
+    idle = min(minima)
+    day_median = _daytime_median(samples, night_start_hour, night_end_hour)
+    noise = _mad(minima)
+    floor = idle + max(noise_multiple * noise, relative_floor * day_median)
+    if floor <= idle:
+        return []  # a perfectly flat meter gives no room to distinguish anything
+
+    run = _trailing_run_above(nights, floor)
+    if len(run) < min_nights:
+        return []
+
+    lowest_in_run = min(v for _, v in run)
+    excess = lowest_in_run - idle
+    margin = max(floor - idle, 1e-9)
+    start = _night_start(run[0][0], night_start_hour)
+    end = _night_start(run[-1][0], night_start_hour) + timedelta(hours=night_end_hour + 24)
+
+    return [
+        AnomalyFinding(
+            detector="minimum_flow_persistence",
+            subject_uuid=subject_uuid,
+            modality=modality,
+            start=start,
+            end=end,
+            score=round(excess / margin, 3),
+            baseline=round(idle, 4),
+            evidence={
+                "consecutive_nights": len(run),
+                "night_window": f"{night_start_hour:02d}-{night_end_hour:02d}",
+                "idle_level": round(idle, 4),
+                "floor_above_idle": round(floor, 4),
+                "lowest_night_minimum_in_run": round(lowest_in_run, 4),
+                "persistent_excess": round(excess, 4),
+                "daytime_median": round(day_median, 4),
+                "nightly_minima": [(n, round(v, 4)) for n, v in nights[-8:]],
+                # Reported so an answer can state the limit rather than implying a location.
+                "meters_on_this_stream": meters_on_this_stream,
+                "localisable": meters_on_this_stream > 1,
+            },
+        )
+    ]
+
+
+def _night_start(night_key: str, night_start_hour: int) -> datetime:
+    d = datetime.fromisoformat(night_key)
+    return d.replace(hour=night_start_hour, minute=0, second=0, microsecond=0)
+
+
+def _night_minima(
+    samples: List[Sample], night_start_hour: int, night_end_hour: int
+) -> List[Tuple[str, float]]:
+    """Minimum per night, keyed by the date the night STARTED.
+
+    Bucketing by calendar date would split a window that crosses midnight into two half
+    nights and halve the apparent minimum of each -- turning a steady leak into two shallower
+    ones and defeating the persistence count.
+    """
+    wraps = night_start_hour > night_end_hour
+    per_night: Dict[str, float] = {}
+    for t, v in samples:
+        inside = (
+            (t.hour >= night_start_hour or t.hour < night_end_hour)
+            if wraps
+            else (night_start_hour <= t.hour < night_end_hour)
+        )
+        if not inside:
+            continue
+        key = t.date()
+        if wraps and t.hour < night_start_hour:
+            key = (t - timedelta(days=1)).date()
+        k = key.isoformat()
+        per_night[k] = min(per_night.get(k, v), v)
+    return sorted(per_night.items())
+
+
+def _daytime_median(samples: List[Sample], night_start_hour: int, night_end_hour: int) -> float:
+    wraps = night_start_hour > night_end_hour
+    day = [
+        v
+        for t, v in samples
+        if not (
+            (t.hour >= night_start_hour or t.hour < night_end_hour)
+            if wraps
+            else (night_start_hour <= t.hour < night_end_hour)
+        )
+    ]
+    return statistics.median(day) if day else 0.0
+
+
+def _mad(values: Sequence[float]) -> float:
+    """Median absolute deviation -- robust, so one leaking night does not inflate the noise
+    estimate that is supposed to detect it."""
+    if len(values) < 2:
+        return 0.0
+    med = statistics.median(values)
+    return statistics.median([abs(v - med) for v in values])
+
+
+def _trailing_run_above(
+    nights: Sequence[Tuple[str, float]], floor: float
+) -> List[Tuple[str, float]]:
+    """The unbroken run of most-recent nights whose minimum exceeds `floor`.
+
+    Trailing rather than longest-anywhere: a leak that was fixed last month is history, and
+    reporting it as current would send someone to look for water that is no longer running.
+    """
+    run: List[Tuple[str, float]] = []
+    for night in reversed(nights):
+        if night[1] > floor:
+            run.append(night)
+        else:
+            break
+    return list(reversed(run))
