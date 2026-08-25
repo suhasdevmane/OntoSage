@@ -106,7 +106,35 @@ def detect_absence_claim(text: str) -> Optional[str]:
     return None
 
 
-def _count_query(class_locals: Tuple[str, ...], namespace: str) -> str:
+def _label_clause(contains: Tuple[str, ...], excludes: Tuple[str, ...]) -> str:
+    """SPARQL restricting the count to the modality's own population.
+
+    Matches on the IRI and the label TOGETHER, the same text the coverage audit
+    matches on — a discriminator written in either vocabulary has to work, and one
+    written against the form the matcher never sees is a rule that silently does
+    nothing.
+    """
+    if not contains and not excludes:
+        return ""
+    clause = (
+        "  OPTIONAL { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?l }\n"
+        '  BIND(LCASE(CONCAT(STR(?s), " ", COALESCE(STR(?l), ""))) AS ?text)\n'
+    )
+    if contains:
+        ors = " || ".join(f'CONTAINS(?text, "{t.lower()}")' for t in contains)
+        clause += f"  FILTER({ors})\n"
+    if excludes:
+        ors = " || ".join(f'CONTAINS(?text, "{t.lower()}")' for t in excludes)
+        clause += f"  FILTER(!({ors}))\n"
+    return clause
+
+
+def _count_query(
+    class_locals: Tuple[str, ...],
+    namespace: str,
+    contains: Tuple[str, ...] = (),
+    excludes: Tuple[str, ...] = (),
+) -> str:
     """COUNT instances of any of these classes, matched on the class LOCAL NAME."""
     values = " ".join(f'"{c}"' for c in class_locals)
     return (
@@ -115,8 +143,7 @@ def _count_query(class_locals: Tuple[str, ...], namespace: str) -> str:
         f"  VALUES ?local {{ {values} }}\n"
         '  FILTER(STRENDS(STR(?cls), CONCAT("#", ?local)) || '
         'STRENDS(STR(?cls), CONCAT("/", ?local)))\n'
-        f'  FILTER(STRSTARTS(STR(?s), "{namespace}"))\n'
-        "}"
+        f'  FILTER(STRSTARTS(STR(?s), "{namespace}"))\n' + _label_clause(contains, excludes) + "}"
     )
 
 
@@ -134,8 +161,11 @@ async def count_sensors(
     classes = modality_classes(modality, building_id)
     if not classes:
         return None
+    from orchestrator.services.modality_repair import modality_label_filters
+
+    contains, excludes = modality_label_filters(modality, building_id)
     try:
-        res = await sparql_exec(_count_query(classes, namespace))
+        res = await sparql_exec(_count_query(classes, namespace, contains, excludes))
         bindings = (res or {}).get("results", {}).get("bindings", [])
         if not bindings:
             return None

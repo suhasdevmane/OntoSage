@@ -139,8 +139,68 @@ _SPACE_HEADS = (
     "stairwell",
     "foyer",
 )
+#: Words that can PRECEDE a space head without being part of its name. The
+#: modifier group below accepted ANY word, so a quantifier or a deictic was
+#: swallowed into the referent and the gate then refused a question about a
+#: referent nobody had named: "how many parking bays are free?" produced the
+#: space "many parking" and answered "I couldn't find many parking in this
+#: building's model" -- a truthful sentence about a fabricated subject, which
+#: is the exact failure this gate exists to prevent, committed by the gate
+#: itself (measured live 2026-08-25). Function words only: a real modifier
+#: like "main" in "main corridor" must still be kept.
+_NON_MODIFIERS = frozenset(
+    {
+        "many",
+        "much",
+        "there",
+        "any",
+        "some",
+        "every",
+        "each",
+        "which",
+        "what",
+        "this",
+        "that",
+        "these",
+        "those",
+        "more",
+        "less",
+        "fewer",
+        "most",
+        "all",
+        "both",
+        "few",
+        "several",
+        "another",
+        "other",
+        "such",
+        "here",
+        "and",
+        "but",
+        "for",
+        "with",
+        "from",
+        "into",
+        "onto",
+        "about",
+        "have",
+        "has",
+        "are",
+        "was",
+        "were",
+        "does",
+        "did",
+        "the",
+        "its",
+        "our",
+        "their",
+        "your",
+    }
+)
 _SPACE_RE = re.compile(
-    r"\b(?:the\s+)?([a-z][a-z-]{2,19})\s+(" + "|".join(_SPACE_HEADS) + r")\b", re.IGNORECASE
+    r"\b(?:the\s+)?(?!(?:" + "|".join(sorted(_NON_MODIFIERS)) + r")\b)"
+    r"([a-z][a-z-]{2,19})\s+(" + "|".join(_SPACE_HEADS) + r")\b",
+    re.IGNORECASE,
 )
 # The same heads standing alone behind a determiner: "in the gym", "on the rooftop".
 # Without this a bare space noun was invisible to the gate, so "how many sensors are

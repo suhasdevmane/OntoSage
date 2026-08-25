@@ -121,6 +121,20 @@ modalities:
       - PM2.5_Level_Sensor
       - PM2.5_Sensor
       - Particulate_Matter_Sensor
+    # Particulate_Matter_Sensor is the PARENT of PM1, PM2.5 and PM10, and on this
+    # building the TVOC sensors carry it too (a source-TTL defect: a volatile
+    # organic compound is not particulate matter). Four different quantities, one
+    # class, so class alone cannot say which one a sensor measures -- and without
+    # this list the audit picked whichever candidate came back first. Measured
+    # live 2026-08-25: the pm25 sensor chosen for room 5.01 was
+    # PM10_Level_Sensor_Atmospheric_5.01, i.e. a PM10 reading answering a PM2.5
+    # question, against a different exposure limit. Excluding the siblings leaves
+    # the 35 genuine PM2.5 sensors; PM1/PM10/TVOC stay in the graph and stay
+    # queryable under their OWN classes, they simply stop impersonating this one.
+    label_excludes:
+      - pm10
+      - pm1_
+      - tvoc
     sat:
       brick_class: PM2.5_Level_Sensor
       table: pm25_data

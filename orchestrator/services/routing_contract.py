@@ -1442,3 +1442,82 @@ def apply_contract(
     # path that skipped the parse stage (CAVEAT: the JSON-parse fallback did)
     normalized.setdefault("routing_stages_run", []).append(stage)
     return applied
+
+
+# ── Metered-quantity questions (V6, 2026-08-25) ─────────────────────────────
+#: Modality-name tokens that carry no subject on their own. "parking_free" must
+#: contribute "parking", never "free" — otherwise "how many rooms are free?"
+#: becomes a parking question. Kept deliberately small: the discriminating word
+#: is almost always the modality's own noun.
+_MODALITY_STOPWORDS = frozenset(
+    {
+        "free",
+        "state",
+        "status",
+        "level",
+        "flow",
+        "contact",
+        "hours",
+        "count",
+        "data",
+        "usage",
+        "chilled",
+        "submeter",
+    }
+)
+
+_METERED_VOCAB_CACHE: Dict[str, frozenset] = {}
+
+
+def metered_vocabulary(building_id: Optional[str] = None) -> frozenset:
+    """Lay terms for the quantities THIS building actually meters.
+
+    Read from the modality config, which is the declared source of truth for what a
+    building measures ("the modality set is CONFIG, NOT CODE"). Deriving the routing
+    vocabulary from it means adding a modality makes its questions routable with no
+    code change, and every other building inherits the behaviour without a second list
+    to keep in sync — the alternative being another hand-maintained phrase table that
+    is wrong for every building except the one it was written on.
+    """
+    key = str(building_id or "")
+    if key in _METERED_VOCAB_CACHE:
+        return _METERED_VOCAB_CACHE[key]
+    terms: set = set()
+    try:
+        from orchestrator.services.deliberation.coverage_audit import load_modalities
+
+        for spec in load_modalities(building_id):
+            terms.update(t.lower() for t in (spec.label_contains or []) if len(t) >= 4)
+            for token in str(spec.name).lower().split("_"):
+                if len(token) >= 4 and token not in _MODALITY_STOPWORDS:
+                    terms.add(token)
+    except Exception as exc:  # a building with no config must still route
+        logger.debug(f"[routing_contract] metered vocabulary unavailable: {exc}")
+    vocab = frozenset(terms)
+    _METERED_VOCAB_CACHE[key] = vocab
+    return vocab
+
+
+def metered_quantity_question(query: str, building_id: Optional[str] = None) -> bool:
+    """True when the query asks HOW MANY/MUCH of something this building meters.
+
+    The gap this closes: ``is_data_query`` recognised a data question by sensor id,
+    room id or a fixed phrase list, so any metered quantity outside that list was
+    invisible to it. Measured live 2026-08-25 — "how many parking bays are free right
+    now?" was not a data query, so it never reached the classifier, and the capability
+    lane answered it with the building's CATERING amenities while a parking sensor sat
+    in the graph with 5,090 rows behind it.
+
+    Deliberately narrow. The quantity shape is REQUIRED, so the modality noun alone
+    never claims a question: "where is the car park?" stays wayfinding and "is there
+    parking?" stays an amenity question. Only "how many/much" plus a metered noun —
+    which no other lane can answer with a number — is taken.
+    """
+    if not query or not query.strip():
+        return False
+    from orchestrator.services.grounding_guard import _ASKS_QUANTITY_RE
+
+    if not _ASKS_QUANTITY_RE.search(query):
+        return False
+    words = set(re.findall(r"[a-z]+", query.lower()))
+    return bool(words & metered_vocabulary(building_id))
