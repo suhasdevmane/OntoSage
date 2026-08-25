@@ -48,7 +48,11 @@ import yaml  # noqa: E402
 GRAPHDB = "http://localhost:7200/repositories/bldg"
 ONTOSAGE_NS = "http://ontosage.org/capabilities#"
 
-FAMILIES = ("hours", "closures", "status", "accessibility", "schedules", "timetable")
+#: Advertised families. MUST stay in step with GENERATORS below — this listed
+#: "closures" and "timetable", neither of which has a generator, so the constant
+#: documented capability the script does not have. A pinned test now compares the
+#: two, because a list that can drift from the code it describes will.
+FAMILIES = ("hours", "status", "accessibility", "schedules")
 
 
 def _env(key: str, default: str = "") -> str:
@@ -369,10 +373,20 @@ def main(argv: List[str]) -> int:
     out_dir = REPO / args.out
     rnd = random.Random(args.seed)
     written: List[Tuple[str, int]] = []
-    for fam in [f.strip() for f in args.families.split(",") if f.strip()]:
-        if fam not in GENERATORS:
-            print(f"  unknown family '{fam}' (known: {', '.join(GENERATORS)})")
-            continue
+    requested = [f.strip() for f in args.families.split(",") if f.strip()]
+    unknown = [f for f in requested if f not in GENERATORS]
+    if unknown:
+        # REFUSE, do not skip. This printed a note and carried on to exit 0, so
+        # asking for a family with no generator — `timetable` and `closures` are
+        # both named in FAMILIES and implemented by neither — provisioned nothing
+        # and reported success. A caller scripting this would see a green exit and
+        # a building that gained no data.
+        print(
+            f"  ERROR: no generator for {', '.join(unknown)} "
+            f"(available: {', '.join(sorted(GENERATORS))})"
+        )
+        return 2
+    for fam in requested:
         suffix, fn = GENERATORS[fam]
         text = fn(d, rnd)
         path = out_dir / f"{building_id}{suffix}"
