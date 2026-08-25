@@ -1,0 +1,182 @@
+# Pathology catalogue — the defects real estate data has (V6-T61).
+#
+# Synthetic data generated cleanly is the wrong test set. Every gate this project built exists
+# because REAL buildings produce gaps, stale streams, disagreeing pairs, uncalibrated points and
+# relocated sensors — and a fixture with none of those cannot tell a working gate from a gate
+# that never fires.
+#
+# Each entry declares:
+#   gate      the V6 gate this defect must TRIGGER
+#   defect    the shape to inject, and the parameters that make it trigger
+#   near_miss the SAME shape, just inside the threshold, which must NOT trigger
+#
+# The near-miss is the half that gives the catalogue its value. A gate that fires on its defect
+# proves recall; only a gate that stays silent on the near-miss proves precision, and a gate
+# with no precision is one people learn to ignore. Every entry here must have both.
+#
+# Rates are per-family injection proportions for the live provisioners. The unit assertions do
+# not use them — they build one clean case and one defective case per entry — but the grader
+# scoring a whole building does, and the ground-truth manifest is what makes that scoring
+# possible at all.
+
+version: 1
+
+defects:
+
+  # ── freshness ───────────────────────────────────────────────────────────────
+  stale_stream:
+    gate: freshness
+    description: >-
+      A stream that stopped writing while its neighbours kept going. CAVEAT-207 was exactly
+      this: every "right now" answer silently came from days-old data and nothing said so.
+    rate: 0.06
+    defect:
+      kind: age_minutes
+      value: 2880          # two days old
+    near_miss:
+      kind: age_minutes
+      value: 5             # recent enough to answer about now
+
+  no_observation:
+    gate: freshness
+    description: A point that is connected and has never produced a row.
+    rate: 0.02
+    defect:
+      kind: latest_observation
+      value: null
+    near_miss:
+      kind: age_minutes
+      value: 1
+
+  # ── completeness ────────────────────────────────────────────────────────────
+  window_gap:
+    gate: completeness
+    description: >-
+      Hours missing from the middle of a window. A mean over half a window is a different claim
+      from a mean over the window, and the difference has to survive into the answer.
+    rate: 0.08
+    defect:
+      kind: coverage
+      value: 0.35
+    near_miss:
+      kind: coverage
+      value: 0.97
+
+  undeclared_cadence:
+    gate: completeness
+    description: >-
+      A stream with no declared archival interval, so coverage cannot be computed. Must read as
+      UNKNOWN, never as complete — the failure that makes an uninstrumented building look fully
+      monitored.
+    rate: 0.03
+    defect:
+      kind: coverage
+      value: null
+    near_miss:
+      kind: coverage
+      value: 0.99
+
+  # ── spatial adequacy ────────────────────────────────────────────────────────
+  proxy_only:
+    gate: spatial_adequacy
+    description: >-
+      The room's own sensor is gone and only a corridor reading remains. Acceptance scenario 1:
+      a corridor value presented bare is a lie about the room.
+    rate: 0.05
+    defect:
+      kind: adequacy
+      value: proxy
+      scope: room
+    near_miss:
+      kind: adequacy
+      value: in_room
+      scope: room
+
+  no_coverage:
+    gate: spatial_adequacy
+    description: No sensor covers the space asked about at all.
+    rate: 0.02
+    defect:
+      kind: adequacy
+      value: none
+      scope: room
+    near_miss:
+      kind: adequacy
+      value: in_room
+      scope: room
+
+  # ── calibration ─────────────────────────────────────────────────────────────
+  expired_calibration:
+    gate: calibration
+    description: >-
+      A standards verdict from a sensor whose calibration lapsed. The most dangerous shape of
+      answer available: it carries the authority of the standard with none of its rigour, and
+      the caveat gets skimmed while the verdict gets quoted.
+    rate: 0.04
+    defect:
+      kind: calibration_state
+      value: expired
+      consequence: safety_or_compliance
+    near_miss:
+      kind: calibration_state
+      value: calibrated
+      consequence: safety_or_compliance
+
+  uncalibrated_for_informational:
+    gate: calibration
+    description: >-
+      The precision case. An uncalibrated sensor answering a CASUAL question is fine, and a
+      gate that blocked it would be switched off within a week.
+    rate: 0.0
+    defect: null
+    near_miss:
+      kind: calibration_state
+      value: unknown
+      consequence: informational
+
+  # ── agreement (co-located disagreement) ─────────────────────────────────────
+  disagreeing_pair:
+    gate: agreement
+    description: >-
+      Two sensors measuring the same thing in the same room, far apart. Acceptance scenario 4:
+      the answer must report the disagreement, never average it away — 19 and 26 average to
+      22.5, a number no sensor reported and no room experienced.
+    rate: 0.04
+    defect:
+      kind: readings
+      values: [19.0, 26.0]
+      tolerance: 1.0
+    near_miss:
+      kind: readings
+      values: [21.0, 21.4]
+      tolerance: 1.0
+
+  # ── configuration history ───────────────────────────────────────────────────
+  relocated_sensor:
+    gate: trend_integrity
+    description: >-
+      A sensor moved mid-window. Acceptance scenario 3: the step it produces is
+      indistinguishable from a real change in the building.
+    rate: 0.03
+    defect:
+      kind: relocation
+      inside_window: true
+    near_miss:
+      kind: relocation
+      inside_window: false
+
+  # ── causal support ──────────────────────────────────────────────────────────
+  causal_overclaim:
+    gate: causal_claim
+    description: >-
+      An attribution the evidence cannot carry. The supervisors' example: the system may report
+      that temperature rose after occupancy rose; it must not conclude the occupants caused it.
+    rate: 0.0
+    defect:
+      kind: prose
+      text: The high CO2 was caused by the closed damper.
+      support: correlational
+    near_miss:
+      kind: prose
+      text: The high CO2 coincides with the damper being closed.
+      support: correlational
