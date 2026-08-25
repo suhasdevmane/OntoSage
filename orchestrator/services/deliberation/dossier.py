@@ -55,6 +55,8 @@ class DossierEvidenceRow(BaseModel):
     sensor_uuid: str
     stored_at: str
     simulated: Optional[bool] = None  # None = provenance not declared for the table
+    #: When the newest reading behind this value was taken (V6-T37).
+    latest: str = ""
 
 
 class DossierRanked(BaseModel):
@@ -180,6 +182,7 @@ def build_dossier(
                 sensor_uuid=e.uuid,
                 stored_at=e.stored_at,
                 simulated=synthetic_lookup(e.stored_at) if synthetic_lookup else None,
+                latest=getattr(e, "latest", "") or "",
             )
             for e in outcome.evidence
         ],

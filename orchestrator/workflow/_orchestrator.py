@@ -401,6 +401,27 @@ def build_plan_trace(
     return {**base, "kind": "reflex", "steps": steps}
 
 
+def _parse_evidence_time(raw):
+    """A datetime from whatever the serialised record carries, or None.
+
+    None means the age is UNKNOWN, and the advice says so. Defaulting to "now" would present a
+    week-old recommendation as current -- the precise inversion the recheck line exists to
+    prevent.
+    """
+    from datetime import datetime as _dt
+
+    if raw is None or isinstance(raw, _dt):
+        return raw
+    text = str(raw).strip().replace("Z", "+00:00")
+    for candidate in (text, text.split("+")[0], text.replace("T", " ")):
+        try:
+            parsed = _dt.fromisoformat(candidate)
+            return parsed.replace(tzinfo=None) if parsed.tzinfo else parsed
+        except ValueError:
+            continue
+    return None
+
+
 class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
     """LangGraph-based conversation workflow.
 
@@ -3486,6 +3507,101 @@ SELECT ?l WHERE {
             return ""
         return caveat_for_uuids(history, uuids, start, end)
 
+    async def _recheck_line(self, state: ConversationState, answer: str) -> str:
+        """Evidence time, recheck point and switch trigger for a RECOMMENDATION (V6-T37).
+
+        A recommendation is a claim with a shelf life. "5.03 is your quietest option" was true
+        of a particular five minutes, and the longer it sits in a chat window the more authority
+        it accrues. Only recommendations get this: a historical figure has no expiry, and a
+        recheck line on one would be noise.
+
+        Evidence time is the OLDEST contributing observation, not the newest. A recommendation
+        resting on four sensors is only as current as its stalest input, and reporting the
+        freshest would overstate exactly the thing this line exists to bound.
+        """
+        from datetime import datetime as _dt0
+
+        results = state.intermediate_results or {}
+        if not (results.get("deliberate_result") or state.current_intent == "recommend"):
+            return ""
+        try:
+            from orchestrator.services.evidence.assemble import _oldest_contributing
+            from orchestrator.services.evidence.recheck import advise
+
+            # The record reaches the bus as an OBJECT from some paths and as a serialised DICT
+            # from others, and `_oldest_contributing` reads attributes. Handed the dict it
+            # raised `'dict' object has no attribute 'sources'` straight into the except, and
+            # the advice silently vanished — the same two-shapes failure as BUG-259, one object
+            # along. Both are handled here rather than assuming either.
+            # Preferred source: the per-sensor observation times the freshness gate already
+            # computes, narrowed to the sensors that actually contributed. The dossier carries
+            # no timestamp of its own (the deliberate lane genuinely could not say when its
+            # readings were taken), and rebuilding one here would be a second view of a fact
+            # the pipeline already has.
+            rec = results.get("evidence_record")
+            evidence_time = None
+            try:
+                from orchestrator.services.evidence.assemble import (
+                    _observations_by_source,
+                    contributing_uuids,
+                )
+
+                observed = _observations_by_source(results, _dt0.utcnow()) or {}
+                mine = set(contributing_uuids(results) or [])
+                seen = [t for k, t in observed.items() if not mine or k in mine]
+                if seen:
+                    # OLDEST, not newest: a recommendation resting on four sensors is only as
+                    # current as its stalest input.
+                    evidence_time = min(seen)
+            except Exception as _obs:
+                logger.debug(f"[recheck] observation times unavailable: {_obs}")
+            # The dossier's own evidence rows now carry the timestamp behind each value
+            # (V6-T37). OLDEST across the contributing rows: a recommendation is only as
+            # current as its stalest input.
+            if evidence_time is None:
+                _rows = (results.get("evidence_dossier") or {}).get("evidence") or []
+                _times = [
+                    t
+                    for t in (
+                        _parse_evidence_time(r.get("latest")) for r in _rows if isinstance(r, dict)
+                    )
+                    if t is not None
+                ]
+                if _times:
+                    evidence_time = min(_times)
+            if evidence_time is not None:
+                pass
+            elif isinstance(rec, dict):
+                evidence_time = _parse_evidence_time(rec.get("latest_evidence_at"))
+            elif rec is not None:
+                evidence_time = _oldest_contributing(rec) or getattr(
+                    rec, "latest_evidence_at", None
+                )
+
+            # The dossier lives on the bus under its OWN key, not nested inside the lane
+            # result. Guessed twice before looking; the payload shape is not inferable from
+            # the lane that produced it.
+            dossier = results.get("evidence_dossier") or {}
+            ranked = dossier.get("ranked") or []
+            chosen = str((ranked[0] or {}).get("space", "")) if ranked else ""
+            runner_up = str((ranked[1] or {}).get("space", "")) if len(ranked) > 1 else ""
+            # The modality the ranking actually used, read off the dossier's own evidence
+            # rows. "conditions" is the last resort, and it makes both the switch trigger and
+            # the recheck horizon generic -- the horizon especially, since volatility is
+            # per-modality and an unnamed one has none.
+            _ev = dossier.get("evidence") or []
+            modality = str(
+                (_ev[0] or {}).get("modality", "") if _ev and isinstance(_ev[0], dict) else ""
+            ) or str(getattr(rec, "modality", "") or "conditions")
+
+            from datetime import datetime as _dt
+
+            advice = advise(modality, evidence_time, chosen=chosen, runner_up=runner_up)
+            return advice.describe(now=_dt.utcnow())
+        except Exception as exc:  # pragma: no cover - advice must never cost the answer
+            logger.warning(f"[recheck] skipped: {exc}")
+            return ""
+
     async def _meter_boundary_line(self, state: ConversationState, answer: str) -> str:
         """The boundary sentence for an energy answer, or "" when the answer is not one.
 
@@ -3963,6 +4079,19 @@ SELECT ?l WHERE {
                 final_response = f"{final_response}\n\n{_history_note}"
         except Exception as _exc:  # pragma: no cover - a caveat must never cost the answer
             logger.warning(f"[history] configuration caveat skipped: {_exc}")
+
+        # ── V6-T37: a recommendation states when it expires ───────────────────
+        # After persona formatting, like every other guarantee-carrying line: a caveat an LLM
+        # may reword is a caveat that can vanish.
+        try:
+            _recheck = await self._recheck_line(state, final_response)
+            if _recheck and _recheck[:18] not in final_response:
+                _dr = state.intermediate_results.get("deliberate_result")
+                if isinstance(_dr, dict):
+                    _dr["recheck"] = _recheck
+                final_response = f"{final_response}\n\n{_recheck}"
+        except Exception as _exc:  # pragma: no cover
+            logger.debug(f"[recheck] append skipped: {_exc}")
 
         # Phase 7.2: Append proactive follow-up suggestions based on intent
         suggestions = self._get_follow_up_suggestions(state.current_intent)

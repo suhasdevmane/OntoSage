@@ -63,6 +63,10 @@ class EvidenceCell:
     n_points: int
     uuid: str
     stored_at: str
+    #: Timestamp of the newest reading behind `value`. Without it a recommendation cannot say
+    #: WHEN it was true, and a snapshot sitting in a chat window reads as a standing fact
+    #: (V6-T37). Carried as the raw string the store returned; parsing belongs to the reader.
+    latest: str = ""
 
 
 @dataclass
@@ -389,6 +393,7 @@ async def execute(
                     n_points=n_points,
                     uuid=handle["uuid"],
                     stored_at=handle["stored_at"],
+                    latest=str(series[-1][0]) if series else "",
                 )
             )
 
