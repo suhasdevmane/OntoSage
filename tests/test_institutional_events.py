@@ -144,3 +144,126 @@ def test_unknown_family_is_refused_rather_than_skipped():
     spec.loader.exec_module(mod)
     src = inspect.getsource(mod.main)
     assert "return 2" in src, "an unrecognised family must fail, not continue"
+
+
+# ── the timetable: generated, declared, and ingested ─────────────────────────
+def test_institutional_event_id_fits_the_column_it_is_stored_in():
+    """events.event_id is CHAR(36) and every other producer mints a uuid5.
+
+    This built "synthetic_timetable:Room1.06:20260727T0900" — 42 characters — and MySQL
+    silently TRUNCATED it to 36, discarding the day digit and the entire time. Every
+    session in one room within the same ten-day window then collapsed onto one primary
+    key and INSERT IGNORE dropped the rest: 675 parsed records became 441 stored ones,
+    with no error raised anywhere.
+    """
+    from datetime import datetime as _dt
+
+    from orchestrator.services.feeds.institutional import InstitutionalRecord
+
+    rec = InstitutionalRecord(
+        space_local="Room1.06",
+        start=_dt(2026, 7, 27, 9, 0),
+        end=_dt(2026, 7, 27, 10, 0),
+        title="Introduction to Data Analysis",
+        source_id="synthetic_timetable",
+    )
+    event = rec.as_event("bldg_fixture", "booking")
+    assert len(event["event_id"]) == 36, event["event_id"]
+
+
+def test_institutional_event_id_is_deterministic_and_distinct_per_session():
+    """Idempotent re-ingest, but two sessions in one room must not share an id."""
+    from datetime import datetime as _dt
+
+    from orchestrator.services.feeds.institutional import InstitutionalRecord
+
+    def _mk(hour):
+        return InstitutionalRecord(
+            space_local="Room1.06",
+            start=_dt(2026, 7, 27, hour, 0),
+            end=_dt(2026, 7, 27, hour + 1, 0),
+            source_id="tt",
+        ).as_event("b", "booking")["event_id"]
+
+    assert _mk(9) == _mk(9)
+    assert _mk(9) != _mk(11)
+
+
+# ── a booking is a working-day act ───────────────────────────────────────────
+def test_no_booking_starts_outside_bookable_hours():
+    """Bookings were derived from every occupied stretch, and the occupancy driver runs
+    around the clock, so calendars opened with 00:00-00:30 entries. The counts were
+    right and the answers read as nonsense (CAVEAT-295)."""
+    from orchestrator.services.deliberation.synthetic_events import (
+        BOOKABLE_FROM_HOUR,
+        BOOKABLE_UNTIL_HOUR,
+    )
+
+    now = datetime(2026, 8, 25, 12, 0, 0)
+    for offset in (-6, -3, 0, 2):
+        for e in bookings_for_building_day(_BID, _ROOMS, _day(offset), now):
+            assert BOOKABLE_FROM_HOUR <= e["start_dt"].hour < BOOKABLE_UNTIL_HOUR, e
+
+
+# ── the window a question actually names ─────────────────────────────────────
+@pytest.mark.parametrize(
+    "question,expect_label,expect_weekday,expect_hours",
+    [
+        ("Is Room1.06 free on Friday morning?", "Friday morning", 4, (6, 12)),
+        ("Is it free tomorrow afternoon?", "tomorrow afternoon", 2, (12, 18)),
+        # the questioner's own phrasing is the right label — "this afternoon",
+        # never "today afternoon"
+        ("Is it free this afternoon?", "this afternoon", 1, (12, 18)),
+    ],
+)
+def test_named_day_and_part_of_day_are_resolved(
+    question, expect_label, expect_weekday, expect_hours
+):
+    """'Friday morning' matched nothing and fell through to today, so the answer was
+    about a different day than the one asked about."""
+    from orchestrator.services.event_query_service import parse_window
+
+    now = datetime(2026, 8, 25, 14, 0)  # a Tuesday
+    start, end, label = parse_window(question, now)
+    assert label == expect_label
+    assert start.weekday() == expect_weekday
+    assert (start.hour, end.hour) == expect_hours
+
+
+@pytest.mark.parametrize(
+    "question,label",
+    [
+        ("what is booked today?", "today"),
+        ("bookings this week", "this week"),
+        ("right now", "right now"),
+        ("what happened yesterday?", "yesterday"),
+    ],
+)
+def test_existing_windows_are_unchanged(question, label):
+    from orchestrator.services.event_query_service import parse_window
+
+    _s, _e, got = parse_window(question, datetime(2026, 8, 25, 14, 0))
+    assert got == label
+
+
+# ── one bad feed may not take down the others ────────────────────────────────
+def test_polling_loop_tolerates_a_non_polling_adapter():
+    """The registry MAPS InstitutionalFeedAdapter but that class has no poll_safe, so
+    declaring a timetable raised AttributeError out of run_forever and silently stopped
+    every weather feed with it."""
+    import inspect
+
+    from orchestrator.services.feeds import registry
+
+    src = inspect.getsource(registry.FeedRegistry.run_forever)
+    assert 'getattr(adapter, "poll_safe", None)' in src
+    assert "except Exception" in src, "a failing poll must not escape the loop"
+
+
+def test_poll_once_returns_empty_for_a_non_polling_adapter():
+    import inspect
+
+    from orchestrator.services.feeds import registry
+
+    src = inspect.getsource(registry.FeedRegistry.poll_once)
+    assert 'getattr(adapter, "poll_safe", None)' in src

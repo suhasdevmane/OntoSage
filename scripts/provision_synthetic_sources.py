@@ -52,7 +52,7 @@ ONTOSAGE_NS = "http://ontosage.org/capabilities#"
 #: "closures" and "timetable", neither of which has a generator, so the constant
 #: documented capability the script does not have. A pinned test now compares the
 #: two, because a list that can drift from the code it describes will.
-FAMILIES = ("hours", "status", "accessibility", "schedules")
+FAMILIES = ("hours", "status", "accessibility", "schedules", "timetable")
 
 
 def _env(key: str, default: str = "") -> str:
@@ -133,7 +133,38 @@ def discover(endpoint: str) -> Dict[str, object]:
             endpoint,
         )
     ]
-    return {"building": building, "ns": ns, "spaces": spaces, "floors": floors, "lifts": lifts}
+    # Spaces a scheduled session could plausibly occupy, chosen by BRICK CLASS rather
+    # than by name. The first version sampled from every brick:Location subclass and
+    # timetabled "Advanced Systems Architecture" into FireExit_F1_North — which is typed
+    # brick:Space, not brick:Room. Brick already distinguishes teaching-capable rooms, so
+    # the ontology answers this question; a name heuristic would only have to be rewritten
+    # for the next building.
+    #
+    # brick:Common_Space is deliberately NOT here. A common space is not a teaching
+    # room, and including it surfaced a room this building types as Common_Space
+    # WITHOUT brick:Room -- which the coverage audit therefore cannot see at all, so
+    # every row naming it was correctly skipped by the ingest as a space the building
+    # does not have. The mistyping is logged separately; the include list should be
+    # right on its own terms either way.
+    teaching = [
+        (b["s"]["value"], (b.get("l") or {}).get("value", ""))
+        for b in _sparql(
+            "PREFIX brick: <https://brickschema.org/schema/Brick#> "
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+            "SELECT ?s (SAMPLE(?lab) AS ?l) WHERE { VALUES ?tc { brick:Classroom "
+            "brick:Lecture_Hall brick:Conference_Room brick:Laboratory } "
+            "?s a ?tc . OPTIONAL { ?s rdfs:label ?lab } } GROUP BY ?s LIMIT 2000",
+            endpoint,
+        )
+    ]
+    return {
+        "building": building,
+        "ns": ns,
+        "spaces": spaces,
+        "floors": floors,
+        "lifts": lifts,
+        "teaching": teaching,
+    }
 
 
 def _header(building: str, ns: str, title: str, why: str) -> str:
@@ -335,11 +366,150 @@ def gen_schedules(d: Dict, rnd: random.Random) -> str:
     return "".join(out)
 
 
+#: Teaching weeks generated either side of today. The BACKWARD half makes
+#: "how busy was the lecture theatre last term?" answerable; the FORWARD half is
+#: the half that matters and the half a naive generator omits — a timetable is
+#: consulted about what is coming, and one that stops at today can only ever say
+#: "no data" to the question it exists to answer (BUG-290, the same mistake made
+#: once already with the booking calendar).
+TIMETABLE_WEEKS_BACK = 4
+TIMETABLE_WEEKS_FORWARD = 4
+
+#: Module titles are generic academic filler, deliberately not building-specific.
+_MODULE_WORDS = (
+    "Introduction to",
+    "Advanced",
+    "Foundations of",
+    "Applied",
+    "Research Methods in",
+)
+_MODULE_TOPICS = (
+    "Computer Science",
+    "Data Analysis",
+    "Software Engineering",
+    "Human-Computer Interaction",
+    "Systems Architecture",
+    "Machine Learning",
+    "Cyber Security",
+)
+
+
+def gen_timetable(d: Dict, rnd: random.Random) -> str:
+    """A recurring teaching timetable as CSV, for the T25 institutional feed.
+
+    Emitted as CSV rather than TTL ON PURPOSE. A timetable is not a fact about the
+    building's structure; it is a periodic export from a system of record, and V6-T25
+    already gave that shape a declare-and-connect contract: drop the file, name it in
+    feeds.yaml, and its rows become interval records in the SAME events store that
+    bookings, work orders and access events share. Writing it as triples instead would
+    have invented a second availability path that drifts from the one the events lane
+    already uses.
+
+    Only a MINORITY of spaces are timetabled. Every room having teaching in it would
+    make "which rooms are free?" trivially answerable and the spatial filters
+    untestable — and no real building looks like that.
+    """
+    candidates = list(d.get("teaching") or [])  # type: ignore[arg-type]
+    if not candidates:
+        # A building that types no teaching-capable rooms gets NO timetable rather
+        # than one scattered across its corridors and fire exits. The header alone is
+        # the honest outcome: there is nothing here to schedule.
+        print(
+            "  no brick:Classroom/Lecture_Hall/Conference_Room/Laboratory in this "
+            "graph — writing an empty timetable rather than inventing teaching spaces"
+        )
+        return "room,start,end,module\n"
+
+    # A deterministic minority: enough to answer with, few enough to leave rooms free.
+    teaching = sorted(_local(iri) for iri, _lab in candidates)
+    rnd.shuffle(teaching)
+    teaching = sorted(teaching[: max(1, len(teaching) // 2)])
+
+    monday = date.today() - timedelta(days=date.today().weekday())
+    first = monday - timedelta(weeks=TIMETABLE_WEEKS_BACK)
+    weeks = TIMETABLE_WEEKS_BACK + TIMETABLE_WEEKS_FORWARD
+
+    rows: List[str] = ["room,start,end,module"]
+    for room in teaching:
+        # Each room keeps the SAME weekly pattern across the term — that is what makes
+        # it a timetable rather than a list of unrelated bookings, and it is what a
+        # recurring-window question ("every Tuesday afternoon") needs to find.
+        # Deduplicated on (weekday, hour): drawing the same slot twice produced two
+        # identical rows whose event ids collide, so 655 parsed records became 429
+        # stored ones and the ingest report meant less than it appeared to.
+        slots = {}
+        for _ in range(rnd.randint(1, 3)):
+            weekday = rnd.randint(0, 4)  # teaching runs Mon-Fri
+            hour = rnd.choice((9, 10, 11, 13, 14, 15, 16))
+            if (weekday, hour) in slots:
+                continue
+            length = rnd.choice((1, 2))
+            module = f"{rnd.choice(_MODULE_WORDS)} {rnd.choice(_MODULE_TOPICS)}"
+            slots[(weekday, hour)] = (weekday, hour, length, module)
+        slots = list(slots.values())
+        for w in range(weeks):
+            for weekday, hour, length, module in slots:
+                day = first + timedelta(weeks=w, days=weekday)
+                # A real timetable has gaps: reading weeks, cancellations, bank holidays.
+                # Without them every week is identical and the completeness gate has
+                # nothing to detect.
+                if rnd.random() < 0.08:
+                    continue
+                rows.append(
+                    f"{room},{day}T{hour:02d}:00:00,{day}T{hour + length:02d}:00:00,{module}"
+                )
+    return "\n".join(rows) + "\n"
+
+
+#: The feed declaration that CONNECTS the generated CSV. Writing the file without this
+#: would leave the building with a timetable it cannot read — described-but-unconnected,
+#: which is the exact half of design contract 8 that this project keeps rediscovering.
+TIMETABLE_FEED_ID = "synthetic_timetable"
+
+
+def ensure_timetable_feed(input_dir: Path, building_id: str, csv_name: str) -> str:
+    """Declare the timetable feed in feeds.yaml if it is not already there.
+
+    Idempotent and additive: an existing declaration with this id is left alone, and
+    nothing else in the file is touched.
+    """
+    feeds_path = input_dir / "feeds.yaml"
+    try:
+        existing = yaml.safe_load(feeds_path.read_text(encoding="utf-8")) or {}
+    except FileNotFoundError:
+        existing = {}
+    except Exception as exc:
+        return f"could not read feeds.yaml ({exc}) — declare the feed by hand"
+
+    for feed in existing.get("feeds") or []:
+        if isinstance(feed, dict) and feed.get("id") == TIMETABLE_FEED_ID:
+            return "feed already declared"
+
+    block = (
+        "\n  # Synthetic teaching timetable (V6-T56). Generated by\n"
+        f"  # scripts/provision_synthetic_sources.py --families timetable.\n"
+        f"  # Rows land in the events store via the T25 institutional adapter, and every\n"
+        f"  # record declares its synthetic origin so an answer can say where it came from.\n"
+        f"  - id: {TIMETABLE_FEED_ID}\n"
+        f"    type: timetable\n"
+        f"    path: {csv_name}\n"
+        f"    space_field: room\n"
+        f"    start_field: start\n"
+        f"    end_field: end\n"
+        f"    title_field: module\n"
+        f"    enabled: true\n"
+    )
+    with feeds_path.open("a", encoding="utf-8") as fh:
+        fh.write(block)
+    return f"declared feed '{TIMETABLE_FEED_ID}' in feeds.yaml"
+
+
 GENERATORS = {
     "hours": ("_synthetic_hours.ttl", gen_hours),
     "status": ("_synthetic_status.ttl", gen_status),
     "accessibility": ("_synthetic_accessibility.ttl", gen_accessibility),
     "schedules": ("_synthetic_schedules.ttl", gen_schedules),
+    "timetable": ("_timetable.csv", gen_timetable),
 }
 
 
@@ -396,6 +566,11 @@ def main(argv: List[str]) -> int:
             path.write_text(text, encoding="utf-8")
             written.append((path.name, len(text.splitlines())))
             print(f"  wrote {path.name}  ({len(text.splitlines())} lines)")
+            # A generated file nothing reads is the described-but-unconnected half of
+            # design contract 8, and this project has now found that shape often enough
+            # to stop shipping it: the timetable CSV is DECLARED as it is written.
+            if fam == "timetable":
+                print(f"  {ensure_timetable_feed(out_dir, building_id, path.name)}")
 
     if written:
         print(

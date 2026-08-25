@@ -33,6 +33,13 @@ from orchestrator.services.deliberation.synthetic_signals import (
     occupancy_series,
 )
 
+#: The hours during which a room can be BOOKED. Generic office/campus hours, not any
+#: building's declared opening times — the generator has no access to those, and a
+#: constant here is honest about being an assumption. A building whose real hours
+#: differ should provision from its own hours triples instead.
+BOOKABLE_FROM_HOUR = 7
+BOOKABLE_UNTIL_HOUR = 21
+
 _TRADES = ("hvac", "electrical", "plumbing", "fabric", "cleaning")
 _ROLES = ("occupant", "facility_manager", "operator")
 
@@ -102,6 +109,15 @@ def bookings_for_room_day(
             continue  # walk-in usage, never booked — bookings ≠ occupancy 1:1
         start = day0 + timedelta(minutes=start_step * STEP_MINUTES)
         end = day0 + timedelta(minutes=end_step * STEP_MINUTES)
+        # Nobody BOOKS a room for 00:20. The occupancy driver runs around the clock —
+        # correctly, since presence at 3am is real in a research building — but a
+        # booking is a deliberate act performed during the working day, and deriving
+        # one from every occupied stretch produced calendars whose first ten entries
+        # were all before 01:30. Answers then read as nonsense even though the counts
+        # were right (CAVEAT-295). Occupancy outside these hours stays exactly as it
+        # was; it simply stops being described as a reservation.
+        if not (BOOKABLE_FROM_HOUR <= start.hour < BOOKABLE_UNTIL_HOUR):
+            continue
         peak = max(occ[start_step:end_step] or [1])
         out.append(
             {

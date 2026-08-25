@@ -85,6 +85,52 @@ def classify_event_question(question: str) -> Optional[str]:
 # ── time-window parsing (calendar windows, deterministic) ─────────────────────
 
 
+#: Weekday names, in the order date.weekday() uses.
+_WEEKDAYS = (
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+)
+
+#: Part-of-day windows as (start_hour, end_hour, label). Deliberately coarse: a
+#: questioner who says "morning" is not asking for a boundary to the minute, and
+#: pretending otherwise would put false precision into the answer's label.
+_PARTS = {
+    "morning": (6, 12, "morning"),
+    "afternoon": (12, 18, "afternoon"),
+    "evening": (18, 22, "evening"),
+    "tonight": (18, 23, "evening"),
+}
+
+
+def _named_day(q: str, day0: datetime):
+    """('friday', that day's midnight) when the question names a weekday, else (None, None).
+
+    Resolves FORWARD: "on Friday" asked on a Wednesday means the coming Friday, and
+    asked on a Friday means today. A question about a named day is almost always about
+    the next one — nobody asks whether a room is free last Friday.
+    """
+    if "tomorrow" in q:
+        return "tomorrow", day0 + timedelta(days=1)
+    for idx, name in enumerate(_WEEKDAYS):
+        if re.search(r"\b" + name + r"\b", q):
+            delta = (idx - day0.weekday()) % 7
+            return name.capitalize(), day0 + timedelta(days=delta)
+    return None, None
+
+
+def _part_of_day(q: str):
+    """(start_hour, end_hour, label) for morning/afternoon/evening, else None."""
+    for word, window in _PARTS.items():
+        if re.search(r"\b" + word + r"\b", q):
+            return window
+    return None
+
+
 def parse_window(question: str, now: datetime) -> Tuple[datetime, datetime, str]:
     """(start, end, label). Default: today so far -> end of day."""
     q = (question or "").lower()
@@ -99,13 +145,33 @@ def parse_window(question: str, now: datetime) -> Tuple[datetime, datetime, str]
             start + timedelta(hours=1),
             start.strftime("%H:%M–") + (start + timedelta(hours=1)).strftime("%H:%M %d %b"),
         )
+    # A NAMED DAY and a PART OF DAY are resolved together, because they are asked
+    # together. "Is Room1.06 free on Friday morning?" previously matched none of the
+    # phrases below and fell through to the default, so it was answered about TODAY —
+    # visibly, since the label is printed, but it is still an answer to a different
+    # question than the one asked (measured 2026-08-25).
+    _day_name, _day_start = _named_day(q, day0)
+    _part = _part_of_day(q)
+    if _day_name or _part:
+        base = _day_start if _day_start is not None else day0
+        # "this morning", not "today morning" — the questioner's phrasing is the
+        # right label, and a part-of-day window with no named day is always "this".
+        base_label = _day_name or ("tomorrow" if "tomorrow" in q else "this")
+        if not _part:
+            base_label = _day_name or "today"
+        if _part:
+            lo, hi, part_label = _part
+            return (
+                base + timedelta(hours=lo),
+                base + timedelta(hours=hi),
+                f"{base_label} {part_label}",
+            )
+        return base, base + timedelta(days=1), base_label
     if "tomorrow" in q:
         d = day0 + timedelta(days=1)
         return d, d + timedelta(days=1), "tomorrow"
     if "yesterday" in q:
         return day0 - timedelta(days=1), day0, "yesterday"
-    if "this morning" in q:
-        return day0, day0 + timedelta(hours=12), "this morning"
     if "last week" in q:
         start = day0 - timedelta(days=day0.weekday() + 7)
         return start, start + timedelta(days=7), "last week"

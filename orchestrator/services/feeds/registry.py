@@ -97,6 +97,8 @@ class FeedRegistry:
         self._building_id = building_id
         self._input_root = Path(input_root)
         self._adapters: Dict[str, FeedAdapter] = {}
+        #: feeds skipped by the polling loop, logged once each rather than every second
+        self._non_polling: set = set()
         self._specs: Dict[str, FeedSpec] = {}
         # writer is a callable: async (records: List[FeedRecord]) -> int
         # injected for testing; defaults to _adapter_registry_writer()
@@ -167,7 +169,13 @@ class FeedRegistry:
         adapter = self._adapters.get(feed_id)
         if adapter is None:
             return []
-        return await adapter.poll_safe()
+        # Same contract check as run_forever: a file-based institutional source has no
+        # poll_safe, and run_all_once must not raise because one declared feed is not a
+        # poller.
+        poll = getattr(adapter, "poll_safe", None)
+        if poll is None:
+            return []
+        return await poll()
 
     async def run_all_once(self) -> Dict[str, int]:
         """Poll all feeds and write results.  Returns {feed_id: records_written}."""
@@ -194,13 +202,40 @@ class FeedRegistry:
             now = time.monotonic()
             for feed_id, adapter in list(self._adapters.items()):
                 if now >= next_fire[feed_id]:
-                    records = await adapter.poll_safe()
-                    if records:
-                        written = await self._write(records)
-                        logger.debug(
-                            f"[feeds] {feed_id}: polled {len(records)} record(s), "
-                            f"wrote {written}"
-                        )
+                    # ONE FEED MAY NOT TAKE DOWN THE OTHERS. poll_safe() guards a poll
+                    # that RAISES, but not an adapter that does not implement the
+                    # polling contract at all — and the registry constructs exactly
+                    # such an adapter: InstitutionalFeedAdapter is a file reader with a
+                    # read() interface, has no poll_safe, and is nonetheless mapped in
+                    # _ADAPTERS. Declaring a timetable therefore killed run_forever with
+                    # an AttributeError and silently stopped every weather feed with it
+                    # (measured 2026-08-25). A blast radius of "all feeds" for one
+                    # misdeclared source is not acceptable in a loop that is supposed to
+                    # be the resilient part.
+                    try:
+                        poll = getattr(adapter, "poll_safe", None)
+                        if poll is None:
+                            if feed_id not in self._non_polling:
+                                self._non_polling.add(feed_id)
+                                logger.info(
+                                    f"[feeds] {feed_id} ({getattr(adapter.spec, 'type', '?')}) "
+                                    "is not a polling source — skipped by the polling loop. "
+                                    "File-based institutional sources are ingested once, "
+                                    "not polled."
+                                )
+                            next_fire[feed_id] = now + max(
+                                60, getattr(adapter.spec, "interval_s", 300)
+                            )
+                            continue
+                        records = await poll()
+                        if records:
+                            written = await self._write(records)
+                            logger.debug(
+                                f"[feeds] {feed_id}: polled {len(records)} record(s), "
+                                f"wrote {written}"
+                            )
+                    except Exception as exc:
+                        logger.error(f"[feeds] {feed_id} poll cycle failed: {exc}", exc_info=True)
                     next_fire[feed_id] = now + adapter.spec.interval_s
             await asyncio.sleep(1)
 

@@ -1,0 +1,676 @@
+room,start,end,module
+Room1.06,2026-07-31T16:00:00,2026-07-31T18:00:00,Foundations of Machine Learning
+Room1.06,2026-07-30T09:00:00,2026-07-30T10:00:00,Foundations of Human-Computer Interaction
+Room1.06,2026-08-07T16:00:00,2026-08-07T18:00:00,Foundations of Machine Learning
+Room1.06,2026-08-05T14:00:00,2026-08-05T16:00:00,Research Methods in Cyber Security
+Room1.06,2026-08-06T09:00:00,2026-08-06T10:00:00,Foundations of Human-Computer Interaction
+Room1.06,2026-08-14T16:00:00,2026-08-14T18:00:00,Foundations of Machine Learning
+Room1.06,2026-08-12T14:00:00,2026-08-12T16:00:00,Research Methods in Cyber Security
+Room1.06,2026-08-13T09:00:00,2026-08-13T10:00:00,Foundations of Human-Computer Interaction
+Room1.06,2026-08-21T16:00:00,2026-08-21T18:00:00,Foundations of Machine Learning
+Room1.06,2026-08-19T14:00:00,2026-08-19T16:00:00,Research Methods in Cyber Security
+Room1.06,2026-08-20T09:00:00,2026-08-20T10:00:00,Foundations of Human-Computer Interaction
+Room1.06,2026-08-28T16:00:00,2026-08-28T18:00:00,Foundations of Machine Learning
+Room1.06,2026-08-26T14:00:00,2026-08-26T16:00:00,Research Methods in Cyber Security
+Room1.06,2026-08-27T09:00:00,2026-08-27T10:00:00,Foundations of Human-Computer Interaction
+Room1.06,2026-09-04T16:00:00,2026-09-04T18:00:00,Foundations of Machine Learning
+Room1.06,2026-09-02T14:00:00,2026-09-02T16:00:00,Research Methods in Cyber Security
+Room1.06,2026-09-03T09:00:00,2026-09-03T10:00:00,Foundations of Human-Computer Interaction
+Room1.06,2026-09-11T16:00:00,2026-09-11T18:00:00,Foundations of Machine Learning
+Room1.06,2026-09-09T14:00:00,2026-09-09T16:00:00,Research Methods in Cyber Security
+Room1.06,2026-09-10T09:00:00,2026-09-10T10:00:00,Foundations of Human-Computer Interaction
+Room1.06,2026-09-18T16:00:00,2026-09-18T18:00:00,Foundations of Machine Learning
+Room1.06,2026-09-16T14:00:00,2026-09-16T16:00:00,Research Methods in Cyber Security
+Room1.06,2026-09-17T09:00:00,2026-09-17T10:00:00,Foundations of Human-Computer Interaction
+Room1.07,2026-07-31T11:00:00,2026-07-31T13:00:00,Foundations of Machine Learning
+Room1.07,2026-07-30T10:00:00,2026-07-30T11:00:00,Introduction to Data Analysis
+Room1.07,2026-08-06T10:00:00,2026-08-06T11:00:00,Introduction to Data Analysis
+Room1.07,2026-08-14T11:00:00,2026-08-14T13:00:00,Foundations of Machine Learning
+Room1.07,2026-08-13T10:00:00,2026-08-13T11:00:00,Introduction to Data Analysis
+Room1.07,2026-08-21T11:00:00,2026-08-21T13:00:00,Foundations of Machine Learning
+Room1.07,2026-08-20T10:00:00,2026-08-20T11:00:00,Introduction to Data Analysis
+Room1.07,2026-08-28T11:00:00,2026-08-28T13:00:00,Foundations of Machine Learning
+Room1.07,2026-08-27T10:00:00,2026-08-27T11:00:00,Introduction to Data Analysis
+Room1.07,2026-09-04T11:00:00,2026-09-04T13:00:00,Foundations of Machine Learning
+Room1.07,2026-09-03T10:00:00,2026-09-03T11:00:00,Introduction to Data Analysis
+Room1.07,2026-09-11T11:00:00,2026-09-11T13:00:00,Foundations of Machine Learning
+Room1.07,2026-09-10T10:00:00,2026-09-10T11:00:00,Introduction to Data Analysis
+Room1.07,2026-09-18T11:00:00,2026-09-18T13:00:00,Foundations of Machine Learning
+Room1.07,2026-09-17T10:00:00,2026-09-17T11:00:00,Introduction to Data Analysis
+Room1.26,2026-07-31T13:00:00,2026-07-31T15:00:00,Applied Human-Computer Interaction
+Room1.26,2026-08-07T13:00:00,2026-08-07T15:00:00,Applied Human-Computer Interaction
+Room1.26,2026-08-03T13:00:00,2026-08-03T15:00:00,Introduction to Data Analysis
+Room1.26,2026-08-03T10:00:00,2026-08-03T12:00:00,Advanced Computer Science
+Room1.26,2026-08-10T13:00:00,2026-08-10T15:00:00,Introduction to Data Analysis
+Room1.26,2026-08-10T10:00:00,2026-08-10T12:00:00,Advanced Computer Science
+Room1.26,2026-08-21T13:00:00,2026-08-21T15:00:00,Applied Human-Computer Interaction
+Room1.26,2026-08-17T13:00:00,2026-08-17T15:00:00,Introduction to Data Analysis
+Room1.26,2026-08-17T10:00:00,2026-08-17T12:00:00,Advanced Computer Science
+Room1.26,2026-08-28T13:00:00,2026-08-28T15:00:00,Applied Human-Computer Interaction
+Room1.26,2026-08-24T13:00:00,2026-08-24T15:00:00,Introduction to Data Analysis
+Room1.26,2026-08-24T10:00:00,2026-08-24T12:00:00,Advanced Computer Science
+Room1.26,2026-09-04T13:00:00,2026-09-04T15:00:00,Applied Human-Computer Interaction
+Room1.26,2026-08-31T13:00:00,2026-08-31T15:00:00,Introduction to Data Analysis
+Room1.26,2026-08-31T10:00:00,2026-08-31T12:00:00,Advanced Computer Science
+Room1.26,2026-09-11T13:00:00,2026-09-11T15:00:00,Applied Human-Computer Interaction
+Room1.26,2026-09-07T13:00:00,2026-09-07T15:00:00,Introduction to Data Analysis
+Room1.26,2026-09-07T10:00:00,2026-09-07T12:00:00,Advanced Computer Science
+Room1.26,2026-09-18T13:00:00,2026-09-18T15:00:00,Applied Human-Computer Interaction
+Room1.26,2026-09-14T13:00:00,2026-09-14T15:00:00,Introduction to Data Analysis
+Room1.26,2026-09-14T10:00:00,2026-09-14T12:00:00,Advanced Computer Science
+Room2.05,2026-07-28T14:00:00,2026-07-28T16:00:00,Advanced Machine Learning
+Room2.05,2026-08-11T14:00:00,2026-08-11T16:00:00,Advanced Machine Learning
+Room2.05,2026-08-18T14:00:00,2026-08-18T16:00:00,Advanced Machine Learning
+Room2.05,2026-08-25T14:00:00,2026-08-25T16:00:00,Advanced Machine Learning
+Room2.05,2026-09-01T14:00:00,2026-09-01T16:00:00,Advanced Machine Learning
+Room2.05,2026-09-08T14:00:00,2026-09-08T16:00:00,Advanced Machine Learning
+Room2.05,2026-09-15T14:00:00,2026-09-15T16:00:00,Advanced Machine Learning
+Room2.08,2026-07-29T16:00:00,2026-07-29T17:00:00,Research Methods in Systems Architecture
+Room2.08,2026-08-05T16:00:00,2026-08-05T17:00:00,Research Methods in Systems Architecture
+Room2.08,2026-08-12T16:00:00,2026-08-12T17:00:00,Research Methods in Systems Architecture
+Room2.08,2026-08-19T16:00:00,2026-08-19T17:00:00,Research Methods in Systems Architecture
+Room2.08,2026-08-26T16:00:00,2026-08-26T17:00:00,Research Methods in Systems Architecture
+Room2.08,2026-09-02T16:00:00,2026-09-02T17:00:00,Research Methods in Systems Architecture
+Room2.08,2026-09-09T16:00:00,2026-09-09T17:00:00,Research Methods in Systems Architecture
+Room2.08,2026-09-16T16:00:00,2026-09-16T17:00:00,Research Methods in Systems Architecture
+Room2.15,2026-07-28T10:00:00,2026-07-28T12:00:00,Foundations of Machine Learning
+Room2.15,2026-07-27T09:00:00,2026-07-27T11:00:00,Applied Software Engineering
+Room2.15,2026-07-28T15:00:00,2026-07-28T17:00:00,Applied Cyber Security
+Room2.15,2026-08-04T10:00:00,2026-08-04T12:00:00,Foundations of Machine Learning
+Room2.15,2026-08-03T09:00:00,2026-08-03T11:00:00,Applied Software Engineering
+Room2.15,2026-08-04T15:00:00,2026-08-04T17:00:00,Applied Cyber Security
+Room2.15,2026-08-11T10:00:00,2026-08-11T12:00:00,Foundations of Machine Learning
+Room2.15,2026-08-10T09:00:00,2026-08-10T11:00:00,Applied Software Engineering
+Room2.15,2026-08-11T15:00:00,2026-08-11T17:00:00,Applied Cyber Security
+Room2.15,2026-08-18T10:00:00,2026-08-18T12:00:00,Foundations of Machine Learning
+Room2.15,2026-08-17T09:00:00,2026-08-17T11:00:00,Applied Software Engineering
+Room2.15,2026-08-18T15:00:00,2026-08-18T17:00:00,Applied Cyber Security
+Room2.15,2026-08-25T10:00:00,2026-08-25T12:00:00,Foundations of Machine Learning
+Room2.15,2026-08-24T09:00:00,2026-08-24T11:00:00,Applied Software Engineering
+Room2.15,2026-08-25T15:00:00,2026-08-25T17:00:00,Applied Cyber Security
+Room2.15,2026-09-01T10:00:00,2026-09-01T12:00:00,Foundations of Machine Learning
+Room2.15,2026-08-31T09:00:00,2026-08-31T11:00:00,Applied Software Engineering
+Room2.15,2026-09-01T15:00:00,2026-09-01T17:00:00,Applied Cyber Security
+Room2.15,2026-09-08T10:00:00,2026-09-08T12:00:00,Foundations of Machine Learning
+Room2.15,2026-09-07T09:00:00,2026-09-07T11:00:00,Applied Software Engineering
+Room2.15,2026-09-08T15:00:00,2026-09-08T17:00:00,Applied Cyber Security
+Room2.15,2026-09-15T10:00:00,2026-09-15T12:00:00,Foundations of Machine Learning
+Room2.15,2026-09-14T09:00:00,2026-09-14T11:00:00,Applied Software Engineering
+Room2.15,2026-09-15T15:00:00,2026-09-15T17:00:00,Applied Cyber Security
+Room2.17,2026-07-30T13:00:00,2026-07-30T15:00:00,Introduction to Machine Learning
+Room2.17,2026-07-28T10:00:00,2026-07-28T11:00:00,Introduction to Data Analysis
+Room2.17,2026-07-31T13:00:00,2026-07-31T14:00:00,Research Methods in Cyber Security
+Room2.17,2026-08-06T13:00:00,2026-08-06T15:00:00,Introduction to Machine Learning
+Room2.17,2026-08-04T10:00:00,2026-08-04T11:00:00,Introduction to Data Analysis
+Room2.17,2026-08-13T13:00:00,2026-08-13T15:00:00,Introduction to Machine Learning
+Room2.17,2026-08-11T10:00:00,2026-08-11T11:00:00,Introduction to Data Analysis
+Room2.17,2026-08-14T13:00:00,2026-08-14T14:00:00,Research Methods in Cyber Security
+Room2.17,2026-08-20T13:00:00,2026-08-20T15:00:00,Introduction to Machine Learning
+Room2.17,2026-08-18T10:00:00,2026-08-18T11:00:00,Introduction to Data Analysis
+Room2.17,2026-08-21T13:00:00,2026-08-21T14:00:00,Research Methods in Cyber Security
+Room2.17,2026-08-27T13:00:00,2026-08-27T15:00:00,Introduction to Machine Learning
+Room2.17,2026-08-25T10:00:00,2026-08-25T11:00:00,Introduction to Data Analysis
+Room2.17,2026-09-03T13:00:00,2026-09-03T15:00:00,Introduction to Machine Learning
+Room2.17,2026-09-01T10:00:00,2026-09-01T11:00:00,Introduction to Data Analysis
+Room2.17,2026-09-04T13:00:00,2026-09-04T14:00:00,Research Methods in Cyber Security
+Room2.17,2026-09-10T13:00:00,2026-09-10T15:00:00,Introduction to Machine Learning
+Room2.17,2026-09-08T10:00:00,2026-09-08T11:00:00,Introduction to Data Analysis
+Room2.17,2026-09-11T13:00:00,2026-09-11T14:00:00,Research Methods in Cyber Security
+Room2.17,2026-09-15T10:00:00,2026-09-15T11:00:00,Introduction to Data Analysis
+Room2.17,2026-09-18T13:00:00,2026-09-18T14:00:00,Research Methods in Cyber Security
+Room2.20,2026-07-31T16:00:00,2026-07-31T18:00:00,Research Methods in Data Analysis
+Room2.20,2026-07-31T10:00:00,2026-07-31T11:00:00,Applied Cyber Security
+Room2.20,2026-07-28T14:00:00,2026-07-28T15:00:00,Advanced Data Analysis
+Room2.20,2026-08-07T10:00:00,2026-08-07T11:00:00,Applied Cyber Security
+Room2.20,2026-08-04T14:00:00,2026-08-04T15:00:00,Advanced Data Analysis
+Room2.20,2026-08-14T16:00:00,2026-08-14T18:00:00,Research Methods in Data Analysis
+Room2.20,2026-08-14T10:00:00,2026-08-14T11:00:00,Applied Cyber Security
+Room2.20,2026-08-11T14:00:00,2026-08-11T15:00:00,Advanced Data Analysis
+Room2.20,2026-08-21T10:00:00,2026-08-21T11:00:00,Applied Cyber Security
+Room2.20,2026-08-28T16:00:00,2026-08-28T18:00:00,Research Methods in Data Analysis
+Room2.20,2026-08-28T10:00:00,2026-08-28T11:00:00,Applied Cyber Security
+Room2.20,2026-09-04T16:00:00,2026-09-04T18:00:00,Research Methods in Data Analysis
+Room2.20,2026-09-01T14:00:00,2026-09-01T15:00:00,Advanced Data Analysis
+Room2.20,2026-09-11T16:00:00,2026-09-11T18:00:00,Research Methods in Data Analysis
+Room2.20,2026-09-11T10:00:00,2026-09-11T11:00:00,Applied Cyber Security
+Room2.20,2026-09-08T14:00:00,2026-09-08T15:00:00,Advanced Data Analysis
+Room2.20,2026-09-18T16:00:00,2026-09-18T18:00:00,Research Methods in Data Analysis
+Room2.20,2026-09-18T10:00:00,2026-09-18T11:00:00,Applied Cyber Security
+Room2.20,2026-09-15T14:00:00,2026-09-15T15:00:00,Advanced Data Analysis
+Room2.21,2026-07-30T10:00:00,2026-07-30T12:00:00,Introduction to Human-Computer Interaction
+Room2.21,2026-07-30T11:00:00,2026-07-30T12:00:00,Advanced Human-Computer Interaction
+Room2.21,2026-08-04T15:00:00,2026-08-04T17:00:00,Research Methods in Data Analysis
+Room2.21,2026-08-06T10:00:00,2026-08-06T12:00:00,Introduction to Human-Computer Interaction
+Room2.21,2026-08-06T11:00:00,2026-08-06T12:00:00,Advanced Human-Computer Interaction
+Room2.21,2026-08-11T15:00:00,2026-08-11T17:00:00,Research Methods in Data Analysis
+Room2.21,2026-08-13T10:00:00,2026-08-13T12:00:00,Introduction to Human-Computer Interaction
+Room2.21,2026-08-13T11:00:00,2026-08-13T12:00:00,Advanced Human-Computer Interaction
+Room2.21,2026-08-18T15:00:00,2026-08-18T17:00:00,Research Methods in Data Analysis
+Room2.21,2026-08-20T10:00:00,2026-08-20T12:00:00,Introduction to Human-Computer Interaction
+Room2.21,2026-08-20T11:00:00,2026-08-20T12:00:00,Advanced Human-Computer Interaction
+Room2.21,2026-08-25T15:00:00,2026-08-25T17:00:00,Research Methods in Data Analysis
+Room2.21,2026-08-27T10:00:00,2026-08-27T12:00:00,Introduction to Human-Computer Interaction
+Room2.21,2026-08-27T11:00:00,2026-08-27T12:00:00,Advanced Human-Computer Interaction
+Room2.21,2026-09-01T15:00:00,2026-09-01T17:00:00,Research Methods in Data Analysis
+Room2.21,2026-09-03T10:00:00,2026-09-03T12:00:00,Introduction to Human-Computer Interaction
+Room2.21,2026-09-03T11:00:00,2026-09-03T12:00:00,Advanced Human-Computer Interaction
+Room2.21,2026-09-08T15:00:00,2026-09-08T17:00:00,Research Methods in Data Analysis
+Room2.21,2026-09-10T10:00:00,2026-09-10T12:00:00,Introduction to Human-Computer Interaction
+Room2.21,2026-09-10T11:00:00,2026-09-10T12:00:00,Advanced Human-Computer Interaction
+Room2.21,2026-09-15T15:00:00,2026-09-15T17:00:00,Research Methods in Data Analysis
+Room2.21,2026-09-17T10:00:00,2026-09-17T12:00:00,Introduction to Human-Computer Interaction
+Room2.22,2026-07-30T13:00:00,2026-07-30T14:00:00,Applied Software Engineering
+Room2.22,2026-07-27T16:00:00,2026-07-27T17:00:00,Introduction to Computer Science
+Room2.22,2026-08-06T13:00:00,2026-08-06T14:00:00,Applied Software Engineering
+Room2.22,2026-08-07T14:00:00,2026-08-07T16:00:00,Research Methods in Computer Science
+Room2.22,2026-08-03T16:00:00,2026-08-03T17:00:00,Introduction to Computer Science
+Room2.22,2026-08-13T13:00:00,2026-08-13T14:00:00,Applied Software Engineering
+Room2.22,2026-08-14T14:00:00,2026-08-14T16:00:00,Research Methods in Computer Science
+Room2.22,2026-08-10T16:00:00,2026-08-10T17:00:00,Introduction to Computer Science
+Room2.22,2026-08-20T13:00:00,2026-08-20T14:00:00,Applied Software Engineering
+Room2.22,2026-08-21T14:00:00,2026-08-21T16:00:00,Research Methods in Computer Science
+Room2.22,2026-08-17T16:00:00,2026-08-17T17:00:00,Introduction to Computer Science
+Room2.22,2026-08-27T13:00:00,2026-08-27T14:00:00,Applied Software Engineering
+Room2.22,2026-08-28T14:00:00,2026-08-28T16:00:00,Research Methods in Computer Science
+Room2.22,2026-09-03T13:00:00,2026-09-03T14:00:00,Applied Software Engineering
+Room2.22,2026-09-04T14:00:00,2026-09-04T16:00:00,Research Methods in Computer Science
+Room2.22,2026-09-10T13:00:00,2026-09-10T14:00:00,Applied Software Engineering
+Room2.22,2026-09-11T14:00:00,2026-09-11T16:00:00,Research Methods in Computer Science
+Room2.22,2026-09-07T16:00:00,2026-09-07T17:00:00,Introduction to Computer Science
+Room2.22,2026-09-17T13:00:00,2026-09-17T14:00:00,Applied Software Engineering
+Room2.22,2026-09-18T14:00:00,2026-09-18T16:00:00,Research Methods in Computer Science
+Room2.52,2026-07-30T09:00:00,2026-07-30T11:00:00,Research Methods in Human-Computer Interaction
+Room2.52,2026-08-06T09:00:00,2026-08-06T11:00:00,Research Methods in Human-Computer Interaction
+Room2.52,2026-08-13T09:00:00,2026-08-13T11:00:00,Research Methods in Human-Computer Interaction
+Room2.52,2026-08-20T09:00:00,2026-08-20T11:00:00,Research Methods in Human-Computer Interaction
+Room2.52,2026-08-27T09:00:00,2026-08-27T11:00:00,Research Methods in Human-Computer Interaction
+Room2.52,2026-09-03T09:00:00,2026-09-03T11:00:00,Research Methods in Human-Computer Interaction
+Room2.52,2026-09-10T09:00:00,2026-09-10T11:00:00,Research Methods in Human-Computer Interaction
+Room2.53,2026-07-29T15:00:00,2026-07-29T17:00:00,Research Methods in Cyber Security
+Room2.53,2026-08-05T15:00:00,2026-08-05T17:00:00,Research Methods in Cyber Security
+Room2.53,2026-08-12T15:00:00,2026-08-12T17:00:00,Research Methods in Cyber Security
+Room2.53,2026-08-19T15:00:00,2026-08-19T17:00:00,Research Methods in Cyber Security
+Room2.53,2026-08-26T15:00:00,2026-08-26T17:00:00,Research Methods in Cyber Security
+Room2.53,2026-09-02T15:00:00,2026-09-02T17:00:00,Research Methods in Cyber Security
+Room2.54,2026-07-31T10:00:00,2026-07-31T12:00:00,Advanced Human-Computer Interaction
+Room2.54,2026-07-27T15:00:00,2026-07-27T17:00:00,Applied Systems Architecture
+Room2.54,2026-07-30T14:00:00,2026-07-30T16:00:00,Advanced Data Analysis
+Room2.54,2026-08-07T10:00:00,2026-08-07T12:00:00,Advanced Human-Computer Interaction
+Room2.54,2026-08-03T15:00:00,2026-08-03T17:00:00,Applied Systems Architecture
+Room2.54,2026-08-06T14:00:00,2026-08-06T16:00:00,Advanced Data Analysis
+Room2.54,2026-08-10T15:00:00,2026-08-10T17:00:00,Applied Systems Architecture
+Room2.54,2026-08-21T10:00:00,2026-08-21T12:00:00,Advanced Human-Computer Interaction
+Room2.54,2026-08-17T15:00:00,2026-08-17T17:00:00,Applied Systems Architecture
+Room2.54,2026-08-20T14:00:00,2026-08-20T16:00:00,Advanced Data Analysis
+Room2.54,2026-08-28T10:00:00,2026-08-28T12:00:00,Advanced Human-Computer Interaction
+Room2.54,2026-08-24T15:00:00,2026-08-24T17:00:00,Applied Systems Architecture
+Room2.54,2026-08-27T14:00:00,2026-08-27T16:00:00,Advanced Data Analysis
+Room2.54,2026-09-04T10:00:00,2026-09-04T12:00:00,Advanced Human-Computer Interaction
+Room2.54,2026-08-31T15:00:00,2026-08-31T17:00:00,Applied Systems Architecture
+Room2.54,2026-09-03T14:00:00,2026-09-03T16:00:00,Advanced Data Analysis
+Room2.54,2026-09-11T10:00:00,2026-09-11T12:00:00,Advanced Human-Computer Interaction
+Room2.54,2026-09-07T15:00:00,2026-09-07T17:00:00,Applied Systems Architecture
+Room2.54,2026-09-10T14:00:00,2026-09-10T16:00:00,Advanced Data Analysis
+Room2.54,2026-09-18T10:00:00,2026-09-18T12:00:00,Advanced Human-Computer Interaction
+Room2.54,2026-09-14T15:00:00,2026-09-14T17:00:00,Applied Systems Architecture
+Room2.54,2026-09-17T14:00:00,2026-09-17T16:00:00,Advanced Data Analysis
+Room3.01,2026-07-29T10:00:00,2026-07-29T11:00:00,Foundations of Data Analysis
+Room3.01,2026-07-27T11:00:00,2026-07-27T13:00:00,Introduction to Human-Computer Interaction
+Room3.01,2026-08-05T10:00:00,2026-08-05T11:00:00,Foundations of Data Analysis
+Room3.01,2026-08-03T11:00:00,2026-08-03T13:00:00,Introduction to Human-Computer Interaction
+Room3.01,2026-08-12T10:00:00,2026-08-12T11:00:00,Foundations of Data Analysis
+Room3.01,2026-08-10T11:00:00,2026-08-10T13:00:00,Introduction to Human-Computer Interaction
+Room3.01,2026-08-19T10:00:00,2026-08-19T11:00:00,Foundations of Data Analysis
+Room3.01,2026-08-17T11:00:00,2026-08-17T13:00:00,Introduction to Human-Computer Interaction
+Room3.01,2026-08-26T10:00:00,2026-08-26T11:00:00,Foundations of Data Analysis
+Room3.01,2026-08-24T11:00:00,2026-08-24T13:00:00,Introduction to Human-Computer Interaction
+Room3.01,2026-09-02T10:00:00,2026-09-02T11:00:00,Foundations of Data Analysis
+Room3.01,2026-08-31T11:00:00,2026-08-31T13:00:00,Introduction to Human-Computer Interaction
+Room3.01,2026-09-09T10:00:00,2026-09-09T11:00:00,Foundations of Data Analysis
+Room3.01,2026-09-07T11:00:00,2026-09-07T13:00:00,Introduction to Human-Computer Interaction
+Room3.01,2026-09-16T10:00:00,2026-09-16T11:00:00,Foundations of Data Analysis
+Room3.01,2026-09-14T11:00:00,2026-09-14T13:00:00,Introduction to Human-Computer Interaction
+Room3.03,2026-07-30T16:00:00,2026-07-30T18:00:00,Applied Data Analysis
+Room3.03,2026-07-29T15:00:00,2026-07-29T16:00:00,Introduction to Cyber Security
+Room3.03,2026-07-31T15:00:00,2026-07-31T17:00:00,Research Methods in Data Analysis
+Room3.03,2026-08-06T16:00:00,2026-08-06T18:00:00,Applied Data Analysis
+Room3.03,2026-08-07T15:00:00,2026-08-07T17:00:00,Research Methods in Data Analysis
+Room3.03,2026-08-13T16:00:00,2026-08-13T18:00:00,Applied Data Analysis
+Room3.03,2026-08-12T15:00:00,2026-08-12T16:00:00,Introduction to Cyber Security
+Room3.03,2026-08-14T15:00:00,2026-08-14T17:00:00,Research Methods in Data Analysis
+Room3.03,2026-08-20T16:00:00,2026-08-20T18:00:00,Applied Data Analysis
+Room3.03,2026-08-19T15:00:00,2026-08-19T16:00:00,Introduction to Cyber Security
+Room3.03,2026-08-27T16:00:00,2026-08-27T18:00:00,Applied Data Analysis
+Room3.03,2026-08-26T15:00:00,2026-08-26T16:00:00,Introduction to Cyber Security
+Room3.03,2026-08-28T15:00:00,2026-08-28T17:00:00,Research Methods in Data Analysis
+Room3.03,2026-09-03T16:00:00,2026-09-03T18:00:00,Applied Data Analysis
+Room3.03,2026-09-10T16:00:00,2026-09-10T18:00:00,Applied Data Analysis
+Room3.03,2026-09-09T15:00:00,2026-09-09T16:00:00,Introduction to Cyber Security
+Room3.03,2026-09-11T15:00:00,2026-09-11T17:00:00,Research Methods in Data Analysis
+Room3.03,2026-09-17T16:00:00,2026-09-17T18:00:00,Applied Data Analysis
+Room3.03,2026-09-18T15:00:00,2026-09-18T17:00:00,Research Methods in Data Analysis
+Room3.04,2026-07-27T15:00:00,2026-07-27T16:00:00,Applied Software Engineering
+Room3.04,2026-07-27T16:00:00,2026-07-27T18:00:00,Advanced Machine Learning
+Room3.04,2026-07-28T10:00:00,2026-07-28T12:00:00,Applied Cyber Security
+Room3.04,2026-08-03T15:00:00,2026-08-03T16:00:00,Applied Software Engineering
+Room3.04,2026-08-03T16:00:00,2026-08-03T18:00:00,Advanced Machine Learning
+Room3.04,2026-08-04T10:00:00,2026-08-04T12:00:00,Applied Cyber Security
+Room3.04,2026-08-10T16:00:00,2026-08-10T18:00:00,Advanced Machine Learning
+Room3.04,2026-08-11T10:00:00,2026-08-11T12:00:00,Applied Cyber Security
+Room3.04,2026-08-17T15:00:00,2026-08-17T16:00:00,Applied Software Engineering
+Room3.04,2026-08-17T16:00:00,2026-08-17T18:00:00,Advanced Machine Learning
+Room3.04,2026-08-18T10:00:00,2026-08-18T12:00:00,Applied Cyber Security
+Room3.04,2026-08-25T10:00:00,2026-08-25T12:00:00,Applied Cyber Security
+Room3.04,2026-08-31T15:00:00,2026-08-31T16:00:00,Applied Software Engineering
+Room3.04,2026-08-31T16:00:00,2026-08-31T18:00:00,Advanced Machine Learning
+Room3.04,2026-09-01T10:00:00,2026-09-01T12:00:00,Applied Cyber Security
+Room3.04,2026-09-07T15:00:00,2026-09-07T16:00:00,Applied Software Engineering
+Room3.04,2026-09-07T16:00:00,2026-09-07T18:00:00,Advanced Machine Learning
+Room3.04,2026-09-08T10:00:00,2026-09-08T12:00:00,Applied Cyber Security
+Room3.04,2026-09-14T15:00:00,2026-09-14T16:00:00,Applied Software Engineering
+Room3.04,2026-09-14T16:00:00,2026-09-14T18:00:00,Advanced Machine Learning
+Room3.04,2026-09-15T10:00:00,2026-09-15T12:00:00,Applied Cyber Security
+Room3.05,2026-07-29T09:00:00,2026-07-29T11:00:00,Introduction to Software Engineering
+Room3.05,2026-08-05T09:00:00,2026-08-05T11:00:00,Introduction to Software Engineering
+Room3.05,2026-08-12T09:00:00,2026-08-12T11:00:00,Introduction to Software Engineering
+Room3.05,2026-08-19T09:00:00,2026-08-19T11:00:00,Introduction to Software Engineering
+Room3.05,2026-08-26T09:00:00,2026-08-26T11:00:00,Introduction to Software Engineering
+Room3.05,2026-09-02T09:00:00,2026-09-02T11:00:00,Introduction to Software Engineering
+Room3.05,2026-09-09T09:00:00,2026-09-09T11:00:00,Introduction to Software Engineering
+Room3.05,2026-09-16T09:00:00,2026-09-16T11:00:00,Introduction to Software Engineering
+Room3.16,2026-07-29T10:00:00,2026-07-29T12:00:00,Applied Human-Computer Interaction
+Room3.16,2026-08-03T10:00:00,2026-08-03T12:00:00,Foundations of Data Analysis
+Room3.16,2026-08-07T16:00:00,2026-08-07T18:00:00,Introduction to Machine Learning
+Room3.16,2026-08-05T10:00:00,2026-08-05T12:00:00,Applied Human-Computer Interaction
+Room3.16,2026-08-10T10:00:00,2026-08-10T12:00:00,Foundations of Data Analysis
+Room3.16,2026-08-14T16:00:00,2026-08-14T18:00:00,Introduction to Machine Learning
+Room3.16,2026-08-12T10:00:00,2026-08-12T12:00:00,Applied Human-Computer Interaction
+Room3.16,2026-08-21T16:00:00,2026-08-21T18:00:00,Introduction to Machine Learning
+Room3.16,2026-08-19T10:00:00,2026-08-19T12:00:00,Applied Human-Computer Interaction
+Room3.16,2026-08-24T10:00:00,2026-08-24T12:00:00,Foundations of Data Analysis
+Room3.16,2026-08-28T16:00:00,2026-08-28T18:00:00,Introduction to Machine Learning
+Room3.16,2026-08-26T10:00:00,2026-08-26T12:00:00,Applied Human-Computer Interaction
+Room3.16,2026-08-31T10:00:00,2026-08-31T12:00:00,Foundations of Data Analysis
+Room3.16,2026-09-04T16:00:00,2026-09-04T18:00:00,Introduction to Machine Learning
+Room3.16,2026-09-02T10:00:00,2026-09-02T12:00:00,Applied Human-Computer Interaction
+Room3.16,2026-09-07T10:00:00,2026-09-07T12:00:00,Foundations of Data Analysis
+Room3.16,2026-09-11T16:00:00,2026-09-11T18:00:00,Introduction to Machine Learning
+Room3.16,2026-09-09T10:00:00,2026-09-09T12:00:00,Applied Human-Computer Interaction
+Room3.16,2026-09-14T10:00:00,2026-09-14T12:00:00,Foundations of Data Analysis
+Room3.16,2026-09-18T16:00:00,2026-09-18T18:00:00,Introduction to Machine Learning
+Room3.16,2026-09-16T10:00:00,2026-09-16T12:00:00,Applied Human-Computer Interaction
+Room3.26,2026-07-29T09:00:00,2026-07-29T10:00:00,Foundations of Machine Learning
+Room3.26,2026-08-05T09:00:00,2026-08-05T10:00:00,Foundations of Machine Learning
+Room3.26,2026-08-12T09:00:00,2026-08-12T10:00:00,Foundations of Machine Learning
+Room3.26,2026-08-19T09:00:00,2026-08-19T10:00:00,Foundations of Machine Learning
+Room3.26,2026-08-26T09:00:00,2026-08-26T10:00:00,Foundations of Machine Learning
+Room3.26,2026-09-02T09:00:00,2026-09-02T10:00:00,Foundations of Machine Learning
+Room3.26,2026-09-09T09:00:00,2026-09-09T10:00:00,Foundations of Machine Learning
+Room3.26,2026-09-16T09:00:00,2026-09-16T10:00:00,Foundations of Machine Learning
+Room3.27,2026-07-30T14:00:00,2026-07-30T15:00:00,Introduction to Computer Science
+Room3.27,2026-07-30T13:00:00,2026-07-30T14:00:00,Foundations of Human-Computer Interaction
+Room3.27,2026-07-27T14:00:00,2026-07-27T15:00:00,Advanced Human-Computer Interaction
+Room3.27,2026-08-06T14:00:00,2026-08-06T15:00:00,Introduction to Computer Science
+Room3.27,2026-08-06T13:00:00,2026-08-06T14:00:00,Foundations of Human-Computer Interaction
+Room3.27,2026-08-03T14:00:00,2026-08-03T15:00:00,Advanced Human-Computer Interaction
+Room3.27,2026-08-13T14:00:00,2026-08-13T15:00:00,Introduction to Computer Science
+Room3.27,2026-08-13T13:00:00,2026-08-13T14:00:00,Foundations of Human-Computer Interaction
+Room3.27,2026-08-10T14:00:00,2026-08-10T15:00:00,Advanced Human-Computer Interaction
+Room3.27,2026-08-20T14:00:00,2026-08-20T15:00:00,Introduction to Computer Science
+Room3.27,2026-08-20T13:00:00,2026-08-20T14:00:00,Foundations of Human-Computer Interaction
+Room3.27,2026-08-27T14:00:00,2026-08-27T15:00:00,Introduction to Computer Science
+Room3.27,2026-08-27T13:00:00,2026-08-27T14:00:00,Foundations of Human-Computer Interaction
+Room3.27,2026-08-24T14:00:00,2026-08-24T15:00:00,Advanced Human-Computer Interaction
+Room3.27,2026-09-03T14:00:00,2026-09-03T15:00:00,Introduction to Computer Science
+Room3.27,2026-09-03T13:00:00,2026-09-03T14:00:00,Foundations of Human-Computer Interaction
+Room3.27,2026-08-31T14:00:00,2026-08-31T15:00:00,Advanced Human-Computer Interaction
+Room3.27,2026-09-10T14:00:00,2026-09-10T15:00:00,Introduction to Computer Science
+Room3.27,2026-09-10T13:00:00,2026-09-10T14:00:00,Foundations of Human-Computer Interaction
+Room3.27,2026-09-07T14:00:00,2026-09-07T15:00:00,Advanced Human-Computer Interaction
+Room3.27,2026-09-17T14:00:00,2026-09-17T15:00:00,Introduction to Computer Science
+Room3.27,2026-09-17T13:00:00,2026-09-17T14:00:00,Foundations of Human-Computer Interaction
+Room3.27,2026-09-14T14:00:00,2026-09-14T15:00:00,Advanced Human-Computer Interaction
+Room3.51,2026-07-29T16:00:00,2026-07-29T17:00:00,Introduction to Machine Learning
+Room3.51,2026-07-30T13:00:00,2026-07-30T15:00:00,Research Methods in Data Analysis
+Room3.51,2026-08-06T13:00:00,2026-08-06T15:00:00,Research Methods in Data Analysis
+Room3.51,2026-08-12T16:00:00,2026-08-12T17:00:00,Introduction to Machine Learning
+Room3.51,2026-08-13T13:00:00,2026-08-13T15:00:00,Research Methods in Data Analysis
+Room3.51,2026-08-19T16:00:00,2026-08-19T17:00:00,Introduction to Machine Learning
+Room3.51,2026-08-20T13:00:00,2026-08-20T15:00:00,Research Methods in Data Analysis
+Room3.51,2026-08-26T16:00:00,2026-08-26T17:00:00,Introduction to Machine Learning
+Room3.51,2026-08-27T13:00:00,2026-08-27T15:00:00,Research Methods in Data Analysis
+Room3.51,2026-09-02T16:00:00,2026-09-02T17:00:00,Introduction to Machine Learning
+Room3.51,2026-09-03T13:00:00,2026-09-03T15:00:00,Research Methods in Data Analysis
+Room3.51,2026-09-09T16:00:00,2026-09-09T17:00:00,Introduction to Machine Learning
+Room3.51,2026-09-10T13:00:00,2026-09-10T15:00:00,Research Methods in Data Analysis
+Room3.51,2026-09-16T16:00:00,2026-09-16T17:00:00,Introduction to Machine Learning
+Room3.51,2026-09-17T13:00:00,2026-09-17T15:00:00,Research Methods in Data Analysis
+Room3.53,2026-07-28T09:00:00,2026-07-28T11:00:00,Applied Systems Architecture
+Room3.53,2026-08-11T09:00:00,2026-08-11T11:00:00,Applied Systems Architecture
+Room3.53,2026-08-18T09:00:00,2026-08-18T11:00:00,Applied Systems Architecture
+Room3.53,2026-08-25T09:00:00,2026-08-25T11:00:00,Applied Systems Architecture
+Room3.53,2026-09-01T09:00:00,2026-09-01T11:00:00,Applied Systems Architecture
+Room3.53,2026-09-08T09:00:00,2026-09-08T11:00:00,Applied Systems Architecture
+Room3.53,2026-09-15T09:00:00,2026-09-15T11:00:00,Applied Systems Architecture
+Room3.54,2026-07-28T10:00:00,2026-07-28T11:00:00,Applied Computer Science
+Room3.54,2026-08-11T10:00:00,2026-08-11T11:00:00,Applied Computer Science
+Room3.54,2026-08-18T10:00:00,2026-08-18T11:00:00,Applied Computer Science
+Room3.54,2026-08-25T10:00:00,2026-08-25T11:00:00,Applied Computer Science
+Room3.54,2026-09-01T10:00:00,2026-09-01T11:00:00,Applied Computer Science
+Room3.54,2026-09-08T10:00:00,2026-09-08T11:00:00,Applied Computer Science
+Room3.54,2026-09-15T10:00:00,2026-09-15T11:00:00,Applied Computer Science
+Room3.57,2026-07-31T15:00:00,2026-07-31T17:00:00,Introduction to Computer Science
+Room3.57,2026-07-27T11:00:00,2026-07-27T12:00:00,Applied Software Engineering
+Room3.57,2026-08-03T11:00:00,2026-08-03T12:00:00,Applied Software Engineering
+Room3.57,2026-08-14T15:00:00,2026-08-14T17:00:00,Introduction to Computer Science
+Room3.57,2026-08-10T11:00:00,2026-08-10T12:00:00,Applied Software Engineering
+Room3.57,2026-08-21T15:00:00,2026-08-21T17:00:00,Introduction to Computer Science
+Room3.57,2026-08-17T11:00:00,2026-08-17T12:00:00,Applied Software Engineering
+Room3.57,2026-08-28T15:00:00,2026-08-28T17:00:00,Introduction to Computer Science
+Room3.57,2026-08-24T11:00:00,2026-08-24T12:00:00,Applied Software Engineering
+Room3.57,2026-09-04T15:00:00,2026-09-04T17:00:00,Introduction to Computer Science
+Room3.57,2026-08-31T11:00:00,2026-08-31T12:00:00,Applied Software Engineering
+Room3.57,2026-09-11T15:00:00,2026-09-11T17:00:00,Introduction to Computer Science
+Room3.57,2026-09-07T11:00:00,2026-09-07T12:00:00,Applied Software Engineering
+Room3.57,2026-09-14T11:00:00,2026-09-14T12:00:00,Applied Software Engineering
+Room3.58,2026-07-30T09:00:00,2026-07-30T11:00:00,Advanced Machine Learning
+Room3.58,2026-07-29T15:00:00,2026-07-29T17:00:00,Foundations of Machine Learning
+Room3.58,2026-08-06T09:00:00,2026-08-06T11:00:00,Advanced Machine Learning
+Room3.58,2026-08-05T15:00:00,2026-08-05T17:00:00,Foundations of Machine Learning
+Room3.58,2026-08-13T09:00:00,2026-08-13T11:00:00,Advanced Machine Learning
+Room3.58,2026-08-13T11:00:00,2026-08-13T12:00:00,Applied Computer Science
+Room3.58,2026-08-12T15:00:00,2026-08-12T17:00:00,Foundations of Machine Learning
+Room3.58,2026-08-20T09:00:00,2026-08-20T11:00:00,Advanced Machine Learning
+Room3.58,2026-08-20T11:00:00,2026-08-20T12:00:00,Applied Computer Science
+Room3.58,2026-08-19T15:00:00,2026-08-19T17:00:00,Foundations of Machine Learning
+Room3.58,2026-08-27T09:00:00,2026-08-27T11:00:00,Advanced Machine Learning
+Room3.58,2026-08-27T11:00:00,2026-08-27T12:00:00,Applied Computer Science
+Room3.58,2026-08-26T15:00:00,2026-08-26T17:00:00,Foundations of Machine Learning
+Room3.58,2026-09-03T09:00:00,2026-09-03T11:00:00,Advanced Machine Learning
+Room3.58,2026-09-03T11:00:00,2026-09-03T12:00:00,Applied Computer Science
+Room3.58,2026-09-02T15:00:00,2026-09-02T17:00:00,Foundations of Machine Learning
+Room3.58,2026-09-10T11:00:00,2026-09-10T12:00:00,Applied Computer Science
+Room3.58,2026-09-09T15:00:00,2026-09-09T17:00:00,Foundations of Machine Learning
+Room3.58,2026-09-16T15:00:00,2026-09-16T17:00:00,Foundations of Machine Learning
+Room4.01,2026-07-27T15:00:00,2026-07-27T16:00:00,Advanced Human-Computer Interaction
+Room4.01,2026-07-30T15:00:00,2026-07-30T17:00:00,Introduction to Computer Science
+Room4.01,2026-08-03T15:00:00,2026-08-03T16:00:00,Advanced Human-Computer Interaction
+Room4.01,2026-08-06T15:00:00,2026-08-06T17:00:00,Introduction to Computer Science
+Room4.01,2026-08-10T15:00:00,2026-08-10T16:00:00,Advanced Human-Computer Interaction
+Room4.01,2026-08-17T15:00:00,2026-08-17T16:00:00,Advanced Human-Computer Interaction
+Room4.01,2026-08-20T15:00:00,2026-08-20T17:00:00,Introduction to Computer Science
+Room4.01,2026-08-24T15:00:00,2026-08-24T16:00:00,Advanced Human-Computer Interaction
+Room4.01,2026-08-27T15:00:00,2026-08-27T17:00:00,Introduction to Computer Science
+Room4.01,2026-08-31T15:00:00,2026-08-31T16:00:00,Advanced Human-Computer Interaction
+Room4.01,2026-09-07T15:00:00,2026-09-07T16:00:00,Advanced Human-Computer Interaction
+Room4.01,2026-09-10T15:00:00,2026-09-10T17:00:00,Introduction to Computer Science
+Room4.01,2026-09-14T15:00:00,2026-09-14T16:00:00,Advanced Human-Computer Interaction
+Room4.01,2026-09-17T15:00:00,2026-09-17T17:00:00,Introduction to Computer Science
+Room4.05,2026-08-06T11:00:00,2026-08-06T13:00:00,Applied Computer Science
+Room4.05,2026-08-13T11:00:00,2026-08-13T13:00:00,Applied Computer Science
+Room4.05,2026-08-20T11:00:00,2026-08-20T13:00:00,Applied Computer Science
+Room4.05,2026-08-27T11:00:00,2026-08-27T13:00:00,Applied Computer Science
+Room4.05,2026-09-03T11:00:00,2026-09-03T13:00:00,Applied Computer Science
+Room4.05,2026-09-10T11:00:00,2026-09-10T13:00:00,Applied Computer Science
+Room4.13,2026-07-28T16:00:00,2026-07-28T18:00:00,Introduction to Human-Computer Interaction
+Room4.13,2026-08-04T16:00:00,2026-08-04T18:00:00,Introduction to Human-Computer Interaction
+Room4.13,2026-08-03T13:00:00,2026-08-03T14:00:00,Introduction to Software Engineering
+Room4.13,2026-08-11T16:00:00,2026-08-11T18:00:00,Introduction to Human-Computer Interaction
+Room4.13,2026-08-10T13:00:00,2026-08-10T14:00:00,Introduction to Software Engineering
+Room4.13,2026-08-17T13:00:00,2026-08-17T14:00:00,Introduction to Software Engineering
+Room4.13,2026-08-25T16:00:00,2026-08-25T18:00:00,Introduction to Human-Computer Interaction
+Room4.13,2026-08-24T13:00:00,2026-08-24T14:00:00,Introduction to Software Engineering
+Room4.13,2026-09-01T16:00:00,2026-09-01T18:00:00,Introduction to Human-Computer Interaction
+Room4.13,2026-08-31T13:00:00,2026-08-31T14:00:00,Introduction to Software Engineering
+Room4.13,2026-09-08T16:00:00,2026-09-08T18:00:00,Introduction to Human-Computer Interaction
+Room4.13,2026-09-07T13:00:00,2026-09-07T14:00:00,Introduction to Software Engineering
+Room4.13,2026-09-15T16:00:00,2026-09-15T18:00:00,Introduction to Human-Computer Interaction
+Room4.18,2026-07-27T13:00:00,2026-07-27T15:00:00,Applied Cyber Security
+Room4.18,2026-08-03T13:00:00,2026-08-03T15:00:00,Applied Cyber Security
+Room4.18,2026-08-10T13:00:00,2026-08-10T15:00:00,Applied Cyber Security
+Room4.18,2026-08-17T13:00:00,2026-08-17T15:00:00,Applied Cyber Security
+Room4.18,2026-08-24T13:00:00,2026-08-24T15:00:00,Applied Cyber Security
+Room4.18,2026-08-31T13:00:00,2026-08-31T15:00:00,Applied Cyber Security
+Room4.18,2026-09-07T13:00:00,2026-09-07T15:00:00,Applied Cyber Security
+Room4.18,2026-09-14T13:00:00,2026-09-14T15:00:00,Applied Cyber Security
+Room4.19,2026-07-31T10:00:00,2026-07-31T12:00:00,Foundations of Human-Computer Interaction
+Room4.19,2026-08-07T10:00:00,2026-08-07T12:00:00,Foundations of Human-Computer Interaction
+Room4.19,2026-08-21T10:00:00,2026-08-21T12:00:00,Foundations of Human-Computer Interaction
+Room4.19,2026-08-28T10:00:00,2026-08-28T12:00:00,Foundations of Human-Computer Interaction
+Room4.19,2026-09-04T10:00:00,2026-09-04T12:00:00,Foundations of Human-Computer Interaction
+Room4.21,2026-07-31T11:00:00,2026-07-31T12:00:00,Applied Computer Science
+Room4.21,2026-07-27T11:00:00,2026-07-27T12:00:00,Advanced Computer Science
+Room4.21,2026-07-30T13:00:00,2026-07-30T15:00:00,Advanced Data Analysis
+Room4.21,2026-08-07T11:00:00,2026-08-07T12:00:00,Applied Computer Science
+Room4.21,2026-08-03T11:00:00,2026-08-03T12:00:00,Advanced Computer Science
+Room4.21,2026-08-06T13:00:00,2026-08-06T15:00:00,Advanced Data Analysis
+Room4.21,2026-08-14T11:00:00,2026-08-14T12:00:00,Applied Computer Science
+Room4.21,2026-08-10T11:00:00,2026-08-10T12:00:00,Advanced Computer Science
+Room4.21,2026-08-13T13:00:00,2026-08-13T15:00:00,Advanced Data Analysis
+Room4.21,2026-08-21T11:00:00,2026-08-21T12:00:00,Applied Computer Science
+Room4.21,2026-08-17T11:00:00,2026-08-17T12:00:00,Advanced Computer Science
+Room4.21,2026-08-20T13:00:00,2026-08-20T15:00:00,Advanced Data Analysis
+Room4.21,2026-08-28T11:00:00,2026-08-28T12:00:00,Applied Computer Science
+Room4.21,2026-08-24T11:00:00,2026-08-24T12:00:00,Advanced Computer Science
+Room4.21,2026-08-27T13:00:00,2026-08-27T15:00:00,Advanced Data Analysis
+Room4.21,2026-09-04T11:00:00,2026-09-04T12:00:00,Applied Computer Science
+Room4.21,2026-08-31T11:00:00,2026-08-31T12:00:00,Advanced Computer Science
+Room4.21,2026-09-03T13:00:00,2026-09-03T15:00:00,Advanced Data Analysis
+Room4.21,2026-09-11T11:00:00,2026-09-11T12:00:00,Applied Computer Science
+Room4.21,2026-09-10T13:00:00,2026-09-10T15:00:00,Advanced Data Analysis
+Room4.21,2026-09-18T11:00:00,2026-09-18T12:00:00,Applied Computer Science
+Room4.21,2026-09-14T11:00:00,2026-09-14T12:00:00,Advanced Computer Science
+Room4.21,2026-09-17T13:00:00,2026-09-17T15:00:00,Advanced Data Analysis
+Room4.22,2026-07-30T09:00:00,2026-07-30T10:00:00,Introduction to Human-Computer Interaction
+Room4.22,2026-08-06T09:00:00,2026-08-06T10:00:00,Introduction to Human-Computer Interaction
+Room4.22,2026-08-13T09:00:00,2026-08-13T10:00:00,Introduction to Human-Computer Interaction
+Room4.22,2026-08-20T09:00:00,2026-08-20T10:00:00,Introduction to Human-Computer Interaction
+Room4.22,2026-08-27T09:00:00,2026-08-27T10:00:00,Introduction to Human-Computer Interaction
+Room4.22,2026-09-03T09:00:00,2026-09-03T10:00:00,Introduction to Human-Computer Interaction
+Room4.22,2026-09-17T09:00:00,2026-09-17T10:00:00,Introduction to Human-Computer Interaction
+Room4.55,2026-07-28T09:00:00,2026-07-28T11:00:00,Research Methods in Cyber Security
+Room4.55,2026-07-28T13:00:00,2026-07-28T15:00:00,Introduction to Computer Science
+Room4.55,2026-07-31T15:00:00,2026-07-31T17:00:00,Advanced Computer Science
+Room4.55,2026-08-04T09:00:00,2026-08-04T11:00:00,Research Methods in Cyber Security
+Room4.55,2026-08-04T13:00:00,2026-08-04T15:00:00,Introduction to Computer Science
+Room4.55,2026-08-07T15:00:00,2026-08-07T17:00:00,Advanced Computer Science
+Room4.55,2026-08-11T09:00:00,2026-08-11T11:00:00,Research Methods in Cyber Security
+Room4.55,2026-08-14T15:00:00,2026-08-14T17:00:00,Advanced Computer Science
+Room4.55,2026-08-18T09:00:00,2026-08-18T11:00:00,Research Methods in Cyber Security
+Room4.55,2026-08-18T13:00:00,2026-08-18T15:00:00,Introduction to Computer Science
+Room4.55,2026-08-21T15:00:00,2026-08-21T17:00:00,Advanced Computer Science
+Room4.55,2026-08-25T09:00:00,2026-08-25T11:00:00,Research Methods in Cyber Security
+Room4.55,2026-08-25T13:00:00,2026-08-25T15:00:00,Introduction to Computer Science
+Room4.55,2026-08-28T15:00:00,2026-08-28T17:00:00,Advanced Computer Science
+Room4.55,2026-09-01T13:00:00,2026-09-01T15:00:00,Introduction to Computer Science
+Room4.55,2026-09-04T15:00:00,2026-09-04T17:00:00,Advanced Computer Science
+Room4.55,2026-09-08T09:00:00,2026-09-08T11:00:00,Research Methods in Cyber Security
+Room4.55,2026-09-08T13:00:00,2026-09-08T15:00:00,Introduction to Computer Science
+Room4.55,2026-09-11T15:00:00,2026-09-11T17:00:00,Advanced Computer Science
+Room4.55,2026-09-15T09:00:00,2026-09-15T11:00:00,Research Methods in Cyber Security
+Room4.55,2026-09-15T13:00:00,2026-09-15T15:00:00,Introduction to Computer Science
+Room4.55,2026-09-18T15:00:00,2026-09-18T17:00:00,Advanced Computer Science
+Room4.56,2026-07-29T13:00:00,2026-07-29T14:00:00,Foundations of Machine Learning
+Room4.56,2026-07-31T11:00:00,2026-07-31T13:00:00,Applied Computer Science
+Room4.56,2026-08-05T13:00:00,2026-08-05T14:00:00,Foundations of Machine Learning
+Room4.56,2026-08-07T11:00:00,2026-08-07T13:00:00,Applied Computer Science
+Room4.56,2026-08-12T13:00:00,2026-08-12T14:00:00,Foundations of Machine Learning
+Room4.56,2026-08-14T11:00:00,2026-08-14T13:00:00,Applied Computer Science
+Room4.56,2026-08-21T11:00:00,2026-08-21T13:00:00,Applied Computer Science
+Room4.56,2026-08-26T13:00:00,2026-08-26T14:00:00,Foundations of Machine Learning
+Room4.56,2026-08-28T11:00:00,2026-08-28T13:00:00,Applied Computer Science
+Room4.56,2026-09-02T13:00:00,2026-09-02T14:00:00,Foundations of Machine Learning
+Room4.56,2026-09-04T11:00:00,2026-09-04T13:00:00,Applied Computer Science
+Room4.56,2026-09-09T13:00:00,2026-09-09T14:00:00,Foundations of Machine Learning
+Room4.56,2026-09-11T11:00:00,2026-09-11T13:00:00,Applied Computer Science
+Room4.56,2026-09-18T11:00:00,2026-09-18T13:00:00,Applied Computer Science
+Room4.58,2026-07-30T09:00:00,2026-07-30T11:00:00,Research Methods in Data Analysis
+Room4.58,2026-07-28T11:00:00,2026-07-28T13:00:00,Advanced Systems Architecture
+Room4.58,2026-07-28T09:00:00,2026-07-28T10:00:00,Applied Human-Computer Interaction
+Room4.58,2026-08-06T09:00:00,2026-08-06T11:00:00,Research Methods in Data Analysis
+Room4.58,2026-08-04T11:00:00,2026-08-04T13:00:00,Advanced Systems Architecture
+Room4.58,2026-08-13T09:00:00,2026-08-13T11:00:00,Research Methods in Data Analysis
+Room4.58,2026-08-11T11:00:00,2026-08-11T13:00:00,Advanced Systems Architecture
+Room4.58,2026-08-11T09:00:00,2026-08-11T10:00:00,Applied Human-Computer Interaction
+Room4.58,2026-08-20T09:00:00,2026-08-20T11:00:00,Research Methods in Data Analysis
+Room4.58,2026-08-18T11:00:00,2026-08-18T13:00:00,Advanced Systems Architecture
+Room4.58,2026-08-18T09:00:00,2026-08-18T10:00:00,Applied Human-Computer Interaction
+Room4.58,2026-08-27T09:00:00,2026-08-27T11:00:00,Research Methods in Data Analysis
+Room4.58,2026-08-25T11:00:00,2026-08-25T13:00:00,Advanced Systems Architecture
+Room4.58,2026-08-25T09:00:00,2026-08-25T10:00:00,Applied Human-Computer Interaction
+Room4.58,2026-09-03T09:00:00,2026-09-03T11:00:00,Research Methods in Data Analysis
+Room4.58,2026-09-01T11:00:00,2026-09-01T13:00:00,Advanced Systems Architecture
+Room4.58,2026-09-01T09:00:00,2026-09-01T10:00:00,Applied Human-Computer Interaction
+Room4.58,2026-09-10T09:00:00,2026-09-10T11:00:00,Research Methods in Data Analysis
+Room4.58,2026-09-08T11:00:00,2026-09-08T13:00:00,Advanced Systems Architecture
+Room4.58,2026-09-08T09:00:00,2026-09-08T10:00:00,Applied Human-Computer Interaction
+Room4.58,2026-09-15T11:00:00,2026-09-15T13:00:00,Advanced Systems Architecture
+Room4.58,2026-09-15T09:00:00,2026-09-15T10:00:00,Applied Human-Computer Interaction
+Room4.59,2026-07-27T10:00:00,2026-07-27T11:00:00,Advanced Computer Science
+Room4.59,2026-07-31T16:00:00,2026-07-31T17:00:00,Foundations of Computer Science
+Room4.59,2026-08-03T10:00:00,2026-08-03T11:00:00,Advanced Computer Science
+Room4.59,2026-08-07T16:00:00,2026-08-07T17:00:00,Foundations of Computer Science
+Room4.59,2026-08-10T10:00:00,2026-08-10T11:00:00,Advanced Computer Science
+Room4.59,2026-08-14T16:00:00,2026-08-14T17:00:00,Foundations of Computer Science
+Room4.59,2026-08-17T10:00:00,2026-08-17T11:00:00,Advanced Computer Science
+Room4.59,2026-08-21T16:00:00,2026-08-21T17:00:00,Foundations of Computer Science
+Room4.59,2026-08-24T10:00:00,2026-08-24T11:00:00,Advanced Computer Science
+Room4.59,2026-08-28T16:00:00,2026-08-28T17:00:00,Foundations of Computer Science
+Room4.59,2026-08-31T10:00:00,2026-08-31T11:00:00,Advanced Computer Science
+Room4.59,2026-09-07T10:00:00,2026-09-07T11:00:00,Advanced Computer Science
+Room4.59,2026-09-11T16:00:00,2026-09-11T17:00:00,Foundations of Computer Science
+Room4.59,2026-09-14T10:00:00,2026-09-14T11:00:00,Advanced Computer Science
+Room4.59,2026-09-18T16:00:00,2026-09-18T17:00:00,Foundations of Computer Science
+Room5.03,2026-07-28T16:00:00,2026-07-28T18:00:00,Applied Computer Science
+Room5.03,2026-07-27T10:00:00,2026-07-27T12:00:00,Applied Software Engineering
+Room5.03,2026-08-04T16:00:00,2026-08-04T18:00:00,Applied Computer Science
+Room5.03,2026-08-11T16:00:00,2026-08-11T18:00:00,Applied Computer Science
+Room5.03,2026-08-10T10:00:00,2026-08-10T12:00:00,Applied Software Engineering
+Room5.03,2026-08-18T16:00:00,2026-08-18T18:00:00,Applied Computer Science
+Room5.03,2026-08-17T10:00:00,2026-08-17T12:00:00,Applied Software Engineering
+Room5.03,2026-08-25T16:00:00,2026-08-25T18:00:00,Applied Computer Science
+Room5.03,2026-09-01T16:00:00,2026-09-01T18:00:00,Applied Computer Science
+Room5.03,2026-08-31T10:00:00,2026-08-31T12:00:00,Applied Software Engineering
+Room5.03,2026-09-08T16:00:00,2026-09-08T18:00:00,Applied Computer Science
+Room5.03,2026-09-07T10:00:00,2026-09-07T12:00:00,Applied Software Engineering
+Room5.03,2026-09-15T16:00:00,2026-09-15T18:00:00,Applied Computer Science
+Room5.03,2026-09-14T10:00:00,2026-09-14T12:00:00,Applied Software Engineering
+Room5.05,2026-07-27T10:00:00,2026-07-27T11:00:00,Applied Software Engineering
+Room5.05,2026-07-28T15:00:00,2026-07-28T16:00:00,Introduction to Cyber Security
+Room5.05,2026-07-29T14:00:00,2026-07-29T16:00:00,Advanced Software Engineering
+Room5.05,2026-08-03T10:00:00,2026-08-03T11:00:00,Applied Software Engineering
+Room5.05,2026-08-04T15:00:00,2026-08-04T16:00:00,Introduction to Cyber Security
+Room5.05,2026-08-05T14:00:00,2026-08-05T16:00:00,Advanced Software Engineering
+Room5.05,2026-08-10T10:00:00,2026-08-10T11:00:00,Applied Software Engineering
+Room5.05,2026-08-11T15:00:00,2026-08-11T16:00:00,Introduction to Cyber Security
+Room5.05,2026-08-12T14:00:00,2026-08-12T16:00:00,Advanced Software Engineering
+Room5.05,2026-08-17T10:00:00,2026-08-17T11:00:00,Applied Software Engineering
+Room5.05,2026-08-19T14:00:00,2026-08-19T16:00:00,Advanced Software Engineering
+Room5.05,2026-08-24T10:00:00,2026-08-24T11:00:00,Applied Software Engineering
+Room5.05,2026-08-25T15:00:00,2026-08-25T16:00:00,Introduction to Cyber Security
+Room5.05,2026-08-26T14:00:00,2026-08-26T16:00:00,Advanced Software Engineering
+Room5.05,2026-08-31T10:00:00,2026-08-31T11:00:00,Applied Software Engineering
+Room5.05,2026-09-01T15:00:00,2026-09-01T16:00:00,Introduction to Cyber Security
+Room5.05,2026-09-02T14:00:00,2026-09-02T16:00:00,Advanced Software Engineering
+Room5.05,2026-09-07T10:00:00,2026-09-07T11:00:00,Applied Software Engineering
+Room5.05,2026-09-08T15:00:00,2026-09-08T16:00:00,Introduction to Cyber Security
+Room5.05,2026-09-09T14:00:00,2026-09-09T16:00:00,Advanced Software Engineering
+Room5.05,2026-09-14T10:00:00,2026-09-14T11:00:00,Applied Software Engineering
+Room5.05,2026-09-15T15:00:00,2026-09-15T16:00:00,Introduction to Cyber Security
+Room5.05,2026-09-16T14:00:00,2026-09-16T16:00:00,Advanced Software Engineering
+Room5.06,2026-07-27T11:00:00,2026-07-27T13:00:00,Foundations of Software Engineering
+Room5.06,2026-07-27T13:00:00,2026-07-27T14:00:00,Advanced Systems Architecture
+Room5.06,2026-08-03T11:00:00,2026-08-03T13:00:00,Foundations of Software Engineering
+Room5.06,2026-08-06T11:00:00,2026-08-06T12:00:00,Foundations of Software Engineering
+Room5.06,2026-08-03T13:00:00,2026-08-03T14:00:00,Advanced Systems Architecture
+Room5.06,2026-08-10T11:00:00,2026-08-10T13:00:00,Foundations of Software Engineering
+Room5.06,2026-08-13T11:00:00,2026-08-13T12:00:00,Foundations of Software Engineering
+Room5.06,2026-08-10T13:00:00,2026-08-10T14:00:00,Advanced Systems Architecture
+Room5.06,2026-08-17T13:00:00,2026-08-17T14:00:00,Advanced Systems Architecture
+Room5.06,2026-08-24T11:00:00,2026-08-24T13:00:00,Foundations of Software Engineering
+Room5.06,2026-08-27T11:00:00,2026-08-27T12:00:00,Foundations of Software Engineering
+Room5.06,2026-08-24T13:00:00,2026-08-24T14:00:00,Advanced Systems Architecture
+Room5.06,2026-08-31T11:00:00,2026-08-31T13:00:00,Foundations of Software Engineering
+Room5.06,2026-09-03T11:00:00,2026-09-03T12:00:00,Foundations of Software Engineering
+Room5.06,2026-08-31T13:00:00,2026-08-31T14:00:00,Advanced Systems Architecture
+Room5.06,2026-09-07T11:00:00,2026-09-07T13:00:00,Foundations of Software Engineering
+Room5.06,2026-09-14T11:00:00,2026-09-14T13:00:00,Foundations of Software Engineering
+Room5.06,2026-09-17T11:00:00,2026-09-17T12:00:00,Foundations of Software Engineering
+Room5.06,2026-09-14T13:00:00,2026-09-14T14:00:00,Advanced Systems Architecture
+Room5.16,2026-07-30T14:00:00,2026-07-30T16:00:00,Research Methods in Data Analysis
+Room5.16,2026-08-06T14:00:00,2026-08-06T16:00:00,Research Methods in Data Analysis
+Room5.16,2026-08-13T14:00:00,2026-08-13T16:00:00,Research Methods in Data Analysis
+Room5.16,2026-08-20T14:00:00,2026-08-20T16:00:00,Research Methods in Data Analysis
+Room5.16,2026-08-27T14:00:00,2026-08-27T16:00:00,Research Methods in Data Analysis
+Room5.16,2026-09-03T14:00:00,2026-09-03T16:00:00,Research Methods in Data Analysis
+Room5.16,2026-09-10T14:00:00,2026-09-10T16:00:00,Research Methods in Data Analysis
+Room5.16,2026-09-17T14:00:00,2026-09-17T16:00:00,Research Methods in Data Analysis
+Room5.17,2026-07-28T16:00:00,2026-07-28T18:00:00,Applied Cyber Security
+Room5.17,2026-07-29T09:00:00,2026-07-29T10:00:00,Research Methods in Software Engineering
+Room5.17,2026-07-31T15:00:00,2026-07-31T17:00:00,Research Methods in Systems Architecture
+Room5.17,2026-08-05T09:00:00,2026-08-05T10:00:00,Research Methods in Software Engineering
+Room5.17,2026-08-07T15:00:00,2026-08-07T17:00:00,Research Methods in Systems Architecture
+Room5.17,2026-08-11T16:00:00,2026-08-11T18:00:00,Applied Cyber Security
+Room5.17,2026-08-14T15:00:00,2026-08-14T17:00:00,Research Methods in Systems Architecture
+Room5.17,2026-08-19T09:00:00,2026-08-19T10:00:00,Research Methods in Software Engineering
+Room5.17,2026-08-21T15:00:00,2026-08-21T17:00:00,Research Methods in Systems Architecture
+Room5.17,2026-08-25T16:00:00,2026-08-25T18:00:00,Applied Cyber Security
+Room5.17,2026-08-26T09:00:00,2026-08-26T10:00:00,Research Methods in Software Engineering
+Room5.17,2026-08-28T15:00:00,2026-08-28T17:00:00,Research Methods in Systems Architecture
+Room5.17,2026-09-01T16:00:00,2026-09-01T18:00:00,Applied Cyber Security
+Room5.17,2026-09-02T09:00:00,2026-09-02T10:00:00,Research Methods in Software Engineering
+Room5.17,2026-09-04T15:00:00,2026-09-04T17:00:00,Research Methods in Systems Architecture
+Room5.17,2026-09-08T16:00:00,2026-09-08T18:00:00,Applied Cyber Security
+Room5.17,2026-09-09T09:00:00,2026-09-09T10:00:00,Research Methods in Software Engineering
+Room5.17,2026-09-11T15:00:00,2026-09-11T17:00:00,Research Methods in Systems Architecture
+Room5.17,2026-09-16T09:00:00,2026-09-16T10:00:00,Research Methods in Software Engineering
+Room5.17,2026-09-18T15:00:00,2026-09-18T17:00:00,Research Methods in Systems Architecture
+Room5.52,2026-07-31T09:00:00,2026-07-31T11:00:00,Applied Machine Learning
+Room5.52,2026-07-30T09:00:00,2026-07-30T11:00:00,Advanced Data Analysis
+Room5.52,2026-07-27T11:00:00,2026-07-27T12:00:00,Introduction to Computer Science
+Room5.52,2026-08-07T09:00:00,2026-08-07T11:00:00,Applied Machine Learning
+Room5.52,2026-08-06T09:00:00,2026-08-06T11:00:00,Advanced Data Analysis
+Room5.52,2026-08-03T11:00:00,2026-08-03T12:00:00,Introduction to Computer Science
+Room5.52,2026-08-14T09:00:00,2026-08-14T11:00:00,Applied Machine Learning
+Room5.52,2026-08-13T09:00:00,2026-08-13T11:00:00,Advanced Data Analysis
+Room5.52,2026-08-10T11:00:00,2026-08-10T12:00:00,Introduction to Computer Science
+Room5.52,2026-08-21T09:00:00,2026-08-21T11:00:00,Applied Machine Learning
+Room5.52,2026-08-20T09:00:00,2026-08-20T11:00:00,Advanced Data Analysis
+Room5.52,2026-08-17T11:00:00,2026-08-17T12:00:00,Introduction to Computer Science
+Room5.52,2026-08-28T09:00:00,2026-08-28T11:00:00,Applied Machine Learning
+Room5.52,2026-08-27T09:00:00,2026-08-27T11:00:00,Advanced Data Analysis
+Room5.52,2026-08-24T11:00:00,2026-08-24T12:00:00,Introduction to Computer Science
+Room5.52,2026-09-03T09:00:00,2026-09-03T11:00:00,Advanced Data Analysis
+Room5.52,2026-08-31T11:00:00,2026-08-31T12:00:00,Introduction to Computer Science
+Room5.52,2026-09-11T09:00:00,2026-09-11T11:00:00,Applied Machine Learning
+Room5.52,2026-09-10T09:00:00,2026-09-10T11:00:00,Advanced Data Analysis
+Room5.52,2026-09-07T11:00:00,2026-09-07T12:00:00,Introduction to Computer Science
+Room5.52,2026-09-18T09:00:00,2026-09-18T11:00:00,Applied Machine Learning
+Room5.52,2026-09-17T09:00:00,2026-09-17T11:00:00,Advanced Data Analysis
+Room5.52,2026-09-14T11:00:00,2026-09-14T12:00:00,Introduction to Computer Science
+Room5.53,2026-07-30T16:00:00,2026-07-30T18:00:00,Applied Cyber Security
+Room5.53,2026-08-20T16:00:00,2026-08-20T18:00:00,Applied Cyber Security
+Room5.53,2026-08-27T16:00:00,2026-08-27T18:00:00,Applied Cyber Security
+Room5.53,2026-09-03T16:00:00,2026-09-03T18:00:00,Applied Cyber Security
+Room5.53,2026-09-10T16:00:00,2026-09-10T18:00:00,Applied Cyber Security
+Room5.53,2026-09-17T16:00:00,2026-09-17T18:00:00,Applied Cyber Security
+Room5.61,2026-07-27T14:00:00,2026-07-27T15:00:00,Advanced Computer Science
+Room5.61,2026-07-27T09:00:00,2026-07-27T10:00:00,Research Methods in Data Analysis
+Room5.61,2026-08-05T10:00:00,2026-08-05T11:00:00,Introduction to Computer Science
+Room5.61,2026-08-10T14:00:00,2026-08-10T15:00:00,Advanced Computer Science
+Room5.61,2026-08-10T09:00:00,2026-08-10T10:00:00,Research Methods in Data Analysis
+Room5.61,2026-08-12T10:00:00,2026-08-12T11:00:00,Introduction to Computer Science
+Room5.61,2026-08-17T14:00:00,2026-08-17T15:00:00,Advanced Computer Science
+Room5.61,2026-08-17T09:00:00,2026-08-17T10:00:00,Research Methods in Data Analysis
+Room5.61,2026-08-19T10:00:00,2026-08-19T11:00:00,Introduction to Computer Science
+Room5.61,2026-08-24T14:00:00,2026-08-24T15:00:00,Advanced Computer Science
+Room5.61,2026-08-24T09:00:00,2026-08-24T10:00:00,Research Methods in Data Analysis
+Room5.61,2026-08-26T10:00:00,2026-08-26T11:00:00,Introduction to Computer Science
+Room5.61,2026-08-31T14:00:00,2026-08-31T15:00:00,Advanced Computer Science
+Room5.61,2026-08-31T09:00:00,2026-08-31T10:00:00,Research Methods in Data Analysis
+Room5.61,2026-09-07T14:00:00,2026-09-07T15:00:00,Advanced Computer Science
+Room5.61,2026-09-07T09:00:00,2026-09-07T10:00:00,Research Methods in Data Analysis
+Room5.61,2026-09-09T10:00:00,2026-09-09T11:00:00,Introduction to Computer Science
+Room5.61,2026-09-14T14:00:00,2026-09-14T15:00:00,Advanced Computer Science
+Room5.61,2026-09-14T09:00:00,2026-09-14T10:00:00,Research Methods in Data Analysis
+Room5.61,2026-09-16T10:00:00,2026-09-16T11:00:00,Introduction to Computer Science
