@@ -656,3 +656,26 @@ class TestFanSignalIsCoincidenceNotSchedule:
         # the room is hot for hours 0-3 while the fan is off, then the fan starts
         pct = self._off_pct([0] * 4 + [1] * 20, [26] * 4 + [20] * 20, 21.0)
         assert pct == 100.0
+
+    def test_a_fan_off_every_night_in_a_night_warm_building_is_not_a_finding(self):
+        """The schedule problem in its second disguise.
+
+        A fan off overnight, in a building whose rooms are warmest overnight, coincides with the
+        elevation 100% of the time — in every room, every night. Raw coincidence therefore
+        reproduces exactly the failure the coincidence measure was introduced to fix. The
+        finding is LIFT: the fan off MORE during the elevated periods than across the window.
+        """
+        from pathlib import Path
+
+        src = Path("orchestrator/services/anomaly/diagnosis.py").read_text(encoding="utf-8")
+        assert "base_off" in src and "lift" in src
+        assert "(lift or 0) >= 20.0" in src, "the lift threshold is gone; raw coincidence is back"
+
+    def test_the_note_states_both_figures_so_the_reader_can_judge(self):
+        """ "Off 100% of the elevated time" alone is unreadable without the base rate; 100
+        against 95 is noise and 100 against 20 is a finding."""
+        from pathlib import Path
+
+        src = Path("orchestrator/services/anomaly/diagnosis.py").read_text(encoding="utf-8")
+        assert "of the window overall" in src
+        assert "concentrated in" in src

@@ -132,7 +132,14 @@ class DiagnosisService:
 
     # ── evidence gatherers ─────────────────────────────────────────────────
 
-    async def _series_for(self, targets, modality: str, start: datetime, end: datetime):
+    async def _series_for(
+        self,
+        targets,
+        modality: str,
+        start: datetime,
+        end: datetime,
+        deep: bool = False,
+    ):
         from orchestrator.services.deliberation.candidates import Candidate
         from orchestrator.services.deliberation.fetch import fetch_series
 
@@ -153,8 +160,24 @@ class DiagnosisService:
         window_hours = max(
             24.0, (datetime.utcnow() - (start - timedelta(days=7))).total_seconds() / 3600.0
         )
+        # `per_uuid_limit` defaults to 500 rows, which at a ten-minute cadence covers about 83
+        # hours -- so the WEEK-EARLIER window this method deliberately reaches back for was
+        # never in the result. The "same window a week earlier" line could not appear for any
+        # sensor sampling faster than about twenty minutes, and nothing said why: the fetch
+        # succeeded, the rows were simply the wrong ones.
+        #
+        # Raised only for the TARGET series (`deep`). The peer call asks for every space in the
+        # building, and widening that would multiply a 233-room fetch by five for a comparison
+        # that only ever needs the current window.
+        limit = 500
+        if deep:
+            limit = max(500, min(5000, int(window_hours * 12)))
         series = await fetch_series(
-            candidates, [modality], window_hours=window_hours, adapter_getter=self._adapter_getter
+            candidates,
+            [modality],
+            window_hours=window_hours,
+            per_uuid_limit=limit,
+            adapter_getter=self._adapter_getter,
         )
         return series, candidates
 
@@ -242,15 +265,26 @@ class DiagnosisService:
                     off_pct = self._off_while_elevated(
                         series.get(uuid) or [], room_series, room_mean, start, end
                     )
+                    # LIFT OVER THE BASE RATE, not the raw coincidence. A fan that is off every
+                    # night in a building whose rooms are warmest at night coincides with the
+                    # elevation 100% of the time -- in EVERY room, EVERY night. That is the
+                    # diurnal cycle, not a fault, and reporting it as the leading explanation
+                    # is the "normal schedule presented as a cause" failure wearing a better
+                    # statistic. The finding is that the fan was off MORE during the elevated
+                    # time than it was overall.
+                    base_off = round(100.0 - on_pct, 1)
+                    lift = None if off_pct is None else round(off_pct - base_off, 1)
                     if off_pct is not None:
                         figures[f"fan_off_while_elevated_pct::{equip}"] = off_pct
-                        if off_pct >= 50.0:
+                        figures[f"fan_off_lift_pts::{equip}"] = lift
+                        if off_pct >= 50.0 and (lift or 0) >= 20.0:
                             notes.append(
                                 (
                                     6.0,
                                     f"{equip}'s supply fan was off for {off_pct}% of the time "
-                                    f"this space was above its own average for the window — "
-                                    f"the elevation and the downtime coincide",
+                                    f"this space was above its own average, against {base_off}% "
+                                    f"of the window overall — the downtime is concentrated in "
+                                    f"the elevated periods rather than spread evenly",
                                 )
                             )
                 elif mod == "damper_position":
@@ -389,7 +423,7 @@ class DiagnosisService:
             else (f"floor {targets[0].floor}" if kind == "floor" else "the building")
         )
 
-        series, candidates = await self._series_for(targets, modality, start, end)
+        series, candidates = await self._series_for(targets, modality, start, end, deep=True)
         target_uuids = [c.sensors[modality]["uuid"] for c in candidates]
         merged: List = []
         for uid in target_uuids:
@@ -528,9 +562,62 @@ class DiagnosisService:
         # ── narration (numbers only from assembled evidence) ───────────────
         lines = [f"**What the data shows for {label}, {window_label}:**"]
         lines.append(f"- mean {modality}: **{window_mean:.1f}** over the window")
+        # Initialised here, not inside the branch below. Reaching for it through `locals()` at
+        # the return statement left the matched figures out of the payload whenever the branch
+        # did not run -- and the narration had already printed an interval, so the numeric
+        # guard suppressed the whole answer. A number in the prose and not in the payload is
+        # exactly what that guard exists to catch; it was right and I had given it nothing.
+        figures_matched: Dict[str, Any] = {}
         if prior_mean is not None:
-            direction_word = "lower" if window_mean < prior_mean else "higher"
-            lines.append(f"- same window a week earlier: {prior_mean:.1f} ({direction_word} now)")
+            # V6-T41: the week-on-week line used to be two means subtracted, which reports a
+            # 0.3-degree wobble in exactly the same words as a real shift. The matched
+            # comparison pairs samples by hour-of-day and day-type, carries an interval, and
+            # NAMES what it could not adjust for -- silently omitting an adjustment produces a
+            # number indistinguishable from a properly adjusted one.
+            # The raw means are DATA and are shown as such. The direction word used to be
+            # asserted here -- "(higher now)" -- and the matched comparison immediately below
+            # then said the difference was indistinguishable from noise. Two lines, one
+            # contradicting the other, with the confident one first: a reader takes the
+            # headline. The adjudication belongs to the matched line alone.
+            lines.append(f"- same window a week earlier: {prior_mean:.1f}")
+            try:
+                from orchestrator.services.evidence.matched_comparison import (
+                    compare as _matched,
+                )
+
+                prior_series = [
+                    (t, v)
+                    for t, v in _clean(merged)
+                    if (start - timedelta(days=7)) <= t < (end - timedelta(days=7))
+                ]
+                current_series = [(t, v) for t, v in _clean(merged) if start <= t < end]
+                matched = _matched(
+                    current_series,
+                    prior_series,
+                    available_covariates=[],
+                    # Declared for THIS estate: both move indoor conditions and neither is
+                    # connected here, so both are stated rather than quietly ignored.
+                    declared_confounders=["outdoor weather", "occupancy"],
+                )
+                if matched.effect is not None:
+                    lines.append(f"- week-on-week, matched: {matched.describe(modality)}")
+                    figures_matched = {
+                        "effect": matched.effect,
+                        "ci_low": matched.ci_low,
+                        "ci_high": matched.ci_high,
+                        "n_matched": matched.n_matched,
+                        # The prose prints the share as a PERCENTAGE ("97% survived matching");
+                        # carrying only the fraction 0.97 left "97" unbacked and the numeric
+                        # guard suppressed the whole answer. Every number the narration prints
+                        # has to be in the payload in the FORM it is printed.
+                        "kept_share_pct": round(matched.kept_share * 100),
+                        "unadjusted_for": matched.unadjusted_for,
+                    }
+                else:
+                    figures_matched = {"declined": matched.reason}
+            except Exception as _mc:  # pragma: no cover - a comparison must not cost the answer
+                logger.debug(f"[diagnosis] matched comparison skipped: {_mc}")
+                figures_matched = {}
         if peer_median is not None:
             lines.append(f"- rest of the building over the same window: median {peer_median:.1f}")
         if anomalies:
@@ -558,6 +645,9 @@ class DiagnosisService:
             "window": [start.isoformat(), end.isoformat()],
             "window_mean": round(window_mean, 2),
             "prior_week_mean": round(prior_mean, 2) if prior_mean is not None else None,
+            # The matched figures ride in the payload so the numeric guard can back the
+            # interval the narration prints.
+            "matched_comparison": figures_matched,
             "peer_median": round(peer_median, 2) if peer_median is not None else None,
             "n_overlapping_anomalies": len(anomalies),
             "causes": [c[1] for c in causes[:4]],
