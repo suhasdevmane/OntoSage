@@ -27,8 +27,16 @@ from datetime import datetime, timezone
 import pytest
 
 from orchestrator.services.evidence.assemble import build_evidence_record
-from orchestrator.services.evidence.permission_guard import assess, detect_claim, unlicensed_kinds
-from orchestrator.services.evidence.precedence import SourceClaim, resolve, tier_for_kind
+from orchestrator.services.evidence.permission_guard import (
+    assess,
+    detect_claim,
+    unlicensed_kinds,
+)
+from orchestrator.services.evidence.precedence import (
+    SourceClaim,
+    resolve,
+    tier_for_kind,
+)
 from shared.models import AnswerStatus
 
 pytestmark = pytest.mark.unit

@@ -559,9 +559,14 @@ def _trend_integrity_verdict(results: Dict[str, Any], rec: EvidenceRecord) -> Li
         if not (results.get("forecast_result") or results.get("trend_result")):
             return verdicts
         from orchestrator.services.evidence.gates import GateVerdict
-        from orchestrator.services.evidence.history import ConfigurationPeriod  # noqa: F401
+        from orchestrator.services.evidence.history import (  # noqa: F401
+            ConfigurationPeriod,
+        )
         from orchestrator.services.evidence.policy import load_policy
-        from orchestrator.services.evidence.trend_integrity import TrendVerdict, assess_trend
+        from orchestrator.services.evidence.trend_integrity import (
+            TrendVerdict,
+            assess_trend,
+        )
 
         tr = results.get("time_range") or {}
         start = _as_datetime(tr.get("start")) if isinstance(tr, dict) else None
@@ -628,7 +633,10 @@ def _precedence_verdicts(results: Dict[str, Any], rec: EvidenceRecord) -> List[A
     try:
         from orchestrator.services.evidence.gates import GateVerdict
         from orchestrator.services.evidence.policy import load_policy
-        from orchestrator.services.evidence.precedence import claims_from_sources, resolve
+        from orchestrator.services.evidence.precedence import (
+            claims_from_sources,
+            resolve,
+        )
 
         if len(rec.sources) < 2:
             return verdicts

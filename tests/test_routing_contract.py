@@ -283,6 +283,10 @@ def test_precedence_order_is_pinned():
         # V5-T20: comfort why-questions; last so every earlier claim wins.
         "why_diagnosis",
         # V5-T27: route / nearest-facility questions → the spatial route finder.
+        # V6-T10: reach questions run FIRST of the three. "Can you measure the energy use of
+        # floor 2?" names a metered resource and asks whether a figure exists to be had — a
+        # figure is the wrong answer to it, so observability must claim it before consumption.
+        "observability_query",
         # V6-T27: consumption sits BEFORE plant. "How much energy does the AHU use?" is a
         # consumption question that happens to name plant, and it must reach the lane that can
         # state a metered figure and its boundary — not the point lane, which would answer with

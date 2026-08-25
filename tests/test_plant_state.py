@@ -24,6 +24,7 @@ Four properties here were each a live defect first, and each is the kind that re
 """
 
 import re
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -581,3 +582,77 @@ class TestExecutorShapes:
 
         ctx = await for_space("http://x#Room5.01", None)
         assert not ctx.has_points and "gap in the graph" in ctx.describe()
+
+
+# ── a low fan runtime is not a finding ───────────────────────────────────────
+
+
+class TestFanSignalIsCoincidenceNotSchedule:
+    """The first version raised the fan as the leading cause whenever it ran under half the
+    window. Live, that produced:
+
+        "AHU_F5's supply fan ran for only 39.6% of the window — the space was barely being
+        ventilated"
+
+    39.6% of 24 hours is roughly one working day. The system had diagnosed a **normal
+    schedule** as the explanation for a warm room: fluent, specific, numerically exact, and
+    about nothing. A plausible-sounding diagnosis of nothing is worse than no diagnosis,
+    because it stops the search.
+
+    The measured signal is COINCIDENCE — the fan off while the room sat above its own average.
+    """
+
+    START = datetime(2026, 8, 1, 0, 0)
+
+    @classmethod
+    def _hours(cls, values):
+        return [(cls.START + timedelta(hours=i), float(v)) for i, v in enumerate(values)]
+
+    def _off_pct(self, fan, room, mean):
+        from orchestrator.services.anomaly.diagnosis import DiagnosisService
+
+        return DiagnosisService._off_while_elevated(
+            self._hours(fan), self._hours(room), mean, self.START, self.START + timedelta(hours=24)
+        )
+
+    def test_a_normal_overnight_schedule_is_not_a_finding(self):
+        """Fan off 00:00-08:00 and 18:00-24:00, room warm only while the fan runs. Runtime is
+        41% — under the old threshold — and nothing is wrong."""
+        fan = [0] * 8 + [1] * 10 + [0] * 6
+        room = [18] * 8 + [24] * 10 + [18] * 6
+        pct = self._off_pct(fan, room, 21.0)
+        assert pct == 0.0, f"a normal schedule scored {pct}% off-while-elevated"
+
+    def test_a_fan_that_is_off_while_the_room_is_hot_is_a_finding(self):
+        """The real fault: the room stays above its average all afternoon with the fan down."""
+        fan = [1] * 8 + [0] * 10 + [1] * 6
+        room = [18] * 8 + [26] * 10 + [18] * 6
+        pct = self._off_pct(fan, room, 21.0)
+        assert pct == 100.0, f"an all-afternoon outage scored {pct}%"
+
+    def test_the_threshold_is_stated_where_the_note_is_raised(self):
+        from pathlib import Path
+
+        src = Path("orchestrator/services/anomaly/diagnosis.py").read_text(encoding="utf-8")
+        assert "off_while_elevated" in src
+        assert "off_pct >= 50.0" in src, "the coincidence threshold is no longer explicit"
+
+    def test_no_room_series_yields_no_finding_rather_than_a_clean_bill(self):
+        """Unknown and fine are different answers."""
+        assert self._off_pct([0] * 24, [], 21.0) is None
+
+    def test_no_elevated_samples_yields_no_finding(self):
+        """If the room never rose above its own average, there is nothing for the fan to
+        explain — and dividing by zero elevated samples would be an invented percentage."""
+        assert self._off_pct([0] * 24, [20] * 24, 25.0) is None
+
+    def test_fan_state_is_matched_as_a_step_not_interpolated(self):
+        """A reading is matched to the fan sample IN FORCE at that moment. Nearest-in-either-
+        direction would let a fan that started later explain an earlier elevation."""
+        from orchestrator.services.anomaly.diagnosis import DiagnosisService
+
+        src = DiagnosisService._off_while_elevated.__doc__ or ""
+        assert "step function" in src
+        # the room is hot for hours 0-3 while the fan is off, then the fan starts
+        pct = self._off_pct([0] * 4 + [1] * 20, [26] * 4 + [20] * 20, 21.0)
+        assert pct == 100.0

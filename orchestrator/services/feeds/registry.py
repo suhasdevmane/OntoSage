@@ -38,11 +38,11 @@ import yaml
 
 from orchestrator.services.feeds.base import FeedAdapter, FeedRecord, FeedSpec
 from orchestrator.services.feeds.csv_drop import CsvDropAdapter
-from orchestrator.services.feeds.rest_poll import RestPollAdapter
 from orchestrator.services.feeds.institutional import (
     SOURCE_KINDS,
     InstitutionalFeedAdapter,
 )
+from orchestrator.services.feeds.rest_poll import RestPollAdapter
 from shared.utils import get_logger
 
 logger = get_logger(__name__)

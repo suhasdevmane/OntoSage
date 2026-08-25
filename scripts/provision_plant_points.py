@@ -208,6 +208,8 @@ def build_ttl(namespace: str, points: List[Dict], db_key: str) -> str:
         "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
         "@prefix brick:<https://brickschema.org/schema/Brick#> .",
         "@prefix ref:  <https://brickschema.org/schema/Brick/ref#> .",
+        "@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .",
+        "@prefix ontosage: <http://ontosage.org/capabilities#> .",
         "@prefix qudt: <http://qudt.org/schema/qudt/> .",
         "",
     ]
@@ -229,6 +231,12 @@ def build_ttl(namespace: str, points: List[Dict], db_key: str) -> str:
             lines.append(f"    brick:hasLocation bldg:{local(p['floor'])} ;")
         lines += [
             f'    brick:hasUnit "{p["unit"]}" ;',
+            # These readings are GENERATED. Every other synthetic sensor in this building
+            # declares it, and the first version of this file did not — so a conformance check
+            # for "no provisioned record lacks isSimulated" would have failed on exactly the
+            # points added to demonstrate honest sourcing. The registry marking the STORE
+            # synthetic is not a substitute: an answer cites the point, not the table.
+            '    ontosage:isSimulated "true"^^xsd:boolean ;',
             f"    qudt:hasUnit <{QUDT.get(p['unit'], '')}> ;" if QUDT.get(p["unit"]) else "",
             "    ref:hasExternalReference [",
             "        a ref:TimeseriesReference ;",

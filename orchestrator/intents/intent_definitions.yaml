@@ -339,6 +339,23 @@ intents:
     pipeline_group: standalone
     node_method: _events_node
 
+  - name: observability
+    description: |-
+      Questions about the SYSTEM'S OWN REACH rather than about a reading: "can you
+      measure formaldehyde in room 5.01?", "do you have a noise sensor in the lab?",
+      "is 2.14 instrumented for humidity?", "what can you measure in this room?".
+      Answered from the coverage matrix - what is located there, whether it is
+      connected to readings, and whether it is reporting - never from prose, and
+      every negative names the step that would make it answerable.
+      NOT for asking the value itself ("what is the CO2 in 5.01?" -> sensor_data);
+      answering a value question with a reach answer withholds data the building has.
+    examples:
+      - '"Can you measure formaldehyde in room 5.01?"'
+      - '"Do you have a noise sensor in the lab?"'
+      - '"What can you measure in room 2.14?"'
+    pipeline_group: standalone
+    node_method: _observability_node
+
   - name: privacy_refusal
     description: |-
       INTERNAL refusal lane (deterministic rule only — do not classify into

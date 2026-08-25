@@ -209,7 +209,7 @@ def test_the_joined_note_degrades_rather_than_breaking_the_answer():
 
 
 def test_event_questions_bypass_the_pre_llm_capability_probe():
-    """"How many work orders are open?" matched the building-hours document on the word
+    """ "How many work orders are open?" matched the building-hours document on the word
     "open" and was answered from prose in 250ms — the routing contract sends it to the events
     lane and never got a say.
 
@@ -252,6 +252,6 @@ def test_the_intake_singleton_does_not_depend_on_call_order():
 
     src = Path("orchestrator/services/report_intake_service.py").read_text(encoding="utf-8")
     body = src[src.index("def get_report_intake_service") :]
-    assert "postgres_manager" in body and "_main" in body, (
-        "the singleton still cannot obtain a connection on its own"
-    )
+    assert (
+        "postgres_manager" in body and "_main" in body
+    ), "the singleton still cannot obtain a connection on its own"

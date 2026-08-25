@@ -20,7 +20,10 @@ import yaml
 
 from orchestrator.services.evidence import load_policy
 from orchestrator.services.evidence.gates import apply, spatial_gate
-from orchestrator.services.evidence.narration import describe_not_assessable, label_proxy
+from orchestrator.services.evidence.narration import (
+    describe_not_assessable,
+    label_proxy,
+)
 from orchestrator.services.evidence.spatial_adequacy import PointFacts, best_verdict
 from shared.models import AnswerStatus, SpatialAdequacy
 

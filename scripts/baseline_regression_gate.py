@@ -141,6 +141,26 @@ def _skeleton(text: str) -> str:
     return re.sub(r"-?\d+(?:\.\d+)?", "#", text or "").strip()
 
 
+def _is_transport_failure(row: Optional[Dict[str, str]]) -> bool:
+    """True when the request never completed: a timeout or a transport-level HTTP failure.
+
+    An HTTP 200 carrying a refusal is NOT one of these -- that is the system answering, and it
+    must still be compared. The distinction is whether the stack delivered a response at all.
+    """
+    if not row:
+        return False
+    status = str(row.get("status") or "").upper()
+    return (
+        status.startswith("TIMEOUT")
+        or status.startswith("HTTP 5")
+        or status
+        in {
+            "CONNECTION ERROR",
+            "ERROR",
+        }
+    )
+
+
 def compare(baseline: Path, current: Path, *, partial: bool = False) -> Dict[str, object]:
     base, cur = _read(baseline), _read(current)
 
@@ -149,6 +169,10 @@ def compare(baseline: Path, current: Path, *, partial: bool = False) -> Dict[str
     b_ok = {k: v for k, v in base.items() if v.get("status") == "OK"}
     c_ok = {k: v for k, v in cur.items() if v.get("status") == "OK"}
     comparable = sorted(set(b_ok) & set(c_ok))
+    #: qids excluded because ONE side never completed the request. Reported, never silent:
+    #: a rising count is the stack degrading, which matters even though it is not a
+    #: behavioural regression.
+    transport_only: List[str] = []
 
     results: List[Dict[str, str]] = []
     for qid in comparable:
@@ -175,6 +199,20 @@ def compare(baseline: Path, current: Path, *, partial: bool = False) -> Dict[str
     for qid in sorted(set(b_ok) - set(c_ok)):
         if partial:
             continue
+        # A TRANSPORT failure is not a dropped answer. The capture records TIMEOUT / HTTP nnn
+        # for a request that never completed, and treating that as "the system stopped
+        # answering this" makes random slowness indistinguishable from a real regression.
+        #
+        # Measured: a baseline with 15 timeouts compared against a run with 14 produced TEN
+        # blocking "dropped" findings and ELEVEN "added" ones -- two halves of the same noise,
+        # on a run that answered one question MORE than the baseline. A gate that fails on
+        # background flakiness gets ignored, and an ignored gate protects nothing.
+        #
+        # The real signal is kept and reported separately: if this run's transport-failure
+        # RATE materially exceeds the baseline's, the stack got worse and that blocks.
+        if _is_transport_failure(cur.get(qid)):
+            transport_only.append(qid)
+            continue
         results.append(
             {
                 "qid": qid,
@@ -187,6 +225,12 @@ def compare(baseline: Path, current: Path, *, partial: bool = False) -> Dict[str
             }
         )
     for qid in sorted(set(c_ok) - set(b_ok)):
+        # Mirror of the rule above: a row the BASELINE could not complete is not a newly
+        # answered question, it is the same flakiness pointing the other way. Counting it as
+        # progress would let a noisy pair of runs look like an improvement.
+        if _is_transport_failure(base.get(qid)):
+            transport_only.append(qid)
+            continue
         results.append(
             {
                 "qid": qid,
@@ -202,15 +246,55 @@ def compare(baseline: Path, current: Path, *, partial: bool = False) -> Dict[str
     counts = Counter(r["verdict"] for r in results)
     identical = counts.get(UNCHANGED, 0)
     blocking = [r for r in results if r["verdict"] in BLOCKING]
+    b_fail = sum(1 for r in base.values() if _is_transport_failure(r))
+    c_fail = sum(1 for r in cur.values() if _is_transport_failure(r))
+    b_rate = b_fail / len(base) if base else 0.0
+    c_rate = c_fail / len(cur) if cur else 0.0
+    # The stack degrading IS a finding, just a different one from a behavioural regression.
+    # Blocks only on a MATERIAL worsening: a couple of extra timeouts on a live building with
+    # a local model is weather, and gating on weather is how a gate gets switched off.
+    stack_worse = c_rate > (b_rate + 0.05) and c_fail > b_fail + 2
+    if stack_worse:
+        blocking += 1
+
     return {
         "results": results,
         "counts": counts,
+        "transport_excluded": sorted(set(transport_only)),
+        "transport": {
+            "baseline_failed": b_fail,
+            "baseline_total": len(base),
+            "current_failed": c_fail,
+            "current_total": len(cur),
+            "worse": stack_worse,
+        },
         "comparable": len(comparable),
         "identity_rate": (identical / len(comparable)) if comparable else 0.0,
         "blocking": blocking,
         "passed": not blocking,
         "partial": partial,
     }
+
+
+def _transport_line(outcome: Dict[str, object]) -> str:
+    """The stack-health line. Always printed, because a silent exclusion is how a shrinking
+    comparison passes for a clean one."""
+    t = outcome.get("transport") or {}
+    if not t:
+        return ""
+    excluded = len(outcome.get("transport_excluded") or [])
+    line = (
+        f"**Transport failures:** baseline {t.get('baseline_failed')}/{t.get('baseline_total')}, "
+        f"current {t.get('current_failed')}/{t.get('current_total')} "
+        f"({excluded} question(s) excluded from the comparison because one side never "
+        f"completed the request — a timeout is not a dropped answer)."
+    )
+    if t.get("worse"):
+        line += (
+            "  \n**BLOCKING: the stack got materially worse.** That is a finding about the "
+            "deployment, not about the answers."
+        )
+    return line
 
 
 def render(outcome: Dict[str, object], baseline: Path, current: Path) -> str:
@@ -225,6 +309,7 @@ def render(outcome: Dict[str, object], baseline: Path, current: Path) -> str:
         f"**Baseline:** `{baseline.name}`  ",
         f"**Current:** `{current.name}`  ",
         f"**Comparable questions:** {n} (quarantined rows excluded from both sides)",
+        _transport_line(outcome),
         (
             "**Partial run** — the current capture covered a declared subset, so questions "
             "absent from it are not counted as dropped. A pass here is evidence about the "

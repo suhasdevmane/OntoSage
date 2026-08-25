@@ -359,9 +359,11 @@ class EventQueryService:
         contract: the join is additive where both stores exist.
         """
         try:
-            from orchestrator.services.report_intake_service import get_report_intake_service
+            from orchestrator.services.report_intake_service import (
+                get_report_intake_service,
+            )
+            from orchestrator.services.tickets import counts as ticket_counts
             from orchestrator.services.tickets import (
-                counts as ticket_counts,
                 merge,
                 reconciliation_note,
                 ticket_from_event,
