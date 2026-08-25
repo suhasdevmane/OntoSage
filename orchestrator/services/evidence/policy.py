@@ -150,16 +150,50 @@ class EvidencePolicy:
         by_shape = (self.raw.get("consequence") or {}).get("by_shape") or {}
         return str(by_shape.get((shape or "").lower(), "informational"))
 
+    def _class_spec(self, consequence_class: str):
+        """The class block, resolving a SHAPE name if one was passed by mistake.
+
+        Every requirement below fails OPEN on an unknown name -- an unrecognised class means no
+        calibration requirement, no authoritative-source requirement. That is the right default
+        for a genuinely new class (a shape must not silently acquire a safety threshold nobody
+        designed for it), and the wrong outcome entirely when a caller passes a SHAPE like
+        `compliance` where a CLASS like `safety_or_compliance` belongs: the strictest gate in
+        the system then goes quietly permissive on exactly the claims it exists for.
+
+        So a name that is not a class is resolved through `by_shape` before giving up, and an
+        unresolvable one is LOGGED rather than silently treated as informational. The whole
+        consequence mechanism was already inert once for a naming mismatch of this kind (see
+        the by_shape comment in config/evidence_policy.yaml); it should not be possible twice.
+        """
+        consequence = self.raw.get("consequence") or {}
+        classes = consequence.get("classes") or {}
+        spec = classes.get(consequence_class)
+        if isinstance(spec, dict):
+            return spec
+        resolved = (consequence.get("by_shape") or {}).get(consequence_class)
+        if resolved and isinstance(classes.get(resolved), dict):
+            logger.debug(
+                f"[policy] {consequence_class!r} is a SHAPE, not a consequence class; "
+                f"resolved to {resolved!r}"
+            )
+            return classes[resolved]
+        if consequence_class:
+            logger.warning(
+                f"[policy] unknown consequence class {consequence_class!r} — treating as "
+                f"informational. Known classes: {sorted(classes)}"
+            )
+        return None
+
     def requires_calibration(self, consequence_class: str) -> bool:
-        cls = (self.raw.get("consequence") or {}).get("classes", {}).get(consequence_class)
+        cls = self._class_spec(consequence_class)
         return bool(isinstance(cls, dict) and cls.get("requires_calibration"))
 
     def forbids_unknown_calibration(self, consequence_class: str) -> bool:
-        cls = (self.raw.get("consequence") or {}).get("classes", {}).get(consequence_class)
+        cls = self._class_spec(consequence_class)
         return bool(isinstance(cls, dict) and cls.get("forbid_unknown_calibration"))
 
     def requires_authoritative_source(self, consequence_class: str) -> bool:
-        cls = (self.raw.get("consequence") or {}).get("classes", {}).get(consequence_class)
+        cls = self._class_spec(consequence_class)
         return bool(isinstance(cls, dict) and cls.get("requires_authoritative_source"))
 
     # ── gate mode ────────────────────────────────────────────────────────────

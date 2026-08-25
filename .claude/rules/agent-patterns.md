@@ -91,8 +91,14 @@ Do NOT raise from inside a node — always catch, log, set error key, and return
 
 ## 5. Adding a New Node — Complete Checklist (Phase 13B — 2026-05-29)
 
-Adding a new pipeline intent is now **two steps**, not five.  The previous
-manual `_build_graph` / `_route_from_dialogue` edits are obsolete.
+Adding a new pipeline intent is **three steps** (the graph wiring is automatic; the
+previous manual `_build_graph` / `_route_from_dialogue` edits are obsolete).
+
+> **This said TWO steps until 2026-08-25.** Routing and execution are automatic; DELIVERY is
+> not. A standalone lane must also be collected by `_response_node`'s dispatch, or it routes
+> correctly, runs, computes the right answer, and the user sees *"I processed your request,
+> but couldn't generate a response."* Measured on the observability lane (V6-T10): the node's
+> own tests passed the whole time. Step 3 below is that missing step.
 
 ```yaml
 # Step 1: Append to orchestrator/intents/intent_definitions.yaml
@@ -117,8 +123,18 @@ async def _my_node_fn(self, state: ConversationState) -> ConversationState:
     return state
 ```
 
+```python
+# Step 3: COLLECT the result in _response_node (standalone lanes only)
+#         Without this the lane runs and nobody sees its answer.
+_my_result = state.intermediate_results.get("my_result") or {}
+...
+elif _my_result.get("formatted_response"):
+    final_response = _my_result["formatted_response"]
+```
+
 Outgoing edges, routing dispatch, and graph wiring are all auto-generated.
-Restart the orchestrator and your intent is live.
+Restart the orchestrator and your intent is live — then **ask it a real question**, because
+steps 1 and 2 passing their tests does not prove step 3 happened.
 
 Tests:
 
