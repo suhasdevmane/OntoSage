@@ -83,10 +83,26 @@ class InstitutionalRecord:
     def as_event(self, building_id: str, event_type: str = "booking") -> Dict[str, Any]:
         """The events-store row. `subject_uuid` uses the SAME derivation the rest of the
         event framework uses, so a timetable row joins to a space exactly as a booking does."""
+        # uuid5, NOT a readable string. The events table declares event_id CHAR(36) and
+        # every other producer mints a uuid5, which is exactly 36 characters. This built
+        # "synthetic_timetable:Room1.06:20260727T0900" — 42 — and MySQL silently
+        # TRUNCATED it to "synthetic_timetable:Room1.06:2026073", discarding the day
+        # digit and the whole time. Every session in one room within the same ten-day
+        # window then collapsed onto one primary key and INSERT IGNORE dropped the rest:
+        # 675 parsed records became 441 stored ones, with no error anywhere (measured
+        # 2026-08-25). The uuid5 recipe keeps the property that mattered — the same row
+        # ingested twice is the same id, so re-ingest stays a no-op — while fitting the
+        # column the rest of the framework already respects.
+        import uuid as _uuidlib
+
         from orchestrator.services.datasource_registry import derive_point_uuid
 
+        _name = (
+            f"{building_id}:{event_type}:{self.source_id}:"
+            f"{self.space_local}:{self.start:%Y-%m-%dT%H:%M}"
+        )
         return {
-            "event_id": f"{self.source_id}:{self.space_local}:{self.start:%Y%m%dT%H%M}",
+            "event_id": str(_uuidlib.uuid5(_uuidlib.NAMESPACE_URL, _name)),
             "event_type": event_type,
             "subject_uuid": derive_point_uuid(building_id, "evt_subject", self.space_local),
             "start_dt": self.start,

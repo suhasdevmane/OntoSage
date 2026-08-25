@@ -20,6 +20,7 @@ import sys
 from collections import Counter
 from datetime import datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO_ROOT))
@@ -63,9 +64,72 @@ def _mysql():
     )
 
 
+def _ingest_institutional(building_id, rooms, cur):
+    """Ingest every institutional source this building DECLARES in feeds.yaml.
+
+    V6-T25 built the adapter and the registry maps its source kinds, but NOTHING EVER
+    CALLED IT: the polling loop cannot, because these are one-shot file reads with a
+    read() interface rather than pollers, and no other caller existed. A building could
+    therefore declare a timetable, have the file sitting on disk, and still answer "no
+    data" - the described-but-unconnected failure, one level up from the sensor case.
+
+    Space resolution stays strict: the adapter SKIPS rows naming a room the building
+    does not have and reports them, rather than binding them to the nearest match.
+    """
+    from orchestrator.services.feeds.institutional import (
+        SOURCE_KINDS,
+        InstitutionalFeedAdapter,
+    )
+
+    out = []
+    feeds_path = _REPO_ROOT / "input" / "feeds.yaml"
+    try:
+        import yaml
+
+        specs = (yaml.safe_load(feeds_path.read_text(encoding="utf-8")) or {}).get("feeds") or []
+    except Exception as exc:
+        return [f"no institutional sources read ({exc})"]
+
+    for entry in specs:
+        if not isinstance(entry, dict):
+            continue
+        kind = entry.get("type", "")
+        if kind not in SOURCE_KINDS or not entry.get("enabled", True):
+            continue
+        spec = SimpleNamespace(**entry)
+        adapter = InstitutionalFeedAdapter(spec, input_root=str(_REPO_ROOT / "input"))
+        records, report = adapter.read(rooms)
+        rows = []
+        for rec in records:
+            e = rec.as_event(building_id, adapter.event_type)
+            rows.append(
+                (
+                    e["event_id"],
+                    e["event_type"],
+                    e["subject_uuid"],
+                    e["start_dt"].strftime("%Y-%m-%d %H:%M:%S"),
+                    e["end_dt"].strftime("%Y-%m-%d %H:%M:%S") if e["end_dt"] else None,
+                    e["status"],
+                    e["attrs"],
+                )
+            )
+        if rows:
+            cur.executemany(_INSERT, rows)
+        out.append(f"{entry.get('id', '?')}: {report.describe()}")
+    return out or ["no institutional sources declared"]
+
+
 async def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--weeks", type=int, default=5)
+    ap.add_argument(
+        "--skip-institutional",
+        action="store_true",
+        help="do not ingest institutional sources declared in feeds.yaml. They are "
+        "ingested by default because a declared timetable that nothing reads is the "
+        "described-but-unconnected half of design contract 8 - and the feed registry "
+        "cannot poll them: they are one-shot file reads, not pollers.",
+    )
     ap.add_argument(
         "--forward-weeks",
         type=int,
@@ -113,6 +177,10 @@ async def main() -> int:
                     for e in events:
                         generated[f"{e['event_type']} (future)"] += 1
                 fday += timedelta(days=1)
+
+        if not args.skip_institutional:
+            for line in _ingest_institutional(building_id, rooms, cur):
+                print(f"[events] {line}")
 
         conn.commit()
         cur.execute("SELECT event_type, COUNT(*) FROM events GROUP BY event_type")

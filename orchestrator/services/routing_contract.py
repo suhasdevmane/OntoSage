@@ -702,6 +702,21 @@ EVENTS_RE = re.compile(
     r"|\b(?:which|what|any|list)\b.{0,40}\brooms?\b.{0,30}\b(?:free|available)\b"
     r"|\b(?:a|any)\s+rooms?\s+(?:free|available)\b"
     r"|\bbookings?\b|\breservations?\b"
+    # Timetabled teaching. These land in the SAME event store as bookings (V6-T25
+    # routes a timetable export there deliberately), so the vocabulary has to reach
+    # the same lane — without it "what is scheduled in Room1.06 tomorrow?" and
+    # "which rooms have teaching sessions this week?" were answered from an uploaded
+    # bookings document showing June dates, while 675 timetable records for the right
+    # weeks sat in the store (measured 2026-08-25).
+    # "scheduled" is qualified: scheduled MAINTENANCE is a compliance-register
+    # question and must keep going there.
+    r"|\btimetabled?\b|\bteaching\s+(?:session|slot|hour)s?\b"
+    # "lecture" but NOT "lecture theatre/hall/room" — those name a SPACE, and
+    # "is there a step-free route to the lecture theatre?" is a wayfinding question.
+    # Matching the bare noun stole it from the route finder.
+    r"|\blectures?\b(?!\s+(?:theatre|theater|hall|room))"
+    r"|\b(?:what(?:'s| is)?|anything)\s+(?:scheduled|booked|on)\b"
+    r"|\bscheduled\s+(?:in|for)\s+(?!.*\b(?:maintenance|service|inspection|test)\b)"
     r"|\bwork ?orders?\b|\b(?:open|overdue|outstanding)\s+tickets?\b"
     r"|\bmaintenance backlog\b"
     r"|\bfootfall\b|\bentrance\b.{0,30}\b(?:busy|arrivals|count)\b"
