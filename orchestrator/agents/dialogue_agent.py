@@ -753,6 +753,9 @@ class DialogueAgent:
         from orchestrator.services.anomaly.diagnosis import (
             is_why_question as _is_why_question,
         )
+        from orchestrator.services.observability import (
+            is_observability_question as _is_observability_question,
+        )
         from orchestrator.services.routing_contract import DELIBERATE_RE as _DELIB_RE
         from orchestrator.services.routing_contract import EVENTS_RE as _EVENTS_RE
         from orchestrator.services.routing_contract import WAYFIND_RE as _WAYFIND_RE
@@ -814,6 +817,11 @@ class DialogueAgent:
             # reaches a lane that can state a figure -- so it can state no BOUNDARY either,
             # which is the whole point of this turn. Sixth member of BUG-231's family.
             and not _consumption_question(user_query)
+            # V6-T10: "can you measure X here?" is a question about the system's own reach.
+            # Answered from a document it becomes a claim about instrumentation sourced from
+            # prose -- BUG-192's shape, where a sensor class was denied from a retrieval
+            # window. Seventh member of BUG-231's family.
+            and not _is_observability_question(user_query)
             # V6-T26: a WHY-question belongs to the diagnosis lane, never to a document.
             # "Why is room 5.01 stuffy?" was answered here in 1.3s with "I don't have that
             # specific information on record" -- for a room whose CO2, AHU fan state and VAV

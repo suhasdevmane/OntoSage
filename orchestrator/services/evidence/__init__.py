@@ -22,6 +22,20 @@ from orchestrator.services.evidence.accessibility import (  # noqa: F401
     AccessibleOption,
     filter_options,
 )
+from orchestrator.services.evidence.aggregation import (  # noqa: F401
+    describe_basis,
+    exceedance_duration,
+    time_weighted_mean,
+)
+from orchestrator.services.evidence.causal_guard import (  # noqa: F401
+    CausalClaim,
+    causal_gate,
+    find_claims,
+    is_already_correlational,
+    qualify,
+    support_from_evidence,
+    unlicensed_claims,
+)
 from orchestrator.services.evidence.completeness import (  # noqa: F401
     CompletenessReport,
     Gap,
@@ -59,6 +73,12 @@ from orchestrator.services.evidence.narration import (  # noqa: F401
     label_proxy,
     status_badge,
 )
+from orchestrator.services.evidence.omissions import (  # noqa: F401
+    CriterionFacts,
+    collect,
+    facts_from_ranking,
+    omission_for,
+)
 from orchestrator.services.evidence.policy import (  # noqa: F401
     EvidencePolicy,
     GateMode,
@@ -70,26 +90,6 @@ from orchestrator.services.evidence.sensor_health import (  # noqa: F401
     assess_drift,
     assess_sensor,
     summarise,
-)
-from orchestrator.services.evidence.causal_guard import (  # noqa: F401
-    CausalClaim,
-    causal_gate,
-    find_claims,
-    is_already_correlational,
-    qualify,
-    support_from_evidence,
-    unlicensed_claims,
-)
-from orchestrator.services.evidence.aggregation import (  # noqa: F401
-    describe_basis,
-    exceedance_duration,
-    time_weighted_mean,
-)
-from orchestrator.services.evidence.omissions import (  # noqa: F401
-    CriterionFacts,
-    collect,
-    facts_from_ranking,
-    omission_for,
 )
 from orchestrator.services.evidence.spatial_adequacy import (  # noqa: F401
     AdequacyVerdict,

@@ -3398,6 +3398,94 @@ SELECT ?l WHERE {
         re.IGNORECASE,
     )
 
+    async def _load_configuration_periods(self, results: dict) -> None:
+        """Put the contributing sensors' configuration history on the bus (V6-T07).
+
+        `assemble._configuration_periods` has always read `_config_periods` from here; nothing
+        ever wrote it, so `assess_trend` received an empty list and every trend was REPORTABLE
+        regardless of what had been moved or recalibrated. The mechanism was wired and inert —
+        which is indistinguishable from working, right up until it matters.
+
+        Writes only the periods for sensors that actually contributed, so an unrelated
+        relocation elsewhere in the building never caveats this answer.
+        """
+        try:
+            from orchestrator.services.deliberation.live import sparql_exec
+            from orchestrator.services.evidence.assemble import contributing_uuids
+            from orchestrator.services.evidence.history import for_building
+            from shared.config import settings
+
+            uuids = set(contributing_uuids(results) or [])
+            if not uuids:
+                return
+            history = await for_building(settings.BUILDING_NAMESPACE, sparql_exec)
+            results["_config_history"] = history
+            wanted = {
+                point
+                for uuid, point in (history.get("uuid_to_point") or {}).items()
+                if uuid in uuids
+            }
+            entries = []
+            for point in sorted(wanted):
+                for period in (history.get("by_point") or {}).get(point) or []:
+                    entries.append(
+                        {
+                            "subject": point,
+                            "location": period.location or "",
+                            "effective_from": period.effective_from.isoformat(),
+                            "effective_to": (
+                                period.effective_to.isoformat() if period.effective_to else ""
+                            ),
+                            "change": period.change,
+                        }
+                    )
+            if entries:
+                results["_config_periods"] = entries
+        except Exception as exc:  # pragma: no cover - history must never cost the answer
+            logger.debug(f"[history] periods not loaded: {exc}")
+
+    async def _configuration_caveat(self, state: ConversationState) -> str:
+        """The discontinuity caveat for the points behind a WINDOWED answer, or "".
+
+        Only windowed answers can span a configuration change, so a latest-reading answer is
+        left alone — a caveat that appears everywhere is furniture, and furniture is not read.
+
+        The window comes from the dialogue node's `time_range`; without one there is no span to
+        check and the caveat is silently skipped rather than guessed at.
+        """
+        try:
+            return self._configuration_caveat_inner(state)
+        except Exception as exc:  # pragma: no cover - a caveat must never cost the answer
+            logger.debug(f"[history] caveat skipped: {exc}")
+            return ""
+
+    def _configuration_caveat_inner(self, state: ConversationState) -> str:
+        """The body of the caveat. Split out so the guard above is unmissable rather than
+        depending on every caller remembering to wrap the call."""
+        results = state.intermediate_results or {}
+        window = results.get("time_range") or {}
+        if not isinstance(window, dict):
+            return ""
+        from orchestrator.services.evidence.history import _parse_dt, caveat_for_uuids
+
+        start = _parse_dt(window.get("start") or window.get("from") or "")
+        end = _parse_dt(window.get("end") or window.get("to") or "")
+        if start is None or end is None or end <= start:
+            return ""
+
+        from orchestrator.services.evidence.assemble import contributing_uuids
+
+        uuids = list(contributing_uuids(results) or [])
+        if not uuids:
+            return ""
+
+        # Read what _load_configuration_periods already fetched. Querying again here would
+        # be a second view of one fact, and two views drift.
+        history = results.get("_config_history") or {}
+        if not history:
+            return ""
+        return caveat_for_uuids(history, uuids, start, end)
+
     async def _meter_boundary_line(self, state: ConversationState, answer: str) -> str:
         """The boundary sentence for an energy answer, or "" when the answer is not one.
 
@@ -3516,6 +3604,15 @@ SELECT ?l WHERE {
         await self._grade_spatial_adequacy(results)
         # V6-T36: a recommendation needs a backup that cannot fail with the primary.
         await self._assess_backup_independence(results)
+        # V6-T07: supply the configuration history the trend-integrity verdict was built to
+        # read. `_configuration_periods` has always read `_config_periods` off the bus "when
+        # the sparql lane starts supplying it" — nothing ever did, so assess_trend saw [] and
+        # every trend came back REPORTABLE. The mechanism was wired and inert.
+        #
+        # Loaded ONCE here, before the record is assembled, so the evidence record and the
+        # user-facing caveat read the same periods. Computing it twice is how two views of one
+        # fact drift apart.
+        await self._load_configuration_periods(results)
 
         try:
             from orchestrator.services.evidence.assemble import record_for_response
@@ -3560,6 +3657,7 @@ SELECT ?l WHERE {
         _template_draft = False
         _deliberate_result = state.intermediate_results.get("deliberate_result") or {}
         _events_result = state.intermediate_results.get("events_result") or {}
+        _observability_result = state.intermediate_results.get("observability_result") or {}
         _register_result = state.intermediate_results.get("register_result") or {}
         _diagnosis_result = state.intermediate_results.get("diagnosis_result") or {}
         _privacy_refusal = state.intermediate_results.get("privacy_refusal_result") or {}
@@ -3578,6 +3676,13 @@ SELECT ?l WHERE {
             # V5-T24: event lane (bookings / work orders / access) — deterministic
             # template over adapter numbers, same trust class as deliberate
             final_response = _events_result["formatted_response"]
+        elif _observability_result.get("formatted_response"):
+            # V6-T10: the reach lane. A deterministic statement about what this building can
+            # and cannot observe, read off the coverage matrix. Registered here because a node
+            # that computes an answer nothing collects produces "I processed your request, but
+            # couldn't generate a response" — which is what this lane did until the dispatch
+            # knew its key. Same shape as every other wiring gap this workstream has found.
+            final_response = _observability_result["formatted_response"]
         elif _deliberate_result.get("formatted_response"):
             # ARBITER deliberation (V4): deterministic template prose, already
             # numeric-guard checked against its own evidence dossier
@@ -3835,6 +3940,29 @@ SELECT ?l WHERE {
                 final_response = f"{final_response}\n\n{_boundary_line}"
         except Exception as _exc:  # pragma: no cover - a caveat must never cost the answer
             logger.warning(f"[meter-boundary] skipped: {_exc}")
+
+        # ── V6-T07: configuration discontinuity on a windowed answer ──────────
+        # Acceptance scenario 3. A sensor that was relocated, recalibrated or replaced produces
+        # a STEP in its series, and a step is exactly what a real event in the building looks
+        # like. Reported as a trend, the answer is confident, specific, and about nothing that
+        # happened.
+        #
+        # Flagged, never refused: refusing every trend that crosses a recalibration would
+        # discard most long-horizon questions on a well-maintained building, which are the ones
+        # the research catalogues care most about.
+        #
+        # After persona formatting for the same reason as the meter boundary — a caveat an LLM
+        # may reword is a caveat that can vanish.
+        try:
+            _history_note = await self._configuration_caveat(state)
+            if _history_note and _history_note[:20] not in final_response:
+                for _k in ("analytics_result", "sql_result", "diagnosis_result"):
+                    _payload = state.intermediate_results.get(_k)
+                    if isinstance(_payload, dict):
+                        _payload["configuration_caveat"] = _history_note
+                final_response = f"{final_response}\n\n{_history_note}"
+        except Exception as _exc:  # pragma: no cover - a caveat must never cost the answer
+            logger.warning(f"[history] configuration caveat skipped: {_exc}")
 
         # Phase 7.2: Append proactive follow-up suggestions based on intent
         suggestions = self._get_follow_up_suggestions(state.current_intent)
@@ -5387,6 +5515,180 @@ SELECT ?l WHERE {
         result = await self.anomaly_agent.detect(state, latest_message, sensor_data=sql_result)
         state.intermediate_results["anomaly_result"] = result
         return state
+
+    async def _observability_node(self, state: ConversationState) -> ConversationState:
+        """V6-T10 — can this building answer that? Reach, from the graph, not from prose.
+
+        The failure this replaces is BUG-192's shape: a model reasoning about what the
+        building HAS from whatever landed in its retrieval window, and asserting absence
+        minutes after quoting a reading from the very sensor it said did not exist.
+
+        Everything here comes from the coverage matrix — located, connected, reporting — and
+        every negative names the step that would change it. An unanswerable question that
+        explains what would make it answerable is worth more than a confident guess.
+        """
+        question = state.messages[-1].content if state.messages else ""
+        logger.info(f"[observability] q={question[:70]!r}")
+        try:
+            from orchestrator.services.deliberation.capability_schema import (
+                build_schema,
+            )
+            from orchestrator.services.deliberation.coverage_audit import (
+                load_modalities,
+            )
+            from orchestrator.services.deliberation.live import sparql_exec
+            from orchestrator.services.observability import (
+                UNINSTRUMENTED,
+                Reach,
+                is_open_question,
+                named_quantity,
+                present_modalities,
+                reach_from_coverage,
+            )
+            from shared.config import settings
+
+            schema = await build_schema(
+                settings.BUILDING_ID,
+                settings.BUILDING_NAMESPACE,
+                sparql_exec,
+                load_modalities(settings.BUILDING_ID),
+            )
+            space = self._observability_space(question, schema.spaces)
+            modality, lay = await self._observability_modality(question, state)
+
+            if space is None:
+                # No resolvable referent. The referent-existence gate owns "that room does not
+                # exist"; saying it twice in different words would be two answers to one
+                # question.
+                text = (
+                    "**Which space did you mean?** I can say what is measured in a particular "
+                    "room, floor or zone, but I need to know which one before I can answer "
+                    "whether it is instrumented."
+                )
+            elif modality is None and not is_open_question(question) and named_quantity(question):
+                # A quantity was NAMED and matches no modality this building declares. Listing
+                # what IS measured and leaving the asker to notice the absence is a non-answer:
+                # "can you measure formaldehyde?" deserves a verdict about formaldehyde.
+                #
+                # The named term is never resolved to the nearest modality — that is how "can
+                # you measure radon?" would end up answered about CO2.
+                reach = Reach(
+                    modality=named_quantity(question),
+                    space_label=space.label,
+                    status=UNINSTRUMENTED,
+                    lay_term=named_quantity(question),
+                    alternatives=present_modalities(space.modalities or {}),
+                )
+                text = reach.describe()
+            elif modality is None:
+                # Asking what is measured HERE, rather than about one quantity.
+                have = present_modalities(space.modalities or {})
+                if have:
+                    text = (
+                        f"**In {space.label} I can measure:** {', '.join(have)}.\n\n"
+                        "Ask for any of these directly and I will answer from live readings."
+                    )
+                else:
+                    text = (
+                        f"**Nothing is currently readable in {space.label}.** Either no sensor "
+                        "is located there, or the points that are have no readings behind them."
+                    )
+            else:
+                reach = reach_from_coverage(
+                    modality,
+                    space.label,
+                    (space.modalities or {}).get(modality),
+                    lay_term=lay,
+                    present_modalities=present_modalities(space.modalities or {}),
+                )
+                text = reach.describe()
+                state.intermediate_results["observability_reach"] = {
+                    "modality": reach.modality,
+                    "space": reach.space_label,
+                    "status": reach.status,
+                    "sensor": reach.sensor,
+                    "stored_at": reach.stored_at,
+                    "fresh": reach.fresh,
+                }
+
+            state.intermediate_results["observability_result"] = {
+                "success": True,
+                "kind": "observability",
+                "formatted_response": text,
+                "source": "coverage matrix (graph + registered stores)",
+            }
+        except Exception as exc:
+            # An UNKNOWN reach, never a claim of absence. "I could not work it out" and "it is
+            # not there" are opposite statements, and only the first one is true here.
+            logger.error(f"[observability] failed: {exc}", exc_info=True)
+            state.intermediate_results["observability_result"] = {
+                "success": False,
+                "kind": "observability",
+                "formatted_response": (
+                    "**I can't tell you reliably right now.** I could not build the coverage "
+                    "picture for this building, so I don't know what is measured there — and "
+                    "guessing either way would be worse than saying so."
+                ),
+            }
+        return state
+
+    @staticmethod
+    def _observability_space(question: str, spaces):
+        """The space the question names, or None. Exact-ish match, never a nearest guess."""
+        import re as _re
+
+        from orchestrator.services.anomaly.diagnosis import _squash
+
+        m = _re.search(r"\b(?:room\s*)?(rm\s?\w{2,6}|\d{1,2}\.\d{2,3})\b", question, _re.I)
+        if m:
+            token = _squash(m.group(1))
+            for sc in spaces:
+                if token and token in _squash(sc.label):
+                    return sc
+        m = _re.search(r"\b(?:floor|level)\s*(\w{1,3})\b", question, _re.I)
+        if m:
+            token = m.group(1).lower()
+            for sc in spaces:
+                if str(sc.floor).lower().endswith(token):
+                    return sc
+        return None
+
+    async def _observability_modality(self, question: str, state: ConversationState):
+        """(modality, lay term) the question asks about, or (None, "") for 'what can you measure'.
+
+        Resolution order is config and ontology first: the HBCO concepts the dialogue node
+        already resolved ("stuffy" -> CO2), then the modality names themselves. A keyword list
+        here would be a second vocabulary drifting from the building's own.
+        """
+        from orchestrator.services.deliberation.coverage_audit import load_modalities
+        from shared.config import settings
+
+        text = (question or "").lower()
+        specs = load_modalities(settings.BUILDING_ID)
+
+        concepts = (state.intermediate_results or {}).get("concepts") or []
+        wanted_classes = {
+            str(c).rsplit("#", 1)[-1].lower()
+            for cm in concepts
+            for c in (cm.get("brick_classes") or [])
+        }
+        if wanted_classes:
+            for spec in specs:
+                if {c.lower() for c in spec.brick_classes} & wanted_classes:
+                    lay = ""
+                    for cm in concepts:
+                        lay = lay or str(cm.get("concept_id") or "")
+                    return spec.name, lay.replace("_", " ")
+
+        # Longest name first so "supply air temperature" is not claimed by "temperature".
+        for spec in sorted(specs, key=lambda s: -len(s.name)):
+            if spec.name.replace("_", " ") in text:
+                return spec.name, ""
+        for spec in sorted(specs, key=lambda s: -len(s.name)):
+            for cls in spec.brick_classes:
+                if cls.replace("_", " ").lower() in text:
+                    return spec.name, ""
+        return None, ""
 
     async def _events_node(self, state: ConversationState) -> ConversationState:
         """V5-T24 — bookings / work orders / access questions from the events store."""

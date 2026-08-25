@@ -78,9 +78,7 @@ def slim(src: Path, dst: Path, keep_inserts: bool = False) -> dict:
             if layer and layer not in out.layers:
                 out.layers.add(layer)
             txt = e.dxf.text if t == "TEXT" else e.text
-            h = float(
-                e.dxf.get("height", 2.5) if t == "TEXT" else e.dxf.get("char_height", 2.5)
-            )
+            h = float(e.dxf.get("height", 2.5) if t == "TEXT" else e.dxf.get("char_height", 2.5))
             omsp.add_text(
                 txt,
                 dxfattribs={"layer": layer, "height": h, "insert": tuple(e.dxf.insert)[:3]},
@@ -89,9 +87,7 @@ def slim(src: Path, dst: Path, keep_inserts: bool = False) -> dict:
         elif keep_inserts and t == "INSERT":
             if layer and layer not in out.layers:
                 out.layers.add(layer)
-            omsp.add_blockref(
-                e.dxf.name, tuple(e.dxf.insert)[:2], dxfattribs={"layer": layer}
-            )
+            omsp.add_blockref(e.dxf.name, tuple(e.dxf.insert)[:2], dxfattribs={"layer": layer})
             kept["inserts"] += 1
 
     dst.parent.mkdir(parents=True, exist_ok=True)

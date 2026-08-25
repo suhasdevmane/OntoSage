@@ -59,8 +59,9 @@ def test_a_building_declares_a_timetable_the_same_way_it_declares_a_sensor_feed(
     """Config, not code — this sameness IS the R2 unlock."""
     from orchestrator.services.feeds.base import FeedSpec
 
-    spec = FeedSpec(id="tt", type="timetable", path="institutional/timetable.csv",
-                    space_field="room")
+    spec = FeedSpec(
+        id="tt", type="timetable", path="institutional/timetable.csv", space_field="room"
+    )
     assert spec.type == "timetable" and spec.space_field == "room"
 
 
@@ -146,14 +147,16 @@ def test_a_disabled_source_is_not_a_connected_system():
     gap is closed when nothing is feeding it."""
     from orchestrator.services.feeds.base import FeedSpec
 
-    assert declared_systems([FeedSpec(id="tt", type="timetable", path="a.csv", enabled=False)]) == []
+    assert (
+        declared_systems([FeedSpec(id="tt", type="timetable", path="a.csv", enabled=False)]) == []
+    )
 
 
 def test_the_matrix_no_longer_hardcodes_an_empty_system_list():
     src = Path("scripts/build_observability_matrix.py").read_text(encoding="utf-8")
-    assert 'facts["connected_systems"] = []' not in src, (
-        "the matrix would keep reporting 'no booking system connected' after one was"
-    )
+    assert (
+        'facts["connected_systems"] = []' not in src
+    ), "the matrix would keep reporting 'no booking system connected' after one was"
     assert "_declared_systems()" in src
 
 
@@ -190,8 +193,15 @@ def test_column_names_are_declared_not_sniffed_widely():
 
 def test_a_declared_field_name_wins_over_the_defaults():
     text = "venue,begins,ends,what\nRoom5.03,2026-09-01 09:00,2026-09-01 10:00,Lecture\n"
-    recs, _ = parse_csv(text, "src", KNOWN, space_field="venue", start_field="begins",
-                        end_field="ends", title_field="what")
+    recs, _ = parse_csv(
+        text,
+        "src",
+        KNOWN,
+        space_field="venue",
+        start_field="begins",
+        end_field="ends",
+        title_field="what",
+    )
     assert len(recs) == 1 and recs[0].space_local == "Room5.03"
     assert recs[0].title == "Lecture"
 

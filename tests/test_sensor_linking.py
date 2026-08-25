@@ -49,6 +49,7 @@ def _registry_any_state() -> dict:
                 return dbs
     return {}
 
+
 SCRIPT = REPO / "scripts" / "link_unlinked_sensors.py"
 
 

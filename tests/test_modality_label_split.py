@@ -18,7 +18,10 @@ import textwrap
 
 import pytest
 
-from orchestrator.services.deliberation.coverage_audit import ModalitySpec, load_modalities
+from orchestrator.services.deliberation.coverage_audit import (
+    ModalitySpec,
+    load_modalities,
+)
 
 pytestmark = pytest.mark.unit
 

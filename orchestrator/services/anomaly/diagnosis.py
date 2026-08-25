@@ -158,7 +158,9 @@ class DiagnosisService:
         )
         return series, candidates
 
-    async def _plant_state(self, targets, start: datetime, end: datetime):
+    async def _plant_state(
+        self, targets, start: datetime, end: datetime, room_series=None, room_mean=None
+    ):
         """What the plant serving this space was DOING during the window (V6-T26).
 
         This is the difference between describing a problem and explaining it. Before this,
@@ -228,16 +230,29 @@ class DiagnosisService:
                 if mod == "fan_state":
                     on_pct = round(100.0 * sum(1 for v in pts if v >= 0.5) / len(pts), 1)
                     figures[f"fan_on_pct::{equip}"] = on_pct
-                    if on_pct < 50.0:
-                        # A measured cause outranks every heuristic below it: this is the
-                        # plant not running, not a correlation in time.
-                        notes.append(
-                            (
-                                6.0,
-                                f"{equip}'s supply fan ran for only {on_pct}% of the window — "
-                                f"the space was barely being ventilated",
+                    # A LOW RUNTIME IS NOT A FINDING. The first version raised this whenever
+                    # the fan ran under half the window, and 39.6% of 24 hours is roughly one
+                    # working day -- a NORMAL schedule, presented as the leading explanation
+                    # for a warm room. That is a plausible-sounding diagnosis of nothing, and
+                    # it is exactly the class of answer this project exists to avoid.
+                    #
+                    # The measured signal is COINCIDENCE, not runtime: the fan being off while
+                    # the room was above its own average for the window. Overnight downtime
+                    # never triggers it, because the room is not elevated then.
+                    off_pct = self._off_while_elevated(
+                        series.get(uuid) or [], room_series, room_mean, start, end
+                    )
+                    if off_pct is not None:
+                        figures[f"fan_off_while_elevated_pct::{equip}"] = off_pct
+                        if off_pct >= 50.0:
+                            notes.append(
+                                (
+                                    6.0,
+                                    f"{equip}'s supply fan was off for {off_pct}% of the time "
+                                    f"this space was above its own average for the window — "
+                                    f"the elevation and the downtime coincide",
+                                )
                             )
-                        )
                 elif mod == "damper_position":
                     figures[f"damper_mean::{equip}"] = round(mean, 1)
                     if mean < 20.0:
@@ -251,6 +266,39 @@ class DiagnosisService:
         except Exception as exc:  # pragma: no cover - defensive
             logger.debug(f"[diagnosis] plant state unavailable: {exc}")
         return notes, figures
+
+    @staticmethod
+    def _off_while_elevated(fan_series, room_series, room_mean, start, end):
+        """Share of the ELEVATED room time during which the fan was off, or None.
+
+        `None` means the question cannot be asked -- no room series, no mean, or no elevated
+        samples -- and is reported as no finding rather than as a clean bill of health.
+
+        Each elevated room sample is matched to the fan sample in force at that moment (the
+        most recent one at or before it). Fan state is a step function: interpolating it would
+        invent half-running fans, and taking the nearest sample in EITHER direction would let a
+        fan that started later explain an earlier elevation.
+        """
+        if not fan_series or not room_series or room_mean is None:
+            return None
+        fan = sorted(
+            ((t, v) for t, v in _clean(fan_series) if start <= t < end), key=lambda p: p[0]
+        )
+        room = [(t, v) for t, v in _clean(room_series) if start <= t < end and v > room_mean]
+        if not fan or not room:
+            return None
+
+        import bisect
+
+        stamps = [t for t, _ in fan]
+        off = 0
+        for t, _v in room:
+            idx = bisect.bisect_right(stamps, t) - 1
+            if idx < 0:
+                continue  # the room reading predates any fan sample: unknown, not "off"
+            if fan[idx][1] < 0.5:
+                off += 1
+        return round(100.0 * off / len(room), 1)
 
     @staticmethod
     def _window_mean(series, start: datetime, end: datetime) -> Optional[float]:
@@ -459,7 +507,9 @@ class DiagnosisService:
                     f"{len(complaints)} user report(s) were filed in the same window — occupants noticed something too",
                 )
             )
-        plant_notes, plant_figures = await self._plant_state(targets, start, end)
+        plant_notes, plant_figures = await self._plant_state(
+            targets, start, end, room_series=merged, room_mean=window_mean
+        )
         causes.extend(plant_notes)
         # Deduplicate before ranking. Live: "why is 5.16 so warm?" listed "a sensor reporting
         # gap overlaps the window" as explanations 1, 2, 3 AND 4 -- one finding per overlapping

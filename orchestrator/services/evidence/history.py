@@ -48,6 +48,13 @@ class ConfigurationPeriod:
     effective_to: Optional[datetime] = None
     location: Optional[str] = None
     change: str = ""  # relocation | recalibration | replacement | firmware | commissioning
+    #: The point this period describes. Added when the bus reader was found constructing
+    #: `ConfigurationPeriod(subject=...)` against a dataclass that had no such field — a
+    #: TypeError that would have been swallowed by the reader's broad `except` and returned an
+    #: empty list, the moment anybody supplied data. Nobody ever had, so it sat latent.
+    #: A period also genuinely needs to know whose it is: several points' histories arrive in
+    #: one query and are worthless once mixed together.
+    subject: str = ""
 
     def covers(self, when: datetime) -> bool:
         if when < self.effective_from:
@@ -138,3 +145,137 @@ def attribute_readings(
     """
     ordered = sorted(periods, key=lambda p: p.effective_from)
     return [(t, v, location_as_of(ordered, t)) for t, v in readings]
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Loading periods from the graph (V6-T07 wiring)
+#
+# The logic above was correct and unreachable for three days: nothing loaded a
+# ConfigurationPeriod, so no lane could consult it. A guard nothing calls is untested in
+# production however green its unit tests are (lesson #60), and this is the half that makes
+# the other half true.
+# ══════════════════════════════════════════════════════════════════════════════
+
+ONTOSAGE_NS = "http://ontosage.org/capabilities#"
+
+_PERIOD_PREFIXES = (
+    "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+    "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
+    "PREFIX ref: <https://brickschema.org/schema/Brick/ref#>\n"
+    f"PREFIX ontosage: <{ONTOSAGE_NS}>\n"
+)
+
+
+def periods_query(namespace: str) -> str:
+    """Every declared configuration period in the building, with the point it belongs to.
+
+    One query for the whole building rather than one per answer: the history is small (one or
+    two periods per point) and changes only when a TTL is uploaded or a sensor is moved.
+
+    The point's timeseries uuid is projected too, because that is the key an ANSWER carries --
+    a period reachable only by IRI would be correct and never matched, which is the
+    present-but-invisible failure this codebase keeps paying for.
+    """
+    return (
+        _PERIOD_PREFIXES + "SELECT DISTINCT ?point ?uuid ?from ?to ?location ?change WHERE {\n"
+        "  ?period a ontosage:ConfigurationPeriod ;\n"
+        "          ontosage:configurationOf ?point ;\n"
+        "          ontosage:effectiveFrom ?from .\n"
+        "  OPTIONAL { ?period ontosage:effectiveTo ?to }\n"
+        "  OPTIONAL { ?period ontosage:configLocation ?location }\n"
+        "  OPTIONAL { ?period ontosage:changeKind ?change }\n"
+        "  OPTIONAL { ?point ref:hasExternalReference ?r . ?r ref:hasTimeseriesId ?uuid }\n"
+        f'  FILTER(STRSTARTS(STR(?point), "{namespace}"))\n'
+        "}"
+    )
+
+
+def _parse_dt(raw: str) -> Optional[datetime]:
+    """A declared instant, or None. Never a guess.
+
+    An unparseable date must not become "now" or "the epoch": either would silently place a
+    reading in the wrong configuration, which is the exact error this module exists to stop.
+    """
+    text = str(raw or "").strip()
+    if not text:
+        return None
+    text = text.replace("Z", "+00:00")
+    for candidate in (text, text.split("+")[0], text.replace("T", " ")):
+        try:
+            parsed = datetime.fromisoformat(candidate)
+            return parsed.replace(tzinfo=None) if parsed.tzinfo else parsed
+        except ValueError:
+            continue
+    logger.debug(f"[history] unparseable effective date {raw!r} — period ignored")
+    return None
+
+
+def periods_from_rows(rows: object) -> "dict":
+    """``{point_iri: [ConfigurationPeriod]}`` and ``{uuid: point_iri}`` from either SPARQL shape.
+
+    Returns a dict with both, because a caller has the uuid and needs the periods, and keeping
+    the mapping here means one place knows how the two relate.
+    """
+    from orchestrator.services.evidence.plant_state import rows_of
+
+    by_point: dict = {}
+    uuid_to_point: dict = {}
+    for row in rows_of(rows):
+        point = str(row.get("point") or "")
+        start = _parse_dt(row.get("from"))
+        if not point or start is None:
+            continue
+        by_point.setdefault(point, []).append(
+            ConfigurationPeriod(
+                effective_from=start,
+                effective_to=_parse_dt(row.get("to")),
+                location=str(row.get("location") or "") or None,
+                change=str(row.get("change") or ""),
+                subject=point,
+            )
+        )
+        uuid = str(row.get("uuid") or "")
+        if uuid:
+            uuid_to_point[uuid] = point
+    for periods in by_point.values():
+        periods.sort(key=lambda p: p.effective_from)
+    return {"by_point": by_point, "uuid_to_point": uuid_to_point}
+
+
+async def for_building(namespace: str, run_select) -> "dict":
+    """Load the building's configuration history. Never raises.
+
+    An answer without a discontinuity caveat is worse than one with it, but an answer that
+    failed outright because the history lookup broke is worse than both.
+    """
+    empty = {"by_point": {}, "uuid_to_point": {}}
+    if not namespace or run_select is None:
+        return empty
+    try:
+        return periods_from_rows(await run_select(periods_query(namespace) + "\nLIMIT 2000"))
+    except Exception as exc:
+        logger.debug(f"[history] period lookup failed: {exc}")
+        return empty
+
+
+def caveat_for_uuids(history: "dict", uuids: Sequence[str], start: datetime, end: datetime) -> str:
+    """The discontinuity caveat for the points behind an answer, or "" when there is none.
+
+    Silent when nothing crosses a change — a caveat that appears on every answer is furniture,
+    and furniture is not read.
+    """
+    if not history or not uuids:
+        return ""
+    seen: List[str] = []
+    parts: List[str] = []
+    for uuid in uuids:
+        point = (history.get("uuid_to_point") or {}).get(str(uuid))
+        if not point or point in seen:
+            continue
+        seen.append(point)
+        integrity = check_window((history.get("by_point") or {}).get(point) or [], start, end)
+        if integrity.is_continuous:
+            continue
+        name = point.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+        parts.append(f"**{name}:** {integrity.caveat()}")
+    return "\n\n".join(parts)

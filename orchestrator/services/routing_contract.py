@@ -948,6 +948,31 @@ def consumption_question(query: str) -> bool:
     return bool(CONSUMPTION_RE.search(query))
 
 
+def _r_observability_query(c: _Ctx) -> Optional[str]:
+    """Questions about the SYSTEM'S REACH -> the observability lane (V6-T10).
+
+    "Can you measure formaldehyde in 5.01?" asks whether a value exists to be had; "What is
+    the CO2 in 5.01?" asks for the value. Answering the first from prose is how BUG-192
+    happened -- a model denying a sensor class from its retrieval window minutes after quoting
+    one of its readings.
+
+    Runs BEFORE the consumption and plant rules: "can you measure the energy use of floor 2?"
+    is a reach question that happens to name a metered resource, and a figure is the wrong
+    answer to it.
+    """
+    # `floor_plan` is in the claimable set because the classifier reaches for it on
+    # "where is X happening, and what detection covers it?" -- measured, and answered with a
+    # floor-plan PICKER in response to a fire-safety question. The reach patterns never match
+    # "show me floor 3" or "where is the server room", so no genuine floor-plan request moves.
+    if c.intent not in _WEAK_INTENTS + ("sensor_data", "metadata", "discovery", "floor_plan"):
+        return None
+    if c.sr.is_control_command(c.query):
+        return None
+    from orchestrator.services.observability import is_observability_question
+
+    return "observability" if is_observability_question(c.query) else None
+
+
 def _r_consumption_query(c: _Ctx) -> Optional[str]:
     """Metered-consumption questions -> analytics, not a document (V6-T27).
 
@@ -1304,6 +1329,11 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "why_diagnosis",
         "comfort why-questions → diagnosis lane (V5-T20)",
         _r_why_diagnosis,
+    ),
+    Rule(
+        "observability_query",
+        "can-you-measure questions → the reach lane, answered from the graph (V6-T10)",
+        _r_observability_query,
     ),
     Rule(
         "consumption_query",
