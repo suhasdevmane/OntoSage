@@ -30,8 +30,12 @@ from orchestrator.services.deliberation.coverage_audit import (  # noqa: E402
     CoverageAuditor,
     load_modalities,
 )
-from orchestrator.services.deliberation.live import active_identity, sparql_exec  # noqa: E402
+from orchestrator.services.deliberation.live import (  # noqa: E402
+    active_identity,
+    sparql_exec,
+)
 from orchestrator.services.deliberation.synthetic_events import (  # noqa: E402
+    bookings_for_building_day,
     generate_building_day,
     to_row,
 )
@@ -62,6 +66,15 @@ def _mysql():
 async def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--weeks", type=int, default=5)
+    ap.add_argument(
+        "--forward-weeks",
+        type=int,
+        default=2,
+        help="weeks of FUTURE bookings to generate (default 2). A room calendar with "
+        "no future entries cannot answer 'is this room free tomorrow?', which is most "
+        "of what a booking system is asked. Only bookings are generated ahead of now: "
+        "nobody has walked through a door tomorrow.",
+    )
     args = ap.parse_args()
 
     identity = active_identity()
@@ -89,6 +102,18 @@ async def main() -> int:
                     generated[e["event_type"]] += 1
                 inserted["rows"] += cur.rowcount if cur.rowcount > 0 else 0
             day += timedelta(days=1)
+        # forward calendar: bookings only, from tomorrow to the horizon
+        if args.forward_weeks > 0:
+            fday = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+            fend = now + timedelta(weeks=args.forward_weeks)
+            while fday <= fend:
+                events = bookings_for_building_day(building_id, rooms, fday, now)
+                if events:
+                    cur.executemany(_INSERT, [to_row(e) for e in events])
+                    for e in events:
+                        generated[f"{e['event_type']} (future)"] += 1
+                fday += timedelta(days=1)
+
         conn.commit()
         cur.execute("SELECT event_type, COUNT(*) FROM events GROUP BY event_type")
         totals = dict(cur.fetchall())

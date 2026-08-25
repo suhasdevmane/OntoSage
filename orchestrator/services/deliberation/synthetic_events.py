@@ -25,7 +25,7 @@ import json
 import random
 import uuid as uuidlib
 from datetime import datetime, timedelta
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from orchestrator.services.datasource_registry import derive_point_uuid
 from orchestrator.services.deliberation.synthetic_signals import (
@@ -65,13 +65,29 @@ def _occupied_blocks(occ: List[float]) -> List[tuple]:
     return blocks
 
 
+def _booking_status(start: datetime, now: Optional[datetime]) -> str:
+    """'confirmed' for a reservation that has not started yet, else 'done'."""
+    return "confirmed" if now is not None and start > now else "done"
+
+
 def bookings_for_room_day(
-    building_id: str, room_local: str, day: datetime, capacity: int = 8
+    building_id: str,
+    room_local: str,
+    day: datetime,
+    capacity: int = 8,
+    now: Optional[datetime] = None,
 ) -> List[Dict]:
     """Bookings consistent with the room's occupancy driver.
 
     Real bookings cover (a subset of) occupied stretches; ~15% of rooms get an
     additional GHOST booking placed in a stretch where occupancy stayed 0.
+
+    ``now`` decides the STATUS rather than whether the booking exists. A booking is
+    the one event type that legitimately lives in the future — that is what a room
+    calendar is for — but a reservation that has not happened yet is "confirmed",
+    not "done". Marking it done would answer "was this room actually used?" with a
+    yes about a meeting nobody has attended. Left as None, every booking is
+    historical and the behaviour is unchanged.
     """
     steps = (24 * 60) // STEP_MINUTES
     occ = occupancy_series(building_id, room_local, day, steps)
@@ -94,7 +110,7 @@ def bookings_for_room_day(
                 "subject_uuid": subject_uuid(building_id, room_local),
                 "start_dt": start,
                 "end_dt": end,
-                "status": "done",
+                "status": _booking_status(start, now),
                 "attrs": {
                     "organizer_role": rng.choice(_ROLES),
                     "attendees": int(min(capacity, max(1, round(peak)))),
@@ -118,7 +134,7 @@ def bookings_for_room_day(
                     "subject_uuid": subject_uuid(building_id, room_local),
                     "start_dt": start,
                     "end_dt": end,
-                    "status": "done",
+                    "status": _booking_status(start, now),
                     "attrs": {
                         "organizer_role": rng.choice(_ROLES),
                         "attendees": rng.randint(2, capacity),
@@ -220,9 +236,27 @@ def generate_building_day(
     """All event types for one building-day (bookings per room + WOs + access)."""
     out: List[Dict] = []
     for room in room_locals:
-        out.extend(bookings_for_room_day(building_id, room, day))
+        out.extend(bookings_for_room_day(building_id, room, day, now=now))
     out.extend(workorders_for_day(building_id, room_locals, day, now))
     out.extend(access_events_for_day(building_id, room_locals, day))
+    return out
+
+
+def bookings_for_building_day(
+    building_id: str, room_locals: List[str], day: datetime, now: datetime
+) -> List[Dict]:
+    """Bookings ONLY, for one building-day.
+
+    Used to extend the calendar past today. Bookings are the one event type that
+    may legitimately exist in the future: a room calendar without future entries
+    cannot answer "is this room free tomorrow?", which is most of what anyone asks
+    a booking system. Access events and work orders are deliberately excluded —
+    nobody has walked through a door tomorrow, and a work order cannot already be
+    finished on a date that has not arrived.
+    """
+    out: List[Dict] = []
+    for room in room_locals:
+        out.extend(bookings_for_room_day(building_id, room, day, now=now))
     return out
 
 

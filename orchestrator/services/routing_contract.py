@@ -688,8 +688,17 @@ def _r_constraint_recommendation(c: _Ctx) -> Optional[str]:
 # regex targets pure event vocabulary.
 EVENTS_RE = re.compile(
     # "is <subject> free/booked" — single-subject availability; the subject
-    # token keeps inventory questions ("what sensor types are available") out
-    r"(?:\bis\s+(?!there\b)\S{2,}\s+(?:free|booked|available|in use)\b"
+    # token keeps inventory questions ("what sensor types are available") out.
+    #
+    # The subject is up to THREE tokens, not one. With one, "is 5.01 booked"
+    # matched but "is room 5.01 booked" did not, and neither did "is the seminar
+    # room reserved" — so the most natural way to ask about a booking fell through
+    # to the capability lane and was answered from a stale uploaded document while
+    # 8,339 live booking records sat in the event store (measured 2026-08-25).
+    # Three is deliberate: it covers "the seminar room" without reaching across a
+    # prepositional phrase, so "is the temperature in room 5.01 available" — five
+    # tokens — still belongs to the data lane rather than to bookings.
+    r"(?:\bis\s+(?!there\b)(?:\S{2,}\s+){1,3}(?:free|booked|available|in use|reserved|occupied|taken)\b"
     r"|\b(?:which|what|any|list)\b.{0,40}\brooms?\b.{0,30}\b(?:free|available)\b"
     r"|\b(?:a|any)\s+rooms?\s+(?:free|available)\b"
     r"|\bbookings?\b|\breservations?\b"

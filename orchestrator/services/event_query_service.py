@@ -304,6 +304,17 @@ class EventQueryService:
             "room": room,
             "window": label,
             "count": len(rows),
+            # The rendered lines travel WITH the answer, the same way
+            # availability_check carries its `clashes`. This branch printed up to
+            # ten booking times and attendee counts and then reported only the
+            # count, so the numeric guard found thirteen figures in the narration
+            # that nothing in the payload could account for and suppressed a
+            # correct answer (measured 2026-08-25: "how many room bookings are
+            # there today?" returned the suppression text against 224 real
+            # bookings). The guard was right — an answer must carry the evidence
+            # for every number it states, and the fix belongs here rather than in
+            # a guard exemption for clock times.
+            "bookings": lines,
             "source": "events_data",
             "formatted_response": text,
         }
