@@ -2514,16 +2514,33 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
         loc_filter = f" && CONTAINS(STR(?sensor), '{loc_m.group(0)}')" if loc_m else ""
 
         # Pattern-based query (Phase 15A: per-request building namespace).
-        alt_query = (
+        #
+        # TWO CHEAP STAGES, never one unbounded scan. This used to be a single
+        # query over `?sensor ?p ?o` with a string FILTER — i.e. every triple in
+        # the store — plus two OPTIONAL joins. When the token MATCHED something
+        # the LIMIT 50 cut it short and it looked fine; when the token matched
+        # NOTHING there was nothing to cut it short and it read the whole store.
+        # That is the case that actually happens, because this fallback only runs
+        # after the class query returned zero — the LLM had invented a class.
+        # Measured live 2026-08-25 on a 19.4M-triple store: 29.98s per attempt,
+        # three self-correction attempts, and the 120s workflow budget gone, so
+        # "how many parking bays are free right now?" returned "your request took
+        # too long" while the sensor that answers it sat one 0.06s query away.
+        #
+        # Anchoring on `a brick:Point` bounds the scan to the building's points
+        # (0.56s for the same zero-match token, 49x faster) and moving the
+        # OPTIONALs into a second VALUES-bound query keeps the hot path cheap —
+        # measured, the OPTIONAL joins cost more than the scan they rode on.
+        ns = _active_namespace()
+        probe_query = (
             self._prefix_block()
             + f"""
-SELECT ?sensor ?location ?uuid WHERE {{
-    ?sensor ?p ?o .
-    FILTER(STRSTARTS(STR(?sensor), '{_active_namespace()}') && CONTAINS(STR(?sensor), '{token}_Sensor'){loc_filter})
-    OPTIONAL {{ ?sensor brick:hasLocation ?location . }}
-    OPTIONAL {{ ?sensor bldg:connstring ?uuid . }}
+SELECT DISTINCT ?sensor WHERE {{
+    ?sensor a brick:Point .
+    FILTER(STRSTARTS(STR(?sensor), '{ns}') && CONTAINS(STR(?sensor), '{token}_Sensor'){loc_filter})
 }} LIMIT 50"""
         )
+        alt_query = probe_query
 
         logger.info(
             f"Attempting pattern fallback for token: {token}"
@@ -2542,9 +2559,42 @@ SELECT ?sensor ?location ?uuid WHERE {{
 
             if response.status_code == 200:
                 data = response.json()
-                count = len(data.get("results", {}).get("bindings", []))
+                bindings = data.get("results", {}).get("bindings", [])
+                count = len(bindings)
                 if count > 0:
                     logger.info(f"✅ Pattern fallback succeeded: {count} results")
+                    # Stage 2: attach location/uuid for the handful of subjects
+                    # stage 1 found. Bound by VALUES, so this cannot degrade into
+                    # a scan however large the store grows. Enrichment is a
+                    # best-effort improvement on an answer we already have — if it
+                    # fails, the caller still gets the sensors.
+                    iris = [
+                        b["sensor"]["value"] for b in bindings if b.get("sensor", {}).get("value")
+                    ]
+                    if iris:
+                        values = " ".join(f"<{iri}>" for iri in iris)
+                        enrich_query = (
+                            self._prefix_block()
+                            + f"""
+SELECT DISTINCT ?sensor ?location ?uuid WHERE {{
+    VALUES ?sensor {{ {values} }}
+    OPTIONAL {{ ?sensor brick:hasLocation ?location . }}
+    OPTIONAL {{ ?sensor ref:hasExternalReference [ ref:hasTimeseriesId ?uuid ] . }}
+}}"""
+                        )
+                        try:
+                            enriched = await client.post(
+                                endpoint,
+                                auth=auth,
+                                data={"query": enrich_query},
+                                headers={"Accept": "application/sparql-results+json"},
+                            )
+                            if enriched.status_code == 200:
+                                e_data = enriched.json()
+                                if e_data.get("results", {}).get("bindings"):
+                                    return e_data
+                        except Exception as e:
+                            logger.warning(f"Pattern fallback enrichment failed: {e}")
                     return data
         except Exception as e:
             logger.warning(f"Pattern fallback failed: {e}")

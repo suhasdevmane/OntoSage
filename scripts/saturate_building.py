@@ -31,7 +31,10 @@ from orchestrator.services.deliberation.coverage_audit import (  # noqa: E402
     CoverageAuditor,
     load_modalities,
 )
-from orchestrator.services.deliberation.live import active_identity, sparql_exec  # noqa: E402
+from orchestrator.services.deliberation.live import (  # noqa: E402
+    active_identity,
+    sparql_exec,
+)
 from orchestrator.services.deliberation.saturation import (  # noqa: E402
     build_saturation_ttl,
     build_zoneid_ttl,
@@ -39,7 +42,7 @@ from orchestrator.services.deliberation.saturation import (  # noqa: E402
 )
 
 
-async def _run(dry_run: bool) -> int:
+async def _run(dry_run: bool, only: list = None) -> int:
     identity = active_identity()
     building_id = identity["BUILDING_ID"]
     namespace = identity["BUILDING_NAMESPACE"]
@@ -50,6 +53,18 @@ async def _run(dry_run: bool) -> int:
     print(f"[saturate] building={building_id} namespace={namespace}")
 
     modalities = load_modalities(building_id)
+    if only:
+        wanted = {m.strip().lower() for m in only}
+        known = {m.name.lower() for m in modalities}
+        missing = wanted - known
+        if missing:
+            print(f"[saturate] ERROR: unknown modality: {', '.join(sorted(missing))}")
+            return 1
+        modalities = [m for m in modalities if m.name.lower() in wanted]
+        print(
+            f"[saturate] restricted to {len(modalities)} modality(ies): "
+            f"{', '.join(m.name for m in modalities)}"
+        )
     auditor = CoverageAuditor(sparql_exec, modalities)
     spaces = await auditor.audit(namespace)
     if not spaces:
@@ -101,8 +116,15 @@ async def _run(dry_run: bool) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description="SATURATE provisioner (V4-T08)")
     parser.add_argument("--dry-run", action="store_true", help="Plan only; write nothing")
+    parser.add_argument(
+        "--only",
+        default="",
+        help="Comma-separated modality names to provision (default: all with gaps). "
+        "Provisioning is additive per modality — each writes its own TTL and its own "
+        "named graph — so filling one gap never has to mean generating the other twenty.",
+    )
     args = parser.parse_args()
-    return asyncio.run(_run(args.dry_run))
+    return asyncio.run(_run(args.dry_run, [x for x in args.only.split(",") if x.strip()]))
 
 
 if __name__ == "__main__":

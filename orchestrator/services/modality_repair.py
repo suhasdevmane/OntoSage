@@ -64,6 +64,33 @@ def modality_classes(modality: str, building_id: Optional[str] = None) -> Tuple[
     return ()
 
 
+def modality_label_filters(
+    modality: str, building_id: Optional[str] = None
+) -> Tuple[Tuple[str, ...], Tuple[str, ...]]:
+    """(label_contains, label_excludes) for a modality — the OTHER half of its identity.
+
+    A modality is a Brick class set AND a label discriminator; several share one class
+    and are told apart only by the label ("parking_free" and "occupancy_status" are both
+    Occupancy_Count_Sensor; PM1, PM2.5, PM10 and TVOC are all Particulate_Matter_Sensor).
+    Any caller that counts or selects on the classes alone silently takes the whole
+    superclass population: the absence guard told a user this building has "257
+    parking_free sensor(s)" when it has exactly one, inside a sentence that begins "to be
+    accurate about one thing" (measured live 2026-08-25).
+    """
+    try:
+        from orchestrator.services.deliberation.coverage_audit import load_modalities
+
+        for spec in load_modalities(building_id):
+            if spec.name == modality:
+                return (
+                    tuple(spec.label_contains or ()),
+                    tuple(spec.label_excludes or ()),
+                )
+    except Exception as exc:  # pragma: no cover - config is optional
+        logger.debug(f"[modality_repair] modality label filters unavailable: {exc}")
+    return (), ()
+
+
 #: Words that appear in EVERY sensor's class or IRI and therefore prove nothing.
 #: Without this, splitting "Relative_Humidity_Sensor" yields "sensor", which
 #: matches "Building_Air_Static_Pressure_Sensor" and the repair never fires.

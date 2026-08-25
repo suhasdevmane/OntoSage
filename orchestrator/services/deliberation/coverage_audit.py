@@ -285,7 +285,17 @@ class CoverageAuditor:
                 "sensor": _val(b, "sensor"),
                 "class_local": _local(_val(b, "cls")),
                 "space": _val(b, "space"),
-                "text": (_val(b, "label") or _local(_val(b, "sensor"))),
+                # BOTH forms, never one-or-the-other. This read `label OR local
+                # name`, so for any sensor carrying an rdfs:label the IRI was
+                # never seen -- and a discriminator written in the IRI's
+                # underscore form ("pm1_") silently matched NOTHING rather than
+                # failing loudly. Found 2026-08-25 excluding PM1 from the pm25
+                # modality: the label is "PM1 Level Sensor installed-node 5.01",
+                # the IRI is PM1_Level_Sensor_Atmospheric_5.01, and the exclusion
+                # was written against the second while the matcher only ever saw
+                # the first. Concatenating means a rule expressed in either
+                # vocabulary works.
+                "text": " ".join(x for x in (_val(b, "label"), _local(_val(b, "sensor"))) if x),
                 "uuid": _val(b, "uuid"),
                 "stored_at": _local(_val(b, "stored")),
             }

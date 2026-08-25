@@ -31,7 +31,10 @@ sys.path.insert(0, str(_REPO_ROOT))
 
 import pymysql  # noqa: E402
 
-from orchestrator.services.deliberation.live import active_identity, sparql_exec  # noqa: E402
+from orchestrator.services.deliberation.live import (  # noqa: E402
+    active_identity,
+    sparql_exec,
+)
 from orchestrator.services.deliberation.synthetic_signals import (  # noqa: E402
     day_timestamps,
     generate_room_day,
@@ -128,11 +131,15 @@ def _backfill(building_id: str, sensors: List[Dict[str, str]], weeks: int) -> Di
     return dict(written)
 
 
-async def _run(weeks: int) -> int:
+async def _run(weeks: int, only: list = None) -> int:
     identity = active_identity()
     building_id, namespace = identity["BUILDING_ID"], identity["BUILDING_NAMESPACE"]
     print(f"[backfill] building={building_id} weeks={weeks}")
     sensors = await _discover(namespace)
+    if only:
+        wanted = {m.strip().lower() for m in only}
+        sensors = [s for s in sensors if s["modality"].lower() in wanted]
+        print(f"[backfill] restricted to modality(ies): {', '.join(sorted(wanted))}")
     if not sensors:
         print("[backfill] ERROR: no saturation sensors found — run saturate_building.py first")
         return 1
@@ -149,8 +156,15 @@ async def _run(weeks: int) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description="SATURATE correlated backfill (V4-T10)")
     parser.add_argument("--weeks", type=int, default=5, help="Weeks of history (default 5)")
+    parser.add_argument(
+        "--only",
+        default="",
+        help="Comma-separated modality names to backfill (default: all saturation sensors). "
+        "Pairs with saturate_building.py --only so a single modality can be added to a "
+        "building that already has history, without rewriting any of it.",
+    )
     args = parser.parse_args()
-    return asyncio.run(_run(args.weeks))
+    return asyncio.run(_run(args.weeks, [x for x in args.only.split(",") if x.strip()]))
 
 
 if __name__ == "__main__":

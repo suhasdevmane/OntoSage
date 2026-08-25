@@ -363,7 +363,45 @@ class CapabilityAgent:
                     {"text": f.render(), "doc_name": getattr(f, "label", "")} for f in _facts
                 ]
                 _keep = {id(r) for r in _on_topic(state.user_message or "", _rendered)}
-                _facts = [f for f, r in zip(_facts, _rendered) if id(r) in _keep]
+                _pairs = [(f, r) for f, r in zip(_facts, _rendered) if id(r) in _keep]
+                # ORDER matters as much as inclusion, and the filter above cannot
+                # supply it. For "how many parking bays are free?" BOTH a
+                # "Transport Parking" amenity and a general "Catering Amenities"
+                # blob survive on-topic legitimately — the catering text mentions
+                # bicycle parking in passing — and the resolver hands them back in
+                # graph order, so the reader was shown a CATERING answer to a
+                # parking question (measured live 2026-08-25). BUG-103 removed the
+                # off-topic amenity; it could not rank the on-topic ones.
+                #
+                # An amenity whose LABEL names what was asked is the one that
+                # answers it; an amenity that merely mentions it in passing is not.
+                # So rank by label match first, then by how distinctive the shared
+                # vocabulary is. Rank, never drop: the weaker fact is still true and
+                # may still be worth reading — it simply must not lead.
+                from orchestrator.services.grounding_guard import (
+                    MATCH_COMMON,
+                    MATCH_DISTINCTIVE,
+                )
+                from orchestrator.services.grounding_guard import (
+                    is_on_topic as _is_on_topic,
+                )
+                from orchestrator.services.grounding_guard import (
+                    match_strength as _strength,
+                )
+
+                _rank = {MATCH_DISTINCTIVE: 2, MATCH_COMMON: 1}
+                _q = state.user_message or ""
+
+                def _relevance(pair):
+                    _f, _r = pair
+                    _label = str(_r.get("doc_name", "")).replace("_", " ")
+                    return (
+                        1 if _label and _is_on_topic(_q, _label) else 0,
+                        _rank.get(_strength(_q, str(_r.get("text", ""))), 0),
+                    )
+
+                _pairs.sort(key=_relevance, reverse=True)
+                _facts = [f for f, _ in _pairs]
             if _facts:
                 _parts = [f"Here is what I found for **{building_name}**:\n"]
                 # Being ABOUT the subject is not the same as ANSWERING the question.

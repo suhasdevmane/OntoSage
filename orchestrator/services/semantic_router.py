@@ -782,7 +782,23 @@ class SemanticRouter:
             word in q for word in _DATA_ANALYTIC_WORDS
         ):
             return True
-        return any(phrase in q for phrase in _DATA_BYPASS_PHRASES)
+        if any(phrase in q for phrase in _DATA_BYPASS_PHRASES):
+            return True
+        # 5. A quantity question about something this building METERS. Checks 1-4
+        #    recognise a data question by sensor id, room id or a fixed phrase
+        #    list, so a metered quantity phrased without any of those was
+        #    invisible here — and this function is the FIRST condition of the
+        #    capability short-circuit bypass, so being invisible meant the
+        #    capability lane answered before the classifier ever ran. Measured
+        #    2026-08-25: "how many parking bays are free right now?" was answered
+        #    with the building's catering amenities while a parking sensor sat in
+        #    the graph with 5,090 rows behind it. The vocabulary comes from the
+        #    building's own modality config, not another literal list here.
+        from orchestrator.services.routing_contract import (  # local: avoids a cycle
+            metered_quantity_question,
+        )
+
+        return metered_quantity_question(query)
 
     @staticmethod
     def is_floor_plan_query(query: str) -> bool:
