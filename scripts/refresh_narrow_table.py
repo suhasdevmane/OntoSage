@@ -86,24 +86,42 @@ def main(argv: List[str]) -> int:
         print(
             f"{t}: {n_uuid} sensor(s), values {vmin}..{vmax}, latest {latest} ({gap_min/60:.1f} h ago)"
         )
-        if gap_min <= args.step_min:
-            print("  already current — nothing to do")
-            return 0
+        # PER SENSOR, never per table. The first version read the table's global
+        # MAX(datetime), then topped up only the uuids that wrote at THAT EXACT timestamp --
+        # so a single still-reporting sensor made the whole table look current and hid every
+        # other one from the top-up. Measured on this building: noise_data reported a table
+        # max of "now" with 1 of 236 sensors actually fresh, light_data 1 of 242,
+        # temperature_data 1 of 67. The deliberate lane then excluded every candidate space
+        # for lack of usable noise, and the answer was "I couldn't rank any spaces".
+        #
+        # This is the same table-versus-sensor conflation recorded as CAVEAT-233, in the tool
+        # written to repair its consequences.
+        now = datetime.now().replace(second=0, microsecond=0)
+        cur.execute(
+            f"SELECT a.uuid, a.value, a.datetime FROM `{t}` a "
+            f"JOIN (SELECT uuid, MAX(datetime) AS m FROM `{t}` GROUP BY uuid) b "
+            f"ON a.uuid = b.uuid AND a.datetime = b.m"
+        )
+        per_sensor = {
+            str(u): (float(v) if v is not None else (float(vmin) + float(vmax)) / 2.0, d)
+            for u, v, d in cur.fetchall()
+        }
+        if not per_sensor:
+            print("  no sensors found — nothing to continue from")
+            return 1
 
-        cur.execute(f"SELECT uuid, value FROM `{t}` WHERE datetime = %s", (latest,))
-        last = {u: float(v) for u, v in cur.fetchall() if v is not None}
-        if not last:
-            cur.execute(f"SELECT DISTINCT uuid FROM `{t}`")
-            mid = (float(vmin) + float(vmax)) / 2.0
-            last = {r[0]: mid for r in cur.fetchall()}
-
-        steps = int(gap_min // args.step_min)
         lo, hi = float(vmin), float(vmax)
         rows = []
-        for uuid, start in last.items():
+        stale = 0
+        for uuid, (start_val, last_dt) in sorted(per_sensor.items()):
+            sensor_gap = (now - last_dt).total_seconds() / 60.0
+            if sensor_gap <= args.step_min:
+                continue  # this one is current; never rewrite history
+            stale += 1
+            steps_for_sensor = int(sensor_gap // args.step_min)
             rnd = random.Random(uuid)
-            val = start
-            for i in range(steps, 0, -1):
+            val = start_val
+            for i in range(steps_for_sensor, 0, -1):
                 ts = now - timedelta(minutes=i * args.step_min)
                 hour = ts.hour + ts.minute / 60.0
                 # A gentle diurnal push plus a small random walk, clamped to the
@@ -113,6 +131,12 @@ def main(argv: List[str]) -> int:
                 val = max(lo, min(hi, val))
                 rows.append((uuid, ts, round(val, 3)))
 
+        if not rows:
+            print(f"  already current — all {len(per_sensor)} sensor(s) up to date")
+            return 0
+        last = {u: v for u, (v, _) in per_sensor.items()}
+        steps = max(1, len(rows) // max(1, stale))
+        print(f"  {stale} of {len(per_sensor)} sensor(s) are stale")
         print(f"  would write {len(rows)} row(s) across {len(last)} sensor(s) in {steps} step(s)")
         if args.dry_run:
             return 0
