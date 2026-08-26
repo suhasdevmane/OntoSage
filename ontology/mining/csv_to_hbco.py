@@ -51,6 +51,10 @@ def build_ttl(rows: list[dict]) -> str:
         "@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .",
         "@prefix brick:  <https://brickschema.org/schema/Brick#> .",
         "@prefix hbco:   <http://ontosage.org/hbco#> .",
+        # OCBV terms. A concept may map to a class Brick does not have --
+        # ontosage:Parking_Occupancy_Sensor exists because brick has no bay-count
+        # class -- and without this prefix the generated file simply does not parse.
+        "@prefix ontosage: <http://ontosage.org/capabilities#> .",
         "",
     ]
 
@@ -125,7 +129,9 @@ def main() -> None:
 
     if args.dry_run:
         count = ttl.count("hbco:Concept") + ttl.count("hbco:CompositeConcept")
-        print(f"[csv_to_hbco] dry-run: would write {len(ttl.splitlines())} lines, ~{count} concept entries")
+        print(
+            f"[csv_to_hbco] dry-run: would write {len(ttl.splitlines())} lines, ~{count} concept entries"
+        )
         return
 
     out_path = Path(args.out)

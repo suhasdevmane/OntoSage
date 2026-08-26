@@ -9,6 +9,7 @@
 @prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix brick:  <https://brickschema.org/schema/Brick#> .
 @prefix hbco:   <http://ontosage.org/hbco#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
 
 hbco:too_warm rdf:type hbco:Concept ,
                owl:NamedIndividual ;
@@ -1079,7 +1080,7 @@ hbco:parking_availability rdf:type hbco:Concept ,
     hbco:layTerm "bays free"^^xsd:string ;
     hbco:layTerm "parking spots"^^xsd:string ;
     hbco:layTerm "spaces in the car park"^^xsd:string ;
+    hbco:mapsToBrickClass ontosage:Parking_Occupancy_Sensor ;
     hbco:mapsToBrickClass brick:Occupancy_Count_Sensor ;
-    hbco:mapsToBrickClass brick:Parking_Occupancy_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:confidence "high"^^xsd:string .

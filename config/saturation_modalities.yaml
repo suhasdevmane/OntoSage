@@ -291,13 +291,20 @@ modalities:
       unit: K
       scope: room
   parking_free:
+    # Parking_Occupancy_Sensor is declared in the OCBV schema (ontosage:), NOT in
+    # Brick — Brick has no class for a bay count, and brick:Occupancy_Count_Sensor
+    # also covers entrance footfall and room people-counters. On this building that
+    # one class held 257 sensors of which exactly one was parking, so the concept
+    # could not resolve to it and the bay count was unreachable. Declaring the
+    # specific class makes the CLASS the discriminator; label_contains stays as the
+    # fallback for a building that only types the generic parent.
     brick_classes:
       - Parking_Occupancy_Sensor
       - Occupancy_Count_Sensor
     label_contains:
       - parking
     sat:
-      brick_class: Occupancy_Count_Sensor
+      brick_class: ontosage:Parking_Occupancy_Sensor
       table: parking_data
       unit: bays
       scope: building
