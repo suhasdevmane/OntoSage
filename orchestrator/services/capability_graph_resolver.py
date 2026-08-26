@@ -111,6 +111,33 @@ class _Amenity:
     document_ref: str = ""
     effective_date: str = ""
     owner: str = ""
+    #: Current service state, from ontosage:amenityStatus -> AssetStatus. An amenity
+    #: that is out of service must be EXCLUDED from an answer, not listed with a
+    #: caveat: somebody who walks to a broken drinking fountain has been given a wrong
+    #: answer, however well hedged (schema Module P, V6-T45).
+    service_status: str = ""
+
+
+#: Status values that mean an amenity cannot be used right now. Anything else --
+#: including an empty string -- is treated as usable, because most buildings publish no
+#: status at all and defaulting to "broken" would empty every answer.
+_OUT_OF_SERVICE = frozenset({"out_of_service", "out of service", "broken", "closed", "fault"})
+
+
+#: Categories where SILENCE is more dangerous than a broken entry. Excluding a
+#: defibrillator because it is out of service tells somebody asking in an emergency
+#: that the building has none — and the exclusion rule was written for a drinking
+#: fountain, where walking to a broken one merely wastes a trip. For these, the answer
+#: names the amenity AND its state, so the reader can decide.
+_NEVER_SILENTLY_EXCLUDE = frozenset({"emergency", "safety", "accessibility", "security"})
+
+
+def _is_safety_critical(category: str) -> bool:
+    return (category or "").strip().lower() in _NEVER_SILENTLY_EXCLUDE
+
+
+def _is_out_of_service(value: str) -> bool:
+    return (value or "").strip().lower().replace("-", "_") in _OUT_OF_SERVICE
 
 
 class CapabilityGraphResolver:
@@ -133,11 +160,44 @@ class CapabilityGraphResolver:
             return []
 
         scored: List[tuple] = []
+        withheld: List[str] = []
         for am in amenities:
             score = _score(q, am.lay_phrases)
-            if score >= _MIN_SCORE:
-                scored.append((score, am))
+            if score < _MIN_SCORE:
+                continue
+            if _is_out_of_service(am.service_status) and not _is_safety_critical(am.category):
+                # EXCLUDED, not caveated. The schema is explicit about why: somebody who
+                # walks to a broken drinking fountain has been given a wrong answer,
+                # however well hedged. Nothing read amenityStatus until 2026-08-26, so an
+                # out-of-service amenity was offered exactly as if it worked.
+                withheld.append(am.label or "an amenity")
+                continue
+            scored.append((score, am))
         scored.sort(key=lambda x: -x[0])
+        # A safety-critical amenity that is out of service is REPORTED, never hidden:
+        # its note carries the state so the answer says "this one is out of service"
+        # rather than pretending it works or pretending it is not there.
+        for _s, am in scored:
+            if _is_out_of_service(am.service_status):
+                flag = "**Currently out of service.**"
+                am.note = f"{flag} {am.note}".strip() if am.note else flag
+        if withheld and not scored:
+            # Everything that matched is out of service. "No drinking fountains here" is
+            # a different and worse answer than "the ones here are not working" — the
+            # first sends someone away, the second tells them what is wrong.
+            return [
+                CapabilityFact(
+                    label="Currently out of service",
+                    location="",
+                    note="",
+                    category="",
+                    answer=(
+                        f"This building does have {'that' if len(withheld) == 1 else 'those'}, "
+                        f"but {'it is' if len(withheld) == 1 else 'they are'} currently out of "
+                        f"service: {', '.join(sorted(set(withheld))[:4])}."
+                    ),
+                )
+            ]
         return [
             CapabilityFact(
                 label=am.label,
@@ -165,7 +225,7 @@ class CapabilityGraphResolver:
         q = (
             f"{_ONTO}{_RDFS}"
             "SELECT ?a ?label ?loc ?note ?cat ?lay ?answer ?url ?email ?phone ?report ?steps "
-            "?docref ?effective ?owner WHERE { "
+            "?docref ?effective ?owner ?svc WHERE { "
             "{ ?a a ontosage:Amenity } UNION { ?a a ontosage:KnowledgeTopic } "
             "OPTIONAL { ?a rdfs:label ?label } "
             "OPTIONAL { ?a ontosage:locationText ?loc } "
@@ -180,7 +240,12 @@ class CapabilityGraphResolver:
             "OPTIONAL { ?a ontosage:steps ?steps } "
             "OPTIONAL { ?a ontosage:documentRef ?docref } "
             "OPTIONAL { ?a ontosage:effectiveDate ?effective } "
-            "OPTIONAL { ?a ontosage:policyOwner ?owner } }"
+            "OPTIONAL { ?a ontosage:policyOwner ?owner } "
+            # Module P. Nothing read this until 2026-08-26, so an out-of-service
+            # amenity was offered as though it worked -- the wrong-answer case the
+            # vocabulary exists to prevent.
+            "OPTIONAL { { ?a ontosage:amenityStatus ?st } UNION { ?st ontosage:statusOf ?a } "
+            "?st ontosage:statusValue ?svc } }"
         )
         data = await self._exec(q)
         out: List[_Amenity] = []
@@ -206,6 +271,7 @@ class CapabilityGraphResolver:
                     document_ref=_v("docref"),
                     effective_date=_v("effective")[:10],
                     owner=_v("owner"),
+                    service_status=_v("svc"),
                 )
             )
         self._cache = out
