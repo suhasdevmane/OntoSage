@@ -1467,6 +1467,12 @@ ontosage:NetworkService a owl:Class ;
     rdfs:label "Network / IT service"@en ;
     rdfs:comment "An aggregate connectivity or IT service serving spaces — wired, wireless, or a named platform. Deliberately an aggregate: the catalogues ask about SERVICE health, and per-device or per-user network monitoring would be surveillance the privacy rules forbid."@en .
 
+ontosage:Parking_Occupancy_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Occupancy_Count_Sensor ;
+    rdfs:label "Parking bay occupancy / availability sensor"@en ;
+    rdfs:comment "A count of parking bays that are free or occupied. Brick has no class for this: brick:Occupancy_Count_Sensor is the nearest, and it also covers entrance footfall counters and room people-counters. On the building this was developed against that one class held 257 sensors of which exactly ONE was parking, so a parking question resolved to a class it shared with 256 other things and no answer could be given — the system knew the bay count and could not reach it. Declaring the specific class is the TTL-first fix: the CLASS becomes the discriminator, so nothing downstream needs a label filter, and subclassing the Brick parent means every existing query that asks for Occupancy_Count_Sensor still finds it."@en ;
+    skos:example "\"how many parking spaces are free?\"" .
+
 ontosage:serviceStatus a owl:ObjectProperty ;
     rdfs:label "current service status"@en ;
     rdfs:comment "Convenience link from an asset to its newest AssetStatus record. The records remain the source of truth — this is a shortcut for the common 'is it working now' query, not a replacement for the history."@en ;

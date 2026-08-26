@@ -13,7 +13,7 @@
     rdfs:label "Parking Data" .
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#building_sat_parking_free>
-    a brick:Occupancy_Count_Sensor ;
+    a ontosage:Parking_Occupancy_Sensor ;
     rdfs:label "building parking_free (simulated) [bays]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Abacws> ;
     ontosage:isSimulated "true"^^xsd:boolean ;

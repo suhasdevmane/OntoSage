@@ -1459,3 +1459,20 @@ bldg:Building_Entrance
     brick:isPartOf bldg:Room0.01 .
 
 # End of bldg1_enhancements.ttl
+
+# =============================================================================
+# TYPING CORRECTION (CAVEAT-301, 2026-08-26)
+#
+# Room1.04 carries brick:Common_Space but NOT brick:Room, while every other room
+# in this building carries brick:Room. The coverage auditor selects brick:Room,
+# so this space had NO modality coverage, was never a ranking candidate and could
+# never be recommended — despite holding capacity and occupancy metadata.
+#
+# It surfaced because the timetable ingest REFUSED to bind rows naming it and
+# reported them rather than guessing, which is the strict space resolution doing
+# exactly its job.
+#
+# Additive on purpose: the Common_Space typing is not wrong — the room is a common
+# space — it was simply incomplete. Asserting the missing parent is the smaller and
+# safer change, and it needs no deletion from the graph.
+bldg:Room1.04 a brick:Room .
