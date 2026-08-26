@@ -206,6 +206,74 @@ def workorders_for_day(
     return out
 
 
+#: Why a service asset goes out. Generic across buildings; the KIND of asset picks the
+#: plausible set, because "lamp failure" is not a reason a wifi access point is down.
+_OUTAGE_REASONS = {
+    "lift": ("door fault", "controller fault", "overload trip", "scheduled inspection"),
+    "av": ("projector lamp failure", "HDMI input fault", "no signal", "firmware update"),
+    "network": ("access point offline", "switch port fault", "planned patching", "congestion"),
+}
+
+#: Roughly how often an asset of each kind starts an outage on a given day. Low on
+#: purpose: an estate where something breaks every day is as untestable as one where
+#: nothing ever does.
+_OUTAGE_DAILY_RATE = {"lift": 0.06, "av": 0.03, "network": 0.04}
+
+
+def outages_for_day(
+    building_id: str, assets: List[tuple], day: datetime, now: datetime
+) -> List[Dict]:
+    """Outage EPISODES starting on `day`, for assets given as (local_name, kind).
+
+    A status is not a fact, it is the current value of something that changes — and the
+    provisioner wrote it as a fact. Every asset carried one status stamped at
+    provisioning time and nothing ever updated it, so on this building every answer was
+    five days stale and no outage had ever appeared or cleared. That makes the freshness
+    caveat fire on everything (so it stops meaning anything) and leaves the consequence
+    and accessibility paths untestable, because nothing is ever actually broken.
+
+    Modelled exactly like work orders: an episode opens, and whether it has CLEARED
+    depends on where `now` sits relative to its deterministic duration. A small tail
+    stays open, which is what gives the lane a live outage to talk about.
+    """
+    out: List[Dict] = []
+    for local, kind in assets:
+        rate = _OUTAGE_DAILY_RATE.get(kind, 0.04)
+        rng = _rng(building_id, f"outage:{local}:{day.strftime('%Y-%m-%d')}")
+        if rng.random() >= rate:
+            continue
+        start = day.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
+            minutes=rng.randint(7 * 60, 19 * 60)
+        )
+        if start > now:
+            continue  # an outage that has not begun is not an outage
+        hours = rng.choice((2, 4, 8, 26, 50))
+        cleared_at = start + timedelta(hours=hours)
+        # ~12% never clear inside the horizon: the estate always has something open,
+        # which is what a maintenance backlog looks like in practice.
+        lingering = rng.random() < 0.12
+        if lingering or now < cleared_at:
+            status, end = "open", None
+        else:
+            status, end = "done", cleared_at
+        out.append(
+            {
+                "event_id": event_id(building_id, "asset_outage", local, start),
+                "event_type": "asset_outage",
+                "subject_uuid": subject_uuid(building_id, local),
+                "start_dt": start,
+                "end_dt": end,
+                "status": status,
+                "attrs": {
+                    "asset": local,
+                    "asset_kind": kind,
+                    "reason": rng.choice(_OUTAGE_REASONS.get(kind, ("fault",))),
+                },
+            }
+        )
+    return out
+
+
 def access_events_for_day(building_id: str, room_locals: List[str], day: datetime) -> List[Dict]:
     """Aggregate entrance events tracking the building-wide arrival curve.
 

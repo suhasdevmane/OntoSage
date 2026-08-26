@@ -171,9 +171,15 @@ def _human_age(hours: Optional[float]) -> str:
 class AssetStateService:
     """Answers asset/service-state questions. `sparql_exec` is injected (testable)."""
 
-    def __init__(self, sparql_exec: Callable, namespace: str):
+    def __init__(self, sparql_exec: Callable, namespace: str, events_adapter=None):
         self._sparql = sparql_exec
         self._ns = namespace
+        # OPTIONAL on purpose. Where an events store exists, OUTAGE EPISODES are the
+        # authority on what is broken right now; where it does not, the graph's status
+        # triple is still answered from, so a building that has only the static form
+        # keeps working. The adapter is injected rather than constructed so the lane
+        # stays unit-testable without a database.
+        self._events = events_adapter
 
     async def _select(self, query: str) -> List[Dict[str, str]]:
         try:
@@ -245,6 +251,62 @@ class AssetStateService:
             "} GROUP BY ?c"
         )
 
+    async def _open_outages(self, building_id: str, assets: List[str]) -> Dict[str, Dict]:
+        """{asset_local: episode} for outages in progress right now.
+
+        A STATUS IS NOT A FACT. It is the current value of something that changes, and
+        the provisioner wrote it as a fact — one status per asset, stamped once at
+        provisioning time and never updated. Every answer on this building was therefore
+        five days stale, the freshness caveat fired on all of them (so it stopped
+        carrying information), and nothing had ever broken or been fixed. Episodes are
+        the fix: the graph says what an asset IS, the event store says what is happening
+        to it.
+        """
+        if self._events is None or not assets:
+            return {}
+        try:
+            from orchestrator.services.deliberation.synthetic_events import subject_uuid
+
+            by_uuid = {subject_uuid(building_id, a): a for a in assets}
+            sql = self._events.build_active_now("asset_outage", subject_uuids=list(by_uuid))
+            if not sql:
+                return {}
+            result = await self._events.execute_query(sql)
+            # execute_query returns a RESULT OBJECT, not rows. The events lane unwraps
+            # it the same way; treating the wrapper as a sequence yields nothing and
+            # would have looked exactly like "no outages".
+            rows = getattr(result, "rows", None) or getattr(result, "data", None) or []
+        except Exception as exc:
+            logger.debug(f"[asset_state] outage episodes unavailable: {exc}")
+            return {}
+
+        import json as _json
+
+        def _col(row, idx, name):
+            """By name for a live DictCursor, by position for tuple fixtures."""
+            if isinstance(row, dict):
+                return row.get(name)
+            return row[idx]
+
+        out: Dict[str, Dict] = {}
+        for r in rows or []:
+            try:
+                subj = _col(r, 2, "subject_uuid")
+                start = _col(r, 3, "start_dt")
+                attrs_raw = _col(r, 6, "attrs")
+            except Exception:
+                continue
+            local = by_uuid.get(str(subj))
+            if not local:
+                continue
+            reason = ""
+            try:
+                reason = (_json.loads(attrs_raw) or {}).get("reason", "") if attrs_raw else ""
+            except Exception:
+                reason = ""
+            out[local] = {"since": start, "reason": reason}
+        return out
+
     # ── answers ──────────────────────────────────────────────────────────────
     def _decline(self, what: str, add: str) -> Dict[str, Any]:
         """An honest decline that names the unlock path, never an empty guess."""
@@ -270,48 +332,78 @@ class AssetStateService:
                 "answerable with no code change.",
             )
 
+        # Episodes OUTRANK the graph's status triple. The triple records what was true
+        # when the asset was described; an open outage records what is true now, and
+        # where the two disagree the live one wins.
+        from shared.config import settings as _settings
+
+        open_outages = await self._open_outages(
+            getattr(_settings, "BUILDING_ID", ""), [_local(r.get("asset", "")) for r in rows]
+        )
+
         working, broken = [], []
         oldest: Optional[float] = None
         simulated = False
         for r in rows:
+            local = _local(r.get("asset", ""))
             value = (r.get("value") or "").strip()
             age = _age_hours(r.get("observed", ""), now)
+            episode = open_outages.get(local)
+            if episode is not None:
+                value = "out_of_service"
+                # The age that matters is how long it has been BROKEN, not when the
+                # description was written.
+                ep_age = _age_hours(str(episode.get("since") or ""), now)
+                age = ep_age if ep_age is not None else age
             if age is not None:
                 oldest = age if oldest is None else max(oldest, age)
             if str(r.get("simulated", "")).lower() in ("true", "1"):
                 simulated = True
             entry = {
-                "asset": _local(r.get("asset", "")),
+                "asset": local,
                 "label": r.get("label", ""),
                 "status": value,
                 "observed_hours_ago": None if age is None else round(age, 1),
                 "source": r.get("source", ""),
                 "contact": r.get("contact", ""),
+                "reason": (episode or {}).get("reason", ""),
+                "live_episode": episode is not None,
             }
             (working if value.lower() in ("operational", "ok", "up", "normal") else broken).append(
                 entry
             )
 
         total = len(rows)
+        # "last checked" is right for a status someone observed; for an OPEN episode the
+        # same number means how long it has been BROKEN, and calling that a check reads
+        # as though nobody has looked since.
+        live = any(e.get("live_episode") for e in broken)
+        age_phrase = "out of service since" if live else "last checked"
+        rendered_age = _human_age(oldest)
         if not broken:
-            text = (
-                f"**All {total} {noun}(s) are operational** "
-                f"(last checked {_human_age(oldest)})."
-            )
+            text = f"**All {total} {noun}(s) are operational** " f"({age_phrase} {rendered_age})."
         else:
-            names = ", ".join(e["label"] or e["asset"] for e in broken[:4])
+            names = ", ".join(
+                (e["label"] or e["asset"]) + (f" ({e['reason']})" if e.get("reason") else "")
+                for e in broken[:4]
+            )
             text = (
                 f"**{len(broken)} of {total} {noun}(s) are not operational**: {names}"
-                f" (last checked {_human_age(oldest)})."
+                f" ({age_phrase} {rendered_age})."
             )
             contact = next((e["contact"] for e in broken if e["contact"]), "")
             if contact:
                 # An outage report with no route to help is a worse answer than it looks.
                 text += f" Report or chase it with: {contact}."
-        if oldest is not None and oldest > STALE_AFTER_HOURS:
+        # The staleness caveat is about not having looked recently. An OPEN episode is
+        # current knowledge — the outage is happening now and the age says how long it
+        # has been going on — so firing the caveat there contradicts the sentence above
+        # it: "out of service since 47 hours ago" followed by "this is not a live state"
+        # tells the reader two different things about the same fact.
+        if not live and oldest is not None and oldest > STALE_AFTER_HOURS:
             text += (
                 f" *This is the last KNOWN state, not a live one — the most recent check "
-                f"was {_human_age(oldest)}.*"
+                f"was {rendered_age}.*"
             )
         if simulated:
             text += " *Source: simulated service feed.*"
@@ -324,6 +416,12 @@ class AssetStateService:
             "not_operational": len(broken),
             "assets": working + broken,
             "oldest_observation_hours": None if oldest is None else round(oldest, 1),
+            # The RENDERED age travels with the answer. _human_age rounds hours into
+            # days for display ("15 days ago"), and 15 appears nowhere else in the
+            # payload — so the numeric guard correctly suppressed a correct answer for
+            # a figure computed only for the prose. Same shape as the bookings_list
+            # defect: the guard was right and the payload was thin.
+            "last_observation_phrase": rendered_age,
             "simulated": simulated,
             "formatted_response": text,
         }

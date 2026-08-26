@@ -275,3 +275,163 @@ def test_the_lane_result_is_collected_by_the_response_node():
     src = inspect.getsource(_orchestrator)
     assert 'state.intermediate_results.get("asset_state_result")' in src
     assert '_asset_state_result["formatted_response"]' in src
+
+
+# ── outage episodes: a status is not a fact ──────────────────────────────────
+class _FakeEventsAdapter:
+    """Minimal stand-in: build_active_now + execute_query, the two the lane uses."""
+
+    def __init__(self, rows):
+        self._rows = rows
+        self.last_sql = None
+
+    def build_active_now(self, event_type, subject_uuids=None, at=None, limit=500):
+        self.last_sql = f"SELECT ... {event_type} {sorted(subject_uuids or [])}"
+        return self.last_sql
+
+    async def execute_query(self, sql):
+        class _Result:
+            rows = self._rows
+
+        return _Result()
+
+
+def _outage_row(building_id, asset_local, start, reason="controller fault"):
+    """A row shaped like the adapter's SELECT: (id, type, subject, start, end, status, attrs)."""
+    import json
+
+    from orchestrator.services.deliberation.synthetic_events import subject_uuid
+
+    return (
+        "eid",
+        "asset_outage",
+        subject_uuid(building_id, asset_local),
+        start.isoformat(),
+        None,
+        "open",
+        json.dumps({"asset": asset_local, "reason": reason}),
+    )
+
+
+def test_outages_never_start_in_the_future():
+    from orchestrator.services.deliberation.synthetic_events import outages_for_day
+
+    now = datetime(2026, 8, 25, 12, 0)
+    assets = [(f"Lift{i}", "lift") for i in range(40)]
+    for offset in (0, 1, 3):
+        day = datetime(2026, 8, 25) + timedelta(days=offset)
+        for e in outages_for_day("b", assets, day, now):
+            assert e["start_dt"] <= now, e
+
+
+def test_outages_both_clear_and_linger():
+    """An estate where nothing ever clears is as untestable as one where nothing breaks."""
+    from orchestrator.services.deliberation.synthetic_events import outages_for_day
+
+    now = datetime(2026, 8, 25, 12, 0)
+    assets = [(f"Lift{i}", "lift") for i in range(60)]
+    statuses = set()
+    for offset in range(-30, 1):
+        day = datetime(2026, 8, 25) + timedelta(days=offset)
+        for e in outages_for_day("b", assets, day, now):
+            statuses.add(e["status"])
+    assert statuses == {"open", "done"}, statuses
+
+
+def test_outage_generation_is_deterministic():
+    from orchestrator.services.deliberation.synthetic_events import outages_for_day
+
+    now = datetime(2026, 8, 25, 12, 0)
+    assets = [(f"Lift{i}", "lift") for i in range(30)]
+    day = datetime(2026, 8, 20)
+    a = outages_for_day("b", assets, day, now)
+    b = outages_for_day("b", assets, day, now)
+    assert [e["event_id"] for e in a] == [e["event_id"] for e in b]
+
+
+@pytest.mark.asyncio
+async def test_an_open_episode_outranks_a_stale_operational_triple():
+    """The triple says what was true when the asset was described; the episode says what
+    is true now, and where they disagree the live one wins."""
+    from shared.config import settings
+
+    events = _FakeEventsAdapter(
+        [_outage_row(settings.BUILDING_ID, "Lift1", _NOW - timedelta(hours=5))]
+    )
+    svc = AssetStateService(
+        _exec(
+            [
+                {
+                    "asset": _NS + "Lift1",
+                    "label": "Lift 1",
+                    "value": "operational",
+                    "observed": (_NOW - timedelta(days=6)).isoformat(),
+                    "contact": "Estates helpdesk",
+                }
+            ]
+        ),
+        _NS,
+        events_adapter=events,
+    )
+    out = await svc.answer("Are the lifts working?", now=_NOW)
+    assert out["not_operational"] == 1
+    assert "controller fault" in out["formatted_response"]
+    assert "Estates helpdesk" in out["formatted_response"]
+
+
+@pytest.mark.asyncio
+async def test_a_live_outage_says_since_not_last_checked():
+    """'out of service since 47 hours' and 'this is not a live state' tell the reader
+    two different things about the same fact."""
+    from shared.config import settings
+
+    events = _FakeEventsAdapter(
+        [_outage_row(settings.BUILDING_ID, "Lift1", _NOW - timedelta(hours=47))]
+    )
+    svc = AssetStateService(
+        _exec([{"asset": _NS + "Lift1", "value": "operational", "observed": _NOW.isoformat()}]),
+        _NS,
+        events_adapter=events,
+    )
+    text = (await svc.answer("Are the lifts working?", now=_NOW))["formatted_response"]
+    assert "out of service since" in text
+    assert "last KNOWN state" not in text
+
+
+@pytest.mark.asyncio
+async def test_the_rendered_age_travels_in_the_payload():
+    """_human_age rounds hours into days for display ("15 days ago"), and 15 appears
+    nowhere else — so the numeric guard suppressed a correct answer for a figure
+    computed only for the prose."""
+    svc = AssetStateService(
+        _exec(
+            [
+                {
+                    "asset": _NS + "Lift1",
+                    "value": "operational",
+                    "observed": (_NOW - timedelta(days=15)).isoformat(),
+                }
+            ]
+        ),
+        _NS,
+    )
+    out = await svc.answer("Are the lifts working?", now=_NOW)
+    assert out["last_observation_phrase"] in out["formatted_response"]
+
+    from orchestrator.services.numeric_guard import collect, find_unbacked
+
+    allowed, blobs = set(), []
+    collect(out, allowed, blobs)
+    assert find_unbacked(out["formatted_response"], allowed, blobs) == []
+
+
+@pytest.mark.asyncio
+async def test_no_events_adapter_still_answers_from_the_graph():
+    """A building with no event store keeps working on the static status alone."""
+    svc = AssetStateService(
+        _exec([{"asset": _NS + "Lift1", "value": "operational", "observed": _NOW.isoformat()}]),
+        _NS,
+        events_adapter=None,
+    )
+    out = await svc.answer("Are the lifts working?", now=_NOW)
+    assert out["success"] is True and out["not_operational"] == 0

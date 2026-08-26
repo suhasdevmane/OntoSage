@@ -6014,12 +6014,22 @@ SELECT ?l WHERE {
         question = state.messages[-1].content if state.messages else ""
         logger.info(f"[asset_state] q={question[:60]!r}")
         try:
+            # The events store, where present, is the authority on what is broken NOW.
+            # Absent, the lane falls back to the graph's status triple rather than
+            # failing — a building with no event store still gets an answer.
+            from orchestrator.services.adapters.registry import adapter_registry
             from orchestrator.services.asset_state_service import AssetStateService
             from orchestrator.services.deliberation.live import sparql_exec
             from orchestrator.services.numeric_guard import guard_payload
             from shared.config import settings
 
-            service = AssetStateService(sparql_exec, settings.BUILDING_NAMESPACE)
+            try:
+                _events = adapter_registry.get("bldg:events_data")
+            except Exception:
+                _events = None
+            service = AssetStateService(
+                sparql_exec, settings.BUILDING_NAMESPACE, events_adapter=_events
+            )
             state.intermediate_results["asset_state_result"] = guard_payload(
                 await service.answer(question), "asset_state"
             )

@@ -38,6 +38,7 @@ from orchestrator.services.deliberation.live import (  # noqa: E402
 from orchestrator.services.deliberation.synthetic_events import (  # noqa: E402
     bookings_for_building_day,
     generate_building_day,
+    outages_for_day,
     to_row,
 )
 
@@ -62,6 +63,30 @@ def _mysql():
         password=os.environ.get("MYSQL_PASSWORD", env.get("MYSQL_PASSWORD", "")),
         database=os.environ.get("MYSQL_DATABASE", env.get("MYSQL_DATABASE", "sensordb")),
     )
+
+
+async def _discover_assets(namespace):
+    """(local, kind) for every service asset this building types.
+
+    By CLASS, never by name: the building's own ontology says what is a lift, and a
+    building that types none simply gets no outages rather than invented ones.
+    """
+    kinds = (("Lift", "lift"), ("AVEquipment", "av"), ("NetworkService", "network"))
+    out = []
+    for class_local, kind in kinds:
+        q = (
+            "PREFIX ontosage: <http://ontosage.org/capabilities#> "
+            f"SELECT DISTINCT ?s WHERE {{ ?s a ontosage:{class_local} . "
+            f'FILTER(STRSTARTS(STR(?s), "{namespace}")) }}'
+        )
+        try:
+            res = await sparql_exec(q)
+        except Exception:
+            continue
+        for b in res.get("results", {}).get("bindings", []):
+            iri = b["s"]["value"]
+            out.append((iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1], kind))
+    return out
 
 
 def _ingest_institutional(building_id, rooms, cur):
@@ -147,6 +172,8 @@ async def main() -> int:
     spaces = await auditor.discover_spaces(namespace)
     rooms = sorted(s.space_iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1] for s in spaces)
     print(f"[events] building={building_id} rooms={len(rooms)} weeks={args.weeks}")
+    assets = await _discover_assets(namespace)
+    print(f"[events] service assets discovered: {len(assets)}")
 
     now = datetime.utcnow()
     start_day = (now - timedelta(weeks=args.weeks)).replace(
@@ -177,6 +204,20 @@ async def main() -> int:
                     for e in events:
                         generated[f"{e['event_type']} (future)"] += 1
                 fday += timedelta(days=1)
+
+        # Asset outage EPISODES. A status is not a fact but the current value of
+        # something that changes, and it had been provisioned as a fact: one status per
+        # asset, stamped once, never updated. Nothing had ever broken and nothing had
+        # ever been fixed.
+        if assets:
+            aday = start_day
+            while aday <= now:
+                events = outages_for_day(building_id, assets, aday, now)
+                if events:
+                    cur.executemany(_INSERT, [to_row(e) for e in events])
+                    for e in events:
+                        generated[f"asset_outage ({e['status']})"] += 1
+                aday += timedelta(days=1)
 
         if not args.skip_institutional:
             for line in _ingest_institutional(building_id, rooms, cur):
