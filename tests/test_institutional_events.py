@@ -267,3 +267,33 @@ def test_poll_once_returns_empty_for_a_non_polling_adapter():
 
     src = inspect.getsource(registry.FeedRegistry.poll_once)
     assert 'getattr(adapter, "poll_safe", None)' in src
+
+
+# ── "which rooms" is a different question from "how many bookings" ───────────
+@pytest.mark.parametrize(
+    "question,expected",
+    [
+        ("Which rooms have teaching sessions this week?", True),
+        ("What rooms have bookings today?", True),
+        ("List rooms with sessions tomorrow", True),
+        ("How many room bookings are there today?", False),
+        ("Is Room1.06 booked?", False),
+    ],
+)
+def test_which_rooms_detection(question, expected):
+    from orchestrator.services.event_query_service import _asks_which_rooms
+
+    assert _asks_which_rooms(question) is expected
+
+
+def test_the_grouped_branch_uses_the_existing_reverse_lookup():
+    """`_room_for_subject` never existed — I invented it, and flake8 does not catch a
+    missing METHOD. The availability list already derives each room's subject uuid and
+    inverts it; the grouped branch uses the same idiom rather than a second one."""
+    import inspect
+
+    from orchestrator.services import event_query_service
+
+    src = inspect.getsource(event_query_service)
+    assert "_room_for_subject" not in src
+    assert src.count('derive_point_uuid(self._bid, "evt_subject", r)') >= 2
