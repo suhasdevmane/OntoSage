@@ -61,8 +61,12 @@ _KIND_RES: List[Tuple[str, re.Pattern]] = [
     (
         "availability_list",
         re.compile(
-            r"\b(which|what|any|list)\b.{0,40}\b(rooms?|spaces?)\b.{0,40}\b(free|available|unbooked)\b"
-            r"|\b(free|available)\b.{0,20}\brooms?\b",
+            # (?<!-) keeps "step-free" out: it is an accessibility term, and matching
+            # it here answered "which rooms are step-free accessible?" with a booking
+            # list.
+            r"\b(which|what|any|list)\b.{0,40}\b(rooms?|spaces?)\b.{0,40}"
+            r"\b((?<!-)free|available|unbooked)\b"
+            r"|\b((?<!-)free|available)\b.{0,20}\brooms?\b",
             re.IGNORECASE,
         ),
     ),
@@ -77,7 +81,7 @@ def classify_event_question(question: str) -> Optional[str]:
         if pat.search(q):
             return kind
     # specific-room availability ("is RM101 free at 3pm?")
-    if re.search(r"\b(free|available|booked|in use)\b", q, re.IGNORECASE):
+    if re.search(r"\b((?<!-)free|available|booked|in use)\b", q, re.IGNORECASE):
         return "availability_check"
     return None
 
