@@ -435,3 +435,64 @@ async def test_no_events_adapter_still_answers_from_the_graph():
     )
     out = await svc.answer("Are the lifts working?", now=_NOW)
     assert out["success"] is True and out["not_operational"] == 0
+
+
+# ── a question that names a place must be answered about THAT place ──────────
+def _schedule_rows(*locs):
+    return _exec(
+        [
+            {
+                "s": f"{_NS}sched_{i}",
+                "location": f"{_NS}{loc}",
+                "kind": "cleaning",
+                "starts": "2026-08-24T06:00:00",
+            }
+            for i, loc in enumerate(locs)
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "question,known,expected",
+    [
+        ("When was the last cleaning of floor 2?", ["Floor0", "Floor1", "Floor2"], "Floor2"),
+        # longest match wins: Floor10 must not be claimed by Floor1
+        ("cleaning schedule for Floor10", ["Floor1", "Floor10"], "Floor10"),
+        ("when is cleaning?", ["Floor0", "Floor1"], ""),
+    ],
+)
+def test_named_location_matching(question, known, expected):
+    from orchestrator.services.asset_state_service import _named_location
+
+    assert _named_location(question, known) == expected
+
+
+@pytest.mark.asyncio
+async def test_a_cleaning_question_about_one_floor_answers_about_that_floor():
+    """It listed every floor's schedule and left the reader to find theirs — the question
+    named a referent and the answer ignored it."""
+    svc = AssetStateService(_schedule_rows("Floor0", "Floor1", "Floor2"), _NS)
+    out = await svc.answer("When was the last cleaning of floor 2?", now=_NOW)
+    assert out["count"] == 1
+    assert [e["location"] for e in out["schedules"]] == ["Floor2"]
+    assert "Floor2" in out["formatted_response"]
+    assert "Floor0" not in out["formatted_response"]
+
+
+@pytest.mark.asyncio
+async def test_an_unmatched_place_falls_back_rather_than_claiming_a_gap():
+    """A place the SCHEDULE does not mention may or may not exist in the building —
+    this query cannot tell, because `named` is derived from the scheduled locations.
+    Claiming "floor 9 has no cleaning schedule" would assert something unverified; the
+    honest fallback is the full list. Answering it properly needs the building's space
+    list, which belongs with the referent gate."""
+    svc = AssetStateService(_schedule_rows("Floor0", "Floor1"), _NS)
+    out = await svc.answer("When was the last cleaning of Floor9?", now=_NOW)
+    assert out["count"] == 2
+
+
+@pytest.mark.asyncio
+async def test_an_unscoped_question_still_lists_everything():
+    svc = AssetStateService(_schedule_rows("Floor0", "Floor1", "Floor2"), _NS)
+    out = await svc.answer("what is the cleaning schedule?", now=_NOW)
+    assert out["count"] == 3

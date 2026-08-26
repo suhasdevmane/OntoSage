@@ -168,6 +168,22 @@ def _human_age(hours: Optional[float]) -> str:
     return f"{round(hours / 24)} days ago"
 
 
+def _named_location(question: str, known: List[str]) -> str:
+    """The location from ``known`` that the question actually names, or "".
+
+    Matched against the building's OWN local names rather than a vocabulary of floor
+    words, so a building that calls its levels something else still resolves. Longest
+    match wins: "Floor10" must not be claimed by "Floor1".
+    """
+    q = (question or "").lower().replace(" ", "")
+    best = ""
+    for name in known:
+        token = (name or "").lower().replace(" ", "").replace("_", "")
+        if token and token in q and len(token) > len(best):
+            best = name
+    return best
+
+
 class AssetStateService:
     """Answers asset/service-state questions. `sparql_exec` is injected (testable)."""
 
@@ -443,11 +459,31 @@ class AssetStateService:
             }
             for r in rows
         ]
+
+        # HONOUR THE NAMED PLACE. "When was the last cleaning of floor 2?" listed every
+        # floor's schedule and left the reader to find theirs -- the question named a
+        # referent and the answer ignored it. Filtering on the location's own local name
+        # keeps this building-agnostic: whatever the building calls its floors is what
+        # the questioner will type.
+        named = _named_location(question, [e["location"] for e in listed])
+        scoped = [e for e in listed if e["location"] == named] if named else listed
+        # NOTE: there is deliberately no 'named a place with no schedule' branch here.
+        # `named` is derived from the scheduled locations themselves, so a non-empty
+        # match always has rows -- a branch for the empty case would be unreachable.
+        # Answering 'floor 9 has no cleaning schedule' needs the building's SPACE list,
+        # not this query's result set, and that belongs with the referent gate rather
+        # than here. Until then an unmatched place falls back to the full list.
+        listed = scoped
+        head = (
+            f"**{len(listed)} service schedule(s) for {named}**"
+            if named
+            else f"**{len(listed)} service schedule(s) on record**"
+        )
         lines = [
             f"- {e['location']}: {e['kind']}" + (f" from {e['starts'][:16]}" if e["starts"] else "")
             for e in listed[:8]
         ]
-        text = f"**{len(listed)} service schedule(s) on record**:\n" + "\n".join(lines)
+        text = head + ":\n" + "\n".join(lines)
         if simulated:
             text += "\n\n*Source: simulated service feed.*"
         return {

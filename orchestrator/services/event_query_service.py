@@ -74,6 +74,21 @@ _KIND_RES: List[Tuple[str, re.Pattern]] = [
 ]
 
 
+#: Question shapes whose UNIT OF ANSWER is rooms, not bookings. "Which rooms have
+#: teaching sessions this week?" was answered with a flat list of a thousand booking
+#: times: the count was right and the shape was wrong, leaving the reader to aggregate
+#: by hand. A question that names rooms as the thing being asked about gets rooms back.
+_WHICH_ROOMS_RE = re.compile(
+    r"\b(which|what|list)\b.{0,30}\b(rooms?|spaces?)\b" r"|\brooms?\b.{0,20}\b(have|has|with)\b",
+    re.IGNORECASE,
+)
+
+
+def _asks_which_rooms(question: str) -> bool:
+    """True when rooms are the unit of the answer, not bookings."""
+    return bool(_WHICH_ROOMS_RE.search(question or ""))
+
+
 def classify_event_question(question: str) -> Optional[str]:
     """Kind or None (None => not an event question; router should not have sent it)."""
     q = question or ""
@@ -352,6 +367,43 @@ class EventQueryService:
         )
         rows = await self._rows(sql)
         scope = room or "the building"
+
+        # WHICH ROOMS is a different question from HOW MANY BOOKINGS, and the same
+        # flat list answered both. "Which rooms have teaching sessions this week?"
+        # returned "1000 booking(s) for the building this week" followed by ten times
+        # — the count was right and the SHAPE was wrong, leaving the reader to
+        # aggregate by hand. When the question names rooms as the unit of the answer,
+        # group by room and report rooms.
+        by_room = _asks_which_rooms(question) and not room
+        if by_room:
+            # Same reverse lookup the availability list already uses: derive each
+            # room's subject uuid and invert it, rather than inventing a resolver.
+            uuid_to_room = {derive_point_uuid(self._bid, "evt_subject", r): r for r in self._rooms}
+            counts: Dict[str, int] = {}
+            for r in rows:
+                subject = str(self._col(r, 2, "subject_uuid") or "")
+                key = uuid_to_room.get(subject) or f"unknown subject {subject[:8]}"
+                counts[key] = counts.get(key, 0) + 1
+            ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+            room_lines = [f"- {name}: {n} session(s)" for name, n in ordered[:12]]
+            if len(ordered) > 12:
+                # Say what was cut. A list that silently stops at twelve reads as the
+                # whole answer (lessons.md: no silent caps).
+                room_lines.append(f"- …and {len(ordered) - 12} more room(s)")
+            text = (
+                f"**{len(ordered)} room(s) with bookings {label}** "
+                f"({len(rows)} session(s) in total):\n" + "\n".join(room_lines)
+            )
+            return {
+                "success": True,
+                "kind": "bookings_by_room",
+                "window": label,
+                "count": len(rows),
+                "rooms": [{"room": nm, "sessions": n} for nm, n in ordered],
+                "source": "events_data",
+                "formatted_response": text,
+            }
+
         lines = []
         for r in rows[:10]:
             attrs_raw = self._col(r, 6, "attrs")
