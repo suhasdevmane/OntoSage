@@ -195,14 +195,26 @@ class SpatialAgent:
                 if scoped:
                     manifests = scoped
 
-            return self._answer(query, manifests)
+            # Availability is looked up HERE because this is the only async point
+            # in the chain; _answer and _answer_wayfinding stay synchronous so
+            # every existing caller keeps working. Only computed for a step-free
+            # question — nothing else can be blocked by a lift.
+            _blocked = None
+            if _STEP_FREE_RE.search(query or ""):
+                _blocked = await _blocked_vertical_nodes_for(manifests)
+            return self._answer(query, manifests, _blocked)
         except Exception as e:
             logger.error(f"[SpatialAgent] Error: {e}", exc_info=True)
             return "I encountered an error analysing the spatial data. Please try again."
 
     # ── Query dispatch ────────────────────────────────────────────────────────
 
-    def _answer(self, query: str, manifests: List[FloorPlanManifest]) -> str:
+    def _answer(
+        self,
+        query: str,
+        manifests: List[FloorPlanManifest],
+        blocked_verticals: Optional[dict] = None,
+    ) -> str:
         q = query.lower()
 
         # Nearest-facility search sits above wayfinding: "how do I get to the
@@ -212,7 +224,7 @@ class SpatialAgent:
 
         # Wayfinding takes priority (before adjacency — "get to X from Y" ≠ "next to X")
         if _WAYFINDING_RE.search(q):
-            return self._answer_wayfinding(query, manifests)
+            return self._answer_wayfinding(query, manifests, blocked_verticals)
 
         # Adjacency query takes priority (before area checks)
         if _ADJ_RE.search(q):
@@ -506,7 +518,12 @@ class SpatialAgent:
             f"floor {hit.floor}) — {hit.hops} hop(s){dist_txt}.\n\n{METHOD_NOTE}"
         )
 
-    def _answer_wayfinding(self, query: str, manifests: List[FloorPlanManifest]) -> str:
+    def _answer_wayfinding(
+        self,
+        query: str,
+        manifests: List[FloorPlanManifest],
+        blocked_verticals: Optional[dict] = None,
+    ) -> str:
         """BFS route guidance between two named spaces in the building."""
         zone_to_space: Dict[str, Space] = {}
         zone_to_floor: Dict[str, int] = {}
@@ -551,9 +568,28 @@ class SpatialAgent:
             from orchestrator.services.route_finder import METHOD_NOTE, RouteFinder
 
             rf = RouteFinder(manifests)
-            rr = rf.route(src_zone, dest_zone, step_free=step_free)
+            # A lift with an OPEN outage is not a slower way up; it is not a way up.
+            # Step-free routes change floors only by lift, so a broken one can remove
+            # the only accessible route there is — and a route still labelled
+            # accessible would send someone who cannot use stairs to a floor they
+            # cannot reach.
+            blocked = dict(blocked_verticals or {}) if step_free else {}
+            rr = rf.route(
+                src_zone, dest_zone, step_free=step_free, unavailable=set(blocked) or None
+            )
             if rr is None and step_free and rf.route(src_zone, dest_zone) is not None:
                 dest_label = zone_to_space[dest_zone].label
+                if blocked:
+                    # Name the outage. "No step-free route" with no reason reads as a
+                    # permanent property of the building rather than something that
+                    # will be fixed.
+                    reasons = ", ".join(sorted(set(blocked.values())))
+                    return (
+                        f"**No step-free route to {dest_label}** (`{dest_zone}`) right now — "
+                        f"the lift it depends on is out of service ({reasons}). A route "
+                        "using stairs does exist; ask without the step-free requirement to "
+                        "see it."
+                    )
                 return (
                     f"**No step-free route found to {dest_label}** (`{dest_zone}`) — every "
                     "connected path uses a staircase and no lift link is recorded between "
@@ -851,6 +887,36 @@ class SpatialAgent:
         except Exception:
             pass
         return cands
+
+
+async def _blocked_vertical_nodes_for(manifests) -> dict:
+    """{zone_id: reason} for vertical cores that cannot be used right now.
+
+    Kept module-level and failure-tolerant: an availability lookup that errors must
+    leave routing exactly as it was, never take the route lane down with it.
+    """
+    try:
+        from orchestrator.services.asset_state_service import unavailable_vertical_nodes
+        from orchestrator.services.deliberation.live import sparql_exec
+        from shared.config import settings
+
+        try:
+            from orchestrator.services.adapters.registry import adapter_registry
+
+            events = adapter_registry.get("bldg:events_data")
+        except Exception:
+            events = None
+        from orchestrator.services.route_finder import RouteFinder
+
+        return await unavailable_vertical_nodes(
+            RouteFinder(manifests).nodes,
+            settings.BUILDING_ID,
+            settings.BUILDING_NAMESPACE,
+            sparql_exec,
+            events_adapter=events,
+        )
+    except Exception:
+        return {}
 
     def _load_manifests(self, building_id: str, floor: Optional[int]) -> List[FloorPlanManifest]:
         """Load manifests from registry (alias-aware over both PDF and DWG floors)."""
