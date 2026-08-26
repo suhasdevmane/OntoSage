@@ -152,7 +152,11 @@ class RouteFinder:
         return 5.0  # unscaled floors still route; distance stays approximate
 
     def _dijkstra(
-        self, src: str, *, step_free: bool = False
+        self,
+        src: str,
+        *,
+        step_free: bool = False,
+        unavailable: Optional[Set[str]] = None,
     ) -> Tuple[Dict[str, float], Dict[str, str]]:
         dist: Dict[str, float] = {src: 0.0}
         prev: Dict[str, str] = {}
@@ -172,6 +176,15 @@ class RouteFinder:
                     continue
                 if step_free and nb.type == "staircase":
                     continue  # accessible routes never pass through stairs
+                if unavailable and nb.zone_id in unavailable:
+                    # A LIFT THAT IS OUT OF SERVICE IS NOT A STEP-FREE ROUTE.
+                    # Dropping stairs makes an accessible route depend entirely on
+                    # lifts, so an out-of-service lift does not merely lengthen the
+                    # journey — it can remove the only route there is. Returning the
+                    # route anyway, still labelled accessible, would send someone who
+                    # cannot use stairs to a floor they cannot reach, which is the
+                    # highest-consequence wrong answer this system can give.
+                    continue
                 nd = d + self._edge_cost(node, nb)
                 if nd < dist.get(nb_id, float("inf")):
                     dist[nb_id] = nd
@@ -191,13 +204,27 @@ class RouteFinder:
     def _has_scale(self, path: List[str]) -> bool:
         return all(self.nodes[z].xy_m is not None for z in path if z in self.nodes)
 
-    def route(self, src: str, dest: str, *, step_free: bool = False) -> Optional[RouteResult]:
-        """Shortest route src→dest; None when disconnected (or blocked step-free)."""
+    def route(
+        self,
+        src: str,
+        dest: str,
+        *,
+        step_free: bool = False,
+        unavailable: Optional[Set[str]] = None,
+    ) -> Optional[RouteResult]:
+        """Shortest route src→dest; None when disconnected (or blocked step-free).
+
+        ``unavailable`` are vertical cores that cannot be used right now — a lift with
+        an open outage episode. They are excluded from the search rather than penalised:
+        a broken lift is not a slower way up, it is not a way up.
+        """
         if src not in self.nodes or dest not in self.nodes:
             return None
         if step_free and self.nodes[src].type == "staircase":
             return None
-        dist, prev = self._dijkstra(src, step_free=step_free)
+        if unavailable and src in unavailable:
+            return None
+        dist, prev = self._dijkstra(src, step_free=step_free, unavailable=unavailable)
         path = self._unwind(prev, src, dest)
         if path is None:
             return None
@@ -219,6 +246,7 @@ class RouteFinder:
         space_types: Optional[Set[str]] = None,
         label_contains: Optional[str] = None,
         step_free: bool = False,
+        unavailable: Optional[Set[str]] = None,
     ) -> Optional[NearestResult]:
         """Closest space matching a type set or a label fragment."""
         if src not in self.nodes:
@@ -233,7 +261,7 @@ class RouteFinder:
                 return True
             return False
 
-        dist, prev = self._dijkstra(src, step_free=step_free)
+        dist, prev = self._dijkstra(src, step_free=step_free, unavailable=unavailable)
         best: Optional[Tuple[float, _Node]] = None
         for zid, d in dist.items():
             node = self.nodes[zid]

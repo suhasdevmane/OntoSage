@@ -523,7 +523,60 @@ class AssetStateService:
 
 __all__ = [
     "AssetStateService",
+    "unavailable_vertical_nodes",
     "classify_asset_question",
     "is_asset_state_question",
     "STALE_AFTER_HOURS",
 ]
+
+
+async def unavailable_vertical_nodes(
+    nodes: Any,
+    building_id: str,
+    namespace: str,
+    sparql_exec: Callable,
+    events_adapter=None,
+) -> Dict[str, str]:
+    """{zone_id: reason} for route nodes whose LIFT is currently out of service.
+
+    A step-free route changes floors only by lift, so an out-of-service lift does not
+    lengthen an accessible journey — it can remove the only one there is. Returning the
+    route anyway, still labelled accessible, would send someone who cannot use stairs to
+    a floor they cannot reach.
+
+    The join is by LABEL, because the two sides come from different sources: lifts are
+    ``ontosage:Lift`` entities in the graph, while route nodes come from the floor-plan
+    manifests, and nothing links them structurally. Matching is deliberately strict —
+    an exact label match, or the asset's label contained in the node's — so a lift is
+    never confused with a neighbouring room. **A missed match leaves the route as it
+    was**, which is the safer failure only because the alternative (matching loosely and
+    blocking the wrong core) would strand people for no reason; a building that wants
+    this guarantee should link the two explicitly.
+    """
+    try:
+        service = AssetStateService(sparql_exec, namespace, events_adapter=events_adapter)
+        rows = await service._select(service._status_query("Lift"))
+        if not rows:
+            return {}
+        locals_ = [_local(r.get("asset", "")) for r in rows]
+        open_outages = await service._open_outages(building_id, locals_)
+        if not open_outages:
+            return {}
+        labels = {_local(r.get("asset", "")): (r.get("label") or "").strip().lower() for r in rows}
+        blocked: Dict[str, str] = {}
+        for node in getattr(nodes, "values", lambda: [])():
+            node_label = (getattr(node, "label", "") or "").strip().lower()
+            if not node_label:
+                continue
+            for asset_local, episode in open_outages.items():
+                asset_label = labels.get(asset_local, "")
+                if not asset_label:
+                    continue
+                if node_label == asset_label or asset_label in node_label:
+                    blocked[getattr(node, "zone_id", "")] = (
+                        episode.get("reason") or "out of service"
+                    )
+        return {k: v for k, v in blocked.items() if k}
+    except Exception as exc:  # a lookup failure must never break routing
+        logger.debug(f"[asset_state] vertical availability unavailable: {exc}")
+        return {}
