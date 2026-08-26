@@ -72,10 +72,31 @@ def _concept_id_from_uri(uri: str) -> str:
     return uri.split("#")[-1].split("/")[-1]
 
 
+#: IRI stem -> CURIE prefix, for every vocabulary a concept may map a class from.
+#: A concept can legitimately name a class Brick does not have — the OCBV layer exists
+#: for exactly that — and those IRIs must come back as CURIEs like everything else.
+_CLASS_PREFIXES = (
+    ("https://brickschema.org/schema/Brick#", "brick:"),
+    ("http://ontosage.org/capabilities#", "ontosage:"),
+    ("http://ontosage.org/hbco#", "hbco:"),
+)
+
+
 def _brick_local(uri: str) -> str:
-    """e.g. 'https://brickschema.org/schema/Brick#CO2_Level_Sensor' -> 'brick:CO2_Level_Sensor'"""
-    if "brickschema.org/schema/Brick#" in uri:
-        return "brick:" + uri.split("#")[-1]
+    """Shorten a class IRI to a CURIE.
+
+    Only Brick was handled here, so an OCBV class came back as a BARE FULL IRI. Two
+    things broke on that, both silently: the caller's most-specific-class check looks
+    for an ``ontosage:`` prefix and never matched, so a concept naming both a class and
+    its Brick parent always resolved to the PARENT — "how many parking spaces are
+    free?" answered 294, the building's space count, from a 40-instance generic class
+    instead of the one parking sensor. And had it been chosen, a bare IRI embedded in
+    generated SPARQL is a syntax error, because an IRI needs angle brackets where a
+    CURIE does not.
+    """
+    for stem, prefix in _CLASS_PREFIXES:
+        if stem in uri:
+            return prefix + uri.split("#")[-1]
     return uri
 
 

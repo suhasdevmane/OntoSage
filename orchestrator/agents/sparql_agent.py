@@ -82,6 +82,14 @@ _STANDARD_PREFIXES = [
     "PREFIX schema1: <http://schema.org/>",
     "PREFIX unit: <http://qudt.org/vocab/unit/>",
     "PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>",
+    # THE OCBV LAYER. Missing until 2026-08-26, which made every ontosage:/hbco:
+    # term a SYNTAX ERROR in any query this agent generated — so the whole
+    # conversational vocabulary (amenities, knowledge topics, lifts, AV, network,
+    # asset status, service schedules, the parking sensor class) was unreachable
+    # from the SPARQL lane. It surfaced when a specificity check silently fell back
+    # to its exception path: the query was correct and simply could not parse.
+    "PREFIX ontosage: <http://ontosage.org/capabilities#>",
+    "PREFIX hbco: <http://ontosage.org/hbco#>",
 ]
 
 
@@ -352,10 +360,22 @@ Your Answer:"""
             for _cm in _hbco_concepts:
                 _bc = _cm.get("brick_classes") or []
                 if _bc:
-                    class_target = _bc[0]
+                    # MOST SPECIFIC, not first. The classes come back from the graph
+                    # unordered, so taking _bc[0] picked whichever the store happened
+                    # to return -- and when a concept names both a class and its
+                    # PARENT, the parent answers a different question. Measured
+                    # 2026-08-25: parking_availability maps to
+                    # ontosage:Parking_Occupancy_Sensor and its parent
+                    # brick:Occupancy_Count_Sensor; the parent won, matched 40
+                    # instances instead of 1, and "how many parking spaces are free?"
+                    # was answered "294" -- the building's space count, presented as
+                    # free bays. A real number from a real query to a different
+                    # question, so the numeric guard had no reason to object.
+                    class_target = self._most_specific_class(_bc)
                     logger.info(
                         f"[sparql] class from HBCO concept "
                         f"'{_cm.get('concept_id')}': {class_target}"
+                        + (f" (from {len(_bc)} candidates)" if len(_bc) > 1 else "")
                     )
                     break
             if not class_target:
@@ -1867,6 +1887,36 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
             if k in uq:
                 return v
         return None
+
+    @staticmethod
+    def _most_specific_class(candidates: List[str]) -> str:
+        """The most specific of a concept's classes, without asking the graph.
+
+        A concept may legitimately name a class AND its parent — the parent so a
+        building that types only the generic form still resolves, the child so a
+        building that types precisely gets a precise answer. Which one the store
+        returns first is arbitrary, so the choice cannot be made on order.
+
+        An OCBV (``ontosage:``) class exists PRECISELY BECAUSE Brick lacked one, and
+        is declared as a subclass of the nearest Brick parent — so where both appear,
+        the extension is by construction the specific one. That makes this a pure
+        function: no query, no network, no failure mode.
+
+        The first version did ask the graph, and always fell back: `_execute_query`
+        raised `[Errno -2] Name or service not known` from its Fuseki fallback, the
+        `except` swallowed it at DEBUG level, and the function silently returned
+        `candidates[0]` — which is why "how many parking spaces are free?" kept
+        answering 294 (the building's space count) from the generic parent class,
+        through three rounds of me "verifying" a fix that had never once run.
+        """
+        if not candidates:
+            return ""
+        if len(candidates) == 1:
+            return candidates[0]
+        for cand in candidates:
+            if cand.startswith("ontosage:") or cand.startswith("hbco:"):
+                return cand
+        return candidates[0]
 
     async def _get_instances_for_class(self, brick_class: str, limit: int = 40) -> List[str]:
         """Query GraphDB for instances of a Brick class. Returns <prefix>: URIs only.
