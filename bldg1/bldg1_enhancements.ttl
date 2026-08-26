@@ -802,7 +802,7 @@ bldg:EV_Charger_2_State_Sensor
     ] .
 
 bldg:NO2_Sensor_Parking
-    rdf:type owl:NamedIndividual , brick:CO_Level_Sensor ;
+    rdf:type owl:NamedIndividual , brick:NO2_Level_Sensor ;
     rdfs:label "NO2/Exhaust Gas Sensor - Parking Level" ;
     rdfs:comment "Monitors NO2 from vehicle exhausts; linked to exhaust fan control." ;
     brick:isPartOf bldg:Parking_Level_Ground ;

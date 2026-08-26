@@ -30,8 +30,15 @@ logger = logging.getLogger(__name__)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-_FEED_TYPES = {"csv_drop", "rest_poll", "events"}
+#: Fallback only. The authority on which feed types are dispatchable is the
+#: registry's own adapter map — this list drifted behind it and rejected a
+#: correctly-declared timetable feed that the registry ingests happily.
+_FEED_TYPES_FALLBACK = {"csv_drop", "rest_poll", "events"}
+#: A telemetry feed becomes a Brick point with rows in a database, so it must say
+#: which class and which store. An institutional source produces EVENTS, not a
+#: point: it has neither, and demanding them reported a working feed as broken.
 _FEED_REQUIRED_KEYS = {"id", "type", "brick_class", "storage"}
+_INSTITUTIONAL_REQUIRED_KEYS = {"id", "type", "path"}
 _RECIPE_KINDS = {"threshold", "range", "aggregate", "correlate", "trend", "estimate", "benchmark"}
 _RULE_OPS = {">", "<", ">=", "<=", "==", "!="}
 _CHANNEL_TYPES = {"log", "webhook", "smtp"}
@@ -43,6 +50,25 @@ _HEX_COLOR = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 
 
 # ── Individual file validators ────────────────────────────────────────────────
+
+
+def _known_feed_types() -> Tuple[set, set]:
+    """(every dispatchable feed type, the institutional subset).
+
+    Read from the feed registry rather than restated here: a second copy of this
+    list is what let feeds.yaml declare a working `timetable` feed and have the
+    swap-time validator call it an unknown type with two missing keys.
+    """
+    try:
+        from orchestrator.services.feeds.registry import (  # local: keeps validators light
+            _ADAPTER_CLASSES,
+            _INSTITUTIONAL_KINDS,
+        )
+
+        return set(_ADAPTER_CLASSES), set(_INSTITUTIONAL_KINDS)
+    except Exception as exc:  # pragma: no cover — registry import is not required to validate
+        logger.debug(f"[input_validator] feed registry unavailable ({exc}); using fallback types")
+        return set(_FEED_TYPES_FALLBACK), set()
 
 
 def validate_feeds_yaml(path: Path) -> Tuple[bool, List[str]]:
@@ -61,6 +87,8 @@ def validate_feeds_yaml(path: Path) -> Tuple[bool, List[str]]:
     if not isinstance(feeds, list):
         return False, ["feeds.yaml: 'feeds' key must be a list"]
 
+    known_types, institutional = _known_feed_types()
+
     seen_ids: set = set()
     for i, feed in enumerate(feeds):
         if not isinstance(feed, dict):
@@ -70,11 +98,15 @@ def validate_feeds_yaml(path: Path) -> Tuple[bool, List[str]]:
         if fid in seen_ids:
             issues.append(f"feeds.yaml: duplicate feed id '{fid}'")
         seen_ids.add(fid)
-        missing = _FEED_REQUIRED_KEYS - set(feed.keys())
+        ftype = feed.get("type")
+        required = _INSTITUTIONAL_REQUIRED_KEYS if ftype in institutional else _FEED_REQUIRED_KEYS
+        missing = required - set(feed.keys())
         if missing:
             issues.append(f"feeds.yaml[{fid}]: missing required keys: {sorted(missing)}")
-        if feed.get("type") not in _FEED_TYPES:
-            issues.append(f"feeds.yaml[{fid}]: type='{feed.get('type')}' not in {_FEED_TYPES}")
+        if ftype not in known_types:
+            issues.append(
+                f"feeds.yaml[{fid}]: type='{ftype}' not in {sorted(known_types)}"
+            )
         field_map = feed.get("field_map", {})
         if field_map and "value" not in field_map.values():
             issues.append(f"feeds.yaml[{fid}]: field_map must map at least one column to 'value'")
@@ -448,6 +480,73 @@ def validate_evidence_policy_yaml(path: Path) -> Tuple[bool, List[str]]:
     return (not issues), issues
 
 
+# ── measurand typing ────────────────────────────────────────────────────────
+# A Brick Point measures ONE quantity. When an instance is asserted into two
+# families at once — a volatile organic compound also typed as particulate
+# matter, nitrogen dioxide also typed as carbon monoxide — a question about one
+# gas can be answered with a reading of the other, against a different exposure
+# limit. Both were live in bldg1 (CAVEAT-286). These families are disjoint by
+# construction: nothing physically measures two of them through one Point.
+_MEASURAND_FAMILIES: Dict[str, set] = {
+    "particulate matter": {
+        "Particulate_Matter_Sensor",
+        "PM1_0_Level_Sensor",
+        "PM2_5_Level_Sensor",
+        "PM10_Level_Sensor",
+    },
+    "volatile organic compounds": {"TVOC_Level_Sensor", "TVOC_Sensor", "VOC_Level_Sensor"},
+    "carbon monoxide": {"CO_Level_Sensor", "CO_Sensor"},
+    "carbon dioxide": {"CO2_Level_Sensor", "CO2_Sensor"},
+    "nitrogen dioxide": {"NO2_Level_Sensor", "NO2_Sensor"},
+    "methane": {"Methane_Level_Sensor"},
+    "ozone": {"Ozone_Level_Sensor"},
+    "formaldehyde": {"Formaldehyde_Level_Sensor"},
+}
+_CLASS_TO_FAMILY = {c: fam for fam, cs in _MEASURAND_FAMILIES.items() for c in cs}
+_INSTANCE_TYPES_RE = re.compile(r"^(\w+:[^\s]+)\s+(?:a|rdf:type)\s+([^;.]+)[;.]", re.M)
+
+
+def _measurand_conflicts(text: str) -> List[Tuple[str, List[str]]]:
+    """Instances in `text` that assert two mutually exclusive measurands."""
+    out: List[Tuple[str, List[str]]] = []
+    for subject, types in _INSTANCE_TYPES_RE.findall(text):
+        fams = sorted(
+            {
+                _CLASS_TO_FAMILY[t]
+                for t in re.findall(r"brick:(\w+)", types)
+                if t in _CLASS_TO_FAMILY
+            }
+        )
+        if len(fams) > 1:
+            out.append((subject, fams))
+    return out
+
+
+def validate_measurand_typing(path: Path) -> Tuple[bool, List[str]]:
+    """Check every *.ttl in a building directory for contradictory sensor typing."""
+    if not path.is_dir():
+        return True, []
+    issues: List[str] = []
+    for ttl in sorted(path.glob("*.ttl")):
+        # Brick/vendored TBox files declare the class hierarchy itself; a class
+        # legitimately sits under several parents there.
+        if ttl.name.lower().startswith("brick"):
+            continue
+        try:
+            text = ttl.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:  # pragma: no cover - unreadable file
+            issues.append(f"{ttl.name}: unreadable ({exc})")
+            continue
+        for subject, fams in _measurand_conflicts(text):
+            issues.append(
+                f"{ttl.name}: {subject} is typed as both "
+                + " and ".join(fams)
+                + " — one Point measures one quantity, so a question about one "
+                "would be answered with a reading of the other"
+            )
+    return (not issues), issues
+
+
 def validate_building_input(building_id: str, input_root: Path) -> Tuple[bool, Dict[str, Any]]:
     """Run all optional-file validators for a building directory.
 
@@ -494,6 +593,7 @@ def validate_building_input(building_id: str, input_root: Path) -> Tuple[bool, D
             lambda p: validate_datasources_yaml(p, input_root=input_root),
         ),
         ("evidence_policy.yaml", bldg_dir / "evidence_policy.yaml", validate_evidence_policy_yaml),
+        ("sensor typing", bldg_dir, validate_measurand_typing),
     ]
 
     for name, path, validator in checks:
