@@ -280,6 +280,12 @@ def test_precedence_order_is_pinned():
         # V5-T26: dated compliance-register questions; after events so
         # workorder aging keeps the events lane.
         "compliance_register",
+        # V6-T58/T60: service and asset STATE (lifts, AV, network, cleaning schedules,
+        # closures). Sits after both events and the register on purpose — a booking
+        # question and a dated compliance check each own vocabulary this lane also
+        # recognises, and whichever claims a question first should be the lane whose
+        # data can actually answer it.
+        "asset_state_query",
         # V5-T20: comfort why-questions; last so every earlier claim wins.
         "why_diagnosis",
         # V5-T27: route / nearest-facility questions → the spatial route finder.

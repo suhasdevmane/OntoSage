@@ -699,8 +699,14 @@ EVENTS_RE = re.compile(
     # prepositional phrase, so "is the temperature in room 5.01 available" — five
     # tokens — still belongs to the data lane rather than to bookings.
     r"(?:\bis\s+(?!there\b)(?:\S{2,}\s+){1,3}(?:free|booked|available|in use|reserved|occupied|taken)\b"
-    r"|\b(?:which|what|any|list)\b.{0,40}\brooms?\b.{0,30}\b(?:free|available)\b"
-    r"|\b(?:a|any)\s+rooms?\s+(?:free|available)\b"
+    # "step-free" is an ACCESSIBILITY term, not an availability one. Without the
+    # lookbehind, "which rooms are step-free accessible?" matched here and was answered
+    # with "69 of 233 rooms have no booking today" — a booking answer to an
+    # accessibility question (measured 2026-08-25). Any hyphen-prefixed "free"
+    # (step-free, barrier-free) is excluded: nobody asks whether a room is "X-free"
+    # meaning unoccupied.
+    r"|\b(?:which|what|any|list)\b.{0,40}\brooms?\b.{0,30}\b(?:(?<!-)free|available)\b"
+    r"|\b(?:a|any)\s+rooms?\s+(?:(?<!-)free|available)\b"
     r"|\bbookings?\b|\breservations?\b"
     # Timetabled teaching. These land in the SAME event store as bookings (V6-T25
     # routes a timetable export there deliberately), so the vocabulary has to reach
@@ -795,6 +801,39 @@ def register_question(query: str) -> bool:
     )
 
     return not (classify_register_question(query) == "last_done" and match_item(query) is None)
+
+
+def _r_asset_state_query(c: _Ctx) -> Optional[str]:
+    """Service/asset STATE question -> asset_state lane (V6-T58/T60).
+
+    The same BUG-166 shape as the events rule, in a second place: "are there any planned
+    closures coming up?" classified as MAINTENANCE and the intake path FILED A TICKET
+    (REP-E1A800, measured 2026-08-25) instead of answering a plainly interrogative
+    question. A closure is a scheduled state change the building already records; asking
+    about one is not reporting a fault.
+
+    Statements keep filing: "the lift is broken" is a report and must reach intake.
+    """
+    from orchestrator.services.asset_state_service import is_asset_state_question
+
+    interrogative = bool(_INTERROGATIVE_RE.search(c.query or ""))
+    from_set = _WEAK_INTENTS + ("sensor_data", "analytics", "capability", "compliance")
+    if c.intent in ("maintenance", "complaint", "report", "safety_report"):
+        if not interrogative:
+            return None  # a statement — intake is correct
+    elif c.intent not in from_set:
+        return None
+    if c.sr.is_control_command(c.query):
+        return None
+    if c.intent not in ("maintenance", "complaint", "report", "safety_report") and (
+        c.sr.report_intake_intent(c.query)
+    ):
+        return None  # statement shapes stay with intake
+    if EVENTS_RE.search(c.query or ""):
+        return None  # a booking/availability question belongs to the events lane
+    if register_question(c.query or ""):
+        return None  # a dated compliance question belongs to the register
+    return "asset_state" if is_asset_state_question(c.query) else None
 
 
 def _r_compliance_register(c: _Ctx) -> Optional[str]:
@@ -1348,6 +1387,11 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "compliance_register",
         "dated compliance-register questions → register lane (V5-T26)",
         _r_compliance_register,
+    ),
+    Rule(
+        "asset_state_query",
+        "lift / AV / network state, cleaning schedules, closures → asset_state (V6-T58/T60)",
+        _r_asset_state_query,
     ),
     Rule(
         "why_diagnosis",

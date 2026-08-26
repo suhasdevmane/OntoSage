@@ -753,6 +753,9 @@ class DialogueAgent:
         from orchestrator.services.anomaly.diagnosis import (
             is_why_question as _is_why_question,
         )
+        from orchestrator.services.asset_state_service import (
+            is_asset_state_question as _is_asset_state_question,
+        )
         from orchestrator.services.observability import (
             is_observability_question as _is_observability_question,
         )
@@ -822,6 +825,16 @@ class DialogueAgent:
             # prose -- BUG-192's shape, where a sensor class was denied from a retrieval
             # window. Seventh member of BUG-231's family.
             and not _is_observability_question(user_query)
+            # V6-T58/T60: service and asset STATE questions had no bypass. "Are the lifts
+            # working?" and "is the wifi down on floor 3?" were answered from the building
+            # documents -- "the ontology does not contain any information about lifts" --
+            # while 21 AssetStatus records sat in the graph with a value, an observation
+            # time and an assistance contact for each one. The capability probe claims the
+            # question before the LLM, and the parse stage never runs on that path, so the
+            # asset_state rule could not get a say however it was ordered. Eighth member of
+            # BUG-231's family, and the same remedy: reuse the lane's own definition rather
+            # than write a second one here.
+            and not _is_asset_state_question(user_query)
             # V6-T26: a WHY-question belongs to the diagnosis lane, never to a document.
             # "Why is room 5.01 stuffy?" was answered here in 1.3s with "I don't have that
             # specific information on record" -- for a room whose CO2, AHU fan state and VAV

@@ -3775,6 +3775,7 @@ SELECT ?l WHERE {
         _events_result = state.intermediate_results.get("events_result") or {}
         _observability_result = state.intermediate_results.get("observability_result") or {}
         _register_result = state.intermediate_results.get("register_result") or {}
+        _asset_state_result = state.intermediate_results.get("asset_state_result") or {}
         _diagnosis_result = state.intermediate_results.get("diagnosis_result") or {}
         _privacy_refusal = state.intermediate_results.get("privacy_refusal_result") or {}
         if _privacy_refusal.get("formatted_response"):
@@ -3788,6 +3789,10 @@ SELECT ?l WHERE {
         elif _register_result.get("formatted_response"):
             # V5-T26: compliance-register lane (dates from graph triples)
             final_response = _register_result["formatted_response"]
+        elif _asset_state_result.get("formatted_response"):
+            # V6-T58/T60: service/asset state — deterministic template over status
+            # triples, same trust class as the register lane
+            final_response = _asset_state_result["formatted_response"]
         elif _events_result.get("formatted_response"):
             # V5-T24: event lane (bookings / work orders / access) — deterministic
             # template over adapter numbers, same trust class as deliberate
@@ -3981,6 +3986,7 @@ SELECT ?l WHERE {
             for k in (
                 "events_result",
                 "register_result",
+                "asset_state_result",
                 "diagnosis_result",
                 "privacy_refusal_result",
             )
@@ -5999,6 +6005,31 @@ SELECT ?l WHERE {
                 "success": False,
                 "formatted_response": (
                     "I couldn't assemble the diagnostic evidence just now — please try again."
+                ),
+            }
+        return state
+
+    async def _asset_state_node(self, state: ConversationState) -> ConversationState:
+        """V6-T58/T60 — service and asset state (lifts, AV, network, schedules, closures)."""
+        question = state.messages[-1].content if state.messages else ""
+        logger.info(f"[asset_state] q={question[:60]!r}")
+        try:
+            from orchestrator.services.asset_state_service import AssetStateService
+            from orchestrator.services.deliberation.live import sparql_exec
+            from orchestrator.services.numeric_guard import guard_payload
+            from shared.config import settings
+
+            service = AssetStateService(sparql_exec, settings.BUILDING_NAMESPACE)
+            state.intermediate_results["asset_state_result"] = guard_payload(
+                await service.answer(question), "asset_state"
+            )
+        except Exception as exc:
+            logger.error(f"[asset_state] node failed: {exc}", exc_info=True)
+            state.intermediate_results["asset_state_result"] = {
+                "success": False,
+                "formatted_response": (
+                    "I couldn't read the building's service-state records just now — "
+                    "please try again."
                 ),
             }
         return state

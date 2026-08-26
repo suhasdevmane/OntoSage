@@ -381,6 +381,23 @@ intents:
     pipeline_group: standalone
     node_method: _diagnosis_node
 
+  - name: asset_state
+    description: |-
+      The working STATE of a non-sensor asset or service, read from the building's
+      own status records: "are the lifts working?", "is the AV broken in the seminar
+      rooms?", "is the wifi down on floor 3?", plus cleaning/service schedules
+      ("when was floor 2 last cleaned?") and planned closures ("any closures coming
+      up?"). NOT for sensor readings (that is sensor_data), NOT for locating an asset
+      ("where is the lift?" is floor_plan/spatial), and NOT for REPORTING a fault
+      ("the lift is broken" is maintenance — a statement, not a question).
+    examples:
+      - '"Are the lifts working?"'
+      - '"Is the wifi down on floor 3?"'
+      - '"When was floor 2 last cleaned?"'
+      - '"Are there any planned closures coming up?"'
+    pipeline_group: standalone
+    node_method: _asset_state_node
+
   - name: register
     description: |-
       Compliance-REGISTER questions answered from dated ComplianceCheck records:
