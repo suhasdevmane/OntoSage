@@ -411,7 +411,9 @@ Your Answer:"""
             # Phase 3.1: Template-first routing (zero LLM for common patterns)
             # Expanded dynamically using OntologyIntrospector discovered classes
             if sparql_query is None:
-                sparql_query = self._template_sparql(user_query, entities, ts_entities)
+                sparql_query = self._template_sparql(
+                    user_query, entities, ts_entities, concept_class=class_target
+                )
 
             used_template = sparql_query is not None
             # Default analytics decision for template queries
@@ -1117,6 +1119,7 @@ SELECT DISTINCT ?sensor ?label ?floorNum ?uuid ?storage WHERE {{
         user_query: str,
         entities: List[str],
         ts_entities: Optional[Set[str]] = None,
+        concept_class: Optional[str] = None,
     ) -> Optional[str]:
         """Return a direct SPARQL template for common sensor/location/entity queries with feature detection."""
         uq = user_query.lower()
@@ -1448,7 +1451,20 @@ SELECT ?floor ?label WHERE {
 
         # T2: List all zones / rooms / spaces
         # Zones in this ontology have no rdf:type — discoverable only via brick:hasLocation
-        if any(w in uq for w in zone_words) and features["wants_count"] and not entities:
+        #
+        # NOT when a concept already identified a measurand. "How many parking SPACES are
+        # free?" contains a zone word and asks for a count, so this template claimed it and
+        # answered 294 — the building's room count — for a question about parking
+        # availability, while the sensor that answers it sat behind the resolved class.
+        # A generic space count is the right answer to "how many rooms are there?" and the
+        # wrong answer to any question the building's own vocabulary has already recognised
+        # as being about something measurable.
+        if (
+            any(w in uq for w in zone_words)
+            and features["wants_count"]
+            and not entities
+            and not concept_class
+        ):
             return (
                 self._prefix_block()
                 + """

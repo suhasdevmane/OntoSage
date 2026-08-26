@@ -116,3 +116,38 @@ def test_specificity_needs_no_network():
     body = code.split('"""')[-1]  # everything after the docstring
     assert "await" not in body
     assert "_execute_query" not in body
+
+
+# ── a generic template must not claim a question a concept already owns ──────
+def test_the_space_count_template_yields_to_a_resolved_concept():
+    """"How many parking SPACES are free?" contains a zone word and asks for a count, so
+    the generic space-count template claimed it and answered 294 — the building's room
+    count — for a question about parking availability, while the sensor that answers it
+    sat behind the resolved class."""
+    from orchestrator.agents.sparql_agent import SPARQLAgent
+
+    agent = SPARQLAgent()
+    q = "How many parking spaces are free?"
+    with_concept = agent._template_sparql(
+        q, [], set(), concept_class="ontosage:Parking_Occupancy_Sensor"
+    )
+    assert not (with_concept and "COUNT(DISTINCT ?space)" in with_concept)
+
+
+def test_a_plain_space_count_still_uses_the_template():
+    """No concept resolves for "how many rooms are there?", so the generic count is
+    still exactly the right answer and must not be suppressed."""
+    from orchestrator.agents.sparql_agent import SPARQLAgent
+
+    agent = SPARQLAgent()
+    out = agent._template_sparql("How many rooms are in this building?", [], set())
+    assert out and "COUNT(DISTINCT ?space)" in out
+
+
+def test_the_template_signature_keeps_the_concept_optional():
+    """Existing callers pass three positional args; the guard must not break them."""
+    from orchestrator.agents.sparql_agent import SPARQLAgent
+
+    agent = SPARQLAgent()
+    out = agent._template_sparql("How many zones are there?", [], set())
+    assert out is None or isinstance(out, str)
