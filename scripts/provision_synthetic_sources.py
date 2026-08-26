@@ -52,7 +52,7 @@ ONTOSAGE_NS = "http://ontosage.org/capabilities#"
 #: "closures" and "timetable", neither of which has a generator, so the constant
 #: documented capability the script does not have. A pinned test now compares the
 #: two, because a list that can drift from the code it describes will.
-FAMILIES = ("hours", "status", "accessibility", "schedules", "timetable")
+FAMILIES = ("hours", "status", "accessibility", "schedules", "timetable", "amenity_state")
 
 
 def _env(key: str, default: str = "") -> str:
@@ -157,12 +157,34 @@ def discover(endpoint: str) -> Dict[str, object]:
             endpoint,
         )
     ]
+    # Amenities, so their SERVICE STATE can be provisioned. Module P of the schema is
+    # explicit that an out-of-service amenity must be excluded from an answer rather than
+    # caveated -- but nothing could be excluded while no amenity carried a status at all.
+    # Only amenities WITH A LOCATION get a service state. A physical thing you can walk
+    # to — a fountain, a lift, a café — can be out of service; an informational entry
+    # cannot. The first version statused every ontosage:Amenity and duly marked
+    # "Accessibility" and "Reception" out of service, which the resolver would then
+    # EXCLUDE from answers: suppressing the building's accessibility information because
+    # a synthetic generator called it broken. Location is the building-agnostic
+    # discriminator here, and it needs no name matching.
+    amenities = [
+        (b["s"]["value"], (b.get("l") or {}).get("value", ""))
+        for b in _sparql(
+            "PREFIX ontosage: <http://ontosage.org/capabilities#> "
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+            "SELECT ?s (SAMPLE(?lab) AS ?l) WHERE { ?s a ontosage:Amenity . "
+            "{ ?s ontosage:locatedIn ?anywhere } UNION { ?s ontosage:locationText ?anytext } "
+            "OPTIONAL { ?s rdfs:label ?lab } } GROUP BY ?s LIMIT 500",
+            endpoint,
+        )
+    ]
     return {
         "building": building,
         "ns": ns,
         "spaces": spaces,
         "floors": floors,
         "lifts": lifts,
+        "amenities": amenities,
         "teaching": teaching,
     }
 
@@ -287,6 +309,84 @@ def gen_status(d: Dict, rnd: random.Random) -> str:
             f'    ontosage:statusObservedAt "{seen.isoformat()}"^^xsd:dateTime ;\n'
             f"    ontosage:isSimulated true .\n\n"
         )
+    return "".join(out)
+
+
+def gen_amenity_state(d: Dict, rnd: random.Random) -> str:
+    """Amenity service status + potability statements (Module P, V6-T45).
+
+    TWO DELIBERATE PROPERTIES, both of which the schema argues for at length:
+
+    Most amenities work. A handful do not, because an estate where everything is
+    operational makes the exclusion rule untestable — and the rule matters: an
+    out-of-service amenity must be EXCLUDED from an answer, not listed with a caveat,
+    since somebody who walks to a broken fountain has been given a wrong answer however
+    well hedged.
+
+    Potability is a PUBLISHED STATEMENT with an owner and a date, never something derived
+    from a reading. A flow sensor sits one short step from "the water is fine to drink",
+    and that step is a health claim nobody made. Some outlets get no statement at all:
+    "nobody has published one" is the honest answer and has to be representable.\n"""
+    amenities = list(d.get("amenities") or [])  # type: ignore[arg-type]
+    out = [
+        _header(
+            str(d["building"]),
+            str(d["ns"]),
+            "Amenity service status and potability (synthetic)",
+            "An amenity with no service state is assumed usable, so a broken one is offered "
+            "exactly as if it worked. Potability is published, never inferred from a sensor.",
+        )
+    ]
+    if not amenities:
+        print("  no ontosage:Amenity entities — writing an empty amenity-state file")
+        return "".join(out)
+
+    now = datetime.now().replace(microsecond=0)
+    reasons = ("awaiting parts", "reported fault", "scheduled servicing", "supply isolated")
+    n_broken = 0
+    for i, (iri, label) in enumerate(sorted(amenities)):
+        local = _local(iri)
+        # ~12% out of service. Deterministic per amenity so re-runs are byte-identical.
+        broken = rnd.random() < 0.12
+        state = "out_of_service" if broken else "operational"
+        n_broken += 1 if broken else 0
+        seen = now - timedelta(minutes=rnd.randint(5, 600))
+        out.append(
+            f"bldg:amenity_status_{i} a ontosage:AssetStatus ;\n"
+            f"    ontosage:statusOf bldg:{local} ;\n"
+            f'    ontosage:statusValue "{state}" ;\n'
+            f'    ontosage:statusSource "estates_helpdesk" ;\n'
+            f'    ontosage:statusObservedAt "{seen.isoformat()}"^^xsd:dateTime ;\n'
+            + (f'    ontosage:statusReason "{rnd.choice(reasons)}" ;\n' if broken else "")
+            + f'    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;\n'
+            f"    ontosage:isSimulated true .\n"
+        )
+
+    # Potability: only for water-related amenities, and NOT for all of them.
+    water = [
+        (iri, lab)
+        for iri, lab in sorted(amenities)
+        if any(w in (lab or _local(iri)).lower() for w in ("water", "fountain", "tap", "drink"))
+    ]
+    for i, (iri, label) in enumerate(water):
+        if rnd.random() < 0.3:
+            continue  # no statement published for this outlet — an honest "unknown"
+        value = "potable" if rnd.random() < 0.85 else "not_potable"
+        issued = date.today() - timedelta(days=rnd.randint(20, 400))
+        out.append(
+            f"bldg:potability_{i} a ontosage:PotabilityStatement ;\n"
+            f'    rdfs:label "Potability statement - {label or _local(iri)}"@en ;\n'
+            f"    ontosage:appliesToOutlet bldg:{_local(iri)} ;\n"
+            f'    ontosage:potabilityValue "{value}" ;\n'
+            f'    ontosage:potabilityAuthority "Estates Water Safety Group" ;\n'
+            f'    ontosage:potabilityIssuedOn "{issued}"^^xsd:date ;\n'
+            f'    ontosage:layTerms "drinking water,potable,is the water safe,can I drink" ;\n'
+            f"    ontosage:isSimulated true .\n"
+        )
+    print(
+        f"  amenity state: {len(amenities)} amenities ({n_broken} out of service), "
+        f"{len(water)} water outlet(s) considered for potability"
+    )
     return "".join(out)
 
 
@@ -510,6 +610,7 @@ GENERATORS = {
     "accessibility": ("_synthetic_accessibility.ttl", gen_accessibility),
     "schedules": ("_synthetic_schedules.ttl", gen_schedules),
     "timetable": ("_timetable.csv", gen_timetable),
+    "amenity_state": ("_synthetic_amenity_state.ttl", gen_amenity_state),
 }
 
 

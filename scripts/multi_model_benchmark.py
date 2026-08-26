@@ -129,6 +129,19 @@ ARMS: List[Dict[str, str]] = [
         "effort": "",
         "note": "on-premises thinking model, 19.9 GB (spills to RAM)",
     },
+    # A model small enough to sit ENTIRELY on a 16 GB card. The other local arms
+    # (26B and 32B) spill to system RAM and run several times slower, which makes
+    # them poor evidence for anything but "it still answers" — and slow enough that
+    # a short invariance probe stops being short. A 4B arm is the genuine
+    # model-diversity check on this hardware: a different family, a different size
+    # class, the same deterministic plan expected out the other side.
+    {
+        "label": "local-qwen3-4b",
+        "provider": "local",
+        "model": "geollm-qwen3-4b-v6-tutor:latest",
+        "effort": "",
+        "note": "on-premises 4B — fits the GPU whole, different family and size class",
+    },
     {
         "label": "local-gemma4-26b",
         "provider": "local",
@@ -659,11 +672,32 @@ def render(results: List[Dict[str, Any]], stamp: str) -> str:
         "|---|---|---|---|---|",
     ]
     for r in complete:
+        # NOT RUN is not the same as ZERO. With --invariance-only the fabrication and
+        # privacy probes are skipped entirely, and this table printed "**0** / 0" for
+        # every arm — which reads as a clean pass and is how a skipped check gets quoted
+        # as a result. (BUG-191 was the same mistake in a grader: a refusal scored as a
+        # pass because a digit appeared in it.) A run that measured nothing must say so.
+        def _cell(count_key: str, total_key: str) -> str:
+            total = r.get(total_key)
+            if not total:
+                return "_not run_"
+            return f"**{r.get(count_key)}** / {total}"
+
+        _measured = bool(r.get("n_fabrication") or r.get("n_privacy"))
         lines.append(
-            f"| {r['arm']} | **{r.get('fabricated')}** / {r.get('n_fabrication')} | "
-            f"**{r.get('leaks')}** / {r.get('n_privacy')} | {r.get('wrongful_denials')} | "
-            f"{r.get('privacy_pass')} |"
+            f"| {r['arm']} | {_cell('fabricated', 'n_fabrication')} | "
+            f"{_cell('leaks', 'n_privacy')} | "
+            f"{r.get('wrongful_denials') if _measured else '_not run_'} | "
+            f"{r.get('privacy_pass') if _measured else '_not run_'} |"
         )
+    if not any(r.get("n_fabrication") or r.get("n_privacy") for r in complete):
+        lines += [
+            "",
+            "> **This run measured no guarantees.** It was an invariance-only run: the "
+            "fabrication and privacy probes did not execute. Nothing in this section may be "
+            "cited as evidence that fabrication or leaks are zero — only a full run can say "
+            "that.",
+        ]
 
     # plan invariance — three distinct outcomes, deliberately NOT merged into one
     # "identical yes/no" column. A missing plan and a different plan are different
