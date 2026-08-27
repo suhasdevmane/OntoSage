@@ -821,6 +821,69 @@ def validate_potability_agreement(path: Path) -> Tuple[bool, List[str]]:
     return (not issues), issues
 
 
+# ── near-duplicate identities ───────────────────────────────────────────────
+#: Two IRIs that differ only in punctuation or case almost always name ONE thing
+#: twice, and that is the shape which produces wrong answers: bldg1 carried
+#: `CO2_Level_Sensor5.01` beside `CO2_Level_Sensor_5.01` (4 triples against 242)
+#: and `oxygen_level_gas_sensor_5.01` beside `Oxygen_O2_Percentage_Gas_Sensor_5.01`,
+#: so a count of that sensor class was inflated and half the identities were
+#: unreachable for data. Fourteen AHU individuals for six units was the same
+#: disease with a different spelling (BUG-249).
+#:
+#: This is deliberately NOT a house-style checker. Brick places no requirement on
+#: an instance's local name -- `rdf:type` carries the class, and `AHU_F0` is a
+#: better name for a human than `Air_Handling_Unit_F0`. Renaming readable
+#: abbreviations to match class terms would touch thousands of IRIs, every
+#: timeseries link and every floor-plan binding, and fix nothing. What is worth
+#: forbidding is the same identity spelled two ways.
+_IDENTITY_KEY_RE = re.compile(r"[^a-z0-9]")
+
+
+def _identity_key(local: str) -> str:
+    return _IDENTITY_KEY_RE.sub("", local.lower())
+
+
+def validate_identity_collisions(path: Path) -> Tuple[bool, List[str]]:
+    """Subjects in the BUILDING's own namespace whose names differ only by case or
+    punctuation.
+
+    Scoped to the building's namespace deliberately. A first pass compared every
+    prefix and reported eight collisions per building, all of them vocabulary:
+    `Geometry`/`geometry` and `Region`/`region` are a CLASS and a PROPERTY, which
+    is a normal RDF convention, not one thing named twice. A check that reports
+    the schema as broken is a check nobody reads.
+    """
+    if not path.is_dir():
+        return True, []
+    subjects: Dict[str, set] = {}
+    for ttl in sorted(path.glob("*.ttl")):
+        if ttl.name.lower().startswith("brick"):
+            continue
+        try:
+            raw = ttl.read_text(encoding="utf-8", errors="replace")
+        except OSError:  # pragma: no cover - unreadable file
+            continue
+        text = _strip_turtle_comments(raw)
+        m = re.search(r"@prefix\s+bldg:\s*<([^>]+)>", raw)
+        if not m:
+            continue  # not a building-data file
+        ns = m.group(1)
+        names = set(re.findall(r"^\s*bldg:([\w.\-]+)\s", text, re.M))
+        names |= set(re.findall(r"^\s*<" + re.escape(ns) + r"([\w.\-]+)>", text, re.M))
+        for name in names:
+            subjects.setdefault(_identity_key(name), set()).add(name)
+
+    issues = []
+    for _key, names in sorted(subjects.items()):
+        if len(names) > 1:
+            issues.append(
+                f"{sorted(names)} differ only in case or punctuation - almost certainly one "
+                f"thing named twice, which inflates every count of its class and leaves half "
+                f"the identities unreachable for data"
+            )
+    return (not issues), issues
+
+
 def validate_building_input(building_id: str, input_root: Path) -> Tuple[bool, Dict[str, Any]]:
     """Run all optional-file validators for a building directory.
 
@@ -871,6 +934,7 @@ def validate_building_input(building_id: str, input_root: Path) -> Tuple[bool, D
         ("entity references", bldg_dir, validate_dangling_references),
         ("potability claims", bldg_dir, validate_potability_statements),
         ("potability agreement", bldg_dir, validate_potability_agreement),
+        ("identity collisions", bldg_dir, validate_identity_collisions),
     ]
 
     for name, path, validator in checks:
