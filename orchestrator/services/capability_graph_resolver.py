@@ -50,6 +50,12 @@ class CapabilityFact:
     document_ref: str = ""
     effective_date: str = ""
     owner: str = ""
+    # Module P — a published potability statement. Never derived from a reading:
+    # the schema is explicit that a sensor value does not support a health claim,
+    # and being wrong about drinkability harms someone.
+    potability: str = ""
+    potability_authority: str = ""
+    potability_issued_on: str = ""
 
     def render(self) -> str:
         head = f"**{self.label}**"
@@ -57,7 +63,13 @@ class CapabilityFact:
             head += f" — {self.location}"
         # Physical amenity: location + note (unchanged output).
         if not (
-            self.answer or self.report_to or self.url or self.email or self.phone or self.steps
+            self.answer
+            or self.report_to
+            or self.url
+            or self.email
+            or self.phone
+            or self.steps
+            or self.potability
         ):
             return f"{head}.{(' ' + self.note) if self.note else ''}"
         # Knowledge topic: canonical answer + contacts/report route + steps.
@@ -66,6 +78,8 @@ class CapabilityFact:
             body.append(self.answer)
         elif self.note:
             body.append(self.note)
+        if self.potability:
+            body.append(self._potability_sentence())
         contact = []
         if self.report_to:
             contact.append(f"Report to: {self.report_to}")
@@ -94,6 +108,33 @@ class CapabilityFact:
             body.append(" · ".join(provenance))
         return f"{head}. " + " ".join(body)
 
+    def _potability_sentence(self) -> str:
+        """The drinkability claim, with the owner who stands behind it.
+
+        The schema requires an authority because a drinkability claim with no owner
+        is exactly the confident unattributable assertion the evidence discipline
+        exists to prevent, and requires a date because a statement issued years ago
+        describes a plumbing system that may since have been altered. Surfacing the
+        value WITHOUT them would reproduce the defect the module was written to stop
+        — so an unattributed statement is reported as unverified rather than as a
+        fact, and 'unknown' is stated plainly instead of being dressed up.
+        """
+        value = (self.potability or "").strip().lower()
+        if value in ("unknown", ""):
+            return (
+                "Drinkability: no statement has been published for this outlet. "
+                "That is not the same as unsafe — nobody has assessed it."
+            )
+        reading = "safe to drink" if value == "potable" else "NOT for drinking"
+        if not self.potability_authority:
+            return (
+                f"Drinkability: recorded as {reading}, but the statement names no "
+                f"issuing authority — treat it as unverified."
+            )
+        when = f" on {self.potability_issued_on}" if self.potability_issued_on else ""
+        stale = "" if self.potability_issued_on else " (no issue date recorded)"
+        return f"Drinkability: {reading} — published by {self.potability_authority}{when}.{stale}"
+
 
 @dataclass
 class _Amenity:
@@ -116,6 +157,9 @@ class _Amenity:
     #: caveat: somebody who walks to a broken drinking fountain has been given a wrong
     #: answer, however well hedged (schema Module P, V6-T45).
     service_status: str = ""
+    potability: str = ""
+    potability_authority: str = ""
+    potability_issued_on: str = ""
 
 
 #: Status values that mean an amenity cannot be used right now. Anything else --
@@ -213,6 +257,9 @@ class CapabilityGraphResolver:
                 document_ref=am.document_ref,
                 effective_date=am.effective_date,
                 owner=am.owner,
+                potability=am.potability,
+                potability_authority=am.potability_authority,
+                potability_issued_on=am.potability_issued_on,
             )
             for _, am in scored[:3]
         ]
@@ -225,7 +272,7 @@ class CapabilityGraphResolver:
         q = (
             f"{_ONTO}{_RDFS}"
             "SELECT ?a ?label ?loc ?note ?cat ?lay ?answer ?url ?email ?phone ?report ?steps "
-            "?docref ?effective ?owner ?svc WHERE { "
+            "?docref ?effective ?owner ?svc ?pot ?potauth ?potdate WHERE { "
             "{ ?a a ontosage:Amenity } UNION { ?a a ontosage:KnowledgeTopic } "
             "OPTIONAL { ?a rdfs:label ?label } "
             "OPTIONAL { ?a ontosage:locationText ?loc } "
@@ -245,7 +292,14 @@ class CapabilityGraphResolver:
             # amenity was offered as though it worked -- the wrong-answer case the
             # vocabulary exists to prevent.
             "OPTIONAL { { ?a ontosage:amenityStatus ?st } UNION { ?st ontosage:statusOf ?a } "
-            "?st ontosage:statusValue ?svc } }"
+            "?st ontosage:statusValue ?svc } "
+            # Module P, the other half. A PotabilityStatement is a KnowledgeTopic
+            # subclass so the resolver already FINDS it -- but it surfaced the
+            # answerText alone, without the authority and date the schema requires,
+            # which is the unattributable health claim the module exists to prevent.
+            "OPTIONAL { ?a ontosage:potabilityValue ?pot } "
+            "OPTIONAL { ?a ontosage:potabilityAuthority ?potauth } "
+            "OPTIONAL { ?a ontosage:potabilityIssuedOn ?potdate } }"
         )
         data = await self._exec(q)
         out: List[_Amenity] = []
@@ -272,6 +326,9 @@ class CapabilityGraphResolver:
                     effective_date=_v("effective")[:10],
                     owner=_v("owner"),
                     service_status=_v("svc"),
+                    potability=_v("pot"),
+                    potability_authority=_v("potauth"),
+                    potability_issued_on=_v("potdate")[:10],
                 )
             )
         self._cache = out
