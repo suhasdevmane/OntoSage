@@ -63,6 +63,14 @@ _LANE_SEMANTICS: Sequence[tuple] = (
     # Authoritative records: a booking or a compliance date is looked up, not measured.
     # Calling it OBSERVED would blur a register entry into a sensor reading, and the
     # catalogues are explicit that the two must never be blurred.
+    # A filed report (TODO-229). INFERRED, not OBSERVED, and the choice is not new
+    # here: evidence/precedence.py already grades a human_report as "inference --
+    # a person's account is evidence, not a measurement". The danger this closes is
+    # a downstream reader treating "the tap in 5.16 is dripping" as something the
+    # building observed. Nobody measured the tap; somebody said so, and the record
+    # has to keep those apart. The ACT is an authoritative one on the system's own
+    # register, which is why the operation matches register_result.
+    ("report_intake_result", Operation.AUTHORITATIVE_LOOKUP, AnswerStatus.INFERRED),
     ("events_result", Operation.AUTHORITATIVE_LOOKUP, AnswerStatus.OBSERVED),
     ("register_result", Operation.AUTHORITATIVE_LOOKUP, AnswerStatus.OBSERVED),
     ("capability_result", Operation.AUTHORITATIVE_LOOKUP, AnswerStatus.OBSERVED),
@@ -102,6 +110,31 @@ def infer_lane(results: Dict[str, Any]) -> Optional[str]:
         if results.get(key):
             return key
     return None
+
+
+def _human_report_source(results: Dict[str, Any]) -> Optional[EvidenceSource]:
+    """The filed report as a source, marked as a person's account (TODO-229).
+
+    ``EvidenceSource.kind`` has documented 'human_report' since the model was
+    written and nothing ever emitted one. Without it a report turn produced a
+    record with no sources at all, which reads as "nothing backed this answer" —
+    when in fact something did, just not an instrument.
+
+    ``simulated=False`` is asserted deliberately: a person really did file this.
+    Everywhere else in this module a missing provenance degrades to None, because
+    None and False are different claims; here the claim is known.
+    """
+    r = results.get("report_intake_result") or {}
+    if not r:
+        return None
+    return EvidenceSource(
+        source_id=str(r.get("report_id") or "user_report"),
+        kind="human_report",
+        store="postgres:user_reports",
+        simulated=False,
+        observed_at=None,  # a person's account carries no instrument timestamp
+        calibration_state="unknown",
+    )
 
 
 def _sources_from(results: Dict[str, Any]) -> List[EvidenceSource]:
@@ -989,6 +1022,12 @@ def build_evidence_record(
         )
 
     rec.sources = _sources_from(results)
+    # A report turn has no instrument behind it, so the generic provenance lift finds
+    # nothing and the record would claim no sources at all — "nothing backed this
+    # answer", when a person did (TODO-229).
+    _hr = _human_report_source(results)
+    if _hr is not None and not any(s.kind == "human_report" for s in rec.sources):
+        rec.sources.append(_hr)
     if rec.sources:
         observed = [s.observed_at for s in rec.sources if s.observed_at]
         if observed:
