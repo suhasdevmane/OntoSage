@@ -249,6 +249,12 @@ def test_precedence_order_is_pinned():
         # Sits directly after countable_metadata so a COUNT question keeps its
         # historical route and only the open "what kinds of X" shape is claimed.
         "inventory_to_discovery",
+        # "How accurate are your forecasts?" asks for the measured track record, not
+        # for another forecast. Placed immediately before forecast_to_trend — though
+        # order alone does NOT settle it: this contract applies every matching rule
+        # and the LAST one wins, so forecast_to_trend guards itself against the same
+        # shape. Both halves are needed; neither is sufficient (CAVEAT-324).
+        "forecast_skill_to_observability",
         "forecast_to_trend",
         "actuation_control",
         "maintenance_schedule",
