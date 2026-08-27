@@ -1862,7 +1862,15 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 logger.warning(f"[protect] sql consult failed (non-fatal): {_protect_err}")
 
             result = await self.sql_agent.fetch_data_for_uuids(
-                uuids, latest_message, storage_map, start_date, end_date
+                uuids,
+                latest_message,
+                storage_map,
+                start_date,
+                end_date,
+                # The unit lives here and never reached the narration prompt, so a
+                # filter differential pressure answered "152 - 154 units (the exact
+                # unit isn't specified)" while the graph held it twice (BUG-257).
+                state.intermediate_results.get("sensor_metadata"),
             )
         elif sparql_result.get("method") == "semantic_rag" or (
             sparql_result.get("success")
