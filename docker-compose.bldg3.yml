@@ -275,7 +275,17 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
-      start_period: 60s
+      # 60s here was shorter than the app's real cold-start. FastAPI does not serve
+      # a request until lifespan completes, and lifespan runs the DWG pipeline and
+      # waits on GraphDB warm-up: measured at ~4m15s. So /ping failed for 3.5
+      # minutes of every boot, the container reported (unhealthy) while /health
+      # returned 200 with every service ok, and then flipped to healthy on its own.
+      # Not a fault -- a FALSE SIGNAL on every single boot, which is how people are
+      # trained to ignore health flags (BUG-246). 6m covers the measured time with
+      # margin. The deeper fix is to move warm-up off the lifespan critical path so
+      # the app serves early and reports its own readiness; that is a larger change
+      # and is NOT done here.
+      start_period: 360s
     restart: unless-stopped
 
   # ====================== Vector Database (Required for graphdbRAG service) ======================

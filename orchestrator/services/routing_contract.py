@@ -391,6 +391,17 @@ def _r_floor_plan(c: _Ctx) -> Optional[str]:
     return "floor_plan" if _any(c.ql, FLOOR_PLAN_KWS) else None
 
 
+#: "How much <mass noun>" asks for a QUANTITY and can never be a census of devices.
+#: "How much electricity does the lab on floor 5 use?" contains "how much" and "floor",
+#: which was enough to make the guard call it a device count (BUG-266). The rule lived in
+#: consumption_question as a pre-emptive workaround; it belongs here, because one decision
+#: with two owners is the drift this contract exists to prevent.
+_QUANTITY_NOT_CENSUS_RE = re.compile(
+    r"\bhow much\b.{0,20}\b(?:energy|electricity|power|water|gas|kwh|fuel|heat)\b",
+    re.IGNORECASE,
+)
+
+
 def _is_countable_meta(ql: str) -> bool:
     """Device/structure COUNT or building-identity question shape (BUG-045)."""
     count_q = _any(ql, COUNT_TRIGGER_KWS)
@@ -398,6 +409,11 @@ def _is_countable_meta(ql: str) -> bool:
     structure = _any(ql, STRUCTURE_COUNT_KWS)
     geometry = _any(ql, ROOM_GEOMETRY_KWS)
     info = _any(ql, BUILDING_INFO_KWS)
+    # A quantity of a metered resource is not a census -- unless the question also
+    # names a countable device ("how much energy do the meters use?"), where the
+    # counting behaviour this guard owns still applies.
+    if not devices and _QUANTITY_NOT_CENSUS_RE.search(ql):
+        return bool(info)
     return (count_q and (devices or structure) and not geometry) or info
 
 
@@ -998,12 +1014,12 @@ def consumption_question(query: str) -> bool:
     """
     if not query or not query.strip():
         return False
-    # "How much <resource>" asks for a QUANTITY of a mass noun and can never be a device
-    # census, so it settles the question before the inventory guard is consulted. That guard
-    # returns True for "How much electricity does the lab on floor 5 use?" — a false positive
-    # that would otherwise route a consumption question to the inventory lane. Narrowing the
-    # shared guard itself would risk the counting behaviour it owns; this states the one case
-    # where counting is impossible instead.
+    # "How much <resource>" asks for a QUANTITY of a mass noun and can never be a
+    # device census. That used to be stated HERE, pre-empting the inventory guard,
+    # because narrowing the shared guard looked riskier than working around it. The
+    # workaround left one decision with two owners, which is the drift this contract
+    # exists to prevent, so the rule now lives in _is_countable_meta and this simply
+    # agrees with it (BUG-266). The behaviour is unchanged; the ownership is not.
     if re.search(rf"\bhow much\b.{{0,20}}\b{_RESOURCE_NOUN}\b", query, re.IGNORECASE):
         return True
     if _is_countable_meta(query.lower()):
