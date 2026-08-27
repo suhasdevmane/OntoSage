@@ -311,7 +311,22 @@ def render_census(rows: List[Tuple[str, int]], building_name: str) -> Optional[s
     if not rows:
         return None
     lines = [f"Here is what **{building_name}** has, counted live from its ontology:\n"]
+    notes: List[str] = []
     for local, n in rows:
         lines.append(f"- **{local.replace('_', ' ')}** — {n}")
+        # A count rolled up Brick's hierarchy can sweep in a DIFFERENT quantity.
+        # brick:TVOC_Sensor is a subclass of brick:Particulate_Matter_Sensor, so
+        # "how many particulate matter sensors?" counts 35 gas sensors among the
+        # solids (CAVEAT-286). Say what the number includes, rather than repeating
+        # it as though the class name meant what a reader assumes it means.
+        try:
+            from orchestrator.services.measurand_kinds import rollup_note
+
+            note = rollup_note(local)
+            if note and note not in notes:
+                notes.append(note)
+        except Exception:  # pragma: no cover - a disclosure must never break a count
+            pass
     lines.append("\n*Counted now from the building's own ontology (triples).*")
+    lines.extend("\n" + n for n in notes)
     return "\n".join(lines)

@@ -1,0 +1,89 @@
+# What a sensor class actually MEASURES (CAVEAT-286).
+#
+# ── The problem this exists to state ────────────────────────────────────────────
+#
+# Brick 1.4 asserts, at Brick_v1.4.ttl:31248:
+#
+#     brick:TVOC_Sensor rdfs:subClassOf brick:Particulate_Matter_Sensor .
+#
+# So every TVOC sensor is, by inference, a particulate-matter sensor — 35 of them in
+# bldg1, sitting alongside 34 PM1, 34 PM10 and 35 PM2.5. A question asking how many
+# particulate-matter sensors the building has counts a GAS measurement among them.
+#
+# Brick is not simply wrong. Its own definition of that class is "Detects pollutants
+# in the ambient air", and under that reading a VOC sensor belongs. The NAME is what
+# misleads: a reader hearing "particulate matter" thinks of suspended solids, not of
+# pollutants in general. Total volatile organic compounds are gases, measured by a
+# different instrument (PID or metal-oxide, not optical scattering) and regulated
+# against different limits.
+#
+# ── What is NOT done here, and why ──────────────────────────────────────────────
+#
+# * The vendored Brick file is NOT edited. "We use Brick 1.4" has to stay true; a
+#   locally-patched copy makes the conformance claim false and the divergence
+#   invisible.
+# * No owl:disjointWith is asserted. Declaring TVOC_Sensor disjoint from a class it
+#   is a subclass of makes it UNSATISFIABLE — every TVOC sensor becomes a
+#   contradiction, which is a worse answer than the one being fixed.
+#
+# ── What IS done ────────────────────────────────────────────────────────────────
+#
+# This file states, in OntoSage's own vocabulary, what each confusable class
+# measures. Nothing here contradicts Brick: a class may be a Particulate_Matter_
+# Sensor by Brick's hierarchy AND measure volatile organic compounds by this file.
+# The two coexist, and an answer that rolls a count up the hierarchy can say what it
+# swept in.
+#
+# ── Why the terms are OntoSage's own ────────────────────────────────────────────
+#
+# QUDT's quantity kinds do not reach this granularity: CO2, CO, NO2 and TVOC are all
+# a VolumeFraction or a MoleFraction, so borrowing QUDT would make the four
+# indistinguishable — and telling NO2 from CO is precisely the other half of
+# CAVEAT-286, where a nitrogen-dioxide sensor was typed as carbon monoxide. The
+# terms below are therefore declared rather than borrowed, and say so.
+
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix brick:    <https://brickschema.org/schema/Brick#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+
+ontosage:measuresQuantityKind a owl:ObjectProperty ;
+    rdfs:label "measures quantity kind"@en ;
+    rdfs:comment "The physical quantity a sensor class measures, stated by OntoSage rather than inferred from a class hierarchy. Two classes related by rdfs:subClassOf may still measure different quantities: Brick puts TVOC under Particulate_Matter_Sensor because that class means 'pollutant sensor' in Brick's own definition, not because a VOC is a particulate. Where they differ, a count rolled up the hierarchy has to say what it included."@en .
+
+ontosage:Measurand a owl:Class ;
+    rdfs:label "Measurand"@en ;
+    rdfs:comment "A quantity a sensor can measure, at the granularity that distinguishes one gas from another. QUDT stops at VolumeFraction, which cannot tell CO from NO2 - so these are declared here rather than borrowed."@en .
+
+ontosage:ParticulateMatter a ontosage:Measurand ;
+    rdfs:label "particulate matter"@en ;
+    rdfs:comment "Suspended solid or liquid particles, measured by optical scattering."@en .
+ontosage:VolatileOrganicCompounds a ontosage:Measurand ; rdfs:label "volatile organic compounds"@en .
+ontosage:CarbonDioxide  a ontosage:Measurand ; rdfs:label "carbon dioxide"@en .
+ontosage:CarbonMonoxide a ontosage:Measurand ; rdfs:label "carbon monoxide"@en .
+ontosage:NitrogenDioxide a ontosage:Measurand ; rdfs:label "nitrogen dioxide"@en .
+ontosage:Methane        a ontosage:Measurand ; rdfs:label "methane"@en .
+ontosage:Ozone          a ontosage:Measurand ; rdfs:label "ozone"@en .
+ontosage:Formaldehyde   a ontosage:Measurand ; rdfs:label "formaldehyde"@en .
+
+# ── particulate matter: solids and liquids suspended in air ────────────────────
+brick:Particulate_Matter_Sensor ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+brick:PM1_Sensor         ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+brick:PM1_Level_Sensor   ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+brick:PM2.5_Sensor       ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+brick:PM2.5_Level_Sensor ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+brick:PM10_Sensor        ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+brick:PM10_Level_Sensor  ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+
+# ── gases: NOT particulate, however Brick's hierarchy files them ───────────────
+brick:TVOC_Sensor ontosage:measuresQuantityKind ontosage:VolatileOrganicCompounds ;
+    rdfs:comment "A gas mixture. Brick makes this a subclass of Particulate_Matter_Sensor; that is Brick using the class as a general pollutant supertype, and it does not make a VOC a particulate."@en .
+brick:TVOC_Level_Sensor  ontosage:measuresQuantityKind ontosage:VolatileOrganicCompounds .
+brick:CO2_Sensor         ontosage:measuresQuantityKind ontosage:CarbonDioxide .
+brick:CO2_Level_Sensor   ontosage:measuresQuantityKind ontosage:CarbonDioxide .
+brick:CO_Sensor          ontosage:measuresQuantityKind ontosage:CarbonMonoxide .
+brick:CO_Level_Sensor    ontosage:measuresQuantityKind ontosage:CarbonMonoxide .
+brick:NO2_Level_Sensor   ontosage:measuresQuantityKind ontosage:NitrogenDioxide .
+brick:Methane_Level_Sensor ontosage:measuresQuantityKind ontosage:Methane .
+brick:Ozone_Level_Sensor ontosage:measuresQuantityKind ontosage:Ozone .
+brick:Formaldehyde_Level_Sensor ontosage:measuresQuantityKind ontosage:Formaldehyde .

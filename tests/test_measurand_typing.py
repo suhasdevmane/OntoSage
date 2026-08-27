@@ -60,8 +60,21 @@ def _input_root() -> Path:
 
 
 # ── the check catches the two defects that were actually shipped ─────────────
-def test_the_tvoc_defect_as_it_was_written_is_caught():
-    """Verbatim from bldg1_expanded_protege_clean.ttl before the fix."""
+def test_the_tvoc_pair_is_redundant_not_contradictory():
+    """This test used to assert the OPPOSITE, and the correction is the point.
+
+    Verbatim from bldg1_expanded_protege_clean.ttl before the retype. It was
+    recorded as "a volatile organic compound typed as particulate matter" — a
+    defect in the building's data. It is not: Brick 1.4 itself declares
+    ``brick:TVOC_Sensor rdfs:subClassOf brick:Particulate_Matter_Sensor``
+    (Brick_v1.4.ttl:31248), so asserting both is REDUNDANT, not contradictory, and
+    a reasoner derives it whatever the file says.
+
+    Flagging it would report Brick-conformant data as broken, which is how a
+    conformance check gets switched off. The real harm — a count of particulate
+    sensors including 35 gas sensors — is disclosed at answer time instead
+    (CAVEAT-286, tests/test_measurand_kinds.py).
+    """
     text = """bldg:TVOC_Level_Sensor_5.01 rdf:type owl:NamedIndividual ,
                                      brick:Air_Quality_Sensor ,
                                      brick:Particulate_Matter_Sensor ,
@@ -69,11 +82,7 @@ def test_the_tvoc_defect_as_it_was_written_is_caught():
                                      brick:TVOC_Level_Sensor ;
                             brick:hasLocation bldg:Zone_5.01 .
 """
-    conflicts = _measurand_conflicts(text)
-    assert len(conflicts) == 1
-    subject, fams = conflicts[0]
-    assert subject == "bldg:TVOC_Level_Sensor_5.01"
-    assert fams == ["particulate matter", "volatile organic compounds"]
+    assert _measurand_conflicts(text) == []
 
 
 def test_the_no2_defect_as_it_was_written_is_caught():
