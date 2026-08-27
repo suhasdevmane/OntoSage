@@ -527,38 +527,84 @@ def _strip_turtle_comments(text: str) -> str:
 # gas can be answered with a reading of the other, against a different exposure
 # limit. Both were live in bldg1 (CAVEAT-286). These families are disjoint by
 # construction: nothing physically measures two of them through one Point.
-_MEASURAND_FAMILIES: Dict[str, set] = {
+#: Fallback only. The AUTHORITY is ontology/measurand_kinds.ttl, which declares what
+#: each confusable Brick class measures; this list exists so a validator still works
+#: when the ontology file is absent. It is also a record of why one owner matters:
+#: this table named `PM2_5_Level_Sensor` and `PM1_0_Level_Sensor` with underscores,
+#: while Brick spells them `PM2.5_Level_Sensor` and `PM1_Level_Sensor` — so those two
+#: entries matched nothing at all, and the particulate family was quietly half its
+#: intended size. Reading the declarations fixes that by construction.
+_MEASURAND_FAMILIES_FALLBACK: Dict[str, set] = {
     "particulate matter": {
         "Particulate_Matter_Sensor",
-        "PM1_0_Level_Sensor",
-        "PM2_5_Level_Sensor",
+        "PM1_Level_Sensor",
+        "PM2.5_Level_Sensor",
         "PM10_Level_Sensor",
     },
-    "volatile organic compounds": {"TVOC_Level_Sensor", "TVOC_Sensor", "VOC_Level_Sensor"},
+    "volatile organic compounds": {"TVOC_Level_Sensor", "TVOC_Sensor"},
     "carbon monoxide": {"CO_Level_Sensor", "CO_Sensor"},
     "carbon dioxide": {"CO2_Level_Sensor", "CO2_Sensor"},
-    "nitrogen dioxide": {"NO2_Level_Sensor", "NO2_Sensor"},
+    "nitrogen dioxide": {"NO2_Level_Sensor"},
     "methane": {"Methane_Level_Sensor"},
     "ozone": {"Ozone_Level_Sensor"},
     "formaldehyde": {"Formaldehyde_Level_Sensor"},
 }
-_CLASS_TO_FAMILY = {c: fam for fam, cs in _MEASURAND_FAMILIES.items() for c in cs}
+
+
+def _class_to_family() -> Dict[str, str]:
+    """{brick class: measurand}, from the ontology when it is there.
+
+    Brick's own hierarchy cannot answer this -- it makes TVOC_Sensor a subclass of
+    Particulate_Matter_Sensor -- so the declarations are OntoSage's, and this reads
+    them rather than keeping a second copy (CAVEAT-286).
+    """
+    try:
+        from orchestrator.services.measurand_kinds import _kinds, measurand_label
+
+        declared = _kinds()
+        if declared:
+            return {cls: measurand_label(kind) for cls, kind in declared.items()}
+    except Exception as exc:  # pragma: no cover - the ontology file is optional
+        logger.debug(f"[input_validator] measurand declarations unavailable: {exc}")
+    return {c: fam for fam, cs in _MEASURAND_FAMILIES_FALLBACK.items() for c in cs}
+
+
 _INSTANCE_TYPES_RE = re.compile(r"^(\w+:[^\s]+)\s+(?:a|rdf:type)\s+([^;.]+)[;.]", re.M)
 
 
 def _measurand_conflicts(text: str) -> List[Tuple[str, List[str]]]:
     """Instances in `text` that assert two mutually exclusive measurands."""
+    _fams = _class_to_family()
     out: List[Tuple[str, List[str]]] = []
+
+    def _brick_relates(a: str, b: str) -> bool:
+        """True when Brick's OWN hierarchy already puts one class under the other.
+
+        Asserting both brick:TVOC_Level_Sensor and brick:Particulate_Matter_Sensor is
+        redundant, not contradictory: Brick declares the first a subclass of the
+        second (Brick_v1.4.ttl:31248). Flagging it would report Brick-conformant data
+        as broken, which is how a conformance check gets switched off.
+
+        What IS a defect is two measurands where NEITHER subsumes the other —
+        nitrogen dioxide asserted as carbon monoxide, which is the half of CAVEAT-286
+        that was real.
+        """
+        try:
+            from orchestrator.services.measurand_kinds import foreign_descendants
+        except Exception:  # pragma: no cover - the ontology file is optional
+            return False
+        return b in foreign_descendants(a) or a in foreign_descendants(b)
+
     for subject, types in _INSTANCE_TYPES_RE.findall(text):
-        fams = sorted(
-            {
-                _CLASS_TO_FAMILY[t]
-                for t in re.findall(r"brick:(\w+)", types)
-                if t in _CLASS_TO_FAMILY
-            }
-        )
-        if len(fams) > 1:
-            out.append((subject, fams))
+        classes = [t for t in re.findall(r"brick:([\w.]+)", types) if t in _fams]
+        clashing = [
+            (a, b)
+            for i, a in enumerate(classes)
+            for b in classes[i + 1 :]
+            if _fams[a] != _fams[b] and not _brick_relates(a, b)
+        ]
+        if clashing:
+            out.append((subject, sorted({_fams[c] for pair in clashing for c in pair})))
     return out
 
 
