@@ -781,7 +781,18 @@ class SemanticRouter:
         if (_ROOM_ID_RE.search(query) or _FLOOR_ID_RE.search(query)) and any(
             word in q for word in _DATA_ANALYTIC_WORDS
         ):
-            return True
+            # ...unless the question asks WHERE something can be done or found.
+            # "Where can I fill my water bottle on floor 3?" names a floor and
+            # contains "water", so it was promoted to sensor_data and answered with
+            # the floor plan, while the building's twelve refill points sat in a
+            # lane the question never reached (BUG-337, measured live). The shape
+            # decides, not the noun -- one owner, in the routing contract.
+            from orchestrator.services.routing_contract import (  # local: avoids a cycle
+                amenity_seeking_question,
+            )
+
+            if not amenity_seeking_question(query):
+                return True
         if any(phrase in q for phrase in _DATA_BYPASS_PHRASES):
             return True
         # 5. A quantity question about something this building METERS. Checks 1-4

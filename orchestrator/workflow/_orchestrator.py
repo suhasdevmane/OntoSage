@@ -5676,6 +5676,32 @@ SELECT ?l WHERE {
         """
         question = state.messages[-1].content if state.messages else ""
         logger.info(f"[observability] q={question[:70]!r}")
+
+        # "How accurate are your forecasts?" is a reach question about the system's
+        # own reliability, and it is the one ontosage:ForecastSkill was declared to
+        # answer -- the schema says so in as many words. Nothing read those triples
+        # until now (CAVEAT-324), so the question had no answer at all.
+        try:
+            from orchestrator.services.deliberation.live import sparql_exec as _sx_skill
+            from orchestrator.services.forecast_skill import (
+                format_skill,
+                is_skill_question,
+                published_skill,
+            )
+
+            if is_skill_question(question):
+                _records = await published_skill(_sx_skill)
+                state.intermediate_results["observability_result"] = {
+                    "success": True,
+                    "kind": "forecast_skill",
+                    "records": len(_records),
+                    "formatted_response": format_skill(_records),
+                }
+                logger.info(f"[observability] forecast skill: {len(_records)} published cell(s)")
+                return state
+        except Exception as _sk_err:
+            logger.warning(f"[observability] skill lookup skipped: {_sk_err}")
+
         try:
             from orchestrator.services.deliberation.capability_schema import (
                 build_schema,

@@ -453,8 +453,36 @@ def _r_inventory_to_discovery(c: _Ctx) -> Optional[str]:
     return "discovery" if is_inventory_question(c.query) else None
 
 
+def _r_forecast_skill(c: _Ctx) -> Optional[str]:
+    """How ACCURATE the forecasts are -> observability, not another forecast.
+
+    Runs BEFORE forecast_to_trend, which claims anything pairing a predict word with
+    a sensor metric. "How good are your predictions for CO2?" pairs both, so it was
+    routed to the trend pipeline and answered with a CO2 forecast -- the system
+    demonstrating a prediction instead of reporting its track record (CAVEAT-324).
+
+    The distinction is what the questioner wants back: a number, or the measured
+    skill behind the numbers.
+    """
+    from orchestrator.services.forecast_skill import is_skill_question
+
+    if c.intent in ("control", "privacy_refusal"):
+        return None
+    return "observability" if is_skill_question(c.query) else None
+
+
 def _r_forecast(c: _Ctx) -> Optional[str]:
     if c.intent in ("trend", "analytics"):
+        return None
+    # A question about forecast ACCURACY is not a request for a forecast. This
+    # contract applies every matching rule in order and the LAST one wins, so
+    # forecast_skill_to_observability firing earlier is not enough on its own --
+    # this rule ran afterwards and overwrote it, answering "how good are your
+    # predictions for CO2?" with a CO2 forecast. The later rule guards itself, the
+    # same way inventory_to_discovery yields to a COUNT question.
+    from orchestrator.services.forecast_skill import is_skill_question
+
+    if is_skill_question(c.query):
         return None
     # V5-T16: an EXPLICIT forecast verb ("forecast/predict humidity for the
     # next 6 hours") classified as sensor_data would answer with the CURRENT
@@ -1328,6 +1356,13 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         _r_inventory_to_discovery,
     ),
     Rule(
+        "forecast_skill_to_observability",
+        "'how accurate are your forecasts' -> observability (the measured track "
+        "record), never another forecast; forecast_to_trend guards itself against "
+        "the same shape, because this contract is last-wins",
+        _r_forecast_skill,
+    ),
+    Rule(
         "forecast_to_trend",
         "predict/forecast + sensor metric → trend pipeline",
         _r_forecast,
@@ -1580,6 +1615,50 @@ def metered_vocabulary(building_id: Optional[str] = None) -> frozenset:
     vocab = frozenset(terms)
     _METERED_VOCAB_CACHE[key] = vocab
     return vocab
+
+
+#: Asking WHERE something can be done or found, not what a sensor reads.
+#:
+#: `is_data_query` treats "a floor is named AND a measurement word appears" as a
+#: reading request. "Where can I fill my water bottle on floor 3?" names floor 3
+#: and contains "water", so it was promoted to sensor_data and answered with the
+#: floor plan -- the building has twelve bottle-refill points and the question
+#: never reached the lane that knows about them (BUG-337, measured live).
+#:
+#: The distinguishing signal is the SHAPE, not the noun. "Where can I <verb>" and
+#: "where is the nearest <thing>" ask for a facility to use; no amount of water
+#: being metered turns them into a request for a reading. Deliberately narrow:
+#: "where is the water usage highest?" keeps its analytic reading, because that
+#: asks which place holds an extreme of a measured value.
+_AMENITY_SEEKING_RE = re.compile(
+    r"\bwhere\s+(?:can|could|do|should|might)\s+(?:i|we|you|someone)\b"
+    r"|\bwhere\s+(?:is|are)\s+(?:the\s+)?(?:nearest|closest)\b"
+    r"|\bhow\s+(?:do|can)\s+i\s+(?:get|find|reach)\b"
+    r"|\bis\s+there\s+(?:a|an|any)\b.{0,30}\b(?:near|nearby|on this floor|in the building)\b",
+    re.IGNORECASE,
+)
+
+#: Words that turn a "where" question back into an analytic one: they ask which
+#: place holds an extreme or a comparison of a measured value.
+_EXTREMUM_RE = re.compile(
+    r"\b(?:highest|lowest|hottest|coldest|warmest|coolest|most|least|maximum|minimum|"
+    r"max|min|peak|worst|best|above|below|exceed(?:s|ing)?|over|under)\b",
+    re.IGNORECASE,
+)
+
+
+def amenity_seeking_question(query: str) -> bool:
+    """True when the question asks where to DO or FIND something, not what a sensor reads.
+
+    Pure and building-agnostic: it reads the shape of the question, never a list
+    of this estate's amenities.
+    """
+    q = query or ""
+    if not _AMENITY_SEEKING_RE.search(q):
+        return False
+    # "Where can I find the room with the highest CO2?" is analytic despite the
+    # shape, so an extremum word hands the question back.
+    return not _EXTREMUM_RE.search(q)
 
 
 def metered_quantity_question(query: str, building_id: Optional[str] = None) -> bool:
