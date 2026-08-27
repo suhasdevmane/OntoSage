@@ -498,6 +498,7 @@ class EventQueryService:
             from orchestrator.services.tickets import counts as ticket_counts
             from orchestrator.services.tickets import (
                 merge,
+                propose_links,
                 reconciliation_note,
                 ticket_from_event,
             )
@@ -538,6 +539,22 @@ class EventQueryService:
                     f" {len(open_reports)} report(s) filed by people are not yet linked to a "
                     "work order."
                 )
+                # Nothing ever called link_to_work_order, so "none linked to each other
+                # yet" was true by construction rather than by fact (CAVEAT-317). These
+                # are SUGGESTIONS: same space, work order raised within the window, and
+                # a compatible trade. They do not join the population -- an inferred
+                # merge would double-count in a way that looks authoritative, and two
+                # tickets in one room on one day are still not necessarily one issue.
+                candidates = propose_links(reports, wos)
+                if candidates:
+                    reports_with = len({c.report_id for c in candidates})
+                    note += (
+                        f" {reports_with} of them sit in the same space as a work order "
+                        f"raised soon afterwards and may be the same issue -- unconfirmed, "
+                        f"and not counted as linked."
+                    )
+                    tcounts["link_candidates"] = len(candidates)
+                    tcounts["reports_with_candidate"] = reports_with
             return f"_{note}_", tcounts
         except Exception as exc:
             logger.debug(f"[events] joined ticket note skipped: {exc}")

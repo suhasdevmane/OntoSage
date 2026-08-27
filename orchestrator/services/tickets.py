@@ -32,7 +32,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from shared.utils import get_logger
 
@@ -185,6 +185,161 @@ def reconciliation_note(n_reports: int, n_work_orders: int, merged: Sequence[Tic
     )
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Likely-related pairs (CAVEAT-317)
+#
+# `link_to_work_order()` existed, `user_reports.work_order_id` existed, this module
+# read the column — and NOTHING ever called the linker. So every reconciliation
+# reported "163 reported by people and 217 raised as work orders, with none linked
+# to each other yet", and "is my report being dealt with?" was unanswerable by
+# construction.
+#
+# The rule below is the one the project owner chose: same space, overlapping time
+# window, compatible category. It deliberately does NOT create the explicit link.
+# This module's opening argument still holds — two tickets in one room on one day
+# are not necessarily one issue, and merging two people's problems is worse than
+# leaving them apart — and an inferred merge would double-count in a way that looks
+# authoritative. So a candidate is a SUGGESTION carrying its own basis, the merge
+# stays explicit-only, and an answer can say "this may be the same issue" without
+# ever saying it is.
+# ─────────────────────────────────────────────────────────────────────────────
+
+#: How long after a report a work order may be raised and still plausibly be about it.
+#: Wide enough for an overnight or weekend queue, short enough that a January report
+#: and a March work order in the same room are never paired.
+LINK_WINDOW_HOURS = 72.0
+
+#: Words that place a ticket in a trade. Two tickets whose trades are both known and
+#: DIFFERENT are not the same issue however close they sit; a ticket whose trade
+#: cannot be read is not evidence either way, so it is left to the other two tests
+#: rather than being guessed into a bucket.
+_CATEGORY_WORDS: Dict[str, Tuple[str, ...]] = {
+    "plumbing": ("leak", "leaking", "drip", "tap", "toilet", "flush", "water", "pipe", "basin"),
+    "hvac": ("cold", "hot", "heating", "radiator", "aircon", "air con", "ac ", "stuffy", "vent"),
+    "electrical": ("light", "lamp", "bulb", "socket", "power", "flicker", "electric"),
+    "lift": ("lift", "elevator"),
+    "door": ("door", "lock", "handle", "latch", "card reader"),
+    "cleaning": ("clean", "rubbish", "bin", "spill", "mess"),
+    "network": ("wifi", "wi-fi", "network", "ethernet", "internet"),
+}
+
+
+def category_of(text: str) -> str:
+    """The trade a ticket's title reads as, or "" when it cannot be told."""
+    t = (text or "").lower()
+    hits = [name for name, words in _CATEGORY_WORDS.items() if any(w in t for w in words)]
+    # Two trades in one title is ambiguous, and an ambiguous category must not be
+    # used to justify a pairing.
+    return hits[0] if len(hits) == 1 else ""
+
+
+@dataclass
+class LinkCandidate:
+    """A report and a work order that MAY be the same issue. Never a fact."""
+
+    report_id: str
+    work_order_id: str
+    basis: str
+    hours_apart: float
+    category: str = ""
+
+    def describe(self) -> str:
+        return (
+            f"{self.report_id} may be the same issue as work order "
+            f"{self.work_order_id} ({self.basis}). Not confirmed."
+        )
+
+
+def propose_links(
+    reports: Sequence[Ticket],
+    work_orders: Sequence[Ticket],
+    *,
+    window_hours: float = LINK_WINDOW_HOURS,
+) -> List[LinkCandidate]:
+    """Report/work-order pairs that plausibly describe one issue.
+
+    All three tests must pass:
+
+    * **Same space.** Not "nearby" — the same space IRI. Proximity inference is what
+      produced BUG-189, where an existing floor let an unverified space through.
+    * **Work order raised after the report, within the window.** A work order that
+      predates the report cannot have been raised because of it.
+    * **Compatible category.** Both known and equal, or at least one unreadable. Two
+      DIFFERENT known trades in one room are two issues.
+
+    A report already carrying an explicit link is skipped: somebody recorded the
+    truth and a guess must not compete with it. A work order already claimed by an
+    explicit link is likewise off the table.
+
+    Pure. Returns candidates sorted by how close in time they are, so the most
+    plausible pairing for a report is first.
+    """
+    claimed = {r.linked_id for r in reports if r.linked_id}
+    out: List[LinkCandidate] = []
+
+    for r in reports:
+        if r.linked_id or not r.space_iri or r.opened_at is None:
+            continue
+        r_cat = category_of(r.title)
+        for w in work_orders:
+            if w.ticket_id in claimed or w.opened_at is None:
+                continue
+            if w.space_iri != r.space_iri:
+                continue
+            delta = (w.opened_at - r.opened_at).total_seconds() / 3600.0
+            if delta < 0 or delta > window_hours:
+                continue
+            w_cat = category_of(w.title)
+            if r_cat and w_cat and r_cat != w_cat:
+                continue
+            shared = r_cat or w_cat
+            where = r.space_iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+            basis = f"same space ({where}), raised {delta:.0f}h after the report" + (
+                f", both look like {shared}" if shared else ""
+            )
+            out.append(
+                LinkCandidate(
+                    report_id=r.ticket_id,
+                    work_order_id=w.ticket_id,
+                    basis=basis,
+                    hours_apart=round(delta, 2),
+                    category=shared,
+                )
+            )
+
+    return sorted(out, key=lambda c: (c.report_id, c.hours_apart))
+
+
+def candidates_for(report_id: str, candidates: Sequence[LinkCandidate]) -> List[LinkCandidate]:
+    """Just this report's candidates, most plausible first."""
+    return [c for c in candidates if c.report_id == report_id]
+
+
+def progress_note(report: Ticket, candidates: Sequence[LinkCandidate]) -> str:
+    """What to tell somebody who asks whether their report is being dealt with.
+
+    The three answers are genuinely different and must not be collapsed: a recorded
+    link is a fact, a candidate is a maybe, and nothing at all is nothing at all.
+    """
+    if report.linked_id:
+        return (
+            f"Yes — {report.ticket_id} is linked to work order {report.linked_id}, "
+            f"which is {report.status.value}."
+        )
+    mine = candidates_for(report.ticket_id, candidates)
+    if not mine:
+        return (
+            f"No work order has been linked to {report.ticket_id}, and none was raised in "
+            f"the same space soon afterwards. The report is {report.status.value}."
+        )
+    best = mine[0]
+    return (
+        f"No work order has been linked to {report.ticket_id}. One may be related: "
+        f"{best.work_order_id} — {best.basis}. Nobody has confirmed the two are the "
+        f"same issue, so treat it as a lead rather than an answer."
+    )
+
+
 def ticket_from_report(row: Dict[str, Any]) -> Ticket:
     """One `user_reports` row as a ticket."""
     return Ticket(
@@ -222,6 +377,12 @@ def ticket_from_event(row: Dict[str, Any]) -> Ticket:
 
 
 __all__ = [
+    "LINK_WINDOW_HOURS",
+    "LinkCandidate",
+    "candidates_for",
+    "category_of",
+    "progress_note",
+    "propose_links",
     "OPEN_STATES",
     "Ticket",
     "TicketStatus",
