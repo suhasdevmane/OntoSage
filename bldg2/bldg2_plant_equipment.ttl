@@ -1,0 +1,18 @@
+# Equipment that a meter measures but nothing declared (BUG-249, found 2026-08-27).
+#
+# bldg2.ttl carries `bldg:Wellman_ChilledWater_Demand_kBtu brick:isPointOf bldg:chiller`
+# against a subject declared in no file. The meter is evidence that a chiller exists --
+# something is being metered -- so the honest repair is to declare it, not to delete the
+# meter's only statement about what it measures.
+#
+# Type and label only. No capacity, no location, no feeds: the source dataset says
+# nothing about any of those, and a plausible guess is how a graph starts asserting
+# things nobody measured.
+
+@prefix bldg: <http://buildsys.org/ontologies/bldg2#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix brick:<https://brickschema.org/schema/Brick#> .
+
+bldg:chiller a brick:Chiller ;
+    rdfs:label "Chiller" ;
+    rdfs:comment "Declared because a chilled-water demand meter names it as the equipment it measures; the source dataset declares nothing further about it." .

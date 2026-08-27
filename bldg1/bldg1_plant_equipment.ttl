@@ -1,0 +1,56 @@
+# Plant EQUIPMENT that its own points referenced but nothing declared (BUG-249).
+#
+# provision_plant_points.py wrote fourteen VAV points with
+# `brick:isPointOf bldg:VAV_Floor5_*` against subjects that exist in NO input TTL.
+# A reasoner typed the dangling references as equipment from the property's range,
+# so the graph looked complete while `input/` could not reproduce it -- and a rebuild
+# from these files would have left fourteen points hanging off nothing.
+#
+# These declarations RECONSTRUCT what the points already say and nothing more: the
+# type from the label ('VAV Box ...'), the area served from the same label, and the
+# floor from the points' own brick:hasLocation. No `feeds` and no `isFedBy` is
+# asserted -- floor 5 has exactly one AHU and the guess would almost certainly be
+# right, which is precisely the proximity inference that produced BUG-189.
+# Reachability by floor is what the points themselves support.
+
+@prefix bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix brick:<https://brickschema.org/schema/Brick#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+
+bldg:VAV_Floor5_Central a brick:VAV ;
+    rdfs:label "VAV Box Floor 5 Central / Corridor Areas" ;
+    brick:isPartOf bldg:Floor5 ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+
+bldg:VAV_Floor5_East a brick:VAV ;
+    rdfs:label "VAV Box Floor 5 East Wing" ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+
+bldg:VAV_Floor5_NorthEast a brick:VAV ;
+    rdfs:label "VAV Box Floor 5 North-East Wing" ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+
+bldg:VAV_Floor5_NorthWest a brick:VAV ;
+    rdfs:label "VAV Box Floor 5 North-West Wing" ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+
+bldg:VAV_Floor5_South a brick:VAV ;
+    rdfs:label "VAV Box Floor 5 South Wing" ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+
+bldg:VAV_Floor5_SouthEast a brick:VAV ;
+    rdfs:label "VAV Box Floor 5 South-East Wing" ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+
+bldg:VAV_Floor5_West a brick:VAV ;
+    rdfs:label "VAV Box Floor 5 West Wing" ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .

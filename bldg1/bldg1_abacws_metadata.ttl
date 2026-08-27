@@ -1818,6 +1818,7 @@ bldg:AHU_F2
 
 bldg:AHU_F3
     rdf:type owl:NamedIndividual , brick:Air_Handling_Unit ;
+    rdfs:comment "AHU serving open-plan offices and study spaces on floor 3." ;
     rdfs:label "Air Handling Unit — Floor 3" ;
     brick:isPartOf bldg:Floor3 ;
     brick:feeds bldg:HVAC_Zone_F3 .
@@ -1830,6 +1831,7 @@ bldg:AHU_F4
 
 bldg:AHU_F5
     rdf:type owl:NamedIndividual , brick:Air_Handling_Unit ;
+    rdfs:comment "AHU serving teaching and lab spaces on floor 5. Rated 8,000 m³/h." ;
     rdfs:label "Air Handling Unit — Floor 5" ;
     brick:isPartOf bldg:Floor5 ;
     brick:feeds bldg:Zone_5.01 ,

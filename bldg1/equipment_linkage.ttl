@@ -10,22 +10,12 @@
 
 bldg:LIFT-01 a brick:Elevator ;
     rdfs:label "Main Passenger Lift"^^xsd:string ;
-    brick:hasLocation bldg:Building ;
+    brick:hasLocation bldg:AbacwsBuilding ;
     rdfs:comment "Single passenger lift serving all 6 floors. Last major service: 2026-04-15."^^xsd:string .
-
-bldg:AHU-F5 a brick:Air_Handler_Unit ;
-    rdfs:label "Air Handling Unit Floor 5"^^xsd:string ;
-    brick:hasLocation bldg:Floor5 ;
-    rdfs:comment "AHU serving teaching and lab spaces on floor 5. Rated 8,000 m³/h."^^xsd:string .
-
-bldg:AHU-F3 a brick:Air_Handler_Unit ;
-    rdfs:label "Air Handling Unit Floor 3"^^xsd:string ;
-    brick:hasLocation bldg:Floor3 ;
-    rdfs:comment "AHU serving open-plan offices and study spaces on floor 3."^^xsd:string .
 
 bldg:PUMP-CH1 a brick:Pump ;
     rdfs:label "Chiller Pump 1"^^xsd:string ;
-    brick:hasLocation bldg:Building ;
+    brick:hasLocation bldg:AbacwsBuilding ;
     rdfs:comment "Primary chiller circulation pump. Paired with PUMP-CH2 (standby)."^^xsd:string .
 
 # ── Equipment → sensor point linkage (T36 feed points) ──────────────────────
@@ -43,7 +33,7 @@ bldg:feed_lift_vibration_floor0 a brick:Vibration_Sensor_Equipment ;
 
 bldg:feed_ahu_runtime_floor5 a brick:Run_Time_Sensor ;
     rdfs:label "AHU-F5 Runtime Sensor"^^xsd:string ;
-    brick:isPointOf bldg:AHU-F5 ;
+    brick:isPointOf bldg:AHU_F5 ;
     brick:hasLocation bldg:Floor5 ;
     brick:hasExternalReference [
         ref:hasTimeseriesId "0fa68f99-b446-5ea9-4813-96d9016cb6d9"^^xsd:string ;
