@@ -11,6 +11,7 @@ import SystemTab from '../components/admin/SystemTab';
 import IndexStatusTab from '../components/admin/IndexStatusTab';
 import AuditTab from '../components/admin/AuditTab';
 import CoverageTab from '../components/admin/CoverageTab';
+import ObservabilityTab from '../components/admin/ObservabilityTab';
 
 const API = 'http://localhost:8000';
 
@@ -38,6 +39,7 @@ const TABS = [
   { id: 'system', label: 'System' },
   { id: 'audit', label: 'Audit Log' },
   { id: 'coverage', label: 'Coverage' },
+  { id: 'observability', label: 'Observability' },
 ];
 
 export default function AdminPortal() {
@@ -92,6 +94,7 @@ export default function AdminPortal() {
           {tab === 'system' && <SystemTab {...props} />}
           {tab === 'audit' && <AuditTab {...props} />}
           {tab === 'coverage' && <CoverageTab {...props} />}
+          {tab === 'observability' && <ObservabilityTab {...props} />}
         </div>
       </div>
     </div>

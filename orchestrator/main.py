@@ -4051,6 +4051,186 @@ async def list_ontology_graphs(
     return APIResponse(success=True, data={"graphs": graphs, "total": len(graphs)})
 
 
+@app.get("/api/v1/admin/observability/matrix", response_model=APIResponse)
+async def observability_matrix(
+    modality: Optional[str] = None,
+    floor: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = 300,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """What this building can observe, cell by cell (V6-T11).
+
+    The same coverage schema and the same ``Reach`` the conversational
+    observability lane answers from — not a second computation of the same idea.
+    Two copies of one measurement drift, and this codebase has paid for that
+    (BUG-210); a portal that disagreed with the chat answer would be worse than no
+    portal, because it would look authoritative while contradicting the system.
+
+    Every negative carries the step that would change it, because that is what the
+    lane's ``describe()`` was written to produce and it is the only part of a
+    coverage matrix an operator can act on.
+
+    Bounded on purpose: bldg1 is ~344 spaces by ~35 modalities, so the full cross
+    product is twelve thousand cells. The summary is always complete and the cell
+    list is truncated with the count said out loud — a list that silently stops
+    reads as the whole picture.
+    """
+    from orchestrator.services.deliberation.capability_schema import build_schema
+    from orchestrator.services.deliberation.coverage_audit import load_modalities
+    from orchestrator.services.deliberation.live import sparql_exec
+    from orchestrator.services.observability import (
+        present_modalities,
+        reach_from_coverage,
+    )
+
+    building_id = settings.BUILDING_ID
+    namespace = settings.BUILDING_NAMESPACE
+    specs = load_modalities(building_id)
+    schema = await build_schema(building_id, namespace, sparql_exec, specs)
+
+    by_status: Dict[str, int] = {}
+    per_modality: Dict[str, Dict[str, int]] = {}
+    cells: List[Dict[str, Any]] = []
+    total = 0
+
+    wanted_modality = (modality or "").strip().lower()
+    wanted_floor = (floor or "").strip().lower()
+    wanted_status = (status or "").strip().lower()
+
+    for sc in schema.spaces:
+        local = sc.space_iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+        space_floor = str(getattr(sc, "floor", "") or "")
+        if wanted_floor and wanted_floor not in space_floor.lower():
+            continue
+        present = present_modalities(sc.modalities or {})
+        for spec in specs:
+            if wanted_modality and spec.name.lower() != wanted_modality:
+                continue
+            entry = (sc.modalities or {}).get(spec.name)
+            reach = reach_from_coverage(spec.name, local, entry, present_modalities=present)
+            total += 1
+            by_status[reach.status] = by_status.get(reach.status, 0) + 1
+            slot = per_modality.setdefault(spec.name, {})
+            slot[reach.status] = slot.get(reach.status, 0) + 1
+            if wanted_status and reach.status != wanted_status:
+                continue
+            if len(cells) < max(1, min(int(limit or 300), 2000)):
+                cells.append(
+                    {
+                        "space": local,
+                        "floor": space_floor,
+                        "modality": spec.name,
+                        "status": reach.status,
+                        "sensor": reach.sensor,
+                        "stored_at": reach.stored_at,
+                        "fresh": reach.fresh,
+                        # The unlock step, from the lane's own prose. An operator can
+                        # act on "the wiring is already in place, check the feed";
+                        # they cannot act on the word "stale".
+                        "note": reach.describe(),
+                    }
+                )
+
+    shown = len(cells)
+    matched = total if not wanted_status else by_status.get(wanted_status, 0)
+    return APIResponse(
+        success=True,
+        data={
+            "building_id": building_id,
+            "modalities": [s.name for s in specs],
+            "spaces": len(schema.spaces),
+            "cells_total": total,
+            "cells_matching": matched,
+            "cells_shown": shown,
+            "truncated": max(0, matched - shown),
+            "by_status": by_status,
+            "per_modality": per_modality,
+            "cells": cells,
+        },
+    )
+
+
+@app.get("/api/v1/admin/observability/calibration", response_model=APIResponse)
+async def observability_calibration(
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """Calibration state per point, and what the evidence gate makes of it.
+
+    Read through ``assemble._calibration_state`` rather than re-deriving the
+    comparison here: the gate that suppresses an answer and the panel that explains
+    why must agree about what "expired" means, or the portal teaches an operator the
+    wrong thing about their own building.
+
+    A point with no calibration record is 'unknown', never an assumed-good default.
+    """
+    from datetime import datetime, timezone
+
+    from orchestrator.services.evidence.assemble import _calibration_state
+
+    query = (
+        "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
+        "PREFIX ref: <https://brickschema.org/schema/Brick/ref#>\n"
+        "SELECT ?p ?uuid ?on ?due ?method WHERE {\n"
+        "  ?p ontosage:calibratedOn ?on .\n"
+        "  OPTIONAL { ?p ontosage:calibrationDueOn ?due }\n"
+        "  OPTIONAL { ?p ontosage:calibrationMethod ?method }\n"
+        "  OPTIONAL { ?p ref:hasExternalReference/ref:hasTimeseriesId ?uuid }\n"
+        "} LIMIT 2000"
+    )
+    try:
+        from orchestrator.services.deliberation.live import sparql_exec
+
+        res = await sparql_exec(query)
+        rows = (res or {}).get("rows") or []
+    except Exception as exc:
+        logger.warning(f"[observability] calibration lookup failed: {exc}")
+        return APIResponse(
+            success=False,
+            error=f"calibration records could not be read: {exc}",
+            data={"records": [], "by_state": {}},
+        )
+
+    now = datetime.now(timezone.utc)
+    out: List[Dict[str, Any]] = []
+    by_state: Dict[str, int] = {}
+    for row in rows:
+        get = row.get if isinstance(row, dict) else (lambda k: getattr(row, k, None))
+        # The KEYS matter: _calibration_state reads "due_on", not
+        # "calibration_due_on". Passing the wrong name would make every record read
+        # as calibrated-or-unknown and never expired -- the panel would then show a
+        # clean building while the gate suppressed answers, which is worse than no
+        # panel. Same class of defect as the sparql_result/sparql_results drift.
+        entry = {
+            "calibrated_on": str(get("on") or ""),
+            "due_on": str(get("due") or ""),
+        }
+        state = _calibration_state(entry, now)
+        by_state[state] = by_state.get(state, 0) + 1
+        out.append(
+            {
+                "point": str(get("p") or "").rsplit("#", 1)[-1],
+                "uuid": str(get("uuid") or ""),
+                "calibrated_on": entry["calibrated_on"][:10],
+                "calibration_due_on": entry["due_on"][:10],
+                "method": str(get("method") or ""),
+                "state": state,
+            }
+        )
+    out.sort(key=lambda r: (r["state"] != "expired", r["point"]))
+    return APIResponse(
+        success=True,
+        data={
+            "records": out,
+            "by_state": by_state,
+            "note": (
+                "Points with no calibration record do not appear here and are treated as "
+                "'unknown' by the gate, never as calibrated."
+            ),
+        },
+    )
+
+
 @app.get("/api/v1/admin/actuation/log", response_model=APIResponse)
 async def read_actuation_audit_log(
     limit: int = 50,
