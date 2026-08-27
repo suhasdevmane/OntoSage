@@ -102,6 +102,7 @@ class SQLAgent:
         storage_map: Optional[Dict[str, str]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
+        sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
     ) -> Dict[str, Any]:
         """
         Fetch data for specific UUIDs, respecting storage locations.
@@ -434,7 +435,9 @@ Return ONLY the SQL query, no markdown, no explanations.
             # We want a flat list of records: [{"timestamp": "...", "uuid": "...", "value": ...}, ...]
             standardized_data = {"data": all_data}
 
-            formatted = await self._format_results(all_data, user_query, "Multiple Queries")
+            formatted = await self._format_results(
+                all_data, user_query, "Multiple Queries", sensor_metadata
+            )
             if _hour_mask is not None:
                 # The basis is stated on the answer itself: which recurring window, and how
                 # many readings actually fall inside it. Without this a night question
@@ -767,10 +770,43 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
             logger.error(f"SQL execution error: {e}")
             raise Exception(f"Failed to execute SQL query: {str(e)}")
 
+    @staticmethod
+    def _sensor_context(sensor_metadata: Optional[Dict[str, Dict[str, str]]]) -> str:
+        """The label and unit for each uuid, as prompt context. "" when unknown.
+
+        Says so explicitly when a sensor has no unit, because the instruction the
+        prompt gives is "state the unit, or say it is not recorded" -- and a silent
+        omission would let the model choose between those on its own.
+        """
+        if not sensor_metadata:
+            return ""
+        lines = ["", "Sensor information (use these names and units):"]
+        for uuid, meta in sensor_metadata.items():
+            label = (meta or {}).get("label") or uuid
+            unit = ((meta or {}).get("unit") or "").strip()
+            lines.append(
+                f"  - {uuid} is '{label}'"
+                + (f", measured in {unit}" if unit else ", unit NOT RECORDED")
+            )
+        lines.append("")
+        return "\n".join(lines)
+
     async def _format_results(
-        self, results: List[Dict[str, Any]], user_query: str, sql_query: str
+        self,
+        results: List[Dict[str, Any]],
+        user_query: str,
+        sql_query: str,
+        sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
     ) -> str:
-        """Format SQL results into natural language"""
+        """Format SQL results into natural language.
+
+        ``sensor_metadata`` carries each uuid's label and unit. Without it this
+        prompt showed the model nothing but uuid/value/timestamp rows, so a filter
+        differential pressure answered "152 - 154 units (the exact unit isn't
+        specified)" -- an honest answer to a prompt that had omitted the unit, while
+        the graph held it twice over (BUG-257). The caller has the metadata; it
+        simply was never passed.
+        """
 
         if not results:
             return "No data found for your query."
@@ -789,11 +825,13 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
         if len(results) > 10:
             result_text += f"\n... and {len(results) - 10} more records"
 
+        sensor_context = self._sensor_context(sensor_metadata)
+
         # Generate natural language summary
         summary_prompt = f"""Convert these SQL query results into a natural language response.
 
 User Query: {user_query}
-
+{sensor_context}
 Results:
 {result_text}
 
@@ -802,6 +840,9 @@ Generate a concise, natural response that:
 2. Highlights key statistics (averages, trends, etc.)
 3. Uses clear, non-technical language
 4. Mentions the time period if relevant
+5. States the UNIT with every figure when the sensor information above gives one,
+   and uses the sensor's readable name rather than its uuid. If no unit is given
+   there, say the unit is not recorded - never invent one.
 
 Response:"""
 
