@@ -216,3 +216,71 @@
     ontosage:locationText "Toilet facility in Server Room — Floor 4 (Room 4.44) (floor unknown)" ;
     ontosage:answerText "There is a toilet facility in Server Room — Floor 4 (Room 4.44) on floor unknown." ;
     ontosage:isSimulated "true"^^xsd:boolean .
+
+# -- Second bottle-refill point per floor (2026-08-27) ---------------------
+# The building has TWO drinking-water / bottle-refill points on every floor;
+# only one per floor was modelled. Rooms are REAL rooms from the building's own
+# metadata, chosen deterministically: a common area, atrium or kitchen where the
+# floor has one, never a plant room, goods store or comms room. The exact
+# placement within the floor is simulated and says so -- the floor and the count
+# are the facts stated by the building's owner.
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_Floor0_b>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle refill point - Room 0.10 — Building Management Office"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, bottle refill, refill station, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10> ;
+    ontosage:onFloor "Floor0" ;
+    ontosage:locationText "Bottle refill point in Room 0.10 — Building Management Office (floor Floor0)" ;
+    ontosage:answerText "There is a bottle refill point in Room 0.10 — Building Management Office on floor Floor0. Each floor has two drinking-water points." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_Floor1_b>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle refill point - Room 1.04 — Common Area / Atrium"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, bottle refill, refill station, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.04> ;
+    ontosage:onFloor "Floor1" ;
+    ontosage:locationText "Bottle refill point in Room 1.04 — Common Area / Atrium (floor Floor1)" ;
+    ontosage:answerText "There is a bottle refill point in Room 1.04 — Common Area / Atrium on floor Floor1. Each floor has two drinking-water points." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_Floor2_b>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle refill point - Room 2.66 — Staff Break Room / Kitchen"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, bottle refill, refill station, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.66> ;
+    ontosage:onFloor "Floor2" ;
+    ontosage:locationText "Bottle refill point in Room 2.66 — Staff Break Room / Kitchen (floor Floor2)" ;
+    ontosage:answerText "There is a bottle refill point in Room 2.66 — Staff Break Room / Kitchen on floor Floor2. Each floor has two drinking-water points." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_Floor3_b>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle refill point - Room 3.18 — Kitchen"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, bottle refill, refill station, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.18> ;
+    ontosage:onFloor "Floor3" ;
+    ontosage:locationText "Bottle refill point in Room 3.18 — Kitchen (floor Floor3)" ;
+    ontosage:answerText "There is a bottle refill point in Room 3.18 — Kitchen on floor Floor3. Each floor has two drinking-water points." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_Floor4_b>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle refill point - Room 4.70 — Staff Break Room"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, bottle refill, refill station, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70> ;
+    ontosage:onFloor "Floor4" ;
+    ontosage:locationText "Bottle refill point in Room 4.70 — Staff Break Room (floor Floor4)" ;
+    ontosage:answerText "There is a bottle refill point in Room 4.70 — Staff Break Room on floor Floor4. Each floor has two drinking-water points." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_DrinkingWater_Floor5_b>
+    a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle refill point - Room 5.26 — Staff Break Room / Kitchen"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, bottle refill, refill station, fill my bottle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26> ;
+    ontosage:onFloor "Floor5" ;
+    ontosage:locationText "Bottle refill point in Room 5.26 — Staff Break Room / Kitchen (floor Floor5)" ;
+    ontosage:answerText "There is a bottle refill point in Room 5.26 — Staff Break Room / Kitchen on floor Floor5. Each floor has two drinking-water points." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
