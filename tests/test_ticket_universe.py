@@ -200,10 +200,15 @@ def test_malformed_attrs_do_not_break_the_row():
 def test_the_joined_note_degrades_rather_than_breaking_the_answer():
     """A building with no intake store keeps its events-only behaviour — the join is additive
     where both stores exist, which is the portability contract."""
-    from pathlib import Path
+    # Read the FUNCTION, not a fixed 2600-character slice of the file. The slice
+    # version failed the moment the function grew past it (CAVEAT-317 added the
+    # link-candidate branch), reporting a missing `except` that was still there —
+    # a test that breaks on length rather than on behaviour.
+    import inspect
 
-    src = Path("orchestrator/services/event_query_service.py").read_text(encoding="utf-8")
-    body = src[src.index("async def _joined_ticket_note") :][:2600]
+    from orchestrator.services.event_query_service import EventQueryService
+
+    body = inspect.getsource(EventQueryService._joined_ticket_note)
     assert "if not reports:" in body and 'return ""' in body
     assert "except Exception" in body, "the note must never break the work-order answer"
 
