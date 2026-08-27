@@ -201,6 +201,9 @@ def discover_schema_ttls() -> List[Path]:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+_TTL_GRAPH_PREFIX = "urn:ontosage:ttl:"
+
+
 def _graph_uri_for_path(ttl_path: Path) -> str:
     """Deterministic named-graph URI for a TTL file.
 
@@ -209,7 +212,7 @@ def _graph_uri_for_path(ttl_path: Path) -> str:
     them.  This eliminates blank-node duplication on repeated uploads.
     """
     safe = ttl_path.name.replace(" ", "_")
-    return f"urn:ontosage:ttl:{safe}"
+    return f"{_TTL_GRAPH_PREFIX}{safe}"
 
 
 async def upload_to_graphdb(
@@ -363,6 +366,70 @@ async def audit_undeclared_types(sample: int = 5) -> Dict[str, Any]:
     return result
 
 
+def _graph_stem(graph_uri: str) -> str:
+    """The file-ish local name a graph URI reduces to, lowercased."""
+    local = graph_uri or ""
+    for sep in ("#", "/", ":"):
+        local = local.rsplit(sep, 1)[-1]
+    return (local[:-4] if local.lower().endswith(".ttl") else local).lower()
+
+
+async def audit_shadowed_graphs() -> Dict[str, Any]:
+    """Report files loaded into two named graphs at once (BUG-250).
+
+    Each TTL is PUT into ``urn:ontosage:ttl:<file>``, which replaces that graph
+    and cannot touch anything outside it. So a copy of the same file sitting in a
+    hand-named graph — created once through the admin API to avoid a restart — is
+    invisible to every later upload and every later correction, while its triples
+    keep joining. 592 plant points came back twice that way, which is the
+    reference fan-out shape that made CAVEAT-039 a live wrong-answer defect.
+
+    The admin upload now refuses to create one. This finds the ones already
+    there. It REPORTS: dropping a graph is destructive and unattended startup is
+    the wrong place to decide which copy is the real one.
+
+    Read-only and non-fatal.
+    """
+    out: Dict[str, Any] = {"ok": True, "shadowed": []}
+    try:
+        from orchestrator.services.ontology_manager import list_named_graphs
+
+        graphs = await list_named_graphs()
+    except Exception as exc:  # pragma: no cover — GraphDB down is not this audit's problem
+        logger.debug(f"[ttl_uploader] shadow audit skipped: {exc}")
+        return {"ok": False, "error": str(exc), "shadowed": []}
+
+    by_stem: Dict[str, List[str]] = {}
+    for uri in graphs:
+        stem = _graph_stem(uri)
+        if stem:
+            by_stem.setdefault(stem, []).append(uri)
+
+    for stem, uris in sorted(by_stem.items()):
+        if len(uris) < 2:
+            continue
+        canonical = [u for u in uris if u.startswith(_TTL_GRAPH_PREFIX)]
+        others = [u for u in uris if not u.startswith(_TTL_GRAPH_PREFIX)]
+        if not (canonical and others):
+            continue  # two hand-named graphs are somebody's deliberate arrangement
+        out["shadowed"].append(
+            {
+                "file": stem,
+                "canonical": canonical[0],
+                "duplicates": others,
+                "triples": {u: graphs.get(u, 0) for u in uris},
+            }
+        )
+        logger.warning(
+            f"[ttl_uploader] {stem} is loaded TWICE: {canonical[0]} "
+            f"({graphs.get(canonical[0], 0)} triples) and {others} "
+            f"({[graphs.get(u, 0) for u in others]}). Joins through it return every "
+            f"subject more than once. Drop the hand-named copy — the uploader's graph "
+            f"is the reproducible one, a fresh deployment gets it automatically."
+        )
+    return out
+
+
 async def run_idempotent_uploads(
     building_ids: Iterable[str],
     *,
@@ -446,4 +513,5 @@ async def run_idempotent_uploads(
     )
     # State the position on what this upload could NOT have fixed.
     summary["type_audit"] = await audit_undeclared_types()
+    summary["shadow_audit"] = await audit_shadowed_graphs()
     return summary
