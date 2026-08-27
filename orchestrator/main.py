@@ -4051,6 +4051,34 @@ async def list_ontology_graphs(
     return APIResponse(success=True, data={"graphs": graphs, "total": len(graphs)})
 
 
+@app.get("/api/v1/admin/actuation/log", response_model=APIResponse)
+async def read_actuation_audit_log(
+    limit: int = 50,
+    since_hours: Optional[float] = None,
+    user: UserContext = Depends(require_permission("system:admin")),
+):
+    """The record of control actions this system has taken.
+
+    Every approved set_point writes an audit row, and nothing read one back until
+    2026-08-27: "what did you change today?" and "who approved that?" were
+    unanswerable about actions the system had itself recorded. bldg1 ships with
+    actuation.driver: sim and three writable points, so the path is live.
+
+    Admin-gated because an audit trail is accountability surface, and read-only —
+    nothing in this path amends a row.
+    """
+    from orchestrator.services.actuation import format_actions, read_actuation_log
+
+    result = await read_actuation_log(
+        settings.BUILDING_ID,
+        postgres_manager=postgres_manager,
+        limit=limit,
+        since_hours=since_hours,
+    )
+    result["summary"] = format_actions(result)
+    return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
+
+
 @app.post("/api/v1/admin/ontology/validate", response_model=APIResponse)
 async def validate_ttl_endpoint(
     body: TtlValidate,
