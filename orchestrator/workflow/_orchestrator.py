@@ -6615,6 +6615,13 @@ SELECT ?l WHERE {
                 "category": category,
                 "action": action,
                 "persona": persona_label,
+                # Carried so the evidence chokepoint can bind the report to its
+                # subject and cite it as a source (TODO-229). Without the id the
+                # record could say a person reported something but not WHICH
+                # report, which is unciteable and therefore unauditable.
+                "report_id": res.get("report_id", ""),
+                "location": location or "",
+                "device": device or "",
             }
             state.intermediate_results["dialogue_response"] = msg
         except Exception as e:
