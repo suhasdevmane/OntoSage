@@ -30,6 +30,20 @@ _RDFS = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
 _CACHE_TTL_S = 300.0
 _MIN_SCORE = 2  # a single distinctive term (2) or a multi-word phrase (3) clears this
 
+#: How many matching facts to hand back. NOT the presentation size -- the CALLER
+#: filters these on-topic and ranks them, and cutting to the presentation size here
+#: discards the candidates that would have survived that filter.
+#:
+#: This was 3, and it produced a wrong answer measured live (BUG-337). Every one of
+#: the building's thirteen drinking-water amenities scores exactly 2 for "where can
+#: I fill my water bottle?", so the cut kept an arbitrary three -- all of them
+#: labelled "Drinking water point", none labelled "Bottle refill point". The
+#: caller's on-topic guard then correctly rejected all three for not mentioning a
+#: bottle, and the building answered that it had no information about a thing it
+#: has twelve of. Truncating before filtering is the defect; the tie was only what
+#: exposed it.
+_MAX_FACTS = 12
+
 
 @dataclass
 class CapabilityFact:
@@ -56,6 +70,10 @@ class CapabilityFact:
     potability: str = ""
     potability_authority: str = ""
     potability_issued_on: str = ""
+    #: The floor an amenity sits on, as the building declares it (ontosage:onFloor).
+    #: Read so a question naming a floor can be answered with THAT floor's amenity:
+    #: "where can I fill my bottle on floor 3?" listed floors 0, 1 and 2 (BUG-337).
+    on_floor: str = ""
 
     def render(self) -> str:
         head = f"**{self.label}**"
@@ -160,6 +178,7 @@ class _Amenity:
     potability: str = ""
     potability_authority: str = ""
     potability_issued_on: str = ""
+    on_floor: str = ""
 
 
 #: Status values that mean an amenity cannot be used right now. Anything else --
@@ -260,8 +279,9 @@ class CapabilityGraphResolver:
                 potability=am.potability,
                 potability_authority=am.potability_authority,
                 potability_issued_on=am.potability_issued_on,
+                on_floor=am.on_floor,
             )
-            for _, am in scored[:3]
+            for _, am in scored[:_MAX_FACTS]
         ]
 
     async def _amenities(self) -> List[_Amenity]:
@@ -272,10 +292,11 @@ class CapabilityGraphResolver:
         q = (
             f"{_ONTO}{_RDFS}"
             "SELECT ?a ?label ?loc ?note ?cat ?lay ?answer ?url ?email ?phone ?report ?steps "
-            "?docref ?effective ?owner ?svc ?pot ?potauth ?potdate WHERE { "
+            "?docref ?effective ?owner ?svc ?pot ?potauth ?potdate ?floor WHERE { "
             "{ ?a a ontosage:Amenity } UNION { ?a a ontosage:KnowledgeTopic } "
             "OPTIONAL { ?a rdfs:label ?label } "
             "OPTIONAL { ?a ontosage:locationText ?loc } "
+            "OPTIONAL { ?a ontosage:onFloor ?floor } "
             "OPTIONAL { ?a ontosage:note ?note } "
             "OPTIONAL { ?a ontosage:capabilityCategory ?cat } "
             "OPTIONAL { ?a ontosage:layTerms ?lay } "
@@ -329,6 +350,7 @@ class CapabilityGraphResolver:
                     potability=_v("pot"),
                     potability_authority=_v("potauth"),
                     potability_issued_on=_v("potdate")[:10],
+                    on_floor=_v("floor"),
                 )
             )
         self._cache = out

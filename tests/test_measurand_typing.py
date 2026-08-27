@@ -33,6 +33,32 @@ pytestmark = pytest.mark.unit
 _REPO = Path(__file__).resolve().parents[1]
 
 
+def _building_dir(building: str) -> Path:
+    """A building's TTL directory, whether it is ACTIVE (input/) or parked.
+
+    Without this the bldg1 cases SKIP whenever bldg1 is the live building, and a
+    skip reads as "checked and fine".
+    """
+    active = _REPO / "input"
+    if (active / "building.yaml").is_file():
+        try:
+            if building in (active / "building.yaml").read_text(encoding="utf-8"):
+                return active
+        except OSError:  # pragma: no cover
+            pass
+    return _REPO / building
+
+
+def _input_root() -> Path:
+    """The root to hand validate_building_input, for whichever layout is in use.
+
+    Both are normal: the committed tree has every building parked (bldg1/), and a
+    live session has one active (input/). A test that only knows one of them fails
+    in the other, which reads as a regression in the thing being tested.
+    """
+    return _REPO / "input" if (_REPO / "input" / "building.yaml").is_file() else _REPO
+
+
 # ── the check catches the two defects that were actually shipped ─────────────
 def test_the_tvoc_defect_as_it_was_written_is_caught():
     """Verbatim from bldg1_expanded_protege_clean.ttl before the fix."""
@@ -84,7 +110,7 @@ def test_an_untyped_or_unrelated_instance_is_ignored():
 # ── every shipped building is clean, and stays clean ─────────────────────────
 @pytest.mark.parametrize("building", ["bldg1", "bldg2", "bldg3"])
 def test_shipped_buildings_have_no_contradictory_sensor_typing(building):
-    d = _REPO / building
+    d = _building_dir(building)
     if not d.is_dir():
         pytest.skip(f"{building} is not present in this checkout")
     ok, issues = validate_measurand_typing(d)
@@ -94,7 +120,7 @@ def test_shipped_buildings_have_no_contradictory_sensor_typing(building):
 def test_the_vendored_brick_tbox_is_skipped():
     """Brick's own class hierarchy legitimately puts a class under several parents;
     scanning it would report the schema as a defect."""
-    d = _REPO / "bldg1"
+    d = _building_dir("bldg1")
     if not (d / "Brick_v1.4.ttl").is_file():
         pytest.skip("Brick TBox not present")
     ok, _ = validate_measurand_typing(d)
@@ -109,7 +135,7 @@ def test_a_missing_directory_is_not_an_error():
 def test_the_check_runs_as_part_of_building_validation():
     """A validator nothing calls is the recurring defect in this codebase
     (lessons.md #87): five capabilities shipped with no invoker."""
-    ok, report = validate_building_input("bldg1", _REPO)
+    ok, report = validate_building_input("bldg1", _input_root())
     assert "sensor typing" in report["files"], sorted(report["files"])
     assert report["files"]["sensor typing"]["ok"], report["files"]["sensor typing"]["issues"]
 
@@ -125,7 +151,7 @@ def test_a_declared_timetable_feed_validates():
 
     from orchestrator.services.input_validators import validate_feeds_yaml
 
-    path = _REPO / "bldg1" / "feeds.yaml"
+    path = _building_dir("bldg1") / "feeds.yaml"
     if not path.is_file():
         pytest.skip("bldg1/feeds.yaml not present")
     declared = {f.get("type") for f in yaml.safe_load(path.read_text(encoding="utf-8"))["feeds"]}

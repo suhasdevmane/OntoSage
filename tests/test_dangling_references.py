@@ -39,6 +39,32 @@ pytestmark = pytest.mark.unit
 _REPO = Path(__file__).resolve().parents[1]
 
 
+def _building_dir(building: str) -> Path:
+    """A building's TTL directory, whether it is ACTIVE (input/) or parked.
+
+    Without this the bldg1 cases SKIP whenever bldg1 is the live building, and a
+    skip reads as "checked and fine".
+    """
+    active = _REPO / "input"
+    if (active / "building.yaml").is_file():
+        try:
+            if building in (active / "building.yaml").read_text(encoding="utf-8"):
+                return active
+        except OSError:  # pragma: no cover
+            pass
+    return _REPO / building
+
+
+def _input_root() -> Path:
+    """The root to hand validate_building_input, for whichever layout is in use.
+
+    Both are normal: the committed tree has every building parked (bldg1/), and a
+    live session has one active (input/). A test that only knows one of them fails
+    in the other, which reads as a regression in the thing being tested.
+    """
+    return _REPO / "input" if (_REPO / "input" / "building.yaml").is_file() else _REPO
+
+
 def _ttl(d: Path, name: str, body: str) -> None:
     (d / name).write_text(body, encoding="utf-8")
 
@@ -122,7 +148,7 @@ def test_the_hash_only_starts_a_comment_where_it_legally_can(line, expected):
 # ── every shipped building is closed, and stays closed ───────────────────────
 @pytest.mark.parametrize("building", ["bldg1", "bldg2", "bldg3"])
 def test_shipped_buildings_have_no_dangling_references(building):
-    d = _REPO / building
+    d = _building_dir(building)
     if not d.is_dir():
         pytest.skip(f"{building} is not present in this checkout")
     ok, issues = validate_dangling_references(d)
@@ -134,7 +160,7 @@ def test_a_missing_directory_is_not_an_error():
 
 
 def test_the_check_runs_as_part_of_building_validation():
-    ok, report = validate_building_input("bldg1", _REPO)
+    ok, report = validate_building_input("bldg1", _input_root())
     assert "entity references" in report["files"], sorted(report["files"])
     assert report["files"]["entity references"]["ok"], report["files"]["entity references"][
         "issues"
@@ -148,7 +174,7 @@ def test_bldg1_declares_one_identity_per_air_handler():
     serving a space could list two air handlers where the building has one."""
     import re
 
-    d = _REPO / "bldg1"
+    d = _building_dir("bldg1")
     if not d.is_dir():
         pytest.skip("bldg1 is not present in this checkout")
     names = set()
@@ -168,7 +194,7 @@ def test_every_plant_point_can_be_placed_on_a_floor():
     did not exist, and invisible to the floor-scoped template that answers "on floor
     5" for every ordinary sensor."""
     rdflib = pytest.importorskip("rdflib")
-    f = _REPO / "bldg1" / "bldg1_plant_points.ttl"
+    f = _building_dir("bldg1") / "bldg1_plant_points.ttl"
     if not f.is_file():
         pytest.skip("bldg1 plant points not present")
     brick = rdflib.Namespace("https://brickschema.org/schema/Brick#")
