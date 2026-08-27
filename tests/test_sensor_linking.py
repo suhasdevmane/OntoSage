@@ -16,7 +16,9 @@ Three properties are asserted, in descending order of how much damage getting th
 """
 
 import importlib.util
+import re
 from pathlib import Path
+from typing import Optional
 
 import pytest
 import yaml
@@ -96,24 +98,109 @@ def test_the_class_map_is_read_from_the_modality_config(linker):
             assert m.get(str(cls).split(":")[-1]) is not None
 
 
-def test_every_modality_resolves_to_a_registered_table(linker):
-    """A storedAt pointing at a table no registry entry names is a dead link.
+def _building_dir_any_state() -> Optional[Path]:
+    """The ACTIVE building's directory, or the first parked one.
 
-    Checked for the modalities this repo actually uses, since the registry is per building.
+    Reads whichever building this checkout can see, because the committed tree has none
+    active and a live session has exactly one.
     """
+    active = REPO / "input"
+    if (active / "building.yaml").is_file():
+        return active
+    for candidate in sorted(REPO.glob("bldg*/building.yaml")):
+        return candidate.parent
+    return None
+
+
+#: Prefixes that mean "this is the vocabulary talking", not a datasource.
+_VOCAB_PREFIXES = {"rdf", "rdfs", "owl", "xsd", "skos", "sh", "brick", "ref", "s223", "qudt"}
+
+
+def _declared_storedat_keys(bdir: Path) -> set:
+    """Datasource keys a building's own TTLs point ``ref:storedAt`` at.
+
+    Two traps, both hit in order while writing this. Allowing ``\s+`` (which spans
+    newlines) swallowed the following line; and even same-line, the property's OWN
+    DEFINITION matches -- ``ref:storedAt a owl:DatatypeProperty``, ``ref:storedAt
+    rdf:type ...``, ``ref:storedAt rdfs:label "storedAt"`` are all in bldg1's files with
+    storedAt as the SUBJECT -- yielding "type", "label", "like" and a bare ".". Reading a
+    vocabulary declaration as building data is the same prose-as-data mistake the
+    dangling-reference and potability checks each made once.
+    """
+    keys = set()
+    for ttl in bdir.glob("*.ttl"):
+        if ttl.name.lower().startswith(("brick", "rec", "s223")):
+            continue  # shared vocabulary, not this building's points
+        text = ttl.read_text(encoding="utf-8", errors="replace")
+        for m in re.finditer(r"ref:storedAt[ 	]+(\w+):([A-Za-z0-9_.\-]+)", text):
+            if m.group(1) not in _VOCAB_PREFIXES:
+                keys.add(m.group(2))
+        for m in re.finditer(r"ref:storedAt[ 	]+<[^>]*[#/]([A-Za-z0-9_.\-]+)>", text):
+            keys.add(m.group(1))
+    return keys
+
+
+def _all_building_dirs() -> list:
+    """Every building in this checkout: the active one, plus each parked one."""
+    dirs = []
+    active = REPO / "input"
+    if (active / "building.yaml").is_file():
+        dirs.append(active)
+    dirs += [p.parent for p in sorted(REPO.glob("bldg*/building.yaml"))]
+    return dirs
+
+
+def _registry_of(bdir: Path) -> dict:
+    path = bdir / "database_registry.yaml"
+    if not path.is_file():
+        return {}
+    return (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("databases") or {}
+
+
+def test_every_storedat_resolves_for_every_building():
+    """A storedAt pointing at a destination no registry entry names is a dead link.
+
+    Checked for EVERY building in the checkout, each against its OWN registry, because
+    the two shipped shapes differ and the difference is the whole portability question:
+    bldg1/2/3 use a table per modality, bldg4 routes everything through one datasource
+    key. Both are legal -- the registry maps ``ref:storedAt`` to an adapter, and nothing
+    requires a table per modality.
+
+    The previous version asserted a hardcoded occupancy/illuminance/humidity/temperature/
+    co2 all resolved against whichever registry it found first. That is the first shape
+    written down as if it were a law, and it failed on bldg4, whose links are sound.
+    Worse, the ``unroutable`` sweep it computed was never asserted -- the real check was
+    dead code while the hardcoded stand-in did the failing.
+    """
+    dirs = _all_building_dirs()
+    assert dirs, "no building present in this checkout"
+
+    checked = 0
+    for bdir in dirs:
+        dbs = _registry_of(bdir)
+        if not dbs:
+            continue  # a building mid-onboarding may not have registered a source yet
+        keys = _declared_storedat_keys(bdir)
+        if not keys:
+            continue  # nothing linked yet; the onboarding readiness check owns that
+        dead = sorted(k for k in keys if k not in dbs)
+        assert not dead, f"{bdir.name}: storedAt keys with no registry entry: {dead}"
+        checked += 1
+
+    assert checked, "no building had both a registry and linked sensors — nothing was checked"
+
+
+def test_a_table_the_registry_defines_is_routable(linker):
+    """Separate from the above: a typo in a per-modality table name is still caught on
+    the buildings that use them."""
     dbs = linker.registry() or _registry_any_state()
     cfg = yaml.safe_load(
         (REPO / "config" / "saturation_modalities.yaml").read_text(encoding="utf-8")
     )["modalities"]
-    unroutable = []
     for modality in cfg:
         table, _unit = linker.modality_table(modality)
-        if table and not linker.storage_key_for(table, dbs):
-            unroutable.append(f"{modality} -> {table}")
-    # Not every modality is provisioned on every building; the ones this building links must be.
-    for needed in ("occupancy", "illuminance", "humidity", "temperature", "co2"):
-        table, _ = linker.modality_table(needed)
-        assert linker.storage_key_for(table, dbs), f"{needed} has no registry key"
+        if table and table in dbs:
+            assert linker.storage_key_for(table, dbs), f"{modality} -> {table} is unroutable"
 
 
 def test_a_prefixed_ontosage_class_maps_too(linker):
