@@ -55,6 +55,30 @@ def _is_metrics_question(query: str) -> bool:
 _INPUT_ROOT = Path("/app/input")
 _LOCAL_INPUT_ROOT = Path(__file__).resolve().parents[2] / "input"
 
+_FLOOR_IN_Q_RE = re.compile(r"\b(?:floor|level|storey|story)\s*(-?\d+)\b", re.IGNORECASE)
+
+
+def _floor_in_question(query: str) -> str:
+    """The floor number a question names, as a bare string. "" when none."""
+    m = _FLOOR_IN_Q_RE.search(query or "")
+    return m.group(1) if m else ""
+
+
+def _same_floor(declared: str, asked: str) -> bool:
+    """Does an amenity's declared floor match the one asked for?
+
+    Buildings spell it differently -- "Floor3", "3", "Level 3" -- so compare the
+    digits rather than the string. A declaration with no digits never matches,
+    instead of matching everything.
+    """
+    digits = re.findall(r"-?\d+", str(declared or ""))
+    return bool(digits) and digits[-1] == asked
+
+
+#: How many amenity facts an answer presents, applied AFTER the on-topic
+#: filter and the relevance ranking above.
+_PRESENT_FACTS = 3
+
 # Module-level clients used by _search_documents.  Initialized via init_document_search().
 _doc_qdrant_client: Optional[Any] = None
 _doc_embedding_service: Optional[Any] = None
@@ -392,16 +416,28 @@ class CapabilityAgent:
                 _rank = {MATCH_DISTINCTIVE: 2, MATCH_COMMON: 1}
                 _q = state.user_message or ""
 
+                # A floor named in the question outranks everything else. "Where can I
+                # fill my bottle ON FLOOR 3?" listed floors 0, 1 and 2 and never
+                # mentioned 3, because nothing in the ranking looked at the floor the
+                # amenity declares (BUG-337). Ranked, not filtered: the other floors'
+                # points are still true and still worth seeing underneath.
+                _asked_floor = _floor_in_question(_q)
+
                 def _relevance(pair):
                     _f, _r = pair
                     _label = str(_r.get("doc_name", "")).replace("_", " ")
+                    _on = getattr(_f, "on_floor", "") or ""
                     return (
+                        1 if _asked_floor and _same_floor(_on, _asked_floor) else 0,
                         1 if _label and _is_on_topic(_q, _label) else 0,
                         _rank.get(_strength(_q, str(_r.get("text", ""))), 0),
                     )
 
                 _pairs.sort(key=_relevance, reverse=True)
-                _facts = [f for f, _ in _pairs]
+                # Truncate HERE, after filtering and ranking -- never in the resolver.
+                # The resolver cutting to this size first is what made the building deny
+                # having bottle-refill points it has twelve of (BUG-337).
+                _facts = [f for f, _ in _pairs][:_PRESENT_FACTS]
             if _facts:
                 _parts = [f"Here is what I found for **{building_name}**:\n"]
                 # Being ABOUT the subject is not the same as ANSWERING the question.
