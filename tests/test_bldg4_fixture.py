@@ -132,18 +132,39 @@ def test_the_delta_names_bldg4_throughout():
 
 
 # ── and it must not be installed ─────────────────────────────────────────────
-def test_the_fixture_is_not_copied_into_the_active_input():
-    """Copying bldg4 into input/ would test the file loader — which already works —
-    instead of the console, which is the claim under test."""
-    active = _REPO / "input"
-    if not (active / "building.yaml").is_file():
-        pytest.skip("no active building")
-    import yaml
+def test_no_building_is_committed_as_installed():
+    """Copying a building into input/ would test the file loader — which already works
+    — instead of the console, which is the claim under test.
 
-    cfg = yaml.safe_load((active / "building.yaml").read_text(encoding="utf-8"))
-    assert (
-        cfg.get("building_id") != "bldg4"
-    ), "bldg4 is installed in input/; onboarding it through the console is the point"
+    Asked of GIT, not of the working tree. The first version read input/building.yaml
+    and failed the moment bldg4 was activated to VERIFY it boots, which is a thing that
+    has to happen; and in the parked state it skipped, which reads as "checked and
+    fine". Neither told anyone whether the repository is clean. What is tracked is the
+    durable property, it is true in every working state, and it is exactly Workflow
+    rule 8: a fresh clone has input/, .env and docker-compose.yml ABSENT.
+    """
+    import subprocess
+
+    for path in ("input/", "docker-compose.yml"):
+        out = subprocess.run(  # nosec B603 B607 - fixed argv, repo-local
+            ["git", "ls-files", path],
+            cwd=_REPO,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        ).stdout.strip()
+        assert not out, f"{path} is tracked in git; the committed tree must have no active building"
+
+
+def test_the_fixture_survives_as_something_to_onboard():
+    """Parked at bldg4/, or momentarily active while being verified — but present."""
+    active = _REPO / "input" / "building.yaml"
+    if active.is_file():
+        import yaml
+
+        if yaml.safe_load(active.read_text(encoding="utf-8")).get("building_id") == "bldg4":
+            return  # active for verification; the git check above governs what ships
+    assert (_B4 / "building.yaml").is_file(), "the bldg4 fixture is gone"
 
 
 def test_the_generator_is_deterministic():

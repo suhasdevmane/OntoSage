@@ -949,6 +949,36 @@ async def lifespan(app: FastAPI):
     # manual `python scripts/onboard_building.py` step for new TTL files.
     # Non-fatal — orchestrator boots even if GraphDB is unreachable.
     try:
+        # BUG-348: a building that has never been booted has an EMPTY GraphDB volume,
+        # and an empty volume has no repository. The uploader then has nowhere to put
+        # the ontology, ontology init fails its "GraphDB is not reachable" check, and
+        # the orchestrator retries that forever while serving a building that can
+        # answer nothing. Measured on bldg4's first boot.
+        #
+        # scripts/ensure_graphdb_repo.py was written for exactly this and had NO
+        # CALLER — the seventh instance of that shape in this codebase. Creating the
+        # repository belongs here, before the upload that needs it, because
+        # `docker compose up -d` is the whole setup story (core contract #11) and a
+        # brand-new building is precisely the case the GUI onboarding flow exercises.
+        #
+        # Idempotent: existing repositories are left alone, so this is a no-op on
+        # every boot after the first.
+        # Assigned BEFORE the try: if the bootstrap raises, the upload below still has
+        # to run, and reading an unassigned name there would raise NameError into the
+        # outer handler and silently skip every TTL — turning a repository hiccup into
+        # a building with no ontology at all.
+        created = False
+        try:
+            from orchestrator.services.ontology_manager import ensure_repository_exists
+
+            created = await ensure_repository_exists()
+            if created:
+                logger.info(
+                    "[graphdb] created repository %r on first boot", settings.GRAPHDB_REPOSITORY
+                )
+        except Exception as _repo_err:  # non-fatal: an existing repo is the normal case
+            logger.warning(f"[graphdb] repository bootstrap skipped: {_repo_err}")
+
         from orchestrator.services.ttl_uploader import run_idempotent_uploads
 
         # Use the registered building IDs from the manager if available, else
@@ -959,7 +989,15 @@ async def lifespan(app: FastAPI):
         # cleaned 2026-07-30). v1 serves ONE building (core contract #1) — the active
         # id IS the whole list.
         _bldg_ids = [settings.BUILDING_ID]
-        summary = await run_idempotent_uploads(building_ids=_bldg_ids)
+        # A repository created a moment ago contains NOTHING, so nothing in it can be
+        # "already uploaded". The SHA cache lives on a volume that outlives the
+        # repository, and on the first run of this bootstrap it reported
+        # `uploaded=0 skipped=8` into an empty graph -- the orchestrator booted
+        # healthy, served bldg4, and answered nothing. Starting from an empty cache
+        # makes the uploader re-ingest, which is what a new repository requires.
+        summary = await run_idempotent_uploads(
+            building_ids=_bldg_ids, cache={} if created else None
+        )
         logger.info(
             f"[ttl_uploader] startup ingestion: uploaded={len(summary['uploaded'])} "
             f"skipped={len(summary['skipped'])} failed={len(summary['failed'])}"

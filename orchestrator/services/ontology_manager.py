@@ -16,6 +16,7 @@ httpx.AsyncClient) so tests can mock without any live GraphDB.
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote_plus
 
@@ -70,6 +71,67 @@ def _rdf_graphs_url(graph_uri: str) -> str:
     return (
         f"{base}/repositories/{settings.GRAPHDB_REPOSITORY}" f"/rdf-graphs/service?graph={encoded}"
     )
+
+
+#: Where the repository's own configuration lives. ONE definition of what an
+#: OntoSage repository is, shared with scripts/ensure_graphdb_repo.py -- two copies of
+#: a repository config is how two buildings end up with different inference profiles
+#: and nobody notices until a query returns different answers on each.
+_REPO_CONFIG_PATHS = (
+    Path("/app/config/graphdb_repo_bldg.ttl"),
+    Path("config/graphdb_repo_bldg.ttl"),
+)
+
+
+def _repo_config_bytes() -> Optional[bytes]:
+    for candidate in _REPO_CONFIG_PATHS:
+        try:
+            if candidate.is_file():
+                return candidate.read_bytes()
+        except OSError:  # pragma: no cover - unreadable path
+            continue
+    return None
+
+
+async def ensure_repository_exists(client: Optional[Any] = None) -> bool:
+    """Create the configured repository if GraphDB has none. Returns True if created.
+
+    BUG-348: a building booted for the first time has an empty GraphDB volume, and an
+    empty volume has no repository. The TTL uploader then has nowhere to put the
+    ontology and ontology init retries "GraphDB is not reachable" indefinitely, while
+    the orchestrator serves a building that can answer nothing. Measured on bldg4's
+    first boot -- the exact path GUI onboarding puts a new building through.
+
+    Idempotent by design: an existing repository is left untouched, so this is a no-op
+    on every boot after the first, and it must never be a way to reset one.
+    """
+    base = settings.GRAPHDB_URL.rstrip("/")
+    repo = settings.GRAPHDB_REPOSITORY
+    close = client is None
+    client = client or httpx.AsyncClient(timeout=_TIMEOUT)
+    try:
+        resp = await client.get(f"{base}/rest/repositories")
+        if resp.status_code != 200:
+            raise RuntimeError(f"GraphDB listed repositories with HTTP {resp.status_code}")
+        body = resp.text
+        if f'"{repo}"' in body or f"/repositories/{repo}" in body:
+            return False
+
+        cfg = _repo_config_bytes()
+        if cfg is None:
+            raise RuntimeError("repository config not found; cannot create %r" % repo)
+
+        created = await client.post(
+            f"{base}/rest/repositories",
+            files={"config": ("config.ttl", cfg, "text/turtle")},
+        )
+        if created.status_code not in (200, 201, 204):
+            raise RuntimeError(f"create returned HTTP {created.status_code}: {created.text[:200]}")
+        logger.info("[ontology_manager] created GraphDB repository %r", repo)
+        return True
+    finally:
+        if close:
+            await client.aclose()
 
 
 async def list_named_graphs(
