@@ -6212,6 +6212,8 @@ SELECT ?l WHERE {
             label_val = None
             sensor_val = None
             unit_val = None
+            qunit_val = None
+            type_val = None
 
             for var in binding:
                 if "uuid" in var.lower() or "id" in var.lower() or "timeseries" in var.lower():
@@ -6220,8 +6222,14 @@ SELECT ?l WHERE {
                     label_val = binding[var]["value"]
                 elif "sensor" in var.lower():
                     sensor_val = binding[var]["value"]
+                elif var.lower().startswith("qunit"):
+                    # A QUDT unit IRI. Held separately from the brick literal so
+                    # the building's own spelling wins when it published both.
+                    qunit_val = binding[var]["value"]
                 elif "unit" in var.lower():
                     unit_val = binding[var]["value"]
+                elif var.lower() in ("type", "class", "sensortype"):
+                    type_val = binding[var]["value"]
 
             if uuid_val:
                 if not label_val and sensor_val:
@@ -6233,7 +6241,22 @@ SELECT ?l WHERE {
                     label_val = sensor_name.replace("_", " ")
 
                 kind = self._infer_sensor_kind(label_val, sensor_val)
-                unit = unit_val or self._unit_for_kind(kind)
+                # Strongest evidence first: a unit the building asserted on the
+                # point, then the modality config, then the nine hardcoded kinds.
+                # The config declares 35 modalities with units; the hardcoded
+                # table covers 8, so sound level, illuminance and PM2.5 reached
+                # the narration unitless while the config named their unit in one
+                # line (BUG-257).
+                from orchestrator.services.modality_units import (
+                    qudt_unit_display,
+                    unit_for_sensor,
+                )
+
+                unit = unit_val or qudt_unit_display(qunit_val)
+                if not unit:
+                    unit = unit_for_sensor(type_val or sensor_val, label_val)
+                if not unit:
+                    unit = self._unit_for_kind(kind)
                 sensor_metadata[uuid_val] = {
                     "label": label_val or "Unknown Sensor",
                     "sensor_uri": sensor_val or "Unknown",

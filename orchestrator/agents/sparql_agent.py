@@ -1533,7 +1533,7 @@ SELECT ?building ?label WHERE {
                     f"{{ BIND({ent} AS ?sensor) "
                     f"OPTIONAL {{ ?sensor rdfs:label ?label . }} "
                     f"OPTIONAL {{ ?sensor rdf:type ?type . }} "
-                    f"OPTIONAL {{ ?sensor brick:hasUnit ?unit . }} "
+                    f"OPTIONAL {{ ?sensor brick:hasUnit ?unit . }} OPTIONAL {{ ?sensor qudt:hasUnit ?qunit . }} "
                     f"OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }} "
                     f"OPTIONAL {{ ?sensor bldg:connstring ?uuid . }} }}"
                 )
@@ -1557,13 +1557,13 @@ SELECT ?building ?label WHERE {
             for ent in location_entities:
                 patterns.append(
                     f"{{ ?sensor brick:hasLocation {ent} . OPTIONAL {{ ?sensor rdfs:label ?label . }} "
-                    f"OPTIONAL {{ ?sensor rdf:type ?type . }} OPTIONAL {{ ?sensor brick:hasUnit ?unit . }} "
+                    f"OPTIONAL {{ ?sensor rdf:type ?type . }} OPTIONAL {{ ?sensor brick:hasUnit ?unit . }} OPTIONAL {{ ?sensor qudt:hasUnit ?qunit . }} "
                     f"OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }} "
                     f"OPTIONAL {{ ?sensor bldg:connstring ?uuid . }} }}"
                 )
                 patterns.append(
                     f"{{ ?sensor brick:isLocatedIn {ent} . OPTIONAL {{ ?sensor rdfs:label ?label . }} "
-                    f"OPTIONAL {{ ?sensor rdf:type ?type . }} OPTIONAL {{ ?sensor brick:hasUnit ?unit . }} "
+                    f"OPTIONAL {{ ?sensor rdf:type ?type . }} OPTIONAL {{ ?sensor brick:hasUnit ?unit . }} OPTIONAL {{ ?sensor qudt:hasUnit ?qunit . }} "
                     f"OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }} "
                     f"OPTIONAL {{ ?sensor bldg:connstring ?uuid . }} }}"
                 )
@@ -1669,7 +1669,7 @@ SELECT ?parent ?parentLabel ?child ?childLabel WHERE {
         if target_class:
             return (
                 self._prefix_block()
-                + f"\nSELECT ?sensor (SAMPLE(?location) AS ?locationName) (SAMPLE(?uuid) AS ?uuidValue) (SAMPLE(?storage) AS ?storageRef) (SAMPLE(?unit) AS ?unitName) WHERE {{\n  ?sensor rdf:type {target_class} .\n  OPTIONAL {{ ?sensor brick:hasLocation ?location . }}\n  OPTIONAL {{ ?sensor brick:hasUnit ?unit . }}\n  OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }}\n  OPTIONAL {{ ?sensor bldg:connstring ?uuid . }}\n}} GROUP BY ?sensor LIMIT {_CLASS_LISTING_LIMIT}"
+                + f"\nSELECT ?sensor (SAMPLE(?location) AS ?locationName) (SAMPLE(?uuid) AS ?uuidValue) (SAMPLE(?storage) AS ?storageRef) (SAMPLE(?unit) AS ?unitName) (SAMPLE(?qunit) AS ?qunitName) WHERE {{\n  ?sensor rdf:type {target_class} .\n  OPTIONAL {{ ?sensor brick:hasLocation ?location . }}\n  OPTIONAL {{ ?sensor brick:hasUnit ?unit . }} OPTIONAL {{ ?sensor qudt:hasUnit ?qunit . }}\n  OPTIONAL {{ ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }}\n  OPTIONAL {{ ?sensor bldg:connstring ?uuid . }}\n}} GROUP BY ?sensor LIMIT {_CLASS_LISTING_LIMIT}"
             )
         # Generic sensor listing fallback
         sensor_words = ["sensor", "sensors", "point", "points"]
@@ -1687,7 +1687,7 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
                 )
             return (
                 self._prefix_block()
-                + "\nSELECT ?sensor ?type ?location ?uuid ?storage ?unit WHERE {\n  ?sensor rdf:type ?type .\n  FILTER(CONTAINS(STR(?type), 'Sensor') || CONTAINS(STR(?type), 'Point'))\n  OPTIONAL { ?sensor brick:hasLocation ?location . }\n  OPTIONAL { ?sensor brick:hasUnit ?unit . }\n  OPTIONAL { ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }\n  OPTIONAL { ?sensor bldg:connstring ?uuid . }\n} LIMIT 50"
+                + "\nSELECT ?sensor ?type ?location ?uuid ?storage ?unit ?qunit WHERE {\n  ?sensor rdf:type ?type .\n  FILTER(CONTAINS(STR(?type), 'Sensor') || CONTAINS(STR(?type), 'Point'))\n  OPTIONAL { ?sensor brick:hasLocation ?location . }\n  OPTIONAL { ?sensor brick:hasUnit ?unit . } OPTIONAL { ?sensor qudt:hasUnit ?qunit . }\n  OPTIONAL { ?sensor ref:hasExternalReference ?ref . ?ref ref:hasTimeseriesId ?uuid . ?ref ref:storedAt ?storage . }\n  OPTIONAL { ?sensor bldg:connstring ?uuid . }\n} LIMIT 50"
             )
         return None
 
