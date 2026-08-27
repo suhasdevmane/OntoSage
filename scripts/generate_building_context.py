@@ -229,10 +229,19 @@ def discover(bdir: Path, exclude: Optional[str] = None) -> Dict[str, Any]:
     # gave bldg2 two answers with different contacts -- "Estates helpdesk" and
     # "Wellman facilities desk" -- in one reply. Two contradictory routes to report
     # a fault is worse than one, and the second was mine.
+    #
+    # AMENITIES count too, and leaving them out was a second, worse version of the same
+    # mistake. bldg3 declares bldg:Cap_cafe with lay terms "cafe, coffee, food, lunch,
+    # canteen ...", and this scanned only KnowledgeTopic, so a Catering topic was
+    # authored anyway -- asserting "There is no canteen on site" about a building whose
+    # own graph declares a ground-floor cafe. Asked live, the cafe answered and the
+    # authored text was simply false. A fixture generator that contradicts the
+    # building's own data is fabrication, whatever it is labelled.
     existing_terms: List[str] = []
-    for s_ in g.subjects(rdflib.RDF.type, onto.KnowledgeTopic):
-        for term in g.objects(s_, onto.layTerms):
-            existing_terms += [t.strip().lower() for t in str(term).split(",") if t.strip()]
+    for cls in (onto.KnowledgeTopic, onto.Amenity):
+        for s_ in g.subjects(rdflib.RDF.type, cls):
+            for term in g.objects(s_, onto.layTerms):
+                existing_terms += [t.strip().lower() for t in str(term).split(",") if t.strip()]
 
     return {
         "namespace": ns,
@@ -474,6 +483,67 @@ _REFUSALS = (
 )
 
 
+#: Words too common to distinguish one authored answer from another building's prose.
+_COMMON = {
+    "about",
+    "after",
+    "always",
+    "available",
+    "before",
+    "building",
+    "during",
+    "every",
+    "floor",
+    "floors",
+    "found",
+    "here",
+    "information",
+    "level",
+    "other",
+    "please",
+    "should",
+    "there",
+    "these",
+    "those",
+    "through",
+    "under",
+    "where",
+    "which",
+    "while",
+    "your",
+}
+
+
+def _carries(reply: str, expected: str, asked: str = "") -> bool:
+    """Did the AUTHORED answer reach the user, or did another lane answer instead?
+
+    The reply is LLM-framed, so an exact-substring test would fail on correct answers.
+    This asks whether enough of the authored answer's DISTINCTIVE words survived --
+    content words of five characters or more, minus ones common to any building's
+    prose. A different lane's fluent answer shares the topic but not the wording.
+
+    Deliberately lenient (a third of the distinctive words, minimum two): the cost of a
+    false alarm here is chasing a non-defect, and the check that matters -- 'cleaning?'
+    returning a service-schedule refusal while the authored Cleaning topic went unread --
+    shares almost nothing with the authored text and is caught comfortably.
+    """
+    # Words from the QUESTION are not evidence: any on-topic reply echoes them, so a
+    # refusal that names the subject ("no CLEANING schedules recorded") would otherwise
+    # score as the authored answer arriving. Only the authored words the asker did not
+    # supply can distinguish one lane's answer from another's.
+    asked_words = set(re.findall(r"[a-z]{4,}", asked.lower()))
+    words = {
+        w
+        for w in re.findall(r"[a-z]{5,}", expected.lower())
+        if w not in _COMMON and not any(w.startswith(a[:5]) for a in asked_words if len(a) >= 5)
+    }
+    if len(words) < 2:
+        return True  # nothing distinctive to look for; do not invent a failure
+    low = reply.lower()
+    hits = sum(1 for w in words if w in low)
+    return hits >= max(2, len(words) // 3)
+
+
 def probe(building_id: str, bdir: Path, base: str, timeout: float) -> int:
     """Ask the live building one question per authored lay term; report what answers.
 
@@ -508,20 +578,40 @@ def probe(building_id: str, bdir: Path, base: str, timeout: float) -> int:
 
     # One question per authored topic: its first lay term, which is the phrasing a
     # person actually types. Later terms are synonyms of the same thing.
-    questions: List[Tuple[str, str]] = []
-    for block in _re.finditer(r'ontosage:layTerms\s+"([^"]+)"', text):
+    #
+    # The topic's OWN answerText is carried alongside, because that -- not the absence
+    # of a refusal phrase -- is what the probe should check. Measured on bldg3:
+    # "cleaning?" returned "This building has no cleaning or service schedules recorded
+    # in its model", a fluent honest no-data answer from a DIFFERENT lane, while the
+    # authored Cleaning topic sat in the graph unread. Matching refusal phrases scored
+    # that as a success. Asking "did the authored answer arrive?" cannot.
+    questions: List[Tuple[str, str, str]] = []
+    for block in _re.finditer(r'ontosage:layTerms\s+"([^"]+)"(.*?)(?:\n\n|\Z)', text, _re.DOTALL):
         first = block.group(1).split(",")[0].strip()
-        if first:
-            questions.append((first, f"{first}?"))
+        if not first:
+            continue
+        m = _re.search(r'ontosage:answerText\s+"([^"]+)"', block.group(2))
+        questions.append((first, f"{first}?", m.group(1) if m else ""))
 
     if not questions:
         print(f"{path.name} authors no lay terms")
         return 1
 
+    import uuid as _uuid
+
+    _run_id = _uuid.uuid4().hex[:8]
     print(f"probing {len(questions)} authored topic(s) on {building_id} via {base}\n")
     answered = 0
-    for term, q in questions:
-        body = _json.dumps({"message": q, "session_id": f"probe-{building_id}-{_stable(term)}"})
+    misses: List[str] = []
+    for i, (term, q, expected) in enumerate(questions):
+        # A FRESH session per question, per run. The id used to be stable per lay term,
+        # which meant every run replayed into the conversation that previous runs had
+        # built -- and Redis keeps conversation state with no time-expiry by default.
+        # Measured: "cleaning?" answered from the authored topic 4 times out of 4 in
+        # fresh sessions, and returned the PREVIOUS run's superseded answer in the
+        # probe's own reused session. The probe was reporting its own history as the
+        # building's data, and reported a fix as still broken.
+        body = _json.dumps({"message": q, "session_id": f"probe-{building_id}-{_run_id}-{i}"})
         req = _rq.Request(
             f"{base}/chat",
             data=body.encode(),
@@ -538,13 +628,21 @@ def probe(building_id: str, bdir: Path, base: str, timeout: float) -> int:
             continue
         reply = payload.get("response") or payload.get("data", {}).get("response") or ""
         low = reply.lower()
-        refused = any(marker in low for marker in _REFUSALS)
-        verdict = "REFUSED" if refused else "answered"
-        if not refused:
+        if any(marker in low for marker in _REFUSALS):
+            verdict = "REFUSED"
+        elif expected and not _carries(reply, expected, term):
+            # Fluent, on-topic, and not the authored fact. Another lane answered.
+            verdict = "WRONG-LANE"
+        else:
+            verdict = "answered"
             answered += 1
-        print(f"  {verdict:9s} {term!r}")
-        print(f"            {' '.join(reply.split())[:160]}")
+        if verdict != "answered":
+            misses.append(f"{term} [{verdict}]")
+        print(f"  {verdict:11s} {term!r}")
+        print(f"              {' '.join(reply.split())[:150]}")
     print(f"\n{answered}/{len(questions)} authored topics answer on {building_id}")
+    if misses:
+        print("not reaching the authored topic: " + "; ".join(misses))
     return 0 if answered == len(questions) else 2
 
 

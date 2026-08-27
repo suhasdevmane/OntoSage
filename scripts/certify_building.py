@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -47,6 +48,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 REPO = Path(__file__).resolve().parents[1]
 HEALTH_URL = "http://127.0.0.1:8000/health"
+
+# Read from the environment, never assumed: the repository name is per-deployment and
+# the whole point of these scripts is that they do not carry building literals.
+GRAPHDB_URL = os.getenv("GRAPHDB_URL_HOST", "http://127.0.0.1:7200").rstrip("/")
+GRAPHDB_REPO = os.getenv("GRAPHDB_REPOSITORY", "bldg")
 OUTPUTS = REPO / "scripts" / "outputs"
 
 
@@ -111,6 +117,65 @@ def _llm_answers() -> Tuple[bool, str]:
     return True, "provider reports healthy"
 
 
+#: One sensor has one timeseries reference. Anything materially above 1 means the same
+#: reference has been loaded more than once, each copy carrying fresh blank nodes that
+#: nothing can dedupe. 1.5 is slack for a building that legitimately declares a second
+#: reference on a few points; the disease shows up at 2.8, 27 and 95.
+_MAX_REFERENCE_FANOUT = 1.5
+
+_FANOUT_QUERY = (
+    "PREFIX ref: <https://brickschema.org/schema/Brick/ref#>\n"
+    "SELECT (COUNT(?r) AS ?refs) (COUNT(DISTINCT ?u) AS ?uuids) "
+    "WHERE { ?r ref:hasTimeseriesId ?u }"
+)
+
+
+def _graph_is_not_duplicated() -> Tuple[bool, str]:
+    """Reference fan-out per UUID, which is what graph bloat looks like from outside.
+
+    BUG-343: the fix that stopped the context-less writer lives in a docker IMAGE, and
+    every building's compose project builds its own. bldg3 booted a four-week-old image
+    and silently resumed duplicating -- source correct, tests green, suite passing, and
+    the deployed thing still broken. No unit test can see that; this can, because it
+    measures the symptom rather than trusting the fix.
+
+    A count query is cheap and answers before any question is asked, which is the point:
+    grading a duplicated graph produces numbers that mean nothing.
+    """
+    url = f"{GRAPHDB_URL}/repositories/{GRAPHDB_REPO}"
+    try:
+        req = urllib.request.Request(
+            url,
+            data=_FANOUT_QUERY.encode(),
+            headers={
+                "Content-Type": "application/sparql-query",
+                "Accept": "text/csv",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=60) as r:  # nosec B310 - fixed local URL
+            rows = r.read().decode("utf-8", "replace").strip().splitlines()
+    except Exception as exc:
+        # Unknown is not failure: a building may run without GraphDB reachable from here.
+        return True, f"reference fan-out unknown ({exc})"
+
+    if len(rows) < 2:
+        return True, "reference fan-out unknown (no rows)"
+    try:
+        refs, uuids = (int(x) for x in rows[1].split(",")[:2])
+    except ValueError:
+        return True, "reference fan-out unknown (unparseable)"
+    if uuids == 0:
+        return True, "no timeseries references in the graph"
+
+    fanout = refs / uuids
+    if fanout > _MAX_REFERENCE_FANOUT:
+        return False, (
+            f"reference fan-out {fanout:.2f} copies/UUID ({refs} refs / {uuids} UUIDs) "
+            f"-- the graph holds duplicates; rebuild before grading (BUG-343)"
+        )
+    return True, f"reference fan-out {fanout:.2f} copies/UUID ({uuids} UUIDs)"
+
+
 def preflight(expect: Optional[str]) -> Tuple[bool, List[str], Dict[str, Any]]:
     checks: List[str] = []
     ok = True
@@ -133,6 +198,10 @@ def preflight(expect: Optional[str]) -> Tuple[bool, List[str], Dict[str, Any]]:
     llm_ok, why = _llm_answers()
     checks.append(f"{'PASS' if llm_ok else 'FAIL'}  {why}")
     ok &= llm_ok
+
+    graph_ok, graph_why = _graph_is_not_duplicated()
+    checks.append(f"{'PASS' if graph_ok else 'FAIL'}  {graph_why}")
+    ok &= graph_ok
 
     snap = _container_snapshot()
     unhealthy = [n for n, s in snap.items() if "unhealthy" in s.lower()]

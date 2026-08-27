@@ -85,8 +85,24 @@ _STATE_RE = re.compile(
 #: dated compliance checks are OTHER lanes' data; matching their vocabulary here would
 #: answer from schedules that say nothing about a chiller. A lane should claim only the
 #: questions its own data can answer.
+#
+# It required SCHEDULE context from 2026-08-27. Matching the bare word claimed every
+# mention of cleaning for this lane, including a plain "cleaning?" — which bldg3
+# answered "this building has no cleaning or service schedules recorded in its model"
+# while an authored Cleaning knowledge topic ("offices are cleaned overnight on
+# weekdays; spills go to the site office") sat in its graph, unread. The refusal was
+# honest and the building was not: it had the answer.
+#
+# That is this comment's own rule turned on itself — a lane should claim only the
+# questions its own data can answer — and it is the third instance of the shape
+# (BUG-337a locators, BUG-341 procedures). Every phrasing the lane is tested on
+# ("when is cleaning?", "when was the last cleaning of floor 2?", "cleaning schedule
+# for Floor10") carries that context and still routes here.
 _SCHEDULE_RE = re.compile(
-    r"\bclean(?:ed|ing|er|ers)?\b|\bcleaning schedule\b",
+    r"\bcleaning\s+(?:schedule|rota|times?|frequency)\b"
+    r"|\bclean(?:ed|ing)?\b[^?.]{0,30}\bschedule[ds]?\b"
+    r"|\b(?:when|how\s+often)\b[^?.]{0,40}\bclean(?:ed|ing|s)?\b"
+    r"|\blast\s+clean(?:ed|ing)?\b",
     re.IGNORECASE,
 )
 

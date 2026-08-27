@@ -29,38 +29,11 @@ bldg:Topic_AccessCards a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     ontosage:contactPhone "+44 20 7946 0812" ;
     ontosage:isSimulated "true"^^xsd:boolean .
 
-bldg:Topic_Cycling a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
-    rdfs:label "Cycling"@en ;
-    ontosage:capabilityCategory "INFORMATION" ;
-    ontosage:layTerms "bike, bicycle, cycle storage, where do i leave my bike, showers" ;
-    ontosage:answerText "Covered cycle racks are at the rear entrance, with showers and lockers on the ground floor." ;
-    ontosage:contactEmail "site@buildsys.example.org" ;
-    ontosage:contactPhone "+44 20 7946 0812" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
-
 bldg:Topic_Cleaning a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     rdfs:label "Cleaning"@en ;
     ontosage:capabilityCategory "INFORMATION" ;
     ontosage:layTerms "cleaning, cleaner, spill, my office is dirty, bins not emptied" ;
     ontosage:answerText "Offices are cleaned overnight on weekdays. Spills and one-off issues go to the site office." ;
-    ontosage:contactEmail "site@buildsys.example.org" ;
-    ontosage:contactPhone "+44 20 7946 0812" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
-
-bldg:Topic_Catering a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
-    rdfs:label "Catering"@en ;
-    ontosage:capabilityCategory "INFORMATION" ;
-    ontosage:layTerms "coffee, food, canteen, vending, where can i eat, lunch" ;
-    ontosage:answerText "There is no canteen on site; vending is on the ground floor and the nearest cafe is a short walk." ;
-    ontosage:contactEmail "site@buildsys.example.org" ;
-    ontosage:contactPhone "+44 20 7946 0812" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
-
-bldg:Topic_QuietSpace a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
-    rdfs:label "Quiet Space"@en ;
-    ontosage:capabilityCategory "INFORMATION" ;
-    ontosage:layTerms "quiet, quiet room, focus, prayer room, contemplation" ;
-    ontosage:answerText "A bookable quiet room is available on the top floor for focused work and contemplation." ;
     ontosage:contactEmail "site@buildsys.example.org" ;
     ontosage:contactPhone "+44 20 7946 0812" ;
     ontosage:isSimulated "true"^^xsd:boolean .

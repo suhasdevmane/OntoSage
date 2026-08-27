@@ -294,6 +294,20 @@ perform this EXACT sequence — never skip the down step, never guess identities
    ingestion + ~7-min backstop, BUG-100). Then verify isolation: GraphDB triple count
    in the building's own namespace > 0 and other buildings' namespaces == 0;
    `data-publisher` env `MYSQL_DATABASE` matches the building's DB.
+6b. **A building not booted in a while runs STALE IMAGES, and a source fix is not
+   deployed until its image carries it** (BUG-343). Compose tags images per project
+   (`ontosage_bldg<N>-<service>`), and neither `restart` nor a plain `up -d` rebuilds
+   one that already exists. bldg3 booted a four-week-old rag-service and silently
+   resumed the context-less ingestion that caused the 20M-triple bloat — source
+   correct, suite green, deployed thing broken. Check with
+   `docker compose images <service>` (the CREATED column), and rebuild anything older
+   than the fix you rely on. Then measure the SYMPTOM rather than trusting the fix:
+   `python scripts/certify_building.py --expect bldg<N> --preflight-only` reports
+   timeseries reference fan-out, which must be ~1.00 copies/UUID. Above ~1.5 the graph
+   holds duplicates: back up, prove the loss is zero with a **subject-level** diff
+   (live IRI subjects vs everything `input/*.ttl` names — inference cannot confound
+   that, type counts can), then drop, delete `volumes/<id>/artifacts/.ttl_uploads.json`
+   so the SHA skip does not suppress re-upload, and restart the orchestrator.
 7. **Flush the response cache** before any testing:
    `docker exec redis-memory-store sh -c 'redis-cli --scan --pattern "resp_cache:*" | xargs -r redis-cli DEL'`
 

@@ -130,3 +130,74 @@ def test_a_partial_result_is_reported_as_a_failure_exit_code():
 
     src = inspect.getsource(_mod().probe)
     assert "return 0 if answered == len(questions) else 2" in src
+
+
+# ── the wrong-lane verdict (BUG-345) ─────────────────────────────────────────
+#: bldg3's authored Cleaning topic, and the reply "cleaning?" actually produced.
+_CLEANING_AUTHORED = (
+    "Offices are cleaned overnight on weekdays. Spills and one-off issues go to the site office."
+)
+_CLEANING_WRONG_LANE = (
+    "This building has no cleaning or service schedules recorded in its model, so I can't "
+    "tell you its state."
+)
+
+
+def test_the_wrong_lane_reply_bldg3_gave_is_not_counted_as_an_answer():
+    """It reported 7/7. One of the seven was this: a fluent, honest, on-topic no-data
+    answer from the asset-state lane, while the authored Cleaning topic sat unread.
+    Absence of a known refusal phrase is not evidence the authored fact arrived."""
+    assert _mod()._carries(_CLEANING_WRONG_LANE, _CLEANING_AUTHORED, "cleaning") is False
+
+
+def test_the_authored_answer_survives_being_reworded():
+    """The reply is LLM-framed, so an exact-substring test would fail on correct answers
+    and make the probe useless."""
+    reworded = (
+        "Offices here are cleaned overnight on weekdays; spills and one-off issues go to "
+        "the site office."
+    )
+    assert _mod()._carries(reworded, _CLEANING_AUTHORED, "cleaning") is True
+
+
+def test_words_the_question_supplied_are_not_evidence():
+    """A refusal that names the subject would otherwise score as the authored answer:
+    'no CLEANING schedules recorded' shares 'cleaning' with the topic for free."""
+    echo = "I have no cleaning information recorded for this building."
+    assert _mod()._carries(echo, _CLEANING_AUTHORED, "cleaning") is False
+
+
+def test_an_answer_with_nothing_distinctive_to_check_is_not_failed():
+    """Inventing a failure where there is no evidence either way is worse than silence."""
+    assert _mod()._carries("anything at all", "Yes.", "open") is True
+
+
+def test_the_probe_reports_which_topics_missed():
+    """A count alone sends you back to re-run it. The first bldg3 run's single defect was
+    invisible in '7/7'."""
+    import inspect
+
+    src = inspect.getsource(_mod().probe)
+    assert "WRONG-LANE" in src
+    assert "not reaching the authored topic" in src
+
+
+# ── a fresh session per run (BUG-347) ────────────────────────────────────────
+def test_each_question_gets_a_session_no_previous_run_has_used():
+    """The session id was stable per lay term, so every run replayed into the
+    conversation earlier runs had built -- and Redis keeps conversation state with no
+    time-expiry by default (CONVERSATION_TTL=0).
+
+    Measured: "cleaning?" answered from the authored topic 4 times out of 4 in fresh
+    sessions, and returned the PREVIOUS run's superseded answer in the probe's own
+    reused session. The probe reported a fix as still broken, twice, and the routing
+    change it was doubting was correct all along.
+    """
+    import inspect
+
+    src = inspect.getsource(_mod().probe)
+    assert "_uuid.uuid4()" in src, "the probe must mint a fresh run id"
+    assert "_run_id" in src and "session_id" in src
+    assert (
+        '_stable(term)}"' not in src
+    ), "the session id is stable per term again, so runs share conversation state"

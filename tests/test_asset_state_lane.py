@@ -496,3 +496,41 @@ async def test_an_unscoped_question_still_lists_everything():
     svc = AssetStateService(_schedule_rows("Floor0", "Floor1", "Floor2"), _NS)
     out = await svc.answer("what is the cleaning schedule?", now=_NOW)
     assert out["count"] == 3
+
+
+# ── a lane claims only what its own data can answer (BUG-346) ────────────────
+@pytest.mark.parametrize(
+    "question",
+    [
+        "When was the last cleaning of floor 2?",
+        "cleaning schedule for Floor10",
+        "when is cleaning?",
+        "what is the cleaning schedule?",
+        "how often are the offices cleaned?",
+    ],
+)
+def test_schedule_questions_still_reach_this_lane(question):
+    """Narrowing must not cost the lane the questions it exists for."""
+    assert classify_asset_question(question) == "schedule"
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "cleaning?",
+        "who do I tell about cleaning?",
+        "my office is dirty",
+        "the cleaner missed my bin",
+    ],
+)
+def test_a_bare_mention_of_cleaning_is_not_a_schedule_question(question):
+    """Measured live on bldg3. Matching the bare word claimed "cleaning?" for this lane,
+    which answered "this building has no cleaning or service schedules recorded in its
+    model" -- while an authored Cleaning topic ("offices are cleaned overnight on
+    weekdays; spills go to the site office") sat in the same graph, unread.
+
+    The refusal was honest and the building was not: it had the answer. Third instance
+    of the shape after BUG-337a (locators taken by sensor_data) and BUG-341 (procedures
+    taken by observability), and the rule this module already states in its own comment.
+    """
+    assert classify_asset_question(question) is None
