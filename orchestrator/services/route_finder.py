@@ -56,6 +56,21 @@ class RouteResult:
     step_free: bool
     used_stairs: bool
     method: str = METHOD_NOTE
+    #: True when the route changed floors through a shaft the ONTOLOGY declares but
+    #: the floor plans never drew, so its position is not known (CAVEAT-313). An
+    #: approximate route beats no route, but only if the reader is told which it is.
+    approximate_vertical: bool = False
+
+    @property
+    def vertical_note(self) -> str:
+        """What to append to a route that used an undrawn shaft. "" otherwise."""
+        if not self.approximate_vertical:
+            return ""
+        return (
+            "_This route changes floor through a lift or staircase the building's "
+            "ontology declares but its floor plans do not draw, so the shaft's "
+            "position is approximate and the hop count near it is indicative._"
+        )
 
 
 @dataclass
@@ -81,9 +96,15 @@ class _Node:
 class RouteFinder:
     """Builds once per manifest set; route/nearest are pure lookups after."""
 
-    def __init__(self, manifests: Sequence) -> None:
+    def __init__(self, manifests: Sequence, vertical_cores: Optional[Sequence] = None) -> None:
         self.nodes: Dict[str, _Node] = {}
+        #: zone_ids of vertical nodes the ONTOLOGY declares and the plans never drew.
+        #: A route touching one is approximate in a way the reader must be told about.
+        self.inferred_vertical: Set[str] = set()
+        #: cores whose served floors were assumed rather than declared.
+        self.assumed_coverage: Set[str] = set()
         self._build(manifests)
+        self._attach_declared_cores(vertical_cores or [])
 
     # ── graph construction ─────────────────────────────────────────────────
 
@@ -141,6 +162,70 @@ class RouteFinder:
                     b.neighbours.add(a.zone_id)
         n_edges = sum(len(n.neighbours) for n in self.nodes.values()) // 2
         logger.info(f"[route-finder] graph: {len(self.nodes)} spaces, {n_edges} edges")
+
+    #: Synthetic vertical nodes: shafts the ONTOLOGY declares that the floor plans
+    #: never drew. Held so a route can disclose that it changed floors through a
+    #: core whose position is not known (CAVEAT-313).
+    def _attach_declared_cores(self, cores) -> None:
+        """Add one node per served floor for each declared core the plans lack.
+
+        Skipped entirely for a kind the manifests already type — a building whose
+        DWGs draw their lifts keeps the real geometry and learns nothing from here.
+
+        **The position is not invented.** A drawing that omits the shaft gives no
+        coordinate to be near, so the node attaches to that floor's best-connected
+        space: a graph-theoretic stand-in for a lift lobby, derived from the
+        building's own adjacency. Deterministic — highest degree, ties broken by
+        zone_id — because a route that changes between runs is not a route.
+        """
+        if not cores:
+            return
+        drawn_kinds = {n.type for n in self.nodes.values() if n.type in _VERTICAL_TYPES}
+        floors = sorted({n.floor for n in self.nodes.values()})
+        if not floors:
+            return
+
+        # Best-connected space per floor, computed once from the plans-only graph so
+        # one synthetic core cannot influence where the next one attaches.
+        anchor: Dict[int, str] = {}
+        for f in floors:
+            on_floor = [n for n in self.nodes.values() if n.floor == f]
+            if on_floor:
+                anchor[f] = sorted(on_floor, key=lambda n: (-len(n.neighbours), n.zone_id))[
+                    0
+                ].zone_id
+
+        for core in cores:
+            if core.kind in drawn_kinds:
+                logger.debug(f"[route-finder] {core.label}: plans already type {core.kind}")
+                continue
+            served = [f for f in (core.floors or floors) if f in anchor]
+            previous: Optional[str] = None
+            for f in served:
+                zid = f"vertical::{core.entity_id.rsplit('#', 1)[-1]}::{f}"
+                self.nodes[zid] = _Node(
+                    zone_id=zid,
+                    label=f"{core.label} (floor {f})",
+                    floor=f,
+                    type=core.kind,
+                    xy_m=None,  # unknown, and left unknown
+                    neighbours={anchor[f]},
+                )
+                self.nodes[anchor[f]].neighbours.add(zid)
+                if previous is not None:
+                    self.nodes[previous].neighbours.add(zid)
+                    self.nodes[zid].neighbours.add(previous)
+                previous = zid
+                self.inferred_vertical.add(zid)
+                if core.floors_assumed:
+                    self.assumed_coverage.add(core.entity_id)
+
+        if self.inferred_vertical:
+            logger.info(
+                f"[route-finder] attached {len(self.inferred_vertical)} node(s) for vertical "
+                f"circulation the ontology declares and the floor plans do not draw; routes "
+                f"through them are reported as approximate"
+            )
 
     # ── search ─────────────────────────────────────────────────────────────
 
@@ -237,6 +322,7 @@ class RouteFinder:
             distance_m=round(dist[dest], 1) if self._has_scale(path) else None,
             step_free=step_free,
             used_stairs=any(n.type == "staircase" for n in nodes),
+            approximate_vertical=any(z in self.inferred_vertical for z in path),
         )
 
     def nearest(

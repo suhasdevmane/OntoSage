@@ -4182,6 +4182,18 @@ SELECT ?l WHERE {
             )
             if _absence_violation:
                 state.intermediate_results["absence_correction"] = _absence_violation
+
+            # The mirror case (CAVEAT-309): the answer reports a count of ZERO for
+            # something the ontology defines no class for. "0 desks available" reads
+            # as every desk being taken, about a thing nobody ever modelled. Only
+            # rewrites when the graph confirms no such class exists.
+            from orchestrator.services.unmodelled_entities import (
+                guard_answer as _unmodelled_guard,
+            )
+
+            final_response, _unmodelled = await _unmodelled_guard(final_response, _sx)
+            if _unmodelled:
+                state.intermediate_results["unmodelled_correction"] = _unmodelled
         except Exception as _ag_err:
             logger.debug(f"absence guard skipped: {_ag_err}")
 

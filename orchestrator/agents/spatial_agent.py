@@ -202,7 +202,12 @@ class SpatialAgent:
             _blocked = None
             if _STEP_FREE_RE.search(query or ""):
                 _blocked = await _blocked_vertical_nodes_for(manifests)
-            return self._answer(query, manifests, _blocked)
+            # Vertical circulation the ONTOLOGY declares and the plans never drew.
+            # bldg1's route graph typed zero lifts and zero staircases across 344
+            # spaces, so every cross-floor route returned nothing while the graph
+            # held a passenger lift and two staircases all along (CAVEAT-313).
+            _cores = await _declared_vertical_cores_for(manifests)
+            return self._answer(query, manifests, _blocked, _cores)
         except Exception as e:
             logger.error(f"[SpatialAgent] Error: {e}", exc_info=True)
             return "I encountered an error analysing the spatial data. Please try again."
@@ -214,17 +219,18 @@ class SpatialAgent:
         query: str,
         manifests: List[FloorPlanManifest],
         blocked_verticals: Optional[dict] = None,
+        vertical_cores: Optional[list] = None,
     ) -> str:
         q = query.lower()
 
         # Nearest-facility search sits above wayfinding: "how do I get to the
         # NEAREST toilet" is a nearest question with route guidance (V5-T27)
         if _NEAREST_RE.search(q) and any(pat.search(q) for pat, _t, _l in _NEAREST_TARGETS):
-            return self._answer_nearest(query, manifests)
+            return self._answer_nearest(query, manifests, vertical_cores)
 
         # Wayfinding takes priority (before adjacency — "get to X from Y" ≠ "next to X")
         if _WAYFINDING_RE.search(q):
-            return self._answer_wayfinding(query, manifests, blocked_verticals)
+            return self._answer_wayfinding(query, manifests, blocked_verticals, vertical_cores)
 
         # Adjacency query takes priority (before area checks)
         if _ADJ_RE.search(q):
@@ -463,7 +469,12 @@ class SpatialAgent:
 
     # ── Wayfinding ────────────────────────────────────────────────────────────
 
-    def _answer_nearest(self, query: str, manifests: List[FloorPlanManifest]) -> str:
+    def _answer_nearest(
+        self,
+        query: str,
+        manifests: List[FloorPlanManifest],
+        vertical_cores: Optional[list] = None,
+    ) -> str:
         """'nearest toilet to RM119' → closest matching space + hops + metres (V5-T27)."""
         target_types = None
         target_label = None
@@ -495,7 +506,7 @@ class SpatialAgent:
         try:
             from orchestrator.services.route_finder import METHOD_NOTE, RouteFinder
 
-            rf = RouteFinder(manifests)
+            rf = RouteFinder(manifests, vertical_cores=vertical_cores)
             step_free = bool(_STEP_FREE_RE.search(query))
             hit = rf.nearest(
                 src_zone,
@@ -523,6 +534,7 @@ class SpatialAgent:
         query: str,
         manifests: List[FloorPlanManifest],
         blocked_verticals: Optional[dict] = None,
+        vertical_cores: Optional[list] = None,
     ) -> str:
         """BFS route guidance between two named spaces in the building."""
         zone_to_space: Dict[str, Space] = {}
@@ -567,7 +579,7 @@ class SpatialAgent:
         try:
             from orchestrator.services.route_finder import METHOD_NOTE, RouteFinder
 
-            rf = RouteFinder(manifests)
+            rf = RouteFinder(manifests, vertical_cores=vertical_cores)
             # A lift with an OPEN outage is not a slower way up; it is not a way up.
             # Step-free routes change floors only by lift, so a broken one can remove
             # the only accessible route there is — and a route still labelled
@@ -613,8 +625,13 @@ class SpatialAgent:
                 for i, zid in enumerate(rr.path):
                     space = zone_to_space.get(zid)
                     fl = rr.floors[i]
-                    label = space.label if space else zid
-                    stype = space.type if space else ""
+                    # A declared-but-undrawn shaft has no manifest space, so its label
+                    # and type come from the route graph. Without this the step read
+                    # "Continue through vertical::Lift_Main::0" — the right route,
+                    # narrated as gibberish.
+                    _node = rf.nodes.get(zid)
+                    label = space.label if space else (_node.label if _node else zid)
+                    stype = space.type if space else (_node.type if _node else "")
                     floor_note = f" _(floor {prev_floor} → {fl})_" if fl != prev_floor else ""
                     prev_floor = fl
                     if i == 0:
@@ -627,6 +644,8 @@ class SpatialAgent:
                         verb = "Take" if stype in ("lift", "staircase") else "Continue through"
                         lines.append(f"{i + 1}. {verb} {label} (`{zid}`){floor_note}")
                 lines += ["", METHOD_NOTE]
+                if rr.vertical_note:
+                    lines += ["", rr.vertical_note]
                 return "\n".join(lines)
         except Exception as rf_err:  # the legacy path still answers
             logger.warning(f"[spatial] route-finder failed, using legacy BFS: {rf_err}")
@@ -887,6 +906,26 @@ class SpatialAgent:
         except Exception:
             pass
         return cands
+
+
+async def _declared_vertical_cores_for(manifests) -> list:
+    """Lifts and staircases the ontology declares, for the route graph.
+
+    Mirrors the availability lookup below: module-level and failure-tolerant, so a
+    graph that is unreachable leaves routing exactly as it was rather than taking
+    the lane down. A building whose floor plans already type their shafts gets
+    nothing from this -- RouteFinder skips a kind the manifests already draw.
+    """
+    try:
+        from orchestrator.services.deliberation.live import sparql_exec
+        from orchestrator.services.vertical_circulation import declared_cores
+        from shared.config import settings
+
+        floors = sorted({int(getattr(m, "floor", 0) or 0) for m in manifests or []})
+        return await declared_cores(settings.BUILDING_NAMESPACE, sparql_exec, floors)
+    except Exception as exc:
+        logger.debug(f"[spatial] declared vertical cores unavailable: {exc}")
+        return []
 
 
 async def _blocked_vertical_nodes_for(manifests) -> dict:
