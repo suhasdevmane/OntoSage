@@ -149,8 +149,8 @@ def test_potability_is_refused_for_a_building_that_is_not_synthetic(gen, tmp_pat
         "helpdesk": "X",
         "topics": [],
     }
-    ttl_real, _ = gen.render("bldgreal", info, prof, "real")
-    ttl_synth, _ = gen.render("bldgsynth", info, prof, "synthetic")
+    ttl_real, _b, _s = gen.render("bldgreal", info, prof, "real")
+    ttl_synth, _b2, _s2 = gen.render("bldgsynth", info, prof, "synthetic")
     assert "PotabilityStatement" not in ttl_real
     assert "false health claim" in ttl_real
     assert "PotabilityStatement" in ttl_synth
@@ -176,7 +176,7 @@ def test_an_unlocatable_amenity_gets_no_service_state(gen):
         "helpdesk": "X",
         "topics": [],
     }
-    ttl, broken = gen.render("bx", info, prof, "synthetic")
+    ttl, broken, _sk = gen.render("bx", info, prof, "synthetic")
     assert broken == 0
     assert "AssetStatus" not in ttl
 
@@ -202,5 +202,5 @@ def test_locatable_means_located_not_floor_tagged(gen):
         "helpdesk": "X",
         "topics": [],
     }
-    _ttl, broken = gen.render("bx", info, prof, "synthetic")
+    _ttl, broken, _sk = gen.render("bx", info, prof, "synthetic")
     assert broken == 1

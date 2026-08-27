@@ -145,6 +145,16 @@ class Reach:
         )
 
 
+#: "How do I ..." asks what the ASKER should do. It is the shape of every procedure
+#: question a building answers -- report a fault, book a room, get an access card -- and
+#: none of them is about the system's reach. Deliberately anchored on the person: "how
+#: does the building report CO2?" is still a reach question and still matches.
+PROCEDURE_ASK_RE = re.compile(
+    r"\bhow\s+(?:do|can|could|should|would)\s+(?:i|we|you)\b",
+    re.IGNORECASE,
+)
+
+
 def is_observability_question(text: str) -> bool:
     """True when the question is about the system's REACH rather than about a reading.
 
@@ -153,6 +163,14 @@ def is_observability_question(text: str) -> bool:
     first with the second is worse — it withholds data the building has.
     """
     if not text or not text.strip():
+        return False
+    if PROCEDURE_ASK_RE.search(text):
+        # "How do I report a fault?" is a question about what the ASKER should do,
+        # not about what the building can observe. CAN_MEASURE_RE matched it on
+        # "do I ... report" and answered "which space did you mean? I can say what
+        # is measured in a particular room" -- a reach answer to a procedure
+        # question, measured live on bldg2. The reporting route is a knowledge
+        # topic; this lane has nothing to say about it.
         return False
     return bool(CAN_MEASURE_RE.search(text) or CAN_ANSWER_RE.search(text))
 

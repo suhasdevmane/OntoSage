@@ -175,11 +175,29 @@ def test_real_datasources_are_refused_in_the_source(linker):
     assert "REFUSING to seed" in src
 
 
-def test_the_registry_still_marks_the_real_source(linker):
-    """If this flips, the guard above silently protects nothing."""
-    dbs = linker.registry() or _registry_any_state()
-    real = [k for k, v in dbs.items() if isinstance(v, dict) and v.get("nature") == "real"]
-    assert real, "no datasource declares nature: real — the seed guard has nothing to protect"
+def test_the_registry_still_marks_the_real_source():
+    """If this flips, the guard above silently protects nothing.
+
+    Scans EVERY building's registry, not the active one. bldg2 and bldg3 are wholly
+    synthetic and correctly declare no real source, so reading only the live building
+    made this fail the moment bldg2 was swapped in — asserting which building was
+    active rather than that the marking survives.
+    """
+    import yaml as _yaml
+
+    paths = [REPO / "input" / "database_registry.yaml"]
+    paths += sorted(REPO.glob("bldg*/database_registry.yaml"))
+    real = []
+    for path in paths:
+        if not path.is_file():
+            continue
+        dbs = (_yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("databases") or {}
+        real += [
+            f"{path.parent.name}:{k}"
+            for k, v in dbs.items()
+            if isinstance(v, dict) and v.get("nature") == "real"
+        ]
+    assert real, "no datasource anywhere declares nature: real — the seed guard protects nothing"
 
 
 def test_generated_streams_are_declared_simulated(linker):

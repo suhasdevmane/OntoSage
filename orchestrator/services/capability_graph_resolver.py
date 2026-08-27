@@ -74,6 +74,14 @@ class CapabilityFact:
     #: Read so a question naming a floor can be answered with THAT floor's amenity:
     #: "where can I fill my bottle on floor 3?" listed floors 0, 1 and 2 (BUG-337).
     on_floor: str = ""
+    #: The lay phrasings the BUILDING declared for this amenity. Carried so the
+    #: caller's on-topic guard can see them: a building that declares "fill my
+    #: bottle" has said this amenity answers that question, and rejecting it for
+    #: not repeating the word in its prose overrules the building about its own
+    #: vocabulary (measured on bldg2, which declined a question it had four
+    #: amenities for). NOT rendered into the answer -- it is matching surface,
+    #: not prose.
+    lay_terms: str = ""
 
     def render(self) -> str:
         head = f"**{self.label}**"
@@ -280,6 +288,7 @@ class CapabilityGraphResolver:
                 potability_authority=am.potability_authority,
                 potability_issued_on=am.potability_issued_on,
                 on_floor=am.on_floor,
+                lay_terms=", ".join(am.lay_phrases),
             )
             for _, am in scored[:_MAX_FACTS]
         ]

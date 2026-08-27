@@ -38,16 +38,6 @@ bldg:Topic_LostProperty a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     ontosage:contactPhone "+44 20 7946 0999" ;
     ontosage:isSimulated "true"^^xsd:boolean .
 
-bldg:Topic_ReportFault a ontosage:KnowledgeTopic , ontosage:Procedure ;
-    rdfs:label "Reporting a fault"@en ;
-    ontosage:capabilityCategory "PROCEDURE" ;
-    ontosage:layTerms "report a fault, something is broken, report a problem, maintenance, who do i tell" ;
-    ontosage:answerText "Faults go to the Northgate services desk." ;
-    ontosage:reportTo "Northgate services desk" ;
-    ontosage:contactEmail "services@northgate.example.org" ;
-    ontosage:steps "Note the room and floor; Say what is wrong; Send it to the desk" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
-
 bldg:Topic_OpeningHours a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     rdfs:label "Opening hours"@en ;
     ontosage:capabilityCategory "INFORMATION" ;

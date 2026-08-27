@@ -170,8 +170,14 @@ def building_dir(building_id: str) -> Optional[Path]:
     return parked if parked.is_dir() else None
 
 
-def discover(bdir: Path) -> Dict[str, Any]:
-    """Namespace, floors, rooms and amenities, from the building's own files."""
+def discover(bdir: Path, exclude: Optional[str] = None) -> Dict[str, Any]:
+    """Namespace, floors, rooms and amenities, from the building's own files.
+
+    ``exclude`` skips the file this run is about to overwrite. Without it the
+    generator reads its OWN previous output as "the building already answers
+    that" and a re-run skips everything it wrote last time -- which looked
+    exactly like a building that was already complete.
+    """
     import rdflib
 
     brick = rdflib.Namespace("https://brickschema.org/schema/Brick#")
@@ -180,7 +186,7 @@ def discover(bdir: Path) -> Dict[str, Any]:
     ns = ""
     g = rdflib.Graph()
     for f in sorted(bdir.glob("*.ttl")):
-        if f.name.lower().startswith("brick"):
+        if f.name.lower().startswith("brick") or (exclude and f.name == exclude):
             continue
         text = f.read_text(encoding="utf-8", errors="replace")
         if not ns:
@@ -219,11 +225,21 @@ def discover(bdir: Path) -> Dict[str, Any]:
                 "space": str(located_in or "").rsplit("#", 1)[-1],
             }
         )
+    # What the building ALREADY answers. Authoring a second fault-reporting topic
+    # gave bldg2 two answers with different contacts -- "Estates helpdesk" and
+    # "Wellman facilities desk" -- in one reply. Two contradictory routes to report
+    # a fault is worse than one, and the second was mine.
+    existing_terms: List[str] = []
+    for s_ in g.subjects(rdflib.RDF.type, onto.KnowledgeTopic):
+        for term in g.objects(s_, onto.layTerms):
+            existing_terms += [t.strip().lower() for t in str(term).split(",") if t.strip()]
+
     return {
         "namespace": ns,
         "floors": locals_of(brick.Floor),
         "rooms": locals_of(brick.Room),
         "amenities": sorted(amenities, key=lambda a: a["local"]),
+        "existing_lay_terms": sorted(set(existing_terms)),
     }
 
 
@@ -285,7 +301,24 @@ def render(building_id: str, info: Dict[str, Any], prof: Dict[str, Any], nature:
         "",
     ]
 
+    covered = set(info.get("existing_lay_terms") or [])
+
+    def _already_answered(lay: str) -> bool:
+        """Does the building already answer this? Overlap on a DISTINCTIVE term.
+
+        Compared on lay terms rather than topic names because the same question is
+        named differently by different authors -- bldg2 called it "Reporting a
+        fault" and so did the profile, but a building that called it "Maintenance
+        requests" would still be answering the same question.
+        """
+        mine = {t.strip().lower() for t in lay.split(",") if len(t.strip()) > 4}
+        return len(mine & covered) >= 2
+
+    skipped: List[str] = []
     for name, lay, answer in prof.get("topics", []):
+        if _already_answered(lay):
+            skipped.append(name)
+            continue
         out += [
             f"bldg:Topic_{name} a ontosage:KnowledgeTopic , ontosage:InformationTopic ;",
             f'    rdfs:label "{re.sub(r"(?<!^)(?=[A-Z])", " ", name)}"@en ;',
@@ -298,20 +331,28 @@ def render(building_id: str, info: Dict[str, Any], prof: Dict[str, Any], nature:
             out.append(f'    ontosage:contactPhone "{prof["phone"]}" ;')
         out += ['    ontosage:isSimulated "true"^^xsd:boolean .', ""]
 
-    # A reporting route and an opening-hours topic every building should be able to answer.
-    out += [
-        "bldg:Topic_ReportFault a ontosage:KnowledgeTopic , ontosage:Procedure ;",
-        '    rdfs:label "Reporting a fault"@en ;',
-        '    ontosage:capabilityCategory "PROCEDURE" ;',
-        '    ontosage:layTerms "report a fault, something is broken, report a problem, '
-        'maintenance, who do i tell" ;',
-        f'    ontosage:answerText "Faults go to the {prof["helpdesk"]}." ;',
-        f'    ontosage:reportTo "{prof["helpdesk"]}" ;',
-        f'    ontosage:contactEmail "{prof["email"]}" ;',
-        '    ontosage:steps "Note the room and floor; Say what is wrong; Send it to the desk" ;',
-        '    ontosage:isSimulated "true"^^xsd:boolean .',
-        "",
-    ]
+    # A reporting route and an opening-hours topic every building should be able to
+    # answer -- unless it already does.
+    _report_lay = (
+        "report a fault, something is broken, report a problem, maintenance, who do i tell"
+    )
+    if _already_answered(_report_lay):
+        skipped.append("ReportFault")
+    else:
+        out += [
+            "bldg:Topic_ReportFault a ontosage:KnowledgeTopic , ontosage:Procedure ;",
+            '    rdfs:label "Reporting a fault"@en ;',
+            '    ontosage:capabilityCategory "PROCEDURE" ;',
+            '    ontosage:layTerms "report a fault, something is broken, report a problem, '
+            'maintenance, who do i tell" ;',
+            f'    ontosage:answerText "Faults go to the {prof["helpdesk"]}." ;',
+            f'    ontosage:reportTo "{prof["helpdesk"]}" ;',
+            f'    ontosage:contactEmail "{prof["email"]}" ;',
+            '    ontosage:steps "Note the room and floor; Say what is wrong; Send it to the '
+            'desk" ;',
+            '    ontosage:isSimulated "true"^^xsd:boolean .',
+            "",
+        ]
     if prof.get("hours"):
         out += [
             "bldg:Topic_OpeningHours a ontosage:KnowledgeTopic , ontosage:InformationTopic ;",
@@ -412,24 +453,130 @@ def render(building_id: str, info: Dict[str, Any], prof: Dict[str, Any], nature:
             f"# (provenance.nature = {nature!r}).",
             "",
         ]
-    return "\n".join(out), broken
+    return "\n".join(out), broken, skipped
+
+
+#: Answers that mean "I could not answer", however politely phrased. A context topic
+#: that lands on one of these is authored-but-unreachable, which is the failure this
+#: probe exists for: the triples are in the graph and the question still gets nothing.
+_REFUSALS = (
+    "don't have",
+    "do not have",
+    "no information",
+    "not available",
+    "couldn't find",
+    "could not find",
+    "unable to",
+    "no data",
+    "i'm not able",
+    "cannot answer",
+    "couldn't generate a response",
+)
+
+
+def probe(building_id: str, bdir: Path, base: str, timeout: float) -> int:
+    """Ask the live building one question per authored lay term; report what answers.
+
+    The generator is the only thing that knows which lay terms it authored, so it is
+    the right thing to check them. Authoring and verifying split across two owners is
+    how this project's recurring defect works -- a capability lands, is correct, is
+    tested, and nothing ever calls it (lessons.md #87).
+    """
+    import importlib.util as _il
+    import json as _json
+    import re as _re
+    import urllib.request as _rq
+
+    # /chat is RBAC-gated; an unauthenticated probe returns 401 for every question,
+    # which reads exactly like "the building answers nothing". Reuse the login the
+    # other probes use rather than adding a fourth copy of it.
+    repo = Path(__file__).resolve().parents[1]
+    spec = _il.spec_from_file_location("_cap", str(repo / "scripts" / "capture_golden_baseline.py"))
+    cap = _il.module_from_spec(spec)
+    spec.loader.exec_module(cap)
+    try:
+        token = cap._login(base)
+    except Exception as exc:  # pragma: no cover - live probe
+        print(f"cannot authenticate against {base}: {exc}")
+        return 1
+
+    path = bdir / f"{building_id}_context.ttl"
+    if not path.is_file():
+        print(f"no {path.name} to probe -- generate it first")
+        return 1
+    text = path.read_text(encoding="utf-8")
+
+    # One question per authored topic: its first lay term, which is the phrasing a
+    # person actually types. Later terms are synonyms of the same thing.
+    questions: List[Tuple[str, str]] = []
+    for block in _re.finditer(r'ontosage:layTerms\s+"([^"]+)"', text):
+        first = block.group(1).split(",")[0].strip()
+        if first:
+            questions.append((first, f"{first}?"))
+
+    if not questions:
+        print(f"{path.name} authors no lay terms")
+        return 1
+
+    print(f"probing {len(questions)} authored topic(s) on {building_id} via {base}\n")
+    answered = 0
+    for term, q in questions:
+        body = _json.dumps({"message": q, "session_id": f"probe-{building_id}-{_stable(term)}"})
+        req = _rq.Request(
+            f"{base}/chat",
+            data=body.encode(),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}",
+            },
+        )
+        try:
+            with _rq.urlopen(req, timeout=timeout) as r:  # noqa: S310 - local only
+                payload = _json.loads(r.read().decode("utf-8", "replace"))
+        except Exception as exc:  # pragma: no cover - live probe
+            print(f"  ERROR  {term!r}: {exc}")
+            continue
+        reply = payload.get("response") or payload.get("data", {}).get("response") or ""
+        low = reply.lower()
+        refused = any(marker in low for marker in _REFUSALS)
+        verdict = "REFUSED" if refused else "answered"
+        if not refused:
+            answered += 1
+        print(f"  {verdict:9s} {term!r}")
+        print(f"            {' '.join(reply.split())[:160]}")
+    print(f"\n{answered}/{len(questions)} authored topics answer on {building_id}")
+    return 0 if answered == len(questions) else 2
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Author context data for a building.")
     ap.add_argument("--building-id", required=True)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument(
+        "--probe",
+        action="store_true",
+        help="ask the LIVE building one question per authored lay term instead of writing",
+    )
+    ap.add_argument("--base", default="http://127.0.0.1:8000")
+    ap.add_argument("--timeout", type=float, default=180.0)
     args = ap.parse_args()
+
+    if args.probe:
+        d = building_dir(args.building_id)
+        if d is None:
+            print(f"No directory for {args.building_id}")
+            return 1
+        return probe(args.building_id, d, args.base.rstrip("/"), args.timeout)
 
     bdir = building_dir(args.building_id)
     if bdir is None:
         print(f"No directory for {args.building_id} (looked for input/ and {args.building_id}/)")
         return 1
 
-    info = discover(bdir)
+    info = discover(bdir, exclude=f"{args.building_id}_context.ttl")
     prof = profile_for(args.building_id, bdir)
     nature = provenance_nature(bdir)
-    ttl, broken = render(args.building_id, info, prof, nature)
+    ttl, broken, skipped = render(args.building_id, info, prof, nature)
 
     print(f"{args.building_id}: ns={info['namespace']}")
     print(
@@ -440,6 +587,10 @@ def main() -> int:
         f"  authoring {len(prof.get('topics', []))} profile topic(s) + report route"
         f"{' + hours' if prof.get('hours') else ''}"
     )
+    if skipped:
+        # Said out loud. A topic silently omitted looks identical to a topic the
+        # profile never had, and the reason matters: the building already answers it.
+        print(f"  skipped {len(skipped)} topic(s) the building already answers: {skipped}")
     print(f"  {broken} amenity/amenities marked out of service")
     print(
         f"  potability: {'authored' if nature == 'synthetic' else f'REFUSED (nature={nature!r})'}"
