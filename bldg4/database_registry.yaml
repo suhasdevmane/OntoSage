@@ -1,0 +1,22 @@
+# Time-series routing for bldg4.
+#
+# The TTL says `ref:storedAt bldg:database4`; this maps that key to a backend.
+# Points at the same MySQL container the other buildings use, with its own
+# database name, so onboarding does not need new infrastructure.
+
+databases:
+  database4:
+    type: mysql
+    host: ${MYSQL_HOST:-host.docker.internal}
+    port: ${MYSQL_PORT:-3306}
+    database: ${MYSQL_DATABASE:-bldg4db}
+    user: ${MYSQL_USER:-ontosage}
+    password: ${MYSQL_PASSWORD}
+    table: sensor_readings
+    schema: narrow
+    columns:
+      uuid: uuid
+      timestamp: datetime
+      value: value
+    nature: synthetic
+    note: "Generated readings for a fictional building."
