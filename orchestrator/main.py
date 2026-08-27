@@ -4076,7 +4076,9 @@ async def upload_ontology_ttl(
     reset and reloads on restart. Non-file graphs (e.g. ``urn:ontosage:custom:*``) are
     written to GraphDB only and flagged as not-persisted in the response."""
     from orchestrator.services.input_ttl_store import (
+        conflicting_input_file,
         filename_from_graph_uri,
+        graph_uri_for_filename,
         persist_ttl_file,
     )
     from orchestrator.services.ontology_manager import upload_ttl, validate_ttl_text
@@ -4095,6 +4097,23 @@ async def upload_ontology_ttl(
             success=bool(result.get("ok")),
             error=None if result.get("ok") else "graph sync failed",
             data=result,
+        )
+
+    # A hand-named graph whose local name matches a file in input/ becomes a SECOND
+    # copy of that file the next time the boot uploader discovers it (BUG-250), and
+    # every joined point then comes back twice. Refuse, and name the graph to use.
+    clash = conflicting_input_file(body.graph_uri)
+    if clash:
+        return APIResponse(
+            success=False,
+            error=(
+                f"'{body.graph_uri}' would duplicate input/{clash}: the boot uploader "
+                f"loads that file into its own graph, so the building would hold both "
+                f"copies and every joined point would be returned twice. Upload into "
+                f"'{graph_uri_for_filename(clash)}' instead — that graph IS the file, "
+                f"so the upload updates it rather than shadowing it."
+            ),
+            data={"graph": body.graph_uri, "conflicts_with": clash, "persisted": False},
         )
 
     result = await upload_ttl(body.ttl, body.graph_uri, replace=body.replace)

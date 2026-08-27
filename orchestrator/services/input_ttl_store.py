@@ -83,6 +83,37 @@ def filename_from_graph_uri(graph_uri: str) -> Optional[str]:
     return None
 
 
+def conflicting_input_file(graph_uri: str) -> Optional[str]:
+    """The input/ TTL that a non-file graph URI would end up duplicating, if any.
+
+    input/bldg1_plant_points.ttl was once uploaded into a hand-named graph
+    ("abacws#bldg1_plant_points") to avoid a four-minute restart. On the next boot
+    ttl_uploader discovered the same FILE — it matches bldg1_*.ttl — and loaded it
+    into its own graph as well. The building then held both copies, and every point
+    came back twice through any blank-node join: the reference fan-out shape that
+    made CAVEAT-039 a live wrong-answer defect (BUG-250).
+
+    The trigger is a name collision, so that is what this detects: the graph's local
+    name, with any .ttl suffix removed, matching the stem of a file in input/.
+    """
+    if not graph_uri or filename_from_graph_uri(graph_uri):
+        return None  # a file graph is already the uploader's own convention
+    local = graph_uri
+    for sep in ("#", "/", ":"):
+        local = local.rsplit(sep, 1)[-1]
+    stem = local[:-4] if local.lower().endswith(".ttl") else local
+    if not stem:
+        return None
+    try:
+        input_dir = writable_input_dir()
+    except Exception:  # pragma: no cover — no active building
+        return None
+    for ttl in sorted(input_dir.glob("*.ttl")):
+        if ttl.stem.lower() == stem.lower():
+            return ttl.name
+    return None
+
+
 def _building_namespace(building_id: str) -> str:
     try:
         from orchestrator.services.building_context import resolve_building_context
