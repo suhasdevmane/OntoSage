@@ -1,0 +1,18 @@
+# Site-level locations the building references but never declared (2026-08-27).
+#
+# `bldg:BuildingExterior` is where feeds.yaml puts the three Open-Meteo weather
+# points, and the feed framework registers them against it on every boot -- against
+# a subject that appears in NO TTL. The same dangling-reference defect as the phantom
+# AHUs (BUG-249), hidden from the TTL scan because the reference is made from a YAML
+# file rather than from a triple.
+#
+# Found by diffing the live graph against what input/ can reproduce, before a rebuild.
+
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+bldg:BuildingExterior a brick:Outside ;
+    rdfs:label "Building exterior" ;
+    rdfs:comment "Outdoor location for weather observations taken at the building. Declared so the outside-air points that feeds.yaml registers here hang off a real subject." ;
+    brick:isPartOf bldg:AbacwsBuilding .

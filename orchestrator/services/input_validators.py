@@ -726,6 +726,101 @@ def validate_potability_statements(path: Path) -> Tuple[bool, List[str]]:
     return (not issues), issues
 
 
+#: NOT a regex. `appliesToOutlet A , B , C ;` was matched with a repeated,
+#: lazily-quantified group, which backtracks catastrophically on a 78k-line TTL:
+#: the validator ran for over ten minutes on the real building and looked like a
+#: hang. A linear scan to the terminator is both faster and easier to be sure of.
+_OUTLET_PREDICATE = "ontosage:appliesToOutlet"
+
+
+def _outlets_in(block: str) -> tuple:
+    """Every outlet named by an appliesToOutlet clause in one statement block."""
+    found: set = set()
+    at = block.find(_OUTLET_PREDICATE)
+    while at != -1:
+        start = at + len(_OUTLET_PREDICATE)
+        stop = block.find(";", start)
+        clause = block[start : stop if stop != -1 else len(block)]
+        found.update(_TERM_RE.findall(clause))
+        at = block.find(_OUTLET_PREDICATE, start)
+    return tuple(sorted(found))
+
+
+_SIMULATED_RE = re.compile(r"ontosage:isSimulated\s+(?:\"?true\"?)", re.I)
+
+
+def _potability_claims(text: str):
+    """(subject, value, outlets, simulated) for every statement in `text`."""
+    out = []
+    for m in _POTABILITY_SUBJECT_RE.finditer(text):
+        subject = m.group(1)
+        end = text.find(" .", m.end())
+        block = text[m.start() : end if end != -1 else len(text)]
+        vm = re.search(r'ontosage:potabilityValue\s+"([^"]*)"', block)
+        outlets = _outlets_in(block)
+        out.append(
+            (
+                subject,
+                (vm.group(1).strip().lower() if vm else ""),
+                outlets,
+                bool(_SIMULATED_RE.search(block)),
+            )
+        )
+    return out
+
+
+def validate_potability_agreement(path: Path) -> Tuple[bool, List[str]]:
+    """No outlet may carry two different drinkability verdicts.
+
+    bldg1 briefly held both: five SIMULATED statements from the synthetic
+    provisioner -- two of them ``not_potable``, attributed to a plausible-sounding
+    "Estates Water Safety Group" that never said any such thing -- alongside the
+    owner's real statement that the water has been potable since the building
+    opened. Two contradictory health claims about the same taps, one of them
+    invented, is the exact harm Module P was written to prevent, and nothing
+    checked for it.
+
+    A simulated claim losing to a real one would still leave the graph asserting
+    both, so the rule is stricter: they must not coexist at all.
+    """
+    if not path.is_dir():
+        return True, []
+    claims = []
+    for ttl in sorted(path.glob("*.ttl")):
+        if ttl.name.lower().startswith("brick"):
+            continue
+        try:
+            text = _strip_turtle_comments(ttl.read_text(encoding="utf-8", errors="replace"))
+        except OSError:  # pragma: no cover - unreadable file
+            continue
+        for subject, value, outlets, simulated in _potability_claims(text):
+            claims.append((ttl.name, subject, value, outlets, simulated))
+
+    issues: List[str] = []
+    by_outlet: Dict[str, List[Tuple[str, str, str, bool]]] = {}
+    for fname, subject, value, outlets, simulated in claims:
+        for outlet in outlets:
+            by_outlet.setdefault(outlet, []).append((fname, subject, value, simulated))
+    for outlet, entries in sorted(by_outlet.items()):
+        values = {v for _f, _s, v, _sim in entries if v}
+        if len(values) > 1:
+            who = ", ".join(f"{s} ({v}, {f})" for f, s, v, _sim in entries)
+            issues.append(
+                f"{outlet} carries contradictory drinkability verdicts: {who} - two health "
+                f"claims about the same tap, at most one of which is true"
+            )
+        elif len(entries) > 1:
+            sims = [e for e in entries if e[3]]
+            reals = [e for e in entries if not e[3]]
+            if sims and reals:
+                issues.append(
+                    f"{outlet} has both a SIMULATED and a real potability statement "
+                    f"({sims[0][1]} and {reals[0][1]}) - a health claim about a real "
+                    f"building must not be simulated alongside the owner's own"
+                )
+    return (not issues), issues
+
+
 def validate_building_input(building_id: str, input_root: Path) -> Tuple[bool, Dict[str, Any]]:
     """Run all optional-file validators for a building directory.
 
@@ -775,6 +870,7 @@ def validate_building_input(building_id: str, input_root: Path) -> Tuple[bool, D
         ("sensor typing", bldg_dir, validate_measurand_typing),
         ("entity references", bldg_dir, validate_dangling_references),
         ("potability claims", bldg_dir, validate_potability_statements),
+        ("potability agreement", bldg_dir, validate_potability_agreement),
     ]
 
     for name, path, validator in checks:

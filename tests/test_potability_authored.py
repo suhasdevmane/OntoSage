@@ -25,7 +25,27 @@ from orchestrator.services.input_validators import (
 pytestmark = pytest.mark.unit
 
 _REPO = Path(__file__).resolve().parents[1]
-_STATEMENT = _REPO / "bldg1" / "bldg1_potability.ttl"
+
+
+def _building_dir() -> Path:
+    """bldg1's files, whether it is ACTIVE (input/) or parked (bldg1/).
+
+    A test that only knows one layout does not fail when the other is in use -- it
+    SKIPS, which reads as "checked and fine". Both states are normal here: the
+    committed tree has every building parked, and a live session has one active.
+    """
+    active = _REPO / "input"
+    if (active / "building.yaml").is_file():
+        return active
+    return _REPO / "bldg1"
+
+
+def _input_root() -> Path:
+    """The root to hand validate_building_input, for whichever layout is in use."""
+    return _REPO / "input" if (_REPO / "input" / "building.yaml").is_file() else _REPO
+
+
+_STATEMENT = _building_dir() / "bldg1_potability.ttl"
 
 
 def _ttl(d: Path, body: str) -> Path:
@@ -91,7 +111,7 @@ def test_a_statement_named_only_in_a_comment_is_not_checked(tmp_path):
 def test_bldg1_statement_is_complete_and_attributed():
     if not _STATEMENT.is_file():
         pytest.skip("bldg1 potability statement not present")
-    ok, issues = validate_potability_statements(_REPO / "bldg1")
+    ok, issues = validate_potability_statements(_building_dir())
     assert ok, "\n".join(issues)
     text = _STATEMENT.read_text(encoding="utf-8")
     assert "Cardiff University Estates" in text
@@ -141,7 +161,7 @@ def test_the_answer_reads_with_its_owner_and_date():
 
 
 def test_the_check_runs_as_part_of_building_validation():
-    ok, report = validate_building_input("bldg1", _REPO)
+    ok, report = validate_building_input("bldg1", _input_root())
     assert "potability claims" in report["files"], sorted(report["files"])
     assert report["files"]["potability claims"]["ok"], report["files"]["potability claims"][
         "issues"

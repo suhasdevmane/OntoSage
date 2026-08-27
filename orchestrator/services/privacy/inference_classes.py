@@ -102,7 +102,14 @@ _PER_CAPITA_RE = re.compile(
 INDIVIDUAL_ATTRIBUTION_RE = re.compile(
     # first person: "how much energy did I use", "my electricity usage", "my carbon footprint"
     rf"\b(?:did|do|have)\s+i\s+{_CONSUME}\b"
+    # "my <resource>" ONLY when a quantity is actually being asked about. Possessing a
+    # noun is not attribution: this alternative used to fire on any "my ... water",
+    # which refused "where can I fill my water bottle on floor 3?" as a privacy
+    # violation (measured live, 2026-08-27) and would equally have refused "my heating
+    # is not working" -- a maintenance report -- as one. The lookahead stops at
+    # sentence end so a cue from the NEXT sentence cannot rescue the match.
     rf"|\bmy\s+(?:own\s+)?(?:\w+\s+){{0,2}}{_RESOURCE}\b"
+    rf"(?=[^?.!]{{0,40}}\b(?:{_CONSUME}|footprint|bill|billed|total|kwh|figure)\b)"
     rf"|\bmy\s+{_RESOURCE}\s+{_CONSUME}\b"
     rf"|\bhow much\b.{{0,30}}\bdid i\b"
     # a person-superlative: "which employee uses the most electricity"

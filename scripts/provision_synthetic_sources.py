@@ -362,30 +362,29 @@ def gen_amenity_state(d: Dict, rnd: random.Random) -> str:
             f"    ontosage:isSimulated true .\n"
         )
 
-    # Potability: only for water-related amenities, and NOT for all of them.
+    # POTABILITY IS NOT GENERATED. It used to be, and it produced five simulated
+    # statements for this building -- two of them "not_potable" -- attributed to a
+    # plausible-sounding "Estates Water Safety Group" that never said any such thing.
+    #
+    # A simulated broken lift is a harmless demo: somebody walks to a lift, finds it
+    # working, and nothing is lost. A simulated potability statement is a false HEALTH
+    # claim about a real building's drinking water, and the schema that introduced the
+    # vocabulary says exactly why that is different: "a sensor reading does not support
+    # a health statement" and "being wrong about drinkability harms someone". The
+    # deliberate-imperfection argument that justifies a broken fountain does not reach
+    # this far.
+    #
+    # Potability is authored by the building's owner, with a real authority and a real
+    # date, or it is absent -- and absent renders as "nobody has assessed this outlet",
+    # which the schema names as a legitimate answer.
     water = [
         (iri, lab)
         for iri, lab in sorted(amenities)
         if any(w in (lab or _local(iri)).lower() for w in ("water", "fountain", "tap", "drink"))
     ]
-    for i, (iri, label) in enumerate(water):
-        if rnd.random() < 0.3:
-            continue  # no statement published for this outlet — an honest "unknown"
-        value = "potable" if rnd.random() < 0.85 else "not_potable"
-        issued = date.today() - timedelta(days=rnd.randint(20, 400))
-        out.append(
-            f"bldg:potability_{i} a ontosage:PotabilityStatement ;\n"
-            f'    rdfs:label "Potability statement - {label or _local(iri)}"@en ;\n'
-            f"    ontosage:appliesToOutlet bldg:{_local(iri)} ;\n"
-            f'    ontosage:potabilityValue "{value}" ;\n'
-            f'    ontosage:potabilityAuthority "Estates Water Safety Group" ;\n'
-            f'    ontosage:potabilityIssuedOn "{issued}"^^xsd:date ;\n'
-            f'    ontosage:layTerms "drinking water,potable,is the water safe,can I drink" ;\n'
-            f"    ontosage:isSimulated true .\n"
-        )
     print(
         f"  amenity state: {len(amenities)} amenities ({n_broken} out of service), "
-        f"{len(water)} water outlet(s) considered for potability"
+        f"{len(water)} water outlet(s) left for the OWNER to publish potability for"
     )
     return "".join(out)
 
