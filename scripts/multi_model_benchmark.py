@@ -636,7 +636,17 @@ def render(results: List[Dict[str, Any]], stamp: str) -> str:
         "",
         "The claim under test is not *which model scores best* — accuracy moves with the",
         "model and always will. It is that OntoSage's **guarantees do not move**: no",
-        "fabrication, no leak, and an identical deliberative plan, whoever is answering.",
+        "fabrication, no leak, and a deterministic deliberative plan.",
+        "",
+        "**The plan claim is narrower than it was, because measurement narrowed it.**",
+        "It was once stated as *an identical plan, whoever is answering*. Measured, that",
+        "is not true and not because of the models: the same model run twice reproduces",
+        "only some of its own plans, so cross-model agreement sits at or below run-to-run",
+        "variance and none of the observed difference can be attributed to the model",
+        "(CAVEAT-327). What IS true is that **the plan is deterministic given the same",
+        "compile** — the wobble is upstream, in what the CQ-IR step compiles, not in the",
+        "fingerprint of what was planned (BUG-184, CAVEAT-160). Every invariance number",
+        "below is therefore printed beside its noise floor, and must not be quoted alone.",
         "",
         "## Arms",
         "",
@@ -706,6 +716,11 @@ def render(results: List[Dict[str, Any]], stamp: str) -> str:
     # measures run-to-run wobble. Mixing it into the cross-model table would
     # charge that wobble to "the model changed the analysis", which is the one
     # conclusion this benchmark must not reach by accident.
+    # (same, total, base_arm) once a repeat control has been measured. Held so the
+    # cross-model summary can print it INLINE: a reader who copies '2/8 invariant'
+    # out of a report and leaves the noise floor behind has quoted a number that
+    # does not mean what it appears to mean (CAVEAT-327).
+    noise_floor: Optional[Tuple[int, int, str]] = None
     noise_arms = [r for r in complete if r.get("repeat_of")]
     model_arms = [r for r in complete if not r.get("repeat_of")]
 
@@ -730,6 +745,7 @@ def render(results: List[Dict[str, Any]], stamp: str) -> str:
                 if base.get("plan_kinds", {}).get(q) == "deliberative"
                 and rep.get("plan_kinds", {}).get(q) == "deliberative"
             )
+            noise_floor = (same, len(ids), rep["repeat_of"])
             lines += [
                 f"`{rep['repeat_of']}` run twice: **{same}/{len(ids)} plans identical**, "
                 f"{both_delib}/{len(ids)} deliberative in both runs.",
@@ -770,11 +786,28 @@ def render(results: List[Dict[str, Any]], stamp: str) -> str:
             lines.append(f"| {qid} | " + " | ".join(cells) + f" | {verdict} |")
 
         n = len(ids)
+        if noise_floor:
+            _same, _tot, _base = noise_floor
+            _nf = f" (noise floor {_same}/{_tot})"
+            _noise_caveat = (
+                f"> Cross-model agreement of {invariant}/{n} sits against a noise floor "
+                f"of {_same}/{_tot} measured on `{_base}` run twice. Agreement at or "
+                f"below that floor is indistinguishable from run-to-run variance, so "
+                f"nothing here is evidence that the MODEL changed the analysis."
+            )
+        else:
+            _nf = " (no noise floor measured)"
+            _noise_caveat = (
+                "> **No repeat control was run**, so there is no noise floor to compare "
+                "these numbers against. A cross-model difference cannot be attributed to "
+                "the model without one -- run an arm with `repeat_of` set."
+            )
         lines += [
             "",
-            f"- **invariant: {invariant}/{n}** — every model reached the deliberative lane "
-            "and computed the *same* plan.",
-            f"- **plan divergence: {divergent}/{n}** — all models deliberated but disagreed on "
+            f"- **invariant: {invariant}/{n}**{_nf} — every model reached the deliberative "
+            "lane and computed the *same* plan.",
+            f"- **plan divergence: {divergent}/{n}**{_nf} — all models deliberated but "
+            "disagreed on "
             "the plan. This is the failure the benchmark exists to catch: the model changed "
             "the analysis, not just the wording.",
             f"- **downgraded: {downgraded}/{n}** — at least one model did not sustain the "
@@ -782,9 +815,13 @@ def render(results: List[Dict[str, Any]], stamp: str) -> str:
             "a capability floor. The weaker the model, the more often ARBITER's compile step "
             "produces nothing usable and the pipeline degrades rather than deliberates.",
             "",
-            "Invariance is therefore **conditional**: the plan is deterministic *given* that the "
-            "model reaches the deliberative lane, and reaching it is model-sensitive. Reporting "
-            "a single 'identical' percentage would hide exactly that distinction.",
+            "Invariance is therefore **conditional**, in two ways. The plan is deterministic "
+            "*given* that the model reaches the deliberative lane, and reaching it is "
+            "model-sensitive. It is also deterministic only *given the same compile*: the "
+            "CQ-IR step wobbles at temperature 0, which is what the noise floor above "
+            "measures. Reporting a single 'identical' percentage would hide both.",
+            "",
+            _noise_caveat,
         ]
 
     incomplete = [r for r in results if r.get("status") != "COMPLETE"]

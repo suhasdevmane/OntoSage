@@ -143,3 +143,57 @@ def test_previous_user_questions_are_refused_by_shape():
         classify_inference("Summarise the complaints my colleague filed, with their name.")
         == "private_content"
     )
+
+
+# ── possessing a noun is not attribution (2026-08-27, found live) ────────────
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Where can I fill my water bottle on floor 3?",
+        "My heating is not working in room 5.01",
+        "Where is my water bottle?",
+        "The tap in my kitchen is leaking",
+    ],
+)
+def test_a_possessive_without_a_quantity_is_not_a_privacy_violation(question):
+    """`my <resource>` fired on ANY possessive: "fill my water bottle" was refused
+    live as an individual-attribution violation, and "my heating is not working" --
+    a maintenance report -- would have been refused the same way.
+
+    A refusal that lands on an ordinary question is not a safe default. It teaches
+    people the system is broken, and it hides the refusals that matter.
+    """
+    from orchestrator.services.privacy.inference_classes import INDIVIDUAL_ATTRIBUTION_RE
+
+    assert not INDIVIDUAL_ATTRIBUTION_RE.search(question), question
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "How much energy did I use last month?",
+        "What is my electricity usage?",
+        "My carbon footprint this year?",
+        "my energy consumption please",
+        "show me my water use",
+        "what is my electricity bill",
+        "Which employee uses the most electricity?",
+        "Break down energy by person",
+        "Bill each occupant for their power",
+    ],
+)
+def test_actual_individual_attribution_is_still_refused(question):
+    """Narrowing the pattern must not open the hole it exists to close."""
+    from orchestrator.services.privacy.inference_classes import INDIVIDUAL_ATTRIBUTION_RE
+
+    assert INDIVIDUAL_ATTRIBUTION_RE.search(question), question
+
+
+def test_a_cue_in_the_next_sentence_does_not_rescue_the_match():
+    """The lookahead stops at sentence end, so an unrelated following sentence
+    cannot turn a possessive into an attribution question."""
+    from orchestrator.services.privacy.inference_classes import INDIVIDUAL_ATTRIBUTION_RE
+
+    assert not INDIVIDUAL_ATTRIBUTION_RE.search(
+        "Where can I fill my water bottle? Also show total usage."
+    )

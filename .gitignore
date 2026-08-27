@@ -350,3 +350,7 @@ tasks/
 # carries the slimmed, pipeline-equivalent DXFs; the untouched originals stay
 # local (50-135 MB each — over GitHub's 100 MB limit).
 dxf_originals/
+
+# Session scratch from live verification runs — .live_token holds an auth token
+.live_token
+_ask.sh
