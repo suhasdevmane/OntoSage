@@ -20,24 +20,6 @@
 
 # ── knowledge topics ────────────────────────────────────────────────────────
 
-bldg:Topic_Wifi a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
-    rdfs:label "Wifi"@en ;
-    ontosage:capabilityCategory "INFORMATION" ;
-    ontosage:layTerms "wifi, wi-fi, wireless, internet, network, guest network" ;
-    ontosage:answerText "The building runs a campus wireless network; visitors use the guest SSID at reception." ;
-    ontosage:contactEmail "estates@wellman.example.org" ;
-    ontosage:contactPhone "+1 555 0147" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
-
-bldg:Topic_Parking a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
-    rdfs:label "Parking"@en ;
-    ontosage:capabilityCategory "INFORMATION" ;
-    ontosage:layTerms "parking, car park, where do i park, visitor parking, permit" ;
-    ontosage:answerText "Staff parking is by permit in the north lot; visitor bays are signposted from the main entrance." ;
-    ontosage:contactEmail "estates@wellman.example.org" ;
-    ontosage:contactPhone "+1 555 0147" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
-
 bldg:Topic_Recycling a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     rdfs:label "Recycling"@en ;
     ontosage:capabilityCategory "INFORMATION" ;
@@ -63,16 +45,6 @@ bldg:Topic_Bookings a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     ontosage:answerText "Rooms are booked through the campus booking system; the estates office can help with recurring bookings." ;
     ontosage:contactEmail "estates@wellman.example.org" ;
     ontosage:contactPhone "+1 555 0147" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
-
-bldg:Topic_ReportFault a ontosage:KnowledgeTopic , ontosage:Procedure ;
-    rdfs:label "Reporting a fault"@en ;
-    ontosage:capabilityCategory "PROCEDURE" ;
-    ontosage:layTerms "report a fault, something is broken, report a problem, maintenance, who do i tell" ;
-    ontosage:answerText "Faults go to the Wellman facilities desk." ;
-    ontosage:reportTo "Wellman facilities desk" ;
-    ontosage:contactEmail "estates@wellman.example.org" ;
-    ontosage:steps "Note the room and floor; Say what is wrong; Send it to the desk" ;
     ontosage:isSimulated "true"^^xsd:boolean .
 
 bldg:Topic_OpeningHours a ontosage:KnowledgeTopic , ontosage:InformationTopic ;

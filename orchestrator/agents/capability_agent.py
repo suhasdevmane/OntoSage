@@ -383,8 +383,19 @@ class CapabilityAgent:
                     filter_on_topic as _on_topic,
                 )
 
+                # The on-topic surface includes the LAY TERMS the building declared,
+                # not just the rendered prose. bldg2 declined "where can I fill my
+                # water bottle?" while holding four amenities whose lay terms say
+                # "fill my bottle" -- their prose never repeats the word, so the
+                # guard rejected every one and the building denied having them.
+                # Rejecting an amenity the building explicitly declared for that
+                # phrasing overrules the building about its own vocabulary.
                 _rendered = [
-                    {"text": f.render(), "doc_name": getattr(f, "label", "")} for f in _facts
+                    {
+                        "text": f.render() + " " + getattr(f, "lay_terms", ""),
+                        "doc_name": getattr(f, "label", ""),
+                    }
+                    for f in _facts
                 ]
                 _keep = {id(r) for r in _on_topic(state.user_message or "", _rendered)}
                 _pairs = [(f, r) for f, r in zip(_facts, _rendered) if id(r) in _keep]

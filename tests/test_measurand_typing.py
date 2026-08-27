@@ -141,10 +141,34 @@ def test_a_missing_directory_is_not_an_error():
 
 
 # ── wired into the swap-time report, not just available ──────────────────────
+def _validatable_building() -> tuple:
+    """(building_id, input_root) for a building this checkout can validate.
+
+    Prefers the ACTIVE building, because that is the one a live session is working
+    on. Hardcoding bldg1 made five tests fail the moment bldg2 was swapped in --
+    the tests were asserting which building was active rather than that the check
+    is wired.
+    """
+    import yaml
+
+    active = _REPO / "input" / "building.yaml"
+    if active.is_file():
+        try:
+            bid = yaml.safe_load(active.read_text(encoding="utf-8")).get("building_id")
+            if bid:
+                return bid, _REPO / "input"
+        except Exception:  # pragma: no cover
+            pass
+    for candidate in ("bldg1", "bldg2", "bldg3"):
+        if (_REPO / candidate / "building.yaml").is_file():
+            return candidate, _REPO
+    return "bldg1", _REPO
+
+
 def test_the_check_runs_as_part_of_building_validation():
     """A validator nothing calls is the recurring defect in this codebase
     (lessons.md #87): five capabilities shipped with no invoker."""
-    ok, report = validate_building_input("bldg1", _input_root())
+    ok, report = validate_building_input(*_validatable_building())
     assert "sensor typing" in report["files"], sorted(report["files"])
     assert report["files"]["sensor typing"]["ok"], report["files"]["sensor typing"]["issues"]
 

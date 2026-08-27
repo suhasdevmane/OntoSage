@@ -29,15 +29,6 @@ bldg:Topic_AccessCards a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     ontosage:contactPhone "+44 20 7946 0812" ;
     ontosage:isSimulated "true"^^xsd:boolean .
 
-bldg:Topic_FireProcedure a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
-    rdfs:label "Fire Procedure"@en ;
-    ontosage:capabilityCategory "INFORMATION" ;
-    ontosage:layTerms "fire, alarm, evacuate, evacuation, assembly point, drill" ;
-    ontosage:answerText "On the alarm, leave by the nearest exit and assemble in the courtyard. Drills are quarterly." ;
-    ontosage:contactEmail "site@buildsys.example.org" ;
-    ontosage:contactPhone "+44 20 7946 0812" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
-
 bldg:Topic_Cycling a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     rdfs:label "Cycling"@en ;
     ontosage:capabilityCategory "INFORMATION" ;
@@ -72,16 +63,6 @@ bldg:Topic_QuietSpace a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     ontosage:answerText "A bookable quiet room is available on the top floor for focused work and contemplation." ;
     ontosage:contactEmail "site@buildsys.example.org" ;
     ontosage:contactPhone "+44 20 7946 0812" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
-
-bldg:Topic_ReportFault a ontosage:KnowledgeTopic , ontosage:Procedure ;
-    rdfs:label "Reporting a fault"@en ;
-    ontosage:capabilityCategory "PROCEDURE" ;
-    ontosage:layTerms "report a fault, something is broken, report a problem, maintenance, who do i tell" ;
-    ontosage:answerText "Faults go to the BuildSys site office." ;
-    ontosage:reportTo "BuildSys site office" ;
-    ontosage:contactEmail "site@buildsys.example.org" ;
-    ontosage:steps "Note the room and floor; Say what is wrong; Send it to the desk" ;
     ontosage:isSimulated "true"^^xsd:boolean .
 
 bldg:Topic_OpeningHours a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
