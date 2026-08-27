@@ -104,9 +104,7 @@ def validate_feeds_yaml(path: Path) -> Tuple[bool, List[str]]:
         if missing:
             issues.append(f"feeds.yaml[{fid}]: missing required keys: {sorted(missing)}")
         if ftype not in known_types:
-            issues.append(
-                f"feeds.yaml[{fid}]: type='{ftype}' not in {sorted(known_types)}"
-            )
+            issues.append(f"feeds.yaml[{fid}]: type='{ftype}' not in {sorted(known_types)}")
         field_map = feed.get("field_map", {})
         if field_map and "value" not in field_map.values():
             issues.append(f"feeds.yaml[{fid}]: field_map must map at least one column to 'value'")
@@ -480,6 +478,48 @@ def validate_evidence_policy_yaml(path: Path) -> Tuple[bool, List[str]]:
     return (not issues), issues
 
 
+def _strip_turtle_comments(text: str) -> str:
+    """Turtle source with comments removed, so prose is not scanned as data.
+
+    The dangling-reference check reported `bldg:VAV_Floor5_` — a name that exists
+    nowhere, read out of a COMMENT explaining the very defect it was looking for
+    (`bldg:VAV_Floor5_*`, truncated at the asterisk). A validator that reads prose
+    as triples manufactures findings, and a check nobody trusts is worse than none.
+
+    `#` only starts a comment outside a quoted literal and outside an angle-bracket
+    IRI — `<http://example.org/ns#Thing>` and `"a # sign"` both contain one legally.
+    """
+    out = []
+    for line in text.splitlines():
+        in_quote = False
+        in_iri = False
+        quote_char = ""
+        cut = None
+        i = 0
+        while i < len(line):
+            ch = line[i]
+            if in_quote:
+                if ch == "\\":
+                    i += 2
+                    continue
+                if ch == quote_char:
+                    in_quote = False
+            elif in_iri:
+                if ch == ">":
+                    in_iri = False
+            elif ch in ('"', "'"):
+                in_quote = True
+                quote_char = ch
+            elif ch == "<":
+                in_iri = True
+            elif ch == "#":
+                cut = i
+                break
+            i += 1
+        out.append(line if cut is None else line[:cut])
+    return "\n".join(out)
+
+
 # ── measurand typing ────────────────────────────────────────────────────────
 # A Brick Point measures ONE quantity. When an instance is asserted into two
 # families at once — a volatile organic compound also typed as particulate
@@ -533,7 +573,7 @@ def validate_measurand_typing(path: Path) -> Tuple[bool, List[str]]:
         if ttl.name.lower().startswith("brick"):
             continue
         try:
-            text = ttl.read_text(encoding="utf-8", errors="replace")
+            text = _strip_turtle_comments(ttl.read_text(encoding="utf-8", errors="replace"))
         except OSError as exc:  # pragma: no cover - unreadable file
             issues.append(f"{ttl.name}: unreadable ({exc})")
             continue
@@ -543,6 +583,95 @@ def validate_measurand_typing(path: Path) -> Tuple[bool, List[str]]:
                 + " and ".join(fams)
                 + " — one Point measures one quantity, so a question about one "
                 "would be answered with a reading of the other"
+            )
+    return (not issues), issues
+
+
+# ── dangling references ─────────────────────────────────────────────────────
+#: Relations whose object must be a real thing in this building. A point saying
+#: `brick:isPointOf bldg:AHU_Floor5` against a subject declared in NO file is not a
+#: harmless typo: a reasoner types the dangling reference as equipment from the
+#: property's range, so the live graph looks complete while `input/` cannot
+#: reproduce it. bldg1 carried thirty such points under a phantom AHU and fourteen
+#: under seven phantom VAVs, and `brick:AHU` counted fourteen instances for six
+#: physical units as a result (BUG-249).
+_REFERENCE_PREDICATES = (
+    "isPointOf",
+    "isPartOf",
+    "hasPart",
+    "feeds",
+    "isFedBy",
+    "hasLocation",
+    "isLocatedIn",
+    "measures",
+    "isMeasuredBy",
+)
+
+#: Vocabulary namespaces are declared in files this scan deliberately skips (the
+#: vendored Brick TBox, ontology/*.ttl). Flagging them would bury the findings that
+#: mean something under thousands that do not.
+_VOCAB_PREFIXES = frozenset(
+    {
+        "brick",
+        "ontosage",
+        "ref",
+        "rdf",
+        "rdfs",
+        "owl",
+        "xsd",
+        "qudt",
+        "unit",
+        "sh",
+        "skos",
+        "s223",
+        "bacnet",
+        "ashrae",
+        "hbco",
+        "tag",
+        "sosa",
+        "quantitykind",
+        "dcterms",
+        "vcard",
+        "foaf",
+    }
+)
+
+_REFERENCE_RE = re.compile(
+    r"brick:(?:" + "|".join(_REFERENCE_PREDICATES) + r")\s+((?:\w+:[\w.\-]+\s*,?\s*)+)"
+)
+_DECLARATION_RE = re.compile(r"^\s*(\w+:[\w.\-]+)\s", re.M)
+_TERM_RE = re.compile(r"(\w+:[\w.\-]+)")
+
+
+def validate_dangling_references(path: Path) -> Tuple[bool, List[str]]:
+    """Relations pointing at a subject no TTL in the building declares."""
+    if not path.is_dir():
+        return True, []
+    files = [f for f in sorted(path.glob("*.ttl")) if not f.name.lower().startswith("brick")]
+    if not files:
+        return True, []
+
+    declared: set = set()
+    referenced: Dict[str, set] = {}
+    for f in files:
+        try:
+            text = _strip_turtle_comments(f.read_text(encoding="utf-8", errors="replace"))
+        except OSError as exc:  # pragma: no cover - unreadable file
+            return False, [f"{f.name}: unreadable ({exc})"]
+        declared |= set(_DECLARATION_RE.findall(text))
+        for m in _REFERENCE_RE.finditer(text):
+            for tok in _TERM_RE.findall(m.group(1)):
+                referenced.setdefault(tok, set()).add(f.name)
+
+    issues = []
+    for term in sorted(referenced):
+        if term.split(":", 1)[0] in _VOCAB_PREFIXES:
+            continue
+        if term not in declared:
+            issues.append(
+                f"{term} is referenced by {sorted(referenced[term])[0]} but declared in no "
+                f"TTL - a reasoner will type it from the property's range, so the graph "
+                f"looks complete while input/ cannot reproduce it"
             )
     return (not issues), issues
 
@@ -594,6 +723,7 @@ def validate_building_input(building_id: str, input_root: Path) -> Tuple[bool, D
         ),
         ("evidence_policy.yaml", bldg_dir / "evidence_policy.yaml", validate_evidence_policy_yaml),
         ("sensor typing", bldg_dir, validate_measurand_typing),
+        ("entity references", bldg_dir, validate_dangling_references),
     ]
 
     for name, path, validator in checks:
