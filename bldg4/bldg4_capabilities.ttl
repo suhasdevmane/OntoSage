@@ -1,0 +1,42 @@
+# Amenities and knowledge topics for Northgate Test House (bldg4) (OCBV).
+#
+# GENERATED. Fictional, like everything else in this fixture. Present so the
+# capability lane has something to answer during an onboarding test.
+
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:     <http://example.org/ontosage/bldg4#> .
+
+bldg:Amenity_Kitchen_Floor1 a ontosage:Amenity ;
+    rdfs:label "Shared kitchen"@en ;
+    ontosage:layTerms "kitchen, tea, coffee, microwave, kettle, break room" ;
+    ontosage:locatedIn bldg:Room_1_05 ;
+    ontosage:onFloor "Floor1" ;
+    ontosage:locationText "Shared kitchen in Room 1.05 (floor Floor1)" ;
+    ontosage:answerText "There is a shared kitchen in Room 1.05 on floor 1." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+bldg:Amenity_DrinkingWater_Floor0 a ontosage:Amenity ;
+    rdfs:label "Drinking water point"@en ;
+    ontosage:layTerms "water, drinking water, bottle refill, refill station, fill my bottle" ;
+    ontosage:locatedIn bldg:Room_0_05 ;
+    ontosage:onFloor "Floor0" ;
+    ontosage:locationText "Drinking water point in Room 0.05 (floor Floor0)" ;
+    ontosage:answerText "There is a drinking water point in Room 0.05 on floor 0." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+bldg:Topic_ReportFault a ontosage:KnowledgeTopic , ontosage:Procedure ;
+    rdfs:label "Reporting a fault"@en ;
+    ontosage:capabilityCategory "PROCEDURE" ;
+    ontosage:layTerms "report a fault, something is broken, report a problem, maintenance request" ;
+    ontosage:answerText "Faults are reported to the (fictional) Northgate facilities desk." ;
+    ontosage:steps "Note the room and floor; Describe what is wrong; Send it to the facilities desk" ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+bldg:Topic_OpeningHours a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
+    rdfs:label "Opening hours"@en ;
+    ontosage:capabilityCategory "INFORMATION" ;
+    ontosage:layTerms "opening hours, when is the building open, access hours, closing time" ;
+    ontosage:answerText "Northgate Test House is open 07:00-19:00 on weekdays and closed at weekends." ;
+    ontosage:isSimulated "true"^^xsd:boolean .

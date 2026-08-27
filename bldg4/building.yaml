@@ -1,0 +1,31 @@
+# Building identity: bldg4
+#
+# ontology_namespace MUST match the `@prefix bldg:` in bldg4.ttl exactly --
+# the startup TTL validator hard-fails the boot on a mismatch, so a silently-empty
+# knowledge graph is impossible.
+
+building_id: bldg4
+building_name: "Northgate Test House (bldg4)"
+ontology_namespace: "http://example.org/ontosage/bldg4#"
+ontology_prefix: bldg
+timezone: "Europe/London"
+
+provenance:
+  nature: synthetic
+  note: >-
+    Wholly fictional. Invented for GUI onboarding testing (TODO-072): every room,
+    sensor and reading is generated and nothing corresponds to a real building.
+    Deliberately NOT a real estate -- a simulated claim about a real building is a
+    mistake this project has already had to undo once.
+
+capability_routing:
+  enabled: true
+  embedding_model: auto
+  threshold: 0.56
+  override_min: 0.60
+  top_k: 5
+  fallback_on_qdrant_failure: skip
+
+actuation:
+  driver: none
+  points_writable: []
