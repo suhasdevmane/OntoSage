@@ -676,6 +676,56 @@ def validate_dangling_references(path: Path) -> Tuple[bool, List[str]]:
     return (not issues), issues
 
 
+# ── potability statements ───────────────────────────────────────────────────
+#: A drinkability claim is a health claim. The OCBV schema requires an issuing
+#: authority because a claim with no owner is exactly the confident
+#: unattributable assertion the evidence discipline exists to prevent, and a date
+#: because a statement issued years ago describes a plumbing system that may since
+#: have been altered. A statement missing either is not a weaker claim — it is one
+#: nobody can check, and it must not reach a building unchallenged.
+_POTABILITY_SUBJECT_RE = re.compile(
+    r"^\s*(\S+)\s+(?:a|rdf:type)\s+[^;.]*ontosage:PotabilityStatement", re.M
+)
+_POTABILITY_TERMS = (
+    ("ontosage:potabilityValue", "a value (potable | not_potable | unknown)"),
+    ("ontosage:potabilityAuthority", "an issuing authority who stands behind it"),
+    ("ontosage:potabilityIssuedOn", "the date it was issued"),
+)
+_POTABILITY_VALUES = ("potable", "not_potable", "unknown")
+
+
+def validate_potability_statements(path: Path) -> Tuple[bool, List[str]]:
+    """Every potability statement carries a value, an authority and a date."""
+    if not path.is_dir():
+        return True, []
+    issues: List[str] = []
+    for ttl in sorted(path.glob("*.ttl")):
+        if ttl.name.lower().startswith("brick"):
+            continue
+        try:
+            text = _strip_turtle_comments(ttl.read_text(encoding="utf-8", errors="replace"))
+        except OSError as exc:  # pragma: no cover - unreadable file
+            issues.append(f"{ttl.name}: unreadable ({exc})")
+            continue
+        for m in _POTABILITY_SUBJECT_RE.finditer(text):
+            subject = m.group(1)
+            end = text.find(" .", m.end())
+            block = text[m.start() : end if end != -1 else len(text)]
+            for term, what in _POTABILITY_TERMS:
+                if term not in block:
+                    issues.append(
+                        f"{ttl.name}: {subject} is a potability statement with no {what} "
+                        f"({term}) - a drinkability claim nobody can check must not ship"
+                    )
+            vm = re.search(r'ontosage:potabilityValue\s+"([^"]*)"', block)
+            if vm and vm.group(1).strip().lower() not in _POTABILITY_VALUES:
+                issues.append(
+                    f"{ttl.name}: {subject} has potabilityValue "
+                    f"'{vm.group(1)}' - expected one of {', '.join(_POTABILITY_VALUES)}"
+                )
+    return (not issues), issues
+
+
 def validate_building_input(building_id: str, input_root: Path) -> Tuple[bool, Dict[str, Any]]:
     """Run all optional-file validators for a building directory.
 
@@ -724,6 +774,7 @@ def validate_building_input(building_id: str, input_root: Path) -> Tuple[bool, D
         ("evidence_policy.yaml", bldg_dir / "evidence_policy.yaml", validate_evidence_policy_yaml),
         ("sensor typing", bldg_dir, validate_measurand_typing),
         ("entity references", bldg_dir, validate_dangling_references),
+        ("potability claims", bldg_dir, validate_potability_statements),
     ]
 
     for name, path, validator in checks:

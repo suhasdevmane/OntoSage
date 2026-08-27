@@ -1,0 +1,46 @@
+# Potability statement for the building's drinking-water points (Module P, V6-T45).
+#
+# Authored 2026-08-27 on the building owner's statement: the water is potable, it has
+# been so since the building opened on 1 January 2020, and Cardiff University Estates
+# is the responsible authority.
+#
+# This is NOT simulated and carries no ontosage:isSimulated flag. It is a published
+# claim with an owner and a date, which is exactly what the schema requires and why
+# it refuses to let potability be derived from a sensor reading: "a sensor reading
+# does not support a health statement", and being wrong about drinkability harms
+# someone. The lay mapping already sends "drinking water" and "potable water" at
+# brick:Water_Quality_Sensor, and a flow reading sits one short step away -- so the
+# claim is modelled here, where it can be attributed, rather than inferred there.
+#
+# ontosage:PotabilityStatement is an ontosage:KnowledgeTopic subclass, so the existing
+# capability resolver finds it with no new code. The value, authority and date are
+# read by capability_graph_resolver and rendered together: a claim shown without its
+# owner would be the unattributable assertion this module exists to prevent.
+
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:     <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+bldg:Potability_DrinkingWater_Building
+    a ontosage:PotabilityStatement ;
+    rdfs:label "Drinking water quality"@en ;
+    ontosage:layTerms "is the water safe to drink, can I drink the water, is the water potable, drinkable, potable water, tap water safe, water quality, safe to drink, drinking water safe" ;
+    ontosage:potabilityValue "potable" ;
+    ontosage:potabilityAuthority "Cardiff University Estates" ;
+    ontosage:potabilityIssuedOn "2020-01-01"^^xsd:date ;
+    ontosage:capabilityCategory "facilities" ;
+    ontosage:answerText "Water from the building's drinking-water and bottle-refill points is safe to drink." ;
+    ontosage:appliesToOutlet
+        bldg:Amenity_DrinkingWater_Floor0 ,
+        bldg:Amenity_DrinkingWater_Floor0_b ,
+        bldg:Amenity_DrinkingWater_Floor1 ,
+        bldg:Amenity_DrinkingWater_Floor1_b ,
+        bldg:Amenity_DrinkingWater_Floor2 ,
+        bldg:Amenity_DrinkingWater_Floor2_b ,
+        bldg:Amenity_DrinkingWater_Floor3 ,
+        bldg:Amenity_DrinkingWater_Floor3_b ,
+        bldg:Amenity_DrinkingWater_Floor4 ,
+        bldg:Amenity_DrinkingWater_Floor4_b ,
+        bldg:Amenity_DrinkingWater_Floor5 ,
+        bldg:Amenity_DrinkingWater_Floor5_b .
