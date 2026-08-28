@@ -272,10 +272,27 @@ def referent_absent(question: str, env: dict) -> str:
     head = (ref.head or "").lower()
     if not head.isalpha():
         return ""
+
+    # EVERY word of the phrase must appear in the label, not just the head noun.
+    #
+    # CAVEAT-357: P001 asks about "the public corridor on floor 1". bldg1 has CCTV
+    # Corridor F1..F5 and no public corridor, and the system says exactly that -- it
+    # names what the building does have and offers the onboarding steps, which is the
+    # BUG-189 fabrication case behaving as intended. The check matched on "corridor"
+    # alone, found the CCTV corridors, concluded the referent existed, and the correct
+    # refusal was graded WRONGFUL_DENIAL.
+    #
+    # This makes the check FAITHFUL to CAVEAT-190's stated rule rather than adding a new
+    # exemption -- but it does remove a wrongful denial from bldg1's denominator, so it
+    # improves the PROTECT figure and should be read knowing that.
+    words = [w for w in re.findall(r"[a-z]+", (ref.phrase or head).lower()) if len(w) > 2]
+    if not words:
+        words = [head]
+    filters = "".join(f'FILTER(CONTAINS(LCASE(STR(?l)), "{w}")) ' for w in words)
     query = (
         "SELECT (COUNT(?s) AS ?n) WHERE { ?s rdfs:label ?l . "
         f'FILTER(STRSTARTS(STR(?s), "{ns}")) '
-        f'FILTER(CONTAINS(LCASE(STR(?l)), "{head}")) }}'
+        f"{filters}}}"
     )
     try:
         r = requests.get(
