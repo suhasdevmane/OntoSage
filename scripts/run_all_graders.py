@@ -270,10 +270,36 @@ def summarise_privacy() -> Dict[str, Any]:
     }
 
 
-def summarise_detect() -> Dict[str, Any]:
-    cards = sorted(OUT.glob("v5_t22_scorecard_r*.csv"), key=lambda p: p.stat().st_mtime)[-3:]
-    if not cards:
-        return {"status": "no artifact", "detail": "run grade_anomalies.py"}
+def summarise_detect(building: str = "") -> Dict[str, Any]:
+    """Recall over the rounds THIS building was graded on.
+
+    Two things were wrong here and they compounded. The glob matched every building's
+    scorecards, and "newest three by modification time" then summed whichever three
+    files happened to be newest -- which on 2026-08-28 meant bldg2's August artifact
+    plus BOTH of today's bldg1 runs, including the superseded one that a fix had just
+    replaced. Recall was reported as 41.7% when the correct, building-scoped figure was
+    25.0%.
+
+    Now: only this building's files, and the NEWEST FILE PER ROUND, so re-grading a
+    round replaces its predecessor instead of being averaged with it.
+    """
+    pattern = f"v5_t22_scorecard_{building}_r*.csv" if building else "v5_t22_scorecard_*_r*.csv"
+    matches = list(OUT.glob(pattern))
+    if not matches:
+        return {
+            "status": "no artifact",
+            "detail": (
+                f"no detect scorecard for {building or 'any building'}; run "
+                f"grade_anomalies.py. Artifacts predating the per-building naming are "
+                f"deliberately NOT reused -- they cannot be attributed to a building."
+            ),
+        }
+    by_round: Dict[str, Path] = {}
+    for path in matches:
+        rnd = path.name.rsplit("_r", 1)[-1].split("_", 1)[0]
+        if rnd not in by_round or path.stat().st_mtime > by_round[rnd].stat().st_mtime:
+            by_round[rnd] = path
+    cards = [by_round[k] for k in sorted(by_round)]
     inj = det = 0
     per: Dict[str, List[float]] = {}
     for c in cards:
@@ -284,6 +310,7 @@ def summarise_detect() -> Dict[str, Any]:
     return {
         "status": "ok",
         "rounds": len(cards),
+        "artifacts": [c.name for c in cards],
         "injected": inj,
         "detected": det,
         "recall_pct": round(100 * det / inj, 1) if inj else 0.0,
@@ -425,7 +452,7 @@ def main() -> int:
     results = {
         "coverage": summarise_coverage(),
         "privacy": summarise_privacy(),
-        "detect": summarise_detect(),
+        "detect": summarise_detect(building),
         "predict": summarise_predict(building),
     }
     OUT.mkdir(parents=True, exist_ok=True)
