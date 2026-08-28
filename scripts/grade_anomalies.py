@@ -361,11 +361,28 @@ def main() -> int:
         print("running scanner sweep…")
         run_scan()
 
+    # Scoped to the ACTIVE building as well as the round. The labels file accumulates
+    # across buildings and runs -- it records `building` per row for exactly this reason
+    # -- and the filter read the round only.
+    #
+    # Measured 2026-08-28: bldg1's certification graded its detectors against round 1,
+    # which held 16 faults injected into BLDG2 ten days earlier plus bldg1's own 8. Those
+    # UUIDs do not exist in bldg1's data and can never be detected, so recall came out at
+    # 8% against bldg2's 96.9% and read as a catastrophic regression in the detectors. It
+    # was arithmetic over another building's ground truth.
+    _bid = (env.get("BUILDING_ID") or "").strip()
     labels = [
         lab
         for lab in csv.DictReader(open(LABELS, encoding="utf-8"))
         if int(lab["round"]) == args.round
+        and (not _bid or (lab.get("building") or "").strip() == _bid)
     ]
+    if not labels:
+        print(
+            f"[warn] no labels for building={_bid!r} round={args.round} — "
+            f"nothing to grade. Inject first, or pick the round this building was "
+            f"injected in."
+        )
     # the episode fetch must cover every label window (a closed dropout that
     # ended hours ago is still this round's ground truth) — round-1 shakedown
     # missed a PERFECT detection because the fetch was clamped to "last hour"
@@ -377,7 +394,12 @@ def main() -> int:
     density = organic_density(env, since, len(labels))
 
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_path = OUT / f"v5_t22_scorecard_r{args.round}_{stamp}.csv"
+    # The BUILDING is in the filename. Without it the summariser could not tell one
+    # building's scorecard from another's and blended them: it took the newest three
+    # CSVs by modification time and summed them, mixing bldg2's August artifact with
+    # both of today's bldg1 runs -- including the superseded one this very fix replaced.
+    # The same shape as the label mixing a layer below (BUG-359).
+    out_path = OUT / f"v5_t22_scorecard_{_bid or 'unknown'}_r{args.round}_{stamp}.csv"
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(

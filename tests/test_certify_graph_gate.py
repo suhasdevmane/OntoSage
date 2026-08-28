@@ -126,3 +126,40 @@ def test_the_repository_name_is_not_hardcoded():
 
     src = inspect.getsource(_mod())
     assert 'os.getenv("GRAPHDB_REPOSITORY"' in src
+
+
+# ── the postflight compares restarts, not uptime strings (BUG-358) ───────────
+def test_the_container_snapshot_reads_started_at_not_status():
+    """`docker ps --format {{.Status}}` renders "Up 2 hours (healthy)", which changes as
+    time passes — so two snapshots more than an hour apart differed for EVERY container
+    and the postflight reported all thirteen as restarted.
+
+    bldg1's certification stamped itself INVALID for that reason after two and a half
+    hours of grading, while docker's own records showed every container started before
+    the run began and none restarted. A gate that always fires is one whose verdict
+    stops being read, which is precisely how the artifacts behind CAVEAT-173 got
+    published.
+    """
+    import inspect
+
+    fn = _mod()._container_snapshot
+    src = inspect.getsource(fn)
+    assert "State.StartedAt" in src, "the snapshot no longer reads the restart signal"
+
+    # The CODE, not the docstring — which explains the old behaviour and therefore
+    # contains the very string being forbidden. Reading prose as if it were code is a
+    # mistake this suite has now made three times (the dangling-reference check, the
+    # potability check, and here).
+    code = src.replace(fn.__doc__ or "", "")
+    assert "{{.Status}}" not in code, "the snapshot is comparing uptime strings again"
+
+
+def test_a_recompile_is_not_stamped_as_a_graded_run():
+    """The health checks around a --skip-run pass describe the stack NOW, which says
+    nothing about the hours in which the underlying artifacts were produced. Borrowing
+    VALID for that would manufacture a certification nobody ran."""
+    import inspect
+
+    src = inspect.getsource(_mod().main)
+    assert '"RECOMPILED"' in src
+    assert "if args.skip_run:" in src

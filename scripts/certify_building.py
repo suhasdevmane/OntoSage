@@ -95,21 +95,41 @@ def _active_building() -> Optional[str]:
 
 
 def _container_snapshot() -> Dict[str, str]:
-    """{container: started_at}. A change between snapshots means a restart."""
+    """{container: State.StartedAt}. A change between snapshots means a restart.
+
+    The docstring said started_at from the beginning; the code captured ``{{.Status}}``,
+    which is the human string "Up 2 hours (healthy)". That string CHANGES AS TIME
+    PASSES, so every snapshot taken more than an hour after the first differed from it
+    and the postflight reported all thirteen containers as restarted.
+
+    Measured 2026-08-28: bldg1's certification stamped itself INVALID for that reason
+    after two and a half hours of grading. Docker's own records showed every container
+    started at 11:47, before the run began, and none restarted. The gate meant to catch
+    CAVEAT-173 was instead condemning every long run — and a gate that always fires is
+    one whose verdict stops being read.
+
+    ``State.StartedAt`` is the real signal: it changes on a restart AND on a recreate,
+    which are the two things CAVEAT-173 and BUG-176 were about.
+    """
     try:
-        out = subprocess.run(
-            ["docker", "ps", "--format", "{{.Names}}\t{{.Status}}"],
+        ids = subprocess.run(  # nosec B603 B607 - fixed argv
+            ["docker", "ps", "-q"], capture_output=True, text=True, timeout=60
+        ).stdout.split()
+        if not ids:
+            return {}
+        out = subprocess.run(  # nosec B603 B607 - fixed argv
+            ["docker", "inspect", "-f", "{{.Name}}\t{{.State.StartedAt}}", *ids],
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=120,
         ).stdout
     except Exception:  # pragma: no cover - docker may be absent
         return {}
     snap = {}
     for line in out.splitlines():
         if "\t" in line:
-            name, status = line.split("\t", 1)
-            snap[name.strip()] = status.strip()
+            name, started = line.split("\t", 1)
+            snap[name.strip().lstrip("/")] = started.strip()
     return snap
 
 
@@ -285,6 +305,11 @@ def main() -> int:
     ap.add_argument("--quick", action="store_true", help="small samples where supported")
     ap.add_argument("--only", help="comma list passed through to run_all_graders")
     ap.add_argument("--preflight-only", action="store_true")
+    ap.add_argument(
+        "--skip-run",
+        action="store_true",
+        help="recompile the scorecard from existing artifacts instead of grading again",
+    )
     args = ap.parse_args()
 
     print("=" * 74)
@@ -307,6 +332,8 @@ def main() -> int:
         return 0
 
     cmd = [sys.executable, str(REPO / "scripts" / "run_all_graders.py")]
+    if args.skip_run:
+        cmd.append("--skip-run")
     if args.quick:
         cmd.append("--quick")
     if args.only:
@@ -328,14 +355,27 @@ def main() -> int:
 
     card = _newest_scorecard(started)
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
-    verdict = "VALID" if (still_ok and rc == 0) else "INVALID"
+    # A COMPILE is not a graded run, and must never be stamped as though it were.
+    # The health checks here describe the stack at compile time, which says nothing
+    # about the hours during which the underlying artifacts were produced -- so it
+    # gets its own verdict rather than borrowing VALID.
+    if args.skip_run:
+        verdict = "RECOMPILED" if rc == 0 else "INVALID"
+    else:
+        verdict = "VALID" if (still_ok and rc == 0) else "INVALID"
     banner = [
         "",
         "---",
         "",
         f"## Run validity: {verdict}",
         "",
-        f"- Preflight and postflight both checked at {stamp} ({elapsed / 60:.1f} min run).",
+        (
+            f"- Recompiled from existing artifacts at {stamp}. The health checks below "
+            f"describe the stack NOW, not the run that produced the figures above."
+            if args.skip_run
+            else f"- Preflight and postflight both checked at {stamp} "
+            f"({elapsed / 60:.1f} min run)."
+        ),
         f"- Graders exited {rc}.",
         "",
     ]
@@ -356,7 +396,7 @@ def main() -> int:
     else:
         print(f"\nNo scorecard was produced; verdict {verdict}")
 
-    return 0 if verdict == "VALID" else 1
+    return 0 if verdict in ("VALID", "RECOMPILED") else 1
 
 
 if __name__ == "__main__":
