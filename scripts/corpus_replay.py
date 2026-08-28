@@ -573,6 +573,43 @@ def _append_row(path: Path, row: Dict[str, Any], first: bool) -> None:
         writer.writerow(row)
 
 
+def _append_transcript(
+    path: Path, qid: str, question: str, answer: str, row: Dict[str, Any]
+) -> None:
+    """Persist the FULL response beside the graded row, one JSON object per line.
+
+    The CSV keeps a 300-character ``answer_preview`` with the newlines stripped, which
+    is the right thing for a spreadsheet and the wrong thing for everything else. This
+    project's recurring lesson is that a number only means something once somebody reads
+    the rows behind it -- CAVEAT-039 was found that way, so were BUG-176, BUG-177 and
+    BUG-191 -- and a truncated preview cannot support that. A table dump, a fabricated
+    figure or a policy leak can all sit past character 300.
+
+    JSONL rather than more CSV columns: answers are long and multi-line, and a
+    transcript that has to survive a spreadsheet round-trip is a transcript that will be
+    mangled. Written per row, so a run killed half way keeps what it had.
+    """
+    import json as _json
+
+    record = {
+        "qid": qid,
+        "question": question,
+        "answer": answer,
+        "grade": row.get("grade"),
+        "pass": row.get("pass"),
+        "status": row.get("status"),
+        "elapsed_s": row.get("elapsed_s"),
+        "expected_behavior": row.get("expected_behavior"),
+        "l7_stratum": row.get("l7_stratum"),
+        "stakeholder_role": row.get("stakeholder_role"),
+    }
+    try:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(_json.dumps(record, ensure_ascii=False) + "\n")
+    except OSError as exc:  # never lose a graded run over a transcript write
+        _safe_print(f"[warn] could not write transcript row: {exc}")
+
+
 # ─── Report generation ────────────────────────────────────────────────────────
 
 _LEVEL_NAMES = {
@@ -832,6 +869,10 @@ def main() -> int:
     checkpoint_path = _OUTPUT_DIR / f"{ts}.csv"
     final_csv_path = _OUTPUT_DIR / f"{ts}_final.csv"
     md_path = _OUTPUT_DIR / f"{ts}.md"
+    #: Full responses, one JSON object per line. The CSV keeps a 300-char preview;
+    #: this keeps what was actually said, which is what re-grading and any claim
+    #: about a wrong answer depends on.
+    transcript_path = _OUTPUT_DIR / f"{ts}_transcript.jsonl"
 
     # ── Load + sample ─────────────────────────────────────────────────────────
     master_path = Path(args.master_table)
@@ -923,6 +964,7 @@ def main() -> int:
         }
 
         _append_row(checkpoint_path, row, first=first_write)
+        _append_transcript(transcript_path, qid, question, answer, row)
         first_write = False
         completed_rows.append(row)
 
