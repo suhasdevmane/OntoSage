@@ -27,15 +27,63 @@ from shared.utils import get_logger
 logger = get_logger(__name__)
 
 #: generic comfort vocabulary → modality (domain English, never building names)
+#:
+#: COMPARATIVES ADMITTED (BUG-354, second half). These are the forms people actually use
+#: in a why-question: nobody asks "why is it warm here", they ask "why is it WARMER in
+#: the corner". ``\bwarm\b`` does not match "warmer" — the word boundary stops it —
+#: exactly as ``\bhumid\b`` did not match "humidity".
+#:
+#: "Why is it so much warmer in the corner than by the windows?" therefore reached no
+#: lane and returned "I processed your request, but couldn't generate a response." It was
+#: the single 'wrong' answer in bldg1's clean certification — found in the very next run
+#: after I closed this defect as fixed on two other examples.
 _MODALITY_WORDS: List[Tuple[re.Pattern, str, str]] = [
-    (re.compile(r"\bfreez|\bcold\b|\bchilly\b|\bcool\b", re.I), "temperature", "low"),
-    (re.compile(r"\bhot\b|\bboiling\b|\boverheat|\bwarm\b", re.I), "temperature", "high"),
-    (re.compile(r"\bstuffy\b|\bco2\b|\bairless\b|\bventilat", re.I), "co2", "high"),
-    (re.compile(r"\bloud\b|\bnoisy\b|\bnoise\b", re.I), "noise", "high"),
-    (re.compile(r"\bdark\b|\bdim\b|\bgloomy\b", re.I), "illuminance", "low"),
-    (re.compile(r"\bhumid\b|\bdamp\b|\bmuggy\b|\bdry\b", re.I), "humidity", "high"),
-    (re.compile(r"\bdusty\b|\bsmoky\b|\bair quality\b|\bpm2\.?5\b", re.I), "pm25", "high"),
-    (re.compile(r"\bbusy\b|\bcrowded\b|\bpacked\b", re.I), "occupancy", "high"),
+    (
+        re.compile(
+            r"\bfreez|\bcold(?:er|est)?\b|\bchill(?:y|ier|iest)\b|\bcool(?:er|est)?\b", re.I
+        ),
+        "temperature",
+        "low",
+    ),
+    (
+        re.compile(r"\bhot(?:ter|test)?\b|\bboiling\b|\boverheat|\bwarm(?:er|est)?\b", re.I),
+        "temperature",
+        "high",
+    ),
+    (
+        re.compile(r"\bstuff(?:y|ier|iest)\b|\bco2\b|\bairless\b|\bventilat", re.I),
+        "co2",
+        "high",
+    ),
+    (
+        re.compile(r"\bloud(?:er|est)?\b|\bnois(?:y|ier|iest)\b|\bnoise\b", re.I),
+        "noise",
+        "high",
+    ),
+    (
+        re.compile(r"\bdark(?:er|est)?\b|\bdim(?:mer|mest)?\b|\bgloom(?:y|ier|iest)\b", re.I),
+        "illuminance",
+        "low",
+    ),
+    (
+        re.compile(
+            r"\bhumid\w*\b|\bdamp(?:er|est)?\b|\bmugg(?:y|ier|iest)\b|\bdr(?:y|ier|iest)\b", re.I
+        ),
+        "humidity",
+        "high",
+    ),
+    (
+        re.compile(
+            r"\bdust(?:y|ier|iest)\b|\bsmok(?:y|ier|iest)\b|\bair quality\b|\bpm2\.?5\b", re.I
+        ),
+        "pm25",
+        "high",
+    ),
+    (
+        re.compile(r"\bbus(?:y|ier|iest)\b|\bcrowded\b|\bpacked\b", re.I),
+        "occupancy",
+        "high",
+    ),
 ]
 
 #: The modality NAMES, which the lay list above does not contain (BUG-354).
