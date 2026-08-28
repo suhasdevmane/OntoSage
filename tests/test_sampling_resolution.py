@@ -103,3 +103,72 @@ def test_both_reading_lanes_pass_the_rate_to_the_pdp():
     assert (
         src.count("requested_resolution_s=requested_resolution_s") >= 2
     ), "a reading lane no longer tells the PDP what cadence was asked for"
+
+
+# -- the aggregation floor, applied to the ANSWER (BUG-356b) -----------------
+@pytest.mark.parametrize(
+    "question",
+    [
+        "List every room's live temperature, updated every 5 seconds, for the whole building.",
+        "Compare the temperature of the three offices next to mine, one by one.",
+        "show me each room temperature",
+        "give me all the rooms and their CO2",
+    ],
+)
+def test_an_enumeration_across_spaces_is_recognised(question):
+    """A list of per-room values is a map of where people are. That is what the
+    aggregation floor exists to prevent, and it was only ever checked as 'does the FETCH
+    cover enough sensors' — 288 >= 14, so it passed — never as 'is the ANSWER
+    aggregated'."""
+    from orchestrator.services.privacy.sampling import enumerates_spaces
+
+    assert enumerates_spaces(question)
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "what is the temperature in room 2.14?",
+        "what is the average temperature in the building?",
+        "which room is the quietest?",
+        "how many rooms are on floor 2?",
+    ],
+)
+def test_a_single_space_question_is_not_an_enumeration(question):
+    """One room is not a map of anything. Aggregating this would refuse an ordinary
+    question in the name of a rule that was never about it — trading a leak for wrongful
+    denials, which is the failure mode to avoid."""
+    from orchestrator.services.privacy.sampling import enumerates_spaces
+
+    assert not enumerates_spaces(question)
+
+
+def test_aggregation_removes_the_per_sensor_identity():
+    """The point of the floor: what must not survive is WHICH sensor said what."""
+    from orchestrator.agents.sql_agent import SQLAgent
+
+    rows = [
+        {"uuid": "a", "timestamp": "2026-08-28 13:00:00", "value": 20.0},
+        {"uuid": "b", "timestamp": "2026-08-28 13:00:00", "value": 30.0},
+        {"uuid": "c", "timestamp": "2026-08-28 14:00:00", "value": 25.0},
+    ]
+    out = SQLAgent._aggregate_across_sensors(rows)
+    assert len(out) == 2, "rows at the same instant must combine into one"
+    first = out[0]
+    assert first["value"] == 25.0, "the combined value is the mean"
+    assert first["sensors_combined"] == 2
+    assert "uuid" not in first, "the contributing sensor identity survived aggregation"
+
+
+def test_both_clamps_are_disclosed_in_the_answer():
+    """An answer that silently became an hourly building average, while the question
+    asked room by room every five seconds, would misrepresent what it is showing. The
+    model cannot be relied on for this — measured, it kept heading its reply 'updated
+    every 5 s' while serving hourly means."""
+    import inspect
+
+    from orchestrator.agents.sql_agent import SQLAgent
+
+    src = inspect.getsource(SQLAgent.fetch_data_for_uuids)
+    assert "Served at" in src and "resolution" in src
+    assert "Combined across sensors" in src
