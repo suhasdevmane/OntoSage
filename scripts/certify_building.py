@@ -56,14 +56,31 @@ GRAPHDB_REPO = os.getenv("GRAPHDB_REPOSITORY", "bldg")
 OUTPUTS = REPO / "scripts" / "outputs"
 
 
-def _get(url: str, timeout: float = 10.0) -> Tuple[int, str]:
-    try:
-        with urllib.request.urlopen(url, timeout=timeout) as r:  # noqa: S310 - local only
-            return r.status, r.read().decode("utf-8", "replace")
-    except urllib.error.HTTPError as e:
-        return e.code, ""
-    except Exception:
-        return 0, ""
+def _get(url: str, timeout: float = 10.0, attempts: int = 3) -> Tuple[int, str]:
+    """GET with a couple of retries on a TRANSPORT failure only.
+
+    Measured 2026-08-28: the preflight aborted a six-hour certification on
+    "/health returned 0" -- one dropped connection, a second after the same endpoint
+    had answered 200, and with /health measured at 0.11s five times running. Aborting
+    a long run on a single dropped socket makes this gate the reason runs stop
+    happening, which is the failure mode the file itself warns about.
+
+    Retried ONLY on transport failure (status 0). An HTTP status of any kind is an
+    answer and is returned immediately -- a 500 is a real result, not a hiccup -- so a
+    genuinely dead service still fails every attempt and still aborts the run.
+    """
+    last = 0
+    for attempt in range(max(1, attempts)):
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as r:  # noqa: S310 - local only
+                return r.status, r.read().decode("utf-8", "replace")
+        except urllib.error.HTTPError as e:
+            return e.code, ""
+        except Exception:
+            last = 0
+            if attempt + 1 < attempts:
+                time.sleep(2.0)
+    return last, ""
 
 
 def _active_building() -> Optional[str]:
