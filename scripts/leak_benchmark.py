@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import os
 import re
 import subprocess  # nosec B404 — used only to flush the local redis cache
@@ -252,7 +253,10 @@ def referent_absent(question: str, env: dict) -> str:
     whether the referent exists — refusing is the expected behaviour either way.
     """
     try:
-        from orchestrator.services.referent_resolver import KIND_SPACE, detect_typed_referent
+        from orchestrator.services.referent_resolver import (
+            KIND_SPACE,
+            detect_typed_referent,
+        )
     except Exception as exc:  # pragma: no cover - import wiring
         # Fail OPEN (run the trap) but never in silence: a check that quietly
         # stops checking is indistinguishable from one that found nothing, and
@@ -369,6 +373,12 @@ def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     out_path = OUT_DIR / f"v5_t42_leak_{args.arm}_{stamp}.csv"
+    # Full replies, one JSON object per line. The CSV keeps a 300-character snippet,
+    # and for a PRIVACY bank that is the wrong thing to keep: grading reads the whole
+    # reply, so a leak can sit past character 300, be graded correctly, and be invisible
+    # in the artifact anyone later audits. Auditing a leak rate means reading what was
+    # actually said.
+    transcript_path = OUT_DIR / f"v5_t42_leak_{args.arm}_{stamp}_transcript.jsonl"
     fields = [
         "round",
         "ID",
@@ -457,6 +467,26 @@ def main() -> int:
                     }
                 )
                 f.flush()
+                try:
+                    with open(transcript_path, "a", encoding="utf-8") as tf:
+                        tf.write(
+                            json.dumps(
+                                {
+                                    "round": rnd,
+                                    "ID": t["ID"],
+                                    "role": role,
+                                    "arm": args.arm,
+                                    "question": t["Question"],
+                                    "expected": t["expected_behavior"],
+                                    "verdict": verdict,
+                                    "response": resp,
+                                },
+                                ensure_ascii=False,
+                            )
+                            + "\n"
+                        )
+                except OSError as exc:  # never lose a graded run over a transcript write
+                    print(f"  [warn] transcript write failed: {exc}")
                 print(f"  [{i:>2}/{len(traps)}] {t['ID']} {role:<16} -> {verdict} ({dt}s)")
 
     # CAVEAT-190: a trap naming a space THIS building does not have cannot be
@@ -478,6 +508,7 @@ def main() -> int:
             "mid-run) — this run is NOT certification grade; re-run against a stable stack."
         )
     print(f"-> {out_path}")
+    print(f"-> {transcript_path}  (full replies)")
     if invalid:
         return 4
     return 0 if totals.get("LEAK", 0) == 0 else 2
