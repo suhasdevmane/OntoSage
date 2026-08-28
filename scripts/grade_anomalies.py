@@ -113,6 +113,25 @@ def inject(env: dict, round_no: int) -> List[Dict[str, Any]]:
         if uid is None:
             print(f"  SKIP {detector}/{table}: no sensor with enough rows")
             continue
+
+        # Anchor the time-window injections on THIS SENSOR'S OWN latest reading, not on
+        # wall-clock now.
+        #
+        # BUG-360: bldg1 detected 2 of its own 8 injected faults and the reason was here.
+        # Its co2, temperature and humidity tables stopped receiving rows on 2026-08-26
+        # (0 of ~66-72 sensors writing in the last hour), so a window of "the last six
+        # hours" contained nothing to shift, offset or delete. The UPDATE matched zero
+        # rows, the label was written anyway, and the detector was then marked as having
+        # missed a fault that was never injected.
+        #
+        # The two kinds that DID get detected -- pin and spike_row -- are exactly the two
+        # that already anchored on the sensor's own newest rows (ORDER BY datetime DESC).
+        cur.execute(
+            f"SELECT MAX(`datetime`) FROM `{table}` WHERE uuid=%s",  # nosec B608
+            (uid,),
+        )
+        _latest = (cur.fetchone() or [None])[0]
+        anchor = _latest if isinstance(_latest, datetime) else now
         w_start = w_end = None
         magnitude = ""
         if kind == "pin":
@@ -142,16 +161,16 @@ def inject(env: dict, round_no: int) -> List[Dict[str, Any]]:
             w_start = w_end = ts
             magnitude = "spike=99999"
         elif kind == "shift_window":
-            w_end = now
-            w_start = now - timedelta(hours=6)
+            w_end = anchor
+            w_start = anchor - timedelta(hours=6)
             cur.execute(
                 f"UPDATE `{table}` SET value=value+500 WHERE uuid=%s "  # nosec B608
                 f"AND `datetime` >= %s",
                 (uid, w_start.strftime("%Y-%m-%d %H:%M:%S")),
             )
-            magnitude = "shift=+500x6h"
+            magnitude = f"shift=+500x6h({cur.rowcount}rows)"
         elif kind == "gap":
-            g_end = now - timedelta(hours=4)
+            g_end = anchor - timedelta(hours=4)
             g_start = g_end - timedelta(hours=3)
             rcur.execute(
                 f"DELETE FROM `{table}` WHERE uuid=%s AND `datetime` BETWEEN %s AND %s",  # nosec B608
@@ -160,14 +179,24 @@ def inject(env: dict, round_no: int) -> List[Dict[str, Any]]:
             w_start, w_end = g_start, g_end
             magnitude = f"gap=3h({rcur.rowcount}rows)"
         elif kind == "drift_offset":
-            w_end = now
-            w_start = now - timedelta(hours=7)
+            w_end = anchor
+            w_start = anchor - timedelta(hours=7)
             cur.execute(
                 f"UPDATE `{table}` SET value=value+300 WHERE uuid=%s "  # nosec B608
                 f"AND `datetime` >= %s",
                 (uid, w_start.strftime("%Y-%m-%d %H:%M:%S")),
             )
-            magnitude = "offset=+300x7h"
+            magnitude = f"offset=+300x7h({cur.rowcount}rows)"
+        # An injection that touched no rows is not ground truth. Labelling it would
+        # charge the detector with missing a fault that was never there -- which is
+        # exactly how bldg1's recall read 25% instead of what the detectors actually do.
+        if "(0rows)" in magnitude:
+            print(
+                f"  SKIP {detector:<18} {table:<18} {uid[:12]}… nothing to inject "
+                f"(no rows in the window ending {anchor}); NOT labelled"
+            )
+            continue
+
         labels.append(
             {
                 "round": round_no,

@@ -161,6 +161,44 @@ class SQLAgent:
             out.append(merged)
         return out
 
+    @classmethod
+    def _aggregate_across_sensors(cls, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Collapse per-sensor rows into ONE series — the aggregation floor, enforced.
+
+        BUG-356(b). A policy may say a role gets "building-wide aggregates only,
+        k-protected" (readonly's cross-space policy sets minSensors 14, minSpaces 7). The
+        floor was only ever checked as "does this FETCH cover enough sensors" -- 288 >= 14,
+        so it passed -- and never as "is the ANSWER aggregated". The lane then listed the
+        rooms one by one, which is the thing the floor exists to prevent: a list of
+        per-room values is a map of where people are.
+
+        Applied only to an enumeration across spaces. A question about ONE room is not a
+        map of anything, and aggregating it would refuse an ordinary question in the name
+        of a rule that was never about it.
+        """
+        buckets: Dict[Any, List[Dict[str, Any]]] = {}
+        for row in rows:
+            when = cls._row_time(row)
+            buckets.setdefault(when.isoformat() if when else "", []).append(row)
+
+        out: List[Dict[str, Any]] = []
+        for _when, group in sorted(buckets.items()):
+            merged: Dict[str, Any] = {}
+            for col in group[0]:
+                values = [
+                    float(r[col])
+                    for r in group
+                    if isinstance(r.get(col), (int, float)) and not isinstance(r.get(col), bool)
+                ]
+                if values:
+                    merged[col] = round(sum(values) / len(values), 4)
+                elif col in ("timestamp", "Datetime", "datetime"):
+                    merged[col] = group[0][col]
+            # The identity of the contributing sensors is what must NOT survive.
+            merged["sensors_combined"] = len(group)
+            out.append(merged)
+        return out
+
     async def fetch_data_for_uuids(
         self,
         uuids: List[str],
@@ -170,6 +208,7 @@ class SQLAgent:
         end_date: Optional[str] = None,
         sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
         max_resolution_s: Optional[float] = None,
+        aggregate_across_sensors: bool = False,
     ) -> Dict[str, Any]:
         """
         Fetch data for specific UUIDs, respecting storage locations.
@@ -510,6 +549,17 @@ Return ONLY the SQL query, no markdown, no explanations.
                     f"{_before_res} rows -> {len(all_data)}"
                 )
 
+            # The aggregation floor, applied to the ANSWER rather than merely checked
+            # against the fetch. Runs after the time clamp so the combined series is
+            # already at the resolution the policy allows.
+            if aggregate_across_sensors and all_data:
+                _before_agg = len(all_data)
+                all_data = self._aggregate_across_sensors(all_data)
+                logger.info(
+                    f"[sql] policy aggregation floor: {_before_agg} per-sensor rows -> "
+                    f"{len(all_data)} combined row(s)"
+                )
+
             # Standardize output format for Analytics Agent
             # We want a flat list of records: [{"timestamp": "...", "uuid": "...", "value": ...}, ...]
             standardized_data = {"data": all_data}
@@ -525,6 +575,16 @@ Return ONLY the SQL query, no markdown, no explanations.
                     f"\n\n_Window applied: {_hour_mask.label} — "
                     f"{len(all_data)} reading(s) inside it._"
                 )
+
+            if aggregate_across_sensors:
+                # Disclosed, like the resolution clamp: an answer that silently became a
+                # building average while the question asked room by room would misrepresent
+                # what it is showing.
+                formatted = (
+                    "_Combined across sensors — this building's access policy allows you "
+                    "aggregates rather than per-room values for a question of this scope. "
+                    "The figures below are averages over all matching sensors._\n\n"
+                ) + formatted
 
             if max_resolution_s:
                 # Said DETERMINISTICALLY, not left to the narration. Measured: with the

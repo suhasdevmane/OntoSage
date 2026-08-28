@@ -108,3 +108,26 @@ def requested_resolution_s(question: str) -> Optional[float]:
     if best is None and _LIVE_FEED_RE.search(q):
         best = _LIVE_FEED_SECONDS
     return best
+
+
+#: A request to enumerate many spaces one by one, rather than to ask about one.
+#:
+#: This is the discriminator BUG-356(b) needs. An aggregation floor ("readonly gets
+#: building-wide aggregates only, k-protected") is violated by a per-room enumeration and
+#: not by a question about a single room -- and enforcing it on every question instead
+#: would refuse "what is the temperature in room 2.14?", trading a leak for a wave of
+#: wrongful denials. The floor exists because a list of per-room values is a map of where
+#: people are; one room is not.
+_ENUMERATION_RE = re.compile(
+    r"\b(?:every|each|all(?:\s+of)?\s+the|list\s+(?:me\s+)?(?:every|all|each))\s+"
+    r"(?:\w+\s+){0,2}(?:room|rooms|space|spaces|zone|zones|office|offices|desk|desks)\b"
+    r"|\b(?:room[- ]by[- ]room|space[- ]by[- ]space|one\s+by\s+one)\b"
+    r"|\b(?:whole|entire)\s+building\b.{0,40}\b(?:room|rooms|space|spaces|temperature|each)\b"
+    r"|\b(?:room|rooms|space|spaces)\b.{0,30}\b(?:whole|entire)\s+building\b",
+    re.IGNORECASE,
+)
+
+
+def enumerates_spaces(question: str) -> bool:
+    """True when the question asks for values space by space rather than for one space."""
+    return bool(_ENUMERATION_RE.search(question or ""))

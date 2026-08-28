@@ -1889,11 +1889,26 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             # was cited in applied_policies — a different number here would mean the
             # answer and its stated policy disagreed.
             _res_clamp = None
+            _aggregate = False
             try:
                 if _verdict is not None and _verdict.decision == "restrict":
                     _res_clamp = getattr(_verdict, "resolution_s", None)
+                # BUG-356(b): the aggregation floor, applied to the ANSWER. A policy that
+                # says "building-wide aggregates only, k-protected" was only ever checked
+                # as "does the FETCH cover enough sensors" -- 288 >= 14, so it passed --
+                # while the lane listed the rooms one by one. A list of per-room values is
+                # a map of where people are; that is what the floor is for.
+                #
+                # Gated on the question ENUMERATING spaces. "What is the temperature in
+                # room 2.14?" is not a map of anything, and aggregating it would refuse an
+                # ordinary question in the name of a rule that was never about it.
+                if _verdict is not None and int(getattr(_verdict, "min_sensors", 1) or 1) > 1:
+                    from orchestrator.services.privacy.sampling import enumerates_spaces
+
+                    _aggregate = enumerates_spaces(latest_message) and len(uuids) > 1
             except NameError:  # the consult block failed; enforcement must not break the lane
                 _res_clamp = None
+                _aggregate = False
 
             result = await self.sql_agent.fetch_data_for_uuids(
                 uuids,
@@ -1906,6 +1921,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 # unit isn't specified)" while the graph held it twice (BUG-257).
                 state.intermediate_results.get("sensor_metadata"),
                 max_resolution_s=_res_clamp,
+                aggregate_across_sensors=_aggregate,
             )
         elif sparql_result.get("method") == "semantic_rag" or (
             sparql_result.get("success")

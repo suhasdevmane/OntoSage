@@ -38,6 +38,42 @@ _MODALITY_WORDS: List[Tuple[re.Pattern, str, str]] = [
     (re.compile(r"\bbusy\b|\bcrowded\b|\bpacked\b", re.I), "occupancy", "high"),
 ]
 
+#: The modality NAMES, which the lay list above does not contain (BUG-354).
+#:
+#: Graded 'wrong' on bldg1: "Why does the temperature keep changing?" returned "I processed
+#: your request, but couldn't generate a response." WHY_RE matched; the modality lookup did
+#: not, because "temperature", "illuminance" and "occupancy" appear nowhere in it and
+#: ``\bhumid\b`` does not match "humidity" -- the trailing word boundary stops it.
+#:
+#: So an occupant asking "why is it stuffy" was served and a facility manager asking "why is
+#: the humidity high" was not. Design contract 6 requires the same system to serve lay users
+#: AND experts; this list is the half that was missing.
+#:
+#: Direction comes from an accompanying word where there is one. A bare name carries no
+#: direction, so it falls back to the side of the range people normally complain about --
+#: named in the tuple rather than guessed at per call.
+_MODALITY_NAMES: List[Tuple[re.Pattern, str, str]] = [
+    (re.compile(r"\btemperature\b|\btemp\b", re.I), "temperature", "high"),
+    (re.compile(r"\bhumidity\b|\brelative humidity\b|\brh\b", re.I), "humidity", "high"),
+    (re.compile(r"\bco2\b|\bcarbon dioxide\b", re.I), "co2", "high"),
+    (re.compile(r"\bnoise level\b|\bsound level\b|\bacoustics?\b", re.I), "noise", "high"),
+    (
+        re.compile(r"\billuminance\b|\blight level\b|\blux\b|\blighting\b", re.I),
+        "illuminance",
+        "low",
+    ),
+    (re.compile(r"\bpm2\.?5\b|\bparticulate\b", re.I), "pm25", "high"),
+    (re.compile(r"\boccupancy\b|\bfootfall\b|\bhead ?count\b", re.I), "occupancy", "high"),
+]
+
+#: Words that flip a bare modality name to the other end of the range.
+_LOW_DIRECTION_RE = re.compile(
+    r"\b(?:low|lower|dropping|falling|too\s+little|not\s+enough|below)\b", re.I
+)
+_HIGH_DIRECTION_RE = re.compile(
+    r"\b(?:high|higher|rising|climbing|too\s+much|excessive|above)\b", re.I
+)
+
 WHY_RE = re.compile(
     r"^\s*why\b|\bwhy (?:was|is|were|are|did|does)\b|\bwhat(?:'s| is) (?:wrong|going on|the reason)\b",
     re.IGNORECASE,
@@ -50,9 +86,20 @@ def is_why_question(question: str) -> Optional[Tuple[str, str]]:
     """(modality, direction) when this is a diagnosable why-question, else None."""
     if not WHY_RE.search(question or ""):
         return None
+    # Lay terms first: they carry a direction of their own ("chilly" is not merely
+    # "temperature"), so a question that uses one should keep that reading.
     for pat, modality, direction in _MODALITY_WORDS:
         if pat.search(question):
             return modality, direction
+    # Then the modality names themselves, with the direction taken from an accompanying
+    # word where the asker supplied one (BUG-354).
+    for pat, modality, default_direction in _MODALITY_NAMES:
+        if pat.search(question):
+            if _LOW_DIRECTION_RE.search(question):
+                return modality, "low"
+            if _HIGH_DIRECTION_RE.search(question):
+                return modality, "high"
+            return modality, default_direction
     return None
 
 
