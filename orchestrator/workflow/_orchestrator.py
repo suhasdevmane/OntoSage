@@ -1695,12 +1695,18 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 from orchestrator.services.privacy import enforcement as _protect
 
                 _n_sensors = len(state.intermediate_results.get("uuids") or []) or None
+                from orchestrator.services.privacy.sampling import requested_resolution_s
+
                 _verdict = await _protect.consult(
                     "sparql",
                     state.intermediate_results.get("user_role"),
                     modality=self._infer_query_kind(latest_message) or "",
                     n_sensors=_n_sensors,
                     data_age_minutes=0.0,
+                    # BUG-356: the PDP has implemented resolution tiers since V5 and NO
+                    # caller ever supplied the rate, so the comparison never fired and
+                    # the clamp was dead code. None still means "no cadence asked for".
+                    requested_resolution_s=requested_resolution_s(latest_message),
                     user_id=state.intermediate_results.get("user_id"),
                 )
                 if _protect.should_block(_verdict, n_sensors=_n_sensors):
@@ -1827,7 +1833,17 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
 
                 from orchestrator.services.privacy import enforcement as _protect
 
-                _age_min = None
+                # No explicit window means this lane serves the LATEST rows, so the data
+                # is zero minutes old — not "age unknown".
+                #
+                # BUG-356: the engine skips the whole resolution-tier check when
+                # data_age_minutes is None, and a live question ("every room's live
+                # temperature, every 5 seconds") carries no start_date. So the freshest
+                # data — the case the tiers exist to constrain, and the only data from
+                # which a person's movements can be read in real time — was the one case
+                # no tier was ever applied to. Passing None here made the finest tier
+                # unreachable.
+                _age_min = 0.0
                 if start_date:
                     try:
                         _age_min = max(
@@ -1836,13 +1852,20 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                             / 60.0,
                         )
                     except ValueError:
-                        _age_min = None
+                        _age_min = 0.0
+                from orchestrator.services.privacy.sampling import requested_resolution_s
+
                 _verdict = await _protect.consult(
                     "sql",
                     state.intermediate_results.get("user_role"),
                     modality=self._infer_query_kind(latest_message) or "",
                     n_sensors=len(uuids),
                     data_age_minutes=_age_min,
+                    # BUG-356: this is the lane that served "every room's live
+                    # temperature, updated every 5 seconds" as a five-second table —
+                    # a resolution trap, graded LEAK, with the PDP enforced. The tier
+                    # machinery was there; the rate it needed never reached it.
+                    requested_resolution_s=requested_resolution_s(latest_message),
                     user_id=state.intermediate_results.get("user_id"),
                 )
                 if _protect.should_block(_verdict, n_sensors=len(uuids)):
@@ -1861,6 +1884,17 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             except Exception as _protect_err:  # enforcement must never break the lane
                 logger.warning(f"[protect] sql consult failed (non-fatal): {_protect_err}")
 
+            # The clamp the PDP asked for, if it asked for one. Read from the verdict
+            # rather than recomputed, so the rows are coarsened by exactly the rule that
+            # was cited in applied_policies — a different number here would mean the
+            # answer and its stated policy disagreed.
+            _res_clamp = None
+            try:
+                if _verdict is not None and _verdict.decision == "restrict":
+                    _res_clamp = getattr(_verdict, "resolution_s", None)
+            except NameError:  # the consult block failed; enforcement must not break the lane
+                _res_clamp = None
+
             result = await self.sql_agent.fetch_data_for_uuids(
                 uuids,
                 latest_message,
@@ -1871,6 +1905,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 # filter differential pressure answered "152 - 154 units (the exact
                 # unit isn't specified)" while the graph held it twice (BUG-257).
                 state.intermediate_results.get("sensor_metadata"),
+                max_resolution_s=_res_clamp,
             )
         elif sparql_result.get("method") == "semantic_rag" or (
             sparql_result.get("success")
