@@ -87,34 +87,87 @@ def _modality_lines(modalities: List[ModalitySpec]) -> str:
     return "\n".join(lines)
 
 
-async def compile_query(
-    query: str,
-    modalities: List[ModalitySpec],
-    llm_call: Optional[LlmCall] = None,
-) -> CQIR:
-    """Compile a NL constraint query into a validated CQIR (signals on anything unclear)."""
-    if llm_call is None:  # pragma: no cover - live wiring
-        from orchestrator.llm_manager import llm_manager
+def _normalise_question(query: str) -> str:
+    """Collapse the incidental differences between two askings of one question."""
+    return " ".join((query or "").lower().split()).strip(" ?!.")
 
-        async def llm_call(prompt: str) -> str:
-            return await llm_manager.generate(prompt, temperature=0.0)
 
-    known = {m.name for m in modalities}
-    prompt = _PROMPT.format(modality_lines=_modality_lines(modalities), query=query)
+def _compile_cache_key(query: str, modalities: List[ModalitySpec]) -> str:
+    """cqir_compile:<sha256> over everything that can change the compiled plan.
 
-    raw = ""
-    try:
-        raw = await llm_call(prompt)
-    except Exception as exc:
-        logger.error(f"[cqir] LLM call failed: {exc}")
-        return CQIR(
-            decision=DecisionKind.SELECT_ONE,
-            raw_query=query,
-            signals=[
-                AmbiguitySignal(kind="vague", phrase=query, note=f"compiler LLM error: {exc}")
-            ],
-        )
+    Provider AND model are in the key, deliberately. A key on the question alone
+    would hand model B the plan model A compiled, and the multi-model invariance
+    benchmark would then be measuring this cache rather than the models -- it would
+    report a perfect score for the very property it exists to test. The embedding
+    cache already keys on text+provider+model for the same reason.
 
+    The modality set is in the key because a building that gains a modality can
+    legitimately compile the same words differently; the prompt is in it because
+    editing the prompt is editing the compiler.
+    """
+    import hashlib
+
+    from shared.config import settings
+
+    provider = str(getattr(settings, "MODEL_PROVIDER", "") or "")
+    if provider == "openai":
+        model = str(getattr(settings, "OPENAI_MODEL", "") or "")
+    else:
+        model = str(getattr(settings, "OLLAMA_MODEL", "") or "")
+
+    material = "␟".join(
+        [
+            _normalise_question(query),
+            ",".join(sorted(m.name for m in modalities)),
+            provider,
+            model,
+            hashlib.sha256(_PROMPT.encode("utf-8")).hexdigest()[:16],
+        ]
+    )
+    return f"cqir_compile:{hashlib.sha256(material.encode('utf-8')).hexdigest()}"
+
+
+#: How long a compiled plan stays valid. A question's meaning does not change, but
+#: the building's modality set can, and that is already in the key -- this is a
+#: bound on stale prompt-era entries rather than a correctness mechanism.
+_COMPILE_CACHE_TTL = 86_400
+
+
+def _cache_enabled() -> bool:
+    """``CQIR_COMPILE_CACHE=false`` turns the cache off for the whole process.
+
+    The multi-model benchmark needs this. Cross-model comparison is safe with the
+    cache ON -- the model is in the key, so each arm compiles for itself -- but the
+    NOISE FLOOR arm, the same model run twice, would come back 8/8 by construction
+    and mean nothing. The two numbers answer different questions and must be measured
+    differently:
+
+      cache OFF  what the compiler does      -- the honest wobble, 3/8 when measured
+      cache ON   what a user experiences     -- a repeat replays its own plan
+
+    Reporting the second as if it were the first is how a fix becomes a fiction.
+    """
+    import os
+
+    return os.getenv("CQIR_COMPILE_CACHE", "true").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
+
+
+def _parse_compiled(raw: str, query: str, known: set) -> CQIR:
+    """Validate one raw compiler response into a CQIR.
+
+    Split out of ``compile_query`` so the cache-hit path and the fresh-compile path
+    run the SAME validation. Caching a parsed object instead would let a stored plan
+    drift out of step with the parser that produced it; caching the text and
+    re-validating it cannot.
+
+    Every field is checked against the closed vocabulary here -- anything unknown
+    becomes an AmbiguitySignal, never a guess.
+    """
     match = re.search(r"\{[\s\S]*\}", raw or "")
     if not match:
         return CQIR(
@@ -261,6 +314,79 @@ async def compile_query(
         event_criteria=_fold_event_criteria(query),
         raw_query=query,
     )
+
+
+# V5-T25 — availability / booking-pressure phrases are folded DETERMINISTICALLY
+# (like the horizon fold): the closed-vocabulary LLM prompt stays untouched and
+
+
+async def compile_query(
+    query: str,
+    modalities: List[ModalitySpec],
+    llm_call: Optional[LlmCall] = None,
+    *,
+    use_cache: bool = True,
+) -> CQIR:
+    """Compile a NL constraint query into a validated CQIR (signals on anything unclear).
+
+    ``use_cache=False`` forces a fresh compile. The multi-model benchmark MUST pass it:
+    with the cache on, a repeat measures the cache, not the compiler (CAVEAT-327).
+    """
+    if llm_call is None:  # pragma: no cover - live wiring
+        from orchestrator.llm_manager import llm_manager
+
+        async def llm_call(prompt: str) -> str:
+            return await llm_manager.generate(prompt, temperature=0.0)
+
+    known = {m.name for m in modalities}
+    prompt = _PROMPT.format(modality_lines=_modality_lines(modalities), query=query)
+
+    # The RAW LLM text is what gets cached, not the parsed CQIR. Everything below this
+    # point is deterministic validation against a closed vocabulary, so replaying the
+    # text reproduces the plan exactly while keeping the cache a single string -- no
+    # serialisation of a dataclass graph, and no risk of a cached object drifting out of
+    # step with the parser that produced it.
+    #
+    # CAVEAT-327: the same model at temperature 0 reproduced only 3 of 8 plans between
+    # runs, so cross-model agreement (2/8) sat AT OR BELOW the noise floor and no
+    # difference could be attributed to the model at all. A repeat of a question now
+    # replays its own compile.
+    cache_key = ""
+    if use_cache and _cache_enabled():
+        try:
+            cache_key = _compile_cache_key(query, modalities)
+            from orchestrator.redis_manager import redis_manager
+
+            cached = await redis_manager.get_cache(cache_key)
+            if isinstance(cached, str) and cached.strip():
+                logger.debug("[cqir] compile cache hit")
+                return _parse_compiled(cached, query, known)
+        except Exception as exc:  # cache is an optimisation; never a failure path
+            logger.debug(f"[cqir] compile cache unavailable: {exc}")
+            cache_key = ""
+
+    raw = ""
+    try:
+        raw = await llm_call(prompt)
+    except Exception as exc:
+        logger.error(f"[cqir] LLM call failed: {exc}")
+        return CQIR(
+            decision=DecisionKind.SELECT_ONE,
+            raw_query=query,
+            signals=[
+                AmbiguitySignal(kind="vague", phrase=query, note=f"compiler LLM error: {exc}")
+            ],
+        )
+
+    if cache_key:
+        try:
+            from orchestrator.redis_manager import redis_manager
+
+            await redis_manager.set_cache(cache_key, raw, ttl=_COMPILE_CACHE_TTL)
+        except Exception as exc:  # storing is best-effort
+            logger.debug(f"[cqir] could not store compile: {exc}")
+
+    return _parse_compiled(raw, query, known)
 
 
 # V5-T25 — availability / booking-pressure phrases are folded DETERMINISTICALLY
