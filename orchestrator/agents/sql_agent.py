@@ -95,6 +95,72 @@ class SQLAgent:
                 "analytics_required": False,
             }
 
+    @staticmethod
+    def _row_time(row: Dict[str, Any]):
+        """The timestamp on a row, whatever the adapter called the column."""
+        from datetime import datetime as _dt
+
+        ts = row.get("timestamp") or row.get("Datetime") or row.get("datetime")
+        if isinstance(ts, _dt):
+            return ts
+        if isinstance(ts, str):
+            try:
+                return _dt.fromisoformat(ts.replace("Z", "+00:00"))
+            except ValueError:
+                return None
+        return None
+
+    @classmethod
+    def _coarsen(cls, rows: List[Dict[str, Any]], max_resolution_s: float) -> List[Dict[str, Any]]:
+        """Average rows into buckets no finer than the policy allows (BUG-356).
+
+        The PDP has always been able to say "this role may not have data finer than N
+        seconds", and the SQL lane has always served whatever the query returned. So a
+        RESTRICT verdict with a resolution clamp was recorded in applied_policies and
+        then ignored: measured live, the PDP said "resolution clamped to 3600s" and the
+        answer went out as a ten-row table at five-second spacing.
+
+        Averaging rather than sampling, because the point is that the fine detail must
+        not survive: taking every Nth row would still hand back individual instants.
+
+        A row whose timestamp cannot be read is DROPPED. Keeping it would let a reading
+        of unknown time through a rule that exists to control timing.
+        """
+        buckets: Dict[Any, List[Dict[str, Any]]] = {}
+        for row in rows:
+            when = cls._row_time(row)
+            if when is None:
+                continue
+            key = (
+                str(row.get("uuid") or row.get("UUID") or ""),
+                int(when.timestamp() // max_resolution_s),
+            )
+            buckets.setdefault(key, []).append(row)
+
+        out: List[Dict[str, Any]] = []
+        for (_uuid, slot), group in sorted(buckets.items(), key=lambda kv: kv[0][1]):
+            merged = dict(group[0])
+            for col in group[0]:
+                values = []
+                for r in group:
+                    v = r.get(col)
+                    if isinstance(v, bool):
+                        continue
+                    if isinstance(v, (int, float)):
+                        values.append(float(v))
+                if values:
+                    merged[col] = round(sum(values) / len(values), 4)
+            from datetime import datetime as _dt
+            from datetime import timezone as _tz
+
+            merged_ts = _dt.fromtimestamp(slot * max_resolution_s, tz=_tz.utc)
+            for col in ("timestamp", "Datetime", "datetime"):
+                if col in merged:
+                    merged[col] = merged_ts.strftime("%Y-%m-%d %H:%M:%S")
+                    break
+            out.append(merged)
+        return out
+
     async def fetch_data_for_uuids(
         self,
         uuids: List[str],
@@ -103,6 +169,7 @@ class SQLAgent:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
+        max_resolution_s: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Fetch data for specific UUIDs, respecting storage locations.
@@ -431,6 +498,18 @@ Return ONLY the SQL query, no markdown, no explanations.
                     "rows inside it"
                 )
 
+            # PROTECT: the policy decision point may cap how fine this role's data may
+            # be. Applied HERE, on the rows, because a clamp that only reaches the log
+            # is not enforcement -- the leak this fixes was a correct RESTRICT verdict
+            # sitting beside a five-second table in the same response.
+            if max_resolution_s and all_data:
+                _before_res = len(all_data)
+                all_data = self._coarsen(all_data, float(max_resolution_s))
+                logger.info(
+                    f"[sql] policy resolution clamp {max_resolution_s:g}s: "
+                    f"{_before_res} rows -> {len(all_data)}"
+                )
+
             # Standardize output format for Analytics Agent
             # We want a flat list of records: [{"timestamp": "...", "uuid": "...", "value": ...}, ...]
             standardized_data = {"data": all_data}
@@ -447,12 +526,34 @@ Return ONLY the SQL query, no markdown, no explanations.
                     f"{len(all_data)} reading(s) inside it._"
                 )
 
+            if max_resolution_s:
+                # Said DETERMINISTICALLY, not left to the narration. Measured: with the
+                # rows correctly coarsened from 102,000 to 7,156 hourly means, the model
+                # still headed its answer "updated every 5 s" — echoing the words of the
+                # question. An answer that names a cadence its data does not have is a
+                # false claim about the data, and here it also hid that a policy applied.
+                _res = float(max_resolution_s)
+                _human = (
+                    f"{_res / 3600:g}-hour"
+                    if _res >= 3600
+                    else (f"{_res / 60:g}-minute" if _res >= 60 else f"{_res:g}-second")
+                )
+                formatted = (
+                    f"_Served at {_human} resolution — this building's access policy sets "
+                    f"the finest detail available to you for data this recent. The figures "
+                    f"below are averages over each interval, not instantaneous readings._\n\n"
+                ) + formatted
+
             return {
                 "success": True,
                 "query": "Multiple Queries (Storage Aware)",
                 "results": standardized_data,  # Standardized JSON for Analytics
                 "formatted_response": formatted,
                 "analytics_required": True,
+                # The clamp that shaped these rows, "" when none did — so the evidence
+                # record can state the resolution actually served rather than inferring
+                # it from timestamps that now describe buckets.
+                "resolution_clamp_s": float(max_resolution_s) if max_resolution_s else "",
                 # V6-T40: which recurring window shaped these rows, "" when none did. The
                 # evidence record reads it so requested_period can state the real basis.
                 "window_mask": _hour_mask.label if _hour_mask is not None else "",
