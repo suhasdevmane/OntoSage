@@ -230,8 +230,22 @@ def main(argv: List[str]) -> int:
 
         present = bool(rec)
         fail_closed = FAIL_CLOSED in reason
-        ok = present and bool(status) and not fail_closed
-        verdict = "PASS" if ok else ("FAIL-CLOSED" if fail_closed else "NO RECORD")
+        # A turn answered while the provider was down is not evidence of anything, and the
+        # fallback text reads enough like an answer to score as one. Measured 2026-08-28:
+        # Ollama died mid-run on bldg1 and this probe reported 9/10 with the deliberate
+        # lane "FAIL-CLOSED" — a dead model presented as a lane defect, and I started
+        # diagnosing the lane. capture_golden_baseline, corpus_replay and leak_benchmark
+        # all quarantine on this field already; this probe was the one that did not.
+        degraded = bool(data.get("llm_degraded"))
+        ok = present and bool(status) and not fail_closed and not degraded
+        if degraded:
+            verdict = "DEGRADED"
+        elif ok:
+            verdict = "PASS"
+        elif fail_closed:
+            verdict = "FAIL-CLOSED"
+        else:
+            verdict = "NO RECORD"
 
         rows.append(
             {
@@ -242,6 +256,7 @@ def main(argv: List[str]) -> int:
                 "status": status,
                 "operation": rec.get("operation"),
                 "reason": reason[:120],
+                "degraded": degraded,
                 "ok": ok,
             }
         )
@@ -258,16 +273,33 @@ def main(argv: List[str]) -> int:
     print(f"/v1/chat/completions carries the record: {'yes' if v1_ok else 'NO'}")
 
     passed = sum(1 for r in rows if r["ok"])
+    quarantined = [r["lane"] for r in rows if r.get("degraded")]
     intents = sorted({r["intent"] for r in rows if r["intent"]})
     print(f"\nresponses carrying a usable record: {passed}/{len(rows)}")
     # The number that actually evidences the criterion. The first version of this probe
     # reported 10/10 while exercising four intents, because seven questions were claimed by
     # the capability lane -- "every response has a record" is not "all ten lanes emit one".
     print(f"distinct lanes exercised: {len(intents)}  {intents}")
+    if quarantined:
+        # Said loudly, and it makes the run INVALID rather than merely lower-scoring.
+        # This project has thrown away two artifacts for exactly this: a container
+        # recreated mid-run (CAVEAT-173/BUG-176) and an LLM outage whose fallback text
+        # graded as a PASS (BUG-177). A score from a run with degraded turns is not a
+        # score, so it must not be reported as one.
+        print(
+            f"INVALID RUN — {len(quarantined)} turn(s) answered while the LLM was "
+            f"degraded: {', '.join(quarantined)}. Fix the provider and re-run; "
+            f"do not publish this number."
+        )
     if args.json:
         Path(args.json).write_text(
             json.dumps({"lanes": rows, "v1_ok": v1_ok}, indent=1), encoding="utf-8"
         )
+    # 3 = invalid, distinct from 1 = failed. They call for different things: an invalid
+    # run must be repeated once the provider is healthy, a failed one must be diagnosed.
+    # Collapsing them is how a dead model gets investigated as a lane defect.
+    if quarantined:
+        return 3
     return 0 if (passed == len(rows) and v1_ok and len(intents) >= 6) else 1
 
 
