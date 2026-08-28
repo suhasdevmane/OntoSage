@@ -36,7 +36,10 @@ def _llm(payload):
 
 
 def _compile(payload, query="q"):
-    return asyncio.run(compile_query(query, MODALITIES, llm_call=_llm(payload)))
+    # use_cache=False: these are OFFLINE tests of the compiler, and the cache would
+    # reach for a Redis that is not there -- costing a DNS timeout per call and
+    # testing the fail-open path over and over instead of the compiler.
+    return asyncio.run(compile_query(query, MODALITIES, llm_call=_llm(payload), use_cache=False))
 
 
 FLAGSHIP = {
@@ -146,7 +149,7 @@ def test_garbage_llm_output_is_vague_signal():
     async def bad(prompt: str) -> str:
         return "I cannot answer that."
 
-    ir = asyncio.run(compile_query("q", MODALITIES, llm_call=bad))
+    ir = asyncio.run(compile_query("q", MODALITIES, llm_call=bad, use_cache=False))
     assert not ir.is_executable()
     assert any(s.kind == "vague" for s in ir.signals)
 

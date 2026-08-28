@@ -1183,6 +1183,28 @@ def _r_anomaly_history_to_events(c: _Ctx) -> Optional[str]:
     return "events" if ANOMALY_HISTORY_RE.search(c.query) else None
 
 
+#: Intents a room-superlative question is observed to land in when the classifier
+#: wobbles. CAVEAT-327 measured lane entry at 6/8 per arm, and the downgrades were TWO
+#: of the three plan mismatches — a bigger contributor than compile wobble. All ten
+#: benchmark questions match DELIBERATE_RE, so the pattern was never the gap: the two
+#: deliberate rules gate on DISJOINT intent sets (weak+recommend, and analytics+
+#: sensor_data) and everything between them fell through to a reflex answer.
+#:
+#: floor_plan and spatial_query are the ones that actually bite: naming a floor pulls
+#: "which room on floor 2 is quietest" toward floor_plan, and "where can I sit near the
+#: cafe" toward spatial_query. Widening is safe because DELIBERATE_RE still has to
+#: match — it requires a superlative or an explicit should-I shape, so "show me floor 2"
+#: and "where is room 2.14" are untouched and stay with their own lanes.
+_SUPERLATIVE_TAKEOVER_INTENTS = (
+    "analytics",
+    "sensor_data",
+    "floor_plan",
+    "spatial_query",
+    "compare",
+    "trend",
+)
+
+
 def _r_superlative_room_takeover(c: _Ctx) -> Optional[str]:
     """Room-superlative shape classified analytics/sensor_data → deliberate (BUG-163).
 
@@ -1191,7 +1213,7 @@ def _r_superlative_room_takeover(c: _Ctx) -> Optional[str]:
     hardware-scale column into '0.00 ppm' answers). Lowest precedence: it fires
     only when no earlier rule (comfort question, compare, data promotion) did.
     """
-    if c.intent not in ("analytics", "sensor_data"):
+    if c.intent not in _SUPERLATIVE_TAKEOVER_INTENTS:
         return None
     return "deliberate" if DELIBERATE_RE.search(c.query) else None
 
