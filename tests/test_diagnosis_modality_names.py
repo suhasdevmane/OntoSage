@@ -74,3 +74,35 @@ def test_an_explicit_direction_overrides_the_default():
 def test_things_that_are_not_diagnosable_why_questions_stay_out(question):
     """Widening the vocabulary must not make every mention of a quantity a diagnosis."""
     assert is_why_question(question) is None
+
+
+# -- comparatives, the form people actually use (BUG-354, second half) --------
+@pytest.mark.parametrize(
+    "question,expected",
+    [
+        # the single 'wrong' answer in bldg1's clean certification
+        ("Why is it so much warmer in the corner than by the windows?", ("temperature", "high")),
+        ("why is it colder upstairs?", ("temperature", "low")),
+        ("why is it noisier today?", ("noise", "high")),
+        ("why is it darker in here?", ("illuminance", "low")),
+        ("why is it busier than usual?", ("occupancy", "high")),
+        ("why is it stuffier after lunch?", ("co2", "high")),
+        ("why is it the hottest room?", ("temperature", "high")),
+        ("why is it dimmer on this side?", ("illuminance", "low")),
+    ],
+)
+def test_a_comparative_is_the_normal_way_to_ask(question, expected):
+    """Nobody asks "why is it warm here" — they ask "why is it WARMER in the corner".
+
+    ``\bwarm\b`` does not match "warmer"; the word boundary stops it, exactly as
+    ``\bhumid\b`` did not match "humidity". I closed BUG-354 on two examples that
+    happened to use base forms, and the very next certification run produced this one.
+    """
+    assert is_why_question(question) == expected
+
+
+def test_the_base_forms_still_work():
+    """Widening to comparatives must not cost the plain adjectives."""
+    assert is_why_question("why is it warm?") == ("temperature", "high")
+    assert is_why_question("why is it chilly?") == ("temperature", "low")
+    assert is_why_question("why is it stuffy?") == ("co2", "high")
