@@ -31,12 +31,20 @@ def rows():
     return _load_strata_source(BANK)
 
 
-def test_both_corpora_load(rows):
-    assert len(rows) == 1580
+def test_all_three_corpora_load(rows):
+    """1,100 v5 synthetic + 480 supervisor catalogue + 2,480 from the 31 stakeholder
+    catalogues that had never been extracted (2026-08-29)."""
+    assert len(rows) == 4060
 
 
 def test_no_question_falls_into_unknown(rows):
-    """A catalogue row has no Category; falling through would bucket 480 questions as junk."""
+    """A catalogue row has no Category; falling through would bucket 480 questions as junk.
+
+    It happened again at four times the scale: the 2,480 rows from the 31 stakeholder
+    catalogues mostly carry NEITHER Category nor Readiness, and on the old rules 1,840 of
+    them landed in "unknown" — the meaningless bucket this test was written to prevent.
+    They stratify by stakeholder instead.
+    """
     unknown = [r for r in rows if r["l7_stratum"] == "unknown"]
     assert not unknown, f"{len(unknown)} rows have no stratum"
 
@@ -50,10 +58,27 @@ def test_catalogue_rows_stratify_by_readiness(rows):
 
 
 def test_v5_rows_still_stratify_by_category(rows):
-    """The existing corpus must keep its existing axis - this is an addition, not a change."""
-    v5 = [r for r in rows if not r["bank_source"].startswith("supervisor")]
+    """The existing corpus must keep its existing axis - this is an addition, not a change.
+
+    Selected by its OWN source name. "not supervisor" used to mean "v5", and the moment a
+    third corpus arrived that read 3,580 rows as v5 — a definition by exclusion that was
+    correct only while there were two banks.
+    """
+    v5 = [r for r in rows if r["bank_source"] == "v5_synthetic_bank"]
     assert len(v5) == 1100
     assert len({r["l7_stratum"] for r in v5}) == 24
+
+
+def test_the_37_catalogues_stratify_by_stakeholder(rows):
+    """One axis per corpus. Only 38% of these rows carry a readiness tag, so a fallback
+    chain would split single catalogues across two axes."""
+    from collections import Counter
+
+    cat37 = [r for r in rows if r["bank_source"] == "stakeholder_catalogue_37"]
+    assert len(cat37) == 2480
+    sizes = Counter(r["l7_stratum"] for r in cat37)
+    assert len(sizes) == 31, "expected one stratum per newly extracted catalogue"
+    assert set(sizes.values()) == {80}, "each catalogue contributes exactly 80 questions"
 
 
 def test_every_catalogue_row_carries_its_complexity(rows):
