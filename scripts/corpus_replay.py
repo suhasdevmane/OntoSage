@@ -502,18 +502,28 @@ _CSV_FIELDNAMES = [
 def _load_strata_source(path: Path) -> List[Dict[str, str]]:
     """Load a question-bank CSV as replay rows.
 
-    Accepts THREE bank shapes:
+    Accepts FOUR bank shapes:
       - L7 bank (V4-T27): ID/qid, Question/question, l7_stratum, expected_behavior
       - V5 synthetic bank: ID, Question, Category, Register, Stakeholder_Role —
         Category becomes the stratum.
       - supervisor catalogue (V6-T46): ID, Question, Readiness_R (R1/R2/R3),
         Complexity_L (L1-L4), Stakeholder_Role — READINESS becomes the stratum.
+      - stakeholder catalogue 37 (2026-08-29): 2,480 questions from the 31 catalogues
+        that had never been extracted — STAKEHOLDER ROLE becomes the stratum.
 
-    The two corpora stratify on different axes ON PURPOSE, and the choice matters more
-    than it looks. R1 coverage measures OntoSage; R2 coverage measures the estate's
+    The corpora stratify on different axes ON PURPOSE, and the choice matters more than
+    it looks. R1 coverage measures OntoSage; R2 coverage measures the estate's
     integration backlog; R3 measures governance. Rolling them into one number would let a
     good R1 score mask an empty R2 — and would tempt exactly the scoring inflation that
     already cost this project three false results (CAVEAT-173, BUG-176, BUG-177).
+
+    The third corpus needs its own axis for the same reason. Most of those 31 catalogues
+    carry no Category and no Readiness tag — verified in the source PDFs, not assumed —
+    so on the old rules 1,840 of them fell into "unknown", which is precisely the
+    meaningless bucket the sentence above was written to prevent. What they DO carry, on
+    every row, is the stakeholder whose catalogue they came from, and that is the axis
+    those documents are organised on: a security officer's questions and an
+    undergraduate's fail for different reasons and are fixed by different work.
 
     Every row is replayed — banks are curated sets, no stratified sampling.
     """
@@ -525,14 +535,32 @@ def _load_strata_source(path: Path) -> List[Dict[str, str]]:
             if not qid or not question:
                 continue
             readiness = (r.get("Readiness_R") or "").strip()
-            # Readiness first: a catalogue row has no Category, and falling through to
-            # "unknown" would silently drop 480 questions into one meaningless bucket.
-            stratum = (
-                (r.get("l7_stratum") or "").strip()
-                or readiness
-                or (r.get("Category") or "").strip()
-                or "unknown"
-            )
+            source = (r.get("Source") or "").strip()
+            # Readiness first: a supervisor-catalogue row has no Category, and falling
+            # through to "unknown" would silently drop 480 questions into one meaningless
+            # bucket. The 37-catalogue rows mostly have NEITHER, so they stratify on the
+            # stakeholder their catalogue belongs to — the axis those documents are built
+            # on, and the only field populated on all 2,480.
+            if source == "stakeholder_catalogue_37":
+                # ONE axis for this corpus, not two. Only 38% of these rows carry a
+                # readiness tag, so a fallback chain would stratify part of the corpus by
+                # readiness and the rest by stakeholder — 26 role buckets beside a
+                # handful of R buckets, splitting single catalogues across both. Mixing
+                # axes inside one corpus is the thing the paragraph above argues against.
+                # Readiness stays available in its own column for anyone who wants it.
+                stratum = (
+                    (r.get("Stakeholder_Role") or "").strip()
+                    or readiness
+                    or (r.get("Category") or "").strip()
+                    or "unknown"
+                )
+            else:
+                stratum = (
+                    (r.get("l7_stratum") or "").strip()
+                    or readiness
+                    or (r.get("Category") or "").strip()
+                    or "unknown"
+                )
             rows.append(
                 {
                     "qid": qid,
