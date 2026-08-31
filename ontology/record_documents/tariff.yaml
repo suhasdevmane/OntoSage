@@ -1,0 +1,41 @@
+# Registered energy tariffs -> ontosage:Tariff
+#
+# Cost is computed ONLY from one of these. With no tariff registered the honest answer is
+# a decline that names it: an invented unit rate produces a confident wrong number, which
+# is the failure mode this project guards against hardest.
+record_type: tariff
+class: ontosage:Tariff
+iri_template: "tariff/{reference}"
+label_column: reference
+
+columns:
+  reference:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  utility:
+    predicate: ontosage:utilityKind
+    datatype: xsd:string
+    required: true
+  unit_rate:
+    predicate: ontosage:unitRate
+    datatype: xsd:decimal
+    required: true
+  standing_charge:
+    predicate: ontosage:standingCharge
+    datatype: xsd:decimal
+  currency:
+    predicate: ontosage:currencyCode
+    datatype: xsd:string
+    required: true
+  start:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:date
+    required: true
+  end:
+    predicate: ontosage:effectiveTo
+    datatype: xsd:date
+  supplier:
+    predicate: ontosage:providerName
+    datatype: xsd:string
+    required: true

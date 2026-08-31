@@ -28,10 +28,7 @@ pytestmark = pytest.mark.unit
 
 
 def _held(*names: str) -> list:
-    return [
-        RecordClass(n, n, 5, _terms_for(n, n.replace("Record", " record")))
-        for n in names
-    ]
+    return [RecordClass(n, n, 5, _terms_for(n, n.replace("Record", " record"))) for n in names]
 
 
 def test_terms_come_from_the_ontology_label_not_a_keyword_list():
@@ -82,3 +79,29 @@ def test_matching_is_word_bounded():
     """A substring must not claim a question — 'permitted' is not 'permit'."""
     held = _held("Permit")
     assert held_record_class("Is smoking permitted in the atrium?", held) is None
+
+
+def test_a_lay_term_phrase_is_never_reduced_to_its_head_word():
+    """ "roof access permit" must not contribute a bare "roof".
+
+    Measured: it did, and "what competency is required for the roof?" was answered from
+    the PERMIT register instead of the competency one. The head word of a phrase is a
+    different concept, not a shorter name for the same one. Head-word expansion is for
+    the class NAME and LABEL, which are titles for the thing itself.
+    """
+    terms = _terms_for("Permit", "Permit to work", "roof access permit|hot works permit")
+    assert "roof access permit" in terms
+    assert "roof" not in terms
+    assert "permit" in terms, "the label's head word is still expanded"
+
+
+def test_declared_lay_terms_are_matched_whole():
+    held = _held("ConditionSurvey")
+    held[0] = RecordClass(
+        "ConditionSurvey",
+        "Condition survey",
+        10,
+        _terms_for("ConditionSurvey", "Condition survey", "expected life|remaining life"),
+    )
+    hit = held_record_class("Which assets are beyond their expected life?", held)
+    assert hit is not None and hit.local_name == "ConditionSurvey"
