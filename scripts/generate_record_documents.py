@@ -779,7 +779,114 @@ def bookings() -> str:
     )
 
 
+def sustainability_targets() -> str:
+    """Carbon and resource targets.
+
+    ontosage:SustainabilityTarget was defined in the TBox and held zero instances
+    anywhere, which is why the readiness probe reported the class ABSENT while the
+    vocabulary for it already existed.
+
+    Every target carries a baseline, a date and an authority. A bare percentage without
+    those is a slogan, not a target, and cannot answer "are we on track" — which is the
+    question these exist for.
+    """
+    rows = [
+        [
+            "SUS-CARBON-2030",
+            "Scope 1 and 2 carbon emissions",
+            "50.0",
+            "% reduction",
+            "412.0",
+            "2019/20 academic year",
+            d(1216),
+            "University Environmental Strategy",
+            "At risk",
+        ],
+        [
+            "SUS-ENERGY-2027",
+            "Building electricity consumption",
+            "15.0",
+            "% reduction",
+            "1840000.0",
+            "2022/23 academic year",
+            d(486),
+            "Estates Energy Board",
+            "On track",
+        ],
+        [
+            "SUS-WATER-2028",
+            "Mains water consumption",
+            "20.0",
+            "% reduction",
+            "9600.0",
+            "2022/23 academic year",
+            d(851),
+            "Estates Energy Board",
+            "On track",
+        ],
+        [
+            "SUS-WASTE-2027",
+            "Waste diverted from landfill",
+            "95.0",
+            "% diverted",
+            "78.0",
+            "2023/24 academic year",
+            d(486),
+            "University Environmental Strategy",
+            "On track",
+        ],
+        [
+            "SUS-GAS-2026",
+            "Gas consumption",
+            "10.0",
+            "% reduction",
+            "742000.0",
+            "2024/25 academic year",
+            d(121),
+            "Estates Energy Board",
+            "At risk",
+        ],
+    ]
+    return (
+        front(
+            "sustainability_target",
+            "Energy and Sustainability Manager",
+            "Cardiff University Estates",
+            "Environmental Strategy Register",
+            "2026.1",
+            "Target register",
+            "targets",
+        )
+        + "# Sustainability Target Register — Abacws Building\n\n"
+        + BANNER
+        + "\n## How a target is read\n\nA target is a REDUCTION against a stated baseline by a stated "
+        "date, set by a named\nauthority. Progress against one is a calculation over metered "
+        "consumption and the\nbaseline — never a claim this register makes on its own, and never a "
+        "figure to quote\nwithout saying which baseline it is measured from.\n\n"
+        "Status is the owner's assessment, recorded here and not re-derived from consumption.\n\n"
+        + "## Target register\n\n"
+        + table(
+            [
+                "reference",
+                "metric",
+                "target_value",
+                "unit",
+                "baseline_value",
+                "baseline_period",
+                "target_date",
+                "authority",
+                "status",
+            ],
+            rows,
+        )
+        + "\n## Authority\n\nTargets are set at university level and are not negotiated at building "
+        "level. This\nservice reports them and progress toward them; it does not set or revise "
+        "one.\n"
+    )
+
+
 DOCUMENTS = {
+    "sustainability_targets.md": sustainability_targets,
     "room_bookings.md": bookings,
     "contract_register.md": contracts,
     "warranty_register.md": warranties,
