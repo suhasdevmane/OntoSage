@@ -154,6 +154,14 @@ def _sources_from(results: Dict[str, Any]) -> List[EvidenceSource]:
                         kind=str(tag.get("kind") or "sensor"),
                         store=str(tag.get("store") or ""),
                         simulated=tag.get("synthetic", tag.get("simulated")),
+                        # V7-T10/T11/T17. Carried when the lane recorded them — a record
+                        # register knows its owner, its version and when it takes effect;
+                        # a sensor reading knows none of the three, and an empty string
+                        # says so rather than inventing one.
+                        owner=str(tag.get("owner") or ""),
+                        authority=str(tag.get("authority") or ""),
+                        record_version=str(tag.get("record_version") or ""),
+                        effective_at=tag.get("effective_at"),
                     )
                 )
             elif isinstance(tag, str):

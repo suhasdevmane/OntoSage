@@ -237,7 +237,14 @@ def test_rule_names_unique_and_documented():
 def test_precedence_order_is_pinned():
     """The rule order IS the contract — changing it must be a conscious decision."""
     assert [r.name for r in rc.PARSE_STAGE_RULES] == [
-        # V5-T42: absolute privacy denials fire FIRST, from any intent —
+        # V7-T80: a what-if question posits a state the building is not in, and the
+        # building holds no thermal, hydraulic or electrical model to reason about it.
+        # It fires before everything — including the privacy denial — because a scenario
+        # must never reach a data lane that could compute a plausible number for it, and
+        # because a hypothetical about a person is declined here on scope grounds without
+        # needing to be classified as a privacy matter at all.
+        "scenario_boundary",
+        # V5-T42: absolute privacy denials fire next, from any intent —
         # before clarification can ask "which professor?".
         "inference_privacy_denial",
         "compare_two_referents",

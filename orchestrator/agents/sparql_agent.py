@@ -657,6 +657,20 @@ Your Answer:"""
             (b.get("derivedFromDocument") or {}).get("value")
             for b in results["results"]["bindings"]
         )
+
+        def _first(field: str) -> str:
+            """The first non-empty value of a field across the register's rows.
+
+            Every row of one register shares its owner, authority and version — the
+            lifter stamps them from the document's front-matter — so one is enough to
+            name who is accountable for the answer.
+            """
+            for binding in results["results"]["bindings"]:
+                value = (binding.get(field) or {}).get("value", "")
+                if value:
+                    return str(value)
+            return ""
+
         try:
             state.intermediate_results.setdefault("_prov_stores", []).append(
                 {
@@ -667,6 +681,13 @@ Your Answer:"""
                         str((b.get("isSimulated") or {}).get("value", "")).lower() == "true"
                         for b in results["results"]["bindings"]
                     ),
+                    # V7-T11/T17/T10: owner is the most demanded field in the whole
+                    # catalogue corpus, and an answer that cannot name it cannot be acted
+                    # on — the reader does not know who to go to.
+                    "owner": _first("recordOwner"),
+                    "authority": _first("owningAuthority"),
+                    "record_version": _first("recordVersion"),
+                    "effective_at": _first("effectiveFrom") or None,
                 }
             )
         except Exception:  # provenance is best-effort and must never cost the answer

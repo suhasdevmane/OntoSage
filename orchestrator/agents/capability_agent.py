@@ -601,6 +601,49 @@ class CapabilityAgent:
         except Exception as e:
             logger.warning(f"[capability] ontology inventory failed: {e}")
 
+        # ── 2a. A state the building is not in (V7-T80) ──────────────────────
+        #
+        # "If power fails, how long do the lab freezers stay safe?" has no grounded
+        # answer: the building holds sensors and records, not a thermal, hydraulic or
+        # electrical model. Left to run, the model answers from physical intuition and
+        # produces a confident number about freezer safety — the most dangerous answer
+        # this system could give.
+        #
+        # The decline names what a real answer would need, so it reads as a specification
+        # rather than a refusal, and it distinguishes the two halves that ARE answerable:
+        # what the building recorded when something like this last happened, and what its
+        # procedures say to do.
+        try:
+            from orchestrator.services.routing_contract import scenario_question
+
+            _is_scenario = scenario_question(state.user_message or "")
+        except Exception:  # pragma: no cover - never block the lane on this
+            _is_scenario = False
+
+        if _is_scenario:
+            state.intermediate_results["capability_result"] = {
+                "success": True,
+                "response": (
+                    f"**I can't answer a what-if for {building_name}.** The question "
+                    "supposes a state the building is not in, and answering it would take "
+                    "a model of how the building behaves under that state — thermal, "
+                    "hydraulic or electrical. This service holds measurements and "
+                    "records, not a simulation, and a confident figure without a model "
+                    "behind it would be a guess dressed as an answer.\n\n"
+                    "Two things I can do instead:\n"
+                    "- tell you what was **recorded** the last time something like this "
+                    "happened, if it is in the event history\n"
+                    "- tell you what the building's **procedures** say to do, if a "
+                    "document covers it\n\n"
+                    "For the scenario itself, the responsible engineer or the resilience "
+                    "plan owner holds the answer."
+                ),
+                "provenance": "scenario_out_of_scope",
+                "building_name": building_name,
+            }
+            logger.info("[capability] declined — scenario question, no model to answer it")
+            return state
+
         # ── 2b. A system of record this building does not hold (V7-T21) ──────
         #
         # Runs BEFORE the document search, because that search is what turns a missing
