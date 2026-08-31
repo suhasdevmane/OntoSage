@@ -205,6 +205,43 @@ and like periods* — which is a real constraint that nothing checks today.
 
 ---
 
+## A number that fell, and why it is not a regression
+
+Three runs of the same 111 questions, all scored with the same grader:
+
+| run | computed | quoted | honest | fail |
+|---|---:|---:|---:|---:|
+| before V7 | 21.8% | 46 | 18 | 14.9% |
+| after the registers | **36.0%** | 18 | 42 | 9.9% |
+| after the lane fixes | 29.7% | 19 | 41 | 16.2% |
+
+The third run looks worse than the second. It is not, and the reason matters more than the
+number.
+
+Of the 17 answers that stopped counting as computed:
+
+* **5 now decline honestly where they had answered from the WRONG SOURCE.** *"Which
+  infrastructure investments should be prioritised?"* was answered from **risk-assessment
+  records**. *"How do today's room conditions compare with my earlier sessions?"* was
+  answered from **asset condition-survey grades** — a question about the environment
+  answered with maintenance data. Those were confidently wrong, and the grader counted
+  them as coverage. BUG-374's over-matching produced them; removing it removed them.
+* **4 were timeouts on a loaded machine.** p90 latency doubled between the runs, 35 s →
+  83 s, on a box that had been building images and running suites for hours. Re-asked when
+  it was quieter, 3 of the 4 answer.
+* **4 returned nothing at all** — BUG-355, still open.
+
+**The probe counts grades and nothing else** (CAVEAT-381). A confidently wrong answer and a
+correct one score identically, so removing wrong answers reads as losing good ones. The
+regression *gate* makes exactly this distinction — an intended tightening names the gate
+that fired — and the probe does not. Until it does, two runs are comparable only when
+their latency profiles are.
+
+The honest summary: coverage is somewhere between the two figures, the second was
+inflated by wrong-source answers, and the third was depressed by machine load.
+
+---
+
 ## Where V7 stands (2026-08-31)
 
 **16 of 35 tasks done, 2 in progress.** The same 111 questions, re-run after the work and
