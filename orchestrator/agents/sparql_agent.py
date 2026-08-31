@@ -539,6 +539,33 @@ Your Answer:"""
             logger.error(f"SPARQL generation error: {e}", exc_info=True)
             return {"success": False, "error": str(e), "query": None, "results": None}
 
+    async def _record_schema_context(self, query: str) -> List[str]:
+        """Schema for a record class this building HOLDS, when the question names one.
+
+        The RAG index is embedded from the ontology as it stood when it was last built,
+        so a class lifted from a document today retrieves zero entities and the generator
+        writes SPARQL blind. Measured: a permit-count question returned 0 triples and then
+        hung for two minutes. This adds the class and the predicates its own instances
+        carry, read live, so the generator has something to write against.
+        """
+        try:
+            from orchestrator.services.record_registry import (
+                held_record_class,
+                record_classes,
+                schema_hint,
+            )
+
+            record = held_record_class(query, await record_classes())
+            if not record:
+                return []
+            hint = await schema_hint(record)
+            if hint:
+                logger.info(f"[sparql] record-class schema injected: {record.local_name}")
+            return [hint] if hint else []
+        except Exception as exc:  # pragma: no cover - never block generation on this
+            logger.debug(f"[sparql] record schema unavailable: {exc}")
+            return []
+
     async def _retrieve_context(self, query: str) -> List[str]:
         """
         🧠 GRAPHDB RAG RETRIEVAL (New Architecture)
@@ -598,18 +625,18 @@ TRIPLES (Graph Structure):
 {triple_text}
 """
 
-                        return [context_text]
+                        return (await self._record_schema_context(query)) + [context_text]
 
                     logger.warning("GraphDB RAG returned unsuccessful status")
-                    return []
+                    return await self._record_schema_context(query)
 
                 except Exception as e:
                     logger.warning(f"GraphDB RAG failed: {e}")
-                    return []
+                    return await self._record_schema_context(query)
 
         except Exception as e:
             logger.error(f"RAG retrieval error: {e}")
-            return []
+            return await self._record_schema_context(query)
 
         except Exception as e:
             logger.error(f"RAG retrieval error: {e}")

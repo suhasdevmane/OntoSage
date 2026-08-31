@@ -778,9 +778,44 @@ class DialogueAgent:
             SemanticRouter as _SR,  # local import avoids cycle
         )
 
+        # V7-T21: a class the building demonstrably HOLDS outranks a lay-term match.
+        #
+        # Lifting the permit register into 15 queryable instances changed nothing on its
+        # own, because this short-circuit fired first: "how many permits are open?"
+        # matched *open* against the Working Hours topic's lay terms and returned the
+        # building's opening times, never reaching classification. Every lifted register
+        # would have been swallowed the same way. Instance counts come from the graph, so
+        # a building without a permit register is unaffected and nothing here is a literal.
+        _held_record = None
+        try:
+            from orchestrator.services.record_registry import held_record_class, record_classes
+
+            _held_record = held_record_class(user_query, await record_classes())
+        except Exception as _rr_err:  # pragma: no cover - never block routing on this
+            logger.debug(f"[ttl-route] record registry unavailable: {_rr_err}")
+
+        if _held_record and not _SR.is_report_intake_query(user_query):
+            # The building holds this class as DATA, so the question is answerable by
+            # SPARQL and must not be handed to a lane that can only quote prose. A
+            # statement ("the permit expired") is still a report and keeps its intake
+            # route — only questions are claimed here.
+            logger.info(
+                f"[ttl-route] metadata via held record class: "
+                f"{_held_record.local_name} ({_held_record.instances} instances) "
+                f"— skipping LLM intent call"
+            )
+            return {
+                "intent": "metadata",
+                "general": False,
+                "analytics": False,
+                "sparql_query": "",
+                "response": "",
+            }
+
         if (
             user_query
             and user_query.strip()
+            and not _held_record
             and not _SR.is_data_query(user_query)
             and not _SR.is_report_intake_query(user_query)
             and not _SR.is_control_command(user_query)

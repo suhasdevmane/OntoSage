@@ -1,0 +1,42 @@
+# Permit-to-work register -> ontosage:Permit
+#
+# Ships with the ONTOLOGY, not with any building: a second building drops a document of
+# this shape and gets these triples with no code change.
+record_type: permit_to_work
+class: ontosage:Permit
+iri_template: "permit/{permit}"
+label_column: permit
+
+columns:
+  permit:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  type:
+    predicate: ontosage:permitKind
+    datatype: xsd:string
+    required: true
+  date:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:date
+    required: true
+  expires:
+    predicate: ontosage:effectiveTo
+    datatype: xsd:date
+  area:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    # The ONE piece of interpretation allowed, and it is a declared lookup rather
+    # than a judgement: "Closed, fire watch completed" is closed because the list
+    # says so. A cell matching nothing is an error, never a guess.
+    values:
+      open: ["Open", "Issued", "Active", "In progress"]
+      closed: ["Closed", "Completed", "Signed off"]
+      suspended: ["Suspended", "On hold"]
+  contractor:
+    predicate: ontosage:providerName
+    datatype: xsd:string

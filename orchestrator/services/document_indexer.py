@@ -25,7 +25,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from shared.building_paths import resolve_building_dir
 from shared.utils import get_logger
@@ -50,6 +50,11 @@ class DocIndexResult:
     reason: str = ""
     indexed_files: List[str] = field(default_factory=list)
     skipped_files: List[str] = field(default_factory=list)
+    #: Record-document lifting (V7-T18). Reported alongside the prose counts because a
+    #: document that indexed fine as prose and failed to lift is NOT a healthy ingest —
+    #: it silently loses the half a question actually needs to compute over.
+    lifted_records: int = 0
+    lift_failures: List[str] = field(default_factory=list)
 
 
 def _chunk_text(text: str, chunk_words: int = _CHUNK_WORDS) -> List[str]:
@@ -157,6 +162,55 @@ class DocumentIndexer:
 
         return results
 
+    async def _lift_record_document(
+        self, building_id: str, doc_path: Path
+    ) -> Tuple[int, List[str]]:
+        """Lift a record document into its own named graph (V7-T18).
+
+        Returns (instances lifted, failures). Failures are REPORTED and nothing is
+        written: half a permit register answers "how many are open" with a number that
+        is confidently short, which is worse than declining. A document with no
+        front-matter is not a record document and returns (0, []) — silently, because
+        that is the normal case and not a fault.
+
+        The graph is REPLACED rather than appended, so re-ingesting a corrected document
+        supersedes it. Appending is how CAVEAT-039 grew reference fan-out to 68.9 and made
+        a class listing return one sensor against a true 280.
+        """
+        try:
+            from orchestrator.services.evidence.spatial_facts import active_namespace
+            from orchestrator.services.ontology_manager import upload_ttl
+            from orchestrator.services.record_documents import lift_document, to_turtle
+        except ImportError as exc:  # pragma: no cover - import guard
+            logger.debug(f"[document_indexer] record lifting unavailable: {exc}")
+            return 0, []
+
+        namespace = active_namespace()
+        if not namespace:
+            return 0, []
+
+        mappings = Path(__file__).resolve().parents[2] / "ontology" / "record_documents"
+        result = lift_document(doc_path, namespace, mappings)
+
+        if result.errors:
+            for why in result.errors[:5]:
+                logger.warning(f"[document_indexer] {doc_path.name}: NOT lifted — {why}")
+            return 0, [f"{doc_path.name}: {result.errors[0]}"]
+        if not result.instances:
+            return 0, []
+
+        try:
+            await upload_ttl(to_turtle(result), result.graph_iri, replace=True)
+        except Exception as exc:
+            logger.error(f"[document_indexer] {doc_path.name}: graph upload failed: {exc}")
+            return 0, [f"{doc_path.name}: upload failed ({exc})"]
+
+        logger.info(
+            f"[document_indexer] {doc_path.name}: lifted {result.instances} "
+            f"{result.record_type} records into {result.graph_iri}"
+        )
+        return result.instances, []
+
     async def index_building(self, building_id: str) -> DocIndexResult:
         """Index documents for a single building.  Idempotent; safe to call repeatedly."""
         t0 = time.monotonic()
@@ -196,12 +250,22 @@ class DocumentIndexer:
         indexed_files: List[str] = []
         skipped_files: List[str] = []
 
+        lifted_records = 0
+        lift_failures: List[str] = []
+
         for doc_path in doc_paths:
             file_sha = hashlib.sha256(doc_path.read_bytes()).hexdigest()
             if existing_shas.get(doc_path.name) == file_sha:
                 logger.info(f"[document_indexer] {building_id}/{doc_path.name}: sha match — skip")
                 skipped_files.append(doc_path.name)
                 continue
+
+            # A record document is ALSO lifted into triples (V7-T18). The prose path
+            # below is untouched: a document that carries no front-matter is not a
+            # record document and behaves exactly as it always did.
+            n, why = await self._lift_record_document(building_id, doc_path)
+            lifted_records += n
+            lift_failures.extend(why)
 
             text = _read_document(doc_path)
             if text is None:
@@ -293,6 +357,8 @@ class DocumentIndexer:
             indexed_files=indexed_files,
             skipped_files=skipped_files,
             duration_ms=duration_ms,
+            lifted_records=lifted_records,
+            lift_failures=lift_failures,
         )
 
     # ── internal helpers ─────────────────────────────────────────────────────

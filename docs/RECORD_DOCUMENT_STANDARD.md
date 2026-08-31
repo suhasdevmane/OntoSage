@@ -2,8 +2,8 @@
 
 **How a document becomes data a building can compute over, with no code change.**
 
-Status: **specification** — V7-T18 implements it. This document is the contract that task
-is written against.
+Status: **implemented** — `orchestrator/services/record_documents.py`, wired into
+`document_indexer`. This document is its contract; 14 tests pin it.
 
 ---
 
@@ -102,16 +102,21 @@ document_indexer
   └─ front-matter + declared tables
         → mapping for record_type
         → RDF
-        → SHACL validate
+        → validate against the mapping
         → named graph  <building>/documents/<document-id>
 ```
 
 Four rules govern the lifting half:
 
-**1. Validate before insert.** Every lifted graph is checked against the shape for its
-`record_type`. A document that does not conform is indexed as prose, reported in the
-ingest log, and **not partially lifted**. Half a register is worse than none: it answers
-"which permits are open" with a number that is confidently short.
+**1. Validate before insert.** Every row is checked against the mapping's declared shape
+— required columns present, datatypes coercible, every enumerated cell matching a declared
+value. A document that does not conform is indexed as prose, reported in the ingest log,
+and **not partially lifted**. Half a register is worse than none: it answers "which
+permits are open" with a number that is confidently short.
+
+The validation is structural rather than SHACL. `pyshacl` is not a dependency of this
+project, and a mapping-driven check is both deterministic and stated in the same file the
+author already reads — adding a shapes graph would put the contract in two places.
 
 **2. One named graph per document.** Re-ingesting replaces that graph rather than adding
 to it. Accumulating instead of replacing is exactly how CAVEAT-039 grew sensor reference
@@ -164,9 +169,19 @@ SELECT ?p ?kind ?status WHERE { ?p a o:Permit ; o:permitKind ?kind ; o:recordSta
 > register. If it still quotes, the lifting did not happen — check the ingest log for a
 > validation failure rather than assuming the mapping ran.
 
-One authoring note found while writing this: every permit in the current register is
-`Closed`. A register with nothing open cannot demonstrate the question it exists to
-answer, so the synthetic set needs open permits before V7-T33 can be verified.
+One authoring note found while writing this: every permit in the register was `Closed`. A
+register with nothing open cannot demonstrate the question it exists to answer, so three
+open permits and one suspended were added. Live, on bldg1:
+
+> **Q.** How many permits to work are currently open?
+> **A.** There are **3 work permits currently open** in the building.
+
+and the mirror case, which is the other half of the point:
+
+> **Q.** Which contracts expire in the next six months?
+> **A.** **Abacws Building holds no contract records** … the ontology defines
+> `ontosage:Contract`, and this building has no instances of it. To make this answerable,
+> add a contract record … no code change is needed.
 
 ---
 
