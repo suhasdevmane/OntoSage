@@ -544,6 +544,45 @@ class CapabilityAgent:
         except Exception as e:
             logger.warning(f"[capability] ontology inventory failed: {e}")
 
+        # ── 2b. A system of record this building does not hold (V7-T21) ──────
+        #
+        # Runs BEFORE the document search, because that search is what turns a missing
+        # system into a wrong answer: measured 2026-08-31, "which contracts expire in the
+        # next six months?" came back with the PERMIT register pasted underneath it. The
+        # building holds no contracts. Saying which system is missing is both true and
+        # actionable, and it is decidable — the ontology defines the class and the graph
+        # holds no instances of it.
+        try:
+            from orchestrator.services.record_registry import absent_record_class, record_classes
+
+            _absent = absent_record_class(state.user_message or "", await record_classes())
+        except Exception as _rr_err:  # pragma: no cover - never block the lane on this
+            logger.debug(f"[capability] record registry unavailable: {_rr_err}")
+            _absent = None
+
+        if _absent:
+            _readable = re.sub(r"(?<!^)(?=[A-Z])", " ", _absent).lower()
+            state.intermediate_results["capability_result"] = {
+                "success": True,
+                "response": (
+                    f"**{building_name} holds no {_readable} records**, so I cannot answer "
+                    f"this from the building's own data.\n\n"
+                    f"I checked: the ontology defines `ontosage:{_absent}`, and this "
+                    f"building has no instances of it.\n\n"
+                    f"To make this answerable, add a {_readable} record — either as TTL, "
+                    f"or as a document carrying the record-document front-matter "
+                    f"(`record_type`, `owner`, `authority`, `effective_from`, `version`), "
+                    f"which is lifted into queryable triples on ingest. No code change is "
+                    f"needed.\n\n"
+                    f"Meanwhile, the {_readable} owner holds the authoritative answer."
+                ),
+                "provenance": "absent_system_of_record",
+                "absent_record_class": _absent,
+                "building_name": building_name,
+            }
+            logger.info(f"[capability] declined — building holds no {_absent} records")
+            return state
+
         # ── 3. Uploaded documents (documents_<bldg>) ─────────────────────────
         # Genuinely-uploaded manuals / policy PDFs, semantically retrieved. This is NOT a
         # capability.yaml fallback — it is a distinct source for long-form uploaded content.

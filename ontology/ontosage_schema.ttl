@@ -1675,3 +1675,185 @@ ontosage:Waste_Weight_Sensor a owl:Class ;
     rdfs:subClassOf brick:Sensor ;
     rdfs:label "Waste weight sensor"@en ;
     rdfs:comment "Reports the mass of waste in a receptacle or collected from a stream."@en .
+
+####################################################################################################
+#  Module R — Systems of record  (V7, the 37 stakeholder catalogues)
+#  ------------------------------------------------------------------------------------------------
+#  The 37 catalogues name the systems whose records are authoritative for each question — a permit
+#  log, a contract, a handover file, a condition survey, a tariff. Brick models the physical fabric
+#  and has no vocabulary for any of them, and the questions that need them are a third of the
+#  corpus: contracts alone cap 413 questions, handover 257, permits 160, tariffs 119.
+#
+#  These classes are what a Record Document lifts INTO (docs/RECORD_DOCUMENT_STANDARD.md). The
+#  building supplies the instances — as authored TTL, or as a document the indexer lifts — and no
+#  code changes for a second building.
+#
+#  EVERY one of them is an ontosage:IntervalRecord, because every one of them is a claim that is
+#  true over a period and not for ever. The catalogues are unanimous on this: preserve effective
+#  time, observed or approved time and retrieval time separately — 660 + 3,048 + 2,882 mentions.
+#  A permit that expired yesterday and a permit issued this morning are not interchangeable, and a
+#  class without a validity period cannot express the difference.
+####################################################################################################
+
+ontosage:Permit rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Permit to work"@en ;
+    rdfs:comment "An authorisation to carry out controlled work (hot works, roof access, confined space, electrical isolation) for a bounded period in a bounded place. Open or closed is READ from recordStatus, never inferred from the dates: a permit past its end date that was never closed is an exception worth reporting, not a closed permit."@en ;
+    skos:example "which permits are open in the basement? -> Permit where recordStatus = open and the location matches." .
+
+ontosage:Contract rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Contract"@en ;
+    rdfs:comment "A service, maintenance or supply agreement with a provider, over a term, covering a named scope. Distinct from Warranty: a contract is bought, a warranty accompanies an asset — they have different owners and routinely disagree, which the catalogues want REPORTED rather than resolved."@en ;
+    skos:example "who maintains the lifts and until when? -> Contract whose coveredScope names the lift asset." .
+
+ontosage:Warranty rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Warranty"@en ;
+    rdfs:comment "A manufacturer or installer guarantee attached to a specific asset for a period. Changes the correct answer to a maintenance question — whether the work is chargeable — which no routing fix can recover if the warranty is not modelled."@en ;
+    skos:example "is the AHU still under warranty? -> Warranty where coversAsset is the AHU and now falls within the interval." .
+
+ontosage:HandoverRecord rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Handover record"@en ;
+    rdfs:comment "A project handover, as-built revision, commissioning certificate or O and M manual, linked to the assets it describes. This is what a claim of commissioned must REST on: the five-part verification gate reads it, so a commissioning state with no handover record behind it is unverified by construction."@en ;
+    skos:example "which plant has no O and M manual? -> brick:Equipment with no HandoverRecord describing it." .
+
+ontosage:ConditionSurvey rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Condition survey"@en ;
+    rdfs:comment "A dated inspection recording an asset condition grade and remaining life. Brick models what an asset IS and where it sits; it has no vocabulary for how worn it is, which is the clearest case in the whole corpus for extending OCBV rather than forcing Brick to carry it."@en ;
+    skos:example "which assets are beyond expected life? -> ConditionSurvey where remainingLifeYears is at most zero." .
+
+ontosage:CompetencyRecord rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Competency requirement"@en ;
+    rdfs:comment "A training, induction or authorisation requirement attached to a ROLE and an area or task — deliberately never to a person. The catalogues ask what a restricted area requires and forbid exposing who holds what, so the answerable form is: this area requires these competencies. No building TTL carries personal training records."@en ;
+    skos:example "what competency does the plant room require? -> CompetencyRecord whose appliesToArea is the plant room." .
+
+ontosage:RiskAssessment rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Risk assessment"@en ;
+    rdfs:comment "A dated assessment of a hazard in a place or activity, with its review date. Overdue is computed from dueDate, exactly as ComplianceCheck does."@en ;
+    skos:example "which risk assessments are past review? -> RiskAssessment where dueDate is before now." .
+
+ontosage:Tariff rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Energy tariff"@en ;
+    rdfs:comment "A registered unit rate and standing charge for a utility, valid over a period, from a named authority. Cost is computed ONLY when one of these exists. An invented unit rate produces a confident wrong number, which is the failure mode this project guards against hardest — so with no Tariff the honest answer is a decline that names the missing source."@en ;
+    skos:example "what did floor 5 cost to heat last month? -> submeter kWh times Tariff unitRate, or decline naming the absent tariff." .
+
+####################################################################################################
+#  Module R.2 — Record provenance: owner, version, and the three times
+#  ------------------------------------------------------------------------------------------------
+#  Owner is the single most frequent demand in the whole corpus — 13,964 occurrences, ahead of
+#  permission (6,176) and conflict (5,437). The catalogues never ask the building to DECIDE; they
+#  ask it to say whose record it is and to defer to that owner. An answer that cannot name the
+#  owner cannot be acted on, because the reader does not know who to go to.
+####################################################################################################
+
+ontosage:recordOwner a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;
+    rdfs:label "record owner"@en ;
+    rdfs:comment "The accountable owner of this record — a role or team, not a person. Named in every answer that rests on it, so the reader knows who to defer to."@en .
+
+ontosage:owningAuthority a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;
+    rdfs:label "owning authority"@en ;
+    rdfs:comment "The organisation whose system of record this is (Estates, HR, the maintainer). Distinct from recordOwner, which is the accountable role inside it."@en .
+
+ontosage:recordVersion a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;
+    rdfs:label "record version"@en ;
+    rdfs:comment "The version or revision this fact was read from. Without it a superseded record and its replacement are indistinguishable in the evidence record, and an answer cannot be reproduced against what it actually used."@en .
+
+ontosage:retrievedAt a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:dateTime ;
+    rdfs:label "retrieved at"@en ;
+    rdfs:comment "When the service obtained the record. The THIRD time, kept separate from effectiveFrom (when it applies) and statusObservedAt (when it was observed). Retrieval time never substitutes for either — a record fetched now may have taken effect last year or take effect next Monday."@en .
+
+ontosage:supersedes a owl:ObjectProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range ontosage:IntervalRecord ;
+    rdfs:label "supersedes"@en ;
+    rdfs:comment "This record replaces an earlier one. Both are retained: the catalogues require conflicting originals to be preserved for the accountable owner rather than silently resolved."@en .
+
+ontosage:currencyThresholdDays a owl:DatatypeProperty ;
+    rdfs:range xsd:integer ;
+    rdfs:label "currency threshold (days)"@en ;
+    rdfs:comment "How long a record of this class stays current, set by its owner. Staleness is decision-specific: a CO2 reading is stale in minutes, an asbestos survey in years. One global freshness rule must either call a valid survey stale or let an hours-old reading pass as current."@en .
+
+ontosage:derivedFromDocument a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;
+    rdfs:label "derived from document"@en ;
+    rdfs:comment "Set on every fact LIFTED from a record document. A document is a statement ABOUT a system of record, not the record itself, so these rank below authored TTL in precedence — without the marker a stale Markdown table silently outranks a live register, which is exactly what BUG-194 was."@en .
+
+ontosage:liftedByMapping a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;
+    rdfs:label "lifted by mapping"@en ;
+    rdfs:comment "The record-document mapping that produced this fact, so a wrong value can be traced to the rule that made it rather than only to the document."@en .
+
+####################################################################################################
+#  Module R.3 — Record fields the catalogues ask about by name
+####################################################################################################
+
+ontosage:permitKind a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Permit ; rdfs:range xsd:string ;
+    rdfs:label "permit kind"@en ;
+    rdfs:comment "Hot works, roof access, confined space, electrical isolation, work at height."@en .
+
+ontosage:coveredScope a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;
+    rdfs:label "covered scope"@en ;
+    rdfs:comment "What a contract or warranty covers, in the words of its owner."@en .
+
+ontosage:providerName a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;
+    rdfs:label "provider"@en ;
+    rdfs:comment "The supplier, maintainer or issuing body."@en .
+
+ontosage:coversAsset a owl:ObjectProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range brick:Equipment ;
+    rdfs:label "covers asset"@en ;
+    rdfs:comment "The equipment a warranty, contract, handover record or condition survey concerns."@en .
+
+ontosage:conditionGrade a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ConditionSurvey ; rdfs:range xsd:string ;
+    rdfs:label "condition grade"@en ;
+    rdfs:comment "The grade recorded by the surveyor (A good, B satisfactory, C poor, D end of life), kept verbatim and never re-derived."@en .
+
+ontosage:remainingLifeYears a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ConditionSurvey ; rdfs:range xsd:decimal ;
+    rdfs:label "remaining life (years)"@en ;
+    rdfs:comment "Expected remaining life at the survey date. An ESTIMATE by the surveyor, so an answer using it is calculated, never observed."@en .
+
+ontosage:appliesToArea a owl:ObjectProperty ;
+    rdfs:domain ontosage:CompetencyRecord ; rdfs:range brick:Location ;
+    rdfs:label "applies to area"@en ;
+    rdfs:comment "The restricted area or space a competency is required for."@en .
+
+ontosage:unitRate a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Tariff ; rdfs:range xsd:decimal ;
+    rdfs:label "unit rate"@en ;
+    rdfs:comment "Cost per unit (per kWh, per cubic metre). Only ever read from a registered Tariff — never defaulted, never assumed."@en .
+
+ontosage:standingCharge a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Tariff ; rdfs:range xsd:decimal ;
+    rdfs:label "standing charge"@en ;
+    rdfs:comment "Fixed daily charge, independent of consumption."@en .
+
+ontosage:currencyCode a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Tariff ; rdfs:range xsd:string ;
+    rdfs:label "currency"@en ;
+    rdfs:comment "ISO currency code. Stated in every cost answer — a bare number is ambiguous across buildings."@en .
+
+ontosage:utilityKind a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Tariff ; rdfs:range xsd:string ;
+    rdfs:label "utility"@en ;
+    rdfs:comment "Electricity, gas, water, heat."@en .
+
+ontosage:bookedByRole a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Booking ; rdfs:range xsd:string ;
+    rdfs:label "booked by role"@en ;
+    rdfs:comment "The organising ROLE or team. Never a named individual: the catalogues limit person-level detail to an authorised case, and an availability question does not need one."@en .
+
+ontosage:expectedAttendees a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Booking ; rdfs:range xsd:integer ;
+    rdfs:label "expected attendees"@en ;
+    rdfs:comment "The group size the booking was made for, used for capacity and turnaround checks."@en .
+
+ontosage:recordId a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;
+    rdfs:label "record id"@en ;
+    rdfs:comment "The identifier this record carries in its own system of record (PTW-2026-0412, a contract number, a survey reference). Quoted back in answers so a reader can find the original, and used as the stable IRI slot so re-ingesting a document updates a record rather than duplicating it."@en .
