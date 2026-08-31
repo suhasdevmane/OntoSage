@@ -68,9 +68,8 @@
 
 | predicted ceiling | n | computed |
 |---|---:|---:|
-| DATA | 46 | 35% |
-| PROSE | 23 | 30% |
-| ABSENT | 37 | 38% |
+| DATA | 99 | 33% |
+| ABSENT | 7 | 57% |
 | NONE | 5 | 60% |
 
 > A ceiling should behave like one: DATA highest, ABSENT lowest. Where measured
