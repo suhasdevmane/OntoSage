@@ -1,87 +1,53 @@
-# Room Bookings — Abacws Building
-
-**Source:** Room booking system (Timetabling Office, Cardiff University)
-**Coverage:** Week commencing 2026-06-10 (Monday–Friday)
-**Note:** This document reflects bookings submitted to the timetabling office.
-Real-time updates may differ. For urgent changes contact timetabling@cardiff.ac.uk.
-
+---
+record_type: booking
+owner: "Room Booking Team"
+authority: "Cardiff University Estates"
+source_system: "Room Booking System"
+effective_from: 2025-08-31
+version: "2026.34"
+review_due: 2027-08-31
+simulated: true
+tables:
+  - name: "Booking register"
+    maps_to: bookings
 ---
 
-## Floor 5 Rooms
+# Room Booking Register — Abacws Building
 
-### Room 5.01 — Seminar Room (capacity: 20)
-| Date       | Time          | Event                                      | Organiser              |
-|------------|--------------|---------------------------------------------|------------------------|
-| Mon 10 Jun | 09:00–11:00  | Research group meeting — Smart Buildings    | Dr Owens (CS Dept)     |
-| Mon 10 Jun | 14:00–16:00  | PhD progress review                          | Graduate School        |
-| Tue 11 Jun | 10:00–12:00  | Sensor calibration workshop                 | Lab Technician         |
-| Wed 12 Jun | 09:00–11:00  | Project planning session                    | OntoSage team          |
-| Thu 13 Jun | 14:00–17:00  | External visitor seminar                    | Industry Liaison       |
-| Fri 14 Jun | 11:00–13:00  | Lab group discussion                        | Prof Davies            |
+_**Synthetic demonstration record** — fictional history, not a real compliance document._
 
-### Room 5.02 — Seminar Room (capacity: 20)
-| Date       | Time          | Event                                       | Organiser              |
-|------------|--------------|----------------------------------------------|------------------------|
-| Mon 10 Jun | 10:00–12:00  | Lecture: Smart Grid Systems (ENG4012)        | Dr Patel               |
-| Tue 11 Jun | 09:00–11:00  | Tutorial: IoT Protocols                      | Teaching Team          |
-| Wed 12 Jun | 14:00–16:00  | Dissertation supervision sessions           | Academic Staff         |
-| Thu 13 Jun | 09:00–13:00  | Guest lecture: Carbon Neutral Buildings     | Prof Al-Rashid (UCL)   |
-| Fri 14 Jun | 09:00–11:00  | Weekly standup — research group              | Dr Owens               |
+## What this register decides
 
-### Room 5.03 — Lecture/Seminar Room (capacity: 30)
-| Date       | Time          | Event                                       | Organiser              |
-|------------|--------------|----------------------------------------------|------------------------|
-| Mon 10 Jun | 11:00–13:00  | Lecture: Building Automation (ENG3045)       | Prof Davies            |
-| Tue 11 Jun | 14:00–16:00  | Workshop: Data Analytics for Buildings      | Research Team          |
-| Wed 12 Jun | 09:00–17:00  | All-day symposium: Urban Sensing 2026        | School of Engineering  |
-| Thu 13 Jun | 10:00–12:00  | Coursework feedback session                  | Teaching Assistants    |
-| Fri 14 Jun | 13:00–15:00  | Industry partnership meeting                 | Industry Liaison       |
+The booking register is the AUTHORITATIVE source for whether a room is available. A room
+with nobody in it is not an available room, and an occupancy sensor cannot tell the
+difference — where the two disagree, both are reported and the room owner resolves it.
 
-### Room 5.08 — Large Seminar/Teaching Room (capacity: 50)
-| Date       | Time          | Event                                       | Organiser              |
-|------------|--------------|----------------------------------------------|------------------------|
-| Mon 10 Jun | 09:00–11:00  | Lecture: Sustainable Engineering (ENG2001)  | Prof Singh             |
-| Mon 10 Jun | 14:00–16:00  | Practical session: Sensor Networks          | Dr Owens               |
-| Tue 11 Jun | 10:00–13:00  | Examination: ENG3045                         | Examinations Office    |
-| Wed 12 Jun | 11:00–13:00  | Student project presentations               | Academic Panel         |
-| Thu 13 Jun | 09:00–11:00  | Lecture: Energy Systems (ENG2015)            | Dr Patel               |
-| Fri 14 Jun | 14:00–16:00  | Revision lecture (open to all years)        | Dr Owens               |
+Organisers are recorded as roles or teams. This register holds no personal data, and a
+question about who is in a room is answered by neither this register nor the sensors.
 
----
+## Booking register
 
-## Floor 4 Rooms
+| reference | room | start | end | booked_by_role | expected_attendees | status |
+|---|---|---|---|---|---|---|
+| BK-2026-0001 | Room 5.15 — Seminar / Conference Room | 2026-08-24T09:00:00 | 2026-08-24T11:00:00 | Graduate School | 12 | Confirmed |
+| BK-2026-0002 | Room 5.16 — Seminar / Conference Room | 2026-08-24T14:00:00 | 2026-08-24T16:00:00 | Teaching Team | 8 | Confirmed |
+| BK-2026-0003 | Room 5.17 — Meeting Room | 2026-08-28T09:00:00 | 2026-08-28T11:00:00 | Industry Liaison | 30 | Provisional |
+| BK-2026-0004 | Room 5.18 — Meeting Room | 2026-08-28T14:00:00 | 2026-08-28T16:00:00 | Estates Compliance | 6 | Confirmed |
+| BK-2026-0005 | Room 5.01 — Research Laboratory | 2026-08-30T09:00:00 | 2026-08-30T11:00:00 | School Office | 24 | Cancelled |
+| BK-2026-0006 | Room 5.04 — Research Laboratory | 2026-08-30T14:00:00 | 2026-08-30T16:00:00 | Research group (Smart Buildings) | 18 | Confirmed |
+| BK-2026-0007 | Room 5.15 — Seminar / Conference Room | 2026-08-31T09:00:00 | 2026-08-31T11:00:00 | Graduate School | 12 | Confirmed |
+| BK-2026-0008 | Room 5.16 — Seminar / Conference Room | 2026-08-31T14:00:00 | 2026-08-31T16:00:00 | Teaching Team | 8 | Confirmed |
+| BK-2026-0009 | Room 5.17 — Meeting Room | 2026-09-01T09:00:00 | 2026-09-01T11:00:00 | Industry Liaison | 30 | Provisional |
+| BK-2026-0010 | Room 5.18 — Meeting Room | 2026-09-01T14:00:00 | 2026-09-01T16:00:00 | Estates Compliance | 6 | Confirmed |
+| BK-2026-0011 | Room 5.01 — Research Laboratory | 2026-09-02T09:00:00 | 2026-09-02T11:00:00 | School Office | 24 | Cancelled |
+| BK-2026-0012 | Room 5.04 — Research Laboratory | 2026-09-02T14:00:00 | 2026-09-02T16:00:00 | Research group (Smart Buildings) | 18 | Confirmed |
+| BK-2026-0013 | Room 5.15 — Seminar / Conference Room | 2026-09-05T09:00:00 | 2026-09-05T11:00:00 | Graduate School | 12 | Confirmed |
+| BK-2026-0014 | Room 5.16 — Seminar / Conference Room | 2026-09-05T14:00:00 | 2026-09-05T16:00:00 | Teaching Team | 8 | Confirmed |
+| BK-2026-0015 | Room 5.17 — Meeting Room | 2026-09-09T09:00:00 | 2026-09-09T11:00:00 | Industry Liaison | 30 | Provisional |
+| BK-2026-0016 | Room 5.18 — Meeting Room | 2026-09-09T14:00:00 | 2026-09-09T16:00:00 | Estates Compliance | 6 | Confirmed |
 
-### Room 4.01 — Research Lab/Seminar Room (capacity: 20)
-| Date       | Time          | Event                                       | Organiser              |
-|------------|--------------|----------------------------------------------|------------------------|
-| Mon 10 Jun | 10:00–12:00  | Research lab session: HVAC testing          | PhD student group      |
-| Tue 11 Jun | 14:00–16:00  | Staff meeting: Facilities                   | Facilities Manager     |
-| Thu 13 Jun | 09:00–11:00  | Equipment calibration (restricted access)   | IT Services            |
+## Changes
 
----
-
-## Floor 3 Collaborative Pods
-
-### Pods 3A–3D (general open access)
-Floor 3 collaborative pods are generally available for group work without pre-booking.
-Pod 3C is reserved for postgraduate students only (9:00–17:00 weekdays).
-
-### Room 3.01 — Group Study Room (capacity: 25)
-| Date       | Time          | Event                                       | Organiser              |
-|------------|--------------|----------------------------------------------|------------------------|
-| Tue 11 Jun | 10:00–12:00  | Group coursework session (ENG3012)          | Student group          |
-| Wed 12 Jun | 14:00–16:00  | Tutorial: Energy Management                 | Teaching Team          |
-
----
-
-## Floor 1 — Quiet Study Area
-Floor 1 is a designated **quiet study area**. Individual study spaces are available
-on a first-come, first-served basis. No group bookings on Floor 1.
-
----
-
-## General Booking Notes
-- Rooms can be booked via the Cardiff University room booking portal (intranet only)
-- Cancellations must be submitted at least 2 hours in advance
-- Catering bookings require 24 hours notice (via Facilities)
-- After-hours access (after 20:00) requires security notification
+Bookings are created and cancelled in the booking system. This service reports them; it
+cannot create, change or cancel one, and a cancelled booking is kept rather than deleted
+so that a no-show can be told from a room that was never booked.
