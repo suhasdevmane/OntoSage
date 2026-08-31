@@ -770,7 +770,21 @@ EVENTS_RE = re.compile(
     r"|\bwork ?orders?\b|\b(?:open|overdue|outstanding)\s+tickets?\b"
     r"|\bmaintenance backlog\b"
     r"|\bfootfall\b|\bentrance\b.{0,30}\b(?:busy|arrivals|count)\b"
-    r"|\bhow busy was\b.{0,30}\b(?:entrance|building)\b)",
+    r"|\bhow busy was\b.{0,30}\b(?:entrance|building)\b"
+    # RECURRENCE over the report history (V7-T73). "Which cleaning-related defects keep
+    # recurring in the same place?" reached the capability lane, which searched the
+    # cleaning SCHEDULE and honestly said it did not answer — it cannot, because a
+    # schedule says when cleaning happens, not where a fault returns. The building holds
+    # 203 reports with a location, a category and a date, and nothing was asking them.
+    #
+    # "persistent" and "chronic" are admitted only over a REPORTED thing: a catalogue
+    # question asks about "persistent temperature, CO2 or particulate exceptions", which
+    # is analytics over readings, and answering it from report history would return the
+    # wrong kind of evidence entirely.
+    r"|\b(?:recur|recurs|recurring|recurrence|repeatedly)\b"
+    r"|\bkeeps? (?:happening|coming back|breaking|failing|being reported)\b"
+    r"|\b(?:persistent|chronic)\s+\w*\s?"
+    r"(?:issues?|problems?|faults?|defects?|complaints?|reports?|breakdowns?)\b)",
     re.IGNORECASE,
 )
 

@@ -96,3 +96,62 @@ def test_persistent_over_a_measurement_is_not_report_recurrence(query):
 )
 def test_persistent_over_a_reported_thing_is_recurrence(query):
     assert classify_event_question(query) == "recurrence", query
+
+
+# ── routing: the question has to REACH the events lane ────────────────────────
+#
+# The classifier above only runs once the router has sent a question to events, and it
+# was not sending these. Classifying correctly in a lane nobody routes to is the
+# "capability present, correct, tested, and with no invoker" pattern this project has hit
+# eleven times.
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "Which cleaning-related defects keep recurring in the same place?",
+        "Which barriers recur after earlier tickets were closed?",
+        "Are there any persistent issues in the atrium?",
+        "What problems are repeatedly reported on floor 3?",
+    ],
+)
+def test_a_recurrence_question_routes_to_the_events_lane(query):
+    from orchestrator.services.routing_contract import EVENTS_RE
+
+    assert EVENTS_RE.search(query), query
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        # FM-021: analytics over readings, not recurrence over reports.
+        "Which occupied rooms show persistent temperature, CO2 or particulate exceptions?",
+        "What is the temperature in room 5.04?",
+        "Where is the nearest toilet?",
+    ],
+)
+def test_the_events_route_does_not_over_claim(query):
+    from orchestrator.services.routing_contract import EVENTS_RE
+
+    assert not EVENTS_RE.search(query), query
+
+
+# ── how a place is written ────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "stored,shown",
+    [
+        ("http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16", "Room 5.16"),
+        ("bldg:Room2.14", "Room 2.14"),
+        ("Level 3 corridor", "Level 3 corridor"),
+        ("Level 3: east wing", "Level 3: east wing"),
+        ("", "unspecified"),
+        (None, "unspecified"),
+    ],
+)
+def test_a_place_is_shown_as_a_person_would_write_it(stored, shown):
+    """space_iri is stored as a full IRI, and a table is not the place for one."""
+    from orchestrator.services.event_query_service import _place_label
+
+    assert _place_label(stored) == shown

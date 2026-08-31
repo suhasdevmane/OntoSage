@@ -480,13 +480,21 @@ class ReportIntakeService:
         """
         if not self.postgres or getattr(self.postgres, "pool", None) is None:
             return []
+        # A report with NO place cannot demonstrate recurrence "in the same place", so
+        # placeless rows are excluded from the grouping rather than collected under an
+        # "unspecified" heading. Measured: 113 of bldg1's reports carry no location, and
+        # bucketing them together produced a single 113-strong row that dominated the
+        # answer and said nothing about anywhere. How many were excluded is reported
+        # separately by the caller — it is a real fact about the intake data, and hiding
+        # it would overstate how complete the recurrence picture is.
         sql = (
-            "SELECT COALESCE(NULLIF(location, ''), space_iri, 'unspecified') AS place, "
+            "SELECT COALESCE(NULLIF(location, ''), space_iri) AS place, "
             "       category, COUNT(*) AS n, "
             "       MIN(created_at) AS first_seen, MAX(created_at) AS last_seen, "
             "       COUNT(*) FILTER (WHERE status IN ('resolved', 'closed')) AS closed "
             "FROM user_reports "
             "WHERE building_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval "
+            "  AND COALESCE(NULLIF(location, ''), space_iri) IS NOT NULL "
             + ("AND category = $4 " if category else "")
             + "GROUP BY place, category HAVING COUNT(*) >= $3 "
             "ORDER BY n DESC, last_seen DESC LIMIT 25"
@@ -501,6 +509,33 @@ class ReportIntakeService:
         except Exception as exc:
             logger.warning(f"[report_intake] recurring_reports failed: {exc}")
             return []
+
+    async def placeless_report_count(
+        self, building_id: str, category: str = "", days: int = 365
+    ) -> int:
+        """How many reports in the window carry no location at all.
+
+        Reported beside a recurrence answer so the reader knows how much of the intake
+        data could not take part in it. Silence here would overstate how complete the
+        picture is.
+        """
+        if not self.postgres or getattr(self.postgres, "pool", None) is None:
+            return 0
+        sql = (
+            "SELECT COUNT(*) FROM user_reports "
+            "WHERE building_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval "
+            "  AND COALESCE(NULLIF(location, ''), space_iri) IS NULL "
+            + ("AND category = $3 " if category else "")
+        )
+        args = [building_id, str(int(days))]
+        if category:
+            args.append(category)
+        try:
+            async with self.postgres.pool.acquire() as conn:
+                return int(await conn.fetchval(sql, *args) or 0)
+        except Exception as exc:
+            logger.warning(f"[report_intake] placeless_report_count failed: {exc}")
+            return 0
 
     def classify_action(self, message: str) -> str:
         """Heuristic: is the user creating, checking, or listing reports?"""
