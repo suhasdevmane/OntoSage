@@ -49,8 +49,19 @@ def test_ordinary_questions_are_left_alone(query):
     assert not scenario_question(query), query
 
 
-def test_the_rule_fires_before_every_other_parse_rule():
-    """A scenario must never reach a lane that could compute a plausible number for it."""
+def test_the_rule_fires_before_anything_that_could_compute_a_number():
+    """A scenario must never reach a lane that could compute a plausible figure for it.
+
+    Being literally first is not the invariant — `answer_provenance` was later placed
+    ahead of it, and reading back an evidence record cannot fabricate a scenario answer.
+    What matters is that no rule capable of routing to a DATA lane runs earlier.
+    """
     from orchestrator.services import routing_contract as rc
 
-    assert rc.PARSE_STAGE_RULES[0].name == "scenario_boundary"
+    names = [r.name for r in rc.PARSE_STAGE_RULES]
+    position = names.index("scenario_boundary")
+    # Everything ahead of it must be a refusal or a read-back lane, never a data route.
+    assert set(names[:position]) <= {
+        "answer_provenance",
+        "inference_privacy_denial",
+    }, f"a data-routing rule now precedes the scenario boundary: {names[:position]}"

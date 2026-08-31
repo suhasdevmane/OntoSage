@@ -1376,6 +1376,20 @@ def scenario_question(query: str) -> bool:
     return bool(_HYPOTHETICAL_RE.search(text) and _CONSEQUENCE_RE.search(text))
 
 
+def _r_answer_provenance(c: _Ctx) -> Optional[str]:
+    """ "How do you know that?" -> capability, which reads the evidence record (V7-T74).
+
+    Runs early, because these questions are about the previous ANSWER and every data lane
+    would otherwise try to answer them as if they were about the building. Measured: "how
+    do you know that?" was classified as a question about the system's own capabilities,
+    and an auditor's "can every extraction and join be rerun from authorised inputs?" got
+    a document search — while the record that answers both sat in the previous turn.
+    """
+    from orchestrator.services.answer_provenance import is_provenance_question
+
+    return "capability" if is_provenance_question(c.query) else None
+
+
 def _r_scenario_boundary(c: _Ctx) -> Optional[str]:
     """What-if questions → capability, which declines and names what is missing (V7-T80).
 
@@ -1392,6 +1406,11 @@ def _r_scenario_boundary(c: _Ctx) -> Optional[str]:
 
 
 PARSE_STAGE_RULES: Tuple[Rule, ...] = (
+    Rule(
+        "answer_provenance",
+        "how do you know that / can it be rerun -> capability, reading the evidence record (V7-T74)",
+        _r_answer_provenance,
+    ),
     Rule(
         "scenario_boundary",
         "what-if / simulate-a-state questions -> capability, which declines (V7-T80)",
