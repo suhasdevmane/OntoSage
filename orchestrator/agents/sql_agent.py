@@ -21,6 +21,15 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
+#: How many sensors this lane will read for one question before declining as too broad.
+#:
+#: A budget, not a property of any building: it bounds what can be fetched, summarised and
+#: narrated inside a single request. Sized to clear an ordinary floor-and-modality question
+#: comfortably while stopping a whole-building sweep, and deliberately larger than the
+#: deliberation lane's space budget because this counts SENSORS, several of which sit in
+#: each space.
+MAX_FETCH_UUIDS = 200
+
 
 class SQLAgent:
     """Generates and executes SQL queries for time-series data"""
@@ -240,6 +249,40 @@ class SQLAgent:
             logger.info("=" * 80)
             logger.info(f"User Query: {user_query}")
             logger.info(f"UUIDs to fetch: {len(uuids)}")
+
+            # Too many sensors to read inside one request (V7-T24).
+            #
+            # Measured 2026-08-31: "show me live setpoints versus measured temperature for
+            # all zones on floor 5" reached this lane with 288 uuids. Before the budget it
+            # timed out at 120 s; capping the deliberation lane alone simply moved the
+            # question here, where it fetched all 288 and then narrated ONE sensor — on a
+            # different floor from the one asked about. Faster, and wrong, which is worse
+            # than slow.
+            #
+            # Declining names the narrowing. Truncating would answer over an unnamed subset
+            # of the building, which is the failure this project guards hardest against.
+            if len(uuids) > MAX_FETCH_UUIDS:
+                msg = (
+                    f"That question reaches **{len(uuids)} sensors** — more than I can read "
+                    "and summarise in one request without either timing out or quietly "
+                    "answering from a fraction of them.\n\n"
+                    "Narrow it and I can answer directly:\n"
+                    "- one floor, or one room\n"
+                    "- one measurement at a time (temperature, or CO₂ — not both)\n"
+                    "- a shorter period\n\n"
+                    "I would rather say this than report a figure without telling you which "
+                    "part of the building it came from."
+                )
+                logger.info(f"[sql] declining as too broad: {len(uuids)} > {MAX_FETCH_UUIDS}")
+                return {
+                    "success": True,
+                    "query": "Breadth Budget (No Fetch)",
+                    "results": {"data": []},
+                    "formatted_response": msg,
+                    "analytics_required": False,
+                    "too_broad": True,
+                    "uuids_requested": len(uuids),
+                }
             for i, uuid in enumerate(uuids, 1):
                 storage = storage_map.get(uuid, "N/A") if storage_map else "N/A"
                 logger.info(f"   {i}. {uuid} (Storage: {storage})")

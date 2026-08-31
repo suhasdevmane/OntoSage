@@ -50,6 +50,26 @@ logger = get_logger(__name__)
 #: candidates that reach the forecasting stage (plan: forecast only the top-K)
 FORECAST_TOP_K = 5
 
+#: How many candidates this lane will fetch series for before it declines as too broad
+#: (V7-T24).
+#:
+#: Measured 2026-08-31: "show me live setpoints versus measured temperature for all zones
+#: on floor 5" enumerated the WHOLE building — 522 series across 8 tables — and died on
+#: the 120 s workflow timeout, 121 s after the user asked. Sixteen of the 1,580 baseline
+#: questions end that way.
+#:
+#: The cap declines rather than truncating. A "which rooms" answer computed over an
+#: arbitrary slice of the candidates is a wrong answer that looks right, and this project
+#: guards hardest against exactly that; a decline naming the narrower question costs the
+#: user one second instead of two minutes and tells them what to ask.
+#:
+#: Sized to sit above a typical floor and well below a whole building. It is a fetch
+#: budget rather than a property of any one building — a floor-scoped question stays
+#: untouched wherever it is asked, and a building large enough to exceed it on one floor
+#: gets the decline, which is the honest outcome for a question that genuinely cannot be
+#: read inside a request.
+MAX_FETCH_CANDIDATES = 120
+
 Forecaster = Callable[[Series, float], Awaitable[Tuple[float, str]]]
 
 
@@ -312,6 +332,43 @@ async def execute(
     t0 = time.time()
     candidates, ledger = enumerate_candidates(cqir, admission, schema, geometry)
     timings["enumerate_ms"] = int((time.time() - t0) * 1000)
+
+    # Too broad to fetch: decline NOW rather than time out in two minutes (V7-T24).
+    #
+    # Truncating instead would be worse than either. A "which rooms" answer computed over
+    # an arbitrary slice of the candidates is wrong in a way that looks right, and the
+    # reader has no way to tell — so the question is handed back with the narrowing that
+    # would make it answerable, which the user can act on immediately.
+    if len(candidates) > MAX_FETCH_CANDIDATES:
+        from orchestrator.services.deliberation.candidates import LedgerEntry
+
+        floors = ", ".join(schema.floors[:8]) or "the building's floors"
+        ledger.excluded.append(
+            LedgerEntry(
+                space_iri="*",
+                label="all in scope",
+                reason=(
+                    f"question spans {len(candidates)} spaces, above the "
+                    f"{MAX_FETCH_CANDIDATES}-space fetch budget"
+                ),
+            )
+        )
+        logger.info(
+            f"[deliberate] declining as too broad: {len(candidates)} candidates "
+            f"> {MAX_FETCH_CANDIDATES}"
+        )
+        return ExecutionOutcome(
+            score=ScoreResult(ranked=[], excluded=[]),
+            ledger=ledger,
+            candidates=[],
+            event_notes=[
+                f"That question covers {len(candidates)} spaces — more than I can read "
+                f"within one request. Narrow it to a floor ({floors}) or to a named room "
+                "and I can answer it directly. I would rather say that than answer from "
+                "part of the building without telling you which part."
+            ],
+            timings_ms=timings,
+        )
 
     # V5-T25: availability filter BEFORE the expensive fetch — a booked room is
     # out no matter how quiet it is, and the exclusion is ledger-visible.
