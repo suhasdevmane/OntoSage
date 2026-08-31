@@ -1898,3 +1898,19 @@ ontosage:Tariff ontosage:layTerms "tariff", "tariffs", "unit rate", "standing ch
 
 ontosage:Booking ontosage:layTerms "booking", "bookings", "reservation", "reservations",
     "room booking", "booked", "who has booked" .
+
+# Lay terms for the three record classes that had none.
+#
+# Nothing is derived from part of a class name any more, so a class without declared lay
+# terms is reachable only by its full label. These were the three, and ComplianceCheck
+# holds 82 instances — the largest register in the building.
+ontosage:ComplianceCheck ontosage:layTerms "compliance check", "compliance checks",
+    "compliance", "statutory check", "statutory checks", "inspection", "inspections",
+    "test due", "overdue check", "certificate" .
+
+ontosage:WorkOrder ontosage:layTerms "work order", "work orders", "job", "jobs",
+    "maintenance job", "reactive job", "ticket", "tickets" .
+
+ontosage:TimetabledSession ontosage:layTerms "timetabled session", "timetabled sessions",
+    "timetable", "scheduled class", "scheduled classes", "teaching session",
+    "teaching sessions", "lecture", "lectures" .

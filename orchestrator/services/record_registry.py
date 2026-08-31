@@ -92,23 +92,39 @@ class RecordClass:
 def _terms_for(
     local_name: str, label: str, lay: str = "", include_head_words: bool = True
 ) -> Tuple[str, ...]:
-    """The words a question would use for this class.
+    """The words a question would use for this class — all of them declared, none derived.
 
-    Three sources, all in the ontology and none in code: the class's declared
-    ``ontosage:layTerms``, its rdfs:label, and its class name. A hand-written synonym
-    list in Python would be a building literal by another route and would rot the moment
-    a class was added.
+    Three sources, every one in the ontology: the class's ``ontosage:layTerms``, its
+    rdfs:label and its class name. Each is taken WHOLE, with only its plural added.
 
-    The lay terms matter more than they look. "Which assets are beyond their expected
-    life?" is a condition-survey question containing neither "condition" nor "survey",
-    and with only the class name to go on it reached a generic equipment inventory
-    instead. A building that uses different words declares them in its own TTL.
+    **Nothing is derived from part of a phrase.** That rule cost three separate defects
+    before it was stated plainly. "roof access permit" contributed a bare *roof*, and a
+    competency question was answered from the permit register. "Work Order" contributed
+    *work*, and "what is the procedure for hot works?" was declined as a missing register.
+    Worst of all, ontosage:Booking is labelled "Room booking", which contributed a bare
+    *room* — and every question naming a room, including two wayfinding questions, was
+    pulled into the register lane. In English a compound noun's head is its LAST word, so
+    the first word of a phrase names a different concept nearly every time.
+
+    Short forms are not lost by this, because they are declared: the TBox lists "permit",
+    "booking", "condition" and the rest as layTerms. That is the design — the ontology
+    says what a thing is called, and a building that calls it something else says so in
+    its own TTL. ``include_head_words`` is kept for callers that want the older, looser
+    behaviour, and nothing uses it.
     """
 
     def _plural(word: str) -> str:
+        """English plural, enough for a class name.
+
+        The y->ies rule needs a CONSONANT before the y: "warranty" becomes "warranties"
+        but "survey" becomes "surveys", not "surveies" — which is what a naive rule
+        produced, so "condition surveys" (the form anyone would type) matched nothing.
+        """
         if word.endswith("s"):
             return word
-        return word[:-1] + "ies" if word.endswith("y") else word + "s"
+        if word.endswith("y") and len(word) > 1 and word[-2] not in "aeiou":
+            return word[:-1] + "ies"
+        return word + "s"
 
     words: set = set()
 
@@ -116,18 +132,11 @@ def _terms_for(
         seed = seed.strip()
         if not seed:
             continue
-        # The plural of the whole phrase is the SAME concept — "work order" and "work
-        # orders" name one thing — so it is always safe, and a counting question is
-        # almost always plural.
+        # The whole phrase and its plural, and NOTHING derived from part of it.
+        # "work order" and "work orders" name one thing; "work" names something else.
         parts = seed.split()
         words.add(seed)
         words.add(" ".join(parts[:-1] + [_plural(parts[-1])]))
-        # The HEAD word of a phrase is a different concept: "work" is not "work order".
-        # Useful for finding a register the building holds, dangerous for declining one
-        # it does not, so the caller chooses.
-        if include_head_words and len(parts) > 1:
-            words.add(parts[0])
-            words.add(_plural(parts[0]))
 
     # Declared lay terms are ALREADY the words people use, so they are taken whole and
     # never reduced to a head word. Reducing them was measured doing real damage: the

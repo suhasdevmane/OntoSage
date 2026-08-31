@@ -40,9 +40,15 @@ def test_terms_come_from_the_ontology_label_not_a_keyword_list():
 
 
 def test_camel_case_class_names_become_words():
+    """A CamelCase class name becomes its phrase — and only its phrase.
+
+    "condition" alone is NOT derived: the short form is declared as a lay term instead,
+    because deriving head words from phrases caused three separate misroutes.
+    """
     terms = _terms_for("ConditionSurvey", "Condition survey")
     assert "condition survey" in terms
-    assert "condition" in terms
+    assert "condition surveys" in terms
+    assert "condition" not in terms
 
 
 def test_a_held_class_is_matched():
@@ -86,13 +92,14 @@ def test_a_lay_term_phrase_is_never_reduced_to_its_head_word():
 
     Measured: it did, and "what competency is required for the roof?" was answered from
     the PERMIT register instead of the competency one. The head word of a phrase is a
-    different concept, not a shorter name for the same one. Head-word expansion is for
-    the class NAME and LABEL, which are titles for the thing itself.
+    different concept, not a shorter name for the same one.
     """
     terms = _terms_for("Permit", "Permit to work", "roof access permit|hot works permit")
     assert "roof access permit" in terms
     assert "roof" not in terms
-    assert "permit" in terms, "the label's head word is still expanded"
+    # "permit" survives because the CLASS NAME is the single word Permit — not because
+    # anything was derived from the label "Permit to work".
+    assert "permit" in terms
 
 
 def test_declared_lay_terms_are_matched_whole():
@@ -107,19 +114,18 @@ def test_declared_lay_terms_are_matched_whole():
     assert hit is not None and hit.local_name == "ConditionSurvey"
 
 
-def test_absent_matching_is_conservative_where_held_matching_is_not():
-    """Asymmetric on purpose, because the consequences are asymmetric.
+def test_matching_is_now_uniform_and_no_head_word_survives_anywhere():
+    """The held/absent asymmetry is gone, because the looser side was the defect.
 
-    Claiming a question for a class the building HOLDS routes it to data that exists and
-    is checkable. Claiming one for an ABSENT class produces a DECLINE and costs a real
-    answer. Measured: WorkOrder contributed a bare "work", and "what is the procedure for
-    hot works?" was declined as a missing work-order register when the permit document
-    answers it.
+    It was introduced when WorkOrder's bare "work" made the system decline a question the
+    permit document answers. The same class of bug then appeared on the HELD side — a
+    bare "room" from "Room booking" pulled two wayfinding questions into the register lane
+    — so the phrase rule is now uniform rather than asymmetric.
     """
     strict = _terms_for("WorkOrder", "Work Order", include_head_words=False)
     loose = _terms_for("WorkOrder", "Work Order")
-    assert "work" not in strict
-    assert "work" in loose
+    assert "work" not in strict and "work" not in loose
+    assert "work order" in strict and "work order" in loose
 
 
 def test_a_generic_head_word_no_longer_triggers_a_decline():
@@ -132,3 +138,69 @@ def test_a_full_class_name_still_names_an_absent_system():
     import orchestrator.services.record_registry as rr
 
     assert rr.absent_record_class("Show me the work order backlog", _held("Permit")) == "WorkOrder"
+
+
+def test_no_term_is_ever_derived_from_part_of_a_phrase():
+    """Three separate defects came from this, so it is pinned uniformly.
+
+    ontosage:Booking is labelled "Room booking". Deriving its head word gave a bare
+    "room", which claimed every question naming a room — including two wayfinding
+    questions that had been routing correctly. In English a compound noun's head is its
+    LAST word, so the first word of a phrase names a different concept nearly every time.
+    """
+    booking = _terms_for("Booking", "Room booking", "booking|bookings|room booking")
+    assert "room" not in booking
+    assert "room booking" in booking
+    assert "booking" in booking, "the short form is DECLARED, not derived"
+
+    assert "roof" not in _terms_for("Permit", "Permit to work", "roof access permit")
+    assert "work" not in _terms_for("WorkOrder", "Work Order")
+    assert "condition" not in _terms_for("ConditionSurvey", "Condition survey")
+
+
+def test_the_plural_of_a_whole_phrase_is_kept():
+    """ "work orders" and "work order" name one thing — that much is safe."""
+    terms = _terms_for("WorkOrder", "Work Order")
+    assert "work order" in terms and "work orders" in terms
+
+
+def test_wayfinding_questions_are_not_claimed_by_a_register():
+    held = [
+        RecordClass(
+            "Booking",
+            "Room booking",
+            16,
+            _terms_for("Booking", "Room booking", "booking|bookings|room booking"),
+        )
+    ]
+    for query in (
+        "Where's the nearest water refill station to Room 3.18?",
+        "I've just arrived at reception - how do I get to the seminar room on level 3?",
+        "Which rooms are we heating that nobody uses?",
+    ):
+        assert held_record_class(query, held) is None, query
+
+
+def test_a_real_booking_question_is_still_claimed():
+    """The TBox declares "booked", and that is what carries this question.
+
+    Worth stating: with head-word derivation gone, a class is only as findable as its
+    declared lay terms. That is the intended trade — the ontology says what a thing is
+    called — but it means an incomplete layTerms list now shows up as a miss rather than
+    being papered over by a guessed short form.
+    """
+    held = [
+        RecordClass(
+            "Booking",
+            "Room booking",
+            16,
+            _terms_for("Booking", "Room booking", "booking|bookings|room booking|booked"),
+        )
+    ]
+    assert held_record_class("Which rooms are booked tomorrow?", held) is not None
+
+
+def test_plurals_of_class_names_are_english():
+    """ "survey" -> "surveys", not "surveies" — the y/ies rule needs a consonant."""
+    assert "condition surveys" in _terms_for("ConditionSurvey", "Condition survey")
+    assert "warranties" in _terms_for("Warranty", "Warranty")
