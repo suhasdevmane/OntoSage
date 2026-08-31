@@ -1331,7 +1331,58 @@ def _r_inference_privacy(c: _Ctx) -> Optional[str]:
     return "privacy_refusal" if classify_inference(c.query) else None
 
 
+#: A hypothetical premise: the question posits a state the building is not in.
+_HYPOTHETICAL_RE = re.compile(
+    r"\bwhat if\b|\bwhat would happen\b|\bsuppose\b|\bassuming\b|\bhypothetical"
+    r"|\bin the event (?:of|that)\b|\bwere (?:the|a|an|it)\b.{0,40}\bto (?:fail|stop|go)\b"
+    r"|\bif (?:the|a|an|we|power|it|there)\b.{0,60}\b(?:fail|fails|failed|lost|lose|"
+    r"were to|goes? (?:down|off)|stops?|stopped|breaks?|broke)\b",
+    re.IGNORECASE,
+)
+
+#: ...and asks for its consequence. Both halves are required: "if you can, show me floor 3"
+#: has a conditional and no consequence, and must keep its normal route.
+_CONSEQUENCE_RE = re.compile(
+    r"\bhow long\b|\bhow many\b|\bwould (?:it|they|we|the)\b|\bwill (?:it|they|we|the)\b"
+    r"|\bimpact\b|\baffect(?:ed|s)?\b|\bconsequence|\bsafe for\b|\blast\b|\bsurvive\b"
+    r"|\bcope\b|\bwithstand\b|\bhappen\b",
+    re.IGNORECASE,
+)
+
+
+def scenario_question(query: str) -> bool:
+    """True when a question asks the building to SIMULATE a state it is not in.
+
+    Both a hypothetical premise and a request for its consequence are required. One
+    without the other is ordinary language — "if you can, show me floor 3" is a
+    conditional with no consequence, and "how long does the lift take" is a consequence
+    with no hypothetical.
+    """
+    text = query or ""
+    return bool(_HYPOTHETICAL_RE.search(text) and _CONSEQUENCE_RE.search(text))
+
+
+def _r_scenario_boundary(c: _Ctx) -> Optional[str]:
+    """What-if questions → capability, which declines and names what is missing (V7-T80).
+
+    The building holds no thermal, hydraulic or electrical model, so "if power fails, how
+    long do the lab freezers stay safe?" has no grounded answer — and the model WILL
+    produce a confident one from physical intuition if allowed to, which is the most
+    dangerous answer this system could give. Deciding it here, before any data lane runs,
+    keeps a plausible number from ever being computed.
+
+    The decline names what a real answer would require, so it is a specification rather
+    than a refusal.
+    """
+    return "capability" if scenario_question(c.query) else None
+
+
 PARSE_STAGE_RULES: Tuple[Rule, ...] = (
+    Rule(
+        "scenario_boundary",
+        "what-if / simulate-a-state questions -> capability, which declines (V7-T80)",
+        _r_scenario_boundary,
+    ),
     Rule(
         "inference_privacy_denial",
         "individual presence/pattern/private-content/override shapes → refusal (V5-T42)",

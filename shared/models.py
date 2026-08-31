@@ -546,6 +546,32 @@ class EvidenceSource(BaseModel):
     observed_at: Optional[datetime] = Field(
         default=None, description="When the evidence was OBSERVED (not when it was fetched)"
     )
+    effective_at: Optional[datetime] = Field(
+        default=None,
+        description="When this record TAKES EFFECT — the third of the three times the 37 "
+        "catalogues insist on keeping separate (660 mentions of effective time against "
+        "3,048 observed and 2,882 retrieved). Distinct from observed_at on purpose: a "
+        "policy read today may take effect next Monday, and a role change may already be "
+        "superseded. Without it every authoritative-record answer silently collapses "
+        "'when it applies' into 'when we read it'.",
+    )
+    owner: str = Field(
+        default="",
+        description="The accountable owner of this record — a ROLE or team, never a "
+        "person. Owner is the single most frequent demand in the catalogue corpus at "
+        "13,964 mentions, ahead of permission and conflict, because the catalogues never "
+        "ask the building to decide: they ask it to say whose record this is and defer. "
+        "An answer that cannot name the owner cannot be acted on.",
+    )
+    authority: str = Field(
+        default="", description="The organisation whose system of record this is"
+    )
+    record_version: str = Field(
+        default="",
+        description="The version this fact was read from. Without it a superseded record "
+        "and its replacement are indistinguishable in the dossier, and an answer cannot "
+        "be reproduced against what it actually used.",
+    )
     calibration_state: str = Field(
         default="unknown",
         description="'calibrated' | 'expired' | 'uncalibrated' | 'unknown'. Absent metadata is "
