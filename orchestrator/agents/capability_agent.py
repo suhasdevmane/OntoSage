@@ -190,6 +190,9 @@ class CapabilityAgent:
             f"{CapabilityAgent._NO_ANSWER} and nothing else. Being close to the topic is "
             "NOT containing the answer.\n"
             "- Do not restate a passage as though it were the answer.\n"
+            "- Reproduce names, identifiers and codes EXACTLY as written — same spelling,\n"
+            "  same punctuation. An SSID, a room id or a reference number that has been\n"
+            "  retyped is no longer the thing the document named.\n"
             "- Be brief and direct.\n\n"
             f"QUESTION: {question}\n\nPASSAGES:\n{passages}\n\nANSWER:"
         )

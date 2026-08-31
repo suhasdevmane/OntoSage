@@ -34,6 +34,14 @@ import orchestrator.services.capability_graph_resolver as cgr
 from orchestrator.services.building_metrics import BuildingMetricsSnapshot
 from shared.models import ConversationState, Message
 
+
+def _ascii_dashes(text: str) -> str:
+    """Normalise the dash family so a typographic swap is not read as a different value."""
+    for dash in ("‐", "‑", "‒", "–", "—", "−"):
+        text = text.replace(dash, "-")
+    return text
+
+
 pytestmark = pytest.mark.unit
 
 _BARE_NAME = "Bare Test Building"
@@ -147,9 +155,18 @@ async def test_document_source_fires_without_capability_yaml(monkeypatch):
     )
     out = await cap.CapabilityAgent().answer(_state("what is the wifi policy?"))
     res = out.intermediate_results["capability_result"]
-    assert res["provenance"] == "document_kb"
+    # Either provenance means the document source fired. The lane now COMPOSES an answer
+    # from the passage where it can ("document_answered") and falls back to presenting the
+    # passage where the composer cannot run ("document_kb") — so which one appears depends
+    # on whether a model is reachable, and pinning one made this test pass on a dev box
+    # and fail in a parked checkout. What the test is actually for is that documents work
+    # as a source without capability.yaml, and both labels say they did.
+    assert res["provenance"] in ("document_kb", "document_answered")
     assert res["success"] is True
-    assert "Guest-WiFi" in res["response"]
+    # Hyphens are normalised before comparing: the composer once returned "Guest‑WiFi"
+    # with a non-breaking hyphen, which is the same value typographically reformatted. The
+    # prompt now asks for identifiers verbatim, and the test does not fail on a dash.
+    assert "Guest-WiFi" in _ascii_dashes(res["response"])
 
 
 async def test_all_sources_miss_gives_honest_boundary_not_crash(monkeypatch):

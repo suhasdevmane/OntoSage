@@ -289,7 +289,13 @@ async def test_documents_answer_when_triples_miss(monkeypatch):
     res = (await cap.CapabilityAgent().answer(_cap_state())).intermediate_results[
         "capability_result"
     ]
-    assert res["provenance"] == "document_kb"
+    # Either provenance means the document source fired. The lane now COMPOSES an answer
+    # from the passage where it can ("document_answered") and falls back to presenting the
+    # passage where the composer cannot run ("document_kb") — so which one appears depends
+    # on whether a model is reachable, and pinning one made this test pass on a dev box
+    # and fail in a parked checkout. What the test is actually for is that documents work
+    # as a source without capability.yaml, and both labels say they did.
+    assert res["provenance"] in ("document_kb", "document_answered")
 
 
 async def test_off_topic_document_is_not_presented_as_an_answer(monkeypatch):
