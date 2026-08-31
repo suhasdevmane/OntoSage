@@ -24,7 +24,7 @@ Survey justification:
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from shared.config import settings
 from shared.models import ConversationState
@@ -146,6 +146,63 @@ class CapabilityAgent:
     Returns a grounded answer with provenance, or an explicit boundary statement.
     Never hallucinate — if no source has the fact, say so clearly.
     """
+
+    #: The model's declared way to say the passages do not contain the answer. A refusal
+    #: has to be as easy to produce as an answer, or the model fills the gap from its own
+    #: knowledge — which is the one thing a document lane must never do.
+    _NO_ANSWER = "NO_ANSWER_IN_SOURCE"
+
+    @staticmethod
+    async def _answer_from_passages(
+        question: str, hits: List[Dict[str, Any]]
+    ) -> Tuple[Optional[str], bool]:
+        """Compose an answer from retrieved passages.
+
+        Returns ``(answer, decided)``. Three outcomes, and the third is the one that
+        matters:
+
+            ("...", True)   the passages answer, and this is that answer
+            (None,  True)   the passages do not answer — decline, do not paste
+            (None,  False)  the composer could not RUN, so nothing was decided
+
+        The last case exists because a model outage must not silently turn this lane off.
+        Without it the document lane would answer nothing whenever the LLM was
+        unavailable, which is BUG-177's lesson exactly: a degraded model produced fallback
+        text that read like an answer, and the harness scored it. Here the caller falls
+        back to presenting the passage, honestly labelled, as it always did.
+
+        Grounded generation, not extraction: the passages are the ONLY permitted source
+        and the model is given an explicit token for "not in here".
+        """
+        if not hits:
+            return None, False
+        from orchestrator.llm_manager import TaskType, llm_manager
+
+        passages = "\n\n".join(
+            f"[{h.get('doc_name', 'document')}]\n{str(h.get('text', ''))[:2000]}" for h in hits[:3]
+        )
+        prompt = (
+            "Answer the question using ONLY the passages below. They are extracts from a "
+            "building's own documents.\n\n"
+            "Rules:\n"
+            "- Use nothing but the passages. Do not add general knowledge.\n"
+            f"- If the passages do not contain the answer, reply with exactly "
+            f"{CapabilityAgent._NO_ANSWER} and nothing else. Being close to the topic is "
+            "NOT containing the answer.\n"
+            "- Do not restate a passage as though it were the answer.\n"
+            "- Be brief and direct.\n\n"
+            f"QUESTION: {question}\n\nPASSAGES:\n{passages}\n\nANSWER:"
+        )
+        try:
+            reply = (await llm_manager.generate(prompt, task_type=TaskType.GENERAL) or "").strip()
+        except Exception as exc:
+            logger.warning(f"[capability] passage answering unavailable: {exc}")
+            return None, False
+        if not reply:
+            return None, False  # an empty completion decided nothing
+        if CapabilityAgent._NO_ANSWER in reply.upper():
+            return None, True
+        return reply, True
 
     @staticmethod
     def _unverified_referent_result(referent: str, building_name: str) -> Dict[str, Any]:
@@ -676,6 +733,59 @@ class CapabilityAgent:
                 == MATCH_DISTINCTIVE
                 for h in doc_hits
             )
+
+            # ── Answer FROM the passage, or decline (V7-T20 / BUG-369) ───────
+            #
+            # The strength check above is a relevance heuristic and it is not enough.
+            # Measured on the 111-question probe: 38 of 56 "answers" were pastes, and
+            # several answered a different question entirely — "which plant can be
+            # installed, commissioned and replaced through a credible route" returned the
+            # ASBESTOS REGISTER, and it passed as a distinctive match. Fifteen roles had
+            # their whole score made of such pastes.
+            #
+            # Whether a passage answers a question is not decidable from word overlap, so
+            # it is decided by trying: compose an answer from the passage alone, with an
+            # explicit way to say the passage does not contain one. That escape hatch is
+            # what makes this safe — without it the model would fill the gap from its own
+            # knowledge, which is the fabrication this project guards against hardest.
+            composed, _decided = await self._answer_from_passages(
+                state.user_message or "", doc_hits
+            )
+            if composed is not None:
+                _cited = sorted({h["doc_name"].replace("_", " ").title() for h in doc_hits})
+                state.intermediate_results["capability_result"] = {
+                    "success": True,
+                    "response": (
+                        f"{composed}\n\n---\n*From {building_name}'s documents: "
+                        f"{', '.join(_cited)}. For the current version, contact facility "
+                        "management.*"
+                    ),
+                    "provenance": "document_answered",
+                    "building_name": building_name,
+                    "documents": _cited,
+                }
+                logger.info(f"[capability] answered from documents: {_cited}")
+                return state
+
+            if _decided and doc_hits:
+                _cited = sorted({h["doc_name"].replace("_", " ").title() for h in doc_hits})
+                state.intermediate_results["capability_result"] = {
+                    "success": True,
+                    "response": (
+                        f"**{building_name}'s documents do not answer this.** I searched "
+                        f"{', '.join(_cited)}; they are the closest material and none of "
+                        "them contains the answer.\n\n"
+                        "If the answer should be in a document, add or update it — a "
+                        "document carrying record-document front-matter is also lifted "
+                        "into queryable data on ingest. Otherwise the owner of that "
+                        "record holds it."
+                    ),
+                    "provenance": "documents_do_not_answer",
+                    "building_name": building_name,
+                    "documents": _cited,
+                }
+                logger.info(f"[capability] documents searched and none answered: {_cited}")
+                return state
 
             seen_docs: set = set()
             if _strong:

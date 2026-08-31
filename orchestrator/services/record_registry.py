@@ -89,7 +89,9 @@ class RecordClass:
     terms: Tuple[str, ...]
 
 
-def _terms_for(local_name: str, label: str, lay: str = "") -> Tuple[str, ...]:
+def _terms_for(
+    local_name: str, label: str, lay: str = "", include_head_words: bool = True
+) -> Tuple[str, ...]:
     """The words a question would use for this class.
 
     Three sources, all in the ontology and none in code: the class's declared
@@ -102,21 +104,30 @@ def _terms_for(local_name: str, label: str, lay: str = "") -> Tuple[str, ...]:
     and with only the class name to go on it reached a generic equipment inventory
     instead. A building that uses different words declares them in its own TTL.
     """
+
+    def _plural(word: str) -> str:
+        if word.endswith("s"):
+            return word
+        return word[:-1] + "ies" if word.endswith("y") else word + "s"
+
     words: set = set()
 
-    # The class name and label are TITLES, so their head word is the thing itself:
-    # "Permit to work" -> permit, permits. Expanding those is what lets a plural
-    # counting question match at all.
     for seed in (label.lower().strip(), re.sub(r"(?<!^)(?=[A-Z])", " ", local_name).lower()):
         seed = seed.strip()
         if not seed:
             continue
+        # The plural of the whole phrase is the SAME concept — "work order" and "work
+        # orders" name one thing — so it is always safe, and a counting question is
+        # almost always plural.
+        parts = seed.split()
         words.add(seed)
-        head = seed.split()[0]
-        words.add(head)
-        words.add(head + "s" if not head.endswith("s") else head)
-        if head.endswith("y"):
-            words.add(head[:-1] + "ies")
+        words.add(" ".join(parts[:-1] + [_plural(parts[-1])]))
+        # The HEAD word of a phrase is a different concept: "work" is not "work order".
+        # Useful for finding a register the building holds, dangerous for declining one
+        # it does not, so the caller chooses.
+        if include_head_words and len(parts) > 1:
+            words.add(parts[0])
+            words.add(_plural(parts[0]))
 
     # Declared lay terms are ALREADY the words people use, so they are taken whole and
     # never reduced to a head word. Reducing them was measured doing real damage: the
@@ -186,8 +197,16 @@ def held_record_class(query: str, classes: List[RecordClass]) -> Optional[Record
 #: Terms for every record class the ontology DEFINES, used to NAME what a building is
 #: missing. Seeded from the class names and enriched from the TBox's declared layTerms on
 #: first use, so adding a class to the ontology is all it takes.
+#:
+#: Head words are DELIBERATELY excluded here, unlike the held-class vocabulary. Matching
+#: is asymmetric because the consequences are: claiming a question for a class the
+#: building HOLDS sends it to data that exists and is checkable, while claiming one for an
+#: ABSENT class produces a decline and costs a real answer. Measured — WorkOrder
+#: contributed a bare "work", and "what is the procedure for hot works?" was declined as a
+#: missing work-order register when the permit document answers it.
 _ALL_CLASS_TERMS: Dict[str, Tuple[str, ...]] = {
-    name: _terms_for(name, re.sub(r"(?<!^)(?=[A-Z])", " ", name)) for name in _RECORD_CLASSES
+    name: _terms_for(name, re.sub(r"(?<!^)(?=[A-Z])", " ", name), include_head_words=False)
+    for name in _RECORD_CLASSES
 }
 _LAY_LOADED = False
 
@@ -213,7 +232,10 @@ async def load_lay_terms() -> None:
             if local not in _ALL_CLASS_TERMS:
                 continue
             _ALL_CLASS_TERMS[local] = _terms_for(
-                local, re.sub(r"(?<!^)(?=[A-Z])", " ", local), str(row.get("lays") or "")
+                local,
+                re.sub(r"(?<!^)(?=[A-Z])", " ", local),
+                str(row.get("lays") or ""),
+                include_head_words=False,
             )
         _LAY_LOADED = True
     except Exception as exc:

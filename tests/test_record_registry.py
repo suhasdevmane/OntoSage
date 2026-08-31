@@ -105,3 +105,30 @@ def test_declared_lay_terms_are_matched_whole():
     )
     hit = held_record_class("Which assets are beyond their expected life?", held)
     assert hit is not None and hit.local_name == "ConditionSurvey"
+
+
+def test_absent_matching_is_conservative_where_held_matching_is_not():
+    """Asymmetric on purpose, because the consequences are asymmetric.
+
+    Claiming a question for a class the building HOLDS routes it to data that exists and
+    is checkable. Claiming one for an ABSENT class produces a DECLINE and costs a real
+    answer. Measured: WorkOrder contributed a bare "work", and "what is the procedure for
+    hot works?" was declined as a missing work-order register when the permit document
+    answers it.
+    """
+    strict = _terms_for("WorkOrder", "Work Order", include_head_words=False)
+    loose = _terms_for("WorkOrder", "Work Order")
+    assert "work" not in strict
+    assert "work" in loose
+
+
+def test_a_generic_head_word_no_longer_triggers_a_decline():
+    import orchestrator.services.record_registry as rr
+
+    assert rr.absent_record_class("What is the procedure for hot works?", _held("Permit")) is None
+
+
+def test_a_full_class_name_still_names_an_absent_system():
+    import orchestrator.services.record_registry as rr
+
+    assert rr.absent_record_class("Show me the work order backlog", _held("Permit")) == "WorkOrder"

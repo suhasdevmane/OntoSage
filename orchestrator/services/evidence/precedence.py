@@ -43,7 +43,21 @@ logger = get_logger(__name__)
 
 #: Tier ranks. Higher wins. Values are spaced so a building may declare an intermediate tier in
 #: config without renumbering these.
-RANK: Dict[str, int] = {"authoritative": 30, "measurement": 20, "inference": 10, "unknown": 0}
+#:
+#: ``document_derived`` sits between authority and measurement, and the gap on each side is
+#: the point (V7-T19). A register LIFTED from a document beats a sensor reading for a
+#: records question — a transcribed permit log still knows what a CO2 sensor cannot — but
+#: it loses to authored TTL, because a document is a statement ABOUT a system of record and
+#: not the record itself. Without the lower rank a stale Markdown table silently outranks a
+#: live register, which is exactly what BUG-194 was: a GUI policy edit shadowed by an old
+#: copy, with the file right, the API wrong, and the editor reporting success.
+RANK: Dict[str, int] = {
+    "authoritative": 30,
+    "document_derived": 25,
+    "measurement": 20,
+    "inference": 10,
+    "unknown": 0,
+}
 
 #: Fallback mapping from an EvidenceSource.kind to a tier, used when the policy declares none.
 #: Deliberately conservative: an unrecognised kind is `unknown`, which can never outrank
@@ -57,6 +71,11 @@ _DEFAULT_KIND_TIER: Dict[str, str] = {
     "alarm": "authoritative",
     "sensor": "measurement",
     "document": "authoritative",  # a policy document IS the system of record for a policy
+    # ...but a REGISTER lifted out of a document is a transcription of one, and the two
+    # must not rank alike. The policy document says what the policy is; the lifted permit
+    # row says what someone wrote down about the permit register, and the register can
+    # have moved on since.
+    "document_derived": "document_derived",
     "human_report": "inference",  # a person's account is evidence, not a measurement
 }
 
