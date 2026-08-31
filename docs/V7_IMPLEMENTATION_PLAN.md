@@ -205,6 +205,39 @@ and like periods* — which is a real constraint that nothing checks today.
 
 ---
 
+## What probing the live building turned up
+
+The readiness table is a prediction. Probing bldg1 to check it found three things the
+analysis could not have.
+
+**A live cross-role privacy leak (BUG-368, fixed).** An occupant asked for a room-level
+temperature and was correctly refused above the k-anonymity floor. A facility manager then
+asked the same words and was served the occupant's *refusal*. With the order reversed, the
+occupant received the facility manager's room-level reading verbatim — the exact figure the
+PDP had denied them minutes earlier. `resp_cache` keyed on building and question hash and
+nothing else, so the first requester's privilege became everyone's until the TTL expired.
+The PDP was right the whole time; it was skipped, because the cache answered first.
+
+**No test could have caught it, and that is the more important half.** Every PROTECT trap
+runs as a *single user*, so nothing in the suite ever put two roles behind one question —
+and a certified "0.0% leak" was measured straight through that blind spot. A privacy
+property is a statement about the *difference* between what two people see, and a one-user
+harness cannot observe a difference. V7-T44 makes every trap run as two roles in both
+orders.
+
+**A refusal whose own remedy times out.** The k-floor refusal helpfully suggests *"ask the
+floor average instead of one room"*. The floor average then exceeds the 150 s budget. A
+refusal that hands the user an impossible remedy costs them a second wait to learn the same
+nothing, and makes a correct privacy decision look like a broken system (V7-T39).
+
+**And my own mid-run rebuild invalidated the first probe.** Deploying the cache fix while
+111 questions were replaying produced 27 transport errors and 32 no-response rows. The
+harness quarantined them, as it was built to after CAVEAT-173 — the run was discarded and
+re-run on a stable stack rather than reported. Kept as
+`scripts/outputs/replay/v7probe_INVALID_container_restart.csv` so the discard is auditable.
+
+---
+
 ## The phases
 
 | phase | tasks | what |

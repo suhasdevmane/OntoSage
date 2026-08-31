@@ -726,7 +726,61 @@ TASKS: List[Dict[str, str]] = [
         acceptance_criteria="Both report DATA in the readiness probe.",
         verify="python scripts/source_system_readiness.py",
     ),
+    dict(
+        turn="V7-T39",
+        phase="P4-SourceOnboarding",
+        effort="M",
+        depends_on="V7-T24",
+        questions_unblocked="",
+        title="The refusal's own suggested remedy times out",
+        objective="Make the coarse, aggregated form that a k-floor refusal recommends actually "
+        "complete inside the request budget.",
+        why="Measured live 2026-08-31. A single-room reading is refused above the k-floor with "
+        "'ask the same thing across at least 14 sensors / 7 spaces — e.g. the floor average "
+        "instead of one room'. Asking for the floor average then exceeds the 150 s timeout. "
+        "A refusal that hands the user an impossible remedy is worse than one that stops at "
+        "'no': it costs them a second wait to learn the same nothing, and it makes a correct "
+        "privacy decision look like a broken system.",
+        alternatives_rejected="Softening the k-floor so the single-room question answers — the "
+        "floor is the privacy guarantee, and the fault is in the cost of "
+        "the compliant path, not in the policy. Removing the suggestion — "
+        "it is the most useful sentence in the refusal when it works.",
+        key_steps="Depends on the SQL-side aggregation in V7-T24; then assert every remedy the "
+        "refusal offers is itself answerable within budget.",
+        files="orchestrator/agents/sql_agent.py; orchestrator/services/privacy/enforcement.py",
+        acceptance_criteria="For each refusal template, the remedy it names answers within the "
+        "budget; a remedy that cannot is not offered.",
+        verify="Probe the refusal, then probe its own suggestion, and time both.",
+    ),
     # ============ P5 — measure it, and prove nothing was lost ======================
+    dict(
+        turn="V7-T44",
+        phase="P5-Measurement",
+        effort="M",
+        depends_on="",
+        questions_unblocked="",
+        title="Every privacy trap must run as at least two roles, in both orders",
+        objective="Re-run the PROTECT trap bank with two roles per trap, asking the same "
+        "question in both orders, and treat a cross-role difference as the assertion.",
+        why="BUG-368 was a live cross-role disclosure — an occupant served a facility manager's "
+        "room-level reading — and no test could have caught it, because every PROTECT trap "
+        "runs as a SINGLE user. A certified '0.0% leak' was measured through that blind "
+        "spot. A privacy property is about the DIFFERENCE between what two people see, and "
+        "a one-user harness cannot observe a difference.",
+        alternatives_rejected="Adding more single-user traps — more of them cannot see across "
+        "users, which is where the whole class of defect lives. Auditing "
+        "the code instead — the defect was a missing key component, "
+        "invisible to review and obvious in one paired probe.",
+        building_agnostic_how="Roles come from the building's own policy TTL, so a building that "
+        "declares different roles is tested against those.",
+        key_steps="Two fixture accounts per applicable role; run each trap in both orders; "
+        "assert the lower-privilege answer is never a superset of its own solo answer.",
+        files="scripts/certify_building.py; scripts/grade_privacy_traps.py",
+        acceptance_criteria="Every trap runs at two privilege levels in both orders; the leak "
+        "rate is reported per ordered pair, not per question.",
+        verify="Re-run certification; confirm BUG-368's exact sequence is now a failing trap "
+        "before the fix and a passing one after.",
+    ),
     dict(
         turn="V7-T40",
         phase="P5-Measurement",
