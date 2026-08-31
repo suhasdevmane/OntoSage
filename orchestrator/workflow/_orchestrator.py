@@ -4280,6 +4280,10 @@ SELECT ?l WHERE {
                         # returns prose with no statement of what supports it, voiding the
                         # T02 guarantee for every repeated question.
                         metadata={"evidence_record": results.get("evidence_record")},
+                        # Store into the asker's OWN partition, so an answer produced under
+                        # one privilege can never be read back under another.
+                        user_id=state.user_id,
+                        role=state.intermediate_results.get("user_role") or "",
                     )
             except Exception as _cache_err:
                 logger.debug(f"Response cache store skipped: {_cache_err}")
@@ -7306,6 +7310,10 @@ SELECT ?l WHERE {
                     question=user_query,
                     building_id=state.building_id,
                     user_id=state.user_id,
+                    # The cache is partitioned by who is asking. Without the role an
+                    # occupant was served a facility manager's room-level reading — the
+                    # exact figure the PDP had refused them moments earlier.
+                    role=state.intermediate_results.get("user_role") or "",
                 )
                 if cached:
                     logger.info(
