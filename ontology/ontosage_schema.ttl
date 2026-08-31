@@ -1816,7 +1816,7 @@ ontosage:conditionGrade a owl:DatatypeProperty ;
 ontosage:remainingLifeYears a owl:DatatypeProperty ;
     rdfs:domain ontosage:ConditionSurvey ; rdfs:range xsd:decimal ;
     rdfs:label "remaining life (years)"@en ;
-    rdfs:comment "Expected remaining life at the survey date. An ESTIMATE by the surveyor, so an answer using it is calculated, never observed."@en .
+    rdfs:comment "Expected remaining life at the survey date, in years. An ESTIMATE by the surveyor, so an answer using it is calculated, never observed. ZERO OR LESS means the asset is at or beyond its expected life: a question about assets beyond expected life must use <= 0, not = 0, or an asset already past its life is left out of its own answer."@en .
 
 ontosage:appliesToArea a owl:ObjectProperty ;
     rdfs:domain ontosage:CompetencyRecord ; rdfs:range brick:Location ;
