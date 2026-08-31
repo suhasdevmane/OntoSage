@@ -31,6 +31,26 @@ from typing import List
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = REPO / "input" / "documents"
 
+#: The building these records belong to. Set from --building-name / --authority, because a
+#: register names its own building and its own owning organisation: the SHAPE of a record
+#: document is shared across buildings, the CONTENT never is. Hard-coding them here made
+#: this generator usable for exactly one building, which is the opposite of the point the
+#: Record Document standard exists to make.
+BUILDING = "Abacws Building"
+AUTHORITY = "Cardiff University Estates"
+
+#: Bookable spaces, in the naming convention THIS building uses. One writes "Room 5.15",
+#: another writes "RM001A" — a room label is content, and an availability answer that
+#: names a room the building does not have is worse than no answer at all.
+ROOMS = [
+    "Room 5.15 — Seminar / Conference Room",
+    "Room 5.16 — Seminar / Conference Room",
+    "Room 5.17 — Meeting Room",
+    "Room 5.18 — Meeting Room",
+    "Room 5.01 — Research Laboratory",
+    "Room 5.04 — Research Laboratory",
+]
+
 #: Fixed so a regeneration produces the same document, and so "expires in six months" is
 #: a stable question rather than one whose answer drifts with the wall clock.
 ANCHOR = date(2026, 8, 31)
@@ -138,7 +158,7 @@ def contracts() -> str:
         [
             "CON-2024-027",
             "Waste collection and recycling",
-            "Cardiff Waste Partners",
+            "Regional Waste Partners",
             d(-430),
             d(28),
             "Active",
@@ -158,13 +178,13 @@ def contracts() -> str:
         front(
             "contract",
             "Estates Contracts Manager",
-            "Cardiff University Estates",
+            AUTHORITY,
             "Contract Register",
             "3.2",
             "Contract register",
             "contracts",
         )
-        + "# Contract Register — Abacws Building\n\n"
+        + f"# Contract Register — {BUILDING}\n\n"
         + BANNER
         + "\n## Scope\n\nService, maintenance and supply agreements covering the building. A contract is "
         "bought;\na warranty accompanies an asset. Where the two disagree about who is liable for a "
@@ -227,13 +247,13 @@ def warranties() -> str:
         front(
             "warranty",
             "Estates Asset Information",
-            "Cardiff University Estates",
+            AUTHORITY,
             "Warranty Register",
             "2.4",
             "Warranty register",
             "warranties",
         )
-        + "# Warranty Register — Abacws Building\n\n"
+        + f"# Warranty Register — {BUILDING}\n\n"
         + BANNER
         + "\n## Why this matters to a work order\n\nWhether a repair is chargeable depends on whether "
         "the asset is in warranty. WTY-GEN-2023\nis recorded **void**: the generator was serviced "
@@ -318,13 +338,13 @@ def handover() -> str:
         front(
             "handover",
             "Estates Asset Information",
-            "Cardiff University Estates",
+            AUTHORITY,
             "Handover and O&M Register",
             "1.8",
             "Handover register",
             "handover",
         )
-        + "# Project Handover and O&M Register — Abacws Building\n\n"
+        + f"# Project Handover and O&M Register — {BUILDING}\n\n"
         + BANNER
         + "\n## What a handover record is for\n\nA claim that a system is *commissioned* must rest on a "
         "record, not on a flag somebody\nset. Three assets below are marked **outstanding**: no "
@@ -348,7 +368,7 @@ def tariffs() -> str:
             "GBP",
             d(-243),
             d(122),
-            "Cardiff University Energy Framework",
+            f"{AUTHORITY} energy framework",
         ],
         [
             "TAR-GAS-2026",
@@ -358,7 +378,7 @@ def tariffs() -> str:
             "GBP",
             d(-243),
             d(122),
-            "Cardiff University Energy Framework",
+            f"{AUTHORITY} energy framework",
         ],
         [
             "TAR-WATER-2026",
@@ -378,20 +398,20 @@ def tariffs() -> str:
             "GBP",
             d(-608),
             d(-244),
-            "Cardiff University Energy Framework",
+            f"{AUTHORITY} energy framework",
         ],
     ]
     return (
         front(
             "tariff",
             "Energy and Sustainability Manager",
-            "Cardiff University Estates",
+            AUTHORITY,
             "Energy Tariff Register",
             "2026.1",
             "Tariff register",
             "tariffs",
         )
-        + "# Energy Tariff Register — Abacws Building\n\n"
+        + f"# Energy Tariff Register — {BUILDING}\n\n"
         + BANNER
         + "\n## How cost is computed\n\nA cost answer is metered consumption multiplied by the unit rate "
         "**of the tariff in force\nfor that period**, plus the standing charge for the days covered. "
@@ -499,13 +519,13 @@ def condition_survey() -> str:
         front(
             "condition_survey",
             "Estates Asset Information",
-            "Cardiff University Estates",
+            AUTHORITY,
             "Condition Survey",
             "2026.1",
             "Condition survey",
             "surveys",
         )
-        + "# Asset Condition Survey — Abacws Building\n\n"
+        + f"# Asset Condition Survey — {BUILDING}\n\n"
         + BANNER
         + "\n## Grades\n\n**A** as new · **B** satisfactory · **C** poor · **D** end of life. Remaining "
         "life is the\nsurveyor's ESTIMATE at the survey date, so any answer using it is a calculation "
@@ -592,13 +612,13 @@ def competency() -> str:
         front(
             "competency",
             "Estates Compliance Team",
-            "Cardiff University Estates",
+            AUTHORITY,
             "Competency Requirements",
             "1.5",
             "Competency requirements",
             "competencies",
         )
-        + "# Competency and Authorisation Requirements — Abacws Building\n\n"
+        + f"# Competency and Authorisation Requirements — {BUILDING}\n\n"
         + BANNER
         + "\n## What this register does and does not hold\n\nIt records what a restricted area "
         "**requires**. It deliberately does not record who holds\nwhat: a question about an "
@@ -683,13 +703,13 @@ def risk_assessments() -> str:
         front(
             "risk_assessment",
             "Health and Safety Officer",
-            "Cardiff University Estates",
+            AUTHORITY,
             "Risk Assessment Register",
             "2026.2",
             "Risk assessment register",
             "risks",
         )
-        + "# Risk Assessment Register — Abacws Building\n\n"
+        + f"# Risk Assessment Register — {BUILDING}\n\n"
         + BANNER
         + "\n## Review\n\nAn assessment is **due** within 30 days of its review date and **overdue** "
         "after it. Status\nis recorded by the owner and is not inferred from the date alone — an "
@@ -715,14 +735,7 @@ def bookings() -> str:
     authorised case. An availability question does not need a name, so the record does not
     carry one — the mapping's `booked_by_role` is the whole point.
     """
-    rooms = [
-        "Room 5.15 — Seminar / Conference Room",
-        "Room 5.16 — Seminar / Conference Room",
-        "Room 5.17 — Meeting Room",
-        "Room 5.18 — Meeting Room",
-        "Room 5.01 — Research Laboratory",
-        "Room 5.04 — Research Laboratory",
-    ]
+    rooms = ROOMS
     roles = [
         "Research group (Smart Buildings)",
         "Graduate School",
@@ -754,13 +767,13 @@ def bookings() -> str:
         front(
             "booking",
             "Room Booking Team",
-            "Cardiff University Timetabling",
+            AUTHORITY,
             "Room Booking System",
             "2026.34",
             "Booking register",
             "bookings",
         )
-        + "# Room Booking Register — Abacws Building\n\n"
+        + f"# Room Booking Register — {BUILDING}\n\n"
         + BANNER
         + "\n## What this register decides\n\nThe booking register is the AUTHORITATIVE source for "
         "whether a room is available. A room\nwith nobody in it is not an available room, and an "
@@ -851,13 +864,13 @@ def sustainability_targets() -> str:
         front(
             "sustainability_target",
             "Energy and Sustainability Manager",
-            "Cardiff University Estates",
+            AUTHORITY,
             "Environmental Strategy Register",
             "2026.1",
             "Target register",
             "targets",
         )
-        + "# Sustainability Target Register — Abacws Building\n\n"
+        + f"# Sustainability Target Register — {BUILDING}\n\n"
         + BANNER
         + "\n## How a target is read\n\nA target is a REDUCTION against a stated baseline by a stated "
         "date, set by a named\nauthority. Progress against one is a calculation over metered "
@@ -901,7 +914,21 @@ DOCUMENTS = {
 def main(argv: List[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", default=str(DEFAULT_OUT))
+    ap.add_argument("--building-name", default="", help="the building these records belong to")
+    ap.add_argument("--authority", default="", help="the organisation that owns them")
+    ap.add_argument(
+        "--rooms", default="", help="comma-separated bookable spaces, in this building's own naming"
+    )
     args = ap.parse_args(argv)
+
+    global BUILDING, AUTHORITY
+    if args.building_name:
+        BUILDING = args.building_name
+    if args.authority:
+        AUTHORITY = args.authority
+    if args.rooms:
+        global ROOMS
+        ROOMS = [r.strip() for r in args.rooms.split(",") if r.strip()]
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
