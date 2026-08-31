@@ -423,13 +423,21 @@ TASKS: List[Dict[str, str]] = [
         title="The document lane answers the question instead of pasting the passage",
         objective="Make the document lane compose an answer from the retrieved passage, "
         "attributed and bounded, rather than returning the passage.",
-        why="CAVEAT-364, open. A pasted passage forces the reader to do the retrieval's last "
-        "step and frequently does not contain the answer at all. It is also why the lane "
-        "looks like it is working when it is not.",
+        why="MEASURED on the 111-question stakeholder probe, and far larger than CAVEAT-364 "
+        "recorded: 38 of the 56 answers graded 'answered-with-data' (68%) are this lane "
+        "pasting a passage, and reading them, they frequently do not address the question at "
+        "all. 'Which plant can be installed, commissioned and replaced through a credible "
+        "route' returned the ASBESTOS REGISTER. 'Which valves have accumulated questionable "
+        "behaviour' returned the helpdesk phone number. 'Which cleaning defects keep "
+        "recurring' returned the cleaning SCHEDULE. Fifteen stakeholder roles have their "
+        "ENTIRE answered score made of such pastes. This is the single largest contributor to "
+        "the apparent coverage figure and it is not coverage.",
         alternatives_rejected="Raising the retrieval threshold — it reduces wrong passages "
-        "without making a right passage into an answer.",
-        key_steps="Compose with the passage as evidence; keep the honesty floor; cite the "
-        "document and its effective date.",
+        "without making a right passage into an answer, and the failure "
+        "here is relevance, not confidence. Leaving it to V7-T18 — lifting "
+        "registers removes the aggregate questions but not the prose ones.",
+        key_steps="Require the passage to ANSWER, not merely to match: compose from it and "
+        "decline when it contains no answer. Cite the document and its effective date.",
         files="orchestrator/agents/capability_agent.py",
         acceptance_criteria="A document-answered question reads as an answer and cites the "
         "document and date.",
@@ -754,34 +762,6 @@ TASKS: List[Dict[str, str]] = [
     ),
     # ============ P5 — measure it, and prove nothing was lost ======================
     dict(
-        turn="V7-T44",
-        phase="P5-Measurement",
-        effort="M",
-        depends_on="",
-        questions_unblocked="",
-        title="Every privacy trap must run as at least two roles, in both orders",
-        objective="Re-run the PROTECT trap bank with two roles per trap, asking the same "
-        "question in both orders, and treat a cross-role difference as the assertion.",
-        why="BUG-368 was a live cross-role disclosure — an occupant served a facility manager's "
-        "room-level reading — and no test could have caught it, because every PROTECT trap "
-        "runs as a SINGLE user. A certified '0.0% leak' was measured through that blind "
-        "spot. A privacy property is about the DIFFERENCE between what two people see, and "
-        "a one-user harness cannot observe a difference.",
-        alternatives_rejected="Adding more single-user traps — more of them cannot see across "
-        "users, which is where the whole class of defect lives. Auditing "
-        "the code instead — the defect was a missing key component, "
-        "invisible to review and obvious in one paired probe.",
-        building_agnostic_how="Roles come from the building's own policy TTL, so a building that "
-        "declares different roles is tested against those.",
-        key_steps="Two fixture accounts per applicable role; run each trap in both orders; "
-        "assert the lower-privilege answer is never a superset of its own solo answer.",
-        files="scripts/certify_building.py; scripts/grade_privacy_traps.py",
-        acceptance_criteria="Every trap runs at two privilege levels in both orders; the leak "
-        "rate is reported per ordered pair, not per question.",
-        verify="Re-run certification; confirm BUG-368's exact sequence is now a failing trap "
-        "before the fix and a passing one after.",
-    ),
-    dict(
         turn="V7-T40",
         phase="P5-Measurement",
         effort="M",
@@ -866,6 +846,60 @@ TASKS: List[Dict[str, str]] = [
         acceptance_criteria="bldg2 reports its own readiness and answers its own questions with "
         "zero code diff.",
         verify="git diff --stat must be empty for orchestrator/ and shared/ across the run.",
+    ),
+    dict(
+        turn="V7-T44",
+        phase="P5-Measurement",
+        effort="M",
+        depends_on="",
+        questions_unblocked="",
+        title="Every privacy trap must run as at least two roles, in both orders",
+        objective="Re-run the PROTECT trap bank with two roles per trap, asking the same "
+        "question in both orders, and treat a cross-role difference as the assertion.",
+        why="BUG-368 was a live cross-role disclosure — an occupant served a facility manager's "
+        "room-level reading — and no test could have caught it, because every PROTECT trap "
+        "runs as a SINGLE user. A certified '0.0% leak' was measured through that blind "
+        "spot. A privacy property is about the DIFFERENCE between what two people see, and "
+        "a one-user harness cannot observe a difference.",
+        alternatives_rejected="Adding more single-user traps — more of them cannot see across "
+        "users, which is where the whole class of defect lives. Auditing "
+        "the code instead — the defect was a missing key component, "
+        "invisible to review and obvious in one paired probe.",
+        building_agnostic_how="Roles come from the building's own policy TTL, so a building that "
+        "declares different roles is tested against those.",
+        key_steps="Two fixture accounts per applicable role; run each trap in both orders; "
+        "assert the lower-privilege answer is never a superset of its own solo answer.",
+        files="scripts/certify_building.py; scripts/grade_privacy_traps.py",
+        acceptance_criteria="Every trap runs at two privilege levels in both orders; the leak "
+        "rate is reported per ordered pair, not per question.",
+        verify="Re-run certification; confirm BUG-368's exact sequence is now a failing trap "
+        "before the fix and a passing one after.",
+    ),
+    dict(
+        turn="V7-T45",
+        phase="P5-Measurement",
+        effort="M",
+        depends_on="",
+        questions_unblocked="",
+        title="Separate a computed answer from a quoted passage before any coverage number is reported",
+        objective="Split the replay grader's single 'answered-with-data' outcome into "
+        "computed-answer, document-quoted and refusal, and judge whether the response "
+        "addresses the question rather than whether it has the shape of an answer.",
+        why="MEASURED: on the 111-question probe the grader reported 55.4% data-backed, and 38 of "
+        "those 56 answers were pasted passages — several of which answered a different "
+        "question entirely. The honest figure is 17.8% computed. Every V7 coverage number "
+        "taken from this grader would be unusable, and this is the same weak-heuristic class "
+        "as BUG-191, where 'any digit means it answered' turned refusals into a spurious "
+        "39/39.",
+        alternatives_rejected="Grading a quote as a failure — for a genuinely prose question a "
+        "quote with its source IS the right answer. The defect is summing "
+        "it with computed answers into one figure, not the quoting.",
+        key_steps="Three outcomes, reported separately; relevance judged against the question, "
+        "not the response shape; re-score the existing captures before comparing anything.",
+        files="scripts/corpus_replay.py; scripts/l7_grader.py",
+        acceptance_criteria="A pasted passage that does not address the question is never "
+        "counted as a computed answer; the scorecard reports all three.",
+        verify="Re-score v7probe2.csv and reproduce the 18 / 38 / 38 split by hand on a sample.",
     ),
 ]
 

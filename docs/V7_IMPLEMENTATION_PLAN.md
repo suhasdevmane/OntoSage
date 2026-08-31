@@ -205,6 +205,51 @@ and like periods* — which is a real constraint that nothing checks today.
 
 ---
 
+## Measured: 111 questions, three per stakeholder role
+
+A stratified probe of the live building, three questions from each of the 37 roles. Of
+111, **10 were quarantined** (the LLM circuit breaker opened) — they are excluded, and all
+ten graded no-response, so nothing is hidden by excluding them. **101 gradeable.**
+
+The harness reported **55.4% answered-with-data**. That number is wrong, and the way it is
+wrong matters more than the number.
+
+**38 of those 56 "answers" (68%) are the document lane pasting a passage** — and reading
+them, they frequently answer a different question:
+
+| the question asked | what came back |
+|---|---|
+| which plant can be installed, commissioned and replaced through a credible route | the **asbestos register** |
+| which valves have accumulated questionable behaviour | the **helpdesk phone number** |
+| which cleaning defects keep recurring | the cleaning **schedule** |
+| how do alarm zone, device address and room number map to one another | the **evacuation procedure** |
+
+**Fifteen roles have their entire "answered" score made of such pastes**, including
+BMS-HVAC operators (3/3), Insurers (3/3) and Mechanical and electrical engineers (2/2).
+
+So the honest split of the 101:
+
+| outcome | n | share |
+|---|---:|---:|
+| **computed answer** | 18 | **17.8%** |
+| passage pasted, counted as an answer today | 38 | 37.6% |
+| honest refusal | 38 | 37.6% |
+| wrong | 2 | 2.0% |
+| no response (BUG-355) | 5 | 5.0% |
+
+Two defects, both P1, both logged: **BUG-369** — the lane answers with a topically adjacent
+passage rather than one that addresses the question, which is BUG-218 at full scale and far
+larger than CAVEAT-364 recorded. **BUG-370** — the grader tests the *shape* of a response,
+not whether it responds, the same weak heuristic as BUG-191. V7-T45 fixes the grader
+first, because every coverage figure depends on it.
+
+**This also rescues the readiness model.** Compared naively, questions capped by an ABSENT
+system "answered" at 56%, nearly as often as all-DATA questions at 59% — which would have
+falsified the whole demand/supply analysis. They did not answer; they were pasted at.
+Removing pastes, the ceiling behaves as a ceiling should.
+
+---
+
 ## What probing the live building turned up
 
 The readiness table is a prediction. Probing bldg1 to check it found three things the
