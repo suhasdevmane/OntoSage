@@ -13,15 +13,18 @@ the sample reproducible across runs.
 
 GRADING RUBRIC
 --------------
-The LLM judge assigns one of four grades:
-  answered-with-data       System returned a grounded, data-driven answer.
+The judge assigns one of five grades:
+  answered-with-data       System COMPUTED an answer from the building's own data.
+  document-quoted          System handed back a document passage instead (BUG-370).
   honest-capability-answer System truthfully acknowledged it can't answer yet
                            and explained why (e.g. 'requires_extension' case).
   deflected                Scope redirect or refusal with no useful explanation.
   wrong                    Factually incorrect, traceback, or empty/timeout.
 
-Both answered-with-data and honest-capability-answer count as PASS for the
-paper metric.  deflected and wrong count as FAIL.
+COVERAGE IS `answered-with-data` ALONE.  A quote is a truthful, sourced response and
+counts as a PASS, but it computed nothing, and summing the two reported 55.4% coverage
+on a probe whose real computed rate was 17.8% — 38 of 56 "answers" were passages, several
+of them answering a different question.  Quote the split, never the total.
 
 RESUMABILITY
 ------------
@@ -151,8 +154,17 @@ _DECLINE_STRINGS = [
     "only help with",
 ]
 
+#: How the document/capability lane opens a response that is a retrieved passage rather
+#: than a computed answer. Matched at the START of the response, so a computed answer
+#: that happens to cite a document later is unaffected.
+_QUOTED_PASSAGE = re.compile(
+    r"^\s*(?:Here is what I found (?:in|for)\b|\*\*From:)",
+    re.IGNORECASE,
+)
+
 VALID_GRADES = {
     "answered-with-data",
+    "document-quoted",
     "honest-capability-answer",
     "deflected",
     "wrong",
@@ -162,12 +174,20 @@ VALID_GRADES = {
     "fabricated",
 }
 
+#: A quoted passage passes — it is a truthful, sourced response — but it is reported
+#: SEPARATELY from a computed answer, because the two are not the same capability and
+#: adding them together is what produced a 55.4% headline over an 17.8% reality.
 PASS_GRADES = {
     "answered-with-data",
+    "document-quoted",
     "honest-capability-answer",
     "answered-with-proof",
     "clarified-appropriately",
 }
+
+#: The grades that mean the system COMPUTED something from the building's own data.
+#: This, not PASS_GRADES, is the coverage figure to quote.
+COMPUTED_GRADES = {"answered-with-data", "answered-with-proof"}
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -293,12 +313,20 @@ def _stratified_sample(
 
 _JUDGE_SYSTEM_PROMPT = """\
 You are a strict evaluator for an intelligent building management assistant called OntoSage.
-Grade the system's answer to the user's question using exactly one of these four labels:
+Grade the system's answer to the user's question using exactly one of these five labels:
 
 answered-with-data
-  The system returned a grounded, data-driven answer using real sensor readings,
-  analytics, metadata, or ontology facts.  Numbers, specific values, or structured
-  information are present.  This is the best outcome.
+  The system COMPUTED an answer to THIS question from the building's own data — sensor
+  readings, analytics, metadata or ontology facts — and the answer addresses what was
+  asked.  This is the best outcome.
+
+document-quoted
+  The system handed back a passage from a document rather than computing an answer.
+  Typically opens "Here is what I found in ... documentation" or "**From: <document>**".
+  Use this label EVEN IF the passage contains numbers or tables, and even if it is
+  relevant — a quote is a truthful response but it is not a computed answer.
+  If the pasted passage does not address the question at all, still use this label;
+  the separation from answered-with-data is what matters here.
 
 honest-capability-answer
   The system truthfully acknowledged it cannot answer this question yet (e.g. sensor
@@ -315,7 +343,7 @@ wrong
   The response contains a traceback, internal server error, empty text, or clearly
   incorrect information that contradicts observable facts.
 
-Respond with EXACTLY one word from the four labels above.  No explanation, no punctuation.
+Respond with EXACTLY one word from the five labels above.  No explanation, no punctuation.
 """
 
 
@@ -364,6 +392,24 @@ def _heuristic_grade(question: str, answer: str) -> str:
     if any(h in low for h in _HARD_FAIL_STRINGS):
         return "wrong"
 
+    # A QUOTED PASSAGE IS NOT A COMPUTED ANSWER (BUG-370).
+    #
+    # The checks below test the SHAPE of a response — does it contain digits, does it
+    # mention a room — never whether it responds to the question. So the document lane
+    # handing back a passage scored identically to a calculation over live data, and on
+    # the 111-question stakeholder probe that turned 18 computed answers into a reported
+    # 56: "which valves have accumulated questionable behaviour" returned the helpdesk
+    # phone number and graded answered-with-data. Fifteen roles had their entire score
+    # made of such pastes.
+    #
+    # A quote is NOT a failure — for a genuinely prose question, a passage with its
+    # source is the right answer, so this is a third outcome rather than a demotion to
+    # deflected. What was wrong was summing it with computed answers into one coverage
+    # figure. This must be tested BEFORE the digit checks, because a pasted table is
+    # full of digits.
+    if _QUOTED_PASSAGE.match(answer.strip()):
+        return "document-quoted"
+
     # Honest capability answer: contains capability language + no data
     capability_phrases = [
         "not currently available",
@@ -392,6 +438,16 @@ def _heuristic_grade(question: str, answer: str) -> str:
         )
     )
 
+    # A COUNT OF RECORDS IS ALSO A COMPUTED ANSWER.
+    #
+    # The two tests above only recognise a SENSOR answer — a physical unit, or a number
+    # beside a sensing word. "3 permits are open in the basement" has neither, and graded
+    # `deflected`. That shape is exactly what every answer over a lifted register looks
+    # like (permits, contracts, bookings, assets beyond expected life), so V7's whole
+    # record-document programme would have measured as a regression while working.
+    # Decline strings are tested first, so "I can help with 3 things" is not caught here.
+    has_counted_records = bool(re.search(r"\b\d+\s+[a-z]{3,}", low))
+
     # Generic deflection
     if (
         any(s in low for s in _DECLINE_STRINGS)
@@ -403,7 +459,7 @@ def _heuristic_grade(question: str, answer: str) -> str:
     if has_capability_phrase and not has_numbers:
         return "honest-capability-answer"
 
-    if has_numbers or has_data_markers:
+    if has_numbers or has_data_markers or has_counted_records:
         return "answered-with-data"
 
     # Long structured answers without numbers are plausibly honest explanations
@@ -661,9 +717,11 @@ def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) 
 
     # NOTE-142 split: data-backed answers and honest declines are both acceptable
     # behaviour but not the same achievement — report them separately, always.
-    data_backed = sum(1 for r in rows if r.get("grade") == "answered-with-data")
+    data_backed = sum(1 for r in rows if r.get("grade") in COMPUTED_GRADES)
+    quoted = sum(1 for r in rows if r.get("grade") == "document-quoted")
     honest_decline = sum(1 for r in rows if r.get("grade") == "honest-capability-answer")
     db_rate = 100 * data_backed / total if total else 0
+    q_rate = 100 * quoted / total if total else 0
     hd_rate = 100 * honest_decline / total if total else 0
 
     # Per-level breakdown (with per-grade split)
@@ -674,7 +732,7 @@ def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) 
         entry["total"] += 1
         if r["pass"] == "True":
             entry["pass"] += 1
-        if r.get("grade") == "answered-with-data":
+        if r.get("grade") in COMPUTED_GRADES:
             entry["data"] += 1
         elif r.get("grade") == "honest-capability-answer":
             entry["honest"] += 1
@@ -698,13 +756,20 @@ def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) 
         f"| Metric | Value |",
         f"|--------|-------|",
         f"| Total questions | {total} |",
-        f"| **Data-backed answers** | **{data_backed} ({db_rate:.1f}%)** |",
+        f"| **Computed answers** | **{data_backed} ({db_rate:.1f}%)** |",
+        f"| **Document quotes** | **{quoted} ({q_rate:.1f}%)** |",
         f"| **Honest declines** | **{honest_decline} ({hd_rate:.1f}%)** |",
         f"| PASS (combined, legacy) | {passed} ({pass_rate:.1f}%) |",
         f"| FAIL (deflected + wrong) | {total - passed} ({100 - pass_rate:.1f}%) |",
         "",
-        "> **NOTE-142:** quote the two split rates as the headline, never the combined",
+        "> **NOTE-142:** quote the SPLIT rates as the headline, never the combined",
         "> PASS — a system that declines everything would score 100% combined.",
+        "",
+        "> **BUG-370:** *Computed answers* and *Document quotes* are reported separately",
+        "> and must never be added. A quote is a truthful, sourced response; it is not a",
+        "> calculation over the building's data. Summing them reported 55.4% coverage on",
+        "> a probe whose real computed rate was 17.8%, because 38 of 56 'answers' were",
+        "> passages — several of them answering a different question entirely.",
         "",
         "## Per-level rates",
         "",
@@ -732,7 +797,7 @@ def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) 
         entry["total"] += 1
         if r["pass"] == "True":
             entry["pass"] += 1
-        if r.get("grade") == "answered-with-data":
+        if r.get("grade") in COMPUTED_GRADES:
             entry["data"] += 1
         elif r.get("grade") == "honest-capability-answer":
             entry["honest"] += 1
@@ -759,7 +824,13 @@ def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) 
         "| Grade | Count |",
         "|-------|-------|",
     ]
-    for grade in ["answered-with-data", "honest-capability-answer", "deflected", "wrong"]:
+    for grade in [
+        "answered-with-data",
+        "document-quoted",
+        "honest-capability-answer",
+        "deflected",
+        "wrong",
+    ]:
         md_lines.append(f"| {grade} | {grade_counts.get(grade, 0)} |")
 
     md_lines += [
