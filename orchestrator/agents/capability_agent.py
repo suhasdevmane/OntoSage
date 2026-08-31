@@ -553,8 +553,13 @@ class CapabilityAgent:
         # actionable, and it is decidable — the ontology defines the class and the graph
         # holds no instances of it.
         try:
-            from orchestrator.services.record_registry import absent_record_class, record_classes
+            from orchestrator.services.record_registry import (
+                absent_record_class,
+                load_lay_terms,
+                record_classes,
+            )
 
+            await load_lay_terms()
             _absent = absent_record_class(state.user_message or "", await record_classes())
         except Exception as _rr_err:  # pragma: no cover - never block the lane on this
             logger.debug(f"[capability] record registry unavailable: {_rr_err}")

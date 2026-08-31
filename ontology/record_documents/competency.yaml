@@ -1,0 +1,37 @@
+# Competency and authorisation requirements -> ontosage:CompetencyRecord
+#
+# Attached to a ROLE and an area, deliberately never to a person. The catalogues ask what
+# a restricted area requires and forbid exposing who holds what, so the answerable form is
+# "this area requires these competencies" and no building TTL carries personal records.
+record_type: competency
+class: ontosage:CompetencyRecord
+iri_template: "competency/{reference}"
+label_column: reference
+
+columns:
+  reference:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  area:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  requirement:
+    predicate: ontosage:coveredScope
+    datatype: xsd:string
+    required: true
+  applies_to_role:
+    predicate: ontosage:appliesToRole
+    datatype: xsd:string
+    required: true
+  valid_for_months:
+    predicate: ontosage:note
+    datatype: xsd:string
+  authority:
+    predicate: ontosage:providerName
+    datatype: xsd:string
+  effective_from:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:date
+    required: true

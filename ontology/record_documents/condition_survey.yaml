@@ -1,0 +1,42 @@
+# Asset condition surveys -> ontosage:ConditionSurvey
+#
+# Brick models what an asset IS and where it sits; it has no vocabulary for how worn it
+# is. This is the clearest case in the corpus for extending OCBV rather than forcing
+# Brick to carry it.
+record_type: condition_survey
+class: ontosage:ConditionSurvey
+iri_template: "survey/{reference}"
+label_column: reference
+
+columns:
+  reference:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  asset:
+    predicate: ontosage:coveredScope
+    datatype: xsd:string
+    required: true
+  surveyed:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:date
+    required: true
+  grade:
+    predicate: ontosage:conditionGrade
+    datatype: xsd:string
+    required: true
+    values:
+      A: ["A", "A ", "Good", "As new"]
+      B: ["B", "Satisfactory", "Fair"]
+      C: ["C", "Poor"]
+      D: ["D", "End of life", "Life expired"]
+  remaining_life_years:
+    predicate: ontosage:remainingLifeYears
+    datatype: xsd:decimal
+    required: true
+  surveyor:
+    predicate: ontosage:providerName
+    datatype: xsd:string
+  note:
+    predicate: ontosage:note
+    datatype: xsd:string

@@ -272,6 +272,22 @@ Your Answer:"""
             Dict with 'query', 'explanation', 'context'
         """
         try:
+            # A register is small and completely enumerable, so it is fetched WHOLE
+            # rather than queried (V7-T18). Generated SPARQL over these was wrong in a
+            # different way on every run: "is the standby generator under warranty?"
+            # answered "expired" when the record says VOID, then on the next attempt said
+            # no warranty covers it at all — the record is right there. "Which contracts
+            # expire in the next six months?" counted six including two that lapsed
+            # months ago, then one. A date filter and a status filter are exactly what a
+            # language model is least reliable at, and a confidently wrong register
+            # answer is worse than no answer.
+            #
+            # Bounded by MAX_RECORD_ROWS: this is only correct while a register is small
+            # enough to hand over whole, and a bigger one must fall back to querying.
+            deterministic = await self._whole_register(user_query)
+            if deterministic is not None:
+                return deterministic
+
             # Attempt deterministic template first (avoids LLM latency for common patterns)
             context = await self._retrieve_context(user_query)
 
@@ -538,6 +554,111 @@ Your Answer:"""
         except Exception as e:
             logger.error(f"SPARQL generation error: {e}", exc_info=True)
             return {"success": False, "error": str(e), "query": None, "results": None}
+
+    #: A register above this size is no longer safely enumerable in one answer, and the
+    #: LLM path takes over. Chosen so bldg1's largest (15 permits) fits several times
+    #: over; a building with thousands of bookings will fall back, which is correct.
+    MAX_RECORD_ROWS = 120
+
+    @staticmethod
+    def _pivot_by_subject(bindings: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], List[str]]:
+        """Turn ?record/?p/?v triples into one binding row per record.
+
+        Returns a SPARQL-shaped result so everything downstream — standardisation,
+        formatting, the evidence record — treats it like any other query result.
+        """
+        rows: Dict[str, Dict[str, Any]] = {}
+        columns: List[str] = ["record"]
+        for binding in bindings:
+            subject = (binding.get("record") or {}).get("value", "")
+            predicate = (binding.get("p") or {}).get("value", "")
+            value = (binding.get("v") or {}).get("value", "")
+            if not subject or not predicate:
+                continue
+            column = predicate.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+            row = rows.setdefault(subject, {"record": {"type": "uri", "value": subject}})
+            if column in row:  # a repeated predicate keeps both, comma-joined
+                row[column]["value"] = f"{row[column]['value']}, {value}"
+            else:
+                row[column] = {"type": "literal", "value": value}
+                if column not in columns:
+                    columns.append(column)
+        ordered = list(rows.values())
+        for row in ordered:  # every row carries every column, so a gap reads as a gap
+            for column in columns:
+                row.setdefault(column, {"type": "literal", "value": ""})
+        return {"head": {"vars": columns}, "results": {"bindings": ordered}}, columns
+
+    async def _whole_register(self, user_query: str) -> Optional[Dict[str, Any]]:
+        """Return an entire small register, deterministically, with no generated SPARQL.
+
+        Returns None when the question is not about a held record class, or when the
+        register is too large to hand over whole — in both cases the normal path runs.
+        """
+        try:
+            from orchestrator.services.record_registry import held_record_class, record_classes
+
+            record = held_record_class(user_query, await record_classes())
+        except Exception as exc:  # pragma: no cover - never block on this
+            logger.debug(f"[sparql] record registry unavailable: {exc}")
+            return None
+
+        if record is None or record.instances > self.MAX_RECORD_ROWS:
+            return None
+
+        query = (
+            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+            "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
+            "SELECT ?record ?p ?v WHERE {\n"
+            f"  ?record a ontosage:{record.local_name} ; ?p ?v .\n"
+            "  FILTER(?p != rdf:type)\n"
+            f"}} ORDER BY ?record LIMIT {self.MAX_RECORD_ROWS * 25}"
+        )
+        try:
+            raw = await self._execute_query(query)
+        except Exception as exc:
+            logger.warning(f"[sparql] whole-register fetch failed, falling back: {exc}")
+            return None
+        bindings = (raw or {}).get("results", {}).get("bindings", [])
+        if not bindings:
+            return None  # nothing to hand over — let the normal path try
+
+        # ONE ROW PER RECORD, not one row per triple.
+        #
+        # Handing back the flat triple list regressed a question that had been answering
+        # correctly: "how many permits are open?" became "none of them — all 15 are
+        # closed" when 3 are open. 15 permits times 16 predicates is 240 rows, and
+        # grouping those by subject to count a status is exactly the bookkeeping a
+        # language model is worst at. Pivoting costs nothing and removes the need.
+        results, columns = self._pivot_by_subject(bindings)
+
+        logger.info(
+            f"[sparql] whole-register fetch: {record.local_name} "
+            f"({record.instances} instances, {len(columns)} fields) — no SPARQL generated"
+        )
+        # Formatted by the SAME helpers as a generated query, so a register answer reads
+        # like every other answer and inherits whatever formatting the rest of the
+        # pipeline gains. Only the QUERY is deterministic here, never the wording.
+        guidance = (
+            f"{user_query}\n\n"
+            f"(These are all {record.instances} {record.label} records this building "
+            "holds. ontosage:recordStatus is the owner's RECORDED state — use it as "
+            "given and never re-derive it from the dates; 'void' is not 'expired'. "
+            "Answer only from these records.)"
+        )
+        return {
+            "success": True,
+            "query": query,
+            "results": results,
+            "error": None,
+            "formatted_response": await self._format_results(results, guidance, query, True),
+            "standardized": self._standardize_results(results, user_query, query),
+            "context": [],
+            "analytics_required": False,
+            "llm_reasoning": "Deterministic whole-register fetch (V7-T18)",
+            "method": "whole_register",
+        }
 
     async def _record_schema_context(self, query: str) -> List[str]:
         """Schema for a record class this building HOLDS, when the question names one.

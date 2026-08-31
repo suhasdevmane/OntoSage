@@ -1857,3 +1857,44 @@ ontosage:recordId a owl:DatatypeProperty ;
     rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;
     rdfs:label "record id"@en ;
     rdfs:comment "The identifier this record carries in its own system of record (PTW-2026-0412, a contract number, a survey reference). Quoted back in answers so a reader can find the original, and used as the stable IRI slot so re-ingesting a document updates a record rather than duplicating it."@en .
+
+####################################################################################################
+#  Module R.4 — Lay terms for the record classes
+#  ------------------------------------------------------------------------------------------------
+#  A class name is not the word a person uses. "Which assets are beyond their expected life?" is a
+#  condition-survey question and contains neither "condition" nor "survey"; measured live, it
+#  reached a generic equipment inventory instead. Deriving the vocabulary from the class name alone
+#  is not enough, and a synonym list in Python would be a building literal by another route.
+#
+#  So the ontology declares them, exactly as ontosage:Amenity and ontosage:KnowledgeTopic already
+#  do. A building that uses different words adds them here; the router reads whatever is declared
+#  and no code changes.
+####################################################################################################
+
+ontosage:Permit ontosage:layTerms "permit", "permits", "permit to work", "ptw", "hot works permit",
+    "roof access permit", "work authorisation", "isolation permit" .
+
+ontosage:Contract ontosage:layTerms "contract", "contracts", "agreement", "agreements",
+    "service agreement", "maintenance contract", "supplier", "framework" .
+
+ontosage:Warranty ontosage:layTerms "warranty", "warranties", "guarantee", "guarantees",
+    "under warranty", "in warranty", "defects liability" .
+
+ontosage:HandoverRecord ontosage:layTerms "handover", "handovers", "o&m manual", "o and m manual",
+    "operating manual", "as-built", "as built", "commissioning certificate", "project record" .
+
+ontosage:ConditionSurvey ontosage:layTerms "condition survey", "condition", "asset condition",
+    "expected life", "remaining life", "beyond life", "life expired", "end of life",
+    "replacement programme", "backlog", "dilapidation" .
+
+ontosage:CompetencyRecord ontosage:layTerms "competency", "competencies", "competence",
+    "training requirement", "induction", "authorisation", "authorised person", "qualification" .
+
+ontosage:RiskAssessment ontosage:layTerms "risk assessment", "risk assessments", "risk register",
+    "hazard assessment", "ra review", "assessment review" .
+
+ontosage:Tariff ontosage:layTerms "tariff", "tariffs", "unit rate", "standing charge",
+    "energy price", "energy cost", "cost per kwh", "utility rate" .
+
+ontosage:Booking ontosage:layTerms "booking", "bookings", "reservation", "reservations",
+    "room booking", "booked", "who has booked" .

@@ -1,0 +1,39 @@
+# Manufacturer / installer warranties -> ontosage:Warranty
+#
+# Kept separate from contract: a contract is bought, a warranty accompanies an asset.
+# They have different owners and routinely disagree, and the catalogues want that
+# disagreement REPORTED rather than resolved.
+record_type: warranty
+class: ontosage:Warranty
+iri_template: "warranty/{reference}"
+label_column: reference
+
+columns:
+  reference:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  asset:
+    predicate: ontosage:coveredScope
+    datatype: xsd:string
+    required: true
+  provider:
+    predicate: ontosage:providerName
+    datatype: xsd:string
+    required: true
+  start:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:date
+    required: true
+  end:
+    predicate: ontosage:effectiveTo
+    datatype: xsd:date
+    required: true
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active", "In warranty", "Current", "Valid"]
+      expired: ["Expired", "Out of warranty", "Lapsed"]
+      void: ["Void", "Voided", "Invalidated"]

@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import re
 import time
+from datetime import date
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
@@ -58,10 +59,22 @@ _RECORD_CLASSES = (
 _QUERY = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX o: <http://ontosage.org/capabilities#>
-SELECT ?cls (SAMPLE(?lbl) AS ?label) (COUNT(?i) AS ?n) WHERE {
+SELECT ?cls (SAMPLE(?lbl) AS ?label) (COUNT(DISTINCT ?i) AS ?n)
+       (GROUP_CONCAT(DISTINCT ?lay; SEPARATOR="|") AS ?lays) WHERE {
   VALUES ?cls { %s }
   ?i a ?cls .
   OPTIONAL { ?cls rdfs:label ?lbl }
+  OPTIONAL { ?cls o:layTerms ?lay }
+} GROUP BY ?cls
+"""
+
+#: Lay terms for classes the building does NOT hold, so an absent system can still be
+#: named. Read once from the TBox rather than from any building's data.
+_LAY_QUERY = """
+PREFIX o: <http://ontosage.org/capabilities#>
+SELECT ?cls (GROUP_CONCAT(DISTINCT ?lay; SEPARATOR="|") AS ?lays) WHERE {
+  VALUES ?cls { %s }
+  ?cls o:layTerms ?lay .
 } GROUP BY ?cls
 """
 
@@ -76,17 +89,25 @@ class RecordClass:
     terms: Tuple[str, ...]
 
 
-def _terms_for(local_name: str, label: str) -> Tuple[str, ...]:
+def _terms_for(local_name: str, label: str, lay: str = "") -> Tuple[str, ...]:
     """The words a question would use for this class.
 
-    Derived from the ontology's own label and class name — never a hand-written keyword
-    list, which would be a building literal by another route and would rot the moment a
-    class was added. "Permit to work" yields {permit to work, permit, permits}; the
-    plural matters because a counting question is almost always plural.
+    Three sources, all in the ontology and none in code: the class's declared
+    ``ontosage:layTerms``, its rdfs:label, and its class name. A hand-written synonym
+    list in Python would be a building literal by another route and would rot the moment
+    a class was added.
+
+    The lay terms matter more than they look. "Which assets are beyond their expected
+    life?" is a condition-survey question containing neither "condition" nor "survey",
+    and with only the class name to go on it reached a generic equipment inventory
+    instead. A building that uses different words declares them in its own TTL.
     """
-    seeds = {label.lower().strip(), re.sub(r"(?<!^)(?=[A-Z])", " ", local_name).lower()}
     words: set = set()
-    for seed in seeds:
+
+    # The class name and label are TITLES, so their head word is the thing itself:
+    # "Permit to work" -> permit, permits. Expanding those is what lets a plural
+    # counting question match at all.
+    for seed in (label.lower().strip(), re.sub(r"(?<!^)(?=[A-Z])", " ", local_name).lower()):
         seed = seed.strip()
         if not seed:
             continue
@@ -96,6 +117,18 @@ def _terms_for(local_name: str, label: str) -> Tuple[str, ...]:
         words.add(head + "s" if not head.endswith("s") else head)
         if head.endswith("y"):
             words.add(head[:-1] + "ies")
+
+    # Declared lay terms are ALREADY the words people use, so they are taken whole and
+    # never reduced to a head word. Reducing them was measured doing real damage: the
+    # permit term "roof access permit" contributed a bare "roof", and "what competency is
+    # required for the roof?" was then answered from the PERMIT register instead of the
+    # competency one. A head word of a phrase is a different concept, not a shorter name
+    # for the same one.
+    for term in (lay or "").split("|"):
+        term = term.strip().lower()
+        if term:
+            words.add(term)
+
     return tuple(sorted(w for w in words if len(w) > 3))
 
 
@@ -124,7 +157,8 @@ async def record_classes(namespace: str = "") -> List[RecordClass]:
                 continue
             local = cls.rsplit("#", 1)[-1]
             label = str(row.get("label") or "") or local
-            found.append(RecordClass(local, label, count, _terms_for(local, label)))
+            lays = str(row.get("lays") or "")
+            found.append(RecordClass(local, label, count, _terms_for(local, label, lays)))
     except Exception as exc:
         logger.debug(f"[record_registry] could not read record classes: {exc}")
         # An unreachable graph must not make every register question route as if the
@@ -149,12 +183,41 @@ def held_record_class(query: str, classes: List[RecordClass]) -> Optional[Record
     return None
 
 
-#: Human-readable names for every record class the ontology DEFINES, used to name what a
-#: building is missing. Derived from the class names themselves so adding a class to the
-#: TBox is all it takes — there is no second list to keep in step.
+#: Terms for every record class the ontology DEFINES, used to NAME what a building is
+#: missing. Seeded from the class names and enriched from the TBox's declared layTerms on
+#: first use, so adding a class to the ontology is all it takes.
 _ALL_CLASS_TERMS: Dict[str, Tuple[str, ...]] = {
     name: _terms_for(name, re.sub(r"(?<!^)(?=[A-Z])", " ", name)) for name in _RECORD_CLASSES
 }
+_LAY_LOADED = False
+
+
+async def load_lay_terms() -> None:
+    """Fold the TBox's declared lay terms into the absent-class vocabulary, once.
+
+    Without this an ABSENT class is matched only by its class name, so a building with no
+    condition survey could not name what it was missing when asked about "expected life".
+    """
+    global _LAY_LOADED
+    if _LAY_LOADED:
+        return
+    try:
+        from orchestrator.services.ontology_manager import run_sparql_select
+
+        values = " ".join(f"o:{c}" for c in _RECORD_CLASSES)
+        result = await run_sparql_select(_LAY_QUERY % values, limit=len(_RECORD_CLASSES) + 1)
+        if not result.get("ok"):
+            return
+        for row in result.get("rows") or []:
+            local = str(row.get("cls") or "").rsplit("#", 1)[-1]
+            if local not in _ALL_CLASS_TERMS:
+                continue
+            _ALL_CLASS_TERMS[local] = _terms_for(
+                local, re.sub(r"(?<!^)(?=[A-Z])", " ", local), str(row.get("lays") or "")
+            )
+        _LAY_LOADED = True
+    except Exception as exc:
+        logger.debug(f"[record_registry] lay terms unavailable: {exc}")
 
 
 def absent_record_class(query: str, held: List[RecordClass]) -> Optional[str]:
@@ -186,6 +249,11 @@ SELECT DISTINCT ?p (SAMPLE(?v) AS ?example) WHERE {
 } GROUP BY ?p
 """
 
+_STATUS_QUERY = """
+PREFIX o: <http://ontosage.org/capabilities#>
+SELECT DISTINCT ?s WHERE { ?i a o:%s ; o:recordStatus ?s }
+"""
+
 
 async def schema_hint(record: "RecordClass") -> str:
     """A SPARQL-generation hint for one record class, read from its own instances.
@@ -213,20 +281,51 @@ async def schema_hint(record: "RecordClass") -> str:
             lines.append(f"  ontosage:{predicate.rsplit('#', 1)[-1]}  e.g. {example!r}")
         if not lines:
             return ""
+
+        status_result = await run_sparql_select(_STATUS_QUERY % record.local_name, limit=20)
+        statuses = sorted(
+            {str(r.get("s") or "") for r in (status_result.get("rows") or []) if r.get("s")}
+        )
     except Exception as exc:
         logger.debug(f"[record_registry] schema hint unavailable: {exc}")
         return ""
 
+    # The status rule is not decoration. Measured on the first live run of the lifted
+    # registers, BOTH answers were wrong in the same way: "is the standby generator under
+    # warranty?" answered "expired" when the recorded status is VOID — cover withdrawn,
+    # so the repair is chargeable whatever the term says — and "which contracts expire in
+    # the next six months?" counted six including two that expired months ago. In each
+    # case the model re-derived the state from the dates instead of reading it. The
+    # catalogues forbid exactly that, and so do the registers themselves.
+    status_rule = ""
+    if statuses:
+        status_rule = (
+            "\nSTATUS IS READ, NEVER DERIVED. ontosage:recordStatus holds the owner's "
+            f"recorded state, and the values actually present are: {', '.join(statuses)}. "
+            "Filter on it. Do NOT infer status from effectiveFrom/effectiveTo — a record "
+            "past its end date that was never closed is an exception worth reporting, and "
+            "'void' is not 'expired'.\n"
+        )
+
+    today = date.today().isoformat()
     return (
         "=== RECORD CLASS HELD BY THIS BUILDING ===\n"
         "PREFIX ontosage: <http://ontosage.org/capabilities#>\n\n"
         f"This building holds {record.instances} instances of ontosage:{record.local_name} "
         f'("{record.label}"). Query them directly — they are ordinary triples.\n\n'
-        "Predicates present on those instances:\n" + "\n".join(sorted(lines)) + "\n\n"
-        f"Example: SELECT (COUNT(?r) AS ?n) WHERE {{ ?r a ontosage:{record.local_name} }}\n"
+        "Predicates present on those instances:\n"
+        + "\n".join(sorted(lines))
+        + "\n"
+        + status_rule
+        + f"\nToday is {today}. A window such as 'in the next six months' is BOUNDED AT "
+        f'BOTH ENDS — ?end >= "{today}"^^xsd:date AND ?end <= (six months later) — or '
+        "records that already lapsed are counted as though they were still to come.\n"
+        f"\nExample: SELECT (COUNT(?r) AS ?n) WHERE {{ ?r a ontosage:{record.local_name} }}\n"
     )
 
 
 def clear_cache() -> None:
     """Drop the cache — used by tests and after a re-ingest."""
+    global _LAY_LOADED
     _CACHE.clear()
+    _LAY_LOADED = False
