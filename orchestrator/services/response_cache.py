@@ -222,6 +222,35 @@ class ResponseCacheService:
     PREFIX_FUZZY = "resp_cache:fuzzy:"
     PREFIX_STATS = "resp_cache:stats"
 
+    #: Roles whose policies are scoped to the individual ("own" spaces), so two people
+    #: holding the SAME role can be owed different answers to the same words. "What is
+    #: the temperature in my office" is one question and two rooms.
+    _PER_USER_ROLES = frozenset({"occupant", "readonly", "guest", ""})
+
+    @classmethod
+    def _partition(cls, building_id: str, role: str, user_id: str) -> str:
+        """The cache partition a requester may read from and write to.
+
+        A cached answer is only reusable by someone the access policy would have given
+        the same answer to. The PDP decides on ROLE, so role is part of the key; and for
+        roles whose policies are scoped to a person's own spaces, on the PERSON too.
+
+        This was measured, not theorised. With role absent from the key an occupant asked
+        a room-level temperature question and was correctly refused above the k-floor;
+        a facility_manager then asked the same words and was served the occupant's
+        refusal; and with the order reversed the occupant received the facility
+        manager's room-level reading verbatim — the very figure the PDP had just denied
+        them. The leak traps never caught it because they run as a single user, and a
+        cache that ignores who is asking makes the first requester's privilege the
+        privilege of everyone after them.
+
+        The cost is a lower hit rate on questions that are genuinely public. That is the
+        right trade: a wrong-privilege answer is not a cheaper answer, it is a disclosure.
+        """
+        role = (role or "").strip().lower()
+        scope = f"{role}:{user_id}" if role in cls._PER_USER_ROLES else role
+        return f"{building_id}|{scope}"
+
     def __init__(
         self,
         redis_client,
@@ -240,7 +269,11 @@ class ResponseCacheService:
     # ─────────────────────────────────────────────────────────────────────────
 
     async def get(
-        self, question: str, building_id: str = "default", user_id: str = ""
+        self,
+        question: str,
+        building_id: str = "default",
+        user_id: str = "",
+        role: str = "",
     ) -> Optional[Dict]:
         """
         Look up a cached response for the given question.
@@ -253,7 +286,8 @@ class ResponseCacheService:
             return None
 
         qhash = query_hash(question)
-        cache_key = f"{self.PREFIX_EXACT}{building_id}:{qhash}"
+        partition = self._partition(building_id, role, user_id)
+        cache_key = f"{self.PREFIX_EXACT}{partition}:{qhash}"
 
         # 1. Exact match
         cached_raw = await self._redis_get(cache_key)
@@ -272,7 +306,7 @@ class ResponseCacheService:
 
         # 2. Fuzzy match (if enabled)
         if self._fuzzy:
-            fuzzy_result = await self._fuzzy_lookup(question, building_id)
+            fuzzy_result = await self._fuzzy_lookup(question, partition)
             if fuzzy_result:
                 fuzzy_result["cache_type"] = "fuzzy"
                 await self._increment_stats("fuzzy_hits")
@@ -296,6 +330,8 @@ class ResponseCacheService:
         media: Optional[List] = None,
         building_id: str = "default",
         metadata: Optional[Dict] = None,
+        user_id: str = "",
+        role: str = "",
     ):
         """
         Store a response in the cache.
@@ -310,7 +346,8 @@ class ResponseCacheService:
             return
 
         qhash = query_hash(question)
-        cache_key = f"{self.PREFIX_EXACT}{building_id}:{qhash}"
+        partition = self._partition(building_id, role, user_id)
+        cache_key = f"{self.PREFIX_EXACT}{partition}:{qhash}"
 
         entry = {
             "question": question,
@@ -331,7 +368,7 @@ class ResponseCacheService:
         # Store fuzzy index entry
         if self._fuzzy:
             normalised = normalise_query(question)
-            fuzzy_key = f"{self.PREFIX_FUZZY}{building_id}"
+            fuzzy_key = f"{self.PREFIX_FUZZY}{partition}"
             await self._redis_hset(fuzzy_key, qhash, normalised)
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -341,24 +378,30 @@ class ResponseCacheService:
     async def invalidate(
         self, question: str = None, building_id: str = "default", flush_all: bool = False
     ):
-        """Invalidate cached responses."""
+        """Invalidate cached responses across EVERY requester partition.
+
+        Invalidation is deliberately partition-blind while lookup is partition-bound:
+        entries are now keyed per role (and per person for individually-scoped roles),
+        so a flush that matched only ``building_id:`` would leave every partition
+        untouched and the stale answer would keep being served to the one requester who
+        could still reach it.
+        """
         if flush_all:
-            pattern = f"{self.PREFIX_EXACT}{building_id}:*"
+            pattern = f"{self.PREFIX_EXACT}{building_id}|*"
             await self._redis_delete_pattern(pattern)
-            fuzzy_key = f"{self.PREFIX_FUZZY}{building_id}"
-            await self._redis_delete(fuzzy_key)
-            logger.info(f"Response cache FLUSH: building={building_id}")
+            await self._redis_delete_pattern(f"{self.PREFIX_FUZZY}{building_id}|*")
+            logger.info(f"Response cache FLUSH: building={building_id} (all partitions)")
             return
 
         if question:
             qhash = query_hash(question)
-            cache_key = f"{self.PREFIX_EXACT}{building_id}:{qhash}"
-            await self._redis_delete(cache_key)
-            logger.info(f"Response cache INVALIDATE: {qhash[:12]}")
+            for key in await self._redis_keys(f"{self.PREFIX_EXACT}{building_id}|*:{qhash}"):
+                await self._redis_delete(key)
+            logger.info(f"Response cache INVALIDATE: {qhash[:12]} (all partitions)")
 
     async def invalidate_by_sensor(self, uuid: str, building_id: str = "default"):
         """Invalidate all cached responses that mention a specific sensor UUID."""
-        pattern = f"{self.PREFIX_EXACT}{building_id}:*"
+        pattern = f"{self.PREFIX_EXACT}{building_id}|*"
         keys = await self._redis_keys(pattern)
         count = 0
         for key in keys:
@@ -397,10 +440,15 @@ class ResponseCacheService:
     # Fuzzy logic
     # ─────────────────────────────────────────────────────────────────────────
 
-    async def _fuzzy_lookup(self, question: str, building_id: str) -> Optional[Dict]:
-        """Find the best fuzzy match for a question."""
+    async def _fuzzy_lookup(self, question: str, partition: str) -> Optional[Dict]:
+        """Find the best fuzzy match for a question WITHIN the caller's partition.
+
+        Takes a partition, not a building: a fuzzy match that crossed partitions would
+        reintroduce the cross-role leak by the back door, and less visibly, since the
+        served answer would not even be to the same question.
+        """
         normalised = normalise_query(question)
-        fuzzy_key = f"{self.PREFIX_FUZZY}{building_id}"
+        fuzzy_key = f"{self.PREFIX_FUZZY}{partition}"
         all_entries = await self._redis_hgetall(fuzzy_key)
 
         best_sim = 0.0
@@ -419,7 +467,7 @@ class ResponseCacheService:
                 best_hash = qhash
 
         if best_sim >= self._min_similarity and best_hash:
-            cache_key = f"{self.PREFIX_EXACT}{building_id}:{best_hash}"
+            cache_key = f"{self.PREFIX_EXACT}{partition}:{best_hash}"
             cached_raw = await self._redis_get(cache_key)
             if cached_raw:
                 try:
