@@ -601,6 +601,58 @@ class CapabilityAgent:
         except Exception as e:
             logger.warning(f"[capability] ontology inventory failed: {e}")
 
+        # ── 1b. "How do you know that?" — read the evidence record (V7-T74) ──
+        #
+        # V6 built a machine-readable record for every consequential answer and nothing
+        # reached it by asking: auditors asking "can every extraction, join and filter be
+        # rerun from authorised inputs?" got a document search, and "how do you know
+        # that?" was answered as a question about the system's capabilities. The record
+        # was in the previous turn's state the whole time.
+        #
+        # It is the PREVIOUS turn's record that matters — "how do you know that" refers to
+        # the answer just given — so it is read from the saved state rather than from this
+        # turn's, which is still empty.
+        try:
+            from orchestrator.services.answer_provenance import is_provenance_question, render
+
+            _wants_provenance = is_provenance_question(state.user_message or "")
+        except Exception:  # pragma: no cover - never block the lane on this
+            _wants_provenance = False
+
+        if _wants_provenance:
+            _record = None
+            try:
+                from orchestrator.redis_manager import redis_manager
+
+                _prev = await redis_manager.load_state(state.conversation_id)
+                if _prev and _prev.intermediate_results:
+                    _record = _prev.intermediate_results.get("evidence_record")
+            except Exception as _prov_err:
+                logger.debug(f"[capability] could not load previous turn: {_prov_err}")
+
+            _rendered = render(_record, state.user_message or "")
+            state.intermediate_results["capability_result"] = {
+                "success": True,
+                "response": _rendered
+                or (
+                    "**I have no evidence record for a previous answer in this "
+                    "conversation.** Every consequential answer carries one — its sources "
+                    "and their owners, the operation performed, when the evidence was "
+                    "observed and when it was retrieved, and the checks that fired. Ask a "
+                    "question first and then ask how I know, and I will read that record "
+                    "back to you.\n\nI would rather say this than reconstruct an "
+                    "explanation after the fact, which is not the same thing as provenance."
+                ),
+                "provenance": "answer_provenance",
+                "building_name": building_name,
+            }
+            logger.info(
+                "[capability] answered from the evidence record"
+                if _rendered
+                else "[capability] provenance asked with no prior record"
+            )
+            return state
+
         # ── 2a. A state the building is not in (V7-T80) ──────────────────────
         #
         # "If power fails, how long do the lab freezers stay safe?" has no grounded

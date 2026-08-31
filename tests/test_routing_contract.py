@@ -237,6 +237,10 @@ def test_rule_names_unique_and_documented():
 def test_precedence_order_is_pinned():
     """The rule order IS the contract — changing it must be a conscious decision."""
     assert [r.name for r in rc.PARSE_STAGE_RULES] == [
+        # V7-T74: "how do you know that?" is about the PREVIOUS answer, not about the
+        # building, so it precedes every rule that would try to answer it as a data
+        # question. It reads the evidence record V6 already writes on every turn.
+        "answer_provenance",
         # V7-T80: a what-if question posits a state the building is not in, and the
         # building holds no thermal, hydraulic or electrical model to reason about it.
         # It fires before everything — including the privacy denial — because a scenario
