@@ -276,6 +276,25 @@ PREFIX o: <http://ontosage.org/capabilities#>
 SELECT DISTINCT ?s WHERE { ?i a o:%s ; o:recordStatus ?s }
 """
 
+#: The ontology's own notes on the class and the predicates its instances carry.
+#:
+#: These comments already state the semantics that a query has to respect — "status is
+#: READ from recordStatus, never inferred from the dates", "zero or less means at or
+#: beyond expected life". Measured: without them, "which assets are beyond their expected
+#: life?" returned the chiller at 0.0 years and omitted the generator at -1.0, because
+#: the boundary was read as `= 0`. Putting the rule in the TBox rather than in Python
+#: keeps it building-agnostic: a building that models condition differently says so in
+#: its own ontology and the generator reads that instead.
+_COMMENT_QUERY = """
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX o: <http://ontosage.org/capabilities#>
+SELECT DISTINCT ?term ?c WHERE {
+  { BIND(o:%s AS ?term) ?term rdfs:comment ?c }
+  UNION
+  { ?i a o:%s ; ?term [] . ?term rdfs:comment ?c }
+}
+"""
+
 
 async def schema_hint(record: "RecordClass") -> str:
     """A SPARQL-generation hint for one record class, read from its own instances.
@@ -308,6 +327,16 @@ async def schema_hint(record: "RecordClass") -> str:
         statuses = sorted(
             {str(r.get("s") or "") for r in (status_result.get("rows") or []) if r.get("s")}
         )
+
+        comment_result = await run_sparql_select(
+            _COMMENT_QUERY % (record.local_name, record.local_name), limit=40
+        )
+        notes = []
+        for row in comment_result.get("rows") or []:
+            term = str(row.get("term") or "").rsplit("#", 1)[-1]
+            text = " ".join(str(row.get("c") or "").split())
+            if term and text:
+                notes.append(f"  ontosage:{term} — {text}")
     except Exception as exc:
         logger.debug(f"[record_registry] schema hint unavailable: {exc}")
         return ""
@@ -327,6 +356,15 @@ async def schema_hint(record: "RecordClass") -> str:
             "Filter on it. Do NOT infer status from effectiveFrom/effectiveTo — a record "
             "past its end date that was never closed is an exception worth reporting, and "
             "'void' is not 'expired'.\n"
+        )
+
+    ontology_notes = ""
+    if notes:
+        # The ontology's own words, verbatim. They state the semantics a query has to
+        # respect, and they travel with the building rather than with the code.
+        joined = "\n".join(sorted(set(notes))[:12])
+        ontology_notes = (
+            "\nWhat the ontology says about these terms — follow it exactly:\n" + joined + "\n"
         )
 
     today = date.today().isoformat()
