@@ -205,6 +205,36 @@ and like periods* — which is a real constraint that nothing checks today.
 
 ---
 
+## Where V7 stands (2026-08-31)
+
+**16 of 35 tasks done, 2 in progress.** The same 111 questions, re-run after the work and
+scored with the same grader as the before run:
+
+| | before | after |
+|---|---:|---:|
+| **Computed answer** | 21.8% | **36.0%** |
+| Document quote | 46 | 18 |
+| Honest decline | 18 | 42 |
+| Failures | 14.9% | **9.9%** |
+
+Both runs clean — no transport errors, no degraded rows.
+
+Source readiness on bldg1 went from **17 DATA / 2 PROSE / 8 ABSENT** to
+**25 DATA / 0 PROSE / 2 ABSENT**. Ten registers, 87 records, lifted automatically at
+ingest. Both remaining ABSENT are deliberate: `hr_identity` is modelled at role level only
+and never as person records.
+
+**The most useful number is not the coverage.** 99 of the 111 questions now have every
+source system they need as DATA, and only 33% of those compute an answer. The remaining
+gap is therefore *not data*: 28 of the 71 non-computed reach the document lane and are
+honestly declined there while the building holds what they need. Reading them, they are
+recurrence questions over the report history and questions about the system's *own*
+auditability — V7-T73 and V7-T74, both already in the plan, neither a missing source.
+
+**P4 is essentially finished. P3 is where the rest lives.**
+
+---
+
 ## Measured: 111 questions, three per stakeholder role
 
 A stratified probe of the live building, three questions from each of the 37 roles. Of
