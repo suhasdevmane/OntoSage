@@ -907,6 +907,43 @@ class SpatialAgent:
             pass
         return cands
 
+    # NOTE: this method spent its whole life NESTED inside
+    # _blocked_vertical_nodes_for, four indents too far in and after that
+    # function's return, so it was defined as a local of a function nobody called
+    # it from and was never a method at all. Every spatial question that reached
+    # resolve() therefore died on AttributeError and was caught by the broad except
+    # there, which reported "I encountered an error analysing the spatial data" —
+    # 29 measured questions, all of them wayfinding, none of them a data problem.
+    def _load_manifests(self, building_id: str, floor: Optional[int]) -> List[FloorPlanManifest]:
+        """Load manifests from registry (alias-aware over both PDF and DWG floors)."""
+        try:
+            from orchestrator.services.floor_plan_registry import (
+                get_floor_plan_registry,
+            )
+
+            registry = get_floor_plan_registry()
+            candidates = self._candidate_building_ids(building_id)
+            if floor is not None:
+                # Try each candidate ID; first hit wins.
+                for cand in candidates:
+                    m = registry.load_manifest(cand, floor)
+                    if m:
+                        return [m]
+                return []
+            results = []
+            seen_floors: set = set()
+            for bid, fl in registry.list_manifests():
+                if bid not in candidates or fl in seen_floors:
+                    continue
+                manifest = registry.load_manifest(bid, fl)
+                if manifest:
+                    results.append(manifest)
+                    seen_floors.add(fl)
+            return results
+        except Exception as e:
+            logger.warning(f"[SpatialAgent] Could not load manifests: {e}")
+            return []
+
 
 async def _declared_vertical_cores_for(manifests) -> list:
     """Lifts and staircases the ontology declares, for the route graph.
@@ -956,36 +993,6 @@ async def _blocked_vertical_nodes_for(manifests) -> dict:
         )
     except Exception:
         return {}
-
-    def _load_manifests(self, building_id: str, floor: Optional[int]) -> List[FloorPlanManifest]:
-        """Load manifests from registry (alias-aware over both PDF and DWG floors)."""
-        try:
-            from orchestrator.services.floor_plan_registry import (
-                get_floor_plan_registry,
-            )
-
-            registry = get_floor_plan_registry()
-            candidates = self._candidate_building_ids(building_id)
-            if floor is not None:
-                # Try each candidate ID; first hit wins.
-                for cand in candidates:
-                    m = registry.load_manifest(cand, floor)
-                    if m:
-                        return [m]
-                return []
-            results = []
-            seen_floors: set = set()
-            for bid, fl in registry.list_manifests():
-                if bid not in candidates or fl in seen_floors:
-                    continue
-                manifest = registry.load_manifest(bid, fl)
-                if manifest:
-                    results.append(manifest)
-                    seen_floors.add(fl)
-            return results
-        except Exception as e:
-            logger.warning(f"[SpatialAgent] Could not load manifests: {e}")
-            return []
 
 
 # ── Module-level singleton ─────────────────────────────────────────────────────

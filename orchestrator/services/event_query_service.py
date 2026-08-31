@@ -114,6 +114,26 @@ def _asks_which_rooms(question: str) -> bool:
     return bool(_WHICH_ROOMS_RE.search(question or ""))
 
 
+def _place_label(place: Any) -> str:
+    """A place as a person would write it.
+
+    `space_iri` is stored as a full IRI, and printing it raw put
+    "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16" in a table where "Room 5.16"
+    belongs. The local name is taken and a digit run is separated from the word before
+    it, which is how these labels read everywhere else in the building.
+    """
+    text = str(place or "").strip()
+    if not text:
+        return "unspecified"
+    local = text.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+    # A CURIE ("bldg:Room2.14") keeps its prefix through the splits above, so strip a
+    # leading `prefix:` too — but only when it looks like one, or a plain place written
+    # as "Level 3: east wing" would lose its first half.
+    if re.match(r"^[A-Za-z][\w.-]*:[A-Za-z]", local):
+        local = local.split(":", 1)[1]
+    return re.sub(r"(?<=[A-Za-z])(?=\d)", " ", local)
+
+
 def classify_event_question(question: str) -> Optional[str]:
     """Kind or None (None => not an event question; router should not have sent it)."""
     q = question or ""
@@ -404,18 +424,27 @@ class EventQueryService:
                 category = name
                 break
 
-        rows = await get_report_intake_service().recurring_reports(self._bid, category=category)
+        svc = get_report_intake_service()
+        rows = await svc.recurring_reports(self._bid, category=category)
+        placeless = await svc.placeless_report_count(self._bid, category=category)
         scope = f"{category} " if category else ""
+        gap = (
+            f" {placeless} {scope}report(s) in the window carry no location and could not "
+            "take part in this."
+            if placeless
+            else ""
+        )
         if not rows:
             return {
                 "success": True,
                 "kind": "recurrence",
                 "rows": [],
                 "category": category,
+                "placeless_reports": placeless,
                 "formatted_response": (
                     f"No place has more than one {scope}report on record for this building, "
-                    "so nothing is recurring by that measure. This counts reports people "
-                    "filed; a fault nobody reported twice will not appear."
+                    f"so nothing is recurring by that measure.{gap} This counts reports "
+                    "people filed; a fault nobody reported twice will not appear."
                 ),
                 "source": "user_reports",
             }
@@ -431,14 +460,14 @@ class EventQueryService:
             first = str(r.get("first_seen") or "")[:10]
             last = str(r.get("last_seen") or "")[:10]
             lines.append(
-                f"| {r.get('place', '?')} | {r.get('category', '?')} | {r.get('n', 0)} | "
-                f"{first} | {last} | {r.get('closed', 0)} |"
+                f"| {_place_label(r.get('place'))} | {r.get('category', '?')} | "
+                f"{r.get('n', 0)} | {first} | {last} | {r.get('closed', 0)} |"
             )
         lines += [
             "",
-            "_Counted from reports filed by building users. A repeat count is evidence "
-            "that something was reported again, not a diagnosis of why — that is for the "
-            "responsible owner to establish._",
+            "_Counted from reports filed by building users." + gap + " A repeat count is "
+            "evidence that something was reported again, not a diagnosis of why — that is "
+            "for the responsible owner to establish._",
         ]
         return {
             "success": True,
@@ -446,6 +475,12 @@ class EventQueryService:
             "rows": [dict(r) for r in rows],
             "category": category,
             "total": sum(int(r.get("n", 0)) for r in rows),
+            # This module's contract, stated in its own docstring: everything the prose
+            # says must exist in the payload so the numeric guard can trace it. The
+            # placeless count appears in the caveat sentence, and leaving it out here had
+            # the guard correctly suppress the whole answer — a number in the text with no
+            # counterpart in the data is exactly what it exists to stop.
+            "placeless_reports": placeless,
             "formatted_response": "\n".join(lines),
             "source": "user_reports",
         }
