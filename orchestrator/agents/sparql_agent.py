@@ -284,7 +284,7 @@ Your Answer:"""
             #
             # Bounded by MAX_RECORD_ROWS: this is only correct while a register is small
             # enough to hand over whole, and a bigger one must fall back to querying.
-            deterministic = await self._whole_register(user_query)
+            deterministic = await self._whole_register(state, user_query)
             if deterministic is not None:
                 return deterministic
 
@@ -589,7 +589,9 @@ Your Answer:"""
                 row.setdefault(column, {"type": "literal", "value": ""})
         return {"head": {"vars": columns}, "results": {"bindings": ordered}}, columns
 
-    async def _whole_register(self, user_query: str) -> Optional[Dict[str, Any]]:
+    async def _whole_register(
+        self, state: ConversationState, user_query: str
+    ) -> Optional[Dict[str, Any]]:
         """Return an entire small register, deterministically, with no generated SPARQL.
 
         Returns None when the question is not about a held record class, or when the
@@ -647,6 +649,29 @@ Your Answer:"""
             "given and never re-derive it from the dates; 'void' is not 'expired'. "
             "Answer only from these records.)"
         )
+        # Provenance for the evidence record. A record LIFTED from a document is
+        # `document_derived`, which outranks a sensor reading and loses to authored TTL
+        # (V7-T19) — the answer is only as current as the transcription. Where the graph
+        # holds authored instances the tier is plain `authoritative`.
+        lifted = any(
+            (b.get("derivedFromDocument") or {}).get("value")
+            for b in results["results"]["bindings"]
+        )
+        try:
+            state.intermediate_results.setdefault("_prov_stores", []).append(
+                {
+                    "source_id": f"ontosage:{record.local_name}",
+                    "kind": "document_derived" if lifted else "authoritative",
+                    "store": "graphdb",
+                    "simulated": any(
+                        str((b.get("isSimulated") or {}).get("value", "")).lower() == "true"
+                        for b in results["results"]["bindings"]
+                    ),
+                }
+            )
+        except Exception:  # provenance is best-effort and must never cost the answer
+            pass
+
         return {
             "success": True,
             "query": query,
