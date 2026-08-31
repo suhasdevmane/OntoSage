@@ -460,6 +460,48 @@ class ReportIntakeService:
             logger.warning(f"[report_intake] tickets_from_reports failed: {exc}")
             return []
 
+    async def recurring_reports(
+        self, building_id: str, category: str = "", min_count: int = 2, days: int = 365
+    ) -> List[Dict[str, Any]]:
+        """Places where the same KIND of problem has been reported more than once (V7-T73).
+
+        "Which cleaning-related defects keep recurring in the same place?" is answerable
+        from data this building already holds — 203 reports with a location, a category and
+        a date — and it was reaching the document lane, which searched the cleaning
+        SCHEDULE and honestly said it did not answer. A schedule cannot show recurrence.
+
+        Grouping is by (location, category), which is what "the same problem in the same
+        place" means. ``min_count`` is 2 because two is the smallest number that can
+        recur; raising it would silently hide the first repeat, which is the one worth
+        catching early.
+
+        Returns [] when there is no intake store, so a building without one keeps the
+        behaviour it had.
+        """
+        if not self.postgres or getattr(self.postgres, "pool", None) is None:
+            return []
+        sql = (
+            "SELECT COALESCE(NULLIF(location, ''), space_iri, 'unspecified') AS place, "
+            "       category, COUNT(*) AS n, "
+            "       MIN(created_at) AS first_seen, MAX(created_at) AS last_seen, "
+            "       COUNT(*) FILTER (WHERE status IN ('resolved', 'closed')) AS closed "
+            "FROM user_reports "
+            "WHERE building_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval "
+            + ("AND category = $4 " if category else "")
+            + "GROUP BY place, category HAVING COUNT(*) >= $3 "
+            "ORDER BY n DESC, last_seen DESC LIMIT 25"
+        )
+        args = [building_id, str(int(days)), int(min_count)]
+        if category:
+            args.append(category)
+        try:
+            async with self.postgres.pool.acquire() as conn:
+                rows = await conn.fetch(sql, *args)
+            return [dict(r) for r in rows]
+        except Exception as exc:
+            logger.warning(f"[report_intake] recurring_reports failed: {exc}")
+            return []
+
     def classify_action(self, message: str) -> str:
         """Heuristic: is the user creating, checking, or listing reports?"""
         m = (message or "").lower()
