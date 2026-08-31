@@ -73,6 +73,31 @@ _KIND_RES: List[Tuple[str, re.Pattern]] = [
     ("bookings_list", re.compile(r"\b(bookings?|reservations?|booked)\b", re.IGNORECASE)),
 ]
 
+#: "Which problems keep coming back in the same place?" — a RECURRENCE question (V7-T73).
+#:
+#: Measured on the stakeholder probe: these reached the document lane, which searched the
+#: cleaning SCHEDULE and honestly reported that it did not answer. It could not: a
+#: schedule says when cleaning happens, not where the same fault returns. The building
+#: holds 203 reports with a location, a category and a date, which is exactly what
+#: recurrence needs, and nothing was asking them.
+#:
+#: Placed FIRST in the kind list, because a recurrence question usually also names
+#: tickets or work orders and would otherwise be answered as a flat backlog count — the
+#: right rows, aggregated the wrong way.
+#: "persistent" and "chronic" are admitted only when they qualify a REPORTED thing.
+#: A catalogue question asks about "persistent temperature, CO2 or particulate
+#: exceptions" — that is analytics over sensor readings, not recurrence over reports,
+#: and answering it from the report history would return the wrong kind of evidence
+#: entirely. The unambiguous words (recur, repeat, keeps coming back) need no such guard.
+_RECURRENCE_RE = re.compile(
+    r"\b(?:recur|recurs|recurring|recurrence|repeat(?:ed|edly|ing)?|again and again"
+    r"|keeps? (?:happening|coming back|breaking|failing|being reported)"
+    r"|same (?:place|room|location|issue|problem|fault) (?:again|repeatedly|more than once)"
+    r"|(?:persistent|chronic)\s+\w*\s?"
+    r"(?:issues?|problems?|faults?|defects?|complaints?|reports?|breakdowns?))\b",
+    re.IGNORECASE,
+)
+
 
 #: Question shapes whose UNIT OF ANSWER is rooms, not bookings. "Which rooms have
 #: teaching sessions this week?" was answered with a flat list of a thousand booking
@@ -92,6 +117,12 @@ def _asks_which_rooms(question: str) -> bool:
 def classify_event_question(question: str) -> Optional[str]:
     """Kind or None (None => not an event question; router should not have sent it)."""
     q = question or ""
+    # Recurrence is tested before the other kinds: such a question usually also names
+    # tickets or work orders, and would otherwise be answered as a flat backlog count —
+    # the right rows, aggregated the wrong way, which is the failure _asks_which_rooms
+    # exists to prevent one layer down.
+    if _RECURRENCE_RE.search(q):
+        return "recurrence"
     for kind, pat in _KIND_RES:
         if pat.search(q):
             return kind
@@ -248,7 +279,11 @@ class EventQueryService:
     async def answer(self, question: str, now: Optional[datetime] = None) -> Dict[str, Any]:
         now = now or datetime.utcnow()
         kind = classify_event_question(question) or "bookings_list"
-        if self._adapter is None:
+        # Recurrence is answered from the report intake store, not the events adapter, so
+        # it must not be gated on one. A building with no events source can still have
+        # people reporting faults, and "what keeps going wrong here" is exactly the
+        # question such a building most needs answered.
+        if self._adapter is None and kind != "recurrence":
             return self._decline(kind)
         start, end, label = parse_window(question, now)
         handler = {
@@ -258,6 +293,7 @@ class EventQueryService:
             "workorder_summary": self._workorder_summary,
             "access_summary": self._access_summary,
             "anomaly_summary": self._anomaly_summary,
+            "recurrence": self._recurrence,
         }[kind]
         try:
             return await handler(question, start, end, label, now)
@@ -326,6 +362,92 @@ class EventQueryService:
             "free": free,
             "source": "events_data",
             "formatted_response": text,
+        }
+
+    #: Report categories, and the words a question uses to name each. Read from the
+    #: question so "cleaning-related defects" narrows to cleaning rather than reporting
+    #: every recurring problem in the building.
+    _CATEGORY_WORDS = {
+        "maintenance": (
+            "maintenance",
+            "fault",
+            "faults",
+            "defect",
+            "defects",
+            "broken",
+            "repair",
+            "repairs",
+            "cleaning",
+            "clean",
+        ),
+        "safety": ("safety", "hazard", "hazards", "incident", "incidents", "near miss"),
+        "complaint": ("complaint", "complaints", "complained"),
+        "feedback": ("feedback",),
+        "suggestion": ("suggestion", "suggestions"),
+    }
+
+    async def _recurrence(self, question, start, end, label, now):
+        """Places where the same kind of problem has been reported more than once.
+
+        A schedule cannot show recurrence and neither can a single ticket; only the
+        history can, grouped by place and kind. Every figure here is a COUNT of records
+        the building holds, so the answer names the count, the window and the category
+        rather than characterising the cause — which is a competent person's judgement,
+        not this service's.
+        """
+        from orchestrator.services.report_intake_service import get_report_intake_service
+
+        low = (question or "").lower()
+        category = ""
+        for name, words in self._CATEGORY_WORDS.items():
+            if any(re.search(rf"\b{re.escape(w)}\b", low) for w in words):
+                category = name
+                break
+
+        rows = await get_report_intake_service().recurring_reports(self._bid, category=category)
+        scope = f"{category} " if category else ""
+        if not rows:
+            return {
+                "success": True,
+                "kind": "recurrence",
+                "rows": [],
+                "category": category,
+                "formatted_response": (
+                    f"No place has more than one {scope}report on record for this building, "
+                    "so nothing is recurring by that measure. This counts reports people "
+                    "filed; a fault nobody reported twice will not appear."
+                ),
+                "source": "user_reports",
+            }
+
+        lines = [
+            f"**{len(rows)} place(s) with repeat {scope}reports** — grouped by location and "
+            "category, from the reports people filed:",
+            "",
+            "| place | category | reports | first | latest | closed |",
+            "|---|---|---:|---|---|---:|",
+        ]
+        for r in rows:
+            first = str(r.get("first_seen") or "")[:10]
+            last = str(r.get("last_seen") or "")[:10]
+            lines.append(
+                f"| {r.get('place', '?')} | {r.get('category', '?')} | {r.get('n', 0)} | "
+                f"{first} | {last} | {r.get('closed', 0)} |"
+            )
+        lines += [
+            "",
+            "_Counted from reports filed by building users. A repeat count is evidence "
+            "that something was reported again, not a diagnosis of why — that is for the "
+            "responsible owner to establish._",
+        ]
+        return {
+            "success": True,
+            "kind": "recurrence",
+            "rows": [dict(r) for r in rows],
+            "category": category,
+            "total": sum(int(r.get("n", 0)) for r in rows),
+            "formatted_response": "\n".join(lines),
+            "source": "user_reports",
         }
 
     async def _availability_list(self, question, start, end, label, now):
