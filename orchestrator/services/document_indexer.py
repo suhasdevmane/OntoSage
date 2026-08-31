@@ -20,6 +20,7 @@ Usage (FastAPI lifespan):
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import time
 import uuid
@@ -163,7 +164,7 @@ class DocumentIndexer:
         return results
 
     async def _lift_record_document(
-        self, building_id: str, doc_path: Path
+        self, building_id: str, doc_path: Path, if_missing: bool = False
     ) -> Tuple[int, List[str]]:
         """Lift a record document into its own named graph (V7-T18).
 
@@ -192,6 +193,12 @@ class DocumentIndexer:
         mappings = Path(__file__).resolve().parents[2] / "ontology" / "record_documents"
         result = lift_document(doc_path, namespace, mappings)
 
+        # if_missing: called on a SHA skip, where the only reason to do any work is that
+        # the graph is not there. An ASK is cheap; re-uploading a graph that already holds
+        # the right triples is not, and would rewrite every register on every boot.
+        if if_missing and result.instances and await self._graph_has_triples(result.graph_iri):
+            return 0, []
+
         if result.errors:
             for why in result.errors[:5]:
                 logger.warning(f"[document_indexer] {doc_path.name}: NOT lifted — {why}")
@@ -199,17 +206,61 @@ class DocumentIndexer:
         if not result.instances:
             return 0, []
 
-        try:
-            await upload_ttl(to_turtle(result), result.graph_iri, replace=True)
-        except Exception as exc:
-            logger.error(f"[document_indexer] {doc_path.name}: graph upload failed: {exc}")
-            return 0, [f"{doc_path.name}: upload failed ({exc})"]
+        # The upload RESULT decides whether this lifted, not the absence of an exception.
+        #
+        # upload_ttl returns {"ok": bool, ...} and logs its own warning on a non-2xx; it
+        # does not raise. Reporting success on the strength of "no exception" therefore
+        # announced "lifted 16 booking records" for three graphs that GraphDB had rejected
+        # with HTTP 500 "Couldn't precommit transaction" — found on the second building,
+        # where three of nine registers were silently missing while the log said all nine
+        # had landed. Claiming an upload happened when it did not is the exact failure
+        # this project guards against everywhere else.
+        #
+        # The 500 is transient — a precommit conflict while another writer holds the
+        # repository — so it is retried before being reported.
+        last_error = ""
+        for attempt in range(3):
+            try:
+                outcome = await upload_ttl(to_turtle(result), result.graph_iri, replace=True)
+            except Exception as exc:
+                last_error = str(exc)
+            else:
+                if outcome.get("ok"):
+                    logger.info(
+                        f"[document_indexer] {doc_path.name}: lifted {result.instances} "
+                        f"{result.record_type} records into {result.graph_iri}"
+                    )
+                    return result.instances, []
+                last_error = str(outcome.get("error") or "upload rejected")
+            if attempt < 2:
+                await asyncio.sleep(1.5 * (attempt + 1))
+                logger.info(f"[document_indexer] {doc_path.name}: retrying upload ({last_error})")
 
-        logger.info(
-            f"[document_indexer] {doc_path.name}: lifted {result.instances} "
-            f"{result.record_type} records into {result.graph_iri}"
+        logger.error(
+            f"[document_indexer] {doc_path.name}: NOT lifted — upload failed: {last_error}"
         )
-        return result.instances, []
+        return 0, [f"{doc_path.name}: upload failed ({last_error})"]
+
+    @staticmethod
+    async def _graph_has_triples(graph_iri: str) -> bool:
+        """True when this document's named graph already holds something.
+
+        Errs towards TRUE on any failure: re-uploading unnecessarily is wasteful, while
+        wrongly believing a graph is empty would rewrite every register on every boot.
+        """
+        try:
+            from orchestrator.services.ontology_manager import run_sparql_select
+
+            result = await run_sparql_select(
+                f"ASK WHERE {{ GRAPH <{graph_iri}> {{ ?s ?p ?o }} }}", limit=1
+            )
+            if not result.get("ok"):
+                return True
+            rows = result.get("rows") or []
+            return str(rows[0].get("boolean", "true")).lower() == "true" if rows else True
+        except Exception as exc:
+            logger.debug(f"[document_indexer] graph check failed for {graph_iri}: {exc}")
+            return True
 
     async def index_building(self, building_id: str) -> DocIndexResult:
         """Index documents for a single building.  Idempotent; safe to call repeatedly."""
@@ -258,6 +309,17 @@ class DocumentIndexer:
             if existing_shas.get(doc_path.name) == file_sha:
                 logger.info(f"[document_indexer] {building_id}/{doc_path.name}: sha match — skip")
                 skipped_files.append(doc_path.name)
+                # The SHA records that the PROSE was indexed, and says nothing about the
+                # lift. A document whose prose indexed and whose graph upload was rejected
+                # would otherwise be skipped for ever, because the file never changes —
+                # exactly the trap CLAUDE.md documents for TTL uploads, where the SHA skip
+                # suppresses a re-upload that is still needed. Measured on the second
+                # building: three registers were rejected with HTTP 500, and the next boot
+                # skipped all three on a SHA match. So the lift is retried whenever its
+                # graph is empty, and costs one ASK per document when it is not.
+                n, why = await self._lift_record_document(building_id, doc_path, if_missing=True)
+                lifted_records += n
+                lift_failures.extend(why)
                 continue
 
             # A record document is ALSO lifted into triples (V7-T18). The prose path
