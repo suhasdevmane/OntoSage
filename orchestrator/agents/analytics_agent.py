@@ -114,6 +114,22 @@ class AnalyticsAgent:
                 logger.warning("⚠️  No data available for analysis")
                 # Build a context-aware, user-friendly message
                 sql_result = state.intermediate_results.get("sql_result", {})
+
+                # A DELIBERATE decline is not an absence of data, and must not be
+                # re-explained as one (V7-T24). When the SQL lane refused a question as too
+                # broad it returns no rows, and the message below then told the user their
+                # "sensor might not be actively transmitting" — blaming the building for a
+                # choice the system made, and sending them to fix the wrong thing. Measured:
+                # a 288-sensor question declined correctly, and the user saw
+                # "No readings were found for Floor_5".
+                if sql_result.get("too_broad"):
+                    return {
+                        "success": False,
+                        "code": None,
+                        "output": None,
+                        "error": "question_too_broad",
+                        "formatted_response": sql_result.get("formatted_response", ""),
+                    }
                 entities = state.intermediate_results.get("entities", [])
                 time_range = state.intermediate_results.get("time_range", {})
                 entity_hint = (
