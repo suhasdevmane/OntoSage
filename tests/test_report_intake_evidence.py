@@ -110,9 +110,9 @@ def test_report_intake_is_not_smuggled_into_the_ten_T02_lanes():
 
 def test_the_status_matches_the_decision_precedence_already_made():
     """Two places must not disagree about what a person's account is worth."""
-    from orchestrator.services.evidence import precedence
-
     import inspect
+
+    from orchestrator.services.evidence import precedence
 
     src = inspect.getsource(precedence)
     assert '"human_report": "inference"' in src

@@ -127,8 +127,9 @@ def _series(uuid: str, days: float, step_min: int) -> List[Tuple[datetime, float
 
 
 def seed_timescale(sensors: List[Tuple[str, str]], days: float, step_min: int) -> Dict[str, object]:
-    import asyncpg  # noqa: F401  (import here so --only cassandra needs no asyncpg)
     import asyncio
+
+    import asyncpg  # noqa: F401  (import here so --only cassandra needs no asyncpg)
 
     env = _env()
     dsn = (

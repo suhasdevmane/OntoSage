@@ -43,6 +43,7 @@ import csv
 import re
 import sys
 from collections import Counter
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -51,12 +52,37 @@ BASELINE_DIR = REPO / "scripts" / "outputs" / "baseline"
 
 csv.field_size_limit(10_000_000)
 
-#: The system's own standard refusal phrasings. Matched rather than judged: these are strings
-#: the codebase emits, so recognising one is a fact about the output, not an opinion about it.
+#: Phrasings that mean "I am not answering this". Matched rather than judged: these are
+#: strings the system emits, so recognising one is a fact about the output, not an opinion.
+#:
+#: Every entry after the first line was added on 2026-09-01 after the gate reported THREE
+#: blocking regressions of which two were decline -> decline. The model does not phrase a
+#: refusal the same way twice: the baseline said "No **valid** data available" (the inserted
+#: adjective breaks `no data available`) and "I **couldn't find** any sensor or data source"
+#: (no entry at all), while the current run said "no data available" and matched. So a pair
+#: of identical refusals was scored as an answer that had become a refusal.
+#:
+#: The additions are deliberately narrow. "couldn't find any" alone would be wrong -- "I
+#: couldn't find any anomalies" is a genuine ANSWER -- so the object is constrained to
+#: data/sensor/information/record words. Widening this regex hides real regressions, which is
+#: the opposite failure and the more dangerous one.
 _DECLINE = re.compile(
     r"don't have that specific information|no information on record|not on record"
     r"|I don't have|cannot answer|not assessable|I can.t report|won.t substitute"
-    r"|no data (?:is |was )?(?:available|recorded)|not been recorded",
+    r"|no (?:\w+ ){0,4}data (?:is |was )?(?:available|recorded)|not been recorded"
+    r"|can.t complete that request|I.m not guessing|could ?n.t tell which"
+    r"|was ?n.t able to (?:retrieve|find)|not able to retrieve"
+    r"|no information is available|there is no information"
+    r"|does not contain any (?:\w+ ){0,4}(?:sensor|metric|record|reading)"
+    r"|could ?n.t (?:find|retrieve) any (?:\w+ ){0,4}(?:sensor|data|information|record|reading)"
+    r"|could not (?:find|retrieve) any (?:\w+ ){0,4}(?:sensor|data|information|record|reading)"
+    r"|does not contain any (?:\w+ ){0,2}(?:data|information)"
+    # The trailing qualifier is required, and is not decoration. Without it "There is no
+    # data loss in this series; completeness is 100%" -- an ANSWER -- was read as a refusal,
+    # which is the direction that HIDES regressions. Caught by the guard test below rather
+    # than in review.
+    r"|there is no (?:\w+ ){0,2}data (?:available|recorded|to |for |on )"
+    r"|no data (?:available|found)",
     re.IGNORECASE,
 )
 
@@ -69,7 +95,10 @@ UNCHANGED = "unchanged"
 LIVE_DRIFT = "live-drift"  # same standing, same lane, different text: a live building
 REWORDED = "reworded"
 ROUTE_CHANGED = "route-changed"
-TIGHTENED = "tightened"  # answered -> declined, WITH a gate named
+ROUTE_INTENDED = "route-intended"  # moved INTO a lane declared for this class of question
+ROUTE_REGRESSION = "route-regression"  # moved OUT of the lane declared for it
+TIGHTENED = "tightened"  # answered -> declined, WITH an enforcing gate named
+TIGHTENED_ADVISORY = "tightened-advisory"  # declined, and only an ADVISORY gate named itself
 LOOSENED = "loosened"  # declined -> answered: review, this is the fabrication direction
 IMPROVED = "improved"  # was empty, now says something
 REGRESSION = "regression"  # got worse, no gate fired
@@ -77,13 +106,117 @@ DROPPED = "dropped"  # in the baseline, absent from the current run
 ADDED = "added"
 
 #: Verdicts that block. Deliberately short: a gate that fails on everything gets bypassed.
-BLOCKING = {REGRESSION, DROPPED}
+BLOCKING = {REGRESSION, DROPPED, ROUTE_REGRESSION}
+
+
+#: Only the OPENING of an answer is searched for a refusal.
+#:
+#: Matching anywhere was structurally wrong, and Q658 proved it: "I've checked all nine
+#: handover records and none of them mention a damper that failed its stroke test", followed
+#: by a table of the records consulted, is one of the best answers in the whole run — and it
+#: was scored as a REFUSAL because thirty words later it said "there is no information about
+#: whether any such failures were later fixed". A thorough answer routinely says what it
+#: could not find; a refusal says so first. So the window is the opening, which is long
+#: enough to clear a "**Answer**" header and short enough to exclude the body.
+#: 160 characters is one or two sentences: enough to clear a "**Answer**" header and state
+#: a refusal, too short to reach the caveats a real answer adds after its finding. Q658's
+#: "there is no information..." sits at character ~250, after a definitive negative and a
+#: table of records; Q393's identical phrase is at character ~10 and IS the answer.
+_DECLINE_WINDOW = 160
 
 
 def standing(answer: str) -> str:
     if not (answer or "").strip():
         return EMPTY
-    return DECLINED if _DECLINE.search(answer) else ANSWERED
+    return DECLINED if _DECLINE.search(answer[:_DECLINE_WINDOW]) else ANSWERED
+
+
+#: Declared routing expectations, loaded once. See config/routing_expectations.yaml for the
+#: reasoning; the short version is that a lane change was the one kind of change the gate
+#: could observe but never attribute.
+_EXPECTATIONS_PATH = Path(__file__).resolve().parent.parent / "config" / "routing_expectations.yaml"
+
+
+@lru_cache(maxsize=1)
+def _expectations() -> List[Dict[str, object]]:
+    """Compiled routing expectations; an empty list when the file is absent or unreadable.
+
+    Absence is not an error. The gate predates this file and must keep working without it —
+    every route change simply stays in the unattributed bucket, which is what it did before.
+    """
+    try:
+        import yaml  # imported lazily: the gate must run where PyYAML is not installed
+
+        raw = yaml.safe_load(_EXPECTATIONS_PATH.read_text(encoding="utf-8")) or {}
+    except Exception as exc:  # pragma: no cover - exercised by the absent-file test
+        logger_msg = f"[gate] no routing expectations ({exc.__class__.__name__}); route changes stay unattributed"
+        print(logger_msg)
+        return []
+
+    compiled: List[Dict[str, object]] = []
+    for entry in raw.get("expectations") or []:
+        pattern = str(entry.get("match") or "").strip()
+        lanes = [str(x) for x in (entry.get("lanes") or []) if str(x).strip()]
+        if not pattern or not lanes:
+            continue
+        # Patterns are single-line by contract (see the header of the YAML). Folding them
+        # would insert a space at each fold and silently kill every alternation after it;
+        # stripping whitespace to compensate is worse, because these patterns contain
+        # INTENTIONAL literal spaces -- "( is| are)" becomes "(is|are)" and stops matching
+        # the English it was written for. Both mistakes were made here and both were caught
+        # by tests rather than in review. So: no rewriting of the pattern at all.
+        if "\n" in pattern:
+            print(f"[gate] expectation {entry.get('id')!r} is multi-line; folding breaks regexes")
+            continue
+        try:
+            rx = re.compile(pattern, re.IGNORECASE)
+        except re.error as exc:
+            print(f"[gate] skipping expectation {entry.get('id')!r}: bad regex ({exc})")
+            continue
+        compiled.append({"id": str(entry.get("id") or "?"), "rx": rx, "lanes": lanes})
+    return compiled
+
+
+def expected_lanes(question: str) -> Tuple[List[str], str]:
+    """The lanes declared for this question, and the id of the entry that declared them."""
+    for entry in _expectations():
+        if entry["rx"].search(question or ""):  # type: ignore[union-attr]
+            return list(entry["lanes"]), str(entry["id"])  # type: ignore[arg-type]
+    return [], ""
+
+
+def classify_route_change(question: str, b_intent: str, c_intent: str) -> Tuple[str, str]:
+    """Classify a lane change against the declared expectations.
+
+    The asymmetry is the whole point, and it is what makes this safe to add to a gate that
+    is about to be relied on:
+
+    * moved INTO a declared lane  -> attributable, reported, does not block;
+    * moved OUT of a declared lane -> blocks, because the lane that owns the question
+      stopped answering it and nothing declared that;
+    * no expectation matches       -> the old, non-blocking verdict, unchanged.
+
+    So the file can only ever make the gate stricter. A wrong entry produces a loud false
+    FAILURE; it cannot produce a quiet false pass, which is the direction this project's
+    measurement apparatus has repeatedly failed in.
+    """
+    lanes, rule = expected_lanes(question)
+    if not lanes:
+        return ROUTE_CHANGED, f"lane {b_intent or '?'} -> {c_intent or '?'}"
+    if c_intent in lanes and b_intent not in lanes:
+        return ROUTE_INTENDED, f"lane {b_intent or '?'} -> {c_intent or '?'} (declared by {rule})"
+    if b_intent in lanes and c_intent not in lanes:
+        return (
+            ROUTE_REGRESSION,
+            f"left the lane declared for it: {b_intent} -> {c_intent or '?'} ({rule})",
+        )
+    # Both in, or both out. Both-in is a move between two acceptable lanes; both-out means
+    # the question was already in the wrong place and still is, which this gate does not
+    # judge -- it reports CHANGES, and being stationary in a bad lane is not one.
+    return (
+        ROUTE_CHANGED,
+        f"lane {b_intent or '?'} -> {c_intent or '?'} (neither declared by {rule})",
+    )
 
 
 def _read(path: Path) -> Dict[str, Dict[str, str]]:
@@ -97,6 +230,7 @@ def classify(base: Dict[str, str], cur: Dict[str, str]) -> Tuple[str, str]:
     b_stand, c_stand = standing(b_ans), standing(c_ans)
     b_intent, c_intent = base.get("intent", ""), cur.get("intent", "")
     gates = (cur.get("gates") or "").strip()
+    advisory = (cur.get("gates_advisory") or "").strip()
 
     if base.get("answer_sha") and base["answer_sha"] == cur.get("answer_sha"):
         return UNCHANGED, "byte-identical"
@@ -105,8 +239,11 @@ def classify(base: Dict[str, str], cur: Dict[str, str]) -> Tuple[str, str]:
         if b_intent != c_intent:
             # Same standing, different lane. Not a regression by itself -- but a question
             # quietly changing lane is one of the more informative things that can happen,
-            # and it is invisible in the prose.
-            return ROUTE_CHANGED, f"lane {b_intent or '?'} -> {c_intent or '?'}"
+            # and it is invisible in the prose. Where an expectation is declared for this
+            # class of question, the move is judged against it instead of merely noted.
+            return classify_route_change(
+                cur.get("question") or base.get("question", ""), b_intent, c_intent
+            )
         if _numbers(b_ans) != _numbers(c_ans) and _skeleton(b_ans) == _skeleton(c_ans):
             return LIVE_DRIFT, "same wording, different readings"
         return REWORDED, "same standing and lane, different wording"
@@ -114,6 +251,17 @@ def classify(base: Dict[str, str], cur: Dict[str, str]) -> Tuple[str, str]:
     if b_stand == ANSWERED and c_stand in (DECLINED, EMPTY):
         if gates:
             return TIGHTENED, f"declined by gate(s): {gates}"
+        if advisory:
+            # An ADVISORY gate does not downgrade the answer, but it did name itself as the
+            # reason, and attribution is what separates a tightening from silent drift.
+            # Measured: LT-029 ("is there enough task light…") stopped answering and carried
+            # `freshness: no illuminance observation is available for this space` — the
+            # explanation was sitting in the row, in a column classify() never read.
+            #
+            # Kept as its OWN verdict rather than folded into TIGHTENED. An advisory gate
+            # only observed; it did not act, so the causal claim is weaker and a human should
+            # still look. Re-labelling it accurately is not the same as hiding it.
+            return TIGHTENED_ADVISORY, f"declined; advisory gate(s) fired: {advisory}"
         # The core rule. Something made the answer worse and nothing owns it.
         return REGRESSION, "answer became a decline with NO gate firing"
 
@@ -377,10 +525,65 @@ def render(outcome: Dict[str, object], baseline: Path, current: Path) -> str:
             L.append(f"| {gate or '(unnamed)'} | {count} |")
         L.append("")
 
+    advisory_tight = [r for r in results if r["verdict"] == TIGHTENED_ADVISORY]
+    if advisory_tight:
+        L += [
+            "## Declines explained only by an ADVISORY gate",
+            "",
+            "An advisory gate observed the problem and named itself, but did not act — so the",
+            "change is attributable without being enforced. Weaker evidence than a tightening:",
+            "worth a look, not a block.",
+            "",
+            "| qid | Question | Advisory gate |",
+            "|---|---|---|",
+        ]
+        for r in advisory_tight[:30]:
+            q = str(r["question"]).replace("|", "/")[:70]
+            L.append(f"| {r['qid']} | {q} | {str(r['reason'])[:70]} |")
+        L.append("")
+
+    # Blocking, so it is listed question by question rather than summarised: a lane that
+    # stopped answering the questions it owns is the finding, not a statistic about it.
+    route_regressions = [r for r in results if r["verdict"] == ROUTE_REGRESSION]
+    if route_regressions:
+        L += [
+            "## Lane regressions — a declared lane stopped answering (BLOCKING)",
+            "",
+            "| qid | Question | Reason |",
+            "|---|---|---|",
+        ]
+        for r in route_regressions[:40]:
+            q = str(r["question"]).replace("|", "/")[:80]
+            L.append(f"| {r['qid']} | {q} | {r['reason']} |")
+        L.append("")
+
+    intended = [r for r in results if r["verdict"] == ROUTE_INTENDED]
+    if intended:
+        by_move = Counter(
+            f"{r['baseline_intent'] or '?'} -> {r['current_intent'] or '?'}" for r in intended
+        )
+        L += [
+            "## Lane changes that were declared (attributable, non-blocking)",
+            "",
+            "| Move | Questions |",
+            "|---|---:|",
+        ]
+        for move, count in by_move.most_common(15):
+            L.append(f"| {move} | {count} |")
+        L.append("")
+
     routed = [r for r in results if r["verdict"] == ROUTE_CHANGED]
     if routed:
         by_move = Counter(f"{r['baseline_intent']} -> {r['current_intent']}" for r in routed)
-        L += ["## Lane changes", "", "| Move | Questions |", "|---|---:|"]
+        L += [
+            "## Lane changes with nothing declared about them",
+            "",
+            "Reported, not judged: no expectation in `config/routing_expectations.yaml` covers",
+            "these questions, so the gate can see the move but cannot say whether it is good.",
+            "",
+            "| Move | Questions |",
+            "|---|---:|",
+        ]
         for move, count in by_move.most_common(15):
             L.append(f"| {move} | {count} |")
         L.append("")

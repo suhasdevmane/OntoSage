@@ -25,8 +25,9 @@ import json
 import sys
 import time
 import uuid
-import requests
 from datetime import datetime
+
+import requests
 
 BASE = "http://localhost:8000"
 TOKEN = "IPbI5DfsP-lhgCvz-QH20F1MSUi_v4BniVIq9695NBg"

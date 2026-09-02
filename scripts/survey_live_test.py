@@ -24,8 +24,9 @@ import json
 import sys
 import time
 import uuid
-import requests
 from datetime import datetime
+
+import requests
 
 
 # Windows cp1252-safe print

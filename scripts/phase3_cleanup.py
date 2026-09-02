@@ -55,7 +55,6 @@ import sys
 from pathlib import Path
 from typing import Callable, List, Tuple
 
-
 ROOT = Path(__file__).resolve().parent.parent
 
 

@@ -18,7 +18,10 @@ could plausibly have broken.
 
 import pytest
 
-from orchestrator.services.routing_contract import _is_countable_meta, consumption_question
+from orchestrator.services.routing_contract import (
+    _is_countable_meta,
+    consumption_question,
+)
 
 pytestmark = pytest.mark.unit
 

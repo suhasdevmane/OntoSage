@@ -38,7 +38,9 @@ from orchestrator.services.forecasting.models.linear_forecaster import (  # noqa
 from orchestrator.services.forecasting.models.seasonal_naive_forecaster import (  # noqa: E402
     SeasonalNaiveForecaster,
 )
-from orchestrator.services.forecasting.preprocessor import preprocess_series  # noqa: E402
+from orchestrator.services.forecasting.preprocessor import (  # noqa: E402
+    preprocess_series,
+)
 
 _MODELS = {
     "linear": lambda: LinearTrendForecaster(degree=1),

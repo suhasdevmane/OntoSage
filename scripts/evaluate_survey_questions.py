@@ -48,8 +48,8 @@ try:
 
     HAS_HTTPX = True
 except ImportError:
-    import urllib.request
     import urllib.error
+    import urllib.request
 
     HAS_HTTPX = False
 

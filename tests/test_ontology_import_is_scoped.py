@@ -42,7 +42,11 @@ def test_the_importer_does_not_run_by_default():
     # call is indented deeper than it.
     lines = src.split("\n")
     guard = next(
-        (i for i, ln in enumerate(lines) if "RAG_IMPORT_ONTOLOGY" in ln and ln.lstrip().startswith("if ")),
+        (
+            i
+            for i, ln in enumerate(lines)
+            if "RAG_IMPORT_ONTOLOGY" in ln and ln.lstrip().startswith("if ")
+        ),
         None,
     )
     assert guard is not None, "no `if` guard on the RAG_IMPORT_ONTOLOGY flag"
@@ -68,7 +72,9 @@ def test_a_context_is_named_when_importing():
     assert "X-GraphDB-Context" in src
     commented = re.search(r"^\s*#\s*\"X-GraphDB-Context\"", src, re.MULTILINE)
     assert commented is None, "the context header is commented out again"
-    assert re.search(r"^\s*context = f", src, re.MULTILINE), "context must be assigned, not commented"
+    assert re.search(
+        r"^\s*context = f", src, re.MULTILINE
+    ), "context must be assigned, not commented"
 
 
 def test_the_orchestrator_uploader_still_owns_ingestion():
