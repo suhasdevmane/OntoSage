@@ -415,7 +415,9 @@ class EventQueryService:
         rather than characterising the cause — which is a competent person's judgement,
         not this service's.
         """
-        from orchestrator.services.report_intake_service import get_report_intake_service
+        from orchestrator.services.report_intake_service import (
+            get_report_intake_service,
+        )
 
         low = (question or "").lower()
         category = ""

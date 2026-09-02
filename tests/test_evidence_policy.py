@@ -150,11 +150,22 @@ def test_deep_merge_replaces_scalars_and_merges_dicts():
 # ── gate mode ────────────────────────────────────────────────────────────────
 
 
-def test_every_gate_ships_advisory():
-    """V6-T55: no gate may change an answer until its impact report has been reviewed."""
+def test_only_freshness_enforces_and_it_does_so_deliberately():
+    """V6-T55 shipped every gate advisory: no gate may act until its impact is reviewed.
+
+    Freshness was reviewed and switched on 2026-09-02 (CAVEAT-361). Eight of bldg1's stores
+    had stopped receiving rows and only 19 of ~933 narrow points were still live, so advisory
+    meant a "right now" question could be answered from an eight-day-old reading with nothing
+    in the text saying so. Enforcing applies the gate's own downgrade — the reading is
+    reported as the last recorded observation, not withheld.
+
+    Every OTHER gate stays advisory, and that is the point of this test: gates are switched
+    one at a time so any change in behaviour is attributable to a single named guard.
+    """
     p = load_policy("any")
-    for gate in ("freshness", "completeness", "agreement", "spatial_adequacy", "calibration"):
-        assert p.gate_mode(gate) is GateMode.ADVISORY, f"{gate} must ship advisory"
+    assert p.gate_mode("freshness") is GateMode.ENFORCING
+    for gate in ("completeness", "agreement", "spatial_adequacy", "calibration"):
+        assert p.gate_mode(gate) is GateMode.ADVISORY, f"{gate} must still ship advisory"
         assert p.is_enforcing(gate) is False
 
 

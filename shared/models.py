@@ -456,17 +456,24 @@ class AnswerStatus(str, Enum):
 
 
 class Operation(str, Enum):
-    """What the system DID to produce the answer (rule R-2, all six catalogues).
+    """What the system DID to produce the answer (rule R-2, the stakeholder catalogues).
 
     Distinct from AnswerStatus on purpose: status describes the claim, operation
     describes the act. A lookup and an observation can both be OBSERVED, but only one
     of them read a sensor, and the catalogues are explicit that these must never be
     blurred together in one figure.
+
+    This list was derived when only SIX of the 37 catalogues had been extracted, and
+    nothing re-derived it when the other 31 arrived -- which is how the single most
+    demanded act in the corpus came to have no member (CAVEAT-365). COMPARISON is that
+    member. When the taxonomy is revisited, re-derive it from the whole corpus rather
+    than extending it one gap at a time.
     """
 
     OBSERVATION = "observation"
     AUTHORITATIVE_LOOKUP = "authoritative_lookup"
     CALCULATION = "calculation"
+    COMPARISON = "comparison"
     ESTIMATE = "estimate"
     FORECAST = "forecast"
     DIAGNOSIS = "diagnosis"

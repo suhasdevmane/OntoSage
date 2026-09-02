@@ -422,6 +422,145 @@ def _parse_evidence_time(raw):
     return None
 
 
+#: Lanes whose bus key holding a value means the lane RAN, whether or not it produced
+#: prose. Used only to tell the user which component went quiet — never to fabricate an
+#: answer out of a partial result.
+_LANE_KEYS_FOR_DIAGNOSIS = (
+    ("sparql_result", "the ontology lane"),
+    ("sql_result", "the time-series lane"),
+    ("analytics_result", "the analytics lane"),
+    ("capability_result", "the document lane"),
+    ("register_result", "the records lane"),
+    ("spatial_result", "the spatial lane"),
+    ("floor_plan_result", "the floor-plan lane"),
+    ("events_result", "the events lane"),
+    ("diagnosis_result", "the diagnosis lane"),
+    ("forecast_result", "the forecast lane"),
+)
+
+
+#: Bus keys a lane writes with THIS turn's answer. They must not survive into the next turn.
+#:
+#: `forecast_result` and `analytics_result` are deliberately absent: turn_memory carries those
+#: forward on purpose so "now plot that" can find the thing it refers to. Everything else is
+#: this turn's working state.
+#: Listed EXPLICITLY, not derived from another list.
+#:
+#: The first version built this from `_LANE_KEYS_FOR_DIAGNOSIS`, which does not contain
+#: `deliberate_result` — the single key that caused the bug — so the fix deployed, ran, and
+#: changed nothing. Deriving one list from another that was written for a different purpose
+#: is how that happened, and the same slip would have cleared `forecast_result`, which
+#: turn_memory carries forward on purpose.
+#:
+#: KEEP IN STEP with `_response_node`'s dispatch: any lane whose result it reads must appear
+#: here, or that lane's answer will outlive its turn.
+_CARRIED_FORWARD_ON_PURPOSE = ("forecast_result", "analytics_result")
+
+_PER_TURN_LANE_KEYS = (
+    "sparql_result",
+    "sql_result",
+    "capability_result",
+    "document_result",
+    "register_result",
+    "spatial_result",
+    "floor_plan_result",
+    "events_result",
+    "diagnosis_result",
+    "deliberate_result",
+    "asset_state_result",
+    "observability_result",
+    "privacy_refusal_result",
+    "report_intake_result",
+    "control_result",
+    "visualization_path",
+    "goal_plan",
+    "error",
+    "route_decision",
+    "cache_hit",
+    "evidence_record",
+    "plan_trace",
+)
+
+
+def _clear_stale_lane_results(state) -> None:
+    """Drop the previous turn's lane results before a new turn runs.
+
+    A resumed conversation is loaded from Redis with its whole `intermediate_results` intact
+    and only `user_message` replaced, so every lane result from the previous turn was still
+    on the bus when the next question arrived. `_response_node` picks the first lane it
+    recognises, and its dispatch checks `deliberate_result` long before `sql_result` — so a
+    deliberative answer stayed pinned for the rest of the session.
+
+    Measured live: turn 1 "which public space on floor 2 is quietest right now" answered from
+    the deliberate lane; turn 2 "what is the temperature in Room 5.04 right now" classified
+    correctly as sensor_data and returned turn 1's answer verbatim — a confident, specific
+    reading about the wrong room, the wrong floor and the wrong modality. The response cache
+    then stored that under turn 2's key, so the wrong answer outlived the session and was
+    served to a fresh one.
+
+    `forecast_result` and `analytics_result` are preserved: turn_memory carries them forward
+    by design so a follow-up like "now plot that" still has its referent.
+    """
+    results = getattr(state, "intermediate_results", None)
+    if not isinstance(results, dict):
+        return
+    dropped = [k for k in _PER_TURN_LANE_KEYS if k in results]
+    for key in dropped:
+        results.pop(key, None)
+    if dropped:
+        logger.debug(f"[workflow] cleared {len(dropped)} stale lane result(s) from a prior turn")
+
+
+def _unanswered_response(state, ctx) -> str:
+    """What to say when no lane produced anything to say (BUG-355).
+
+    *"I processed your request, but couldn't generate a response"* is the documented
+    signature of a lane that routes correctly, executes, and is never collected by this
+    node — `.claude/rules/agent-patterns.md` records it as the step nobody remembers, and
+    it has been measured at least twice (the observability lane in V6-T10, the diagnosis
+    lane in BUG-354). It is the worst possible string to emit, for two reasons: it tells
+    the user nothing they can act on, and it tells whoever is debugging nothing about
+    which component went quiet.
+
+    This says what was understood, which lane ran, and what to try instead. It states no
+    figure and no fact about the building — there is nothing to state, and inventing a
+    plausible one here is exactly the failure the honesty contract exists to prevent.
+    """
+    results = getattr(state, "intermediate_results", None) or {}
+    intent = str(results.get("intent") or "").strip()
+    entities = [str(e) for e in (results.get("entities") or []) if str(e).strip()]
+    ran = [label for key, label in _LANE_KEYS_FOR_DIAGNOSIS if results.get(key)]
+    error = str(results.get("error") or "").strip()
+
+    lines = ["I understood the question but could not put an answer together for it."]
+    detail = []
+    if intent:
+        detail.append(f"read it as a **{intent.replace('_', ' ')}** question")
+    if entities:
+        detail.append(f"about **{', '.join(entities[:3])}**")
+    if detail:
+        lines.append("")
+        lines.append(f"- I {' '.join(detail)}.")
+    if ran:
+        # Naming the lane that ran and returned nothing is the single most useful thing
+        # here: it separates "nothing was tried" from "something was tried and came back
+        # empty", which are different problems with different fixes.
+        lines.append(f"- {', '.join(ran).capitalize()} ran, but returned nothing to report.")
+    else:
+        lines.append("- No data lane produced a result for it.")
+    if error:
+        lines.append(f"- A step reported: {error[:160]}")
+
+    lines += [
+        "",
+        "That is a gap on my side, not a statement that the building has no such data. "
+        "Rephrasing with a specific room, floor or date range often reaches a lane that "
+        'can answer — or ask *"what can you tell me about this building?"* to see what '
+        "is connected.",
+    ]
+    return "\n".join(lines)
+
+
 class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
     """LangGraph-based conversation workflow.
 
@@ -1440,6 +1579,30 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                         state.query_results = {}
                         state.analytics_required = False
                         state.intermediate_results["referent_resolution"] = "not_found"
+                        # The gate NAMES ITSELF on the record (CAVEAT-385).
+                        #
+                        # It wrote its refusal into `sparql_result` and said nothing else, so
+                        # the evidence record described a successful lookup: measured live,
+                        # "what is the temperature in Room 99.99?" was correctly refused and
+                        # recorded as status=observed, operation=authoritative_lookup,
+                        # gates_applied=[]. A refusal recorded as an observation is wrong on
+                        # its own terms, and it is also what makes the regression gate call
+                        # an intended tightening a REGRESSION — its rule is "worse, and no
+                        # gate fired", and no gate had said it was responsible.
+                        _partial = state.intermediate_results.get("evidence") or {}
+                        if not isinstance(_partial, dict):
+                            _partial = {}
+                        state.intermediate_results["evidence"] = {
+                            **_partial,
+                            "status": "not_assessable",
+                            "not_assessable_reason": (
+                                f"'{_resolution.referent}' does not exist in this building, so "
+                                "there is nothing to report about it"
+                            ),
+                            "gates_applied": sorted(
+                                set(_partial.get("gates_applied") or []) | {"referent_existence"}
+                            ),
+                        }
                         return state
                     if _resolution.status == SKIPPED and _resolution.referent:
                         # BUG-136 — the question NAMED something and the existence
@@ -1695,7 +1858,9 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 from orchestrator.services.privacy import enforcement as _protect
 
                 _n_sensors = len(state.intermediate_results.get("uuids") or []) or None
-                from orchestrator.services.privacy.sampling import requested_resolution_s
+                from orchestrator.services.privacy.sampling import (
+                    requested_resolution_s,
+                )
 
                 _verdict = await _protect.consult(
                     "sparql",
@@ -1853,7 +2018,9 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                         )
                     except ValueError:
                         _age_min = 0.0
-                from orchestrator.services.privacy.sampling import requested_resolution_s
+                from orchestrator.services.privacy.sampling import (
+                    requested_resolution_s,
+                )
 
                 _verdict = await _protect.consult(
                     "sql",
@@ -3966,7 +4133,7 @@ SELECT ?l WHERE {
         elif sparql_result.get("formatted_response"):
             final_response = sparql_result["formatted_response"]
         else:
-            final_response = "I processed your request, but couldn't generate a response."
+            final_response = _unanswered_response(state, ctx)
 
         # ── Visualization honesty guard ───────────────────────────────────────
         # If the user explicitly asked for a chart but no image was produced,
@@ -7302,6 +7469,8 @@ SELECT ?l WHERE {
         """
         try:
             logger.info(f"Starting workflow execution for conversation {state.conversation_id}")
+
+            _clear_stale_lane_results(state)
 
             # B.2: Check response cache before running the full pipeline
             if self.response_cache:

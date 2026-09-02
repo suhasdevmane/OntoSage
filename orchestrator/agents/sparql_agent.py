@@ -598,7 +598,10 @@ Your Answer:"""
         register is too large to hand over whole — in both cases the normal path runs.
         """
         try:
-            from orchestrator.services.record_registry import held_record_class, record_classes
+            from orchestrator.services.record_registry import (
+                held_record_class,
+                record_classes,
+            )
 
             record = held_record_class(user_query, await record_classes())
         except Exception as exc:  # pragma: no cover - never block on this

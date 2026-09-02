@@ -194,7 +194,9 @@ class ReportIntakeService:
                 "report_id": report_id,
                 "category": category,
                 "priority": priority,
-                "message": self._acknowledgment(report_id, category, priority, location, device),
+                "message": self._acknowledgment(
+                    report_id, category, priority, location, device, space_iri
+                ),
             }
         except Exception as e:
             logger.error(f"[report_intake] create failed: {e}", exc_info=True)
@@ -622,6 +624,7 @@ class ReportIntakeService:
         priority: str,
         location: Optional[str],
         device: Optional[str],
+        space_iri: Optional[str] = None,
     ) -> str:
         cat_label = {
             "maintenance": "Maintenance request",
@@ -647,6 +650,22 @@ class ReportIntakeService:
             "An administrator has been notified and will review it. "
             f'You can check progress any time by asking *"what\'s the status of {report_id}"*.',
         ]
+        # CAVEAT-380: 113 of bldg1's 203 reports carry neither a location nor a space_iri, so
+        # recurrence -- "is this the same problem in the same place again?" -- is computed
+        # over 44% of the intake data. A report filed without a place cannot be attributed to
+        # one afterwards, which makes THIS the only moment the gap can still be closed: the
+        # reporter is present and knows where they are.
+        #
+        # Asked, never demanded. Refusing to log a report because someone did not say where
+        # they were would lose the report entirely, and a safety report is worth more
+        # placeless than not at all.
+        if not location and not space_iri:
+            lines += [
+                "",
+                "📍 I couldn't tell **where** this is. If you reply with the room, floor or "
+                "area, I'll attach it — that is what lets the building notice when the same "
+                "problem keeps coming back in the same place.",
+            ]
         if priority == "URGENT":
             lines.append(
                 "\n⚠️ This looks **urgent** — if it is a fire, gas, flood or injury "

@@ -26,8 +26,8 @@ pytestmark = pytest.mark.unit
     "question,expected",
     [
         # the graded failure, with and without its typo
-        ("Why dose the temperature keep changing?", ("temperature", "high")),
-        ("Why does the temperature keep changing?", ("temperature", "high")),
+        ("Why dose the temperature keep changing?", ("temperature", "variability")),
+        ("Why does the temperature keep changing?", ("temperature", "variability")),
         # the word boundary that swallowed humidity
         ("why is the humidity high?", ("humidity", "high")),
         ("why is relative humidity so high in the lab?", ("humidity", "high")),
@@ -106,3 +106,51 @@ def test_the_base_forms_still_work():
     assert is_why_question("why is it warm?") == ("temperature", "high")
     assert is_why_question("why is it chilly?") == ("temperature", "low")
     assert is_why_question("why is it stuffy?") == ("co2", "high")
+
+
+# ── CAVEAT-384: a direction nobody stated must not be invented ────────────────────────
+
+
+import pytest as _pytest  # noqa: E402
+
+
+@_pytest.mark.parametrize(
+    "question",
+    [
+        "Why does the temperature keep changing?",
+        "Why dose the temperature keep changing?",  # the original typo, verbatim
+        "Why is the humidity fluctuating so much?",
+        "Why is the temperature so unstable in here?",
+        "Why does the CO2 swing up and down all day?",
+        "Why is the temperature all over the place?",
+    ],
+)
+def test_a_stability_question_is_not_answered_as_a_high_one(question):
+    """ "Keeps changing" asks about STABILITY. "It is high" does not answer it at all.
+
+    The default direction used to be "high", so a variability question was silently turned
+    into a level question with a direction the asker never supplied. Currently harmless only
+    because the direction stays out of the prose — a previous fix had to strip "(higher now)"
+    from the output because it contradicted the matched comparison beneath it.
+    """
+    hit = is_why_question(question)
+    assert hit is not None, f"no longer diagnosable: {question}"
+    assert hit[1] == "variability", f"{question!r} -> {hit}, expected a variability reading"
+
+
+@_pytest.mark.parametrize(
+    "question, direction",
+    [
+        ("Why is the temperature so high?", "high"),
+        ("Why is the humidity low today?", "low"),
+        ("Why is the illuminance below target?", "low"),
+    ],
+)
+def test_a_stated_direction_still_wins(question, direction):
+    """The safety property: variability must not swallow questions that DO state a level."""
+    assert is_why_question(question)[1] == direction
+
+
+def test_a_lay_term_keeps_its_own_direction():
+    """ "Chilly" carries a direction of its own and must not be reread as variability."""
+    assert is_why_question("Why does it keep feeling chilly in here?")[1] == "low"

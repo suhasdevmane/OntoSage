@@ -616,7 +616,10 @@ class CapabilityAgent:
         # the answer just given — so it is read from the saved state rather than from this
         # turn's, which is still empty.
         try:
-            from orchestrator.services.answer_provenance import is_provenance_question, render
+            from orchestrator.services.answer_provenance import (
+                is_provenance_question,
+                render,
+            )
 
             _wants_provenance = is_provenance_question(state.user_message or "")
         except Exception:  # pragma: no cover - never block the lane on this

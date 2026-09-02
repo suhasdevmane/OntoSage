@@ -55,6 +55,12 @@ logger = get_logger(__name__)
 #: was two copies of one step drifting; T02 shipped a second copy of the lane list which had
 #: already drifted from the one in ``_response_node``. Documentation is not a source of truth
 #: about code, and a table of key names has to be checked against the code that writes them.
+#: Intents whose ACT is a comparison, regardless of which lane computed the numbers.
+#: `compare` is the canonical name and `comparison` its declared alias in
+#: intent_definitions.yaml; both are listed so an alias arriving on the bus is not silently
+#: mislabelled. Intent names, not building terms -- this holds for every building.
+_COMPARISON_INTENTS = frozenset({"compare", "comparison"})
+
 _LANE_SEMANTICS: Sequence[tuple] = (
     ("forecast_result", Operation.FORECAST, AnswerStatus.PREDICTED),
     ("deliberate_result", Operation.RECOMMENDATION, AnswerStatus.RECOMMENDED),
@@ -104,10 +110,57 @@ T02_LANES: Sequence[str] = (
 _REFUSAL_LANES = ("privacy_refusal_result", "control_result")
 
 
+#: Lanes whose evidence IS rows. For these, an empty result set means the lane ran and found
+#: nothing — which is a different claim from the lane not having run, and a very different
+#: claim from the lane having observed something.
+#:
+#: The prose lanes are deliberately absent. A capability or document answer's evidence is the
+#: passage itself, so "no rows" says nothing about whether it found anything.
+_ROW_BEARING_LANES = frozenset(
+    {"sql_result", "sparql_result", "analytics_result", "events_result", "register_result"}
+)
+
+
+def lane_produced_evidence(key: str, value: Any) -> bool:
+    """Did this lane actually produce evidence, or did it merely run? (BUG-386)
+
+    A lane result is a dict, and a dict with zero rows in it is still truthy — so a lane that
+    ran, found nothing, and had a refusal composed around it was indistinguishable from one
+    that observed something. Measured across the V7 gate candidates: Q393, Q424, Q404, AO-035
+    and Q041 all carry ``answer_status=observed`` while their text refuses outright. Q040 says
+    it plainly — *"I found 1 sensor in the ontology, but none of their identifiers appear in
+    the store they are registered to"* — and the record still called that an OBSERVATION.
+
+    Judged STRUCTURALLY, from ``success`` and the row count the lane already reports. Reading
+    the prose to decide whether it was a refusal is what the regression gate does, and that
+    approach moved its own blocking count from 3 to 22 over one unchanged capture without the
+    system changing at all. The lanes already declare this; nothing needs to guess.
+    """
+    if not isinstance(value, dict):
+        return bool(value)
+    if value.get("success") is False:
+        return False
+    if key in _ROW_BEARING_LANES:
+        res = value.get("results")
+        if isinstance(res, dict):
+            data = res.get("data")
+            if isinstance(data, (list, tuple)) and not data:
+                return False
+        elif isinstance(res, (list, tuple)) and not res:
+            return False
+    return True
+
+
 def infer_lane(results: Dict[str, Any]) -> Optional[str]:
-    """Which lane shaped this answer."""
+    """Which lane shaped this answer — the first that actually produced evidence.
+
+    Skipping the empty ones matters twice over. It stops an empty lane from stamping its
+    status on the record, and it stops an empty EARLIER lane from masking a later one that
+    did find something: the table is ordered, so an empty ``analytics_result`` used to claim
+    an answer that the ``sql_result`` below it had actually produced.
+    """
     for key, _op, _st in _LANE_SEMANTICS:
-        if results.get(key):
+        if lane_produced_evidence(key, results.get(key)):
             return key
     return None
 
@@ -1014,6 +1067,28 @@ def build_evidence_record(
     ents = results.get("entities") or []
     if ents and isinstance(ents, list):
         rec.interpreted_location = str(ents[0])
+
+    # CAVEAT-365: comparison is an ACT, and the lane table above cannot express it.
+    #
+    # `compare` is a `data` pipeline intent with no lane of its own -- it flows through
+    # sparql -> sql -> analytics -- so every comparison was labelled OBSERVATION or
+    # CALCULATION depending on which of those happened to produce the numbers. Neither
+    # names what the system did: it set two or more things against each other and reported
+    # how they differ. The corpus asks for that more often than any other single operation,
+    # and it had no member at all, because the taxonomy was derived from six of the
+    # thirty-seven catalogues and never re-derived.
+    #
+    # Applied AFTER the lane table and only when a lane actually produced evidence. A
+    # declined or unsupported comparison has no act worth relabelling, and overwriting
+    # NOT_ASSESSABLE here would dress a refusal up as something the system performed.
+    if lane and str(results.get("intent") or "").strip().lower() in _COMPARISON_INTENTS:
+        rec.operation = Operation.COMPARISON
+        # Only from referents the dialogue lane actually extracted, and only when there are
+        # at least two -- with one referent there is nothing to compare against, and naming
+        # a baseline the user never mentioned is the fabrication this record exists to
+        # prevent. Empty is the honest value when the referents are not known.
+        if isinstance(ents, list) and len(ents) >= 2:
+            rec.comparison_baseline = ", ".join(str(e) for e in ents[1:4])
     tr = results.get("time_range") or {}
     if isinstance(tr, dict) and (tr.get("start") or tr.get("end")):
         rec.requested_period = f"{tr.get('start') or 'unbounded'} to {tr.get('end') or 'now'}"
@@ -1080,9 +1155,31 @@ def build_evidence_record(
                 rec.latest_evidence_at = max(stamps)
 
     # Whatever the lane asserted overrides inference.
+    #
+    # Enum-valued fields are COERCED. A lane hands up plain JSON, so it says
+    # `{"status": "not_assessable"}` — and assigning that raw string left the record holding
+    # a str where every reader expects an AnswerStatus. It serialises to exactly the same
+    # JSON, so the API response looked correct while `rec.status is
+    # AnswerStatus.NOT_ASSESSABLE` was quietly False: a refusal that reads as a refusal on
+    # the wire and as something else in code. Caught by a unit test after the live check had
+    # already been declared green.
+    _ENUM_FIELDS = {
+        "status": AnswerStatus,
+        "operation": Operation,
+        "spatial_adequacy": SpatialAdequacy,
+    }
     for field_name, value in (partial or {}).items():
         if value is None or not hasattr(rec, field_name):
             continue
+        enum_cls = _ENUM_FIELDS.get(field_name)
+        if enum_cls is not None and not isinstance(value, enum_cls):
+            try:
+                value = enum_cls(str(value))
+            except ValueError:
+                logger.warning(
+                    f"[evidence] lane supplied an unknown {field_name}={value!r}; ignoring"
+                )
+                continue
         try:
             setattr(rec, field_name, value)
         except Exception:
@@ -1142,8 +1239,22 @@ def build_evidence_record(
             # suppresses every candidate), and replacing the list would silently discard it,
             # putting the record back to being unable to explain its own change.
             _declared = list(rec.gates_applied or [])
-            _fired = [v.gate for v in gate_verdicts if getattr(v, "blocks", False)]
-            rec.gates_applied = _declared + [g for g in _fired if g not in _declared]
+            # The REASON travels with the gate, not just its name.
+            #
+            # This recorded `v.gate` alone while the advisory list recorded "gate: reason",
+            # so promoting a gate from advisory to enforcing made the record LESS
+            # informative: the freshness verdict went from "freshness: the newest co2 reading
+            # is 7390 minutes old, beyond the 15-minute limit" to the bare word "freshness".
+            # The age is the whole point of the downgrade — the user's decision was to report
+            # the last recorded reading WITH its age — and it was being dropped at exactly
+            # the moment the gate started acting on it.
+            _fired = [
+                f"{v.gate}: {v.reason}" if getattr(v, "reason", "") else str(v.gate)
+                for v in gate_verdicts
+                if getattr(v, "blocks", False)
+            ]
+            _names = {g.split(":", 1)[0] for g in _declared}
+            rec.gates_applied = _declared + [g for g in _fired if g.split(":", 1)[0] not in _names]
 
             # An ADVISORY failure changes no answer, so unless it is recorded here it leaves no
             # trace at all -- and shadow mode exists precisely to be read before enforcing.

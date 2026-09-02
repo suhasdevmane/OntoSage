@@ -40,11 +40,23 @@ def test_answer_status_has_exactly_the_six_master_report_members():
     ]
 
 
-def test_operation_covers_the_seven_labels_the_catalogues_require():
+def test_operation_covers_the_eight_acts_the_catalogues_require():
+    """Eight since CAVEAT-365. The list is pinned so it cannot drift silently.
+
+    It was seven, and the seven were derived when only SIX of the thirty-seven stakeholder
+    catalogues had been extracted. Nothing re-derived the taxonomy when the other 31
+    arrived, so COMPARISON — the most demanded act in the corpus — had no member, and every
+    comparison was labelled with whatever lane computed it.
+
+    Update this list in the SAME commit as any change to `Operation`, the way the routing
+    contract's precedence order is pinned. A pin that is edited afterwards to make a suite
+    green is not a pin.
+    """
     assert {o.value for o in Operation} == {
         "observation",
         "authoritative_lookup",
         "calculation",
+        "comparison",
         "estimate",
         "forecast",
         "diagnosis",

@@ -9,7 +9,7 @@ sys.path.append("/app")
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 from orchestrator.llm_manager import TaskType, llm_manager
@@ -18,6 +18,28 @@ from orchestrator.services.prompt_builder import get_prompt_builder
 from shared.config import settings
 from shared.models import ConversationState
 from shared.utils import get_logger
+
+
+def _parse_window_start(value: Optional[str]) -> Optional[datetime]:
+    """The start of the requested window as a datetime, or None when it is not a date.
+
+    None means "no bounded window", and the caller must then skip the coverage check
+    entirely: with no start there is nothing a store can be shown to predate, so dropping a
+    point would be a guess rather than a proof.
+    """
+    text = str(value or "").strip()
+    if not text:
+        return None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(text[: len(fmt) + 2].strip(), fmt)
+        except ValueError:
+            continue
+    try:
+        return datetime.fromisoformat(text)
+    except ValueError:
+        return None
+
 
 logger = get_logger(__name__)
 
@@ -338,6 +360,30 @@ class SQLAgent:
             # Continue with valid UUIDs only
             uuids = valid_uuids
 
+            # Set aside points whose store PROVABLY predates the window (BUG-378).
+            #
+            # Room 5.04 has two temperature points: the real sensor in the wide store, with
+            # 1,045 readings on the date asked about, and a synthetic `_sat_` overlay point on
+            # a narrow table frozen five days earlier. Reading the second and reporting "No
+            # data found" is not a data gap, it is a selection defect — and it is broad: 665
+            # of the 728 points on the eight frozen stores are that same overlay shadowing a
+            # live sensor.
+            #
+            # Conservative by construction. Only a store whose newest reading is proven to
+            # predate the window is dropped; UNKNOWN is kept, so a probe failure can never
+            # silence a sensor. And if this would drop EVERYTHING, nothing is dropped — the
+            # frozen reading is then the only evidence there is, and the freshness gate is
+            # what says it is old. Discarding it here would replace a stale answer with none.
+            skipped_reasons: Dict[str, str] = {}
+            if len(uuids) > 1 and start_date:
+                try:
+                    uuids, skipped_reasons = await self._drop_uncoverable_uuids(
+                        uuids, storage_map, start_date
+                    )
+                except Exception as exc:  # never let a freshness probe break a fetch
+                    logger.warning(f"[sql] store-coverage check skipped: {exc}")
+                    skipped_reasons = {}
+
             # Group UUIDs by storage location.
             # _resolve_storage_key extracts the fragment from any URI form:
             #   "bldg:database1"  →  "database1"
@@ -647,12 +693,25 @@ Return ONLY the SQL query, no markdown, no explanations.
                     f"below are averages over each interval, not instantaneous readings._\n\n"
                 ) + formatted
 
+            # Points set aside because their store predates the window are NAMED (BUG-378).
+            # Dropping a point the question named and then answering from the rest changes
+            # the question without saying so; naming it is what makes the omission checkable.
+            if skipped_reasons:
+                from orchestrator.services.store_coverage import describe_skipped
+
+                _note = describe_skipped(skipped_reasons, sensor_metadata)
+                if _note:
+                    formatted = f"{formatted}\n\n_{_note}_"
+
             return {
                 "success": True,
                 "query": "Multiple Queries (Storage Aware)",
                 "results": standardized_data,  # Standardized JSON for Analytics
                 "formatted_response": formatted,
                 "analytics_required": True,
+                # Which points were not read, and why — carried so the evidence record can
+                # state the omission rather than leaving it only in the prose.
+                "points_omitted": dict(skipped_reasons),
                 # The clamp that shaped these rows, "" when none did — so the evidence
                 # record can state the resolution actually served rather than inferring
                 # it from timestamps that now describe buckets.
@@ -664,6 +723,72 @@ Return ONLY the SQL query, no markdown, no explanations.
         except Exception as e:
             logger.error(f"Fetch data for UUIDs failed: {e}")
             return {"success": False, "error": str(e)}
+
+    async def _drop_uncoverable_uuids(
+        self,
+        uuids: List[str],
+        storage_map: Optional[Dict[str, str]],
+        start_date: str,
+    ) -> Tuple[List[str], Dict[str, str]]:
+        """Drop points whose store cannot hold anything in the window. See BUG-378.
+
+        Returns (kept, {dropped_uuid: why}). The all-or-nothing guard is the important part:
+        if every point would be dropped, none is. A stale reading is still evidence about the
+        recent past, and the freshness gate exists to label it as such — throwing it away here
+        would turn "this is five days old" into "there is nothing", which is a worse answer
+        and a false one.
+        """
+        from orchestrator.services import store_coverage
+
+        window_start = _parse_window_start(start_date)
+        if window_start is None:
+            return uuids, {}
+
+        by_store: Dict[str, List[str]] = {}
+        for uid in uuids:
+            by_store.setdefault(store_coverage._store_key((storage_map or {}).get(uid)), []).append(
+                uid
+            )
+
+        latest_by_store: Dict[str, Optional[datetime]] = {}
+        latest_by_uuid: Dict[str, Optional[datetime]] = {}
+        for store, store_uuids in sorted(by_store.items()):
+            if not store:
+                continue
+            try:
+                adapter = adapter_registry.get(store)
+            except Exception:
+                adapter = None
+            if adapter is None:
+                continue
+            # PER-SENSOR freshness where the adapter can report it, because a store's
+            # MAX(timestamp) is not a statement about any particular sensor in it. Measured:
+            # noise_data holds 236 uuids and ONE has written in the last 24h; light_data 242
+            # with one; occupancy_data 280 with six. A store-level check calls all three
+            # current while 99% of their points are eight days dead. Across bldg1's narrow
+            # tables only 19 of ~933 points are live.
+            per_uuid = getattr(adapter, "latest_by_uuid", None)
+            if per_uuid is not None:
+                try:
+                    latest_by_uuid.update(await per_uuid(store_uuids))
+                    continue
+                except Exception as exc:
+                    logger.warning(f"[sql] per-uuid freshness failed for {store}: {exc}")
+            # Wide tables keep the store-level check: a sensor is a COLUMN there and the
+            # publisher writes whole rows, so the table's newest row does describe them all.
+            latest_by_store[store] = await store_coverage.latest_observation(store, adapter)
+
+        kept, dropped, reasons = store_coverage.partition_by_coverage(
+            uuids, storage_map, latest_by_store, window_start, latest_by_uuid=latest_by_uuid
+        )
+        if not kept:
+            return uuids, {}
+        if dropped:
+            logger.info(
+                f"[sql] set aside {len(dropped)} point(s) whose store predates the window: "
+                f"{sorted(reasons.values())[:2]}"
+            )
+        return kept, reasons
 
     async def _get_all_db_columns(self) -> set:
         """Get all column names from the default adapter (for UUID validation)."""

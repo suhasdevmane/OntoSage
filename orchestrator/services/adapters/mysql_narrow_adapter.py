@@ -16,7 +16,8 @@ short-circuits the wide builder with a native narrow SELECT.
 from __future__ import annotations
 
 import re
-from typing import List, Optional, Set
+from datetime import datetime
+from typing import Dict, List, Optional, Set
 
 from orchestrator.services.adapters.mysql_adapter import MySQLAdapter
 from orchestrator.services.database_adapter import AdapterType, SchemaInfo
@@ -95,6 +96,60 @@ class MySQLNarrowAdapter(MySQLAdapter):
             logger.error(f"MySQLNarrowAdapter[{self._table}].get_columns failed: {e}")
         self._columns_cache = cols
         return cols
+
+    async def latest_by_uuid(self, uuids: List[str]) -> Dict[str, Optional[datetime]]:
+        """Newest timestamp PER SENSOR, because a narrow table's sensors are rows.
+
+        Store-level freshness is misleading here and measurably so. `noise_data` holds 236
+        sensors and exactly ONE of them has written in the last 24 hours; `light_data` 242
+        with one; `occupancy_data` 280 with six. `MAX(datetime)` over any of those tables
+        reports today, so a store-level check calls it current while 235 of its 236 points
+        have been dead since 2026-08-25. Across bldg1's narrow tables just 19 of ~933 points
+        are live — exactly the 19 in the publisher's uuid map.
+
+        One GROUP BY covers the whole request, so this costs a single query however many
+        sensors are asked about. A uuid absent from the result has no rows at all and is
+        reported as None — UNKNOWN, never "stale", the same contract as latest_timestamp.
+        """
+        wanted = [u for u in dict.fromkeys(uuids) if _UUID_RE.match(str(u))]
+        if not wanted:
+            return {}
+        quoted = ", ".join(f"'{u}'" for u in wanted)
+        result = await self.execute_query(
+            f"SELECT `uuid`, MAX(`datetime`) AS `latest` FROM `{self._table}` "
+            f"WHERE `uuid` IN ({quoted}) GROUP BY `uuid`"
+        )
+        if not getattr(result, "success", False):
+            # EMPTY, not all-None. A caller reads a present key with a None value as "this
+            # sensor was looked up and has no rows" — proof of absence. Returning that for a
+            # failed query would mark every sensor in the request dead on a transient
+            # database error, which is the direction that silences working sensors.
+            return {}
+        out: Dict[str, Optional[datetime]] = {u: None for u in wanted}
+        for row in getattr(result, "data", None) or []:
+            raw = row.get("latest")
+            if isinstance(raw, datetime):
+                out[str(row.get("uuid"))] = raw
+            elif raw:
+                try:
+                    out[str(row.get("uuid"))] = datetime.fromisoformat(str(raw))
+                except (TypeError, ValueError):
+                    pass
+        return out
+
+    async def _timestamp_column(self) -> Optional[str]:
+        """Always `datetime` — the narrow contract, not a discovered name.
+
+        The inherited implementation discovers the time column from ``get_columns()``, which
+        on this adapter returns the DISTINCT uuids rather than column names: a narrow table's
+        sensors are rows, not columns. Discovery would therefore find nothing and
+        ``latest_timestamp`` would report UNKNOWN for every narrow store — silently disabling
+        the staleness check on exactly the eight tables it was written for (CAVEAT-361).
+
+        `(uuid, datetime, value)` is the definition of a narrow table here, so naming the
+        column is a statement of that contract rather than a building literal.
+        """
+        return "datetime"
 
     def get_dialect_hints(self) -> str:
         return (
