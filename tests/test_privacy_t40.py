@@ -163,7 +163,9 @@ def test_a_possessive_without_a_quantity_is_not_a_privacy_violation(question):
     A refusal that lands on an ordinary question is not a safe default. It teaches
     people the system is broken, and it hides the refusals that matter.
     """
-    from orchestrator.services.privacy.inference_classes import INDIVIDUAL_ATTRIBUTION_RE
+    from orchestrator.services.privacy.inference_classes import (
+        INDIVIDUAL_ATTRIBUTION_RE,
+    )
 
     assert not INDIVIDUAL_ATTRIBUTION_RE.search(question), question
 
@@ -184,7 +186,9 @@ def test_a_possessive_without_a_quantity_is_not_a_privacy_violation(question):
 )
 def test_actual_individual_attribution_is_still_refused(question):
     """Narrowing the pattern must not open the hole it exists to close."""
-    from orchestrator.services.privacy.inference_classes import INDIVIDUAL_ATTRIBUTION_RE
+    from orchestrator.services.privacy.inference_classes import (
+        INDIVIDUAL_ATTRIBUTION_RE,
+    )
 
     assert INDIVIDUAL_ATTRIBUTION_RE.search(question), question
 
@@ -192,7 +196,9 @@ def test_actual_individual_attribution_is_still_refused(question):
 def test_a_cue_in_the_next_sentence_does_not_rescue_the_match():
     """The lookahead stops at sentence end, so an unrelated following sentence
     cannot turn a possessive into an attribution question."""
-    from orchestrator.services.privacy.inference_classes import INDIVIDUAL_ATTRIBUTION_RE
+    from orchestrator.services.privacy.inference_classes import (
+        INDIVIDUAL_ATTRIBUTION_RE,
+    )
 
     assert not INDIVIDUAL_ATTRIBUTION_RE.search(
         "Where can I fill my water bottle? Also show total usage."

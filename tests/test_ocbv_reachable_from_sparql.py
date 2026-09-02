@@ -34,15 +34,23 @@ def test_the_query_prefix_block_declares_the_vocabulary(prefix):
     from orchestrator.agents.sparql_agent import EXTENDED_PREFIXES
 
     block = "\n".join(EXTENDED_PREFIXES)
-    assert f"PREFIX {prefix}" in block, f"{prefix} is not declared — any query using it is a syntax error"
+    assert (
+        f"PREFIX {prefix}" in block
+    ), f"{prefix} is not declared — any query using it is a syntax error"
 
 
 # ── concept classes must come back as CURIEs, whatever the vocabulary ────────
 @pytest.mark.parametrize(
     "iri,expected",
     [
-        ("https://brickschema.org/schema/Brick#Occupancy_Count_Sensor", "brick:Occupancy_Count_Sensor"),
-        ("http://ontosage.org/capabilities#Parking_Occupancy_Sensor", "ontosage:Parking_Occupancy_Sensor"),
+        (
+            "https://brickschema.org/schema/Brick#Occupancy_Count_Sensor",
+            "brick:Occupancy_Count_Sensor",
+        ),
+        (
+            "http://ontosage.org/capabilities#Parking_Occupancy_Sensor",
+            "ontosage:Parking_Occupancy_Sensor",
+        ),
         ("http://ontosage.org/hbco#Something", "hbco:Something"),
     ],
 )
@@ -109,9 +117,7 @@ def test_specificity_needs_no_network():
 
     # And judge the CODE, not the docstring — which names _execute_query on purpose.
     code = "\n".join(
-        line
-        for line in inspect.getsource(fn).split("\n")
-        if not line.lstrip().startswith("#")
+        line for line in inspect.getsource(fn).split("\n") if not line.lstrip().startswith("#")
     )
     body = code.split('"""')[-1]  # everything after the docstring
     assert "await" not in body
@@ -120,7 +126,7 @@ def test_specificity_needs_no_network():
 
 # ── a generic template must not claim a question a concept already owns ──────
 def test_the_space_count_template_yields_to_a_resolved_concept():
-    """"How many parking SPACES are free?" contains a zone word and asks for a count, so
+    """ "How many parking SPACES are free?" contains a zone word and asks for a count, so
     the generic space-count template claimed it and answered 294 — the building's room
     count — for a question about parking availability, while the sensor that answers it
     sat behind the resolved class."""

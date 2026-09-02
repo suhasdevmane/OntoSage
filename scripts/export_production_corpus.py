@@ -27,7 +27,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 try:
     from qdrant_client import QdrantClient
-    from qdrant_client.models import Filter, FieldCondition, MatchAny
+    from qdrant_client.models import FieldCondition, Filter, MatchAny
 
     _QDRANT_OK = True
 except ImportError:

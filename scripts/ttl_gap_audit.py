@@ -39,7 +39,8 @@ try:
             return r.status_code, r.json()
 
 except ImportError:
-    import urllib.request, urllib.error
+    import urllib.error
+    import urllib.request
 
     def _post(url, payload, timeout=45):
         data = json.dumps(payload).encode()

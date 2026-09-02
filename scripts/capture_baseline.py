@@ -22,12 +22,10 @@ import hashlib
 import json
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from datetime import datetime
 from pathlib import Path
-
-import urllib.request
-import urllib.error
-
 
 ROOT = Path(__file__).resolve().parent.parent
 QDRANT_URL = "http://localhost:6333"

@@ -20,10 +20,10 @@ Usage:
 """
 
 import argparse
-import os
-import sys
 import json
+import os
 import re
+import sys
 import textwrap
 from pathlib import Path
 from typing import Optional

@@ -277,7 +277,12 @@ def main(argv: List[str]) -> int:
         "FIRST N, which on a bank ordered by source means one source; --every spreads the "
         "sample across all of them and is reproducible, so two runs compare like with like.",
     )
-    ap.add_argument("--source", default="", help="only this Source value")
+    ap.add_argument(
+        "--source",
+        default="",
+        help="only these Source values (comma-separated). To reproduce the golden "
+        "baseline's question set: --source v5_synthetic_bank,supervisor_catalogue_2026-08",
+    )
     ap.add_argument("--resume", default="", help="timestamp of a run to continue")
     ap.add_argument(
         "--no-retry-failed",
@@ -288,7 +293,17 @@ def main(argv: List[str]) -> int:
 
     rows = list(csv.DictReader(BANK.read_text(encoding="utf-8-sig").splitlines()))
     if args.source:
-        rows = [r for r in rows if r.get("Source") == args.source]
+        # Comma-separated, because the set a regression run needs is usually "the sources the
+        # baseline was captured from" and that is more than one. The bank grew from 1,580 to
+        # 4,060 when the 37 stakeholder catalogues were extracted into it; re-running the
+        # whole bank against a 1,580-question baseline spends ~17 hours to ask 2,480
+        # questions that can only ever come back as "added" and cannot inform a regression
+        # verdict. Naming the baseline's own sources keeps the comparison like-for-like.
+        wanted = {s.strip() for s in args.source.split(",") if s.strip()}
+        rows = [r for r in rows if r.get("Source") in wanted]
+        if not rows:
+            print(f"no questions match --source {sorted(wanted)}; nothing to capture")
+            return 2
     if args.every and args.every > 1:
         rows = rows[:: args.every]
     if args.limit:

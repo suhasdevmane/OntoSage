@@ -11,7 +11,11 @@ from __future__ import annotations
 
 import pytest
 
-from orchestrator.services.evidence.precedence import RANK, SourceClaim, _DEFAULT_KIND_TIER
+from orchestrator.services.evidence.precedence import (
+    _DEFAULT_KIND_TIER,
+    RANK,
+    SourceClaim,
+)
 
 pytestmark = pytest.mark.unit
 

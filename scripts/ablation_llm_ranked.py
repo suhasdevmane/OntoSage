@@ -32,7 +32,10 @@ from orchestrator.services.deliberation.coverage_audit import (  # noqa: E402
     CoverageAuditor,
     load_modalities,
 )
-from orchestrator.services.deliberation.live import active_identity, sparql_exec  # noqa: E402
+from orchestrator.services.deliberation.live import (  # noqa: E402
+    active_identity,
+    sparql_exec,
+)
 
 # the same single-cue tasks the grader can score exactly
 _TASKS: List[Tuple[str, str, str, Optional[str]]] = [

@@ -706,6 +706,54 @@ _LEVEL_NAMES = {
 }
 
 
+def run_health(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Latency profile and transport failures for a run (CAVEAT-381).
+
+    Two runs are only comparable when their latency profiles are, and nothing in this
+    harness used to say what a run's profile was. Measured: the V7 probe scored 29.7%
+    computed against 36.0% for the previous run and read as a regression. Four of the
+    seventeen lost answers were TIMEOUTs on a loaded machine -- p90 had doubled from 35s to
+    83s between the runs -- and three of those four answered normally when re-asked. The
+    capability had not changed at all; the machine had.
+
+    So the score is never reported alone again. `comparable` is deliberately conservative:
+    it says whether the run is fit to be compared, not whether it is good.
+    """
+    lat = sorted(float(r["elapsed_s"]) for r in rows if str(r.get("elapsed_s") or "").strip())
+    timeouts = sum(1 for r in rows if "TIMEOUT" in str(r.get("status") or "").upper())
+    degraded = sum(1 for r in rows if "DEGRADED" in str(r.get("status") or "").upper())
+
+    def pct(p: float) -> float:
+        return lat[min(int(len(lat) * p), len(lat) - 1)] if lat else 0.0
+
+    p50, p90 = (pct(0.5), pct(0.9)) if lat else (0.0, 0.0)
+    warnings: List[str] = []
+    if timeouts:
+        warnings.append(
+            f"{timeouts} question(s) TIMED OUT — those are machine load, not capability. "
+            "Re-ask them before reading any change in the score."
+        )
+    if degraded:
+        warnings.append(f"{degraded} turn(s) reported a degraded provider; scores exclude them.")
+    # A long tail relative to the median is the signature of a contended machine. The
+    # threshold is a heuristic and says so: it prompts a look, it does not prove anything.
+    if p50 and p90 > 6 * p50:
+        warnings.append(
+            f"p90 ({p90:.0f}s) is more than 6x p50 ({p50:.0f}s) — a heavily contended run. "
+            "Compare with another run only if its profile is similar."
+        )
+    return {
+        "n": len(lat),
+        "p50": p50,
+        "p90": p90,
+        "max": lat[-1] if lat else 0.0,
+        "timeouts": timeouts,
+        "degraded": degraded,
+        "warnings": warnings,
+        "comparable": not warnings,
+    }
+
+
 def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) -> None:
     """Write final per-level report to .md and .csv."""
     invalid_rows = [r for r in rows if r.get("grade") == "invalid-no-response"]
@@ -744,6 +792,8 @@ def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) 
         grade_counts[g] = grade_counts.get(g, 0) + 1
 
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    # Computed over the rows AS SCORED, so the profile describes the run the score came from.
+    health = run_health(rows)
 
     md_lines = [
         "# OntoSage Corpus Replay Report",
@@ -770,6 +820,27 @@ def _generate_report(rows: List[Dict[str, Any]], md_path: Path, csv_path: Path) 
         "> calculation over the building's data. Summing them reported 55.4% coverage on",
         "> a probe whose real computed rate was 17.8%, because 38 of 56 'answers' were",
         "> passages — several of them answering a different question entirely.",
+        "",
+        "## Run health — read this before comparing this score with another run",
+        "",
+        f"| Questions timed | {health['n']} |",
+        "|---|---|",
+        f"| Median (p50) | {health['p50']:.1f}s |",
+        f"| p90 | {health['p90']:.1f}s |",
+        f"| Slowest | {health['max']:.1f}s |",
+        f"| Timed out | {health['timeouts']} |",
+        f"| Provider degraded | {health['degraded']} |",
+        f"| **Fit to compare** | **{'yes' if health['comparable'] else 'NO — see below'}** |",
+        "",
+    ]
+    if health["warnings"]:
+        md_lines += [f"> ⚠️ {w}" for w in health["warnings"]] + [""]
+    md_lines += [
+        "> **CAVEAT-381:** a score means nothing without the profile beside it. The V7 probe",
+        "> scored 29.7% against a previous 36.0% and read as a regression; four of the",
+        "> seventeen lost answers were timeouts on a loaded machine (p90 had doubled, 35s →",
+        "> 83s) and three of the four answered normally when re-asked. Compare two runs only",
+        "> when both say *fit to compare*, or when you have read the rows behind the change.",
         "",
         "## Per-level rates",
         "",
@@ -949,11 +1020,156 @@ def _build_parser() -> argparse.ArgumentParser:
             "l7_stratum, expected_behavior). All rows run; --sample is ignored."
         ),
     )
+    p.add_argument(
+        "--compare",
+        nargs=2,
+        metavar=("BEFORE.csv", "AFTER.csv"),
+        default=None,
+        help=(
+            "compare two finished replay CSVs instead of running one, and classify every "
+            "question whose grade changed (CAVEAT-381). Answers no longer counted are "
+            "split by WHY: declined honestly, broke, or genuinely lost."
+        ),
+    )
     return p
+
+
+#: How a grade transition is classified when a run stops counting an answer as computed.
+#:
+#: The probe used to count grades and nothing else, so a confidently wrong answer and a
+#: correct one scored identically -- and REMOVING wrong answers therefore looked exactly
+#: like losing good ones. Measured: five answers that stopped counting between two V7 runs
+#: had previously been answered FROM THE WRONG SOURCE (infrastructure investments from
+#: risk-assessment records; room conditions from asset condition-survey grades). Those are
+#: the fix working. Four others were timeouts, and four returned nothing. One number, four
+#: unrelated causes.
+_BROKE_STATUSES = ("TIMEOUT", "HTTP", "DEGRADED")
+
+
+def classify_grade_change(before: Dict[str, str], after: Dict[str, str]) -> Tuple[str, str]:
+    """Why a question's grade changed, in the gate's vocabulary rather than a delta."""
+    b_grade, a_grade = (before.get("grade") or ""), (after.get("grade") or "")
+    a_status = str(after.get("status") or "").upper()
+    if b_grade == a_grade:
+        return "unchanged", b_grade
+    b_computed, a_computed = b_grade in COMPUTED_GRADES, a_grade in COMPUTED_GRADES
+
+    if b_computed and not a_computed:
+        # Machine, not capability. Named first because it is the cause most likely to be
+        # misread as a regression, and the cheapest to rule out by re-asking.
+        if any(s in a_status for s in _BROKE_STATUSES):
+            return "broke", f"{b_grade} -> {a_grade} ({a_status}) — re-ask before reading this"
+        if a_grade == "honest-capability-answer":
+            return "tightened", f"{b_grade} -> honest decline — confirm the old answer was right"
+        if a_grade == "document-quoted":
+            # Not a loss. BUG-370 added `document-quoted` precisely because pasted passages
+            # were being counted as computations -- 38 of 56 "answers" on one probe were
+            # passages, several answering a different question entirely, and summing them
+            # reported 55.4% coverage against a real 17.8%. A computed -> quoted transition
+            # across a grader change is the fix landing. Across two runs on the SAME grader
+            # it would be a real behaviour change, and the grades alone cannot tell which,
+            # so it gets its own bucket and says what to check rather than guessing.
+            return "requoted", f"{b_grade} -> document-quoted — quotation, not computation"
+        return "lost", f"{b_grade} -> {a_grade}"
+
+    if a_computed and not b_computed:
+        return "gained", f"{b_grade} -> {a_grade}"
+    return "changed", f"{b_grade} -> {a_grade}"
+
+
+def compare_runs(before_csv: Path, after_csv: Path) -> str:
+    """A report on what changed between two replay runs, and why."""
+    b_rows = {
+        r["qid"]: r
+        for r in csv.DictReader(before_csv.read_text(encoding="utf-8-sig").splitlines())
+        if r.get("qid")
+    }
+    a_rows = {
+        r["qid"]: r
+        for r in csv.DictReader(after_csv.read_text(encoding="utf-8-sig").splitlines())
+        if r.get("qid")
+    }
+    shared = sorted(set(b_rows) & set(a_rows))
+
+    buckets: Dict[str, List[Tuple[str, str, str]]] = {}
+    for qid in shared:
+        verdict, reason = classify_grade_change(b_rows[qid], a_rows[qid])
+        if verdict == "unchanged":
+            continue
+        buckets.setdefault(verdict, []).append((qid, b_rows[qid].get("question", ""), reason))
+
+    b_health, a_health = run_health(list(b_rows.values())), run_health(list(a_rows.values()))
+    b_score = sum(1 for r in b_rows.values() if r.get("grade") in COMPUTED_GRADES)
+    a_score = sum(1 for r in a_rows.values() if r.get("grade") in COMPUTED_GRADES)
+
+    L = [
+        "# Replay comparison",
+        "",
+        f"- **before:** `{before_csv.name}` — {b_score}/{len(b_rows)} computed "
+        f"({100 * b_score / max(len(b_rows), 1):.1f}%), p50 {b_health['p50']:.0f}s / "
+        f"p90 {b_health['p90']:.0f}s, {b_health['timeouts']} timeouts",
+        f"- **after:**  `{after_csv.name}` — {a_score}/{len(a_rows)} computed "
+        f"({100 * a_score / max(len(a_rows), 1):.1f}%), p50 {a_health['p50']:.0f}s / "
+        f"p90 {a_health['p90']:.0f}s, {a_health['timeouts']} timeouts",
+        f"- **compared on:** {len(shared)} questions present in both",
+        "",
+    ]
+    if not (b_health["comparable"] and a_health["comparable"]):
+        L += [
+            "> ⚠️ **These two runs are not straightforwardly comparable.** At least one has",
+            "> timeouts or a heavily skewed latency profile, which moves the score without",
+            "> anything about the system changing. Read the `broke` bucket first.",
+            "",
+        ]
+        for w in b_health["warnings"] + a_health["warnings"]:
+            L.append(f"> - {w}")
+        L.append("")
+
+    order = [
+        ("broke", "Broke — machine, not capability (re-ask these)"),
+        ("tightened", "Tightened — stopped answering, and that may be correct"),
+        ("requoted", "Re-graded as a quotation — a passage that used to count as a computation"),
+        ("lost", "Lost — stopped counting, no benign explanation"),
+        ("gained", "Gained — now computes an answer it did not before"),
+        ("changed", "Changed between two non-computed grades"),
+    ]
+    for key, title in order:
+        items = buckets.get(key) or []
+        if not items:
+            continue
+        L += [f"## {title} ({len(items)})", "", "| qid | Question | Change |", "|---|---|---|"]
+        for qid, q, reason in items[:60]:
+            L.append(f"| {qid} | {str(q).replace('|', '/')[:70]} | {reason} |")
+        L.append("")
+
+    L += [
+        "## How to read this",
+        "",
+        "The headline delta is the least informative number here. `broke` is machine load,",
+        "`tightened` is usually the system refusing to answer from a source that could not",
+        "support the answer, and only `lost` is a candidate regression. A run that removes",
+        "five wrong answers and times out on four scores nine points worse while being",
+        "strictly better — which is exactly what happened once, and is why this exists.",
+        "",
+    ]
+    return "\n".join(L) + "\n"
 
 
 def main() -> int:
     args = _build_parser().parse_args()
+
+    if getattr(args, "compare", None):
+        before, after = Path(args.compare[0]), Path(args.compare[1])
+        missing = [p for p in (before, after) if not p.is_file()]
+        if missing:
+            _safe_print(f"[error] not found: {', '.join(str(p) for p in missing)}")
+            return 1
+        report = compare_runs(before, after)
+        out = _OUTPUT_DIR / f"compare_{before.stem}__{after.stem}.md"
+        out.write_text(report, encoding="utf-8")
+        _safe_print(report)
+        _safe_print(f"[written] {out}")
+        return 0
 
     per_level = args.sample // 6
     if not getattr(args, "strata_source", None) and per_level * 6 != args.sample:

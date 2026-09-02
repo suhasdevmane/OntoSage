@@ -92,10 +92,31 @@ def _mysql(env: dict, as_root: bool = False):
 
 
 def _pick_sensor(cur, table: str, offset: int) -> Optional[str]:
+    """A sensor with enough history, rotating by round so labels never collide.
+
+    The offset WRAPS. It used to grow without bound as `round_no * len(INJECTION_PLAN) + i`,
+    so from about round 8 it walked off the end of every small table — co2_data has 66
+    eligible sensors, humidity_data 72, temperature_data 67 — and those injections were
+    skipped with "no sensor with enough rows". The message says the data is missing; the
+    data was there and the cursor had run past it.
+
+    That silently shrinks the measurement: round 8 injected 4 of 9 planned faults, so recall
+    was computed over whichever detectors happened to survive, and comparing it with an
+    earlier round compared different question sets. Wrapping keeps every round testing the
+    same plan.
+    """
+    cur.execute(
+        f"SELECT COUNT(*) FROM (SELECT uuid FROM `{table}` "  # nosec B608
+        f"GROUP BY uuid HAVING COUNT(*) >= 100) AS eligible"
+    )
+    row = cur.fetchone()
+    eligible = int(row[0]) if row else 0
+    if not eligible:
+        return None
     cur.execute(
         f"SELECT uuid FROM `{table}` GROUP BY uuid HAVING COUNT(*) >= 100 "  # nosec B608
         f"ORDER BY uuid LIMIT 1 OFFSET %s",
-        (offset,),
+        (offset % eligible,),
     )
     row = cur.fetchone()
     return row[0] if row else None

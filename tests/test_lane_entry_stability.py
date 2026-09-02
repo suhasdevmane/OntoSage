@@ -28,9 +28,9 @@ plain floor-plan and wayfinding questions keep their own lanes.
 import pytest
 
 from orchestrator.services.routing_contract import (
-    DELIBERATE_RE,
     _SUPERLATIVE_TAKEOVER_INTENTS,
     _WEAK_INTENTS,
+    DELIBERATE_RE,
 )
 
 pytestmark = pytest.mark.unit

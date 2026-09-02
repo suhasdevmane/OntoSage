@@ -22,15 +22,18 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 _REPO_ROOT = _SCRIPT_DIR.parent
 sys.path.insert(0, str(_REPO_ROOT))
 
-from orchestrator.services.deliberation.amenities import (
+from orchestrator.services.deliberation.amenities import (  # noqa: E402
     build_amenity_ttl,
     plan_amenities,
-)  # noqa: E402
+)
 from orchestrator.services.deliberation.coverage_audit import (  # noqa: E402
     CoverageAuditor,
     load_modalities,
 )
-from orchestrator.services.deliberation.live import active_identity, sparql_exec  # noqa: E402
+from orchestrator.services.deliberation.live import (  # noqa: E402
+    active_identity,
+    sparql_exec,
+)
 
 
 async def _run(dry_run: bool) -> int:

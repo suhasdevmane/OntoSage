@@ -69,7 +69,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-
 ROOT = Path(__file__).resolve().parent.parent
 ENV_FILE = ROOT / ".env"
 BASELINE_DIR = ROOT / "tests" / "baselines"

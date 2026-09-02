@@ -46,7 +46,6 @@ from pathlib import Path
 
 import requests
 
-
 ROOT = Path(__file__).resolve().parent.parent
 QDRANT_URL = "http://localhost:6333"
 
