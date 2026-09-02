@@ -183,8 +183,8 @@ def _build_runtime_registry() -> tuple[Dict[str, PersonaPriors], Dict[str, str]]
     aliases: Dict[str, str] = dict(_ALIASES)
     try:
         # Lazy import to avoid a circular import at module load.
-        from shared.persona_loader import load_persona_overlays
         from shared.config import settings as _settings
+        from shared.persona_loader import load_persona_overlays
 
         overlay_data, overlay_aliases = load_persona_overlays(_settings.BUILDING_ID)
         for name, raw in overlay_data.items():

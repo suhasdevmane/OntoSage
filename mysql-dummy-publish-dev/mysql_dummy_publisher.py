@@ -9,6 +9,7 @@ Requires: pip install PyMySQL
 """
 from __future__ import annotations
 
+import glob
 import json
 import os
 import random
@@ -93,19 +94,56 @@ _NARROW_RANGES = {
     "lux": (0.0, 600.0, 0),
     "vib_mm_s": (0.1, 1.2, 2),
     "runtime_h": (0.0, 1.0, 3),
+    # Added when the publisher was widened from 19 hand-listed points to every point the
+    # ontology registers to a narrow store (BUG-390). Without these the fallback range
+    # applies, and (0, 100) is not merely vague for these modalities — it is impossible.
+    # A CO2 reading of 12 ppm is below the outdoor atmosphere; a room at 3 degrees is not a
+    # plausible office. Generated data still has to be data a building could produce, or the
+    # first thing anyone notices about the system is that its readings are nonsense.
+    "temp_c": (18.0, 26.0, 1),
+    "rh_pct": (30.0, 65.0, 1),
+    "co2_ppm": (400, 1200, 0),
+    "contact": (0, 1, 0),  # a door or window is open or shut, never 0.47
+    "generic": (0.0, 100.0, 2),
 }
 
 
-def load_narrow_sensors(filepath="/app/input/bldg1_timeseries_extension_uuids.json"):
+def _narrow_map_path():
+    """The narrow publish map for whichever building is mounted.
+
+    Prefers the GENERATED complete map (``*_narrow_publish_map.json``, produced by
+    scripts/generate_publisher_map.py from the live graph) and falls back to the older
+    hand-written extension file so a building that has not generated one still publishes
+    something. Discovered by glob rather than named per building, so no building id appears
+    in this service.
+    """
+    override = os.environ.get("NARROW_MAP", "").strip()
+    if override:
+        return override
+    generated = sorted(glob.glob("/app/input/*_narrow_publish_map.json"))
+    if generated:
+        return generated[0]
+    legacy = sorted(glob.glob("/app/input/*_timeseries_extension_uuids.json"))
+    return legacy[0] if legacy else "/app/input/narrow_publish_map.json"
+
+
+def load_narrow_sensors(filepath=None):
     global NARROW_SENSORS
+    filepath = filepath or _narrow_map_path()
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
+        entries = data.values() if isinstance(data, dict) else data
         NARROW_SENSORS = [
-            {"uuid": e["uuid"], "table": e["table"], "value_col": e["value_col"]}
-            for e in data.values()
+            {"uuid": e["uuid"], "table": e["table"], "value_col": e.get("value_col", "generic")}
+            for e in entries
+            if e.get("uuid") and e.get("table")
         ]
-        print(f"[py-dummy] Loaded {len(NARROW_SENSORS)} narrow sensors from {filepath}")
+        tables = sorted({s["table"] for s in NARROW_SENSORS})
+        print(
+            f"[py-dummy] Loaded {len(NARROW_SENSORS)} narrow sensors across "
+            f"{len(tables)} table(s) from {filepath}"
+        )
     except Exception as e:
         print(f"[py-dummy] Narrow sensors not loaded ({filepath}): {e}")
 
@@ -119,20 +157,32 @@ def publish_narrow(conn, verbose=False) -> int:
     """Insert one fresh (uuid, NOW(), value) row into each narrow modality table."""
     if not NARROW_SENSORS:
         return 0
+    # Batched per table. This wrote one INSERT per sensor, which was fine for the 19
+    # hand-listed points and is not for the 1,528 the ontology actually registers: at a
+    # 30-second interval a row-at-a-time loop spends most of the tick in round-trips and can
+    # overrun the interval it is meant to keep. One executemany per table keeps a full pass
+    # well inside the window.
+    #
+    # A failing table is logged and skipped rather than aborting the pass, so one broken
+    # modality cannot stop every other sensor from being topped up.
+    by_table = {}
+    for s in NARROW_SENSORS:
+        by_table.setdefault(s["table"], []).append((s["uuid"], _narrow_value(s["value_col"])))
+
     written = 0
     with conn.cursor() as cur:
-        for s in NARROW_SENSORS:
+        for table, rows in by_table.items():
             try:
-                cur.execute(
-                    f"INSERT INTO `{s['table']}` (`uuid`, `datetime`, `value`) "
+                cur.executemany(
+                    f"INSERT INTO `{table}` (`uuid`, `datetime`, `value`) "
                     f"VALUES (%s, NOW(), %s) "
                     f"ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)",
-                    (s["uuid"], _narrow_value(s["value_col"])),
+                    rows,
                 )
-                written += 1
+                written += len(rows)
             except Exception as e:
                 if verbose:
-                    print(f"[py-dummy] narrow insert {s['table']} failed: {e}", flush=True)
+                    print(f"[py-dummy] narrow insert {table} failed: {e}", flush=True)
     return written
 
 
@@ -566,6 +616,8 @@ def main() -> int:
             if _SHOULD_STOP:
                 break
 
+            # Start of this tick, so the sleep below can subtract the work from the interval.
+            _tick_started = time.time()
             try:
                 if publish_wide:
                     if batch_size == 1:
@@ -592,12 +644,20 @@ def main() -> int:
                 if max_rows and total >= max_rows:
                     break
 
-                # Sleep only if we’re not stopping
+                # Sleep the REMAINDER of the interval, not the whole of it.
+                #
+                # PUBLISH_INTERVAL=30 is meant to be the cadence, and this slept 30s AFTER
+                # the work. That was invisible while the pass wrote 19 narrow points; once
+                # it wrote the 1,528 the ontology actually registers (BUG-390) the pass took
+                # ~10s and the observed spacing drifted to ~40s. Measuring the elapsed time
+                # and sleeping the difference makes the env var mean what it says, and a
+                # pass that overruns simply starts the next one immediately rather than
+                # falling further behind every tick.
                 if interval > 0:
-                    for _ in range(interval):
-                        if _SHOULD_STOP:
-                            break
-                        time.sleep(1)
+                    remaining = interval - (time.time() - _tick_started)
+                    while remaining > 0 and not _SHOULD_STOP:
+                        time.sleep(min(1.0, remaining))
+                        remaining = interval - (time.time() - _tick_started)
             except KeyboardInterrupt:
                 # Redundant due to signal handler but keeps behavior consistent
                 break

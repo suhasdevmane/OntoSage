@@ -365,6 +365,50 @@ class MySQLAdapter(DatabaseAdapter):
         # writes rather than two that can drift.
         return "sensor_data"
 
+    async def latest_timestamp(self, store_key: str = "") -> Optional[datetime]:
+        """Newest timestamp this store holds, or None when it cannot say (BUG-378).
+
+        `store_key` is accepted and ignored: an adapter instance already IS one store, and the
+        argument exists only so every adapter answers the same call.
+
+        None means UNKNOWN, and callers must treat it as such. An empty table, a query error
+        and an open circuit breaker are all reported the same way on purpose — none of them
+        licenses the conclusion that the store is stale, and skipping a sensor because a health
+        probe failed would turn a transient database error into a wrong answer.
+        """
+        ts_col = await self._timestamp_column()
+        if not ts_col:
+            return None
+        result = await self.execute_query(
+            f"SELECT MAX(`{ts_col}`) AS `latest` FROM `{self._wide_table()}`"
+        )
+        if not getattr(result, "success", False) or not getattr(result, "data", None):
+            return None
+        raw = (result.data[0] or {}).get("latest")
+        if isinstance(raw, datetime):
+            return raw
+        try:
+            return datetime.fromisoformat(str(raw)) if raw else None
+        except (TypeError, ValueError):
+            return None
+
+    async def _timestamp_column(self) -> Optional[str]:
+        """The wide table's time column, discovered rather than assumed.
+
+        The wide store spells it `Datetime` and the narrow tables spell it `datetime`; a
+        third building may spell it something else again. Matching case-insensitively against
+        the real schema keeps this building-agnostic, which a hardcoded name would not be.
+        """
+        try:
+            columns = await self.get_columns()
+        except Exception:  # pragma: no cover - schema probe is best-effort
+            return None
+        by_lower = {str(c).lower(): str(c) for c in (columns or set())}
+        for candidate in ("datetime", "timestamp", "time", "ts", "recorded_at"):
+            if candidate in by_lower:
+                return by_lower[candidate]
+        return None
+
     @staticmethod
     def _sanitize_dt(value: Optional[str]) -> Optional[str]:
         """Accept only 'YYYY-MM-DD[ HH:MM:SS]'. Anything else is dropped, never interpolated."""

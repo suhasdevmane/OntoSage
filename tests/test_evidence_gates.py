@@ -55,12 +55,35 @@ def enforcing(tmp_path):
     return load_policy("bldgX", input_dir=tmp_path)
 
 
+@pytest.fixture
+def advisory(tmp_path):
+    """A policy with every gate ADVISORY, written explicitly.
+
+    The mechanism tests below are about advisory-vs-enforcing, not about which posture the
+    shipped config happens to use. They used the live policy, so switching freshness to
+    enforcing (CAVEAT-361) broke tests that were never about freshness. An explicit overlay
+    keeps them testing the mechanism and immune to the next posture decision.
+    """
+    (tmp_path / "evidence_policy.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "gates": {
+                    g: {"mode": "advisory"}
+                    for g in ("freshness", "completeness", "spatial_adequacy", "calibration")
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    return load_policy("bldgY", input_dir=tmp_path)
+
+
 # ── the shape ────────────────────────────────────────────────────────────────
 
 
-def test_a_failing_gate_does_not_block_while_advisory(policy):
+def test_a_failing_gate_does_not_block_while_advisory(advisory):
     """The property the whole rollout plan depends on."""
-    v = freshness_gate(policy, "co2", NOW - timedelta(days=3), NOW)
+    v = freshness_gate(advisory, "co2", NOW - timedelta(days=3), NOW)
     assert v.passed is False
     assert v.mode is GateMode.ADVISORY
     assert v.blocks is False
@@ -194,10 +217,10 @@ def test_a_blocked_standards_verdict_still_offers_the_raw_reading(policy):
 # ── resolving several gates ──────────────────────────────────────────────────
 
 
-def test_advisory_failures_never_move_the_status(policy):
+def test_advisory_failures_never_move_the_status(advisory):
     verdicts = [
-        freshness_gate(policy, "co2", NOW - timedelta(days=3), NOW),
-        completeness_gate(policy, 0.2),
+        freshness_gate(advisory, "co2", NOW - timedelta(days=3), NOW),
+        completeness_gate(advisory, 0.2),
     ]
     assert apply(verdicts, AnswerStatus.OBSERVED) is AnswerStatus.OBSERVED
     assert len(advisory_failures(verdicts)) == 2

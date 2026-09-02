@@ -173,7 +173,12 @@ def test_an_enforcing_gate_failure_downgrades_and_records_itself():
     )
     rec = build_evidence_record({"sql_result": [1]}, now=NOW, gate_verdicts=[verdict])
     assert rec.status is AnswerStatus.NOT_ASSESSABLE
-    assert rec.gates_applied == ["freshness"]
+    # The gate's REASON travels with its name. This asserted the bare name, and that was
+    # how promoting a gate from advisory to enforcing quietly made the record LESS
+    # informative: the advisory list had always carried "gate: reason", the applied list
+    # only "gate", so the age vanished at the moment the gate began acting on it.
+    assert rec.gates_applied == ["freshness: the reading is 3 days old"]
+    assert any(g.split(":", 1)[0] == "freshness" for g in rec.gates_applied)
     assert "3 days old" in rec.not_assessable_reason
     assert "restart" in rec.remedy
 

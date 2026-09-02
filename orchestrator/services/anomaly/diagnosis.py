@@ -122,6 +122,49 @@ _HIGH_DIRECTION_RE = re.compile(
     r"\b(?:high|higher|rising|climbing|too\s+much|excessive|above)\b", re.I
 )
 
+#: Words that name a QUANTITY and nothing about its level. When one of these is what matched
+#: in the lay-term pass, the match says which modality is being asked about and contributes
+#: no direction -- so the direction must come from what the asker actually said.
+#:
+#: Derived from the modality names themselves rather than listed twice: a name added to
+#: _MODALITY_NAMES is automatically neutral here, which is the only way this stays correct
+#: when someone extends that table and does not think about this one.
+_BARE_MODALITY_WORDS = {
+    "temperature",
+    "temp",
+    "humidity",
+    "relative humidity",
+    "rh",
+    "co2",
+    "carbon dioxide",
+    "noise",
+    "noise level",
+    "sound level",
+    "acoustics",
+    "acoustic",
+    "illuminance",
+    "light level",
+    "lux",
+    "lighting",
+    "occupancy",
+    "footfall",
+    "headcount",
+    "head count",
+    "pm2.5",
+    "pm25",
+    "particulate",
+}
+
+#: A question about STABILITY rather than level. Distinct from high/low because the honest
+#: answer is different: "it swings between 18 and 24 through the day" answers this, and "it
+#: is high" does not answer it at all.
+_VARIABILITY_RE = re.compile(
+    r"\bkeeps?\s+changing\b|\bkeep\s+changing\b|\bfluctuat|\bunstable\b|\bswing"
+    r"|\bvar(?:y|ies|ying|iable)\b|\bup\s+and\s+down\b|\bincons(?:istent|istently)\b"
+    r"|\bnot\s+steady\b|\bunsteady\b|\berratic\b|\ball\s+over\s+the\s+place\b",
+    re.I,
+)
+
 WHY_RE = re.compile(
     r"^\s*why\b|\bwhy (?:was|is|were|are|did|does)\b|\bwhat(?:'s| is) (?:wrong|going on|the reason)\b",
     re.IGNORECASE,
@@ -136,9 +179,21 @@ def is_why_question(question: str) -> Optional[Tuple[str, str]]:
         return None
     # Lay terms first: they carry a direction of their own ("chilly" is not merely
     # "temperature"), so a question that uses one should keep that reading.
+    #
+    # UNLESS what matched was the bare modality name. Several lay patterns also match the
+    # name itself -- "co2" sits in the stuffy alternation, "noise" in the loud one, and
+    # "humid" was widened to catch "humidity" -- and a bare name carries no direction at all.
+    # Returning the lay default for those overrode a direction the user had STATED: measured,
+    # "Why is the humidity low today?" came back as ("humidity", "high"), and so did "why does
+    # the CO2 swing up and down". Breaking to the name pass lets the stated direction win,
+    # while "chilly" and "stuffy" keep their own reading as before.
     for pat, modality, direction in _MODALITY_WORDS:
-        if pat.search(question):
-            return modality, direction
+        match = pat.search(question)
+        if not match:
+            continue
+        if match.group(0).strip().lower() in _BARE_MODALITY_WORDS:
+            break
+        return modality, direction
     # Then the modality names themselves, with the direction taken from an accompanying
     # word where the asker supplied one (BUG-354).
     for pat, modality, default_direction in _MODALITY_NAMES:
@@ -147,6 +202,15 @@ def is_why_question(question: str) -> Optional[Tuple[str, str]]:
                 return modality, "low"
             if _HIGH_DIRECTION_RE.search(question):
                 return modality, "high"
+            # "Why does the temperature keep changing?" asks about STABILITY, not level.
+            # Returning "high" for it — which the default below used to do — answers a
+            # question the user did not ask, with a direction they never stated (CAVEAT-384).
+            # Harmless only while the direction stays out of the prose; a previous fix had to
+            # remove "(higher now)" from the output because it contradicted the matched
+            # comparison printed beneath it, and an invented "high" would return as a false
+            # claim the moment anyone reinstated it.
+            if _VARIABILITY_RE.search(question):
+                return modality, "variability"
             return modality, default_direction
     return None
 

@@ -788,7 +788,10 @@ class DialogueAgent:
         # a building without a permit register is unaffected and nothing here is a literal.
         _held_record = None
         try:
-            from orchestrator.services.record_registry import held_record_class, record_classes
+            from orchestrator.services.record_registry import (
+                held_record_class,
+                record_classes,
+            )
 
             _held_record = held_record_class(user_query, await record_classes())
         except Exception as _rr_err:  # pragma: no cover - never block routing on this

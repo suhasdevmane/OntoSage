@@ -26,6 +26,37 @@ import pytest
 from orchestrator.services.evidence.assemble import build_evidence_record
 from shared.models import AnswerStatus, Operation
 
+
+def _advisory_policy():
+    """A policy with freshness explicitly ADVISORY, for tests about the mechanism itself."""
+    import tempfile
+    from pathlib import Path
+
+    import yaml as _yaml
+
+    from orchestrator.services.evidence import load_policy as _load
+
+    d = Path(tempfile.mkdtemp())
+    (d / "evidence_policy.yaml").write_text(
+        _yaml.safe_dump({"gates": {"freshness": {"mode": "advisory"}}}), encoding="utf-8"
+    )
+    return _load("bldgAdvisory", input_dir=d)
+
+
+def _fired(rec):
+    """Gate verdicts recorded on a record, whichever bucket they landed in.
+
+    A gate's verdict goes to `gates_advisory` while it only observes and to `gates_applied`
+    once it acts. These tests are about whether the gate RAN, so they must read both — they
+    asserted on `gates_advisory` alone and broke the moment freshness began enforcing
+    (CAVEAT-361), reporting "the gate is still not being called" about a gate that had just
+    downgraded the answer.
+    """
+    return list(getattr(rec, "gates_applied", []) or []) + list(
+        getattr(rec, "gates_advisory", []) or []
+    )
+
+
 pytestmark = pytest.mark.unit
 
 NOW = datetime(2026, 8, 22, 12, 0, 0, tzinfo=timezone.utc)
@@ -50,33 +81,47 @@ def _observation(age_minutes: int, **extra):
 def test_the_gate_actually_runs_now():
     """The defect this file exists for: the gate was never invoked at all."""
     rec = _observation(60 * 24 * 40)  # forty days old
-    assert rec.gates_advisory, (
+    assert _fired(rec), (
         "no advisory verdict was recorded for a forty-day-old reading — the freshness gate is "
         "still not being called"
     )
-    assert any("freshness" in g for g in rec.gates_advisory)
+    assert any("freshness" in g for g in _fired(rec))
 
 
 def test_a_stale_reading_is_named_with_its_age():
     rec = _observation(60 * 24 * 40)
-    text = " ".join(rec.gates_advisory)
+    text = " ".join(_fired(rec))
     assert "freshness" in text
     assert "minutes old" in text, f"the verdict does not state the age: {text!r}"
 
 
 def test_a_fresh_reading_raises_nothing():
     rec = _observation(2)
-    assert not rec.gates_advisory, rec.gates_advisory
+    assert not _fired(rec), _fired(rec)
 
 
-def test_advisory_changes_no_answer():
-    """Shadow mode, and the reason the regression gate can still be trusted across this change.
-    An advisory verdict must not move the status, no matter how badly it failed."""
+def test_an_advisory_gate_changes_no_answer():
+    """The MECHANISM: an advisory verdict must not move the status, however badly it failed.
+
+    Built on an explicitly advisory policy rather than the shipped one. It used the live
+    config and so broke the moment freshness was switched to enforcing (CAVEAT-361) — but
+    this test was never about freshness's posture, it is about what "advisory" means, and it
+    must keep holding whichever gates happen to be enforcing today.
+    """
+    from orchestrator.services.evidence.gates import apply as apply_gates
+    from orchestrator.services.evidence.gates import freshness_gate
+
+    advisory = _advisory_policy()
+    verdict = freshness_gate(advisory, "co2", NOW - timedelta(days=400), NOW)
+    assert verdict.passed is False
+    assert verdict.blocks is False
+    assert apply_gates([verdict], AnswerStatus.OBSERVED) is AnswerStatus.OBSERVED
+
+
+def test_the_enforced_gate_does_move_the_answer():
+    """The other half, so the pair documents both postures rather than only the old one."""
     stale = _observation(60 * 24 * 400)
-    assert stale.status == AnswerStatus.OBSERVED, (
-        "an advisory gate downgraded the answer — this is enforcement, and every stale answer "
-        "in the bank would change on the commit that merely wired the gate"
-    )
+    assert stale.status is AnswerStatus.INFERRED
     assert stale.operation is Operation.OBSERVATION
 
 
@@ -84,14 +129,14 @@ def test_a_historical_question_is_not_stale_for_being_historical():
     """ "What was the CO2 last March?" is not stale because March was a while ago. The signal is
     the time range the dialogue lane already extracted, not a phrase list."""
     rec = _observation(60 * 24 * 40, time_range={"start": "2026-03-01", "end": "2026-03-31"})
-    assert not rec.gates_advisory, rec.gates_advisory
+    assert not _fired(rec), _fired(rec)
 
 
 def test_a_documentary_answer_is_not_judged_on_freshness():
     """A passage from a manual has no observation time and is not a current-status claim.
     Gating it would produce 'no observation is available' on every policy question."""
     rec = build_evidence_record({"capability_result": {"answer": "the policy says ..."}}, now=NOW)
-    assert not rec.gates_advisory, rec.gates_advisory
+    assert not _fired(rec), _fired(rec)
 
 
 def test_no_gate_is_left_silently_unrunnable():
@@ -176,11 +221,11 @@ def test_the_gate_works_with_the_provenance_shape_production_actually_uses():
         },
         now=NOW,
     )
-    assert rec.gates_advisory, (
+    assert _fired(rec), (
         "with store-level provenance the gate saw no per-sensor time and judged the newest "
         "reading — a nearly-three-month-old contributing observation raised nothing"
     )
-    assert any("freshness" in g for g in rec.gates_advisory)
+    assert any("freshness" in g for g in _fired(rec))
 
 
 def test_the_modality_matches_however_the_class_is_notated():
@@ -217,4 +262,4 @@ def test_an_observation_with_no_measurand_is_not_judged_on_freshness():
         },
         now=NOW,
     )
-    assert not [g for g in rec.gates_advisory if "freshness" in g], rec.gates_advisory
+    assert not [g for g in _fired(rec) if "freshness" in g], _fired(rec)

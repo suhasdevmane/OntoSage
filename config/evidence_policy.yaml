@@ -188,7 +188,32 @@ gates:
   # harm, not a hedge. That decision belongs to the impact report, not to this default.
   source_precedence: { mode: advisory }
   permission: { mode: advisory }
-  freshness:         { mode: advisory }
+  # ENFORCING since 2026-09-02, on the user's decision (CAVEAT-361). The FIRST gate to be
+  # switched, and deliberately alone.
+  #
+  # WHY THIS ONE. Eight of bldg1's stores stopped receiving rows on 2026-08-26 and 728 of
+  # 2,861 connected points read from them. Advisory, the gate NOTICED every time — it
+  # returns passed=False with the exact age against a 15-minute limit — and changed nothing,
+  # so "what is the CO2 in here right now" could still answer from a five-day-old reading
+  # with no sign in the text that it was old. That is stale evidence presented as current
+  # status, which design contract 4 forbids outright.
+  #
+  # WHAT ENFORCING DOES, AND DOES NOT DO. It applies the gate's existing downgrade: the
+  # answer becomes INFERRED and is reported as the last recorded observation with its
+  # timestamp, NOT refused. A real reading from five days ago is still evidence about the
+  # recent past, and discarding it would replace a stale answer with no answer — worse, and
+  # untrue. An absent stream is separately NOT_ASSESSABLE, because there is nothing to infer
+  # from.
+  #
+  # WHY IT IS AFFORDABLE NOW. Before BUG-378 this would have downgraded a large share of
+  # room-level questions, because the lane preferred whichever point the query resolved and
+  # that was usually the frozen synthetic overlay. Store-coverage selection now prefers a
+  # point whose store can cover the window, so most questions no longer touch frozen data at
+  # all and the downgrade lands only where it should: where the newest reading really is old.
+  #
+  # Only a present-tense question is gated. A question about last March is not stale for
+  # being about March.
+  freshness:         { mode: enforcing }
   completeness:      { mode: advisory }
   agreement:         { mode: advisory }
   spatial_adequacy:  { mode: advisory }

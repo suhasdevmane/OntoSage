@@ -90,6 +90,11 @@ def render(record: Optional[Dict[str, Any]], question: str = "") -> Optional[str
         # one of them read a sensor.
         if status == "observed" and operation == "authoritative_lookup":
             kind = "read from a system of record, not from an instrument"
+        # A comparison reports how things differ. Saying only "read from an instrument" or
+        # "arithmetic over observations" describes the ingredients and hides the act, which
+        # is the whole reason COMPARISON became an operation (CAVEAT-365).
+        elif operation == "comparison":
+            kind = "two or more things set against each other, and the difference reported"
         lines.append(
             f"- **Kind of claim:** {status or 'unstated'}" + (f" — {kind}" if kind else "")
         )

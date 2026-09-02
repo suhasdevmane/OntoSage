@@ -26,6 +26,21 @@ import pytest
 
 from orchestrator.services.evidence.assemble import build_evidence_record
 
+
+def _fired(rec):
+    """Gate verdicts recorded on a record, whichever bucket they landed in.
+
+    A gate's verdict goes to `gates_advisory` while it only observes and to `gates_applied`
+    once it acts. These tests are about whether the gate RAN, so they must read both — they
+    asserted on `gates_advisory` alone and broke the moment freshness began enforcing
+    (CAVEAT-361), reporting "the gate is still not being called" about a gate that had just
+    downgraded the answer.
+    """
+    return list(getattr(rec, "gates_applied", []) or []) + list(
+        getattr(rec, "gates_advisory", []) or []
+    )
+
+
 pytestmark = pytest.mark.unit
 
 NOW = datetime(2026, 8, 22, 12, 0, 0, tzinfo=timezone.utc)
@@ -246,8 +261,8 @@ def test_the_freshness_gate_judges_the_stalest_ingredient():
         now=NOW,
     )
     assert rec.latest_evidence_at == datetime(2026, 8, 22, 11, 59, tzinfo=timezone.utc)
-    assert rec.gates_advisory, (
+    assert _fired(rec), (
         "a nearly-three-month-old contributing reading raised no freshness verdict — the gate "
         "is still judging the newest evidence instead of the oldest"
     )
-    assert any("freshness" in g for g in rec.gates_advisory)
+    assert any("freshness" in g for g in _fired(rec))

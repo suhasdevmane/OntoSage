@@ -1,0 +1,74 @@
+# Declared routing expectations — makes a LANE CHANGE attributable (CAVEAT-379).
+#
+# WHY THIS FILE EXISTS
+# --------------------
+# The regression gate can attribute a *tightening* because a gate names itself: an answer
+# that became a decline is fine when some check says "I declined this, and here is my name".
+# A lane change had no equivalent. The gate could only report that a question moved from one
+# lane to another, with no way to tell a deliberate improvement from silent drift — so every
+# route change landed in one undifferentiated bucket and nothing blocked.
+#
+# This file supplies the missing half: for a class of question, the lane that SHOULD answer
+# it, and why. A move INTO a declared lane is attributable; a move OUT of one blocks.
+#
+# CONSERVATIVE BY CONSTRUCTION
+# ----------------------------
+# An unmatched route change keeps its old, non-blocking `route-changed` verdict. This file
+# can therefore only make the gate STRICTER, never weaker — the failure mode it must not
+# have is manufacturing a PASS, which is how this project's measurement apparatus has gone
+# wrong before. A wrong entry produces a loud false FAILURE; it cannot produce a quiet false
+# pass. `test_expectations_can_only_add_blocking_never_remove_it` pins that as a property.
+#
+# BUILDING-AGNOSTIC
+# -----------------
+# Every pattern below is ontology-level vocabulary (record classes, wayfinding words) or a
+# lane name. No building names, room ids, floor numbers or sensor counts — the same file
+# governs every building, which is the point.
+#
+# WRITING A PATTERN — keep it on ONE line
+# ---------------------------------------
+# `match` must be a single-line scalar. A folded YAML scalar (`>-`) inserts a space at every
+# fold point, and a stray space inside `(?:a|b)` makes every branch after the fold silently
+# unmatchable: the entry loads, reports no error, looks like coverage, and never fires. The
+# first version of this file was written folded and three of its four entries were dead —
+# the tests caught it, which is the only reason it is documented here rather than shipped.
+# Long lines are the lesser evil.
+#
+# `lanes` is a LIST because more than one lane can be legitimately correct: a wayfinding
+# question is well served by either the floor-plan lane or the spatial lane, and forcing a
+# choice between them would invent a regression out of a distinction nobody cares about.
+
+expectations:
+  - id: record-questions-reach-the-register
+    reason: >-
+      Questions about permits, contracts, warranties, handovers, condition surveys,
+      competency, risk assessments and tariffs are answered by reading a system of record.
+      Before V7 they fell into the capability lane, which searched prose and guessed; the
+      register lane reads typed records lifted from the record documents. A move INTO
+      `register` is the intended V7 behaviour. A move OUT of it means the register stopped
+      being consulted for a question it owns.
+    match: "\\b(permits?|contracts?|warrant(?:y|ies)|handovers?|condition surveys?|competenc(?:y|ies)|risk assessments?|tariffs?|licen[cs]es?)\\b"
+    lanes: [register]
+
+  - id: wayfinding-never-reaches-the-register
+    reason: >-
+      "Where is the nearest toilet" is wayfinding, not a records question. Three separate
+      bugs (BUG-372/374) sent these to the register lane because a head word was derived
+      from part of a phrase — "roof access permit" yielding "roof", "room booking" yielding
+      "room". The gate must catch any recurrence, so wayfinding is pinned to the spatial and
+      floor-plan lanes.
+    match: "\\b(where(?:'s| is| are)? (?:the )?(?:nearest|closest)|how do i (?:get|find my way)|directions? to)\\b"
+    lanes: [floor_plan, spatial_query]
+
+  - id: provenance-questions-stay-where-the-reader-lives
+    reason: >-
+      "How do you know that?" is answered from the previous turn's evidence record. There is
+      NO `provenance` lane — the reader is a branch inside the capability agent
+      (`capability_agent` -> `answer_provenance.render`), so the correct lane really is
+      `capability`. This entry therefore does not pin provenance to a lane of its own; it
+      pins it to the lane where the only reader exists, so that a drift into `register`,
+      `sensor_data` or anything else is caught as a regression rather than reported as a
+      neutral move. If provenance is ever promoted to its own intent, add that name here in
+      the same commit.
+    match: "\\b(how do(?:es)? (?:you|it) know|where did (?:that|this|it).{0,24}come from|what(?:'s| is| are) (?:your|the) sources?|show (?:me )?(?:your|the) working)\\b"
+    lanes: [capability]

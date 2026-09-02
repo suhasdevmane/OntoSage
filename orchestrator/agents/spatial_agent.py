@@ -225,8 +225,15 @@ class SpatialAgent:
 
         # Nearest-facility search sits above wayfinding: "how do I get to the
         # NEAREST toilet" is a nearest question with route guidance (V5-T27)
-        if _NEAREST_RE.search(q) and any(pat.search(q) for pat, _t, _l in _NEAREST_TARGETS):
-            return self._answer_nearest(query, manifests, vertical_cores)
+        if _NEAREST_RE.search(q):
+            if any(pat.search(q) for pat, _t, _l in _NEAREST_TARGETS):
+                return self._answer_nearest(query, manifests, vertical_cores)
+            # A nearest-question whose target this building does not know must NOT fall
+            # through (BUG-377). It used to drop past every branch below to _answer_list and
+            # come back as "## All spaces" — a whole-building inventory in reply to "where is
+            # the nearest water refill station to Room 3.18?". Wrong in shape, not merely in
+            # content: the user asked where ONE thing is and got a list of everything.
+            return self._nearest_target_unknown(query, manifests)
 
         # Wayfinding takes priority (before adjacency — "get to X from Y" ≠ "next to X")
         if _WAYFINDING_RE.search(q):
@@ -259,6 +266,36 @@ class SpatialAgent:
         return self._answer_list(query, manifests)
 
     # ── Area filter ───────────────────────────────────────────────────────────
+
+    def _nearest_target_unknown(self, query: str, manifests: List[FloorPlanManifest]) -> str:
+        """Decline a nearest-question whose target this building's floor plan does not hold.
+
+        Names what IS locatable rather than just refusing, and reads that list from the
+        manifests instead of a constant — so a building with different amenities advertises
+        its own, and nothing here has to change for it.
+        """
+        kinds = set()
+        for m in manifests or []:
+            for space in getattr(m, "spaces", []) or []:
+                kind = (getattr(space, "space_type", "") or "").strip()
+                if kind:
+                    kinds.add(kind.replace("_", " "))
+        known = sorted(kinds)[:12]
+        lines = [
+            "I can only point you to the kinds of place this building's floor plan labels, "
+            "and what you asked for is not one of them.",
+        ]
+        if known:
+            lines += [
+                "",
+                "**I can find the nearest:** " + ", ".join(known) + ".",
+            ]
+        lines += [
+            "",
+            "_If that amenity does exist here, it has not been labelled on the floor plan — "
+            "which is a gap in the plan rather than a statement that the building lacks it._",
+        ]
+        return "\n".join(lines)
 
     def _answer_area_filter(self, query: str, manifests: List[FloorPlanManifest]) -> str:
         min_area: Optional[float] = None
