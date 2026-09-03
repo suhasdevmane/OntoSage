@@ -450,6 +450,20 @@ hbco:energy_consumption rdf:type hbco:CompositeConcept ,
     hbco:layTerm "power consumption"^^xsd:string ;
     hbco:layTerm "kWh"^^xsd:string ;
     hbco:layTerm "energy usage"^^xsd:string ;
+    # Added 2026-09-02 (BUG-395). "energy use" resolved and bare "energy" did not, so
+    # "any energy spikes" carried no measurand concept, the routing rule that would have
+    # sent it to the detector never fired, and it fell to the capability lane's "contact
+    # your facilities team" — while all 8 energy sensors were live and the scanner had
+    # found 24,317 spike findings that hour. A lay-term gap, fixed in the ontology rather
+    # than by another code path.
+    hbco:layTerm "energy"^^xsd:string ;
+    hbco:layTerm "electricity"^^xsd:string ;
+    hbco:layTerm "power"^^xsd:string ;
+    hbco:layTerm "energy spike"^^xsd:string ;
+    hbco:layTerm "energy spikes"^^xsd:string ;
+    hbco:layTerm "power spike"^^xsd:string ;
+    hbco:layTerm "energy anomaly"^^xsd:string ;
+    hbco:layTerm "energy anomalies"^^xsd:string ;
     hbco:mapsToBrickClass brick:Electrical_Energy_Sensor ;
     hbco:mapsToBrickClass brick:Electrical_Power_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
@@ -1084,3 +1098,4 @@ hbco:parking_availability rdf:type hbco:Concept ,
     hbco:mapsToBrickClass brick:Occupancy_Count_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:confidence "high"^^xsd:string .
+

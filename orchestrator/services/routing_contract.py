@@ -1279,6 +1279,92 @@ _DOCUMENTARY_RE = re.compile(
 #: Shapes that want a COMPUTATION over a period rather than a current reading. Routed to
 #: analytics so the answer is an average or a trend; sending these to sensor_data would return
 #: one instantaneous value to a question about a week, which is a wrong answer that looks right.
+#: A question asking whether something is WRONG with the readings, rather than what they are.
+#:
+#: Wider than ANOMALY_HISTORY_RE, which is about persisted episodes and deliberately does not
+#: match "spike" — the word that sends "any energy spikes" to the detector. Kept separate
+#: rather than widening that one: the history rule routes to the events store and matching
+#: "spike" there would send a live-detection question to a log of past episodes.
+_ANOMALY_SHAPE_RE = re.compile(
+    r"\bspikes?\b|\bspiking\b|\banomal(?:y|ies|ous)\b|\boutliers?\b"
+    r"|\bunusual\b|\babnormal\b|\berratic\b|\bout of range\b|\bmisbehav"
+    r"|\bsomething wrong\b|\bfaulty\b|\bmisreading\b",
+    re.IGNORECASE,
+)
+
+#: "is there a VOLTAGE fluctuation", "any RADON readings" — a question about a quantity,
+#: written without the "can you measure…" verb the observability lane looks for.
+_UNVERBED_QUANTITY_RE = re.compile(
+    r"\b(?:is|are|any|the)\s+(?:there\s+)?(?:a|an|the)?\s*([a-z][a-z0-9 \-]{2,24}?)\s+"
+    r"(?:fluctuations?|spikes?|readings?|levels?|measurements?|anomal(?:y|ies)|"
+    r"concentrations?|values?)\b",
+    re.IGNORECASE,
+)
+
+#: Words that fill the same slot but name no physical quantity, so they must not be reported
+#: as "not measured here" — that would answer a question about the building's data with a
+#: statement about a word.
+_NOT_A_QUANTITY = frozenset(
+    {
+        "any",
+        "these",
+        "those",
+        "some",
+        "other",
+        "such",
+        "recent",
+        "latest",
+        "new",
+        "current",
+        "unusual",
+        "abnormal",
+        "high",
+        "low",
+        "sensor",
+        "data",
+        "same",
+        "last",
+    }
+)
+
+
+def _r_unmeasured_quantity_is_reach(c: _Ctx) -> Optional[str]:
+    """A question about a quantity this building does not measure -> the reach lane.
+
+    "Is there a voltage fluctuation that could put our hardware at risk?" classified as
+    general_knowledge, which answers from the model rather than from the building, and
+    reached the anomaly lane's "No sensor data available for anomaly detection" when it
+    reached anything — a sentence about the detector's input, not about the building.
+
+    The building it was measured on has no voltage sensors at all. The honest answer is
+    "voltage is not measured here", and the observability lane already renders exactly that,
+    including what IS measured. Nothing new had to be written; the question never arrived.
+
+    NARROW BY CONSTRUCTION. It fires only when a measurement-shaped question names a quantity
+    AND the concept resolver found no measurand — so anything this building actually
+    instruments has already been claimed by `capability_measurand_is_data` above, and a word
+    that names no quantity at all is excluded outright. Being wrong here costs a reach answer
+    to a question that deserved a data answer; being absent costs a confident non-answer.
+    """
+    if c.intent in {"observability", "control", "privacy_refusal", "clarification"}:
+        return None
+
+    from orchestrator.services.grounding_guard import has_measurand_concept
+
+    if has_measurand_concept(c.normalized.get("concepts")):
+        return None  # the building measures it — an earlier rule owns this question
+
+    match = _UNVERBED_QUANTITY_RE.search(c.ql)
+    if not match:
+        return None
+    quantity = match.group(1).strip().lower()
+    # Take the last word: "a sudden voltage fluctuation" names voltage, not "sudden".
+    head = quantity.split()[-1] if quantity.split() else ""
+    if not head or head in _NOT_A_QUANTITY:
+        return None
+    return "observability"
+
+
 _AGGREGATE_SHAPE_RE = re.compile(
     r"\b(?:average|mean|median|total|sum|trend|typical|"
     r"over the (?:last|past)|during the (?:last|past)|this (?:week|month|term|year)|"
@@ -1327,6 +1413,21 @@ def _r_capability_measurand_is_data(c: _Ctx) -> Optional[str]:
 
     if is_why_question(c.query):
         return None
+
+    # An ANOMALY-shaped question goes to the detector, not to a reading lookup (BUG-395).
+    #
+    # This rule could previously return only `sensor_data` or `analytics`, so "any energy
+    # spikes" — a capability-classified question naming a measurand this building
+    # instruments — was converted to a reading lookup or left in capability, and the
+    # detector was never reached. Measured live: it returned "I don't have that specific
+    # information on record ... contact your facilities team" while all 8 energy sensors
+    # were live and the scanner had found 24,317 spike findings that hour.
+    #
+    # No new rule and no change to the precedence order: this widens the LANE an existing
+    # rule may choose. A new rule would have had to be placed relative to seventeen others,
+    # and the file's own history is that placement is where routing goes wrong.
+    if _ANOMALY_SHAPE_RE.search(c.ql):
+        return "anomaly"
     return "analytics" if _AGGREGATE_SHAPE_RE.search(c.ql) else "sensor_data"
 
 
@@ -1611,6 +1712,15 @@ CONCEPT_STAGE_RULES: Tuple[Rule, ...] = (
         "capability question naming a measurand this building instruments → sensor_data "
         "(or analytics for an aggregate shape)",
         _r_capability_measurand_is_data,
+    ),
+    # AFTER the rule above, and the order is the whole point: that one claims every question
+    # naming something this building DOES measure. Whatever reaches here named a quantity and
+    # resolved to no measurand at all.
+    Rule(
+        "unmeasured_quantity_is_reach",
+        "measurement-shaped question naming a quantity this building does not instrument → "
+        "observability, which can say so",
+        _r_unmeasured_quantity_is_reach,
     ),
 )
 
