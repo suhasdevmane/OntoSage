@@ -482,6 +482,104 @@ _PER_TURN_LANE_KEYS = (
 )
 
 
+async def apply_referent_gate(state, question: str, sparql_exec, *, lane: str) -> bool:
+    """Refuse a question naming something this building does not have. True when it refused.
+
+    ONE implementation, callable from any lane. It lived inline in the sparql node, so every
+    lane that does not pass through sparql had no existence check at all — measured on the
+    events lane, where "are there any vibration anomalies on floor 9" was answered with 500
+    episodes from floors 3, 4 and 5 (BUG-399). Copying the block into each lane would have
+    made the third copy the one that drifts; a shared function is the reason a fourth lane
+    can be covered by a single call rather than by new logic.
+
+    Fails OPEN. `SKIPPED` — the existence check could not run, GraphDB down — passes through,
+    because refusing a legitimate question on an infrastructure fault is a worse trade than
+    letting one through: the lane's own guards still apply downstream.
+    """
+    # Imported HERE, not at module scope: the sparql node imports both the same way, and a
+    # module-level import of either creates a cycle. The first draft of this helper referenced
+    # `_active_namespace` without importing it — the NameError was caught, the helper failed
+    # OPEN as designed, and the events lane would have carried a gate that never once fired
+    # while logging a line nobody reads. Failing open is right; failing open silently on a
+    # coding error is how a guard becomes decorative.
+    from orchestrator.agents.sparql_agent import _active_namespace
+    from orchestrator.services.referent_resolver import NOT_FOUND, ReferentResolver
+
+    try:
+        resolution = await ReferentResolver(sparql_exec).resolve(
+            query=question,
+            entities=state.intermediate_results.get("entities", []),
+            namespace=_active_namespace(),
+            building_name=getattr(settings, "BUILDING_NAME", "this building"),
+        )
+    except Exception as exc:  # an existence check that errors must not take the lane down
+        logger.warning(f"[referent_gate/{lane}] check did not run: {exc}")
+        return False
+
+    if resolution.status != NOT_FOUND:
+        return False
+
+    logger.info(
+        f"[referent_gate/{lane}] '{resolution.referent}' not found in ontology — refusing "
+        "rather than answering about something else"
+    )
+    state.intermediate_results["referent_resolution"] = "not_found"
+    partial = state.intermediate_results.get("evidence")
+    partial = partial if isinstance(partial, dict) else {}
+    state.intermediate_results["evidence"] = {
+        **partial,
+        "status": "not_assessable",
+        "not_assessable_reason": (
+            f"'{resolution.referent}' does not exist in this building, so there is nothing "
+            "to report about it"
+        ),
+        "gates_applied": sorted(set(partial.get("gates_applied") or []) | {"referent_existence"}),
+    }
+    return True
+
+
+def _resolved_point_count(state) -> int:
+    """How many timeseries points this turn actually resolved.
+
+    Zero means the ontology matched nothing — a different situation from points that were
+    found and returned no rows, and the two deserve different answers (CAVEAT-396).
+    """
+    results = getattr(state, "intermediate_results", None) or {}
+    meta = results.get("sensor_metadata")
+    if isinstance(meta, dict) and meta:
+        return len(meta)
+    sparql = results.get("sparql_result")
+    if isinstance(sparql, dict):
+        rows = (sparql.get("results") or {}).get("data")
+        if isinstance(rows, (list, tuple)):
+            return len(rows)
+    return 0
+
+
+#: What a question names as the thing to look at. Wider than observability's own pattern,
+#: which requires a verb like "measure" — "is there a voltage fluctuation" has none.
+_QUANTITY_RE = re.compile(
+    r"\b(?:any|a|an|the)\s+([a-z][a-z0-9 \-]{2,28}?)\s+"
+    r"(?:fluctuation|spike|anomal|reading|level|issue|problem|fault)",
+    re.IGNORECASE,
+)
+
+
+def _quantity_asked_about(text: str) -> str:
+    """The quantity a question names, or "" — never guessed at from a near match.
+
+    Returning "" is the safe outcome: the caller then says "what you asked about" rather
+    than naming the wrong modality, which is exactly how "can you measure radon?" would end
+    up answered about CO2.
+    """
+    match = _QUANTITY_RE.search(text or "")
+    if match:
+        return match.group(1).strip()
+    from orchestrator.services.observability import named_quantity
+
+    return named_quantity(text or "")
+
+
 def _clear_stale_lane_results(state) -> None:
     """Drop the previous turn's lane results before a new turn runs.
 
@@ -5888,8 +5986,61 @@ SELECT ?l WHERE {
         """Phase 4.7 — Anomaly detection node."""
         logger.info("Executing Phase 4 Anomaly Detection Node")
         latest_message = state.messages[-1].content if state.messages else ""
-        sql_result = state.intermediate_results.get("sql_result")
+        sql_result = state.intermediate_results.get("sql_result") or {}
+
+        # An UPSTREAM decline is the answer, and must not be overwritten (BUG-395).
+        #
+        # "are there any energy spikes?" resolved 288 sensors, over the fetch lane's breadth
+        # budget, so the SQL lane declined with the reason and the narrowing to try. This
+        # node then handed the empty result set to the detector, which reported "No sensor
+        # data available for anomaly detection" — a different and untrue claim. The building
+        # has the sensors and they are live; the question was too broad to read in one
+        # request, and the user was told the opposite.
+        #
+        # Checked here rather than inside the detector: the detector is given data and should
+        # not have to reason about why it is empty.
+        if isinstance(sql_result, dict) and sql_result.get("too_broad"):
+            logger.info("[anomaly] upstream declined as too broad — surfacing that, not 'no data'")
+            state.intermediate_results["anomaly_result"] = {
+                "success": True,
+                "anomalies": [],
+                "formatted_response": sql_result.get("formatted_response")
+                or "That question reaches more sensors than I can read in one request.",
+                "declined_upstream": "too_broad",
+            }
+            return state
+
         result = await self.anomaly_agent.detect(state, latest_message, sensor_data=sql_result)
+
+        # Say WHY there is nothing to check, not that the detector had no input (CAVEAT-396).
+        #
+        # "Is there a Voltage fluctuation that could put our hardware at risk?" returned "No
+        # sensor data available for anomaly detection." The refusal is CORRECT — this
+        # building has no voltage sensors — but the sentence describes the lane's internal
+        # state, and to a reader it sounds like a temporary outage they should wait out. The
+        # honest version is a fact about the building, which is also the only version that
+        # tells them what to do about it.
+        #
+        # Only rewritten when NOTHING was resolved. If sensors were found and merely returned
+        # no rows, that is a different situation with a different remedy, and the detector's
+        # own wording is left alone.
+        if not result.get("anomalies") and not (result.get("success") or False):
+            resolved = _resolved_point_count(state)
+            if resolved == 0:
+                quantity = _quantity_asked_about(latest_message)
+                named = f"**{quantity}**" if quantity else "what you asked about"
+                result = {
+                    **result,
+                    "formatted_response": (
+                        f"This building has nothing instrumented for {named}, so there is "
+                        "nothing to check for anomalies.\n\n"
+                        "_That is a statement about what is connected here, not a fault: no "
+                        "sensor of that kind appears in this building's ontology. If one "
+                        "exists, adding it to the ontology and registering its readings makes "
+                        "this answerable with no code change._"
+                    ),
+                    "declined_reason": "modality_not_instrumented",
+                }
         state.intermediate_results["anomaly_result"] = result
         return state
 
@@ -5959,7 +6110,35 @@ SELECT ?l WHERE {
             space = self._observability_space(question, schema.spaces)
             modality, lay = await self._observability_modality(question, state)
 
-            if space is None:
+            _named = named_quantity(question) or _quantity_asked_about(question)
+            if space is None and modality is None and _named:
+                # A quantity this building instruments NOWHERE needs no space (CAVEAT-396).
+                #
+                # "Is there a voltage fluctuation that could put our hardware at risk?" named
+                # no room, so this lane asked "which space did you mean?" — and the answer is
+                # the same in every one of them, because there is not a voltage point in the
+                # building. Demanding a space first makes the user supply information that
+                # cannot change the answer, to a question already answerable.
+                #
+                # `modality is None` is what licenses this: the resolver matched the named
+                # word to nothing this building declares. A quantity it DOES measure still
+                # needs a space, because there the answer genuinely varies room by room.
+                reach = Reach(
+                    modality=_named,
+                    space_label="this building",
+                    status=UNINSTRUMENTED,
+                    lay_term=_named,
+                    # load_modalities returns ModalitySpec objects, not strings; sorting
+                    # them raised TypeError and the lane fell to "I could not build the
+                    # coverage picture" — an infrastructure message for a question it could
+                    # answer. Take the NAME each spec carries.
+                    alternatives=sorted(
+                        str(getattr(m, "name", m))
+                        for m in (load_modalities(settings.BUILDING_ID) or [])
+                    ),
+                )
+                text = reach.describe()
+            elif space is None:
                 # No resolvable referent. The referent-existence gate owns "that room does not
                 # exist"; saying it twice in different words would be two answers to one
                 # question.
@@ -6097,6 +6276,22 @@ SELECT ?l WHERE {
         """V5-T24 — bookings / work orders / access questions from the events store."""
         question = state.messages[-1].content if state.messages else ""
         logger.info(f"[events] intent={state.current_intent} q={question[:60]!r}")
+
+        # The existence check runs HERE too (BUG-399). It used to live only inside the sparql
+        # node, so this lane answered "are there any vibration anomalies on floor 9" with 500
+        # episodes from floors 3, 4 and 5 — a floor this building does not have.
+        if await apply_referent_gate(
+            state, question, self.sparql_agent._execute_query, lane="events"
+        ):
+            state.intermediate_results["events_result"] = {
+                "success": True,
+                "kind": "referent_not_found",
+                "formatted_response": state.intermediate_results["evidence"][
+                    "not_assessable_reason"
+                ].capitalize()
+                + ".",
+            }
+            return state
         # V5-T39 — PROTECT (shadow consult): event answers are aggregate by
         # construction (counts, availability — never named individuals), so
         # this lane only LOGS its verdict; denial semantics live in the

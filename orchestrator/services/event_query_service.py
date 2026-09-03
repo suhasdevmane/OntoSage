@@ -134,6 +134,94 @@ def _place_label(place: Any) -> str:
     return re.sub(r"(?<=[A-Za-z])(?=\d)", " ", local)
 
 
+#: A floor named in a question — "floor 9", "level 2", "3rd floor".
+_FLOOR_RE = re.compile(
+    r"\b(?:floor|level)\s*(\d{1,2})\b|\b(\d{1,2})(?:st|nd|rd|th)\s+floor\b", re.I
+)
+
+
+def _floor_named(question: str) -> Optional[str]:
+    match = _FLOOR_RE.search(question or "")
+    if not match:
+        return None
+    return match.group(1) or match.group(2)
+
+
+def _floor_of(room_label: str) -> str:
+    """The floor an episode's room sits on, or "" when the label does not encode one.
+
+    Read from the room's own label rather than a second lookup. Returning "" for an
+    unrecognised shape matters: a building whose rooms are named differently then filters on
+    nothing rather than filtering everything away, so this narrowing can never silently empty
+    a result set it does not understand.
+    """
+    match = re.match(r"\s*(?:room|rm)?[_\s-]*(\d{1,2})[.\-]", str(room_label or ""), re.I)
+    return match.group(1) if match else ""
+
+
+def _narrow_to_question(
+    question: str, episodes: List[Dict[str, Any]], points: Dict[str, Any]
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """Keep only the episodes the question asked about (BUG-399).
+
+    Returns the surviving episodes and, when narrowing leaves nothing, the sentence that
+    says why. Naming a modality or a floor and receiving a list of everything else is a
+    confident answer to a different question, which is worse than no answer at all.
+
+    Conservative by construction: a term the building's own points do not use narrows
+    nothing rather than guessing at the nearest one, and an unrecognised room-label shape
+    disables the floor filter instead of emptying the result.
+    """
+    text = (question or "").lower()
+    known_modalities = {str(m).lower() for _r, m in (points or {}).values() if m}
+    out = list(episodes)
+    info: Dict[str, Any] = {}
+
+    # ── modality ────────────────────────────────────────────────────────────────────────
+    asked = sorted(
+        (m for m in known_modalities if re.search(rf"(?<![a-z]){re.escape(m)}(?![a-z])", text)),
+        key=len,
+        reverse=True,
+    )
+    if asked:
+        info["modality"] = asked[0]
+        out = [e for e in out if str(e.get("modality", "")).lower() in set(asked)]
+        if not out:
+            info["empty_reason"] = (
+                f"**No {asked[0]} anomalies are recorded for this period.** Other modalities "
+                "did report episodes; this narrows to the one you asked about rather than "
+                "listing them."
+            )
+            return out, info
+    else:
+        # A quantity was named that this building does not instrument at all. Saying so is
+        # the answer; listing what it DOES measure instead would be answering a different
+        # question, which is exactly the failure this narrowing exists to stop.
+        for candidate in re.findall(r"\b([a-z]{4,20})\s+anomal", text):
+            if candidate not in known_modalities and candidate not in {"any", "these", "those"}:
+                info["empty_reason"] = (
+                    f"**This building does not monitor {candidate}**, so there are no "
+                    f"{candidate} anomalies to report.\n\n_That is a statement about what is "
+                    "connected here, not a fault._"
+                )
+                return [], info
+            break
+
+    # ── floor ───────────────────────────────────────────────────────────────────────────
+    floor = _floor_named(text)
+    if floor:
+        info["floor"] = floor
+        encoded = [e for e in out if _floor_of(e.get("room", ""))]
+        if encoded:  # only filter when the labels actually carry a floor
+            out = [e for e in encoded if _floor_of(e.get("room", "")) == floor]
+            if not out:
+                info["empty_reason"] = (
+                    f"**No anomalies are recorded on floor {floor} for this period.** If this "
+                    "building has no such floor, that is why."
+                )
+    return out, info
+
+
 def classify_event_question(question: str) -> Optional[str]:
     """Kind or None (None => not an event question; router should not have sent it)."""
     q = question or ""
@@ -787,6 +875,39 @@ class EventQueryService:
                     "severity": str(attrs.get("severity", "")),
                 }
             )
+        # Narrow to what the question actually asked about (BUG-399).
+        #
+        # This listed EVERY episode in the window regardless of what was named. Measured:
+        # "are there any vibration anomalies on floor 9" answered "at least 500 anomaly
+        # episode(s)" and listed spikes in Room4.35 (occupancy), Room3.06 (humidity) and
+        # Room5.69 (occupancy) — a confident, specific answer about a different modality, in
+        # rooms on floors the question did not mention, for a floor this building does not
+        # have. Every episode already carries its room and modality; nothing was reading them.
+        episodes, narrowing = _narrow_to_question(question, episodes, self._points)
+
+        # Recount AFTER narrowing, and recompute `capped` with it.
+        #
+        # `by_detector` and the cap were derived from every fetched row. Narrowing without
+        # rebuilding them left the prose quoting totals the payload no longer contained, and
+        # the grounding guard caught it live — "a number in the text could not be traced back
+        # to the underlying data", which is exactly its job. A filtered answer narrated with
+        # unfiltered counts is the same defect this narrowing was written to remove, just
+        # moved from the episode list into the summary line.
+        by_detector = {}
+        for episode in episodes:
+            key = str(episode.get("detector") or "unknown")
+            by_detector[key] = by_detector.get(key, 0) + 1
+        capped = capped and len(episodes) == len(rows)
+        if narrowing.get("empty_reason"):
+            return {
+                "success": True,
+                "kind": "anomaly_summary",
+                "window": label,
+                "count": 0,
+                "source": "events store (anomaly scanner)",
+                "formatted_response": narrowing["empty_reason"],
+            }
+
         if not episodes:
             return {
                 "success": True,

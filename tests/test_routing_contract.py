@@ -693,6 +693,12 @@ def test_concept_stage_precedence_is_pinned():
     assert [r.name for r in rc.CONCEPT_STAGE_RULES] == [
         "building_question_not_general",
         "capability_measurand_is_data",
+        # CAVEAT-396: LAST in the stage, and the position is load-bearing. The rule above
+        # claims every question naming something this building DOES measure; whatever
+        # reaches this one named a quantity and resolved to no measurand at all, which is
+        # exactly the case the reach lane exists to answer. Placed earlier it would
+        # intercept real data questions.
+        "unmeasured_quantity_is_reach",
     ]
 
 
@@ -877,3 +883,134 @@ def test_route_questions_are_not_covered_by_the_other_spatial_predicates(query):
     assert not SR.is_spatial_query(query)
     assert not SR.is_floor_plan_query(query)
     assert rc.WAYFIND_RE.search(query)
+
+
+# ── BUG-395: an anomaly-shaped measurand question reaches the detector ─────────
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "any energy spikes",
+        "are there any energy spikes?",
+        "show me energy anomalies in the last day",
+        "any unusual temperature readings",
+        "is the CO2 sensor faulty",
+    ],
+)
+def test_an_anomaly_shaped_measurand_question_routes_to_the_detector(query):
+    """`capability_measurand_is_data` could only choose sensor_data or analytics.
+
+    So "any energy spikes" — a capability-classified question naming a measurand this
+    building instruments — never reached the anomaly lane. Measured live, it answered "I
+    don't have that specific information on record ... contact your facilities team" while
+    all 8 energy sensors were live and the scanner had found 24,317 spike findings in the
+    same hour.
+    """
+    assert rc._ANOMALY_SHAPE_RE.search(query.lower()), f"not recognised as anomaly-shaped: {query}"
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "what is the energy use right now",
+        "average temperature last week",
+        "how much energy did we use yesterday",
+        "which rooms are warmest",
+    ],
+)
+def test_an_ordinary_reading_question_is_not_diverted_to_the_detector(query):
+    """The safety property: only anomaly-SHAPED questions move, not every measurand."""
+    assert not rc._ANOMALY_SHAPE_RE.search(query.lower())
+
+
+def test_the_history_rule_still_does_not_claim_spike():
+    """`spike` is deliberately absent from ANOMALY_HISTORY_RE.
+
+    That rule routes to the persisted events store. Matching "spike" there would send a
+    live-detection question to a log of past episodes, so the two patterns stay separate.
+    """
+    assert not rc.ANOMALY_HISTORY_RE.search("any energy spikes")
+    assert rc.ANOMALY_HISTORY_RE.search("show me the anomaly history")
+
+
+# ── CAVEAT-396: a quantity this building does not measure reaches the reach lane ──────
+
+
+@pytest.mark.parametrize(
+    "query, quantity",
+    [
+        ("is there a voltage fluctuation that could put our hardware at risk?", "voltage"),
+        ("any radon readings today", "radon"),
+        ("is there a formaldehyde concentration problem", "formaldehyde"),
+        ("are there any vibration anomalies", "vibration"),
+    ],
+)
+def test_an_unmeasured_quantity_is_recognised(query, quantity):
+    """The shape the observability lane's own detector misses: no "can you measure" verb.
+
+    "Is there a voltage fluctuation?" classified as general_knowledge — answered from the
+    model rather than from the building — and reached "No sensor data available for anomaly
+    detection" when it reached anything, a sentence about the detector's input rather than
+    about the building.
+    """
+    match = rc._UNVERBED_QUANTITY_RE.search(query.lower())
+    assert match, f"not recognised as naming a quantity: {query}"
+    assert match.group(1).strip().split()[-1] == quantity
+
+
+def test_a_multi_word_phrase_takes_the_head_noun():
+    """ "a sudden voltage fluctuation" names voltage, not "sudden"."""
+    match = rc._UNVERBED_QUANTITY_RE.search("is there a sudden voltage fluctuation")
+    assert match.group(1).strip().split()[-1] == "voltage"
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "are there any readings today",
+        "is there a high reading",
+        "any unusual readings",
+        "is there a current value",
+    ],
+)
+def test_a_word_that_names_no_quantity_is_excluded(query):
+    """Reporting "'any' is not measured here" would answer about a word, not the building."""
+    match = rc._UNVERBED_QUANTITY_RE.search(query.lower())
+    head = match.group(1).strip().split()[-1] if match else ""
+    assert head in rc._NOT_A_QUANTITY or not head
+
+
+def test_the_rule_defers_when_the_building_measures_it():
+    """The safety property, and the reason this rule sits LAST in its stage."""
+    ctx = rc._Ctx(
+        query="is there a temperature fluctuation",
+        ql="is there a temperature fluctuation",
+        normalized={
+            "intent": "general_knowledge",
+            "concepts": [{"brick_classes": ["brick:Air_Temperature_Sensor"]}],
+        },
+        sr=None,
+    )
+    assert rc._r_unmeasured_quantity_is_reach(ctx) is None
+
+
+def test_the_rule_claims_a_quantity_with_no_concept():
+    ctx = rc._Ctx(
+        query="is there a voltage fluctuation that could put our hardware at risk?",
+        ql="is there a voltage fluctuation that could put our hardware at risk?",
+        normalized={"intent": "general_knowledge", "concepts": []},
+        sr=None,
+    )
+    assert rc._r_unmeasured_quantity_is_reach(ctx) == "observability"
+
+
+@pytest.mark.parametrize("intent", ["observability", "control", "privacy_refusal"])
+def test_lanes_that_own_their_own_refusals_are_left_alone(intent):
+    ctx = rc._Ctx(
+        query="is there a voltage fluctuation",
+        ql="is there a voltage fluctuation",
+        normalized={"intent": intent, "concepts": []},
+        sr=None,
+    )
+    assert rc._r_unmeasured_quantity_is_reach(ctx) is None

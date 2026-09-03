@@ -511,6 +511,26 @@ async def run_idempotent_uploads(
         f"[ttl_uploader] done — uploaded={len(summary['uploaded'])} "
         f"skipped={len(summary['skipped'])} failed={len(summary['failed'])}"
     )
+
+    # Drop the cached HBCO lay-term map when the ontology behind it has changed.
+    #
+    # ConceptResolver caches the whole concept map in REDIS, which a container restart does
+    # not touch, and `invalidate_cache()` — whose own docstring says "call after HBCO TTL is
+    # re-uploaded" — was called by NOTHING. So new lay terms landed in GraphDB, were
+    # verifiable there by query, and the resolver went on reading the stale map.
+    #
+    # Measured: BUG-395's lay terms were added, confirmed present in GraphDB, and the
+    # question still routed to the wrong lane through two container restarts. Only a manual
+    # `DEL cache:concept:hbco_all` made the ontology change take effect — which nobody would
+    # know to do, and which turns "extend the TTL and it works" into a claim the system does
+    # not honour. Cheap to run and only after an actual upload.
+    if summary["uploaded"]:
+        try:
+            from orchestrator.services.concept_resolver import concept_resolver
+
+            await concept_resolver.invalidate_cache()
+        except Exception as exc:  # never let a cache drop fail a boot
+            logger.warning(f"[ttl_uploader] concept cache not invalidated: {exc}")
     # State the position on what this upload could NOT have fixed.
     summary["type_audit"] = await audit_undeclared_types()
     summary["shadow_audit"] = await audit_shadowed_graphs()

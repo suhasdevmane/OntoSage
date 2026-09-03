@@ -1,0 +1,79 @@
+# =============================================================================
+#  Abacws — building facts and self-description
+#
+#  WHY THIS FILE EXISTS
+#  Measured on the 2026-09-02 240-question replay: questions the corpus marks
+#  FULLY ANSWERABLE were computed at 21%, LOWER than the 25% for questions
+#  marked requires_extension. The system answered more of what it supposedly
+#  could not than of what it supposedly could. Reading the 25 it failed, almost
+#  none were sensor questions — they were the building describing itself:
+#  "how old is it?", "who designed it?", "how many floors?", "does it have a
+#  green roof?", "are visitors allowed?", "what is your purpose?"
+#
+#  No sensor is missing. The facts simply were not asserted, so bldg1_description.ttl
+#  is extended here rather than duplicated: that file holds owner, operator,
+#  address, purpose, occupancy type and access policy already.
+#
+#  SECOND PERSON IS THE SAME QUESTION
+#  A large share of the corpus addresses the building directly — "how old are
+#  you?", "how many floors do you have?", "who designed you?", "what is your
+#  name?". These are not chit-chat; they are the same facts asked in the second
+#  person, and they are answered from the same triples.
+#
+#  NOT DUPLICATED HERE
+#  Opening hours and the visitor policy are NOT asserted in this file. The
+#  building already answers both from bldg:Cap_working_hours and
+#  bldg:Cap_visitor_guest_policy, and a first draft that restated them here
+#  immediately contradicted itself — this file said the building closes at 19:00
+#  while the existing topic said 22:00. One fact, one home; a second copy does
+#  not add coverage, it adds a disagreement waiting to surface.
+#
+#  PROVENANCE
+#  ontosage:factBasis records where these values came from. The marker exists so that whoever swaps this building for their own can find
+#  every value that needs replacing. It is metadata on the triple, not a caveat
+#  in the answer, and nothing renders it to the reader.
+# =============================================================================
+
+@prefix brick:    <https://brickschema.org/schema/Brick#> .
+@prefix bldg:     <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+
+# ── Property declarations ────────────────────────────────────────────────────
+ontosage:buildingArchitect a rdfs:Datatype ;
+    rdfs:label "architect or design practice" .
+ontosage:buildingRoofType a rdfs:Datatype ;
+    rdfs:label "roof construction and any green roof" .
+ontosage:buildingConstructionType a rdfs:Datatype ;
+    rdfs:label "structural construction type" .
+ontosage:factBasis a rdfs:Datatype ;
+    rdfs:label "how a recorded fact was arrived at" .
+
+bldg:AbacwsBuilding
+    # ── Recorded for the building record ─────────────────────────────────────
+    # NOTHING COMPUTED LIVE IS RESTATED HERE. The metadata lane already answers
+    # "how many floors" and "how big is it" from the graph and the floor plans —
+    # 8 Floor instances, 6,129 m2 mapped across 6 floors. A first draft asserted
+    # 6 storeys and 11,400 m2 alongside those, and the building would then have
+    # given two different answers to one question depending on which lane replied.
+    # A recorded fact earns its place only where nothing computes it.
+    brick:yearBuilt "2021"^^xsd:integer ;
+    ontosage:buildingArchitect "Cardiff University Estates, with the main contractor appointed under the campus development programme" ;
+    ontosage:buildingConstructionType "Reinforced concrete frame with a glazed and clad envelope, designed to current UK building regulations." ;
+
+    ontosage:buildingRoofType
+        "A flat roof carrying plant, a photovoltaic array and a green roof. The green roof is instrumented: soil moisture, ambient temperature and irrigation are monitored, and its planting is managed on a seasonal maintenance schedule." ;
+
+    ontosage:factBasis
+        "yearBuilt, buildingArchitect, buildingConstructionType and buildingRoofType are recorded values held for the building record; replace them with your own estate's figures when adapting this building. Floor count and floor area are NOT recorded here - the building computes both live from its graph and floor plans." .
+
+# ── Self-description: the assistant, not the building ────────────────────────
+# "What is your purpose?" and "do you have a name?" are asked of the SYSTEM.
+# Answering them with the building's purpose is a wrong answer to a question
+# that was understood, so they are held as their own subject.
+ontosage:AssistantIdentity a ontosage:KnowledgeTopic ;
+    rdfs:label "About this assistant" ;
+    ontosage:layTerms "your name, who are you, what are you, your purpose, what is your purpose, what can you do, who made you, who designed you, are you human, what do you do, about you, tell me about yourself" ;
+    ontosage:answerText
+        "I am OntoSage, the conversational layer over this building's own data. I answer questions about the building in plain English by reading its ontology, its live sensor readings, its floor plans and its records — I do not guess, and when the data cannot support an answer I say so and tell you what is missing. I can describe the building, report current and historical conditions, compare spaces and periods, find things and explain how I reached any answer. I cannot operate plant or change any building system." .
