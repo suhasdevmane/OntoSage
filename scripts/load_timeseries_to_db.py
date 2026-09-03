@@ -15,12 +15,18 @@ loaded, the DB is authoritative and the CSVs can be archived.
 from __future__ import annotations
 
 import csv
+import sys
 import json
 import os
 from pathlib import Path
 from typing import Dict
 
 import pymysql
+
+# Run directly as a script, so the repo root is not on sys.path yet.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from shared.db_clock import UTC_SESSION_INIT
 
 INPUT_ROOT = Path(os.environ.get("INPUT_ROOT", "/app/input"))
 MAP_PATH = INPUT_ROOT / "bldg1_timeseries_extension_uuids.json"
@@ -50,6 +56,8 @@ def _connect() -> pymysql.connections.Connection:
         database=os.environ.get("MYSQL_DATABASE", "sensordb"),
         connect_timeout=10,
         autocommit=False,
+        # Same clock the rows are stamped in (BUG-403).
+        init_command=UTC_SESSION_INIT,
     )
 
 

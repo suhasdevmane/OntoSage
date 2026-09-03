@@ -95,7 +95,12 @@ def _sparql(endpoint: str, query: str) -> List[Dict[str, str]]:
 
 
 def narrow_tables(registry_path: Path) -> Dict[str, str]:
-    """{storage key: table} for every narrow store the active building registers."""
+    """{storage key: table} for every narrow store the active building registers.
+
+    The KEY is what ``ref:storedAt`` names in the graph; the TABLE is where rows are
+    written. They are equal for most stores and NOT equal for some — matching one against
+    the other is CAVEAT-402's defect and is why two stores were dropped in silence.
+    """
     raw = yaml.safe_load(registry_path.read_text(encoding="utf-8")) or {}
     databases = raw.get("databases") or raw
     out: Dict[str, str] = {}
@@ -112,8 +117,51 @@ def _value_col(table: str) -> str:
     return _VALUE_COL_BY_MODALITY.get(stem, "generic")
 
 
+#: Loaded by the publisher only when no generated map exists (see ``_narrow_map_path``), so
+#: writing this map SUPERSEDES it. It is not a sibling and must never be deferred to.
+_SUPERSEDED_BY_THIS_MAP = "_timeseries_extension_uuids.json"
+
+
+def sibling_uuids(building_id: str, exclude: Path) -> Dict[str, str]:
+    """{uuid: file} for every point some OTHER publisher map already feeds.
+
+    Three maps feed this building and none of them knew about the others, so "is this point
+    fed?" had no single answer — which is how CAVEAT-402 came to be recorded as a data gap
+    when in fact every watched point was being written. A point must be claimed by exactly
+    one map: two maps writing the same uuid on the same tick double its apparent sampling
+    rate, and the map with the coarser value range would be indistinguishable from the one
+    with per-class ranges.
+
+    The existing map wins. It carries per-Brick-class ranges (a temperature reads 18-28, not
+    0-100) that this generator cannot reconstruct from a table name alone.
+
+    A SIBLING IS A MAP THE PUBLISHER LOADS *ALONGSIDE* THIS ONE, and only those. The legacy
+    ``*_timeseries_extension_uuids.json`` is loaded only *instead of* this file, as the
+    fallback when no generated map exists — so deferring its 19 points to it would leave
+    them fed by nobody. That is the same accident this function exists to prevent, one file
+    further along, and it was live for the length of one dry-run.
+    """
+    claimed: Dict[str, str] = {}
+    folder = exclude.parent
+    for path in sorted(folder.glob("*_uuids.json")) + sorted(folder.glob("*_publish_map.json")):
+        if path.resolve() == exclude.resolve():
+            continue
+        if path.name.endswith(_SUPERSEDED_BY_THIS_MAP):
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        entries = data.values() if isinstance(data, dict) else data
+        for entry in entries:
+            uuid = str((entry or {}).get("uuid") or "").strip()
+            if uuid:
+                claimed.setdefault(uuid, path.name)
+    return claimed
+
+
 def build_map(endpoint: str, tables: Dict[str, str]) -> Dict[str, Dict[str, str]]:
-    """{uuid: entry} for every point registered to one of these narrow tables."""
+    """{uuid: entry} for every point registered to one of these narrow stores."""
     rows = _sparql(
         endpoint,
         "PREFIX ref: <https://brickschema.org/schema/Brick/ref#>\n"
@@ -125,21 +173,28 @@ def build_map(endpoint: str, tables: Dict[str, str]) -> Dict[str, Dict[str, str]
         "  OPTIONAL { ?sensor rdfs:label ?label }\n"
         "}",
     )
-    wanted = {t for t in tables.values()}
+    # Match the registry KEY, which is what ref:storedAt names — not the table name.
+    #
+    # This compared against ``tables.values()`` (table names) and passed for years because
+    # most stores are registered under a key identical to their table. The two where they
+    # differ were dropped without a word, and were rescued only by a second, hand-written
+    # map that happened to cover them. A building that names its keys and tables
+    # differently throughout would have produced an EMPTY map and an empty console line.
     out: Dict[str, Dict[str, str]] = {}
     for row in rows:
         store = str(row.get("stored") or "").rsplit("#", 1)[-1].rsplit("/", 1)[-1]
         uuid = str(row.get("uuid") or "").strip()
-        if store not in wanted or not uuid:
+        if store not in tables or not uuid:
             continue
+        table = tables[store]
         # One entry per uuid. A point referenced twice in the graph must not be published
         # twice per tick, which would double its apparent sampling rate.
         out.setdefault(
             uuid,
             {
                 "uuid": uuid,
-                "table": store,
-                "value_col": _value_col(store),
+                "table": table,
+                "value_col": _value_col(table),
                 "label": str(row.get("label") or "").strip(),
                 "sensor": str(row.get("sensor") or "").rsplit("#", 1)[-1],
             },
@@ -153,6 +208,11 @@ def main(argv: List[str]) -> int:
     ap.add_argument("--endpoint", default="http://localhost:7200/repositories/bldg")
     ap.add_argument("--registry", default=str(REPO / "input" / "database_registry.yaml"))
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument(
+        "--claim-all",
+        action="store_true",
+        help="publish points another map already feeds (doubles their sampling rate)",
+    )
     args = ap.parse_args(argv)
 
     tables = narrow_tables(Path(args.registry))
@@ -163,6 +223,22 @@ def main(argv: List[str]) -> int:
     if not entries:
         print("no points are registered to a narrow store; nothing to publish")
         return 0
+
+    out = REPO / "input" / f"{args.building_id}_narrow_publish_map.json"
+    if not args.claim_all:
+        claimed = sibling_uuids(args.building_id, out)
+        overlap = {u: claimed[u] for u in list(entries) if u in claimed}
+        for uuid in overlap:
+            entries.pop(uuid, None)
+        if overlap:
+            by_file = Counter(overlap.values())
+            print("already fed by another map, left to it:")
+            for name, count in by_file.most_common():
+                print(f"  {name:44} {count:>5}")
+            print()
+        if not entries:
+            print("every registered point is already fed by another map; nothing to write")
+            return 0
 
     per_table = Counter(e["table"] for e in entries.values())
     print(f"narrow stores registered: {len(tables)}   points found: {len(entries)}")
@@ -175,7 +251,6 @@ def main(argv: List[str]) -> int:
         print("\n--dry-run: nothing written.")
         return 0
 
-    out = REPO / "input" / f"{args.building_id}_narrow_publish_map.json"
     out.write_text(json.dumps(entries, indent=1, sort_keys=True), encoding="utf-8")
     print(f"\n[written] {out}  ({len(entries)} points)")
     print("Recreate the publisher so it reloads the map: docker compose up -d data-publisher")

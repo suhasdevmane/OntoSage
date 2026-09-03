@@ -55,6 +55,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from orchestrator.services.evidence.plant_state import plant_modalities  # noqa: E402
 from orchestrator.services.ontology_manager import run_sparql_select  # noqa: E402
 from shared.config import settings  # noqa: E402
+from shared.db_clock import UTC_SESSION_INIT
 
 _PREFIXES = (
     "PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
@@ -344,6 +345,8 @@ async def main() -> int:
         user=os.getenv("MYSQL_USER", "root"),
         password=os.getenv("MYSQL_PASSWORD", "mysql"),
         database=os.getenv("MYSQL_DATABASE", "sensordb"),
+        # Same clock the rows are stamped in (BUG-403).
+        init_command=UTC_SESSION_INIT,
     )
     start = datetime.utcnow().replace(second=0, microsecond=0) - timedelta(days=args.days)
     written = 0

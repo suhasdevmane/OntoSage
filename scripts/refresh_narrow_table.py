@@ -33,6 +33,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List
 
+# Run directly as a script, so the repo root is not on sys.path yet.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from shared.db_clock import UTC_SESSION_INIT
+
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
@@ -70,6 +75,8 @@ def main(argv: List[str]) -> int:
         user=env.get("MYSQL_USER", "root"),
         password=env.get("MYSQL_PASSWORD", ""),
         database=env.get("MYSQL_DATABASE", "sensordb"),
+        # Same clock the rows are stamped in (BUG-403).
+        init_command=UTC_SESSION_INIT,
     )
     try:
         cur = conn.cursor()

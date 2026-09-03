@@ -41,6 +41,7 @@ from orchestrator.services.deliberation.synthetic_events import (  # noqa: E402
     outages_for_day,
     to_row,
 )
+from shared.db_clock import UTC_SESSION_INIT
 
 _INSERT = (
     "INSERT IGNORE INTO events "
@@ -62,6 +63,8 @@ def _mysql():
         user=os.environ.get("MYSQL_USER", env.get("MYSQL_USER", "root")),
         password=os.environ.get("MYSQL_PASSWORD", env.get("MYSQL_PASSWORD", "")),
         database=os.environ.get("MYSQL_DATABASE", env.get("MYSQL_DATABASE", "sensordb")),
+        # Same clock the rows are stamped in (BUG-403).
+        init_command=UTC_SESSION_INIT,
     )
 
 

@@ -36,6 +36,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
+from shared.db_clock import UTC_SESSION_INIT
 from shared.utils import get_logger
 
 # Optional DB drivers — imported at module level so tests can monkeypatch them.
@@ -630,6 +631,8 @@ def _mysql_connect(host, port, user, password, database, timeout=8):
         database=database or None,
         connect_timeout=timeout,
         read_timeout=timeout,
+        # Same clock the rows are stamped in (BUG-403).
+        init_command=UTC_SESSION_INIT,
     )
 
 

@@ -58,6 +58,7 @@ from orchestrator.services.deliberation.live import (  # noqa: E402
     active_identity,
     sparql_exec,
 )
+from shared.db_clock import UTC_SESSION_INIT
 
 BASE = os.environ.get("ONTOSAGE_BASE", "http://127.0.0.1:8000")
 _OUT_DIR = _SCRIPT_DIR / "outputs" / "l7"
@@ -136,6 +137,8 @@ def _mysql():
         user=env.get("MYSQL_USER", "root"),
         password=env.get("MYSQL_PASSWORD", "mysql"),
         database=env.get("MYSQL_DATABASE", "sensordb"),
+        # Same clock the rows are stamped in (BUG-403).
+        init_command=UTC_SESSION_INIT,
     )
 
 

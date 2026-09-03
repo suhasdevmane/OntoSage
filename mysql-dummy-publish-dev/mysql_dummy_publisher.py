@@ -194,8 +194,18 @@ def publish_narrow(conn, verbose=False) -> int:
 EXTENDED_SENSORS: List[Dict[str, object]] = []  # [{uuid, table, lo, hi, dec}]
 
 
-def load_extended_sensors(filepath="/app/input/bldg1_extended_narrow_uuids.json"):
+def _extended_map_path() -> str:
+    """Discovered, not hardcoded — this named bldg1's file, so no other building was fed."""
+    override = os.environ.get("EXTENDED_MAP", "").strip()
+    if override:
+        return override
+    found = sorted(glob.glob("/app/input/*_extended_narrow_uuids.json"))
+    return found[0] if found else "/app/input/extended_narrow_uuids.json"
+
+
+def load_extended_sensors(filepath=None):
     global EXTENDED_SENSORS
+    filepath = filepath or _extended_map_path()
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -209,6 +219,19 @@ def load_extended_sensors(filepath="/app/input/bldg1_extended_narrow_uuids.json"
             }
             for e in data.values()
         ]
+        # A uuid written by BOTH maps on the same tick doubles its apparent sampling rate,
+        # and every window a detector or a freshness check reasons about is expressed in
+        # samples somewhere. The maps are disjoint by construction today (the generator
+        # defers to this file); this makes a hand-edit that overlaps them fail loudly
+        # instead of silently halving every detector's effective view (CAVEAT-402).
+        already = {s["uuid"] for s in NARROW_SENSORS}
+        collisions = [s for s in EXTENDED_SENSORS if s["uuid"] in already]
+        if collisions:
+            EXTENDED_SENSORS = [s for s in EXTENDED_SENSORS if s["uuid"] not in already]
+            print(
+                f"[py-dummy] {len(collisions)} sensor(s) appear in BOTH publish maps; the "
+                f"narrow map keeps them so they are not written twice per tick"
+            )
         print(f"[py-dummy] Loaded {len(EXTENDED_SENSORS)} extended narrow sensors from {filepath}")
     except Exception as e:
         print(f"[py-dummy] Extended sensors not loaded ({filepath}): {e}")
@@ -387,6 +410,24 @@ def connect_mysql(cfg) -> pymysql.connections.Connection:
         database=cfg["db"],
         autocommit=True,
         cursorclass=pymysql.cursors.DictCursor,
+        # Stamp rows in the SAME clock every reader uses (BUG-403).
+        #
+        # mysql_adapter pins its own sessions to UTC and its comment states that "the
+        # dummy-data generator writes UTC". It did not. Narrow rows are written with SQL
+        # NOW() on a session that inherited the server's SYSTEM zone — BST, UTC+1 — into
+        # DATETIME columns, which store what they are given without conversion. So every
+        # narrow row was stamped ONE HOUR AHEAD of the clock every consumer reads with.
+        #
+        # The wide table hid it: its timestamp column is TIMESTAMP, which MySQL converts on
+        # write and on read, so the same NOW() landed correctly there. One table type was
+        # right and eighteen were wrong, which is why this survived so long.
+        #
+        # What it cost: any window bounded by NOW() dropped the newest hour of narrow data,
+        # so the anomaly sweep saw a truncated series and a freshly injected fault was
+        # outside its own window; and the freshness gate, ENFORCING since 2026-09-02, read
+        # a future timestamp as current and would keep calling a dead point fresh for a
+        # full hour.
+        init_command="SET time_zone='+00:00'",
     )
 
 

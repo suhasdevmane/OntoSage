@@ -29,6 +29,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+# Run directly as a script, so the repo root is not on sys.path yet.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from shared.db_clock import UTC_SESSION_INIT
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 REF = "https://brickschema.org/schema/Brick/ref#"
@@ -108,6 +113,8 @@ def _populated_counts(targets: List[str]) -> Optional[Dict[str, Tuple[int, int]]
             password=settings.MYSQL_PASSWORD,
             database=settings.MYSQL_DATABASE,
             connect_timeout=5,
+            # Same clock the rows are stamped in (BUG-403).
+            init_command=UTC_SESSION_INIT,
         )
     except Exception as e:
         print(f"  (MySQL unreachable — declared side only: {e})", file=sys.stderr)
