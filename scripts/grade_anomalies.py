@@ -95,6 +95,99 @@ def _mysql(env: dict, as_root: bool = False):
 # ── injection ────────────────────────────────────────────────────────────────
 
 
+#: Run inside the orchestrator container to report the uuids the scanner will examine.
+#: A module-level triple-quoted constant rather than a string built from concatenated
+#: escaped-newline fragments: that form gets mangled when this file is edited through a
+#: shell heredoc, and it broke every string literal in this block twice.
+CANDIDATE_SCRIPT = """
+import asyncio
+from orchestrator.services.adapters.registry import adapter_registry
+from orchestrator.services.deliberation.capability_schema import build_schema
+from orchestrator.services.deliberation.coverage_audit import load_modalities
+from orchestrator.services.deliberation.live import sparql_exec
+from shared.config import settings
+
+
+async def main():
+    await adapter_registry.initialize()
+    sch = await build_schema(
+        settings.BUILDING_ID,
+        settings.BUILDING_NAMESPACE,
+        sparql_exec,
+        load_modalities(settings.BUILDING_ID),
+    )
+    out = set()
+    for sc in sch.spaces:
+        for _m, h in (sc.modalities or {}).items():
+            u = (h or {}).get("uuid")
+            if u:
+                out.add(str(u))
+    print("CANDIDATES:" + ",".join(sorted(out)))
+
+
+asyncio.run(main())
+"""
+
+_CANDIDATE_CACHE: Optional[set] = None
+
+
+def _scanner_candidates() -> set:
+    """The uuids the SCANNER will actually look at, read from the running system.
+
+    The injector chose its victims by DATABASE presence (a uuid with enough rows in the
+    table); the scanner scans by ONTOLOGY membership (points attached to a space in the
+    capability schema). Those are different sets, and nothing reconciled them — so a round
+    scored only when its rotated victim happened to fall in both.
+
+    Measured on round 13: the two `stuck` targets were in the scanner's 1,859 candidates and
+    were detected 2/2, while both `spike` and both `dropout` targets were NOT in it and
+    scored 0/2 — and spike() fires on those exact series when called directly, at either
+    fetch limit. The detectors were never the problem; the faults were planted in sensors
+    nothing was going to look at.
+
+    This is why recall moved between 44.4%, 55.6% and 44.4% across rounds while the system
+    improved: the numbers were tracking the rotation, not the detectors. An empty set here
+    disables the filter rather than blocking every injection, so a building whose schema
+    cannot be built still runs — with a warning, because the resulting score is not
+    comparable.
+    """
+    global _CANDIDATE_CACHE
+    if _CANDIDATE_CACHE is not None:
+        return _CANDIDATE_CACHE
+    script = CANDIDATE_SCRIPT
+    tmp = OUT / "_t22_candidates.py"
+    tmp.write_text(script, encoding="utf-8")
+    env = os.environ.copy()
+    env["MSYS_NO_PATHCONV"] = "1"
+    try:
+        subprocess.run(  # nosec B603 B607
+            ["docker", "cp", str(tmp), "ontosage-orchestrator:/tmp/_t22_cand.py"],
+            check=True,
+            capture_output=True,
+            timeout=60,
+            env=env,
+        )
+        r = subprocess.run(  # nosec B603 B607
+            ["docker", "exec", "ontosage-orchestrator", "python", "/tmp/_t22_cand.py"],
+            capture_output=True,
+            text=True,
+            timeout=900,
+            env=env,
+        )
+        line = next(
+            (ln for ln in (r.stdout or "").splitlines() if ln.startswith("CANDIDATES:")), ""
+        )
+        _CANDIDATE_CACHE = {u for u in line[len("CANDIDATES:") :].split(",") if u}
+    except Exception as exc:
+        print(f"  WARNING: could not read the scanner's candidate set ({exc})")
+        _CANDIDATE_CACHE = set()
+    if _CANDIDATE_CACHE:
+        print(f"  scanner will look at {len(_CANDIDATE_CACHE)} point(s); injecting only into those")
+    else:
+        print("  WARNING: candidate set empty — injecting blind; this round is NOT comparable")
+    return _CANDIDATE_CACHE
+
+
 def _pick_sensor(cur, table: str, offset: int) -> Optional[str]:
     """A sensor with enough history, rotating by round so labels never collide.
 
@@ -110,20 +203,18 @@ def _pick_sensor(cur, table: str, offset: int) -> Optional[str]:
     same plan.
     """
     cur.execute(
-        f"SELECT COUNT(*) FROM (SELECT uuid FROM `{table}` "  # nosec B608
-        f"GROUP BY uuid HAVING COUNT(*) >= 100) AS eligible"
+        f"SELECT uuid FROM `{table}` GROUP BY uuid HAVING COUNT(*) >= 100 "  # nosec B608
+        f"ORDER BY uuid"
     )
-    row = cur.fetchone()
-    eligible = int(row[0]) if row else 0
+    have_rows = [r[0] for r in cur.fetchall()]
+    # Intersect with what the scanner will actually look at. A fault planted in a sensor
+    # outside the scanner's candidate set is never examined, and the detector is then
+    # recorded as having missed it.
+    candidates = _scanner_candidates()
+    eligible = [u for u in have_rows if u in candidates] if candidates else have_rows
     if not eligible:
         return None
-    cur.execute(
-        f"SELECT uuid FROM `{table}` GROUP BY uuid HAVING COUNT(*) >= 100 "  # nosec B608
-        f"ORDER BY uuid LIMIT 1 OFFSET %s",
-        (offset % eligible,),
-    )
-    row = cur.fetchone()
-    return row[0] if row else None
+    return eligible[offset % len(eligible)]
 
 
 def inject(env: dict, round_no: int) -> List[Dict[str, Any]]:
