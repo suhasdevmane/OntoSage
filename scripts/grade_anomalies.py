@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import inspect
 import json
 import os
 import subprocess  # nosec B404 — local docker exec only
@@ -43,6 +44,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 _REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO))
+
+# Imported AFTER the sys.path insert above — the repo is not on the path before it.
+from orchestrator.services.anomaly import detectors as _detectors  # noqa: E402
 
 OUT = _REPO / "scripts" / "outputs"
 LABELS = OUT / "v5_t22_labels.csv"
@@ -156,18 +160,41 @@ def inject(env: dict, round_no: int) -> List[Dict[str, Any]]:
         w_start = w_end = None
         magnitude = ""
         if kind == "pin":
+            # Pin by TIME SPAN, not by row count.
+            #
+            # This pinned a fixed 60 rows, and detectors.stuck() requires the frozen run to
+            # span `min_hours=6.0`. At the publisher's 30-second cadence 60 rows is THIRTY
+            # MINUTES, so the injection could never satisfy the detector it was testing:
+            # `stuck` scored 0/2 in every round and read as a detector defect. It is not —
+            # the harness was injecting a fault below the detector's own definition, which
+            # is this project's most-repeated failure in a new place.
+            #
+            # The span is read from the detector rather than restated here, so raising
+            # min_hours cannot silently make these injections undetectable again.
+            # Read by NAME, not by position: `__defaults__[-2]` gives the same 6.0 today
+            # and silently becomes the wrong parameter the moment anyone adds an argument.
+            _stuck_hours = float(
+                inspect.signature(_detectors.stuck).parameters["min_hours"].default or 6.0
+            )
+            _span_hours = _stuck_hours + 1.0  # clear the boundary rather than sit on it
             cur.execute(
-                f"UPDATE `{table}` SET value=777.7 WHERE uuid=%s "  # nosec B608
-                f"ORDER BY `datetime` DESC LIMIT 60",
+                f"SELECT MAX(`datetime`) FROM `{table}` WHERE uuid=%s",  # nosec B608
                 (uid,),
             )
+            _newest = cur.fetchone()[0]
+            cur.execute(
+                f"UPDATE `{table}` SET value=777.7 WHERE uuid=%s "  # nosec B608
+                f"AND `datetime` > %s",
+                (uid, _newest - timedelta(hours=_span_hours)),
+            )
+            _pinned = cur.rowcount
             cur.execute(
                 f"SELECT MIN(`datetime`), MAX(`datetime`) FROM `{table}` "  # nosec B608
                 f"WHERE uuid=%s AND value=777.7",
                 (uid,),
             )
             w_start, w_end = cur.fetchone()
-            magnitude = "pin=777.7x60rows"
+            magnitude = f"pin=777.7x{_span_hours:g}h({_pinned}rows)"
         elif kind == "spike_row":
             cur.execute(
                 f"SELECT `datetime` FROM `{table}` WHERE uuid=%s "  # nosec B608
@@ -273,7 +300,12 @@ def run_scan() -> None:
         ["docker", "exec", "ontosage-orchestrator", "python", "/tmp/_t22_scan.py"],
         capture_output=True,
         text=True,
-        timeout=300,
+        # 300s was sized when the building had 19 live narrow points. It now has 1,528 with
+        # a backfilled history behind them, and the sweep overran — killing the run AFTER
+        # the injections had been written, which leaves labelled faults in the data with no
+        # score against them. A timeout that fires mid-measurement corrupts the next round
+        # as well as this one.
+        timeout=int(os.environ.get("T22_SCAN_TIMEOUT_S", "1800")),
         env=env,
     )
     for line in (r.stdout or "").splitlines()[-3:]:
@@ -393,6 +425,51 @@ def organic_density(env: dict, since: datetime, n_labels: int) -> Dict[str, Any]
     }
 
 
+_PUBLISHER = "data-publisher"
+
+
+def _pause_publisher() -> bool:
+    """Stop the dev data publisher for the duration of a measurement. True when it stopped.
+
+    Returns False when it was not running or could not be stopped, so the resume knows not
+    to start something the operator had deliberately left down.
+    """
+    env = os.environ.copy()
+    env["MSYS_NO_PATHCONV"] = "1"
+    try:
+        running = subprocess.run(  # nosec B603 B607
+            ["docker", "ps", "--filter", f"name={_PUBLISHER}", "--format", "{{.Names}}"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=env,
+        )
+        if _PUBLISHER not in (running.stdout or ""):
+            return False
+        subprocess.run(  # nosec B603 B607
+            ["docker", "stop", _PUBLISHER], capture_output=True, timeout=60, env=env
+        )
+        print(f"  paused {_PUBLISHER} so injected faults survive to be scanned")
+        return True
+    except Exception as exc:
+        print(f"  WARNING: could not pause {_PUBLISHER} ({exc}) — tail injections may be buried")
+        return False
+
+
+def _resume_publisher(was_paused: bool) -> None:
+    if not was_paused:
+        return
+    env = os.environ.copy()
+    env["MSYS_NO_PATHCONV"] = "1"
+    try:
+        subprocess.run(  # nosec B603 B607
+            ["docker", "start", _PUBLISHER], capture_output=True, timeout=60, env=env
+        )
+        print(f"  resumed {_PUBLISHER}")
+    except Exception as exc:  # a stopped feed is worse than a noisy log
+        print(f"  WARNING: {_PUBLISHER} did NOT restart ({exc}) — start it manually")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--round", type=int, required=True)
@@ -404,12 +481,31 @@ def main() -> int:
     print(f"— T22 anomaly grader · round {args.round} · building {env.get('BUILDING_ID')} —")
     since = datetime.utcnow() - timedelta(hours=1)  # widened below from the labels
 
-    if not args.skip_inject:
-        print("injecting labelled faults…")
-        inject(env, args.round)
-    if not args.skip_scan:
-        print("running scanner sweep…")
-        run_scan()
+    # HOLD THE PUBLISHER STILL WHILE MEASURING.
+    #
+    # The dev publisher tops up every registered point every 30 seconds. A tail-shaped
+    # injection — `stuck` pins the trailing window to one value — is therefore buried within
+    # seconds of being written, and the detector correctly finds no constant run. Measured:
+    # a 7-hour, 698-row pin scored 0/2, and the pinned sensor's newest rows were 185, 127,
+    # 484 — fresh publisher values, not the pinned 777.7.
+    #
+    # This is an interaction the publisher fix (BUG-390) created: while only 19 points were
+    # live, most injected sensors were never written over. Pausing is the honest fix; the
+    # alternative is grading detectors against faults that no longer exist by the time they
+    # look, which is how `stuck` came to read as a detector defect for three rounds.
+    #
+    # try/finally, because a run that dies mid-scan must not leave the building's data feed
+    # stopped behind it.
+    _paused = _pause_publisher()
+    try:
+        if not args.skip_inject:
+            print("injecting labelled faults…")
+            inject(env, args.round)
+        if not args.skip_scan:
+            print("running scanner sweep…")
+            run_scan()
+    finally:
+        _resume_publisher(_paused)
 
     # Scoped to the ACTIVE building as well as the round. The labels file accumulates
     # across buildings and runs -- it records `building` per row for exactly this reason
