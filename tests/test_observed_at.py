@@ -13,9 +13,15 @@ would produce a plausible number rather than an obvious failure:
 1. **The wide-table row.** One timestamp, a column per sensor, nearly all null. Counting such
    a row regardless would date a silent sensor to whenever *any* sensor last reported — the
    per-table-max illusion of CAVEAT-233 rebuilt inside the evidence record.
-2. **The naive timestamp.** Rows come back without a timezone while `retrieved_at` is UTC.
-   Calling the naive value UTC shifts staleness by the building's offset — an hour of invented
-   freshness for half the year in Europe/London.
+2. **The naive timestamp.** Rows come back without a timezone while `retrieved_at` is UTC,
+   so the naive value has to be made comparable somehow. This file originally required it to
+   be read as BUILDING-LOCAL, and that was right about the risk and wrong about the direction:
+   at the time, the publisher was stamping rows in BST, so reading them as BST cancelled the
+   error and hid it. BUG-403 pinned every writer to UTC — the convention `mysql_adapter` had
+   always claimed — which turned the compensation into the whole error, and a co2 reading
+   three minutes old was scored 63 minutes old against a 5-minute policy. A stored reading is
+   now read as UTC; a time a HUMAN or the ontology expressed stays building-local, because
+   "between 9 and 5" means nine and five in the building.
 3. **The future timestamp.** Bookings and schedules carry times too. A lane that mixed one in
    would make an answer look fresher than the data behind it.
 """
@@ -25,6 +31,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from orchestrator.services.evidence.assemble import build_evidence_record
+from shared.config import settings
 
 
 def _fired(rec):
@@ -86,18 +93,29 @@ def test_an_all_null_wide_row_is_not_an_observation():
     )
 
 
-def test_a_naive_timestamp_is_localised_to_the_building_not_assumed_utc():
-    """`retrieved_at` is aware; a naive row value has to be made comparable. Assuming UTC is
-    the tempting default and it invents freshness equal to the building's offset."""
-    from zoneinfo import ZoneInfo
+def test_a_naive_reading_is_read_as_utc_because_that_is_how_it_was_stored(monkeypatch):
+    """This test asserted the OPPOSITE until 2026-09-03, and both versions were defensible
+    against the system as it stood at the time.
 
-    from shared.config import settings
+    A naive row value has to be made comparable with an aware `retrieved_at`. The original
+    rule — read it as building-local — was chosen to avoid inventing freshness equal to the
+    building's offset. It happened to be correct only because the writer was ALSO
+    building-local: the publisher stamped narrow rows with SQL NOW() on a BST session, so
+    two opposite errors cancelled and neither was visible.
 
+    BUG-403 pinned every writer to UTC, which is the convention `mysql_adapter` had asserted
+    all along. That made this compensation the entire error, and it showed immediately: a co2
+    reading taken three minutes earlier was scored 63 minutes old against a 5-minute policy
+    and a current answer was downgraded to INFERRED.
+
+    Pinned with a non-UTC building timezone so the assertion is about the RULE and not about
+    where this building happens to be — under the old behaviour this reads 09:15+05:30.
+    """
+    monkeypatch.setattr(settings, "BUILDING_TIMEZONE", "Asia/Kolkata", raising=False)
     rec = _rec([{"datetime": "2026-08-22 09:15:00", "value": 21.4}])
     assert rec.latest_evidence_at is not None
     assert rec.latest_evidence_at.tzinfo is not None, "naive timestamps cannot be compared"
-    expected = datetime(2026, 8, 22, 9, 15, tzinfo=ZoneInfo(settings.BUILDING_TIMEZONE))
-    assert rec.latest_evidence_at == expected
+    assert rec.latest_evidence_at == datetime(2026, 8, 22, 9, 15, tzinfo=timezone.utc)
 
 
 def test_a_future_timestamp_is_not_treated_as_an_observation():

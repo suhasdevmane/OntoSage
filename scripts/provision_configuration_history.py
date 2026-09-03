@@ -41,6 +41,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from orchestrator.services.ontology_manager import run_sparql_select  # noqa: E402
 from shared.config import settings  # noqa: E402
+from shared.db_clock import UTC_SESSION_INIT
 
 ONTOSAGE = "http://ontosage.org/capabilities#"
 
@@ -109,6 +110,8 @@ def earliest_observations(points: List[Dict]) -> Dict[str, datetime]:
         user=os.getenv("MYSQL_USER"),
         password=os.getenv("MYSQL_PASSWORD"),
         database=os.getenv("MYSQL_DATABASE", "sensordb"),
+        # Same clock the rows are stamped in (BUG-403).
+        init_command=UTC_SESSION_INIT,
     )
     found: Dict[str, datetime] = {}
     try:

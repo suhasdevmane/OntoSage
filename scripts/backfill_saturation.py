@@ -39,6 +39,7 @@ from orchestrator.services.deliberation.synthetic_signals import (  # noqa: E402
     day_timestamps,
     generate_room_day,
 )
+from shared.db_clock import UTC_SESSION_INIT
 
 _MARKER = "synthetic-saturation-v4"
 _BATCH = 5000
@@ -52,6 +53,8 @@ def _mysql():
         password=os.environ.get("MYSQL_PASSWORD", "mysql"),
         database=os.environ.get("MYSQL_DATABASE", "sensordb"),
         autocommit=False,
+        # Same clock the rows are stamped in (BUG-403).
+        init_command=UTC_SESSION_INIT,
     )
 
 

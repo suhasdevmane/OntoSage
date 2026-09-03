@@ -279,9 +279,9 @@ def _as_datetime(value: Any) -> Optional[datetime]:
         return None
     if dt.tzinfo is not None:
         return dt
-    # Naive: the reading belongs to the building, so the building's timezone is the one that
-    # makes it comparable. Assuming UTC would shift every staleness figure by the offset --
-    # in Europe/London that is an hour of false freshness for half the year.
+    # Naive: a time a HUMAN or the ontology expressed belongs to the building, so the
+    # building's timezone is the one that makes it comparable. "Between 9 and 5" means 9 and
+    # 5 there. Stored READINGS are a different case and use _as_observation_time below.
     try:
         from zoneinfo import ZoneInfo
 
@@ -290,6 +290,34 @@ def _as_datetime(value: Any) -> Optional[datetime]:
         return dt.replace(tzinfo=ZoneInfo(settings.BUILDING_TIMEZONE))
     except Exception:
         return dt.replace(tzinfo=timezone.utc)
+
+
+def _as_observation_time(value: Any) -> Optional[datetime]:
+    """Parse a timestamp that came out of a DATA ROW. Naive means UTC.
+
+    OntoSage stores time-series as naive UTC, and BUG-403 pinned every MySQL session to
+    ``+00:00`` so the writers finally honour that. Reading those same rows as
+    building-local would re-introduce the offset from the other end: measured live on
+    bldg1 immediately after that fix, a co2 reading taken 3 minutes earlier came back as
+    ``2026-09-03T11:49:35+01:00`` — an hour of false staleness against a 5-minute policy,
+    which downgraded a genuinely current answer to INFERRED.
+
+    Two wrongs had been cancelling. The publisher stamped rows in BST and this read them
+    as BST, so the error was invisible until one half was corrected. Fixing a clock in one
+    place and not the other is worse than leaving both wrong, and that is exactly what
+    happened here for the length of one live probe.
+
+    A human's "9am" is still building-local; only stored readings are UTC. That is why this
+    is a separate function rather than a change of default.
+    """
+    dt = _as_datetime(value)
+    if dt is None:
+        return None
+    if isinstance(value, datetime) and value.tzinfo is not None:
+        return dt
+    if isinstance(value, str) and ("+" in value[10:] or value.strip().endswith("Z")):
+        return dt
+    return dt.replace(tzinfo=timezone.utc)
 
 
 def _rows_of(payload: Any) -> List[Dict[str, Any]]:
@@ -338,7 +366,7 @@ def _observations_by_source(results: Dict[str, Any], now: datetime) -> Dict[str,
             stamp: Optional[datetime] = None
             for key, value in row.items():
                 if _TIME_COL_RE.search(str(key)):
-                    dt = _as_datetime(value)
+                    dt = _as_observation_time(value)
                     # Beyond a small clock-skew allowance it is a schedule, not a reading.
                     if dt is not None and (dt - now).total_seconds() <= _CLOCK_SKEW_S:
                         if stamp is None or dt > stamp:
@@ -451,7 +479,7 @@ def _latest_values_by_uuid(results: Dict[str, Any]) -> Dict[str, float]:
             stamp = None
             for key, value in row.items():
                 if _TIME_COL_RE.search(str(key)):
-                    dt = _as_datetime(value)
+                    dt = _as_observation_time(value)
                     if dt is not None and (stamp is None or dt > stamp):
                         stamp = dt
             if stamp is None:
@@ -953,7 +981,7 @@ def _available_gates(
                     stamp = None
                     for key, value in row.items():
                         if _TIME_COL_RE.search(str(key)):
-                            stamp = _as_datetime(value) or stamp
+                            stamp = _as_observation_time(value) or stamp
                     if stamp is None:
                         continue
                     named = [

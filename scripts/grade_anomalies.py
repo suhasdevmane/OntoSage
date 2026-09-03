@@ -30,6 +30,7 @@ Building-agnostic: tables discovered by shape, identities from .env.
 from __future__ import annotations
 
 import argparse
+import ast
 import csv
 import inspect
 import json
@@ -89,6 +90,13 @@ def _mysql(env: dict, as_root: bool = False):
         user="root" if as_root else env.get("MYSQL_USER", "root"),
         password=env.get("MYSQL_ROOT_PASSWORD" if as_root else "MYSQL_PASSWORD", ""),
         database=env.get("MYSQL_DATABASE", "sensordb"),
+        # Same clock as every reader and as the publisher (BUG-403). This builds its window
+        # bounds from `datetime.utcnow()` while its SQL session inherited the server's
+        # SYSTEM zone, so any bound expressed as NOW() was an hour off the bounds expressed
+        # in Python — and the narrow rows it perturbs were themselves stamped an hour ahead.
+        # The visible symptom was an injection window holding ~27 rows across seven hours
+        # and a dropout skipped for "no rows in the window".
+        init_command="SET time_zone='+00:00'",
     )
 
 
@@ -273,10 +281,53 @@ def inject(env: dict, round_no: int) -> List[Dict[str, Any]]:
                 (uid,),
             )
             _newest = cur.fetchone()[0]
+
+            # CAN this sensor hold the fault? Asked BEFORE anything is written, because a
+            # skip after the UPDATE would leave an unlabelled 777.7 run in the data for the
+            # detectors to trip over.
+            #
+            # The UPDATE below is correct — it pins every row in the last 7 hours — and that
+            # is not the same as a 7-hour RUN, because the window can be mostly empty.
+            # Measured on round 16: `pin=777.7x7h(185rows)` while the contiguous constant
+            # tail spanned 1.82 HOURS, this sensor having no rows at all between 05:09 and
+            # 10:19 (the stack was down overnight). stuck() needs 6.0 hours, so it was
+            # correctly returning nothing — and was scored 0/2 for it across four rounds.
+            # Same defect as CAVEAT-401 one layer up: a count of rows standing in for a
+            # duration. A labelled fault the data cannot express is not a detector miss.
+            _floor = _newest - timedelta(hours=_span_hours)
+            cur.execute(
+                f"SELECT `datetime` FROM `{table}` WHERE uuid=%s "  # nosec B608
+                f"AND `datetime` > %s ORDER BY `datetime`",
+                (uid, _floor),
+            )
+            _stamps = [r[0] for r in cur.fetchall()]
+            _achieved_h = (
+                (_stamps[-1] - _stamps[0]).total_seconds() / 3600.0 if len(_stamps) >= 2 else 0.0
+            )
+            _worst_gap_h = (
+                max(
+                    (_stamps[i] - _stamps[i - 1]).total_seconds() / 3600.0
+                    for i in range(1, len(_stamps))
+                )
+                if len(_stamps) >= 2
+                else 0.0
+            )
+            # A run that spans the threshold only by straddling a hole is an artifact of the
+            # harness, not a stuck sensor. Half the requirement is a generous ceiling and
+            # still excludes the multi-hour holes a start/stop dev machine leaves behind.
+            if _achieved_h < _stuck_hours or _worst_gap_h > (_stuck_hours / 2.0):
+                print(
+                    f"  SKIP {detector:<18} {table:<18} {uid[:12]}... history in the last "
+                    f"{_span_hours:g}h spans {_achieved_h:.2f}h with a {_worst_gap_h:.2f}h "
+                    f"hole; stuck() needs {_stuck_hours:g}h contiguous. NOT labelled and "
+                    f"NOTHING written - the data cannot hold this fault."
+                )
+                continue
+
             cur.execute(
                 f"UPDATE `{table}` SET value=777.7 WHERE uuid=%s "  # nosec B608
                 f"AND `datetime` > %s",
-                (uid, _newest - timedelta(hours=_span_hours)),
+                (uid, _floor),
             )
             _pinned = cur.rowcount
             # VERIFY the tail is actually constant, and re-pin if it is not.
@@ -320,7 +371,8 @@ def inject(env: dict, round_no: int) -> List[Dict[str, Any]]:
                 (uid,),
             )
             w_start, w_end = cur.fetchone()
-            magnitude = f"pin=777.7x{_span_hours:g}h({_pinned}rows)"
+
+            magnitude = f"pin=777.7x{_achieved_h:.2f}h({_pinned}rows,gap{_worst_gap_h:.2f}h)"
         elif kind == "spike_row":
             cur.execute(
                 f"SELECT `datetime` FROM `{table}` WHERE uuid=%s "  # nosec B608
@@ -400,7 +452,7 @@ def inject(env: dict, round_no: int) -> List[Dict[str, Any]]:
 # ── scan ─────────────────────────────────────────────────────────────────────
 
 
-def run_scan() -> None:
+def run_scan() -> Dict[str, Any]:
     script = (
         "import asyncio\n"
         "from orchestrator.services.adapters.registry import adapter_registry\n"
@@ -434,8 +486,23 @@ def run_scan() -> None:
         timeout=int(os.environ.get("T22_SCAN_TIMEOUT_S", "1800")),
         env=env,
     )
+    summary: Dict[str, Any] = {}
     for line in (r.stdout or "").splitlines()[-3:]:
         print("  ", line[:160])
+        text = line.strip()
+        if text.startswith("{") and "building_id" in text:
+            try:
+                summary = ast.literal_eval(text)
+            except Exception:
+                summary = {}
+    # A detector the sweep could not run is not a detector that found nothing.
+    # `seasonal_residual` declares min_history_hours=48 and the sweep fetches roughly 24, so
+    # it returned [] on every point for as long as this harness has existed and was scored
+    # 0/1 for it. The scanner now says which detectors are starved; this reports it rather
+    # than letting a zero read as a miss.
+    for name, why in (summary.get("detectors_starved") or {}).items():
+        print(f"  NOT RUN {name}: {why}")
+    return summary
 
 
 # ── scoring (pure — unit-tested) ─────────────────────────────────────────────
@@ -623,15 +690,20 @@ def main() -> int:
     # try/finally, because a run that dies mid-scan must not leave the building's data feed
     # stopped behind it.
     _paused = _pause_publisher()
+    _sweep: Dict[str, Any] = {}
     try:
         if not args.skip_inject:
             print("injecting labelled faults…")
             inject(env, args.round)
         if not args.skip_scan:
             print("running scanner sweep…")
-            run_scan()
+            _sweep = run_scan()
     finally:
         _resume_publisher(_paused)
+
+    # Detectors the sweep could not run at all. Their labels are reported separately rather
+    # than folded into recall, because a detector that never ran did not miss anything.
+    _starved = set(_sweep.get("detectors_starved") or {})
 
     # Scoped to the ACTIVE building as well as the round. The labels file accumulates
     # across buildings and runs -- it records `building` per row for exactly this reason
@@ -703,17 +775,28 @@ def main() -> int:
     print(f"\n{'detector':<20}{'inj':>4}{'det':>4}{'recall':>8}{'prec':>7}{'f1':>7}{'lat_h':>7}")
     for det, c in sorted(cards.items()):
         lat = c["mean_latency_h"] if c["mean_latency_h"] is not None else "-"
+        flag = "   NOT RUN (starved of history)" if det in _starved else ""
         print(
             f"{det:<20}{c['injected']:>4}{c['detected']:>4}{c['recall']:>8}"
-            f"{c['precision']:>7}{c['f1']:>7}{lat:>7}"
+            f"{c['precision']:>7}{c['f1']:>7}{lat:>7}{flag}"
         )
     print(
         f"organic context: {density['episodes_total']} episodes on "
         f"{density['sensors_with_findings']} sensors in the same hour (unlabeled != FP)"
     )
     print(f"-> {out_path}")
-    total_r = sum(c["detected"] for c in cards.values())
-    total_i = sum(c["injected"] for c in cards.values())
+    # A detector that could not run did not miss anything, so it is excluded from the
+    # headline rather than counted as a zero. Excluding it is stated, not silent: the row
+    # above still shows the injection and is marked NOT RUN.
+    scored = {d: c for d, c in cards.items() if d not in _starved}
+    total_r = sum(c["detected"] for c in scored.values())
+    total_i = sum(c["injected"] for c in scored.values())
+    if _starved:
+        print(
+            f"scored over {len(scored)} of {len(cards)} detectors; "
+            f"{', '.join(sorted(_starved))} could not run this sweep"
+        )
+    print(f"recall over what was testable: {total_r}/{total_i}")
     return 0 if total_i and total_r == total_i else 3
 
 

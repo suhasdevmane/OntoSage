@@ -60,6 +60,8 @@ sys.path.insert(0, str(REPO))
 
 import yaml  # noqa: E402
 
+from shared.db_clock import UTC_SESSION_INIT
+
 GRAPHDB = os.environ.get("GRAPHDB_QUERY_URL", "http://localhost:7200/repositories/bldg")
 REF_NS = "https://brickschema.org/schema/Brick/ref#"
 ONTOSAGE_NS = "http://ontosage.org/capabilities#"
@@ -280,6 +282,8 @@ def db_connect():
         password=env("MYSQL_PASSWORD", ""),
         database=db,
         connect_timeout=20,
+        # Same clock the rows are stamped in (BUG-403).
+        init_command=UTC_SESSION_INIT,
     )
 
 

@@ -21,11 +21,13 @@ Design decisions (recorded for the handoff):
 
 from __future__ import annotations
 
+import inspect
 import json
 import time
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from orchestrator.services.anomaly import detectors as _detector_module
 from orchestrator.services.anomaly.detectors import (
     FLOW_MODALITIES,
     AnomalyFinding,
@@ -61,12 +63,72 @@ MERGE_GRACE = timedelta(hours=2)
 
 #: Samples fetched per sensor per sweep.
 #:
-#: Derived, not chosen: the longest detector window (stuck's `min_hours`) at the fastest
-#: publish cadence this system runs, doubled so the frozen run is a MINORITY of the fetched
-#: history — a detector that sees only the fault has no baseline to call it a fault against.
+#: Derived, not chosen: stuck's `min_hours` at the fastest publish cadence this system runs,
+#: doubled so the frozen run is a MINORITY of the fetched history — a detector that sees only
+#: the fault has no baseline to call it a fault against.
+#:
+#: THIS IS NOT THE LONGEST DETECTOR WINDOW, and the comment here said it was until
+#: 2026-09-03. `seasonal_residual` requires 48 hours; covering that at 30 seconds would be
+#: 11,520 samples per sensor across 1,859 sensors — 21M rows a sweep, which this cannot
+#: afford. So the limit stays sized for the detectors it can serve and
+#: `detectors_starved()` REPORTS the one it cannot, because the alternative is what
+#: happened for as long as this scanner has existed: seasonal_residual returned [] on every
+#: point, in silence, and the fault-injection harness scored it 0/1 and read it as broken.
+#: A tradeoff that is stated is engineering; the same tradeoff unstated is a defect.
 _FASTEST_CADENCE_S = 30.0
 _LONGEST_DETECTOR_WINDOW_H = 6.0
 _PER_UUID_LIMIT = int((_LONGEST_DETECTOR_WINDOW_H * 3600.0 / _FASTEST_CADENCE_S) * 2)  # 1440
+
+
+def detectors_starved(series_by_uuid: Dict[str, Any]) -> Dict[str, str]:
+    """Which detectors cannot possibly fire on the history that was fetched, and why.
+
+    A detector whose minimum-history requirement exceeds the span of every fetched series
+    returns ``[]`` for every point — correctly, and in total silence. `seasonal_residual`
+    declares ``min_history_hours=48.0`` while a sweep fetches roughly 24 hours, so it has
+    never once been able to fire, and the fault-injection harness read that as a detector
+    scoring 0/1.
+
+    That is the same mistake as CAVEAT-401 wearing a different hat, and the same one this
+    project has now made four times: a limit expressed in samples, a requirement expressed
+    in hours, and nothing connecting them. ``_PER_UUID_LIMIT``'s own comment claims to be
+    derived from "the longest detector window", and it is derived from stuck's 6 hours —
+    the longest is 48.
+
+    The requirement is read from each detector's signature BY NAME, so raising a threshold
+    shows up here rather than becoming a silent no-op.
+    """
+    spans = []
+    for series in series_by_uuid.values():
+        if series and len(series) >= 2:
+            try:
+                first, last = series[0][0], series[-1][0]
+                if isinstance(first, str):
+                    first = datetime.fromisoformat(first)
+                    last = datetime.fromisoformat(last)
+                spans.append((last - first).total_seconds() / 3600.0)
+            except Exception:  # pragma: no cover - a malformed stamp is not this job
+                continue
+    if not spans:
+        return {}
+    spans.sort()
+    best = spans[-1]  # the most history ANY point has: nothing can beat it
+    out: Dict[str, str] = {}
+    for name in ("seasonal_residual", "stuck", "dropout", "spike", "drift_vs_peers"):
+        fn = getattr(_detector_module, name, None)
+        if fn is None:
+            continue
+        need = 0.0
+        for param in ("min_history_hours", "min_hours"):
+            found = inspect.signature(fn).parameters.get(param)
+            if found is not None and isinstance(found.default, (int, float)):
+                need = max(need, float(found.default))
+        if need and best < need:
+            out[name] = (
+                f"needs {need:g}h of history; the longest series fetched spans "
+                f"{best:.1f}h, so it cannot fire on any point this sweep"
+            )
+    return out
 
 
 class AnomalyScanner:
@@ -266,11 +328,15 @@ class AnomalyScanner:
         by_detector: Dict[str, int] = {}
         for f in findings:
             by_detector[f.detector] = by_detector.get(f.detector, 0) + 1
+        starved = detectors_starved(series_by_uuid)
         summary = {
             "building_id": self.building_id,
             "points_scanned": len(series_by_uuid),
             "findings": len(findings),
             "by_detector": by_detector,
+            # Detectors that could not fire on ANY point for want of history. Reported so a
+            # zero is legible as "not run" rather than read as "found nothing".
+            "detectors_starved": starved,
             "inserted": inserted,
             "extended": extended,
             "alerts_sent": alerts,

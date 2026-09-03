@@ -16,6 +16,7 @@ Env: GRAPHDB_QUERY_URL, MYSQL_HOST/PORT, MYSQL_ROOT_PASSWORD (DDL+GRANT), MYSQL_
 """
 import json
 import math
+from pathlib import Path
 import os
 import random
 import sys
@@ -24,6 +25,11 @@ import urllib.request
 from datetime import datetime, timedelta
 
 import pymysql
+
+# Run directly as a script, so the repo root is not on sys.path yet.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from shared.db_clock import UTC_SESSION_INIT
 
 _BID = os.environ.get("BUILDING_ID", "")
 # GRAPHDB repo 'bldg' is the SINGLE shared repository for every building (buildings are
@@ -160,7 +166,14 @@ def main():
     rng = {u: range_for(points[u]) for u in uuids}
 
     conn = pymysql.connect(
-        host=HOST, port=PORT, user="root", password=ROOT_PW, database=DB, autocommit=True
+        host=HOST,
+        port=PORT,
+        user="root",
+        password=ROOT_PW,
+        database=DB,
+        autocommit=True,
+        # Same clock the rows are stamped in (BUG-403).
+        init_command=UTC_SESSION_INIT,
     )
     cur = conn.cursor()
     cols = ", ".join(f"`{u}` DOUBLE NULL" for u in uuids)
@@ -372,7 +385,14 @@ def publish_loop(interval=None):
     while True:
         try:
             conn = pymysql.connect(
-                host=HOST, port=PORT, user="root", password=ROOT_PW, database=DB, autocommit=True
+                host=HOST,
+                port=PORT,
+                user="root",
+                password=ROOT_PW,
+                database=DB,
+                autocommit=True,
+                # Same clock the rows are stamped in (BUG-403).
+                init_command=UTC_SESSION_INIT,
             )
             cur = conn.cursor()
             # Periodically discover new sensors (and on the very first tick).

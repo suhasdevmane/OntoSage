@@ -21,6 +21,7 @@ import random
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from shared.db_clock import UTC_SESSION_INIT
 from shared.models import DataSourcePoint, DataSourceSpec
 from shared.utils import get_logger
 
@@ -262,6 +263,8 @@ class SyntheticDataService:
             database=os.environ.get("MYSQL_DATABASE", "sensordb"),
             connect_timeout=10,
             autocommit=False,
+            # Same clock the rows are stamped in (BUG-403).
+            init_command=UTC_SESSION_INIT,
         )
         written = 0
         try:

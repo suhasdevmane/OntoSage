@@ -47,6 +47,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List
 
+# Run directly as a script, so the repo root is not on sys.path yet.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from shared.db_clock import UTC_SESSION_INIT
+
 REPO = Path(__file__).resolve().parent.parent
 
 #: (low, high, decimals) per value_col — the same ranges the live publisher uses, so a
@@ -84,8 +89,33 @@ _DIURNAL = {
 }
 
 
+def _point_range(point: dict) -> tuple:
+    """(lo, hi, dec, swing_key) for a point from EITHER publisher map shape.
+
+    The narrow map names a `value_col` this module already has a range for; the extended map
+    carries `lo`/`hi`/`dec` typed per Brick class, which is strictly better information. This
+    read only the first shape and raised KeyError on the second, so the 628 points in the
+    extended stores could not be backfilled at all — and those are 509 of the scanner's
+    candidates, the ones a stuck or dropout injection needs contiguous history for.
+    """
+    col = str(point.get("value_col") or "")
+    if "lo" in point and "hi" in point:
+        return float(point["lo"]), float(point["hi"]), int(point.get("dec", 2)), col
+    lo, hi, dec = _RANGES.get(col, _RANGES["generic"])
+    return lo, hi, dec, col
+
+
+def _value_from(point: dict, when: datetime, phase: float) -> float:
+    lo, hi, dec, col = _point_range(point)
+    return _shape(lo, hi, dec, col, when, phase)
+
+
 def _value(value_col: str, when: datetime, phase: float) -> float:
     lo, hi, dec = _RANGES.get(value_col, _RANGES["generic"])
+    return _shape(lo, hi, dec, value_col, when, phase)
+
+
+def _shape(lo: float, hi: float, dec: int, value_col: str, when: datetime, phase: float) -> float:
     swing = _DIURNAL.get(value_col, 0.2)
     # Daytime peak around 13:00, trough overnight.
     hours = when.hour + when.minute / 60.0
@@ -128,8 +158,12 @@ def main(argv: List[str]) -> int:
         user=os.environ["MYSQL_USER"],
         password=os.environ["MYSQL_PASSWORD"],
         database=os.environ["MYSQL_DB"],
+        # Same clock the rows are stamped in (BUG-403).
+        init_command=UTC_SESSION_INIT,
     )
-    now = datetime.now().replace(second=0, microsecond=0)
+    # UTC, like every row this writes into and every reader that will window them
+    # (BUG-403). datetime.now() on a BST host put the whole backfill an hour ahead.
+    now = datetime.utcnow().replace(second=0, microsecond=0)
     step = timedelta(minutes=max(1, args.interval_min))
     # The gap ENDS where the live publisher took over, not at `now`.
     gap_end = now - timedelta(hours=args.live_since_hours)
@@ -159,7 +193,7 @@ def main(argv: List[str]) -> int:
                 phase = (i % 7) / 7.0 - 0.5  # a stable per-sensor offset, so peers differ
                 when = start
                 while when < gap_end:
-                    rows.append((p["uuid"], when, _value(p["value_col"], when, phase)))
+                    rows.append((p["uuid"], when, _value_from(p, when, phase)))
                     when += step
 
             if not rows:

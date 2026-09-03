@@ -41,6 +41,7 @@ from orchestrator.services.forecasting.models.seasonal_naive_forecaster import (
 from orchestrator.services.forecasting.preprocessor import (  # noqa: E402
     preprocess_series,
 )
+from shared.db_clock import UTC_SESSION_INIT
 
 _MODELS = {
     "linear": lambda: LinearTrendForecaster(degree=1),
@@ -68,6 +69,8 @@ def _mysql(env: dict):
         user=os.environ.get("MYSQL_USER", env.get("MYSQL_USER", "root")),
         password=os.environ.get("MYSQL_PASSWORD", env.get("MYSQL_PASSWORD", "")),
         database=os.environ.get("MYSQL_DATABASE", env.get("MYSQL_DATABASE", "sensordb")),
+        # Same clock the rows are stamped in (BUG-403).
+        init_command=UTC_SESSION_INIT,
     )
 
 
