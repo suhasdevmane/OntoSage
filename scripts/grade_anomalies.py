@@ -188,6 +188,41 @@ def inject(env: dict, round_no: int) -> List[Dict[str, Any]]:
                 (uid, _newest - timedelta(hours=_span_hours)),
             )
             _pinned = cur.rowcount
+            # VERIFY the tail is actually constant, and re-pin if it is not.
+            #
+            # detectors.stuck() walks back from the NEWEST sample, so a single row written
+            # after the pin ends the run at length zero and the fault vanishes. `docker stop`
+            # lets the publisher finish an in-flight 30-second tick, and that one row was
+            # enough: measured, the tail read [777.7 x7, 455.0] and stuck() returned nothing.
+            # Run directly against a genuinely constant tail the same detector returns an
+            # 8.0-hour finding at score 1.339 — it was never broken, the harness simply never
+            # gave it the fault it claimed to have injected.
+            for _attempt in range(3):
+                cur.execute(
+                    f"SELECT value FROM `{table}` WHERE uuid=%s "  # nosec B608
+                    f"ORDER BY `datetime` DESC LIMIT 1",
+                    (uid,),
+                )
+                _newest_val = (cur.fetchone() or [None])[0]
+                if _newest_val is not None and abs(float(_newest_val) - 777.7) < 1e-6:
+                    break
+                cur.execute(
+                    f"SELECT MAX(`datetime`) FROM `{table}` WHERE uuid=%s",  # nosec B608
+                    (uid,),
+                )
+                _newest = cur.fetchone()[0]
+                cur.execute(
+                    f"UPDATE `{table}` SET value=777.7 WHERE uuid=%s "  # nosec B608
+                    f"AND `datetime` > %s",
+                    (uid, _newest - timedelta(hours=_span_hours)),
+                )
+                _pinned += cur.rowcount
+            else:
+                print(
+                    f"  WARNING {table}: tail still not pinned after 3 attempts — "
+                    "something is still writing to this sensor; the label would be false"
+                )
+
             cur.execute(
                 f"SELECT MIN(`datetime`), MAX(`datetime`) FROM `{table}` "  # nosec B608
                 f"WHERE uuid=%s AND value=777.7",

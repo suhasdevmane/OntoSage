@@ -59,6 +59,16 @@ OPEN_GRACE = timedelta(hours=1)
 MERGE_GRACE = timedelta(hours=2)
 
 
+#: Samples fetched per sensor per sweep.
+#:
+#: Derived, not chosen: the longest detector window (stuck's `min_hours`) at the fastest
+#: publish cadence this system runs, doubled so the frozen run is a MINORITY of the fetched
+#: history — a detector that sees only the fault has no baseline to call it a fault against.
+_FASTEST_CADENCE_S = 30.0
+_LONGEST_DETECTOR_WINDOW_H = 6.0
+_PER_UUID_LIMIT = int((_LONGEST_DETECTOR_WINDOW_H * 3600.0 / _FASTEST_CADENCE_S) * 2)  # 1440
+
+
 class AnomalyScanner:
     """One instance per active building; ``scan_once`` is re-entrant safe."""
 
@@ -110,7 +120,19 @@ class AnomalyScanner:
             candidates,
             all_modalities,
             window_hours=window_hours,
-            per_uuid_limit=600,
+            # 600 samples is not a window; it is a window DIVIDED BY CADENCE, and the
+            # cadence changed underneath it. At the dev publisher's 30-second interval 600
+            # samples spans FIVE HOURS — shorter than stuck()'s own `min_hours=6.0`, so a
+            # genuinely stuck sensor could not be detected at all through this sweep, and
+            # worse: when every fetched sample fell inside the frozen run the historical
+            # range was zero and stuck() correctly classified the signal as "flat by nature,
+            # not by fault". Called directly against the same sensor with more history the
+            # detector returns an 8.0-hour finding at score 1.339. The detector was right;
+            # it was being handed a truncated view.
+            #
+            # Sized so the fetch clears the longest window any detector requires with room
+            # for contrast on either side, at the fastest cadence this system publishes at.
+            per_uuid_limit=_PER_UUID_LIMIT,
             adapter_getter=self._adapter_getter,
         )
         return candidates, series_by_uuid
