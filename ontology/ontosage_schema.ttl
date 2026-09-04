@@ -1700,6 +1700,11 @@ ontosage:Permit rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
     rdfs:comment "An authorisation to carry out controlled work (hot works, roof access, confined space, electrical isolation) for a bounded period in a bounded place. Open or closed is READ from recordStatus, never inferred from the dates: a permit past its end date that was never closed is an exception worth reporting, not a closed permit."@en ;
     skos:example "which permits are open in the basement? -> Permit where recordStatus = open and the location matches." .
 
+ontosage:ApprovalRecord rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Approval and evidence record"@en ;
+    rdfs:comment "Whether a subject is approved, by which ROLE, under whose authority and until when; what evidence substantiates it, referenced and dated; who is accountable and when it is next reviewed. THE LARGEST SINGLE GAP IN THE CORPUS: of 1,023 stakeholder questions that could not answer with data, 546 (53%) ask about approval, evidence or ownership, spread across all 31 roles rather than concentrated in one -- the recurring words in every role's unanswered set were the same six: evidence, approved, authorised, owner, confirmed, verified. APPROVAL AND EVIDENCE ARE SEPARATE: a subject can be approved with no evidence recorded, or evidenced but never approved, and collapsing them into one 'verified' flag would hide exactly the gap an auditor is looking for. Roles, never people."@en ;
+    skos:example "is this route approved and what evidence supports it? -> ApprovalRecord whose label names the route; read approvalDecision, evidenceKind and evidenceDate." .
+
 ontosage:CostLine rdfs:subClassOf ontosage:Record ; a owl:Class ;
     rdfs:label "Building cost line"@en ;
     rdfs:comment "One line of the building's ledger, carrying budget, actual, committed and accrued as SEPARATE amounts. Free balance is budget minus all three, and a register that folded commitments into actuals could report money as available when a purchase order has already claimed it -- 'decision-ready free balance' is precisely the figure after all three. varianceCause is recorded rather than inferred, because a line can move on price, quantity, timing or scope and the number alone cannot say which, while the remedies differ. Added because finance and procurement computed at 28% against FOUR finance instances."@en ;
@@ -1817,6 +1822,51 @@ ontosage:liftedByMapping a owl:DatatypeProperty ;
 ####################################################################################################
 #  Module R.3 — Record fields the catalogues ask about by name
 ####################################################################################################
+
+ontosage:approvalSubjectKind a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ApprovalRecord ; rdfs:range xsd:string ;
+    rdfs:label "approval subject kind"@en ;
+    rdfs:comment "What sort of thing is approved -- a route, a space use, a procedure, a permission group, a policy, a system, an asset, a cost line."@en .
+
+ontosage:approvalDecision a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ApprovalRecord ; rdfs:range xsd:string ;
+    rdfs:label "approval decision"@en ;
+    rdfs:comment "Approved, conditional, refused, withdrawn or pending. Refused is RECORDED rather than omitted, so a refused option is never offered by silence."@en .
+
+ontosage:approvedByRole a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ApprovalRecord ; rdfs:range xsd:string ;
+    rdfs:label "approved by role"@en ;
+    rdfs:comment "The role that took the decision. Never a person."@en .
+
+ontosage:approvedOn a owl:DatatypeProperty ; rdfs:range xsd:date ;
+    rdfs:label "approved on"@en .
+
+ontosage:approvalReference a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "approval reference"@en ;
+    rdfs:comment "The decision's own identifier, so an answer can be traced back to the record that made it."@en .
+
+ontosage:evidenceKind a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ApprovalRecord ; rdfs:range xsd:string ;
+    rdfs:label "evidence kind"@en ;
+    rdfs:comment "Certificate, survey, test record, inspection, sign-off, committee minute or drawing. ABSENT means no evidence is recorded, which is a finding rather than a blank."@en .
+
+ontosage:evidenceReference a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "evidence reference"@en .
+
+ontosage:evidenceDate a owl:DatatypeProperty ; rdfs:range xsd:date ;
+    rdfs:label "evidence date"@en ;
+    rdfs:comment "When the evidence was produced -- distinct from when the approval was made, because evidence ages and approvals do not."@en .
+
+ontosage:accountableRole a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "accountable role"@en ;
+    rdfs:comment "Who answers for the subject now. A role, so 'who is accountable' is answerable without exposing who holds what."@en .
+
+ontosage:reviewDue a owl:DatatypeProperty ; rdfs:range xsd:date ;
+    rdfs:label "review due"@en .
+
+ontosage:approvalConditions a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "approval conditions"@en ;
+    rdfs:comment "What a conditional approval depends on, in the register's own words. A condition nobody can read is not a condition."@en .
 
 ontosage:costCentre a owl:DatatypeProperty ;
     rdfs:domain ontosage:CostLine ; rdfs:range xsd:string ;
@@ -2110,6 +2160,12 @@ ontosage:recordId a owl:DatatypeProperty ;
 #  do. A building that uses different words adds them here; the router reads whatever is declared
 #  and no code changes.
 ####################################################################################################
+
+ontosage:ApprovalRecord ontosage:layTerms "approved", "approval", "approvals",
+    "authorised", "authorized", "authorisation", "who approved", "signed off",
+    "sign-off", "evidence", "evidenced", "verified", "confirmed", "proof",
+    "accountable", "who is accountable", "who owns", "owner", "governance",
+    "review due", "certificate", "assurance", "is this allowed", "permitted" .
 
 ontosage:CostLine ontosage:layTerms "cost", "costs", "budget", "budgets", "spend",
     "spending", "actuals", "commitment", "commitments", "accrual", "accruals",
