@@ -411,10 +411,34 @@ def _heuristic_grade(question: str, answer: str) -> str:
         return "document-quoted"
 
     # Honest capability answer: contains capability language + no data
+    # BARE "requires" AND BARE "capability" ARE NOT EVIDENCE OF A DECLINE (CAVEAT-418).
+    #
+    # "requires" is an ordinary English verb and appeared in 56 of the 61 answers this
+    # branch wrongly claimed. Hand-labelling a sample of eight found six genuinely computed:
+    # "the building holds seven competency-requirement records", a warranty table, an open
+    # permit table, "in total, 3 hazard categories". Every one carried a phrase like "because
+    # each task requires a different access method" -- a sentence ABOUT the data, not an
+    # admission that the data is missing.
+    #
+    # The phrases that do mean a missing capability all say WHAT is missing, so they are
+    # listed in that specific form. A decline like "comparing recurring faults requires
+    # sensors with linked time-series data" is still caught, by "requires sensors".
+    #
+    # Ordering is NOT the fix here, and reordering was rejected: promoting the computed test
+    # above this one would make a decline that happens to mention a number read as computed,
+    # which is BUG-370 and BUG-191 exactly. This narrows the evidence instead of reranking it.
     capability_phrases = [
         "not currently available",
         "not yet implemented",
-        "requires",
+        "requires a sensor",
+        "requires sensors",
+        "requires hardware",
+        "requires integration",
+        "requires an extension",
+        "requires additional instrumentation",
+        "capability is not",
+        "no such capability",
+        "outside my capability",
         "not equipped",
         "not instrumented",
         "phase h",
@@ -426,7 +450,6 @@ def _heuristic_grade(question: str, answer: str) -> str:
         "alert me when",
         "set up an alert",
         "cannot directly measure",
-        "capability",
     ]
     has_capability_phrase = any(p in low for p in capability_phrases)
     has_numbers = bool(re.search(r"\b\d+\.?\d*\s*(%|°|ppm|kwh|kw|lux|db|m2|m3|°c|l/|kg)", low))
