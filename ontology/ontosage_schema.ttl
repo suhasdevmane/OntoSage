@@ -1700,6 +1700,26 @@ ontosage:Permit rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
     rdfs:comment "An authorisation to carry out controlled work (hot works, roof access, confined space, electrical isolation) for a bounded period in a bounded place. Open or closed is READ from recordStatus, never inferred from the dates: a permit past its end date that was never closed is an exception worth reporting, not a closed permit."@en ;
     skos:example "which permits are open in the basement? -> Permit where recordStatus = open and the location matches." .
 
+ontosage:WasteCollectionPoint rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Waste collection point"@en ;
+    rdfs:comment "One bin or container: its station, what the SYSTEM records it as, what the bin is LABELLED, what its aperture physically accepts, its fill against an approved threshold, and when it is next collected. The three stream columns are separate deliberately -- a point recorded as general waste, labelled mixed recycling and fitted with a narrow slot is one people will use wrongly, and collapsing them into a single stream field makes that disagreement unrepresentable when the disagreement IS the answer. Fill threshold is per point, because a 240-litre bin in a busy atrium and a 60-litre one in a quiet corridor do not cross 'full' at the same percentage."@en ;
+    skos:example "which points will cross their threshold before the next collection? -> WasteCollectionPoint where fillPercent >= approvedFillThreshold, read with nextDue." .
+
+ontosage:CoordinationFunction rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Emergency coordination function"@en ;
+    rdfs:comment "One coordination function for one operational period: its accountable role, primary system and that system's state, the approved fallback, the activation criterion and whether that criterion is evidenced as met. UNKNOWN IS A FIRST-CLASS STATE. In an incident, 'we have not established whether this is met' and 'this is not met' lead to different decisions, and a register collapsing them into one empty cell would be actively dangerous -- so criterionState carries an explicit unknown, and a row without an evidence reference cannot be recorded as met. The approved fallback sits beside the function it replaces, because a fallback that must be looked up elsewhere during an incident is not a fallback."@en ;
+    skos:example "which coordination systems are ready, degraded or unavailable, and what fallback applies? -> CoordinationFunction for the current period; read systemState and approvedFallback." .
+
+ontosage:AVReadiness rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Teaching AV readiness"@en ;
+    rdfs:comment "One audiovisual component in a teaching room, with its state, the formats it serves, when it was last checked and the evidence reference for that check. THE AUDIO PATH IS A CHAIN: a room with a working projector, a working display and a dead microphone cannot run a lecture that needs amplification, so inAudioPath marks the links and a room's readiness for a format follows from the chain rather than from one asserted flag. No component may be recorded READY without evidence -- 'checked' without a record is a claim, and withholding a room from service on somebody's recollection is what the team is trying to avoid. The rule is conditional rather than a required column, because a component that has NEVER been tested has no check date and no reference, and that is the most important row in the register rather than one to exclude: `unevidenced` exists so it can be stated."@en ;
+    skos:example "which rooms have complete current AV evidence for a lecture? -> AVReadiness grouped by locationText where supportsFormat names the format; a room fails if any inAudioPath component is not ready." .
+
+ontosage:EventActivity rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Event activity"@en ;
+    rdfs:comment "One item inside a PublicEvent's agenda: its position, start, duration, location, whether a companion may attend and whether it is optional. An agenda is not a property of an event -- it is a sequence of things with their own durations and rules, which is why it is rows. companionPolicy is per ACTIVITY because a campus tour and a one-to-one admissions conversation can sit inside the same open day and differ, and a family planning their day needs it at that level or the answer is wrong for half the visit. isOptional exists so 'we only have two hours, what should we prioritise' is answerable by dropping what the events office marked optional rather than by inventing a preference."@en ;
+    skos:example "how much time for the talk, tour and questions? -> EventActivity where partOfEvent matches; sum expectedMinutes." .
+
 ontosage:ApprovalRecord rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
     rdfs:label "Approval and evidence record"@en ;
     rdfs:comment "Whether a subject is approved, by which ROLE, under whose authority and until when; what evidence substantiates it, referenced and dated; who is accountable and when it is next reviewed. THE LARGEST SINGLE GAP IN THE CORPUS: of 1,023 stakeholder questions that could not answer with data, 546 (53%) ask about approval, evidence or ownership, spread across all 31 roles rather than concentrated in one -- the recurring words in every role's unanswered set were the same six: evidence, approved, authorised, owner, confirmed, verified. APPROVAL AND EVIDENCE ARE SEPARATE: a subject can be approved with no evidence recorded, or evidenced but never approved, and collapsing them into one 'verified' flag would hide exactly the gap an auditor is looking for. Roles, never people."@en ;
@@ -1822,6 +1842,79 @@ ontosage:liftedByMapping a owl:DatatypeProperty ;
 ####################################################################################################
 #  Module R.3 — Record fields the catalogues ask about by name
 ####################################################################################################
+
+ontosage:wasteStation a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "waste station"@en ;
+    rdfs:comment "The grouping of bins a user meets together. Conflicts are judged WITHIN a station, because that is where somebody stands and chooses."@en .
+
+ontosage:wasteStream a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "recorded waste stream"@en ;
+    rdfs:comment "What the system says the point is for."@en .
+
+ontosage:labelledStream a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "labelled waste stream"@en ;
+    rdfs:comment "What is printed on the bin. Separate from the recorded stream so the two can be compared rather than assumed equal."@en .
+
+ontosage:apertureKind a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "aperture kind"@en ;
+    rdfs:comment "What the opening physically accepts. A narrow slot will not take flattened card whatever the label claims."@en .
+
+ontosage:capacityLitres a owl:DatatypeProperty ; rdfs:range xsd:integer ;
+    rdfs:label "capacity in litres"@en .
+
+ontosage:fillPercent a owl:DatatypeProperty ; rdfs:range xsd:integer ;
+    rdfs:label "fill percent"@en .
+
+ontosage:approvedFillThreshold a owl:DatatypeProperty ; rdfs:range xsd:integer ;
+    rdfs:label "approved fill threshold"@en ;
+    rdfs:comment "Per point, not a constant: a service decision about when this container needs emptying."@en .
+
+ontosage:isTemporary a owl:DatatypeProperty ; rdfs:range xsd:boolean ;
+    rdfs:label "is temporary"@en ;
+    rdfs:comment "Event assets come and go. Without this the register answers the wrong question after every event."@en .
+
+ontosage:primarySystem a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "primary system"@en .
+
+ontosage:systemState a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "system state"@en ;
+    rdfs:comment "Ready, degraded or unavailable. Degraded is recorded rather than rounded to either neighbour, because it changes which fallback applies."@en .
+
+ontosage:approvedFallback a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "approved fallback"@en .
+
+ontosage:activationCriterion a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "activation criterion"@en .
+
+ontosage:criterionState a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "criterion state"@en ;
+    rdfs:comment "Met, not met, conflicting or UNKNOWN. Unknown is not a blank: it is the statement that nobody has established this, which is a different decision from 'not met'."@en .
+
+ontosage:decisionRequired a owl:DatatypeProperty ; rdfs:range xsd:boolean ;
+    rdfs:label "decision required"@en ;
+    rdfs:comment "Whether an authorised decision is owed before the next operational period. A column rather than prose, because it is the single thing a coordinator most needs listed."@en .
+
+ontosage:avComponentKind a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AVReadiness ; rdfs:range xsd:string ;
+    rdfs:label "AV component kind"@en .
+
+ontosage:inAudioPath a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AVReadiness ; rdfs:range xsd:boolean ;
+    rdfs:label "in audio path"@en ;
+    rdfs:comment "Whether the component is a link in the amplified audio chain. A format needing a microphone fails if any link is down, whatever the display is doing."@en .
+
+ontosage:supportsFormat a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "supports format"@en ;
+    rdfs:comment "Which teaching formats this component serves -- lecture, seminar, hybrid, practical."@en .
+
+ontosage:partOfEvent a owl:DatatypeProperty ;
+    rdfs:domain ontosage:EventActivity ; rdfs:range xsd:string ;
+    rdfs:label "part of event"@en ;
+    rdfs:comment "The PublicEvent this activity belongs to, by record id, so the two registers join."@en .
+
+ontosage:isOptional a owl:DatatypeProperty ; rdfs:range xsd:boolean ;
+    rdfs:label "is optional"@en ;
+    rdfs:comment "Whether the activity can be skipped. Recorded by whoever owns the programme, never judged."@en .
 
 ontosage:approvalSubjectKind a owl:DatatypeProperty ;
     rdfs:domain ontosage:ApprovalRecord ; rdfs:range xsd:string ;
@@ -2160,6 +2253,24 @@ ontosage:recordId a owl:DatatypeProperty ;
 #  do. A building that uses different words adds them here; the router reads whatever is declared
 #  and no code changes.
 ####################################################################################################
+
+ontosage:WasteCollectionPoint ontosage:layTerms "waste", "bin", "bins", "recycling",
+    "collection point", "collection", "stream", "general waste", "food waste",
+    "fill level", "full bin", "emptied", "refuse", "skip", "waste station" .
+
+ontosage:CoordinationFunction ontosage:layTerms "coordination", "coordination function",
+    "emergency", "incident", "incident command", "activation", "escalation",
+    "operational period", "fallback", "manual fallback", "evacuation control",
+    "refuge", "roll call", "who is on call", "are we ready for an incident" .
+
+ontosage:AVReadiness ontosage:layTerms "av", "audio visual", "audiovisual",
+    "projector", "display", "microphone", "hearing loop", "amplifier", "camera",
+    "audio path", "teaching room ready", "room ready for teaching", "av evidence",
+    "av check", "is the room ready" .
+
+ontosage:EventActivity ontosage:layTerms "agenda", "programme", "schedule of the day",
+    "activity", "activities", "session", "sessions", "talk", "tour", "workshop",
+    "how much time", "how long will", "what should we prioritise", "itinerary" .
 
 ontosage:ApprovalRecord ontosage:layTerms "approved", "approval", "approvals",
     "authorised", "authorized", "authorisation", "who approved", "signed off",

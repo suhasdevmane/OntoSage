@@ -1,0 +1,93 @@
+# Emergency coordination function register -> ontosage:CoordinationFunction
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# Emergency coordinators computed at 32% with 34 questions unanswered. Their recurring words
+# are *authorised, coordination, operational, channels, uncertain, approved, evidence*:
+#
+#     "Which coordination functions are confirmed for the next operational period, and which
+#      need an authorised decision?"
+#     "Which activation or escalation criteria are evidenced as met, not met, conflicting or
+#      still unknown?"
+#     "Which coordination systems are ready, degraded or unavailable, and which approved
+#      manual fallbacks apply?"
+#
+# UNKNOWN IS A FIRST-CLASS STATE, not a blank. In an emergency, "we have not established
+# whether this is met" and "this is not met" lead to different decisions, and a register that
+# collapsed them would be actively dangerous. `criterion_state` therefore has an explicit
+# `unknown`, and a row with no evidence reference cannot be recorded as `met`.
+#
+# THE FALLBACK IS RECORDED BESIDE THE FUNCTION IT REPLACES. A fallback that has to be looked
+# up somewhere else during an incident is not a fallback.
+record_type: coordination_function
+class: ontosage:CoordinationFunction
+iri_template: "coordination/{function}"
+label_column: name
+
+columns:
+  function:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  accountable_role:
+    predicate: ontosage:accountableRole
+    datatype: xsd:string
+    required: true
+  operational_period:
+    predicate: ontosage:financialPeriod
+    datatype: xsd:string
+    required: true
+  primary_system:
+    predicate: ontosage:primarySystem
+    datatype: xsd:string
+    required: true
+  system_state:
+    predicate: ontosage:systemState
+    datatype: xsd:string
+    required: true
+    values:
+      ready: ["Ready", "Available", "Operational"]
+      degraded: ["Degraded", "Partial", "Intermittent"]
+      unavailable: ["Unavailable", "Down", "Out of service"]
+  fallback:
+    predicate: ontosage:approvedFallback
+    datatype: xsd:string
+  activation_criterion:
+    predicate: ontosage:activationCriterion
+    datatype: xsd:string
+    required: true
+  criterion_state:
+    predicate: ontosage:criterionState
+    datatype: xsd:string
+    required: true
+    values:
+      met: ["Met", "Satisfied", "Triggered"]
+      not_met: ["Not met", "Below threshold"]
+      conflicting: ["Conflicting", "Sources disagree"]
+      unknown: ["Unknown", "Not established", "Unverified"]
+  evidence_ref:
+    predicate: ontosage:evidenceReference
+    datatype: xsd:string
+  decision_needed:
+    # A function that needs an authorised decision before the next period is the single
+    # thing a coordinator most needs listed, so it is a column rather than prose.
+    predicate: ontosage:decisionRequired
+    datatype: xsd:boolean
+    required: true
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      confirmed: ["Confirmed", "Staffed", "In place"]
+      provisional: ["Provisional", "Pending confirmation"]
+      unfilled: ["Unfilled", "No assignment"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

@@ -2904,8 +2904,23 @@ SELECT DISTINCT ?sensor ?location ?uuid WHERE {{
                     result_text += f"{i}. **{label}**: {definition}\n\n"
                 return result_text
 
-        # Special formatting for building name query
-        if "building" in uq and "name" in uq:
+        # Special formatting for building name query.
+        #
+        # THREE GUARDS, and it had none of them. `"name" in uq` matched the word "names",
+        # and the template then took bindings[0]'s label WHATEVER the query was about --
+        # measured live, "where do waste stream NAMES and labels conflict within a station?"
+        # answered "The building name is: **Reception mixed recycling**", naming a waste bin
+        # as the building. A confident false statement about the building's own identity is
+        # the worst shape of wrong answer this system can produce, and it is exactly what
+        # contract 4 forbids.
+        #
+        # So: whole words, not substrings; and a single binding, because a building-name
+        # answer is one row by definition and a multi-row result is a different question
+        # that happens to share two words.
+        _asks_building_name = bool(
+            re.search(r"\bbuilding\b", uq) and re.search(r"\b(name|named|called)\b", uq)
+        )
+        if _asks_building_name and len(bindings) == 1:
             if bindings:
                 b = bindings[0]
                 label = b.get("label", {}).get("value", "Unknown Building")
