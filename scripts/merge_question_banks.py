@@ -33,7 +33,12 @@ CATALOGUE = REPO / "tasks" / "v6" / "catalogue_questions.csv"
 BACKUP = REPO / "tasks" / "v6" / "smart_building_questions_v5_original.csv"
 
 SRC_V5 = "v5_synthetic_bank"
-SRC_CAT = "supervisor_catalogue_2026-08"
+# The six occupant catalogues were labelled `supervisor_catalogue_2026-08` because they
+# arrived from the supervisor before the other 31 were generated. That was a delivery
+# batch, not a different corpus: all 37 are the same Talking Abacws catalogues, 80
+# questions each. Merged under one source 2026-09-04 (2,960 questions, 37 roles), so
+# a filter on the old label now matches NOTHING rather than 480 rows.
+SRC_CAT = "stakeholder_catalogue_37"
 
 #: V5 columns first (so existing tooling that reads by name keeps working), then the
 #: catalogue's own fields.

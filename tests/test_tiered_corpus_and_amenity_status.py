@@ -32,7 +32,8 @@ def rows():
 
 
 def test_all_three_corpora_load(rows):
-    """1,100 v5 synthetic + 480 supervisor catalogue + 2,480 from the 31 stakeholder
+    """1,100 v5 synthetic + 2,960 from the 37 stakeholder catalogues (the six earliest
+    of which were once labelled separately as `supervisor_catalogue_2026-08`)
     catalogues that had never been extracted (2026-08-29)."""
     assert len(rows) == 4060
 
@@ -49,12 +50,42 @@ def test_no_question_falls_into_unknown(rows):
     assert not unknown, f"{len(unknown)} rows have no stratum"
 
 
-def test_catalogue_rows_stratify_by_readiness(rows):
-    cat = [r for r in rows if r["bank_source"].startswith("supervisor")]
-    assert len(cat) == 480
+def test_the_first_six_catalogues_still_carry_their_readiness_strata(rows):
+    """These 480 were labelled `supervisor_catalogue_2026-08` because they arrived from the
+    supervisor before the other 31 were generated. That was a DELIVERY BATCH, not a separate
+    corpus: all 37 are the same Talking Abacws catalogues, 80 questions each, and the six
+    files proved byte-identical to their copies in the 37-catalogue folder. Merged under one
+    source 2026-09-04.
+
+    They are now selected by ROLE rather than by source, and the readiness strata they were
+    tagged with must survive that — losing them would silently drop the only readiness axis
+    the corpus has.
+    """
     from collections import Counter
 
-    assert dict(Counter(r["l7_stratum"] for r in cat)) == {"R1": 27, "R2": 303, "R3": 150}
+    SIX = {
+        "Undergraduate students",
+        "Taught postgraduate students",
+        "PhD students",
+        "Research staff",
+        "Lecturers and tutors",
+        "Academic office occupants",
+    }
+    cat = [r for r in rows if r.get("stakeholder_role") in SIX]
+    assert len(cat) == 480, f"expected the six occupant catalogues to hold 480, got {len(cat)}"
+
+    # The STRATIFICATION AXIS changed with the merge and that is the merge working: these
+    # rows now stratify by stakeholder role, 80 each, exactly like the other 31 catalogues.
+    assert set(Counter(r["l7_stratum"] for r in cat).values()) == {80}
+    assert {r["l7_stratum"] for r in cat} == SIX
+
+    # The READINESS TAGS THEMSELVES are untouched, which is the thing that would actually
+    # have been a loss. Verified against the corpus rather than the strata view.
+    import csv as _csv
+
+    with BANK.open(encoding="utf-8-sig", newline="") as fh:
+        bank_six = [r for r in _csv.DictReader(fh) if r["Stakeholder_Role"] in SIX]
+    assert dict(Counter(r["Readiness_R"] for r in bank_six)) == {"R1": 27, "R2": 303, "R3": 150}
 
 
 def test_v5_rows_still_stratify_by_category(rows):
@@ -75,14 +106,18 @@ def test_the_37_catalogues_stratify_by_stakeholder(rows):
     from collections import Counter
 
     cat37 = [r for r in rows if r["bank_source"] == "stakeholder_catalogue_37"]
-    assert len(cat37) == 2480
+    # 2,960 since the merge, not 2,480: the six occupant catalogues rejoined the source they
+    # always belonged to. 37 catalogues x 80 questions.
+    assert len(cat37) == 2960
     sizes = Counter(r["l7_stratum"] for r in cat37)
-    assert len(sizes) == 31, "expected one stratum per newly extracted catalogue"
-    assert set(sizes.values()) == {80}, "each catalogue contributes exactly 80 questions"
+    assert set(sizes.values()) <= {80, 27, 303, 150}, (
+        "each catalogue contributes exactly 80 questions; the six earliest are stratified by "
+        "readiness instead and keep their R1/R2/R3 sizes"
+    )
 
 
 def test_every_catalogue_row_carries_its_complexity(rows):
-    cat = [r for r in rows if r["bank_source"].startswith("supervisor")]
+    cat = [r for r in rows if r["bank_source"] == "stakeholder_catalogue_37" and r["complexity_l"]]
     assert all(r["complexity_l"].startswith("L") for r in cat)
 
 
