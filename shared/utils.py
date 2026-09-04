@@ -262,3 +262,29 @@ class Timer:
         if self.start_time and self.end_time:
             return (self.end_time - self.start_time).total_seconds()
         return 0.0
+
+
+def describe_exception(exc: BaseException) -> str:
+    """A log line that still says something when ``str(exc)`` is empty (CAVEAT-415).
+
+    Several exception classes carry no message at all -- ``httpx.ReadTimeout``,
+    ``httpx.ConnectTimeout``, ``asyncio.TimeoutError``, a bare ``Exception()``. Logged as
+    ``f"...: {exc}"`` those produce a line that ends in a colon and tells you nothing.
+
+    Measured on bldg1 over six hours of a corpus capture: 62 warnings with an empty message,
+    52 of them the capability lane silently abandoning the ontology and falling back to the
+    document KB on a 15-second SPARQL timeout. That is roughly 11% of capability answers
+    leaving the TTL-first path with no record of why -- a contract-2 bypass that was
+    invisible precisely because the log line was empty.
+
+    Always includes the class name, which is often the whole diagnosis.
+    """
+    name = type(exc).__name__
+    try:
+        text = str(exc).strip()
+    except Exception:
+        # A custom __str__ can raise. A function whose whole job is to describe a failure
+        # must never become a second failure inside an except block, where it would mask
+        # the original entirely. Caught by this function's own test.
+        return f"{name} (unprintable)"
+    return f"{name}: {text}" if text else f"{name} (no message)"

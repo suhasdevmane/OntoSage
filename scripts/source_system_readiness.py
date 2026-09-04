@@ -18,7 +18,20 @@ Readiness is three-valued on purpose:
 
     DATA      the facts are queryable — triples or rows a lane can compute over
     PROSE     only a document says it, so it can be quoted but not calculated with
+    WIRED     a feed is configured for it and has produced NOTHING yet
     ABSENT    nothing holds it; a question needing it can only decline
+
+WIRED exists because this reported DATA for a source with no data (CAVEAT-412). The rule was
+`if count or rows or feeds`, so an ENABLED FEED alone was enough — a configured feed treated
+as a proxy for the data it is supposed to produce. Measured 2026-09-03: `timetable` reported
+DATA on 0 triples, 0 Postgres rows and 0 rows in the events store its own comment says it
+writes to, purely because `synthetic_timetable` is `enabled: true` in feeds.yaml. Its 55 KB
+CSV has never been ingested.
+
+That is a false positive in the direction that looks like success, and readiness decides
+which questions V7 believes it can answer — so it inflated the coverage ceiling and would
+route a timetable question to a lane holding nothing. A feed now counts as DATA only when its
+OUTPUT is measured, never because it is switched on.
 
 PROSE is not a lesser DATA. "The legionella assessment is dated 12 March" answers a
 question about the record; it cannot answer "which outlets are overdue" — and conflating
@@ -36,6 +49,11 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+# Run directly as a script, so the repo root is not on sys.path yet.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from shared.db_clock import UTC_SESSION_INIT
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -192,6 +210,101 @@ FEED_PROBES: Dict[str, Tuple[str, ...]] = {
 }
 
 
+#: Where a feed-backed system's output LANDS, so "the feed is on" is never mistaken for
+#: "the data arrived". Each entry is (kind, query): 'sparql' counts triples, 'mysql' counts
+#: rows in the operational store. A system absent from this dict keeps the old behaviour and
+#: is reported WIRED rather than DATA when nothing else holds it — honest about not knowing.
+FEED_OUTPUT_PROBES: Dict[str, Tuple[str, str]] = {
+    # feeds.yaml says timetable rows "land in the events store via the T25 institutional
+    # adapter", so that is where to look.
+    # A timetabled session is stored as a BOOKING event, not as its own type:
+    # institutional.SOURCE_KINDS maps timetable -> booking deliberately, because a
+    # timetabled session IS a room occupancy. A probe looking for event_type='timetable'
+    # therefore matches nothing forever, and that was the first version of this line -- the
+    # probe measuring the thing it was written to measure, and returning zero because it
+    # asked for a shape the data does not take. The source id survives in `attrs`.
+    "timetable": (
+        "mysql",
+        "SELECT COUNT(*) FROM events WHERE event_type = 'booking' " "AND attrs LIKE '%timetable%'",
+    ),
+    # A rest_poll weather feed auto-registers its points in the graph.
+    "weather_external": (
+        "sparql",
+        "SELECT (COUNT(DISTINCT ?p) AS ?n) WHERE { "
+        "?p a ?c . ?c rdfs:subClassOf* brick:Weather_Based_Setpoint_Sensor }",
+    ),
+}
+
+
+def feed_output(system: str, endpoint: str, auth) -> Optional[int]:
+    """How many records this system's feed has actually produced, or None if unmeasured."""
+    probe = FEED_OUTPUT_PROBES.get(system)
+    if not probe:
+        return None
+    kind, query = probe
+    try:
+        if kind == "sparql":
+            return sparql_count(endpoint, query, auth)
+        return mysql_scalar(query)
+    except Exception:
+        return None
+
+
+def mysql_scalar(query: str) -> Optional[int]:
+    """One integer from the operational MySQL, or None when it cannot be asked.
+
+    Connects directly rather than through `docker exec`: this deployment's MySQL runs on the
+    HOST (compose points the services at host.docker.internal), so there is no container to
+    exec into — a docker-based probe here would fail on every run and silently report every
+    feed as unmeasured.
+
+    None is UNKNOWN, never zero. Reporting a source ABSENT because a probe could not run
+    would turn a connection hiccup into a planning decision.
+    """
+    import os
+
+    try:
+        import pymysql
+    except Exception:
+        return None
+    env = {}
+    env_file = REPO / ".env"
+    if env_file.is_file():
+        for line in env_file.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                if key.strip().isidentifier():
+                    env[key.strip()] = value.split("#", 1)[0].strip()
+    host = os.environ.get("MYSQL_HOST") or "127.0.0.1"
+    if host in ("host.docker.internal", "mysql", ""):
+        host = "127.0.0.1"  # this probe runs on the host, not inside a container
+    try:
+        conn = pymysql.connect(
+            host=host,
+            port=int(os.environ.get("MYSQL_PORT") or env.get("MYSQL_PORT") or 3306),
+            user=os.environ.get("MYSQL_USER") or env.get("MYSQL_USER") or "root",
+            password=os.environ.get("MYSQL_PASSWORD") or env.get("MYSQL_PASSWORD") or "",
+            database=os.environ.get("MYSQL_DATABASE") or env.get("MYSQL_DATABASE") or "sensordb",
+            connect_timeout=10,
+            init_command=UTC_SESSION_INIT,
+        )
+    except Exception:
+        return None
+    try:
+        with conn.cursor() as cur:
+            cur.execute(query)
+            row = cur.fetchone()
+            return int(row[0]) if row and row[0] is not None else 0
+    except Exception:
+        return None
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
 def documents_present(stems: Tuple[str, ...], folder: Path) -> List[str]:
     """Which of the named documents the building actually carries."""
     if not folder.is_dir():
@@ -300,10 +413,18 @@ def main(argv: List[str]) -> int:
         )
         feeds = feeds_enabled(FEED_PROBES[system], feeds_file) if system in FEED_PROBES else []
         docs = documents_present(doc_stems, folder)
-        if count or rows or feeds:
+        # A feed counts toward DATA only by its OUTPUT. `None` means unmeasured, and an
+        # unmeasured feed is still allowed to carry DATA — refusing to would re-introduce
+        # the under-reporting the feeds clause was added to fix. A feed measured at ZERO
+        # does not: that is the false positive CAVEAT-412 is about.
+        produced = feed_output(system, endpoint, auth) if feeds else None
+        feed_has_data = bool(feeds) and (produced is None or produced > 0)
+        if count or rows or feed_has_data:
             readiness = "DATA"
         elif docs:
             readiness = "PROSE"
+        elif feeds:
+            readiness = "WIRED"
         else:
             readiness = "ABSENT"
         results.append(

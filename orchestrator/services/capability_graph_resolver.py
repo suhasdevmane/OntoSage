@@ -19,7 +19,7 @@ import time
 from dataclasses import dataclass
 from typing import Awaitable, Callable, List, Optional
 
-from shared.utils import get_logger
+from shared.utils import describe_exception, get_logger
 
 logger = get_logger(__name__)
 
@@ -227,7 +227,10 @@ class CapabilityGraphResolver:
         try:
             amenities = await self._amenities()
         except Exception as e:  # GraphDB down / malformed — fall through to the KB.
-            logger.warning(f"[capability_graph] amenity fetch failed, deferring to KB: {e}")
+            logger.warning(
+                f"[capability_graph] amenity fetch failed, deferring to KB: "
+                f"{describe_exception(e)}"
+            )
             return []
 
         scored: List[tuple] = []

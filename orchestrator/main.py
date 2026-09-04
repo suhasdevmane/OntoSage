@@ -68,7 +68,7 @@ from shared.models import (
     DataSourceSpec,
     Message,
 )
-from shared.utils import generate_conversation_id, get_logger
+from shared.utils import describe_exception, generate_conversation_id, get_logger
 
 # All valid personas (must match shared/models.py ConversationState.persona Literal)
 VALID_PERSONAS = {
@@ -895,7 +895,11 @@ async def lifespan(app: FastAPI):
                     try:
                         await scanner.scan_once()
                     except Exception as scan_err:
-                        logger.warning(f"[anomaly-scan] sweep failed (will retry): {scan_err}")
+                        logger.warning(
+                            f"[anomaly-scan] sweep failed (will retry): "
+                            f"{describe_exception(scan_err)}",
+                            exc_info=True,
+                        )
                     await asyncio.sleep(settings.ANOMALY_SCAN_INTERVAL_SECS)
 
             app.state.anomaly_scan_task = asyncio.create_task(_anomaly_scan_loop())

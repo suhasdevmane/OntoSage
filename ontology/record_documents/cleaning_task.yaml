@@ -1,0 +1,75 @@
+# Cleaning task register -> ontosage:CleaningTask
+#
+# Ships with the ONTOLOGY, not with any building: a second building drops a document of
+# this shape and gets these triples with no code change.
+#
+# WHY THIS EXISTS
+# ---------------
+# Measured on the 2,480-question stakeholder capture: the cleaning and caretaking team is
+# among the three worst-served roles at 19% computed, with 63 questions that did not
+# compute. `input/documents/service_schedules.md` already described cleaning — as PROSE,
+# with no front-matter, so nothing was ever lifted into RDF and every question about it
+# declined. It also described the building, not the shift: the questions ask "what is my
+# zone and task list for this shift", "which rooms must be ready first", "what standard
+# applies to this room on this visit". Those need a row per task, not a paragraph.
+record_type: cleaning_task
+class: ontosage:CleaningTask
+iri_template: "cleaning/{task}"
+label_column: task
+
+columns:
+  task:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  zone:
+    predicate: ontosage:cleaningZone
+    datatype: xsd:string
+    required: true
+  area:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  standard:
+    predicate: ontosage:cleaningStandard
+    datatype: xsd:string
+    required: true
+  frequency:
+    predicate: ontosage:serviceFrequency
+    datatype: xsd:string
+    required: true
+  shift:
+    predicate: ontosage:shiftName
+    datatype: xsd:string
+    required: true
+  ready_by:
+    predicate: ontosage:readyBy
+    datatype: xsd:string
+  minutes:
+    predicate: ontosage:expectedMinutes
+    datatype: xsd:integer
+  last_done:
+    predicate: ontosage:lastCompleted
+    datatype: xsd:date
+  next_due:
+    predicate: ontosage:nextDue
+    datatype: xsd:date
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    # A declared lookup, not a judgement — the same rule the permit register follows.
+    # A cell matching nothing is an error rather than a guess, because "temporarily
+    # reassigned" and "closed" lead a caretaker to different places.
+    values:
+      scheduled: ["Scheduled", "Planned", "Routine"]
+      added: ["Added", "Extra", "Additional"]
+      handed_over: ["Handed over", "Handover", "Passed on"]
+      suspended: ["Suspended", "Closed", "Restricted", "Reassigned"]
+      done: ["Done", "Completed", "Signed off"]
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

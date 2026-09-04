@@ -1,0 +1,77 @@
+# Access permission register -> ontosage:AccessPermission
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# `access_control` reads DATA in the readiness report on SEVEN instances, and those seven
+# are physical readers and a turnstile — the equipment layer. The 277 non-computed questions
+# naming it ask about the MANAGEMENT layer: which permission group controls an opening,
+# through which inherited paths, what overrides it, whether a one-off grant is bounded to
+# the openings and times it claims. The ontology held none of that, so the lane declined
+# honestly and 80 access-control questions computed at 20%.
+#
+# NO PERSON RECORDS. V7-T35 holds identity at role level deliberately and the catalogues
+# forbid exposing who holds what, so this register names ROLES and GROUPS and never an
+# individual. "Which entitlements are justified for this transfer" is answerable from role
+# templates; "who has access to room X" is not a question this data should be able to
+# answer, and that is a design decision rather than a gap.
+record_type: access_permission
+class: ontosage:AccessPermission
+iri_template: "access/{group}"
+label_column: group
+
+columns:
+  group:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  opening:
+    predicate: ontosage:controlsOpening
+    datatype: xsd:string
+    required: true
+  role_template:
+    # A ROLE, never a person. See the header.
+    predicate: ontosage:grantedToRole
+    datatype: xsd:string
+    required: true
+  inherits_from:
+    # Empty means the group stands alone. The questions ask "through which direct or
+    # inherited paths", so the chain has to be data rather than prose.
+    predicate: ontosage:inheritsFrom
+    datatype: xsd:string
+  time_profile:
+    predicate: ontosage:timeProfile
+    datatype: xsd:string
+    required: true
+  override:
+    predicate: ontosage:overriddenBy
+    datatype: xsd:string
+  approval_route:
+    predicate: ontosage:approvalRoute
+    datatype: xsd:string
+  valid_from:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:date
+  valid_to:
+    predicate: ontosage:effectiveTo
+    datatype: xsd:date
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active", "In force", "Enabled"]
+      suspended: ["Suspended", "Disabled", "On hold"]
+      exception: ["Exception", "One-off", "Temporary grant"]
+      withdrawn: ["Withdrawn", "Revoked", "Expired"]
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

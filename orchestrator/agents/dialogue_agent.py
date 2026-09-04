@@ -21,7 +21,7 @@ from orchestrator.services.context_manager import ContextManager
 from shared.config import settings
 from shared.models import ConversationState, Message
 from shared.persona_registry import get_persona_registry
-from shared.utils import generate_hash, get_logger
+from shared.utils import describe_exception, generate_hash, get_logger
 
 logger = get_logger(__name__)
 
@@ -678,7 +678,7 @@ class DialogueAgent:
                         logger.warning(f"GraphDB retrieval returned status {response.status_code}")
                         return []
                 except Exception as e:
-                    logger.warning(f"GraphDB retrieval failed: {e}")
+                    logger.warning(f"GraphDB retrieval failed: {describe_exception(e)}")
                     return []
         except Exception as e:
             logger.error(f"❌ Failed to retrieve ontology context: {e}")

@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Dict, List, Optional, Tuple
 
-from shared.utils import get_logger
+from shared.utils import describe_exception, get_logger
 
 logger = get_logger(__name__)
 
@@ -41,7 +41,18 @@ _CACHE: Dict[str, Tuple[float, List["RecordClass"]]] = {}
 
 #: Every record class the ontology defines. Their LABELS are matched, so a building that
 #: types its records with these classes is understood without configuring anything.
-_RECORD_CLASSES = (
+#: Fallback only. The record classes are DISCOVERED from the ontology (see
+#: ``_discover_record_classes``); this list is what to fall back on when that query cannot
+#: run, so a GraphDB hiccup degrades to the classes that existed when it was written rather
+#: than to none at all.
+#:
+#: IT USED TO BE THE ONLY SOURCE, and that was a contract-2 violation with teeth: adding
+#: ontosage:CleaningTask, ontosage:PublicEvent and ontosage:AccessPermission to the TBox,
+#: with lay terms, with documents lifted into 62 instances, changed nothing — every question
+#: about them still reached the document lane and was told the building holds no such
+#: record, because a Python tuple decided what the building could be asked about. "Extend
+#: the TTL before adding code" is the design rule; this made the code the gate.
+_FALLBACK_RECORD_CLASSES = (
     "Permit",
     "Contract",
     "Warranty",
@@ -55,6 +66,42 @@ _RECORD_CLASSES = (
     "WorkOrder",
     "TimetabledSession",
 )
+
+#: Every class the ontology declares beneath a record root. A building that adds its own
+#: register subclasses one of these and is found with no code change.
+_DISCOVER_QUERY = """
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX o: <http://ontosage.org/capabilities#>
+SELECT DISTINCT ?cls WHERE {
+  VALUES ?root { o:Record o:IntervalRecord }
+  ?cls rdfs:subClassOf+ ?root .
+  FILTER(STRSTARTS(STR(?cls), "http://ontosage.org/capabilities#"))
+}
+"""
+
+
+async def _discover_record_classes() -> tuple:
+    """Record class local names, read from the ontology rather than restated here."""
+    try:
+        from orchestrator.services.ontology_manager import run_sparql_select
+
+        result = await run_sparql_select(_DISCOVER_QUERY, limit=200)
+        if result.get("ok"):
+            names = tuple(
+                sorted(
+                    {
+                        str(row.get("cls", "")).rsplit("#", 1)[-1]
+                        for row in (result.get("rows") or [])
+                        if row.get("cls")
+                    }
+                )
+            )
+            if names:
+                return names
+    except Exception as exc:  # pragma: no cover - a graph hiccup must not empty the list
+        logger.debug(f"[record_registry] class discovery failed: {describe_exception(exc)}")
+    return _FALLBACK_RECORD_CLASSES
+
 
 _QUERY = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -159,12 +206,13 @@ async def record_classes(namespace: str = "") -> List[RecordClass]:
     if hit and (time.monotonic() - hit[0]) < _TTL_SECONDS:
         return hit[1]
 
-    values = " ".join(f"o:{c}" for c in _RECORD_CLASSES)
+    known = await _discover_record_classes()
+    values = " ".join(f"o:{c}" for c in known)
     found: List[RecordClass] = []
     try:
         from orchestrator.services.ontology_manager import run_sparql_select
 
-        result = await run_sparql_select(_QUERY % values, limit=len(_RECORD_CLASSES) + 1)
+        result = await run_sparql_select(_QUERY % values, limit=len(known) + 1)
         if not result.get("ok"):
             raise RuntimeError(result.get("error") or "SPARQL select failed")
         for row in result.get("rows") or []:
@@ -215,7 +263,7 @@ def held_record_class(query: str, classes: List[RecordClass]) -> Optional[Record
 #: missing work-order register when the permit document answers it.
 _ALL_CLASS_TERMS: Dict[str, Tuple[str, ...]] = {
     name: _terms_for(name, re.sub(r"(?<!^)(?=[A-Z])", " ", name), include_head_words=False)
-    for name in _RECORD_CLASSES
+    for name in _FALLBACK_RECORD_CLASSES
 }
 _LAY_LOADED = False
 
@@ -232,8 +280,10 @@ async def load_lay_terms() -> None:
     try:
         from orchestrator.services.ontology_manager import run_sparql_select
 
-        values = " ".join(f"o:{c}" for c in _RECORD_CLASSES)
-        result = await run_sparql_select(_LAY_QUERY % values, limit=len(_RECORD_CLASSES) + 1)
+        values = " ".join(f"o:{c}" for c in _FALLBACK_RECORD_CLASSES)
+        result = await run_sparql_select(
+            _LAY_QUERY % values, limit=len(_FALLBACK_RECORD_CLASSES) + 1
+        )
         if not result.get("ok"):
             return
         for row in result.get("rows") or []:

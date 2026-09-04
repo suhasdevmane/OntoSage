@@ -1700,6 +1700,26 @@ ontosage:Permit rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
     rdfs:comment "An authorisation to carry out controlled work (hot works, roof access, confined space, electrical isolation) for a bounded period in a bounded place. Open or closed is READ from recordStatus, never inferred from the dates: a permit past its end date that was never closed is an exception worth reporting, not a closed permit."@en ;
     skos:example "which permits are open in the basement? -> Permit where recordStatus = open and the location matches." .
 
+ontosage:AccessibleRoute rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Accessible route"@en ;
+    rdfs:comment "A SURVEYED journey between an arrival point and a destination, carrying the facts a disabled visitor actually asks for: entrance, step-free or not, seated rests, how the doors operate, which lift and whether it is in service, how much time to allow, how busy it is, and a non-telephone assistance contact. surveyedOn and surveyedBy are required because every question this answers uses the word 'verified' — a route inferred from geometry is a guess about somebody's journey, and a wrong guess costs them the journey. A route that is NOT step-free is published too, so it is never offered as an accessible option by omission."@en ;
+    skos:example "which verified route from the drop-off has seated rests, and how long should I allow? -> AccessibleRoute where routeFrom matches; read seatedRests and allowMinutes." .
+
+ontosage:AccessPermission rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Access permission group"@en ;
+    rdfs:comment "A named grant over one controlled opening to a ROLE TEMPLATE, under a time profile, with its inheritance and overrides recorded as data. NO INDIVIDUAL IS MODELLED, deliberately: V7-T35 holds identity at role level and the catalogues forbid exposing who holds what, so 'which entitlements does this role justify' is answerable and 'who can open this door' is not. Added because access_control read DATA on seven instances that were all physical readers, while 277 questions asked about the management layer the ontology did not hold."@en ;
+    skos:example "which permission group controls this opening, and through which inherited paths? -> AccessPermission where controlsOpening matches, then follow inheritsFrom." .
+
+ontosage:PublicEvent rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Public event"@en ;
+    rdfs:comment "A published, visitor-facing arrangement over a space: admission times, entrance, registration policy and change history. DISTINCT FROM ontosage:Booking, which is a room held for a period — a booking can move without the published event changing, and that disagreement is precisely what a visitor asking 'has the venue changed since my invitation' needs reported. Added after the stakeholder capture measured visitors and event attendees at 16% computed with 59 questions unanswered."@en ;
+    skos:example "which entrance should visitors use tomorrow evening? -> PublicEvent on that date, read visitorEntrance and doorsOpenAt." .
+
+ontosage:CleaningTask rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Cleaning task"@en ;
+    rdfs:comment "One unit of cleaning work: a zone, an area within it, the standard that applies, how often it recurs, the shift that owns it and the time the area must be ready. Added after the 2,480-question stakeholder capture measured the cleaning and caretaking team at 19% computed with 63 questions unanswered — the building described cleaning only as prose, so nothing could be counted, filtered or handed over. Status is READ from the register, never inferred from dates: a caretaker sent to a suspended area wastes a shift, and a suspended area silently omitted is worse."@en ;
+    skos:example "what is my zone and task list for this shift? -> CleaningTask where shiftName matches and recordStatus is not suspended." .
+
 ontosage:Contract rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
     rdfs:label "Contract"@en ;
     rdfs:comment "A service, maintenance or supply agreement with a provider, over a term, covering a named scope. Distinct from Warranty: a contract is bought, a warranty accompanies an asset — they have different owners and routinely disagree, which the catalogues want REPORTED rather than resolved."@en ;
@@ -1788,6 +1808,160 @@ ontosage:liftedByMapping a owl:DatatypeProperty ;
 #  Module R.3 — Record fields the catalogues ask about by name
 ####################################################################################################
 
+ontosage:routeFrom a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessibleRoute ; rdfs:range xsd:string ;
+    rdfs:label "route from"@en .
+
+ontosage:routeTo a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessibleRoute ; rdfs:range xsd:string ;
+    rdfs:label "route to"@en .
+
+ontosage:isStepFree a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessibleRoute ; rdfs:range xsd:boolean ;
+    rdfs:label "is step free"@en ;
+    rdfs:comment "False is recorded, not omitted: a route missing from the register is unknown, while a route marked false is known to be unsuitable, and an answer must be able to tell those apart."@en .
+
+ontosage:seatedRests a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessibleRoute ; rdfs:range xsd:integer ;
+    rdfs:label "seated rests"@en ;
+    rdfs:comment "How many places to sit along the route. Asked directly by visitors who need regular rests."@en .
+
+ontosage:doorOperation a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessibleRoute ; rdfs:range xsd:string ;
+    rdfs:label "door operation"@en ;
+    rdfs:comment "Automatic, assisted or manual, PER ROUTE — a step-free route can still carry a heavy manual door, which is the difference between usable and not."@en .
+
+ontosage:servedByLift a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "served by lift"@en .
+
+ontosage:liftStatus a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "lift status"@en .
+
+ontosage:routeDistanceMetres a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessibleRoute ; rdfs:range xsd:integer ;
+    rdfs:label "route distance in metres"@en .
+
+ontosage:allowMinutes a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessibleRoute ; rdfs:range xsd:integer ;
+    rdfs:label "allow minutes"@en ;
+    rdfs:comment "Time to ALLOW, including doors, lifts, waiting and check-in — not walking time, because 'how long should I allow' is the question actually asked."@en .
+
+ontosage:sensoryLevel a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "sensory level"@en ;
+    rdfs:comment "How busy and stimulating the route is, so a lower-stimulation arrival can be offered."@en .
+
+ontosage:assistanceContact a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "assistance contact"@en ;
+    rdfs:comment "A non-telephone arrival contact. The catalogues ask for text-based options explicitly."@en .
+
+ontosage:surveyedOn a owl:DatatypeProperty ; rdfs:range xsd:date ;
+    rdfs:label "surveyed on"@en .
+
+ontosage:surveyedBy a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "surveyed by"@en .
+
+ontosage:controlsOpening a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessPermission ; rdfs:range xsd:string ;
+    rdfs:label "controls opening"@en ;
+    rdfs:comment "The controlled door, gate or turnstile this grant applies to."@en .
+
+ontosage:grantedToRole a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessPermission ; rdfs:range xsd:string ;
+    rdfs:label "granted to role"@en ;
+    rdfs:comment "The role template a grant is made to. Never a person."@en .
+
+ontosage:inheritsFrom a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessPermission ; rdfs:range xsd:string ;
+    rdfs:label "inherits from"@en ;
+    rdfs:comment "The parent group whose grant this one extends. Empty means the group stands alone; the chain is data so an inherited path can be reported rather than described."@en .
+
+ontosage:timeProfile a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessPermission ; rdfs:range xsd:string ;
+    rdfs:label "time profile"@en .
+
+ontosage:overriddenBy a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessPermission ; rdfs:range xsd:string ;
+    rdfs:label "overridden by"@en ;
+    rdfs:comment "Global modes or controller rules that supersede the time profile. Recorded on the row they override, because that is where someone checking the group will look."@en .
+
+ontosage:approvalRoute a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "approval route"@en ;
+    rdfs:comment "Who must approve a grant, so 'does this need a formal exception' is answerable from the register rather than from memory."@en .
+
+ontosage:startsAt a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "starts at"@en .
+
+ontosage:endsAt a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "ends at"@en .
+
+ontosage:doorsOpenAt a owl:DatatypeProperty ;
+    rdfs:domain ontosage:PublicEvent ; rdfs:range xsd:string ;
+    rdfs:label "doors open at"@en ;
+    rdfs:comment "When a visitor may enter, which is earlier than the start and is the time they actually need."@en .
+
+ontosage:checkInFrom a owl:DatatypeProperty ;
+    rdfs:domain ontosage:PublicEvent ; rdfs:range xsd:string ;
+    rdfs:label "check-in from"@en .
+
+ontosage:visitorEntrance a owl:DatatypeProperty ;
+    rdfs:domain ontosage:PublicEvent ; rdfs:range xsd:string ;
+    rdfs:label "visitor entrance"@en ;
+    rdfs:comment "The entrance a visitor should use, which is not always the one nearest the venue."@en .
+
+ontosage:registrationPolicy a owl:DatatypeProperty ;
+    rdfs:domain ontosage:PublicEvent ; rdfs:range xsd:string ;
+    rdfs:label "registration policy"@en .
+
+ontosage:companionPolicy a owl:DatatypeProperty ;
+    rdfs:domain ontosage:PublicEvent ; rdfs:range xsd:string ;
+    rdfs:label "companion policy"@en ;
+    rdfs:comment "Whether a companion or support person may attend, and whether they register separately. Asked directly by the accessibility catalogues."@en .
+
+ontosage:accessibilityNote a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "accessibility note"@en .
+
+ontosage:previousLocationText a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "previous location"@en ;
+    rdfs:comment "Where a record used to be. ABSENT means the register records no move — not that nothing changed, and an answer must say which."@en .
+
+ontosage:cleaningZone a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CleaningTask ; rdfs:range xsd:string ;
+    rdfs:label "cleaning zone"@en ;
+    rdfs:comment "The named division of the building a shift is responsible for."@en .
+
+ontosage:cleaningStandard a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CleaningTask ; rdfs:range xsd:string ;
+    rdfs:label "cleaning standard"@en ;
+    rdfs:comment "The specification applied on a visit — enhanced, standard, presentation or light. Distinct from frequency: a room may be cleaned daily to a light standard."@en .
+
+ontosage:serviceFrequency a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:label "service frequency"@en ;
+    rdfs:comment "How often a recurring task falls due, in the register's own words."@en .
+
+ontosage:shiftName a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:label "shift"@en ;
+    rdfs:comment "The working period that owns a task."@en .
+
+ontosage:readyBy a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:label "ready by"@en ;
+    rdfs:comment "The time an area must be released for use. A service commitment, so a task still open past it is an exception to report rather than a task running late."@en .
+
+ontosage:expectedMinutes a owl:DatatypeProperty ;
+    rdfs:range xsd:integer ;
+    rdfs:label "expected minutes"@en ;
+    rdfs:comment "Planned duration, so a shift's workload can be summed against the hours available."@en .
+
+ontosage:lastCompleted a owl:DatatypeProperty ;
+    rdfs:range xsd:date ;
+    rdfs:label "last completed"@en .
+
+ontosage:nextDue a owl:DatatypeProperty ;
+    rdfs:range xsd:date ;
+    rdfs:label "next due"@en .
+
 ontosage:permitKind a owl:DatatypeProperty ;
     rdfs:domain ontosage:Permit ; rdfs:range xsd:string ;
     rdfs:label "permit kind"@en ;
@@ -1871,6 +2045,26 @@ ontosage:recordId a owl:DatatypeProperty ;
 #  and no code changes.
 ####################################################################################################
 
+ontosage:AccessibleRoute ontosage:layTerms "accessible route", "step free", "step-free",
+    "wheelchair", "wheelchair access", "accessible entrance", "level access", "ramp",
+    "seated rest", "somewhere to sit", "how long should i allow", "assistance",
+    "assistance dog", "carer", "personal assistant", "low vision", "quiet route",
+    "lower stimulation", "heavy door", "which lift", "mobility", "accessibility" .
+
+ontosage:AccessPermission ontosage:layTerms "access", "access control", "permission",
+    "permissions", "permission group", "entitlement", "entitlements", "card access",
+    "door access", "who can get in", "access rights", "swipe", "badge", "credential",
+    "time profile", "lockdown", "escorted access", "access request" .
+
+ontosage:PublicEvent ontosage:layTerms "event", "events", "seminar", "lecture", "open day",
+    "showcase", "visitor", "visitors", "attending", "check in", "check-in", "doors open",
+    "which entrance", "companion", "support person", "registration", "ticket",
+    "has the venue changed", "what time should i arrive" .
+
+ontosage:CleaningTask ontosage:layTerms "cleaning", "clean", "cleaner", "caretaker",
+    "caretaking", "janitorial", "housekeeping", "my zone", "my round", "task list",
+    "cleaning schedule", "cleaning standard", "which rooms must be ready", "my shift" .
+
 ontosage:Permit ontosage:layTerms "permit", "permits", "permit to work", "ptw", "hot works permit",
     "roof access permit", "work authorisation", "isolation permit" .
 
@@ -1892,6 +2086,14 @@ ontosage:CompetencyRecord ontosage:layTerms "competency", "competencies", "compe
 
 ontosage:RiskAssessment ontosage:layTerms "risk assessment", "risk assessments", "risk register",
     "hazard assessment", "ra review", "assessment review" .
+
+# Found by tests/test_record_registers_are_well_formed.py: this class holds 5 instances
+# (V7-T38) and had no lay terms, so no question could route to it. A register that is
+# populated and unreachable is indistinguishable from one that was never built.
+ontosage:SustainabilityTarget ontosage:layTerms "sustainability target",
+    "sustainability targets", "carbon target", "carbon", "net zero", "emissions",
+    "emissions target", "energy reduction", "reduction target", "scope 1", "scope 2",
+    "environmental target", "are we on track", "sustainability commitment" .
 
 ontosage:Tariff ontosage:layTerms "tariff", "tariffs", "unit rate", "standing charge",
     "energy price", "energy cost", "cost per kwh", "utility rate" .
