@@ -339,7 +339,10 @@ def main(argv: List[str]) -> int:
         "--source",
         default="",
         help="only these Source values (comma-separated). To reproduce the golden "
-        "baseline's question set: --source v5_synthetic_bank,supervisor_catalogue_2026-08",
+        "baseline's question set, use --resume against it: its own rows list the 1,580 qids. "
+        "The 480 catalogue questions in it no longer carry a separate Source -- they were "
+        "merged into stakeholder_catalogue_37 on 2026-09-04 -- so a Source filter cannot "
+        "reproduce that set any more.",
     )
     ap.add_argument("--resume", default="", help="timestamp of a run to continue")
     ap.add_argument(

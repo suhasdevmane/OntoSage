@@ -29,7 +29,12 @@ from typing import Dict, List
 REPO = Path(__file__).resolve().parents[1]
 BANK = REPO / "tasks" / "smart_building_questions.csv"
 OUT = REPO / "docs" / "V7_probe_sample.csv"
-CATALOGUE_SOURCES = ("stakeholder_catalogue_37", "supervisor_catalogue_2026-08")
+# The six occupant catalogues were labelled `supervisor_catalogue_2026-08` because they
+# arrived from the supervisor before the other 31 were generated. That was a delivery
+# batch, not a different corpus: all 37 are the same Talking Abacws catalogues, 80
+# questions each. Merged under one source 2026-09-04 (2,960 questions, 37 roles), so
+# a filter on the old label now matches NOTHING rather than 480 rows.
+CATALOGUE_SOURCES = ("stakeholder_catalogue_37",)
 
 
 def main(argv: List[str]) -> int:
