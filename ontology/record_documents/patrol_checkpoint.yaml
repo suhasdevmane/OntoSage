@@ -1,0 +1,81 @@
+# Patrol checkpoint register -> ontosage:PatrolCheckpoint
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# Security officers computed at 29% on the 2,480-question stakeholder capture, with 57
+# questions unanswered. They ask about the shift in front of them: which checkpoints are
+# current, due, overdue or unverified; which approved circuit is feasible in the next patrol
+# window; which posts still lack a role-qualified assignment; which exceptions need calling
+# out at handover.
+#
+# The building already models access-control EQUIPMENT (readers, a turnstile). None of that
+# says when a checkpoint was last verified or whether a circuit segment is passable, which
+# is the whole of what a patrol needs.
+#
+# STATUS IS RECORDED, NOT DERIVED FROM `due`. An overdue checkpoint and an unverifiable one
+# are different facts with different remedies — one needs walking, the other needs a lock
+# fixed — and inferring either from a date would collapse them into "late".
+record_type: patrol_checkpoint
+class: ontosage:PatrolCheckpoint
+iri_template: "patrol/{checkpoint}"
+label_column: name
+
+columns:
+  checkpoint:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  circuit:
+    predicate: ontosage:patrolCircuit
+    datatype: xsd:string
+    required: true
+  sequence:
+    predicate: ontosage:circuitSequence
+    datatype: xsd:integer
+  location:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  shift:
+    predicate: ontosage:shiftName
+    datatype: xsd:string
+    required: true
+  frequency:
+    predicate: ontosage:serviceFrequency
+    datatype: xsd:string
+    required: true
+  last_verified:
+    predicate: ontosage:lastCompleted
+    datatype: xsd:dateTime
+  due:
+    predicate: ontosage:nextDue
+    datatype: xsd:dateTime
+  walk_minutes:
+    # So a circuit's total can be summed against the patrol window, which is what
+    # "is this circuit evidenced as feasible" actually asks.
+    predicate: ontosage:expectedMinutes
+    datatype: xsd:integer
+  qualification:
+    predicate: ontosage:requiredQualification
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      current: ["Current", "Verified", "Complete"]
+      due: ["Due", "Scheduled"]
+      overdue: ["Overdue", "Missed", "Late"]
+      unverifiable: ["Unverifiable", "Blocked", "No access", "Tag faulty"]
+  exception:
+    predicate: ontosage:openException
+    datatype: xsd:string
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string

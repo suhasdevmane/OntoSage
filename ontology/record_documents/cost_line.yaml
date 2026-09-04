@@ -1,0 +1,87 @@
+# Building cost line register -> ontosage:CostLine
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# Finance and procurement computed at 28% on the 2,480-question stakeholder capture, with 54
+# questions unanswered. `finance_cost` held FOUR instances. The questions ask for a
+# decision-ready position: free balance after actuals, commitments and accruals; what moved a
+# line and whether it was price, quantity, timing or scope; which postings need an owner
+# check; what share of spend is planned against reactive; whether repeated low-value
+# purchases aggregate into one requirement.
+#
+# Every one of those is arithmetic over a ledger the building did not have.
+#
+# COMMITTED AND ACCRUED ARE SEPARATE COLUMNS, deliberately. "Free balance" is
+# budget - actual - committed - accrued, and a register that folded them together could
+# report a balance that is already spent. The catalogues ask for the decision-ready figure,
+# which is the one after all three.
+record_type: cost_line
+class: ontosage:CostLine
+iri_template: "cost/{line}"
+label_column: description
+
+columns:
+  line:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  description:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  cost_centre:
+    predicate: ontosage:costCentre
+    datatype: xsd:string
+    required: true
+  category:
+    predicate: ontosage:spendCategory
+    datatype: xsd:string
+    required: true
+    values:
+      planned: ["Planned", "Programmed", "Cyclical"]
+      reactive: ["Reactive", "Responsive", "Breakdown"]
+      statutory: ["Statutory", "Compliance", "Mandatory"]
+      contract_fixed: ["Contract-fixed", "Contract fixed", "Fixed contract"]
+      demand_led: ["Demand-led", "Demand led", "Variable"]
+  period:
+    predicate: ontosage:financialPeriod
+    datatype: xsd:string
+    required: true
+  budget:
+    predicate: ontosage:budgetAmount
+    datatype: xsd:decimal
+    required: true
+  actual:
+    predicate: ontosage:actualAmount
+    datatype: xsd:decimal
+    required: true
+  committed:
+    predicate: ontosage:committedAmount
+    datatype: xsd:decimal
+  accrued:
+    predicate: ontosage:accruedAmount
+    datatype: xsd:decimal
+  variance_cause:
+    # Price, quantity, timing or scope — the catalogues ask which, and a number alone
+    # cannot say. Recorded rather than inferred from the movement.
+    predicate: ontosage:varianceCause
+    datatype: xsd:string
+  supplier:
+    predicate: ontosage:providerName
+    datatype: xsd:string
+  coding_check:
+    predicate: ontosage:codingCheckRequired
+    datatype: xsd:boolean
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      open: ["Open", "In year", "Active"]
+      closed: ["Closed", "Settled"]
+      query: ["Query", "Under review", "Disputed"]
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string

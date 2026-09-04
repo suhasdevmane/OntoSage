@@ -171,12 +171,24 @@ def test_every_status_cell_matches_a_declared_surface_form(path):
         for ln in docs[0].read_text(encoding="utf-8").splitlines()
         if ln.strip().startswith("|")
     ]
+    # Pick the REGISTER table, not the first table that happens to share a column name.
+    # A document may carry explanatory tables ("| category | meaning |"), and matching on
+    # "any mapped column appears" latched onto one of those and then read its prose rows as
+    # register rows. The lifter itself selects by the front-matter's declared table name;
+    # the closest equivalent here is the table whose header covers the MOST mapped columns.
+    columns_declared = set(m.get("columns") or {})
+    best, best_hits = None, 0
+    for ln in lines:
+        cells = [c.strip() for c in ln.strip("|").split("|")]
+        hits = len(columns_declared & set(cells))
+        if hits > best_hits:
+            best, best_hits = cells, hits
     header = None
     bad = []
     for ln in lines:
         cells = [c.strip() for c in ln.strip("|").split("|")]
         if header is None:
-            if any(c in (m.get("columns") or {}) for c in cells):
+            if cells == best:
                 header = cells
             continue
         if set(cells) <= {"", "---", ":---", "---:"}:

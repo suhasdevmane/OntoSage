@@ -1700,6 +1700,16 @@ ontosage:Permit rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
     rdfs:comment "An authorisation to carry out controlled work (hot works, roof access, confined space, electrical isolation) for a bounded period in a bounded place. Open or closed is READ from recordStatus, never inferred from the dates: a permit past its end date that was never closed is an exception worth reporting, not a closed permit."@en ;
     skos:example "which permits are open in the basement? -> Permit where recordStatus = open and the location matches." .
 
+ontosage:CostLine rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Building cost line"@en ;
+    rdfs:comment "One line of the building's ledger, carrying budget, actual, committed and accrued as SEPARATE amounts. Free balance is budget minus all three, and a register that folded commitments into actuals could report money as available when a purchase order has already claimed it -- 'decision-ready free balance' is precisely the figure after all three. varianceCause is recorded rather than inferred, because a line can move on price, quantity, timing or scope and the number alone cannot say which, while the remedies differ. Added because finance and procurement computed at 28% against FOUR finance instances."@en ;
+    skos:example "what is the decision-ready free balance? -> sum(budgetAmount) - sum(actualAmount) - sum(committedAmount) - sum(accruedAmount) over the period." .
+
+ontosage:PatrolCheckpoint rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Patrol checkpoint"@en ;
+    rdfs:comment "A point on a security circuit, with its position, the shift that walks it, when it was last verified and when it is next due. recordStatus is RECORDED rather than derived from the due time, because overdue and unverifiable are different facts with different remedies -- one needs walking, the other needs a lock or a tag fixed -- and a date alone collapses them into 'late'. expectedMinutes exists so a circuit's feasibility in a patrol window is a sum rather than a judgement. Added because security officers computed at 29% with 57 questions unanswered: the building modelled access-control EQUIPMENT and nothing about the patrol that uses it."@en ;
+    skos:example "which checkpoints are overdue or unverifiable this shift? -> PatrolCheckpoint where shiftName matches and recordStatus in (overdue, unverifiable)." .
+
 ontosage:AccessibleRoute rdfs:subClassOf ontosage:Record ; a owl:Class ;
     rdfs:label "Accessible route"@en ;
     rdfs:comment "A SURVEYED journey between an arrival point and a destination, carrying the facts a disabled visitor actually asks for: entrance, step-free or not, seated rests, how the doors operate, which lift and whether it is in service, how much time to allow, how busy it is, and a non-telephone assistance contact. surveyedOn and surveyedBy are required because every question this answers uses the word 'verified' — a route inferred from geometry is a guess about somebody's journey, and a wrong guess costs them the journey. A route that is NOT step-free is published too, so it is never offered as an accessible option by omission."@en ;
@@ -1807,6 +1817,62 @@ ontosage:liftedByMapping a owl:DatatypeProperty ;
 ####################################################################################################
 #  Module R.3 — Record fields the catalogues ask about by name
 ####################################################################################################
+
+ontosage:costCentre a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CostLine ; rdfs:range xsd:string ;
+    rdfs:label "cost centre"@en .
+
+ontosage:spendCategory a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CostLine ; rdfs:range xsd:string ;
+    rdfs:label "spend category"@en ;
+    rdfs:comment "Planned, reactive, statutory, contract-fixed or demand-led. Asked directly: what proportion of spend is each."@en .
+
+ontosage:financialPeriod a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "financial period"@en .
+
+ontosage:budgetAmount a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CostLine ; rdfs:range xsd:decimal ;
+    rdfs:label "budget amount"@en .
+
+ontosage:actualAmount a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CostLine ; rdfs:range xsd:decimal ;
+    rdfs:label "actual amount"@en .
+
+ontosage:committedAmount a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CostLine ; rdfs:range xsd:decimal ;
+    rdfs:label "committed amount"@en ;
+    rdfs:comment "Money a purchase order has claimed but not yet spent. Separate from actual so a free balance cannot be overstated."@en .
+
+ontosage:accruedAmount a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CostLine ; rdfs:range xsd:decimal ;
+    rdfs:label "accrued amount"@en .
+
+ontosage:varianceCause a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CostLine ; rdfs:range xsd:string ;
+    rdfs:label "variance cause"@en ;
+    rdfs:comment "Price, quantity, timing or scope. Recorded, because the movement alone cannot say which and the remedies differ."@en .
+
+ontosage:codingCheckRequired a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CostLine ; rdfs:range xsd:boolean ;
+    rdfs:label "coding check required"@en ;
+    rdfs:comment "Flagged on the row rather than kept as a list, because a list goes stale the moment the row is corrected."@en .
+
+ontosage:patrolCircuit a owl:DatatypeProperty ;
+    rdfs:domain ontosage:PatrolCheckpoint ; rdfs:range xsd:string ;
+    rdfs:label "patrol circuit"@en .
+
+ontosage:circuitSequence a owl:DatatypeProperty ;
+    rdfs:domain ontosage:PatrolCheckpoint ; rdfs:range xsd:integer ;
+    rdfs:label "circuit sequence"@en ;
+    rdfs:comment "Position within the circuit, so a route can be reported in the order it is walked."@en .
+
+ontosage:requiredQualification a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "required qualification"@en ;
+    rdfs:comment "What an officer must hold to work this point. Role-level, never a person."@en .
+
+ontosage:openException a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "open exception"@en ;
+    rdfs:comment "What must be called out at handover, in the register's own words."@en .
 
 ontosage:routeFrom a owl:DatatypeProperty ;
     rdfs:domain ontosage:AccessibleRoute ; rdfs:range xsd:string ;
@@ -2044,6 +2110,15 @@ ontosage:recordId a owl:DatatypeProperty ;
 #  do. A building that uses different words adds them here; the router reads whatever is declared
 #  and no code changes.
 ####################################################################################################
+
+ontosage:CostLine ontosage:layTerms "cost", "costs", "budget", "budgets", "spend",
+    "spending", "actuals", "commitment", "commitments", "accrual", "accruals",
+    "free balance", "variance", "overspend", "underspend", "cost centre", "invoice",
+    "procurement", "purchase", "supplier spend", "what did it cost" .
+
+ontosage:PatrolCheckpoint ontosage:layTerms "patrol", "patrols", "checkpoint",
+    "checkpoints", "security round", "rounds", "circuit", "post", "posts", "guard",
+    "security officer", "handover", "my shift", "overdue check", "walk the building" .
 
 ontosage:AccessibleRoute ontosage:layTerms "accessible route", "step free", "step-free",
     "wheelchair", "wheelchair access", "accessible entrance", "level access", "ramp",
