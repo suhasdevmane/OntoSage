@@ -241,14 +241,59 @@ async def record_classes(namespace: str = "") -> List[RecordClass]:
     return found
 
 
+#: A term matched inside a hyphenated compound counts, but for less. "contract-fixed" is a
+#: kind of SPEND, not a mention of a contract -- measured live, that one word sent
+#: "what proportion of spend is planned, reactive, statutory, contract-fixed or demand-led"
+#: to the Contract register instead of CostLine. DISCOUNTED rather than rejected, because
+#: rejecting outright would lose real matches in a building that hyphenates compound names.
+_COMPOUND_WEIGHT = 0.25
+
+
+def _term_score(term: str, low: str) -> float:
+    """How strongly `term` is evidence that this question is about its class.
+
+    Longer terms are stronger: "permission group" is better evidence than "access", which
+    appears in half the corpus. A multi-word term is stronger again, because two words
+    landing together is far less likely to be coincidence than one common noun.
+    """
+    best = 0.0
+    for m in re.finditer(rf"\b{re.escape(term)}\b", low):
+        weight = float(len(term)) * (2.0 if " " in term else 1.0)
+        before = low[m.start() - 1] if m.start() else " "
+        after = low[m.end()] if m.end() < len(low) else " "
+        if before == "-" or after == "-":
+            weight *= _COMPOUND_WEIGHT
+        best = max(best, weight)
+    return best
+
+
 def held_record_class(query: str, classes: List[RecordClass]) -> Optional[RecordClass]:
-    """The record class this question is about, when the building holds one."""
+    """The record class this question is about, when the building holds one.
+
+    SCORED, not first-match. This used to return the first class whose vocabulary matched,
+    in whatever order SPARQL happened to return them -- so a question naming several
+    registers went to whichever the graph listed first, and the routing was not even
+    deterministic between runs. Harmless while twelve classes existed and increasingly wrong
+    as registers were added: measured on live questions, "contract-fixed" reached Contract
+    instead of CostLine, and a shift-handover question reached HandoverRecord instead of
+    PatrolCheckpoint.
+
+    Ties break on the class name, never on row order, so the same question routes the same
+    way twice.
+    """
     low = f" {(query or '').lower()} "
+    scored = []
     for record in classes:
-        for term in record.terms:
-            if re.search(rf"\b{re.escape(term)}\b", low):
-                return record
-    return None
+        total = sum(_term_score(term, low) for term in record.terms)
+        if total > 0:
+            scored.append((total, record))
+    if not scored:
+        return None
+    best = max(total for total, _ in scored)
+    return sorted(
+        (record for total, record in scored if total == best),
+        key=lambda r: r.local_name,
+    )[0]
 
 
 #: Terms for every record class the ontology DEFINES, used to NAME what a building is
