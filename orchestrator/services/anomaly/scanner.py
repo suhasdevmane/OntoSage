@@ -75,9 +75,50 @@ MERGE_GRACE = timedelta(hours=2)
 #: happened for as long as this scanner has existed: seasonal_residual returned [] on every
 #: point, in silence, and the fault-injection harness scored it 0/1 and read it as broken.
 #: A tradeoff that is stated is engineering; the same tradeoff unstated is a defect.
-_FASTEST_CADENCE_S = 30.0
+def _fastest_publish_cadence_s(default: float = 30.0) -> float:
+    """The shortest interval anything actually writes at, read from the publisher.
+
+    Restated as a constant `30.0` until 2026-09-04, and CAVEAT-405 then changed every
+    cadence underneath it: the fastest is now 60s and most modalities are at 300s. The limit
+    derived from 30s was therefore about DOUBLE what any detector needs, and the cost is not
+    theoretical -- a sweep fetched ~2.7M rows and took 598 SECONDS, during which GraphDB
+    slowed enough that the capability lane's 15s SPARQL timeout fired and 52 answers silently
+    left the TTL-first path (CAVEAT-414/415).
+
+    CAVEAT-401's own note said to re-check this whenever the cadence or a detector threshold
+    changes. It changed and nothing re-checked, because the coupling lived in a comment
+    rather than in code. Now it is read, so the two cannot drift apart again.
+
+    The publisher is a separate build context and is not importable from here, so its map is
+    read as data with a stated fallback -- a building whose publisher this cannot see keeps
+    the old conservative value rather than silently shrinking its detectors' view.
+    """
+    import re as _re
+    from pathlib import Path as _Path
+
+    candidates = [
+        _Path("/app/mysql-dummy-publish-dev/sensor_signal.py"),
+        _Path(__file__).resolve().parents[3] / "mysql-dummy-publish-dev" / "sensor_signal.py",
+    ]
+    for path in candidates:
+        try:
+            if not path.is_file():
+                continue
+            block = path.read_text(encoding="utf-8")
+            start = block.index("CADENCE_S")
+            values = [int(v) for v in _re.findall(r":\s*(\d+)\s*,", block[start : start + 900])]
+            if values:
+                return float(min(values))
+        except Exception:  # pragma: no cover - a missing publisher is not an error here
+            continue
+    return default
+
+
+#: Seconds between writes at the fastest-reporting modality, and the longest window any
+#: detector requires. Their ratio is how many samples that window holds.
+_FASTEST_CADENCE_S = _fastest_publish_cadence_s()
 _LONGEST_DETECTOR_WINDOW_H = 6.0
-_PER_UUID_LIMIT = int((_LONGEST_DETECTOR_WINDOW_H * 3600.0 / _FASTEST_CADENCE_S) * 2)  # 1440
+_PER_UUID_LIMIT = int((_LONGEST_DETECTOR_WINDOW_H * 3600.0 / _FASTEST_CADENCE_S) * 2)
 
 
 def detectors_starved(series_by_uuid: Dict[str, Any]) -> Dict[str, str]:

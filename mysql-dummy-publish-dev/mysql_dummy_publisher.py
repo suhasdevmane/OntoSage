@@ -17,7 +17,11 @@ import re
 import signal
 import sys
 import time
+from datetime import datetime
 from typing import Dict, List, Optional, Tuple
+
+# NOT `import signal`: that name is the stdlib module, used below for SIGTERM.
+import sensor_signal as _signal
 
 try:
     import pymysql
@@ -148,9 +152,36 @@ def load_narrow_sensors(filepath=None):
         print(f"[py-dummy] Narrow sensors not loaded ({filepath}): {e}")
 
 
-def _narrow_value(value_col: str):
-    lo, hi, dec = _NARROW_RANGES.get(value_col, (0.0, 100.0, 2))
-    return rand_int(int(lo), int(hi)) if dec == 0 else rand_float(lo, hi, dec)
+def _modality_of(table: str) -> str:
+    """value_col for a table that does not declare one (the extended stores).
+
+    `sensor_data_floors04` and `sensor_data_synth` hold mixed modalities in one table, so
+    there is no single right answer; `generic` gives them the default cadence and a mild
+    daily swing, which is honest about not knowing rather than asserting a wrong shape.
+    """
+    stem = re.sub(r"_data$", "", table).lower()
+    return _TABLE_TO_VALUE_COL.get(stem, "generic")
+
+
+#: Table stem -> value_col, for tables whose modality is unambiguous.
+_TABLE_TO_VALUE_COL = {
+    "co2": "co2_ppm",
+    "temperature": "temp_c",
+    "humidity": "rh_pct",
+    "occupancy": "occupancy",
+    "noise": "noise_db",
+    "light": "lux",
+    "energy": "kwh",
+    "submeter": "kwh",
+    "water": "flow_lpm",
+    "waterflow": "flow_lpm",
+    "iaq": "voc",
+    "equipment": "vib_mm_s",
+    "plant": "runtime_h",
+    "contact": "contact",
+    "parking": "occupancy",
+    "pm25": "pm25",
+}
 
 
 def publish_narrow(conn, verbose=False) -> int:
@@ -165,9 +196,20 @@ def publish_narrow(conn, verbose=False) -> int:
     #
     # A failing table is logged and skipped rather than aborting the pass, so one broken
     # modality cannot stop every other sensor from being topped up.
+    # Per-point cadence and a SHAPED value, not one global tick of white noise
+    # (CAVEAT-233 / CAVEAT-405). A point is written only when its own modality interval has
+    # elapsed, so a CO2 sensor reports every minute and an energy meter every fifteen -- what
+    # a real building does, and about 80% fewer writes than every point every 30 seconds.
+    now_s = time.time()
+    now_dt = datetime.utcnow()
     by_table = {}
     for s in NARROW_SENSORS:
-        by_table.setdefault(s["table"], []).append((s["uuid"], _narrow_value(s["value_col"])))
+        if not _signal.due(s["uuid"], s["value_col"], now_s):
+            continue
+        lo, hi, dec = _NARROW_RANGES.get(s["value_col"], (0.0, 100.0, 2))
+        value, _raw = _signal.next_value(s["uuid"], s["value_col"], lo, hi, dec, now_dt)
+        by_table.setdefault(s["table"], []).append((s["uuid"], value))
+        _signal.mark_written(s["uuid"], now_s)
 
     written = 0
     with conn.cursor() as cur:
@@ -242,11 +284,21 @@ def publish_extended(conn, verbose=False) -> int:
     if not EXTENDED_SENSORS:
         return 0
     written = 0
+    now_s = time.time()
+    now_dt = datetime.utcnow()
     with conn.cursor() as cur:
         for s in EXTENDED_SENSORS:
             try:
                 lo, hi, dec = s["lo"], s["hi"], s["dec"]
-                val = rand_int(int(lo), int(hi)) if dec == 0 else rand_float(lo, hi, dec)
+                # These carry per-Brick-class ranges but no value_col, so the modality is
+                # inferred from the table for cadence and diurnal shape; a table this does
+                # not recognise falls back to the generic 300s interval rather than being
+                # skipped (CAVEAT-405).
+                col = _modality_of(str(s["table"]))
+                if not _signal.due(s["uuid"], col, now_s):
+                    continue
+                val, _raw = _signal.next_value(s["uuid"], col, lo, hi, dec, now_dt)
+                _signal.mark_written(s["uuid"], now_s)
                 cur.execute(
                     f"INSERT INTO `{s['table']}` (`uuid`, `datetime`, `value`) "
                     f"VALUES (%s, NOW(), %s) "
@@ -260,55 +312,103 @@ def publish_extended(conn, verbose=False) -> int:
     return written
 
 
+#: Physical ranges for the WIDE table, as (name substring, modality key, lo, hi, decimals).
+#:
+#: WHY THIS IS A TABLE AND NOT AN IF-CHAIN
+#: ---------------------------------------
+#: It was an if-chain of nine rules, and it returned None for everything it did not name --
+#: falling through to gen_value's TYPE fallback, where `tinyint` becomes rand_int(0, 1).
+#: Measured 2026-09-03: 450 of this building's 1,218 wide sensor names (37%) reached that
+#: fallback, so twelve whole sensor classes x 34 rooms reported numbers with no physical
+#: meaning. A PM2.5 question returned "1" -- grounded in a real column, and nonsense as a
+#: reading, which is the failure contract 4 exists to prevent. The catalogues name PM2.5,
+#: CO, NO2 and formaldehyde directly.
+#:
+#: ORDER MATTERS: the first substring that matches wins, so "pm10" must precede "pm1" or
+#: every PM10 sensor is typed as PM1. Keep specific keys above general ones.
+#:
+#: The decimals here are a FALLBACK. The column's own scale wins when the schema knows it,
+#: and an integer column forces 0 -- writing 0.25 into a tinyint stores 0, silently, and
+#: that is how a plausible range still produces an implausible reading.
+_WIDE_RANGES = (
+    # (substring, modality key for the diurnal shape, lo, hi, decimals)
+    ("temperature", "temp_c", 18.0, 28.0, 2),
+    ("humidity", "rh_pct", 30.0, 70.0, 2),
+    ("co2", "co2_ppm", 400.0, 1200.0, 2),
+    ("tvoc", "voc", 0.0, 500.0, 0),
+    ("noise", "noise_db", 30.0, 80.0, 0),
+    ("sound", "noise_db", 30.0, 80.0, 0),
+    ("illuminance", "lux", 0.0, 1000.0, 0),
+    ("light", "lux", 0.0, 1000.0, 0),
+    ("occupancy", "occupancy", 0.0, 1.0, 0),
+    ("motion", "occupancy", 0.0, 1.0, 0),
+    # ── particulates, ug/m3. WHO 2021 24-hour guidelines: PM2.5 15, PM10 45. ──
+    ("pm10", "pm10", 10.0, 50.0, 0),
+    ("pm2.5", "pm25", 5.0, 35.0, 0),
+    ("pm2_5", "pm25", 5.0, 35.0, 0),
+    ("pm1", "pm1", 2.0, 15.0, 0),
+    # ── gases ──
+    # CO: indoor guideline is under 9 ppm over 8 hours, so a healthy room sits near zero.
+    ("co_level", "co_ppm", 0.0, 5.0, 0),
+    # NO2, ppb. WHO annual guideline 10 ug/m3 is roughly 5 ppb; indoor peaks higher.
+    ("no2", "no2_ppb", 5.0, 40.0, 0),
+    # Formaldehyde, ppb. WHO 0.1 mg/m3 short-term is roughly 80 ppb.
+    ("formaldehyde", "hcho_ppb", 5.0, 50.0, 2),
+    # Ambient oxygen is 20.95%; a narrow band, because anything else is an emergency.
+    ("oxygen", "o2_pct", 20.60, 20.95, 2),
+    ("ethyl_alcohol", "etoh_ppm", 0.0, 20.0, 0),
+    # MQ-series metal-oxide sensors report an uncalibrated ppm-equivalent, not a species
+    # concentration. A clean-air baseline with drift is the honest shape for them.
+    ("mq2", "mq_ppm", 50.0, 300.0, 2),
+    ("mq3", "mq_ppm", 50.0, 300.0, 2),
+    ("mq5", "mq_ppm", 50.0, 300.0, 2),
+    ("mq9", "mq_ppm", 50.0, 300.0, 2),
+    # ── exterior and metering ──
+    ("wind_speed", "wind_ms", 0.0, 12.0, 2),
+    ("electrical_price", "price", 0.1200, 0.4500, 4),
+    ("electrical_energy", "kwh", 5.0, 60.0, 3),
+)
+
+#: Integer column types. A range with decimals written into one of these is truncated.
+_INT_TYPES = ("tinyint", "smallint", "mediumint", "int", "integer", "bigint")
+
+
 def get_realistic_value(sensor_name, uuid, enum_opts=None):
-    """Generate realistic value based on sensor name and schema type."""
+    """A value this sensor could physically produce, or None if the name is unrecognised.
+
+    Returns a SHAPED value (mean-reverting toward a diurnal centre, per-sensor phase) rather
+    than an independent uniform draw, so consecutive rows in the wide table correlate the
+    way the narrow tables now do -- see sensor_signal and CAVEAT-405. Mixing a smooth
+    history with a white-noise present is what made every point look anomalous.
+    """
     name = sensor_name.lower()
     schema = SCHEMA_MAP.get(uuid, {})
     data_type = schema.get("data_type", "").lower()
-    precision = schema.get("precision")
-    scale = schema.get("scale", 2)
+    scale = schema.get("scale")
 
-    # Temperature (18-28 C) - DECIMAL(6,2)
-    if "temperature" in name:
-        return round(random.uniform(18.0, 28.0), scale or 2)
-
-    # Humidity (30-70 %) - DECIMAL(6,2) or DECIMAL(8,2)
-    if "humidity" in name:
-        return round(random.uniform(30.0, 70.0), scale or 2)
-
-    # CO2 (400-1200 ppm) - DECIMAL(8,2)
-    if "co2" in name:
-        if data_type == "decimal":
-            return round(random.uniform(400.0, 1200.0), scale or 2)
-        return random.randint(400, 1200)
-
-    # TVOC (0-500 ppb) - SMALLINT
-    if "tvoc" in name:
-        return random.randint(0, 500)
-
-    # Noise/Sound (30-80 dB) - SMALLINT
-    if "noise" in name or "sound" in name:
-        return random.randint(30, 80)
-
-    # Illuminance/Light (0-1000 lux) - SMALLINT
-    if "illuminance" in name or "light" in name:
-        return random.randint(0, 1000)
-
-    # Occupancy/Motion (0 or 1) - TINYINT
-    if "occupancy" in name or "motion" in name:
-        return random.choice([0, 1])
-
-    # Air Quality Level (Enum) - ENUM
+    # Enum first: an enumerated level has no numeric range to shape.
     if "air_quality_level" in name:
-        if enum_opts:
-            return random.choice(enum_opts)
-        return None
+        return pick(list(enum_opts)) if enum_opts else None
 
-    # Air Quality (Index 0-500) - SMALLINT
+    # Air quality INDEX (0-500 scale); guarded so it cannot swallow the level sensor above.
     if "air_quality" in name and "level" not in name:
-        return random.randint(0, 150)
+        lo, hi, dec, key = 0.0, 150.0, 0, "aqi"
+    else:
+        match = next((r for r in _WIDE_RANGES if r[0] in name), None)
+        if match is None:
+            return None
+        _sub, key, lo, hi, dec = match
 
-    return None
+    if data_type in _INT_TYPES:
+        dec = 0
+    elif scale is not None:
+        try:
+            dec = int(scale)
+        except Exception:
+            pass
+
+    value, _raw = _signal.next_value(str(uuid), key, lo, hi, dec, datetime.utcnow())
+    return value
 
 
 # ============================ SETTINGS (edit me) ============================

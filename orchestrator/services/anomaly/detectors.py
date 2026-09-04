@@ -398,6 +398,13 @@ def schedule_violation(
 # ── 6. spike (robust, local) ─────────────────────────────────────────────────
 
 
+#: A signal taking no more than this many distinct values across its whole history is a
+#: STATE, not a measurement -- a contact, a mode, an occupancy flag. Deviation-from-median
+#: detectors are meaningless on one, because the median IS one of the states. Three rather
+#: than two so a tri-state (open / closed / fault) is covered as well.
+_STATE_SIGNAL_MAX_LEVELS = 3
+
+
 def spike(
     series: Sequence[Tuple[object, object]],
     subject_uuid: str,
@@ -419,6 +426,25 @@ def spike(
     hist_range = max(values) - min(values)
     if hist_range <= 1e-12:
         return []
+
+    # A STATE SIGNAL IS NOT A MEASUREMENT, and every transition of one is not a spike.
+    #
+    # Measured on bldg1: `contact_data` returned 247.8 spike episodes per sensor against
+    # 3.8-17.5 for every continuous store, and with 466 contacts that was ~115,000 of the
+    # sweep's 133,663 findings -- the whole flood, from one signal type. The arithmetic is
+    # forced: a door sits at 0, so the rolling MAD over a 12-sample window collapses to
+    # zero, the spread falls to its 5%-of-range floor, and a legitimate open to 1 clears it
+    # by twenty times. The detector was working exactly as designed on a signal it was
+    # never designed for.
+    #
+    # A contact HAS meaningful detectors -- schedule_violation catches a door open out of
+    # hours, stuck catches one held open -- so this is not a loss of coverage, it is the
+    # right detector doing its own job instead of this one's. Keyed on the SIGNAL rather
+    # than on a modality name, so a building whose binary points are called something else
+    # is covered without a literal.
+    if len(set(values)) <= _STATE_SIGNAL_MAX_LEVELS:
+        return []
+
     cadence = _cadence_seconds(samples)
     flagged = []
     for i in range(window, len(samples)):

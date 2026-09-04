@@ -52,7 +52,11 @@ def readiness_ceiling(demand: Path, readiness: Optional[Path]) -> Dict[str, str]
     if not (demand.is_file() and readiness and readiness.is_file()):
         return {}
     ready = {r["source_system"]: r["readiness"] for r in json.loads(readiness.read_text())}
-    rank = {"DATA": 0, "PROSE": 1, "ABSENT": 2}
+    # WIRED sits BELOW prose deliberately (CAVEAT-412): a document you can quote answers more
+    # questions than a feed that is switched on and has produced nothing. The default for an
+    # unknown state stays the worst rank, so a state added upstream degrades the ceiling
+    # rather than silently flattering it.
+    rank = {"DATA": 0, "PROSE": 1, "WIRED": 2, "ABSENT": 3}
     out: Dict[str, str] = {}
     with demand.open(encoding="utf-8") as fh:
         for row in csv.DictReader(fh):
@@ -60,7 +64,7 @@ def readiness_ceiling(demand: Path, readiness: Optional[Path]) -> Dict[str, str]
             if not systems:
                 out[row["ID"]] = "NONE"
                 continue
-            worst = max(systems, key=lambda s: rank.get(ready.get(s, "ABSENT"), 2))
+            worst = max(systems, key=lambda s: rank.get(ready.get(s, "ABSENT"), max(rank.values())))
             out[row["ID"]] = ready.get(worst, "ABSENT")
     return out
 
@@ -144,7 +148,7 @@ def main(argv: List[str]) -> int:
         by_ceiling: Dict[str, List[Dict[str, str]]] = defaultdict(list)
         for row in graded:
             by_ceiling[ceiling.get(row.get("qid", ""), "?")].append(row)
-        for state in ("DATA", "PROSE", "ABSENT", "NONE", "?"):
+        for state in ("DATA", "PROSE", "WIRED", "ABSENT", "NONE", "?"):
             subset = by_ceiling.get(state)
             if subset:
                 lines.append(f"| {state} | {len(subset)} | {share(subset, COMPUTED):.0f}% |")

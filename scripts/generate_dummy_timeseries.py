@@ -16,13 +16,13 @@ Env: GRAPHDB_QUERY_URL, MYSQL_HOST/PORT, MYSQL_ROOT_PASSWORD (DDL+GRANT), MYSQL_
 """
 import json
 import math
-from pathlib import Path
 import os
 import random
 import sys
 import time
 import urllib.request
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import pymysql
 

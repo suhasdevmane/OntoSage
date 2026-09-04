@@ -439,7 +439,7 @@ LOG_FORMAT=%(asctime)s - %(name)s - %(levelname)s - %(message)s
 # Cloud Ollama API (alternative to local Ollama)
 # Set MODEL_PROVIDER=cloud to use this instead of local model
 OLLAMA_CLOUD_API_KEY=
-OLLAMA_CLOUD_BASE_URL=https://api.ollama.ai/v1
+OLLAMA_CLOUD_BASE_URL=https://ollama.com/v1  # api.ollama.ai has NO DNS record (BUG-175/BUG-406); this host is the working one
 OLLAMA_CLOUD_MODEL=gpt-oss:120b-cloud
 
 

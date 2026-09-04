@@ -15,9 +15,9 @@ loaded, the DB is authoritative and the CSVs can be archived.
 from __future__ import annotations
 
 import csv
-import sys
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Dict
 

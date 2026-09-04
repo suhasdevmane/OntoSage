@@ -194,7 +194,17 @@ async def test_uploaded_document_source_is_not_preempted(monkeypatch):
     out = await cap.CapabilityAgent().answer(_state("where do I go in a fire?"))
     res = out.intermediate_results["capability_result"]
     # Must reach the document source, not short-circuit to the honest boundary.
-    assert res["provenance"] == "document_kb"
+    #
+    # EITHER document label satisfies the invariant, and pinning one made this test
+    # provider-dependent. `document_answered` is the path where the model synthesises an
+    # answer from the retrieved manual; `document_kb` returns the snippet directly when it
+    # does not. Which one runs depends on the model: this asserted `document_kb` and failed
+    # the moment MODEL_PROVIDER moved to the hosted 120B, which took the synthesis path
+    # instead — a better answer failing a test written around a weaker one.
+    #
+    # The invariant is that the document source was REACHED. The content assertion below is
+    # what actually proves it, and it holds on both paths.
+    assert res["provenance"] in ("document_kb", "document_answered"), res["provenance"]
     assert res["provenance"] != "no_match"
     assert "north car park" in res["response"]
 

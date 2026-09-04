@@ -1,0 +1,104 @@
+# Accessible route register -> ontosage:AccessibleRoute
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# Measured on the 2,480-question stakeholder capture: people with mobility, sensory or other
+# access requirements computed at 34% with 53 questions unanswered. They do not ask whether
+# the building is accessible in general. They ask about a SPECIFIC JOURNEY — which entrance,
+# how many seated rests, whether the doors are manual, which lift, how much time to allow,
+# whether a quieter arrival exists, and what text-based contact replaces a phone call.
+#
+# The word every one of those questions uses is "verified". An accessible route asserted
+# from geometry would be a guess about a person's journey, which is the one place this
+# project must not guess: `surveyed_on` and `surveyed_by` are required columns, so a route
+# with no survey behind it cannot be published as verified.
+record_type: accessible_route
+class: ontosage:AccessibleRoute
+iri_template: "route/{route}"
+label_column: name
+
+columns:
+  route:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  from_point:
+    predicate: ontosage:routeFrom
+    datatype: xsd:string
+    required: true
+  to_point:
+    predicate: ontosage:routeTo
+    datatype: xsd:string
+    required: true
+  entrance:
+    predicate: ontosage:visitorEntrance
+    datatype: xsd:string
+    required: true
+  step_free:
+    predicate: ontosage:isStepFree
+    datatype: xsd:boolean
+    required: true
+  seated_rests:
+    predicate: ontosage:seatedRests
+    datatype: xsd:integer
+  door_type:
+    predicate: ontosage:doorOperation
+    datatype: xsd:string
+    required: true
+    values:
+      automatic: ["Automatic", "Powered", "Auto"]
+      assisted: ["Assisted", "Push pad", "Power assisted"]
+      manual: ["Manual", "Manual heavy", "Manual light"]
+  lift:
+    predicate: ontosage:servedByLift
+    datatype: xsd:string
+  lift_status:
+    predicate: ontosage:liftStatus
+    datatype: xsd:string
+    values:
+      in_service: ["In service", "Available", "Operational"]
+      out_of_service: ["Out of service", "Faulty", "Under repair"]
+  distance_m:
+    predicate: ontosage:routeDistanceMetres
+    datatype: xsd:integer
+  allow_minutes:
+    # What to allow, not how long it takes. The catalogues ask "how much arrival time
+    # should I allow", which includes doors, lifts and check-in, so a walking time alone
+    # would answer a question nobody asked.
+    predicate: ontosage:allowMinutes
+    datatype: xsd:integer
+  sensory:
+    predicate: ontosage:sensoryLevel
+    datatype: xsd:string
+    values:
+      quiet: ["Quiet", "Low stimulation", "Calm"]
+      moderate: ["Moderate", "Typical"]
+      busy: ["Busy", "High footfall", "Noisy"]
+  assistance_contact:
+    predicate: ontosage:assistanceContact
+    datatype: xsd:string
+  surveyed_on:
+    predicate: ontosage:surveyedOn
+    datatype: xsd:date
+    required: true
+  surveyed_by:
+    predicate: ontosage:surveyedBy
+    datatype: xsd:string
+    required: true
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      open: ["Open", "Available", "In use"]
+      restricted: ["Restricted", "Partly available"]
+      closed: ["Closed", "Unavailable", "Blocked"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

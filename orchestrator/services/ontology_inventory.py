@@ -23,7 +23,7 @@ from typing import List, Optional, Tuple
 import httpx
 
 from shared.config import settings
-from shared.utils import get_logger
+from shared.utils import describe_exception, get_logger
 
 logger = get_logger(__name__)
 
@@ -263,7 +263,7 @@ SELECT ?cls (COUNT(DISTINCT ?s) AS ?n) (MIN(STR(?s)) AS ?lo) (MAX(STR(?s)) AS ?h
             resp.raise_for_status()
             rows = resp.json().get("results", {}).get("bindings", [])
     except Exception as e:
-        logger.warning(f"[inventory] class census failed: {e}")
+        logger.warning(f"[inventory] class census failed: {describe_exception(e)}")
         return []
 
     found: List[Tuple[str, int, str, str]] = []

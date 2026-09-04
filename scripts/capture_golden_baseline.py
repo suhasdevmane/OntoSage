@@ -76,7 +76,51 @@ FIELDS = [
     "answer_len",
     "elapsed_s",
     "status",
+    # WHICH MODEL ANSWERED. Absent until 2026-09-03, and a capture is not one measurement
+    # without it: this run was deliberately split across the hosted gpt-oss:120b and local
+    # gpt-oss:20b (hosted until its rolling budget ran out, then the free GPU), and nothing
+    # in the artifact would have said so. A later reader — or a regression comparison —
+    # would have treated two models' answers as one homogeneous baseline.
+    "provider",
+    "model",
 ]
+
+#: Re-read the active provider every this many questions, so a switch mid-run is located to
+#: within that many rows rather than assumed to have happened at a boundary.
+_MODEL_POLL_EVERY = 25
+
+#: What a row says when the field was never captured. NOT blank: blank reads as "no model",
+#: which is a claim, while this reads as "we did not record it", which is the truth.
+_UNRECORDED = "unrecorded"
+
+
+def _active_model(base_url: str, token: str) -> tuple:
+    """(provider, model) as the RUNNING system reports it, or (_UNRECORDED, _UNRECORDED).
+
+    Read from the live admin endpoint rather than from .env, because .env is what someone
+    intended and the container holds what is actually loaded — BUG-406 was exactly that gap,
+    and CAVEAT-178 is the same shape (a `restart` keeps the old environment).
+
+    Never raises. A capture that dies because it could not label itself is worse than a
+    capture labelled "unrecorded".
+    """
+    try:
+        r = requests.get(
+            f"{base_url}/api/v1/admin/ai-config",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=20,
+        )
+        cfg = (r.json() or {}).get("data") or {}
+        provider = str(cfg.get("model_provider") or "")
+        if provider == "local":
+            return provider, str(cfg.get("ollama_model") or "")
+        if provider == "cloud":
+            return provider, str(cfg.get("ollama_cloud_model") or "")
+        if provider == "openai":
+            return provider, str(cfg.get("openai_model") or "")
+        return provider or _UNRECORDED, _UNRECORDED
+    except Exception:
+        return _UNRECORDED, _UNRECORDED
 
 
 def _login(base_url: str) -> str:
@@ -236,11 +280,25 @@ def _drop_rows(path: Path, qids: set) -> int:
         return 0
     tmp = path.with_suffix(".csv.tmp")
     with tmp.open("w", encoding="utf-8-sig", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=FIELDS)
+        w = csv.DictWriter(fh, fieldnames=FIELDS, extrasaction="ignore")
         w.writeheader()
-        w.writerows(keep)
+        w.writerows(_labelled(r) for r in keep)
     tmp.replace(path)
     return dropped
+
+
+def _labelled(row: Dict[str, str]) -> Dict[str, str]:
+    """Fill provider/model on a row written before those columns existed.
+
+    Blank would read as "answered by no model", which is a claim. `unrecorded` reads as
+    "we did not capture this", which is what happened. Rows captured before 2026-09-03 --
+    including the hosted half of the split stakeholder-catalogue run -- carry this.
+    """
+    out = dict(row)
+    for column in ("provider", "model"):
+        if not (out.get(column) or "").strip():
+            out[column] = _UNRECORDED
+    return out
 
 
 def _tally(path: Path) -> Dict[str, int]:
@@ -344,7 +402,19 @@ def main(argv: List[str]) -> int:
         w = csv.DictWriter(fh, fieldnames=FIELDS)
         if first:
             w.writeheader()
+        provider, model = _active_model(args.base_url, token)
+        print(f"  answering with provider={provider} model={model}")
         for i, q in enumerate(todo, 1):
+            if i > 1 and (i - 1) % _MODEL_POLL_EVERY == 0:
+                now_provider, now_model = _active_model(args.base_url, token)
+                if (now_provider, now_model) != (provider, model) and now_model != _UNRECORDED:
+                    print(
+                        f"  MODEL CHANGED at question {i}: {provider}/{model} -> "
+                        f"{now_provider}/{now_model}. Rows are stamped individually, so the "
+                        f"two segments can be reported apart; an aggregate across them is a "
+                        f"blend of two systems."
+                    )
+                    provider, model = now_provider, now_model
             res = _ask(q["Question"], args.base_url, args.building, token)
             ans = str(res["answer"] or "")
             status = str(res["status"])
@@ -373,6 +443,8 @@ def main(argv: List[str]) -> int:
                     "answer_len": len(ans),
                     "elapsed_s": res["elapsed_s"],
                     "status": status,
+                    "provider": provider,
+                    "model": model,
                 }
             )
             fh.flush()
