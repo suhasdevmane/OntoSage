@@ -2174,7 +2174,8 @@ ontosage:CostLine ontosage:layTerms "cost", "costs", "budget", "budgets", "spend
 
 ontosage:PatrolCheckpoint ontosage:layTerms "patrol", "patrols", "checkpoint",
     "checkpoints", "security round", "rounds", "circuit", "post", "posts", "guard",
-    "security officer", "handover", "my shift", "overdue check", "walk the building" .
+    "security officer", "shift handover", "my shift", "this shift", "overdue check",
+    "walk the building" .
 
 ontosage:AccessibleRoute ontosage:layTerms "accessible route", "step free", "step-free",
     "wheelchair", "wheelchair access", "accessible entrance", "level access", "ramp",
@@ -2205,8 +2206,15 @@ ontosage:Contract ontosage:layTerms "contract", "contracts", "agreement", "agree
 ontosage:Warranty ontosage:layTerms "warranty", "warranties", "guarantee", "guarantees",
     "under warranty", "in warranty", "defects liability" .
 
-ontosage:HandoverRecord ontosage:layTerms "handover", "handovers", "o&m manual", "o and m manual",
-    "operating manual", "as-built", "as built", "commissioning certificate", "project record" .
+# "handover" alone is ambiguous and both this class and ontosage:PatrolCheckpoint claimed
+# it: a PROJECT handover (as-built drawings, O&M manuals) and a SHIFT handover (what the
+# outgoing security officer must call out) are unrelated. Measured — "which unresolved
+# exceptions require a call-out in this shift handover" reached the project register. Each
+# class now declares the qualified phrase its own domain uses, which is the ontology saying
+# what a thing is called rather than the router guessing.
+ontosage:HandoverRecord ontosage:layTerms "project handover", "handover record",
+    "handover records", "o&m manual", "o and m manual", "operating manual", "as-built",
+    "as built", "commissioning certificate", "project record" .
 
 ontosage:ConditionSurvey ontosage:layTerms "condition survey", "condition", "asset condition",
     "expected life", "remaining life", "beyond life", "life expired", "end of life",
