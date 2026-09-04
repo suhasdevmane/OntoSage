@@ -108,6 +108,8 @@ worst-served ROLES rather than from the top of the system table.
 | `public_event` | 12 | visitors and event attendees, 16% | admission, check-in, entrance, venue changes |
 | `access_permission` | 20 | access-control administrators, 20% | permission groups, inheritance, overrides |
 | `accessible_route` | 16 | accessibility users, 34% | verified routes, rests, doors, lifts, quiet options |
+| `patrol_checkpoint` | 18 | security officers, 29% | current/due/overdue/unverifiable per shift |
+| `cost_line` | 24 | finance and procurement, 28% | free balance after actuals, commitments and accruals |
 
 All four went live with **no code change** — mapping, document, TBox class — once BUG-417
 stopped a hardcoded Python tuple from deciding which record classes the building was allowed
@@ -135,9 +137,35 @@ including one empty answer.
 So **+32 points is a floor, not a ceiling** — the grader currently under-counts computed
 answers, which is the safer direction to be wrong in.
 
-Every point of that came from four documents, four mappings and four TBox classes. No lane
+Every point of that came from four documents, four mappings and four TBox classes (two more have since been added, taking the total to six registers and 120 records). No lane
 was rewritten. What made it possible was BUG-417: until a hardcoded Python tuple stopped
 deciding which record classes the building was allowed to hold, none of it was reachable.
+
+## Verified arithmetic, not just a plausible sentence
+
+The finance register's first live answer was checked against the document it came from:
+
+| figure | answered | actual, summed over 24 rows |
+|---|---:|---:|
+| Budget | £253,200.00 | £253,200.00 |
+| Actual | £209,840.80 | £209,840.80 |
+| Committed | £62,100.00 | £62,100.00 |
+| Accrued | £4,050.00 | £4,050.00 |
+
+Free balance **−£22,790.80** — the building is overcommitted, and saying so is the point.
+Every figure exact. A confident financial number that is wrong would be worse than a
+decline, so this one was verified rather than accepted.
+
+## Two routing misses worth naming
+
+Of five test questions against the new registers, three computed and two reached an
+adjacent register: *"what proportion of spend is planned, reactive, statutory,
+contract-fixed…"* matched `Contract` on the word "contract-fixed" instead of `CostLine`,
+and a shift-handover question matched `HandoverRecord` instead of `PatrolCheckpoint`.
+
+`held_record_class` picks ONE class by lay-term match, and these questions legitimately name
+several. That is the next routing problem, and it is a different one from BUG-417: the
+classes are now all reachable, and the matcher has to choose among them.
 
 ## Not to be done
 
