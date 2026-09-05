@@ -1,6 +1,6 @@
 # Regression probe — answers this system has already been proved to give
 
-Model: `local/gpt-oss:20b` · 31 cases · **31 pass, 0 fail**
+Model: `local/gpt-oss:20b` · 33 cases · **33 pass, 0 fail**
 
 Each case asserts a FACT the registers hold — a figure, a record id, a department code — not a phrasing, so a reworded answer passes and a wrong figure fails.
 
@@ -37,3 +37,5 @@ Each case asserts a FACT the registers hold — a figure, a record id, a departm
 | PASS | deliberate | Which space has the best conditions for focused work this afternoon? |  |
 | PASS | deliberate | Which space on Floor 3 has the best conditions for focused work this a |  |
 | PASS | workspace | I have an online interview next week. Which bookable room and time giv |  |
+| PASS | readiness | Is Room 1.06 ready for my class? |  |
+| PASS | readiness | Is Room 3.13 ready for my seminar? |  |

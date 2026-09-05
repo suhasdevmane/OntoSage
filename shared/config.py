@@ -347,6 +347,24 @@ class Settings(BaseSettings):
         default=60,
         description="How often AlertMonitor polls sensor data for threshold breaches.",
     )
+    READINESS_LEAD_MINUTES: int = Field(
+        default=30,
+        description=(
+            "How far ahead of a timetabled session a readiness check is compiled and "
+            "dispatched. Lecturers asked for 30 minutes; a building whose rooms take "
+            "longer to put right sets its own."
+        ),
+    )
+    READINESS_CHECK_INTERVAL_SECS: int = Field(
+        default=0,
+        description=(
+            "How often the scheduler looks for sessions entering the lead window and "
+            "dispatches a readiness check to the configured notification channels. 0 "
+            "disables the schedule entirely — the check remains available on demand, "
+            "so a building that does not want unsolicited messages loses nothing but "
+            "the timing."
+        ),
+    )
     ANOMALY_SCAN_INTERVAL_SECS: int = Field(
         default=3600,
         description=(

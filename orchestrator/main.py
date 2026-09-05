@@ -912,6 +912,96 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("[anomaly-scan] ANOMALY_SCAN_INTERVAL_SECS=0 — scanner idle")
 
+    # Pre-session readiness checks, dispatched ahead of each timetabled session.
+    #
+    # OFF BY DEFAULT. A building that has not asked for unsolicited messages must not start
+    # receiving them because it upgraded, and the check remains available on demand either
+    # way — the schedule adds the timing, not the capability.
+    #
+    # ONCE PER SESSION, not once per sweep. The loop remembers what it has already sent, so
+    # a five-minute interval against a thirty-minute lead sends one message rather than six.
+    # An alert that repeats is an alert people learn to ignore, which costs more than the
+    # one it was trying to deliver.
+    if settings.READINESS_CHECK_INTERVAL_SECS > 0:
+        try:
+
+            async def _readiness_loop() -> None:
+                await asyncio.sleep(180)  # let GraphDB warm up, as the scanner does
+                from orchestrator.agents.sparql_agent import _active_namespace
+                from orchestrator.services.deliberation.live import sparql_exec
+                from orchestrator.services.notification_service import (
+                    get_notification_service,
+                )
+                from orchestrator.services.readiness_check import (
+                    compose,
+                    render,
+                    upcoming_sessions,
+                )
+
+                async def _run(query: str, limit: int = 200):
+                    return await sparql_exec(query)
+
+                sent: set = set()
+                while True:
+                    try:
+                        lead = settings.READINESS_LEAD_MINUTES
+                        sessions = await upcoming_sessions(
+                            _active_namespace(), _run, lead_minutes=lead
+                        )
+                        for session in sessions:
+                            key = f"{session['ref']}@{session['starts_at']}"
+                            if key in sent:
+                                continue
+                            check = await compose(
+                                session["room"],
+                                _active_namespace(),
+                                _run,
+                                module=session["module"],
+                                starts_at=session["starts_at"],
+                                session_ref=session["ref"],
+                                lead_minutes=lead,
+                            )
+                            await get_notification_service(settings.BUILDING_ID).dispatch(
+                                title=f"Readiness check — {check.room} ({check.verdict})",
+                                message=render(check),
+                                severity="warning" if check.blockers else "info",
+                                source="readiness_check",
+                                extra={
+                                    "session_ref": session["ref"],
+                                    "starts_at": session["starts_at"],
+                                    "verdict": check.verdict,
+                                },
+                            )
+                            sent.add(key)
+                            logger.info(
+                                f"[readiness] dispatched for {check.room} "
+                                f"({check.verdict}) ahead of {session['starts_at']}"
+                            )
+                        # Keys are only useful until their session has started; dropping
+                        # yesterday's keeps this from growing for the life of the process.
+                        if len(sent) > 500:
+                            sent.clear()
+                    except Exception as _rc_err:
+                        logger.warning(
+                            f"[readiness] sweep failed (will retry): "
+                            f"{describe_exception(_rc_err)}",
+                            exc_info=True,
+                        )
+                    await asyncio.sleep(settings.READINESS_CHECK_INTERVAL_SECS)
+
+            app.state.readiness_task = asyncio.create_task(_readiness_loop())
+            logger.info(
+                f"[readiness] scheduled every {settings.READINESS_CHECK_INTERVAL_SECS}s, "
+                f"{settings.READINESS_LEAD_MINUTES} min before each session"
+            )
+        except Exception as _rc_sched_err:
+            logger.warning(f"[readiness] failed to schedule (non-fatal): {_rc_sched_err}")
+    else:
+        logger.info(
+            "[readiness] READINESS_CHECK_INTERVAL_SECS=0 — no scheduled dispatch; "
+            "the check is still available on demand"
+        )
+
     # B.6: Initialize multi-building manager — discovers and loads all building configs
     try:
         building_manager = get_building_manager(

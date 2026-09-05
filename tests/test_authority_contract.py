@@ -247,15 +247,26 @@ def test_no_regex_source_contains_a_control_character():
     """
     from pathlib import Path as _P
 
-    roots = [_P("orchestrator/services/evidence"), _P("orchestrator/services")]
+    # SIX TIMES NOW. The sixth was `_READINESS_RE` in routing_contract.py, which this test
+    # WOULD have caught -- but only on the next full suite run, after the routing had been
+    # deployed and debugged live for twenty minutes. It scanned two directories with a
+    # NON-RECURSIVE glob, so agents/, workflow/ and scripts/ were never covered, and those
+    # are edited exactly the same way.
+    #
+    # Recursive now, across every tree that holds a pattern. The cost is milliseconds, and
+    # the alternative is finding the next one by watching a lane answer nothing.
+    roots = [_P("orchestrator"), _P("shared"), _P("scripts")]
+    control_chars = (chr(8), chr(11), chr(12), chr(7))
     checked = 0
     for root in roots:
-        for f in root.glob("*.py"):
-            text = f.read_text(encoding="utf-8")
+        if not root.exists():
+            continue
+        for f in root.rglob("*.py"):
+            text = f.read_text(encoding="utf-8", errors="replace")
             checked += 1
-            for ch in ("", "", "", ""):
+            for ch in control_chars:
                 assert ch not in text, (
-                    f"{f} contains {ch!r} — almost certainly a backslash escape collapsed by a "
-                    "heredoc; the pattern will compile and never match"
+                    f"{f} contains {ch!r} -- almost certainly a backslash escape collapsed by "
+                    "a heredoc; the pattern will compile and never match"
                 )
-    assert checked > 20, f"only {checked} files scanned; the glob is wrong"
+    assert checked > 100, f"only {checked} files scanned; the glob is wrong"

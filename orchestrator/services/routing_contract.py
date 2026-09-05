@@ -1564,6 +1564,47 @@ def _r_instrument_metrology(c: _Ctx) -> Optional[str]:
     return "metadata" if _METROLOGY_RE.search(c.query or "") else None
 
 
+#: "Is this room ready for what is about to happen in it?"
+#:
+#: Distinct from every register that holds part of the answer. The AV register knows the
+#: technology, the workspace register the network, the timetable when the session is — and a
+#: question routed to any ONE of them gets that third of the answer with no date on it. The
+#: readiness lane joins them and puts a source and a timestamp on every line.
+#:
+#: Deliberately narrow. "Is the projector working?" is an AV register question and stays
+#: one; this fires on the shape that means *before something happens here*.
+_READINESS_RE = re.compile(
+    r"\breadiness\s+check"
+    r"|\bready\s+for\s+(?:my|the|a|this|our)\b"
+    r"|\b(?:before|ahead\s+of)\s+(?:my|the|our|each)\s+"
+    r"(?:class|lecture|seminar|session|lesson|teaching|meeting)\b"
+    r"|\bis\s+\S+\s+set\s+up\s+for\b"
+    r"|\bwhat\s+should\s+i\s+know\s+before\s+(?:teaching|using|the)\b",
+    re.IGNORECASE,
+)
+
+#: Lanes a readiness question may be taken from. A register route is included on purpose:
+#: the AV register legitimately matches "ready", answers a third of the question and dates
+#: none of it, and that partial answer is what this lane exists to replace.
+_READINESS_TAKES_FROM = (
+    "metadata",
+    "capability",
+    "sensor_data",
+    "asset_state",
+    "observability",
+    "general",
+    "general_knowledge",
+    "",
+)
+
+
+def _r_readiness_check(c: _Ctx) -> Optional[str]:
+    """A question about a space before it is used -> the readiness lane."""
+    if c.intent not in _READINESS_TAKES_FROM:
+        return None
+    return "readiness_check" if _READINESS_RE.search(c.query or "") else None
+
+
 PARSE_STAGE_RULES: Tuple[Rule, ...] = (
     Rule(
         "answer_provenance",
@@ -1748,6 +1789,11 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "instrument_metrology",
         "calibration / reporting-interval questions describe the INSTRUMENT → metadata",
         _r_instrument_metrology,
+    ),
+    Rule(
+        "readiness_check",
+        "is this space ready for what happens next -> the readiness lane, dated per line",
+        _r_readiness_check,
     ),
 )
 

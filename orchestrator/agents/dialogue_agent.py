@@ -763,6 +763,7 @@ class DialogueAgent:
         from orchestrator.services.routing_contract import EVENTS_RE as _EVENTS_RE
         from orchestrator.services.routing_contract import WAYFIND_RE as _WAYFIND_RE
         from orchestrator.services.routing_contract import _METROLOGY_RE
+        from orchestrator.services.routing_contract import _READINESS_RE
         from orchestrator.services.routing_contract import (
             consumption_question as _consumption_question,
         )
@@ -798,7 +799,19 @@ class DialogueAgent:
         except Exception as _rr_err:  # pragma: no cover - never block routing on this
             logger.debug(f"[ttl-route] record registry unavailable: {_rr_err}")
 
-        if _held_record and not _SR.is_report_intake_query(user_query):
+        # A readiness question is not a register question, even though a register
+        # matches it. "Is Room 1.06 ready for my class?" hits AVReadiness on "ready",
+        # and that register holds the technology, dates nothing in the answer, and
+        # knows nothing about the network or the session. This override fires before
+        # the routing contract, so the contract's readiness rule never gets a turn
+        # unless the question is let through here first.
+        from orchestrator.services.routing_contract import _READINESS_RE
+
+        if (
+            _held_record
+            and not _SR.is_report_intake_query(user_query)
+            and not _READINESS_RE.search(user_query or "")
+        ):
             # The building holds this class as DATA, so the question is answerable by
             # SPARQL and must not be handed to a lane that can only quote prose. A
             # statement ("the permit expired") is still a report and keeps its intake
@@ -845,6 +858,11 @@ class DialogueAgent:
             # while a single SPARQL count returns 194. The parse-stage rule that owns this
             # shape never gets a turn, because this decides first.
             and not _METROLOGY_RE.search(user_query)
+            # A readiness question is answered by joining four sources with a date on
+            # each. The document probe matches it on the AV register and returns that
+            # register's prose - a third of the answer, undated - before anything else
+            # gets a turn.
+            and not _READINESS_RE.search(user_query)
             # V6-T24: event-store questions had no bypass either. "How many work
             # orders are open?" matched the building-hours document on "open" and was
             # answered from prose before the LLM classified anything -- the routing
