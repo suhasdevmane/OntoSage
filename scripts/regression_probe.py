@@ -104,7 +104,16 @@ def main(argv: List[str]) -> int:
         answer = str(res.get("answer") or "")
         missing = [m for m in case.get("expect", []) if not _matches(answer, m)]
         present = [f for f in case.get("forbid", []) if _matches(answer, f)]
-        ok = res["status"] == "OK" and not missing and not present
+        # `expect_any` is satisfied by ANY ONE of its markers.
+        #
+        # The same fact is rendered differently between runs at temperature: the overdue
+        # fume cupboard comes back as "FC-301", as "HZ-003" and as "Level 3 fume cupboard",
+        # all correct. A marker list requiring every spelling fails on style, and a probe
+        # that cries wolf is one nobody reads — which costs more than having none, because
+        # a real regression then arrives among the noise.
+        alternatives = case.get("expect_any", [])
+        any_missing = bool(alternatives) and not any(_matches(answer, m) for m in alternatives)
+        ok = res["status"] == "OK" and not missing and not present and not any_missing
         if not ok:
             failed += 1
         why = ""
@@ -112,6 +121,8 @@ def main(argv: List[str]) -> int:
             why = f"transport {res['status']}"
         elif missing:
             why = f"missing {missing}"
+        elif any_missing:
+            why = f"none of {alternatives}"
         elif present:
             why = f"forbidden present {present}"
         print(

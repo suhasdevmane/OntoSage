@@ -100,6 +100,16 @@ columns:
     predicate: ontosage:quietestPeriod
     datatype: xsd:string
     required: true
+  setup_minutes:
+    # Separate from travel: they are paid by different people at different moments, and a
+    # transition that fits the travel can still fail on the setup.
+    predicate: ontosage:setupMinutes
+    datatype: xsd:decimal
+  recovery_minutes:
+    # How long after a full session the conditions return to normal. Makes "did the
+    # previous class leave too little recovery time?" a calculation against the timetable.
+    predicate: ontosage:recoveryMinutes
+    datatype: xsd:decimal
   vertical_route:
     predicate: ontosage:nearestVerticalRoute
     datatype: xsd:string

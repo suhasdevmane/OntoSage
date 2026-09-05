@@ -1,6 +1,6 @@
 # Regression probe — answers this system has already been proved to give
 
-Model: `local/gpt-oss:20b` · 25 cases · **24 pass, 1 fail**
+Model: `local/gpt-oss:20b` · 28 cases · **28 pass, 0 fail**
 
 Each case asserts a FACT the registers hold — a figure, a record id, a department code — not a phrasing, so a reworded answer passes and a wrong figure fails.
 
@@ -23,7 +23,7 @@ Each case asserts a FACT the registers hold — a figure, a record id, a departm
 | PASS | operations | Which HVAC systems run outside normal hours, and is each exception app |  |
 | PASS | operations | Which permits are open? |  |
 | PASS | timetable | Which teaching sessions are scheduled in Room 1.06? |  |
-| **FAIL** | metrology | When was the CO2 sensor in Room 5.01 last calibrated? | transport TIMEOUT |
+| PASS | metrology | When was the CO2 sensor in Room 5.01 last calibrated? |  |
 | PASS | metrology | How often does a CO2 sensor report? |  |
 | PASS | metrology | How many sensors are overdue for calibration? |  |
 | PASS | counts | How many CO2 sensors are there? |  |
@@ -31,14 +31,6 @@ Each case asserts a FACT the registers hold — a figure, a record id, a departm
 | PASS | stakeholders | Which stakeholder groups does DEP-13 serve? |  |
 | PASS | honesty | What is the temperature in Room 9.99? |  |
 | PASS | honesty | How warm is the swimming pool? |  |
-
-## What came back instead
-
-### When was the CO2 sensor in Room 5.01 last calibrated?
-
-- **why:** transport TIMEOUT · **intent:** ``
-
-```
-
-```
-
+| PASS | circulation | How long does it take to get from Level 1 to Level 5? |  |
+| PASS | circulation | On which floor pairs is the step-free route slower than the stairs? |  |
+| PASS | workspace | How long do the Level 1 computer laboratories take to recover after a  |  |
