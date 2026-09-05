@@ -2578,6 +2578,8 @@ ontosage:WorkspaceProfile ontosage:layTerms "study space", "study spaces", "some
     "somewhere quiet", "breakout space", "common room", "hot desk",
     "recovery time", "recovery minutes", "setup time", "setup minutes",
     "how long to recover", "time to recover", "recover after", "to recover",
+    "bookable room", "bookable rooms", "bookable space", "bookable spaces",
+    "quiet room", "room for a call", "somewhere to take a call",
     "recovery", "room readiness" .
 
 
