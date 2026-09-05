@@ -222,6 +222,14 @@ tests/                              # 981 deterministic tests, 8 skipped; see §
 > the narrow table in `input/database_registry.yaml`, and load readings keyed by UUID — one command:
 > `scripts/onboard_data_source.py`. Full guide: [docs/ADDING_A_DATA_SOURCE.md](docs/ADDING_A_DATA_SOURCE.md).
 
+> **Not everything a building knows is a reading.** Cleaning rotas, permits, incidents,
+> department contacts, timetabled sessions and asset commissioning data are DOCUMENTS, and a
+> document can only be quoted. A **record document** is a Markdown file with a typed table that
+> OntoSage lifts into RDF, so the same content is counted, filtered and joined by SPARQL. A
+> register is three files and no code: a mapping, the document, and a class in Module R of the
+> schema. bldg1 holds 34 register classes and 1,424 records this way. Full guide:
+> [docs/RECORD_DOCUMENTS.md](docs/RECORD_DOCUMENTS.md).
+
 ### 2.4 LLM / embedding provider
 
 `shared/config.py` is the single switch via `MODEL_PROVIDER`:

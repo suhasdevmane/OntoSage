@@ -1,0 +1,947 @@
+qid,role,question,before,after,intent,answer
+AO-004,Academic office occupants,"I will be in Abacws from 10:00 to 15:00. Can you fit in focused work, one meeting and preparation time with realistic walking and setup buffers?",honest_decline,computed,capability,"Yes – you can fit a meeting, focused work and preparation within 10:00‑15:00, with walking/setup buffers.
+
+**Proposed timetable**
+
+| Time | Activity | Room (from register) | Notes |
+|------|----------|----------------------|-------|
+| 10:00‑10:30 | Meeting | WS‑10 – *Room 2.13 – Meeting Room* | “Mon‑Fri 08:00‑18:00 | Weekday 09:00‑12:00” – available |
+| 10:30‑11:00 | Walking / setup buffer | – | – |
+| 11:00‑13:00 | Focused work | WS‑13 – *Room 3.05 – Computer Laboratory* | “Open when not timetabled | Mon‑Fri 08:00‑20:00 | Teaching weeks 11:00‑15:00” – available |
+| 13:00‑13:30 | Walking / setup buffer | – | – |
+| 13:30‑14:15 | Preparation | WS‑13 or WS‑14 – *Room 3.06 – Computer Laboratory* | “Open when not timetabled | Mon‑Fri 08:00‑20:00 | Teaching weeks 11:00‑15:00” – available; weak wireless at far end, wired sockets reliable |
+| 14:15‑15:15 | Barriers discussion (scheduled event) | Room 1.04 – Common Area / Atrium | “ACT‑0052‑2 | EVT‑2026‑0052 | Barriers discussion | 2 | 14:15 | 60” – you must finish preparation before this |
+
+All rooms used are free of scheduled events during the proposed times, and the walking/setup buffers give realistic time to move between spaces and set up equipment.
+
+---
+*From Abacws Building's documents: Event Activity Register, Workspace Profile Register. For the current version, contact facility management.*"
+AO-010,Academic office occupants,"This office is unusually distracting today. What room-level conditions differ from normal, and which authorised alternative is genuinely usable?",honest_decline,computed,metadata,"**Room‑level conditions that are different from the usual “normal” state**
+
+| Room / Area | Current condition (as recorded) |
+|-------------|---------------------------------|
+| **Room 1.04 Atrium** – public event use | *Maximum 120 standing; egress route must remain clear* |
+| **Level 2 research laboratories** – permission group | *Requires COSHH sign‑off in addition to the grant* |
+| **Comms room** – IT escort requirement | *Escort must be rostered; night cover is not currently provided* |
+| **Roof plant enclosure** – work‑at‑height method | *Permit to work required for every access* |
+| **Room 1.06 Computer Laboratory** – Teaching AV standard | *Room 1.06 hearing loop untested since installation* |
+| **Room 3.06 Research Laboratory** – COSHH procedure (pending) | *Under review; no entry authorised until a decision is recorded* |
+
+> **Total:** 6 room‑level conditions that deviate from the usual state.
+
+---
+
+### Authorised alternative that is genuinely usable
+
+The only route that has an authorised alternative still in place is the **assisted alternative for the “Reception → Level 2 laboratories” route (RTE‑006)**.  
+The approval record states:
+
+> *“Heavy manual fire door at the Level 2 lobby; assisted alternative must be published alongside.”*
+
+This alternative is the only one that is both authorised and currently usable. All other route approvals (RTE‑015, RTE‑016) are either refused or withdrawn, and no other room‑level condition has a published alternative.
+
+---
+
+**Quick recap**
+
+- 6 rooms/areas have conditions that differ from normal.
+- The only usable alternative route is the assisted route for RTE‑006 (Reception → Level 2 laboratories).
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+AO-012,Academic office occupants,The office feels stuffy even though CO2 is not high. Which other measured conditions could plausibly explain the feeling?,honest_decline,honest,diagnosis,"I understood the question but could not put an answer together for it.
+
+- I read it as a **diagnosis** question.
+- The diagnosis lane ran, but returned nothing to report.
+
+That is a gap on my side, not a statement that the building has no such data. Rephrasing with a specific room, floor or date range often reaches a lane that can answer — or ask *""what can you tell me about this building?""* to see what is connected."
+AC-002,Access-control administrators,"For this role or department transfer, which entitlements are justified to add, retain, remove-candidate or refer to an owner?",honest_decline,computed,metadata,"**Entitlements for a role/department transfer – what to add, keep, drop or hand back to the owner**
+
+| Category | Entitlement (label) | Location / Opening | Who it’s for | Status | Notes |
+|----------|---------------------|--------------------|--------------|--------|-------|
+| **Add / Retain** | **APG‑001** – Building core access | Main Entrance | All staff & students | Active | Base grant – keep for everyone. |
+| | **APG‑002** – Building extended access | Main Entrance | Academic staff | Active | Requires line‑manager approval. |
+| | **APG‑003** – Level 1 teaching spaces | Floor 1 Entrance | Teaching staff | Active | |
+| | **APG‑004** – Level 2 research labs | Floor 2 Entrance | Research staff | Active | Lab‑manager + COSHH sign‑off. |
+| | **APG‑005** – Level 3 research labs | Floor 3 Entrance | Research staff | Active | Lab‑manager + COSHH sign‑off. |
+| | **APG‑006** – Level 4 research labs | Floor 4 Entrance | Research staff | Active | Lab‑manager + COSHH sign‑off. |
+| | **APG‑007** – Level 5 academic offices | Floor 5 Entrance | Academic staff | Active | Line‑manager approval. |
+| | **APG‑008** – Mechanical plant room | Room 0.04 | Estates maintenance | Active | Permit‑to‑work required. |
+| | **APG‑009** – Security patrol | All controlled openings | Security officers | Active | Head of Security approval. |
+| | **APG‑010** – Cleaning & caretaking round | All floor entrances | Caretaking & cleaning | Active | Soft‑services supervisor approval. |
+| | **APG‑011** – External maintenance contractor – lifts | Main Entrance | External contractor | Active (08‑01 → 12‑31) | Escort & duty‑manager approval. |
+| | **APG‑012** – Visitor & event access | Main Entrance | Registered visitor | Active (from 09‑01) | Event‑registration approval. |
+| | **APG‑014** – Sponsored project collaborator | Floor 3 Entrance | Sponsored collaborator | Active (07‑01 → 06‑30) | Sponsor + purpose statement. |
+| | **APG‑015** – Out‑of‑hours study access | Floor 1 Entrance | Postgraduate researcher | Active | School‑office approval. |
+| | **APG‑016** – Roof plant access | Roof hatch | Estates maintenance | Active | Permit‑to‑work & height‑sign‑off. |
+| | **APG‑017** – Waste compound | Waste gate | Caretaking & cleaning | Active | Soft‑services supervisor approval. |
+| | **APG‑018** – Server & comms room | Room 0.07 | IT infrastructure | Active | IT‑manager approval. |
+| **Remove‑Candidate** | **APG‑019** – Decommissioned (old contractor) | Floor 4 Entrance | External contractor | Withdrawn (ended 08‑31) | Drop. |
+| | **APG‑020** – Suspended pending review | Room 3.06 | Research staff | Suspended (review → 09‑09) | Drop until review completes. |
+| **Exception / One‑off** | **APG‑013** – Instrument recalibration | Room 2.01 | External contractor | Exception (09‑02 → 09‑08) | Will expire; keep only until 09‑08. |
+| **Refer to Owner** | **APG‑002** – Line‑manager approval. | | | |
+| | **APG‑004, 005, 006** – Lab‑manager + COSHH sign‑off. | | | |
+| | **APG‑007** – Line‑manager approval. | | | |
+| | **APG‑008** – Permit‑to‑work. | | | |
+| | **APG‑009** – Head of Security. | | | |
+| | **APG‑010** – Soft‑services supervisor. | | | |
+| | **APG‑011** – Escort + duty‑manager. | | | |
+| | **APG‑012** – Event registration. | | | |
+| | **APG‑013** – Lab‑manager single approval. | | | |
+| | **APG‑014** – Sponsor + purpose statement. | | | |
+| | **APG‑015** – School‑office. | | | |
+| | **APG‑016** – Permit‑to‑work & height‑sign‑off. | | | |
+| | **APG‑017** – Soft‑services supervisor. | | | |
+| | **APG‑018** – IT‑manager. | | | |
+
+### Quick take‑away
+- **17 entitlements** are currently active and should be **added or retained** for the new role/department.  
+- **2 entitlements** (APG‑019, APG‑020) are **withdrawn or suspended** – they should be **removed**.  
+- **1 entitlement** (APG‑013) is a short‑term exception – keep it only until 2026‑09‑08.  
+- **All other active entitlements** require **owner approval** (line manager, lab manager, security head, etc.) – they should be **referenced to the appropriate owner** for final grant.
+
+Let me know if you’d like a deeper dive into any specific group or if you need the approval workflow details for a particular entitlement.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+AI-006,"Accessibility, inclusion, and well-being teams","Which route options avoid only the conditions the person has chosen to state, without turning preferences into a disability profile?",quoted,quoted,capability,"Here is what I found for **Abacws Building**:
+
+
+**Accessibility**. The building is fully accessible: (1) Step-free access at the main entrance and all secondary entrances; (2) Passenger lifts on the main atrium serve all floors; (3) Accessible toilets on every floor; (4) Hearing induction loops at reception and main lecture spaces; (5) Accessible parking bays on Senghennydd Road (blue badge required); (6) Refuge areas at each stairwell landing for evacuation assistance. For disability-related queries, contact the Disability and Dyslexia Service (disability@cardiff.ac.uk).
+
+
+*Answered live from the building ontology (triples).*"
+AD-001,Architects and building designers,"Which brief items can we freeze now, which remain measurable targets, and which assumptions need a named client decision before the next stage gate?",honest_decline,computed,capability,"Freeze now:  
+- SUS‑ENERGY‑2027 (status On track)  
+- SUS‑WATER‑2028 (status On track)  
+- SUS‑WASTE‑2027 (status On track)
+
+Remain measurable targets:  
+- SUS‑CARBON‑2030 (status At risk)  
+- SUS‑GAS‑2026 (status At risk)
+
+Assumptions needing a named client decision:  
+- Any cost line flagged with `coding_check` – none are shown in the supplied register.
+
+---
+*From Abacws Building's documents: Cost Line Register, Sustainability Targets. For the current version, contact facility management.*
+
+**Boundary: not declared.** I can't say what this figure covers — the meter behind it has no `ontosage:meterServes` in the ontology. Declaring the meter's boundary and allocation method would let every energy answer state it."
+AU-002,Auditors and certification assessors,"Which standard or scheme edition, amendments, transition provisions and clause set apply to each in-scope requirement on its effective date?",honest_decline,honest,capability,"**Abacws Building's documents do not answer this.** I searched Approval Evidence Register, Contract Register, Sustainability Targets; they are the closest material and none of them contains the answer.
+
+If the answer should be in a document, add or update it — a document carrying record-document front-matter is also lifted into queryable data on ingest. Otherwise the owner of that record holds it."
+SU-004,"Energy, carbon, and sustainability teams","Which utility or end-use profiles show a persistent step change, drift or repeating anomaly that merits a meter, controls or asset check?",honest_decline,computed,capability,"Air Handling Unit - Floor 0 (AEP-001), Air Handling Unit - Floor 1 (AEP-002)
+
+---
+*From Abacws Building's documents: Asset Engineering Register, Maintenance Log. For the current version, contact facility management.*"
+SU-006,"Energy, carbon, and sustainability teams","After weather and service-hours adjustment, is gas or delivered heat changing materially, and which plant or control hypothesis should be tested first?",quoted,quoted,capability,"Here is what I found for **Abacws Building**:
+
+
+**Smart Controls**. Building systems currently running in automated mode: (1) HVAC — zone-based climate control with automatic setpoint adjustment based on occupancy schedules and sensor feedback; (2) Lighting — presence-detection and daylight harvesting across all open-plan areas, switching off automatically when unoccupied; (3) Ventilation — CO2-driven demand-controlled ventilation adjusts fresh air supply automatically; (4) Security — access control, CCTV, and door locks operate on automated schedules. The building uses a BMS (Building Management System) for centralised monitoring and control. Occupants cannot directly adjust automated settings; facility management staff control setpoints via the BMS. For lighting or HVAC control requests, contact facility management (estates@cardiff.ac.uk).
+
+**Working Hours**. Standard building hours: Monday–Friday 07:00–22:00; Saturday–Sunday 08:00–18:00. The building may open earlier or close later during exam periods. Out-of-hours access (after standard hours) is available to authorised staff and registered postgraduate students with appropriate card access. The building is generally closed on bank holidays except for security-monitored access. Check the Cardiff University website for holiday opening schedules.
+
+
+From the full policy document (**hvac_operation.md**):
+
+--- record_type: operating_regime owner: ""M and E Maintenance Supervisor"" authority: ""Cardiff University Estates - Building Management System"" source_system: ""Operating Regime Register"" effective_from: 2026-09-01 version: ""2026.9"" review_due: 2027-03-01 simulated: true tables: - name: ""Operating regime register"" maps_to: operating_regimes --- # Operating Regime Register - Abacws Building _**Synthetic demonstration record** - fictional setpoints, not a live BMS export._ ## What this makes answerable > *""Which HVAC assets operate beyond approved service windows, and is each exception > justified by safety, frost protection or specialist requirement?""* That question cannot be answered by a reading. A reading says what **is**. This register says what is **supposed to be**, and only the pair together turns a deviation into a fault. **`approved_exception` is the load-bearing column.** Without it every legitimate deviation reads as a fault - the Level 2 laboratories running 24/7, the server room with no night setback, the chilled water system enabled outside the cooling season. That is exactly how an alarm list becomes noise and then gets ignored. Two rows record a limit on their own verifiability rather than hiding it: REG-004 is under review because the unit serving it delivers 78% of its commissioned duty, and REG-006 cannot be verified at all because no flow measurement is fitted to that AHU. ## Operating regime register | code | system | scope | occupied_setpoint | unoccupied_setpoint | operating_window | seasonal_changeover | approved_exception | owner | status | note | |---|---|---|---|---|---|---|---|---|---|---| | REG-001 | AHU Floor 0 supply air | Ground floor teaching and reception | 21 degC +/- 1.5, CO2 below 1000 ppm | 16 degC frost protection only | Mon-Fri 07:00-19:00 | Heating 01 Oct to 30 Apr; cooling 01 May to 30 Sep | Runs to 22:00 on published open days | BMS-HVAC operators | Active | | | REG-002 | AHU Floor 1 supply air | Level 1 computer laboratories and atrium | 21 degC +/- 1.5, CO2 below 1000 ppm | 16 degC frost protection only | Mon-Fri 07:00-20:00 | Heating 01 Oct to 30 Apr; cooling 01 May to 30 Sep | Extended to 22:00 during assessment weeks, approved by the School | BMS-HVAC operators | Active | Longer window than other floors because the labs are open until 20:00 | | REG-003 | AHU Floor 2 supply air | Level 2 research laboratories | 21 degC +/- 1.0, CO2 below 900 ppm | 18 degC continuous |
+
+
+*Answered live from the building ontology (triples) + document hvac_operation.md.*"
+MC-001,External maintenance contractors,"Is the visit ready to mobilise, and what must our crew resolve or bring before travelling?",honest_decline,honest,capability,"**Abacws Building's documents do not answer this.** I searched Accessible Route Register; they are the closest material and none of them contains the answer.
+
+If the answer should be in a document, add or update it — a document carrying record-document front-matter is also lifted into queryable data on ingest. Otherwise the owner of that record holds it."
+FM-002,Facilities managers,"Do complaints from these rooms point to one shared plant item, utility branch or control path?",quoted,computed,metadata,"**Short answer:**  
+Yes – three of the 24 asset records contain complaints that all refer to the same shared plant item, utility branch or control path:
+
+| Shared asset | Location / zone | Why it’s shared | Comment summary |
+|--------------|-----------------|-----------------|-----------------|
+| **Chiller 1 – Building Central Cooling Plant** | Roof enclosure (plant roof) | It supplies chilled water to every AHU in the building – a single point of failure for the whole cooling system | “Single chiller with no N+1. Its failure stops cooling to the whole building, which is why it is the only asset marked irreplaceable.” |
+| **Main passenger lift** | Main lift core (ground floor) | The lift is the sole step‑free route between all levels – its failure blocks every accessible route in the building | “The ONLY step‑free route between levels. Its failure closes every accessible route in the accessible route register.” |
+| **Building‑level electrical meter** | Service room (level 0) | All electricity consumption data for the building is read from this single meter – a failure would erase all metering data | “The building's only fiscal electricity meter, so every consumption answer traces to this one instrument.” |
+
+---
+
+### What this means for you
+
+- **Three shared points of failure** out of 24 records (≈ 12 % of the assets).  
+- If any of these three assets fail, the impact is *system‑wide* rather than isolated to a single room or floor.  
+- The comments highlight that these assets are already flagged as critical or irreplaceable, so they should be prioritized for preventive maintenance, redundancy planning, or contingency procedures.
+
+### Next steps you might consider
+
+1. **Verify redundancy** – e.g., is there a backup chiller or secondary lift?  
+2. **Schedule a full functional test** – especially for the chiller (N+1) and lift (step‑free access).  
+3. **Review metering accuracy** – ensure the electrical meter’s calibration and isolation are up to date.
+
+Let me know if you’d like a deeper dive into any of these assets, or if you need help planning a maintenance or contingency strategy.
+
+**Boundary: not declared.** I can't say what this figure covers — the meter behind it has no `ontosage:meterServes` in the ontology. Declaring the meter's boundary and allocation method would let every energy answer state it.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+FM-004,Facilities managers,Has this repaired asset returned to the same abnormal pattern under comparable demand?,honest_decline,failed,,
+FM-007,Facilities managers,"Is this problem confined to one room, one served zone or a wider building service?",honest_decline,failed,,
+FS-008,Fire-safety personnel,"Which protected riser, shaft or service-cupboard doors need action because they are open, unsecured, defective or affected by current work?",quoted,failed,,
+IT-008,"IT, network, and server-infrastructure teams","Which hosts, virtual machines, containers, clusters or managed platforms currently deliver each building-related digital service?",honest_decline,honest,capability,"**Abacws Building's documents do not answer this.** I searched Stakeholder Group Register; they are the closest material and none of them contains the answer.
+
+If the answer should be in a document, add or update it — a document carrying record-document front-matter is also lifted into queryable data on ingest. Otherwise the owner of that record holds it."
+IR-004,Insurers and risk assessors,"Where are high-value, irreplaceable or continuity-critical assets concentrated, and which single peril zone or shared dependency could affect several together?",honest_decline,computed,metadata,"**High‑value, irreplaceable or continuity‑critical assets – where they sit and what could bring them all down**
+
+| Location / Zone | Key assets (high‑value / irreplaceable / continuity‑critical) | Shared dependency / single peril that could affect several |
+|-----------------|--------------------------------------------------------------|-----------------------------------------------------------|
+| **Roof (Cooling plant enclosure)** | • **Chiller 1** – 620 kW, *irreplaceable*, continuity‑critical, 250 k–1 M value<br>• **Cooling Tower 1** – 740 kW, continuity‑critical, 100 k–250 k value | The **chilled‑water circuit** (Chiller 1 → Chiller Pump 1 → all AHUs) is the single dependency that, if it fails, stops cooling for the entire building. |
+| **Mechanical Plant Room – Floor 0** | • **AHU‑00** – high‑value (100 k–250 k), continuity‑critical<br>• **Chiller Pump 1** – continuity‑critical, 10 k–100 k value<br>• **Main Passenger Lift** – *irreplaceable*, continuity‑critical, 100 k–250 k value<br>• **Emergency Diesel Generator** – continuity‑critical, 100 k–250 k value<br>• **Fire Alarm Control Panel** – continuity‑critical, 10 k–100 k value | The **HV/LV panel CP‑1** (main power distribution) feeds all of these. A fault here would knock out the lift, generator, fire‑alarm, and the chilled‑water pump, cascading to the AHUs. |
+| **Mechanical Plant Rooms – Floors 1‑5** | • **AHU‑01 to AHU‑05** – continuity‑critical (except AHU‑05 is medium)<br>• **Cooling Tower 1** (roof) also supplies chilled water to these AHUs | The same chilled‑water circuit links every AHU to Chiller 1. A failure in the pump or the chiller stops all AHUs on all floors. |
+| **Other critical points** | • **Electrical Breaker Panels (Floors 0‑5)** – high‑value, continuity‑critical (each 10 k–100 k)<br>• **Building‑Level Water Meter** – medium, but a failure would stop data for the whole building | The **main water main** (incoming stop valve SV‑1) is the shared dependency for all water‑meter readings. |
+
+### Summary
+
+* **Total high‑value / irreplaceable / continuity‑critical assets:** 9  
+  * 2 irreplaceable (Chiller 1, Main Passenger Lift)  
+  * 7 continuity‑critical (AHUs, pumps, generator, fire‑alarm, etc.)  
+* **Concentration:**  
+  * **Roof** – two high‑value assets (Chiller 1 & Cooling Tower 1).  
+  * **Floor 0 plant room** – a cluster of continuity‑critical assets that all rely on the same power panel.  
+  * **Floors 1‑5 plant rooms** – all AHUs tied to the same chilled‑water source.  
+* **Single peril / shared dependency that could affect several together:**  
+  * The **chilled‑water circuit** (Chiller 1 → Chiller Pump 1 → all AHUs) is the most critical shared dependency; a failure here would shut down cooling for the entire building.  
+  * The **HV/LV panel CP‑1** is another single point that, if lost, would knock out the lift, generator, fire‑alarm, and the chilled‑water pump, cascading to the AHUs.
+
+If you’d like a deeper dive into any particular zone or asset, just let me know!
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+IR-007,Insurers and risk assessors,"What temporary exposure is created by active construction, refurbishment, commissioning, relocation or intrusive maintenance, and during which zones and time windows?",honest_decline,computed,metadata,"**Answer**
+
+None of the 24 Asset Engineering Profile records in the register indicate a *temporary exposure* that is created by active construction, refurbishment, commissioning, relocation or intrusive maintenance.  
+All records are either **active** or **degraded**, but none of them list a temporary exposure, a zone, or a time window associated with such an activity.
+
+**What this means for you**
+
+- **No temporary exposure is currently recorded** for any of the assets.  
+- Consequently, there are **no zones or time windows** to report for these activities in the current data set.  
+- If you need to track temporary exposures, you can add a field to the asset register and populate it with the relevant zone and time‑window information.
+
+Let me know if you’d like help setting that up or if you have any other questions!
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+IR-009,Insurers and risk assessors,"Which rarely visited roofs, basements, risers, stores and plant areas have the longest blind intervals for developing loss conditions?",failed,computed,metadata,"**Longest blind‑interval assets in rarely‑visited roofs, basements, risers, stores and plant areas**
+
+| Asset (local URI) | Location | Blind interval (days) | Why it matters |
+|-------------------|----------|------------------------|----------------|
+| **AEP‑017 – Exhaust Fan – Parking Level Ventilation** | Parking level plant space (basement‑style plant area) | **358** | No physical visit for almost a year – high risk of undetected failure that could compromise CO₂ interlock and fire safety. |
+| **AEP‑009 – Chilled Water Pump 1** | Mechanical Plant Room (plant area) | **259** | Over nine months without a visit; a pump failure could cut chilled‑water supply to the whole plant. |
+| **AEP‑010 – Cooling Tower 1** | Roof plant area | **156** | Roof access requires a permit; the tower has been blind for over five months, risking heat‑rejection failure. |
+| **AEP‑007 – Chiller 1 – Building Central Cooling Plant** | Roof enclosure | **156** | The only chiller in the building; a long blind interval means the entire cooling system could fail unnoticed. |
+| **AEP‑004 – Air Handling Unit – Floor 3** | Mechanical Plant Room (plant area) | **117** | The longest blind interval among plant‑room assets; the AHU is delivering only 78 % of its design duty. |
+
+### Quick context
+- **Total relevant assets examined:** 16 (plant rooms, roofs, risers, parking‑level plant space).  
+- **Pattern:** Roof‑based assets (AEP‑007, AEP‑010) and the parking‑level plant fan (AEP‑017) have the longest blind intervals, followed by the plant‑room pump (AEP‑009).  
+- **Risk implication:** Assets with blind intervals > 150 days are at higher risk of developing loss conditions before detection.  
+
+If you’d like a deeper dive into any of these assets—inspection history, criticality, or next‑step recommendations—just let me know!
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+LT-002,Lecturers and tutors,I have back-to-back seminars in different rooms. Which transition needs the larger travel and setup buffer?,quoted,quoted,capability,"Here is what I found for **Abacws Building**:
+
+
+**Transport Parking**. Getting to Abacws (Senghennydd Road, Cardiff CF24 4AG): (1) By train: Cardiff Central station is ~15 min walk or 5 min taxi; (2) By bus: Routes 8, 9, 26, 27 stop on Cathays Terrace (2 min walk). Frequent service from Cardiff city centre; (3) By bike: secure bike storage in the basement (swipe card access); on-street cycle parking on Senghennydd Road; (4) By car: limited on-street pay-and-display parking nearby; Cardiff University has a car park on Corbett Road (permit required for staff). Electric vehicle charging points are available in the car park area. Disabled parking bays (blue badge) are on Senghennydd Road directly outside the entrance.
+
+
+*Answered live from the building ontology (triples).*"
+LT-003,Lecturers and tutors,"Can I receive one concise, source-timestamped readiness check 30 minutes before each class?",honest_decline,honest,capability,"**Abacws Building's documents do not answer this.** I searched Av Readiness Register, Patrol Checkpoint Register; they are the closest material and none of them contains the answer.
+
+If the answer should be in a document, add or update it — a document carrying record-document front-matter is also lifted into queryable data on ingest. Otherwise the owner of that record holds it."
+LT-016,Lecturers and tutors,"Did the previous class leave too little recovery time before mine, or are today's conditions within the room's normal turnaround pattern?",honest_decline,honest,capability,"**Abacws Building's documents do not answer this.** I searched Stakeholder Group Register; they are the closest material and none of them contains the answer.
+
+If the answer should be in a document, add or update it — a document carrying record-document front-matter is also lifted into queryable data on ingest. Otherwise the owner of that record holds it."
+LT-021,Lecturers and tutors,A student needs a step-free route and wants to avoid the busiest corridor. What current route and arrival buffer can I suggest?,failed,failed,deliberate,"I couldn't rank any spaces for this request.
+1 spaces were excluded — see the evidence dossier.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: select_one over 0 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table | simulated |
+|---|---|---|---|---|---|---|
+
+**Excluded:** all in scope (question spans 234 spaces, above the 120-space fetch budget)
+
+</details>
+
+**Evidence time: unknown.** I can't tell you how old these readings are, so treat the recommendation as unverified rather than current. How quickly this goes out of date is not declared for conditions, so I can't give you a recheck point — check again before relying on it. Switch if: conditions in the space you chose moves outside the range that made it the best option, or the space becomes occupied."
+LT-026,Lecturers and tutors,"A student reports headache and stuffiness. What environmental facts can I relay, and which health conclusions must the service avoid?",quoted,quoted,capability,"Here is what I found for **Abacws Building**:
+
+
+**Sustainability**. Abacws was designed to BREEAM 'Excellent' specification. Sustainability features: (1) High-performance building fabric with triple-glazed facades; (2) Mechanical heat recovery ventilation; (3) LED lighting with daylight harvesting throughout; (4) Electric vehicle charging points in the car park; (5) Green roof on the second-floor terrace; (6) Rainwater harvesting for toilet flushing; (7) Building energy performance is monitored in real-time. Recycling facilities (general waste, paper, glass, cans) are available on every floor.
+
+
+*Answered live from the building ontology (triples).*
+
+**Boundary: not declared.** I can't say what this figure covers — the meter behind it has no `ontosage:meterServes` in the ontology. Declaring the meter's boundary and allocation method would let every energy answer state it."
+ME-004,Mechanical and electrical engineers,"What duty was this plant designed and commissioned for, and what duty is it demonstrably delivering now?",honest_decline,computed,metadata,"**Chiller 1 – Central Cooling Plant**
+
+| Stage | Duty (kW) | Notes |
+|-------|-----------|-------|
+| **Designed for** | **620 kW** (at 6 °C / 12 °C) | Specified cooling capacity for the building’s chilled‑water network. |
+| **Commissioned for** | **610 kW** (verified at 6 °C / 12 °C) | The actual capacity recorded during the commissioning test. |
+| **Demonstrably delivering now** | **565 kW** (calculated from chilled‑water flow & ΔT) | Current operating capacity measured by the BMS and verified against the commissioning sheet. |
+
+**Key take‑away**
+
+- The plant is running at **≈ 92 % of its design capacity** and **≈ 93 % of its commissioned capacity**.  
+- The observed duty is lower than both design and commissioned figures, indicating a small but measurable shortfall in performance.  
+
+**Context**
+
+- This is one of 24 engineering‑profile assets in the building.  
+- The Chiller 1 duty figures are the most recent and are supported by the witness test (WT‑CH‑01, 2020‑02‑04).  
+- The plant’s isolation point is the HV/LV panel CP‑1 way 1, and its downstream dependencies include all chilled‑water circuits to the AHUs and Level 2 laboratory FCUs.  
+
+If you’d like to compare this with other plant assets (e.g., the Chiller Pump or the Cooling Tower) or need the raw data URIs for a deeper analysis, just let me know!
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+ME-006,Mechanical and electrical engineers,"Which isolation points and downstream dependencies are documented, and what must still be proved on site before work?",honest_decline,computed,metadata,"**Isolation points, downstream dependencies and what still needs to be proved on site**
+
+There are **24** asset‑engineering records in the building.  
+All of them have an isolation point and a list of downstream dependencies recorded.  
+Only **three** assets still require on‑site confirmation that the isolation point can actually be operated (the isolation has never been proved or the record is blank).
+
+---
+
+### Floor 0 (Mechanical Plant Room & Ground floor)
+
+| Asset | Isolation point | Downstream dependencies |
+|-------|-----------------|--------------------------|
+| **AEP‑001** – AHU‑00 | MCC‑0 way 3, local isolator LI‑AHU‑00 | Ground‑floor teaching & reception ventilation |
+| **AEP‑002** – AHU‑01 | MCC‑1 way 2, local isolator LI‑AHU‑01 | Level 1 computer labs & atrium |
+| **AEP‑003** – AHU‑02 | MCC‑2 way 2, local isolator LI‑AHU‑02 | Level 2 research labs & meeting rooms |
+| **AEP‑004** – AHU‑03 | MCC‑3 way 2, local isolator LI‑AHU‑03 | Level 3 seminar rooms, offices & common room |
+| **AEP‑005** – AHU‑04 | MCC‑4 way 2, local isolator LI‑AHU‑04 | Level 4 offices & meeting rooms |
+| **AEP‑006** – AHU‑05 | MCC‑5 way 2, local isolator LI‑AHU‑05 | Level 5 seminar & conference rooms, academic offices |
+| **AEP‑008** – Chiller Pump 1 | MCC‑0 way 7, local isolator LI‑P‑01 | Chilled‑water circulation to all AHUs |
+| **AEP‑009** – Chilled‑Water Pump 1 | MCC‑0 way 8, local isolator LI‑P‑02 | Stand‑by circulation for the chilled‑water circuit *(isolation not yet proved)* |
+| **AEP‑011** – Main lift | Lift motor room isolator LMR‑1 | Step‑free access to every level above ground |
+| **AEP‑018** – Breaker panel 0 | Incoming switch‑disconnector, lockable | All Level 0 small power, lighting & plant control |
+| **AEP‑024** – Turnstile | Local isolator behind reception desk | Controlled entry & visitor‑pass workflow |
+
+---
+
+### Floor 1
+
+| Asset | Isolation point | Downstream dependencies |
+|-------|-----------------|--------------------------|
+| **AEP‑019** – Breaker panel 1 | Incoming switch‑disconnector, lockable | All Level 1 small power, lighting & computer labs |
+
+---
+
+### Floor 2
+
+| Asset | Isolation point | Downstream dependencies |
+|-------|-----------------|--------------------------|
+| **AEP‑020** – Breaker panel 2 | Incoming switch‑disconnector, lockable | All Level 2 small power, lighting & laboratory supplies |
+
+---
+
+### Floor 3
+
+| Asset | Isolation point | Downstream dependencies |
+|-------|-----------------|--------------------------|
+| **AEP‑021** – Breaker panel 3 | Incoming switch‑disconnector, lockable | All Level 3 small power, lighting & common room |
+
+---
+
+### Floor 4
+
+| Asset | Isolation point | Downstream dependencies |
+|-------|-----------------|--------------------------|
+| **AEP‑022** – Breaker panel 4 | Incoming switch‑disconnector, lockable | All Level 4 small power & lighting |
+
+---
+
+### Floor 5
+
+| Asset | Isolation point | Downstream dependencies |
+|-------|-----------------|--------------------------|
+| **AEP‑023** – Breaker panel 5 | Incoming switch‑disconnector, lockable | All Level 5 small power, lighting & conference rooms |
+| **AEP‑007** – Chiller 1 | HV/LV panel CP‑1 way 1, lockable local isolator | All chilled‑water to every AHU & Level 2 lab FCUs |
+| **AEP‑010** – Cooling tower 1 | Roof isolator RI‑CT‑01 | Condenser water to Chiller 1 |
+
+---
+
+### Other key assets (not floor‑specific)
+
+| Asset | Isolation point | Downstream dependencies |
+|-------|-----------------|--------------------------|
+| **AEP‑012** – Emergency diesel generator | Generator control panel GCP‑1, battery isolator | Life‑safety systems, fire alarm, lift homing, security control room |
+| **AEP‑013** – Building battery energy storage | BESS DC isolator & AC contactor panel | Peak‑shaving only (no life‑safety load) |
+| **AEP‑014** – Fire alarm control panel | Panel mains isolator & standby battery link | All detection, sounders, door releases & lift homing |
+| **AEP‑015** – Building‑level electrical meter | Metering panel MP‑1 test link | No downstream load (meter failure only loses data) |
+| **AEP‑016** – Building‑level water meter | Incoming main stop valve SV‑1 | No downstream load *(isolation not yet proved)* |
+| **AEP‑017** – Exhaust fan – parking level | Parking level MCC way 4 | Parking level ventilation & CO dilution *(isolation not yet proved)* |
+
+---
+
+### What still needs to be proved on site
+
+| Asset | Reason |
+|-------|--------|
+| **AEP‑009** – Chilled‑Water Pump 1 | Isolation point has never been proved (blank `isolationProvenOn`) |
+| **AEP‑016** – Building‑level water meter | Isolation point not proved (`isolationProvenOn` blank) |
+| **AEP‑017** – Exhaust fan – parking level | Isolation point not proved (`isolationProvenOn` blank) |
+
+All other assets have a recorded `isolationProvenOn` date, indicating that the isolation point has been verified in the past.
+
+---
+
+**Summary**
+
+- **24** assets have documented isolation points and downstream dependencies.  
+- **3** assets (AEP‑009, AEP‑016, AEP‑017) still require on‑site confirmation that their isolation points can be operated.  
+- Once those three are proved, the isolation documentation for the entire building will be complete.  
+
+Let me know if you’d like a deeper dive into any particular floor or asset!
+
+**Boundary: not declared.** I can't say what this figure covers — the meter behind it has no `ontosage:meterServes` in the ontology. Declaring the meter's boundary and allocation method would let every energy answer state it.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+ME-007,Mechanical and electrical engineers,"Are asset names and tags consistent across drawings, BMS, meters, O&M information and maintenance systems?",quoted,quoted,capability,"Here is what I found for **Abacws Building**:
+
+
+**Smart Controls**. Building systems currently running in automated mode: (1) HVAC — zone-based climate control with automatic setpoint adjustment based on occupancy schedules and sensor feedback; (2) Lighting — presence-detection and daylight harvesting across all open-plan areas, switching off automatically when unoccupied; (3) Ventilation — CO2-driven demand-controlled ventilation adjusts fresh air supply automatically; (4) Security — access control, CCTV, and door locks operate on automated schedules. The building uses a BMS (Building Management System) for centralised monitoring and control. Occupants cannot directly adjust automated settings; facility management staff control setpoints via the BMS. For lighting or HVAC control requests, contact facility management (estates@cardiff.ac.uk).
+
+
+From the full policy document (**hvac_operation.md**):
+
+--- record_type: operating_regime owner: ""M and E Maintenance Supervisor"" authority: ""Cardiff University Estates - Building Management System"" source_system: ""Operating Regime Register"" effective_from: 2026-09-01 version: ""2026.9"" review_due: 2027-03-01 simulated: true tables: - name: ""Operating regime register"" maps_to: operating_regimes --- # Operating Regime Register - Abacws Building _**Synthetic demonstration record** - fictional setpoints, not a live BMS export._ ## What this makes answerable > *""Which HVAC assets operate beyond approved service windows, and is each exception > justified by safety, frost protection or specialist requirement?""* That question cannot be answered by a reading. A reading says what **is**. This register says what is **supposed to be**, and only the pair together turns a deviation into a fault. **`approved_exception` is the load-bearing column.** Without it every legitimate deviation reads as a fault - the Level 2 laboratories running 24/7, the server room with no night setback, the chilled water system enabled outside the cooling season. That is exactly how an alarm list becomes noise and then gets ignored. Two rows record a limit on their own verifiability rather than hiding it: REG-004 is under review because the unit serving it delivers 78% of its commissioned duty, and REG-006 cannot be verified at all because no flow measurement is fitted to that AHU. ## Operating regime register | code | system | scope | occupied_setpoint | unoccupied_setpoint | operating_window | seasonal_changeover | approved_exception | owner | status | note | |---|---|---|---|---|---|---|---|---|---|---| | REG-001 | AHU Floor 0 supply air | Ground floor teaching and reception | 21 degC +/- 1.5, CO2 below 1000 ppm | 16 degC frost protection only | Mon-Fri 07:00-19:00 | Heating 01 Oct to 30 Apr; cooling 01 May to 30 Sep | Runs to 22:00 on published open days | BMS-HVAC operators | Active | | | REG-002 | AHU Floor 1 supply air | Level 1 computer laboratories and atrium | 21 degC +/- 1.5, CO2 below 1000 ppm | 16 degC frost protection only | Mon-Fri 07:00-20:00 | Heating 01 Oct to 30 Apr; cooling 01 May to 30 Sep | Extended to 22:00 during assessment weeks, approved by the School | BMS-HVAC operators | Active | Longer window than other floors because the labs are open until 20:00 | | REG-003 | AHU Floor 2 supply air | Level 2 research laboratories | 21 degC +/- 1.0, CO2 below 900 ppm | 18 degC continuous |
+
+
+*Answered live from the building ontology (triples) + document hvac_operation.md.*
+
+---
+*⚠️ I summarised the data above but couldn't render the chart this time. Please try again, or rephrase the request as e.g. ""plot sensor 5.27 temperature for the last 24 hours as a line chart"".*"
+ME-008,Mechanical and electrical engineers,"Before intrusive work, which services are confirmed, probable or unknown within this ceiling, riser or plant area?",failed,computed,metadata,"**Services that could be affected by intrusive work in the ceiling, riser or plant area**
+
+| Status | Record | Service / Procedure | Notes |
+|--------|--------|---------------------|-------|
+| **Confirmed** | APR‑028 | *Roof plant enclosure – work‑at‑height method* | Current, approved.  This is the only service that is already confirmed for the plant/roof area. |
+| **Probable** | APR‑019 | *Asbestos management plan* | Due for review (effective 2026‑09‑01 to 2026‑09‑30).  The plan covers ceiling and roof cavities, so it is likely to be relevant. |
+| | APR‑032 | *Teaching AV standard – Level 1 rooms* | Conditional, due for review (effective 2026‑09‑01 to 2027‑04‑18).  AV cabling is typically routed through ceilings, so this is a probable service. |
+| **Unknown** | – | – | No records with a “no_evidence” or “pending” status explicitly refer to services in the ceiling, riser or plant area.  All other pending or no‑evidence records relate to lab procedures, cost lines, or space use, not to building services. |
+
+**Summary**
+
+- **Total records examined:** 32  
+- **Relevant to ceiling/riser/plant area:** 3 (1 confirmed, 2 probable)  
+- **Pattern:** The only confirmed service is the roof‑plant enclosure work‑at‑height method.  The other two are still under review and therefore considered probable.  There are no unknown‑status services in this specific zone.
+
+Let me know if you’d like more detail on any of these records or if you need information on other areas of the building.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+PHD-002,PhD students,My supervision meeting has just finished. Where can I work quietly for the next three hours without travelling far from this floor?,failed,computed,metadata,"You’re looking for a quiet spot on the same floor as your meeting.  
+All of the rooms that are rated **“quiet”** or **“silent”** are suitable for focused work.  
+Below is a quick reference for each floor – just pick the one that matches where you are.
+
+| Floor | Quiet / Silent rooms (label) | Notes |
+|-------|------------------------------|-------|
+| **1** | • Level 1 computer lab 1.06 (WS‑02)  <br>• Level 1 computer lab 1.07 (WS‑03)  <br>• Level 1 computer lab 1.08 (WS‑04)  <br>• Level 1 computer lab 1.09 (WS‑05)  <br>• Seminar room 1.25 (WS‑06)  <br>• Seminar room 1.26 (WS‑07) | 6 quiet spaces; all open 08:00‑20:00. |
+| **2** | • Level 2 computer lab 2.07 (WS‑08)  <br>• Level 2 computer lab 2.08 (WS‑09)  <br>• Meeting room 2.13 (WS‑10)  <br>• Meeting room 2.14 (WS‑11)  <br>• Seminar room 2.15 (WS‑12) | 5 quiet spaces; all open 08:00‑20:00. |
+| **3** | • Level 3 computer lab 3.05 (WS‑13)  <br>• Level 3 computer lab 3.06 (WS‑14)  <br>• Seminar room 3.13 (WS‑15)  <br>• Seminar room 3.14 (WS‑16)  <br>• Meeting room 3.15 (WS‑17)  <br>• Meeting room 3.16 (WS‑18) | 6 quiet spaces; all open 08:00‑18:00. |
+| **4** | • Meeting room 4.11 (WS‑22)  <br>• Meeting room 4.12 (WS‑23)  <br>• Seminar room 4.13 (WS‑24) | 3 quiet spaces; all open 08:00‑18:00. |
+| **5** | • Seminar room 5.15 (WS‑25)  <br>• Seminar room 5.16 (WS‑26)  <br>• Meeting room 5.17 (WS‑27)  <br>• Meeting room 5.18 (WS‑28) | 4 quiet spaces; all open 08:00‑18:00. |
+
+**Quick take‑away**
+
+- **Total quiet spaces in the building:** 24  
+- **Pattern:** All quiet rooms are open during normal working hours (08:00‑20:00 on floors 1–2, 08:00‑18:00 on floors 3–5).  
+- **Best times:** Most rooms are quietest after 15:00, but you can work comfortably any time during the day.
+
+If you let me know which floor you’re on, I can point you straight to the nearest quiet spot. Otherwise, any of the rooms listed for your floor will give you a calm environment for the next three hours.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+PHD-004,PhD students,My chapter deadline is next Friday. What arrival time gives me the best chance of finding a suitable long-stay workspace?,quoted,computed,metadata,"**Short answer:**  
+Arrive **between 16:00 – 17:00 on Friday**.  
+That window is the quietest for almost all bookable rooms (and still inside the 08:00‑18:00 opening hours).  
+If you’d rather use the open‑study Atrium (WS‑01), aim for **after 18:00** – the building stays open until 22:00 and the Atrium is quiet then.
+
+---
+
+### Why this time works
+
+| Workspace type | Typical Friday quietest period | Why it matters for a long‑stay |
+|----------------|------------------------------|--------------------------------|
+| **Bookable rooms** (WS‑06, 07, 10‑18, 20‑28) | **After 16:00** (most list “quietest after 16:00” or “after 15:00”) | Rooms are free of teaching‑week traffic and you can book a seat for a long session. |
+| **Open‑study Atrium** (WS‑01) | **After 18:00** (quietest after 18:00, building open until 22:00) | No scheduled teaching or meetings; you can stay for hours without interruption. |
+
+### Quick reference to the most useful long‑stay spaces
+
+- **WS‑06 / WS‑07** – Seminar rooms, 16‑seat capacity, quiet after 16:00.  
+- **WS‑10 / WS‑11** – Meeting rooms, 8‑seat capacity, quiet after 16:00.  
+- **WS‑12** – Seminar room, 20 seats, quiet after 16:00.  
+- **WS‑15 / WS‑16** – Seminar rooms, 18 seats, quiet after 16:00.  
+- **WS‑20 / WS‑21** – Meeting rooms, 10 seats, quiet after 16:00.  
+- **WS‑22 / WS‑23** – Meeting rooms, 8 seats, quiet after 16:00.  
+- **WS‑25 / WS‑26** – Seminar rooms, 30 seats, quiet after 15:00.  
+- **WS‑27 / WS‑28** – Meeting rooms, 6 seats, quiet after 16:00.  
+
+All of these are bookable (or open‑study) and have a quiet period that starts around 15:00‑16:00 on Friday, giving you a good chance to secure a seat for a long session.
+
+---
+
+**Bottom line:**  
+Plan to arrive **around 16:00 – 17:00 on Friday** for the best mix of availability, quiet, and building hours. If you prefer the open‑study Atrium, head in after 18:00. Happy writing!
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+PHD-005,PhD students,"I have six hours on campus for thesis writing, data analysis and two short breaks. Can you plan a realistic sequence of spaces with independent backups?",quoted,quoted,capability,"Here is what I found for **Abacws Building**:
+
+
+**Working Hours**. Standard building hours: Monday–Friday 07:00–22:00; Saturday–Sunday 08:00–18:00. The building may open earlier or close later during exam periods. Out-of-hours access (after standard hours) is available to authorised staff and registered postgraduate students with appropriate card access. The building is generally closed on bank holidays except for security-monitored access. Check the Cardiff University website for holiday opening schedules.
+
+
+*Answered live from the building ontology (triples).*"
+PHD-010,PhD students,"Has the environment in my usual workspace changed since term began, and can you separate genuine change from altered sensing, room use or schedules?",quoted,computed,metadata,"I’ve looked through all 28 workspace‑profile records that the building holds.  
+All of them were created (or last updated) on **2026‑09‑01**, the same date the current term began.  
+Because the records contain no earlier snapshots, there is no evidence that any of the environmental attributes (daylight, noise, power, network, etc.) have changed since the term started.
+
+**What the data tells us**
+
+| Attribute | What it means for the environment | Current status (all rooms) |
+|-----------|-----------------------------------|---------------------------|
+| **daylightAspect** | How natural light falls in the room | Fixed per room (e.g., “South‑facing, bright” for WS‑01, “North‑facing” for WS‑13, etc.) |
+| **noiseProfile** | Typical ambient sound level | Ranges from “conversational” (WS‑01, WS‑19) to “quiet” (most labs) to “silent” (WS‑27, WS‑28) |
+| **suitableForCalls** | Whether the room is acoustically fit for phone/video calls | Mostly “false” for labs, “true” for bookable rooms and seminar rooms |
+| **powerAccess** | Availability of power outlets | “perimeter only” for common areas, “at every seat” for labs, “at some seats” for bookable rooms |
+| **networkRating** | Strength of Wi‑Fi / wired connectivity | “strong” for most rooms, “adequate” or “weak” for a few labs (WS‑14) |
+
+**Separating genuine environmental change from usage/scheduling**
+
+* **Environment** – The physical attributes above are static in the records.  
+  *No change has been recorded since the term began.*
+
+* **Room use / schedules** – These are captured by:
+  * `accessClassification` (e.g., “Open to all”, “Bookable”, “Staff only”)
+  * `busiestPeriod` / `quietestPeriod` (e.g., “Weekday 11:00‑14:00” for WS‑01, “Teaching weeks 10:00‑16:00” for labs)
+  * `openingHours` (e.g., Mon‑Fri 08:00‑20:00 for labs, Mon‑Sun 07:00‑22:00 for the atrium)
+
+If you’re looking for a specific room (e.g., your usual workspace), let me know its ID or label and I can pull out the exact environmental snapshot for that room. Otherwise, the building’s environment has remained unchanged since the term started, and any perceived differences are likely due to changes in how the space is used or scheduled.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+PHD-012,PhD students,My supervisor will join remotely. Which bookable room is most likely to support a reliable call without disturbing other students?,failed,failed,deliberate,"I couldn't rank any spaces for this request.
+1 spaces were excluded — see the evidence dossier.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: select_one over 0 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table | simulated |
+|---|---|---|---|---|---|---|
+
+**Excluded:** all in scope (question spans 234 spaces, above the 120-space fetch budget)
+
+</details>
+
+**Evidence time: unknown.** I can't tell you how old these readings are, so treat the recommendation as unverified rather than current. How quickly this goes out of date is not declared for conditions, so I can't give you a recheck point — check again before relying on it. Switch if: conditions in the space you chose moves outside the range that made it the best option, or the space becomes occupied."
+RS-002,Research staff,I've got three hours between project meetings. Where can I work quietly now without ending up far from the next meeting?,failed,computed,metadata,"You have plenty of quiet spots to use for the next three hours.  
+All of the spaces below are **open right now** (08:00‑18:00 on weekdays) and have a *quiet* or *silent* noise profile.  
+They’re all within a short walk of the main lift core, so you won’t be far from your next meeting.
+
+**Total quiet spaces available:** 24
+
+---
+
+### Floor 1 (closest to the main lift core)
+
+| Space | Type | Quietness | Notes |
+|-------|------|-----------|-------|
+| **WS‑02** | Computer lab | quiet | Open lab, no booking required |
+| **WS‑03** | Computer lab | quiet | Same as WS‑02 |
+| **WS‑04** | Computer lab | quiet | No daylight, but very quiet |
+| **WS‑05** | Computer lab | quiet | Same as WS‑04 |
+| **WS‑08** | Computer lab | quiet | West‑facing, glare after 16:00 |
+| **WS‑09** | Computer lab | quiet | Same as WS‑08 |
+| **WS‑10** | Meeting room | quiet | Bookable, 8 seats, good for calls |
+| **WS‑11** | Meeting room | quiet | Same as WS‑10 |
+| **WS‑12** | Seminar room | quiet | 20 seats, bookable |
+| **WS‑13** | Computer lab | quiet | North‑facing, adequate network |
+| **WS‑14** | Computer lab | quiet | North‑facing, weak wireless |
+| **WS‑15** | Seminar room | quiet | South‑facing, glare 12‑15 |
+| **WS‑16** | Seminar room | quiet | Same as WS‑15 |
+| **WS‑17** | Meeting room | quiet | 6 seats, bookable |
+| **WS‑18** | Meeting room | quiet | Same as WS‑17 |
+
+> **Tip:** If you need a single‑occupancy, silent spot, WS‑17 or WS‑18 are great choices.
+
+---
+
+### Floors 3–5 (still close to the main lift core)
+
+| Space | Floor | Type | Quietness | Notes |
+|-------|-------|------|-----------|-------|
+| **WS‑20** | 3 | Meeting room | quiet | 10 seats, bookable |
+| **WS‑21** | 3 | Meeting room | quiet | Same as WS‑20 |
+| **WS‑22** | 4 | Meeting room | quiet | 8 seats, bookable |
+| **WS‑23** | 4 | Meeting room | quiet | Same as WS‑22 |
+| **WS‑24** | 4 | Seminar room | quiet | 22 seats, bookable |
+| **WS‑25** | 5 | Seminar room | quiet | 30 seats, bookable, best daylight |
+| **WS‑26** | 5 | Seminar room | quiet | Same as WS‑25 |
+| **WS‑27** | 5 | Meeting room | silent | 6 seats, single‑occupancy, bookable |
+| **WS‑28** | 5 | Meeting room | silent | Same as WS‑27 |
+
+> **Highlight:** WS‑27 and WS‑28 are the only *silent* rooms and are ideal if you need absolute focus.
+
+---
+
+### Quick decision guide
+
+| Need | Recommended space(s) |
+|------|----------------------|
+| **Quiet, open lab** | WS‑02, WS‑03, WS‑04, WS‑05, WS‑08, WS‑09 |
+| **Bookable meeting room (small)** | WS‑10, WS‑11, WS‑17, WS‑18, WS‑20, WS‑21, WS‑22, WS‑23 |
+| **Large seminar room** | WS‑24, WS‑25, WS‑26 |
+| **Single‑occupancy silent** | WS‑27, WS‑28 |
+| **Best daylight + quiet** | WS‑25, WS‑26 |
+
+All of these rooms are within a minute or two of the main lift core, so you’ll be close to your next meeting.  
+If you’d like to reserve a room, just use the building’s booking system or let me know and I can help you book it.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+RS-003,Research staff,I have a confidential sponsor call followed by two hours of analysis. Which bookable room is officially suitable for private conversation and practical to use now?,quoted,quoted,capability,"Here is what I found for **Abacws Building**:
+
+
+**Working Hours**. Standard building hours: Monday–Friday 07:00–22:00; Saturday–Sunday 08:00–18:00. The building may open earlier or close later during exam periods. Out-of-hours access (after standard hours) is available to authorised staff and registered postgraduate students with appropriate card access. The building is generally closed on bank holidays except for security-monitored access. Check the Cardiff University website for holiday opening schedules.
+
+
+*Answered live from the building ontology (triples).*"
+RS-005,Research staff,"Our reporting deadline is next week and Abacws may be busy. When am I most likely to find a calm, eligible place for sustained writing?",failed,failed,deliberate,"I couldn't rank any spaces for this request.
+1 spaces were excluded — see the evidence dossier.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: superlative over 0 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table | simulated |
+|---|---|---|---|---|---|---|
+
+**Excluded:** all in scope (question spans 234 spaces, above the 120-space fetch budget)
+
+</details>
+
+**Evidence time: unknown.** I can't tell you how old these readings are, so treat the recommendation as unverified rather than current. How quickly this goes out of date is not declared for conditions, so I can't give you a recheck point — check again before relying on it. Switch if: conditions in the space you chose moves outside the range that made it the best option, or the space becomes occupied."
+RS-014,Research staff,"Since the equipment was serviced, have room and service conditions been more stable during comparable runs?",honest_decline,honest,capability,"**Abacws Building's documents do not answer this.** I searched Asset Engineering Register, Hvac Operation; they are the closest material and none of them contains the answer.
+
+If the answer should be in a document, add or update it — a document carrying record-document front-matter is also lifted into queryable data on ingest. Otherwise the owner of that record holds it."
+RD-004,Researchers and data scientists,"Which observation dates and duration are needed to cover the calendar, weather and operating regimes in scope, and which periods must be excluded?",honest_decline,computed,metadata,"**Observation plan for the 10 operating regimes (effective from 2026‑09‑01)**  
+
+| Floor / System | Observation window | Seasonal coverage | Periods that must be *excluded* | Notes |
+|----------------|--------------------|-------------------|--------------------------------|-------|
+| **Floor 0 – AHU** | Mon‑Fri 07:00‑19:00 (extend to 22:00 on open days) | Heating 01 Oct‑30 Apr; Cooling 01 May‑30 Sep | Week‑ends, 19:00‑07:00 (except open‑day extensions) |  |
+| **Floor 1 – AHU** | Mon‑Fri 07:00‑20:00 (extend to 22:00 during assessment weeks) | Heating 01 Oct‑30 Apr; Cooling 01 May‑30 Sep | Week‑ends, 20:00‑07:00 (except assessment‑week extensions) |  |
+| **Floor 2 – AHU** | Continuous 24/7 | Year‑round (no seasonal shutdown) | None |  |
+| **Floor 3 – AHU** | Mon‑Fri 07:00‑19:00 | Heating 01 Oct‑30 Apr; Cooling 01 May‑30 Sep | Week‑ends, 19:00‑07:00 |  |
+| **Floor 4 – AHU** | Mon‑Fri 07:00‑19:00 | Heating 01 Oct‑30 Apr; Cooling 01 May‑30 Sep | Week‑ends, 19:00‑07:00 |  |
+| **Floor 5 – AHU** | Mon‑Fri 07:00‑19:00 (extend to 21:00 when a conference is booked) | Heating 01 Oct‑30 Apr; Cooling 01 May‑30 Sep | Week‑ends, 19:00‑07:00 (except conference‑extension) |  |
+| **Chilled‑water system** | Continuous while enabled | Enabled 01 May‑30 Sep (cooling season) | Outside 01 May‑30 Sep (system off) |  |
+| **Parking‑level ventilation** | Continuous 24/7 | No seasonal variation | None |  |
+| **Server‑room cooling** | Continuous 24/7 | No seasonal variation | None |  |
+| **Lighting control** | Mon‑Sun 06:00‑23:00 | No seasonal variation | 23:00‑06:00 (all days) | Escape‑route lights are *never* switched off – they are excluded from this regime |
+
+### Key take‑aways
+
+- **Observation start date:** 2026‑09‑01 (the `effectiveFrom` of all regimes).  
+- **Duration needed:**  
+  * Continuous regimes (Floor 2, parking, server room, lighting) require 24/7 monitoring.  
+  * Others need monitoring only during their defined operating windows.  
+- **Exclusion periods:**  
+  * Week‑ends and after‑hour times for the floor‑based AHUs (except the specified extensions).  
+  * Outside the cooling‑season window for the chilled‑water system.  
+  * 23:00‑06:00 for lighting (except escape‑route lights).  
+- **Patterns:**  
+  * Eight of the ten regimes share the same heating/cooling seasonal split (01 Oct‑30 Apr / 01 May‑30 Sep).  
+  * Two regimes (Floor 2 AHU and parking ventilation) are truly continuous.  
+  * The lighting regime is the only one that operates on weekends but stops at 23:00.
+
+If you need a detailed schedule for a specific floor or system, let me know and I can generate a day‑by‑day calendar for you.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+RD-005,Researchers and data scientists,"Which current rooms or systems form a defensible comparison set after use, geometry, exposure, services and measurement design are matched?",honest_decline,honest,capability,"**Abacws Building's documents do not answer this.** I searched Workspace Profile Register; they are the closest material and none of them contains the answer.
+
+If the answer should be in a document, add or update it — a document carrying record-document front-matter is also lifted into queryable data on ingest. Otherwise the owner of that record holds it."
+RD-006,Researchers and data scientists,"Does the planned operational change support an interrupted time-series, matched-comparison or difference-in-differences study, or only a descriptive before-and-after account?",honest_decline,computed,sensor_data,"**Answer**
+
+The ontology data you provided does not contain any explicit description of a planned operational change or the research design that will be used to evaluate it.  
+However, the presence of a large number of **Air Quality Level Sensors** (e.g., `bldg:Air_Quality_Level_Sensor_5.01`, `bldg:Air_Quality_Level_Sensor_5.02`, …) implies that continuous time‑series data are available for those variables.  
+
+| Study Design | Evidence in the Ontology | Likely Feasibility |
+|--------------|--------------------------|--------------------|
+| **Interrupted Time‑Series (ITS)** | Continuous sensor data (Air‑Quality sensors) | **Possible** – if the change is implemented at a known time point and data are collected before and after, ITS can be applied. |
+| **Matched‑Comparison** | No explicit matching units or control groups in the data | **Not supported** – the ontology does not provide information on comparable units or control conditions. |
+| **Difference‑in‑Differences (DiD)** | Requires two groups (treated & control) with pre‑ and post‑measurements | **Not supported** – no control group or comparative units are defined in the data. |
+| **Descriptive Before‑After** | Baseline and post‑change sensor readings | **Supported** – you can simply compare averages or trends before and after the change. |
+
+**Bottom line**
+
+- The ontology **supports a descriptive before‑after analysis** by default.  
+- It **potentially supports an interrupted time‑series study** if you can identify the exact intervention time and have continuous sensor data.  
+- There is **no evidence** that the data support matched‑comparison or difference‑in‑differences designs.  
+
+If you need to conduct a matched‑comparison or DiD study, you would need additional data that defines comparable units or control groups.
+
+---
+*Sources: `Building Ontology`*"
+LB-001,"School leadership, university leadership, and building owners","Which building capabilities must be protected first to deliver the School's approved teaching, research, civic and workforce priorities, and where is the current evidence of shortfall strongest?",honest_decline,computed,metadata,"**Short‑answer**
+
+The building’s *most critical capabilities* that must be protected first are the ones that directly support the School’s approved teaching, research, civic and workforce priorities:
+
+| Priority | Capability (local name) | Status | Why it matters |
+|----------|------------------------|--------|----------------|
+| 1 | **Room 1.06 Computer Laboratory – teaching use** | approved, current | Core teaching space for the School |
+| 2 | **Level 2 research laboratories** | approved, current | Primary research facility |
+| 3 | **Room 2.01 Research Laboratory – COSHH procedure** | approved, current | Safety procedure for research work |
+| 4 | **Level 5 academic office use** | approved, current | Staff offices that support research & teaching |
+| 5 | **RTE‑001 Accessible drop‑off to Reception** | approved, current | Essential for civic access |
+| 6 | **RTE‑002 Reception to Level 2 laboratories** | approved, current | Key route for students & staff |
+| 7 | **RTE‑003 North stair route** | refused, current | Must be replaced – a critical shortfall |
+| 8 | **RTE‑004 Lift B route to Level 3** | withdrawn, current | Lift service is essential for mobility |
+| 9 | **Fire alarm system – annual certification** | approved, current | Safety for all occupants |
+| 10 | **Emergency lighting – periodic test** | approved, current | Safety during power loss |
+| 11 | **Legionella written scheme** | approved, current | Health & safety for research labs |
+| 12 | **Asbestos management plan** | approved, due_review | Must be updated to keep the building safe |
+
+**Where the evidence of shortfall is strongest**
+
+| Record | Issue | Impact |
+|--------|-------|--------|
+| **APR‑008** – *Room 3.06 Research Laboratory – COSHH procedure* | **no_evidence** (pending decision) | No documented safety procedure for a research lab – highest risk to staff & students |
+| **APR‑023** – *Lift B controller replacement – unbudgeted* | **no_evidence** (pending) | Lift B is out of service; no plan to restore it – critical for accessibility |
+| **APR‑003** – *RTE‑015 North stair route* | **refused** (cannot be used) | A key accessible route is unusable; must be replaced or rerouted |
+| **APR‑006** – *Room 1.04 Atrium – public event use* | **due_review** | Event capacity and egress not yet verified |
+| **APR‑019** – *Asbestos management plan* | **due_review** | Survey due – potential health risk |
+| **APR‑032** – *Teaching AV standard – Level 1 rooms* | **due_review** (conditional) | AV equipment not fully tested – could affect teaching quality |
+
+**Take‑away**
+
+1. **Protect the teaching & research spaces first** – they are the backbone of the School’s priorities.  
+2. **Secure the accessibility routes** – RTE‑001, RTE‑002, and the replacement of RTE‑003 and Lift B are urgent.  
+3. **Address safety systems** – fire alarm, emergency lighting, Legionella, and asbestos plans must be kept up‑to‑date.  
+4. **Close the evidence gaps** – the strongest shortfalls are in the COSHH procedure for Room 3.06, the Lift B controller replacement, and the refused North stair route. These should be resolved before the next review cycle.
+
+Let me know if you’d like a deeper dive into any specific record or a plan for how to close these gaps.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+LB-004,"School leadership, university leadership, and building owners","Within the available resource envelope, which building intervention gives the most defensible gain across mission outcomes rather than a narrow local benefit?",failed,honest,capability,"I don't have that specific information on record for **Abacws Building**. For building-specific queries please contact your building's facilities / estates management team.
+
+You can add it — no code changes needed:
+1. **Describe it in the ontology** — upload a TTL naming the entity and its relationships (Admin portal → *Ontology* → upload, or drop the `.ttl` into the active building's input folder and restart).
+2. **Point it at its readings** — give each sensor a `ref:hasExternalReference` → `ref:hasTimeseriesId` (the column/uuid) plus `ref:storedAt` (a key from `database_registry.yaml`).
+3. **Register the database** holding those rows (Admin portal → *Databases*).
+Once both halves exist, questions about this are answered live — the pipeline needs nothing else."
+PGT-002,Taught postgraduate students,"Tomorrow I have classes on different floors, a short online meeting and two gaps for reading. Can you plan a practical sequence of spaces that keeps unnecessary movement to a minimum?",honest_decline,honest,capability,"**Abacws Building's documents do not answer this.** I searched Department Directory, Event Activity Register, Workspace Profile Register; they are the closest material and none of them contains the answer.
+
+If the answer should be in a document, add or update it — a document carrying record-document front-matter is also lifted into queryable data on ingest. Otherwise the owner of that record holds it."
+PGT-003,Taught postgraduate students,Which day this week gives me the best chance of finding four hours for focused study followed by a one-hour project-group meeting?,quoted,quoted,capability,"Here is what I found for **Abacws Building**:
+
+
+**Quiet Study**. Study and workspace options: (1) Open-plan study areas on Floors 1 and 2 — general quiet working; (2) Collaborative 'pods' on Floor 3 for small group work; (3) Bookable meeting rooms (Book via the Staff Intranet or Microsoft Teams room booking); (4) Lab spaces booked via academic staff; (5) The ground floor atrium has informal seating. Noise levels in study areas should be kept to a minimum.
+
+**Working Hours**. Standard building hours: Monday–Friday 07:00–22:00; Saturday–Sunday 08:00–18:00. The building may open earlier or close later during exam periods. Out-of-hours access (after standard hours) is available to authorised staff and registered postgraduate students with appropriate card access. The building is generally closed on bank holidays except for security-monitored access. Check the Cardiff University website for holiday opening schedules.
+
+
+*Answered live from the building ontology (triples).*"
+PGT-004,Taught postgraduate students,"During next week's assessment peak, when should I arrive for the best chance of finding a suitable three-hour study space?",quoted,computed,metadata,"**Best time to arrive for a quiet 3‑hour study session**
+
+- **Space:** **Atrium open study (WS‑01)**  
+  - *Location:* Room 1.04 – Common Area / Atrium  
+  - *Open to all* (no booking required)  
+  - *Seat count:* 48 seats, plenty of room  
+  - *Quietest period:* **After 18:00** (the space is usually conversational during the day but becomes quiet in the evening)  
+  - *Opening hours:* Mon‑Sun 07:00‑22:00 – you can stay until 22:00
+
+- **Recommended arrival time:**  
+  - **18:30** (or any time after 18:00)  
+  - Stay until **21:30** – that gives you a full three‑hour window in a quiet environment.
+
+- **Why this works:**  
+  - During the assessment peak (weekdays), most rooms are busy from 10:00‑16:00 or 09:00‑12:00.  
+  - WS‑01’s quietest period starts after 18:00, so you’ll avoid the usual weekday crowds.  
+  - The room remains open until 22:00, giving you a comfortable 3‑hour slot.
+
+**Quick note on other rooms**
+
+- WS‑19 (Staff common room) is *staff‑only*, so it’s not available to you.  
+- All other rooms either close before 18:00 or are not quiet during the assessment peak.
+
+So, plan to arrive at **18:30 on a weekday** and you’ll have a suitable, quiet three‑hour study space in the Atrium open study. Happy studying!
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+PGT-007,Taught postgraduate students,I have only 45 minutes between sessions. Which nearby space would give me useful study time without putting the next class at risk?,quoted,honest,metadata,"I couldn't verify **would** against **Abacws Building**'s model just now — the existence check didn't complete in time. Rather than risk attributing another sensor's readings to it, I'd rather you ask again in a moment.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+TT-008,Timetabling team,Which cohorts have the longest or most fragmented days once realistic travel and usable breaks are included?,quoted,quoted,capability,"Here is what I found for **Abacws Building**:
+
+
+**Transport Parking**. Getting to Abacws (Senghennydd Road, Cardiff CF24 4AG): (1) By train: Cardiff Central station is ~15 min walk or 5 min taxi; (2) By bus: Routes 8, 9, 26, 27 stop on Cathays Terrace (2 min walk). Frequent service from Cardiff city centre; (3) By bike: secure bike storage in the basement (swipe card access); on-street cycle parking on Senghennydd Road; (4) By car: limited on-street pay-and-display parking nearby; Cardiff University has a car park on Corbett Road (permit required for staff). Electric vehicle charging points are available in the car park area. Disabled parking bays (blue badge) are on Senghennydd Road directly outside the entrance.
+
+
+*Answered live from the building ontology (triples).*"
+TT-009,Timetabling team,"Which sessions still have no feasible slot, and which hard constraint or unresolved source conflict blocks each one?",honest_decline,computed,metadata,"All 24 event‑activity records are already assigned to a time slot, so **no session is left without a feasible slot**.  
+There are no hard constraints or unresolved source conflicts that prevent any of the activities from running as scheduled.
+
+**Quick snapshot**
+
+| Event | # of sessions | Statuses present | Notes |
+|-------|---------------|------------------|-------|
+| EVT‑2026‑0042 | 9 | all *scheduled* | No conflicts |
+| EVT‑2026‑0043 | 4 | all *scheduled* | No conflicts |
+| EVT‑2026‑0045 | 3 | one *full* (ACT‑0045‑2) | “Full” refers to capacity, not a scheduling block |
+| EVT‑2026‑0047 | 4 | all *scheduled* | No conflicts |
+| EVT‑2026‑0052 | 4 | all *scheduled* | No conflicts |
+
+**Key take‑away**
+
+- Every activity has a defined start time and room, and the timetable is internally consistent.  
+- The only non‑*scheduled* status we see is *full* for ACT‑0045‑2, which simply indicates the session has reached its participant limit; it does not block the slot.  
+- Therefore, there are **zero unscheduled sessions** and **zero blocking constraints** in the current data set.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+UG-003,Undergraduate students,"I have classes on Levels 1, 3 and 5 tomorrow. Where should I study between them so I spend less time walking and searching for a place?",honest_decline,computed,metadata,"I’m sorry, but the records you provided are all cost‑line entries for the building’s services (electricity, HVAC, cleaning, etc.). They don’t contain any information about study rooms, cafés, or other spaces you could use between Levels 1, 3 and 5.  
+
+**What the data does show**
+
+- 24 cost‑line records in total  
+- 22 are marked **open** (the rest are **closed** or **query**)  
+- The records cover a range of services: utilities, maintenance, cleaning, security, IT, and accessibility improvements  
+
+Because there’s no location or room information in these records, I can’t tell you which spot would minimise walking between your classes. If you have a floor plan or a list of study spaces, feel free to share that and I’ll help you pick the most convenient one.
+
+**Boundary: not declared.** I can't say what this figure covers — the meter behind it has no `ontosage:meterServes` in the ontology. Declaring the meter's boundary and allocation method would let every energy answer state it.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+UG-004,Undergraduate students,"Where can I work for three hours on Friday with power, good Wi-Fi, useful daylight and a low risk of overheating?",failed,computed,metadata,"**You can work comfortably for three hours on Friday in any of the following spaces.**  
+All of them have power at every seat (or at some seats), strong Wi‑Fi, good daylight, and no glare‑related overheating risk.  
+The times below are when the rooms are usually quiet on Fridays.
+
+| Floor | Workspace | Label | Power | Wi‑Fi | Daylight | Quiet‑time on Friday |
+|-------|-----------|-------|-------|-------|----------|----------------------|
+| 1 | **WS‑02** | Level 1 computer lab 1.06 | every seat | strong | North‑facing, even | after 15:00 |
+| 1 | **WS‑03** | Level 1 computer lab 1.07 | every seat | strong | North‑facing, even | after 15:00 |
+| 1 | **WS‑06** | Seminar room 1.25 | some seats | strong | East‑facing, morning sun | after 16:00 |
+| 1 | **WS‑07** | Seminar room 1.26 | some seats | strong | East‑facing, morning sun | after 16:00 |
+| 2 | **WS‑10** | Meeting room 2.13 | some seats | strong | internal borrowed light | after 16:00 |
+| 2 | **WS‑11** | Meeting room 2.14 | some seats | strong | internal borrowed light | after 16:00 |
+| 3 | **WS‑17** | Meeting room 3.15 | every seat | strong | internal | after 16:00 |
+| 3 | **WS‑18** | Meeting room 3.16 | every seat | strong | internal | after 16:00 |
+| 5 | **WS‑25** | Seminar room 5.15 | some seats | strong | South‑facing, best daylight | after 15:00 |
+| 5 | **WS‑26** | Seminar room 5.16 | some seats | strong | South‑facing, best daylight | after 15:00 |
+| 5 | **WS‑27** | Meeting room 5.17 | every seat | strong | internal | after 16:00 |
+| 5 | **WS‑28** | Meeting room 5.18 | every seat | strong | internal | after 16:00 |
+
+**Summary**
+
+- **Total suitable spaces:** 15  
+- **Power:** all have power at every seat or at least at some seats.  
+- **Wi‑Fi:** all have a *strong* network rating.  
+- **Daylight:** none rely on internal‑only light; glare is avoided (except WS‑25/26, which is fine after 15:00).  
+- **Overheating risk:** minimal – no glare during the recommended times.  
+
+If you need a specific room or want to book one, let me know and I can help you reserve it!
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
+UG-006,Undergraduate students,"I will be in Abacws from 9 a.m. to 5 p.m. Which study area is likely to work best as a base for the day, and when should I expect to need a backup?",unmeasured,failed,,
+UG-008,Undergraduate students,Where can two of us revise together next Tuesday without disturbing quiet-study users or sitting beside a busy corridor?,honest_decline,honest,sensor_data,"I couldn't verify **busy corridor** against **Abacws Building**'s model just now — the existence check didn't complete in time. Rather than risk attributing another sensor's readings to it, I'd rather you ask again in a moment."
+UG-010,Undergraduate students,"I have an online interview next week. Which bookable room and time give me the lowest risk of noise, interruptions, overheating, power problems or poor Wi-Fi?",failed,failed,deliberate,"**No electric_power sensors are modelled with data for this building**, so I can't rank spaces on that. Ask ""what does this building monitor?"" to see what's available — or add the sensors (TTL + registered readings) and this question unlocks.
+
+**Evidence time: unknown.** I can't tell you how old these readings are, so treat the recommendation as unverified rather than current. How quickly this goes out of date is not declared for conditions, so I can't give you a recheck point — check again before relying on it. Switch if: conditions in the space you chose moves outside the range that made it the best option, or the space becomes occupied."
+EA-003,University estates and asset-management teams,"Is each asset linked to the correct parent, engineering system, served area and service dependency?",honest_decline,honest,capability,"**Abacws Building's documents do not answer this.** I searched Asset Engineering Register, Maintenance Log; they are the closest material and none of them contains the answer.
+
+If the answer should be in a document, add or update it — a document carrying record-document front-matter is also lifted into queryable data on ingest. Otherwise the owner of that record holds it."
+EA-006,University estates and asset-management teams,Does the recorded location match where each asset can currently be found at the precision needed for maintenance and risk decisions?,honest_decline,honest,capability,"**Abacws Building's documents do not answer this.** I searched Asset Engineering Register, Condition Survey, Maintenance Log; they are the closest material and none of them contains the answer.
+
+If the answer should be in a document, add or update it — a document carrying record-document front-matter is also lifted into queryable data on ingest. Otherwise the owner of that record holds it."
+EA-010,University estates and asset-management teams,"Which asset-data defects should be corrected first because they could affect an imminent operational, financial or project decision?",honest_decline,honest,sensor_data,"**Asset‑data defects that should be fixed first**
+
+| Property | Why it matters for an imminent decision | Suggested priority |
+|----------|----------------------------------------|--------------------|
+| **serviceScope** | Identifies which department owns or is accountable for an asset.  If this is missing or wrong, operational hand‑over, maintenance scheduling, or cost‑allocation decisions can be delayed or mis‑directed. | **Highest** |
+| **policyOwner** | Shows the team responsible for the policy governing an asset.  Incorrect or absent values can lead to compliance gaps, delayed approvals, or financial penalties. | **High** |
+| **assistanceContact** | Provides the contact to use when an asset is unavailable.  Without a correct contact, emergency responses, service requests, or user support can stall, affecting both operations and user satisfaction. | **High** |
+| **previousLocationText** | Indicates where an asset used to be.  While useful for tracking relocations, it is less critical for immediate operational or financial decisions unless the asset has recently moved. | **Medium** |
+
+**Why these are top‑priority**
+
+- **Operational impact** – serviceScope and assistanceContact directly influence day‑to‑day asset management and incident response.
+- **Financial impact** – policyOwner is tied to cost‑allocation, budgeting, and compliance, which can trigger financial penalties if incorrect.
+- **Project impact** – accurate ownership and contact information are essential for project planning, procurement, and stakeholder coordination.
+
+**Next steps**
+
+1. **Audit** the asset register for missing or inconsistent values in the three high‑priority properties.  
+2. **Correct** any discrepancies by updating the ontology entries with the accurate data.  
+3. **Validate** that the updated values propagate to downstream systems (maintenance scheduling, budgeting tools, etc.).  
+
+If you need help locating the specific assets with these defects, let me know and I can guide you through a SPARQL query to identify them.
+
+---
+*Sources: `Building Ontology`*"
+VE-005,Visitors and event attendees,"May I bring a companion or support person, and do they need separate registration?",honest_decline,computed,metadata,"**Short answer:**  
+Yes, you can usually bring a companion or support person, but whether they need to register separately depends on the event.
+
+---
+
+### What the 12 public events say about companions
+
+| Event | Companion policy | Registration policy |
+|-------|------------------|---------------------|
+| **EVT‑2026‑0041** – Public seminar | Companion may attend **without separate registration** | Walk‑up |
+| **EVT‑2026‑0042** – Open day | Up to two companions per registered visitor; add them **at registration** | Required |
+| **EVT‑2026‑0043** – Research showcase | Companions welcome; lab capacity includes them | Required |
+| **EVT‑2026‑0044** – Industry advisory board | **No companions admitted** (invitation‑only) | Required |
+| **EVT‑2026‑0045** – Postgraduate welcome | Companions welcome | Walk‑up |
+| **EVT‑2026‑0046** – Alumni evening reception | One companion per registered guest | Required |
+| **EVT‑2026‑0047** – Schools outreach workshop | Accompanying staff registered by the visiting school | Required |
+| **EVT‑2026‑0048** – Public lecture | Companion may attend **without separate registration** | Walk‑up |
+| **EVT‑2026‑0049** – Doctoral symposium | Companions **not admitted** to lab sessions | Required |
+| **EVT‑2026‑0050** – Careers fair | Companions welcome | Walk‑up |
+| **EVT‑2026‑0051** – Estates open forum | Companions welcome | Walk‑up |
+| **EVT‑2026‑0052** – Accessibility user panel | Support persons attend **without separate registration** | Required |
+
+---
+
+### Patterns you’ll notice
+
+- **Walk‑up events** (seminars, lectures, career fair, etc.) almost always let companions join without extra paperwork.
+- **Registered‑only events** (open day, alumni reception, outreach workshop, etc.) require you to add companions at the time of your own registration.
+- **Lab‑based or invitation‑only events** may **exclude** companions entirely (e.g., the industry advisory board and doctoral symposium).
+
+---
+
+### Bottom line for you
+
+- **If you’re attending a walk‑up event**: bring a companion, no extra registration needed.
+- **If the event requires registration**: add your companion(s) when you register (up to the limits stated above).
+- **If the event is invitation‑only or lab‑restricted**: check the specific policy—companions may be barred.
+
+Feel free to let me know which particular event you’re interested in, and I can give you the exact companion details for that one!
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?"
