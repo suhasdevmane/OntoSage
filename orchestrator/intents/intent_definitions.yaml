@@ -356,6 +356,23 @@ intents:
     pipeline_group: standalone
     node_method: _observability_node
 
+  - name: readiness_check
+    description: |-
+      Is a SPACE ready to be used for something that is about to happen: "is room 1.06
+      ready for my class?", "give me a readiness check before the seminar", "is the
+      lecture theatre set up?", "what should I know before teaching in 3.13?".
+      Answered from the building's own records with a SOURCE AND A DATE on every line,
+      and with what is NOT known listed as prominently as what is - a room with nothing
+      recorded against it is not a room in good condition.
+      NOT for asking a current reading ("what is the CO2 in 1.06?" -> sensor_data), and
+      NOT for choosing between rooms ("which room is quietest?" -> the register lane).
+    examples:
+      - '"Is room 1.06 ready for my class?"'
+      - '"Give me a readiness check for the seminar room before my session"'
+      - '"What should I know before teaching in 3.13?"'
+    pipeline_group: standalone
+    node_method: _readiness_check_node
+
   - name: privacy_refusal
     description: |-
       INTERNAL refusal lane (deterministic rule only — do not classify into

@@ -334,6 +334,10 @@ def test_precedence_order_is_pinned():
         # cannot see them, and answered "No calibration record found" about a sensor whose
         # record says 2025-11-17.
         "instrument_metrology",
+        # Last, for the same reason as instrument_metrology: it takes questions FROM the
+        # register lanes that answer a third of them, so any rule after it would take them
+        # back. The AV register legitimately matches "ready" and dates nothing.
+        "readiness_check",
     ]
     assert [r.name for r in rc.POST_STAGE_RULES] == ["data_query_promotion"]
 

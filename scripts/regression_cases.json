@@ -340,5 +340,28 @@
       "couldn't rank any spaces",
       "documents do not answer"
     ]
+  },
+  {
+    "group": "readiness",
+    "question": "Is Room 1.06 ready for my class?",
+    "expect_any": [
+      "hearing loop"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ],
+    "note": "Must name the untested hearing loop as a blocker AND date the components."
+  },
+  {
+    "group": "readiness",
+    "question": "Is Room 3.13 ready for my seminar?",
+    "expect_any": [
+      "not known",
+      "no av readiness record"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ],
+    "note": "A room with no AV record must SAY so \u2014 silence would read as working AV."
   }
 ]

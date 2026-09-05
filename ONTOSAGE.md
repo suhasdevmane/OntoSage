@@ -230,6 +230,12 @@ tests/                              # 981 deterministic tests, 8 skipped; see §
 > schema. bldg1 holds 34 register classes and 1,424 records this way. Full guide:
 > [docs/RECORD_DOCUMENTS.md](docs/RECORD_DOCUMENTS.md).
 
+> **A readiness check** joins those registers at a useful moment: before a session, for
+> one room, with a source and a date on every line and the unassessed parts listed as
+> prominently as the assessed ones. Available on demand in chat, and dispatchable ahead
+> of each timetabled session through the existing notification channels (off by default).
+> Full guide: [docs/READINESS_CHECKS.md](docs/READINESS_CHECKS.md).
+
 ### 2.4 LLM / embedding provider
 
 `shared/config.py` is the single switch via `MODEL_PROVIDER`:

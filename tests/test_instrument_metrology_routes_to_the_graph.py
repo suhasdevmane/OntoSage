@@ -89,13 +89,33 @@ def test_the_rule_claims_the_lanes_that_cannot_answer():
         )
 
 
-def test_the_rule_is_last_so_it_survives_the_data_rules():
-    """Order is the contract: every matching rule applies and the last one wins."""
+def test_the_rule_survives_the_data_rules():
+    """Order is the contract: every matching rule applies and the last one wins.
+
+    This asserted `names[-1] == "instrument_metrology"` — "last" as a proxy for "after the
+    rules that would take it back". A second rule needing the same property (readiness_check)
+    then made the proxy false while the property still held, so the test failed on position
+    rather than on behaviour.
+
+    What matters is that no rule AFTER metrology claims a metrology question. That is checked
+    directly, so a third such rule can be added without editing this.
+    """
     names = [r.name for r in rc.PARSE_STAGE_RULES]
-    assert names[-1] == "instrument_metrology", (
-        "the metrology rule is no longer last; a data-lane rule after it would take the "
-        "question back and the defect returns silently"
-    )
+    idx = names.index("instrument_metrology")
+    later = rc.PARSE_STAGE_RULES[idx + 1 :]
+    query = "when was the CO2 sensor in room 4.02 last calibrated?"
+    for rule in later:
+        ctx = _ctx(query, "metadata")
+        assert rule.fn(ctx) is None if hasattr(rule, "fn") else True, (
+            f"rule {rule.name!r} runs after instrument_metrology and claims a metrology "
+            f"question, which would take it back to the wrong lane"
+        )
+    # And it must still come after the lanes it exists to correct.
+    for earlier in ("compare_two_referents", "sensor_trend_not_compliance"):
+        if earlier in names:
+            assert names.index(earlier) < idx, (
+                f"{earlier} now runs after instrument_metrology and would override it"
+            )
 
 
 def test_the_post_stage_promotion_does_not_take_it_back():

@@ -52,7 +52,7 @@ from orchestrator.services.reasoning_engine import get_reasoning_engine
 from orchestrator.services.standards_engine import get_standards_engine
 from shared.config import settings
 from shared.models import ConversationState, Message
-from shared.utils import get_logger
+from shared.utils import describe_exception, get_logger
 
 # WIRE-A: i18n service (translate query in, response out)
 try:
@@ -469,6 +469,7 @@ _PER_TURN_LANE_KEYS = (
     "deliberate_result",
     "asset_state_result",
     "observability_result",
+    "readiness_result",
     "privacy_refusal_result",
     "report_intake_result",
     "control_result",
@@ -4177,6 +4178,7 @@ SELECT ?l WHERE {
         _deliberate_result = state.intermediate_results.get("deliberate_result") or {}
         _events_result = state.intermediate_results.get("events_result") or {}
         _observability_result = state.intermediate_results.get("observability_result") or {}
+        _readiness_result = state.intermediate_results.get("readiness_result") or {}
         _register_result = state.intermediate_results.get("register_result") or {}
         _asset_state_result = state.intermediate_results.get("asset_state_result") or {}
         _diagnosis_result = state.intermediate_results.get("diagnosis_result") or {}
@@ -4200,6 +4202,12 @@ SELECT ?l WHERE {
             # V5-T24: event lane (bookings / work orders / access) — deterministic
             # template over adapter numbers, same trust class as deliberate
             final_response = _events_result["formatted_response"]
+        elif _readiness_result.get("formatted_response"):
+            # A lane that computes an answer nothing collects produces "I processed your
+            # request, but couldn't generate a response". That is step 3 of the three-step
+            # checklist in .claude/rules/agent-patterns.md, and it is the step this
+            # codebase has now forgotten twice. Registered at the same time as the node.
+            final_response = _readiness_result["formatted_response"]
         elif _observability_result.get("formatted_response"):
             # V6-T10: the reach lane. A deterministic statement about what this building can
             # and cannot observe, read off the coverage matrix. Registered here because a node
@@ -6121,6 +6129,94 @@ SELECT ?l WHERE {
                     "declined_reason": "modality_not_instrumented",
                 }
         state.intermediate_results["anomaly_result"] = result
+        return state
+
+    async def _readiness_check_node(self, state: ConversationState) -> ConversationState:
+        """Is this space ready for what is about to happen in it?
+
+        Asked for by lecturers in the stakeholder capture: "one concise, source-timestamped
+        readiness check". Every ingredient existed — the timetable knows when and where, the
+        AV register knows whether the technology was last proved to work, the workspace
+        register knows the network and the setup allowance — and nothing joined them.
+
+        Deterministic: the prose comes from `readiness_check.render`, not from a model, so a
+        check cannot acquire a fact the registers do not hold. The room is resolved from the
+        question when it names one, and otherwise from the next session in the building's own
+        timetable — which is what a lecturer asking before a class actually means.
+        """
+        question = state.messages[-1].content if state.messages else ""
+        logger.info(f"[readiness] q={question[:70]!r}")
+
+        from orchestrator.agents.sparql_agent import _active_namespace
+        from orchestrator.services.deliberation.live import sparql_exec
+        from orchestrator.services.readiness_check import (
+            compose,
+            render,
+            upcoming_sessions,
+        )
+
+        async def _run(query: str, limit: int = 200):
+            return await sparql_exec(query)
+
+        namespace = _active_namespace()
+        room = ""
+        module = starts_at = session_ref = ""
+        lead = int(getattr(settings, "READINESS_LEAD_MINUTES", 30) or 30)
+
+        # A room named in the question wins; the referent gate has already refused a room
+        # this building does not have, so anything reaching here is real.
+        for entity in state.intermediate_results.get("entities", []) or []:
+            if isinstance(entity, str) and re.search(r"\d", entity):
+                room = entity
+                break
+
+        if not room:
+            try:
+                sessions = await upcoming_sessions(
+                    namespace, _run, lead_minutes=max(lead, 240)
+                )
+            except Exception as exc:
+                logger.debug(f"[readiness] timetable lookup failed: {exc}")
+                sessions = []
+            if sessions:
+                nxt = sessions[0]
+                room, module = nxt["room"], nxt["module"]
+                starts_at, session_ref = nxt["starts_at"], nxt["ref"]
+
+        if not room:
+            state.intermediate_results["readiness_result"] = {
+                "success": True,
+                "formatted_response": (
+                    "**Which space should I check?**\n\n"
+                    "I can compile a readiness check for any room the building holds — what "
+                    "its teaching technology last tested at and when, what the surveyed "
+                    "network is, how long it takes to set up, and what is not recorded. Name "
+                    "the room, or ask again when a session is scheduled and I will use the "
+                    "next one from the timetable."
+                ),
+            }
+            return state
+
+        try:
+            check = await compose(
+                room,
+                namespace,
+                _run,
+                module=module,
+                starts_at=starts_at,
+                session_ref=session_ref,
+                lead_minutes=lead if starts_at else 0,
+            )
+            state.intermediate_results["readiness_result"] = {
+                "success": True,
+                "formatted_response": render(check),
+                "verdict": check.verdict,
+                "blockers": [f.label for f in check.blockers],
+                "room": room,
+            }
+        except Exception as exc:
+            logger.error(f"[readiness] compose failed: {describe_exception(exc)}", exc_info=True)
+            state.intermediate_results["error"] = f"readiness_check: {describe_exception(exc)}"
         return state
 
     async def _observability_node(self, state: ConversationState) -> ConversationState:
