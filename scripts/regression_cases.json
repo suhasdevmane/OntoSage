@@ -1,0 +1,255 @@
+[
+  {
+    "group": "departments",
+    "question": "Who do I contact about a broken door closer, and how quickly should they respond?",
+    "expect": [
+      "estates operations",
+      "24"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "departments",
+    "question": "Which departments have no out-of-hours route?",
+    "expect": [
+      "timetabling"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "departments",
+    "question": "Who is my contact for a fault with the network, and what is their response target?",
+    "expect": [
+      "network infrastructure",
+      "8"
+    ],
+    "forbid": [
+      "documents do not answer",
+      "029 2087 4444"
+    ]
+  },
+  {
+    "group": "workspace",
+    "question": "Where can I work for three hours with power, good Wi-Fi and a low risk of noise?",
+    "expect": [
+      "1.25"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "workspace",
+    "question": "Which bookable rooms are suitable for a confidential call?",
+    "expect": [
+      "room"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "assets",
+    "question": "What duty was the Floor 3 air handling unit designed and commissioned for, and what is it delivering?",
+    "expect": [
+      "3.1",
+      "2.4"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "assets",
+    "question": "Which rarely visited plant areas have the longest blind intervals?",
+    "expect": [
+      "aep-017"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "assets",
+    "question": "Which isolation points have never been proved dead?",
+    "expect": [
+      "chilled water pump 1",
+      "water meter"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "assets",
+    "question": "Is each asset linked to the correct parent, engineering system and served area?",
+    "expect": [
+      "24"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "safety",
+    "question": "Which high-potential near misses were never investigated?",
+    "expect": [
+      "inc-2026-007"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "safety",
+    "question": "Which fire safety assets are overdue or cannot be evidenced?",
+    "expect": [
+      "fsa-027"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "safety",
+    "question": "Which hazard controls are overdue for test?",
+    "expect": [
+      "fc-301"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "safety",
+    "question": "Which refuge points have a working communication unit?",
+    "expect": [
+      "4"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "safety",
+    "question": "Which refuge points are defective, and who owns them?",
+    "expect": [
+      "level 3 north stair"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "operations",
+    "question": "Which HVAC systems run outside normal hours, and is each exception approved?",
+    "expect": [
+      "open day"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "operations",
+    "question": "Which permits are open?",
+    "expect": [
+      "3"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "timetable",
+    "question": "Which teaching sessions are scheduled in Room 1.06?",
+    "expect": [
+      "23"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "metrology",
+    "question": "When was the CO2 sensor in Room 5.01 last calibrated?",
+    "expect": [
+      "november 17, 2025"
+    ],
+    "forbid": [
+      "no calibration record"
+    ]
+  },
+  {
+    "group": "metrology",
+    "question": "How often does a CO2 sensor report?",
+    "expect": [
+      "60"
+    ],
+    "forbid": [
+      "30 second"
+    ]
+  },
+  {
+    "group": "metrology",
+    "question": "How many sensors are overdue for calibration?",
+    "expect": [
+      "194"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "counts",
+    "question": "How many CO2 sensors are there?",
+    "expect": [
+      "280"
+    ],
+    "forbid": [
+      "8 unique"
+    ]
+  },
+  {
+    "group": "counts",
+    "question": "How many sensors are there?",
+    "expect": [
+      "272"
+    ],
+    "forbid": []
+  },
+  {
+    "group": "stakeholders",
+    "question": "Which stakeholder groups does DEP-13 serve?",
+    "expect": [
+      "three"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ],
+    "note": "By department CODE, which the register holds. Asking by department NAME needs a join from the department directory that no single-register handover can make \u2014 tracked as CAVEAT-432, not hidden by rewording."
+  },
+  {
+    "group": "honesty",
+    "question": "What is the temperature in Room 9.99?",
+    "expect": [
+      "9.99"
+    ],
+    "forbid": [
+      "degrees",
+      "\u00b0c"
+    ]
+  },
+  {
+    "group": "honesty",
+    "question": "How warm is the swimming pool?",
+    "expect": [
+      "couldn't find"
+    ],
+    "forbid": []
+  }
+]

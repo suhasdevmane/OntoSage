@@ -1,0 +1,79 @@
+[
+  {
+    "group": "workspace",
+    "question": "Where can I work for three hours with power, good Wi-Fi and a low risk of noise?",
+    "expect": [
+      "ws-"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "workspace",
+    "question": "Which bookable rooms are suitable for a confidential call?",
+    "expect": [
+      "room"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "assets",
+    "question": "Which isolation points have never been proved dead?",
+    "expect": [
+      "3"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "safety",
+    "question": "Which refuge points are defective, and who owns them?",
+    "expect": [
+      "ev-003"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "metrology",
+    "question": "When was the CO2 sensor in Room 5.01 last calibrated?",
+    "expect": [
+      "2025-11-17"
+    ],
+    "forbid": [
+      "no calibration record",
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "counts",
+    "question": "How many sensors are there?",
+    "expect": [
+      "2721"
+    ],
+    "forbid": []
+  },
+  {
+    "group": "stakeholders",
+    "question": "Which stakeholder groups are served by the accessibility team?",
+    "expect": [
+      "sh-"
+    ],
+    "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "honesty",
+    "question": "What is the temperature in Room 9.99?",
+    "expect": [
+      "couldn't find"
+    ],
+    "forbid": []
+  }
+]
