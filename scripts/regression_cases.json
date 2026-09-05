@@ -188,11 +188,13 @@
   {
     "group": "metrology",
     "question": "When was the CO2 sensor in Room 5.01 last calibrated?",
-    "expect": [
-      "november 17, 2025"
-    ],
     "forbid": [
       "no calibration record"
+    ],
+    "expect_any": [
+      "2025-11-17",
+      "november 17, 2025",
+      "17 november 2025"
     ]
   },
   {
