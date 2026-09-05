@@ -1237,12 +1237,22 @@ def _r_data_query_promotion(c: _Ctx) -> Optional[str]:
 
     Guard: a countable/structure/building-identity question is metadata, never
     demoted to a per-sensor reading.
+
+    Second guard, same reasoning: a question about the INSTRUMENT is metadata too.
+    "When was the CO2 sensor in Room 5.01 last calibrated?" names a place and a measurable,
+    so `is_data_query` says yes and this promoted it straight back out of the lane the
+    parse-stage rule had just put it in — the answer read "there is no record of a
+    calibration event in this dataset" while the graph held 2025-11-17. The parse rule alone
+    was not enough, and neither is this one alone: both halves are needed, the same shape
+    as CAVEAT-324.
     """
     if c.intent not in ("metadata", "general", "capability", "general_knowledge"):
         return None
     if not c.sr.is_data_query(c.query):
         return None
     if _is_countable_meta(c.ql):
+        return None
+    if _METROLOGY_RE.search(c.query or ""):
         return None
     return "sensor_data"
 
@@ -1506,6 +1516,54 @@ def _r_scenario_boundary(c: _Ctx) -> Optional[str]:
     return "capability" if scenario_question(c.query) else None
 
 
+#: A question about the INSTRUMENT rather than about its readings.
+#:
+#: These properties live in the graph — ontosage:calibratedOn, calibrationDueOn,
+#: samplingIntervalS, archivalIntervalS — and 2,728 sensors now carry them. The data lanes
+#: read time-series rows and cannot see any of it, which produced three wrong answers on the
+#: day the metrology landed:
+#:
+#:   "When was the CO2 sensor in Room 5.01 last calibrated?"
+#:     -> analytics: "No calibration record found" — the graph says 2025-11-17.
+#:   "How often does a CO2 sensor report?"
+#:     -> sensor_data: "every 30 seconds", inferred from the spacing of the rows it
+#:        happened to fetch. The declared interval is 60.
+#:
+#: The first is the serious one: a confident false negative about data the building holds,
+#: which is exactly what contract 4 forbids. Both are the same mistake — measuring the
+#: readings to answer a question about the instrument that produced them.
+_METROLOGY_RE = re.compile(
+    r"\bcalibrat\w*"
+    r"|\bre-?calibrat\w*"
+    r"|\bsampling\s+(?:interval|rate|period)"
+    r"|\b(?:archival|reporting|logging|recording)\s+interval"
+    r"|\bhow\s+often\s+(?:does|do|is|are)\b[^?]*\b(?:report|reports|sample|samples|"
+    r"log|logs|record|records|update|updates)\b",
+    re.IGNORECASE,
+)
+
+#: Lanes this rule may claim from. Deliberately NOT every intent: a register question that
+#: already routed to metadata, a capability decline, or a report intake must keep its route.
+#: Only the lanes that answer from time-series rows are taken, because those are the ones
+#: that cannot see a calibration date however hard they look.
+_METROLOGY_TAKES_FROM = (
+    "sensor_data",
+    "analytics",
+    "trend",
+    "compare",
+    "general",
+    "general_knowledge",
+    "",
+)
+
+
+def _r_instrument_metrology(c: _Ctx) -> Optional[str]:
+    """Calibration and cadence describe the instrument, not the measurement (BUG-427)."""
+    if c.intent not in _METROLOGY_TAKES_FROM:
+        return None
+    return "metadata" if _METROLOGY_RE.search(c.query or "") else None
+
+
 PARSE_STAGE_RULES: Tuple[Rule, ...] = (
     Rule(
         "answer_provenance",
@@ -1685,6 +1743,11 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "anomaly_history_to_events",
         "anomaly questions → persisted detector episodes (V5-T21)",
         _r_anomaly_history_to_events,
+    ),
+    Rule(
+        "instrument_metrology",
+        "calibration / reporting-interval questions describe the INSTRUMENT → metadata",
+        _r_instrument_metrology,
     ),
 )
 
