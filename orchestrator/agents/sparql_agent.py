@@ -583,10 +583,15 @@ Your Answer:"""
     #:     FireSafetyAsset           600
     #:     Department                460
     #:
-    #: 1000 sits above every register that works and below the one that does not. An
+    #: 1300 sits above every register that works and below the one that does not. An
     #: earlier value of 700, chosen from an ESTIMATE rather than these figures, declined
     #: the asset and workspace registers and took the regression probe from 23/25 to 19/25.
-    MAX_RECORD_CELLS = 1000
+    #:
+    #: Raised from 1000 to 1300 on measurement, not on preference: a TWO-register handover
+    #: of workspace plus circulation is 1,267 cells, and three consecutive runs at that size
+    #: returned full answers with no empty completion. 1,558 still fails and is still
+    #: excluded, so the budget continues to separate the two.
+    MAX_RECORD_CELLS = 1300
 
     @staticmethod
     def _pivot_by_subject(bindings: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], List[str]]:
@@ -682,6 +687,41 @@ Your Answer:"""
                 continue
             out.append(low)
         return out[:4]
+
+    @staticmethod
+    def _merge_registers(
+        a: Dict[str, Any],
+        a_columns: List[str],
+        a_label: str,
+        b: Dict[str, Any],
+        b_columns: List[str],
+        b_label: str,
+    ) -> Tuple[Dict[str, Any], List[str]]:
+        """Two registers as one result set, each row saying which register it came from.
+
+        A `register` column is added FIRST and carries the register's human label. Without
+        it the two sets of rows are indistinguishable once they reach the prompt, and a
+        model asked which transition takes longest would happily read a setup time as a
+        travel time — turning a fix for a half-answer into a wrong one.
+
+        Columns are the union, and a row missing a column carries an empty value rather
+        than nothing, so a gap reads as a gap in both registers alike.
+        """
+        columns = ["register"] + [c for c in a_columns if c != "register"]
+        for column in b_columns:
+            if column not in columns:
+                columns.append(column)
+
+        merged: List[Dict[str, Any]] = []
+        for rows, label in ((a["results"]["bindings"], a_label), (b["results"]["bindings"], b_label)):
+            for row in rows:
+                out = {"register": {"type": "literal", "value": label}}
+                for column in columns:
+                    if column == "register":
+                        continue
+                    out[column] = row.get(column) or {"type": "literal", "value": ""}
+                merged.append(out)
+        return {"head": {"vars": columns}, "results": {"bindings": merged}}, columns
 
     async def _instrument_metrology(self, user_query: str) -> Optional[Dict[str, Any]]:
         """Answer a calibration or reporting-interval question from the declaration.
@@ -789,7 +829,16 @@ Your Answer:"""
             "query": query,
             "results": results,
             "error": None,
-            "formatted_response": await self._format_results(results, guidance, query, True),
+            "formatted_response": await self._format_results(
+                # A SMALLER limit than the register path, on purpose. That path is
+                # bounded by MAX_RECORD_CELLS before the query runs; this one is
+                # bounded only by LIMIT 200, and raising its rows to 240 sent a
+                # scoped CO2 fetch of ~200 sensors into one prompt and produced an
+                # empty completion. 40 covers every metrology question seen: an
+                # instance, a handful of a kind, or the aggregate, which is a
+                # single row.
+                results, guidance, query, True, row_limit=40
+            ),
             "standardized": self._standardize_results(results, user_query, query),
             "context": [],
             "analytics_required": False,
@@ -879,17 +928,21 @@ Your Answer:"""
                 "  }\n"
             )
 
-        def _build(scope_filter: str) -> str:
+        def _build_for(which: Any, scope_filter: str) -> str:
+            """The register query for any class, so a second register reuses this one."""
             return (
                 "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
                 "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
                 "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
                 "SELECT ?record ?p ?v WHERE {\n"
                 + scope_filter
-                + f"  ?record a ontosage:{record.local_name} ; ?p ?v .\n"
+                + f"  ?record a ontosage:{which.local_name} ; ?p ?v .\n"
                 "  FILTER(?p != rdf:type)\n"
                 f"}} ORDER BY ?record LIMIT {self.MAX_RECORD_ROWS * 25}"
             )
+
+        def _build(scope_filter: str) -> str:
+            return _build_for(record, scope_filter)
 
         # A ROW-oversized register is scoped up front, because fetching 675 sessions to
         # discover they are 675 is waste. A CELL-oversized one cannot be known until the
@@ -973,16 +1026,85 @@ Your Answer:"""
             f"[sparql] whole-register fetch: {record.local_name} "
             f"({record.instances} instances, {len(columns)} fields) — no SPARQL generated"
         )
+
+        # A SECOND REGISTER, when the question genuinely names two (CAVEAT-432).
+        #
+        # "Which transition needs the larger travel and setup time?" names CirculationTime
+        # (travel) and WorkspaceProfile (setup). Handing over one produced a confident half
+        # answer — "we don't have explicit travel-time data" — from a building holding it in
+        # the register next door. The same shape refused "which stakeholder groups are
+        # served by the accessibility team?".
+        #
+        # NOT BY DENORMALISING. Copying the second register's fields into the first would
+        # answer these questions today and guarantee the two disagree within a year, which
+        # the stakeholder mapping's own header already argues against. The registers stay
+        # separate and BOTH are handed over.
+        #
+        # At most one extra, and only when the budget still fits. Two registers is a
+        # question spanning two things; handing over the building's whole record layer is
+        # the prompt-size failure that already cost an empty completion (BUG-433).
+        second_label = ""
+        try:
+            from orchestrator.services.record_registry import (
+                record_classes as _rc,
+                second_record_class,
+            )
+
+            _second = second_record_class(user_query, await _rc(), record)
+            if _second is not None:
+                s_raw = await self._execute_query(_build_for(_second, ""))
+                s_bindings = (s_raw or {}).get("results", {}).get("bindings", [])
+                if s_bindings:
+                    s_results, s_columns = self._pivot_by_subject(s_bindings)
+                    s_cells = len(s_results["results"]["bindings"]) * max(len(s_columns), 1)
+                    if _cells + s_cells <= self.MAX_RECORD_CELLS:
+                        results, columns = self._merge_registers(
+                            results, columns, record.label or record.local_name,
+                            s_results, s_columns, _second.label or _second.local_name,
+                        )
+                        second_label = _second.label or _second.local_name
+                        logger.info(
+                            f"[sparql] second register {_second.local_name} added "
+                            f"({s_cells} cells, {_cells + s_cells} total) — the question "
+                            f"names both"
+                        )
+                    else:
+                        logger.info(
+                            f"[sparql] second register {_second.local_name} would take the "
+                            f"handover to {_cells + s_cells} cells, over budget — answering "
+                            f"from {record.local_name} alone"
+                        )
+        except Exception as exc:  # pragma: no cover - never lose the primary answer
+            logger.debug(f"[sparql] second-register lookup skipped: {exc}")
         # Formatted by the SAME helpers as a generated query, so a register answer reads
         # like every other answer and inherits whatever formatting the rest of the
         # pipeline gains. Only the QUERY is deterministic here, never the wording.
-        guidance = (
-            f"{user_query}\n\n"
-            f"(These are all {record.instances} {record.label} records this building "
-            "holds. ontosage:recordStatus is the owner's RECORDED state — use it as "
-            "given and never re-derive it from the dates; 'void' is not 'expired'. "
-            "Answer only from these records.)"
-        )
+        if second_label:
+            # SAY THAT THERE ARE TWO. The rows are interleaved in one table, and a model
+            # told nothing would read a setup time as a travel time — a half-answer turned
+            # into a wrong one, which is a worse trade than the gap it was fixing.
+            guidance = (
+                f"{user_query}\n\n"
+                f"(These records come from TWO registers, and the `register` column says "
+                f"which: **{record.label}** and **{second_label}**. They describe different "
+                f"things and their columns are NOT interchangeable — read each value against "
+                f"the register its row names, and say which register each figure came from. "
+                f"EVERY NUMBER YOU GIVE MUST APPEAR VERBATIM IN A ROW ABOVE. Do not estimate, "
+                f"round, average or infer a figure, and do not describe one as 'about' or "
+                f"'approximately' a value that is not there: name the row it comes from. If "
+                f"the rows do not contain a figure the question needs, say that instead of "
+                f"supplying one. ontosage:recordStatus is the owner's RECORDED state; use it "
+                f"as given and never re-derive it from the dates. Answer only from these "
+                f"records.)"
+            )
+        else:
+            guidance = (
+                f"{user_query}\n\n"
+                f"(These are all {record.instances} {record.label} records this building "
+                "holds. ontosage:recordStatus is the owner's RECORDED state — use it as "
+                "given and never re-derive it from the dates; 'void' is not 'expired'. "
+                "Answer only from these records.)"
+            )
         # Provenance for the evidence record. A record LIFTED from a document is
         # `document_derived`, which outranks a sensor reading and loses to authored TTL
         # (V7-T19) — the answer is only as current as the transcription. Where the graph
@@ -1032,7 +1154,9 @@ Your Answer:"""
             "query": query,
             "results": results,
             "error": None,
-            "formatted_response": await self._format_results(results, guidance, query, True),
+            "formatted_response": await self._format_results(
+                results, guidance, query, True, row_limit=self.MAX_RECORD_ROWS * 2
+            ),
             "standardized": self._standardize_results(results, user_query, query),
             "context": [],
             "analytics_required": False,
@@ -3196,9 +3320,19 @@ SELECT DISTINCT ?sensor ?location ?uuid WHERE {{
         return None
 
     async def _format_results(
-        self, results: Dict[str, Any], user_query: str, sparql_query: str, used_template: bool
+        self,
+        results: Dict[str, Any],
+        user_query: str,
+        sparql_query: str,
+        used_template: bool,
+        row_limit: Optional[int] = None,
     ) -> str:
-        """Format SPARQL results into natural language"""
+        """Format SPARQL results into natural language.
+
+        ``row_limit`` overrides the default cap on how many rows reach the prompt. The
+        deterministic register handover passes one, because its whole purpose is that the
+        model sees the WHOLE register — and it was not.
+        """
 
         bindings = results.get("results", {}).get("bindings", [])
         # Deduplicate rows based on concatenated variable values
@@ -3270,8 +3404,19 @@ SELECT DISTINCT ?sensor ?location ?uuid WHERE {{
         )
 
         # Set limit based on user intent (default 10, but higher if "all" requested)
-        # Cap at 100 to prevent context window overflow
-        limit = 100 if show_all else 10
+        # Cap at 100 to prevent context window overflow.
+        #
+        # AN EXPLICIT row_limit WINS (BUG-434). The whole-register handover exists so the
+        # model sees every record and can count, filter and group them — and this capped it
+        # at TEN unless the question happened to contain "all", "list", "full",
+        # "everything" or "complete". Measured consequences: "which departments have no
+        # out-of-hours route?" answered 7 one run and 8 another from a 20-row register, and
+        # a merged two-register handover reported the second register "isn't included in
+        # the snippet you posted" because its rows sat at positions 29 to 49.
+        #
+        # The register path is already bounded by MAX_RECORD_CELLS, so the context-window
+        # protection this cap provides is done there, in the right unit, before the query.
+        limit = row_limit if row_limit is not None else (100 if show_all else 10)
 
         for i, binding in enumerate(bindings[:limit], 1):
             result_text += f"{i}. "

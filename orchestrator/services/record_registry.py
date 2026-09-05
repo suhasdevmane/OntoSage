@@ -281,19 +281,68 @@ def held_record_class(query: str, classes: List[RecordClass]) -> Optional[Record
     Ties break on the class name, never on row order, so the same question routes the same
     way twice.
     """
+    ranked = rank_record_classes(query, classes)
+    return ranked[0][1] if ranked else None
+
+
+#: How strongly a SECOND register must score, relative to the best, to count as genuinely
+#: named by the question rather than incidentally brushed by one shared word.
+#:
+#: 0.5 is deliberately high. "Which transition needs the larger travel and setup time?"
+#: names CirculationTime and WorkspaceProfile at comparable strength — both halves are in
+#: the question. A question that merely mentions "room" while asking about permits scores
+#: the second register far below this, and picking it up would undo the whole point of
+#: scoring: a register lane that hands over two registers whenever any word matches is the
+#: first-match behaviour this function replaced, wearing a different coat.
+SECOND_REGISTER_SHARE = 0.5
+
+
+def rank_record_classes(
+    query: str, classes: List[RecordClass]
+) -> List[Tuple[float, RecordClass]]:
+    """Every class this question scores against, strongest first.
+
+    Ties break on class name, never on row order, so the same question ranks the same way
+    twice — the property `held_record_class` was written to guarantee and which this
+    function now owns for both callers.
+    """
     low = f" {(query or '').lower()} "
-    scored = []
+    scored: List[Tuple[float, RecordClass]] = []
     for record in classes:
         total = sum(_term_score(term, low) for term in record.terms)
         if total > 0:
             scored.append((total, record))
-    if not scored:
+    return sorted(scored, key=lambda pair: (-pair[0], pair[1].local_name))
+
+
+def second_record_class(
+    query: str, classes: List[RecordClass], primary: RecordClass
+) -> Optional[RecordClass]:
+    """A SECOND register the question names, or None (CAVEAT-432).
+
+    A question can be about two registers at once and be unanswerable from either alone:
+
+        "Which transition needs the larger travel and setup time?"
+            travel  -> CirculationTime
+            setup   -> WorkspaceProfile
+
+    Handing over one produced a confident half-answer — "we don't have explicit travel-time
+    data" — from a building that holds it in the register next door.
+
+    Deliberately at most ONE extra, and only when it scores at least half the primary.
+    Two registers is a question spanning two things; three is a question the scorer has
+    failed to understand, and handing over the building's whole record layer would be the
+    prompt-size failure BUG-433 already cost an empty completion.
+    """
+    ranked = rank_record_classes(query, classes)
+    if len(ranked) < 2:
         return None
-    best = max(total for total, _ in scored)
-    return sorted(
-        (record for total, record in scored if total == best),
-        key=lambda r: r.local_name,
-    )[0]
+    best_score = ranked[0][0]
+    for score, record in ranked[1:]:
+        if record.local_name == primary.local_name:
+            continue
+        return record if score >= best_score * SECOND_REGISTER_SHARE else None
+    return None
 
 
 #: Terms for every record class the ontology DEFINES, used to NAME what a building is
