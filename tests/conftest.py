@@ -129,3 +129,126 @@ storage:
     cfg_file = tmp_path / "test_building_config.yaml"
     cfg_file.write_text(cfg_content)
     return str(cfg_file)
+
+
+# ── Network guard for the unit suite (CAVEAT-408) ──────────────────────────────────────
+#
+# `pytest -m unit` is documented as the fast, OFFLINE suite. It was not one. Confirmed from
+# a run log: `httpx POST https://ollama.com/v1/chat/completions` during collection of the
+# unit selection. So a green unit run was a function of `.env` — evidence about one machine
+# and none about another — and a provider switch read as a code regression
+# (test_capability_bare_building failed the moment the provider moved to the hosted model,
+# because a BETTER answer took a different path).
+#
+# The guard blocks OUTBOUND, NON-LOOPBACK connections while a unit test runs, and names the
+# test in the failure. Loopback is allowed: a test that talks to 127.0.0.1 is exercising a
+# local service and is a different (also worth fixing) problem, and blocking it here would
+# conflate the two.
+#
+# ONE ESCAPE HATCH, deliberately explicit: `@pytest.mark.allow_network`. A test that needs
+# the network is an integration test and should say so in its marks rather than in its
+# behaviour.
+#
+# Enabled by default. Set ONTOSAGE_ALLOW_UNIT_NETWORK=1 to measure what the guard would
+# catch without failing the run.
+
+_ALLOW_UNIT_NETWORK = os.environ.get("ONTOSAGE_ALLOW_UNIT_NETWORK", "").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+
+_LOOPBACK_HOSTS = {"127.0.0.1", "::1", "localhost", "0.0.0.0", ""}
+
+
+class UnitTestNetworkAccess(AssertionError):
+    """A test marked `unit` tried to reach the network."""
+
+
+@pytest.fixture(autouse=True)
+def _no_network_in_unit_tests(request, monkeypatch):
+    """Fail a unit test that opens a non-loopback socket."""
+    if _ALLOW_UNIT_NETWORK:
+        return
+    if "unit" not in request.node.keywords:
+        return
+    if "allow_network" in request.node.keywords:
+        return
+
+    import socket
+
+    real_connect = socket.socket.connect
+    real_connect_ex = socket.socket.connect_ex
+
+    def _host_of(address):
+        if isinstance(address, tuple) and address:
+            return str(address[0])
+        return ""
+
+    def _guarded(self, address, *args, **kwargs):
+        host = _host_of(address)
+        if host not in _LOOPBACK_HOSTS:
+            raise UnitTestNetworkAccess(
+                f"{request.node.nodeid} is marked `unit` but opened a connection to "
+                f"{host}. The unit suite is documented as offline; a test that needs the "
+                f"network belongs in `integration`, or must stub its client. If it "
+                f"genuinely needs it, mark it @pytest.mark.allow_network and say why."
+            )
+        return real_connect(self, address, *args, **kwargs)
+
+    def _guarded_ex(self, address, *args, **kwargs):
+        host = _host_of(address)
+        if host not in _LOOPBACK_HOSTS:
+            raise UnitTestNetworkAccess(
+                f"{request.node.nodeid} is marked `unit` but opened a connection to {host}."
+            )
+        return real_connect_ex(self, address, *args, **kwargs)
+
+    monkeypatch.setattr(socket.socket, "connect", _guarded)
+    monkeypatch.setattr(socket.socket, "connect_ex", _guarded_ex)
+
+
+def pytest_collection(session):
+    """Report any outbound connection made while COLLECTING tests (CAVEAT-408).
+
+    The original observation was a `POST https://ollama.com/v1/chat/completions` **during
+    collection of the unit selection** — i.e. at import time, before any test ran. A
+    per-test fixture cannot see that: by the time it installs, the call has happened.
+
+    This reports rather than fails. Collection covers every selected test, including
+    integration ones, so failing here would block a legitimate integration run for a
+    problem that belongs to a specific module. The point is to make an import-time call
+    visible, since inspection is exactly what let this sit unmeasured.
+    """
+    if _ALLOW_UNIT_NETWORK:
+        return
+    import socket
+
+    real_connect = socket.socket.connect
+    offenders = []
+
+    def _watch(self, address, *args, **kwargs):
+        host = address[0] if isinstance(address, tuple) and address else ""
+        if str(host) not in _LOOPBACK_HOSTS:
+            offenders.append(str(host))
+        return real_connect(self, address, *args, **kwargs)
+
+    socket.socket.connect = _watch
+    session.config._ontosage_collect_offenders = offenders
+
+    def _restore():
+        socket.socket.connect = real_connect
+
+    session.config.add_cleanup(_restore)
+
+
+def pytest_collection_finish(session):
+    offenders = getattr(session.config, "_ontosage_collect_offenders", None)
+    if offenders:
+        unique = sorted(set(offenders))
+        session.config.stash  # noqa: B018 - touch to keep the attribute lookup honest
+        print(
+            f"\n[network] {len(offenders)} outbound connection(s) during COLLECTION "
+            f"to {unique}. Test collection must not reach the network: it makes the "
+            f"suite's result a function of the environment (CAVEAT-408)."
+        )
