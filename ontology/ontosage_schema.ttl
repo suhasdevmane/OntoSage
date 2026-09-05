@@ -2670,7 +2670,10 @@ ontosage:AssetEngineeringProfile ontosage:layTerms "design duty", "commissioned 
     "downstream dependencies", "asset tag", "asset tags", "tag consistency",
     "plant item", "plant items", "commissioning record",
     "services in the void", "riser contents", "blind interval", "rarely visited",
-    "replacement value", "irreplaceable", "continuity critical", "criticality" .
+    "replacement value", "irreplaceable", "continuity critical", "criticality",
+    "parent asset", "engineering system", "engineering systems", "served area",
+    "serves area", "asset hierarchy", "asset chain", "service dependency",
+    "service dependencies", "location verified", "recorded location" .
 
 
 ontosage:IncidentRecord rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
@@ -2837,3 +2840,24 @@ ontosage:EvacuationProvision ontosage:layTerms "peep", "peeps",
     "personal emergency evacuation plan", "refuge", "refuge point", "refuge points",
     "evacuation chair", "evacuation chairs", "assisted escape", "assisted evacuation",
     "communication unit", "how do i get out", "evacuation provision" .
+
+
+ontosage:parentAsset a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "parent asset"@en ;
+    rdfs:comment "The asset this one is a part of, if any. Blank for a top-level plant item. Asset-management questions are about the CHAIN — is each asset linked to the correct parent, system, served area and dependency — and a register of unconnected items cannot answer one of them."@en .
+
+ontosage:engineeringSystem a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "engineering system"@en ;
+    rdfs:comment "The system this asset belongs to: chilled water, ventilation, LV distribution, fire, transport, metering. The grouping an estates or M&E question uses before it names any individual item."@en .
+
+ontosage:servesArea a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "serves area"@en ;
+    rdfs:comment "The part of the building this asset serves, which is distinct from where it SITS. An AHU in a ground-floor plant room serving Level 3 is the ordinary case, and conflating the two sends an engineer to the wrong floor."@en .
+
+ontosage:locationVerifiedOn a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:date ;
+    rdfs:label "location verified on"@en ;
+    rdfs:comment "When the recorded location was last confirmed against the asset's actual position. A location nobody has checked is a record, not a fact — and 'does the recorded location match where the asset can currently be found?' is a question about this field, not about the location field."@en .

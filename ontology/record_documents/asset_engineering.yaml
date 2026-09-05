@@ -87,6 +87,25 @@ columns:
   tag_maintenance:
     predicate: ontosage:tagInMaintenance
     datatype: xsd:string
+  parent_asset:
+    # Blank for a top-level item. The CHAIN is what an asset-management question asks about.
+    predicate: ontosage:parentAsset
+    datatype: xsd:string
+  engineering_system:
+    predicate: ontosage:engineeringSystem
+    datatype: xsd:string
+    required: true
+  serves_area:
+    # Distinct from `location`, which is where the asset SITS. An AHU in a ground-floor
+    # plant room serving Level 3 is the ordinary case; conflating them sends an engineer
+    # to the wrong floor.
+    predicate: ontosage:servesArea
+    datatype: xsd:string
+    required: true
+  location_verified_on:
+    # A location nobody has checked is a record, not a fact.
+    predicate: ontosage:locationVerifiedOn
+    datatype: xsd:date
   criticality:
     predicate: ontosage:criticality
     datatype: xsd:string
