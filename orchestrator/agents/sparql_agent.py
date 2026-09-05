@@ -570,6 +570,24 @@ Your Answer:"""
     #: over; a building with thousands of bookings will fall back, which is correct.
     MAX_RECORD_ROWS = 120
 
+    #: A whole-register handover is paid for in rows TIMES columns, not rows alone. The
+    #: stakeholder register is 82 rows — comfortably inside the 120-row limit — and returned
+    #: an EMPTY COMPLETION, so the user got nothing at all.
+    #:
+    #: SET FROM MEASUREMENT, not from a guess. The pivoted size of every register this
+    #: building holds:
+    #:
+    #:     StakeholderGroup        1,558   <- the only one that fails
+    #:     AssetEngineeringProfile   816
+    #:     WorkspaceProfile          784
+    #:     FireSafetyAsset           600
+    #:     Department                460
+    #:
+    #: 1000 sits above every register that works and below the one that does not. An
+    #: earlier value of 700, chosen from an ESTIMATE rather than these figures, declined
+    #: the asset and workspace registers and took the regression probe from 23/25 to 19/25.
+    MAX_RECORD_CELLS = 1000
+
     @staticmethod
     def _pivot_by_subject(bindings: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], List[str]]:
         """Turn ?record/?p/?v triples into one binding row per record.
@@ -822,33 +840,75 @@ Your Answer:"""
         # does not bring the set under the limit, this still returns None and the normal
         # path runs, because handing over an arbitrary 120 of 675 sessions would answer
         # "which room has the most" from a quarter of the data and look authoritative.
-        scope_filter = ""
-        if record.instances > self.MAX_RECORD_ROWS:
-            tokens = self._scope_tokens(user_query)
+        # ROWS ARE NOT THE COST. COLUMNS ARE, TOO.
+        #
+        # MAX_RECORD_ROWS bounded the handover by row count while the prompt is paid in
+        # rows TIMES columns. The stakeholder register is 82 rows — comfortably inside the
+        # 120-row limit — and 11 columns, so 902 values went into one prompt and the model
+        # returned an EMPTY COMPLETION. The user got nothing at all, which is worse than
+        # either a scoped answer or an honest decline.
+        #
+        # Measured across this building's registers: stakeholder 902 cells, asset
+        # engineering 624, workspace 560, fire safety 390. Only the first fails, and only
+        # a cell budget separates it from the rest — a row limit cannot, because the
+        # failing register has the FEWEST columns of the four.
+        #
+        # This is the same shape as several defects already in this tracker: a limit
+        # expressed in one unit against a requirement expressed in another.
+        # THE PRE-CHECK IS THE ROW COUNT ONLY. An estimate of cells from the mapping's
+        # declared columns understates the real width by about 1.7x, because every lifted
+        # record also carries provenance predicates the mapping never mentions. Gating on
+        # that estimate declined two registers that work — measured, 19/25 on the regression
+        # probe against a 23/25 baseline. The real size is known one query later and is
+        # checked there; guessing it here only produced a confident wrong answer about how
+        # big something was going to be.
+        tokens = self._scope_tokens(user_query) or self._measurand_tokens(user_query)
+
+        def _scope_clause() -> str:
             if not tokens:
-                return None
+                return ""
             clauses = " || ".join(
-                f'CONTAINS(LCASE(STR(?v)), "{self._escape_literal(t)}")' for t in tokens
+                f'CONTAINS(LCASE(STR(?sv)), "{self._escape_literal(t)}")' for t in tokens
             )
-            scope_filter = (
+            return (
                 "  {\n"
                 "    SELECT DISTINCT ?record WHERE {\n"
                 f"      ?record a ontosage:{record.local_name} ; ?sp ?sv .\n"
-                f"      FILTER({clauses.replace('?v', '?sv')})\n"
+                f"      FILTER({clauses})\n"
                 f"    }} LIMIT {self.MAX_RECORD_ROWS}\n"
                 "  }\n"
             )
 
-        query = (
-            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
-            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
-            "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
-            "SELECT ?record ?p ?v WHERE {\n"
-            + scope_filter
-            + f"  ?record a ontosage:{record.local_name} ; ?p ?v .\n"
-            "  FILTER(?p != rdf:type)\n"
-            f"}} ORDER BY ?record LIMIT {self.MAX_RECORD_ROWS * 25}"
-        )
+        def _build(scope_filter: str) -> str:
+            return (
+                "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+                "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
+                "SELECT ?record ?p ?v WHERE {\n"
+                + scope_filter
+                + f"  ?record a ontosage:{record.local_name} ; ?p ?v .\n"
+                "  FILTER(?p != rdf:type)\n"
+                f"}} ORDER BY ?record LIMIT {self.MAX_RECORD_ROWS * 25}"
+            )
+
+        # A ROW-oversized register is scoped up front, because fetching 675 sessions to
+        # discover they are 675 is waste. A CELL-oversized one cannot be known until the
+        # rows come back, so it is fetched, measured, and RE-FETCHED scoped — one extra
+        # query, only for a register that needs it.
+        #
+        # Without the retry the cell check was a dead end: the stakeholder register (82
+        # rows, under the row limit) was fetched whole, measured at 1,640 cells, and
+        # declined WITHOUT EVER BEING SCOPED. "Which stakeholder groups does DEP-13 serve?"
+        # names a department code that narrows it to three records, and the answer was
+        # still "no such records appear in the triples supplied".
+        oversized = record.instances > self.MAX_RECORD_ROWS
+        if oversized and not tokens:
+            logger.info(
+                f"[sparql] {record.local_name} is too large to hand over whole and the "
+                f"question names nothing to scope by — falling back to a generated query"
+            )
+            return None
+        query = _build(_scope_clause() if oversized else "")
         try:
             raw = await self._execute_query(query)
         except Exception as exc:
@@ -866,6 +926,48 @@ Your Answer:"""
         # grouping those by subject to count a status is exactly the bookkeeping a
         # language model is worst at. Pivoting costs nothing and removes the need.
         results, columns = self._pivot_by_subject(bindings)
+
+        # SIZE THE PIVOTED RESULT, in the same unit the budget is written in.
+        #
+        # An estimate decides whether to TRY; the result decides whether to HAND OVER. The
+        # scope only helps if it narrows, and it does not always: "which stakeholder groups
+        # are served by the accessibility team?" names no identifier, so the scope falls
+        # back to content words and "groups" matches nearly every row — the prompt stayed as
+        # large as before and the model returned an EMPTY COMPLETION.
+        #
+        # MEASURED AFTER THE PIVOT, deliberately. A first version of this check counted RAW
+        # BINDINGS, which are one per triple and include the provenance predicates every
+        # lifted record carries — so a 24-row register measured 792 against a 624 estimate
+        # and four working answers were declined into the generated-query path. Comparing an
+        # estimate in one unit against a measurement in another is the same mistake the
+        # budget itself was introduced to fix, made one line further down.
+        _cells = len(results["results"]["bindings"]) * max(len(columns), 1)
+        if _cells > self.MAX_RECORD_CELLS and not oversized and tokens:
+            # Too wide to hand over whole, and the question DOES name something. Re-fetch
+            # scoped rather than declining a register that can answer once narrowed.
+            logger.info(
+                f"[sparql] {record.local_name} is {_cells} cells whole — re-fetching scoped "
+                f"by {', '.join(tokens)}"
+            )
+            try:
+                query = _build(_scope_clause())
+                raw = await self._execute_query(query)
+            except Exception as exc:
+                logger.warning(f"[sparql] scoped re-fetch failed, falling back: {exc}")
+                return None
+            bindings = (raw or {}).get("results", {}).get("bindings", [])
+            if not bindings:
+                return None
+            results, columns = self._pivot_by_subject(bindings)
+            _cells = len(results["results"]["bindings"]) * max(len(columns), 1)
+
+        if _cells > self.MAX_RECORD_CELLS:
+            logger.info(
+                f"[sparql] {record.local_name} still holds {_cells} cells after scoping, over "
+                f"the {self.MAX_RECORD_CELLS} budget — falling back to a generated query "
+                f"rather than risking an empty completion"
+            )
+            return None
 
         logger.info(
             f"[sparql] whole-register fetch: {record.local_name} "
