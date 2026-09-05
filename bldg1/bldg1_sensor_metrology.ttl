@@ -16709,7 +16709,3 @@ bldg:feed_outside_weather_wind
     ontosage:calibrationDueOn "2026-07-27"^^xsd:date ;
     ontosage:calibrationMethod "volumetric verification" .
 
-bldg:feed_synthetic_timetable
-    ontosage:samplingIntervalS 300 ;
-    ontosage:archivalIntervalS 300 .
-

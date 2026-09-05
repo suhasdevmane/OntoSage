@@ -494,7 +494,7 @@ class ReferentResolver:
         suggestions: List[str] = []
         if head_exists:
             try:
-                suggestions = await self._suggest_terms([typed.head], namespace)
+                suggestions = await self._suggest_terms([typed.head], namespace, typed.kind)
             except Exception as e:
                 logger.warning(f"[referent_resolver] typed suggestion lookup failed: {e}")
 
@@ -549,16 +549,48 @@ class ReferentResolver:
         )
         return len(_bindings(await self._exec(q))) > 0
 
-    async def _suggest_terms(self, terms: List[str], namespace: str) -> List[str]:
-        """Up to 5 real entity names of the same kind (e.g. the floors that DO exist)."""
+    #: The Brick root a suggestion must sit beneath, per referent kind. A suggestion is
+    #: offered as "what this building does have" INSTEAD of the thing asked about, so it
+    #: has to be the same kind of thing.
+    _SUGGEST_ROOT = {
+        KIND_SPACE: "https://brickschema.org/schema/Brick#Location",
+        KIND_FLOOR: "https://brickschema.org/schema/Brick#Location",
+        KIND_EQUIPMENT: "https://brickschema.org/schema/Brick#Equipment",
+    }
+
+    async def _suggest_terms(
+        self, terms: List[str], namespace: str, kind: str = ""
+    ) -> List[str]:
+        """Up to 5 real entity names of the same kind (e.g. the floors that DO exist).
+
+        KIND-FILTERED. Without it this matched any entity whose name merely CONTAINS the
+        term, and every suggestion it produced was the wrong kind of thing — measured live:
+
+            "verified corridor" -> "CCTV Corridor F1, CCTV Corridor F2, ..."   (cameras)
+            "lift lobby"        -> "CHK-301, CHK-302, CHK-303"                 (checkpoints)
+            "room"              -> "Alcohol Vapor MQ3 Gas Sensor 5.01, ..."    (sensors)
+
+        The sentence it feeds reads "What this building does have: ...", offered in place of
+        the space that was asked for. Answering a question about a corridor with a list of
+        cameras named after corridors is not a smaller answer, it is a different one — and
+        it makes the decline look careless in exactly the moment the system is being honest.
+
+        The kind is dropped when unknown, which keeps the old behaviour rather than
+        returning nothing.
+        """
         t = (terms[0] if terms else "").lower()
         if not t:
             return []
+        root = self._SUGGEST_ROOT.get(kind, "")
+        kind_clause = (
+            f"  ?cls rdfs:subClassOf* <{root}> .\n" if root else ""
+        )
         q = (
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
             "SELECT DISTINCT ?s WHERE {\n"
             "  ?s a ?cls .\n"  # anchor on typed entities — fast, same reason as _exists_terms
-            "  OPTIONAL { ?s rdfs:label ?l }\n"
+            + kind_clause
+            + "  OPTIONAL { ?s rdfs:label ?l }\n"
             f'  FILTER(STRSTARTS(STR(?s), "{namespace}"))\n'
             # Local name, not full URI — a term that lives in the namespace itself
             # would otherwise match every subject.
