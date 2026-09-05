@@ -2575,7 +2575,10 @@ ontosage:WorkspaceProfile ontosage:layTerms "study space", "study spaces", "some
     "somewhere to study", "quiet space", "quiet study", "group study", "workspace",
     "workspaces", "place to work", "place to study", "where can i work",
     "where can i study", "study area", "study areas", "desk space", "seat",
-    "somewhere quiet", "breakout space", "common room", "hot desk" .
+    "somewhere quiet", "breakout space", "common room", "hot desk",
+    "recovery time", "recovery minutes", "setup time", "setup minutes",
+    "how long to recover", "time to recover", "recover after", "to recover",
+    "recovery", "room readiness" .
 
 
 ontosage:AssetEngineeringProfile rdfs:subClassOf ontosage:Record ; a owl:Class ;
@@ -2861,3 +2864,50 @@ ontosage:locationVerifiedOn a owl:DatatypeProperty ;
     rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:date ;
     rdfs:label "location verified on"@en ;
     rdfs:comment "When the recorded location was last confirmed against the asset's actual position. A location nobody has checked is a record, not a fact — and 'does the recorded location match where the asset can currently be found?' is a question about this field, not about the location field."@en .
+
+
+ontosage:CirculationTime rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Circulation time"@en ;
+    rdfs:comment "How long it takes to get from one part of the building to another, by the walking route and by the step-free route separately. Added because a lecturer with back-to-back classes in different rooms is asking a question the building could not answer at all: it knew where both rooms were and nothing about the journey between them. Floor-to-floor rather than room-to-room, because a room-pair matrix grows as the square of the room count and the floor change is what dominates the time."@en ;
+    skos:example "which transition needs the larger travel allowance? -> CirculationTime between the two floors, walking and step-free." .
+
+ontosage:fromFloor a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CirculationTime ; rdfs:range xsd:string ;
+    rdfs:label "from floor"@en .
+
+ontosage:toFloor a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CirculationTime ; rdfs:range xsd:string ;
+    rdfs:label "to floor"@en .
+
+ontosage:walkingMinutes a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CirculationTime ; rdfs:range xsd:decimal ;
+    rdfs:label "walking minutes"@en ;
+    rdfs:comment "Typical time by stairs at an unhurried pace, between the usual teaching spaces on each floor."@en .
+
+ontosage:stepFreeMinutes a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CirculationTime ; rdfs:range xsd:decimal ;
+    rdfs:label "step-free minutes"@en ;
+    rdfs:comment "The same journey using the lift, INCLUDING typical wait. Longer than the walking time on most floor pairs, which is the point: a step-free route is not the walking route with a lift substituted, and planning a transition on the walking figure sends a wheelchair user late."@en .
+
+ontosage:dependsOnLift a owl:DatatypeProperty ;
+    rdfs:domain ontosage:CirculationTime ; rdfs:range xsd:boolean ;
+    rdfs:label "depends on lift"@en ;
+    rdfs:comment "Whether the step-free time assumes the lift. When it fails, every journey marked true has no step-free alternative at all rather than a slower one."@en .
+
+ontosage:CirculationTime ontosage:layTerms "travel time", "travel times", "how long to get",
+    "walking time", "transition time", "between floors", "floor to floor",
+    "back to back", "back-to-back", "get from one room to another",
+    "time between rooms", "changeover", "changeover time",
+    "how long does it take", "take to get", "stairs", "by the stairs",
+    "floor pairs", "slower than the stairs", "journey time", "vertical travel" .
+
+
+ontosage:setupMinutes a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:decimal ;
+    rdfs:label "setup minutes"@en ;
+    rdfs:comment "Time needed in the room before a session can start — logging in, connecting, arranging. Separate from travel because they are paid by different people at different moments, and a transition that fits the travel can still fail on the setup."@en .
+
+ontosage:recoveryMinutes a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:decimal ;
+    rdfs:label "recovery minutes"@en ;
+    rdfs:comment "How long after a full session the room's conditions return to their normal range. The field that makes 'did the previous class leave too little recovery time before mine?' a calculation against the timetable rather than a guess."@en .
