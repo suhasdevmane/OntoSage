@@ -8,7 +8,7 @@ sys.path.append("/app")
 
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 from zoneinfo import ZoneInfo
 
@@ -287,6 +287,16 @@ Your Answer:"""
             deterministic = await self._whole_register(state, user_query)
             if deterministic is not None:
                 return deterministic
+
+            # An instrument's calibration and cadence are declared, not inferred (BUG-427).
+            # Routing now sends these questions here, but a generated query asked for sensor
+            # names and UUIDs and the answer came back "the data I have only lists the
+            # sensor itself — it doesn't include a calibration timestamp" about a sensor
+            # whose record says 2025-11-17. The properties are narrow and named; asking for
+            # them directly is more reliable than hoping they are retrieved into context.
+            metrology = await self._instrument_metrology(user_query)
+            if metrology is not None:
+                return metrology
 
             # Attempt deterministic template first (avoids LLM latency for common patterns)
             context = await self._retrieve_context(user_query)
@@ -623,6 +633,151 @@ Your Answer:"""
                 if low not in cls._SCOPE_STOPWORDS and low not in tokens:
                     tokens.append(low)
         return tokens[:6]
+
+    #: Words that name no measurand. Every metrology question contains several of them, and
+    #: a filter matching "sensor" matches the whole graph and scopes nothing.
+    _GENERIC_INSTRUMENT_WORDS = frozenset(
+        """sensor sensors device devices instrument instruments point points meter meters
+        stream streams report reports reporting record records recording log logs logging
+        was were been being will shall may might must
+        sample samples sampling interval intervals calibrated calibration calibrations
+        recalibration overdue due date dates last next often does the a an of in for is are
+        to and or on with by which what how many when where who this that from at as it its
+        be has have do any all show me my our list tell please can could would should not
+        no year years month months week weeks day days building""".split()
+    )
+
+    @classmethod
+    def _measurand_tokens(cls, user_query: str) -> List[str]:
+        """What the question is asking ABOUT, when it names a kind rather than an instance.
+
+        "How often does a CO2 sensor report?" -> ["co2"]. Matched against the sensor IRI,
+        which carries the class name in every building this repo has seen. Returns [] when
+        the question names no measurand, and the caller then answers building-wide.
+        """
+        import re as _re
+
+        out: List[str] = []
+        for word in _re.findall(r"[A-Za-z][A-Za-z0-9]{1,}", user_query or ""):
+            low = word.lower()
+            if len(low) < 3 or low in cls._GENERIC_INSTRUMENT_WORDS or low in out:
+                continue
+            out.append(low)
+        return out[:4]
+
+    async def _instrument_metrology(self, user_query: str) -> Optional[Dict[str, Any]]:
+        """Answer a calibration or reporting-interval question from the declaration.
+
+        Returns None when the question is not about an instrument's metrology, so the
+        normal path runs untouched.
+
+        WHY DETERMINISTIC. The properties are few and named — ontosage:calibratedOn,
+        calibrationDueOn, calibrationMethod, samplingIntervalS, archivalIntervalS — and a
+        generated query has to guess that they exist before it can ask for them. It did not:
+        routed correctly to this lane, the LLM asked for sensor names and UUIDs, and the
+        answer was "it doesn't include a calibration timestamp" about a sensor carrying one.
+
+        The question's own identifiers scope the result, exactly as an oversized register is
+        scoped. Without one the answer is the building-wide picture, which is what "how many
+        sensors are overdue for calibration?" is actually asking.
+        """
+        from orchestrator.services.routing_contract import _METROLOGY_RE
+
+        if not _METROLOGY_RE.search(user_query or ""):
+            return None
+
+        # An identifier scopes to an INSTANCE ("Room 5.01"); a measurand scopes to a KIND
+        # ("a CO2 sensor"). Both are scopes and the question uses whichever it means.
+        #
+        # Identifiers alone were not enough: "How often does a CO2 sensor report?" names no
+        # instance, so the query ran building-wide with a LIMIT and returned the first 200
+        # sensors in IRI order — every one of them an air-handling point — and the answer
+        # was "none of the listed URIs contain a CO2 sensor". Correct about its input and
+        # useless, from a graph holding 280 of them.
+        tokens = self._scope_tokens(user_query)
+        if not tokens:
+            tokens = self._measurand_tokens(user_query)
+        scope = ""
+        if tokens:
+            clauses = " || ".join(
+                f'CONTAINS(LCASE(STR(?sensor)), "{self._escape_literal(t)}")'
+                for t in tokens
+            )
+            scope = f"  FILTER({clauses})\n"
+
+        # AN UNSCOPED QUESTION IS COUNTED, NOT LISTED.
+        #
+        # "How many sensors are overdue for calibration?" names nothing to scope by, and
+        # 1,929 sensors declare a calibration date. Handing back the first 200 in IRI order
+        # and letting the model count them would produce a confident number computed from a
+        # tenth of the data — the exact failure BUG-370 and BUG-191 cost this project twice.
+        # The graph can count; so it counts.
+        if not scope:
+            today = datetime.now(timezone.utc).date().isoformat()
+            query = (
+                "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
+                "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
+                "SELECT (COUNT(DISTINCT ?s) AS ?sensors_with_declared_interval)\n"
+                "       (COUNT(DISTINCT ?c) AS ?sensors_with_a_calibration_regime)\n"
+                "       (COUNT(DISTINCT ?overdue) AS ?calibrations_overdue) WHERE {\n"
+                "  ?s ontosage:archivalIntervalS ?iv .\n"
+                "  OPTIONAL { ?s ontosage:calibrationDueOn ?due . BIND(?s AS ?c)\n"
+                f'    OPTIONAL {{ FILTER(?due < "{today}"^^xsd:date) BIND(?s AS ?overdue) }}\n'
+                "  }\n"
+                "}"
+            )
+        else:
+            query = (
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+                "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
+                "SELECT ?sensor ?calibrated_on ?calibration_due_on ?calibration_method "
+                "?sampling_interval_s ?archival_interval_s WHERE {\n"
+                "  ?sensor ontosage:archivalIntervalS ?archival_interval_s .\n"
+                "  OPTIONAL { ?sensor ontosage:samplingIntervalS ?sampling_interval_s }\n"
+                "  OPTIONAL { ?sensor ontosage:calibratedOn ?calibrated_on }\n"
+                "  OPTIONAL { ?sensor ontosage:calibrationDueOn ?calibration_due_on }\n"
+                "  OPTIONAL { ?sensor ontosage:calibrationMethod ?calibration_method }\n"
+                + scope
+                + "} ORDER BY ?sensor LIMIT 200"
+            )
+        try:
+            raw = await self._execute_query(query)
+        except Exception as exc:
+            logger.warning(f"[sparql] metrology fetch failed, falling back: {exc}")
+            return None
+        bindings = (raw or {}).get("results", {}).get("bindings", [])
+        if not bindings:
+            return None  # nothing declared — let the normal path answer honestly
+
+        logger.info(
+            f"[sparql] instrument metrology: {len(bindings)} sensor(s) "
+            f"{'scoped by ' + ', '.join(tokens) if tokens else 'building-wide'}"
+        )
+        guidance = (
+            f"{user_query}\n\n"
+            "(These are the instrument's DECLARED metrology, read from the building's "
+            "ontology. sampling_interval_s and archival_interval_s are in SECONDS and are "
+            "what the instrument is declared to do — never infer a reporting interval from "
+            "the spacing of readings, which reflects whatever window happened to be "
+            "fetched. A blank calibration field means the stream is a state or contact "
+            "signal that is verified rather than calibrated, not that a calibration is "
+            "missing. Answer only from these rows.)"
+        )
+        results = raw
+        # Formatted by the SAME helpers as a generated query, so this reads like every
+        # other answer. Only the QUERY is deterministic, never the wording.
+        return {
+            "success": True,
+            "query": query,
+            "results": results,
+            "error": None,
+            "formatted_response": await self._format_results(results, guidance, query, True),
+            "standardized": self._standardize_results(results, user_query, query),
+            "context": [],
+            "analytics_required": False,
+            "llm_reasoning": "Deterministic instrument-metrology fetch (BUG-427)",
+            "method": "instrument_metrology",
+        }
 
     async def _whole_register(
         self, state: ConversationState, user_query: str

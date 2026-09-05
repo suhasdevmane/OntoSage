@@ -396,7 +396,25 @@ class CapabilityAgent:
             state.intermediate_results["capability_result"] = _profile_answer
             return state
 
-        if measurand_of(state.user_message or "") or _is_metrics_question(state.user_message or ""):
+        # A metrology question is not a census (BUG-427). "How many sensors are overdue for
+        # calibration?" is a count of sensors, so it reads as a metrics question and was
+        # answered with the building's live figures — instrumented points, zones, floors —
+        # none of which is what was asked. The graph holds 194 overdue calibrations and the
+        # deterministic metrology path in the SPARQL lane counts them; this must not claim
+        # the question before it gets there.
+        from orchestrator.services.building_metrics import names_a_specific_class
+        from orchestrator.services.routing_contract import _METROLOGY_RE as _METROLOGY
+
+        _is_metrology = bool(_METROLOGY.search(state.user_message or ""))
+        # Nor a count of a specific KIND of device (BUG-431). This snapshot reports the
+        # building's totals, so "how many CO2 sensors are there?" was answered "2,721
+        # sensors". The class census two blocks below counts by class and holds the right
+        # figure — CO2_Sensor 280 — so a class-qualified count belongs to it.
+        _class_qualified = names_a_specific_class(state.user_message or "")
+        if not _is_metrology and not _class_qualified and (
+            measurand_of(state.user_message or "")
+            or _is_metrics_question(state.user_message or "")
+        ):
             _decline = await self._absent_referent_decline(state, building_id, building_name)
             if _decline:
                 state.intermediate_results["capability_result"] = _decline

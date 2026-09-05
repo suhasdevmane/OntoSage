@@ -328,6 +328,12 @@ def test_precedence_order_is_pinned():
         "room_geometry_spatial",
         # V5-T21: anomaly questions → the scanner's persisted episodes.
         "anomaly_history_to_events",
+        # BUG-427: last, because it must survive every data-lane rule above it — this
+        # contract applies every matching rule and the LAST one wins. Calibration dates
+        # and reporting intervals live in the graph; the lanes that read time-series rows
+        # cannot see them, and answered "No calibration record found" about a sensor whose
+        # record says 2025-11-17.
+        "instrument_metrology",
     ]
     assert [r.name for r in rc.POST_STAGE_RULES] == ["data_query_promotion"]
 

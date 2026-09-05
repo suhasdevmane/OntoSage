@@ -26,15 +26,33 @@ logger = get_logger(__name__)
 # building-scoped inventory noun (sensors/points/devices/cameras/meters) or a
 # building-total-area phrase. Per-floor and per-room questions are excluded so they
 # keep using the SPARQL/spatial paths that can scope to a floor.
+#: A CLASS qualifier may sit between "how many" and the noun — "how many CO2 sensors",
+#: "how many air temperature sensors". Requiring the noun to follow immediately meant
+#: "How many CO2 sensors are there?" missed this entirely, reached the generated-SPARQL
+#: path, came back with a LIMITed 72 rows, and the model divided by RDF-type multiplicity
+#: to announce "8 unique CO2 sensors". The graph holds 280 (BUG-431). Two qualifier words
+#: are allowed, which covers every Brick class name shape this repo has seen.
 _INVENTORY_RE = re.compile(
-    r"(how many\s+(sensors?|points?|devices?|cameras?|meters?|floors?|rooms?)"
+    r"(how many\s+(?:[A-Za-z0-9][\w-]*\s+){0,2}(sensors?|points?|devices?|cameras?|meters?"
+    r"|floors?|rooms?)"
     r"|(sensor|point|device)\s+count"
-    r"|number of\s+(sensors?|points?|devices?|cameras?|floors?|rooms?)"
+    r"|number of\s+(?:[A-Za-z0-9][\w-]*\s+){0,2}(sensors?|points?|devices?|cameras?"
+    r"|floors?|rooms?)"
     r"|total\s+(number of\s+)?(sensors?|points?|devices?|floors?|rooms?)"
     r"|how (big|large|tall) is the building"
     r"|how many floors"
     r"|total\s+(net\s+)?(internal\s+)?floor\s*area"
     r"|total\s+area\s+of\s+the\s+building)",
+    re.IGNORECASE,
+)
+
+#: A CONDITION qualifier is not a class qualifier, and the census cannot answer it. Counting
+#: every sensor in reply to "how many sensors are broken?" is the same failure BUG-427 fixed
+#: for calibration: a census answering a question about state. These keep the normal path.
+_CONDITION_QUALIFIER_RE = re.compile(
+    r"\b(broken|faulty|failed|failing|offline|off-?line|down|dead|stuck|drifting|"
+    r"unresponsive|missing|disconnected|overdue|expired|out of service|unserviceable|"
+    r"uncalibrated|defective|degraded|alarmed|alarming|in alarm|reporting|silent)\b",
     re.IGNORECASE,
 )
 # A specific floor/zone/room scope → NOT building-wide; let the normal path handle it.
@@ -53,7 +71,46 @@ def is_inventory_count_question(query: str) -> bool:
         return False
     if _FLOOR_SCOPE_RE.search(q):
         return False
+    # A count of instruments in a CONDITION is not a census of the building (BUG-427).
+    # "How many sensors are overdue for calibration?" is a building-wide count question by
+    # shape, so this claimed it and routed to the live-metrics grounding, which counts
+    # sensors, zones and floors — none of them the number asked for. The condition is
+    # declared in the graph on 1,929 sensors and a deterministic SPARQL count returns 194.
+    from orchestrator.services.routing_contract import _METROLOGY_RE
+
+    if _METROLOGY_RE.search(q):
+        return False
+    # Nor a count of instruments in any other CONDITION. The census counts what exists; it
+    # cannot filter on state, and answering "how many sensors are broken?" with the total
+    # is the same mistake in a different field.
+    if _CONDITION_QUALIFIER_RE.search(q):
+        return False
     return True
+
+
+#: "how many CO2 sensors" carries a class qualifier; "how many sensors" does not.
+_CLASS_QUALIFIED_RE = re.compile(
+    r"\b(?:how many|number of)\s+([A-Za-z0-9][\w-]*(?:\s+[A-Za-z0-9][\w-]*)?)\s+"
+    r"(sensors?|points?|devices?|cameras?|meters?)\b",
+    re.IGNORECASE,
+)
+#: Words that sit in that slot without naming a class.
+_NOT_A_CLASS = frozenset({"the", "a", "an", "of", "these", "those", "many", "other", "such"})
+
+
+def names_a_specific_class(query: str) -> bool:
+    """True when a count question names a KIND of device rather than all of them.
+
+    The building-wide metrics snapshot answers "how many sensors are there?" with the
+    building's totals, which is right. Asked "how many CO2 sensors are there?" it answers
+    with the same totals — 2,721 — which is not. The class census counts by class and holds
+    the correct figure (CO2_Sensor 280), so the qualified form belongs to it.
+    """
+    m = _CLASS_QUALIFIED_RE.search(query or "")
+    if not m:
+        return False
+    words = [w for w in m.group(1).split() if w.lower() not in _NOT_A_CLASS]
+    return bool(words)
 
 
 SparqlExec = Callable[[str], Awaitable[dict]]

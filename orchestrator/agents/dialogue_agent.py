@@ -762,6 +762,7 @@ class DialogueAgent:
         from orchestrator.services.routing_contract import DELIBERATE_RE as _DELIB_RE
         from orchestrator.services.routing_contract import EVENTS_RE as _EVENTS_RE
         from orchestrator.services.routing_contract import WAYFIND_RE as _WAYFIND_RE
+        from orchestrator.services.routing_contract import _METROLOGY_RE
         from orchestrator.services.routing_contract import (
             consumption_question as _consumption_question,
         )
@@ -836,6 +837,14 @@ class DialogueAgent:
             # keeps one definition rather than two that can drift.
             and not _WAYFIND_RE.search(user_query)
             and not _DELIB_RE.search(user_query)
+            # BUG-427: a calibration or reporting-interval question is answered from the
+            # GRAPH, which declares both for 2,728 sensors, and never from a document.
+            # Measured: "How many sensors are overdue for calibration?" matched three
+            # document chunks here and was routed to capability before the LLM classified
+            # anything, so it was answered "Abacws Building's documents do not answer this"
+            # while a single SPARQL count returns 194. The parse-stage rule that owns this
+            # shape never gets a turn, because this decides first.
+            and not _METROLOGY_RE.search(user_query)
             # V6-T24: event-store questions had no bypass either. "How many work
             # orders are open?" matched the building-hours document on "open" and was
             # answered from prose before the LLM classified anything -- the routing

@@ -171,6 +171,16 @@ def is_inventory_question(query: str) -> bool:
         return False
     if not _INVENTORY_SHAPE.search(q):
         return False
+    # A question about an instrument's CONDITION is not a question about what the building
+    # contains (BUG-427). "How many sensors are overdue for calibration?" has an inventory
+    # shape and an inventory noun, so this claimed it and answered with the class census —
+    # Sensor 2721, Air Quality Sensor 589, CO2 Sensor 280 — none of which is the number
+    # asked for. The graph holds 194 overdue calibrations and a deterministic path counts
+    # them; this must not take the question first.
+    from orchestrator.services.routing_contract import _METROLOGY_RE
+
+    if _METROLOGY_RE.search(query or ""):
+        return False
     return any(re.search(rf"\b{re.escape(n)}\b", q) for n in _INVENTORY_NOUNS)
 
 
