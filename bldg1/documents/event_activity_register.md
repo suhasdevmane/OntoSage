@@ -37,11 +37,11 @@ core and what is extra is the events office's decision, so it is recorded rather
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | ACT-0042-1 | EVT-2026-0042 | Welcome and registration | 1 | 09:30 | 30 | Room 0.01 — Main Reception | Companions welcome; no separate registration. | false | Step-free; seating available. | Scheduled | Events and Communications Coordinator |
 | ACT-0042-2 | EVT-2026-0042 | Course talk — Computer Science | 2 | 10:00 | 45 | Room 1.06 — Computer Laboratory | Companions welcome. | false | Step-free; hearing loop at the front. | Scheduled | Events and Communications Coordinator |
-| ACT-0042-3 | EVT-2026-0042 | Building tour | 3 | 10:45 | 40 | Starts Room 1.04 — Common Area / Atrium | Companions welcome; step-free tour available on request. | false | A step-free tour route runs in parallel; ask at registration. | Scheduled | Events and Communications Coordinator |
+| ACT-0042-3 | EVT-2026-0042 | Building tour | 3 | 10:45 | 40 | Room 1.04 — Common Area / Atrium | Companions welcome; step-free tour available on request. | false | A step-free tour route runs in parallel; ask at registration. | Scheduled | Events and Communications Coordinator |
 | ACT-0042-4 | EVT-2026-0042 | Questions with academic staff | 4 | 11:25 | 30 | Room 1.04 — Common Area / Atrium | Companions welcome. | false | Step-free; quieter after 11:45. | Scheduled | Events and Communications Coordinator |
 | ACT-0042-5 | EVT-2026-0042 | Laboratory demonstration | 5 | 12:00 | 30 | Room 2.01 — Research Laboratory | Companions welcome; capacity 30 including companions. | true | Step-free. Closed footwear required. | Scheduled | Events and Communications Coordinator |
 | ACT-0042-6 | EVT-2026-0042 | Lunch and informal chat | 6 | 12:30 | 45 | Room 1.04 — Common Area / Atrium | Companions welcome. | true | Step-free; busiest part of the day. | Scheduled | Events and Communications Coordinator |
-| ACT-0042-7 | EVT-2026-0042 | One-to-one admissions conversation | 7 | 13:15 | 20 | Room 5.04 — Academic Office | Applicant only; a companion may wait in Room 1.09. | true | Step-free via the Main Entrance lifts. | Scheduled | Events and Communications Coordinator |
+| ACT-0042-7 | EVT-2026-0042 | One-to-one admissions conversation | 7 | 13:15 | 20 | Room 5.07 — Academic Office | Applicant only; a companion may wait in Room 1.25. | true | Step-free via the Main Entrance lifts. | Scheduled | Events and Communications Coordinator |
 | ACT-0042-8 | EVT-2026-0042 | Student accommodation talk | 8 | 13:45 | 30 | Room 1.06 — Computer Laboratory | Companions welcome. | true | Step-free; hearing loop at the front. | Scheduled | Events and Communications Coordinator |
 | ACT-0042-9 | EVT-2026-0042 | Close and departure | 9 | 14:30 | 30 | Room 0.01 — Main Reception | Companions welcome. | false | Step-free. | Scheduled | Events and Communications Coordinator |
 | ACT-0047-1 | EVT-2026-0047 | Schools group arrival | 1 | 12:30 | 30 | Room 0.01 — Main Reception | Accompanying staff registered by the school. | false | Step-free. | Scheduled | Events and Communications Coordinator |
@@ -54,15 +54,15 @@ core and what is extra is the events office's decision, so it is recorded rather
 | ACT-0043-4 | EVT-2026-0043 | Closing remarks | 4 | 16:30 | 30 | Room 1.04 — Common Area / Atrium | Companions welcome. | true | Step-free. | Scheduled | Events and Communications Coordinator |
 | ACT-0052-1 | EVT-2026-0052 | Panel welcome | 1 | 14:00 | 15 | Room 1.04 — Common Area / Atrium | Support persons attend without separate registration. | false | Level approach; BSL interpreter present; hearing loop. | Scheduled | Accessibility and Inclusion Team |
 | ACT-0052-2 | EVT-2026-0052 | Barriers discussion | 2 | 14:15 | 60 | Room 1.04 — Common Area / Atrium | Support persons welcome. | false | BSL interpreter present; breaks every 20 minutes. | Scheduled | Accessibility and Inclusion Team |
-| ACT-0052-3 | EVT-2026-0052 | Quiet break | 3 | 15:15 | 20 | Room 1.09 — Quiet Room | Support persons welcome. | true | Low lighting, low noise; no interpreter in this period. | Scheduled | Accessibility and Inclusion Team |
+| ACT-0052-3 | EVT-2026-0052 | Quiet break | 3 | 15:15 | 20 | Room 1.25 — Conference/Seminar Room | Support persons welcome. | true | Low lighting, low noise; no interpreter in this period. | Scheduled | Accessibility and Inclusion Team |
 | ACT-0052-4 | EVT-2026-0052 | Actions and close | 4 | 15:35 | 25 | Room 1.04 — Common Area / Atrium | Support persons welcome. | false | BSL interpreter present. | Scheduled | Accessibility and Inclusion Team |
 | ACT-0045-1 | EVT-2026-0045 | Postgraduate welcome | 1 | 16:00 | 30 | Room 1.04 — Common Area / Atrium | Companions welcome. | false | Step-free; hearing loop. | Scheduled | Events and Communications Coordinator |
 | ACT-0045-2 | EVT-2026-0045 | Meet your supervisor | 2 | 16:30 | 45 | Room 1.04 — Common Area / Atrium | Applicant only. | true | Step-free. | Full | Events and Communications Coordinator |
-| ACT-0045-3 | EVT-2026-0045 | Facilities tour | 3 | 17:15 | 45 | Starts Room 1.04 — Common Area / Atrium | Companions welcome. | true | Step-free route available. | Scheduled | Events and Communications Coordinator |
+| ACT-0045-3 | EVT-2026-0045 | Facilities tour | 3 | 17:15 | 45 | Room 1.04 — Common Area / Atrium | Companions welcome. | true | Step-free route available. | Scheduled | Events and Communications Coordinator |
 
 ## Where a family member can wait
 
-**Room 1.09 — Quiet Room** is the confirmed public waiting space: low lighting, low noise,
+**Room 1.25 — Conference/Seminar Room** is the confirmed public waiting space: low lighting, low noise,
 seating for six, open whenever the building is. It is used as a scheduled activity only
 during EVT-2026-0052; at all other times it is available to wait in.
 

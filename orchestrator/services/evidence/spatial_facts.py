@@ -41,11 +41,27 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
+#: BUG-428. The ontosage prefix here was <http://ontosage.org/schema#>. The ontology's
+#: actual term namespace is <http://ontosage.org/capabilities#>, and it always has been.
+#: Measured on the live bldg1 graph: the declared IRI matches **0** triples, the real one
+#: matches 37,207.
+#:
+#: Five queries in this module use the prefix — environmentalBoundary, zoneValidated,
+#: archivalIntervalS, calibratedOn and calibrationDueOn — so all five have returned nothing
+#: since they were written, and nothing errored: an OPTIONAL that never binds and a VALUES
+#: join that never matches are both perfectly valid SPARQL returning an empty result.
+#:
+#: The consequence was attributed elsewhere. BUG-237 recorded the completeness and
+#: calibration gates as unwirable "because each judges a field nothing populates", and that
+#: was true of the DATA — no sensor declared an archival interval. But the graph could have
+#: been full of them and these queries would still have come back empty, so populating the
+#: data alone would have fixed nothing and looked like the data was wrong. Two independent
+#: causes for one symptom, the same shape as BUG-403.
 _PREFIXES = (
     "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
     "PREFIX brick: <https://brickschema.org/schema/Brick#>\n"
     "PREFIX ref: <https://brickschema.org/schema/Brick/ref#>\n"
-    "PREFIX ontosage: <http://ontosage.org/schema#>\n"
+    "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
 )
 
 #: Ceiling on how many streams one answer's spatial check will consider. An answer resting on
@@ -73,6 +89,24 @@ async def resolve_space_iri(name: str, namespace: str, run_select) -> str:
     token = (name or "").strip().lower()
     if not token or not namespace:
         return ""
+    # SEPARATORS DIFFER BETWEEN THE QUESTION AND THE GRAPH, and matching only the literal
+    # token meant they never met. The dialogue stage emits entities with underscores
+    # ("Room_3.17"); this building's IRIs run the words together ("Room3.17") and its labels
+    # space them ("Room 3.17 — Academic Office"). One spelling matched neither, so
+    # `_spatial_grades` stayed empty and every room question recorded spatial adequacy as
+    # "none" — "no sensor covers the space asked about" — about rooms that have sensors.
+    #
+    # All three spellings are tried, most specific first. This is a normalisation of
+    # separators only: no building vocabulary appears here, and a token that matches nothing
+    # in any spelling still returns "" rather than guessing.
+    variants = []
+    for candidate in (token, token.replace("_", " "), token.replace("_", ""),
+                      token.replace(" ", "")):
+        if candidate and candidate not in variants:
+            variants.append(candidate)
+    filters = " || ".join(
+        f'CONTAINS(?local, "{_esc(v)}") || CONTAINS(?lbl, "{_esc(v)}")' for v in variants
+    )
     q = (
         _PREFIXES + "SELECT DISTINCT ?s WHERE {\n"
         "  ?s a ?cls .\n"
@@ -80,8 +114,8 @@ async def resolve_space_iri(name: str, namespace: str, run_select) -> str:
         "  OPTIONAL { ?s rdfs:label ?l }\n"
         f'  FILTER(STRSTARTS(STR(?s), "{_esc(namespace)}"))\n'
         f"  BIND(LCASE(SUBSTR(STR(?s), {len(namespace) + 1})) AS ?local)\n"
-        f'  FILTER(CONTAINS(?local, "{_esc(token)}") '
-        f'|| CONTAINS(LCASE(COALESCE(STR(?l), "")), "{_esc(token)}"))\n'
+        '  BIND(LCASE(COALESCE(STR(?l), "")) AS ?lbl)\n'
+        f"  FILTER({filters})\n"
         "} LIMIT 5"
     )
     try:
@@ -119,10 +153,25 @@ async def facts_for_uuids(
         "  OPTIONAL { ?point ontosage:environmentalBoundary ?boundary }\n"
         "  OPTIONAL { ?point brick:hasLocation ?loc }\n"
         "  OPTIONAL { ?point brick:isPointOf ?loc }\n"
-        # Zone service: the equipment/zone this point belongs to, and what that zone feeds.
-        # Nothing here checks validation, because no building in this repo declares it — so
-        # every space reached this way is reported as UNVALIDATED, i.e. proxy.
-        "  OPTIONAL { ?point brick:isPointOf ?zone . ?zone brick:feeds ?zoneSpace .\n"
+        # Zone service: the equipment/zone this point belongs to, and the spaces that zone
+        # relates to. Nothing here checks validation, because no building in this repo
+        # declares it — so every space reached this way is reported as UNVALIDATED, i.e.
+        # proxy.
+        #
+        # BOTH RELATIONS, not just brick:feeds. `derive_zone_room_links.py` asserts the
+        # zone-to-room mapping as brick:hasPart, and this clause matched only brick:feeds,
+        # so the links it generates were invisible here. Measured: the CO2 sensor in
+        # Room 5.01 sits in Zone_5.01, Zone_5.01 brick:hasPart Room5.01 is in the graph,
+        # and the point facts came back with EMPTY zone spaces — so every room question
+        # graded spatial adequacy as "none", i.e. "no sensor covers the space asked about",
+        # about a room with a sensor in it. Both relations mean "this zone relates to that
+        # space" for grading purposes, and the grade is proxy either way.
+        # The hop to the zone accepts brick:hasLocation as well as brick:isPointOf, because
+        # this building's sensors declare the former: CO2_Level_Sensor_5.01 is
+        # brick:hasLocation Zone_5.01 and carries no isPointOf at all. Matching only
+        # isPointOf meant the clause never bound for any sensor here.
+        "  OPTIONAL { ?point brick:isPointOf|brick:hasLocation ?zone .\n"
+        "             ?zone brick:feeds|brick:hasPart ?zoneSpace .\n"
         "             OPTIONAL { ?zone ontosage:zoneValidated ?zv } }\n"
         # Siblings: spaces sharing the point's own parent. Structural, not geometric.
         "  OPTIONAL { ?point brick:hasLocation ?own . ?parent brick:hasPart ?own ;\n"

@@ -77,7 +77,10 @@ async def gather(namespace: str) -> Dict[str, object]:
         q = (
             "PREFIX brick:<https://brickschema.org/schema/Brick#> "
             "PREFIX ref:<https://brickschema.org/schema/Brick/ref#> "
-            "PREFIX o:<http://ontosage.org/schema#> "
+            # BUG-428: was ontosage.org/schema#, which matches 0 triples on a live graph while
+            # the real term namespace matches 37,207. This query counts declared cadences
+            # and calibrations, so it reported ZERO of each for every building.
+            "PREFIX o:<http://ontosage.org/capabilities#> "
             "SELECT (COUNT(DISTINCT ?p) AS ?pts) (COUNT(DISTINCT ?loc) AS ?spaces) "
             "(COUNT(DISTINCT ?cad) AS ?cads) (COUNT(DISTINCT ?cal) AS ?cals) WHERE { "
             f"VALUES ?cls {{ {classes} }} ?p a ?cls . "

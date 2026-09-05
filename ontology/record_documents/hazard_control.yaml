@@ -1,0 +1,73 @@
+# Hazard control register -> ontosage:HazardControl
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY ONE CLASS FOR FOUR DOCUMENTS
+# --------------------------------
+# The building held four separate prose documents — COSHH and LEV, asbestos, water hygiene
+# and legionella — and none was mapped. They share exactly one shape: a hazard that is
+# MANAGED rather than removed, whose safety depends on a test somebody has to keep doing.
+# Four near-identical registers would have meant four places for "which controls are
+# overdue?" to be half-answered.
+#
+# condition IS SEPARATE FROM status. An asbestos-containing material in good condition
+# behind a damaged label is a different problem from a damaged material, and a single state
+# field cannot tell a safety officer which one they have.
+record_type: hazard_control
+class: ontosage:HazardControl
+iri_template: "hazard/{code}"
+label_column: hazard
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  hazard:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  kind:
+    predicate: ontosage:hazardKind
+    datatype: xsd:string
+    required: true
+  location:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  control:
+    predicate: ontosage:controlMeasure
+    datatype: xsd:string
+    required: true
+  condition:
+    predicate: ontosage:hazardCondition
+    datatype: xsd:string
+  regime:
+    predicate: ontosage:testStandard
+    datatype: xsd:string
+    required: true
+  last_tested_on:
+    predicate: ontosage:lastTestedOn
+    datatype: xsd:date
+  next_test_due:
+    predicate: ontosage:nextTestDue
+    datatype: xsd:date
+    required: true
+  evidence_ref:
+    predicate: ontosage:evidenceReference
+    datatype: xsd:string
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string
+    required: true
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active", "Controlled"]
+      overdue: ["Overdue"]
+      defective: ["Defective", "Control impaired"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

@@ -139,11 +139,20 @@ def completeness_gate(
     floor = policy.min_completeness(consequence_class)
 
     if coverage is None:
+        # SAY WHICH STREAMS AND WHY. The caller already counts how many contributing
+        # streams declared no cadence, and this branch used to throw that away — so the
+        # record read "could not be established" with no way to tell whether the cause was
+        # an undeclared interval, no rows at all, or a join that failed silently. Diagnosing
+        # one instance of it meant reading four modules. The count is free; discarding it
+        # was the expensive part.
         return GateVerdict(
             "completeness",
             False,
             mode,
-            "the share of the window actually observed could not be established",
+            (
+                "the share of the window actually observed could not be established"
+                + (f" — {detail}" if detail else "")
+            ),
             remedy="Declare this stream's archival interval so coverage can be computed.",
             downgrade_to=AnswerStatus.NOT_ASSESSABLE,
             threshold=f"{floor:.0%}",
