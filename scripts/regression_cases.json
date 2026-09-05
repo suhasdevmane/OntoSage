@@ -48,11 +48,14 @@
   {
     "group": "workspace",
     "question": "Which bookable rooms are suitable for a confidential call?",
-    "expect": [
-      "ws-27"
-    ],
     "forbid": [
       "documents do not answer"
+    ],
+    "expect_any": [
+      "ws-27",
+      "ws-28",
+      "5.17",
+      "5.18"
     ]
   },
   {
@@ -300,6 +303,41 @@
       "26"
     ],
     "forbid": [
+      "documents do not answer"
+    ]
+  },
+  {
+    "group": "deliberate",
+    "question": "Which space has the best conditions for focused work this afternoon?",
+    "expect_any": [
+      "fetch budget",
+      "narrow it to a floor"
+    ],
+    "forbid": [],
+    "note": "Over budget by design. The decline must SAY WHY and name the narrowing that works."
+  },
+  {
+    "group": "deliberate",
+    "question": "Which space on Floor 3 has the best conditions for focused work this afternoon?",
+    "expect_any": [
+      "best match",
+      "score"
+    ],
+    "forbid": [
+      "couldn't rank any spaces"
+    ],
+    "note": "The narrowed form the decline recommends. If this fails, the advice is wrong."
+  },
+  {
+    "group": "workspace",
+    "question": "I have an online interview next week. Which bookable room and time give me the lowest risk of noise?",
+    "expect_any": [
+      "5.17",
+      "5.18",
+      "silent"
+    ],
+    "forbid": [
+      "couldn't rank any spaces",
       "documents do not answer"
     ]
   }

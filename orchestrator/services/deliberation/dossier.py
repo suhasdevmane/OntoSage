@@ -118,6 +118,12 @@ class EvidenceDossier(BaseModel):
     plan_hash: str = ""
     plan_fingerprint: str = ""
     timings_ms: Dict[str, int] = Field(default_factory=dict)
+    #: What the executor said the reader could DO about a refusal. The plan executor
+    #: already writes this — "narrow it to a floor and I can answer it directly" — and
+    #: nothing carried it to the answer, so a question over the fetch budget came back as
+    #: "I couldn't rank any spaces for this request" and stopped there. The advice was
+    #: written, tested and unreachable, which is the shape this project keeps paying for.
+    guidance_notes: List[str] = Field(default_factory=list)
 
 
 def build_dossier(
@@ -219,14 +225,36 @@ def build_dossier(
         plan_hash=outcome.plan_hash,
         plan_fingerprint=getattr(outcome, "plan_fingerprint", ""),
         timings_ms=dict(outcome.timings_ms),
+        guidance_notes=[str(n) for n in (getattr(outcome, "event_notes", None) or [])],
     )
 
 
 def render_answer(dossier: EvidenceDossier, top_k: int = 3) -> str:
     """Deterministic prose: every number is substituted from the dossier itself."""
     if not dossier.ranked:
+        # SAY WHY, AND WHAT WOULD WORK. "I couldn't rank any spaces for this request" is
+        # true and useless: the reader cannot tell a building with no such space from a
+        # question that was merely too broad to fetch, and the second is fixable in one
+        # edit of the question.
+        #
+        # The reason is already recorded against each exclusion — "question spans 234
+        # spaces, above the 120-space fetch budget" — and the plan executor already writes
+        # the narrowing that would make it answerable. Neither reached the answer. A
+        # decline that names what a real answer would require is a specification; one that
+        # does not is a dead end.
         lines = ["I couldn't rank any spaces for this request."]
-        if dossier.coverage_excluded:
+        reasons: List[str] = []
+        for entry in dossier.coverage_excluded:
+            reason = str(getattr(entry, "reason", "") or "").strip()
+            if reason and reason not in reasons:
+                reasons.append(reason)
+        if reasons:
+            lines.append("")
+            lines.append("**Why:** " + "; ".join(reasons[:3]) + ".")
+        for note in dossier.guidance_notes[:2]:
+            lines.append("")
+            lines.append(str(note))
+        if not reasons and dossier.coverage_excluded:
             lines.append(
                 f"{len(dossier.coverage_excluded)} spaces were excluded — see the evidence dossier."
             )
