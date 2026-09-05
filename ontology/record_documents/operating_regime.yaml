@@ -1,0 +1,62 @@
+# Operating regime register -> ontosage:OperatingRegime
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# "Which HVAC assets operate beyond approved service windows, and is each exception
+# justified?" cannot be answered by a reading. A reading says what IS; this register says
+# what is SUPPOSED to be, and only the pair together makes a deviation a fault.
+#
+# approved_exception IS THE LOAD-BEARING COLUMN. Without it every legitimate deviation reads
+# as a fault, which is precisely how an alarm list becomes noise and then gets ignored.
+record_type: operating_regime
+class: ontosage:OperatingRegime
+iri_template: "regime/{code}"
+label_column: system
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  system:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  scope:
+    predicate: ontosage:coveredScope
+    datatype: xsd:string
+    required: true
+  occupied_setpoint:
+    predicate: ontosage:occupiedSetpoint
+    datatype: xsd:string
+    required: true
+  unoccupied_setpoint:
+    predicate: ontosage:unoccupiedSetpoint
+    datatype: xsd:string
+  operating_window:
+    predicate: ontosage:operatingWindow
+    datatype: xsd:string
+    required: true
+  seasonal_changeover:
+    predicate: ontosage:seasonalChangeover
+    datatype: xsd:string
+  approved_exception:
+    predicate: ontosage:approvedException
+    datatype: xsd:string
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string
+    required: true
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active", "In force"]
+      overridden: ["Overridden"]
+      under_review: ["Under review"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

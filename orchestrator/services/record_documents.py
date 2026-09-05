@@ -215,14 +215,13 @@ def load_mapping(record_type: str, mappings_dir: Path) -> Optional[RecordMapping
 
 
 def _expand(term: str) -> str:
-    """ontosage:Permit -> full IRI. Already-absolute IRIs pass through."""
-    if term.startswith("http://") or term.startswith("https://"):
-        return term
-    if term.startswith("ontosage:"):
-        return ONTOSAGE + term.split(":", 1)[1]
-    if term.startswith("xsd:"):
-        return XSD + term.split(":", 1)[1]
-    return term
+    """ontosage:Permit -> full IRI. Already-absolute IRIs pass through.
+
+    This knew ``ontosage:`` and ``xsd:`` and nothing else, while the mappings use
+    ``rdfs:`` too — see ``expand_predicate`` for what that cost. One prefix table now
+    serves both, so adding a prefix in one place cannot leave the other behind.
+    """
+    return expand_predicate(term)
 
 
 def _coerce(value: str, datatype: str, spec: ColumnSpec) -> Tuple[Any, Optional[str]]:
@@ -383,6 +382,46 @@ def lift_document(
     return result
 
 
+#: Prefixes a mapping may use in a ``predicate:`` field, expanded before serialisation.
+#: Anything not listed here is left alone, so an unknown prefix fails loudly as a bad IRI
+#: rather than silently becoming a different property.
+_PREFIXES = {
+    "ontosage": "http://ontosage.org/capabilities#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "brick": "https://brickschema.org/schema/Brick#",
+}
+
+
+def expand_predicate(predicate: str) -> str:
+    """``rdfs:label`` -> the RDFS IRI. Full IRIs and unknown prefixes pass through.
+
+    WHY THIS EXISTS
+    ---------------
+    ``to_turtle`` wrote every predicate as ``<{predicate}>``. A mapping that declares
+    ``predicate: rdfs:label`` — and eleven of them do — therefore emitted ``<rdfs:label>``,
+    a RELATIVE IRI, which GraphDB stored verbatim as a property named "rdfs:label".
+
+    Measured live before the fix: 206 junk ``rdfs:label`` triples and 63 junk
+    ``rdfs:comment`` triples. The labels survived because the lifter also emits a proper
+    label from ``label_column``, so the damage there was a duplicate. **The comments did
+    not**: ``rdfs:comment`` proper was 0 against 63 junk, so every register's ``note``
+    column — the field that carries "collections are contracted; missed collections
+    escalate same day" — was unreachable by any query that asked for a comment.
+
+    A relative IRI is the worst shape of this bug because nothing errors. The upload
+    succeeds, the count of triples looks right, and the property is simply not the one
+    anybody queries.
+    """
+    if ":" not in predicate or predicate.startswith("http://") or predicate.startswith("https://"):
+        return predicate
+    prefix, _, local = predicate.partition(":")
+    base = _PREFIXES.get(prefix)
+    return f"{base}{local}" if base else predicate
+
+
 def to_turtle(result: LiftResult) -> str:
     """Serialise a lift to Turtle for upload into its named graph."""
     lines = [
@@ -393,7 +432,7 @@ def to_turtle(result: LiftResult) -> str:
         "",
     ]
     for subject, predicate, value in result.triples:
-        lines.append(f"<{subject}> <{predicate}> {_literal(value)} .")
+        lines.append(f"<{subject}> <{expand_predicate(predicate)}> {_literal(value)} .")
     return "\n".join(lines) + "\n"
 
 

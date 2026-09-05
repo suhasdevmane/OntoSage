@@ -1,0 +1,90 @@
+# Department directory -> ontosage:Department
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# Measured on the 2,960-question capture: 53 non-computed questions ask for an accountable
+# owner, a contact route or an escalation path by function —
+#
+#     "Is this access request ready for administration, and which accountable owner must
+#      supply each missing item?"
+#     "Which critical services lack reliable status evidence for this shift, and which gap
+#      prevents a safe priority decision?"
+#
+# The building could describe its plant in detail and could not say who runs it.
+#
+# NO INDIVIDUAL IS MODELLED. The catalogues forbid exposing who holds what, and contract 4
+# plus the PDP hold identity at role level, so every column here names a FUNCTION or a
+# CHANNEL. "Duty electrician" is a role on a rota; naming the person on it tonight would be
+# a different, and prohibited, answer.
+#
+# out_of_hours IS A SEPARATE COLUMN, not a note. The daytime helpdesk and the night duty
+# line differ for most of these, and an occupant sent to a closed queue at 22:00 has been
+# given a confidently wrong answer — the shape of failure contract 4 exists to prevent.
+record_type: department
+class: ontosage:Department
+iri_template: "dept/{code}"
+label_column: name
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  function:
+    predicate: ontosage:departmentFunction
+    datatype: xsd:string
+    required: true
+  scope:
+    # The field a "who owns this?" question is answered from.
+    predicate: ontosage:serviceScope
+    datatype: xsd:string
+    required: true
+  based_at:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+  coverage_hours:
+    predicate: ontosage:openingHours
+    datatype: xsd:string
+    required: true
+  request_channel:
+    predicate: ontosage:requestChannel
+    datatype: xsd:string
+    required: true
+  out_of_hours:
+    predicate: ontosage:outOfHoursRoute
+    datatype: xsd:string
+  responds_within_hours:
+    predicate: ontosage:respondsWithinHours
+    datatype: xsd:decimal
+    required: true
+  escalates_to:
+    predicate: ontosage:escalatesTo
+    datatype: xsd:string
+    required: true
+  accountable_role:
+    predicate: ontosage:accountableRole
+    datatype: xsd:string
+    required: true
+  contact_email:
+    predicate: ontosage:contactEmail
+    datatype: xsd:string
+  contact_phone:
+    predicate: ontosage:contactPhone
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active", "In service"]
+      reduced: ["Reduced", "Reduced cover", "Partial"]
+      suspended: ["Suspended", "Withdrawn"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

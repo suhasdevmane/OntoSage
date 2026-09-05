@@ -1,0 +1,66 @@
+# Evacuation provision register -> ontosage:EvacuationProvision
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS, AND THE LINE IT DOES NOT CROSS
+# ----------------------------------------------
+# Refuge points, evacuation chairs, communication units and personal plans were held only as
+# prose. Their EXISTENCE, location, state and review date are operational facts that a fire
+# warden, an accessibility adviser and a responding officer all need.
+#
+# WHOSE PLAN IT IS, IS NOT RECORDED. A personal emergency evacuation plan names a disabled
+# person by definition, and this register is answerable by anyone the PDP admits. So a plan
+# appears here as a COUNT and a REVIEW DATE against a role and an area, never as a subject.
+# "How many personal plans are overdue for review?" is answerable; "whose" is not, and that
+# asymmetry is the design.
+record_type: evacuation_provision
+class: ontosage:EvacuationProvision
+iri_template: "evac/{code}"
+label_column: name
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  kind:
+    predicate: ontosage:provisionKind
+    datatype: xsd:string
+    required: true
+  location:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  floor:
+    predicate: ontosage:onFloor
+    datatype: xsd:string
+  state:
+    predicate: ontosage:provisionState
+    datatype: xsd:string
+    required: true
+  last_checked:
+    predicate: ontosage:lastTestedOn
+    datatype: xsd:date
+  review_due:
+    predicate: ontosage:reviewDue
+    datatype: xsd:date
+    required: true
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string
+    required: true
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active", "Available"]
+      defective: ["Defective"]
+      overdue: ["Overdue"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

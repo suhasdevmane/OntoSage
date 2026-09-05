@@ -1544,7 +1544,52 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 "unknown",
             }
         )
+        # A question the REGISTER can answer must not be decomposed (BUG-425).
+        #
+        # `dialogue_agent` resolves a question naming a held record class straight to
+        # `metadata`, skipping the LLM intent call, because the building holds the answer
+        # as queryable data. Decomposition then ran on the result and threw that away.
+        # Measured live:
+        #
+        #     Q: "Who is my contact for a fault with the network, and what is their
+        #         response target?"
+        #     [ttl-route] metadata via held record class: Department (20 instances)
+        #     [multi-intent] Decomposed into 2 sub-intents: ['capability', 'capability']
+        #
+        # Both clauses were then answered from prose, and the answer named the wrong
+        # contacts entirely — while twenty department records held both the contact and
+        # the response target, in one row.
+        #
+        # A compound question is exactly the case where a register is MOST useful: one
+        # SPARQL returns every column at once, whereas two capability probes return two
+        # partial prose answers that have to be stitched. Re-checking here rather than
+        # threading a flag through the dialogue result keeps the rule where the override
+        # it protects can be seen.
+        _register_answerable = False
         if settings.MULTI_INTENT_ENABLED and state.current_intent not in _skip_decompose:
+            try:
+                from orchestrator.services.record_registry import (
+                    held_record_class,
+                    record_classes,
+                )
+
+                _q_for_record = state.messages[-1].content if state.messages else ""
+                _register_answerable = bool(
+                    held_record_class(_q_for_record, await record_classes())
+                )
+                if _register_answerable:
+                    logger.info(
+                        "[multi-intent] not decomposing: the building holds a record class "
+                        "that answers this question directly"
+                    )
+            except Exception as _rr_err:  # pragma: no cover - never block routing on this
+                logger.debug(f"[multi-intent] record check unavailable: {_rr_err}")
+
+        if (
+            settings.MULTI_INTENT_ENABLED
+            and state.current_intent not in _skip_decompose
+            and not _register_answerable
+        ):
             try:
                 from orchestrator.services.multi_intent_detector import (
                     MultiIntentDetector,
@@ -3680,6 +3725,16 @@ SELECT ?l WHERE {
             uuids = contributing_uuids(results)
             entities = [e for e in (results.get("entities") or []) if isinstance(e, str)]
             if not uuids or not entities:
+                # SAY WHY. This early return also skips the cadence and calibration fetches
+                # that ride the same graph pass, so a silent exit here makes the
+                # completeness gate report "coverage could not be established" and the
+                # calibration state "unknown" for reasons no log records. Chasing that
+                # backwards from the evidence record cost an hour; the reason is one line.
+                logger.info(
+                    "[spatial] grading skipped: "
+                    f"{len(uuids)} contributing uuid(s), {len(entities)} string entit(y/ies)"
+                    f" — cadence and calibration are not fetched either"
+                )
                 return
 
             from orchestrator.services.evidence.spatial_adequacy import classify
@@ -3710,15 +3765,39 @@ SELECT ?l WHERE {
                     results["_calibration"] = _cal
             except Exception as _cal_err:
                 logger.debug(f"[evidence] calibration fetch skipped: {_cal_err}")
-            target = await resolve_space_iri(entities[0], ns, default_run_select)
+            # EVERY entity, not just the first. The dialogue stage extracts entities in the
+            # order it finds them, so "CO2 readings for Room 5.01" yields the measurand
+            # before the room. Resolving only entities[0] meant the space was never found,
+            # `_spatial_grades` stayed empty, and every such answer recorded spatial
+            # adequacy as "none" — "no sensor covers the space asked about" — about a room
+            # with a sensor in it.
+            #
+            # The FIRST entity that resolves to exactly one space wins. `resolve_space_iri`
+            # already returns "" for both no match and an ambiguous match, so this cannot
+            # silently pick a coin-flip candidate; it only stops looking once something
+            # resolved unambiguously.
+            target = ""
+            for _entity in entities:
+                target = await resolve_space_iri(_entity, ns, default_run_select)
+                if target:
+                    break
             if not target:
                 # Unresolved or ambiguous. Grading against an arbitrary candidate would
                 # produce a confident verdict about the wrong room, so nothing is written and
-                # the gate stays unevaluated rather than wrong.
+                # the gate stays unevaluated rather than wrong. Say so: a silent return here
+                # is indistinguishable in the record from a genuine "no sensor covers it".
+                logger.info(
+                    f"[spatial] no space resolved from entities {entities[:4]} — "
+                    f"adequacy left ungraded rather than guessed"
+                )
                 return
 
             facts = await facts_for_uuids(uuids, ns, default_run_select, target=target)
             if not facts:
+                logger.info(
+                    f"[spatial] {len(uuids)} uuid(s) yielded no point facts for "
+                    f"{target.rsplit('#', 1)[-1]} — adequacy left ungraded"
+                )
                 return
             grades = {}
             for uid, f in facts.items():

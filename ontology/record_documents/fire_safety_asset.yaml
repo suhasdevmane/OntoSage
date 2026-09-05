@@ -1,0 +1,82 @@
+# Fire safety asset register -> ontosage:FireSafetyAsset
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# The building held `fire_safety.md`: fifty-one lines of prose, no tables, no mapping. It
+# could tell somebody what to do when the alarm sounds and could not answer a single
+# question about whether the precautions work —
+#
+#     "Which portable firefighting, sprinkler, riser or specialist suppression assets need
+#      service, retest or evidence close-out?"
+#     "What is the currently verified arrangement of fire compartments, doorsets,
+#      penetrations and escape provision?"
+#
+# A FIRE PRECAUTION THAT IS MERELY PRESENT PROVES NOTHING. That is the whole design premise
+# here: every column exists to answer *when was this last proved to work, and by what
+# evidence*. `last_tested_on` and `evidence_ref` are therefore separate — a test somebody
+# remembers doing is not a test, and the register must be able to state the difference.
+#
+# A BLANK `open_defect` MEANS NONE RECORDED, NOT NONE PRESENT. The distinction matters for a
+# fire register more than anywhere else, and the document says so in its own words rather
+# than letting an absence read as an assurance.
+record_type: fire_safety_asset
+class: ontosage:FireSafetyAsset
+iri_template: "fireasset/{code}"
+label_column: name
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  kind:
+    predicate: ontosage:fireAssetKind
+    datatype: xsd:string
+    required: true
+  location:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  floor:
+    predicate: ontosage:onFloor
+    datatype: xsd:string
+  standard:
+    predicate: ontosage:testStandard
+    datatype: xsd:string
+    required: true
+  last_tested_on:
+    predicate: ontosage:lastTestedOn
+    datatype: xsd:date
+  next_test_due:
+    predicate: ontosage:nextTestDue
+    datatype: xsd:date
+    required: true
+  evidence_ref:
+    # Separate from last_tested_on on purpose: a test nobody can evidence is a claim.
+    predicate: ontosage:evidenceReference
+    datatype: xsd:string
+  open_defect:
+    predicate: ontosage:openDefect
+    datatype: xsd:string
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string
+    required: true
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active", "Serviceable"]
+      defective: ["Defective", "Defect open"]
+      unevidenced: ["Unevidenced", "Not proved"]
+      overdue: ["Overdue"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

@@ -589,6 +589,41 @@ Your Answer:"""
                 row.setdefault(column, {"type": "literal", "value": ""})
         return {"head": {"vars": columns}, "results": {"bindings": ordered}}, columns
 
+    #: Words that scope nothing. A filter built from these matches most of a register and
+    #: defeats the purpose, so they are excluded before the scope is built.
+    _SCOPE_STOPWORDS = frozenset(
+        """the a an of in for is are to and or on with by which what how many when where who
+        this that from at as it its be has have do does any all show me my our list tell
+        please can could would should not no next last this month week year day today
+        tomorrow scheduled are there""".split()
+    )
+
+    @staticmethod
+    def _escape_literal(text: str) -> str:
+        return str(text).replace("\\", "\\\\").replace('"', '\\"')
+
+    @classmethod
+    def _scope_tokens(cls, user_query: str) -> List[str]:
+        """The parts of a question specific enough to narrow a large register.
+
+        Identifiers ("1.06", "TS-0042", "DEP-07") and capitalised words carry the scope;
+        ordinary words do not. Returns [] when the question names nothing specific, and the
+        caller then declines rather than handing over an arbitrary slice.
+        """
+        import re as _re
+
+        tokens: List[str] = []
+        for match in _re.findall(r"\b\d+\.\d+\b|\b[A-Z]{2,}-\d+\b|\b\d{4}-\d{2}-\d{2}\b",
+                                 user_query or ""):
+            if match.lower() not in tokens:
+                tokens.append(match.lower())
+        if not tokens:
+            for word in _re.findall(r"\b[A-Z][a-z]{3,}\b", user_query or ""):
+                low = word.lower()
+                if low not in cls._SCOPE_STOPWORDS and low not in tokens:
+                    tokens.append(low)
+        return tokens[:6]
+
     async def _whole_register(
         self, state: ConversationState, user_query: str
     ) -> Optional[Dict[str, Any]]:
@@ -608,15 +643,54 @@ Your Answer:"""
             logger.debug(f"[sparql] record registry unavailable: {exc}")
             return None
 
-        if record is None or record.instances > self.MAX_RECORD_ROWS:
+        if record is None:
             return None
+
+        # A LARGE REGISTER IS SCOPED, NOT ABANDONED.
+        #
+        # This used to return None whenever a register exceeded MAX_RECORD_ROWS, on the
+        # reasoning that a building "with thousands of bookings will fall back, which is
+        # correct". Falling back is correct; what happened next was not. Measured live once
+        # the timetable was lifted into 675 sessions:
+        #
+        #   Q: "Which teaching sessions are scheduled in Room 1.06 this month?"
+        #   A: "the data you provided only lists spaces and the number of sensors ..."
+        #
+        # The generated fallback query asked about SENSOR COUNTS. The routing had already
+        # established the question was about TimetabledSession and that knowledge was
+        # dropped on the floor, so a register with the answer in it produced an answer about
+        # something else entirely.
+        #
+        # The question almost always carries its own scope — a room, a code, a date. Those
+        # literals are matched against the register's values, and a filtered set that fits
+        # is handed over exactly as a small register is. Nothing is truncated: if the filter
+        # does not bring the set under the limit, this still returns None and the normal
+        # path runs, because handing over an arbitrary 120 of 675 sessions would answer
+        # "which room has the most" from a quarter of the data and look authoritative.
+        scope_filter = ""
+        if record.instances > self.MAX_RECORD_ROWS:
+            tokens = self._scope_tokens(user_query)
+            if not tokens:
+                return None
+            clauses = " || ".join(
+                f'CONTAINS(LCASE(STR(?v)), "{self._escape_literal(t)}")' for t in tokens
+            )
+            scope_filter = (
+                "  {\n"
+                "    SELECT DISTINCT ?record WHERE {\n"
+                f"      ?record a ontosage:{record.local_name} ; ?sp ?sv .\n"
+                f"      FILTER({clauses.replace('?v', '?sv')})\n"
+                f"    }} LIMIT {self.MAX_RECORD_ROWS}\n"
+                "  }\n"
+            )
 
         query = (
             "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
             "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
             "SELECT ?record ?p ?v WHERE {\n"
-            f"  ?record a ontosage:{record.local_name} ; ?p ?v .\n"
+            + scope_filter
+            + f"  ?record a ontosage:{record.local_name} ; ?p ?v .\n"
             "  FILTER(?p != rdf:type)\n"
             f"}} ORDER BY ?record LIMIT {self.MAX_RECORD_ROWS * 25}"
         )

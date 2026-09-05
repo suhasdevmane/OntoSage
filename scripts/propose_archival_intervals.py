@@ -191,7 +191,10 @@ async def main(argv=None) -> int:
             "# values, so a wrong one here does not produce an error — it produces a coverage",
             "# figure that looks authoritative.",
             "",
-            "@prefix ontosage: <http://ontosage.org/schema#> .",
+            # BUG-428: this script WRITES the intervals the completeness gate reads. Under the
+            # wrong namespace the file loads without error and the gate never sees a
+            # single value it declares.
+            "@prefix ontosage: <http://ontosage.org/capabilities#> .",
             f"@prefix bldg: <{ns}> .",
             "@prefix ref: <https://brickschema.org/schema/Brick/ref#> .",
             "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .",

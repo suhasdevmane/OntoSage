@@ -1,0 +1,75 @@
+# Timetabled session register -> ontosage:TimetabledSession
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# ontosage:TimetabledSession was declared in the TBox with lay terms and had ZERO instances,
+# while `input/bldg1_timetable.csv` sat in the building folder holding 675 real sessions
+# across 44 rooms. The feed that was supposed to load them has never produced a row:
+# NOTE-413 measured the events table at 64,738 rows across anomaly, booking, access,
+# workorder and asset_outage, and not one session among them.
+#
+# So the building had the timetable, declared the concept, and could answer nothing about
+# either. This is the third register in this session to be blocked by a missing mapping
+# rather than by missing data (ServiceSchedule and WorkOrder were the others), which is
+# worth stating plainly: the Record Document standard is three files, and the one that goes
+# missing is never the data.
+#
+# A SESSION IS NOT A BOOKING, deliberately, and ontosage:Booking is a separate class. A
+# timetable says what the institution has PLANNED; a booking says what somebody RESERVED.
+# Where they disagree the answer must report the disagreement rather than silently prefer
+# one, which is only possible while they are two registers.
+record_type: timetabled_session
+class: ontosage:TimetabledSession
+iri_template: "session/{code}"
+label_column: module
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  module:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  room:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  floor:
+    predicate: ontosage:onFloor
+    datatype: xsd:string
+  session_date:
+    predicate: ontosage:effectiveDate
+    datatype: xsd:date
+    required: true
+  weekday:
+    predicate: ontosage:timeProfile
+    datatype: xsd:string
+    required: true
+  starts_at:
+    predicate: ontosage:startsAt
+    datatype: xsd:string
+    required: true
+  ends_at:
+    predicate: ontosage:endsAt
+    datatype: xsd:string
+    required: true
+  duration_minutes:
+    predicate: ontosage:expectedMinutes
+    datatype: xsd:integer
+    required: true
+  session_kind:
+    predicate: ontosage:sessionKind
+    datatype: xsd:string
+    required: true
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      scheduled: ["Scheduled"]
+      completed: ["Completed"]
+      cancelled: ["Cancelled"]

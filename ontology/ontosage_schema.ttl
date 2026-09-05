@@ -2259,9 +2259,9 @@ ontosage:WasteCollectionPoint ontosage:layTerms "waste", "bin", "bins", "recycli
     "fill level", "full bin", "emptied", "refuse", "skip", "waste station" .
 
 ontosage:CoordinationFunction ontosage:layTerms "coordination", "coordination function",
-    "emergency", "incident", "incident command", "activation", "escalation",
+    "emergency", "incident command", "activation", "escalation",
     "operational period", "fallback", "manual fallback", "evacuation control",
-    "refuge", "roll call", "who is on call", "are we ready for an incident" .
+    "roll call", "who is on call", "are we ready for an incident" .
 
 ontosage:AVReadiness ontosage:layTerms "av", "audio visual", "audiovisual",
     "projector", "display", "microphone", "hearing loop", "amplifier", "camera",
@@ -2366,3 +2366,474 @@ ontosage:WorkOrder ontosage:layTerms "work order", "work orders", "job", "jobs",
 ontosage:TimetabledSession ontosage:layTerms "timetabled session", "timetabled sessions",
     "timetable", "scheduled class", "scheduled classes", "teaching session",
     "teaching sessions", "lecture", "lectures" .
+
+# The five event and state classes were declared as record classes but never given lay
+# terms, so each was reachable only by its formal name. Measured on the 2,960-question
+# capture: 41 non-computed questions use this vocabulary. Every term below was screened
+# against the corpus first — none takes three or more answers away from a lane that
+# already answers them, which is the failure mode a bare head word like "room" caused.
+
+ontosage:AssetStatus ontosage:layTerms "asset status", "equipment status",
+    "out of service", "in service", "operational status", "serviceable",
+    "unserviceable", "is it working", "condition of the equipment" .
+
+ontosage:ClosurePeriod ontosage:layTerms "closure", "closures", "closed period",
+    "closed periods", "shutdown", "out of use", "temporarily closed",
+    "when does it reopen", "planned closure" .
+
+ontosage:AnomalyEvent ontosage:layTerms "anomaly", "anomalies", "unusual reading",
+    "unusual readings", "abnormal reading", "out of range", "outlier", "odd reading" .
+
+ontosage:AccessEvent ontosage:layTerms "access event", "access events", "door event",
+    "door events", "entry log", "entry logs", "tailgating", "forced door",
+    "door held open", "door forced" .
+
+ontosage:AlarmEvent ontosage:layTerms "alarm activation", "alarm activations",
+    "alarm event", "alarm events", "false alarm", "false alarms", "alarm history",
+    "when did the alarm sound" .
+
+
+####################################################################################################
+#  MODULE S — THE ORGANISATION THAT RUNS THE BUILDING
+#
+#  Every register built so far records WHAT the building holds. The 2,960-question capture kept
+#  returning a different shape of question that none of them answers:
+#
+#      "Which accountable owner must supply each missing item?"
+#      "Who currently holds responsibility for this, and what is the escalation route?"
+#      "Which department owns this asset, and what response time is agreed?"
+#
+#  53 non-computed questions ask for an accountable owner by name of function. A building that can
+#  describe its plant in detail and cannot say who runs it is answering only half of operations.
+#
+#  ontosage:Department is deliberately a RECORD class, not a bare taxonomy: departments have owners,
+#  coverage hours, response targets and escalation routes that change, and a register carries the
+#  effective dates and the authority for those. The people are NOT modelled — contract 4 and the
+#  privacy stance hold identity at role level, so this names FUNCTIONS and their contact routes,
+#  never individuals.
+####################################################################################################
+
+ontosage:Department rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Department"@en ;
+    rdfs:comment "An organisational function that operates, maintains, secures or administers the building, with its scope, coverage hours, agreed response target, request channel and escalation route recorded as data. Names functions and contact routes only — never individuals."@en ;
+    skos:example "who do I contact about a broken door closer, and how fast should they respond? -> Department whose serviceScope covers doors, read requestChannel and respondsWithinHours." .
+
+ontosage:departmentFunction a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Department ; rdfs:range xsd:string ;
+    rdfs:label "department function"@en ;
+    rdfs:comment "What this department exists to do, in one line."@en .
+
+ontosage:serviceScope a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Department ; rdfs:range xsd:string ;
+    rdfs:label "service scope"@en ;
+    rdfs:comment "The assets, spaces or activities this department is accountable for. The field a 'who owns this?' question is answered from."@en .
+
+ontosage:requestChannel a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Department ; rdfs:range xsd:string ;
+    rdfs:label "request channel"@en ;
+    rdfs:comment "How a request reaches this department — helpdesk queue, phone, form or duty line."@en .
+
+ontosage:respondsWithinHours a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Department ; rdfs:range xsd:decimal ;
+    rdfs:label "responds within hours"@en ;
+    rdfs:comment "Agreed target response time in hours for a routine request. Recorded so 'is this overdue?' is a computation rather than an opinion."@en .
+
+ontosage:escalatesTo a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Department ; rdfs:range xsd:string ;
+    rdfs:label "escalates to"@en ;
+    rdfs:comment "The function a request escalates to when the response target is missed or the issue exceeds this department's scope."@en .
+
+ontosage:outOfHoursRoute a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Department ; rdfs:range xsd:string ;
+    rdfs:label "out of hours route"@en ;
+    rdfs:comment "Who answers outside coverage hours. Separate from requestChannel because they routinely differ, and an occupant told the daytime queue at 22:00 is told the wrong thing."@en .
+
+# "team"/"teams" were dropped after screening: they appear in 37 questions and 7 that
+# already compute do so in the sensor and capability lanes, so claiming them would take
+# working answers. "escalation", "who owns" and "who is accountable" were dropped because
+# CoordinationFunction and ApprovalRecord already declare them and a tie routes
+# alphabetically — the longer, unambiguous forms below carry the same questions.
+ontosage:Department ontosage:layTerms "department", "departments",
+    "who do i contact", "who is responsible", "responsible department",
+    "accountable owner", "escalation route", "helpdesk", "service desk",
+    "contact route", "response target", "out of hours", "duty officer",
+    "who should i report this to", "which team handles", "who is my contact" .
+
+
+ontosage:StakeholderGroup rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Stakeholder group"@en ;
+    rdfs:comment "A category of person the building serves, recorded with what they need from it, which department serves them, what they are accountable for, when they are present and how far their access reaches. DISTINCT FROM ontosage:StakeholderRole, which is a conversational persona that biases answer framing: this is operational data about a group, with an owner and effective dates, and it is a Record for that reason. No individual is modelled — a group is the finest grain this register goes to."@en ;
+    skos:example "who serves visitors, and what can they see? -> StakeholderGroup for visitors, read servedByDepartment and accessTier." .
+
+ontosage:stakeholderCategory a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StakeholderGroup ; rdfs:range xsd:string ;
+    rdfs:label "stakeholder category"@en ;
+    rdfs:comment "Broad family: occupant, operations, specialist, external, governance or visitor. Used to answer 'which groups are affected' without enumerating every row."@en .
+
+ontosage:primaryNeed a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StakeholderGroup ; rdfs:range xsd:string ;
+    rdfs:label "primary need"@en ;
+    rdfs:comment "What this group mostly comes to the building's data for."@en .
+
+ontosage:servedByDepartment a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StakeholderGroup ; rdfs:range xsd:string ;
+    rdfs:label "served by department"@en ;
+    rdfs:comment "The department code that owns this group's requests. Joins a stakeholder question to a contact route and a response target."@en .
+
+ontosage:accountableFor a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StakeholderGroup ; rdfs:range xsd:string ;
+    rdfs:label "accountable for"@en ;
+    rdfs:comment "What this group is answerable for, if anything. Blank for groups the building serves rather than groups that run it."@en .
+
+ontosage:accessTier a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StakeholderGroup ; rdfs:range xsd:string ;
+    rdfs:label "access tier"@en ;
+    rdfs:comment "How far this group's access reaches: public, visitor, occupant, staff, operational or restricted. Advisory context for an answer — the PDP, not this field, decides what is released."@en .
+
+ontosage:presencePattern a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StakeholderGroup ; rdfs:range xsd:string ;
+    rdfs:label "presence pattern"@en ;
+    rdfs:comment "When this group is typically in the building. The field that makes 'who is affected by a Saturday shutdown?' answerable."@en .
+
+ontosage:dataNeeds a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StakeholderGroup ; rdfs:range xsd:string ;
+    rdfs:label "data needs"@en ;
+    rdfs:comment "The kinds of building data this group asks for, in their own words."@en .
+
+ontosage:StakeholderGroup ontosage:layTerms "stakeholder", "stakeholders",
+    "stakeholder group", "occupant group", "user group", "building users",
+    "who uses the building", "who is affected", "which groups", "audience",
+    "who does this affect", "who needs to know" .
+
+
+ontosage:WorkspaceProfile rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Workspace profile"@en ;
+    rdfs:comment "What a space is like to WORK IN, as opposed to what it is called or how big it is. Records power, network quality, daylight, acoustic character, whether it suits a call, whether a group can use it without disturbing others, and the times it is typically busy or quiet. Added after the stakeholder capture found that undergraduates, postgraduates, PhD students, research staff and lecturers all failed on the same shape of question — 'where can I work for three hours with power, good Wi-Fi and a low risk of noise?' — which the ontology could not answer because it described rooms geometrically and never described them as places to sit down and work."@en ;
+    skos:example "where can two of us revise without disturbing quiet study? -> WorkspaceProfile where groupFriendly is true and noiseProfile is not silent." .
+
+ontosage:workspaceKind a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:string ;
+    rdfs:label "workspace kind"@en ;
+    rdfs:comment "quiet study, open study, group study, bookable room, teaching room, computer lab, common room or breakout."@en .
+
+ontosage:seatCount a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:integer ;
+    rdfs:label "seat count"@en ;
+    rdfs:comment "Working seats, which is not the fire capacity and not the teaching capacity."@en .
+
+ontosage:isBookable a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:boolean ;
+    rdfs:label "is bookable"@en ;
+    rdfs:comment "Whether the space can be reserved. A space that cannot be booked can still be free, and the two questions differ."@en .
+
+ontosage:powerAccess a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:string ;
+    rdfs:label "power access"@en ;
+    rdfs:comment "How reliably a laptop can be plugged in: at every seat, at some seats, perimeter only, or none."@en .
+
+ontosage:networkRating a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:string ;
+    rdfs:label "network rating"@en ;
+    rdfs:comment "Surveyed wireless quality in this space: strong, adequate or weak. Surveyed, not inferred from the nearest access point, because a wall between them is the usual reason an answer is wrong."@en .
+
+ontosage:daylightAspect a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:string ;
+    rdfs:label "daylight aspect"@en ;
+    rdfs:comment "Orientation and daylight character, including glare risk at particular times."@en .
+
+ontosage:noiseProfile a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:string ;
+    rdfs:label "noise profile"@en ;
+    rdfs:comment "The acoustic expectation people hold for this space: silent, quiet, conversational or busy. An expectation, not a measurement — it is what makes a group in the wrong room a problem."@en .
+
+ontosage:suitableForCalls a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:boolean ;
+    rdfs:label "suitable for calls"@en ;
+    rdfs:comment "Whether a video or confidential call can be taken here without disturbing others or being overheard. Requires acoustic separation, not merely a door."@en .
+
+ontosage:groupFriendly a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:boolean ;
+    rdfs:label "group friendly"@en ;
+    rdfs:comment "Whether two or more people may work together here without breaching the space's own noise expectation."@en .
+
+ontosage:busiestPeriod a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:string ;
+    rdfs:label "busiest period"@en ;
+    rdfs:comment "When this space is typically hardest to get a seat in. A TYPICAL PATTERN, not a live occupancy reading — 'when should I arrive?' is a question about the pattern, and answering it from the current count would be wrong tomorrow."@en .
+
+ontosage:quietestPeriod a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:string ;
+    rdfs:label "quietest period"@en ;
+    rdfs:comment "When a seat is typically easiest to find here."@en .
+
+ontosage:nearestVerticalRoute a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:string ;
+    rdfs:label "nearest vertical route"@en ;
+    rdfs:comment "The lift or stair core serving this space, so travel between levels can be reasoned about rather than guessed."@en .
+
+ontosage:WorkspaceProfile ontosage:layTerms "study space", "study spaces", "somewhere to work",
+    "somewhere to study", "quiet space", "quiet study", "group study", "workspace",
+    "workspaces", "place to work", "place to study", "where can i work",
+    "where can i study", "study area", "study areas", "desk space", "seat",
+    "somewhere quiet", "breakout space", "common room", "hot desk" .
+
+
+ontosage:AssetEngineeringProfile rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Asset engineering profile"@en ;
+    rdfs:comment "The engineering truth about a plant item: what it was designed for, what commissioning proved, what it is observed to deliver, where it is isolated, what depends on it downstream, what it is called in every other system, how critical it is, and how long it goes unvisited. Added after the re-sample left mechanical and electrical engineers, facilities managers and insurers as the three worst non-occupant roles, all failing on engineering depth rather than access. The building recorded that an AHU exists and never recorded what it was for."@en ;
+    skos:example "what duty was this designed for and what is it delivering? -> AssetEngineeringProfile, compare designDuty, commissionedDuty and observedDuty with their evidence." .
+
+ontosage:designDuty a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "design duty"@en ;
+    rdfs:comment "What the asset was specified to do, with its unit. The claim on the drawing."@en .
+
+ontosage:commissionedDuty a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "commissioned duty"@en ;
+    rdfs:comment "What commissioning actually witnessed and signed off. Separate from design duty because the two routinely differ, and the difference is the answer."@en .
+
+ontosage:observedDuty a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "observed duty"@en ;
+    rdfs:comment "What the asset is currently measured to deliver. Blank where nothing measures it — and a blank here is a finding, not a gap in the register."@en .
+
+ontosage:dutyEvidence a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "duty evidence"@en ;
+    rdfs:comment "The document or record that substantiates the commissioned duty. Without it the duty is an assertion."@en .
+
+ontosage:isolationPoint a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "isolation point"@en ;
+    rdfs:comment "Where this asset is isolated for safe work. The single most load-bearing field for anyone about to touch it."@en .
+
+ontosage:isolationProvenOn a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:date ;
+    rdfs:label "isolation proven on"@en ;
+    rdfs:comment "When the isolation was last PROVED dead rather than assumed. A documented isolation point that nobody has proved is a claim."@en .
+
+ontosage:downstreamDependencies a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "downstream dependencies"@en ;
+    rdfs:comment "What stops working when this is isolated. The field that turns a five-minute isolation into a decision."@en .
+
+ontosage:tagOnDrawings a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "tag on drawings"@en .
+
+ontosage:tagInBMS a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "tag in BMS"@en .
+
+ontosage:tagInMaintenance a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "tag in maintenance system"@en ;
+    rdfs:comment "Held as three SEPARATE tag fields, not one identifier, for the same reason the waste register separates label from signage: 'are asset names consistent across drawings, BMS and maintenance records?' is only answerable if the disagreement can be represented."@en .
+
+ontosage:criticality a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "criticality"@en ;
+    rdfs:comment "continuity-critical, high, medium or low — what failure would actually stop."@en .
+
+ontosage:replaceability a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "replaceability"@en ;
+    rdfs:comment "stock item, long lead or irreplaceable. An insurer's concentration question is about this, not about value alone."@en .
+
+ontosage:valueBand a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "value band"@en ;
+    rdfs:comment "Replacement value band. A band rather than a figure, because a precise figure implies a valuation nobody has done."@en .
+
+ontosage:lastVisited a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:date ;
+    rdfs:label "last visited"@en ;
+    rdfs:comment "When a person last physically attended this asset — not when a sensor last reported it."@en .
+
+ontosage:inspectionIntervalDays a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:integer ;
+    rdfs:label "inspection interval days"@en ;
+    rdfs:comment "The intended interval between physical visits. With lastVisited this makes the 'longest blind interval' question a calculation."@en .
+
+ontosage:servicesInVoid a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AssetEngineeringProfile ; rdfs:range xsd:string ;
+    rdfs:label "services in void"@en ;
+    rdfs:comment "What runs in the ceiling, riser or floor void at this asset, graded confirmed, probable or unknown. Before intrusive work the grade matters more than the list."@en .
+
+# "plant" was screened and REJECTED: it appears in 43 questions and 12 that already
+# compute do so in the sensor and capability lanes, so claiming it would take working
+# answers. The phrases below are specific to this register and take at most two.
+ontosage:AssetEngineeringProfile ontosage:layTerms "design duty", "commissioned duty",
+    "designed for", "designed and commissioned", "commissioned for", "design intent",
+    "commissioning", "isolation", "isolation point", "isolation points", "safe isolation",
+    "downstream dependencies", "asset tag", "asset tags", "tag consistency",
+    "plant item", "plant items", "commissioning record",
+    "services in the void", "riser contents", "blind interval", "rarely visited",
+    "replacement value", "irreplaceable", "continuity critical", "criticality" .
+
+
+ontosage:IncidentRecord rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Incident record"@en ;
+    rdfs:comment "Something that went wrong or nearly did: injury, near miss, property damage, security breach or environmental release, with what was done immediately, what the investigation concluded, whether it is externally reportable and what remains outstanding. A near miss is recorded in the SAME register as an injury deliberately — separating them is how an organisation stops seeing that the two have the same cause."@en ;
+    skos:example "which incident types recur in the same location? -> IncidentRecord grouped by locationText and incidentCategory." .
+
+ontosage:incidentCategory a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IncidentRecord ; rdfs:range xsd:string ;
+    rdfs:label "incident category"@en ;
+    rdfs:comment "injury, near miss, property damage, security, environmental or service failure."@en .
+
+ontosage:incidentSeverity a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IncidentRecord ; rdfs:range xsd:string ;
+    rdfs:label "incident severity"@en ;
+    rdfs:comment "Actual severity of what happened. Kept apart from potential severity, because a near miss with low actual and high potential severity is the most important row in any incident register."@en .
+
+ontosage:potentialSeverity a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IncidentRecord ; rdfs:range xsd:string ;
+    rdfs:label "potential severity"@en ;
+    rdfs:comment "What could reasonably have happened. The field that stops a near miss being filed and forgotten."@en .
+
+ontosage:immediateAction a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IncidentRecord ; rdfs:range xsd:string ;
+    rdfs:label "immediate action"@en .
+
+ontosage:investigationFinding a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IncidentRecord ; rdfs:range xsd:string ;
+    rdfs:label "investigation finding"@en ;
+    rdfs:comment "What the investigation concluded. Blank where none has been done — and a blank on a high-potential row is itself the finding."@en .
+
+ontosage:externallyReportable a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IncidentRecord ; rdfs:range xsd:boolean ;
+    rdfs:label "externally reportable"@en ;
+    rdfs:comment "Whether this must be reported to a regulator. A legal obligation, not a severity judgement."@en .
+
+ontosage:actionsOutstanding a owl:DatatypeProperty ;
+    rdfs:domain ontosage:IncidentRecord ; rdfs:range xsd:string ;
+    rdfs:label "actions outstanding"@en .
+
+ontosage:IncidentRecord ontosage:layTerms "incident", "incidents", "near miss",
+    "near misses", "accident", "accidents", "injury", "injuries", "what went wrong",
+    "incident log", "incident history", "reportable incident", "riddor",
+    "lessons learned", "recurring incident" .
+
+
+ontosage:FireSafetyAsset rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Fire safety asset"@en ;
+    rdfs:comment "A physical fire precaution — detection, alarm, suppression, a fire door, a compartment penetration or an escape provision — with the date it was last tested, the evidence for that test, the standard it is held to and the defects open against it. Recorded separately from general plant because a fire precaution that is merely PRESENT proves nothing: the question is always when it was last proved to work."@en ;
+    skos:example "which suppression assets need service, retest or evidence close-out? -> FireSafetyAsset where nextTestDue has passed or evidenceReference is blank." .
+
+ontosage:fireAssetKind a owl:DatatypeProperty ;
+    rdfs:domain ontosage:FireSafetyAsset ; rdfs:range xsd:string ;
+    rdfs:label "fire asset kind"@en ;
+    rdfs:comment "detection, alarm, suppression, extinguisher, fire door, compartmentation, escape provision or signage."@en .
+
+ontosage:testStandard a owl:DatatypeProperty ;
+    rdfs:domain ontosage:FireSafetyAsset ; rdfs:range xsd:string ;
+    rdfs:label "test standard"@en ;
+    rdfs:comment "The standard or regime the asset is held to, so 'is this compliant?' has a stated benchmark rather than an opinion."@en .
+
+ontosage:lastTestedOn a owl:DatatypeProperty ;
+    rdfs:domain ontosage:FireSafetyAsset ; rdfs:range xsd:date ;
+    rdfs:label "last tested on"@en .
+
+ontosage:nextTestDue a owl:DatatypeProperty ;
+    rdfs:domain ontosage:FireSafetyAsset ; rdfs:range xsd:date ;
+    rdfs:label "next test due"@en .
+
+ontosage:openDefect a owl:DatatypeProperty ;
+    rdfs:domain ontosage:FireSafetyAsset ; rdfs:range xsd:string ;
+    rdfs:label "open defect"@en ;
+    rdfs:comment "A defect recorded against this asset and not yet closed. Blank means none recorded, which is not the same as none present, and the register says so."@en .
+
+ontosage:FireSafetyAsset ontosage:layTerms "fire door", "fire doors", "fire alarm",
+    "smoke detector", "smoke detectors", "detection", "extinguisher", "extinguishers",
+    "sprinkler", "sprinklers", "suppression", "compartmentation", "fire compartment",
+    "fire stopping", "escape route", "escape routes", "means of escape", "fire precaution",
+    "fire precautions", "emergency lighting", "fire safety asset" .
+
+ontosage:ServiceSchedule ontosage:layTerms "service schedule", "service schedules",
+    "planned maintenance", "planned preventive maintenance", "ppm", "maintenance schedule",
+    "next due", "last completed", "servicing schedule", "scheduled service",
+    "when is it next serviced", "due for service" .
+
+
+ontosage:HazardControl rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Hazard control"@en ;
+    rdfs:comment "A recognised hazard present in the building, the control applied to it, the regime that tests the control and when that test is next due. One class serves COSHH substances, local exhaust ventilation, asbestos-containing materials and water hygiene because they share exactly this shape — a hazard that is managed rather than removed, whose safety depends on a test somebody has to keep doing. Modelling them separately would have produced four near-identical registers and four places for the same question to be half-answered."@en ;
+    skos:example "which hazard controls are overdue for test? -> HazardControl where nextTestDue has passed." .
+
+ontosage:hazardKind a owl:DatatypeProperty ;
+    rdfs:domain ontosage:HazardControl ; rdfs:range xsd:string ;
+    rdfs:label "hazard kind"@en ;
+    rdfs:comment "COSHH substance, local exhaust ventilation, asbestos-containing material, water system or biological."@en .
+
+ontosage:controlMeasure a owl:DatatypeProperty ;
+    rdfs:domain ontosage:HazardControl ; rdfs:range xsd:string ;
+    rdfs:label "control measure"@en ;
+    rdfs:comment "What actually keeps the hazard safe. The thing that must not silently stop working."@en .
+
+ontosage:hazardCondition a owl:DatatypeProperty ;
+    rdfs:domain ontosage:HazardControl ; rdfs:range xsd:string ;
+    rdfs:label "hazard condition"@en ;
+    rdfs:comment "Current assessed condition of the hazard itself, distinct from the state of its control — an asbestos material in good condition under a damaged label is a different problem from a damaged material."@en .
+
+ontosage:HazardControl ontosage:layTerms "hazard", "hazards", "coshh", "lev",
+    "local exhaust ventilation", "fume cupboard", "fume cupboards", "asbestos",
+    "asbestos containing material", "legionella", "water hygiene", "hazardous substance",
+    "hazardous substances", "control measure", "control measures", "safe to work" .
+
+
+ontosage:OperatingRegime rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Operating regime"@en ;
+    rdfs:comment "How a building system is SUPPOSED to run: its setpoints, its occupied and unoccupied schedules, its seasonal changeover and the deviations that are approved rather than faults. Added because 'which HVAC assets operate beyond approved service windows, and is each exception justified?' cannot be answered by a reading — it needs the intended envelope to compare the reading against, and the building held that only as prose."@en ;
+    skos:example "is this zone running outside its approved window, and is the exception justified? -> OperatingRegime for the system, compare with the live reading." .
+
+ontosage:occupiedSetpoint a owl:DatatypeProperty ;
+    rdfs:domain ontosage:OperatingRegime ; rdfs:range xsd:string ;
+    rdfs:label "occupied setpoint"@en .
+
+ontosage:unoccupiedSetpoint a owl:DatatypeProperty ;
+    rdfs:domain ontosage:OperatingRegime ; rdfs:range xsd:string ;
+    rdfs:label "unoccupied setpoint"@en .
+
+ontosage:operatingWindow a owl:DatatypeProperty ;
+    rdfs:domain ontosage:OperatingRegime ; rdfs:range xsd:string ;
+    rdfs:label "operating window"@en ;
+    rdfs:comment "The hours the system is approved to run. A reading outside this window is only a fault once this says so."@en .
+
+ontosage:approvedException a owl:DatatypeProperty ;
+    rdfs:domain ontosage:OperatingRegime ; rdfs:range xsd:string ;
+    rdfs:label "approved exception"@en ;
+    rdfs:comment "A deviation that has been authorised, with its reason. Without this field every legitimate exception reads as a fault, which is how an alarm list becomes noise."@en .
+
+ontosage:seasonalChangeover a owl:DatatypeProperty ;
+    rdfs:domain ontosage:OperatingRegime ; rdfs:range xsd:string ;
+    rdfs:label "seasonal changeover"@en .
+
+ontosage:OperatingRegime ontosage:layTerms "setpoint", "setpoints", "operating regime",
+    "operating window", "operating windows", "occupied hours", "unoccupied",
+    "how is it supposed to run", "control strategy", "seasonal changeover",
+    "approved exception", "approved exceptions", "heating season", "cooling season",
+    "outside its window", "service window", "service windows",
+    "outside normal hours", "normal hours", "outside approved hours",
+    "beyond approved", "runs outside" .
+
+
+ontosage:EvacuationProvision rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Evacuation provision"@en ;
+    rdfs:comment "A named arrangement for getting a person out of the building who cannot simply walk down the stairs: a refuge point, an evacuation chair, a communication unit, or a personal emergency evacuation plan held at role level. Deliberately does NOT record who any plan belongs to — the plan's EXISTENCE, location and review date are operational facts anyone may need; its subject is not."@en ;
+    skos:example "which refuge points have a working communication unit? -> EvacuationProvision of kind refuge, read provisionState." .
+
+ontosage:provisionKind a owl:DatatypeProperty ;
+    rdfs:domain ontosage:EvacuationProvision ; rdfs:range xsd:string ;
+    rdfs:label "provision kind"@en ;
+    rdfs:comment "refuge point, evacuation chair, communication unit, personal plan or assisted route."@en .
+
+ontosage:provisionState a owl:DatatypeProperty ;
+    rdfs:domain ontosage:EvacuationProvision ; rdfs:range xsd:string ;
+    rdfs:label "provision state"@en .
+
+ontosage:EvacuationProvision ontosage:layTerms "peep", "peeps",
+    "personal emergency evacuation plan", "refuge", "refuge point", "refuge points",
+    "evacuation chair", "evacuation chairs", "assisted escape", "assisted evacuation",
+    "communication unit", "how do i get out", "evacuation provision" .

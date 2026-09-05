@@ -1,0 +1,79 @@
+# Planned service schedule register -> ontosage:ServiceSchedule
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# ontosage:ServiceSchedule was DECLARED in the TBox and had no mapping and no document
+# front-matter, so it was a class with no instances — the building could name the concept
+# and hold none of it. `input/documents/service_schedules.md` already carried seventeen
+# well-formed rows across three tables; only the two files that turn a document into a
+# register were missing.
+#
+# A HONEST NOTE ON SIZE. A keyword count first suggested this register was worth 270
+# unanswered questions. That was wrong by a factor of eighteen: nearly every one of those
+# used "service" in an unrelated sense — building SERVICES (utilities distribution), SERVICE
+# windows (operating hours), in SERVICE (state), SERVICE targets (SLA), the SERVICE relay
+# (software). Counted strictly, planned maintenance is worth about 15. It is built because
+# it is nearly free — the document exists — not because it is large.
+#
+# frequency IS TEXT, NOT AN INTERVAL. "twice daily", "6 monthly" and "quarterly" are what the
+# schedule actually says, and normalising them into days would invent a precision the source
+# does not have and would make "what does the schedule say?" unanswerable.
+record_type: service_schedule
+class: ontosage:ServiceSchedule
+iri_template: "service/{code}"
+label_column: task
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  task:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  category:
+    predicate: ontosage:scheduleKind
+    datatype: xsd:string
+    required: true
+  scope:
+    predicate: ontosage:coveredScope
+    datatype: xsd:string
+    required: true
+  frequency:
+    predicate: ontosage:serviceFrequency
+    datatype: xsd:string
+    required: true
+  last_completed:
+    predicate: ontosage:lastCompleted
+    datatype: xsd:date
+    required: true
+  next_due:
+    predicate: ontosage:nextDue
+    datatype: xsd:date
+    required: true
+  statutory:
+    # Whether missing it is a legal failure or an inconvenience. The two carry very
+    # different consequences and a single "overdue" flag conflates them.
+    predicate: ontosage:isOptional
+    datatype: xsd:boolean
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string
+    required: true
+  provider:
+    predicate: ontosage:providerName
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active", "On schedule"]
+      due: ["Due", "Due soon"]
+      overdue: ["Overdue"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

@@ -1,0 +1,117 @@
+# Workspace profile register -> ontosage:WorkspaceProfile
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# The 185-question re-sample found five roles still failing on one shape of question, and
+# they were the five occupant roles: undergraduates 0/5, PhD students 0/5, lecturers 0/5,
+# taught postgraduates 1/5, research staff 1/5. Their questions were nearly interchangeable:
+#
+#     "Where can I work for three hours on Friday with power, good Wi-Fi, useful daylight
+#      and a low risk of noise?"
+#     "Where can two of us revise together without disturbing quiet-study users?"
+#     "Which bookable room is most likely to support a reliable call?"
+#     "What arrival time gives me the best chance of finding a suitable space?"
+#
+# The ontology described rooms geometrically — area, floor, adjacency — and never described
+# them as places to sit down and work. Every one of those questions is unanswerable from
+# geometry, and every one is answerable from a handful of ordinary attributes.
+#
+# busiest_period AND quietest_period ARE TYPICAL PATTERNS, NOT LIVE READINGS. "What arrival
+# time gives me the best chance" is a question about the pattern; answering it from the
+# current occupancy count would be right this afternoon and wrong tomorrow. Live occupancy
+# still comes from the sensors, and the two must not be conflated.
+#
+# network_rating IS SURVEYED, not derived from the nearest access point. A wall between the
+# seat and the AP is the usual reason a confident wireless answer is wrong.
+record_type: workspace_profile
+class: ontosage:WorkspaceProfile
+iri_template: "workspace/{code}"
+label_column: name
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  room:
+    # Must name a room the building actually has. A workspace profile for an invented room
+    # is the fabrication the referent gate exists to stop, arriving through the data.
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  floor:
+    predicate: ontosage:onFloor
+    datatype: xsd:string
+    required: true
+  kind:
+    predicate: ontosage:workspaceKind
+    datatype: xsd:string
+    required: true
+  seats:
+    predicate: ontosage:seatCount
+    datatype: xsd:integer
+    required: true
+  bookable:
+    predicate: ontosage:isBookable
+    datatype: xsd:boolean
+    required: true
+  power:
+    predicate: ontosage:powerAccess
+    datatype: xsd:string
+    required: true
+  network:
+    predicate: ontosage:networkRating
+    datatype: xsd:string
+    required: true
+  daylight:
+    predicate: ontosage:daylightAspect
+    datatype: xsd:string
+  noise:
+    predicate: ontosage:noiseProfile
+    datatype: xsd:string
+    required: true
+  calls_ok:
+    predicate: ontosage:suitableForCalls
+    datatype: xsd:boolean
+    required: true
+  group_ok:
+    predicate: ontosage:groupFriendly
+    datatype: xsd:boolean
+    required: true
+  access:
+    predicate: ontosage:accessClassification
+    datatype: xsd:string
+    required: true
+  hours:
+    predicate: ontosage:openingHours
+    datatype: xsd:string
+    required: true
+  busiest:
+    predicate: ontosage:busiestPeriod
+    datatype: xsd:string
+    required: true
+  quietest:
+    predicate: ontosage:quietestPeriod
+    datatype: xsd:string
+    required: true
+  vertical_route:
+    predicate: ontosage:nearestVerticalRoute
+    datatype: xsd:string
+    required: true
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active", "Available"]
+      restricted: ["Restricted"]
+      unavailable: ["Unavailable", "Out of use"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

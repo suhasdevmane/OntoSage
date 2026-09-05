@@ -48,7 +48,7 @@ service decision rather than a constant.
 | WCP-013 | Level 4 general waste | ST-L4-A | Level 4 circulation and stairs | General waste | General waste | Wide opening | 120 | 58 | 80 | 2026-09-08 | weekly | false | Active | Soft Services Manager | |
 | WCP-014 | Level 5 mixed recycling | ST-L5-A | Level 5 circulation and stairs | Mixed recycling | Mixed recycling | Wide opening | 120 | 44 | 80 | 2026-09-08 | weekly | false | Active | Soft Services Manager | |
 | WCP-015 | Level 5 general waste | ST-L5-A | Level 5 circulation and stairs | General waste | General waste | Wide opening | 120 | 39 | 80 | 2026-09-08 | weekly | false | Active | Soft Services Manager | |
-| WCP-016 | Confidential shredding | ST-L5-B | Room 5.04 — Academic Office | Confidential paper | Confidential | Narrow slot | 90 | 81 | 75 | 2026-09-09 | monthly | false | Active | Soft Services Manager | Over threshold; next collection is five days away. |
+| WCP-016 | Confidential shredding | ST-L5-B | Room 5.07 — Academic Office | Confidential paper | Confidential | Narrow slot | 90 | 81 | 75 | 2026-09-09 | monthly | false | Active | Soft Services Manager | Over threshold; next collection is five days away. |
 | WCP-017 | WEEE and batteries | ST-GROUND-B | Waste compound and bin store | WEEE | Electrical and batteries | Restricted opening | 60 | 25 | 70 | 2026-09-25 | monthly | false | Active | Soft Services Manager | |
 | WCP-018 | Compound general waste | ST-GROUND-B | Waste compound and bin store | General waste | General waste | Bulk container | 1100 | 47 | 85 | 2026-09-05 | twice weekly | false | Active | Soft Services Manager | |
 | WCP-019 | Compound mixed recycling | ST-GROUND-B | Waste compound and bin store | Mixed recycling | Mixed recycling | Bulk container | 1100 | 63 | 85 | 2026-09-05 | twice weekly | false | Active | Soft Services Manager | |
@@ -56,7 +56,7 @@ service decision rather than a constant.
 | WCP-021 | Open-day temporary general | ST-TEMP-01 | Room 1.04 — Common Area / Atrium | General waste | General waste | Wide opening | 240 | 8 | 85 | 2026-09-12 | event only | true | Active | Events and Communications Coordinator | Placed for EVT-2026-0042. |
 | WCP-022 | Seminar temporary recycling | ST-TEMP-02 | Room 1.04 — Common Area / Atrium | Mixed recycling | Mixed recycling | Wide opening | 120 | 0 | 85 | 2026-09-04 | event only | true | Withdrawn | Events and Communications Coordinator | Placed for the 2026-09-04 seminar; removed the following morning. |
 | WCP-023 | Level 2 laboratory sharps | ST-L2-B | Room 2.01 — Research Laboratory | Clinical sharps | Sharps | Restricted opening | 20 | 55 | 60 | 2026-09-18 | monthly | false | Active | Laboratory Manager | Collected under the clinical waste contract, not the general one. |
-| WCP-024 | Level 3 laboratory sharps | ST-L3-B | Room 3.06 — Research Laboratory | Clinical sharps | Sharps | Restricted opening | 20 | 40 | 60 | 2026-09-18 | monthly | false | Overdue | Laboratory Manager | Collection missed 2026-08-18: the room is under a COSHH restriction and the contractor could not enter. |
+| WCP-024 | Level 3 laboratory sharps | ST-L3-B | Room 3.01 — Research Laboratory | Clinical sharps | Sharps | Restricted opening | 20 | 40 | 60 | 2026-09-18 | monthly | false | Overdue | Laboratory Manager | Collection missed 2026-08-18: the room is under a COSHH restriction and the contractor could not enter. |
 
 ## Points over their approved threshold
 

@@ -1,0 +1,89 @@
+# Stakeholder group register -> ontosage:StakeholderGroup
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# The building could describe its plant, its permits and its cleaning rota, and could not
+# say who it was for. The 4,060-question bank is organised entirely around stakeholder
+# groups — 37 catalogue roles plus 45 earlier ones — and questions of the form
+#
+#     "Which groups are affected by this closure, and who tells them?"
+#     "Who is served by this, and what can they actually see?"
+#
+# had nowhere to be answered from.
+#
+# NO INDIVIDUAL IS MODELLED. A group is the finest grain this goes to, deliberately: the
+# catalogues forbid exposing who holds what, and a register of people would be the single
+# easiest place to breach that.
+#
+# served_by IS A DEPARTMENT CODE, not a name. It joins to the department directory, so a
+# stakeholder question inherits a contact route, a response target and an out-of-hours
+# route without restating any of them here. Restating them would guarantee the two
+# registers disagree within a year.
+#
+# access_tier IS ADVISORY. It says how far a group's access normally reaches so an answer
+# can be framed for the audience. It is NOT a permission: the PDP decides what is released,
+# and a field in a document must never be mistaken for an access-control decision.
+record_type: stakeholder_group
+class: ontosage:StakeholderGroup
+iri_template: "stakeholder/{code}"
+label_column: name
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  category:
+    predicate: ontosage:stakeholderCategory
+    datatype: xsd:string
+    required: true
+    values:
+      occupant: ["Occupant"]
+      operations: ["Operations"]
+      specialist: ["Specialist"]
+      external: ["External"]
+      governance: ["Governance"]
+      visitor: ["Visitor"]
+  primary_need:
+    predicate: ontosage:primaryNeed
+    datatype: xsd:string
+    required: true
+  served_by:
+    # A department code. The join that gives a stakeholder question its contact route.
+    predicate: ontosage:servedByDepartment
+    datatype: xsd:string
+    required: true
+  accountable_for:
+    # Blank for groups the building serves rather than groups that run it. That asymmetry
+    # is the point: "who is accountable" must not return an answer for a visitor.
+    predicate: ontosage:accountableFor
+    datatype: xsd:string
+  access_tier:
+    predicate: ontosage:accessTier
+    datatype: xsd:string
+    required: true
+  presence:
+    predicate: ontosage:presencePattern
+    datatype: xsd:string
+    required: true
+  data_needs:
+    predicate: ontosage:dataNeeds
+    datatype: xsd:string
+    required: true
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active"]
+      occasional: ["Occasional", "Seasonal"]
+      inactive: ["Inactive", "Withdrawn"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string
