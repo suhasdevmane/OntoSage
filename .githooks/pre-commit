@@ -1,0 +1,25 @@
+#!/bin/sh
+# Refuse a commit that would put a live credential into history (BUG-507).
+#
+# Lives in a TRACKED directory so a clone gets it. Git will not use it until
+# someone points git at this directory once, which the README line below and
+# scripts/check_staged_secrets.py --help both state:
+#
+#     git config core.hooksPath .githooks
+#
+# A hook in .git/hooks would be invisible to everyone but the machine it was
+# written on -- which is how this project ended up with a credential in
+# history in the first place: the control existed only as a habit.
+
+set -e
+
+if command -v python >/dev/null 2>&1; then
+    PY=python
+elif command -v python3 >/dev/null 2>&1; then
+    PY=python3
+else
+    echo "pre-commit: no python found -- refusing rather than skipping the secret scan" >&2
+    exit 1
+fi
+
+exec "$PY" scripts/check_staged_secrets.py
