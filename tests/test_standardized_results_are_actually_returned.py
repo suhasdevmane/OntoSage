@@ -47,6 +47,7 @@ and common case. Silence was already a legal answer.
 from __future__ import annotations
 
 import ast
+import textwrap
 import pathlib
 
 import pytest
@@ -111,21 +112,52 @@ def test_the_planner_extractors_now_see_the_uuid():
 # ── the class, not just the instance ────────────────────────────────────────
 
 
+def _terminates(stmts: list) -> bool:
+    """True when this block cannot fall through — every path returns or raises.
+
+    REPLACES a one-line heuristic that was wrong in both directions (V12-12):
+
+    * **Too permissive.** ``return not isinstance(last, (..., ast.If, ...))`` treated ANY
+      trailing ``if`` as terminating. A function ending ``if hit: return hit`` with no
+      ``else`` is precisely the BUG-476 shape — annotated, returns a value on one path,
+      silently returns None on the other — and the guard for BUG-476 could not see it.
+    * **Too strict**, once scope was widened. Reading the same line as "a trailing ``if``
+      falls through" flags ``get_llm_config()``, whose ``if/elif/else`` returns on all
+      three branches. Two false positives in ``shared/config.py`` alone, and a guard that
+      cries wolf is one people learn to skip.
+
+    Also fixes the ``Try`` arm, which asked whether ANY tail returned. One handler
+    returning does not stop the others falling through.
+    """
+    if not stmts:
+        return False
+    last = stmts[-1]
+    if isinstance(last, (ast.Return, ast.Raise)):
+        return True
+    if isinstance(last, ast.If):
+        # No `else` means the false branch falls straight through.
+        return bool(last.orelse) and _terminates(last.body) and _terminates(last.orelse)
+    if isinstance(last, ast.Try):
+        if last.finalbody and _terminates(last.finalbody):
+            return True  # a finally that returns ends the function whatever happened
+        body_ok = _terminates(last.body) and (not last.orelse or _terminates(last.orelse))
+        return body_ok and all(_terminates(h.body) for h in last.handlers)
+    if isinstance(last, (ast.With, ast.AsyncWith)):
+        return _terminates(last.body)
+    if isinstance(last, ast.Match):
+        return bool(last.cases) and all(_terminates(c.body) for c in last.cases)
+    if isinstance(last, ast.While):
+        # `while True:` with no break cannot fall through. Any other loop can run zero
+        # times, so it can.
+        constant_true = isinstance(last.test, ast.Constant) and bool(last.test.value)
+        has_break = any(isinstance(n, ast.Break) for n in ast.walk(last))
+        return constant_true and not has_break
+    return False  # a for-loop, an expression, an assignment: all fall through
+
+
 def _falls_off_the_end(fn: ast.AST) -> bool:
     """True when execution can reach the end of the body without returning or raising."""
-    body = fn.body
-    if not body:
-        return True
-    last = body[-1]
-    if isinstance(last, (ast.Return, ast.Raise)):
-        return False
-    if isinstance(last, ast.Try):
-        tails = [last.body[-1] if last.body else None]
-        tails += [h.body[-1] if h.body else None for h in last.handlers]
-        if last.finalbody:
-            tails.append(last.finalbody[-1])
-        return not any(isinstance(t, (ast.Return, ast.Raise)) for t in tails)
-    return not isinstance(last, (ast.While, ast.For, ast.If, ast.With, ast.AsyncWith, ast.Match))
+    return not _terminates(fn.body)
 
 
 def test_no_annotated_function_can_return_none_by_accident():
@@ -136,7 +168,14 @@ def test_no_annotated_function_can_return_none_by_accident():
     exact shape that cost a correct SPARQL result and produced a fabricated answer.
     """
     offenders = []
-    for path in sorted(pathlib.Path("orchestrator").rglob("*.py")):
+    # SCOPE WIDENED to shared/ (V12-12). It scanned `orchestrator/` alone, which is the
+    # literal guard's mistake — that one covered two directories, reported "clean", and
+    # fifteen real literals sat outside its scope. shared/ is 3,920 lines of core code and
+    # `shared/config.py` is read by every service.
+    for path in sorted(
+        list(pathlib.Path("orchestrator").rglob("*.py"))
+        + list(pathlib.Path("shared").rglob("*.py"))
+    ):
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"))
         except SyntaxError:  # pragma: no cover
@@ -158,3 +197,79 @@ def test_no_annotated_function_can_return_none_by_accident():
         "these promise a value and can fall off the end returning None; downstream reads "
         "are defensive, so the failure is SILENT:\n  " + "\n  ".join(offenders)
     )
+
+
+# ── the analyser itself, pinned (V12-12) ─────────────────────────────────────
+#
+# The sweep above is only as good as `_terminates`, and its predecessor was wrong in both
+# directions: it treated any trailing `if` as terminating (missing the BUG-476 shape) and,
+# read the other way, would have flagged `get_llm_config()`'s exhaustive if/elif/else.
+# Neither error is visible from the sweep's own result — it just reports a number.
+
+
+def _fn(src: str):
+    return ast.parse(textwrap.dedent(src)).body[0]
+
+
+def test_a_trailing_if_with_no_else_falls_through():
+    """The BUG-476 shape. The old heuristic called this terminating and could not see it."""
+    assert _falls_off_the_end(_fn("""
+        def f() -> dict:
+            if hit:
+                return hit
+    """))
+
+
+def test_an_exhaustive_if_elif_else_does_not_fall_through():
+    """`shared/config.py:get_llm_config` — flagging it would be a false alarm, and a guard
+    that cries wolf gets skipped."""
+    assert not _falls_off_the_end(_fn("""
+        def f() -> dict:
+            if a:
+                return 1
+            elif b:
+                return 2
+            else:
+                return 3
+    """))
+
+
+def test_one_returning_handler_does_not_excuse_the_others():
+    """The Try arm asked whether ANY tail returned. One handler returning does not stop
+    another falling through."""
+    assert _falls_off_the_end(_fn("""
+        def f() -> dict:
+            try:
+                return go()
+            except ValueError:
+                return {}
+            except KeyError:
+                log()
+    """))
+
+
+def test_a_finally_that_returns_ends_the_function():
+    assert not _falls_off_the_end(_fn("""
+        def f() -> dict:
+            try:
+                risky()
+            finally:
+                return {}
+    """))
+
+
+def test_a_for_loop_can_run_zero_times():
+    assert _falls_off_the_end(_fn("""
+        def f() -> dict:
+            for x in xs:
+                return x
+    """))
+
+
+def test_while_true_without_break_cannot_fall_through():
+    assert not _falls_off_the_end(_fn("""
+        def f() -> dict:
+            while True:
+                if ready():
+                    return {}
+    """))

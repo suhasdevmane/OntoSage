@@ -440,7 +440,7 @@ Full design, all phases, and the floor-plan PDF+DWG pipeline: **[ONTOSAGE.md](./
 All nodes read/write one `ConversationState` (`shared/models.py`); `intermediate_results: Dict` is the
 data bus. **Reserved keys — never overwrite another node's key:**
 `intent`, `entities`, `time_range` (dialogue) · `sparql_result` (sparql) · `sql_result`, `sensor_metadata` (sql; **not** `uuids` — that name is a local, never a bus key)
-· `analytics_output` (analytics) · `visualization_path` (visualization) · `concepts` (concept_resolver)
+· `analytics_result` (analytics — **not** `analytics_output`, which nothing writes; BUG-510) · `visualization_path` (visualization) · `concepts` (concept_resolver)
 · `recipe_hints` (concept_resolver → analytics) · `control_result` (control) · `goal_plan` (planner)
 · `error` (_safe_node on failure).
 

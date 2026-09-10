@@ -165,6 +165,24 @@ class DocumentBuilder:
             if output_format == "docx":
                 return self._render_docx(report_data, ctx, f"{base_filename}.docx")
 
+            # BUG-511 — this promised `Dict[str, Any]` and fell off the end.
+            #
+            # Unreachable today only because the guard forty lines above rejects anything
+            # outside ("html", "pdf", "docx"). That is protection by distance: add a
+            # format to that tuple, forget a branch here, and this returns None silently
+            # while every caller reads it defensively — BUG-476 exactly, where
+            # `_standardize_results` fell off the end and the pipeline read None as an
+            # empty answer for as long as it had existed.
+            #
+            # An explicit terminal branch makes the promise self-contained.
+            return {
+                "success": False,
+                "error": (
+                    f"Unsupported document format: {output_format}. "
+                    "Supported: html, pdf, docx."
+                ),
+            }
+
         except Exception as e:
             logger.error(f"DocumentBuilder render failed: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
