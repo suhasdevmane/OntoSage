@@ -10,7 +10,7 @@ import json
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -71,6 +71,64 @@ _RELATIVE_DT_SCALE = {
     "year": 365,
     "years": 365,
 }
+
+
+#: Words that name a WHOLE CALENDAR DAY, and how many days back it starts.
+#:
+#: Only terms whose day boundaries are not in dispute. "last night" spans two dates,
+#: "this morning" is a part-day, "the weekend" is two days and which two depends on where
+#: you are — none of those belong here, and guessing at them would trade one wrong window
+#: for another.
+_CALENDAR_DAYS = {
+    "yesterday": 1,
+    "today": 0,
+}
+
+
+def calendar_day_bounds(
+    text: str, tz_name: Optional[str] = None, now: Optional[datetime] = None
+) -> Optional[Tuple[str, str]]:
+    """Local midnight-to-midnight bounds when a question names a calendar day (BUG-480).
+
+    "Give me a report on the CO2 in room 5.01 yesterday" compiled to a bound of `now-24h`,
+    which the resolver dutifully turned into a stamp 24 hours old. The query then covered
+    17:16 on the 6th to 17:16 on the 7th — a rolling day, HALF OF IT TODAY — under a report
+    headed "Yesterday". Every figure in it was real, which is what made it hard to see.
+
+    "Yesterday" in plain English is a date, not a duration. A reader comparing two days
+    cannot use a window that slides with the clock, and a report about it that silently
+    includes this afternoon is wrong in a way no amount of correct arithmetic fixes.
+
+    Returns None when no calendar day is named, leaving the compiled range alone: this
+    narrows a specific, checkable case rather than taking over time parsing.
+
+    Bounds are LOCAL to the building. A day is a local thing — the occupants' Tuesday, not
+    UTC's — and the stores hold local stamps.
+    """
+    low = (text or "").lower()
+    days_back = None
+    for word, back in _CALENDAR_DAYS.items():
+        if re.search(rf"\b{re.escape(word)}\b", low):
+            days_back = back
+            break
+    if days_back is None:
+        return None
+
+    if now is None:
+        try:
+            from zoneinfo import ZoneInfo
+
+            now = datetime.now(ZoneInfo(tz_name)) if tz_name else datetime.now()
+        except Exception:  # pragma: no cover - an unknown zone must not break the turn
+            now = datetime.now()
+
+    day = (now - timedelta(days=days_back)).date()
+    start = datetime(day.year, day.month, day.day, 0, 0, 0)
+    # INCLUSIVE END, because the SQL builders emit `<=`. Using the next midnight would
+    # pull in the first instant of the following day, which for "yesterday" means a
+    # reading from today appearing in a report about a day that has ended.
+    end = datetime(day.year, day.month, day.day, 23, 59, 59)
+    return start.strftime("%Y-%m-%d %H:%M:%S"), end.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def _resolve_relative_dt(value: Optional[str]) -> Optional[str]:
@@ -759,11 +817,10 @@ class DialogueAgent:
         from orchestrator.services.observability import (
             is_observability_question as _is_observability_question,
         )
+        from orchestrator.services.routing_contract import _METROLOGY_RE, _READINESS_RE
         from orchestrator.services.routing_contract import DELIBERATE_RE as _DELIB_RE
         from orchestrator.services.routing_contract import EVENTS_RE as _EVENTS_RE
         from orchestrator.services.routing_contract import WAYFIND_RE as _WAYFIND_RE
-        from orchestrator.services.routing_contract import _METROLOGY_RE
-        from orchestrator.services.routing_contract import _READINESS_RE
         from orchestrator.services.routing_contract import (
             consumption_question as _consumption_question,
         )
@@ -944,28 +1001,31 @@ class DialogueAgent:
                         "sparql_query": "",
                         "response": "",
                     }
-                # Prose fallback: only a STRONG document-KB match routes to capability.
-                from orchestrator.agents.capability_agent import _search_documents
-
-                _bldg = state.building_id or settings.BUILDING_ID
-                _docs = await _search_documents(user_query, _bldg)
-                # Threshold calibrated on bge-large scores: real capability prose lands
-                # >=0.55 (wifi 0.55, GDPR 0.67, parking 0.64) while general questions land
-                # <=0.43 ("capital of France" 0.43). 0.50 sits in that gap so prose routes
-                # DETERMINISTICALLY via the probe instead of falling to LLM-variance, and
-                # general queries are still rejected. (0.55 sat exactly on wifi's score.)
-                if any(d.get("score", 0) >= 0.50 for d in _docs):
-                    logger.info(
-                        f"[ttl-route] capability via document KB ({len(_docs)} chunk(s)) "
-                        f"— skipping LLM intent call"
-                    )
-                    return {
-                        "intent": "capability",
-                        "general": False,
-                        "analytics": False,
-                        "sparql_query": "",
-                        "response": "",
-                    }
+                # THE PROSE FALLBACK USED TO RETURN FROM HERE. It does not any more.
+                #
+                # A document scoring above a threshold claimed the turn BEFORE anything
+                # classified it, and prose about a building matches an enormous range of
+                # questions. Measured live (BUG-440): "Which rooms are on floor 2?" logged
+                # `capability via document KB (3 chunk(s))` and answered with six rooms
+                # drawn from the Cleaning Task Register, the Public Event Register and
+                # Timetabled Sessions. GraphDB holds FORTY-EIGHT rooms on Floor2, and
+                # nothing marked the answer partial — it read as the floor's room list.
+                #
+                # The guard above had grown to nineteen `and not` clauses, each added
+                # after a live wrong answer of exactly this shape. That is the tell: a
+                # pre-classification veto needing an exception per lane cannot be
+                # completed, because it discovers each newly shadowed lane only by
+                # answering a question wrongly first.
+                #
+                # So the document probe now runs AFTER classification, in
+                # `_promote_to_capability_from_documents`, and only over an intent the
+                # classifier left weak. The clauses are then unnecessary rather than
+                # merely deleted: a question the LLM calls `spatial_query` no longer needs
+                # a regex to defend it from a register.
+                #
+                # The TRIPLE probe above keeps its place. It matches curated
+                # `ontosage:layTerms` exactly, so it is precise in the way prose is not,
+                # and no incident has ever implicated it.
             except Exception as e:
                 logger.warning(f"[ttl-route] check failed (non-fatal): {e}")
 
@@ -1045,6 +1105,9 @@ class DialogueAgent:
                 _apply_rc(user_query, result, stage="parse")
             _apply_rc(user_query, result, stage="post")
 
+            # Documents are consulted AFTER the lanes have had their say (W0-2/BUG-440).
+            await self._promote_to_capability_from_documents(user_query, result, state)
+
             # (Legacy medium-band capability SOFT override removed — TODO-012. Capability
             # routing is now the deterministic TTL-first probe above; there is no Qdrant
             # capability-KB fallback to soft-override from.)
@@ -1096,6 +1159,16 @@ class DialogueAgent:
                 _rc(user_query, fallback, stage="post")
             except Exception as rc_err:  # never let routing break the fallback
                 logger.warning(f"[dialogue] contract on fallback skipped: {rc_err}")
+            # DOCUMENTS STILL ANSWER WHEN THE CLASSIFIER IS DOWN.
+            #
+            # The probe this replaced ran BEFORE the LLM, so an outage cost it nothing —
+            # a capability question was still answered from prose. Moving it after
+            # classification would have quietly taken that away on exactly the path built
+            # for an outage (BUG-167), turning a fixed sequencing bug into a new
+            # availability one. The rule is the same as on the healthy path: this
+            # fallback's intent is `general`, which is weak, so a strong document may
+            # claim it and nothing else can be shadowed.
+            await self._promote_to_capability_from_documents(user_query, fallback, state)
             fallback["general"] = fallback.get("intent") == "general"
             return fallback
 
@@ -1293,6 +1366,84 @@ Return ONLY the JSON object.
 """
         return prompt
 
+    #: A document must score at least this to claim a turn nothing else wanted.
+    #:
+    #: Calibrated on bge-large: real capability prose lands >=0.55 (wifi 0.55, GDPR 0.67,
+    #: parking 0.64) while general questions land <=0.43 ("capital of France" 0.43). 0.50
+    #: sits in that gap. Unchanged by the inversion — WHEN the probe runs moved, not how
+    #: strong a match has to be — so a threshold change and a sequencing change cannot be
+    #: confused for each other if this regresses.
+    CAPABILITY_DOC_FLOOR = 0.50
+
+    #: Intents that mean "the classifier did not commit", and only these may be overridden
+    #: by a document.
+    #:
+    #: Read from the routing contract rather than restated: a second copy of this list is
+    #: a second thing to keep in step, and the contract is where lane precedence lives.
+    #: `metadata` and `discovery` are deliberately EXCLUDED even though the contract
+    #: treats them as weak — those are structural answers computed from the graph, and
+    #: BUG-440 was precisely a structural question ("which rooms are on floor 2?") losing
+    #: to a register. A weak-but-structural classification is still better grounded than
+    #: prose.
+    _DOC_OVERRIDABLE = ("general", "general_knowledge", "clarification", None)
+
+    async def _promote_to_capability_from_documents(
+        self,
+        user_query: str,
+        result: Dict[str, Any],
+        state: Optional["ConversationState"] = None,
+    ) -> None:
+        """Let uploaded prose answer, but only a question no lane claimed (BUG-440).
+
+        This is the inverted form of the pre-LLM document probe. That version returned
+        `intent=capability` before anything classified the question, and was guarded by
+        nineteen `and not` clauses — each one added after a live wrong answer where prose
+        had shadowed a real lane. A veto that needs an exception per lane cannot be
+        finished: it finds each newly shadowed lane by answering wrongly first.
+
+        Running afterwards inverts the burden. The classifier and the routing contract go
+        first; documents are consulted only where they left the intent weak. So the
+        clauses are not deleted, they are made UNNECESSARY — `is_data_query`,
+        `is_floor_plan_query`, `_plant_point_question` and the rest were all reconstructing
+        by regex what the classifier already decided.
+
+        Mutates `result` in place and never raises: a document search failing must cost
+        the turn its prose, not its answer.
+        """
+        if result.get("intent") not in self._DOC_OVERRIDABLE:
+            return
+        if not (user_query or "").strip():
+            return
+        try:
+            from orchestrator.agents.capability_agent import _search_documents
+
+            bldg = (state.building_id if state else None) or settings.BUILDING_ID
+            docs = await _search_documents(user_query, bldg)
+            best = max((d.get("score", 0) or 0) for d in docs) if docs else 0
+            if best >= self.CAPABILITY_DOC_FLOOR:
+                logger.info(
+                    "[doc-route] '%s' left at %r by the classifier; %d document chunk(s) "
+                    "score %.2f — routing to capability",
+                    (user_query or "")[:60],
+                    result.get("intent"),
+                    len(docs),
+                    best,
+                )
+                result["intent"] = "capability"
+                result["general"] = False
+                result["analytics"] = False
+            elif docs:
+                # SAY WHY IT DID NOT FIRE. A silent floor is untunable — the same lesson
+                # as a guard that reports only "blocked".
+                logger.debug(
+                    "[doc-route] best document score %.2f is below %.2f — leaving %r",
+                    best,
+                    self.CAPABILITY_DOC_FLOOR,
+                    result.get("intent"),
+                )
+        except Exception as exc:
+            logger.warning(f"[doc-route] document probe failed (non-fatal): {exc}")
+
     def _parse_llm_response(
         self,
         llm_response: str,
@@ -1359,6 +1510,43 @@ Return ONLY the JSON object.
                 else:
                     normalized["start_date"] = None
                     normalized["end_date"] = None
+
+                # A NAMED DAY IS A DATE, NOT A DURATION (BUG-480).
+                #
+                # "…in room 5.01 yesterday" compiled to a bound of `now-24h`, which
+                # resolved to a stamp 24 hours old, and the query covered 17:16 on the 6th
+                # to 17:16 on the 7th — half of it TODAY — under a report headed
+                # "Yesterday". Every figure in it was real, which is what made it hard to
+                # see.
+                #
+                # This runs LAST and overrides whatever was compiled, because the question
+                # is the authoritative source and the compile is one reading of it: the
+                # same lesson as recovering a floor from the raw query (BUG-472). It fires
+                # only when the text actually names a calendar day, so it narrows a
+                # specific, checkable case rather than taking over time parsing.
+                try:
+                    _tz = None
+                    from orchestrator.services.building_context import (
+                        resolve_building_context,
+                    )
+
+                    _bctx = resolve_building_context(getattr(state, "building_id", None))
+                    _tz = getattr(_bctx, "timezone", None) if _bctx else None
+                except Exception:  # pragma: no cover - local time is a sane fallback
+                    _tz = None
+                _day = calendar_day_bounds(user_query, _tz)
+                if _day:
+                    if (normalized.get("start_date"), normalized.get("end_date")) != _day:
+                        logger.info(
+                            "[dialogue] calendar day named in the question — window set to "
+                            "%s .. %s (was %s .. %s)",
+                            _day[0],
+                            _day[1],
+                            normalized.get("start_date"),
+                            normalized.get("end_date"),
+                        )
+                    normalized["start_date"], normalized["end_date"] = _day
+                    normalized["time_range"] = {"start": _day[0], "end": _day[1]}
 
                 # NOTE: The former out-of-domain guard that rewrote "general"
                 # answers into a building-scope redirect was removed — OntoSage now

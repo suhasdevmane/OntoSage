@@ -5,7 +5,7 @@ Supports both local (Ollama) and cloud (OpenAI) model providers
 
 import os
 from pathlib import Path
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
@@ -546,7 +546,11 @@ class Settings(BaseSettings):
         description="TTL for Redis-cached embeddings (cache:embed:*). Default 24h.",
     )
     WORKFLOW_TIMEOUT_S: int = Field(
-        default=120, description="Max seconds for entire workflow execution"
+        default=0,
+        description=(
+            "Max seconds for entire workflow execution. 0 = derive from LLM_TIMEOUT_S "
+            "(see _workflow_deadline_must_outlast_one_llm_call)."
+        ),
     )
     CODE_EXECUTOR_TIMEOUT: int = Field(default=30, description="Code execution timeout in seconds")
     CODE_EXECUTOR_MEMORY_LIMIT: str = Field(
@@ -797,6 +801,40 @@ class Settings(BaseSettings):
             # (the RBAC_ENABLED gate only hard-fails on the default when RBAC is on).
             "SECRET_KEY": "change-me-in-production-use-32-random-bytes",
         }
+        # EVERY credential field, not the five somebody remembered.
+        #
+        # The list above is hand-kept, and on 2026-09-06 it covered 5 of the roughly 14
+        # credential settings this system reads. Six of the uncovered ones held values
+        # IDENTICAL to `.env.example` on the live deployment -- POSTGRES_PASSWORD,
+        # PGADMIN_DEFAULT_PASSWORD, API_KEY, API_PGPASSWORD, API_MYSQL_PASSWORD and
+        # PG_THINGSBOARD_PASSWORD -- and STRICT_SECRETS had nothing to say about any of
+        # them (CAVEAT-458).
+        #
+        # So the check is DERIVED: any field whose name looks like a credential is compared
+        # against its OWN declared default. A credential added next month is covered
+        # without anyone remembering to add it here, which is the property the hand list
+        # could not have.
+        #
+        # An EMPTY value is allowed. Empty means "this integration is not configured", and
+        # refusing it would make the guard fail on every deployment that does not use
+        # Influx, Cassandra or the demo datasource.
+        _CREDENTIAL_MARKERS = ("PASSWORD", "SECRET", "API_KEY", "TOKEN", "PRIVATE_KEY")
+        #: Names that MATCH a marker and are not credentials. `STRICT_SECRETS` contains
+        #: "SECRET" and is a boolean switch -- the first version of this check duly
+        #: reported the guard itself as an unset secret, which is the kind of noise that
+        #: gets a guard disabled.
+        _NOT_CREDENTIALS = {"STRICT_SECRETS", "SECRETS_BACKEND", "MASK_SECRETS"}
+        derived: dict = {}
+        for _name, _field in type(self).model_fields.items():
+            if not any(m in _name.upper() for m in _CREDENTIAL_MARKERS):
+                continue
+            if _name in _NOT_CREDENTIALS:
+                continue
+            _default = getattr(_field, "default", None)
+            if isinstance(_default, str) and _default.strip():
+                derived[_name] = _default
+        _DEFAULT_PASSWORDS = {**derived, **_DEFAULT_PASSWORDS}
+
         offenders = [
             name
             for name, default in _DEFAULT_PASSWORDS.items()
@@ -806,13 +844,60 @@ class Settings(BaseSettings):
         # `.envN.example` files carry every credential as a CHANGE-ME placeholder;
         # without this check a deployment could run with the literal password
         # "CHANGE-ME-mysql-password" while STRICT_SECRETS reported all-clear.
+        # `CHANGE-ME`, `CHANGE_ME` and `YOUR_...` are all unfilled templates, and
+        # `.env.example` uses each spelling somewhere. Matching one of the three left the
+        # other two looking like real values.
+        _PLACEHOLDER_PREFIXES = ("CHANGE-ME", "CHANGE_ME", "CHANGEME", "YOUR_", "YOUR-")
         placeholders = [
             name
             for name in _DEFAULT_PASSWORDS
-            if str(getattr(self, name, "") or "").upper().startswith("CHANGE-ME")
+            if str(getattr(self, name, "") or "").upper().startswith(_PLACEHOLDER_PREFIXES)
         ]
-        if offenders or placeholders:
+        # ── credentials this class never sees ───────────────────────────────────
+        #
+        # The derivation above covers every CREDENTIAL FIELD, and that is not every
+        # credential. `POSTGRES_PASSWORD`, `PGADMIN_DEFAULT_PASSWORD`, `API_KEY`,
+        # `API_PGPASSWORD`, `API_MYSQL_PASSWORD` and `PG_THINGSBOARD_PASSWORD` are read
+        # by docker-compose directly and never reach `Settings`, so no amount of work on
+        # the field list can reach them. On 2026-09-06 all six held values IDENTICAL to
+        # `.env.example` on the live deployment and nothing anywhere said so.
+        #
+        # `.env.example` IS the template, and this file already treats an unfilled
+        # template as exactly as insecure as a shipped default. So the comparison is
+        # against the template: a credential-looking variable whose value still equals
+        # the committed example value has not been set.
+        #
+        # Best-effort by design. A missing or unreadable `.env.example` -- a container
+        # that ships without it, most obviously -- is not a reason to refuse to boot.
+        template_matches: List[str] = []
+        try:
+            for _root in (Path("/app/.env.example"), Path(".env.example")):
+                if not _root.is_file():
+                    continue
+                for _line in _root.read_text(encoding="utf-8", errors="replace").splitlines():
+                    _s = _line.strip()
+                    if not _s or _s.startswith("#") or "=" not in _s:
+                        continue
+                    _k, _v = (x.strip() for x in _s.split("=", 1))
+                    if _k in _NOT_CREDENTIALS:
+                        continue
+                    if not _v or not any(m in _k.upper() for m in _CREDENTIAL_MARKERS):
+                        continue
+                    if _k in _DEFAULT_PASSWORDS:
+                        continue  # already reported above, with a better message
+                    if os.environ.get(_k, "").strip() == _v:
+                        template_matches.append(_k)
+                break
+        except Exception:  # never let the guard's own IO stop a boot
+            template_matches = []
+
+        if offenders or placeholders or template_matches:
             parts = []
+            if template_matches:
+                parts.append(
+                    "still hold their .env.example value: "
+                    + ", ".join(sorted(set(template_matches)))
+                )
             if offenders:
                 parts.append(f"equal their insecure defaults: {', '.join(offenders)}")
             if placeholders:
@@ -852,6 +937,61 @@ class Settings(BaseSettings):
                 f"back to EMBEDDING_PROVIDER=local ({self.EMBEDDING_MODEL_LOCAL})."
             )
             self.EMBEDDING_PROVIDER = "local"
+        return self
+
+    @model_validator(mode="after")
+    def _workflow_deadline_must_outlast_one_llm_call(self) -> "Settings":
+        """A workflow may not be given less time than a single call inside it.
+
+        MEASURED 2026-09-07. Every `.env` in this repo carried `LLM_TIMEOUT_S=180` and no
+        `WORKFLOW_TIMEOUT_S` at all, so the workflow deadline sat at its 120s default: one
+        legal LLM call was allowed SIXTY SECONDS LONGER than the entire workflow containing
+        it, and `llm_manager` retries each call up to MAX_RETRY_ATTEMPTS times on top of
+        that. The planner-driven report lane makes roughly four sequential calls and so
+        could never finish — "Give me a report on energy use last week" was killed at 120s
+        on every attempt, narrowing it to one sensor and one day changed nothing, and what
+        came back was a degraded turn rather than an error naming the deadline.
+
+        The two numbers were invisible to each other: `WORKFLOW_TIMEOUT_S` is a Settings
+        field, while `LLM_TIMEOUT_S` is read straight from `os.environ` in
+        `orchestrator/llm_manager.py` and is not a Settings field at all. Nothing ever
+        printed them side by side, and no test could fail — the incoherence lived entirely
+        in the gap between two configuration mechanisms.
+
+        So: DERIVE the default rather than restate it, and complain about an explicit value
+        that cannot work. An operator who sets the number deliberately keeps it — this
+        warns, it does not overrule — because a deployment may genuinely want to shed slow
+        requests, and silently extending a deadline someone chose is its own surprise.
+        """
+        import logging as _logging
+        import os as _os
+
+        _logger = _logging.getLogger("shared.config")
+        try:
+            llm_s = float(_os.environ.get("LLM_TIMEOUT_S", "60"))
+        except ValueError:
+            llm_s = 60.0
+
+        if self.WORKFLOW_TIMEOUT_S <= 0:
+            # Room for two full-length calls plus overhead — NOT for the worst case.
+            #
+            # The planner-driven report lane makes about four sequential calls, so four
+            # full-length calls looks like the honest derivation. It is not: at
+            # LLM_TIMEOUT_S=180 that is a twelve-minute ceiling before a genuinely stuck
+            # request is reported, which is a worse deadline than the broken one. Those
+            # calls do not each run to the cap; measured live, the report lane needs
+            # somewhat over 120s cold and 15s warm. This is a CEILING on a hang, not a
+            # budget for the slow path, and 420s was the value verified to let every
+            # measured lane complete.
+            self.WORKFLOW_TIMEOUT_S = max(120, int(llm_s * 2) + 60)
+        elif self.WORKFLOW_TIMEOUT_S <= llm_s:
+            _logger.warning(
+                "WORKFLOW_TIMEOUT_S=%ss is not longer than LLM_TIMEOUT_S=%ss — any lane "
+                "that makes even one full-length LLM call will be killed mid-flight and "
+                "report a degraded answer rather than an error naming this deadline.",
+                self.WORKFLOW_TIMEOUT_S,
+                int(llm_s),
+            )
         return self
 
     # ── Backward-compat property for BLDG1_ABOX_FILE → BUILDING_ABOX_FILE ─────
@@ -1146,7 +1286,9 @@ def validate_config():
     if ns and not (ns.endswith("#") or ns.endswith("/")):
         raise ValueError(
             f"BUILDING_NAMESPACE must end with '#' or '/' (got: {ns!r}). "
-            "Example: 'http://example.com/building#'"
+            # Shows the SHAPE without naming a host that resolves. `example.com` is a
+            # real registered domain and this string has been copied into a .env before.
+            "It must be the building's own namespace, ending in '#' or '/'."
         )
 
     # SECRET_KEY must not be the default placeholder in production-like envs

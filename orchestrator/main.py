@@ -611,6 +611,28 @@ async def lifespan(app: FastAPI):
                 _phase1_state["inited"] = True
                 await ontology_introspector.initialize()
 
+                # ── What THIS building calls things (V10 W2-1) ──────────────
+                #
+                # Built once at boot so the log records what was learned -- the identifier
+                # shapes, the space nouns, the measurand words -- which is the only place
+                # anyone can see whether a new building's vocabulary was understood.
+                #
+                # The routing layer does NOT consult it yet. Its regexes are tuned against
+                # one building's `N.NN` grammar and swapping them is a behaviour change
+                # that the 33-case regression probe exists to validate; making that change
+                # without being able to run the probe is the silent trade this project has
+                # been bitten by before. The lexicon is built, tested and observable now;
+                # the swap lands with the probe.
+                try:
+                    from orchestrator.services.building_lexicon import lexicon_for
+                    from orchestrator.services.deliberation.live import sparql_exec
+
+                    await lexicon_for(
+                        settings.BUILDING_ID, settings.BUILDING_NAMESPACE, sparql_exec
+                    )
+                except Exception as _lex_err:
+                    logger.warning(f"[building_lexicon] not built at boot: {_lex_err}")
+
                 # C.3: Build the per-building sensor map from the LIVE graph. Regenerate
                 # when the cache is missing/empty OR does not match the ACTIVE building
                 # (no cached sensor URI belongs to its namespace) — this prevents another
@@ -1557,6 +1579,42 @@ async def ping():
     return {"status": "ok"}
 
 
+@app.get("/api/v1/building/identity")
+async def building_identity():
+    """Who this deployment serves. Public, because the UI needs it before anyone logs in.
+
+    The frontend had the building's name written into it in four places -- the nav brand,
+    the home page heading, a service tile, and a `|| "abacws"` fallback in the floor-plan
+    viewer -- so every deployment greeted its users by the name of the first building this
+    system ever served (V10 W2-2).
+
+    UNAUTHENTICATED ON PURPOSE, and safe: it returns only what the login page already
+    displays. The admin config endpoint stays behind `system:admin` because it also writes.
+
+    Nothing here is a secret and nothing here is a measurement. A caller that cannot reach
+    this endpoint should render a neutral name rather than a remembered one.
+    """
+    from orchestrator.services.building_context import resolve_building_context
+
+    building_id = getattr(settings, "BUILDING_ID", "") or ""
+    try:
+        ctx = resolve_building_context(building_id)
+        name, namespace, prefix = ctx.name, ctx.namespace, ctx.prefix
+    except Exception:
+        name = getattr(settings, "BUILDING_NAME", "") or ""
+        namespace = getattr(settings, "BUILDING_NAMESPACE", "") or ""
+        prefix = getattr(settings, "BUILDING_PREFIX", "") or ""
+    return {
+        "status": "success",
+        "data": {
+            "building_id": building_id,
+            "building_name": name or building_id or "Building",
+            "ontology_namespace": namespace,
+            "ontology_prefix": prefix,
+        },
+    }
+
+
 @app.get("/health", response_model=APIResponse)
 async def health_check():
     """
@@ -1689,6 +1747,13 @@ async def health_check():
             "duration_ms": duration_ms,
             "services": checks,
             "building": settings.BUILDING_NAME,
+            # The ID as the RUNNING process holds it, not as `input/env.building` reads on
+            # disk. Those diverge -- a stale per-building image keeps serving the building
+            # it was built for after the files have been renamed (BUG-343), and the
+            # regression probe must key its building-specific cases off what is actually
+            # answering, or it will assert bldg1's room numbers against bldg3's graph and
+            # report the mismatch as a regression.
+            "building_id": settings.BUILDING_ID,
             "ontology_valid": ontology_ok,
             "introspector_ready": ontology_introspector.is_ready(),
             # Build provenance — which commit/time this image was built from (baked as ENV at build).

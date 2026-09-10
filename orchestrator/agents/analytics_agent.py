@@ -73,6 +73,26 @@ class AnalyticsAgent:
     def __init__(self):
         self.max_retries = 3
 
+    @staticmethod
+    def _repair_budget_s() -> float:
+        """How long this lane may spend repairing before it must let the turn finish.
+
+        DERIVED from the workflow deadline, not a number of its own. The failure being
+        prevented is the analytics lane consuming the entire request budget in retries and
+        the turn dying with nothing to show — so the bound has to be expressed as a
+        fraction of the same clock the turn is racing, or the two drift apart the moment
+        either is tuned (the shape of BUG-473, where two deadlines in two files could not
+        see each other).
+
+        Half the workflow's time: enough for a repair or two on a local model, and it
+        still leaves the fetch that already happened and the narration that has to follow.
+        """
+        try:
+            total = float(getattr(settings, "WORKFLOW_TIMEOUT_S", 0) or 0)
+        except (TypeError, ValueError):
+            total = 0.0
+        return (total * 0.5) if total > 0 else 120.0
+
     async def analyze(
         self,
         state: ConversationState,
@@ -730,7 +750,19 @@ else:
 
 Respond with ONLY the Python code, wrapped in ```python blocks."""
 
+        # EVERY LLM CALL IN THIS LANE, TIMED AND SIZED.
+        #
+        # A comparison question was measured at 63s, 94s, 109s and once past a 420s
+        # deadline (CAVEAT-467), and the six minutes before that timeout carried NO log
+        # line at all — the lane could not be told apart from a hang. Each call here is on
+        # a local model and each retry pays the full cost again, so the number of calls
+        # matters as much as the size of any one of them.
+        import time as _t
+
+        _t0 = _t.time()
+        logger.info("[analytics] code prompt %d chars — generating", len(code_prompt))
         response = await llm_manager.generate(code_prompt, task_type=TaskType.ANALYTICS)
+        logger.info("[analytics] code generated in %.1fs", _t.time() - _t0)
 
         # Extract code from response
         code = extract_code_from_llm_response(response)
@@ -749,8 +781,10 @@ Respond with ONLY the Python code, wrapped in ```python blocks."""
         sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
         data_filename: str = "current_data.json",
     ) -> Dict[str, Any]:
-        """Execute code with automatic error fixing"""
+        """Execute code with automatic error fixing, inside a time budget."""
+        import time as _t
 
+        started = _t.time()
         for attempt in range(self.max_retries):
             try:
                 # Execute code via code executor service
@@ -764,6 +798,36 @@ Respond with ONLY the Python code, wrapped in ```python blocks."""
                 else:
                     error = result.get("error", "Unknown error")
                     logger.warning(f"Execution failed (attempt {attempt + 1}): {error}")
+
+                    # STOP REPAIRING WHILE THERE IS STILL TIME TO SPEAK.
+                    #
+                    # Each repair is a full LLM call on the local model, ~60s, and the
+                    # loop had no idea what time it was. Measured on "Compare average CO2
+                    # on floor 1 versus floor 3 over the last week" (CAVEAT-467): the
+                    # workflow died at its 420s deadline mid-repair and the user got
+                    # NOTHING — not the failure, not the rows that were fetched, not a
+                    # word. The same question answered in 63s, 87s and 109s on other runs,
+                    # so the variance is entirely in how many repairs it needed.
+                    #
+                    # Spending the last of the budget on another attempt trades a partial
+                    # answer for a total loss. Returning here leaves the narration step
+                    # its share, so the turn says what happened.
+                    spent = _t.time() - started
+                    if attempt < self.max_retries - 1 and spent > self._repair_budget_s():
+                        logger.warning(
+                            "[analytics] %.0fs spent over %d attempt(s), budget %.0fs — "
+                            "stopping repairs so the turn can still answer",
+                            spent,
+                            attempt + 1,
+                            self._repair_budget_s(),
+                        )
+                        return {
+                            "success": False,
+                            "code": code,
+                            "output": None,
+                            "error": error,
+                            "gave_up_early": True,
+                        }
 
                     if attempt < self.max_retries - 1:
                         # Try to fix the code
@@ -862,7 +926,12 @@ Fix the code to resolve the error. Common issues:
 
 Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
 
+        import time as _t
+
+        _t0 = _t.time()
+        logger.info("[analytics] REPAIR attempt — fix prompt %d chars", len(fix_prompt))
         response = await llm_manager.generate(fix_prompt, task_type=TaskType.ANALYTICS)
+        logger.info("[analytics] repair generated in %.1fs", _t.time() - _t0)
         fixed_code = extract_code_from_llm_response(response)
 
         logger.info(f"Fixed code:\n{fixed_code}")
@@ -1030,6 +1099,16 @@ Generate a response that:
 
 Response:"""
 
+        # WHAT THE NARRATION ACTUALLY COSTS. Without this, a slow answer cannot be told
+        # apart from a large prompt — and a prompt that grows with the BUILDING rather
+        # than the question is how a 45,573-character SQL prompt reached a 16k context
+        # and returned nothing at all (BUG-474).
+        logger.info(
+            "[analytics] narration prompt %d chars (output %d, %d sensor line(s))",
+            len(summary_prompt),
+            len(str(output or "")),
+            len(sensor_metadata or {}),
+        )
         try:
             summary = await llm_manager.generate(summary_prompt, task_type=TaskType.ANALYTICS)
             return summary.strip() + plot_markdown, media

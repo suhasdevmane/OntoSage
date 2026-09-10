@@ -3,6 +3,7 @@ import React from 'react';
 // Removed unused Link import to satisfy ESLint
 import './Home.css';
 import TopNav from './TopNav';
+import { fetchBuildingIdentity, NEUTRAL_NAME } from '../api/buildingIdentity';
 import Apache_Jena from './imgs/Apache_Jena.png';
 import graphdbImg from './imgs/GraphDB.png';
 import thingsboardImg from './imgs/thingsboard.png';
@@ -17,6 +18,15 @@ import sparqlimg from './imgs/sparql.png';
 
 
 export default function Home() {
+  // The building's own name. The heading read "Abacws SmartBot", so every deployment
+  // announced the first building this system ever served (V10 W2-2).
+  const [buildingName, setBuildingName] = React.useState(NEUTRAL_NAME);
+  React.useEffect(() => {
+    let alive = true;
+    fetchBuildingIdentity().then((b) => { if (alive) setBuildingName(b.buildingName); });
+    return () => { alive = false; };
+  }, []);
+
   const openService = url => window.open(url, '_blank');
 
  const services = [
@@ -30,7 +40,7 @@ export default function Home() {
   { img: adminerImg,     title: "Adminer",            text: "Database Management",               url: "http://localhost:8282",  width:  "70%", height: "150px" },
 
     // Frontend & Notebooks
-  { img: visualiserImg,  title: "3D-Abacws Service",  text: "3D Visualization",                  url: "http://localhost:8090",  width:  "70%", height: "150px" },
+  { img: visualiserImg,  title: "3D Building Service",  text: "3D Visualization",                  url: "http://localhost:8090",  width:  "70%", height: "150px" },
   { img: jupyterImg,     title: "Jupyter Notebook",   text: "Notebooks for data analysis",       url: "http://localhost:8888",  width:  "70%", height: "150px" },
 
     // APIs and Microservices
@@ -54,7 +64,7 @@ export default function Home() {
 
       {/* Intro */}
       <div className="container mt-4" id="content">
-        <h1>Abacws SmartBot – Your Virtual Assistant</h1>
+        <h1>{buildingName} SmartBot – Your Virtual Assistant</h1>
         <p>
           Click on the chat button to start a conversation or select a service below:
         </p>

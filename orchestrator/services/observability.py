@@ -189,6 +189,19 @@ OPEN_QUESTION_RE = re.compile(
 #: The quantity a reach question names, when it names one.
 NAMED_QUANTITY_RE = re.compile(
     r"\b(?:measure|monitor|track|sense|detect|read)\s+"
+    # A SCOPE IS NOT A QUANTITY.
+    #
+    # Without this, "What can you measure in this building?" captured the words "in this
+    # building" — the group is non-greedy and the `\s*\?` lookahead happily accepted the
+    # preposition phrase — and the lane answered:
+    #
+    #     "No — in this building is not measured in this building."
+    #
+    # Garbled, and worse, a confident negative about a referent that does not exist. A
+    # verb followed straight by a preposition names no quantity at all; that question is
+    # asking for the menu, and `is_open_question` already says so.
+    r"(?!(?:in|at|for|on|inside|within|across|throughout|around|near|here|there|"
+    r"anything|everything|any\s?more)\b)"
     r"(?:the\s+|any\s+)?([a-z][a-z0-9 \-]{2,30}?)"
     r"(?=\s+(?:in|at|for|on|inside|within|here|there)\b|\s*\?|$)",
     re.IGNORECASE,

@@ -378,11 +378,97 @@ def _judge_with_llm(question: str, answer: str) -> str:
     return _heuristic_grade(question, answer)
 
 
+#: What a question SHAPE demands of an answer, for the one check the grader could not make.
+#:
+#: The grader tested the SHAPE OF THE RESPONSE -- does it contain digits, does it mention a
+#: room -- and never whether it responded to the question. Its own docstring said so: "the
+#: question is currently unused by the heuristic but kept for parity with the LLM judge."
+#:
+#: MEASURED BEFORE FIXING, against the 2,960-row capture already on disk: of 309 credited
+#: answers whose question asks for a specific KIND of thing, 44 contain no such thing --
+#: 33 date questions answered without a date, 5 "who" questions answered without a role.
+#: 1.5% of the corpus. Worth an hour; not worth the two days it was first scoped at, and
+#: not a re-capture: the answers are already recorded, so this re-grades rows on disk.
+#:
+#: Deliberately NARROW. Each entry is a question word with an unambiguous answer type, and
+#: the answer test is generous -- any date-ish token, any role-ish word. A grader that
+#: demands the RIGHT date would be judging correctness, which is the LLM judge's job and
+#: not something a regex should attempt.
+_ANSWER_SHAPES = (
+    (
+        "date",
+        # `when` MUST be followed by an auxiliary or modal.
+        #
+        # Measured over the capture: most `when` in this corpus is a SUBORDINATING
+        # CONJUNCTION, not a question word -- "which assets are overdue WHEN approved
+        # regimes and actual runtime diverge", "is heat recovery effective WHEN conditions
+        # permit", "WHEN students are allowed to open windows, what usually happens".
+        # None of those asks for a date, and demoting them would withdraw credit from
+        # answers that are correct.
+        #
+        # Leading position is NOT the discriminator: "When a lift is unavailable, how much
+        # capacity is left?" begins with the word and asks about capacity. The auxiliary
+        # is: "when was", "when should I leave", "when can I collect", "when did it begin"
+        # all ask for a time; "when a", "when conditions", "when students" do not.
+        re.compile(
+            r"\bwhen\s+(?:was|were|is|are|did|do|does|will|would|should|can|could|has|have|had)\b"
+            r"|\bwhat date\b|\bhow long ago\b"
+            r"|\blast (?:serviced|inspected|tested|calibrated)\b",
+            re.I,
+        ),
+        re.compile(
+            r"\b(19|20)\d{2}\b|\b\d{1,2}[/-]\d{1,2}\b"
+            r"|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\b"
+            r"|\bago\b|\byesterday\b|\btoday\b|\bnever\b|\bno (?:record|date)\b",
+            re.I,
+        ),
+    ),
+    (
+        "role",
+        # `who` MUST open a clause.
+        #
+        # As a RELATIVE pronoun it introduces a description, not a question: "a staff
+        # member WHO is officially available", "conditions constrain WHO may work on
+        # this". As an INTERROGATIVE it opens the sentence or follows a comma or `and`:
+        # "WHO owns this job on site", "..., and WHO has the mandate?".
+        re.compile(
+            r"(?:^|[?.;,]\s*|\band\s+)who\b|\bwhom\b"
+            r"|\bwhich (?:team|department|role|contact)\b",
+            re.I,
+        ),
+        re.compile(
+            r"\b(team|department|manager|officer|desk|helpdesk|estates|contact|responsible"
+            r"|owner|dept|group|warden|supervisor|coordinator)\b|@|ext\.? ?\d",
+            re.I,
+        ),
+    ),
+)
+
+
+def _answer_omits_what_was_asked(question: str, answer: str):
+    """The shape the question asked for and the answer does not contain, or None.
+
+    Returns the SHAPE NAME so a caller can report which kind of thing was missing; a
+    demotion with no reason is one nobody can check.
+    """
+    for name, q_re, a_re in _ANSWER_SHAPES:
+        if q_re.search(question or ""):
+            return None if a_re.search(answer or "") else name
+    return None
+
+
 def _heuristic_grade(question: str, answer: str) -> str:
     """Rule-based grading fallback when no LLM API is available.
 
-    Signature matches the judge_fn contract (question, answer); the question
-    is currently unused by the heuristic but kept for parity with the LLM judge.
+    THE QUESTION IS READ, as of V10 W4-3. It was not: every test below examines the shape
+    of the RESPONSE, so an answer containing digits was credited as answered-with-data
+    whatever it was digits ABOUT. Measured against the capture on disk, that credited 33
+    date questions answered without a date and 5 "who" questions answered without a role.
+
+    The check is deliberately narrow and generous -- it asks whether the answer contains
+    the KIND of thing the question wanted, never whether it is the right one. Judging
+    correctness is the LLM judge's job, and a regex that tried would be worse than the gap
+    it closes.
     """
     low = answer.lower()
 
@@ -483,6 +569,12 @@ def _heuristic_grade(question: str, answer: str) -> str:
         return "honest-capability-answer"
 
     if has_numbers or has_data_markers or has_counted_records:
+        # A NUMBER IS NOT AN ANSWER TO EVERY QUESTION. "When was the fume cupboard last
+        # tested?" answered with a table of sensor counts contains digits and no date.
+        # Demoted to `deflected` rather than `wrong`: the response is not false, it simply
+        # does not answer what was asked, which is what `deflected` means.
+        if _answer_omits_what_was_asked(question, answer):
+            return "deflected"
         return "answered-with-data"
 
     # Long structured answers without numbers are plausibly honest explanations

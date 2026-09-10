@@ -42,6 +42,23 @@ def _resolve_path(candidates: List[str]) -> Optional[Path]:
     return None
 
 
+def _resolve_building_overlay(building_id: str) -> Optional[Path]:
+    """This building's recipes.yaml, in EITHER input layout.
+
+    `_PER_BUILDING_PATHS` names the nested form only, and the canonical layout is FLAT:
+    under swap-by-rename the active building's files sit directly in ``input/``. So a
+    per-building recipe overlay could never be found for any building this repo ships
+    (CAVEAT-448). ``shared/building_paths`` is the one implementation; the templates remain
+    as a fallback for a caller with neither layout under a standard root.
+    """
+    from shared.building_paths import resolve_building_file
+
+    resolved = resolve_building_file(building_id, "recipes.yaml")
+    if resolved is not None:
+        return resolved
+    return _resolve_path([c.format(building_id=building_id) for c in _PER_BUILDING_PATHS])
+
+
 def _load_yaml(path: Path) -> Dict[str, Any]:
     try:
         with open(path, encoding="utf-8") as f:
@@ -79,19 +96,18 @@ class RecipeRegistry:
         else:
             logger.warning("[recipes] config/recipes.yaml not found — recipe registry empty")
 
-        # Per-building override
+        # Per-building override, resolved in EITHER layout (CAVEAT-448). This walked
+        # _PER_BUILDING_PATHS directly, which names the nested form only, so under the
+        # canonical flat layout no building's overrides were ever applied.
         if building_id:
-            for template in _PER_BUILDING_PATHS:
-                override_path = Path(template.format(building_id=building_id))
-                if override_path.exists():
-                    overrides = _load_yaml(override_path)
-                    if overrides:
-                        recipes.update(overrides)
-                        logger.info(
-                            f"[recipes] applied {len(overrides)} override(s) "
-                            f"from {override_path}"
-                        )
-                    break
+            override_path = _resolve_building_overlay(building_id)
+            if override_path is not None:
+                overrides = _load_yaml(override_path)
+                if overrides:
+                    recipes.update(overrides)
+                    logger.info(
+                        f"[recipes] applied {len(overrides)} override(s) from {override_path}"
+                    )
 
         self._recipes = recipes
         self._loaded = True

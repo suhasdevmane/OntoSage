@@ -226,16 +226,36 @@ class AssetStateService:
 
     # ── queries ──────────────────────────────────────────────────────────────
     def _status_query(self, class_local: str) -> str:
-        """Latest status per asset of one class.
+        """Status per asset of one class, with any disagreement between records reported.
 
         GROUP BY the asset with SAMPLE over the rest: an asset carrying two status
         records would otherwise fan out into two rows and be counted twice — the same
         label fan-out that once reported fourteen floors in a six-storey building.
+
+        THE DOCSTRING USED TO SAY "LATEST STATUS", AND THIS DOES NOT COMPUTE ONE.
+        `MAX(?t)` takes the newest observation date and `SAMPLE(?v)` takes an arbitrary
+        value, so with two records the answer pairs the NEWEST DATE with a possibly OLDER
+        VALUE. That is worse than reporting a stale status honestly: the fresh date makes
+        the stale value read as current.
+
+        Measured 2026-09-06 while fixing BUG-438. Declaring the building's lift made it
+        both an ontosage:Lift and a located ontosage:Amenity, so two generator families
+        each wrote it a status — `operational` from the lift controller and
+        `out_of_service` from the estates helpdesk. "Is the lift working?" became a coin
+        toss, and neither answer would have mentioned that a second source disagreed.
+
+        The generator now writes one record per asset and a test pins it, so this cannot
+        arise from that route again. But a real building has status HISTORY, and the
+        moment one appears the same silence returns. So the query counts the distinct
+        values it collapsed: `value_count > 1` means the sources disagree, and the caller
+        must say so rather than present whichever one SAMPLE happened to pick.
         """
         return (
             f"PREFIX ontosage: <{_ONTOSAGE}>\n"
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
             "SELECT ?asset (SAMPLE(?lab) AS ?label) (SAMPLE(?v) AS ?value)\n"
+            "       (COUNT(DISTINCT ?v) AS ?value_count)\n"
+            "       (GROUP_CONCAT(DISTINCT ?v; separator=\" / \") AS ?all_values)\n"
             "       (MAX(?t) AS ?observed) (SAMPLE(?src) AS ?source)\n"
             "       (SAMPLE(?contact) AS ?contact) (SAMPLE(?sim) AS ?simulated) WHERE {\n"
             f"  ?asset a ontosage:{class_local} .\n"
@@ -376,10 +396,22 @@ class AssetStateService:
         working, broken = [], []
         oldest: Optional[float] = None
         simulated = False
+        disputed: List[str] = []
         for r in rows:
             local = _local(r.get("asset", ""))
             value = (r.get("value") or "").strip()
             age = _age_hours(r.get("observed", ""), now)
+            # TWO SOURCES DISAGREEING IS NOT A STATE TO SAMPLE FROM.
+            # An asset whose records do not agree is not confirmed working, and for an
+            # accessibility asset that distinction strands somebody. It goes in the
+            # cautious bucket and the disagreement is named.
+            try:
+                n_values = int(r.get("value_count") or 1)
+            except (TypeError, ValueError):
+                n_values = 1
+            if n_values > 1:
+                disputed.append(local)
+                value = "disputed"
             episode = open_outages.get(local)
             if episode is not None:
                 value = "out_of_service"
@@ -398,7 +430,14 @@ class AssetStateService:
                 "observed_hours_ago": None if age is None else round(age, 1),
                 "source": r.get("source", ""),
                 "contact": r.get("contact", ""),
-                "reason": (episode or {}).get("reason", ""),
+                "reason": (
+                    (episode or {}).get("reason", "")
+                    or (
+                        f"sources disagree: {r.get('all_values', '')}"
+                        if local in disputed
+                        else ""
+                    )
+                ),
                 "live_episode": episode is not None,
             }
             (working if value.lower() in ("operational", "ok", "up", "normal") else broken).append(
@@ -427,6 +466,14 @@ class AssetStateService:
             if contact:
                 # An outage report with no route to help is a worse answer than it looks.
                 text += f" Report or chase it with: {contact}."
+        # Named, not folded in. "Not operational" and "the records disagree" are different
+        # facts, and only one of them is fixed by sending an engineer.
+        if disputed:
+            text += (
+                f" *{len(disputed)} of these carry conflicting status records and are "
+                f"reported as unconfirmed rather than working: "
+                f"{', '.join(disputed[:4])}.*"
+            )
         # The staleness caveat is about not having looked recently. An OPEN episode is
         # current knowledge — the outage is happening now and the age says how long it
         # has been going on — so firing the caveat there contradicts the sentence above

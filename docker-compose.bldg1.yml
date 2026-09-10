@@ -107,6 +107,11 @@ services:
 
   # ====================== Orchestrator ======================
   orchestrator:
+    # Required on Linux, where this name does not resolve on its own.
+    # Docker Desktop provides it anyway, so declaring it costs nothing there
+    # and is the difference between working and not elsewhere (W3-5).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     build:
       context: .
       dockerfile: orchestrator/Dockerfile
@@ -354,7 +359,11 @@ services:
       - GRAPHDB_REPOSITORY=bldg
       - GRAPHDB_SIMILARITY_INDEX=bldg_index
     volumes:
-      - ./data/bldg1:/staging:ro # Mount ontology files for reference
+      # The `./data/bldg1:/staging:ro` mount was removed 2026-09-06 (CAVEAT-449).
+      # It named ONE building in every compose file -- including bldg2's and
+      # bldg3's -- so one building's staging directory followed every other
+      # building through every swap. It was also dead: data/bldg1/ is empty and
+      # nothing in rag-service reads /staging.
       - ./input:/app/input:ro # Mount input folder for auto-import
     depends_on:
       graphdb:
@@ -522,6 +531,11 @@ services:
 
     # ====================== GraphDB (Replaces Fuseki + Qdrant) ======================
   graphdb:
+    # Required on Linux, where this name does not resolve on its own.
+    # Docker Desktop provides it anyway, so declaring it costs nothing there
+    # and is the difference between working and not elsewhere (W3-5).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     image: ontotext/graphdb:10.7.4
     container_name: graphdb
     restart: unless-stopped
@@ -578,6 +592,11 @@ services:
   # With host MySQL mode, it connects via host.docker.internal:3306.
   # To re-enable mysql container mode: uncomment mysql service and restore depends_on below.
   data-publisher:
+    # Required on Linux, where this name does not resolve on its own.
+    # Docker Desktop provides it anyway, so declaring it costs nothing there
+    # and is the difference between working and not elsewhere (W3-5).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     build:
       context: ./mysql-dummy-publish-dev
       dockerfile: Dockerfile
@@ -722,6 +741,11 @@ services:
 
   # ====================== Chat History ======================
   mongo:
+    # Required on Linux, where this name does not resolve on its own.
+    # Docker Desktop provides it anyway, so declaring it costs nothing there
+    # and is the difference between working and not elsewhere (W3-5).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     image: mongo:7
     container_name: mongo-chat-history
     hostname: mongohost
@@ -893,6 +917,11 @@ services:
   # Static SPA served by nginx; reverse-proxies /api + /auth to the orchestrator
   # (same-origin, no CORS). Toggle synthetic data sources + view provenance.
   config-panel:
+    # Required on Linux, where this name does not resolve on its own.
+    # Docker Desktop provides it anyway, so declaring it costs nothing there
+    # and is the difference between working and not elsewhere (W3-5).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     image: nginx:alpine
     container_name: ontosage-config-panel
     ports:

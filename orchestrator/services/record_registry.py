@@ -297,9 +297,7 @@ def held_record_class(query: str, classes: List[RecordClass]) -> Optional[Record
 SECOND_REGISTER_SHARE = 0.5
 
 
-def rank_record_classes(
-    query: str, classes: List[RecordClass]
-) -> List[Tuple[float, RecordClass]]:
+def rank_record_classes(query: str, classes: List[RecordClass]) -> List[Tuple[float, RecordClass]]:
     """Every class this question scores against, strongest first.
 
     Ties break on class name, never on row order, so the same question ranks the same way
@@ -367,6 +365,22 @@ async def load_lay_terms() -> None:
 
     Without this an ABSENT class is matched only by its class name, so a building with no
     condition survey could not name what it was missing when asked about "expected life".
+
+    THE CLASS LIST COMES FROM THE ONTOLOGY, not from the fallback tuple (W3-4).
+    This module's own docstring names the sin and this function was still committing it:
+    the vocabulary was seeded from `_FALLBACK_RECORD_CLASSES`, the query asked only about
+    those names, and any class not in that Python tuple was skipped outright. So a class
+    the ontology defines, gives lay terms to and that `_discover_record_classes` finds
+    perfectly well could never be named as ABSENT.
+
+    Measured on the live building: `ontosage:AlarmEvent`, `AnomalyEvent` and `AccessEvent`
+    are declared, carry 8-10 lay terms each, are discovered as record classes, and hold no
+    instances. "Have there been any alarms this week?" matched neither a held class nor an
+    absent one, so it fell through to the document lane — and "Show me the anomaly events"
+    matched **PublicEvent**, because "events" is one of its lay terms. An anomaly question
+    answered from the public-event register.
+
+    The held-class path was fixed for exactly this reason. The absent path was not.
     """
     global _LAY_LOADED
     if _LAY_LOADED:
@@ -374,10 +388,21 @@ async def load_lay_terms() -> None:
     try:
         from orchestrator.services.ontology_manager import run_sparql_select
 
-        values = " ".join(f"o:{c}" for c in _FALLBACK_RECORD_CLASSES)
-        result = await run_sparql_select(
-            _LAY_QUERY % values, limit=len(_FALLBACK_RECORD_CLASSES) + 1
-        )
+        discovered = await _discover_record_classes()
+        # Union, not replacement: discovery can degrade to the fallback on a graph hiccup,
+        # and losing the vocabulary entirely would be worse than an over-broad one.
+        names = tuple(sorted(set(discovered) | set(_FALLBACK_RECORD_CLASSES)))
+        for _name in names:
+            _ALL_CLASS_TERMS.setdefault(
+                _name,
+                _terms_for(
+                    _name,
+                    re.sub(r"(?<!^)(?=[A-Z])", " ", _name),
+                    include_head_words=False,
+                ),
+            )
+        values = " ".join(f"o:{c}" for c in names)
+        result = await run_sparql_select(_LAY_QUERY % values, limit=len(names) + 1)
         if not result.get("ok"):
             return
         for row in result.get("rows") or []:
@@ -408,12 +433,45 @@ def absent_record_class(query: str, held: List[RecordClass]) -> Optional[str]:
     """
     held_names = {r.local_name for r in held}
     low = f" {(query or '').lower()} "
+
+    def _longest_hit(terms) -> int:
+        """Length of the longest declared term this question contains, or 0."""
+        best = 0
+        for term in terms:
+            if len(term) > best and re.search(rf"\b{re.escape(term)}\b", low):
+                best = len(term)
+        return best
+
+    # THE MOST SPECIFIC MATCH WINS, and a HELD class beats an absent one on a tie.
+    #
+    # This used to return the first absent class whose vocabulary matched, in dict order.
+    # Harmless while the vocabulary was a short hardcoded tuple; wrong the moment it came
+    # from the ontology, because a SHORT term on an absent class then beats a LONG one on
+    # a class the building actually holds.
+    #
+    # The case that forced it: `FireSafetyAsset` declares "fire alarm" and is held, with
+    # 30 instances. Giving `AlarmEvent` the bare term "alarm" — which is what anyone asking
+    # "have there been any alarms this week?" writes — would have let an EMPTY class claim
+    # "when was the fire alarm last tested?", a question the building answers today.
+    #
+    # Comparing on match length is the whole of it: "fire alarm" is longer than "alarm", so
+    # the held class keeps its question and the absent one keeps its own. Ties go to held,
+    # because a decline costs a real answer while a held class merely routes to data that
+    # exists and is checkable — the same asymmetry `_ALL_CLASS_TERMS` documents.
+    best_held = max((_longest_hit(r.terms) for r in held), default=0)
+
+    best_name, best_len = None, 0
     for name, terms in _ALL_CLASS_TERMS.items():
         if name in held_names:
             continue
-        for term in terms:
-            if re.search(rf"\b{re.escape(term)}\b", low):
-                return name
+        hit = _longest_hit(terms)
+        # Ties between two ABSENT classes break on the name, never on dict order, so the
+        # same question resolves the same way twice.
+        if hit > best_len or (hit and hit == best_len and name < (best_name or "￿")):
+            best_name, best_len = name, hit
+
+    if best_len and best_len > best_held:
+        return best_name
     return None
 
 

@@ -28,7 +28,7 @@ import sys
 sys.path.append("/app")
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 from orchestrator.services.adapters.mysql_adapter import MySQLAdapter
 from orchestrator.services.adapters.postgresql_adapter import PostgreSQLAdapter
@@ -509,15 +509,26 @@ class AdapterRegistry:
         """True if at least one database adapter is connected."""
         return bool(self._adapters)
 
-    def get_schema_text(self, storage_uri: Optional[str] = None) -> str:
-        """Return schema prompt text for the adapter matched to storage_uri."""
+    def get_schema_text(
+        self,
+        storage_uri: Optional[str] = None,
+        keep_columns: Optional[Set[str]] = None,
+    ) -> str:
+        """Return schema prompt text for the adapter matched to storage_uri.
+
+        Pass `keep_columns` — the UUIDs the caller is about to query — whenever they are
+        known. Without it a wide table names every sensor in the building, which is how a
+        45,573-character prompt reached a 16,384-token model (BUG-474).
+        """
         key = self._resolve_storage_key(storage_uri or "")
         disc = (
             self._discoveries.get(key)
             or self._discoveries.get("default")
             or (next(iter(self._discoveries.values())) if self._discoveries else None)
         )
-        return disc.schema_prompt_text if disc else "Schema unavailable"
+        if not disc:
+            return "Schema unavailable"
+        return disc.prompt_text_for(keep_columns)
 
     def get_timestamp_column(self, storage_uri: Optional[str] = None) -> str:
         """Return the auto-detected timestamp column for the matched adapter."""

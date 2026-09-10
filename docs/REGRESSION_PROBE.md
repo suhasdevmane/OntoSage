@@ -1,8 +1,10 @@
 # Regression probe — answers this system has already been proved to give
 
-Model: `local/gpt-oss:20b` · 33 cases · **33 pass, 0 fail**
+Model: `local/gpt-oss:20b` · building `bldg1` · 59 cases · **57 first-pass pass, 2 first-pass fail**
 
 Each case asserts a FACT the registers hold — a figure, a record id, a department code — not a phrasing, so a reworded answer passes and a wrong figure fails.
+
+**Every case was asked once.** No result here was retried, so a failure is a first-pass failure and is not folded into the pass total.
 
 | result | group | question | why |
 |---|---|---|---|
@@ -22,7 +24,7 @@ Each case asserts a FACT the registers hold — a figure, a record id, a departm
 | PASS | safety | Which refuge points are defective, and who owns them? |  |
 | PASS | operations | Which HVAC systems run outside normal hours, and is each exception app |  |
 | PASS | operations | Which permits are open? |  |
-| PASS | timetable | Which teaching sessions are scheduled in Room 1.06? |  |
+| **FAIL** | timetable | Which teaching sessions are scheduled in Room 1.06? | transport TIMEOUT |
 | PASS | metrology | When was the CO2 sensor in Room 5.01 last calibrated? |  |
 | PASS | metrology | How often does a CO2 sensor report? |  |
 | PASS | metrology | How many sensors are overdue for calibration? |  |
@@ -39,3 +41,48 @@ Each case asserts a FACT the registers hold — a figure, a record id, a departm
 | PASS | workspace | I have an online interview next week. Which bookable room and time giv |  |
 | PASS | readiness | Is Room 1.06 ready for my class? |  |
 | PASS | readiness | Is Room 3.13 ready for my seminar? |  |
+| PASS | capability-bypass | What is the CO2 level in room 5.01 right now? |  |
+| PASS | capability-bypass | The toilet on floor 2 is leaking. |  |
+| PASS | capability-bypass | Open the windows on floor 3. |  |
+| PASS | capability-bypass | Show me the floor 3 layout. |  |
+| PASS | capability-bypass | What is the total area of floor 3? |  |
+| PASS | capability-bypass | How do I get to the seminar room from reception? |  |
+| PASS | capability-bypass | Take me to the nearest fire exit. |  |
+| PASS | capability-bypass | How many work orders are open? |  |
+| PASS | capability-bypass | Is the supply fan running on floor 5? |  |
+| PASS | capability-bypass | What is the filter differential pressure on AHU_F5? |  |
+| PASS | capability-bypass | How much energy did the building use last week? |  |
+| PASS | capability-bypass | How much electricity does the lab on floor 5 use? |  |
+| PASS | capability-bypass | Can you measure noise in this building? |  |
+| PASS | capability-bypass | Why is room 5.01 stuffy? |  |
+| PASS | capability-bypass | When was the fire alarm last tested? |  |
+| PASS | capability-bypass | Give me a report on the CO2 in room 5.01 yesterday. |  |
+| PASS | capability-bypass | Is the professor in her office? |  |
+| **FAIL** | w0 | Is the lift working? | forbidden present ['of 1 lift'] |
+| PASS | w0 | How many sensors are there in total? |  |
+| PASS | w0 | What is this building and who runs it? |  |
+| PASS | w0 | What is the nearest accessible toilet to room 3.10? |  |
+| PASS | w0 | Which rooms are stuffy right now? |  |
+| PASS | w0 | Compare the average CO2 on floor 1 versus floor 3 |  |
+| PASS | w0 | Show me floor 3 |  |
+| PASS | portability | What is the radiation level in the atrium? |  |
+| PASS | portability | How many floors does this building have? |  |
+
+## What came back instead
+
+### Which teaching sessions are scheduled in Room 1.06?
+
+- **why:** transport TIMEOUT · **intent:** ``
+
+```
+
+```
+
+### Is the lift working?
+
+- **why:** forbidden present ['of 1 lift'] · **intent:** `asset_state`
+
+```
+**1 of 1 lift(s) are not operational**: Main passenger lift (controller fault) (out of service since 16 days ago). Report or chase it with: Estates helpdesk, ext 1234. *Source: simulated service feed.*
+```
+

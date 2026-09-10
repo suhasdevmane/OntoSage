@@ -1,8 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { fetchBuildingIdentity } from '../../api/buildingIdentity';
 
-const EXAMPLE_TTL = `# ── REQUIRED: use the same bldg: namespace as the active building TTL ──────
-# For bldg1 (Abacws): <http://abacwsbuilding.cardiff.ac.uk/abacws#>
-@prefix bldg:   <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+// The starter TTL, built from the ACTIVE building's own prefix and namespace.
+//
+// It was a constant carrying one building's namespace -- so the first thing a NEW
+// building's operator saw, in the box they were about to paste their own ontology into,
+// was somebody else's namespace, ready to be kept by accident. `input/README.md` warns
+// about exactly this footgun; it was wired into the onboarding tool (V10 W2-2).
+//
+// A mismatched @prefix is not a soft error here: the swap validator and the boot-time TTL
+// validator both hard-fail on it, so the pre-seeded value would have cost a failed boot at
+// best and a silently empty graph at worst.
+const exampleTtl = (prefix, namespace) => `# ── REQUIRED: use this building's own namespace ──
+@prefix ${prefix}:   <${namespace}> .
 @prefix brick:  <https://brickschema.org/schema/Brick#> .
 @prefix ref:    <https://brickschema.org/schema/Brick/ref#> .
 @prefix bacnet: <http://data.ashrae.org/bacnet/> .
@@ -13,23 +23,23 @@ const EXAMPLE_TTL = `# ── REQUIRED: use the same bldg: namespace as the acti
 
 # ── Pattern 1: SQL/Postgres/MySQL time-series sensor (TimeseriesReference) ──
 # Database node — credentials stay in database_registry.yaml, NOT here.
-bldg:database1
+${prefix}:database1
     a ref:Database ;
     rdfs:label "Primary MySQL Sensor Store" .
 
-bldg:MyNewTemperatureSensor
+${prefix}:MyNewTemperatureSensor
     a brick:Temperature_Sensor ;
     rdfs:label "My New Temperature Sensor"@en ;
-    brick:isPartOf bldg:Floor3 ;
+    brick:isPartOf ${prefix}:Floor3 ;
     brick:hasUnit unit:DEG_C ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
         ref:hasTimeseriesId "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" ;
-        ref:storedAt bldg:database1 ;
+        ref:storedAt ${prefix}:database1 ;
     ] .
 
 # ── Pattern 2: BACnet sensor point (BACnetReference) ────────────────────────
-bldg:sample-device
+${prefix}:sample-device
     a bacnet:BACnetDevice ;
     bacnet:device-instance 123 ;
     bacnet:hasPort [
@@ -39,16 +49,16 @@ bldg:sample-device
         bacnet:ip-default-gateway "C0A80101"^^xsd:hexBinary ;
     ] .
 
-bldg:MyBACnetAirSensor
+${prefix}:MyBACnetAirSensor
     a brick:Zone_Air_Temperature_Sensor ;
     rdfs:label "BACnet Zone Air Temp Sensor"@en ;
-    brick:isPartOf bldg:Floor1 ;
+    brick:isPartOf ${prefix}:Floor1 ;
     brick:hasUnit unit:DEG_C ;
     ref:hasExternalReference [
         a ref:BACnetReference ;
         bacnet:object-identifier "analog-value,5"^^bacnet:objectIdentifier ;
         bacnet:object-name "BLDG-Z410-ZATS" ;
-        bacnet:objectOf bldg:sample-device ;
+        bacnet:objectOf ${prefix}:sample-device ;
     ] .
 `;
 
@@ -61,7 +71,20 @@ SELECT ?sensor ?label WHERE {
 export default function OntologyTab({ api, headers }) {
   const [graphs, setGraphs] = useState({});
   const [graphsLoading, setGraphsLoading] = useState(false);
-  const [ttlText, setTtlText] = useState(EXAMPLE_TTL);
+  // Seeded once the building's identity arrives, and only while the editor is still
+  // untouched -- replacing text somebody has started typing would be worse than a wrong
+  // placeholder.
+  const [ttlText, setTtlText] = useState('');
+  const [ttlSeeded, setTtlSeeded] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    fetchBuildingIdentity().then((b) => {
+      if (!alive || ttlSeeded || ttlText) return;
+      setTtlText(exampleTtl(b.prefix || 'bldg', b.namespace || ''));
+      setTtlSeeded(true);
+    });
+    return () => { alive = false; };
+  }, [ttlSeeded, ttlText]);
   const [graphUri, setGraphUri] = useState('urn:ontosage:custom:extension');
   const [validateResult, setValidateResult] = useState(null);
   const [uploadResult, setUploadResult] = useState(null);

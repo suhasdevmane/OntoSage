@@ -149,12 +149,113 @@ async def build_schema(
     )
 
 
-def _norm_floor(anchor: str, floors: List[str]) -> Optional[str]:
-    """'Floor 1' / '1' / 'floor1' -> the matching floor local name."""
-    token = anchor.strip().lower().replace(" ", "").replace("_", "")
+#: How people and models write a storey. Matched against the BUILDING'S OWN floor list, so
+#: nothing here assumes what a floor is called -- only how the same floor might be spelled.
+_FLOOR_WORDS = ("floor", "level", "storey", "story", "fl", "lvl", "l")
+
+#: Ordinals a model reaches for when the question says a digit.
+_ORDINALS = {
+    "ground": "0",
+    "zeroth": "0",
+    "first": "1",
+    "second": "2",
+    "third": "3",
+    "fourth": "4",
+    "fifth": "5",
+    "sixth": "6",
+    "seventh": "7",
+    "eighth": "8",
+    "ninth": "9",
+    "tenth": "10",
+}
+
+
+def _floor_digits(token: str) -> Optional[str]:
+    """The storey number inside a spelling of it, or None.
+
+    A HYPHEN AFTER A LETTER IS A SEPARATOR, NOT A MINUS SIGN. `Niveau-3` is the third
+    floor, not the third basement, and reading the hyphen as a sign made it -3 -- so a
+    building naming floors that way matched nothing. The two readings are genuinely
+    ambiguous in isolation (`Floor-1` could be either), and this resolves it the way that
+    keeps BOTH SIDES consistent: a name like `Floor-1` still matches itself through the
+    exact-match branch above, which runs first.
+    """
+    import re as _re
+
+    for word, digit in _ORDINALS.items():
+        if word in token:
+            return digit
+    cleaned = _re.sub(r"(?<=[a-z])-", "", token)
+    m = _re.search(r"(-?\d+)", cleaned)
+    return m.group(1) if m else None
+
+
+#: What a model writes when it means "I did not fill this in".
+#:
+#: Measured live: the CQ-IR compile emitted an ON_FLOOR qualifier whose anchor was the
+#: literal string "None" for the question "Which space on Floor 3 has the best conditions
+#: for focused work this afternoon?". The admission gate dutifully reported "unknown floor
+#: 'None'" and asked the reader which floor they meant, offering Floor3 among the options.
+_NULLISH = {"", "none", "null", "nil", "n/a", "na", "unknown", "unspecified", "any"}
+
+
+def floor_from_text(text: str, floors: List[str]) -> Optional[str]:
+    """The floor a QUESTION names, matched against this building's own floor list.
+
+    The compiler is one source and the question is the authoritative one. When the
+    compiled anchor is missing or null-ish, reading the floor back out of the raw query is
+    deterministic, costs nothing, and cannot invent a floor the building does not have --
+    every candidate is checked against `floors`.
+    """
+    import re as _re
+
+    low = (text or "").lower()
     for f in floors:
-        f_norm = f.lower().replace(" ", "").replace("_", "")
+        digits = _floor_digits(f.lower())
+        if digits is None:
+            continue
+        # "floor 3", "level 3", "3rd floor", "storey 3" -- the word next to the number is
+        # what makes it a floor reference rather than a room number or a quantity.
+        pattern = (
+            r"\b(?:" + "|".join(_FLOOR_WORDS) + r")\s*-?\s*" + _re.escape(digits) + r"\b"
+            r"|\b" + _re.escape(digits) + r"(?:st|nd|rd|th)?\s+(?:" + "|".join(_FLOOR_WORDS) + r")\b"
+        )
+        if _re.search(pattern, low):
+            return f
+    return None
+
+
+def _norm_floor(anchor: str, floors: List[str]) -> Optional[str]:
+    """Any spelling of a storey -> the matching floor local name, or None.
+
+    WHY THIS IS MORE THAN A STRIP-AND-COMPARE
+    -----------------------------------------
+    It matched 'Floor 3', '3', 'floor3' and nothing else, and the anchor it is given comes
+    from an LLM compile -- so the spelling varies between runs of the SAME question. The
+    regression probe caught the consequence: "Which space on Floor 3 has the best
+    conditions for focused work this afternoon?" -- a question that names its floor, and
+    which this lane had ranked correctly in an earlier session -- came back as "Which floor
+    did you mean? I know: Floor0, Floor1, ... Floor3", offering the reader the floor they
+    had just named.
+
+    An unstable input is not a reason to ask the user; it is a reason to normalise harder.
+    'Level 3', '3rd floor', 'third floor', 'L3' and 'FL-3' now all resolve, by reducing
+    both sides to a STOREY NUMBER and comparing that -- so nothing here assumes what this
+    building calls a floor, only how the same floor might be written.
+    """
+    token = anchor.strip().lower().replace(" ", "").replace("_", "").replace("-", "")
+    for f in floors:
+        f_norm = f.lower().replace(" ", "").replace("_", "").replace("-", "")
         if token == f_norm or token == f_norm.replace("floor", "") or f"floor{token}" == f_norm:
+            return f
+
+    # Fall back to comparing STOREY NUMBERS, which survives any spelling either side uses.
+    want = _floor_digits(token)
+    if want is None:
+        return None
+    for f in floors:
+        have = _floor_digits(f.lower())
+        if have is not None and have == want:
             return f
     return None
 
@@ -198,6 +299,15 @@ def validate(cqir: CQIR, schema: BuildingCapabilitySchema) -> AdmissionResult:
     for q in cqir.spatial:
         if q.relation == SpatialRelation.ON_FLOOR:
             floor_anchor = _norm_floor(q.anchor, schema.floors)
+            if floor_anchor is None and str(q.anchor or "").strip().lower() in _NULLISH:
+                # THE COMPILER LEFT IT BLANK; THE QUESTION DID NOT.
+                #
+                # An LLM compile that emits `anchor: "None"` alongside an ON_FLOOR
+                # qualifier has told us a floor was mentioned and failed to say which.
+                # Asking the reader is the wrong recovery when the reader already said:
+                # the live failure offered "Floor0 ... Floor3 ..." to someone who had
+                # written "Floor 3".
+                floor_anchor = floor_from_text(cqir.raw_query, schema.floors)
             if floor_anchor is None:
                 return AdmissionResult(
                     verdict=CLARIFY,

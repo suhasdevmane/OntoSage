@@ -391,7 +391,12 @@ class DiagnosisService:
                         space_iri=pt.equipment_iri,
                         label=pt.equipment_name,
                         floor="",
-                        sensors={mod: {"uuid": pt.uuid, "stored_at": "plant_data"}},
+                        # The POINT's own storage key, from its ref:storedAt. This was
+                        # the literal "plant_data" -- a registry key only one building
+                        # defines -- so plant diagnosis resolved to a table that does not
+                        # exist anywhere else and every other building's plant questions
+                        # came back empty with no error (V10 W2-2).
+                        sensors={mod: {"uuid": pt.uuid, "stored_at": pt.stored_at}},
                     )
                 )
             if not cands:

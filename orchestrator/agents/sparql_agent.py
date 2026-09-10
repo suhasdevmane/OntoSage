@@ -646,8 +646,9 @@ Your Answer:"""
         import re as _re
 
         tokens: List[str] = []
-        for match in _re.findall(r"\b\d+\.\d+\b|\b[A-Z]{2,}-\d+\b|\b\d{4}-\d{2}-\d{2}\b",
-                                 user_query or ""):
+        for match in _re.findall(
+            r"\b\d+\.\d+\b|\b[A-Z]{2,}-\d+\b|\b\d{4}-\d{2}-\d{2}\b", user_query or ""
+        ):
             if match.lower() not in tokens:
                 tokens.append(match.lower())
         if not tokens:
@@ -713,7 +714,10 @@ Your Answer:"""
                 columns.append(column)
 
         merged: List[Dict[str, Any]] = []
-        for rows, label in ((a["results"]["bindings"], a_label), (b["results"]["bindings"], b_label)):
+        for rows, label in (
+            (a["results"]["bindings"], a_label),
+            (b["results"]["bindings"], b_label),
+        ):
             for row in rows:
                 out = {"register": {"type": "literal", "value": label}}
                 for column in columns:
@@ -758,8 +762,7 @@ Your Answer:"""
         scope = ""
         if tokens:
             clauses = " || ".join(
-                f'CONTAINS(LCASE(STR(?sensor)), "{self._escape_literal(t)}")'
-                for t in tokens
+                f'CONTAINS(LCASE(STR(?sensor)), "{self._escape_literal(t)}")' for t in tokens
             )
             scope = f"  FILTER({clauses})\n"
 
@@ -837,7 +840,11 @@ Your Answer:"""
                 # empty completion. 40 covers every metrology question seen: an
                 # instance, a handful of a kind, or the aggregate, which is a
                 # single row.
-                results, guidance, query, True, row_limit=40
+                results,
+                guidance,
+                query,
+                True,
+                row_limit=40,
             ),
             "standardized": self._standardize_results(results, user_query, query),
             "context": [],
@@ -1059,8 +1066,12 @@ Your Answer:"""
                     s_cells = len(s_results["results"]["bindings"]) * max(len(s_columns), 1)
                     if _cells + s_cells <= self.MAX_RECORD_CELLS:
                         results, columns = self._merge_registers(
-                            results, columns, record.label or record.local_name,
-                            s_results, s_columns, _second.label or _second.local_name,
+                            results,
+                            columns,
+                            record.label or record.local_name,
+                            s_results,
+                            s_columns,
+                            _second.label or _second.local_name,
                         )
                         second_label = _second.label or _second.local_name
                         logger.info(
@@ -1307,6 +1318,35 @@ TRIPLES (Graph Structure):
             _bldg_namespace = settings.BUILDING_NAMESPACE
             _bldg_timezone = settings.BUILDING_TIMEZONE
 
+        # ── worked examples, from THIS building ─────────────────────────────────
+        #
+        # The prompt taught `room 5.01`, `CO2_Level_Sensor_5.08` and
+        # `CONTAINS(STR(?sensor), "5.08")` in six places. `5.01` is not a placeholder: it
+        # is a room in one building, in that building's N.NN numbering, and a model shown
+        # three examples of it reaches for that shape when asked about a building
+        # numbering rooms `RM-204`. The advice was CORRECT for bldg1, so nothing looked
+        # wrong until somebody checked whether the room existed.
+        #
+        # Deleting the examples would have made the prompt worse -- the CONTAINS-filter
+        # guidance is genuinely useful and hard to state abstractly -- so they are read
+        # from the graph, cached per building. When none can be read the example lines are
+        # OMITTED rather than defaulted: worse guidance beats wrong guidance, and a
+        # fallback here would reintroduce the defect.
+        _ex = None
+        try:
+            from orchestrator.services.prompt_exemplars import exemplars_for
+
+            _ex = await exemplars_for(building_id or "", _bldg_namespace, self._execute_query)
+        except Exception:
+            _ex = None
+        _ex_usable = bool(_ex is not None and _ex.usable)
+        _ex_room_line = (
+            f'   - "room {_ex.room_identifier}" -> {_bldg_prefix}:{_ex.room_local} '
+            f'or filter CONTAINS "{_ex.room_identifier}"\n'
+            if _ex_usable
+            else ""
+        )
+
         # Get current time in building's local timezone
         try:
             local_time = datetime.now(ZoneInfo(_bldg_timezone))
@@ -1387,8 +1427,7 @@ Respond with JSON containing exactly TWO keys:
 
 2. Map to ontology concepts using context:
    - "temperature sensors" → brick:Air_Temperature_Sensor
-   - "room 5.01" → bldg:Room_5.01 or filter CONTAINS "5.01"
-   - "location" → brick:hasLocation property
+{_ex_room_line}   - "location" → brick:hasLocation property
    - "next to", "adjacent", "nearby" → rec:adjacentElement
    - "contains", "inside" → rec:containsElement or rec:locatedIn (inverse)
    - "zone", "floor" → rec:Zone, rec:Level
@@ -1455,7 +1494,7 @@ WHERE {{
     FILTER(?sensor = {_bldg_prefix}:ENTITY_NAME)
 }}
 
-Replace {_bldg_prefix}:ENTITY_NAME with the actual URI found in the context (e.g. {_bldg_prefix}:CO2_Level_Sensor_5.08).
+Replace {_bldg_prefix}:ENTITY_NAME with the actual URI found in the context{f" (e.g. {_bldg_prefix}:{_ex.sensor_local})" if _ex_usable else ""}.
 Do NOT add other OPTIONAL blocks or properties.
 Do NOT use '{_bldg_prefix}:connstring'.
 Do NOT use 'ref:hasExternalReference' directly on the sensor (use ashrae:hasExternalReference).
@@ -1510,8 +1549,9 @@ JSON with TWO keys:
    ONLY retrieve metadata (UUID, storage).
 
 3. Use candidate instances if available.
-   - If user asks for a specific sensor by name (e.g. "Sensor_5.08"), FILTER by URI or Label:
-     FILTER(CONTAINS(STR(?sensor), "5.08") || CONTAINS(STR(?label), "5.08"))
+   - If user asks for a specific sensor by name{f' (e.g. "{_ex.sensor_local}")' if _ex_usable else ""}, FILTER by URI or Label:
+     FILTER(CONTAINS(STR(?sensor), "IDENTIFIER") || CONTAINS(STR(?label), "IDENTIFIER"))
+     where IDENTIFIER is the part of the name the user actually said.
    - Ensure ?label is retrieved: OPTIONAL {{ ?sensor rdfs:label ?label }}
 
 4. Add FILTER for specific room/zone mentions
@@ -3123,6 +3163,21 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
                 standardized["results"].append(entry)
         except Exception as e:
             standardized["error"] = f"standardization_failed: {e}"
+        # THE RETURN. It was missing (BUG-476).
+        #
+        # This function is annotated `-> Dict[str, Any]`, builds the dict, fills it from
+        # the bindings and then fell off the end — returning None on every call, on every
+        # path, since it was written. Everything downstream reads it defensively
+        # (`.get("standardized", {})`), so nothing ever raised: the planner's
+        # `_extract_uuids`, `_extract_storage_map` and `_extract_sensor_metadata` simply
+        # returned empty every time.
+        #
+        # `_run_sql` then took its `else` branch — no UUIDs, so let the LLM write the SQL
+        # — and the LLM, given a room named "5.01" and no sensor id, wrote
+        # `WHERE uuid = '5.01'`. Zero rows, and a report that told the reader their room
+        # had no CO2 sensor and recommended installing one, for a room whose readings run
+        # to 77,088 rows a day.
+        return standardized
 
     async def _execute_query(self, sparql: str) -> Dict[str, Any]:
         """Execute SPARQL query against GraphDB (with Fuseki fallback)"""

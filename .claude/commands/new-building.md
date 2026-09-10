@@ -26,7 +26,14 @@ Tip: If TTL parse fails, use `rapper -i turtle input/$ARGUMENTS.ttl 2>&1` for de
 ## Step 2 — Run onboarding script
 
 ```bash
-python scripts/onboard_building.py --building-id $ARGUMENTS --non-interactive
+# The script's parser takes `--id`, not `--building-id`; this line has never run.
+# `--name` and `--namespace` are required in non-interactive mode -- a building
+# without them would inherit the previous building's identity, which is the
+# CAVEAT-446 failure one level up.
+python scripts/onboard_building.py --non-interactive \
+  --id $ARGUMENTS \
+  --name "<the building's name>" \
+  --namespace "<http://example.org/ontosage/$ARGUMENTS#>"
 ```
 
 **Gate:** Script exits 0 with onboarding complete message. If it fails, check script logs for the specific upload error, then try the GraphDB web UI at `http://localhost:7200` for manual upload.
@@ -34,7 +41,11 @@ python scripts/onboard_building.py --building-id $ARGUMENTS --non-interactive
 ## Step 3 — Verify GraphDB loaded
 
 ```bash
-curl -s -X POST http://localhost:7200/repositories/ontosage/sparql \
+# The repository is `bldg` (shared/config.py GRAPHDB_REPOSITORY, and the live server).
+# This said `ontosage`, which exists on no deployment, so the step it gates could
+# only ever return an error -- and the gate below reads that as a failed build
+# rather than as a wrong URL (CAVEAT-449).
+curl -s -X POST http://localhost:7200/repositories/bldg/sparql \
   -H "Content-Type: application/sparql-query" \
   -H "Accept: application/sparql-results+json" \
   -d "SELECT (COUNT(*) as ?n) WHERE { ?s ?p ?o }" | python -m json.tool

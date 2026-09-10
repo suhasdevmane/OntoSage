@@ -587,3 +587,172 @@ def enablement_hint(subject_kind: str, subject: str = "") -> str:
             f"questions about {name} are answered from your own document."
         )
     return common
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Meta-answers: prose ABOUT the pipeline, delivered instead of an answer
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Measured live 2026-09-06, "Which rooms are stuffy right now?":
+#
+#     "I don't have the live CO2 or temperature readings that would let me tell you which
+#      rooms are currently 'stuffy.' What I can share is a quick snapshot of how many
+#      sensors are installed in each space...
+#      Floor 0 - 11 sensors, Floor 1 - 8 sensors, ...
+#      If you'd like to pull the current CO2 or temperature data for any of these spaces,
+#      just let me know."
+#
+# The building has 589 air-quality sensors and a populated co2_data table. The generated
+# SPARQL had returned COUNTS per space rather than readings, and the model narrated the
+# shortfall -- offering, at the end, to do the very thing it had just been asked to do.
+#
+# THIS IS NOT AN HONEST DECLINE, AND THE DIFFERENCE IS THE WHOLE POINT.
+#
+# An honest decline is a statement about the BUILDING: "this building has no lifts recorded
+# in its model", followed by what would make it answerable. It is produced deterministically
+# by a lane that looked and found nothing, and it is one of this system's best behaviours.
+#
+# A meta-answer is a statement about the PIPELINE: what the model was handed, what it would
+# need, what the reader should go and do. The reader cannot act on it, cannot tell whether
+# the building has the data, and is being asked to operate machinery they cannot see. Worse,
+# it usually arrives WITH a table of something else, which reads as a partial answer.
+#
+# So the markers below are deliberately narrow: each one names the conversation, the query
+# or the reader's obligation to fetch data. None of them can appear in a true statement
+# about a building.
+
+#: Phrases that describe the exchange rather than the building.
+_META_ANSWER_RES = (
+    # The data as an object handed over in conversation.
+    re.compile(
+        r"\bthe (?:data|results?|information|context|snippets?|records?) "
+        r"(?:you(?:'ve| have)? |that (?:you|were) )?(?:provided|gave|supplied|shared|sent"
+        r"|pasted|listed|above)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\bbased on the (?:data|information|context|results?) (?:provided|given|supplied"
+        r"|you (?:provided|gave))\b",
+        re.IGNORECASE,
+    ),
+    # Asking the reader to run the system.
+    re.compile(
+        r"\b(?:if you can|you (?:can|could|may want to|might want to|would need to|"
+        r"should)|please)\s+(?:run|execute|issue|write|perform)\s+(?:a |an |the )?"
+        r"(?:query|sparql|sql|search)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b(?:please|kindly)\s+(?:provide|supply|share|paste|upload)\s+"
+        r"(?:the |more |additional |further )?(?:data|readings?|values?|information)\b",
+        re.IGNORECASE,
+    ),
+    # Narrating the shortfall of its own inputs.
+    re.compile(
+        r"\b(?:i (?:do not|don't) have access to|i was not (?:given|provided)|"
+        r"no (?:data|readings?|values?) (?:were|was) (?:provided|given|supplied|included))"
+        r"\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\bonly tells? (?:us|me|you) how many\b|\bdoes not (?:contain|include) "
+        r"(?:any )?(?:actual |live )?(?:readings?|measurements?|values?)\b",
+        re.IGNORECASE,
+    ),
+    # THE PIVOT, which is what the live failure actually was.
+    #
+    # A bare "I don't have X" cannot be the marker: this system says it legitimately and
+    # deterministically -- "I don't have a floor plan for Floor 7", "I don't have that
+    # specific information on record" -- and each is a true statement followed by what
+    # would change it. Catching those would suppress the honesty this project is built on.
+    #
+    # What made the stuffy-rooms answer a meta-answer is the SECOND move: having said it
+    # lacks the readings, it offers a substitute it has just labelled as not the thing
+    # asked for, and then hands the task back to the reader. Those two sentences together
+    # describe the pipeline's state, not the building's.
+    re.compile(
+        # `give you` was missing, and that is what the live answer said: "What I can give
+        # you is a quick snapshot of the rooms that are equipped with sensors". Three
+        # synonyms is not a vocabulary; the verb is anything that hands over a substitute.
+        r"\b(?:what i can (?:share|tell you|offer|give you|provide|show you) (?:instead )?is"
+        r"|instead,? (?:here is|i can (?:show|share|offer))"
+        r"|however,? i can (?:show|share|offer|tell))\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\bif you(?:'d| would)? like (?:me )?to (?:pull|fetch|check|look up|get|query)\b"
+        r".{0,80}?\b(?:just )?let me know\b",
+        re.IGNORECASE | re.DOTALL,
+    ),
+)
+
+#: An honest decline says what the BUILDING lacks and how to change that. These phrases
+#: are the system's own decline vocabulary and must never be treated as meta-narration:
+#: catching them would suppress the behaviour this whole project is built around.
+_HONEST_DECLINE_RES = (
+    re.compile(
+        r"\bthis building (?:has no|does not have|is not|has not)\b", re.IGNORECASE
+    ),
+    re.compile(r"\bnot (?:recorded|described|declared) in (?:this|the) building\b", re.IGNORECASE),
+    re.compile(r"\bno (?:such )?(?:room|space|floor|zone|sensor|asset) (?:called|named)\b", re.IGNORECASE),
+    re.compile(r"\byou can add it\b|\bno code changes? needed\b", re.IGNORECASE),
+)
+
+
+#: Typographic characters a language model produces where the patterns above write ASCII.
+#:
+#: THE GUARD MISSED THE ANSWER IT WAS WRITTEN FOR because of this. Live, 2026-09-07:
+#:
+#:     "If you’d like to check the current CO₂ levels ... just let me know."
+#:
+#: The pattern says `you(?:'d| would)?` with a STRAIGHT apostrophe. The model wrote a
+#: RIGHT SINGLE QUOTATION MARK, so nothing matched, and the exact prose this guard exists
+#: to suppress reached the user with the guard sitting in front of it.
+#:
+#: It is a class, not an instance: a model writes curly quotes, en and em dashes and
+#: ellipsis characters wherever prose calls for them, so every pattern matching a
+#: contraction or a dash in MODEL OUTPUT has the same hole. Normalising once here fixes
+#: all of them, and is why this is a translation table rather than another alternative
+#: added to one regex.
+_TYPOGRAPHY = str.maketrans(
+    {
+        "\u2019": "'",  # right single quote -> apostrophe
+        "\u2018": "'",
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2013": "-",  # en dash
+        "\u2014": "-",  # em dash
+        "\u00a0": " ",  # non-breaking space
+        "\u2011": "-",  # non-breaking hyphen
+    }
+)
+
+
+def normalise_typography(text: str) -> str:
+    """Model prose, in the characters the patterns are written in."""
+    return (text or "").translate(_TYPOGRAPHY)
+
+
+def meta_answer_reason(text: str) -> Optional[str]:
+    """The phrase that makes this prose ABOUT the pipeline, or None.
+
+    Returns the matched text so a caller can log WHICH marker fired. A guard that reports
+    only "blocked" cannot be tuned, and an untunable guard is one that gets disabled the
+    first time it is wrong.
+    """
+    body = normalise_typography(text)
+    if not body.strip():
+        return None
+    for ok in _HONEST_DECLINE_RES:
+        if ok.search(body):
+            return None
+    for bad in _META_ANSWER_RES:
+        m = bad.search(body)
+        if m:
+            return m.group(0).strip()
+    return None
+
+
+def is_meta_answer(text: str) -> bool:
+    """True when the prose describes the pipeline rather than the building."""
+    return meta_answer_reason(text) is not None
+

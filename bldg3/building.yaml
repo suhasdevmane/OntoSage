@@ -7,6 +7,11 @@ building_name: "BuildSys Building (bldg3)"
 ontology_namespace: "http://buildsys.org/ontologies/bldg3#"
 ontology_prefix: bldg          # bldg3.ttl uses the standard `bldg:` label
 
+# Stated rather than inherited (CAVEAT-446). building_context read the timezone under a key
+# no building.yaml writes, so every building silently used the environment default -- a
+# wrong value that happens to be right for whichever building the defaults were set from.
+timezone: "Europe/London"
+
 # ── Data provenance (building-level) ─────────────────────────────────────────
 # Describes the WHOLE building — its ontology, sensors AND readings — which is a
 # broader statement than `nature:` on a single connection in database_registry.yaml

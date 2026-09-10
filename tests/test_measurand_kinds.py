@@ -72,7 +72,17 @@ def test_pm2_5_is_spelled_the_way_brick_spells_it():
 
 
 def test_an_undeclared_class_returns_nothing_rather_than_guessing():
-    assert measurand_of("Temperature_Sensor") == ""
+    """The property is unchanged; the EXAMPLE had to move.
+
+    This used `Temperature_Sensor` as its undeclared class. V10 W1-3 declared it, along
+    with sixteen other quantities, so the file could carry physical bands for every
+    instrument a building actually instruments. The example is now a SUPERTYPE, which is
+    both undeclared and permanently so: `Air_Quality_Sensor` sits above CO2, TVOC and
+    particulate sensors, so a band on it would be applied to quantities sharing no unit.
+    That is deliberate and asserted separately in
+    tests/test_a_generated_stream_carries_its_own_quantity.py.
+    """
+    assert measurand_of("Air_Quality_Sensor") == ""
     assert measurand_of("") == ""
 
 

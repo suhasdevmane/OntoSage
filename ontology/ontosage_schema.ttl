@@ -1629,7 +1629,16 @@ ontosage:streamCapacityLitres a owl:DatatypeProperty ;
 
 #  ── Institutional targets ───────────────────────────────────────────────────────────────────────
 
-ontosage:SustainabilityTarget a owl:Class ;
+### rdfs:subClassOf ontosage:Record added 2026-09-08 (W3-4).
+### It was declared as a bare owl:Class with no parent, so `_discover_record_classes`
+### — which walks `rdfs:subClassOf+` from Record and IntervalRecord — never found it,
+### and the register lane could not route to it. Measured live: five instances in the
+### graph, fourteen declared lay terms, and "what are our sustainability targets?"
+### matched no held class and no absent one. Data present, question unanswerable.
+### Record, not IntervalRecord: the instances carry recordStatus / recordOwner /
+### recordVersion / recordId — a standing record, not something with an interval
+### lifecycle like a booking or an alarm.
+ontosage:SustainabilityTarget rdfs:subClassOf ontosage:Record ; a owl:Class ;
     rdfs:label "Sustainability target"@en ;
     rdfs:comment "A published institutional commitment against which progress is reported: a diversion rate, a carbon reduction, a consumption ceiling. Authored and cited, NEVER inferred - a target derived from the data it is meant to judge would make every trend look like success or failure by construction."@en ;
     skos:example "\"are we on track for our recycling target?\" -> compare measured diversion against THIS, and say who set it." .
@@ -2384,13 +2393,27 @@ ontosage:ClosurePeriod ontosage:layTerms "closure", "closures", "closed period",
 ontosage:AnomalyEvent ontosage:layTerms "anomaly", "anomalies", "unusual reading",
     "unusual readings", "abnormal reading", "out of range", "outlier", "odd reading" .
 
+### Bare and colloquial forms added 2026-09-08 (TODO-490).
+### Every term here was a compound phrase, so the words people actually type missed:
+### "have there been any alarms this week?" and "who accessed the server room?" matched
+### neither a held class nor an absent one and fell through to the document lane.
+###
+### Safe now, and NOT before: `absent_record_class` compares MATCH LENGTH and lets a held
+### class win, so "fire alarm" (FireSafetyAsset, 30 instances, answers today) keeps
+### "when was the fire alarm last tested?" while bare "alarm" claims only the questions
+### no held class wants. Adding these without that change would have handed a working
+### question to an empty class.
 ontosage:AccessEvent ontosage:layTerms "access event", "access events", "door event",
     "door events", "entry log", "entry logs", "tailgating", "forced door",
-    "door held open", "door forced" .
+    "door held open", "door forced",
+    "accessed", "access log", "access logs", "who entered", "who went in",
+    "entry record", "entry records", "badge in", "badged in", "swipe record" .
 
 ontosage:AlarmEvent ontosage:layTerms "alarm activation", "alarm activations",
     "alarm event", "alarm events", "false alarm", "false alarms", "alarm history",
-    "when did the alarm sound" .
+    "when did the alarm sound",
+    "alarm", "alarms", "alarm log", "alarm logs", "went off", "alarm sounded",
+    "alarms sounded" .
 
 
 ####################################################################################################

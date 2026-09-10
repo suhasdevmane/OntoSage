@@ -207,14 +207,14 @@ class SpatialAgent:
             # spaces, so every cross-floor route returned nothing while the graph
             # held a passenger lift and two staircases all along (CAVEAT-313).
             _cores = await _declared_vertical_cores_for(manifests)
-            return self._answer(query, manifests, _blocked, _cores)
+            return await self._answer(query, manifests, _blocked, _cores)
         except Exception as e:
             logger.error(f"[SpatialAgent] Error: {e}", exc_info=True)
             return "I encountered an error analysing the spatial data. Please try again."
 
     # ── Query dispatch ────────────────────────────────────────────────────────
 
-    def _answer(
+    async def _answer(
         self,
         query: str,
         manifests: List[FloorPlanManifest],
@@ -227,7 +227,7 @@ class SpatialAgent:
         # NEAREST toilet" is a nearest question with route guidance (V5-T27)
         if _NEAREST_RE.search(q):
             if any(pat.search(q) for pat, _t, _l in _NEAREST_TARGETS):
-                return self._answer_nearest(query, manifests, vertical_cores)
+                return await self._answer_nearest(query, manifests, vertical_cores)
             # A nearest-question whose target this building does not know must NOT fall
             # through (BUG-377). It used to drop past every branch below to _answer_list and
             # come back as "## All spaces" — a whole-building inventory in reply to "where is
@@ -506,7 +506,7 @@ class SpatialAgent:
 
     # ── Wayfinding ────────────────────────────────────────────────────────────
 
-    def _answer_nearest(
+    async def _answer_nearest(
         self,
         query: str,
         manifests: List[FloorPlanManifest],
@@ -556,6 +556,37 @@ class SpatialAgent:
             hit = None
         src_label = zone_to_space[src_zone].label
         if hit is None:
+            # THE FLOOR PLAN CANNOT ANSWER; THE BUILDING OFTEN CAN.
+            #
+            # Measured: "nearest accessible toilet to room 3.10?" declined with the message
+            # below, while the amenity catalogue held a toilet on that very floor and two
+            # VERIFIED accessible WCs one floor up and on the ground floor. For someone
+            # with mobility needs "no toilet is reachable" and "the accessible one is one
+            # floor up" are not degrees of the same answer -- the first ends a journey.
+            #
+            # Tried only AFTER the adjacency search, never instead of it: a surveyed route
+            # is a better answer than a floor count whenever one exists.
+            # THE FLOOR COMES FROM THE MANIFEST that contains the space.
+            #
+            # `Space` has no floor field, so the helper's fallback -- the trailing number
+            # of the zone id -- was the only thing that ever ran, and for `3.10` the
+            # trailing number is TEN. The live probe answered "the nearest accessible WC
+            # is 6 floors down" about one that is one floor up. A grammar guess where an
+            # authoritative source exists, which is the mistake the lexicon work exists to
+            # stop making.
+            _from_floor = None
+            for _m in manifests:
+                if any(s.zone_id == src_zone for s in _m.spaces):
+                    try:
+                        _from_floor = int(_m.floor)
+                    except (TypeError, ValueError):
+                        _from_floor = None
+                    break
+            fallback = await self._nearest_from_amenities(
+                query, target_word, src_label, _from_floor
+            )
+            if fallback:
+                return fallback
             return (
                 f"**No {target_word} is reachable from {src_label}** in the floor-plan "
                 "adjacency data — either none is mapped or the adjacency is incomplete."
@@ -565,6 +596,53 @@ class SpatialAgent:
             f"**Nearest {target_word} to {src_label}:** {hit.label} (`{hit.zone_id}`, "
             f"floor {hit.floor}) — {hit.hops} hop(s){dist_txt}.\n\n{METHOD_NOTE}"
         )
+
+    async def _nearest_from_amenities(
+        self, query: str, target_word: str, src_label: str, from_floor
+    ) -> str:
+        """The building's amenity catalogue, when the geometry has nothing to say.
+
+        Returns "" when the catalogue cannot answer either, so the caller's honest
+        floor-plan decline stands. An empty result must never become a different decline:
+        two messages for one absence is how a reader learns to distrust both.
+        """
+        try:
+            from orchestrator.services.amenity_proximity import (
+                nearest_by_floor,
+                render,
+                wants_accessible,
+            )
+            from orchestrator.services.deliberation.live import sparql_exec
+            from shared.config import settings
+
+            # The KIND is taken from the words the question and the target table already
+            # agree on, so no amenity vocabulary is restated here.
+            kind_words = {target_word}
+            for pat, types, label_frag in _NEAREST_TARGETS:
+                if pat.search(query):
+                    kind_words |= set(types or set())
+                    if label_frag:
+                        kind_words.add(label_frag)
+                    break
+
+            # `from_floor` is given, never derived here. Deriving it from the zone id
+            # read `3.10` as floor TEN, and a caller that cannot supply one passes None --
+            # which makes the answer say the floor is not recorded rather than compute a
+            # distance from a number it guessed.
+            accessible_only = wants_accessible(query)
+            hits = await nearest_by_floor(
+                sparql_exec,
+                getattr(settings, "BUILDING_NAMESPACE", ""),
+                sorted(kind_words),
+                from_floor,
+                accessible_only=accessible_only,
+            )
+            if not hits:
+                return ""
+            return render(hits, target_word, src_label, from_floor, accessible_only)
+        except Exception as exc:
+            logger.warning(f"[spatial] amenity-catalogue fallback failed: {exc}")
+            return ""
 
     def _answer_wayfinding(
         self,

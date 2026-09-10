@@ -694,8 +694,36 @@ Rules:
     ) -> Dict:
         from orchestrator.agents.sql_agent import SQLAgent
 
+        # THE PERIOD THE USER ASKED ABOUT (BUG-478).
+        #
+        # This call omitted start_date and end_date, so `fetch_data_for_uuids` fell back
+        # to its default window and returned the most recent 1,000 rows of the last 30
+        # days. Measured on "Give me a report on the CO2 in room 5.01 yesterday":
+        #
+        #     WHERE ... `datetime` >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        #     ORDER BY `datetime` DESC LIMIT 1000
+        #     Sample row: {'timestamp': '2026-09-07T17:00:23', ...}
+        #
+        # The sample row is from the afternoon the question was asked. The report came
+        # back headed "Room 5.01 – Yesterday" and described today: avg 993.81 ppm against
+        # yesterday's true 781.01, and a maximum of 1,112 above yesterday's actual 1,102.
+        # Every figure in it was real, measured, and about the wrong day — which is
+        # harder to catch than a fabrication, because nothing looks wrong.
+        #
+        # The main workflow's lane has always passed these. Only the planner dropped them.
+        ir = getattr(state, "intermediate_results", {}) or {}
+        start_date = ir.get("start_date")
+        end_date = ir.get("end_date")
+
         if uuids:
-            return await SQLAgent().fetch_data_for_uuids(uuids, query, storage_map)
+            return await SQLAgent().fetch_data_for_uuids(
+                uuids,
+                query,
+                storage_map,
+                start_date,
+                end_date,
+                ir.get("sensor_metadata"),
+            )
         return await SQLAgent().generate_and_execute(state, query)
 
     async def _run_analytics(self, state: ConversationState, query: str, ctx: Dict) -> Dict:

@@ -15,6 +15,10 @@ from datetime import datetime
 import pytest
 
 from orchestrator.agents.spatial_agent import SpatialAgent
+
+# `_answer` became ASYNC in V10 W0-7: when floor-plan adjacency finds nothing, the nearest
+# path consults the building's amenity catalogue before declining, and that is a SPARQL
+# round trip. Nothing these tests assert has changed.
 from shared.models import FloorPlanManifest, RenderedImage, Space
 
 pytestmark = pytest.mark.unit
@@ -71,48 +75,57 @@ def manifests():
 
 
 class TestTheNamedRoomAnswer:
-    def test_the_rooms_own_area_is_reported(self, agent, manifests):
-        out = agent._answer("How big is RM001A_room?", manifests)
+    @pytest.mark.asyncio
+    async def test_the_rooms_own_area_is_reported(self, agent, manifests):
+        out = await agent._answer("How big is RM001A_room?", manifests)
         assert "20.0 m²" in out
         assert "RM001A_room" in out
 
-    def test_the_building_total_is_not_the_answer(self, agent, manifests):
+    @pytest.mark.asyncio
+    async def test_the_building_total_is_not_the_answer(self, agent, manifests):
         """100.0 m² is the sum across both floors — the old answer."""
-        out = agent._answer("How big is RM001A_room?", manifests)
+        out = await agent._answer("How big is RM001A_room?", manifests)
         assert "Floor Areas" not in out, "fell through to the building-wide table"
         assert "100.0" not in out
 
-    def test_a_room_named_without_its_suffix_still_resolves(self, agent, manifests):
-        out = agent._answer("how big is RM101?", manifests)
+    @pytest.mark.asyncio
+    async def test_a_room_named_without_its_suffix_still_resolves(self, agent, manifests):
+        out = await agent._answer("how big is RM101?", manifests)
         assert "50.0 m²" in out
 
-    def test_the_answer_gives_the_room_its_context(self, agent, manifests):
-        out = agent._answer("How big is RM001A_room?", manifests)
+    @pytest.mark.asyncio
+    async def test_the_answer_gives_the_room_its_context(self, agent, manifests):
+        out = await agent._answer("How big is RM001A_room?", manifests)
         assert "floor 0" in out
         assert "%" in out, "a bare number without its share of the floor is less useful"
 
 
 class TestBuildingAndFloorScopeAreUntouched:
-    def test_a_building_question_keeps_the_floor_table(self, agent, manifests):
-        out = agent._answer("What is the total floor area?", manifests)
+    @pytest.mark.asyncio
+    async def test_a_building_question_keeps_the_floor_table(self, agent, manifests):
+        out = await agent._answer("What is the total floor area?", manifests)
         assert "Floor Areas" in out
 
-    def test_how_big_is_the_building_is_not_a_room(self, agent, manifests):
-        out = agent._answer("How big is the building?", manifests)
+    @pytest.mark.asyncio
+    async def test_how_big_is_the_building_is_not_a_room(self, agent, manifests):
+        out = await agent._answer("How big is the building?", manifests)
         assert "Floor Areas" in out
 
-    def test_a_floor_question_is_not_captured_by_a_room(self, agent, manifests):
-        out = agent._answer("size of floor 1", manifests)
+    @pytest.mark.asyncio
+    async def test_a_floor_question_is_not_captured_by_a_room(self, agent, manifests):
+        out = await agent._answer("size of floor 1", manifests)
         assert "Floor Areas" in out
 
 
 class TestHonestyWhenGeometryIsMissing:
-    def test_a_room_without_area_says_so_instead_of_substituting(self, agent):
+    @pytest.mark.asyncio
+    async def test_a_room_without_area_says_so_instead_of_substituting(self, agent):
         ms = [manifest(0, [space("0Z001", "RM001A_room", area=None, perimeter=None)])]
-        out = agent._answer("How big is RM001A_room?", ms)
+        out = await agent._answer("How big is RM001A_room?", ms)
         assert "no area is recorded" in out
         assert "Floor Areas" not in out, "the building total must not stand in for the room"
 
-    def test_an_unknown_room_does_not_invent_one(self, agent, manifests):
-        out = agent._answer("How big is RM999_room?", manifests)
+    @pytest.mark.asyncio
+    async def test_an_unknown_room_does_not_invent_one(self, agent, manifests):
+        out = await agent._answer("How big is RM999_room?", manifests)
         assert "20.0 m²" not in out and "50.0 m²" not in out

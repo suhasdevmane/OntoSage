@@ -114,6 +114,10 @@ class PlantPoint:
     brick_class: str
     uuid: str = ""
     label: str = ""
+    #: The registry key this point's readings are stored under, read from the graph's own
+    #: `ref:storedAt`. Empty when the point declares none, and a caller must then route by
+    #: its default rather than guess a table name.
+    stored_at: str = ""
 
     @property
     def equipment_name(self) -> str:
@@ -187,7 +191,7 @@ def build_query(space_iri: str, classes: Sequence[str]) -> str:
     """Points on the equipment that serves one space."""
     values = " ".join(f"brick:{c}" for c in classes if c)
     return (
-        _PREFIXES + "SELECT DISTINCT ?point ?equip ?cls ?uuid ?label WHERE {\n"
+        _PREFIXES + "SELECT DISTINCT ?point ?equip ?cls ?uuid ?label ?store WHERE {\n"
         f"  VALUES ?cls {{ {values} }}\n"
         f"{_serving_clause(space_iri)}"
         "  ?point brick:isPointOf ?equip ; a ?cls .\n"
@@ -209,7 +213,15 @@ def build_query(space_iri: str, classes: Sequence[str]) -> str:
         "    FILTER NOT EXISTS { ?cls rdfs:subClassOf ?sub }\n"
         "  }\n"
         "  OPTIONAL { ?point rdfs:label ?label }\n"
-        "  OPTIONAL { ?point ref:hasExternalReference ?e . ?e ref:hasTimeseriesId ?uuid }\n"
+        # The STORE comes back with the uuid. Without it the diagnosis lane had to name a
+        # table, and it named `plant_data` -- a key only bldg1's registry defines, so plant
+        # diagnosis was dark in every other building (V10 W2-2). The graph already says
+        # where each point's readings live; nothing needed adding but the ask.
+        "  OPTIONAL {\n"
+        "    ?point ref:hasExternalReference ?e .\n"
+        "    ?e ref:hasTimeseriesId ?uuid .\n"
+        "    OPTIONAL { ?e ref:storedAt ?store }\n"
+        "  }\n"
         "}"
     )
 
@@ -253,6 +265,7 @@ def context_from_rows(
             brick_class=str(row.get("cls") or ""),
             uuid=str(row.get("uuid") or ""),
             label=str(row.get("label") or ""),
+            stored_at=str(row.get("store") or "").rsplit("#", 1)[-1].rsplit("/", 1)[-1],
         )
         if existing is None:
             seen[iri] = candidate

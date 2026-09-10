@@ -1,0 +1,24 @@
+source_id,disposition,reason
+BUG-134,cosmetic,Residual is a stale source-type list in GraphDB's DEFAULT graph - a duplicate row in one list. The MECHANISM is not cosmetic and is V12-15; this instance is.
+BUG-135,cosmetic,"Residual is one stale non-deprecated label surviving in the DEFAULT graph from an older upload path. Same mechanism as BUG-134, same disposition."
+BUG-337,closed_residual,The residual visible in the answer was fixed in the same row: the amenity ranking now reads the floor an amenity declares.
+CAVEAT-039,closed_residual,"Residual named in the row is TODO-223, fixed in the same session; both re-infection vectors verified."
+CAVEAT-193,closed,"Clock-dependent policy-bank traps, non-reproducible for reasons unrelated to privacy. The bank hygiene it implies is folded into V12-17."
+CAVEAT-233,user_decision_needed,"Whether the publisher SHOULD feed every declared stream is a dev-data decision for the user, not a defect. 683 of 2,796 declared sensors report in the last 24h by design."
+CAVEAT-404,user_decided,25M narrow rows stamped +1h. USER DECISION 2026-09-03: keep them. The offset is uniform rather than discontinuous and the rows are dev-mode top-up.
+CAVEAT-418,scheduled_elsewhere,Grader residual: has_counted_records promotes a general-knowledge answer containing any 'N word' pattern. 1 in 57 here. Belongs with V12-29's grading discipline - the measurement apparatus is wrong more often than the system.
+FEAT-086,closed_residual,bldg3's compare/forecast residual is analytics-agent behaviour on a topology proven by SPARQL 66/68 per floor. Re-measured by V12-30's onboarding leg rather than tracked separately.
+FIX-004,closed_residual,Row states FULLY RESOLVED; the 'residual 628' was itself resolved by creating the two narrow companion tables.
+FIX-056,accepted,Floor-plan registry falls back to 'any registered' config when the ACTIVE building has none. Reachable only on a building with no floor-plan config at all; the literal guard and agnosticism ratchet already run continuously.
+META-CLAUDEMD-STALE-OPEN-LIST,fixed_2026_09_09,"The open-issues list named ten items closed in the fix tracker (BUG-192, TODO-181, CAVEAT-148/154/190/193, KNOWN-008, KNOWN-153, TODO-143, BUG-147). Fixed, and the file now says not to hand-maintain one again - `v12_coverage_audit.py --list` prints the derived list instead."
+META-CLAUDEMD-TWO-WORKSTREAMS,fixed_2026_09_09,"CLAUDE.md declared two ACTIVE WORKSTREAMs at once (V11 in the snapshot, V5 under open issues). Fixed: the file now names exactly one, and the V5 bullet says so explicitly. `grep -c 'ACTIVE WORKSTREAM' CLAUDE.md` returns 1."
+META-TRACKER-DIVERGENCE,fixed_2026_09_09,Two copies of the V7 tracker disagreed and the git-tracked one (docs/) was the stale copy. Synced. Moot from 2026-09-09 in any case: V7 is out of V12 scope.
+REV-B16,conditional_closed,"Disallowed-execution injection. Settled by the Phase 0 inspection: 35 LLM call sites, three lanes generating executable artifacts, every one already guarded, and the Python sandbox verified LIVE to have no network egress at all. The review makes B16 explicitly conditional on that inventory. Re-open if an execution path is added."
+ROADMAP-009,closed_residual,"Residual named in the row is TODO-081, which is VERIFIED_LIVE. Nothing owed."
+TODO-011,closed_residual,Residual (wifi at 0.248) is covered by the KB safety net and superseded by V12-18's document-relevance work.
+TODO-049,accepted,"One-time ~16s Ollama reload after 30 min idle. Accepted VRAM tradeoff, tunable by env only; the row states no code work remains."
+V11-D1,deferred,Register scaffolder (W3-2). The review independently reaches the same conclusion: defer generalised scaffolding until V12-30's manual second onboarding shows which work actually repeats.
+V11-D2,deferred,Templates for the 24 TTLs with no template (W3-3). Same reason as V11-D1; V12-30 produces the evidence that would justify it.
+V11-D3,deferred,"Packaging and container naming (W3-5 remainder). The .env.example and deployment-truth half IS scheduled, as V12-27; only the packaging half is deferred."
+W3-2,deferred,Same item as V11-D1.
+W3-3,deferred,Same item as V11-D2.

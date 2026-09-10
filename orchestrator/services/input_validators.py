@@ -653,6 +653,40 @@ _REFERENCE_PREDICATES = (
     "isMeasuredBy",
 )
 
+#: The SAME rule for OntoSage's own relations, and it was missing until 2026-09-06.
+#:
+#: This check covered `brick:` predicates only, so `ontosage:statusOf` pointing at nothing
+#: was invisible to it. 14 of bldg1's 64 asset statuses named an IRI with zero triples --
+#: the reception, the cafe, the makerspace, the prayer room, the showers, the lift -- and
+#: every one answered "not recorded in this building's model" about a thing the building
+#: has (BUG-438). The validator was working exactly as written and had nothing to say,
+#: which is the least useful kind of passing check.
+#:
+#: These are the object properties whose range is a building entity: the object has to be
+#: something the building DECLARES, not a bare IRI a reasoner will type from the range.
+#: `measuresQuantityKind` and `answeredBy` are deliberately absent -- their ranges are
+#: vocabulary terms, declared in ontology/ rather than in a building's own files.
+_ONTOSAGE_REFERENCE_PREDICATES = (
+    "statusOf",
+    "locatedIn",
+    "servesSpace",
+    "servesFloor",
+    "servedByPoint",
+    "appliesToArea",
+    "aboutSpace",
+    "aboutEquipment",
+    "aboutPoint",
+    "coversAsset",
+    "environmentalBoundary",
+    "periodLocation",
+    "relatedTopic",
+    "concernsIssue",
+    "amenityStatus",
+    "serviceStatus",
+    "hasConfigurationPeriod",
+    "supersedes",
+)
+
 #: Vocabulary namespaces are declared in files this scan deliberately skips (the
 #: vendored Brick TBox, ontology/*.ttl). Flagging them would bury the findings that
 #: mean something under thousands that do not.
@@ -683,10 +717,48 @@ _VOCAB_PREFIXES = frozenset(
 )
 
 _REFERENCE_RE = re.compile(
-    r"brick:(?:" + "|".join(_REFERENCE_PREDICATES) + r")\s+((?:\w+:[\w.\-]+\s*,?\s*)+)"
+    r"(?:brick:(?:"
+    + "|".join(_REFERENCE_PREDICATES)
+    + r")|ontosage:(?:"
+    + "|".join(_ONTOSAGE_REFERENCE_PREDICATES)
+    + r"))\s+((?:\w+:[\w.\-]+\s*,?\s*)+)"
 )
-_DECLARATION_RE = re.compile(r"^\s*(\w+:[\w.\-]+)\s", re.M)
+#: A subject can be written two ways in Turtle and BOTH are declarations.
+#:
+#: This matched prefixed names only (`bldg:Room_1.06`). Buildings in this repo also write
+#: subjects as full IRIs on their own line:
+#:
+#:     <http://.../abacws#Amenity_StudyArea_Floor0>
+#:         a ontosage:Amenity , ontosage:StudyArea ;
+#:
+#: With the check limited to `brick:` predicates that gap never showed. Extending it to
+#: `ontosage:` relations (V10 W1-2) surfaced it immediately: 19 amenities across three
+#: buildings were reported as declared nowhere while sitting declared, as full IRIs, in the
+#: building's own amenity catalogue. A validator that cries wolf is one people switch off,
+#: and it would have taken the real findings with it.
+_DECLARATION_RE = re.compile(r"^\s*(?:(\w+:[\w.\-]+)|<([^>\s]+)>)\s", re.M)
 _TERM_RE = re.compile(r"(\w+:[\w.\-]+)")
+
+
+def _local_name(term: str) -> str:
+    """The part after the prefix or the final separator.
+
+    Declarations and references are compared on this, because one file may write a subject
+    as `bldg:X` and another as `<http://.../X>` and they are the same node.
+    """
+    if "<" in term:
+        term = term.strip("<>")
+    return term.rsplit("#", 1)[-1].rsplit("/", 1)[-1].rsplit(":", 1)[-1]
+
+
+def _declared_local_names(text: str) -> set:
+    """Local names of every subject this text declares, either notation."""
+    out = set()
+    for prefixed, full in _DECLARATION_RE.findall(text):
+        term = prefixed or full
+        if term:
+            out.add(_local_name(term))
+    return out
 
 
 def validate_dangling_references(path: Path) -> Tuple[bool, List[str]]:
@@ -704,7 +776,7 @@ def validate_dangling_references(path: Path) -> Tuple[bool, List[str]]:
             text = _strip_turtle_comments(f.read_text(encoding="utf-8", errors="replace"))
         except OSError as exc:  # pragma: no cover - unreadable file
             return False, [f"{f.name}: unreadable ({exc})"]
-        declared |= set(_DECLARATION_RE.findall(text))
+        declared |= _declared_local_names(text)
         for m in _REFERENCE_RE.finditer(text):
             for tok in _TERM_RE.findall(m.group(1)):
                 referenced.setdefault(tok, set()).add(f.name)
@@ -713,7 +785,7 @@ def validate_dangling_references(path: Path) -> Tuple[bool, List[str]]:
     for term in sorted(referenced):
         if term.split(":", 1)[0] in _VOCAB_PREFIXES:
             continue
-        if term not in declared:
+        if _local_name(term) not in declared:
             issues.append(
                 f"{term} is referenced by {sorted(referenced[term])[0]} but declared in no "
                 f"TTL - a reasoner will type it from the property's range, so the graph "

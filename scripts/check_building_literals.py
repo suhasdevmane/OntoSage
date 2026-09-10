@@ -46,7 +46,24 @@ from pathlib import Path
 from typing import List, Set, Tuple
 
 REPO = Path(__file__).resolve().parent.parent
-SCAN_ROOTS = ("orchestrator", "shared")
+#: Every tree that ships code, plus the files that describe a deployment.
+#:
+#: It was ("orchestrator", "shared"). The external review of 2026-09-06 found fifteen real
+#: building literals and this guard reported "clean" -- because eleven of them were in
+#: `frontend/`, `rag-service/`, `scripts/` and the compose files, which it never opened.
+#: A guard whose scope excludes most of the codebase is a guard that certifies the part
+#: nobody was worried about.
+SCAN_ROOTS = ("orchestrator", "shared", "scripts", "rag-service", "frontend/src")
+
+#: Non-Python files that carry deployment identity. Scanned line by line with the same
+#: patterns; there is no docstring notion here, so a `#`-comment prefix is the only
+#: exemption.
+SCAN_FILES = (
+    "docker-compose.yml",
+    "docker-compose.bldg2.yml",
+    "docker-compose.bldg3.yml",
+    "docker-compose.bldgtest.yml",
+)
 
 #: Files whose purpose is to resolve building identity - they must name buildings.
 ALLOWED_FILES = {
@@ -56,9 +73,20 @@ ALLOWED_FILES = {
     "orchestrator/services/onboarding_report.py",
     "shared/building_paths.py",
     "shared/building_context.py",
+    # The guard's own patterns must spell the words it looks for.
+    "scripts/check_building_literals.py",
 }
 
-SKIP_PARTS = ("tests", "graphify-out", "__pycache__", "migrations")
+SKIP_PARTS = (
+    "tests",
+    "graphify-out",
+    "__pycache__",
+    "migrations",
+    "node_modules",
+    "build",
+    "dist",
+    ".venv",
+)
 
 #: (name, pattern, severity). ERROR fails the build; INFO is reported only.
 PATTERNS: List[Tuple[str, str, str]] = [
@@ -69,15 +97,106 @@ PATTERNS: List[Tuple[str, str, str]] = [
     # `x = 0` is an accumulator, not a hardcoded count - require a nonzero literal.
     ("hardcoded floor count", r"(num_floors|floor_count|n_floors)\s*=\s*[1-9]\d*", "ERROR"),
     ("hardcoded sensor count", r"(sensor_count|num_sensors|n_sensors)\s*=\s*[1-9]\d*", "ERROR"),
+    # ── added 2026-09-06 (V10 W2-2), each for a literal this guard reported clean ──
+    #
+    # The city. `cardiff` appears in namespaces, contact addresses and prompt exemplars,
+    # and none of the patterns above matches it.
+    ("city or campus name in code", r"\bcardiff\b", "ERROR"),
+    # A placeholder namespace is worse than a wrong one: it resolves to nothing, so the
+    # query returns zero rows and no error. `self_correction_engine` defaulted to
+    # `http://example.com/building#` and produced silent empty repairs.
+    (
+        "placeholder namespace",
+        r'https?://(example\.com|example\.org)/[^\s"\']*building',
+        "ERROR",
+    ),
+    # A room identifier CONSTRUCTED from a floor number, or written as an exemplar. The
+    # floor-plan service generated fourteen rooms per floor this way when PDF text was
+    # empty (BUG-444), and the SPARQL prompt teaches `Room_5.01` in six places.
+    (
+        "room id in one building's grammar",
+        # Paired with REQUIRE_CONTEXT below: this shape alone matched
+        # `float(os.environ.get("...", "0.85"))` in three places, and a confidence
+        # threshold is not a room.
+        #
+        # The context requirement is a SEPARATE check rather than a lookahead, because a
+        # lookahead anchors at the MATCH position and the context word usually comes
+        # first. Written as `(?=.*\bsensor\b)` it silently stopped matching
+        # `CONTAINS(STR(?sensor), "5.08")` -- the exemplar it most needed to catch -- and
+        # the finding count fell by five, which reads exactly like progress.
+        r'["\']\s*(Room[_ ]?)?\d\.\d{2}\s*["\']',
+        "ERROR",
+    ),
+    (
+        "room id built from a floor number",
+        # Anchored on a DIGIT format spec, so it catches `f"{floor}.{n:02d}"` --
+        # fourteen invented rooms per floor (BUG-444) -- and not
+        # `f"fp.{building_id}.{floor}.{slug}"`, which composes an id from the
+        # building's own values and is exactly what this guard wants to see. The
+        # first version flagged three correct lines in floor_plan_pipeline.
+        r'\{floor\}\.\{[a-z_]*:?0?\d*d\}',
+        "ERROR",
+    ),
+    # A storage key from one building's registry. `anomaly/diagnosis.py` hardcoded
+    # `stored_at: "plant_data"`, which only bldg1's registry defines.
+    (
+        "datasource key literal",
+        r'stored_at["\']?\s*[:=]\s*["\'][a-z_]+_data["\']',
+        "ERROR",
+    ),
+    # A per-building path baked into a mount or a default.
+    (
+        "building path literal",
+        r'["\'./][^\s"\']*(data|input|volumes)/bldg\d',
+        "ERROR",
+    ),
 ]
 
+#: Rules that only mean something with a spatial word on the same line.
+#:
+#: `"5.08"` is a room in `CONTAINS(STR(?sensor), "5.08")` and a threshold in
+#: `float(os.environ.get(..., "0.85"))`. Nothing about the literal distinguishes them; the
+#: rest of the line does.
+REQUIRE_CONTEXT = {
+    "room id in one building's grammar": re.compile(
+        r"\b(room|zone|space|sensor|floor|storey)\b", re.IGNORECASE
+    ),
+}
 
-def _prose_lines(src: str) -> Set[int]:
+
+def _js_prose_lines(src: str) -> Set[int]:
+    """Line numbers inside a `//` or block comment in a JavaScript file.
+
+    Needed because the Python path parses an AST, and JS has none here. Without it the
+    guard reported FIVE of its own fix comments -- the ones explaining which building
+    literal was removed and why -- as building literals. A guard that flags the
+    documentation of its own findings is one nobody reads twice.
+    """
+    prose: Set[int] = set()
+    in_block = False
+    for n, line in enumerate(src.splitlines(), 1):
+        s = line.strip()
+        if in_block:
+            prose.add(n)
+            if "*/" in s:
+                in_block = False
+            continue
+        if s.startswith("//") or s.startswith("*"):
+            prose.add(n)
+        elif s.startswith("/*"):
+            prose.add(n)
+            in_block = "*/" not in s
+    return prose
+
+
+def _prose_lines(src: str, suffix: str = ".py") -> Set[int]:
     """Line numbers occupied by a docstring or a comment.
 
     Parsed rather than pattern-matched, because a line in the middle of a docstring looks
     exactly like a line of code to a prefix test.
     """
+    if suffix in (".js", ".jsx"):
+        return _js_prose_lines(src)
     prose: Set[int] = set()
     try:
         tree = ast.parse(src)
@@ -117,7 +236,13 @@ def scan(show_all: bool = False) -> int:
         base = REPO / root
         if not base.is_dir():
             continue
-        for py in sorted(base.rglob("*.py")):
+        # `.js`/`.jsx` for the frontend, which held four literals this guard never saw:
+        # "Abacws SmartBot" in the nav, a `|| "abacws"` fallback in the plan viewer, and a
+        # TTL editor placeholder pre-seeded with one building's namespace.
+        files = sorted(base.rglob("*.py")) + sorted(base.rglob("*.js")) + sorted(
+            base.rglob("*.jsx")
+        )
+        for py in files:
             rel = py.relative_to(REPO).as_posix()
             if any(part in rel.split("/") for part in SKIP_PARTS):
                 continue
@@ -128,19 +253,58 @@ def scan(show_all: bool = False) -> int:
             except Exception:
                 continue
             lines = src.splitlines()
-            prose = _prose_lines(src)
+            prose = _prose_lines(src, py.suffix.lower())
             for n, line in enumerate(lines, 1):
                 if n in prose:
                     continue
                 for name, pat, sev in PATTERNS:
                     if not re.search(pat, line, re.IGNORECASE):
                         continue
+                    _ctx = REQUIRE_CONTEXT.get(name)
+                    if _ctx is not None and not _ctx.search(line):
+                        continue
                     level = sev
                     # config.py env-var defaults are legitimate; surface as INFO.
                     if rel == "shared/config.py" and "default=" in line:
                         level = "INFO"
+                    # ── severity depends on WHICH TREE ──────────────────────────
+                    #
+                    # `orchestrator/`, `shared/`, `frontend/src/` and `rag-service/` must
+                    # run unchanged for a building this repo has never seen. A literal
+                    # there is a defect.
+                    #
+                    # `scripts/` is different, and pretending otherwise would make the
+                    # guard useless. A generator that writes ONE building's TTL, a QA
+                    # battery that asks real questions about the active building, a
+                    # one-off extraction from a survey -- each names a building on
+                    # purpose, and 26 of the first run's 98 findings were QA questions.
+                    # Reported as INFO so they stay countable: the fact that bldg1's data
+                    # exists only as hand-written generators IS a finding, just a
+                    # different one (V10 W3-2/W3-3), and burying the agnosticism defects
+                    # under it would be the way to lose both.
+                    if rel.startswith("scripts/"):
+                        level = "INFO"
                     msg = f"  {rel}:{n}  [{name}]  {line.strip()[:96]}"
                     (errors if level == "ERROR" else infos).append(msg)
+
+    # ── deployment files ────────────────────────────────────────────────────
+    for name in SCAN_FILES:
+        f = REPO / name
+        if not f.is_file():
+            continue
+        try:
+            for n, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+                if line.lstrip().startswith("#"):
+                    continue
+                for pname, pat, sev in PATTERNS:
+                    _ctx = REQUIRE_CONTEXT.get(pname)
+                    if _ctx is not None and not _ctx.search(line):
+                        continue
+                    if re.search(pat, line, re.IGNORECASE):
+                        msg = f"  {name}:{n}  [{pname}]  {line.strip()[:96]}"
+                        (errors if sev == "ERROR" else infos).append(msg)
+        except Exception:
+            continue
 
     if infos and show_all:
         print(f"INFO ({len(infos)}) - allowed, but visible on purpose:")

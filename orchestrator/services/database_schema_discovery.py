@@ -69,9 +69,18 @@ class DatabaseSchemaDiscovery:
     @property
     def schema_prompt_text(self) -> str:
         """Return schema formatted for injection into LLM SQL generation prompts."""
+        return self.prompt_text_for()
+
+    def prompt_text_for(self, keep_columns: Optional[Set[str]] = None) -> str:
+        """Schema text naming the columns the caller intends to query.
+
+        A wide time-series table has one column per sensor, so listing all of them grows
+        the prompt with the building rather than with the question. See
+        `SchemaInfo.as_prompt_text` for what that cost when nobody said which they wanted.
+        """
         if not self._schema:
             return "Schema unavailable"
-        base = self._schema.as_prompt_text()
+        base = self._schema.as_prompt_text(keep_columns)
         dialect = self._adapter.get_dialect_hints()
         return base + ("\n\n" + dialect if dialect else "")
 
